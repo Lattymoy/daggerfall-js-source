@@ -21,22 +21,29 @@
 /** AUDIT WORLD-EVENTS L5-12: how a trait's word and a name compose - systems/bossTraits.js hands the player's language's
  *  (its key `bossTraits.title`), so this leaf stays one; until it does, the word before the name. */
 let _traitTitle = (/** @type {string} */ word, /** @type {string} */ name) => `${word} ${name}`;
-export function setTraitTitleFormat(fn) { if (typeof fn === 'function') _traitTitle = fn; }
+export function setTraitTitleFormat(fn) {
+  if (typeof fn === 'function') _traitTitle = fn;
+}
 
 /** @param {any} entity @param {string | null | undefined} base the foe's own name (its kind's, or its career's)
  *  @param {{ traits?: boolean }} [o] `traits` false: no trait's word (AUDIT WORLD-EVENTS L5-12 - the enhanced target frame
  *  names the traits on their own line under the name, and said them twice) */
 export function foeTitle(entity, base, { traits = true } = {}) {
   if (!base) return base;
-  if (entity?.wildGiant) base = 'Greater Giant';   // GREATER-GIANT: the zone's own giants (systems/wild/wildZone.js GREATER_GIANT_NAME)
+  if (entity?.wildGiant) base = 'Greater Giant'; // GREATER-GIANT: the zone's own giants (systems/wild/wildZone.js GREATER_GIANT_NAME)
   const revenant = entity?.revenant?.name;
   if (typeof revenant === 'string' && revenant) return revenant;
-  const band = entity?.bandName;   // RVN6 (bible/12-Enhanced-AI/Feud-Arc.md 17): a revenant's follower, by its band - "Orc of Grushnak's Warband"
+  const band = entity?.bandName; // RVN6 (bible/12-Enhanced-AI/Feud-Arc.md 17): a revenant's follower, by its band - "Orc of Grushnak's Warband"
   if (typeof band === 'string' && band) return `${base} of ${band}`;
   const c = entity?.champion;
   const named = typeof c === 'string' && c ? `${c.charAt(0).toUpperCase()}${c.slice(1)} ${base}` : base;
-  const lead = typeof entity?.raidLeader?.name === 'string' && entity.raidLeader.name ? entity.raidLeader.name : null;   // RAID5: a raid's leader, by its party's word (systems/eliteFoes.js promoteRaidLeader)
-  const special = entity?.staffBoss ? `Mighty ${named}` : lead ?? (entity?.eliteFoe ? `Elite ${named}` : named);   // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)
-  const traited = traits && typeof entity?.bossTitle === 'string' && entity.bossTitle ? _traitTitle(entity.bossTitle, special) : special;   // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)
-  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ? `Unquiet ${traited}` : traited;   // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)
+  const lead = typeof entity?.raidLeader?.name === 'string' && entity.raidLeader.name ? entity.raidLeader.name : null; // RAID5: a raid's leader, by its party's word (systems/eliteFoes.js promoteRaidLeader)
+  const special = entity?.staffBoss ? `Mighty ${named}` : (lead ?? (entity?.eliteFoe ? `Elite ${named}` : named)); // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)
+  const traited =
+    traits && typeof entity?.bossTitle === 'string' && entity.bossTitle
+      ? _traitTitle(entity.bossTitle, special)
+      : special; // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)
+  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true
+    ? `Unquiet ${traited}`
+    : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)
 }

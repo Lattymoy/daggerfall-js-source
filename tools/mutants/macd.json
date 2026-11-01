@@ -35,8 +35,8 @@
   {
     "name": "MACD2-transportation-draws-its-junk-icon-address-again",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (BORROWED_ART_INDICES.has(item.templateIndex)) return null;\n",
-    "new": "",
+    "old": "  if (BORROWED_ART_INDICES.has(item.templateIndex)) return null;\n  // RRI1: a custom class answers InventoryTextureArchive/Record itself",
+    "new": "  // RRI1: a custom class answers InventoryTextureArchive/Record itself",
     "tests": [
       "test/systems/inputactions.test.js",
       "test/systems/audit63_items_loot.test.js",

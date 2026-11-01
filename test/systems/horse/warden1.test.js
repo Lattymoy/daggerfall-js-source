@@ -414,7 +414,7 @@ test('WARDEN1 hosts: the online plumbing carries `y` and the owner\'s word; worl
   assert.equal((w.match(/wardenShows\?\.destroyAll\(\);/g) ?? []).length, 2, 'a re-anchor and a load');
   assert.match(w, /hcc\.setWardenWord\(\(a\) => wagonWarden\?\.word\(a\) \?\? null\);/);
   assert.match(w, /registerModSaveData\(WARDEN_VENDOR, \{/);
-  assert.match(rd('src/systems/horse/horseCart.js'), /adoptYeet,   \/\/ WARDEN1/);
+  assert.match(rd('src/systems/horse/horseCart.js'), /adoptYeet, \/\/ WARDEN1/);
 });
 
 // ─── the runtime ────────────────────────────────────────────────────────────────────────────────────────────────────

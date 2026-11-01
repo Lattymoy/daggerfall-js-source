@@ -45,7 +45,7 @@ import { createSeaScore, seaScoreSongs, SEA_SCORE_SILENCE } from '../systems/sou
 import { isNight } from '../world/worldClock.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { doorSpotsNear } from '../characters/foeSpacing.js';   // AUDIT SOUNDSCAPE W2: a door's own centre and its outward face, the one home
+import { doorSpotsNear } from '../characters/foeSpacing.js'; // AUDIT SOUNDSCAPE W2: a door's own centre and its outward face, the one home
 
 /** The gulls' land: a map pixel within this ring of mine that is not the sea. */
 export const GULL_RING = 2;
@@ -68,7 +68,14 @@ export const DOORS_REACH_M = 70;
 export const DOOR_OUT_M = 1.2;
 const SMITHIES = new Set([BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]);
 /** The score's word while I am at no helm. */
-const NOT_SAILING = Object.freeze({ sailing: false, fight: false, weather: 'sunny', night: false, nearPort: false, way: 0 });
+const NOT_SAILING = Object.freeze({
+  sailing: false,
+  fight: false,
+  weather: 'sunny',
+  night: false,
+  nearPort: false,
+  way: 0,
+});
 const TAVERNS = new Set([BUILDING_TYPES.Tavern]);
 /** A boat I ride and do not steer (another player's - AUDIT SOUNDSCAPE S4: her way was my own idle helm's, lying still
  *  at six knots): her way is her root's own going, eased over WAY_TAU_S; a step faster than WAY_JUMP_MPS is a recentre
@@ -87,7 +94,8 @@ export const WAY_JUMP_MPS = 40;
 export function shoreEdge(ear, columnAt) {
   let surface = NaN;
   const deep = (x, z) => {
-    const c = columnAt(x, z), d = Number(c?.depth);
+    const c = columnAt(x, z),
+      d = Number(c?.depth);
     if (Number.isFinite(c?.oceanY)) surface = /** @type {number} */ (c?.oceanY);
     return Number.isFinite(d) && d > SHORE_DEPTH;
   };
@@ -99,15 +107,25 @@ export function shoreEdge(ear, columnAt) {
     // every bearing that meets the water on this ring, each placed along itself - the nearest is the edge (a slanting
     // bearing meets a straight shore further off than the one square to it)
     for (let b = 0; b < SHORE_BEARINGS; b++) {
-      const a = (2 * Math.PI * b) / SHORE_BEARINGS, dir = [Math.sin(a), Math.cos(a)];
+      const a = (2 * Math.PI * b) / SHORE_BEARINGS,
+        dir = [Math.sin(a), Math.cos(a)];
       if (deep(ear[0] + dir[0] * r, ear[2] + dir[1] * r) === here) continue;
-      let lo = inner, hi = r;
-      for (let k = 0; k < 5; k++) { const m = (lo + hi) / 2; if (deep(ear[0] + dir[0] * m, ear[2] + dir[1] * m) === here) lo = m; else hi = m; }
+      let lo = inner,
+        hi = r;
+      for (let k = 0; k < 5; k++) {
+        const m = (lo + hi) / 2;
+        if (deep(ear[0] + dir[0] * m, ear[2] + dir[1] * m) === here) lo = m;
+        else hi = m;
+      }
       if (!best || hi < best.dist) best = { dist: hi, dir };
     }
     if (best) {
       const { dist, dir } = best;
-      return { dist, dir, at: [ear[0] + dir[0] * dist, Number.isFinite(surface) ? surface : ear[1] - 1, ear[2] + dir[1] * dist] };
+      return {
+        dist,
+        dir,
+        at: [ear[0] + dir[0] * dist, Number.isFinite(surface) ? surface : ear[1] - 1, ear[2] + dir[1] * dist],
+      };
     }
     inner = r;
   }
@@ -116,7 +134,8 @@ export function shoreEdge(ear, columnAt) {
 
 /** Whether land is near a map pixel - one within GULL_RING that is not the sea. Pure. @param {number} px @param {number} py @param {(x: number, y: number) => boolean} isSea */
 export function landNear(px, py, isSea) {
-  for (let dy = -GULL_RING; dy <= GULL_RING; dy++) for (let dx = -GULL_RING; dx <= GULL_RING; dx++) if (!isSea(px + dx, py + dy)) return true;
+  for (let dy = -GULL_RING; dy <= GULL_RING; dy++)
+    for (let dx = -GULL_RING; dx <= GULL_RING; dx++) if (!isSea(px + dx, py + dy)) return true;
   return false;
 }
 /** Whether the sea is beside a map pixel - its own or one of the eight about it. Pure. @param {number} px @param {number} py @param {(x: number, y: number) => boolean} isSea */
@@ -126,10 +145,16 @@ export function seaBeside(px, py, isSea) {
 }
 
 /** A door's building type, off its block's own list (the record its door names), or -1. Pure. @param {any} entry */
-export const doorBuildingType = (entry) => entry?.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[entry?.recordIndex]?.buildingType ?? -1;
+export const doorBuildingType = (entry) =>
+  entry?.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[entry?.recordIndex]?.buildingType ?? -1;
 
 /** The climate's word for the seasons: a winter there, or none (the desert's and the rainforest's never come). Pure. */
-export const winterIn = (climate, winter) => !!winter && climate !== CLIMATES.Desert && climate !== CLIMATES.Desert2 && climate !== CLIMATES.Rainforest && climate !== CLIMATES.Subtropical;
+export const winterIn = (climate, winter) =>
+  !!winter &&
+  climate !== CLIMATES.Desert &&
+  climate !== CLIMATES.Desert2 &&
+  climate !== CLIMATES.Rainforest &&
+  climate !== CLIMATES.Subtropical;
 
 /**
  * @param {{ audio: any, music: any, boat: () => any, aboard?: () => boolean, bow?: (boat: any, yaw: number) => number[], csa: any, fight: () => boolean, pixel: () => ({ x: number, y: number } | null),
@@ -137,27 +162,44 @@ export const winterIn = (climate, winter) => !!winter && climate !== CLIMATES.De
  *   doors: any[], doorAt: (entry: any) => any, rand?: () => number }} deps
  */
 export function createSoundscapeHost(deps) {
-  const columnAt = deps.dw?.rawColumnAt ? (/** @type {number} */ x, /** @type {number} */ z) => deps.dw.rawColumnAt(x, z) : null;
+  const columnAt = deps.dw?.rawColumnAt
+    ? (/** @type {number} */ x, /** @type {number} */ z) => deps.dw.rawColumnAt(x, z)
+    : null;
   const sea = createSeaAir({ engine: deps.audio, rand: deps.rand });
   const world = createWorldAir({ engine: deps.audio, rand: deps.rand });
   const score = createSeaScore();
-  let songsMade = false, held = false;
+  let songsMade = false,
+    held = false;
   // the way of a boat I ride (S4): her last place and her eased speed
-  let rode = null, rodeAt = [0, 0, 0], rodeWay = 0;
+  let rode = null,
+    rodeAt = [0, 0, 0],
+    rodeWay = 0;
   const wayOf = (/** @type {any} */ boat, /** @type {number} */ dt) => {
     const p = boat?.GameObject?.position;
-    if (!p || boat !== rode || !(dt > 0)) { rode = p ? boat : null; rodeWay = 0; }
-    else {
+    if (!p || boat !== rode || !(dt > 0)) {
+      rode = p ? boat : null;
+      rodeWay = 0;
+    } else {
       const v = Math.hypot(p[0] - rodeAt[0], p[2] - rodeAt[2]) / dt;
       if (v <= WAY_JUMP_MPS) rodeWay += (v - rodeWay) * Math.min(1, dt / WAY_TAU_S);
     }
-    if (p) { rodeAt[0] = p[0]; rodeAt[1] = p[1]; rodeAt[2] = p[2]; }
+    if (p) {
+      rodeAt[0] = p[0];
+      rodeAt[1] = p[1];
+      rodeAt[2] = p[2];
+    }
     return rodeWay;
   };
   /** the sea's word for the music, as the last frame left it (null: on no deck) */
   let sailing = null;
   // the dear questions, asked on their own clock
-  let askIn = 0, askedAt = null, pixKey = '', land = false, port = false, coast = false, blocks = 1;
+  let askIn = 0,
+    askedAt = null,
+    pixKey = '',
+    land = false,
+    port = false,
+    coast = false,
+    blocks = 1;
   /** @type {{ dist: number, dir: number[] | null, at?: number[] } | null} */ let shore = null;
   /** @type {number[][]} */ let smithies = [];
   /** @type {number[][]} */ let taverns = [];
@@ -168,22 +210,36 @@ export function createSoundscapeHost(deps) {
       pixKey = key;
       land = !!p && landNear(p.x, p.y, deps.seaPixel);
       coast = !!p && seaBeside(p.x, p.y, deps.seaPixel);
-      try { port = !!deps.csa?.IsNearPort?.(3); } catch { port = false; }
-      try { blocks = p ? deps.townAt?.(p.x, p.y)?.blocks ?? 1 : 1; } catch { blocks = 1; }
+      try {
+        port = !!deps.csa?.IsNearPort?.(3);
+      } catch {
+        port = false;
+      }
+      try {
+        blocks = p ? (deps.townAt?.(p.x, p.y)?.blocks ?? 1) : 1;
+      } catch {
+        blocks = 1;
+      }
     }
     shore = columnAt ? shoreEdge(ear, columnAt) : coast ? { dist: SHORE_FAR_M, dir: null } : null;
-    smithies = []; taverns = [];
+    smithies = [];
+    taverns = [];
     for (const e of deps.doors ?? []) {
       const type = doorBuildingType(e);
       const list = SMITHIES.has(type) ? smithies : TAVERNS.has(type) ? taverns : null;
       if (!list) continue;
       const spot = doorSpotsNear([e], ear, DOORS_REACH_M, deps.doorAt)[0];
       if (!spot) continue;
-      const [nx, , nz] = spot.normal, l = Math.hypot(nx, nz) || 1;
+      const [nx, , nz] = spot.normal,
+        l = Math.hypot(nx, nz) || 1;
       list.push([spot.pos[0] + (nx / l) * DOOR_OUT_M, spot.pos[1], spot.pos[2] + (nz / l) * DOOR_OUT_M]);
     }
   };
-  const stopAll = () => { sea.stop(); world.stop(); sailing = null; };
+  const stopAll = () => {
+    sea.stop();
+    world.stop();
+    sailing = null;
+  };
   return {
     /**
      * Once an exterior frame, after the host's setListener (the ear and its forward are the engine's listenerPose -
@@ -195,39 +251,98 @@ export function createSoundscapeHost(deps) {
      * @param {{ ear?: number[], fwd?: number[], wd: any, weather: string, minute: number, climate: number, winter: boolean, paused: boolean }} f
      */
     frame(dt, f) {
-      const pose = f?.ear ? null : deps.audio?.listenerPose?.() ?? null;
-      const ear = f?.ear ?? pose?.pos, fwd = f?.fwd ?? pose?.fwd ?? [0, 0, 1];
-      if (!enhancedSoundsOn() || !Array.isArray(ear) || !ear.every(Number.isFinite)) { stopAll(); return; }
-      installSoundscapeSounds(deps.audio);   // AUDIT SOUNDSCAPE S7: a load that failed is asked again on the loader's own backoff
-      if ((askIn -= Math.max(0, dt)) <= 0 || !askedAt || Math.hypot(ear[0] - askedAt[0], ear[2] - askedAt[2]) > ASK_MOVED_M) {
-        askIn = ASK_EVERY_S; askedAt = [...ear];
+      const pose = f?.ear ? null : (deps.audio?.listenerPose?.() ?? null);
+      const ear = f?.ear ?? pose?.pos,
+        fwd = f?.fwd ?? pose?.fwd ?? [0, 0, 1];
+      if (!enhancedSoundsOn() || !Array.isArray(ear) || !ear.every(Number.isFinite)) {
+        stopAll();
+        return;
+      }
+      installSoundscapeSounds(deps.audio); // AUDIT SOUNDSCAPE S7: a load that failed is asked again on the loader's own backoff
+      if (
+        (askIn -= Math.max(0, dt)) <= 0 ||
+        !askedAt ||
+        Math.hypot(ear[0] - askedAt[0], ear[2] - askedAt[2]) > ASK_MOVED_M
+      ) {
+        askIn = ASK_EVERY_S;
+        askedAt = [...ear];
         ask(ear);
       }
-      const minute = Number(f.minute) || 0, night = isNight(minute), wind = f.wd?.on ? f.wd.strength01 : 0.35, gust = f.wd?.gust ?? 0.7;
+      const minute = Number(f.minute) || 0,
+        night = isNight(minute),
+        wind = f.wd?.on ? f.wd.strength01 : 0.35,
+        gust = f.wd?.gust ?? 0.7;
       const boat = deps.boat?.() ?? null;
       let aboard = !!boat;
-      if (!aboard) { try { aboard = !!deps.aboard?.(); } catch { aboard = false; } }
+      if (!aboard) {
+        try {
+          aboard = !!deps.aboard?.();
+        } catch {
+          aboard = false;
+        }
+      }
       if (aboard) {
         world.stop();
         let helm = null;
-        if (boat) { try { helm = deps.csa?.helmPanelState?.() ?? null; } catch { helm = null; } }
+        if (boat) {
+          try {
+            helm = deps.csa?.helmPanelState?.() ?? null;
+          } catch {
+            helm = null;
+          }
+        }
         // my helm says her way; a boat I ride says it by her own going (S4); a deck off any helm - mine at anchor, a sea
         // ship's - lies still
         const way = helm ? Number(helm.way) || 0 : boat && !f.paused ? wayOf(boat, dt) : boat ? rodeWay : 0;
         const bow = boat?.GameObject?.rotation && deps.bow ? deps.bow(boat, 0) : null;
-        sea.frame(dt, { ear, fwd, bow, way, wind, gust, weather: f.weather, night, nearLand: land, minute, paused: f.paused });
+        sea.frame(dt, {
+          ear,
+          fwd,
+          bow,
+          way,
+          wind,
+          gust,
+          weather: f.weather,
+          night,
+          nearLand: land,
+          minute,
+          paused: f.paused,
+        });
         // the score's word: at a helm the sea's law; aboard off it, the fight's alone (AUDIT SOUNDSCAPE M1: a boarding
         // lets the helm go - its deck fight is the sea fight's still, and a fight ended aboard keeps its tail)
-        sailing = { sailing: !!helm, aboard: true, fight: !!deps.fight?.(), weather: f.weather, night, nearPort: port, way };
+        sailing = {
+          sailing: !!helm,
+          aboard: true,
+          fight: !!deps.fight?.(),
+          weather: f.weather,
+          night,
+          nearPort: port,
+          way,
+        };
         return;
       }
       sea.stop();
       sailing = null;
       let inTown = false;
-      try { inTown = !!deps.inTown?.(); } catch { inTown = false; }
+      try {
+        inTown = !!deps.inTown?.();
+      } catch {
+        inTown = false;
+      }
       world.frame(dt, {
-        ear, climate: f.climate, night, hour: minute / 60, weather: f.weather, wind, winter: winterIn(f.climate, f.winter),
-        inTown, townBlocks: blocks, shore, smithies, taverns, paused: f.paused,
+        ear,
+        climate: f.climate,
+        night,
+        hour: minute / 60,
+        weather: f.weather,
+        wind,
+        winter: winterIn(f.climate, f.winter),
+        inTown,
+        townBlocks: blocks,
+        shore,
+        smithies,
+        taverns,
+        paused: f.paused,
       });
     },
     /** On every modal frame: silent, nothing left looping. */
@@ -240,12 +355,20 @@ export function createSoundscapeHost(deps) {
     scoreFrame(now = Date.now()) {
       const want = score.want(sailing && enhancedSoundsOn() ? sailing : NOT_SAILING, now);
       if (want == null) {
-        if (held) { held = false; deps.music?.fadeOut?.(); }
+        if (held) {
+          held = false;
+          deps.music?.fadeOut?.();
+        }
         return false;
       }
-      if (!songsMade) { songsMade = true; for (const song of Object.values(seaScoreSongs())) deps.music?.registerSong?.(song.name, song); }
+      if (!songsMade) {
+        songsMade = true;
+        for (const song of Object.values(seaScoreSongs())) deps.music?.registerSong?.(song.name, song);
+      }
       held = true;
-      if (want === SEA_SCORE_SILENCE) { if (deps.music?.current !== null) deps.music?.fadeOut?.(); } else deps.music?.playSong?.(want);
+      if (want === SEA_SCORE_SILENCE) {
+        if (deps.music?.current !== null) deps.music?.fadeOut?.();
+      } else deps.music?.playSong?.(want);
       return true;
     },
   };

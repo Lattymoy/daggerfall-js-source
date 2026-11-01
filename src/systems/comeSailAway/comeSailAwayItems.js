@@ -18,11 +18,11 @@
 // it: the placed boat a deed stands for (GetPlacedBoatWithUID) and the cargo a packed boat carries (PackedCargoes).
 // The port's items carry none, so the mod's two are minted with one (`mintBoatItem`'s `uid`, the host's; the shelf's
 // two by `mintShelfBoatUids`) - DECLARED.
-import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';   // CSA-H: the rows' one table; SHIPYARDS: RegisterCustomItem's group no longer stocks them (below)
+import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js'; // CSA-H: the rows' one table; SHIPYARDS: RegisterCustomItem's group no longer stocks them (below)
 import { modSetting, modLatchedOn } from '../modSettings.js';
 import { registerModEffectKind, WATER_WALKING_SILENT_KIND } from '../effects.js';
-import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES } from './comeSailAwayHulls.js';   // INT1: the leaf, not the boat's renderer
-import { packedHullWeight, hullFromMessage } from './comeSailAwayHulls.js';   // PARTS-WEIGHT: the load's repair, from the leaf too
+import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES } from './comeSailAwayHulls.js'; // INT1: the leaf, not the boat's renderer
+import { packedHullWeight, hullFromMessage } from './comeSailAwayHulls.js'; // PARTS-WEIGHT: the load's repair, from the leaf too
 
 /** ItemBoatParts.templateIndex and ItemBoatDeed.templateIndex. */
 export const BOAT_PARTS_TEMPLATE = 1320;
@@ -32,16 +32,60 @@ export const BOAT_ITEM_GROUP = 'UselessItems2';
 
 /** vendor/come-sail-away/ItemTemplates.json, row for row. */
 export const CSA_ITEM_TEMPLATES = Object.freeze([
-  Object.freeze({ index: 1320, name: 'Parts of', baseWeight: 120, hitPoints: 1400, capacityOrTarget: 400, basePrice: 4000, enchantmentPoints: 1250, rarity: 1, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 0, worldTextureRecord: 0, playerTextureArchive: 212, playerTextureRecord: 11, hasNoEncumbrance: false }),
-  Object.freeze({ index: 1321, name: 'Deed to', baseWeight: 0.5, hitPoints: 1400, capacityOrTarget: 400, basePrice: 6000, enchantmentPoints: 1250, rarity: 1, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 0, worldTextureRecord: 0, playerTextureArchive: 209, playerTextureRecord: 5, hasNoEncumbrance: false }),
+  Object.freeze({
+    index: 1320,
+    name: 'Parts of',
+    baseWeight: 120,
+    hitPoints: 1400,
+    capacityOrTarget: 400,
+    basePrice: 4000,
+    enchantmentPoints: 1250,
+    rarity: 1,
+    variants: 0,
+    drawOrderOrEffect: 0,
+    isBluntWeapon: false,
+    isLiquid: false,
+    isOneHanded: false,
+    isIngredient: false,
+    worldTextureArchive: 0,
+    worldTextureRecord: 0,
+    playerTextureArchive: 212,
+    playerTextureRecord: 11,
+    hasNoEncumbrance: false,
+  }),
+  Object.freeze({
+    index: 1321,
+    name: 'Deed to',
+    baseWeight: 0.5,
+    hitPoints: 1400,
+    capacityOrTarget: 400,
+    basePrice: 6000,
+    enchantmentPoints: 1250,
+    rarity: 1,
+    variants: 0,
+    drawOrderOrEffect: 0,
+    isBluntWeapon: false,
+    isLiquid: false,
+    isOneHanded: false,
+    isIngredient: false,
+    worldTextureArchive: 0,
+    worldTextureRecord: 0,
+    playerTextureArchive: 209,
+    playerTextureRecord: 5,
+    hasNoEncumbrance: false,
+  }),
 ]);
 registerCustomTemplates(CSA_ITEM_TEMPLATES);
 
 /** The mod loaded at all: its classes answer only then, as DFU registers them only for a loaded mod. */
 const csaLoaded = () => {
-  const latched = modLatchedOn('come-sail-away');   // AUDIT PRE-MERGE 0928 S4: loaded for the game - the world host's answer at its mount, so a switch flipped mid-game stocks nothing until the next load
+  const latched = modLatchedOn('come-sail-away'); // AUDIT PRE-MERGE 0928 S4: loaded for the game - the world host's answer at its mount, so a switch flipped mid-game stocks nothing until the next load
   if (latched !== undefined) return latched;
-  try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; }
+  try {
+    return modSetting('come-sail-away', 'Enabled') !== false;
+  } catch {
+    return false;
+  }
 };
 // SHIPYARDS (2026-10-11, Mac: "Shipyard only"): THE TWO ROWS ON NO SHELF. A port town's shipyard sells every hull and
 // buys them back (systems/shipyards.js), so RegisterCustomItem's group no longer stocks them on a General Store's or a
@@ -57,16 +101,29 @@ registerModEffectKind(WATER_WALKING_SILENT_KIND, csaLoaded);
  * the template's price and weight - and the item's UID (the host's mint).
  */
 export function mintBoatItem(templateIndex, uid) {
-  return mintCondition(setItemFields({ group: BOAT_ITEM_GROUP, templateIndex, material: 0, flags: 0, variant: 0, message: 0, stackCount: 1, UID: uid }));
+  return mintCondition(
+    setItemFields({
+      group: BOAT_ITEM_GROUP,
+      templateIndex,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: 1,
+      UID: uid,
+    }),
+  );
 }
 
 /** An index the C#'s arrays would throw on: IndexOutOfRangeException, as `hullNames[num]` does. */
 function at(table, i, what) {
-  if (!(Number.isInteger(i) && i >= 0 && i < table.length)) throw new RangeError(`IndexOutOfRangeException: Index was outside the bounds of the array. (${what} ${i})`);
+  if (!(Number.isInteger(i) && i >= 0 && i < table.length))
+    throw new RangeError(`IndexOutOfRangeException: Index was outside the bounds of the array. (${what} ${i})`);
   return table[i];
 }
 /** `shortName + " " + hullNames[hull] + " '" + variantNames[variant] + "'"` - every writer's one form. */
-export const boatItemName = (name, hull, variant) => `${name} ${at(HULL_NAMES, hull, 'hull')} '${at(VARIANT_NAMES, variant, 'variant')}'`;
+export const boatItemName = (name, hull, variant) =>
+  `${name} ${at(HULL_NAMES, hull, 'hull')} '${at(VARIANT_NAMES, variant, 'variant')}'`;
 /** The item's message: `hull * 10 + variant` (PackBoat, giveboat and the shelf alike). */
 export const boatItemMessage = (hull, variant) => hull * 10 + variant;
 
@@ -113,7 +170,10 @@ export function repairPartsWeights(list) {
   for (const item of Array.isArray(list) ? list : []) {
     if (item?.templateIndex !== BOAT_PARTS_TEMPLATE) continue;
     const kg = packedHullWeight(hullFromMessage(item.message | 0));
-    if (Number.isFinite(kg) && item.weightInKg !== kg) { item.weightInKg = kg; n++; }
+    if (Number.isFinite(kg) && item.weightInKg !== kg) {
+      item.weightInKg = kg;
+      n++;
+    }
   }
   return n;
 }
@@ -124,7 +184,9 @@ export function repairPartsWeights(list) {
  * another such deed placed (GetPlacedBoatWithUID). An item that has one keeps it; `uid()` is the host's mint.
  */
 export function mintShelfBoatUids(items, uid) {
-  for (const item of items) if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null) item.UID = uid();
+  for (const item of items)
+    if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)
+      item.UID = uid();
   return items;
 }
 
@@ -137,7 +199,12 @@ export function mintShelfBoatUids(items, uid) {
  * ui/enhanced/enhancedInventory.js remoteModel): the Enhanced skins opened a hold TAKE-ONLY, the pile's frame alone, so
  * nothing could be stowed in it there; the classic skin was always two-way, as the mod's own window is.
  */
-export const cargoLootTarget = (cargo) => ({ items: () => cargo.Items, containerImage: () => cargo.ContainerImage, playerOwned: cargo.playerOwned !== false, storage: true });
+export const cargoLootTarget = (cargo) => ({
+  items: () => cargo.Items,
+  containerImage: () => cargo.ContainerImage,
+  playerOwned: cargo.playerOwned !== false,
+  storage: true,
+});
 
 /**
  * AssignVariantsToShopItems (6692-6717), PlayerActivate.OnLootSpawned's subscriber (6687): every deed on the shelf

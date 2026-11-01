@@ -17,14 +17,16 @@
 
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { monsterName, GENDERS, BANK_TYPES } from '../../characters/nameHelper.js';
-import { personName } from '../../characters/personNames.js';   // REGION-NAMES
+import { personName } from '../../characters/personNames.js'; // REGION-NAMES
 import { enemyDisplayName } from '../../characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES as M } from '../../characters/mobile/mobileTypes.js';
 import { ARENA_TEXT } from './arenaText.js';
 import { ARENA_HOMES, BEAST_HOMES, arenaHash, seededRng } from './arenaLadder.js';
 
 /** The monsters that fight as beasts - billed by kind, no yield in them. */
-export const ARENA_BEASTS = Object.freeze(new Set([M.GrizzlyBear, M.SabertoothTiger, M.GiantScorpion, M.Spriggan, M.IronAtronach]));
+export const ARENA_BEASTS = Object.freeze(
+  new Set([M.GrizzlyBear, M.SabertoothTiger, M.GiantScorpion, M.Spriggan, M.IronAtronach]),
+);
 /** The monsters that fight on with no temper to yield (daedra, undead, atronachs) - and every beast. */
 const NO_YIELD = new Set([...ARENA_BEASTS, M.DaedraSeducer, M.Vampire]);
 
@@ -32,10 +34,12 @@ const NO_YIELD = new Set([...ARENA_BEASTS, M.DaedraSeducer, M.Vampire]);
 function drawName(seed, bank, gender) {
   const saved = getSeed();
   try {
-    srand((seed >>> 0) || 1);
+    srand(seed >>> 0 || 1);
     if (bank === BANK_TYPES.Monster1) return monsterName(gender, () => 0, BANK_TYPES.Monster1);
     return personName(bank, gender);
-  } finally { setSeed(saved); }
+  } finally {
+    setSeed(saved);
+  }
 }
 
 /**
@@ -49,7 +53,15 @@ export function fighterIdentity(seed, i, mobile) {
   if (ARENA_BEASTS.has(mobile)) {
     const kind = enemyDisplayName(mobile) ?? 'Beast';
     const from = BEAST_HOMES[Math.floor(rng() * BEAST_HOMES.length)];
-    return { name: `The ${kind}`, home: from, epithet: '', billing: ARENA_TEXT.beast(kind, from), gender: 'male', temper: 0, beast: true };
+    return {
+      name: `The ${kind}`,
+      home: from,
+      epithet: '',
+      billing: ARENA_TEXT.beast(kind, from),
+      gender: 'male',
+      temper: 0,
+      beast: true,
+    };
   }
   const isClass = mobile >= 128;
   const female = isClass && rng() < 0.4;
@@ -59,9 +71,20 @@ export function fighterIdentity(seed, i, mobile) {
   else if (mobile === M.DaedraSeducer) home = { town: 'Oblivion', bank: BANK_TYPES.Monster1 };
   else home = ARENA_HOMES.filter((h) => h.town !== 'Orsinium')[Math.floor(rng() * (ARENA_HOMES.length - 1))];
   const bank = home.bank === 8 ? BANK_TYPES.Monster1 : home.bank;
-  const name = drawName(s ^ 0x5a5a5a5a, bank, mobile === M.DaedraSeducer ? GENDERS.Female : gender) || enemyDisplayName(mobile) || 'Fighter';
+  const name =
+    drawName(s ^ 0x5a5a5a5a, bank, mobile === M.DaedraSeducer ? GENDERS.Female : gender) ||
+    enemyDisplayName(mobile) ||
+    'Fighter';
   const temper = NO_YIELD.has(mobile) ? 0 : 0.2 + rng() * 0.7;
-  return { name, home: home.town, epithet, billing: `${name} of ${home.town}, ${epithet}`, gender: female || mobile === M.DaedraSeducer ? 'female' : 'male', temper, beast: false };
+  return {
+    name,
+    home: home.town,
+    epithet,
+    billing: `${name} of ${home.town}, ${epithet}`,
+    gender: female || mobile === M.DaedraSeducer ? 'female' : 'male',
+    temper,
+    beast: false,
+  };
 }
 
 /** Where fighters stand at the call and walk to: `n` marks on the floor's long axis (x), sides apart, in the ring's

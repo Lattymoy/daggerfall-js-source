@@ -40,8 +40,8 @@
   {
     "name": "DC-the-rooms-own-past-the-gate",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);",
-    "new": "lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix, null);",
+    "old": "        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);",
+    "new": "        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix, null);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "DC-the-rooms-own-taken-out-forgets-nothing",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "lateSolidsOf(collider)?.remove(baseBucketOf(key)); }",
-    "new": "collider?.removeBucket?.(baseBucketOf(key)); }",
+    "old": "      lateSolidsOf(collider)?.remove(baseBucketOf(key));",
+    "new": "      collider?.removeBucket?.(baseBucketOf(key));",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ],
@@ -60,8 +60,8 @@
   {
     "name": "DC-the-skin-past-the-radius",
     "file": "src/player/lateSolid.js",
-    "old": "probe.capsuleContact(body.pos, height, -SKIN, null, HIT)",
-    "new": "probe.capsuleContact(body.pos, height, SKIN, null, HIT)",
+    "old": "  return probe.capsuleContact(body.pos, height, -SKIN, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
+    "new": "  return probe.capsuleContact(body.pos, height, SKIN, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "DC-the-skin-at-the-radius",
     "file": "src/player/lateSolid.js",
-    "old": "probe.capsuleContact(body.pos, height, -SKIN, null, HIT)",
-    "new": "probe.capsuleContact(body.pos, height, 0, null, HIT)",
+    "old": "  return probe.capsuleContact(body.pos, height, -SKIN, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
+    "new": "  return probe.capsuleContact(body.pos, height, 0, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "DC-the-parity-unasked",
     "file": "src/player/lateSolid.js",
-    "old": " || heldInSolid(probe, body.pos, height);",
-    "new": ";",
+    "old": "  return probe.capsuleContact(body.pos, height, -SKIN, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
+    "new": "  return probe.capsuleContact(body.pos, height, -SKIN, null, HIT) !== null;",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "DC-the-box-unasked",
     "file": "src/player/lateSolid.js",
-    "old": "  if (!b || !boxMeetsBody([...b.min, ...b.max], body.pos, height)) return false;\n",
-    "new": "",
+    "old": "  if (!b || !boxMeetsBody([...b.min, ...b.max], body.pos, height)) return false;\n  return probe.capsuleContact(body.pos, height, -SKIN, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
+    "new": "  return probe.capsuleContact(body.pos, height, -SKIN, null, HIT) !== null || heldInSolid(probe, body.pos, height);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "DC-the-box-turned",
     "file": "src/player/lateSolid.js",
-    "old": "  return b[0] <= feet[0] + CAPSULE_RADIUS && b[3] >= feet[0] - CAPSULE_RADIUS",
-    "new": "  return b[0] >= feet[0] + CAPSULE_RADIUS && b[3] >= feet[0] - CAPSULE_RADIUS",
+    "old": "    b[0] <= feet[0] + CAPSULE_RADIUS &&",
+    "new": "    b[0] >= feet[0] + CAPSULE_RADIUS &&",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -125,8 +125,8 @@
   {
     "name": "DC-the-head-at-standing-height",
     "file": "src/player/enterExit.js",
-    "old": "feet[1] + height - CAPSULE_RADIUS",
-    "new": "feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS",
+    "old": "    collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]])",
+    "new": "    collider.insideSolid([feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]])",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js",
       "test/player/unstuckout.test.js"
@@ -135,8 +135,8 @@
   {
     "name": "DC-no-collider-a-gate",
     "file": "src/player/lateSolid.js",
-    "old": "  if (!collider || typeof collider !== 'object') return null;\n",
-    "new": "",
+    "old": "  if (!collider || typeof collider !== 'object') return null;\n  let gate = GATES.get(collider);",
+    "new": "  let gate = GATES.get(collider);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "DC-a-gate-an-asking",
     "file": "src/player/lateSolid.js",
-    "old": "    GATES.set(collider, gate);\n",
-    "new": "",
+    "old": "    GATES.set(collider, gate);\n    if (collider instanceof Collider) collider.late = gate; // ROCK-CLEAR: its removeBucket forgets a withheld part",
+    "new": "    if (collider instanceof Collider) collider.late = gate; // ROCK-CLEAR: its removeBucket forgets a withheld part",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -153,8 +153,8 @@
   {
     "name": "DC-the-body-unguarded",
     "file": "src/player/lateSolid.js",
-    "old": "      if (typeof body === 'function' || body?.pos) guarded = body;\n",
-    "new": "",
+    "old": "      if (typeof body === 'function' || body?.pos) guarded = body;\n      const now = bodyNow(guarded);",
+    "new": "      const now = bodyNow(guarded);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -171,7 +171,7 @@
   {
     "name": "DC-a-withheld-one-not-kept",
     "file": "src/player/lateSolid.js",
-    "old": "      if (was) held.set(key, [h]); else stand(key, h);",
+    "old": "      if (was) held.set(key, [h]);\n      else stand(key, h);",
     "new": "      stand(key, h);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "DC-the-gate-stands-what-closes",
     "file": "src/player/lateSolid.js",
-    "old": "      if (!(now && closes(h, now))) { stand(key, h); return true; }",
-    "new": "      { stand(key, h); return true; }",
+    "old": "      if (!(now && closes(h, now))) {",
+    "new": "      {",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "DC-the-settle-stands-it-again",
     "file": "src/player/lateSolid.js",
-    "old": "        if (left.length) held.set(key, left); else held.delete(key);",
-    "new": "        if (left.length) held.set(key, left);",
+    "old": "        else held.delete(key);\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "DC-the-removal-keeps-it-withheld",
     "file": "src/player/lateSolid.js",
-    "old": "    remove(key) {\n      held.delete(key);\n",
-    "new": "    remove(key) {\n",
+    "old": "      held.delete(key);\n      collider.removeBucket?.(key);",
+    "new": "      collider.removeBucket?.(key);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ],
@@ -227,8 +227,8 @@
   {
     "name": "DC-the-probe-where-the-model-is-made",
     "file": "src/player/lateSolid.js",
-    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
-    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], h.translation, null, false, h.sight);",
+    "old": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "      h.probe.addMesh(\n        PROBE,\n        h.positions,\n        h.indices,\n        [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],\n        h.translation,\n        null,\n        false,\n        h.sight,\n      );",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]

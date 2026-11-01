@@ -1843,7 +1843,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:"if (this._saveSettings) saveSettings();   // ConfirmExitBox"); in a browser Application.Quit means nothing,
+// (pauseWindow.js:"if (this._saveSettings) saveSettings(); // ConfirmExitBox"); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //

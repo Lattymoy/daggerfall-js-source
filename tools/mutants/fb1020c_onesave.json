@@ -74,8 +74,8 @@
   {
     "name": "FB1020c-ONE-SAVE-a-provider-call-a-material",
     "file": "src/ui/professions/profPages.js",
-    "old": "      const answers = plan.length ? await p.deposit(plan) : [];",
-    "new": "      const answers = []; for (const one of plan) answers.push(...(await p.deposit([one])));",
+    "old": "    const answers = plan.length ? await p.deposit(plan) : [];",
+    "new": "    const answers = []; for (const one of plan) answers.push(...(await p.deposit([one])));",
     "tests": [
       "test/systems/professions/fb1020c_onesave.test.js"
     ]
@@ -91,7 +91,7 @@
   },
   {
     "name": "FB1020c-ONE-SAVE-the-host-plan-not-the-batch",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => ",
     "new": "deposit: async (plan) => (await Promise.all(plan.map((d) => profBook.deposit(d.material, d.qty, d)))).map((r, i) => ",
     "tests": [

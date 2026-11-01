@@ -42,11 +42,16 @@ export const EG_HERO_REFERENCE = 'reference';
 
 /** A registry of law halves, by id: each held to the reader, frozen - or refused, naming the fragment and its faults. */
 export function egHeroFragRegistry(laws) {
-  return Object.freeze(Object.fromEntries(laws.map((law) => {
-    const faults = egFragRecordFault(law);
-    if (faults.length) throw new Error(`net/eliteGates/egHeroFrags.js: ${law?.id}'s law half is refused - ${faults.join('; ')}`);
-    return [law.id, Object.freeze(law)];
-  })));
+  return Object.freeze(
+    Object.fromEntries(
+      laws.map((law) => {
+        const faults = egFragRecordFault(law);
+        if (faults.length)
+          throw new Error(`net/eliteGates/egHeroFrags.js: ${law?.id}'s law half is refused - ${faults.join('; ')}`);
+        return [law.id, Object.freeze(law)];
+      }),
+    ),
+  );
 }
 /** EVERY BAKED FRAGMENT'S LAW HALF, by its id. */
 export const EG_HERO_FRAGS = egHeroFragRegistry([
@@ -65,4 +70,5 @@ export const EG_HERO_FRAGS = egHeroFragRegistry([
 
 /** The hero fragments of kit `kit` a hall may lay - every one of that kit registered (in `frags`, the registry by
  *  default) but the reference. */
-export const egHeroFragLaws = (kit, frags = EG_HERO_FRAGS) => Object.values(frags).filter((law) => law.kit === kit && law.variant !== EG_HERO_REFERENCE);
+export const egHeroFragLaws = (kit, frags = EG_HERO_FRAGS) =>
+  Object.values(frags).filter((law) => law.kit === kit && law.variant !== EG_HERO_REFERENCE);

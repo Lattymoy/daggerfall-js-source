@@ -272,8 +272,8 @@
   {
     "name": "BACK-HOLSTER-SIDE-the-half-a-whole",
     "file": "src/render/armoryPose.js",
-    "old": "if (run) { sum += run.wd / 2; n++; }",
-    "new": "if (run) { sum += run.wd; n++; }",
+    "old": "        sum += run.wd / 2;",
+    "new": "        sum += run.wd;",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]

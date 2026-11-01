@@ -2,8 +2,8 @@
   {
     "name": "CHAP6A-W-CALM",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Object.freeze({ id: 'calm', name: 'Calm', weight: 30 }),",
-    "new": "Object.freeze({ id: 'calm', name: 'Calm', weight: 31 }),",
+    "old": "  Object.freeze({ id: 'calm', name: 'Calm', weight: 30 }),",
+    "new": "  Object.freeze({ id: 'calm', name: 'Calm', weight: 31 }),",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP6A-W-RIVALRY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 15 }),",
-    "new": "Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 14 }),",
+    "old": "  Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 15 }),",
+    "new": "  Object.freeze({ id: 'rivalry', name: 'Rivalry', weight: 14 }),",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP6A-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "typeof v === 'string' && /** @type {string[]} */ (EVENT_IDS).includes(v);",
-    "new": "typeof v === 'string';",
+    "old": "export const chapterEventOk = (/** @type {unknown} */ v) =>\n  typeof v === 'string' && /** @type {string[]} */ (EVENT_IDS).includes(v);",
+    "new": "export const chapterEventOk = (/** @type {unknown} */ v) => typeof v === 'string';",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP6A-W-MASTERS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (masters >= E.schismMasters) w.schism += E.schismMoved;",
-    "new": "if (masters > E.schismMasters) w.schism += E.schismMoved;",
+    "old": "  if (masters >= E.schismMasters) w.schism += E.schismMoved;",
+    "new": "  if (masters > E.schismMasters) w.schism += E.schismMoved;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "CHAP6A-W-MASTERS-NONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (masters >= E.schismMasters) w.schism += E.schismMoved;",
+    "old": "  if (masters >= E.schismMasters) w.schism += E.schismMoved;",
     "new": "",
     "tests": [
       "test/net/chap6a_events.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "CHAP6A-W-ASC-SUCC",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (band === 'ascendant') w.succession += E.successionAscendant;\n",
-    "new": "",
+    "old": "  if (band === 'ascendant') w.succession += E.successionAscendant;\n  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;",
+    "new": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP6A-W-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n",
-    "new": "",
+    "old": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n  if (curfew) w.crackdown += E.crackdownCurfew;",
+    "new": "  if (curfew) w.crackdown += E.crackdownCurfew;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP6A-W-CURFEW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (curfew) w.crackdown += E.crackdownCurfew;\n",
-    "new": "",
+    "old": "  if (curfew) w.crackdown += E.crackdownCurfew;\n  if (rivalBand === null) {",
+    "new": "  if (rivalBand === null) {",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP6A-W-ORDER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n  if (curfew) w.crackdown += E.crackdownCurfew;\n",
-    "new": "  if (curfew) w.crackdown += E.crackdownCurfew;\n  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n",
+    "old": "  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;\n  if (curfew) w.crackdown += E.crackdownCurfew;",
+    "new": "  if (curfew) w.crackdown += E.crackdownCurfew;\n  if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP6A-W-NORIVAL-CALM",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (rivalBand === null) { w.calm += w.rivalry; w.rivalry = 0; }",
-    "new": "if (rivalBand === null) { w.rivalry = 0; }",
+    "old": "    w.calm += w.rivalry;\n    w.rivalry = 0;",
+    "new": "    w.rivalry = 0;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP6A-W-NORIVAL",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (rivalBand === null) { w.calm += w.rivalry; w.rivalry = 0; }\n  else if",
-    "new": "if (false) { w.calm += w.rivalry; w.rivalry = 0; }\n  else if",
+    "old": "  if (rivalBand === null) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP6A-W-RIVAL-THRIVING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rivalBand === 'thriving' || rivalBand === 'ascendant'",
-    "new": "rivalBand === 'ascendant'",
+    "old": "  } else if (rivalBand === 'thriving' || rivalBand === 'ascendant') w.rivalry += E.rivalryThriving;",
+    "new": "  } else if (rivalBand === 'ascendant') w.rivalry += E.rivalryThriving;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP6A-W-RIVAL-ASC",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rivalBand === 'thriving' || rivalBand === 'ascendant'",
-    "new": "rivalBand === 'thriving'",
+    "old": "  } else if (rivalBand === 'thriving' || rivalBand === 'ascendant') w.rivalry += E.rivalryThriving;",
+    "new": "  } else if (rivalBand === 'thriving') w.rivalry += E.rivalryThriving;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP6A-E-SHUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "crackdownMerit: 1.5, crackdownShut: 30,",
-    "new": "crackdownMerit: 1.5, crackdownShut: 31,",
+    "old": "  crackdownShut: 30,",
+    "new": "  crackdownShut: 31,",
     "tests": [
       "test/net/chap6a_events.test.js"
     ],
@@ -129,8 +129,8 @@
   {
     "name": "CHAP6A-DRAW-SALT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region))",
-    "new": "gateHash(season, chapterTitleKey(faction, region))",
+    "old": "  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3",
+    "new": "  let r = drawOf(gateHash(season, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "CHAP6A-DRAW-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region))",
-    "new": "gateHash(CHAPTER_EVENT_SALT, season, faction)",
+    "old": "  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3",
+    "new": "  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, faction), total); // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "CHAP6A-DRAW-SEASON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region))",
-    "new": "gateHash(CHAPTER_EVENT_SALT, chapterTitleKey(faction, region))",
+    "old": "  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3",
+    "new": "  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "CHAP6A-DRAW-NEG",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!Number.isSafeInteger(season) || season < 0 || total <= 0) return 'calm';",
-    "new": "if (!Number.isSafeInteger(season) || total <= 0) return 'calm';",
+    "old": "  if (!Number.isSafeInteger(season) || season < 0 || total <= 0) return 'calm';",
+    "new": "  if (!Number.isSafeInteger(season) || total <= 0) return 'calm';",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "CHAP6A-DRAW-TOTAL",
     "file": "src/net/npcChapterLaw.js",
-    "old": "weights.reduce((a, b) => a + Math.max(0, whole(b)), 0)",
-    "new": "weights.reduce((a, b) => a + whole(b), 0)",
+    "old": "  const total = Array.isArray(weights) ? weights.reduce((a, b) => a + Math.max(0, whole(b)), 0) : 0;",
+    "new": "  const total = Array.isArray(weights) ? weights.reduce((a, b) => a + whole(b), 0) : 0;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "CHAP6A-RIVALS-MAGES",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  Object.freeze([GUILD_FACTION_IDS.MagesGuild, DIVINES.Julianos]),\n",
-    "new": "",
+    "old": "  Object.freeze([GUILD_FACTION_IDS.MagesGuild, DIVINES.Julianos]),\n]);",
+    "new": "]);",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "CHAP6A-RIVALS-BACK",
     "file": "src/net/npcChapterLaw.js",
-    "old": ".flatMap(([a, b]) => (a === faction ? [b] : b === faction ? [a] : []))",
-    "new": ".flatMap(([a, b]) => (a === faction ? [b] : []))",
+    "old": "  CHAPTER_RIVAL_PAIRS.flatMap(([a, b]) => (a === faction ? [b] : b === faction ? [a] : [])).sort((x, y) => x - y);",
+    "new": "  CHAPTER_RIVAL_PAIRS.flatMap(([a, b]) => (a === faction ? [b] : [])).sort((x, y) => x - y);",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "CHAP6A-PICK-STRONG",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)",
-    "new": "(b.strength < a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)",
+    "old": "    b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a,",
+    "new": "    b.strength < a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a,",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "CHAP6A-PICK-TIE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)",
-    "new": "(b.strength > a.strength || (b.strength === a.strength && b.faction > a.faction) ? b : a)",
+    "old": "    b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a,",
+    "new": "    b.strength > a.strength || (b.strength === a.strength && b.faction > a.faction) ? b : a,",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "CHAP6A-RIVALRY-TIE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (!(ma > mb) && !(mb > ma)) return { a, b, won: null };\n",
-    "new": "",
+    "old": "  if (!(ma > mb) && !(mb > ma)) return { a, b, won: null };\n  const E = CHAPTER_EVENT_EFFECTS;",
+    "new": "  const E = CHAPTER_EVENT_EFFECTS;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "CHAP6A-RIVALRY-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const lost = Math.min(E.rivalrySwing, l);",
-    "new": "const lost = E.rivalrySwing;",
+    "old": "  const lost = Math.min(E.rivalrySwing, l); // the loser's sting is whole; the winner's gain stops at 100",
+    "new": "  const lost = E.rivalrySwing; // the loser's sting is whole; the winner's gain stops at 100",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "CHAP6A-RIVALRY-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const won = Math.min(STRENGTH_MAX, w + lost);",
-    "new": "const won = w + lost;",
+    "old": "  const won = Math.min(STRENGTH_MAX, w + lost);",
+    "new": "  const won = w + lost;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "CHAP6A-PAY-ROUND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
-    "new": "Math.floor(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
+    "old": "  Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit);",
+    "new": "  Math.floor(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit);",
     "tests": [
       "test/net/chap6a_events.test.js"
     ],
@@ -256,8 +256,8 @@
   {
     "name": "CHAP6A-PAY-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
-    "new": "Math.round((Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit)",
+    "old": "  Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit);",
+    "new": "  Math.round((Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit);",
     "tests": [
       "test/net/chap6a_events.test.js",
       "test/net/audit_chap5.test.js"
@@ -267,8 +267,8 @@
   {
     "name": "CHAP6A-SHUTS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Number(s) < CHAPTER_EVENT_EFFECTS.crackdownShut;",
-    "new": "Number(s) <= CHAPTER_EVENT_EFFECTS.crackdownShut;",
+    "old": "export const crackdownShuts = (/** @type {number} */ s) => Number(s) < CHAPTER_EVENT_EFFECTS.crackdownShut;",
+    "new": "export const crackdownShuts = (/** @type {number} */ s) => Number(s) <= CHAPTER_EVENT_EFFECTS.crackdownShut;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "CHAP6A-LINE-ROUTE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row);   // CHAP6a: a Season's own lines\n",
-    "new": "",
+    "old": "  if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row); // CHAP6a: a Season's own lines\n  if (row?.kind === 'patron') return chapterPatronLine(row); // CHAP7a: a Season's patron",
+    "new": "  if (row?.kind === 'patron') return chapterPatronLine(row); // CHAP7a: a Season's patron",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "CHAP6A-LINE-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows')",
-    "new": "(isRollFaction(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows')",
+    "old": "  isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows';",
+    "new": "  isRollFaction(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows';",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "CHAP6A-LINE-GUILD-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export function chapterSeasonLine(/** @type {any} */ row) {\n  if (!isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
-    "new": "export function chapterSeasonLine(/** @type {any} */ row) {\n  if (!isRollFaction(row?.faction)) return null;",
+    "old": "  if (!isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "  if (!isRollFaction(row?.faction)) return null;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "CHAP6A-LINE-FELL",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(d.fell > 0 ? `${guild}'s decline cost it",
-    "new": "(d.fell >= 0 ? `${guild}'s decline cost it",
+    "old": "      ? d.fell > 0",
+    "new": "      ? d.fell >= 0",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "CHAP6A-LINE-SHUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "d.event === 'crackdown' ? (d.shut ?",
-    "new": "d.event === 'crackdown' ? (!d.shut ?",
+    "old": "        ? d.shut",
+    "new": "        ? !d.shut",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "CHAP6A-LINE-WON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "d.event === 'rivalry' ? (d.won === true ?",
-    "new": "d.event === 'rivalry' ? (d.won ?",
+    "old": "          ? d.won === true",
+    "new": "          ? d.won",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "CHAP6A-LINE-LOST",
     "file": "src/net/npcChapterLaw.js",
-    "old": ": d.won === false ? `${guild} lost its rivalry",
-    "new": ": d.won !== true ? `${guild} lost its rivalry",
+    "old": "            : d.won === false",
+    "new": "            : d.won !== true",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "CHAP6A-LINE-ASC",
     "file": "src/net/npcChapterLaw.js",
-    "old": ": d.event === 'ascendancy' ? `${guild} stood ascendant`\n",
-    "new": ": d.event === 'ascendancy' ? null\n",
+    "old": "            ? `${guild} stood ascendant`",
+    "new": "            ? null",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "CHAP6A-LINE-NAME",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';\n    return `Through",
-    "new": "    const who = row?.name;\n    return `Through",
+    "old": "    const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';",
+    "new": "    const who = row?.name;",
     "tests": [
       "test/net/chap6a_events.test.js"
     ]

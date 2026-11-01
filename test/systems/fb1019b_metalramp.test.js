@@ -46,12 +46,17 @@ test('METAL-RAMP: a granted drop is the race\'s metal on exactly `level` of the 
   }
 });
 
-test('METAL-RAMP: at 20 and up the mod stands as it was - no draw more, its race\'s metal always; a refused drop draws no ramp either (mutant: the ramp drawn at the full level)', () => {
+// PIN MOVED (DAEDRIC-RARE, FIELD FEEDBACK 2026-10-31): a Daedra's granted drop is Daedric on a tenth of its draws at any
+// level now - test/systems/daedricrare.test.js; the Orcs stand here as the mod's at 20 and up
+test('METAL-RAMP: at 20 and up an Orc\'s drop stands as the mod\'s - no ramp draw, Orcish always; a Daedra\'s takes DAEDRIC-RARE\'s keep draw alone; a refused drop draws no ramp either (mutant: the ramp drawn at the full level)', () => {
   _resetUnleveledLoot();
   for (const level of [20, 35]) {
     const g = counted(0.999, 0.999, 0.5, 0.5); const loot = [];
     addOrcish(loot, 24, g, level);
     assert.equal(loot[0].material, 8);
+    const d = counted(0.999, 0, 0.999, 0.5, 0.5); const lord = [];
+    addDaedric(lord, 31, d, level);
+    assert.deepEqual([lord[0].material, d.n], [9, g.n + 1], 'the keep draw, and no ramp draw');
     const at20 = g.n;
     const h = counted(0.999, 0, 0.999, 0.5, 0.5); const low = [];
     addOrcish(low, 24, h, 10);

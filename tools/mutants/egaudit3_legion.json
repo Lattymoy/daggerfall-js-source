@@ -62,8 +62,8 @@
   {
     "name": "EGA3L-mastery-id",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "EG_MASTERIES.map((m) => [m.key, m.id])",
-    "new": "EG_MASTERIES.map((m) => [m.key, m.id + 1])",
+    "old": "export const EG_M_ID = Object.freeze(Object.fromEntries(EG_MASTERIES.map((m) => [m.key, m.id])));",
+    "new": "export const EG_M_ID = Object.freeze(Object.fromEntries(EG_MASTERIES.map((m) => [m.key, m.id + 1])));",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "EGA3L-noquarter-company",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "line = dueOn && fallenDue && egAccordMates(ms, sub, 'noquarter', 'a').length ? 1 / 3 : 1 / 4;",
-    "new": "line = dueOn && fallenDue ? 1 / 3 : 1 / 4;",
+    "old": "      line = dueOn && fallenDue && egAccordMates(ms, sub, 'noquarter', 'a').length ? 1 / 3 : 1 / 4;",
+    "new": "      line = dueOn && fallenDue ? 1 / 3 : 1 / 4;",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "EGA3L-noquarter-self",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "egAccordMates(ms, sub, 'noquarter', 'a').length ? 1 / 3",
-    "new": "(egAccordMates(ms, sub, 'noquarter', 'a').length || egVOf(vs, 'fallensdue')) ? 1 / 3",
+    "old": "      line = dueOn && fallenDue && egAccordMates(ms, sub, 'noquarter', 'a').length ? 1 / 3 : 1 / 4;",
+    "new": "      line =\n        dueOn && fallenDue && (egAccordMates(ms, sub, 'noquarter', 'a').length || egVOf(vs, 'fallensdue'))\n          ? 1 / 3\n          : 1 / 4;",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "EGA3L-standard-reach",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "<= EG_V_BY_KEY.standard.aura)",
-    "new": "<= 10.5)",
+    "old": "    .filter((o) => o.sub !== sub && Math.hypot(o.x - pose.x, o.z - pose.z) <= EG_V_BY_KEY.standard.aura)",
+    "new": "    .filter((o) => o.sub !== sub && Math.hypot(o.x - pose.x, o.z - pose.z) <= 10.5)",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "EGA3L-standard-extra",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "std[0] + EG_AURA_EXTRA * (std.length - 1)",
-    "new": "std[0] + 0.03 * (std.length - 1)",
+    "old": "  if (std.length) x *= 1 + Math.min(std[0] + EG_AURA_EXTRA_MAX, std[0] + EG_AURA_EXTRA * (std.length - 1));",
+    "new": "  if (std.length) x *= 1 + Math.min(std[0] + EG_AURA_EXTRA_MAX, std[0] + 0.03 * (std.length - 1));",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "EGA3L-standard-max",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "Math.min(std[0] + EG_AURA_EXTRA_MAX,",
-    "new": "Math.min(std[0] + 0.01,",
+    "old": "  if (std.length) x *= 1 + Math.min(std[0] + EG_AURA_EXTRA_MAX, std[0] + EG_AURA_EXTRA * (std.length - 1));",
+    "new": "  if (std.length) x *= 1 + Math.min(std[0] + 0.01, std[0] + EG_AURA_EXTRA * (std.length - 1));",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "EGA3L-counter-mastery",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "m.mast === EG_M_ID.counterstroke && r === HIT_KINDS.Melee",
-    "new": "m.mast === EG_M_ID.spotter && r === HIT_KINDS.Melee",
+    "old": "    m.mast === EG_M_ID.counterstroke &&",
+    "new": "    m.mast === EG_M_ID.spotter &&",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "EGA3L-counter-window",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "(m.lordLandedAt ?? -Infinity) + EG_COUNTER_MS >= now",
-    "new": "(m.lordLandedAt ?? -Infinity) + EG_COUNTER_MS > now",
+    "old": "    (m.lordLandedAt ?? -Infinity) + EG_COUNTER_MS >= now",
+    "new": "    (m.lordLandedAt ?? -Infinity) + EG_COUNTER_MS > now",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "EGA3L-counter-melee",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "m.mast === EG_M_ID.counterstroke && r === HIT_KINDS.Melee",
-    "new": "m.mast === EG_M_ID.counterstroke && r !== HIT_KINDS.Spell",
+    "old": "    r === HIT_KINDS.Melee &&",
+    "new": "    r !== HIT_KINDS.Spell &&",
     "tests": [
       "test/net/eliteGates/egaudit3_legion_blows.test.js"
     ],

@@ -21,7 +21,12 @@ export function makeVideoQueue(play) {
   let depth = 0;
   const queue = (name) => {
     depth++;
-    const turn = chain.then(() => play(name)).catch(() => undefined).finally(() => { depth--; });
+    const turn = chain
+      .then(() => play(name))
+      .catch(() => undefined)
+      .finally(() => {
+        depth--;
+      });
     chain = turn;
     return turn;
   };

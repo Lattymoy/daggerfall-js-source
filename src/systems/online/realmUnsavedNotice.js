@@ -17,10 +17,18 @@ export const REALM_UNSAVED_SAY_EVERY_MS = ONLINE_CHECKPOINT_MS;
 
 /** The warning while puts fail and this device keeps the save, with how long, in the player's language. */
 export const realmUnsavedText = (/** @type {number} */ minutes) =>
-  t('realm.unsaved.warning', 'Your progress has not reached the realm for {minutes, plural, one {# minute} other {# minutes}}. This device is keeping it. Play this character only here until the realm takes it.', { minutes });
+  t(
+    'realm.unsaved.warning',
+    'Your progress has not reached the realm for {minutes, plural, one {# minute} other {# minutes}}. This device is keeping it. Play this character only here until the realm takes it.',
+    { minutes },
+  );
 /** The warning while no save was sent at all (the checkpoint's gate shut), with how long, in the player's language. */
 export const realmNotSavedText = (/** @type {number} */ minutes) =>
-  t('realm.unsaved.notSent', 'Your progress has not been saved to the realm for {minutes, plural, one {# minute} other {# minutes}}. It is saved when what you are doing ends.', { minutes });
+  t(
+    'realm.unsaved.notSent',
+    'Your progress has not been saved to the realm for {minutes, plural, one {# minute} other {# minutes}}. It is saved when what you are doing ends.',
+    { minutes },
+  );
 /** Said once when a save lands after a warning, in the player's language. */
 export const realmSavedAgainText = () => t('realm.unsaved.reachedAgain', 'Your progress reached the realm again.');
 
@@ -56,7 +64,7 @@ export function watchRealmUnsaved(session, { say, now = () => Date.now() }) {
       return;
     }
     const failing = session.missedSince != null;
-    if (session.busy && !failing) return;   // a put is out: its answer decides
+    if (session.busy && !failing) return; // a put is out: its answer decides
     if (warnedAt != null && at - warnedAt < REALM_UNSAVED_SAY_EVERY_MS) return;
     warnedAt = at;
     const minutes = Math.floor(unsavedFor / 60_000);

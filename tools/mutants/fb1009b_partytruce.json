@@ -2,8 +2,8 @@
   {
     "name": "PARTY-TRUCE-the-leaver-never-held",
     "file": "src/systems/wild/wildZone.js",
-    "old": "      for (const id of was) if (!peers.has(id)) { until.set(id, now + ms); gone.push(id); }",
-    "new": "      for (const id of was) if (!peers.has(id)) { gone.push(id); }",
+    "old": "          until.set(id, now + ms);\n          gone.push(id);",
+    "new": "          gone.push(id);",
     "tests": [
       "test/systems/wild/fb1009b_partytruce.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "PARTY-TRUCE-a-rejoin-keeps-the-old-clock",
     "file": "src/systems/wild/wildZone.js",
-    "old": "      for (const id of peers) until.delete(id);   // a mate again: the party's own protection",
+    "old": "      for (const id of peers) until.delete(id); // a mate again: the party's own protection",
     "new": "      // a mate again: the party's own protection",
     "tests": [
       "test/systems/wild/fb1009b_partytruce.test.js"

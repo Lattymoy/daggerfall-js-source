@@ -17,14 +17,20 @@
 //    "The remains of Ysolde Hlaalu"), and a share of their purse.
 //  - THE BLESSING: remains laid to rest give the one who laid them +3 to the fallen's best skill, for good - at most +9
 //    on any one skill (BLESSING_SKILL_MAX).
-import { registerCustomTemplates, setItemFields, mintCondition, itemValueOf, templateByIndex } from '../item/itemTemplates.js';
+import {
+  registerCustomTemplates,
+  setItemFields,
+  mintCondition,
+  itemValueOf,
+  templateByIndex,
+} from '../item/itemTemplates.js';
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';
 import { armorBodyParts } from '../equip.js';
 import { SKILL_COUNT } from '../skills.js';
 import { rarityOf } from '../loot/lootRarity.js';
 import { isSummoned } from '../inventory.js';
-import { REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX } from './legacyLaw.js';   // INT18: the remains' ceiling, beside the family law's bounds
-import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house says itself once
+import { REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX } from './legacyLaw.js'; // INT18: the remains' ceiling, beside the family law's bounds
+import { houseWord } from './houseName.js'; // LEGACY-NAME: a seat's house says itself once
 
 export const HEIRLOOM_GEN_MAX = 5;
 /** A weapon's damage per generation, percent; armour's points per generation on its parts. */
@@ -34,7 +40,8 @@ export const HEIRLOOM_ARMOR_PER_GEN = 2;
  *  legacyLaw.js, with the family law's other bounds. */
 export { REMAINS_GOLD_SHARE, REMAINS_GOLD_MAX };
 /** The gold lying with the fallen, of the purse they carried. */
-export const remainsGoldOf = (gold) => Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));
+export const remainsGoldOf = (gold) =>
+  Math.min(REMAINS_GOLD_MAX, Math.max(0, Math.floor((Number(gold) || 0) * REMAINS_GOLD_SHARE)));
 /** The blessing: points on the fallen's best skill. */
 export const BLESSING_POINTS = 3;
 /** ...and the most the house's blessings give one skill, however many ancestors are laid to rest: three blessings'
@@ -45,10 +52,25 @@ export const BLESSING_SKILL_MAX = 9;
 export const REMAINS_TEMPLATE = 1810;
 export const REMAINS_GROUP = 'UselessItems2';
 export const REMAINS_ROW = Object.freeze({
-  index: REMAINS_TEMPLATE, name: 'Remains', baseWeight: 2, hitPoints: 100, capacityOrTarget: 0, basePrice: 0,
-  enchantmentPoints: 0, rarity: 0, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 254, worldTextureRecord: 56, playerTextureArchive: 0,
-  playerTextureRecord: 0, stackable: false,
+  index: REMAINS_TEMPLATE,
+  name: 'Remains',
+  baseWeight: 2,
+  hitPoints: 100,
+  capacityOrTarget: 0,
+  basePrice: 0,
+  enchantmentPoints: 0,
+  rarity: 0,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 254,
+  worldTextureRecord: 56,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: false,
 });
 registerCustomTemplates([REMAINS_ROW]);
 
@@ -57,8 +79,17 @@ const NEVER_RARITY = new Set(['aetheric', 'artifact', 'gilded']);
 
 /** Whether a worn piece may become an heirloom. */
 export function heirloomEligible(it) {
-  return !!it && it.equipSlot != null && HEIR_GROUPS.has(it.group) && !it.questItem
-    && !NEVER_RARITY.has(it.rarity) && !NEVER_RARITY.has(rarityOf(it)) && it.sigil == null && it.aetheric == null && !isSummoned(it);
+  return (
+    !!it &&
+    it.equipSlot != null &&
+    HEIR_GROUPS.has(it.group) &&
+    !it.questItem &&
+    !NEVER_RARITY.has(it.rarity) &&
+    !NEVER_RARITY.has(rarityOf(it)) &&
+    it.sigil == null &&
+    it.aetheric == null &&
+    !isSummoned(it)
+  );
 }
 
 /** THE PIECE: an heirloom already worn, else the most valuable eligible worn piece (value, then condition). */
@@ -68,7 +99,10 @@ export function pickHeirloom(items) {
   if (handed) return handed;
   let best = null;
   for (const it of worn) {
-    if (!best) { best = it; continue; }
+    if (!best) {
+      best = it;
+      continue;
+    }
     const dv = itemValueOf(it) - itemValueOf(best);
     if (dv > 0 || (dv === 0 && (it.currentCondition ?? 0) > (best.currentCondition ?? 0))) best = it;
   }
@@ -84,7 +118,14 @@ export function markHeirloom(it, { line, house, of, from }) {
   const base = baseNameOf(it);
   const copy = JSON.parse(JSON.stringify(it));
   delete copy.equipSlot;
-  copy.heirloom = { line: String(line), house: String(house), of: of | 0, from: String(from), gen: Math.min(HEIRLOOM_GEN_MAX, it.heirloom?.gen | 0), base };
+  copy.heirloom = {
+    line: String(line),
+    house: String(house),
+    of: of | 0,
+    from: String(from),
+    gen: Math.min(HEIRLOOM_GEN_MAX, it.heirloom?.gen | 0),
+    base,
+  };
   return copy;
 }
 
@@ -98,8 +139,22 @@ export const isHeirloom = (it) => !!it?.heirloom && typeof it.heirloom.line === 
 
 /** The remains item: "The remains of Ysolde Hlaalu", marking whose and which line. */
 export function mintRemainsItem({ line, of, name }) {
-  const item = mintCondition(setItemFields({ group: REMAINS_GROUP, templateIndex: REMAINS_TEMPLATE, material: 0, flags: 0, variant: 0, message: 0, stackCount: 1 }));
-  return { ...item, name: `The remains of ${name}`, legacyRemains: { line: String(line), of: of | 0, name: String(name) } };
+  const item = mintCondition(
+    setItemFields({
+      group: REMAINS_GROUP,
+      templateIndex: REMAINS_TEMPLATE,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: 1,
+    }),
+  );
+  return {
+    ...item,
+    name: `The remains of ${name}`,
+    legacyRemains: { line: String(line), of: of | 0, name: String(name) },
+  };
 }
 export const isRemainsItem = (it) => it?.templateIndex === REMAINS_TEMPLATE && !!it?.legacyRemains;
 /** AUDIT LEGACY II H4: the mark a remains' list wears while it is open - the fallen's person id, under a symbol (never
@@ -117,10 +172,20 @@ export function bestSkillOf(person) {
   return best;
 }
 /** The blessing a laying to rest gives: `{ of, name, skill, value }`. */
-export const blessingOf = (person, name) => ({ of: person.id | 0, name: String(name), skill: bestSkillOf(person) ?? 0, value: BLESSING_POINTS });
+export const blessingOf = (person, name) => ({
+  of: person.id | 0,
+  name: String(name),
+  skill: bestSkillOf(person) ?? 0,
+  value: BLESSING_POINTS,
+});
 /** AUDIT LEGACY III F11a: what the house's blessings give `skill` on `entity` now - the fold's own sum, to its cap. */
-export const blessedIn = (entity, skill) => Math.min(BLESSING_SKILL_MAX, (Array.isArray(entity?.legacyBlessings) ? entity.legacyBlessings : [])
-  .filter((b) => (b?.skill | 0) === (skill | 0)).reduce((n, b) => n + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)), 0));
+export const blessedIn = (entity, skill) =>
+  Math.min(
+    BLESSING_SKILL_MAX,
+    (Array.isArray(entity?.legacyBlessings) ? entity.legacyBlessings : [])
+      .filter((b) => (b?.skill | 0) === (skill | 0))
+      .reduce((n, b) => n + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)), 0),
+  );
 
 // ---- the folds -------------------------------------------------------------------------------------------------
 
@@ -142,7 +207,11 @@ export function legacyFold(entity) {
   }
   for (const b of blessings) {
     const k = b?.skill | 0;
-    if (k >= 0 && k < SKILL_COUNT) mods.skills[k] = Math.min(BLESSING_SKILL_MAX, (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)));
+    if (k >= 0 && k < SKILL_COUNT)
+      mods.skills[k] = Math.min(
+        BLESSING_SKILL_MAX,
+        (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)),
+      );
   }
   return mods;
 }

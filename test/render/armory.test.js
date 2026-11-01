@@ -366,7 +366,7 @@ test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf
   assert.equal(+wl.B[1].toFixed(3), +wolfBack.pts[POSE_AT.ftL + 1].toFixed(3), 'the wolf\'s topped at the hock');
   assert.ok(Math.abs(wl.A[1] - 0.1 * ARMORY_BEAST_FIT) < 1e-6 && Math.abs(wl.A[0] - wl.B[0]) < 1e-6, 'and straight down to its toes');
   poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'the rest pose a person\'s - nothing of the wolf left on it');
-  // the classic sprite's lycanthrope wears none (mob: "just remove them from the paperdoll")
+  // the classic sprite's lycanthrope wears none
   const lyc = newPose(); poseFromFigure({ base: 0.1, mpp: 0.029, beast: true, marks: null }, lyc);
   pass.draw([wearer({ pose: lyc })], I, I, [0, 1.6, 3], 1, null, true);
   assert.equal(pass.drawn, 0, 'the paperdoll\'s wolf bare');
@@ -535,6 +535,6 @@ test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACR
   assert.ok(Math.abs(cape(drawn, 0.02 / A) - cape(full, 0.02)) < 1e-9, 'the cape\'s shoulders at the body\'s own');
   // every reader hands the record's scale over (the world's body, a peer's, the profile's stage)
   for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(withoutShield\(px, (?:img|raw)\.shield, width, height, s\.mirror\), width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);   // PIN MOVED (LAYERED-SHIELD): read without the shield's air
-  assert.match(rd('src/render/characterStage.js'), /art: shown\.art \}/);
-  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\) \};/);
+  assert.match(rd('src/render/characterStage.js'), /art: shown\.art,\n\s*\}/);
+  assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\),\n\s*\};/);
 });

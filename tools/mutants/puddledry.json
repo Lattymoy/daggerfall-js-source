@@ -2,8 +2,8 @@
   {
     "name": "PUDDLEDRY-no-tile-dried",
     "file": "src/world/puddleDry.js",
-    "old": "  for (const [x, y, bits] of plan) groundTiles[x][y] = tileOf(bits);",
-    "new": "  for (const [x, y, bits] of plan) void bits;",
+    "old": "  for (const [x, y, bits] of plan) groundTiles[x][y] = tileOf(bits); // written after the walk: every choice is the art's own ground",
+    "new": "  for (const [x, y, bits] of plan) void bits; // written after the walk: every choice is the art's own ground",
     "tests": [
       "test/world/puddledry.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PUDDLEDRY-the-least-common",
     "file": "src/world/puddleDry.js",
-    "old": "        for (const [bits, n] of count) if (n > most) { most = n; best = bits; }",
-    "new": "        let fewest = Infinity; for (const [bits, n] of count) if (n < fewest) { fewest = n; best = bits; }",
+    "old": "        for (const [bits, n] of count)\n          if (n > most) {\n            most = n;",
+    "new": "        let fewest = Infinity;\n        for (const [bits, n] of count)\n          if (n < fewest) {\n            fewest = n;",
     "tests": [
       "test/world/puddledry.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PUDDLEDRY-the-turn-dropped",
     "file": "src/world/puddleDry.js",
-    "old": "const tileOf = (bitfield) => ({\n  tileBitfield: bitfield,",
-    "new": "const tileOf = (bitfield) => ({\n  tileBitfield: bitfield & 0x3f,",
+    "old": "  tileBitfield: bitfield,",
+    "new": "  tileBitfield: bitfield & 0x3f,",
     "tests": [
       "test/world/puddledry.test.js"
     ]
@@ -57,7 +57,7 @@
     "name": "PUDDLEDRY-the-shore-ring-apart",
     "file": "src/world/puddleDry.js",
     "old": "  return waterCorners(convertTile(tile.tileBitfield), WATER_DRAW_MASK_TABLE) !== 0;",
-    "new": "  return waterCorners(convertTile(tile.tileBitfield), WATER_DRAW_MASK_TABLE) === 0xF;",
+    "new": "  return waterCorners(convertTile(tile.tileBitfield), WATER_DRAW_MASK_TABLE) === 0xf;",
     "tests": [
       "test/world/puddledry.test.js"
     ]

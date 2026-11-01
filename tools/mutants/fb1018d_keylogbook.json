@@ -92,8 +92,8 @@
   {
     "name": "KEY-LOGBOOK-page-renamed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  ['quests', 'Quests'], ['notes', 'Notes'],",
-    "new": "  ['quests', 'Quest'], ['notes', 'Notes'],",
+    "old": "  ['quests', 'Quests'],",
+    "new": "  ['quests', 'Quest'],",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],

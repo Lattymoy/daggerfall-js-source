@@ -87,7 +87,7 @@ test('WET1 settings: wet-world row on Graphics, High/Ultra ship Full (puddle mir
   assert.deepEqual(v, { low: 'off', medium: 'wet', high: 'full', ultra: 'full' });
   assert.equal(v.high, row.control.initial, 'High is how the game ships');
   assert.equal(puddleProxyOn(''), true, 'default Full runs the colour proxy');
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:water-quality", "feat:wet-world"/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /'feat:water-quality',\s*'feat:wet-world'/);
   assert.match(rd('src/render/airPass.js'), /puddleProxyOn\(\)/, 'Full tier gates the colour proxy');
   assert.match(rd('src/render/renderer.js'), /key === 'terrain' \|\| key === 'snow'/, 'snow ground gets uWetProxy too');
   assert.ok(EL_TERRAIN_FS.includes('uWetProxy') && EL_TERRAIN_FS.includes('1.0 - uWetProxy'), 'Wet tier keeps winGlint');

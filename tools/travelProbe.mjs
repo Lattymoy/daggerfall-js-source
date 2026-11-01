@@ -34,7 +34,7 @@ const frames = async (n, cap = 30000) => {
   const t0 = Date.now();
   while (Date.now() - t0 < cap) {
     await page.waitForTimeout(150);
-    if (await page.evaluate(() => window.__frame ?? 0) >= f0 + n) break;
+    if ((await page.evaluate(() => window.__frame ?? 0)) >= f0 + n) break;
   }
 };
 const map = () => page.evaluate(() => JSON.parse(window.__travelMap()));
@@ -60,7 +60,10 @@ const out = { steps: {} };
 // declines a YesNo. Same guard as castProbe's.
 for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {
   const up = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
-  if (up) { quiet = 0; await page.keyboard.press('Escape'); } else quiet++;
+  if (up) {
+    quiet = 0;
+    await page.keyboard.press('Escape');
+  } else quiet++;
   await frames(2);
 }
 out.steps.overlayAfterDrain = await page.evaluate(() => JSON.parse(window.__talk()).overlay);
@@ -78,7 +81,12 @@ if (!out.steps.opened?.identifying) await clickNative(25, 191);
 await page.keyboard.press('Enter');
 await frames(1);
 let st = await map();
-if (!st?.regionSelected) { await clickNative(25, 191); await page.keyboard.press('Enter'); await frames(1); st = await map(); }
+if (!st?.regionSelected) {
+  await clickNative(25, 191);
+  await page.keyboard.press('Enter');
+  await frames(1);
+  st = await map();
+}
 out.steps.regionPage = st;
 
 // FIND, then the name, then Return.
@@ -93,7 +101,10 @@ out.steps.typed = await map();
 await page.keyboard.press('Enter');
 await frames(1);
 // A fuzzy match opens the list picker; its first row is the best one.
-if ((await map())?.picker) { await page.keyboard.press('Enter'); await frames(1); }
+if ((await map())?.picker) {
+  await page.keyboard.press('Enter');
+  await frames(1);
+}
 out.steps.found = await map();
 
 // The crosshair flashes twice over the found place and the flash's
@@ -103,18 +114,22 @@ if ((await map())?.top === 'confirm') await page.keyboard.press('y');
 await frames(1);
 out.steps.popUp = await map();
 await page.keyboard.press('b');
-await frames(8, 60000);               // the day countdown, then the arrival rebuild
+await frames(8, 60000); // the day countdown, then the arrival rebuild
 await until((s) => s === null, 60000);
 out.steps.after = await page.evaluate(() => JSON.parse(window.__travelProbe()));
 
-const b = out.steps.before, a = out.steps.after;
-out.ok = !!(a.minutes > b.minutes                                      // the clock advanced
-  && (a.pixel.x !== b.pixel.x || a.pixel.y !== b.pixel.y)              // the player moved pixels
-  && Math.abs(a.pixel.x - dest.pixel.x) <= 1 && Math.abs(a.pixel.y - dest.pixel.y) <= 1   // to the destination
-  && a.gold <= b.gold                                                  // the trip was paid (inns cost)
-  && out.steps.regionPage?.regionSelected                              // the page really opened
-  && out.steps.found?.locationSelected                                 // the find really landed
-  && errors.length === 0);
+const b = out.steps.before,
+  a = out.steps.after;
+out.ok = !!(
+  a.minutes > b.minutes && // the clock advanced
+  (a.pixel.x !== b.pixel.x || a.pixel.y !== b.pixel.y) && // the player moved pixels
+  Math.abs(a.pixel.x - dest.pixel.x) <= 1 &&
+  Math.abs(a.pixel.y - dest.pixel.y) <= 1 && // to the destination
+  a.gold <= b.gold && // the trip was paid (inns cost)
+  out.steps.regionPage?.regionSelected && // the page really opened
+  out.steps.found?.locationSelected && // the find really landed
+  errors.length === 0
+);
 out.minutesAdvanced = a.minutes - b.minutes;
 out.errors = errors.slice(0, 8);
 console.log(JSON.stringify(out, null, 2));

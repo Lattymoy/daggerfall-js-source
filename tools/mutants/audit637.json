@@ -162,8 +162,8 @@
   {
     "name": "AUDIT637-A5a-the-whole-memo-cleared",
     "file": "src/net/roster.js",
-    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5",
-    "new": "  if (_rowMemo.size > ROW_MEMO_MAX) _rowMemo.clear();   // AUDIT 637 A5",
+    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k); // AUDIT 637 A5",
+    "new": "  if (_rowMemo.size > ROW_MEMO_MAX) _rowMemo.clear(); // AUDIT 637 A5",
     "tests": [
       "test/net/audit637_roster.test.js",
       "test/net/perfon3.test.js"
@@ -172,7 +172,7 @@
   {
     "name": "AUDIT637-A5b-nothing-let-go",
     "file": "src/net/roster.js",
-    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5",
+    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k); // AUDIT 637 A5",
     "new": "",
     "tests": [
       "test/net/audit637_roster.test.js",
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT637-A5c-the-last-asks-rows-let-go-too",
     "file": "src/net/roster.js",
-    "old": "if (m.call < call - 1) _rowMemo.delete(k);",
-    "new": "if (m.call < call) _rowMemo.delete(k);",
+    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k); // AUDIT 637 A5",
+    "new": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call) _rowMemo.delete(k); // AUDIT 637 A5",
     "tests": [
       "test/net/audit637_roster.test.js",
       "test/net/perfon3.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT637-A6-the-listing-committed-before-its-answer",
     "file": "src/net/roster.js",
-    "old": "    const sorted = rows.slice().sort(byNameThenTag);\n    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX));   // AUDIT 637 A6: the answer first, then the state that names it\n    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    _lastOut = out;",
-    "new": "    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    const sorted = rows.slice().sort(byNameThenTag);\n    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX));\n    _lastOut = out;",
+    "old": "    const sorted = rows.slice().sort(byNameThenTag);\n    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX)); // AUDIT 637 A6: the answer first, then the state that names it\n    _scratchIn = _lastIn; // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;",
+    "new": "    _scratchIn = _lastIn; // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    const sorted = rows.slice().sort(byNameThenTag);\n    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX));",
     "tests": [
       "test/net/audit637_roster.test.js",
       "test/net/perfon3.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT637-A9a-the-row-left-open",
     "file": "src/net/roster.js",
-    "old": "      freezeRow(row);   // AUDIT 637 A9\n",
-    "new": "",
+    "old": "      freezeRow(row); // AUDIT 637 A9\n      m = { name, me, title: f?.title, glyphs: keepInput(f?.glyphs), ts: keepInput(f?.ts), gt: f?.gt, row, call };",
+    "new": "      m = { name, me, title: f?.title, glyphs: keepInput(f?.glyphs), ts: keepInput(f?.ts), gt: f?.gt, row, call };",
     "tests": [
       "test/net/audit637_roster.test.js",
       "test/net/perfon3.test.js"
@@ -222,7 +222,7 @@
   {
     "name": "AUDIT637-A9b-its-arrays-left-open",
     "file": "src/net/roster.js",
-    "old": "const freezeRow = (row) => { Object.freeze(row.glyphs); if (row.ts) Object.freeze(row.ts); return Object.freeze(row); };",
+    "old": "const freezeRow = (row) => {\n  Object.freeze(row.glyphs);\n  if (row.ts) Object.freeze(row.ts);\n  return Object.freeze(row);\n};",
     "new": "const freezeRow = (row) => Object.freeze(row);",
     "tests": [
       "test/net/audit637_roster.test.js",

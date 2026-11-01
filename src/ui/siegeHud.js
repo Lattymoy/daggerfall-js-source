@@ -17,8 +17,8 @@
 // The two buttons and the card's Claim are the readout's only clicks.
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
-import { siegeHudModel } from '../net/siege/siegeLink.js';   // the lines (pure, beside the fold - net/siege/siegeSession.js draws through it)
-import { paintSwatch } from './heraldrySwatch.js';   // HERALDRY-SHOWN (Seats-Arc 8.1): each side's shield on the bar
+import { siegeHudModel } from '../net/siege/siegeLink.js'; // the lines (pure, beside the fold - net/siege/siegeSession.js draws through it)
+import { paintSwatch } from './heraldrySwatch.js'; // HERALDRY-SHOWN (Seats-Arc 8.1): each side's shield on the bar
 export { siegeHudModel };
 
 export const SIEGE_HUD_STYLE_ID = 'dagger-siege-hud-style';
@@ -48,35 +48,62 @@ export function createSiegeHud(doc, { onClaim = null, onLeave = null } = {}) {
   /** @type {any} */ let root = null;
   /** @type {Record<string, any>} */ const parts = {};
   const said = new Map();
-  const put = (k, text) => { if (said.get(k) !== text) { said.set(k, text); parts[k].textContent = text; } };
+  const put = (k, text) => {
+    if (said.get(k) !== text) {
+      said.set(k, text);
+      parts[k].textContent = text;
+    }
+  };
   function make() {
     if (!doc.getElementById?.(SIEGE_HUD_STYLE_ID)) {
-      const st = doc.createElement('style'); st.id = SIEGE_HUD_STYLE_ID; st.textContent = SIEGE_HUD_CSS; doc.head?.appendChild(st);
+      const st = doc.createElement('style');
+      st.id = SIEGE_HUD_STYLE_ID;
+      st.textContent = SIEGE_HUD_CSS;
+      doc.head?.appendChild(st);
     }
-    root = doc.createElement('div'); root.className = 'sg-hud';
-    const bar = doc.createElement('div'); bar.className = 'sg-bar';
-    parts.title = doc.createElement('div'); parts.banners = doc.createElement('div');
-    parts.works = doc.createElement('div'); parts.works.className = 'sg-works'; parts.works.style.display = 'none';   // SEAT2b part two (b): the Gatehouse, the Ram, the Walls
-    bar.appendChild(parts.title); bar.appendChild(parts.banners); bar.appendChild(parts.works);
+    root = doc.createElement('div');
+    root.className = 'sg-hud';
+    const bar = doc.createElement('div');
+    bar.className = 'sg-bar';
+    parts.title = doc.createElement('div');
+    parts.banners = doc.createElement('div');
+    parts.works = doc.createElement('div');
+    parts.works.className = 'sg-works';
+    parts.works.style.display = 'none'; // SEAT2b part two (b): the Gatehouse, the Ram, the Walls
+    bar.appendChild(parts.title);
+    bar.appendChild(parts.banners);
+    bar.appendChild(parts.works);
     // HERALDRY-SHOWN: the defender's shield at the bar's left (named first), the challenger's at its right - hidden for none
     for (const side of ['defend', 'attack']) {
-      const img = parts[`arm-${side}`] = doc.createElement('img');
+      const img = (parts[`arm-${side}`] = doc.createElement('img'));
       img.className = `sg-arm sg-arm-${side}`;
       bar.appendChild(img);
     }
-    parts.sides = doc.createElement('div'); parts.sides.className = 'sg-sides';
-    parts.self = doc.createElement('div'); parts.self.className = 'sg-self';
-    parts.card = doc.createElement('div'); parts.card.className = 'sg-card'; parts.card.style.display = 'none';
-    parts.cardTitle = doc.createElement('div'); parts.cardTitle.className = 'sg-card-title';
-    parts.cardLine = doc.createElement('div'); parts.cardHonour = doc.createElement('div');
-    parts.claim = doc.createElement('button'); parts.claim.textContent = 'Claim'; parts.claim.style.display = 'none';
+    parts.sides = doc.createElement('div');
+    parts.sides.className = 'sg-sides';
+    parts.self = doc.createElement('div');
+    parts.self.className = 'sg-self';
+    parts.card = doc.createElement('div');
+    parts.card.className = 'sg-card';
+    parts.card.style.display = 'none';
+    parts.cardTitle = doc.createElement('div');
+    parts.cardTitle.className = 'sg-card-title';
+    parts.cardLine = doc.createElement('div');
+    parts.cardHonour = doc.createElement('div');
+    parts.claim = doc.createElement('button');
+    parts.claim.textContent = 'Claim';
+    parts.claim.style.display = 'none';
     parts.claim.addEventListener?.('click', () => onClaim?.());
     // AUDIT-SEATS C1: the card's Close (the battle ended - dismissing it leaves), and the bar's Leave
-    parts.close = doc.createElement('button'); parts.close.textContent = SIEGE_HUD_WORDS.close;
+    parts.close = doc.createElement('button');
+    parts.close.textContent = SIEGE_HUD_WORDS.close;
     parts.close.addEventListener?.('click', () => onLeave?.());
-    parts.leave = doc.createElement('button'); parts.leave.className = 'sg-leave'; parts.leave.textContent = SIEGE_HUD_WORDS.leave;
+    parts.leave = doc.createElement('button');
+    parts.leave.className = 'sg-leave';
+    parts.leave.textContent = SIEGE_HUD_WORDS.leave;
     parts.leave.addEventListener?.('click', () => onLeave?.());
-    for (const c of [parts.cardTitle, parts.cardLine, parts.cardHonour, parts.claim, parts.close]) parts.card.appendChild(c);
+    for (const c of [parts.cardTitle, parts.cardLine, parts.cardHonour, parts.claim, parts.close])
+      parts.card.appendChild(c);
     for (const c of [bar, parts.leave, parts.sides, parts.self, parts.card]) root.appendChild(c);
     doc.body?.appendChild(root);
   }
@@ -85,18 +112,33 @@ export function createSiegeHud(doc, { onClaim = null, onLeave = null } = {}) {
     update(m) {
       if (!root) make();
       root.style.display = '';
-      put('title', m.bar[0]); put('banners', m.bar[1]); put('sides', m.sides); put('self', m.self.join('\n'));
-      put('works', m.works ?? ''); parts.works.style.display = m.works ? '' : 'none';   // SEAT2b part two (b)
-      paintSwatch(parts['arm-defend'], m.arms?.defend); paintSwatch(parts['arm-attack'], m.arms?.attack);   // HERALDRY-SHOWN: painted when it changes
+      put('title', m.bar[0]);
+      put('banners', m.bar[1]);
+      put('sides', m.sides);
+      put('self', m.self.join('\n'));
+      put('works', m.works ?? '');
+      parts.works.style.display = m.works ? '' : 'none'; // SEAT2b part two (b)
+      paintSwatch(parts['arm-defend'], m.arms?.defend);
+      paintSwatch(parts['arm-attack'], m.arms?.attack); // HERALDRY-SHOWN: painted when it changes
       parts.card.style.display = m.card ? '' : 'none';
-      parts.leave.style.display = m.card || !onLeave ? 'none' : '';   // AUDIT-SEATS C1: the card's Close stands for it once the battle has ended; INT9: a readout with nothing to leave (the open zone's) has none
+      parts.leave.style.display = m.card || !onLeave ? 'none' : ''; // AUDIT-SEATS C1: the card's Close stands for it once the battle has ended; INT9: a readout with nothing to leave (the open zone's) has none
       if (m.card) {
-        put('cardTitle', m.card.title); put('cardLine', m.card.line); put('cardHonour', m.card.honour);
+        put('cardTitle', m.card.title);
+        put('cardLine', m.card.line);
+        put('cardHonour', m.card.honour);
         parts.claim.style.display = m.card.claim ? '' : 'none';
       }
     },
-    hide() { if (root) root.style.display = 'none'; },
-    destroy() { root?.remove?.(); root = null; said.clear(); },
-    get node() { return root; },
+    hide() {
+      if (root) root.style.display = 'none';
+    },
+    destroy() {
+      root?.remove?.();
+      root = null;
+      said.clear();
+    },
+    get node() {
+      return root;
+    },
   };
 }

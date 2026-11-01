@@ -1,341 +1,91 @@
 # Multiplayer
 
-> **ONLINE1 (2026-09-12) shipped the first cut - `06-Systems/Online-Arc.md`;
-> WORLD1 (2026-09-12) began the persistent shared world.** Of the three
-> decisions below the arc keeps the first (your own character from your
-> own save) whole; the second stands in a new shape - the relay names a
-> HOST per room (the player in it longest) and keeps the host's snapshot
-> of a dungeon's world for whoever comes next, while the world still
-> runs in the host's browser - and WORLD2 (2026-09-12) made that
-> literal for a dungeon's foes: one simulation per room, the host's,
-> streamed to the rest, whose foes are puppets - and WORLD3 (2026-09-12)
-> made its doors, levers and platforms everyone's and its foes every
-> player's hunters. Loot, then shared time and weather, are the arc's
-> next slices. This page is the co-op design the arc grows into; where
-> the two disagree, the arc is what runs.
+DFO Online's co-op model: every player brings their own character from their own save, and meets others in a shared
+world kept by a relay. A player meets it the moment they go online - other players walk past, fight the same dungeon
+foes, open the same doors and see the same time of day. The online systems built on this (chat, parties, duels, the
+open zone, the bosses) have their own pages; this page holds the base the rest stands on.
 
-Co-op for DFO Online (BR5; the page was written while the
-public name was Daggerfall JavaScript, BR1 renamed it Daggerfall
-Enhanced and BR4 Daggerfall Online). Locked with Mac on 2026-09-01
-after a survey of what the port actually has; the three decisions below
-are his, the reasoning under each is why they are the version that
-ships.
+## How it works
 
-## What it is, and is not
+**The relay.** Every client holds one WebSocket to a Cloudflare Worker whose one Durable Object class, `Room`
+(`server/src/index.js`), holds the sockets of one room. The client names the room in the path (`/room/<key>`). The
+relay's law is one module, `src/net/wire.js`, which the relay re-exports (`server/src/relay.js`) and the client
+session (`src/net/online.js`) imports, so what the relay refuses the client never sends.
 
-**It is** two to eight players walking the same Iliac Bay together, each
-with their own character from their own save, seeing each other, sharing
-the host's world - its time, its weather, its enemies, its doors - and
-fighting beside each other against NPCs.
+**Rooms.** The streaming world is cut into `WORLD_CELL`-pixel cells (`world:<cx>,<cy>`). Inside a cell a pose reaches
+only the peers within `RANGE_PIXELS` of the sender. A town, a dungeon and an interior are each a room of their own,
+and everyone in them hears everyone. A chat channel is a room on the `CHAT_ROOMS` whitelist: it relays lines, never
+poses. A cell's key (`worldRoom`) is a floored world pixel and may be negative, so a cell past the Bay's west and
+south edges is a room like any other.
 
-**It is not** PvP, an MMO, or a shared campaign - with ONE door through the first: a DUEL (DUEL1, 2026-09-24, Mac:
-"I want to be the foundation of pvp"), consensual and bounded - two players who both said yes, in a ring of light,
-until one falls (INT8, 2026-10-09: the relay referees it on its own vitality and signs its result - the save's health
-is never touched, nobody drops to 1 health and nothing is healed: `06-Systems/Integrity-Arc.md` 5;
-`06-Systems/Community-Arc.md` DUEL1) - and, since WILD1
-(2026-10-07), ONE PLACE where it is not consensual: the Wrothgarian Mountains, an open zone where players may fight,
-a death at another's hand drops the bag (never the cart nor a companion's pack - STORE-KEEPS, 2026-10-26; nor a piece
-under a policy - WILD-INSURE) and a killer takes one worn piece (`11-Multiplayer/Wild-Zone.md`; INT9: the relay
-referees its fights and the account service takes the drop off the record). Nobody's save changes
-shape because they played with a friend - and the one online progression, RENOWN (RENOWN1, 2026-09-24,
-Mac: "seperate unique to online but compatible"; named: "Lets officially call this Renown"), is a second level per character kept by the account service, never
-in the save, adding health and magicka only while online (`06-Systems/Accounts-And-Cloud-Saves-Arc.md` RENOWN1). It IS, since WORLD1
-(2026-09-12, Mac: "The world is the server and every player should
-inhabit that world while also being able to continue their progress
-... True persistance"), a persistent shared world one room at a time:
-a dungeon's dead stay dead for whoever comes next, kept by the relay
-and not by anyone's save. (Privateer's Hold among them: HOLD-SOLO keyed it no room from
-2026-10-07 until HOLD-SHARED reverted it, 2026-10-12; online it is entered once, by the new game's start -
-HOLD-ONCE, `06-Systems/Online-Arc.md`.)
+**Identity.** A hello carries an id and the secret the first hello minted. A second hello with the same id must
+carry the same secret; it then replaces the old socket. A welcome carries at most `ROSTER_MAX` peers, the nearest.
 
-## The three locked decisions
+**Poses.** A pose is position, facing, gait, weapon state, swing and cast counts and arrows loosed. The client sends
+`POSE_HZ` a second and slows towards `POSE_HZ_MIN` in a crowd (`poseHzFor`); the relay drops anything past
+`POSE_HZ_MAX`. A look is the paperdoll's recipe - race, gender, face and the worn items projected onto
+`LOOK_ITEM_FIELDS` - so a look is small and carries no inventory. Other players are drawn by `src/net/remotePlayers.js`
+and the `src/net/peer/` modules.
 
-### 1. Quests stay separate
+**The room's memory.** A world room (a dungeon or an interior, `isWorldRoom`) keeps a snapshot of its place in the
+object's storage: the foes and how they stand, piles, dropped loot, actions and door locks. The room's host - the
+hello'd socket in it longest - publishes it, and a joiner gets it in the welcome. A dungeon one player cleared stays
+cleared for the next, through an empty room, for `worldTtlMsFor` its key. The relay stores the frame as it came and
+reads none of it.
 
-Each player's quest state, dialogue state, travel map and history are
-their own. You walk together; the story you are in is yours.
+**Live foes, doors and loot.** The host streams its changed foes (`foes`, `FOES_HZ_MAX` a second) and the relay fans
+them to everyone else, whose foes are puppets. A blow on a host's foe (`hit`) goes to the host alone. A player's own
+foes in a world room - a building's, a shared quest's - ride `own` beside the host's. A door, lever, platform or
+opened container is whoever touched it: any player sends `act`, and the relay fans it to the rest. When the host
+leaves, the seat passes on (`host` frame) and the puppets go live from where the stream left them.
 
-Why: the save envelope (`systems/save/save.js:"so a save from before"`) already splits the world
-from the player - `position, pose, classicMinutes, world, locationKey`
-on one side; `quest, talk, travelMap, escortingFaces, interior` on the
-other. That line IS the replication boundary. A shared campaign would
-mean one quest engine deciding for eight saves and every quest action
-becoming a network transaction; separate quests mean the quest engine
-is untouched.
+**The clock.** Online, time is a function of wall time: `sharedClassicMinutes` counts from `ONLINE_EPOCH_MS` at
+Daggerfall Unity's default time scale (a game minute every five real seconds). The welcome carries the relay's clock,
+so a client with a wrong machine clock reads the world's time through the offset. Nothing local moves it.
 
-The cost is honest: two players on the same quest each get their own
-copy of the target, and a quest NPC one player has already dealt with
-may still stand for the other. That is Borderlands' rule and it is the
-rule here.
+**Quests.** Each player's quests, dialogue, travel map and history are their own; the story you are in is yours.
+Two exceptions: the foes of a quest the party shared ride the party's stream, so the party fights the same ones and a
+kill counts for every linked copy; and the foes of a world quest (`WORLD_QUESTS`, the Curse of Daggerfall) ride the
+cell for everyone (`src/scenes/quest/questFoeHost.js`).
 
-**The one exception - QUEST-PARTY (2026-09-26, Mac: "Party shares them"): the FOES of a quest the party SHARED.** A
-shared quest is still a copy each (QUEST1) and the quest engine is still untouched; but its foes ride the party's
-stream. The member who shared it stands them while near, the party sees and fights the same ones, each member's copy
-counts the injuries and the kills it sees, and no one outside the party sees them, strikes them or is hunted by them.
-In the open air, in a building and in a dungeon, and a host who leaves hands them to the party (phases 1-3 - a quest
-marker's foe stands once for the party). And a kill of one counts for every copy of the quest, wherever its member
-stands - KEPT-KILL (2026-10-01, Mac: "If someone kills a quest target regardless of relation then it should ping the
-quest for the players involved regardless"): a foe handed to a member whose copy holds no such quest says its fall in
-that member's party pose (`qk`), and every linked copy counts it once (`01-Overview/bugs/Field-Bugs-2026-10-01.md`).
-`06-Systems/Online-Arc.md` (QUEST-PARTY).
+**Trust.** Outside the refereed rooms the room code and the relay's gates are the access control: a client's blow is
+applied as sent. A siege, a duel, the open zone and the boss fights are refereed by the relay (`src/net/siege/siegeRef.js`,
+`src/net/duel/duelRef.js`, `src/net/wild/wildRef.js`, `src/net/bossRef.js`, `src/net/bossBody.js`); what a realm
+character carries off is judged at its checkpoint (`06-Systems/Integrity-Arc.md`).
 
-**And a world quest's - CURSE-SYNC (2026-09-27).** S0000977, the Curse of Daggerfall, is no player's story: every character runs it and no task counts its foes, so the ghosts and wraiths it stands in Daggerfall's streets at night ride the cell as an encounter's do - everyone sees them, strikes them and is hunted by them. `06-Systems/Online-Arc.md` (CURSE-SYNC).
+## Rules
 
-### 2. The host's browser is the server
+- Quests stay separate: no player's quest engine decides for another, and no one's save changes shape because they
+  played with a friend (Mac).
+- One simulation per room, the host's; the relay introduces, relays and referees, and runs no world. Lockstep is not
+  possible here: the frame loop has a variable `dt` and the simulation draws unseeded randoms (Mac).
+- WebSocket through a Cloudflare Durable Object, no WebRTC: a relay always connects (Mac).
+- The world is the server: a place's memory is the relay's, never a save's (Mac, WORLD1).
+- The shared clock is wall time; no rest, fast travel, sentence, `?tod` or `?timescale` moves it online (Mac, WORLD5).
+- One home for the wire's law: `src/net/wire.js`. The relay refuses a client older than the world online with
+  `GROUND_OLD_WORDS` (`server/src/index.js`).
+- Ingress is gated and counted: `MAX_FRAME_BYTES` a frame, `SOCKETS_MAX` sockets a room, `HELLO_WAIT_MS` to say
+  hello, `DROP_STRIKES_MAX` dropped poses before a close.
+- A deploy of the relay restarts every Durable Object and drops every connected player (`server/wrangler.toml`);
+  `RELAY_VERSION` in `src/net/wire.js` names what is live.
+- A scrolling flex column whose rows may hide their overflow gives those rows `flex: none`, or the rows shrink to
+  nothing instead of scrolling (`.dfchat-line`, `src/ui/chatPanel.js`).
 
-One player hosts. Their browser runs the world - enemies, time,
-weather, actions - exactly as it does solo, and everyone else is a
-renderer with local prediction for their own body. The Cloudflare side
-introduces peers and relays bytes; it runs no game.
+## Code and tests
 
-Why, and this is the constraint that decides everything: **lockstep is
-impossible here.** The frame loop is `requestAnimationFrame` with a
-variable `dt` (`scenes/world.js:"ItemCollection.Contains /"`) and 110 source files call
-`Math.random` unseeded. Two clients cannot simulate the same world in
-parallel and agree, and making them able to would mean a fixed-step
-deterministic rewrite of the simulation. So one authority owns the
-world and the rest trust it. The host is the cheapest authority because
-the code is already here; a Durable Object running the simulation would
-be a second copy of the game in a Worker.
+- `src/net/wire.js` - the wire's law: frames, rooms, rates, bounds, the shared clock, `RELAY_VERSION`
+- `server/src/index.js` `Room` - the relay's Durable Object
+- `server/src/relay.js` - the relay's door onto the wire's law
+- `src/net/online.js` - the client session: hello, poses, the welcome, reconnects
+- `src/net/remotePlayers.js`, `src/net/peer/` - other players' bodies and effects
+- `src/scenes/quest/questFoeHost.js` - shared-quest and world-quest foes
+- `test/server/online_relay.test.js` - the relay's law, executed
+- `test/net/chat1.test.js` - the chat panel's behaviour and its sheet's flex law
+- `tools/chatLayoutProbe.mjs` - measures the chat list's layout in Chromium
 
-The cost as designed: when the host leaves, the session ends. WORLD1
-(2026-09-12) shipped the relay's own answer to the seat - it passes to
-the player in the room longest (in a dungeon, the longest still heard -
-Online-Arc SEAT-LIVE), said in a host frame - and WORLD2
-(2026-09-12) handed the live simulation of a dungeon's foes over with
-it: the puppets go live from the pose the stream left them in.
+## Open
 
-### 3. WebSocket through a Cloudflare Durable Object
-
-Every client holds one WebSocket to a Durable Object named by the room
-code. The DO holds the roster and relays. No WebRTC in v1.
-
-Why: WebRTC data channels are faster and cost nothing per byte, and they
-are where browser multiplayer projects go to die - signaling, STUN,
-TURN, symmetric NAT, and the player whose router hates them. A relay
-always connects. For a game whose movement update is a few dozen bytes
-at 10-20Hz, the extra hop is invisible. WebRTC can come later as a
-transport optimization behind the same message layer, and the message
-layer is designed so it can.
-
-Cloudflare because Mac already holds the key and the deploy is static:
-GitHub Pages cannot host a socket, and a Worker plus one DO per room is
-the smallest server that exists.
-
-## Architecture
-
-### Topology
-
-```
-  host browser  ─┐
-  client A      ─┼─ WebSocket ─→  Worker  ─→  DurableObject("room:ABCD")
-  client B      ─┘                                 roster + relay
-```
-
-The DO knows who is in the room and who is host. It forwards every
-message from the host to all clients, and every message from a client
-to the host (and, for transforms, to the other clients too - the host
-does not need to re-emit what it merely renders). It held no game
-state beyond the roster until WORLD1: a world room keeps the host's
-snapshot of the place in the object's durable storage, so a restart or
-an empty room loses nothing.
-
-### Authority
-
-| Owns | Who | Notes |
-|---|---|---|
-| World time (`classicMinutes`) | host | 1Hz tick, clients snap |
-| Weather, region conditions | host | on change |
-| Location (`locationKey`) | host | the party is where the host is |
-| Enemies: spawn, position, state, death | host | clients render, never simulate |
-| Doors, action records, dungeon state | host | any client may REQUEST; host applies and echoes |
-| Loose loot, world items | host | pickup is a request; host arbitrates first-come |
-| Each player's body: position, pose, weapon, animation | that player | broadcast 10-20Hz, others interpolate |
-| Each player's inventory, gold, quests, dialogue | that player | never leaves their browser |
-| Damage a player deals to an enemy | that player computes, host applies | trust model below |
-| Damage an enemy deals to a player | host computes, that player applies | |
-
-### Trust
-
-Friends-only co-op. A client's damage claim is applied as sent. There
-is no anti-cheat in v1 and no plan for one; the room code is the access
-control. This is recorded so nobody later mistakes its absence for an
-oversight.
-
-PVP-REF (2026-10-01, `06-Systems/Online-Arc.md` PVP-REF): the one room
-where that stops being true is a SIEGE's (`siege:<seat>:<week>`), where a
-town's Charter changes hands - there the relay holds every fighter's
-vitality and judges every blow, cast and step (`src/net/siege/siegeRef.js`,
-`11-Multiplayer/Seats-Arc.md` 6.1). Everywhere else this section stands.
-
-INT1-INT6 (2026-10-09, `06-Systems/Integrity-Arc.md`, Mac: "I want to do
-everything and do it properly"): what a REALM character carries away from
-any room is judged at its checkpoint - the item law over every piece, the
-ids' ledger, the wealth budget - and a breach holds its trade, so an
-impossible piece, or a copy that keeps its id, reaches no other player
-through the service. Lawful loot past what play earns is the budget's: it
-measures first, and holds once staff turn it on.
-
-INT7-INT10 (2026-10-09, the same arc's lane 2): a DUEL's room and the OPEN
-ZONE's are the next exceptions - there too the relay holds both fighters'
-vitality and judges every blow, cast and step against the arms the judged
-pack holds; a duel's result and a fall in the zone are its signed
-receipts, and a death's drop in the zone is taken by the account service
-off the fallen's judged record, never handed over by the fallen's game.
-Every spell between players is capped by a referee. The bosses (lane 3)
-are next.
-
-INT11-INT15 (2026-10-10, the same arc's lane 3; Mac: "Measure, then
-enforce"): in a GATE's court, an ABYSS DUNGEON's realm and a SERPENT's
-waters the relay now judges the boss's blows itself on the poses it holds
-(`src/net/bossRef.js`, each fight's own strike law) and keeps its own
-count of each fighter's body - a ship's hull at sea (`src/net/bossBody.js`).
-The client's word of its body is believed as a mend out of a budget. The
-count MEASURES first: each boss receipt carries what it saw, and nobody
-falls by it until staff set the relay's line. The world itself - the
-boss's blow on this screen, the potion, the save - is still the client's.
-
-GRANT0 (2026-10-17, `11-Multiplayer/Spawn-Grants.md`; PROPOSED, nothing
-built): a foe that rides to another player would exist only on a grant
-the relay rolls and signs when the foe is made. Its elite and champion
-are the relay's roll; its species comes from the grant's seed, which
-every reader checks against its own map files. The relay never reads
-the foe stream (revised 2026-10-18, for its cost). The simulation stays
-on the owner's machine, as decision 2 has it: the relay rolls a foe's
-identity, not its life.
-
-### The state model is the save
-
-`systems/save/save.js` already knows how to snapshot the world and restore
-it. **A joining client receives the host's world snapshot through the
-same envelope a save file uses**, restores it the way `restore` does,
-and is then in the host's world at the host's time. The player half of
-the envelope is theirs and is not touched. Sync after that is deltas
-against that baseline.
-
-This is the single biggest reason the feature is tractable: the
-serialization problem is solved, versioned, and pinned.
-
-### Messages
-
-JSON over the socket, one object per frame, every message carrying a
-schema version. Small on purpose; binary framing is a later
-optimization behind the same names.
-
-| Message | From | Cadence | Carries |
-|---|---|---|---|
-| `hello` | client | once | protocol version, player name, race/gender/class for the body |
-| `roster` | DO | on change | who is here, who is host |
-| `world` | host | on join, on location change | the save envelope's world half |
-| `tick` | host | 1Hz | classicMinutes, weather |
-| `tf` | any player | 10-20Hz | pos, yaw, pitch, pose flags, weapon, anim state |
-| `enemy` | host | on change, ≤20Hz | per-enemy pos, state, health |
-| `req` | client | on action | door / loot / activate - "I want to" |
-| `ev` | host | on apply | the applied result, to everyone |
-| `hit` | player | on strike | target, damage, source - see Trust |
-| `leave` | DO | on disconnect | who |
-
-### Rendering other players
-
-The port already has everything it needs. In the enhanced skin the
-third-person Morrowind body (`fpArm`'s `thirdBuilt`/`thirdMesh`, MW-D24)
-is a full posed model driven by the same animation state a remote `tf`
-carries; in the classic skin the player is a sprite and other players
-are more sprites. Remote transforms are buffered ~100ms and
-interpolated, the standard answer to a 10-20Hz feed.
-
-### Locations
-
-v1: the party is wherever the host is. A joining player is placed at
-the host's position. When the host enters a building or a dungeon, the
-world host changes for everyone; clients that were elsewhere are
-brought along. Splitting up across interiors is a later slice - it is
-mostly a rendering question (a client "away" in another interior is in
-a scene the host is not running), and it is not what basics means.
-
-### What is deliberately not persisted
-
-Nothing multiplayer goes in a save. A session is ephemeral; the place
-is not - since WORLD1 a world room's memory lives in the relay, for
-`WORLD_TTL_MS` past its last visitor (AUDIT WORLD A3). The only thing
-worth remembering locally is the last room code, and even that is a
-convenience.
-
-## Constraints the codebase imposes
-
-- **Four hosts.** exterior (`world.js`), dungeon (`dungeonContext.js`),
-  interior (`worldModes.js`), and the fourth. The four-hosts rule in
-  this bible exists because every one of them has been missed at least
-  once. Multiplayer must land at ONE seam each host calls, never as
-  four copies. The weapon rig's construction seam is the model.
-- **Solo must not change.** With no room joined, every probe, every pin
-  and every solo session behaves byte-for-byte as before. The
-  multiplayer layer is a null object when absent.
-- **Both skins.** Classic and enhanced both play; the room UI is skin
-  work, the transport is not.
-- **`bootProbe` and the fleet keep running** with no Worker present.
-  The Worker is a runtime dependency of a joined session only.
-
-## Open questions, deliberately open
-
-- Host migration (a client becomes host when the host drops): the seat, WORLD1 (the relay's word); a dungeon's foes, WORLD2 (the puppets go live); its doors, levers and platforms need no seat at all, WORLD3 (an act is whoever touched them, the memory carries them); its loot, WORLD4 (a container the room has opened is the room's, and needs no seat either).
-- Splitting the party across interiors. Later.
-- Voice chat. Text chat shipped in the ONLINE arc (CHAT1, `06-Systems/Online-Arc.md`) - one World tab in the enhanced HUD; a co-op party tab is the next row of its CHAT_TABS. Voice is not basics.
-- Whether a client's damage claim ever gets validated. Not planned.
-- Binary framing / WebRTC. When the numbers say so, not before.
-
-## CHAT2 - the list holds its rows (2026-09-15)
-
-**Mac, relaying a player:** *"The chat UI when accumulating messages
-scrunched together and makes history unreadable and after some time,
-chat history disappears altogether."*
-
-Two symptoms, one bug, and a layout one.
-
-`.dfchat-list` is a fixed-height flex COLUMN (`height: min(220px,
-34vh)`, `overflow-y: auto`) and `.dfchat-line` carried `overflow:
-hidden`. Per CSS Flexbox 4.5 a flex item's **automatic minimum size**
-applies only while its overflow is `visible`; with `overflow: hidden`
-the item's `min-height: auto` resolves to **zero**, which leaves the
-default `flex-shrink: 1` free to compress every row instead of letting
-the content overflow into the scroll. Measured in Chromium:
-
-| rows | row height | scrollHeight vs clientHeight |
-|---|---|---|
-| 5 | 18.30px | 232 / 232 |
-| 10 | 18.30px | 232 / 232 |
-| 20 | 9.09px | 232 / 232 |
-| 40 | 3.55px | 232 / 232 |
-| 80 | 0.78px | 233 / 232 |
-| 200 | **0.00px** | 410 / 232 |
-
-The scroll never engaged because there was nothing to scroll - the
-content had been squeezed to fit. That ramp IS the report: "scrunched
-together" in the middle of it, "disappears altogether" at the end. The
-rows were in the DOM the whole time and the lines were in the log; they
-were drawn zero pixels tall. `flex: none` on the row is the fix: a chat
-line does not shrink, the list scrolls.
-
-**Why no pin caught it.** `test/net/chat1.test.js` drives the panel against
-a fake document, and a fake document has no layout - its boxes are
-whatever the fake says they are. That is the right tool for the panel's
-BEHAVIOUR (the keys, the IME, the grown list, the badge) and it can
-never see a box. So this gets two checks, split by what each can
-actually hold:
-
-- `tools/chatLayoutProbe.mjs` **measures**, in Chromium, with no dev
-  server and no game data - the panel's own sheet is the subject. It
-  fails on the old CSS and passes on the new, and it checks the closed
-  peek too, so a fix to the list cannot quietly break the overlay.
-- `test/net/chat1.test.js` holds the **law**, and states it over the SHEET
-  rather than over `.dfchat-line`: the sheet still contains a
-  fixed-height flex-column scroller (so the rule cannot go vacuous),
-  and nothing in the sheet hides its overflow without also refusing to
-  shrink. A future row class dropped into the list inherits the pin
-  instead of the bug.
-
-**The general shape**, for the next DOM surface this project grows: a
-scrolling flex column whose children may carry `overflow: hidden` needs
-`flex: none` on those children, or it silently becomes a squeezer. It
-fails quietly - no error, no warning, and worse the more content
-arrives, which is exactly backwards from how a bug wants to be found.
+- Splitting a party across interiors.
+- Voice chat.
+- Validating a client's blow outside the refereed rooms.
+- Binary framing or WebRTC behind the same messages, when the numbers call for it.

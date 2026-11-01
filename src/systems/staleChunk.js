@@ -45,10 +45,10 @@
  *  that knew only Chrome's would leave Firefox and Safari players on
  *  the dead page. Vite's CSS preloader has its own phrasing. */
 export const STALE_CHUNK_MESSAGES = Object.freeze([
-  'Failed to fetch dynamically imported module',   // Chrome / Edge
-  'error loading dynamically imported module',     // Firefox
-  'Importing a module script failed',              // Safari
-  'Unable to preload CSS',                         // Vite's preloader
+  'Failed to fetch dynamically imported module', // Chrome / Edge
+  'error loading dynamically imported module', // Firefox
+  'Importing a module script failed', // Safari
+  'Unable to preload CSS', // Vite's preloader
 ]);
 
 /** True when this error is a chunk that is not on the server. */
@@ -67,8 +67,8 @@ export const RELOAD_KEY = 'dagger:stale-chunk-reload';
  *  happened, because "failed to fetch dynamically imported module" is
  *  a sentence about JavaScript and this one is about them. */
 export const STALE_CHUNK_TEXT =
-  'This page is from an older version of the game. '
-  + 'Reloading did not load the new one. Try a hard refresh (Ctrl-Shift-R, or Cmd-Shift-R on a Mac).';
+  'This page is from an older version of the game. ' +
+  'Reloading did not load the new one. Try a hard refresh (Ctrl-Shift-R, or Cmd-Shift-R on a Mac).';
 
 /** DISC19-D: the same event in the middle of a session - a chunk a
  *  running page asks for (the dungeon's foe subsystem is the case that

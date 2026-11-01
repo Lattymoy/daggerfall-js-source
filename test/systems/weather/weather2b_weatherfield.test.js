@@ -219,10 +219,3 @@ test('WEATHER2b the controller and the hosts: the sky eases on the front\'s own 
   assert.match(e, /cellOfField\(c, \(x, z\) => pixelLocalOfField\(_locPixel\.x, _locPixel\.y, x, z\)\)/);
 });
 
-test('WEATHER2b records: the arc page\'s B, the ledger row, the features arc, Home\'s index and the testing row', () => {
-  assert.match(rd('bible/07-Rendering/Weather-Arc.md'), /^## B - THE WEATHER FIELD \(WEATHER2b, 2026-09-14\)/m);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /^\| \*\*THE WEATHER FIELD \(WEATHER2b, 2026-09-14\)\*\*/m);
-  assert.match(rd('bible/10-UI/Features-Arc.md'), /^## WEATHER2b - WEATHER AS PLACES, THE ROW \(2026-09-14\)/m);
-  assert.match(rd('bible/01-Overview/Page-Index.md'), /B: the weather field/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
-  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| weather2b_weatherfield\.test\.js \| \d+ \| WEATHER2b/m);
-});

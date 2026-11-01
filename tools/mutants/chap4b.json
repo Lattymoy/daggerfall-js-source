@@ -2,8 +2,8 @@
   {
     "name": "CHAP4B-SEATS-FACTION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
-    "new": "return list.filter((s) => regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "old": "    .filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "new": "    .filter((s) => regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CHAP4B-SEATS-REGION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
-    "new": "return list.filter((s) => isRollFaction(s?.f) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "old": "    .filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "new": "    .filter((s) => isRollFaction(s?.f) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CHAP4B-SEATS-KIND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
-    "new": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region))",
+    "old": "    .filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "new": "    .filter((s) => isRollFaction(s?.f) && regionOk(s?.region))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CHAP4B-RANKAT-REGION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);",
-    "new": "const s = rollSeatsOf(seats).find((x) => x.f === faction);",
+    "old": "  const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);",
+    "new": "  const s = rollSeatsOf(seats).find((x) => x.f === faction);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "CHAP4B-RANKAT-FACTION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);",
-    "new": "const s = rollSeatsOf(seats).find((x) => x.region === region);",
+    "old": "  const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);",
+    "new": "  const s = rollSeatsOf(seats).find((x) => x.region === region);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "CHAP4B-SEATED-HIGHER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "!(typeof rank === 'number' && rank > whole(row.rank))) return book;",
-    "new": "!(typeof rank === 'number' && rank >= whole(row.rank))) return book;",
+    "old": "    !(typeof rank === 'number' && rank > whole(row.rank))",
+    "new": "    !(typeof rank === 'number' && rank >= whole(row.rank))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "CHAP4B-SEATED-NUMBER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "!(typeof rank === 'number' && rank > whole(row.rank))) return book;",
-    "new": "!(rank > whole(row.rank))) return book;",
+    "old": "  if (\n    !row ||\n    typeof row !== 'object' ||\n    whole(row.rank) !== ROLL_BOOK_RANK_MAX ||\n    !(typeof rank === 'number' && rank > whole(row.rank))\n  )",
+    "new": "  if (!row || typeof row !== 'object' || whole(row.rank) !== ROLL_BOOK_RANK_MAX || !(rank > whole(row.rank)))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "CHAP4B-SEATED-READ",
     "file": "src/net/npcChapterLaw.js",
-    "old": "new Proxy(row, { get: (t, k) => (k === 'rank' ? rank : t[k]) })",
-    "new": "new Proxy(row, { get: (t, k) => t[k] })",
+    "old": "  return { ...book, [key]: new Proxy(row, { get: (t, k) => (k === 'rank' ? rank : t[k]) }) };",
+    "new": "  return { ...book, [key]: new Proxy(row, { get: (t, k) => t[k] }) };",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "CHAP4B-SEATED-COPY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return { ...book, [key]: new Proxy(row, { get: (t, k) => (k === 'rank' ? rank : t[k]) }) };",
-    "new": "return { ...book, [key]: { ...row, rank } };",
+    "old": "  return { ...book, [key]: new Proxy(row, { get: (t, k) => (k === 'rank' ? rank : t[k]) }) };",
+    "new": "  return { ...book, [key]: { ...row, rank } };",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "CHAP4B-CAP-LINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (f == null || !(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;",
-    "new": "if (f == null || !(whole(m?.rank) >= ROLL_BOOK_RANK_MAX)) continue;",
+    "old": "      if (f == null || !(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;",
+    "new": "      if (f == null || !(whole(m?.rank) >= ROLL_BOOK_RANK_MAX)) continue;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "CHAP4B-CAP-GUILD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (f == null || !(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;",
-    "new": "if (!(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;",
+    "old": "      if (f == null || !(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;",
+    "new": "      if (!(whole(m?.rank) > ROLL_BOOK_RANK_MAX)) continue;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "CHAP4B-CAP-BOOKS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];\n  const held = new Set();",
-    "new": "Object.hasOwn(store, 'vampire') ? [store.mortal] : [store];\n  const held = new Set();",
+    "old": "  const books =\n    Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];",
+    "new": "  const books = Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal] : [store];",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "CHAP4B-LINES-FIRST",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (before == null) return now.map((s) => seatLineOf(s));",
-    "new": "if (before == null) return [];",
+    "old": "  if (before == null) return now.map((s) => seatLineOf(s));",
+    "new": "  if (before == null) return [];",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "CHAP4B-LINES-MOVED",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return [...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s)),",
-    "new": "return [...now.filter((s) => !wasAt.has(k(s))).map((s) => seatLineOf(s)),",
+    "old": "    ...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s)),",
+    "new": "    ...now.filter((s) => !wasAt.has(k(s))).map((s) => seatLineOf(s)),",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "CHAP4B-LINES-LOST",
     "file": "src/net/npcChapterLaw.js",
-    "old": "...was.filter((s) => !nowAt.has(k(s))).map((s) => seatLineOf(s, false))]",
-    "new": "]",
+    "old": "  return [\n    ...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s)),\n    ...was.filter((s) => !nowAt.has(k(s))).map((s) => seatLineOf(s, false)),\n  ];",
+    "new": "  return [...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s))];",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "CHAP4B-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const SEAT_WORDS = Object.freeze({ master: 'the Master\\'s chair', officer: 'a council chair' });",
-    "new": "const SEAT_WORDS = Object.freeze({ master: 'the Master\\'s chair', officer: 'the council chair' });",
+    "old": "const SEAT_WORDS = Object.freeze({ master: \"the Master's chair\", officer: 'a council chair' });",
+    "new": "const SEAT_WORDS = Object.freeze({ master: \"the Master's chair\", officer: 'the council chair' });",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "CHAP4B-CAPPED-ONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils",
-    "new": "keep ranks 8 and 9 for their chapters' Masters and councils",
+    "old": "  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit. Your rank there is 7.`;",
+    "new": "  return `${said.charAt(0).toUpperCase()}${said.slice(1)} keep ranks 8 and 9 for their chapters' Masters and councils, won by Merit. Your rank there is 7.`;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "CHAP4B-FLOW-CEILING",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
-    "new": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
+    "old": "    rankCeiling,\n    promoteWhenEarned,",
+    "new": "    promoteWhenEarned,",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "CHAP4B-TAB-CAP",
     "file": "src/net/npcRollTracker.js",
-    "old": "    const held = cap();\n    if (held.length) onCapped(held);",
-    "new": "    const held = [];\n    if (held.length) onCapped(held);",
+    "old": "    const held = cap();",
+    "new": "    const held = [];",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "CHAP4B-TAB-CAPPED-SAID",
     "file": "src/net/npcRollTracker.js",
-    "old": "    if (held.length) onCapped(held);\n",
-    "new": "    onCapped(held);\n",
+    "old": "    if (held.length) onCapped(held);",
+    "new": "    onCapped(held);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "CHAP4B-DOORS-CAP",
     "file": "src/net/npcRollTracker.js",
-    "old": "    cap: () => rollBookCap(entityOf()?.guildMemberships),   // CHAP4b: the book held at 7\n",
-    "new": "",
+    "old": "    cap: () => rollBookCap(entityOf()?.guildMemberships), // CHAP4b: the book held at 7\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]

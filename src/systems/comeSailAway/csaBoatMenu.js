@@ -24,22 +24,43 @@
 
 /** The verbs, by row id. */
 export const BOAT_VERB = Object.freeze({
-  helm: 'helm', board: 'board', cargo: 'cargo', pack: 'pack', variant: 'variant', status: 'status', position: 'position',
-  crew: 'crew', orders: 'orders',   // SHIP-CREW: the port's own - her crew's card, her captain's orders (no box of the mod's)
-  companions: 'companions',   // CREW-COMPANIONS: her hands to take ashore, or send back aboard
-  cabin: 'cabin', door: 'door',   // SAILING-CABINS: the cabin and the existing animated door
+  helm: 'helm',
+  board: 'board',
+  cargo: 'cargo',
+  pack: 'pack',
+  variant: 'variant',
+  status: 'status',
+  position: 'position',
+  crew: 'crew',
+  orders: 'orders', // SHIP-CREW: the port's own - her crew's card, her captain's orders (no box of the mod's)
+  companions: 'companions', // CREW-COMPANIONS: her hands to take ashore, or send back aboard
+  cabin: 'cabin',
+  door: 'door', // SAILING-CABINS: the cabin and the existing animated door
 });
 /** The rows' words. */
 export const BOAT_MENU_TEXT = Object.freeze({
-  helm: 'Take the helm', leave: 'Leave the helm', board: 'Board', cargo: 'Open storage', pack: 'Pick up',
-  variant: 'Change style', status: 'Status', position: 'Position', crew: 'Crew', orders: 'Give orders', companions: 'Companions',
-  cabin: 'Enter cabin', door: 'Open / close door',
+  helm: 'Take the helm',
+  leave: 'Leave the helm',
+  board: 'Board',
+  cargo: 'Open storage',
+  pack: 'Pick up',
+  variant: 'Change style',
+  status: 'Status',
+  position: 'Position',
+  crew: 'Crew',
+  orders: 'Give orders',
+  companions: 'Companions',
+  cabin: 'Enter cabin',
+  door: 'Open / close door',
 });
 /** Why a row is refused - short, for the plaque's "(why)". */
 export const BOAT_MENU_WHY = Object.freeze({
-  driving: 'driving', passengers: 'passengers aboard', moored: 'a deed ship stays afloat', sailing: 'not at the helm',
-  noDeed: 'the deed is not in your pack',   // SHIP-PACK: a ship is picked up with her deed (comeSailAway.js PackBoat)
-  tooHeavy: 'too heavy to carry',   // HOLD-WEIGHT: parts no take could lift again (comeSailAway.js partsTooHeavy)
+  driving: 'driving',
+  passengers: 'passengers aboard',
+  moored: 'a deed ship stays afloat',
+  sailing: 'not at the helm',
+  noDeed: 'the deed is not in your pack', // SHIP-PACK: a ship is picked up with her deed (comeSailAway.js PackBoat)
+  tooHeavy: 'too heavy to carry', // HOLD-WEIGHT: parts no take could lift again (comeSailAway.js partsTooHeavy)
 });
 
 /**
@@ -47,8 +68,12 @@ export const BOAT_MENU_WHY = Object.freeze({
  * @type {Readonly<Record<string, { box: string, mode: string|null }>>}
  */
 export const BOAT_VERB_BOX = Object.freeze({
-  helm: { box: 'drive', mode: 'grab' }, pack: { box: 'drive', mode: 'steal' }, board: { box: 'board', mode: null },
-  cargo: { box: 'cargo', mode: null }, variant: { box: 'variant', mode: null }, status: { box: 'status', mode: null },
+  helm: { box: 'drive', mode: 'grab' },
+  pack: { box: 'drive', mode: 'steal' },
+  board: { box: 'board', mode: null },
+  cargo: { box: 'cargo', mode: null },
+  variant: { box: 'variant', mode: null },
+  status: { box: 'status', mode: null },
   position: { box: 'position', mode: null },
   door: { box: 'door', mode: null },
 });
@@ -69,7 +94,10 @@ export function boatTriggers(root, modelOf, models) {
     const n = stack.pop();
     const id = modelOf(n?.name);
     const box = id != null ? byId.get(id) : null;
-    if (box) { if (!out.has(box)) out.set(box, []); out.get(box).push(n); }
+    if (box) {
+      if (!out.has(box)) out.set(box, []);
+      out.get(box).push(n);
+    }
     for (const c of n?.children ?? []) stack.push(c);
   }
   return out;
@@ -84,27 +112,49 @@ export function boatTriggers(root, modelOf, models) {
 export function boatMenuRows(s) {
   const has = (b) => s.boxes.has(b);
   const rows = [];
-  if (has('drive')) rows.push({ id: BOAT_VERB.helm, label: s.sailingThis ? BOAT_MENU_TEXT.leave : BOAT_MENU_TEXT.helm });
+  if (has('drive'))
+    rows.push({ id: BOAT_VERB.helm, label: s.sailingThis ? BOAT_MENU_TEXT.leave : BOAT_MENU_TEXT.helm });
   if (has('board') && !s.aboard && !s.sailingThis) rows.push({ id: BOAT_VERB.board, label: BOAT_MENU_TEXT.board });
   if (has('cargo')) rows.push({ id: BOAT_VERB.cargo, label: BOAT_MENU_TEXT.cargo });
   if (has('door') && s.cabin) {
-    rows.push({ id: BOAT_VERB.cabin, label: BOAT_MENU_TEXT.cabin, ...(s.cabinWhy ? { disabled: true, why: s.cabinWhy } : {}) });
+    rows.push({
+      id: BOAT_VERB.cabin,
+      label: BOAT_MENU_TEXT.cabin,
+      ...(s.cabinWhy ? { disabled: true, why: s.cabinWhy } : {}),
+    });
     rows.push({ id: BOAT_VERB.door, label: BOAT_MENU_TEXT.door });
   }
   if (has('drive')) {
-    const why = !s.packable ? BOAT_MENU_WHY.moored : s.sailingThis ? BOAT_MENU_WHY.driving : (s.passengers ?? 0) > 0 ? BOAT_MENU_WHY.passengers
-      : s.noDeed ? BOAT_MENU_WHY.noDeed   // SHIP-PACK: a ship whose deed is not in the pack (the runtime's deedMissing)
-        : s.tooHeavy ? BOAT_MENU_WHY.tooHeavy : null;   // HOLD-WEIGHT: her parts heavier than the bearer's most (the runtime's partsTooHeavy)
-    rows.push(why ? { id: BOAT_VERB.pack, label: BOAT_MENU_TEXT.pack, disabled: true, why } : { id: BOAT_VERB.pack, label: BOAT_MENU_TEXT.pack });
+    const why = !s.packable
+      ? BOAT_MENU_WHY.moored
+      : s.sailingThis
+        ? BOAT_MENU_WHY.driving
+        : (s.passengers ?? 0) > 0
+          ? BOAT_MENU_WHY.passengers
+          : s.noDeed
+            ? BOAT_MENU_WHY.noDeed // SHIP-PACK: a ship whose deed is not in the pack (the runtime's deedMissing)
+            : s.tooHeavy
+              ? BOAT_MENU_WHY.tooHeavy
+              : null; // HOLD-WEIGHT: her parts heavier than the bearer's most (the runtime's partsTooHeavy)
+    rows.push(
+      why
+        ? { id: BOAT_VERB.pack, label: BOAT_MENU_TEXT.pack, disabled: true, why }
+        : { id: BOAT_VERB.pack, label: BOAT_MENU_TEXT.pack },
+    );
   }
-  if (has('variant') && s.variants) rows.push(s.sailing ? { id: BOAT_VERB.variant, label: BOAT_MENU_TEXT.variant, disabled: true, why: BOAT_MENU_WHY.sailing } : { id: BOAT_VERB.variant, label: BOAT_MENU_TEXT.variant });
+  if (has('variant') && s.variants)
+    rows.push(
+      s.sailing
+        ? { id: BOAT_VERB.variant, label: BOAT_MENU_TEXT.variant, disabled: true, why: BOAT_MENU_WHY.sailing }
+        : { id: BOAT_VERB.variant, label: BOAT_MENU_TEXT.variant },
+    );
   if (has('status')) rows.push({ id: BOAT_VERB.status, label: BOAT_MENU_TEXT.status });
   if (has('position')) rows.push({ id: BOAT_VERB.position, label: BOAT_MENU_TEXT.position });
   // SHIP-CREW: with the naval arc on, her crew's card (a crewed boat's) and her orders - CREW-COMPANIONS: and her hands ashore
   if (s.naval) {
     if (s.crewed) rows.push({ id: BOAT_VERB.crew, label: BOAT_MENU_TEXT.crew });
     rows.push({ id: BOAT_VERB.orders, label: BOAT_MENU_TEXT.orders });
-    if (s.crewed && s.companions !== false) rows.push({ id: BOAT_VERB.companions, label: BOAT_MENU_TEXT.companions });   // CREW-COMPANIONS - AUDIT CC-A9: not on a boat with no deed number (`companions` false)
+    if (s.crewed && s.companions !== false) rows.push({ id: BOAT_VERB.companions, label: BOAT_MENU_TEXT.companions }); // CREW-COMPANIONS - AUDIT CC-A9: not on a boat with no deed number (`companions` false)
   }
   return rows;
 }
@@ -119,18 +169,27 @@ export function boatMenuRows(s) {
  */
 export function boatMenuStart(box, rows, mode) {
   if (box == null) return 0;
-  if (box === 'door' && rows.some((r) => r.id === BOAT_VERB.cabin)) return rows.findIndex((r) => r.id === BOAT_VERB.cabin);
+  if (box === 'door' && rows.some((r) => r.id === BOAT_VERB.cabin))
+    return rows.findIndex((r) => r.id === BOAT_VERB.cabin);
   const verb = box === 'drive' ? (mode === 'steal' ? BOAT_VERB.pack : BOAT_VERB.helm) : box;
   return rows.findIndex((r) => r.id === verb);
 }
 
 /** A refused row's press, in the mod's own words where it has them. */
-export const boatMenuRefusal = (why) => (why === BOAT_MENU_WHY.driving ? 'You cannot pack a boat you are driving!'
-  : why === BOAT_MENU_WHY.passengers ? 'You cannot pack a boat with passengers aboard!'
-    : why === BOAT_MENU_WHY.moored ? 'A ship from a deed can\'t be packed. It stays afloat.'
-      : why === BOAT_MENU_WHY.sailing ? 'Not while at the helm.'
-        : why === BOAT_MENU_WHY.noDeed ? 'You need the ship\'s deed in your pack to pick it up.'   // SHIP-PACK: comeSailAway.js DEED_NOT_HELD_TEXT (pinned equal)
-          : why === BOAT_MENU_WHY.tooHeavy ? 'The ship\'s parts are too heavy for you to carry.' : null);   // HOLD-WEIGHT: PARTS_TOO_HEAVY_TEXT (pinned equal)
+export const boatMenuRefusal = (why) =>
+  why === BOAT_MENU_WHY.driving
+    ? 'You cannot pack a boat you are driving!'
+    : why === BOAT_MENU_WHY.passengers
+      ? 'You cannot pack a boat with passengers aboard!'
+      : why === BOAT_MENU_WHY.moored
+        ? "A ship from a deed can't be packed. It stays afloat."
+        : why === BOAT_MENU_WHY.sailing
+          ? 'Not while at the helm.'
+          : why === BOAT_MENU_WHY.noDeed
+            ? "You need the ship's deed in your pack to pick it up." // SHIP-PACK: comeSailAway.js DEED_NOT_HELD_TEXT (pinned equal)
+            : why === BOAT_MENU_WHY.tooHeavy
+              ? "The ship's parts are too heavy for you to carry."
+              : null; // HOLD-WEIGHT: PARTS_TOO_HEAVY_TEXT (pinned equal)
 
 /**
  * The box a verb is pressed on: the one aimed at when it is that verb's (AUDIT BOAT-MENU C6: the far ladder aimed at
@@ -143,12 +202,16 @@ export const boatMenuRefusal = (why) => (why === BOAT_MENU_WHY.driving ? 'You ca
  */
 export function boatVerbNode(boxes, verb, at, posOf, aimed = null) {
   const list = boxes.get(BOAT_VERB_BOX[verb]?.box ?? '') ?? [];
-  if (aimed && list.includes(aimed)) return aimed;   // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's
-  let best = null, bestD = Infinity;
+  if (aimed && list.includes(aimed)) return aimed; // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's
+  let best = null,
+    bestD = Infinity;
   for (const n of list) {
     const p = posOf(n);
     const d = (p[0] - at[0]) ** 2 + (p[1] - at[1]) ** 2 + (p[2] - at[2]) ** 2;
-    if (d < bestD) { bestD = d; best = n; }
+    if (d < bestD) {
+      bestD = d;
+      best = n;
+    }
   }
   return best;
 }
@@ -167,7 +230,11 @@ export function pressBoatVerb(p) {
   if (!(p.distance <= p.reach)) return 'far';
   const row = p.rows.find((r) => r.id === p.verb);
   if (!row) return 'none';
-  if (row.disabled) { const line = boatMenuRefusal(row.why); if (line) p.say(line); return 'refused'; }
+  if (row.disabled) {
+    const line = boatMenuRefusal(row.why);
+    if (line) p.say(line);
+    return 'refused';
+  }
   const how = BOAT_VERB_BOX[row.id];
   const node = boatVerbNode(p.boxes, row.id, p.at, p.posOf, p.aimed ?? null);
   if (!how || !node) return 'none';

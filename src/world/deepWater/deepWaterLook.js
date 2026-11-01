@@ -25,7 +25,12 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 /** Mathf.Lerp (t clamped). */
 const lerp = (a, b, t) => a + (b - a) * clamp01(t);
-const lerpColor = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t), lerp(a[3] ?? 1, b[3] ?? 1, t)];
+const lerpColor = (a, b, t) => [
+  lerp(a[0], b[0], t),
+  lerp(a[1], b[1], t),
+  lerp(a[2], b[2], t),
+  lerp(a[3] ?? 1, b[3] ?? 1, t),
+];
 /** Mathf.InverseLerp. */
 const inverseLerp = (a, b, v) => (a !== b ? clamp01((v - a) / (b - a)) : 0);
 
@@ -53,16 +58,25 @@ export function fogDistanceSliderToMultiplier(v) {
 }
 
 /** GetScaledSliderValue, in the C#'s floats (the decorations' frequency splits into a pass count and a fraction rolled against). */
-export function scaledSliderValue(v, valueAtMidpoint) { return Math.fround(clamp01(Math.fround(Number(v) || 0)) * Math.fround(valueAtMidpoint / 0.5)); }
+export function scaledSliderValue(v, valueAtMidpoint) {
+  return Math.fround(clamp01(Math.fround(Number(v) || 0)) * Math.fround(valueAtMidpoint / 0.5));
+}
 
 /** UnderwaterVisionDistance. */
 export function underwaterVisionDistance(fogDistanceSlider) {
-  return clamp(UNDERWATER_VISION_DISTANCE_AT_DEFAULT * fogDistanceSliderToMultiplier(fogDistanceSlider), MIN_UNDERWATER_VISION_DISTANCE, MAX_UNDERWATER_VISION_DISTANCE);
+  return clamp(
+    UNDERWATER_VISION_DISTANCE_AT_DEFAULT * fogDistanceSliderToMultiplier(fogDistanceSlider),
+    MIN_UNDERWATER_VISION_DISTANCE,
+    MAX_UNDERWATER_VISION_DISTANCE,
+  );
 }
 
 /** UnderwaterFogDensityMax. */
 export function underwaterFogDensityMax(fogStrengthSlider, fogDistanceSlider) {
-  return scaledSliderValue(fogStrengthSlider, UNDERWATER_FOG_DENSITY_MAX_AT_MIDPOINT) / fogDistanceSliderToMultiplier(fogDistanceSlider);
+  return (
+    scaledSliderValue(fogStrengthSlider, UNDERWATER_FOG_DENSITY_MAX_AT_MIDPOINT) /
+    fogDistanceSliderToMultiplier(fogDistanceSlider)
+  );
 }
 
 /**
@@ -85,7 +99,12 @@ export function daylightFactor({ night, daylightScale, weatherScale = 1 }) {
 
 /** GetUnderwaterFogColor: DFU's water fog colour, to the night tint by the daylight (alpha kept). */
 export function underwaterFogColor(daylight, waterFogColor = DEFAULT_UNDERWATER_FOG_COLOR) {
-  const night = [NIGHT_UNDERWATER_FOG_TINT[0], NIGHT_UNDERWATER_FOG_TINT[1], NIGHT_UNDERWATER_FOG_TINT[2], waterFogColor[3] ?? 1];
+  const night = [
+    NIGHT_UNDERWATER_FOG_TINT[0],
+    NIGHT_UNDERWATER_FOG_TINT[1],
+    NIGHT_UNDERWATER_FOG_TINT[2],
+    waterFogColor[3] ?? 1,
+  ];
   return lerpColor(night, waterFogColor, daylight);
 }
 
@@ -123,14 +142,20 @@ export const SURFACE_TEXTURE = Object.freeze({ archive: 302, record: 0 });
 /** GetBaseSurfaceTint: light .. base over the slider's first half, base .. dark over its second. */
 export function baseSurfaceTint(darker) {
   const n = clamp01(darker);
-  return n <= 0.5 ? lerpColor(LIGHT_SURFACE_TINT, SURFACE_TINT, n / 0.5) : lerpColor(SURFACE_TINT, DARK_SURFACE_TINT, (n - 0.5) / 0.5);
+  return n <= 0.5
+    ? lerpColor(LIGHT_SURFACE_TINT, SURFACE_TINT, n / 0.5)
+    : lerpColor(SURFACE_TINT, DARK_SURFACE_TINT, (n - 0.5) / 0.5);
 }
 
 /** GetTimeAdjustedSurfaceTint. */
-export function timeAdjustedSurfaceTint(darker, daylight) { return lerpColor(NIGHT_SURFACE_TINT, baseSurfaceTint(darker), daylight); }
+export function timeAdjustedSurfaceTint(darker, daylight) {
+  return lerpColor(NIGHT_SURFACE_TINT, baseSurfaceTint(darker), daylight);
+}
 
 /** GetTimeAdjustedTopSurfaceAlpha: the night makes the top more opaque. */
-export function timeAdjustedTopSurfaceAlpha(topAlpha, daylight) { return clamp01(topAlpha + (1 - daylight) * NIGHT_TOP_SURFACE_ALPHA_BOOST); }
+export function timeAdjustedTopSurfaceAlpha(topAlpha, daylight) {
+  return clamp01(topAlpha + (1 - daylight) * NIGHT_TOP_SURFACE_ALPHA_BOOST);
+}
 
 /** IsTopSurfaceNearOpaque: the top then writes depth and its vision distance is effectively endless. */
 export const isTopSurfaceNearOpaque = (topAlpha) => topAlpha >= NEAR_OPAQUE_TOP_SURFACE_ALPHA;
@@ -139,13 +164,15 @@ export const isTopSurfaceNearOpaque = (topAlpha) => topAlpha >= NEAR_OPAQUE_TOP_
 export const topSurfaceVisionDistance = (vision) => Math.min(vision, MAXIMUM_TOP_SURFACE_VISION_DISTANCE);
 
 /** GetTopSurfaceVisionDistanceForMaterial: the top's _WaterSurfaceVisionDistance. */
-export const topSurfaceVisionDistanceForMaterial = (topAlpha, vision) => (isTopSurfaceNearOpaque(topAlpha) ? OPAQUE_TOP_SURFACE_VISION_DISTANCE : vision);
+export const topSurfaceVisionDistanceForMaterial = (topAlpha, vision) =>
+  isTopSurfaceNearOpaque(topAlpha) ? OPAQUE_TOP_SURFACE_VISION_DISTANCE : vision;
 
 /** GetTopSurfaceOpaqueFadeEnd. */
 export const topSurfaceOpaqueFadeEnd = (vision) => Math.max(1, vision * TOP_SURFACE_OPAQUE_END_VISION_MULTIPLIER);
 
 /** GetPlayerShallowWaterFactor: 1 in 3 m of water or less, 0 in 12 m or more. */
-export const playerShallowWaterFactor = (columnDepth) => (columnDepth == null ? 0 : 1 - inverseLerp(3, 12, columnDepth));
+export const playerShallowWaterFactor = (columnDepth) =>
+  columnDepth == null ? 0 : 1 - inverseLerp(3, 12, columnDepth);
 
 /** ApplyDynamicUndersideSettings' fades: {start, end}. */
 export function undersideFades(vision, shallow) {
@@ -168,7 +195,10 @@ export function sceneTint(darker, daylight, cameraAboveSea) {
  *   (ApplySharedWaterProperties runs when a material is configured, never in the frame's refresh) -
  *   absent, this frame's
  */
-export function surfaceLook(s, { daylight, columnDepth = null, waterFogColor = DEFAULT_UNDERWATER_FOG_COLOR, undersideFogColor = null }) {
+export function surfaceLook(
+  s,
+  { daylight, columnDepth = null, waterFogColor = DEFAULT_UNDERWATER_FOG_COLOR, undersideFogColor = null },
+) {
   const vision = underwaterVisionDistance(s.fogDistance);
   const tint = timeAdjustedSurfaceTint(s.darker, daylight);
   const fog = underwaterFogColor(daylight, waterFogColor);
@@ -197,8 +227,12 @@ const SWAMP_GROUND_TEXTURE_STRENGTH = 0.9;
 const NIGHT_AMBIENT_BOOST = 0.72;
 /** The Seafloor shader's own defaults for what the material never sets. */
 export const FLOOR_SHADER_DEFAULTS = Object.freeze({
-  sand: [0.74, 0.66, 0.49], mid: [0.41, 0.38, 0.31], deep: [0.18, 0.18, 0.2], swamp: [0.3, 0.27, 0.18],
-  shelfMix: 0.55, depthGamma: 1.4,
+  sand: [0.74, 0.66, 0.49],
+  mid: [0.41, 0.38, 0.31],
+  deep: [0.18, 0.18, 0.2],
+  swamp: [0.3, 0.27, 0.18],
+  shelfMix: 0.55,
+  depthGamma: 1.4,
 });
 
 /** UsesDfuGroundTexture: the ocean and the swamp take DFU's own ground. */
@@ -215,18 +249,31 @@ const usesDfuGroundTexture = (climate) => climate === 223 || climate === 228;
 export function seafloorTexture(climate, climateSettings, snowy) {
   if (usesDfuGroundTexture(climate)) return { archive: climateSettings.groundArchive + (snowy ? 1 : 0), record: 1 };
   switch (climate) {
-    case 227: case 229: return { archive: 402, record: 28 };
-    case 226: case 230: return { archive: 102, record: 3 };
-    case 224: case 225: return { archive: 2, record: 10 };
-    case 232: return { archive: 302, record: 3 };
-    case 231: return { archive: 302, record: 25 };
-    default: return { archive: climateSettings.groundArchive, record: 1 };
+    case 227:
+    case 229:
+      return { archive: 402, record: 28 };
+    case 226:
+    case 230:
+      return { archive: 102, record: 3 };
+    case 224:
+    case 225:
+      return { archive: 2, record: 10 };
+    case 232:
+      return { archive: 302, record: 3 };
+    case 231:
+      return { archive: 302, record: 25 };
+    default:
+      return { archive: climateSettings.groundArchive, record: 1 };
   }
 }
 
 /** The material's texture strength. */
 export function seafloorTextureStrength(climate) {
-  return climate === 228 ? SWAMP_GROUND_TEXTURE_STRENGTH : usesDfuGroundTexture(climate) ? DFU_GROUND_TEXTURE_STRENGTH : TERRAIN_TEXTURE_STRENGTH;
+  return climate === 228
+    ? SWAMP_GROUND_TEXTURE_STRENGTH
+    : usesDfuGroundTexture(climate)
+      ? DFU_GROUND_TEXTURE_STRENGTH
+      : TERRAIN_TEXTURE_STRENGTH;
 }
 
 /** ApplyBiomePalette - or the shader's own defaults, which the ocean keeps. */
@@ -237,12 +284,22 @@ export function seafloorPalette(climate) {
   }
   const P = (sand, mid, deep, swamp) => ({ sand, mid, deep, swamp });
   switch (climate) {
-    case 227: case 229: return P([0.52, 0.67, 0.49], [0.24, 0.42, 0.32], [0.08, 0.2, 0.2], [0.16, 0.32, 0.22]);
-    case 228: return P([0.38, 0.36, 0.21], [0.23, 0.25, 0.15], [0.08, 0.12, 0.09], [0.18, 0.17, 0.09]);
-    case 226: case 230: return P([0.58, 0.63, 0.61], [0.34, 0.43, 0.47], [0.12, 0.18, 0.24], [0.24, 0.3, 0.32]);
-    case 224: case 225: return P([0.78, 0.65, 0.42], [0.5, 0.39, 0.22], [0.23, 0.18, 0.13], [0.45, 0.34, 0.18]);
-    case 231: case 232: return P([0.58, 0.62, 0.45], [0.33, 0.39, 0.28], [0.13, 0.18, 0.15], [0.24, 0.3, 0.19]);
-    default: return P([0.3, 0.42, 0.43], [0.16, 0.23, 0.26], [0.06, 0.08, 0.11], [0.12, 0.18, 0.16]);
+    case 227:
+    case 229:
+      return P([0.52, 0.67, 0.49], [0.24, 0.42, 0.32], [0.08, 0.2, 0.2], [0.16, 0.32, 0.22]);
+    case 228:
+      return P([0.38, 0.36, 0.21], [0.23, 0.25, 0.15], [0.08, 0.12, 0.09], [0.18, 0.17, 0.09]);
+    case 226:
+    case 230:
+      return P([0.58, 0.63, 0.61], [0.34, 0.43, 0.47], [0.12, 0.18, 0.24], [0.24, 0.3, 0.32]);
+    case 224:
+    case 225:
+      return P([0.78, 0.65, 0.42], [0.5, 0.39, 0.22], [0.23, 0.18, 0.13], [0.45, 0.34, 0.18]);
+    case 231:
+    case 232:
+      return P([0.58, 0.62, 0.45], [0.33, 0.39, 0.28], [0.13, 0.18, 0.15], [0.24, 0.3, 0.19]);
+    default:
+      return P([0.3, 0.42, 0.43], [0.16, 0.23, 0.26], [0.06, 0.08, 0.11], [0.12, 0.18, 0.16]);
   }
 }
 
@@ -286,7 +343,11 @@ export function horizonAmbientColor(s, { daylight, cameraY, oceanY, waterFogColo
   const end = depthDarkeningEnd(s.waterDepth);
   const t = clamp01((below - DEPTH_DARKENING_START) / Math.max(0.001, end - DEPTH_DARKENING_START));
   const k = t * t * (3 - 2 * t);
-  return lerpColor(distanceFogScatter(daylight, waterFogColor), distanceFogDeep(daylight), clamp01(k * 0.85 + strength * 0.18));
+  return lerpColor(
+    distanceFogScatter(daylight, waterFogColor),
+    distanceFogDeep(daylight),
+    clamp01(k * 0.85 + strength * 0.18),
+  );
 }
 
 /**
@@ -306,7 +367,11 @@ export function horizonAmbientColor(s, { daylight, cameraY, oceanY, waterFogColo
  * @param {{daylight: number, cameraY: number, oceanY: number, waterFogColor?: number[], murk?: number}} f
  * @param {Float32Array} [out]
  */
-export function distanceFogUniforms(s, { daylight, cameraY, oceanY, waterFogColor = DEFAULT_UNDERWATER_FOG_COLOR, murk = 1 }, out = new Float32Array(20)) {
+export function distanceFogUniforms(
+  s,
+  { daylight, cameraY, oceanY, waterFogColor = DEFAULT_UNDERWATER_FOG_COLOR, murk = 1 },
+  out = new Float32Array(20),
+) {
   const strength = clamp01(s.fogStrength);
   const vision = underwaterVisionDistance(s.fogDistance) * murk;
   const scatter = distanceFogScatter(daylight, waterFogColor);
@@ -314,17 +379,24 @@ export function distanceFogUniforms(s, { daylight, cameraY, oceanY, waterFogColo
   const scatterStrength = lerp(0.85, 1.3, strength);
   const end = depthDarkeningEnd(s.waterDepth);
   // the shader's: saturate((max(surface - camera, 0) - start) / (max(start + 0.001, end) - start)), smoothed
-  const t = clamp01((Math.max(oceanY - cameraY, 0) - DEPTH_DARKENING_START) / (Math.max(DEPTH_DARKENING_START + 0.001, end) - DEPTH_DARKENING_START));
+  const t = clamp01(
+    (Math.max(oceanY - cameraY, 0) - DEPTH_DARKENING_START) /
+      (Math.max(DEPTH_DARKENING_START + 0.001, end) - DEPTH_DARKENING_START),
+  );
   const dd = t * t * (3 - 2 * t);
   const darken = dd * -0.45 + 1;
   const v = Math.max(darken * vision, 1);
   const k = strength * 0.9 + 0.55;
-  const near = Math.min(dd * 0.65, 1), far = Math.min(strength * 0.18 + dd * 0.85, 1);
+  const near = Math.min(dd * 0.65, 1),
+    far = Math.min(strength * 0.18 + dd * 0.85, 1);
   const bandStart = v * (strength * -0.85 + 1.4);
   const bandEnd = Math.max(v * (strength * -2.15 + 3.2), bandStart + 0.1);
   let bandFactor = Math.max((strength - 0.15) * 1.17647052, 0);
   bandFactor = bandFactor * bandFactor * (3 - 2 * bandFactor);
-  out[0] = 1; out[1] = oceanY; out[2] = v; out[3] = strength;
+  out[0] = 1;
+  out[1] = oceanY;
+  out[2] = v;
+  out[3] = strength;
   for (let i = 0; i < 3; i++) {
     out[4 + i] = (k * FOG_ABSORPTION[i]) / v;
     out[8 + i] = scatter[i] + (deep[i] - scatter[i]) * near;
@@ -333,7 +405,10 @@ export function distanceFogUniforms(s, { daylight, cameraY, oceanY, waterFogColo
   out[7] = (k * scatterStrength) / v;
   out[11] = darken;
   out[15] = bandFactor;
-  out[16] = bandStart; out[17] = bandEnd; out[18] = v * (strength * -2 + 3.6); out[19] = 0;
+  out[16] = bandStart;
+  out[17] = bandEnd;
+  out[18] = v * (strength * -2 + 3.6);
+  out[19] = 0;
   return out;
 }
 
@@ -343,7 +418,10 @@ export function distanceFogUniforms(s, { daylight, cameraY, oceanY, waterFogColo
  * @param {number[]} col @param {number} d @param {Float32Array} u - distanceFogUniforms'
  */
 export function distanceFogAt(col, d, u) {
-  const sm = (a, b, x) => { const q = clamp01((x - a) / (b - a)); return q * q * (3 - 2 * q); };
+  const sm = (a, b, x) => {
+    const q = clamp01((x - a) / (b - a));
+    return q * q * (3 - 2 * q);
+  };
   const v = u[2];
   const f = Math.max(sm(0.5 * v, 1.45 * v, d), u[15] * sm(u[16], u[17], d));
   const scat = 1 - Math.exp(-d * u[7]);

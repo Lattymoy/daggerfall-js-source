@@ -27,7 +27,8 @@ export function plateLooks(led, k, wrong = null, out = [], t = led?.ec ?? 0) {
   } else if (led.p === DP.work) {
     for (let n = 0; n < led.next; n++) out[led.order[n]] = PLATE_LOOK.lit;
   }
-  if (wrong && t >= wrong.at && t - wrong.at < PLATE_WRONG_MS && wrong.j >= 0 && wrong.j < k) out[wrong.j] = PLATE_LOOK.wrong;
+  if (wrong && t >= wrong.at && t - wrong.at < PLATE_WRONG_MS && wrong.j >= 0 && wrong.j < k)
+    out[wrong.j] = PLATE_LOOK.wrong;
   return out;
 }
 
@@ -43,7 +44,7 @@ export function shownPlate(led) {
 export const DELVE_SOUNDS = Object.freeze({
   chime: (n) => Object.freeze({ rec: SOUND.MakeItem, vol: 0.7, pitch: 0.9 + 0.12 * Math.max(0, (n | 0) - 1) }),
   wrong: Object.freeze({ rec: SOUND.SelectClassDrums, vol: 1, pitch: 0.8 }),
-  wake: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.75 }),   // the Examination's toll (ui/eliteGates/egBeats.js EG_BEAT_SOUNDS.toll)
+  wake: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.75 }), // the Examination's toll (ui/eliteGates/egBeats.js EG_BEAT_SOUNDS.toll)
   won: Object.freeze({ rec: SOUND.ArenaFanfareLevelUp, vol: 0.9, pitch: 1 }),
   // DLV4: the pieces - a source or seal rising and breaking (the Court's crystals' own, world/gate/gateBoss.js
   // CRYSTAL_CLIPS), a brazier catching, a weight set down

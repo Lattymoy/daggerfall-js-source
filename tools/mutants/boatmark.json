@@ -2,8 +2,8 @@
   {
     "name": "BOAT-MARK-the-live-place-always",
     "file": "src/ui/boatMarks.js",
-    "old": "  out[0] = x0 + terrainSize / 2; out[1] = z0 + terrainSize / 2;\n",
-    "new": "  if (live) { out[0] = p[0]; out[1] = p[2]; } else { out[0] = x0 + terrainSize / 2; out[1] = z0 + terrainSize / 2; }\n",
+    "old": "  out[0] = x0 + terrainSize / 2;\n  out[1] = z0 + terrainSize / 2;",
+    "new": "  if (live) {\n    out[0] = p[0];\n    out[1] = p[2];\n  } else {\n    out[0] = x0 + terrainSize / 2;\n    out[1] = z0 + terrainSize / 2;\n  }",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BOAT-MARK-the-middle-always",
     "file": "src/ui/boatMarks.js",
-    "old": "  if (live && !boat.inside\n    && p[0] >= x0",
-    "new": "  if (false\n    && p[0] >= x0",
+    "old": "    live &&\n    !boat.inside &&",
+    "new": "    false &&",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BOAT-MARK-the-slack-dropped",
     "file": "src/ui/boatMarks.js",
-    "old": "p[0] >= x0 - BOAT_PIXEL_SLACK_M && p[0] <= x0 + terrainSize + BOAT_PIXEL_SLACK_M",
-    "new": "p[0] >= x0 && p[0] <= x0 + terrainSize",
+    "old": "    p[0] >= x0 - BOAT_PIXEL_SLACK_M &&\n    p[0] <= x0 + terrainSize + BOAT_PIXEL_SLACK_M &&",
+    "new": "    p[0] >= x0 &&\n    p[0] <= x0 + terrainSize &&",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BOAT-MARK-the-dungeon-boat-out-of-sight-at-her-place",
     "file": "src/ui/boatMarks.js",
-    "old": "  if (live && !boat.inside\n",
-    "new": "  if (live\n",
+    "old": "    !boat.inside &&\n    p[0] >= x0 - BOAT_PIXEL_SLACK_M &&",
+    "new": "    p[0] >= x0 - BOAT_PIXEL_SLACK_M &&",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BOAT-MARK-the-translation-dropped",
     "file": "src/ui/boatMarks.js",
-    "old": "  const x0 = t[0], z0 = t[2];",
-    "new": "  const x0 = 0, z0 = 0;",
+    "old": "  const x0 = t[0],\n    z0 = t[2];",
+    "new": "  const x0 = 0,\n    z0 = 0;",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BOAT-MARK-the-axes-crossed",
     "file": "src/ui/boatMarks.js",
-    "old": "  const x0 = t[0], z0 = t[2];",
-    "new": "  const x0 = t[2], z0 = t[0];",
+    "old": "  const x0 = t[0],\n    z0 = t[2];",
+    "new": "  const x0 = t[2],\n    z0 = t[0];",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BOAT-MARK-the-near-test-on-the-wrong-axis",
     "file": "src/ui/boatMarks.js",
-    "old": "p[1] - feet[2]) < BOAT_MARK_NEAR_M",
-    "new": "p[1] - feet[1]) < BOAT_MARK_NEAR_M",
+    "old": "    if (Math.hypot(p[0] - feet[0], p[1] - feet[2]) < BOAT_MARK_NEAR_M) continue;",
+    "new": "    if (Math.hypot(p[0] - feet[0], p[1] - feet[1]) < BOAT_MARK_NEAR_M) continue;",
     "tests": [
       "test/ui/boatmark.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BOAT-MARK-the-floats-off-the-hex",
     "file": "src/ui/boatMarks.js",
-    "old": "0xe0 / 255, 0xb0 / 255",
-    "new": "0xe0 / 256, 0xb0 / 255",
+    "old": "export const BOAT_MARK_RGB = Object.freeze([0x20 / 255, 0xe0 / 255, 0xb0 / 255, 1]);",
+    "new": "export const BOAT_MARK_RGB = Object.freeze([0x20 / 255, 0xe0 / 256, 0xb0 / 255, 1]);",
     "tests": [
       "test/ui/boatmark.test.js"
     ]

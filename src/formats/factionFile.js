@@ -14,10 +14,23 @@
 import { rand, randomRangeInclusive } from './dfRandom.js';
 
 export const FACTION_TYPES = Object.freeze({
-  None: -1, Daedra: 0, God: 1, Group: 2, Subgroup: 3, Individual: 4,
-  Official: 5, VampireClan: 6, Province: 7, WitchesCoven: 8, Temple: 9,
-  KnightlyGuard: 10, MagicUser: 11, Generic: 12, Thieves: 13,
-  Courts: 14, People: 15,
+  None: -1,
+  Daedra: 0,
+  God: 1,
+  Group: 2,
+  Subgroup: 3,
+  Individual: 4,
+  Official: 5,
+  VampireClan: 6,
+  Province: 7,
+  WitchesCoven: 8,
+  Temple: 9,
+  KnightlyGuard: 10,
+  MagicUser: 11,
+  Generic: 12,
+  Thieves: 13,
+  Courts: 14,
+  People: 15,
 });
 
 /** FactionFile.Flags (:629-633) - the only two DFU names. Here, beside FACTION_TYPES, since FIELD BUGS 2026-10-14's
@@ -26,25 +39,58 @@ export const FACTION_TYPES = Object.freeze({
 export const FACTION_FLAGS = Object.freeze({ RulerImmune: 0x10, Summoned: 0x40 });
 
 export const SOCIAL_GROUPS = Object.freeze({
-  None: -1, Commoners: 0, Merchants: 1, Scholars: 2, Nobility: 3,
-  Underworld: 4, SGroup5: 5, SupernaturalBeings: 6, GuildMembers: 7,
-  SGroup8: 8, SGroup9: 9, SGroup10: 10,
+  None: -1,
+  Commoners: 0,
+  Merchants: 1,
+  Scholars: 2,
+  Nobility: 3,
+  Underworld: 4,
+  SGroup5: 5,
+  SupernaturalBeings: 6,
+  GuildMembers: 7,
+  SGroup8: 8,
+  SGroup9: 9,
+  SGroup10: 10,
 });
 export const SOCIAL_GROUP_COUNT = 11;
 
 export const GUILD_GROUPS = Object.freeze({
-  None: -1, Oblivion: 2, DarkBrotherHood: 3, GeneralPopulace: 4,
-  Bards: 5, TheFey: 6, Prostitutes: 7, KnightlyOrder: 9, MagesGuild: 10,
-  FightersGuild: 11, Necromancers: 14, Region: 15, HolyOrder: 17,
-  Witches: 22, Vampires: 23, Orsinium: 24,
+  None: -1,
+  Oblivion: 2,
+  DarkBrotherHood: 3,
+  GeneralPopulace: 4,
+  Bards: 5,
+  TheFey: 6,
+  Prostitutes: 7,
+  KnightlyOrder: 9,
+  MagesGuild: 10,
+  FightersGuild: 11,
+  Necromancers: 14,
+  Region: 15,
+  HolyOrder: 17,
+  Witches: 22,
+  Vampires: 23,
+  Orsinium: 24,
   // The placeholder members are REAL enum names in FactionFile.cs
   // :568-602 and Enum.IsDefined matches them - the quest-list router
   // (QuestListsManager.ParseQuestList) files a "GGroup12" row under
   // guilds in DFU, so the mirror carries them too (Q2b-ii VERIFY; no
   // shipped row uses one).
-  GGroup0: 0, GGroup1: 1, GGroup8: 8, GGroup12: 12, GGroup13: 13,
-  GGroup16: 16, GGroup18: 18, GGroup19: 19, GGroup20: 20, GGroup21: 21,
-  GGroup25: 25, GGroup26: 26, GGroup27: 27, GGroup28: 28, GGroup29: 29,
+  GGroup0: 0,
+  GGroup1: 1,
+  GGroup8: 8,
+  GGroup12: 12,
+  GGroup13: 13,
+  GGroup16: 16,
+  GGroup18: 18,
+  GGroup19: 19,
+  GGroup20: 20,
+  GGroup21: 21,
+  GGroup25: 25,
+  GGroup26: 26,
+  GGroup27: 27,
+  GGroup28: 28,
+  GGroup29: 29,
   GGroup30: 30,
 });
 
@@ -67,16 +113,42 @@ export const flatRecord = (flat) => flat & 0x7f;
 
 function newFaction() {
   return {
-    id: 0, parent: 0, type: 0, name: '', rep: 0, summon: 0, region: 0,
-    power: 0, flags: 0, ruler: 0, ally1: 0, ally2: 0, ally3: 0,
-    enemy1: 0, enemy2: 0, enemy3: 0, face: 0, race: 0, flat1: 0,
-    flat2: 0, sgroup: 0, ggroup: 0, minf: 0, maxf: 0, vam: 0, rank: 0,
-    rulerNameSeed: 0, rulerPowerBonus: 0, children: null,
+    id: 0,
+    parent: 0,
+    type: 0,
+    name: '',
+    rep: 0,
+    summon: 0,
+    region: 0,
+    power: 0,
+    flags: 0,
+    ruler: 0,
+    ally1: 0,
+    ally2: 0,
+    ally3: 0,
+    enemy1: 0,
+    enemy2: 0,
+    enemy3: 0,
+    face: 0,
+    race: 0,
+    flat1: 0,
+    flat2: 0,
+    sgroup: 0,
+    ggroup: 0,
+    minf: 0,
+    maxf: 0,
+    vam: 0,
+    rank: 0,
+    rulerNameSeed: 0,
+    rulerPowerBonus: 0,
+    children: null,
   };
 }
 
 function parseFactionBlock(block, faction) {
-  let allyCount = 0, enemyCount = 0, flatCount = 0;
+  let allyCount = 0,
+    enemyCount = 0,
+    flatCount = 0;
   for (const line of block) {
     if (line.includes('#')) {
       faction.id = parseInt(line.split('#')[1].trim(), 10);
@@ -92,26 +164,56 @@ function parseFactionBlock(block, faction) {
     const tag = parts[0].trim().toLowerCase();
     const value = parts[1].trim();
     switch (tag) {
-      case 'name': faction.name = value; break;
-      case 'rep': faction.rep = parseInt(value, 10); break;
-      case 'summon': faction.summon = parseInt(value, 10); break;
+      case 'name':
+        faction.name = value;
+        break;
+      case 'rep':
+        faction.rep = parseInt(value, 10);
+        break;
+      case 'summon':
+        faction.summon = parseInt(value, 10);
+        break;
       case 'region':
         faction.region = parseInt(value, 10);
         // 1-based -> 0-based, as classic does
         if (faction.region !== -1) faction.region--;
         break;
-      case 'type': faction.type = parseInt(value, 10); break;
-      case 'power': faction.power = parseInt(value, 10); break;
-      case 'flags': faction.flags |= parseInt(value, 10); break;
-      case 'ruler': faction.ruler = parseInt(value, 10); break;
-      case 'face': faction.face = parseInt(value, 10); break;
-      case 'race': faction.race = parseInt(value, 10); break;
-      case 'sgroup': faction.sgroup = parseInt(value, 10); break;
-      case 'ggroup': faction.ggroup = parseInt(value, 10); break;
-      case 'minf': faction.minf = parseInt(value, 10); break;
-      case 'maxf': faction.maxf = parseInt(value, 10); break;
-      case 'vam': faction.vam = parseInt(value, 10); break;
-      case 'rank': faction.rank = parseInt(value, 10); break;
+      case 'type':
+        faction.type = parseInt(value, 10);
+        break;
+      case 'power':
+        faction.power = parseInt(value, 10);
+        break;
+      case 'flags':
+        faction.flags |= parseInt(value, 10);
+        break;
+      case 'ruler':
+        faction.ruler = parseInt(value, 10);
+        break;
+      case 'face':
+        faction.face = parseInt(value, 10);
+        break;
+      case 'race':
+        faction.race = parseInt(value, 10);
+        break;
+      case 'sgroup':
+        faction.sgroup = parseInt(value, 10);
+        break;
+      case 'ggroup':
+        faction.ggroup = parseInt(value, 10);
+        break;
+      case 'minf':
+        faction.minf = parseInt(value, 10);
+        break;
+      case 'maxf':
+        faction.maxf = parseInt(value, 10);
+        break;
+      case 'vam':
+        faction.vam = parseInt(value, 10);
+        break;
+      case 'rank':
+        faction.rank = parseInt(value, 10);
+        break;
       case 'ally': {
         const ally = parseInt(value, 10);
         if (allyCount === 0) faction.ally1 = ally;
@@ -138,7 +240,7 @@ function parseFactionBlock(block, faction) {
             faction.flat1 = flat;
             faction.flat2 = flat;
           } else if (flatCount === 1) {
-            faction.flat2 = flat;   // the second flat is the female
+            faction.flat2 = flat; // the second flat is the female
           } else {
             throw new Error(`Too many flats for faction #${faction.id}`);
           }
@@ -164,7 +266,9 @@ export function registerCustomFaction(factionId, factionData) {
   return true;
 }
 export const customFactions = () => _customFactions;
-export function _resetCustomFactions() { _customFactions.clear(); }
+export function _resetCustomFactions() {
+  _customFactions.clear();
+}
 
 export function relinkChildren(dict) {
   for (const faction of [...dict.values()]) {
@@ -178,8 +282,8 @@ export function relinkChildren(dict) {
 
 export class FactionFile {
   constructor() {
-    this.factionDict = new Map();       // id -> faction
-    this.factionNameToId = new Map();   // first name wins (DFU ignores dupes)
+    this.factionDict = new Map(); // id -> faction
+    this.factionNameToId = new Map(); // first name wins (DFU ignores dupes)
   }
 
   /** Parse FACTION.TXT bytes (UTF-8 text). */
@@ -250,15 +354,19 @@ export class FactionFile {
       // rolls all add nothing. The port stored what DFU throws away.
       // Bug-for-bug: draw, then drop.
       const random = (rand() << 16) >>> 0;
-      void ((rand() | random) >>> 0);          // DFU: faction.rulerNameSeed on the discarded copy
-      void (randomRangeInclusive(0, 50) + 20);  // DFU: faction.rulerPowerBonus on the discarded copy
+      void ((rand() | random) >>> 0); // DFU: faction.rulerNameSeed on the discarded copy
+      void (randomRangeInclusive(0, 50) + 20); // DFU: faction.rulerPowerBonus on the discarded copy
 
       previousId = faction.id;
     }
   }
 
-  getFaction(id) { return this.factionDict.get(id) ?? null; }
-  getFactionId(name) { return this.factionNameToId.get(name) ?? -1; }
+  getFaction(id) {
+    return this.factionDict.get(id) ?? null;
+  }
+  getFactionId(name) {
+    return this.factionNameToId.get(name) ?? -1;
+  }
 }
 
 export const isAlly = (a, b) => a.ally1 === b.id || a.ally2 === b.id || a.ally3 === b.id;

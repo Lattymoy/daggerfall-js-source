@@ -148,8 +148,8 @@
   {
     "name": "ELITE-FLOOR-no-floor",
     "file": "src/systems/eliteFoes.js",
-    "old": "  && (!checkLevel || (entity.level | 0) >= ELITE_FOE_MIN_LEVEL)\n",
-    "new": "\n",
+    "old": "  (!checkLevel || (entity.level | 0) >= ELITE_FOE_MIN_LEVEL) &&\n  entity.mobileType !== KNIGHT_CITY_WATCH &&",
+    "new": "  entity.mobileType !== KNIGHT_CITY_WATCH &&",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "FOE-TITLE-the-elite-unnamed",
     "file": "src/systems/foeTitle.js",
-    "old": ": lead ?? (entity?.eliteFoe ? `Elite ${named}` : named);",
-    "new": ": lead ?? named;",
+    "old": "  const special = entity?.staffBoss ? `Mighty ${named}` : (lead ?? (entity?.eliteFoe ? `Elite ${named}` : named)); // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)",
+    "new": "  const special = entity?.staffBoss ? `Mighty ${named}` : (lead ?? named); // STAFF-EVENT: a staff event's mini boss (systems/eliteFoes.js promoteStaffBoss)",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "REVENANT-CARD-no-typing",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "typed: still ? full.length : 0,",
-    "new": "typed: full.length,",
+    "old": "      typed: still ? full.length : 0,",
+    "new": "      typed: full.length,",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "REVENANT-CARD-the-clock-runs-hidden",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "  if (hidden) return _cards.length;\n",
-    "new": "",
+    "old": "  if (hidden) return _cards.length;\n  const ms = Math.max(0, Number(dt) || 0) * 1000;",
+    "new": "  const ms = Math.max(0, Number(dt) || 0) * 1000;",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "REVENANT-CARD-a-revenant-twice",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "    if (ev.id) for (const c of _cards) if (c.ev.id === ev.id && c.outMs == null) c.outMs = REVENANT_SLIDE_MS;\n",
-    "new": "",
+    "old": "    if (ev.id) for (const c of _cards) if (c.ev.id === ev.id && c.outMs == null) c.outMs = REVENANT_SLIDE_MS;\n    const { el, say } = build(d, ev);",
+    "new": "    const { el, say } = build(d, ev);",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "REVENANT-CARD-no-cap",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "    for (const c of _cards.slice(REVENANT_CARDS_MAX)) if (c.outMs == null) c.outMs = REVENANT_SLIDE_MS;\n",
-    "new": "",
+    "old": "    for (const c of _cards.slice(REVENANT_CARDS_MAX)) if (c.outMs == null) c.outMs = REVENANT_SLIDE_MS;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "REVENANT-PAGE-the-fallen-among-the-living",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  const living = all.filter((r) => !r.defeated && !r.sworn)",
-    "new": "  const living = all.filter((r) => !r.sworn)",
+    "old": "  const living = all.filter((r) => !r.defeated && !r.sworn).sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt);",
+    "new": "  const living = all.filter((r) => !r.sworn).sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt);",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "REVENANT-PAGE-the-order",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": ".sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt);",
-    "new": ".sort((a, b) => a.rank - b.rank || a.dueAt - b.dueAt);",
+    "old": "  const living = all.filter((r) => !r.defeated && !r.sworn).sort((a, b) => b.rank - a.rank || a.dueAt - b.dueAt);",
+    "new": "  const living = all.filter((r) => !r.defeated && !r.sworn).sort((a, b) => a.rank - b.rank || a.dueAt - b.dueAt);",
     "tests": [
       "test/systems/revenant_card.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "ELITE-FLOOR-the-kind-floor-dropped",
     "file": "src/systems/eliteFoes.js",
-    "old": "e.champion == null && kindLevel(e.mobileType) >= ELITE_FOE_MIN_LEVEL) pool.push(i);",
-    "new": "e.champion == null) pool.push(i);",
+    "old": "    if (\n      e &&\n      !e.allied &&\n      e.reaction !== 'passive' &&\n      e.champion == null &&\n      kindLevel(e.mobileType) >= ELITE_FOE_MIN_LEVEL\n    )\n      pool.push(i);",
+    "new": "    if (e && !e.allied && e.reaction !== 'passive' && e.champion == null) pool.push(i);",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js",
       "test/systems/revenant_card.test.js"

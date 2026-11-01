@@ -29,8 +29,8 @@
   {
     "name": "SITE-NAMED-the-re-seat-unhooked",
     "file": "src/systems/quest/machine.js",
-    "old": "    for (const resource of quest.resources.values()) if (resource.isPlace) resource.nameSiteAgain?.(world);",
-    "new": "",
+    "old": "    for (const resource of quest.resources.values()) if (resource.isPlace) resource.nameSiteAgain?.(world); // FB1020h SITE-NAMED: a site the bag named '' off a town - not counted: no site moved",
+    "new": "    // FB1020h SITE-NAMED: a site the bag named '' off a town - not counted: no site moved",
     "tests": [
       "test/systems/quest/fb1020h_sitenamed.test.js"
     ]

@@ -14,13 +14,30 @@ export const QL_STAMP = 1;
  *  FIELD BUGS 2026-10-25i HEART-TAKEN (AUDIT FB1025i B4): `reread`, the mends this state has taken - a sheet's objective
  *  whose binding was mended names its mend, and a state that has not taken it reads that objective afresh once (qlLaw.js
  *  observe), so a latch an older build wrote under the old binding does not stand. */
-export const freshState = () => ({ stamp: QL_STAMP, tier: 1, opened: [], done: [], failed: [], choices: {}, outcome: null, paid: false, moved: false, acts: {}, received: false, reread: [] });
+export const freshState = () => ({
+  stamp: QL_STAMP,
+  tier: 1,
+  opened: [],
+  done: [],
+  failed: [],
+  choices: {},
+  outcome: null,
+  paid: false,
+  moved: false,
+  acts: {},
+  received: false,
+  reread: [],
+});
 
 const idList = (v) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === 'string' && x))] : []);
-const strMap = (v) => (v && typeof v === 'object' && !Array.isArray(v)
-  ? Object.fromEntries(Object.entries(v).filter(([k, x]) => typeof k === 'string' && typeof x === 'string' && x)) : {});
-const countMap = (v) => (v && typeof v === 'object' && !Array.isArray(v)
-  ? Object.fromEntries(Object.entries(v).filter(([, x]) => Number.isSafeInteger(x) && x > 0)) : {});
+const strMap = (v) =>
+  v && typeof v === 'object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.entries(v).filter(([k, x]) => typeof k === 'string' && typeof x === 'string' && x))
+    : {};
+const countMap = (v) =>
+  v && typeof v === 'object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.entries(v).filter(([, x]) => Number.isSafeInteger(x) && x > 0))
+    : {};
 
 /** A save's `ql`, read back: a stamp this law knows and its fields each of its own kind, else null - a hand-edited or
  *  older envelope never throws a quest out of the load (machine.js restoreSaveData's per-quest catch is for DFU's
@@ -29,10 +46,18 @@ export function readState(data) {
   if (!data || typeof data !== 'object' || data.stamp !== QL_STAMP) return null;
   const tier = Number.isSafeInteger(data.tier) ? Math.min(4, Math.max(1, data.tier)) : 1;
   return {
-    stamp: QL_STAMP, tier, opened: idList(data.opened), done: idList(data.done), failed: idList(data.failed), choices: strMap(data.choices),
+    stamp: QL_STAMP,
+    tier,
+    opened: idList(data.opened),
+    done: idList(data.done),
+    failed: idList(data.failed),
+    choices: strMap(data.choices),
     outcome: typeof data.outcome === 'string' && data.outcome ? data.outcome : null,
-    paid: data.paid === true, moved: data.moved === true, acts: countMap(data.acts), received: data.received === true,
-    reread: idList(data.reread),   // HEART-TAKEN (AUDIT FB1025i B4): an older save's is empty - its mends are taken at its first read
+    paid: data.paid === true,
+    moved: data.moved === true,
+    acts: countMap(data.acts),
+    received: data.received === true,
+    reread: idList(data.reread), // HEART-TAKEN (AUDIT FB1025i B4): an older save's is empty - its mends are taken at its first read
   };
 }
 

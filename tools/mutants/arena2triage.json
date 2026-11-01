@@ -79,8 +79,8 @@
   {
     "name": "ARENA2-TRIAGE-4-the-court-draws-both-dice",
     "file": "src/systems/court.js",
-    "old": "const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
-    "new": "const punishmentType = (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) && failed2 ? 2 : 0;",
+    "old": "  const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
+    "new": "  const punishmentType = (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) && failed2 ? 2 : 0;",
     "why": "killed by audit18 social F2 against the player's own data (ARENA2_PATH): the banishment's second roll is drawn and the defense reads the wrong number (AUDIT 21 F5's short-circuit)",
     "tests": [
       "test/systems/audit18_systems_social.test.js",
@@ -209,8 +209,8 @@
   {
     "name": "ARENA2-TRIAGE-5-the-fan-a-triangle-short",
     "file": "src/world/meshReader.js",
-    "old": "for (let tri = 0; tri < plane.points.length - 2; tri++) {",
-    "new": "for (let tri = 0; tri < plane.points.length - 3; tri++) {",
+    "old": "      for (let tri = 0; tri < plane.points.length - 2; tri++) {",
+    "new": "      for (let tri = 0; tri < plane.points.length - 3; tri++) {",
     "why": "killed by 'c2/S7 mesh 99900 is a real, whole model' against the player's own data (ARENA2_PATH): each plane's fan is a triangle short, so the submeshes no longer tile the index buffer - ARENA-FIX re-aim: against this ARENA2 that pin no longer fails it (it survived at the tree before ARENA-FIX too), so the colosseum's rebuild out of ARCH3D (5,138 triangles, test/world/arena/arena1_model.test.js) holds it as well",
     "tests": [
       "test/ui/automap/roadc_automap_pick.test.js",

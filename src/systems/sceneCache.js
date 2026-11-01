@@ -49,16 +49,19 @@
  *  miss rather than an error. */
 export const interiorSceneName = (mapId, buildingKey) =>
   `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;
-export const worldSceneName = (mapPixelX, mapPixelY) =>
-  `DaggerfallWorld [mapX=${mapPixelX}, mapY=${mapPixelY}]`;
+export const worldSceneName = (mapPixelX, mapPixelY) => `DaggerfallWorld [mapX=${mapPixelX}, mapY=${mapPixelY}]`;
 
 /** LootContainerTypes (DaggerfallUnityEnums.cs:558-566). The port
  *  needs the enum for ONE reason - telling a corpse from a chest at
  *  the permanent-scene clear - but carries it whole, because a
  *  partial enum is how the next reader gets the numbering wrong. */
 export const LOOT_CONTAINER_TYPES = Object.freeze({
-  Nothing: 0, RandomTreasure: 1, CorpseMarker: 2,
-  DroppedLoot: 3, ShopShelves: 4, HouseContainers: 5,
+  Nothing: 0,
+  RandomTreasure: 1,
+  CorpseMarker: 2,
+  DroppedLoot: 3,
+  ShopShelves: 4,
+  HouseContainers: 5,
 });
 
 /** A fresh manager. `scenes` is DFU's sceneDataCache and `permanent`
@@ -73,11 +76,13 @@ export function createSceneCache() {
  *  (:68-82). Adding twice is a no-op, and removing one that was never
  *  there is not an error - List.Remove answers false and DFU ignores
  *  it. */
-export const addPermanentScene = (cache, sceneName) => { cache.permanent.add(sceneName); };
+export const addPermanentScene = (cache, sceneName) => {
+  cache.permanent.add(sceneName);
+};
 export const containsPermanentScene = (cache, sceneName) => cache.permanent.has(sceneName);
 export const removePermanentScene = (cache, sceneName) => {
   cache.permanent.delete(sceneName);
-  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n);   // WD3: and its other layouts' visits
+  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n); // WD3: and its other layouts' visits
 };
 /** WD3 (AUDIT WD3 R1): A PERMANENT SCENE'S VISIT IN ANOTHER LAYOUT of its town (a house's town pinned out, its pack
  *  not loaded) - kept beside the scene, never over it, and given back when the town next stands in that layout; it
@@ -89,11 +94,12 @@ export const layoutSceneName = (sceneName, layout) => `${sceneName}|${layout || 
  *  position and its items in a nested record, where DFU's
  *  LootContainerData_v1 is flat - so a shallow `{...p}` would share
  *  the live arrays with the scene the caller is about to tear down. */
-const copyPiles = (piles) => piles.map((p) => ({
-  ...p,
-  pos: [...p.pos],
-  items: (p.items ?? []).map((it) => ({ ...it })),
-}));
+const copyPiles = (piles) =>
+  piles.map((p) => ({
+    ...p,
+    pos: [...p.pos],
+    items: (p.items ?? []).map((it) => ({ ...it })),
+  }));
 
 /** One scene entry, detached from its caller - AUDIT 68 S31-scenecache-triple-copy: the store, the save and the
  *  load each wrote this copy by hand, and the save's drifted once (TERRAIN-SCALE1: torches and camps gone on load).
@@ -111,10 +117,15 @@ const copySceneEntry = (d) => ({
   // piece id, the online home's too - the owner's things are the owner's save's). A record written before DECOR1
   // carries neither and reads as a room with nothing placed.
   decor: (d.decor ?? []).map((p) => ({
-    ...p, pos: [...(p.pos ?? [])], rot: [...(p.rot ?? [])], flat: p.flat ? [...p.flat] : null,
+    ...p,
+    pos: [...(p.pos ?? [])],
+    rot: [...(p.rot ?? [])],
+    flat: p.flat ? [...p.flat] : null,
     light: p.light ? { ...p.light, color: [...(p.light.color ?? [])] } : null,
   })),
-  decorItems: Object.fromEntries(Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))])),
+  decorItems: Object.fromEntries(
+    Object.entries(d.decorItems ?? {}).map(([id, list]) => [id, (list ?? []).map((it) => ({ ...it }))]),
+  ),
   // DECOR2a: the owner's own items standing in the room, by piece id - the save's in every room, the online home's
   // too (its piece is the service's, the thing itself the owner's). A record written before DECOR2 carries none.
   decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),
@@ -124,14 +135,17 @@ const copySceneEntry = (d) => ({
   // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so
   // walking out of the hall and back, or a save and a load, keeps what was bought gone until the next day's stock. A
   // record written before it carries none, and the next open mints the day's shelf.
-  guildShelves: Object.fromEntries(Object.entries(d.guildShelves ?? {})
-    .filter(([, s]) => s && Number.isFinite(s.day) && Array.isArray(s.items))
-    .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }])),
+  guildShelves: Object.fromEntries(
+    Object.entries(d.guildShelves ?? {})
+      .filter(([, s]) => s && Number.isFinite(s.day) && Array.isArray(s.items))
+      .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }]),
+  ),
   // TERRAIN-SCALE1: `frame` names what the positions above are measured from ('building': the interior's own
   // building, as DFU's SerializableLootContainer restores an interior container by its localPosition; null: the
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
   // before either was carried, which the restoring host reads as the old raw frame on the prefab's 1.5.
-  frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,
+  frame: d.frame ?? null,
+  terrainScale: d.terrainScale ?? null,
   // BAY-LEFT-GROUND (bible/03-World/Landforms.md, D5): the law of an exterior height's frame (terrainSampler.js
   // GROUND_FRAME_LAW) - absent on an entry written before it, which past the Bay stood the shaped ground
   groundFrame: d.groundFrame ?? null,
@@ -184,11 +198,19 @@ export function foldLayoutCopies(cache, sceneName) {
   for (const n of copies) {
     const c = copySceneEntry(cache.scenes.get(n));
     cache.scenes.delete(n);
-    const ids = new Set(base.decor.map((pc) => pc.id)), added = new Set();
-    for (const pc of c.decor) if (!ids.has(pc.id)) { base.decor.push(pc); ids.add(pc.id); added.add(String(pc.id)); }
-    for (const [id, list] of Object.entries(c.decorItems)) if (added.has(id)) base.decorItems[id] = list;   // what a piece of its own holds, with it
+    const ids = new Set(base.decor.map((pc) => pc.id)),
+      added = new Set();
+    for (const pc of c.decor)
+      if (!ids.has(pc.id)) {
+        base.decor.push(pc);
+        ids.add(pc.id);
+        added.add(String(pc.id));
+      }
+    for (const [id, list] of Object.entries(c.decorItems)) if (added.has(id)) base.decorItems[id] = list; // what a piece of its own holds, with it
     for (const [id, item] of Object.entries(c.decorOwn)) if (!(id in base.decorOwn)) base.decorOwn[id] = item;
-    base.droppedPiles.push(...c.droppedPiles); base.droppedTorches.push(...c.droppedTorches); base.camps.push(...c.camps);
+    base.droppedPiles.push(...c.droppedPiles);
+    base.droppedTorches.push(...c.droppedTorches);
+    base.camps.push(...c.camps);
     for (const k of c.hiddenBase) if (!base.hiddenBase.includes(k)) base.hiddenBase.push(k);
   }
   cache.scenes.set(sceneName, base);
@@ -251,9 +273,7 @@ export function clearSceneCache(cache, { start = true } = {}) {
       ...data,
       // "sans corpses" - a body left in your own house does not
       // survive the world moving on, though the chest beside it does
-      lootContainers: data.lootContainers.filter(
-        (c) => c.containerType !== LOOT_CONTAINER_TYPES.CorpseMarker,
-      ),
+      lootContainers: data.lootContainers.filter((c) => c.containerType !== LOOT_CONTAINER_TYPES.CorpseMarker),
     });
   }
   cache.scenes = kept;
@@ -290,7 +310,7 @@ export function snapshotSceneCache(cache) {
   };
 }
 export function restoreSceneCache(cache, snap) {
-  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));   // `?? []` inside keeps a pre-ID1 save loadable
+  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)])); // `?? []` inside keeps a pre-ID1 save loadable
   cache.permanent = new Set(snap?.permanentScenes ?? []);
   return cache;
 }

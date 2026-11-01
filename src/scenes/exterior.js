@@ -1987,7 +1987,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const exteriorFoePool = () => [...cityGuards.guards, ...exteriorFoes.foes];
   // ROAD-B/ROAD-G G2: the AREA, for GameManager.MakeEnemiesHostile
   // (:790-806) - the street's two pools joined with whatever inside
-  // pool the mode machine holds, which is world.js:"came from hosts wiring"'s line.
+  // pool the mode machine holds, which is testPresetHost.js:"came from hosts wiring"'s line.
   const _liveEnemyDatabase = () => [
     ...exteriorFoes.foes, ...cityGuards.guards, ...(modes?.insideFoes?.() ?? []),
   ];
@@ -2916,7 +2916,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     surfacePlayer,
     // QG1: the ready-spell doors - EntityEffectManager's two events
     // (hostMagic.js:"onNewReadySpell ="), which are the ONLY route into the quest
-    // machine's CastSpellDo / CastEffectDo latches (machine.js:"LATCHES this on the"/machine.js:"PlayerEffectManager.OnCastReadySpell";
+    // machine's CastSpellDo / CastEffectDo latches (machine.js:"LATCHES this on the"machine.js:"PlayerEffectManager.OnCastReadySpell";
     // actions.js:"machine's notifyNewReadySpell/notifyCastReadySpell"). This host owns its own cast engine and passed
     // neither key, so on this route - and, because worldModes takes THIS
     // instance indoors, in every shop entered from it - `cast X spell do`

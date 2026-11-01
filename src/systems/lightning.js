@@ -104,30 +104,48 @@ export function boltPath(seed, top, groundY) {
   const height = Math.max(1, top[1] - groundY);
   const n = Math.max(6, Math.min(80, Math.round(height / LEADER_STEP_M)));
   const dy = height / n;
-  let x = top[0], y = top[1], z = top[2], hx = 0, hz = 0;
+  let x = top[0],
+    y = top[1],
+    z = top[2],
+    hx = 0,
+    hz = 0;
   const kink = () => (r() - 0.5) * 2 * LEADER_KINK * dy;
   for (let i = 0; i < n; i++) {
-    hx = 0.45 * hx + kink(); hz = 0.45 * hz + kink();
+    hx = 0.45 * hx + kink();
+    hz = 0.45 * hz + kink();
     // each step takes its share of the height still to fall, give or take a quarter, the last all of it
     const ey = i === n - 1 ? groundY : Math.max(groundY, y - ((y - groundY) / (n - i)) * (0.75 + 0.5 * r()));
-    const nx = x + hx, nz = z + hz;
+    const nx = x + hx,
+      nz = z + hz;
     out.push(x, y, z, nx, ey, nz, 1);
     // a branch off this step, never off the last fifth - a branch reaching the ground is another channel
-    if (i < n * 0.8 && r() < BRANCH_CHANCE) branch(nx, ey, nz, hx, hz, Math.round((n - i) * (0.2 + 0.4 * r())), 0.55, 1);
-    x = nx; y = ey; z = nz;
+    if (i < n * 0.8 && r() < BRANCH_CHANCE)
+      branch(nx, ey, nz, hx, hz, Math.round((n - i) * (0.2 + 0.4 * r())), 0.55, 1);
+    x = nx;
+    y = ey;
+    z = nz;
     if (y <= groundY) break;
   }
   function branch(bx, by, bz, px, pz, steps, w, depth) {
     // out to the side the parent leans, a little further each step, falling slower than the main channel
-    const ox = (r() - 0.5) * 2, oz = (r() - 0.5) * 2, l = Math.hypot(ox, oz) || 1;
-    let ax = px * 0.5 + (ox / l) * dy * 0.6, az = pz * 0.5 + (oz / l) * dy * 0.6;
+    const ox = (r() - 0.5) * 2,
+      oz = (r() - 0.5) * 2,
+      l = Math.hypot(ox, oz) || 1;
+    let ax = px * 0.5 + (ox / l) * dy * 0.6,
+      az = pz * 0.5 + (oz / l) * dy * 0.6;
     for (let k = 0; k < steps; k++) {
-      ax = 0.5 * ax + kink(); az = 0.5 * az + kink();
-      const cx = bx + ax, cz = bz + az, cy = Math.max(groundY + dy, by - dy * (0.4 + 0.5 * r()));
+      ax = 0.5 * ax + kink();
+      az = 0.5 * az + kink();
+      const cx = bx + ax,
+        cz = bz + az,
+        cy = Math.max(groundY + dy, by - dy * (0.4 + 0.5 * r()));
       const wk = w * (1 - k / Math.max(1, steps));
       out.push(bx, by, bz, cx, cy, cz, wk);
-      if (depth < 2 && r() < BRANCH_CHANCE * 0.6) branch(cx, cy, cz, ax, az, Math.round((steps - k) * 0.5), wk * 0.6, depth + 1);
-      bx = cx; by = cy; bz = cz;
+      if (depth < 2 && r() < BRANCH_CHANCE * 0.6)
+        branch(cx, cy, cz, ax, az, Math.round((steps - k) * 0.5), wk * 0.6, depth + 1);
+      bx = cx;
+      by = cy;
+      bz = cz;
     }
   }
   return new Float32Array(out);
@@ -158,7 +176,7 @@ export function createBoltField() {
   const live = [];
   return {
     add(s) {
-      if (s.tag) for (let i = live.length - 1; i >= 0; i--) if (live[i].tag === s.tag) live.splice(i, 1);   // a tagged strike replaces its own
+      if (s.tag) for (let i = live.length - 1; i >= 0; i--) if (live[i].tag === s.tag) live.splice(i, 1); // a tagged strike replaces its own
       const strike = strikeOf(s.seed, s.kind);
       const segs = strike.kind === 'cg' ? boltPath(strike.seed, [s.x, s.baseY, s.z], s.groundY) : null;
       live.push({ ...s, strike, segs });
@@ -166,28 +184,41 @@ export function createBoltField() {
       return strike;
     },
     tick(seconds, eye) {
-      for (let i = live.length - 1; i >= 0; i--) if (seconds - live[i].at >= BOLT_LIFE_S || seconds < live[i].at - 1) live.splice(i, 1);
+      for (let i = live.length - 1; i >= 0; i--)
+        if (seconds - live[i].at >= BOLT_LIFE_S || seconds < live[i].at - 1) live.splice(i, 1);
       const bolts = [];
-      let flash = null, best = 0;
+      let flash = null,
+        best = 0;
       for (const b of live) {
         const bright = flickerAt(b.strike, seconds - b.at) * (b.strength ?? 1);
         if (bright <= 0) continue;
-        if (b.segs) bolts.push(b.color ? { segs: b.segs, bright, color: b.color } : { segs: b.segs, bright });   // EVENT1: a strike's own colour rides to its channel
+        if (b.segs) bolts.push(b.color ? { segs: b.segs, bright, color: b.color } : { segs: b.segs, bright }); // EVENT1: a strike's own colour rides to its channel
         if (b.strike.kind !== 'cg' || !eye) continue;
         const d = Math.hypot(b.x - eye[0], b.z - eye[2]);
         const reach = bright * (1 - d / FLASH_REACH_M);
         if (reach > best) {
           best = reach;
-          const k = 3 * reach, t = Math.min(d, FLASH_TOWARD_M) / Math.max(d, 1e-6);
-          const fc = b.flashColor ?? FLASH_COLOR;   // EVENT1: and to the light it throws
-          flash = { x: eye[0] + (b.x - eye[0]) * t, y: eye[1] + FLASH_UP_M, z: eye[2] + (b.z - eye[2]) * t, range: FLASH_RANGE_M, color: [fc[0] * k, fc[1] * k, fc[2] * k] };
+          const k = 3 * reach,
+            t = Math.min(d, FLASH_TOWARD_M) / Math.max(d, 1e-6);
+          const fc = b.flashColor ?? FLASH_COLOR; // EVENT1: and to the light it throws
+          flash = {
+            x: eye[0] + (b.x - eye[0]) * t,
+            y: eye[1] + FLASH_UP_M,
+            z: eye[2] + (b.z - eye[2]) * t,
+            range: FLASH_RANGE_M,
+            color: [fc[0] * k, fc[1] * k, fc[2] * k],
+          };
         }
       }
       return { bolts, flash };
     },
     /** The strikes burning (tests, and a jump). */
-    count() { return live.length; },
-    reset() { live.length = 0; },
+    count() {
+      return live.length;
+    },
+    reset() {
+      live.length = 0;
+    },
   };
 }
 
@@ -241,23 +272,55 @@ export function createStormLights() {
   return {
     frame({ seconds, eye, eyeHeight = 1.7, distant = [], player = null, shown = false, test = 0 }) {
       if (test > 0) {
-        const x = eye[0] + test, z = eye[2];
-        field.add({ x, z, ...strikeColumn(eye, x, z, STORM_BASE_M, eyeHeight), seed: 0x51f15eed, kind: 'cg', strength: 1, at: seconds, tag: 'test' });
+        const x = eye[0] + test,
+          z = eye[2];
+        field.add({
+          x,
+          z,
+          ...strikeColumn(eye, x, z, STORM_BASE_M, eyeHeight),
+          seed: 0x51f15eed,
+          kind: 'cg',
+          strength: 1,
+          at: seconds,
+          tag: 'test',
+        });
       }
       for (const s of distant) {
         const c = strikeColumn(eye, s.x, s.z, STORM_BASE_M, eyeHeight);
-        field.add({ x: s.x, z: s.z, ...c, seed: s.seed, kind: s.kind, strength: s.strength ?? 1, at: seconds, ...(s.color ? { color: s.color } : {}), ...(s.flashColor ? { flashColor: s.flashColor } : {}) });   // EVENT1: a coloured strike (the dread's) keeps its colours
+        field.add({
+          x: s.x,
+          z: s.z,
+          ...c,
+          seed: s.seed,
+          kind: s.kind,
+          strength: s.strength ?? 1,
+          at: seconds,
+          ...(s.color ? { color: s.color } : {}),
+          ...(s.flashColor ? { flashColor: s.flashColor } : {}),
+        }); // EVENT1: a coloured strike (the dread's) keeps its colours
       }
       const count = player?.strikes ?? null;
       if (count !== null && seen !== null && count !== seen && shown) {
         const seed = (Math.imul(count, 0x9e3779b1) ^ Math.floor(seconds * 1000)) >>> 0;
         const l = localStrike(seed, player.lastClipClass);
-        const x = eye[0] + l.dx, z = eye[2] + l.dz;
-        field.add({ x, z, ...strikeColumn(eye, x, z, STORM_BASE_M, eyeHeight), seed, kind: l.kind, strength: 1, at: seconds });
+        const x = eye[0] + l.dx,
+          z = eye[2] + l.dz;
+        field.add({
+          x,
+          z,
+          ...strikeColumn(eye, x, z, STORM_BASE_M, eyeHeight),
+          seed,
+          kind: l.kind,
+          strength: 1,
+          at: seconds,
+        });
       }
       seen = count;
       return field.tick(seconds, eye);
     },
-    reset() { field.reset(); seen = null; },
+    reset() {
+      field.reset();
+      seen = null;
+    },
   };
 }

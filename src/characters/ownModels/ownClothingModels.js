@@ -18,12 +18,32 @@
 export const CLOAK_NAMES = Object.freeze(['Casual Cloak', 'Formal Cloak']);
 
 /** Mac's paintings, one mesh each (`cloak_<painting>.nif`), in Daggerfall's dye order less the two he did not paint. */
-export const CLOAK_PAINTINGS = Object.freeze(['blue', 'grey', 'red', 'dark_brown', 'purple', 'light_brown', 'white', 'green']);
+export const CLOAK_PAINTINGS = Object.freeze([
+  'blue',
+  'grey',
+  'red',
+  'dark_brown',
+  'purple',
+  'light_brown',
+  'white',
+  'green',
+]);
 
 /** Each Daggerfall clothing dye's painting, by the dye's index (DyeColors: Blue, Grey, Red, Dark Brown, Purple, Light
  *  Brown, White, Aquamarine, Yellow, Green - mwItemMap.js DF_CLOTHING_DYE_RGB): its own where Mac painted it, the
  *  nearest of the eight where he did not - Aquamarine the blue, Yellow the light brown. */
-export const CLOAK_DYE_PAINTING = Object.freeze(['blue', 'grey', 'red', 'dark_brown', 'purple', 'light_brown', 'white', 'blue', 'light_brown', 'green']);
+export const CLOAK_DYE_PAINTING = Object.freeze([
+  'blue',
+  'grey',
+  'red',
+  'dark_brown',
+  'purple',
+  'light_brown',
+  'white',
+  'blue',
+  'light_brown',
+  'green',
+]);
 
 export const cloakModel = (painting) => `cloak_${painting}.nif`;
 
@@ -63,26 +83,35 @@ export const isCloakSlot = (slot) => String(slot ?? '').startsWith('cloak (');
 // hers).
 
 /** One outfit: its id, its mesh, the ARMO_PART slots whose skin it hides, the skin it dresses without hiding. */
-const outfit = (archive, hides, covers = []) => Object.freeze({
-  id: `townsfolk_${archive}`, archive, model: `townsfolk_${archive}.nif`, hides: Object.freeze(hides), covers: Object.freeze(covers),
-});
+const outfit = (archive, hides, covers = []) =>
+  Object.freeze({
+    id: `townsfolk_${archive}`,
+    archive,
+    model: `townsfolk_${archive}.nif`,
+    hides: Object.freeze(hides),
+    covers: Object.freeze(covers),
+  });
 const PAIR = (...parts) => parts.flatMap((p) => [`right ${p}`, `left ${p}`]);
 
 /** Each walker sprite's outfit, by its archive (the walker's picture). The skin each hides is what it covers all round
  *  (test/tooling/mwfolk1.test.js measures every one). */
-export const TOWNSFOLK_OUTFITS = Object.freeze(Object.fromEntries([
-  outfit(381, ['groin']),                                                                                // Redguard: the grey robe with the red hem
-  outfit(382, ['groin']),                                                                                // Redguard: the kilt, the wrist cuffs, the sandals
-  outfit(383, ['groin']),                                                                                // Redguard: the teal robe with the yellow hem
-  outfit(384, ['groin', ...PAIR('ankle', 'foot')]),                                                      // Redguard: the striped skirt and the boots
-  outfit(385, ['cuirass', 'groin', ...PAIR('upper arm', 'forearm', 'upper leg', 'knee', 'ankle', 'foot')]),   // Breton: the tunic, the long sleeves, the striped hose
-  outfit(386, ['cuirass', 'groin', ...PAIR('wrist', 'upper leg', 'knee', 'ankle', 'foot')]),             // Breton: the tunic, the wraps, the breeches, the boots
-  outfit(387, ['groin', ...PAIR('wrist', 'ankle', 'foot')]),                                             // Nord: the green vest, the wraps, the striped skirt, the boots
-  outfit(388, ['cuirass', 'groin', 'hair', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]),              // Nord: the green hood, the orange tunic, the striped hose
-  outfit(389, ['cuirass', 'groin', 'hair', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]),              // Nord: the hooded tunic in teal
-  outfit(390, ['cuirass', 'groin', ...PAIR('wrist', 'upper leg', 'knee', 'ankle', 'foot')]),             // Nord: the teal tunic, the striped boots
-  outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')], ['chest']),                                // Redguard woman: the hooded dress
-].map((o) => [o.archive, o])));
+export const TOWNSFOLK_OUTFITS = Object.freeze(
+  Object.fromEntries(
+    [
+      outfit(381, ['groin']), // Redguard: the grey robe with the red hem
+      outfit(382, ['groin']), // Redguard: the kilt, the wrist cuffs, the sandals
+      outfit(383, ['groin']), // Redguard: the teal robe with the yellow hem
+      outfit(384, ['groin', ...PAIR('ankle', 'foot')]), // Redguard: the striped skirt and the boots
+      outfit(385, ['cuirass', 'groin', ...PAIR('upper arm', 'forearm', 'upper leg', 'knee', 'ankle', 'foot')]), // Breton: the tunic, the long sleeves, the striped hose
+      outfit(386, ['cuirass', 'groin', ...PAIR('wrist', 'upper leg', 'knee', 'ankle', 'foot')]), // Breton: the tunic, the wraps, the breeches, the boots
+      outfit(387, ['groin', ...PAIR('wrist', 'ankle', 'foot')]), // Nord: the green vest, the wraps, the striped skirt, the boots
+      outfit(388, ['cuirass', 'groin', 'hair', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]), // Nord: the green hood, the orange tunic, the striped hose
+      outfit(389, ['cuirass', 'groin', 'hair', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]), // Nord: the hooded tunic in teal
+      outfit(390, ['cuirass', 'groin', ...PAIR('wrist', 'upper leg', 'knee', 'ankle', 'foot')]), // Nord: the teal tunic, the striped boots
+      outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')], ['chest']), // Redguard woman: the hooded dress
+    ].map((o) => [o.archive, o]),
+  ),
+);
 
 /** The outfit a walker's sprite wears (its archive), or null for a sprite with none yet. */
 export const townsfolkOutfitOf = (archive) => TOWNSFOLK_OUTFITS[archive] ?? null;

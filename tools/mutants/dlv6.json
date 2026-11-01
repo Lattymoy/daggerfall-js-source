@@ -2,8 +2,8 @@
   {
     "name": "DLV6-light-uncounted",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "a.marker !== undefined, a.light !== undefined].filter(Boolean).length;",
-    "new": "a.marker !== undefined].filter(Boolean).length;",
+    "old": "    const kinds = [a.model !== undefined, a.flat !== undefined, a.marker !== undefined, a.light !== undefined].filter(\n      Boolean,\n    ).length;",
+    "new": "    const kinds = [a.model !== undefined, a.flat !== undefined, a.marker !== undefined].filter(Boolean).length;",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "DLV6-light-unbounded",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "a.light >= CURATED_LIGHT_M[0] && a.light <= CURATED_LIGHT_M[1]",
-    "new": "a.light > 0",
+    "old": "    if (\n      a.light !== undefined &&\n      !(Number.isFinite(a.light) && a.light >= CURATED_LIGHT_M[0] && a.light <= CURATED_LIGHT_M[1])\n    )",
+    "new": "    if (a.light !== undefined && !(Number.isFinite(a.light) && a.light > 0))",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "DLV6-light-units",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "Math.round(m / (GLOBAL_SCALE * 3))",
-    "new": "Math.round(m / GLOBAL_SCALE)",
+    "old": "export const lightRadiusOf = (m) => Math.round(m / (GLOBAL_SCALE * 3));",
+    "new": "export const lightRadiusOf = (m) => Math.round(m / GLOBAL_SCALE);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "DLV6-light-made-a-flat",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "type: RDB_RESOURCE_TYPES.Light, resources:",
-    "new": "type: RDB_RESOURCE_TYPES.Flat, resources:",
+    "old": "        type: RDB_RESOURCE_TYPES.Light,",
+    "new": "        type: RDB_RESOURCE_TYPES.Flat,",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "DLV6-light-radius-zero",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "lightResource: { ...lightNone(), radius: lightRadiusOf(a.light) }",
-    "new": "lightResource: lightNone()",
+    "old": "        resources: {\n          modelResource: modelNone(),\n          flatResource: flatOf(0, 0),\n          lightResource: { ...lightNone(), radius: lightRadiusOf(a.light) },\n        },",
+    "new": "        resources: { modelResource: modelNone(), flatResource: flatOf(0, 0), lightResource: lightNone() },",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "DLV6-spawn-at-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null;",
-    "new": "return null;",
+    "old": "  return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null; // an empty field is no 0",
+    "new": "  return null; // an empty field is no 0",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "DLV6-foot-sign",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "return Number.isFinite(lo) ? -lo : null;",
-    "new": "return Number.isFinite(lo) ? lo : null;",
+    "old": "      return Number.isFinite(lo) ? -lo : null;",
+    "new": "      return Number.isFinite(lo) ? lo : null;",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "DLV6-foot-flat-whole",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "classicBillboardSize(t, item.flat[1]).h / 2",
-    "new": "classicBillboardSize(t, item.flat[1]).h",
+    "old": "      return t && item.flat[1] < (t.recordCount ?? 0) ? classicBillboardSize(t, item.flat[1]).h / 2 : null;",
+    "new": "      return t && item.flat[1] < (t.recordCount ?? 0) ? classicBillboardSize(t, item.flat[1]).h : null;",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "DLV6-foot-record-unbounded",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "t && item.flat[1] < (t.recordCount ?? 0) ?",
-    "new": "t ?",
+    "old": "      return t && item.flat[1] < (t.recordCount ?? 0) ? classicBillboardSize(t, item.flat[1]).h / 2 : null;",
+    "new": "      return t ? classicBillboardSize(t, item.flat[1]).h / 2 : null;",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "DLV6-foot-model-unknown",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "if (k < 0) return null;",
+    "old": "      if (k < 0) return null;",
     "new": "",
     "tests": [
       "test/world/dlv6_blocks.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "DLV6-panel-foot-unread",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "putAt('add', item, [p[0], p[1] + up, p[2]]);",
-    "new": "putAt('add', item, p);",
+    "old": "    putAt('add', item, [p[0], p[1] + up, p[2]]);",
+    "new": "    putAt('add', item, p);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -112,7 +112,7 @@
   {
     "name": "DLV6-panel-foot-refusal",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "if (up == null) { tell(`${JSON.stringify(item)}: not in your game's data`, true); return; }",
+    "old": "    if (up == null) {\n      tell(`${JSON.stringify(item)}: not in your game's data`, true);\n      return;\n    }",
     "new": "",
     "tests": [
       "test/world/dlv6_blocks.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "DLV6-panel-light-at-feet",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "putAt('add', { light: Number(reach.value) }, [p[0], p[1] + Number(over.value), p[2]]);",
-    "new": "putAt('add', { light: Number(reach.value) }, p);",
+    "old": "        putAt('add', { light: Number(reach.value) }, [p[0], p[1] + Number(over.value), p[2]]);",
+    "new": "        putAt('add', { light: Number(reach.value) }, p);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "DLV6-panel-rebuild-where",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "const why = rebuild(r.draft, at());",
-    "new": "const why = rebuild(r.draft, [0, 0, 0]);",
+    "old": "        const why = rebuild(r.draft, at());",
+    "new": "        const why = rebuild(r.draft, [0, 0, 0]);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "DLV6-bench-spawn-unsaid",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "draft, spawn: labSpawn(params) };",
-    "new": "draft };",
+    "old": "    return { location: labLocation(draft, template), draft, spawn: labSpawn(params) };",
+    "new": "    return { location: labLocation(draft, template), draft };",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "DLV6-fires-anchors-unread",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": ".filter((c) => anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)))",
-    "new": "",
+    "old": "    count > 0\n      ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }).filter((c) =>\n          anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)),\n        )\n      : [];",
+    "new": "    count > 0 ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }) : [];",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "DLV6-fires-anchor-reach",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  anchorM: 12,",
-    "new": "  anchorM: 6,",
+    "old": "  anchorM: 12, // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)",
+    "new": "  anchorM: 6, // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "DLV6-anchor-crowded-stands",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM))",
-    "new": "kinds.includes(a.kind)",
+    "old": "    : anchors.filter(\n        (a) =>\n          kinds.includes(a.kind) &&\n          fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM)) &&\n          (!start || d2(start, a.at) >= SQ(lawOf(a).startM)),\n      );",
+    "new": "    : anchors.filter((a) => kinds.includes(a.kind) && (!start || d2(start, a.at) >= SQ(lawOf(a).startM)));",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "DLV6-record-unlisted",
     "file": "src/world/dungeon/curatedRecords.js",
-    "old": "checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRATED_CHAPEL, THRONE_HALL])",
-    "new": "checkedRecords([CRYPT_HALL, MINE_GALLERY, THRONE_HALL])",
+    "old": "export const CURATED_RECORDS = checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRATED_CHAPEL, THRONE_HALL]);",
+    "new": "export const CURATED_RECORDS = checkedRecords([CRYPT_HALL, MINE_GALLERY, THRONE_HALL]);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "DLV6-spawn-empty-field",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v)))",
-    "new": "raw.every((v) => Number.isFinite(Number(v)))",
+    "old": "  return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null; // an empty field is no 0",
+    "new": "  return raw.length === 3 && raw.every((v) => Number.isFinite(Number(v))) ? raw.map(Number) : null; // an empty field is no 0",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "DLV6-stand-off-lab",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "(bench?.draft ? bench.spawn ?? delve?.firstFloor?.() ?? null : null)",
-    "new": "(bench ? bench.spawn ?? delve?.firstFloor?.() ?? null : null)",
+    "old": "export const labStand = (bench, delve) => (bench?.draft ? (bench.spawn ?? delve?.firstFloor?.() ?? null) : null);",
+    "new": "export const labStand = (bench, delve) => (bench ? (bench.spawn ?? delve?.firstFloor?.() ?? null) : null);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "DLV6-stand-spot-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "bench.spawn ?? delve?.firstFloor?.() ?? null",
-    "new": "delve?.firstFloor?.() ?? null",
+    "old": "export const labStand = (bench, delve) => (bench?.draft ? (bench.spawn ?? delve?.firstFloor?.() ?? null) : null);",
+    "new": "export const labStand = (bench, delve) => (bench?.draft ? (delve?.firstFloor?.() ?? null) : null);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "DLV6-stand-floor-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "bench.spawn ?? delve?.firstFloor?.() ?? null : null",
-    "new": "bench.spawn ?? null : null",
+    "old": "export const labStand = (bench, delve) => (bench?.draft ? (bench.spawn ?? delve?.firstFloor?.() ?? null) : null);",
+    "new": "export const labStand = (bench, delve) => (bench?.draft ? (bench.spawn ?? null) : null);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "DLV6-panel-off-lab",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "  if (!bench?.draft) return null;\n  const rebuild",
-    "new": "  const rebuild",
+    "old": "  if (!bench?.draft) return null;\n  const rebuild = (d, at) => {",
+    "new": "  const rebuild = (d, at) => {",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "DLV6-panel-spot-unsent",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "&novideo&at=${at.join(',')}`);",
-    "new": "&novideo`);",
+    "old": "    if (!why) go(`?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo&at=${at.join(',')}`);",
+    "new": "    if (!why) go(`?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo`);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "DLV6-panel-refused-laid",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "    if (!why) go(",
-    "new": "    go(",
+    "old": "    if (!why) go(`?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo&at=${at.join(',')}`);",
+    "new": "    go(`?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo&at=${at.join(',')}`);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "DLV6-panel-no-host",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "delve()?.landing(at, r) ?? { ok: false, rule: 'none' }",
-    "new": "delve().landing(at, r)",
+    "old": "      landing: (at, r) => delve()?.landing(at, r) ?? { ok: false, rule: 'none' },",
+    "new": "      landing: (at, r) => delve().landing(at, r),",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],

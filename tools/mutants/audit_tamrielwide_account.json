@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-C3-the-pit's-region-unread",
     "file": "src/scenes/dungeonIdentity.js",
-    "old": "region: g ? g.region : loc.regionIndex ?? null",
-    "new": "region: loc.regionIndex ?? null",
+    "old": "    region: g ? g.region : (loc.regionIndex ?? null),",
+    "new": "    region: loc.regionIndex ?? null,",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],
@@ -154,8 +154,8 @@
   {
     "name": "AUDIT-TW-C7-the-bay's-map-scanned",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "  const f = isProvinceRegion(r) ? tamrielFrameInBay() : { x0: 0, y0: 0, w: MAP_W, h: MAP_H };",
-    "new": "  const f = { x0: 0, y0: 0, w: MAP_W, h: MAP_H };",
+    "old": "    const f = isProvinceRegion(r) ? tamrielFrameInBay() : { x0: 0, y0: 0, w: MAP_W, h: MAP_H };",
+    "new": "    const f = { x0: 0, y0: 0, w: MAP_W, h: MAP_H };",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js",
       "test/scenes/staffFlatMap.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-TW-C7-the-coarse-reach-ungrown",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "grow = coarse ? MARGIN + COARSE : MARGIN;",
-    "new": "grow = MARGIN;",
+    "old": "      grow = coarse ? MARGIN + COARSE : MARGIN; // AUDIT TAMRIEL-WIDE II A3: past the Bay, a sample's step past its last land, then the margin",
+    "new": "      grow = MARGIN; // AUDIT TAMRIEL-WIDE II A3: past the Bay, a sample's step past its last land, then the margin",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js",
       "test/scenes/staffFlatMap.test.js"
@@ -186,8 +186,8 @@
   {
     "name": "AUDIT-TW-II-A3-the-step-ungrown",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "grow = coarse ? MARGIN + COARSE : MARGIN;",
-    "new": "grow = coarse ? MARGIN + COARSE - 1 : MARGIN;",
+    "old": "      grow = coarse ? MARGIN + COARSE : MARGIN; // AUDIT TAMRIEL-WIDE II A3: past the Bay, a sample's step past its last land, then the margin",
+    "new": "      grow = coarse ? MARGIN + COARSE - 1 : MARGIN; // AUDIT TAMRIEL-WIDE II A3: past the Bay, a sample's step past its last land, then the margin",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "AUDIT-TW-II-A4-the-box-kept-across-fits",
     "file": "src/scenes/staffFlatMapHost.js",
-    "old": "if (kept && kept.fit === fit) return kept.box;",
-    "new": "if (kept) return kept.box;",
+    "old": "    if (kept && kept.fit === fit) return kept.box;",
+    "new": "    if (kept) return kept.box;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],

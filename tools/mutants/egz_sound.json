@@ -2,8 +2,8 @@
   {
     "name": "EGZ-reverb-cave-unmapped",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "{ cave: 'Cave', stoneroom: 'Stoneroom', quarry: 'Quarry' }",
-    "new": "{ cave: 'Quarry', stoneroom: 'Stoneroom', quarry: 'Quarry' }",
+    "old": "export const EG_REVERB_PRESETS = Object.freeze({ cave: 'Cave', stoneroom: 'Stoneroom', quarry: 'Quarry' });",
+    "new": "export const EG_REVERB_PRESETS = Object.freeze({ cave: 'Quarry', stoneroom: 'Stoneroom', quarry: 'Quarry' });",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZ-reverb-hyst-on-the-way-in",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "for (let i = 0; i < zones.length; i++) if (inside(zones[i], 0)) return i;",
-    "new": "for (let i = 0; i < zones.length; i++) if (inside(zones[i], hyst)) return i;",
+    "old": "  for (let i = 0; i < zones.length; i++) if (inside(zones[i], 0)) return i;",
+    "new": "  for (let i = 0; i < zones.length; i++) if (inside(zones[i], hyst)) return i;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZ-reverb-no-hyst-out",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "if (cur >= 0 && zones[cur] && inside(zones[cur], hyst)) return cur;",
-    "new": "if (cur >= 0 && zones[cur] && inside(zones[cur], 0)) return cur;",
+    "old": "  if (cur >= 0 && zones[cur] && inside(zones[cur], hyst)) return cur;",
+    "new": "  if (cur >= 0 && zones[cur] && inside(zones[cur], 0)) return cur;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZ-reverb-reach-ignored",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "&& Math.abs(x - q.x) <= q.half + pad;",
-    "new": ";",
+    "old": "  const inside = (q, pad) => z >= q.z0 - pad && z <= q.z1 + pad && Math.abs(x - q.x) <= q.half + pad;",
+    "new": "  const inside = (q, pad) => z >= q.z0 - pad && z <= q.z1 + pad;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZ-reverb-second-is-none",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "const second = zones.find((q) => q.preset !== EG_REVERB_OPEN)?.preset ?? null;",
-    "new": "const second = null;",
+    "old": "  const second = zones.find((q) => q.preset !== EG_REVERB_OPEN)?.preset ?? null;",
+    "new": "  const second = null;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZ-reverb-chamber-half",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : f.cls === 'chamber' ? (f.z1 - f.z0) / 2 : 6;",
-    "new": "const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : 6;",
+    "old": "    const half = hero\n      ? Math.max(f.x - hero.box[0], hero.box[3] - f.x)\n      : cave\n        ? cave.halfW\n        : f.cls === 'chamber'\n          ? (f.z1 - f.z0) / 2\n          : 6;",
+    "new": "    const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave ? cave.halfW : 6;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZ-reverb-never-held",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "held = !!audio?.holdReverb?.(EG_REVERB_OWNER);",
-    "new": "held = !!audio?.holdReverb?.(EG_REVERB_OWNER) && false;",
+    "old": "      held = !!audio?.holdReverb?.(EG_REVERB_OWNER);",
+    "new": "      held = !!audio?.holdReverb?.(EG_REVERB_OWNER) && false;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZ-reverb-hall-every-frame",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "if (!held || !spec || k === key) return false;",
-    "new": "if (!held || !spec) return false;",
+    "old": "      if (!held || !spec || k === key) return false;",
+    "new": "      if (!held || !spec) return false;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGZ-reverb-fade-cut",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "plan.zones[i].preset, EG_REVERB_FADE_S);",
-    "new": "plan.zones[i].preset, 0);",
+    "old": "        audio?.reverbFade?.(i < 0 ? plan.base : plan.zones[i].preset, EG_REVERB_FADE_S);",
+    "new": "        audio?.reverbFade?.(i < 0 ? plan.base : plan.zones[i].preset, 0);",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZ-reverb-no-retry",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "      if (!made) key = '';",
-    "new": "",
+    "old": "      if (!made) key = ''; // no context yet (no gesture has woken the engine): asked again next frame",
+    "new": "      // no context yet (no gesture has woken the engine): asked again next frame",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZ-reverb-never-released",
     "file": "src/systems/eliteGates/egReverb.js",
-    "old": "if (held) { try { audio?.releaseReverb?.(EG_REVERB_OWNER); }",
-    "new": "if (false) { try { audio?.releaseReverb?.(EG_REVERB_OWNER); }",
+    "old": "      if (held) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGZ-ba-never-yields",
     "file": "src/systems/betterAmbience.js",
-    "old": "if (audio.reverbHeld?.() != null) { reverbOn = null; return; }",
-    "new": "if (false) { reverbOn = null; return; }",
+    "old": "    if (audio.reverbHeld?.() != null) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGZ-ba-cache-kept",
     "file": "src/systems/betterAmbience.js",
-    "old": "if (audio.reverbHeld?.() != null) { reverbOn = null; return; }",
-    "new": "if (audio.reverbHeld?.() != null) { return; }",
+    "old": "      reverbOn = null;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGZ-fx-outside-scope",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (!dup) peerHeard(() => (q.hurt",
-    "new": "if (!dup) ((f) => f())(() => (q.hurt",
+    "old": "          peerHeard(() => (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share })); // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it",
+    "new": "          ((f) => f())(() =>\n            (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share }),\n          ); // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGZ-peers-scope-never-set",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "setPeerSoundScope(want ? (run) =>",
-    "new": "setPeerSoundScope(false ? (run) =>",
+    "old": "        want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,",
+    "new": "        false ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGZ-peers-gain-not-mix",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "audio.scaled(mix.peerVolume(1), run)",
-    "new": "audio.scaled(1, run)",
+    "old": "      setPeerSoundScope(\n        want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,\n      );",
+    "new": "      setPeerSoundScope(want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(1, run) : run()) : null);",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGZ-tell-at-sting-pitch",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "pitch: EG_MIX.watchfirePitch, volume: BOSS_CUES.sting.volume",
-    "new": "pitch: BOSS_CUES.sting.pitch, volume: BOSS_CUES.sting.volume",
+    "old": "  pitch: EG_MIX.watchfirePitch,",
+    "new": "  pitch: BOSS_CUES.sting.pitch,",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGZ-tell-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!toldHeard.has(bl.i) && t >= Math.max(",
-    "new": "if (t >= Math.max(",
+    "old": "        if (\n          !toldHeard.has(bl.i) &&\n          t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) &&\n          t < bl.at\n        ) {",
+    "new": "        if (t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) && t < bl.at) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGZ-tell-before-heard",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "&& t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) && t < bl.at) { toldHeard.add",
-    "new": "&& t < bl.at) { toldHeard.add",
+    "old": "        if (\n          !toldHeard.has(bl.i) &&\n          t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) &&\n          t < bl.at\n        ) {",
+    "new": "        if (!toldHeard.has(bl.i) && t < bl.at) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGZ-tell-after-landing",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(bl.sh ?? 0)) && t < bl.at) { toldHeard.add(bl.i);",
-    "new": "(bl.sh ?? 0))) { toldHeard.add(bl.i);",
+    "old": "        if (\n          !toldHeard.has(bl.i) &&\n          t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) &&\n          t < bl.at\n        ) {",
+    "new": "        if (!toldHeard.has(bl.i) && t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0))) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EGZ-peers-never-down-in-fight",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      mix.peers(true);   // EG-ZH (section 26)",
-    "new": "      mix.peers(false);   // EG-ZH (section 26)",
+    "old": "      mix.peers(true); // EG-ZH (section 26): every peer's sound 4 dB down while a hall's fight runs",
+    "new": "      mix.peers(false); // EG-ZH (section 26): every peer's sound 4 dB down while a hall's fight runs",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGZ-peers-never-let-go",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "dropFire(); toldHeard.clear(); mix.peers(false);",
-    "new": "dropFire(); toldHeard.clear();",
+    "old": "      toldHeard.clear();\n      mix.peers(false); // EG-ZH: the flames freed, the peers as they were",
+    "new": "      toldHeard.clear(); // EG-ZH: the flames freed, the peers as they were",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "EGZ-unity-half-up",
     "file": "src/formats/baseImageFile.js",
-    "old": "return (d > 0.5 || (d === 0.5 && f % 2 === 1) ? f + 1 : f) & 0xff;",
-    "new": "return (d >= 0.5 ? f + 1 : f) & 0xff;",
+    "old": "    return (d > 0.5 || (d === 0.5 && f % 2 === 1) ? f + 1 : f) & 0xff; // half to even",
+    "new": "    return (d >= 0.5 ? f + 1 : f) & 0xff; // half to even",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGZ-unity-alpha-not-one",
     "file": "src/formats/baseImageFile.js",
-    "old": "ch(c.length > 3 ? c[3] : 1)",
-    "new": "ch(c.length > 3 ? c[3] : 0)",
+    "old": "  return [ch(c[0]), ch(c[1]), ch(c[2]), ch(c.length > 3 ? c[3] : 1)];",
+    "new": "  return [ch(c[0]), ch(c[1]), ch(c[2]), ch(c.length > 3 ? c[3] : 0)];",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGZ-lerp-double-sum",
     "file": "src/formats/baseImageFile.js",
-    "old": "return Math.trunc(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;",
-    "new": "return Math.trunc(a + (b - a) * tt) & 0xff;",
+    "old": "  return Math.trunc(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;",
+    "new": "  return Math.trunc(a + (b - a) * tt) & 0xff;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZ-lerp-rounded",
     "file": "src/formats/baseImageFile.js",
-    "old": "return Math.trunc(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;",
-    "new": "return Math.round(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;",
+    "old": "  return Math.trunc(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;",
+    "new": "  return Math.round(Math.fround(a + Math.fround((b - a) * tt))) & 0xff;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-lerp-unclamped",
     "file": "src/formats/baseImageFile.js",
-    "old": "const tt = Math.fround(Math.min(1, Math.max(0, Math.fround(t))));",
-    "new": "const tt = Math.fround(t);",
+    "old": "  const tt = Math.fround(Math.min(1, Math.max(0, Math.fround(t))));",
+    "new": "  const tt = Math.fround(t);",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZ-fire-neutral-unconverted",
     "file": "src/formats/baseImageFile.js",
-    "old": "const n = unityColor32(neutralColor);",
-    "new": "const n = [...neutralColor, 1];",
+    "old": "    const n = unityColor32(neutralColor);",
+    "new": "    const n = [...neutralColor, 1];",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZ-fire-albedo-own",
     "file": "src/formats/baseImageFile.js",
-    "old": "out[o + c] = unityColor32Lerp(n[c], srcColors[o + c] ?? 0, scale);",
-    "new": "out[o + c] = srcColors[o + c] ?? 0;",
+    "old": "      for (let c = 0; c < 4; c++) out[o + c] = unityColor32Lerp(n[c], srcColors[o + c] ?? 0, scale);",
+    "new": "      for (let c = 0; c < 4; c++) out[o + c] = srcColors[o + c] ?? 0;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGZ-fire-texel-skipped",
     "file": "src/formats/baseImageFile.js",
-    "old": "for (let i = 0; i < width * height; i++) {\n      const o = i * 4;",
-    "new": "for (let i = 1; i < width * height; i++) {\n      const o = i * 4;",
+    "old": "    for (let i = 0; i < width * height; i++) {",
+    "new": "    for (let i = 1; i < width * height; i++) {",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGZ-fire-colour",
     "file": "src/world/emissiveTextures.js",
-    "old": "Object.freeze([0.706, 0.271, 0.086])",
-    "new": "Object.freeze([0.773, 0.38, 0.122])",
+    "old": "export const FIRE_WALL_COLOR = Object.freeze([0.706, 0.271, 0.086]);",
+    "new": "export const FIRE_WALL_COLOR = Object.freeze([0.773, 0.38, 0.122]);",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZ-flames-off-the-line",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "const t = (k + 0.5) / n; at.push(",
-    "new": "const t = k / n; at.push(",
+    "old": "    const t = (k + 0.5) / n;",
+    "new": "    const t = k / n;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-flames-height-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "h: cave ? cave.height : EG_FIRE_FALL.h };",
-    "new": "h: EG_FIRE_FALL.h };",
+    "old": "  return { at, w: len / n, h: cave ? cave.height : EG_FIRE_FALL.h };",
+    "new": "  return { at, w: len / n, h: EG_FIRE_FALL.h };",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZ-flames-other-hazard",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (hz?.kind !== 'fall' || !Array.isArray(hz.sh)",
-    "new": "if (hz?.kind === 'never' || !Array.isArray(hz.sh)",
+    "old": "  if (hz?.kind !== 'fall' || !Array.isArray(hz.sh) || hz.sh.length < 4) return null;",
+    "new": "  if (hz?.kind === 'never' || !Array.isArray(hz.sh) || hz.sh.length < 4) return null;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-flames-width",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return { at, w: len / n,",
-    "new": "return { at, w: EG_FIRE_FALL.w + 1,",
+    "old": "  return { at, w: len / n, h: cave ? cave.height : EG_FIRE_FALL.h };",
+    "new": "  return { at, w: EG_FIRE_FALL.w + 1, h: cave ? cave.height : EG_FIRE_FALL.h };",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-fight-fire-while-told",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (p.st === 'live' && hz.kind === 'fall') drawFireFall(hz, t);",
-    "new": "if (hz.kind === 'fall') drawFireFall(hz, t);",
+    "old": "        if (p.st === 'live' && hz.kind === 'fall') drawFireFall(hz, t); // EG-ZH: the fall burning in Daggerfall's own fire",
+    "new": "        if (hz.kind === 'fall') drawFireFall(hz, t); // EG-ZH: the fall burning in Daggerfall's own fire",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-fight-frame-frozen",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "frame = Math.floor((t / 1000) * GENERAL_FPS) % n;",
-    "new": "frame = 0;",
+    "old": "      frame = Math.floor((t / 1000) * GENERAL_FPS) % n;",
+    "new": "      frame = 0;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-fight-fire-never-freed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "function dropFire() { for (const b of fireBatches.values()) renderer?.destroyBillboardBatch?.(b); fireBatches.clear(); }",
-    "new": "function dropFire() { fireBatches.clear(); }",
+    "old": "    for (const b of fireBatches.values()) renderer?.destroyBillboardBatch?.(b);\n    fireBatches.clear();",
+    "new": "    fireBatches.clear();",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGZ-fight-upload-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!renderer.textures?.has?.(`${EG_FIRE_FALL.archive}_${rkey}`)) uploadRecordFrame",
-    "new": "if (true) uploadRecordFrame",
+    "old": "    if (!renderer.textures?.has?.(`${EG_FIRE_FALL.archive}_${rkey}`))\n      uploadRecordFrame?.(EG_FIRE_FALL.archive, EG_FIRE_FALL.record, frame);",
+    "new": "    if (true) uploadRecordFrame?.(EG_FIRE_FALL.archive, EG_FIRE_FALL.record, frame);",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-fight-texture-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!fire && getTexture) fire = Promise",
-    "new": "if (getTexture) fire = Promise",
+    "old": "    if (!fire && getTexture)",
+    "new": "    if (getTexture)",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGZ-key-bit-dropped",
     "file": "src/world/eliteGates/egKeyArt.js",
-    "old": "const BIT = Object.freeze([Object.freeze({ x0: 22, x1: 25, y0: 12, y1: 16 }),",
-    "new": "const BIT = Object.freeze([Object.freeze({ x0: 0, x1: 0, y0: 0, y1: 0 }),",
+    "old": "  Object.freeze({ x0: 22, x1: 25, y0: 12, y1: 16 }),",
+    "new": "  Object.freeze({ x0: 0, x1: 0, y0: 0, y1: 0 }),",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "EGZ-key-ground-coloured",
     "file": "src/world/eliteGates/egKeyArt.js",
-    "old": "img.colors[i] = 0; img.colors[i + 1] = 0; img.colors[i + 2] = 0; }",
-    "new": "void i; }",
+    "old": "        img.colors[i] = 0;\n        img.colors[i + 1] = 0;\n        img.colors[i + 2] = 0;",
+    "new": "        void i;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "EGZ-key-light-from-below",
     "file": "src/world/eliteGates/egKeyArt.js",
-    "old": "const t = up || left ? 0.95 : down ? 0.15 : 0.62 - (x / w) * 0.25;",
-    "new": "const t = down ? 0.95 : up || left ? 0.15 : 0.62 - (x / w) * 0.25;",
+    "old": "        const t = up || left ? 0.95 : down ? 0.15 : 0.62 - (x / w) * 0.25;",
+    "new": "        const t = down ? 0.95 : up || left ? 0.15 : 0.62 - (x / w) * 0.25;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "EGZ-key-row-talisman",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "worldTextureArchive: WEIR_KEY_ART.archive, worldTextureRecord: WEIR_KEY_ART.record,",
-    "new": "worldTextureArchive: 211, worldTextureRecord: 50,",
+    "old": "  worldTextureArchive: WEIR_KEY_ART.archive,\n  worldTextureRecord: WEIR_KEY_ART.record,",
+    "new": "  worldTextureArchive: 211,\n  worldTextureRecord: 50,",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "EGZ-key-unregistered",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "registerWeirKeyArt(addVendorTextures);   // EG-ZH: the import IS the registration",
-    "new": "void registerWeirKeyArt;   // EG-ZH: the import IS the registration",
+    "old": "registerWeirKeyArt(addVendorTextures); // EG-ZH: the import IS the registration",
+    "new": "void registerWeirKeyArt; // EG-ZH: the import IS the registration",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "EGZ-key-block-moved",
     "file": "src/world/eliteGates/pseudoArchives.js",
-    "old": "key: EG_ARCH_ARCHIVES.from + 1,",
-    "new": "key: EG_ARCH_ARCHIVES.from + 3,",
+    "old": "  key: EG_ARCH_ARCHIVES.from + 1,",
+    "new": "  key: EG_ARCH_ARCHIVES.from + 3,",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "EGZ-grace-hold-ignored",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (now < _s.graceReady || lootSpireHeld('grace')) return false;",
-    "new": "if (now < _s.graceReady) return false;",
+    "old": "  if (now < _s.graceReady || lootSpireHeld('grace')) return false; // EG-ZH: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.graceReady) return false; // EG-ZH: and in the Spire, not before its next Redoubt",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "EGZ-vigil-hold-ignored",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (now < _s.vigilReady || lootSpireHeld('vigil')) return;",
-    "new": "if (now < _s.vigilReady) return;",
+    "old": "  if (now < _s.vigilReady || lootSpireHeld('vigil')) return; // EG-ZH: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.vigilReady) return; // EG-ZH: and in the Spire, not before its next Redoubt",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "EGZ-hold-outlives-breach",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "return room !== undefined && room === spireRoomNow(); }",
-    "new": "return room !== undefined; }",
+    "old": "  return room !== undefined && room === spireRoomNow();",
+    "new": "  return room !== undefined;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "EGZ-chip-on-timer",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "const wait = (k, field) => (lootSpireHeld(k) ? 'Redoubt'",
-    "new": "const wait = (k, field) => (false ? 'Redoubt'",
+    "old": "  const wait = (k, field) => (lootSpireHeld(k) ? 'Redoubt' : left(_s[field]) ? time(left(_s[field])) : '');",
+    "new": "  const wait = (k, field) => (false ? 'Redoubt' : left(_s[field]) ? time(left(_s[field])) : '');",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "EGZ-round-says-held",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (now < r.at() || lootSpireHeld(k)) continue;",
-    "new": "if (now < r.at()) continue;",
+    "old": "    if (now < r.at() || lootSpireHeld(k)) continue; // EG-ZH: a death save the Spire holds is said at its Redoubt",
+    "new": "    if (now < r.at()) continue; // EG-ZH: a death save the Spire holds is said at its Redoubt",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "EGZ-redoubt-door-unregistered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken);",
-    "new": "void lootRedoubtTaken;",
+    "old": "registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken); // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach",
+    "new": "void lootRedoubtTaken; // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "EGZ-sets-door-never-called",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "for (const fn of _spireRedoubts.values()) { try { fn(); }",
-    "new": "for (const fn of [].values()) { try { fn(); }",
+    "old": "  for (const fn of _spireRedoubts.values()) {",
+    "new": "  for (const fn of [].values()) {",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "EGZ-cam-pace",
     "file": "src/player/mwView.js",
-    "old": "const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / SPIRE_CAMERA_EASE_S;",
-    "new": "const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / 1;",
+    "old": "  const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / SPIRE_CAMERA_EASE_S;",
+    "new": "  const step = (Math.max(full, want) * Math.max(0, Number(dt) || 0)) / 1;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "EGZ-cam-everywhere",
     "file": "src/player/mwView.js",
-    "old": "try { on = !!_spireCamera(); } catch { on = false; }",
-    "new": "on = true;",
+    "old": "  try {\n    on = !!_spireCamera();\n  } catch {\n    on = false;\n  }",
+    "new": "  on = true;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "EGZ-cam-first-person-no-cut",
     "file": "src/player/mwView.js",
-    "old": "!(out.distance > 1e-6)) { _spireCamDist = null; return out; }",
-    "new": "!(out.distance > 1e-6)) return out;",
+    "old": "  if (!on || !out?.thirdPerson || !out.focal || !(out.distance > 1e-6)) {\n    _spireCamDist = null;\n    return out;\n  }",
+    "new": "  if (!on || !out?.thirdPerson || !out.focal || !(out.distance > 1e-6)) return out;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "EGZ-cam-off-the-line",
     "file": "src/player/mwView.js",
-    "old": "out.eye = [f[0] + (out.eye[0] - f[0]) * k, f[1] + (out.eye[1] - f[1]) * k, f[2] + (out.eye[2] - f[2]) * k];",
-    "new": "out.eye = [out.eye[0] * k, out.eye[1] * k, out.eye[2] * k];",
+    "old": "    out.eye = [f[0] + (out.eye[0] - f[0]) * k, f[1] + (out.eye[1] - f[1]) * k, f[2] + (out.eye[2] - f[2]) * k];",
+    "new": "    out.eye = [out.eye[0] * k, out.eye[1] * k, out.eye[2] * k];",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "EGZ-clamp-open-edges-held",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (q.open || z < q.z0 || z > q.z1) return null;",
-    "new": "if (z < q.z0 || z > q.z1) return null;",
+    "old": "    if (q.open || z < q.z0 || z > q.z1) return null; // an open passage's sides, and its two mouths, are open edges",
+    "new": "    if (z < q.z0 || z > q.z1) return null; // an open passage's sides, and its two mouths, are open edges",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "EGZ-clamp-mouth-held",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (q.open || z < q.z0 || z > q.z1) return null;",
-    "new": "if (q.open) return null;",
+    "old": "    if (q.open || z < q.z0 || z > q.z1) return null; // an open passage's sides, and its two mouths, are open edges",
+    "new": "    if (q.open) return null; // an open passage's sides, and its two mouths, are open edges",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "EGZ-clamp-slack-gone",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "Math.abs(x - q.x) <= q.halfW + EG_CLAMP_SLACK_M :",
-    "new": "Math.abs(x - q.x) <= q.halfW :",
+    "old": "          ? z >= q.z0 && z <= q.z1 && Math.abs(x - q.x) <= q.halfW + EG_CLAMP_SLACK_M",
+    "new": "          ? z >= q.z0 && z <= q.z1 && Math.abs(x - q.x) <= q.halfW",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "EGZ-clamp-heights-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (y < q.y - 3 || y > q.ceil + 3) continue;",
-    "new": "",
+    "old": "    if (y < q.y - 3 || y > q.ceil + 3) continue;\n    if (q.t === 'climb') {",
+    "new": "    if (q.t === 'climb') {",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "EGZ-clamp-doorway-walled",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return door ? null : [q.x + side * lim, z];",
-    "new": "return [q.x + side * lim, z];",
+    "old": "    return door ? null : [q.x + side * lim, z];",
+    "new": "    return [q.x + side * lim, z];",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "EGZ-clamp-gap-ringed",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
-    "new": "if (d <= lim || d > q.r + EG_CLAMP_SLACK_M) return null;",
+    "old": "  if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
+    "new": "  if (d <= lim || d > q.r + EG_CLAMP_SLACK_M) return null;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "EGZ-clamp-ring-slack",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
-    "new": "if (d <= lim || ringGap(dx, dz)) return null;",
+    "old": "  if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
+    "new": "  if (d <= lim || ringGap(dx, dz)) return null;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "EGZ-clamp-ring-radius-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "d = Math.hypot(dx, dz), lim = q.r - r;",
-    "new": "d = Math.hypot(dx, dz), lim = 10 - r;",
+    "old": "    lim = q.r - r;",
+    "new": "    lim = 10 - r;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -857,8 +857,8 @@
   {
     "name": "EGZ-clamp-trial-wall-a-fragment",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d.t === 'wall' && d.kit) out.push(",
-    "new": "if (d.t === 'wall') out.push(",
+    "old": "    if (d.t === 'wall' && d.kit)\n      out.push({ t: 'chamber', x: d.x, z: d.z, r: d.r, y: d.y ?? 0, ceil: (d.y ?? 0) + d.h });",
+    "new": "    if (d.t === 'wall') out.push({ t: 'chamber', x: d.x, z: d.z, r: d.r, y: d.y ?? 0, ceil: (d.y ?? 0) + d.h });",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "EGZ-clamp-ceiling-unheld",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "ceilAbove: Math.max(0.5, q.ceil - q.y - CLAMP_BODY_M), zone: q,",
-    "new": "ceilAbove: undefined, zone: q,",
+    "old": "    ceilAbove: Math.max(0.5, q.ceil - q.y - CLAMP_BODY_M),",
+    "new": "    ceilAbove: undefined,",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]

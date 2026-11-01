@@ -190,7 +190,7 @@ test('MWNPC17d the build reads the hint: each garment its rung and pick, the hea
   assert.equal(npcKeyOf(player), '');
   for (const bad of [{ seed: -1, tier: 0, lo: 0, hi: 3 }, { seed: 1.5, tier: 0, lo: 0, hi: 3 }, { seed: 1, tier: 4, lo: 0, hi: 3 }, { seed: 2 ** 32, tier: 0, lo: 0, hi: 3 }, { seed: 1, tier: 0 }, { seed: 1, tier: 1, lo: 2, hi: 3 }, { seed: 1, tier: 2, lo: 0, hi: 1 }, { seed: 1, tier: 1, lo: -1, hi: 3 }, 'x', null]) assert.equal(npcHintOf({ npc: bad }), null, `a hint read as data: ${JSON.stringify(bad)}`);
   // PIN MOVED (MW-FOLK1): the memo's key carries a townsperson's outfit after the hint, both inside it
-  assert.match(rd('src/net/peer/peerBodies.js'), /: lookKey\(look\)\) \+ npcKeyOf\(look\) \+ outfitKeyOf\(look\);\n {4}_bodyLookKeys\.set\(look, k\);/, 'the hint in the memo: one key a look, never a string a frame');
+  assert.match(rd('src/net/peer/peerBodies.js'), /: lookKey\(look\)\) \+\n\s*npcKeyOf\(look\) \+\n\s*outfitKeyOf\(look\);\n\s*_bodyLookKeys\.set\(look, k\);/, 'the hint in the memo: one key a look, never a string a frame');
   // a beast (BEAST-BOOTS): an NPC's helm and boots reach the build as anyone's do, and the composer draws what a beast
   // wears of them (mwItemMap.js beastCut; test/formats/morrowind/mwbeast1_beastboots.test.js)
   const kit = dressPerson({ role: 'knight', gender: 'male', seed: 4 });

@@ -71,7 +71,16 @@ export function labEntity() {
       majorSkills: [SKILLS.Archery, SKILLS.Restoration, SKILLS.CriticalStrike],
       minorSkills: [SKILLS.Dodging, SKILLS.Stealth, SKILLS.Swimming, SKILLS.Running, SKILLS.Mercantile, SKILLS.Medical],
     },
-    stats: { strength: 62, intelligence: 41, willpower: 48, agility: 55, endurance: 58, personality: 44, speed: 51, luck: 47 },
+    stats: {
+      strength: 62,
+      intelligence: 41,
+      willpower: 48,
+      agility: 55,
+      endurance: 58,
+      personality: 44,
+      speed: 51,
+      luck: 47,
+    },
     skills,
     // PlayerEntity's uint[2] mask: Archery and Climbing rose on the way
     // here, so the ribbon leads with them. THE WORD INDEX IS THE POINT -
@@ -81,13 +90,17 @@ export function labEntity() {
     // a skill nobody had raised; systems/skills.js's own getter is the
     // reason the window was right and the fake data was wrong.
     skillsRecentlyRaised: [(1 << SKILLS.Climbing) >>> 0, (1 << (SKILLS.Archery - 32)) >>> 0],
-    health: 96, maxHealth: 118,
-    magicka: 0, maxMagicka: 0,
+    health: 96,
+    maxHealth: 118,
+    magicka: 0,
+    maxMagicka: 0,
     fatigue: 64 * 104,
     startingLevelUpSkillSum: 180,
     currentLevelUpSkillSum: 254,
-    levelProgress: 38, levelRollUp: 6,
-    equipment: {}, items: [],
+    levelProgress: 38,
+    levelRollUp: 6,
+    equipment: {},
+    items: [],
   };
 }
 
@@ -102,7 +115,10 @@ let entity = null;
 export async function mount(lane = 'classic') {
   view?.destroy?.();
   entity = labEntity();
-  if (lane === 'oghma') { entity.oghmaLevelUp = true; entity.pendingLevel = null; }
+  if (lane === 'oghma') {
+    entity.oghmaLevelUp = true;
+    entity.pendingLevel = null;
+  }
   if (lane === 'virtue') entity.levelingSystem = 'virtue';
   // LV1's AUDIT: the character the window could not let go of. Every
   // attribute at the ceiling means `statUp` refuses every press, so
@@ -122,8 +138,13 @@ export async function mount(lane = 'classic') {
     announceSkillRaise(SKILLS.Climbing, 41, {});
     announceMastery(SKILLS.LongBlade, {});
     const vitals = {
-      health: 96, maxHealth: 118, fatigue: 104 * 64, maxFatigue: 120 * 64,
-      magicka: 0, maxMagicka: 0, breath: null,
+      health: 96,
+      maxHealth: 118,
+      fatigue: 104 * 64,
+      maxFatigue: 120 * 64,
+      magicka: 0,
+      maxMagicka: 0,
+      breath: null,
     };
     let heading = 0;
     const tick = () => {
@@ -139,7 +160,13 @@ export async function mount(lane = 'classic') {
       drawEnhancedHud(vitals, heading, 16, { hidden: false });
       globalThis.requestAnimationFrame(tick);
     };
-    globalThis.__lv = { entity, lane, spend: () => { entity.readyToLevelUp = false; } };
+    globalThis.__lv = {
+      entity,
+      lane,
+      spend: () => {
+        entity.readyToLevelUp = false;
+      },
+    };
     tick();
     return null;
   }
@@ -166,7 +193,13 @@ export async function mount(lane = 'classic') {
   // it, and the probe read "the window is gone" as false against a
   // commit that had in fact landed.
   view = mountEnhancedLevelUp(host, {
-    screen, entity, onExit: () => { view?.destroy?.(); view = null; done(lane); },
+    screen,
+    entity,
+    onExit: () => {
+      view?.destroy?.();
+      view = null;
+      done(lane);
+    },
   });
   // The probe reads these rather than the DOM's text where it wants
   // the LAW's answer: the window under test and the screen under it.
@@ -177,11 +210,15 @@ export async function mount(lane = 'classic') {
 function done(lane) {
   const note = document.createElement('div');
   note.id = 'lab-done';
-  note.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;'
-    + 'background:#07080d;color:#d8cfae;font:16px system-ui,sans-serif;text-align:center;padding:24px';
-  note.textContent = `Ascended. Level ${entity.level}, `
-    + `stats ${Object.entries(entity.stats).map(([k, v]) => `${k.slice(0, 3)} ${v}`).join(' ')}`
-    + `, bar ${entity.levelProgress ?? 0}/${LEVELUP_TOTAL} (${lane}).`;
+  note.style.cssText =
+    'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+    'background:#07080d;color:#d8cfae;font:16px system-ui,sans-serif;text-align:center;padding:24px';
+  note.textContent =
+    `Ascended. Level ${entity.level}, ` +
+    `stats ${Object.entries(entity.stats)
+      .map(([k, v]) => `${k.slice(0, 3)} ${v}`)
+      .join(' ')}` +
+    `, bar ${entity.levelProgress ?? 0}/${LEVELUP_TOTAL} (${lane}).`;
   host.append(note);
   globalThis.__lvDone = { level: entity.level, stats: { ...entity.stats }, maxHealth: entity.maxHealth, lane };
 }
@@ -193,7 +230,10 @@ for (const lane of ['classic', 'oghma', 'virtue', 'allmax', 'door', 'notice']) {
   const b = document.createElement('button');
   b.textContent = lane;
   b.dataset.lane = lane;
-  b.onclick = () => { document.getElementById('lab-done')?.remove(); mount(lane); };   // fire and forget: the lane strip is the lab's, not a law
+  b.onclick = () => {
+    document.getElementById('lab-done')?.remove();
+    mount(lane);
+  }; // fire and forget: the lane strip is the lab's, not a law
   bar.append(b);
 }
 

@@ -128,7 +128,7 @@ test('CARDS9 the counter: a pack\'s price is the counter\'s (DFU\'s CalculateTra
   const tav = read('src/ui/enhanced/enhancedTavern.js');
   assert.match(tav, /const pack = el\('button', 'act tavern-act', `Card pack \(\$\{packPrice\(\)\} gold\)`\);\s*pack\.onclick = buyPack;/);
   assert.match(tav, /wrap\.append\(room, talkBtn, food, pack, exit\);/);
-  assert.match(tav, /const r = buyCardPack\(deps\.entity, \{ quality: deps\.quality\?\.\(\) \?\? 10, skills: deps\.skills\?\.\(\) \?\? \{\} \}\);\s*if \(!r\.ok\) \{ say\(rows\(NOT_ENOUGH_GOLD_ID, \{ amount: r\.price \}\)\); return; \}/);
+  assert.match(tav, /const r = buyCardPack\(deps\.entity, \{ quality: deps\.quality\?\.\(\) \?\? 10, skills: deps\.skills\?\.\(\) \?\? \{\} \}\);\n\s*if \(!r\.ok\) \{\n\s*say\(rows\(NOT_ENOUGH_GOLD_ID, \{ amount: r\.price \}\)\);\n\s*return;\n\s*\}/);
   assert.doesNotMatch(read('src/ui/tavernWindow.js'), /buyCardPack/, 'the classic window keeps DFU\'s four buttons');
 });
 
@@ -165,7 +165,7 @@ test('CARDS9 the foes: a creature drops its own card - one draw at its card\'s t
   raiseEnemyDeath(body, { rolls: () => 0 });
   assert.deepEqual(body.items.filter(isCardRecord).map((c) => c.card), ['zombie']);
   assert.equal(dropFoeCard({ mobileType: MOBILE_TYPES.Rat, items: null }, { rolls: () => 0 }), null, 'a body with no list takes none');
-  assert.match(read('src/systems/card/cardSources.js'), /registerEnemyDeathHandler\(CARD_DROP_HANDLER, \(entity, opts = \{\}\) => \{ dropFoeCard\(entity, opts\); \}\);/);
+  assert.match(read('src/systems/card/cardSources.js'), /registerEnemyDeathHandler\(CARD_DROP_HANDLER, \(entity, opts = \{\}\) => \{\n\s*dropFoeCard\(entity, opts\);\n\s*\}\);/);
   assert.equal(CARD_DROP_HANDLER, 'iliac-card');
   assert.match(read('src/systems/worldTick.js'), /^import '\.\/card\/cardSources\.js';/m, 'the app carries the import (AUDIT-THUNDERLOCK F1\'s wire)');
   // THE CAP keeps it: three Common pieces and a card, capped to three - the card stays
@@ -243,7 +243,7 @@ test('CARDS9 THE BOSSES\' OWN: the Warden\'s, Sethrakul\'s and the Brass Remnant
   // by source: each draw sits after the hoard's last piece's
   // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md, PIN MOVED): the card is the last draw BEFORE the gem arc's - the sockets'
   // passes and the boss's gems follow it (law 9); test/systems/gem1_sockets.test.js pins them
-  assert.match(read('src/systems/gate/gateSpoils.js'), /lastPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('gate', rolls\);\s*(\/\/[^\n]*\n\s*)*socketPass\(pieces\.map/);
+  assert.match(read('src/systems/gate/gateSpoils.js'), /lastPass\(pieces\.map\(\(p\) => p\.item\), rolls\);\n\s*\/\/ CARDS9 \(bible\/11-Multiplayer\/Tavern-Cards\.md section 32\): THE WARDEN'S OWN CARD - one draw more, LAST of all \(after\n\s*\/\/ the last pass\), so every spoils before it is what it was for its seed; kept beside the pieces, never among them\n\s*const card = bossCardRoll\('gate', rolls\);\n\s*\/\/ GEM1\/GEM2 \(bible\/06-Systems\/Gem-Sockets\.md section 4\): the sockets' passes over the pieces - LOOT20's, then the\n\s*\/\/ weapons' own - and the Warden's gem at a boss's grade, LAST of all \(after the card\), so every spoils before them is\n\s*\/\/ what it was for its seed\n\s*socketPass\(pieces\.map/);
   assert.match(read('src/systems/serpent/serpentSpoils.js'), /if \(coil\) pieces\.push\(\{ item: coil, tier: coil\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const card = dealt \? bossCardRoll\('serpent', rolls\) : null;/);
   assert.match(read('src/systems/superDungeon/sdSpoils.js'), /if \(hourlock\) pieces\.push\(\{ item: hourlock, tier: hourlock\.rarity \}\);\s*(\/\/[^\n]*\n\s*)*const card = bossCardRoll\('abyss', rolls\);/);
 });

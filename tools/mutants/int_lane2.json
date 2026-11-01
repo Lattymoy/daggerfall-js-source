@@ -2,8 +2,8 @@
   {
     "name": "INT9-ZONE-ONE-WORD-ENOUGH",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!a.zone || !t.zone) return",
-    "new": "  if (!t.zone) return",
+    "old": "  if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
+    "new": "  if (!t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "INT9-THE-FALLEN-STRUCK",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (a.down || t.down) return",
-    "new": "  if (a.down) return",
+    "old": "  if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };",
+    "new": "  if (a.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "INT9-A-STRANGERS-PICK",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!fall || fall.killer !== killer || fall.picked ||",
-    "new": "  if (!fall || fall.picked ||",
+    "old": "  if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
+    "new": "  if (!fall || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "INT9-A-SECOND-PICK",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!fall || fall.killer !== killer || fall.picked ||",
-    "new": "  if (!fall || fall.killer !== killer ||",
+    "old": "  if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
+    "new": "  if (!fall || fall.killer !== killer || now - fall.at > WILD_REF.pickMs) return null;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "INT9-THE-PICK-LATE",
     "file": "src/net/wild/wildRef.js",
-    "old": "fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
-    "new": "fall.picked) return null;",
+    "old": "  if (!fall || fall.killer !== killer || fall.picked || now - fall.at > WILD_REF.pickMs) return null;",
+    "new": "  if (!fall || fall.killer !== killer || fall.picked) return null;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "INT9-THE-STEP-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!fall.picked && now - fall.at > WILD_REF.pickMs) { fall.picked = true; out.push(fall); }",
-    "new": "if (false) { fall.picked = true; out.push(fall); }",
+    "old": "    if (!fall.picked && now - fall.at > WILD_REF.pickMs) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "INT9-RC-A-SELF-KILL",
     "file": "src/net/wild/wildReceipt.js",
-    "old": " || !ID_RE.test(c.k) || c.f === c.k) return false;",
-    "new": " || !ID_RE.test(c.k)) return false;",
+    "old": "  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)\n    return false;",
+    "new": "  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k)) return false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "INT9-RC-A-FOREIGN-FIELD",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (WILD_FOREIGN.some((f) => c[f] !== undefined)) return false;\n",
-    "new": "",
+    "old": "  if (WILD_FOREIGN.some((f) => c[f] !== undefined)) return false;\n  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)",
+    "new": "  if (typeof c.f !== 'string' || !ID_RE.test(c.f) || typeof c.k !== 'string' || !ID_RE.test(c.k) || c.f === c.k)",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "INT9-RC-THE-PIECE-UNBOUNDED",
     "file": "src/net/wild/wildReceipt.js",
-    "old": " || c.w < -1 || c.w >= WILD_WORN_MAX) return false;",
-    "new": " || c.w < -1) return false;",
+    "old": "  if (!Number.isInteger(c.w) || c.w < -1 || c.w >= WILD_WORN_MAX) return false;",
+    "new": "  if (!Number.isInteger(c.w) || c.w < -1) return false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "INT9-RC-THE-VERSION-UNREAD",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "  if (v !== V) return { ok: false, why: 'version' };\n",
-    "new": "",
+    "old": "  if (v !== V) return { ok: false, why: 'version' };\n  if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "  if (!sig64) return { ok: false, why: 'unsigned' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "INT9-A-REMAINS-UNVOUCHED-TAKEN",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (!rec?.ok) return null;",
-    "new": "  if (!rec) return null;",
+    "old": "  if (!rec?.ok) return null; // INT9: a remains whose records the order never vouched for is nobody's",
+    "new": "  if (!rec) return null; // INT9: a remains whose records the order never vouched for is nobody's",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "INT9-THE-KILLERS-PIECE-ANYONES",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (named && sub !== named) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (named && sub !== named) return null; // INT9: the killer's worn piece is the killer's alone",
+    "new": "  if (false) return null; // INT9: the killer's worn piece is the killer's alone",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -141,8 +141,8 @@
   {
     "name": "INT9-A-REMAINS-UNVOUCHED-SAID",
     "file": "src/net/wild/wildLaw.js",
-    "old": "  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return [];",
-    "new": "  if (!remainsLive(rec, now) || remainsEmpty(rec)) return [];",
+    "old": "  if (!rec?.ok || !remainsLive(rec, now) || remainsEmpty(rec)) return []; // INT9: a remains the order never vouched for is said to nobody",
+    "new": "  if (!remainsLive(rec, now) || remainsEmpty(rec)) return []; // INT9: a remains the order never vouched for is said to nobody",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "INT9-SVC-THE-GRACE-UNREAD",
     "file": "server-account/src/wild.js",
-    "old": "      if (ctx.nowS < c.i + wildFallGraceS(c)) return { error: 'grace' };\n",
-    "new": "",
+    "old": "      if (ctx.nowS < c.i + wildFallGraceS(c)) return { error: 'grace' };\n      seize = true;",
+    "new": "      seize = true;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "INT9-SVC-A-STRANGERS-CARRY",
     "file": "server-account/src/wild.js",
-    "old": "    if (player.id !== c.f && player.id !== c.k) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "    if (player.id !== c.f && player.id !== c.k) return { error: 'not-yours' };\n    if (!c.c) return { error: 'no-realm-character' };",
+    "new": "    if (!c.c) return { error: 'no-realm-character' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -222,7 +222,7 @@
   {
     "name": "INT9-SVC-THE-LEDGER-UNREAD",
     "file": "server-account/src/wild.js",
-    "old": "  const keep = (/** @type {any} */ it) => { const k = ledgerKeyOf(it); return k != null && barred.has(k); };",
+    "old": "  const keep = (/** @type {any} */ it) => {\n    const k = ledgerKeyOf(it);\n    return k != null && barred.has(k);\n  };",
     "new": "  const keep = (/** @type {any} */ _it) => false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -258,8 +258,8 @@
   {
     "name": "INT9-SVC-THE-SEIZED-LEASE-KEPT",
     "file": "server-account/src/realm.js",
-    "old": "${seize ? ', lease = NULL' : ''}",
-    "new": "${seize ? '' : ''}",
+    "old": "        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}",
+    "new": "        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? '' : ''}",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -267,7 +267,7 @@
   {
     "name": "INT9-LAW-A-KEPT-PIECE-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const aside = bag.map((it, i) => (held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);",
+    "old": "  const aside = bag\n    .map((it, i) =>\n      held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null,\n    )\n    .filter((x) => x !== null);",
     "new": "  const aside = [];",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -295,8 +295,8 @@
   {
     "name": "INT9-CLIENT-THE-KILLERS-PIECE-A-PILE",
     "file": "src/net/wild/wildRemains.js",
-    "old": "      if (!r || i === rec.wi) continue;",
-    "new": "      if (!r) continue;",
+    "old": "      if (!r || i === rec.wi) continue; // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)",
+    "new": "      if (!r) continue; // INT9: the killer's piece is no pile's - theirs comes by itself (onWord)",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "INT9-CLIENT-ANOTHER-FALLS-OFFER",
     "file": "src/net/wild/wildFight.js",
-    "old": "      if (!b || b.s !== d.s || b.offered ||",
-    "new": "      if (!b || b.offered ||",
+    "old": "      if (!b || b.s !== d.s || b.offered || b.picked || now() - b.at > WILD_BODY_MS) return;",
+    "new": "      if (!b || b.offered || b.picked || now() - b.at > WILD_BODY_MS) return;",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "INT8-THE-OPPONENT-UNREAD",
     "file": "src/net/duel/duelRef.js",
-    "old": "  if (them.id !== to) return { ok: false, dealt: 0, fell: false, bout, why: 'not-opponent' };\n",
-    "new": "",
+    "old": "  if (them.id !== to) return { ok: false, dealt: 0, fell: false, bout, why: 'not-opponent' };\n  if (now < bout.startMs || now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };",
+    "new": "  if (now < bout.startMs || now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "INT8-A-BLOW-IN-THE-COUNT",
     "file": "src/net/duel/duelRef.js",
-    "old": "  if (now < bout.startMs || now >= bout.endMs) return",
-    "new": "  if (now >= bout.endMs) return",
+    "old": "  if (now < bout.startMs || now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };",
+    "new": "  if (now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "INT8-RC-A-SELF-DUEL",
     "file": "src/net/duel/duelReceipt.js",
-    "old": " || c.f[0] === c.f[1]) return false;",
-    "new": ") return false;",
+    "old": "  if (\n    !Array.isArray(c.f) ||\n    c.f.length !== 2 ||\n    !c.f.every((x) => typeof x === 'string' && ID_RE.test(x)) ||\n    c.f[0] === c.f[1]\n  )",
+    "new": "  if (!Array.isArray(c.f) || c.f.length !== 2 || !c.f.every((x) => typeof x === 'string' && ID_RE.test(x)))",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "INT7-THE-ARMS-UNSIGNED",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.wa !== undefined) claims.wa = who.wa;",
-    "new": "  if (false) claims.wa = who.wa;",
+    "old": "  if (who?.wa !== undefined) claims.wa = who.wa; // INT7: only for a realm character judged since - before one, the bytes as before",
+    "new": "  if (false) claims.wa = who.wa; // INT7: only for a realm character judged since - before one, the bytes as before",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "INT9-AUDIT-A-WORD-OFF-AND-ON-A-HEAL",
     "file": "src/net/wild/wildRef.js",
-    "old": "    if (now - x.outAt >= WILD_REF.awayMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
-    "new": "    if (!x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
+    "old": "    if (now - x.outAt >= WILD_REF.awayMs && !x.down) {",
+    "new": "    if (!x.down) {",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "INT9-AUDIT-THE-CARRY-BACK-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "  } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);",
-    "new": "  }",
+    "old": "  } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now); // it fought in another room since it left this one",
+    "new": "  } // it fought in another room since it left this one",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -430,7 +430,7 @@
   {
     "name": "INT9-AUDIT-A-FALLEN-CARRIED-WHOLE",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; return; }",
+    "old": "  if (carry.down && now - carry.downAt < WILD_REF.riseMs) {\n    x.down = true;\n    x.downAt = carry.downAt;\n    x.f.down = true;\n    x.f.hp = 0;\n    return;\n  }",
     "new": "  if (false) return;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -439,8 +439,8 @@
   {
     "name": "INT9-AUDIT-THE-GONE-STILL-FIGHTING",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (x && x.zone) { x.zone = false; x.outAt = now; }",
-    "new": "  if (false) { x.zone = false; x.outAt = now; }",
+    "old": "  if (x && x.zone) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "INT9-AUDIT-THE-JUMPER-STRIKES",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (now - a.jumpAt < WILD_REF.jumpMs) return",
-    "new": "  if (false) return",
+    "old": "  if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };",
+    "new": "  if (false) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -457,7 +457,7 @@
   {
     "name": "INT9-AUDIT-THE-EVICTED-FORGOTTEN",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (st.falls.size >= WILD_REF.fallsMax) { evicted = st.falls.values().next().value; evicted.picked = true; st.falls.delete(evicted.r); }",
+    "old": "  if (st.falls.size >= WILD_REF.fallsMax) {\n    evicted = st.falls.values().next().value;\n    evicted.picked = true;\n    st.falls.delete(evicted.r);\n  }",
     "new": "  if (st.falls.size >= WILD_REF.fallsMax) st.falls.delete(st.falls.keys().next().value);",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -466,7 +466,7 @@
   {
     "name": "INT9-AUDIT-THE-PICKS-PIECE-UNSIGNED",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (Array.isArray(wt) && wt.length === 2 && wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536)) fall.wt = [wt[0], wt[1]];",
+    "old": "  if (Array.isArray(wt) && wt.length === 2 && wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536))\n    fall.wt = [wt[0], wt[1]];",
     "new": "",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -475,8 +475,8 @@
   {
     "name": "INT9-AUDIT-A-TOMBSTONE-LET-GO",
     "file": "src/net/wild/wildLaw.js",
-    "old": "    if (remainsSpent(rec) && now - rec.at < WILD_TOMB_MIN_MS) continue;",
-    "new": "",
+    "old": "    if (remainsSpent(rec) && now - rec.at < WILD_TOMB_MIN_MS) continue;\n    if (!old || rec.at < old.at) old = rec;",
+    "new": "    if (!old || rec.at < old.at) old = rec;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "INT9-AUDIT-THE-GUILD-LOST-ON-A-WAKE",
     "file": "src/net/wild/wildLaw.js",
-    "old": "return { r: v.r, gi: typeof v.gi === 'string' && v.gi ? v.gi : null, os:",
-    "new": "return { r: v.r, gi: null, os:",
+    "old": "    gi: typeof v.gi === 'string' && v.gi ? v.gi : null,",
+    "new": "    gi: null,",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "INT9-AUDIT-THE-GOLD-LAST",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (pile) took.push([pile, 'gold']);\n",
-    "new": "",
+    "old": "  if (pile) took.push([pile, 'gold']);\n  // a piece kept stands aside while the drop is taken, and comes back to its place - LETTERS-TENTH: a letter too",
+    "new": "  // a piece kept stands aside while the drop is taken, and comes back to its place - LETTERS-TENTH: a letter too",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -512,8 +512,8 @@
   {
     "name": "INT9-AUDIT-THE-DROP-IN-THE-PACKS-ORDER",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  drop.sort((a, b) => worth.get(b[0]) - worth.get(a[0]));",
-    "new": "",
+    "old": "  drop.sort((a, b) => worth.get(b[0]) - worth.get(a[0])); // stable: equal worth keeps the pack's order",
+    "new": "  // stable: equal worth keeps the pack's order",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "INT9-AUDIT-A-HEAVY-RECORD-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "(held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)",
-    "new": "(held(it) || (letters && shareLetter(it)) ? [i, it] : null)",
+    "old": "    .map((it, i) =>\n      held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null,\n    )",
+    "new": "    .map((it, i) => (held(it) || (letters && shareLetter(it)) ? [i, it] : null))",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -558,8 +558,8 @@
   {
     "name": "INT9-AUDIT-THE-TOOK-BY-MARKS-ALONE",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    const same = (/** @type {any} */ it) => !!it && (s.u ? it.uid === s.u : s.p ? it.provenance === s.p\n      : ",
-    "new": "    const same = (/** @type {any} */ it) => !!it && (false ? 0 : false ? 0\n      : ",
+    "old": "      (s.u\n        ? it.uid === s.u\n        : s.p\n          ? it.provenance === s.p",
+    "new": "      (false\n        ? 0\n        : false\n          ? 0",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "INT9-AUDIT-SVC-A-FRESH-ORDER-EACH-ASKING",
     "file": "server-account/src/wild.js",
-    "old": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });",
-    "new": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: ctx.nowS });",
+    "old": "      { subtle: ctx.subtle, nowS: oi },",
+    "new": "      { subtle: ctx.subtle, nowS: ctx.nowS },",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -595,8 +595,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-ASKERS-ROOM",
     "file": "server-account/src/wild.js",
-    "old": "records: list(had.items), kept: list(had.kept), burnt: had.burnt === 1, killerFirst: had.wi === 0, wm: had.wm,",
-    "new": "records: list(had.items), kept: list(had.kept), burnt: had.burnt === 1, killerFirst: had.wi === 0, wm: room,",
+    "old": "      wm: had.wm,",
+    "new": "      wm: room,",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "INT9-AUDIT-SVC-NO-COPY-WRITTEN",
     "file": "server-account/src/wild.js",
-    "old": "    ...knownCopySteps(ctx.db, charId, dropped, ctx.nowS),\n",
-    "new": "",
+    "old": "    ...knownCopySteps(ctx.db, charId, dropped, ctx.nowS),\n    ctx.db",
+    "new": "    ctx.db",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -622,8 +622,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-FITTED-FEW-ASKED",
     "file": "server-account/src/wild.js",
-    "old": "  const barred = await piecesBarred(ctx.db, charId, [...wornOffer(stored.items).filter((it) => !insured(it)), ...wildDropCandidates(stored, -1, null, { insured })].map(ledgerKeyOf).filter((k) => k != null));",
-    "new": "  const barred = await piecesBarred(ctx.db, charId, takeWildDeath(JSON.parse(JSON.stringify(stored)), -1, () => false, null, { insured }).taken.map(ledgerKeyOf).filter((k) => k != null));",
+    "old": "    [...wornOffer(stored.items).filter((it) => !insured(it)), ...wildDropCandidates(stored, -1, null, { insured })]\n      .map(ledgerKeyOf)",
+    "new": "    takeWildDeath(JSON.parse(JSON.stringify(stored)), -1, () => false, null, { insured })\n      .taken.map(ledgerKeyOf)",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -631,8 +631,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-SEQ-UNTOLD",
     "file": "server-account/src/wild.js",
-    "old": "      if (now && now.lease === at.lease) seq = now.seq;",
-    "new": "",
+    "old": "      if (now && now.lease === at.lease) seq = now.seq;\n    }",
+    "new": "    }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-TOOK-UNSAID",
     "file": "server-account/src/wild.js",
-    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
-    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
+    "old": "    took: wildTookOf(drop.taken, drop.from),\n    gold: drop.gold,",
+    "new": "    took: [],\n    gold: { purse: 0, cart: 0 },",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "INT9-AUDIT-CLIENT-THE-KILLERS-PIECE-NEVER-ASKED-AGAIN",
     "file": "src/net/wild/wildRemains.js",
-    "old": "        askMine(rec);   // AUDIT INT9: an ask that never left",
-    "new": "        void 0;   // AUDIT INT9: an ask that never left",
+    "old": "        askMine(rec); // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word",
+    "new": "        void 0; // AUDIT INT9: an ask that never left (the socket, the gate) is asked again - it was asked once, at the word",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -813,8 +813,8 @@
   {
     "name": "INT9-AUDIT-CLIENT-AN-EMPTIED-REMAINS-FORGOTTEN",
     "file": "src/net/wild/wildRemains.js",
-    "old": "    has(r) { return recs.has(r) || saidIds.has(r); },",
-    "new": "    has(r) { return recs.has(r); },",
+    "old": "      return recs.has(r) || saidIds.has(r);",
+    "new": "      return recs.has(r);",
     "tests": [
       "test/net/wild1_fight.test.js"
     ]
@@ -832,8 +832,8 @@
   {
     "name": "INT7-AUDIT-A-SHAFT-FROM-AN-UNSIGNED-BOW",
     "file": "src/net/siege/siegeRef.js",
-    "old": " || (shaft && armsOk(wa) && wa[1] !== 1)) return",
-    "new": ") return",
+    "old": "  if (shaft !== siegeIsBow(held.w) || (shaft && armsOk(wa) && wa[1] !== 1))\n    return { ok: false, dealt: 0, fell: false, why: 'weapon' }; // INT7: a shaft a signed bow's",
+    "new": "  if (shaft !== siegeIsBow(held.w)) return { ok: false, dealt: 0, fell: false, why: 'weapon' }; // INT7: a shaft a signed bow's",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]
@@ -850,8 +850,8 @@
   {
     "name": "INT7-AUDIT-ARENA-THE-SIGNED-REACH-UNREAD",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "(arenaArmsOk(wa) ? Math.min(wmax + mat, wa[0]) : wmax + mat)",
-    "new": "(wmax + mat)",
+    "old": "  const reach = wmax != null ? (arenaArmsOk(wa) ? Math.min(wmax + mat, wa[0]) : wmax + mat) : ARENA_HAND_MAX;",
+    "new": "  const reach = wmax != null ? wmax + mat : ARENA_HAND_MAX;",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]
@@ -898,8 +898,8 @@
   {
     "name": "INT7-AUDIT-VERDICT-THE-ARMS-UNWRITTEN",
     "file": "server-account/src/verdict.js",
-    "old": "    arms_top: judged.arms[0],\n",
-    "new": "    arms_top: null,\n",
+    "old": "    arms_top: judged.arms[0],",
+    "new": "    arms_top: null,",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]
@@ -907,8 +907,8 @@
   {
     "name": "INT7-AUDIT-REALM-ANOTHERS-ARMS",
     "file": "server-account/src/realm.js",
-    "old": "WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();",
-    "new": "WHERE r.id = ? AND (r.player = ? OR 1)').bind(id, playerId).first();",
+    "old": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?',",
+    "new": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND (r.player = ? OR 1)',",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ],
@@ -927,8 +927,8 @@
   {
     "name": "INT8-AUDIT-ANOTHER-DUELS-YES",
     "file": "src/net/duel/duelRef.js",
-    "old": "ask.s !== s || yes.s !== s ||",
-    "new": "ask.s !== s ||",
+    "old": "    yes.s !== s ||\n    now - ask.at > ROYAL_RING.askMs + DUEL_REF.startWaitMs ||",
+    "new": "    now - ask.at > ROYAL_RING.askMs + DUEL_REF.startWaitMs ||",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
       "test/net/duel/duel_session.test.js"
@@ -937,8 +937,8 @@
   {
     "name": "INT8-AUDIT-A-SECOND-BOUT",
     "file": "src/net/duel/duelRef.js",
-    "old": "  if (st.of.has(a.sub) || st.of.has(b.sub) || st.bouts.size",
-    "new": "  if (st.bouts.size",
+    "old": "  if (st.of.has(a.sub) || st.of.has(b.sub) || st.bouts.size >= DUEL_REF_BOUTS_MAX || st.bouts.has(s))\n    return { no: 'busy' };",
+    "new": "  if (st.bouts.size >= DUEL_REF_BOUTS_MAX || st.bouts.has(s)) return { no: 'busy' };",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
       "test/net/duel/duel_session.test.js"
@@ -977,8 +977,8 @@
   {
     "name": "INT8-AUDIT-THE-CLOCK-UNREAD",
     "file": "src/net/duel/duelRef.js",
-    "old": "    if (now >= bout.endMs) { out.push(duelEnd(st, bout, null, 'draw')); continue; }",
-    "new": "",
+    "old": "    if (now >= bout.endMs) {\n      out.push(duelEnd(st, bout, null, 'draw'));\n      continue;\n    }\n    for (const x of [bout.a, bout.b]) {",
+    "new": "    for (const x of [bout.a, bout.b]) {",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
       "test/net/duel/duel_session.test.js"
@@ -987,7 +987,7 @@
   {
     "name": "INT8-AUDIT-THE-GONE-UNREAD",
     "file": "src/net/duel/duelRef.js",
-    "old": "    for (const x of [bout.a, bout.b]) { if (here(x.sub)) x.goneAt = null; else x.goneAt ??= now; }",
+    "old": "    for (const x of [bout.a, bout.b]) {\n      if (here(x.sub)) x.goneAt = null;\n      else x.goneAt ??= now;\n    }",
     "new": "",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
@@ -997,8 +997,8 @@
   {
     "name": "INT8-AUDIT-THE-RING-LEFT-UNREAD",
     "file": "src/net/duel/duelRef.js",
-    "old": "    if (outA || outB) out.push(duelEnd(",
-    "new": "    if (false) out.push(duelEnd(",
+    "old": "    if (outA || outB)",
+    "new": "    if (false)",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
       "test/net/duel/duel_session.test.js"
@@ -1007,8 +1007,8 @@
   {
     "name": "INT8-AUDIT-A-TELEPORT-BELIEVED",
     "file": "src/net/duel/duelRef.js",
-    "old": "  if (refereeStep(me.pose, p, now - me.poseAt, me.f)) { me.pose",
-    "new": "  if (true) { me.pose",
+    "old": "  if (refereeStep(me.pose, p, now - me.poseAt, me.f)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
       "test/net/duel/duel_session.test.js"
@@ -1017,7 +1017,7 @@
   {
     "name": "INT8-AUDIT-THE-RING-EDGE-UNREAD",
     "file": "src/net/duel/duelRef.js",
-    "old": "  if (fromCentre(p, bout.c) > ROYAL_RING.radiusM + ROYAL_RING.outSlackM) me.outAt ??= now; else me.outAt = null;",
+    "old": "  if (fromCentre(p, bout.c) > ROYAL_RING.radiusM + ROYAL_RING.outSlackM) me.outAt ??= now;\n  else me.outAt = null;",
     "new": "  me.outAt = null;",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js",
@@ -1064,8 +1064,8 @@
   {
     "name": "INT8-AUDIT-CLIENT-THE-CARRIER-ANYONES",
     "file": "src/net/siege/siegeClaims.js",
-    "old": "  mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who) });",
-    "new": "  mine: () => true });",
+    "old": "    mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who),",
+    "new": "    mine: () => true,",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js"
     ]

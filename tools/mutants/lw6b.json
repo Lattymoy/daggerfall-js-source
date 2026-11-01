@@ -101,8 +101,8 @@
   {
     "name": "LW6b-mark-kept",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const set = turns[kind] ?? marks[kind];",
-    "new": "      const set = turns[kind];",
+    "old": "      const set = turns[kind] ?? marks[kind]; // LW6b: a mark is kept as a turn is",
+    "new": "      const set = turns[kind]; // LW6b: a mark is kept as a turn is",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW6b-mark-written",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const marksOut = Object.fromEntries(MARK_KINDS.filter((k) => marks[k].size).map((k) => [k, [...marks[k]]]));",
-    "new": "      const marksOut = {};",
+    "old": "      const marksOut = Object.fromEntries(MARK_KINDS.filter((k) => marks[k].size).map((k) => [k, [...marks[k]]])); // LW6b: only once there is one",
+    "new": "      const marksOut = {}; // LW6b: only once there is one",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LW6b-mark-always",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const marksOut = Object.fromEntries(MARK_KINDS.filter((k) => marks[k].size).map((k) => [k, [...marks[k]]]));",
-    "new": "      const marksOut = Object.fromEntries(MARK_KINDS.map((k) => [k, [...marks[k]]]));",
+    "old": "      const marksOut = Object.fromEntries(MARK_KINDS.filter((k) => marks[k].size).map((k) => [k, [...marks[k]]])); // LW6b: only once there is one",
+    "new": "      const marksOut = Object.fromEntries(MARK_KINDS.map((k) => [k, [...marks[k]]])); // LW6b: only once there is one",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW6b-mark-alone",
     "file": "src/systems/livingWorld/relations.js",
-    "old": " || Object.keys(marksOut).length > 0 || Object.keys(talesOut).length > 0;",
-    "new": " || Object.keys(talesOut).length > 0;",
+    "old": "        TURN_KINDS.some((k) => turns[k].size) ||\n        Object.keys(handsOut).length > 0 ||\n        Object.keys(marksOut).length > 0 ||\n        Object.keys(talesOut).length > 0;",
+    "new": "        TURN_KINDS.some((k) => turns[k].size) || Object.keys(handsOut).length > 0 || Object.keys(talesOut).length > 0;",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "LW6b-stood-member",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "return !!c && (c.allies.has(resId) || c.foes.has(resId)); },",
-    "new": "return !!c; },",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c;",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LW6b-stood-allies",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "return !!c && (c.allies.has(resId) || c.foes.has(resId)); },",
-    "new": "return !!c && c.foes.has(resId); },",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c && c.foes.has(resId);",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "LW6b-stood-foes",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "return !!c && (c.allies.has(resId) || c.foes.has(resId)); },",
-    "new": "return !!c && c.allies.has(resId); },",
+    "old": "      return !!c && (c.allies.has(resId) || c.foes.has(resId));",
+    "new": "      return !!c && c.allies.has(resId);",
     "tests": [
       "test/systems/livingWorld/lw6b_remains.test.js"
     ]

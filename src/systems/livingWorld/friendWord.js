@@ -9,12 +9,15 @@ import { t } from '../textManager.js';
 import { residentOfId } from './people.js';
 
 const FRIEND_TEXT = '{name} counts you a friend now.';
-const FRIEND_COURT_TEXT = '{name} counts you a friend now. You can court them: ask about Courtship under Tell me about.';
+const FRIEND_COURT_TEXT =
+  '{name} counts you a friend now. You can court them: ask about Courtship under Tell me about.';
 
 /** The line for a friend made. @param {{ name: string, court: boolean }} who - their name, and whether the Courtship row
  *  is theirs now */
 export function friendLine({ name, court }) {
-  return court ? t('livingWorld.friend.court', FRIEND_COURT_TEXT, { name }) : t('livingWorld.friend.made', FRIEND_TEXT, { name });
+  return court
+    ? t('livingWorld.friend.court', FRIEND_COURT_TEXT, { name })
+    : t('livingWorld.friend.made', FRIEND_TEXT, { name });
 }
 
 /**
@@ -27,6 +30,8 @@ export function friendLine({ name, court }) {
  * @returns {{ name: string, court: boolean }[]}
  */
 export function friendCards(ids, townOf, topicsOf) {
-  return ids.map((id) => residentOfId(id, townOf)).filter(Boolean)
+  return ids
+    .map((id) => residentOfId(id, townOf))
+    .filter(Boolean)
     .map((res) => ({ name: res.name, court: (topicsOf({ living: { res } }) ?? []).some((r) => r.topic === 'court') }));
 }

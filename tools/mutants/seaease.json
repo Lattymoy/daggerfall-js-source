@@ -2,8 +2,8 @@
   {
     "name": "SE-densities-back",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "few: 1, some: 2, many: 4",
-    "new": "few: 2, some: 3, many: 5",
+    "old": "export const DENSITY = Object.freeze({ off: 0, few: 1, some: 2, many: 4 });",
+    "new": "export const DENSITY = Object.freeze({ off: 0, few: 2, some: 3, many: 5 });",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SE-weights-back",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "{ pirate: 30, merchant: 45, navy: 25 }",
-    "new": "{ pirate: 45, merchant: 38, navy: 17 }",
+    "old": "export const FACTION_WEIGHTS = Object.freeze({ pirate: 30, merchant: 45, navy: 25 });",
+    "new": "export const FACTION_WEIGHTS = Object.freeze({ pirate: 45, merchant: 38, navy: 17 });",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SE-port-pirates-kept",
     "file": "src/systems/naval/navalDirector.js",
-    "old": " w.pirate *= PORT_PIRATE_K; }",
-    "new": " }",
+    "old": "    w.pirate *= PORT_PIRATE_K;\n  } // SEA-EASE: the crown's own waters",
+    "new": "  } // SEA-EASE: the crown's own waters",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SE-relief-wait-unread",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "      if (distress) wait = Math.min(wait, RELIEF_WAIT_S);\n",
-    "new": "",
+    "old": "      if (distress) wait = Math.min(wait, RELIEF_WAIT_S);\n      wait -= spent;",
+    "new": "      wait -= spent;",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SE-relief-no-berth",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "(ctx.density ?? 0) + (distress ? 1 : 0)",
-    "new": "(ctx.density ?? 0)",
+    "old": "      if (alive >= (ctx.density ?? 0) + (distress ? 1 : 0) || random() >= SHIP_SPAWN_CHANCE) return out;",
+    "new": "      if (alive >= (ctx.density ?? 0) || random() >= SHIP_SPAWN_CHANCE) return out;",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SE-relief-always",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null;   // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)\n",
-    "new": "\n",
+    "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null; // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)",
+    "new": "",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SE-relief-about-stander",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "const pos = [at[0] + Math.sin(a) * d, ctx.seaY ?? at[1], at[2] + Math.cos(a) * d];",
-    "new": "const pos = [ctx.player[0] + Math.sin(a) * d, ctx.seaY ?? at[1], ctx.player[2] + Math.cos(a) * d];",
+    "old": "      const pos = [at[0] + Math.sin(a) * d, ctx.seaY ?? at[1], at[2] + Math.cos(a) * d];",
+    "new": "      const pos = [ctx.player[0] + Math.sin(a) * d, ctx.seaY ?? at[1], ctx.player[2] + Math.cos(a) * d];",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SE-relief-facing-away",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "yaw: Math.atan2(at[0] - pos[0], at[2] - pos[2]), hunter: false, relief: true",
-    "new": "yaw: 0, hunter: false, relief: true",
+    "old": "      return {\n        seed,\n        classId: cls.id,\n        variant,\n        pos,\n        yaw: Math.atan2(at[0] - pos[0], at[2] - pos[2]),\n        hunter: false,\n        relief: true,\n      };",
+    "new": "      return { seed, classId: cls.id, variant, pos, yaw: 0, hunter: false, relief: true };",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SE-relieving-unread",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null",
-    "new": "Array.isArray(ctx.distress) && !ctx.ether ? ctx.distress : null",
+    "old": "      const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
+    "new": "      const distress = Array.isArray(ctx.distress) && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SE-aid-priority-dropped",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(aids && fightsAny(c, aids) ? AID_PRIORITY : 1)",
-    "new": "1",
+    "old": "      const rank = (held ? dist * 0.8 : dist) * (aids && fightsAny(c, aids) ? AID_PRIORITY : 1);",
+    "new": "      const rank = (held ? dist * 0.8 : dist) * 1;",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SE-hunted-stood-by",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (c.kind === 'player' && !hostile(ship, c, world))",
-    "new": "if (c.kind === 'player')",
+    "old": "  for (const c of world.contacts ?? [])\n    if (c.kind === 'player' && !hostile(ship, c, world)) (ids ??= new Set()).add(c.id);",
+    "new": "  for (const c of world.contacts ?? []) if (c.kind === 'player') (ids ??= new Set()).add(c.id);",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SE-fight-any-mode",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(c.ship.mode === 'engage' || c.ship.mode === 'board')",
-    "new": "c.ship.mode !== 'cruise'",
+    "old": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && (c.ship.mode === 'engage' || c.ship.mode === 'board');",
+    "new": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && c.ship.mode !== 'cruise';",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SE-fight-board-dropped",
     "file": "src/systems/naval/navalAI.js",
-    "old": "(c.ship.mode === 'engage' || c.ship.mode === 'board')",
-    "new": "(c.ship.mode === 'engage')",
+    "old": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && (c.ship.mode === 'engage' || c.ship.mode === 'board');",
+    "new": "  c.kind === 'ship' && !!c.ship && ids.has(c.ship.target) && c.ship.mode === 'engage';",
     "tests": [
       "test/systems/naval/seaease.test.js"
     ]

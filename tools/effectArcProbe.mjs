@@ -23,11 +23,15 @@ import { chromium } from 'playwright';
 const PORT = 5219;
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: PORT, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
-page.on('console', (m) => { if (m.type() === 'error') pageErrors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') pageErrors.push(m.text());
+});
 
 // ?shot&class=0 is the standalone-dungeon route the monster and
 // inventory probes already use - Privateer's Hold with a real party.
@@ -42,24 +46,34 @@ const check = (name, ok, detail) => {
 
 // A custom spell record built by the SHIPPED maker, in the page, so
 // the probe cannot drift from the real packing.
-const mkSpell = (slots, rangeType) => page.evaluate(async ([s, rt]) => {
-  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
-  return buildCustomSpell({
-    slots: s.map((x) => ({ type: x.type, subType: x.subType,
-      settings: { ...blankEffectSettings(), ...x.settings } })),
-    rangeType: rt,
-  });
-}, [slots, rangeType]);
+const mkSpell = (slots, rangeType) =>
+  page.evaluate(
+    async ([s, rt]) => {
+      const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
+      return buildCustomSpell({
+        slots: s.map((x) => ({
+          type: x.type,
+          subType: x.subType,
+          settings: { ...blankEffectSettings(), ...x.settings },
+        })),
+        rangeType: rt,
+      });
+    },
+    [slots, rangeType],
+  );
 
 const foes = async () => JSON.parse(await page.evaluate(() => window.__foes()));
 const liveFoes = async () => (await foes()).filter((f) => !f.dead);
 
-const dists = async () => page.evaluate(() => {
-  const p = window.__player.pos;
-  return (window.__liveFoeRecords() ?? [])
-    .map((r) => ({ t: r.mobileType, d: Math.hypot(r.pos[0] - p[0], r.pos[1] - p[1], r.pos[2] - p[2]) }))
-    .sort((a, b) => a.d - b.d).slice(0, 5).map((x) => ({ t: x.t, d: Number(x.d.toFixed(1)) }));
-});
+const dists = async () =>
+  page.evaluate(() => {
+    const p = window.__player.pos;
+    return (window.__liveFoeRecords() ?? [])
+      .map((r) => ({ t: r.mobileType, d: Math.hypot(r.pos[0] - p[0], r.pos[1] - p[1], r.pos[2] - p[2]) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 5)
+      .map((x) => ({ t: x.t, d: Number(x.d.toFixed(1)) }));
+  });
 out.steps.scene = { foes: (await foes()).length, live: (await liveFoes()).length, nearest: await dists() };
 
 // THE POINT OF THE PROBE: a 14-unit reach means nothing is in range
@@ -85,8 +99,7 @@ out.steps.afterPark = { nearest: await dists() };
 {
   const spell = await mkSpell([{ type: 39, subType: 1, settings: { durationBase: 20 } }], 0);
   await page.evaluate((sp) => window.__combat.applySpellToPlayer(sp, 5), spell);
-  const kinds = await page.evaluate(() =>
-    (window.__playerEntity.activeEffects ?? []).map((a) => a.kind));
+  const kinds = await page.evaluate(() => (window.__playerEntity.activeEffects ?? []).map((a) => a.kind));
   // the markers come off the LIVE pool through the shipped bridge
   const markers = await page.evaluate(async () => {
     const nb = await import('/src/systems/nearbyObjects.js');
@@ -101,8 +114,7 @@ out.steps.afterPark = { nearest: await dists() };
   // is bounded by the 14-unit reach rather than the pool size. Before
   // the player was parked this read 0 of 42 - correct, and
   // indistinguishable from broken without the distances above.
-  check('X4 markers resolve in range', markers.n >= 1 && markers.n < markers.scanned,
-    markers);
+  check('X4 markers resolve in range', markers.n >= 1 && markers.n < markers.scanned, markers);
 }
 
 // ---- X8: Pacify Undead ----------------------------------------------
@@ -114,17 +126,23 @@ out.steps.afterPark = { nearest: await dists() };
     return fs.findIndex((f) => !f.dead && nb.enemyGroupOf(f.type) === nb.NEARBY.Undead);
   });
   if (undeadIdx < 0) {
-    check('X8 pacify', false, { reason: 'no live undead in this dungeon to pacify', liveTypes: before.map((f) => f.type) });
+    check('X8 pacify', false, {
+      reason: 'no live undead in this dungeon to pacify',
+      liveTypes: before.map((f) => f.type),
+    });
   } else {
     const spell = await mkSpell([{ type: 33, subType: 1, settings: { chanceBase: 100, chanceMod: 0 } }], 1);
-    const res = await page.evaluate(async ([sp, idx]) => {
-      const { applySpell } = await import('/src/systems/effects.js');
-      const f = window.__foeRecord(idx);
-      const wasHostile = f.ai?.isHostile;
-      const r = applySpell(sp, 5, f.entity, {}, () => 0, null, {});
-      if (r.pacify && f.ai) f.ai.isHostile = false;   // the hostMagic door, replayed
-      return { wasHostile, pacify: !!r.pacify, nowHostile: f.ai?.isHostile, type: f.mobileType };
-    }, [spell, undeadIdx]);
+    const res = await page.evaluate(
+      async ([sp, idx]) => {
+        const { applySpell } = await import('/src/systems/effects.js');
+        const f = window.__foeRecord(idx);
+        const wasHostile = f.ai?.isHostile;
+        const r = applySpell(sp, 5, f.entity, {}, () => 0, null, {});
+        if (r.pacify && f.ai) f.ai.isHostile = false; // the hostMagic door, replayed
+        return { wasHostile, pacify: !!r.pacify, nowHostile: f.ai?.isHostile, type: f.mobileType };
+      },
+      [spell, undeadIdx],
+    );
     check('X8 pacify undead', res.pacify === true && res.nowHostile === false, res);
   }
 }
@@ -148,8 +166,15 @@ out.steps.afterPark = { nearest: await dists() };
   const corpses = afterAll.filter((f) => f.corpse).length;
   const pilesAfter = JSON.parse(await page.evaluate(() => window.__piles()));
   const destroyed = beforeLive - afterLive;
-  const detail = { beforeLive, beforeUndead, afterLive, destroyed, corpses,
-    pilesBefore: pilesBefore.length, pilesAfter: pilesAfter.length };
+  const detail = {
+    beforeLive,
+    beforeUndead,
+    afterLive,
+    destroyed,
+    corpses,
+    pilesBefore: pilesBefore.length,
+    pilesAfter: pilesAfter.length,
+  };
   // The sweep reached something. beforeUndead counts every undead in
   // the DUNGEON; only those inside the 14-unit reach can go, so this
   // asserts "at least the parked one" rather than "all of them".

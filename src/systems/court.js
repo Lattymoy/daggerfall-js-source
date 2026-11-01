@@ -30,7 +30,7 @@
 // the field only 2 (:137) or 0 (:139), so its own `punishmentType ==
 // 1` arms at :329 and :399 are dead code, and :279 says so in DFU's
 // own words - "Seems like an execution sentence can't be given in
-// classic. It can't be given here, either." court.js:"return localizedText('Execution', 'Execution');", court.js:"export function pleaGuilty".."if (court.punishmentType === 1) return { outcome: 'executed' };" and
+// classic. It can't be given here, either." court.js:"if (court.punishmentType === 1) return localizedText", court.js:"export function pleaGuilty".."if (court.punishmentType === 1) return { outcome: 'executed' };" and
 // :431 carry the same unreachable arm for the same reason (an arm
 // that is absent and an arm that is wrong read alike from the call
 // site). The prison time-skip riding the host clock callback is the
@@ -52,19 +52,19 @@
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { goldPiecesOf, addGoldPieces, LETTER_OF_CREDIT_TEMPLATE, addItem } from './inventory.js';   // E4: the counter's two members; B1: letters are tender; STOLEN-GOODS AUDIT S2: a bag's honest goods into the pack
-import { hasBag } from '../net/bagLaw.js';   // STOLEN-GOODS AUDIT S2: whether a Materials Bag still rides in the pack
-import { getPeopleOfCurrentRegion } from './talk/talk.js';   // T3a shipped the lookup
-import { changeReputation } from './faction/factionRep.js';     // S25
-import { isEquipped, unequipItem } from './equip.js';   // STOLEN-GOODS: a worn stolen piece is taken off before it is taken
-import { setLightSource } from './lightSource.js';   // STOLEN-GOODS: and a stolen torch in hand goes out with it (DISC7's one door)
-import { isStolen } from './stolenGoods.js';   // STOLEN-GOODS: the theft's mark
+import { goldPiecesOf, addGoldPieces, LETTER_OF_CREDIT_TEMPLATE, addItem } from './inventory.js'; // E4: the counter's two members; B1: letters are tender; STOLEN-GOODS AUDIT S2: a bag's honest goods into the pack
+import { hasBag } from '../net/bagLaw.js'; // STOLEN-GOODS AUDIT S2: whether a Materials Bag still rides in the pack
+import { getPeopleOfCurrentRegion } from './talk/talk.js'; // T3a shipped the lookup
+import { changeReputation } from './faction/factionRep.js'; // S25
+import { isEquipped, unequipItem } from './equip.js'; // STOLEN-GOODS: a worn stolen piece is taken off before it is taken
+import { setLightSource } from './lightSource.js'; // STOLEN-GOODS: and a stolen torch in hand goes out with it (DISC7's one door)
+import { isStolen } from './stolenGoods.js'; // STOLEN-GOODS: the theft's mark
 
 /** PlayerEntity.CrimeCommitted's SETTER (:2345-2355), the ONE home
  *  every crime write goes through (V4): a transformed lycanthrope is
  *  never tagged - SuppressCrime turns the write into Crimes.None. */
 import { racialSuppressCrime } from './lycanthropy.js';
-import { liveStat } from './statMods.js';   // DaggerfallStats.GetLiveStatValue (:155-164)
+import { liveStat } from './statMods.js'; // DaggerfallStats.GetLiveStatValue (:155-164)
 export function setCrimeCommitted(entity, crime) {
   entity.crimeCommitted = racialSuppressCrime(entity) ? 0 : crime;
   return entity.crimeCommitted;
@@ -75,15 +75,26 @@ export function setCrimeCommitted(entity, crime) {
 // pickpocket law wrote a string rather than reach it. Re-exported here
 // so every existing `CRIMES` caller stays where it is.
 export { CRIMES } from './crimes.js';
-import { CRIMES } from './crimes.js';   // REP2/REP3: the marked and the banishable crimes, by name
+import { CRIMES } from './crimes.js'; // REP2/REP3: the marked and the banishable crimes, by name
 export const CRIME_IDS = Object.freeze({ Pickpocketing: 12 });
 
 // The %cri crime names (MacroHelper.Crime, verbatim strings).
-export const CRIME_NAMES = localizedTable({   // L10N3d: MacroHelper.Crime's GetLocalizedText (:668-701); 0 has no row - its 'None' is DFU's unlocalized default, the caller's
-  1: ['Attempted_Breaking_And_Entering', 'Attempted Breaking and Entering'], 2: ['Trespassing', 'Trespassing'],
-  3: ['Breaking_And_Entering', 'Breaking and Entering'], 4: ['Assault', 'Assault'], 5: ['Murder', 'Murder'], 6: ['Tax_Evasion', 'Tax Evasion'],
-  7: ['Criminal_Conspiracy', 'Criminal Conspiracy'], 8: ['Vagrancy', 'Vagrancy'], 9: ['Smuggling', 'Smuggling'], 10: ['Piracy', 'Piracy'],
-  11: ['High_Treason', 'High Treason'], 12: ['Pickpocketing', 'Pickpocketing'], 13: ['Theft', 'Theft'], 14: ['Treason', 'Treason'],
+export const CRIME_NAMES = localizedTable({
+  // L10N3d: MacroHelper.Crime's GetLocalizedText (:668-701); 0 has no row - its 'None' is DFU's unlocalized default, the caller's
+  1: ['Attempted_Breaking_And_Entering', 'Attempted Breaking and Entering'],
+  2: ['Trespassing', 'Trespassing'],
+  3: ['Breaking_And_Entering', 'Breaking and Entering'],
+  4: ['Assault', 'Assault'],
+  5: ['Murder', 'Murder'],
+  6: ['Tax_Evasion', 'Tax Evasion'],
+  7: ['Criminal_Conspiracy', 'Criminal Conspiracy'],
+  8: ['Vagrancy', 'Vagrancy'],
+  9: ['Smuggling', 'Smuggling'],
+  10: ['Piracy', 'Piracy'],
+  11: ['High_Treason', 'High Treason'],
+  12: ['Pickpocketing', 'Pickpocketing'],
+  13: ['Theft', 'Theft'],
+  14: ['Treason', 'Treason'],
   15: ['Loan_Default', 'Loan Default'],
 });
 
@@ -93,32 +104,42 @@ export function penaltyText(court) {
   // L10N3d: DFU's rows (:714-720), read in the player's language - the regular string's %gtp/%dip filled after the lookup
   if (court.punishmentType === 2) {
     return localizedText('Regular_Punishment_String', '%gtp gold pieces in fines and %dip days in prison')
-      .replaceAll('%gtp', String(court.fine)).replaceAll('%dip', String(court.daysInPrison));
+      .replaceAll('%gtp', String(court.fine))
+      .replaceAll('%dip', String(court.daysInPrison));
   }
   if (court.punishmentType === 1) return localizedText('Execution', 'Execution');
   return localizedText('Banishment', 'Banishment');
 }
 
 // FALL.EXE (index 0 unused; Treason = half High_Treason, DFU's note)
-export const REPUTATION_LOSS_PER_CRIME = Object.freeze(
-  [0x00, 0x0A, 0x05, 0x0A, 0x08, 0x14, 0x0A, 0x02, 0x01, 0x02, 0x02, 0x4B, 0x02, 0x08, 0x24, 0x0A]);
+export const REPUTATION_LOSS_PER_CRIME = Object.freeze([
+  0x00, 0x0a, 0x05, 0x0a, 0x08, 0x14, 0x0a, 0x02, 0x01, 0x02, 0x02, 0x4b, 0x02, 0x08, 0x24, 0x0a,
+]);
 
 // Court tables (crimeType = crime - 1)
-export const PENALTY_PER_LEGAL_REP_POINT = Object.freeze([0x05, 0x05, 0x06, 0x06, 0x0A, 0x05, 0x05, 0x03, 0x08, 0x08, 0x09, 0x06, 0x00, 0x08, 0x00]);
-export const BASE_PENALTY = Object.freeze([0x12C, 0xC8, 0x258, 0x3E8, 0x2710, 0xC8, 0x1F4, 0x64, 0x1F4, 0x1F4, 0x4B0, 0xC8, 0xC8, 0x3E8, 0x64]);
-export const MIN_PENALTY = Object.freeze([0x32, 0x0A, 0x50, 0x0A, 0x2328, 0x0A, 0x0A, 0x02, 0x0A, 0x0A, 0xA0, 0x05, 0x05, 0x0A, 0x04]);
-export const MAX_PENALTY = Object.freeze([0x3E8, 0x320, 0x4B0, 0x5DC, 0x2EE0, 0x2EE0, 0x5DC, 0x2BC, 0x5DC, 0x5DC, 0x7D0, 0x3E8, 0x3E8, 0x5DC, 0x2BC]);
+export const PENALTY_PER_LEGAL_REP_POINT = Object.freeze([
+  0x05, 0x05, 0x06, 0x06, 0x0a, 0x05, 0x05, 0x03, 0x08, 0x08, 0x09, 0x06, 0x00, 0x08, 0x00,
+]);
+export const BASE_PENALTY = Object.freeze([
+  0x12c, 0xc8, 0x258, 0x3e8, 0x2710, 0xc8, 0x1f4, 0x64, 0x1f4, 0x1f4, 0x4b0, 0xc8, 0xc8, 0x3e8, 0x64,
+]);
+export const MIN_PENALTY = Object.freeze([
+  0x32, 0x0a, 0x50, 0x0a, 0x2328, 0x0a, 0x0a, 0x02, 0x0a, 0x0a, 0xa0, 0x05, 0x05, 0x0a, 0x04,
+]);
+export const MAX_PENALTY = Object.freeze([
+  0x3e8, 0x320, 0x4b0, 0x5dc, 0x2ee0, 0x2ee0, 0x5dc, 0x2bc, 0x5dc, 0x5dc, 0x7d0, 0x3e8, 0x3e8, 0x5dc, 0x2bc,
+]);
 
 // TEXT.RSC records
-export const TEXT_SURRENDER = 15;            // "Halt! ... do you surrender?"
+export const TEXT_SURRENDER = 15; // "Halt! ... do you surrender?"
 export const TEXT_COURT_START = 8050;
 export const TEXT_FOUND_GUILTY = 8055;
 export const TEXT_FREE_TO_GO = 8062;
 export const TEXT_BANISHED = 8063;
 export const TEXT_HOW_CONVINCE = 8064;
 // CR1: the guild rescue records (DaggerfallCourtWindow.cs:33-34)
-export const TEXT_RESCUE_TG = 550;           // courtTextTG - "the Thieves Guild has intervened"
-export const TEXT_RESCUE_DB = 551;           // courtTextDB - the Dark Brotherhood's
+export const TEXT_RESCUE_TG = 550; // courtTextTG - "the Thieves Guild has intervened"
+export const TEXT_RESCUE_DB = 551; // courtTextDB - the Dark Brotherhood's
 // FactionFile.FactionIDs (FactionFile.cs:91/:135). CG2 moved the two
 // DECLARATIONS into systems/crimeGuilds.js and re-exports them here, so
 // this file's surface is unchanged: talk.js needs the ids for the
@@ -126,7 +147,7 @@ export const TEXT_RESCUE_DB = 551;           // courtTextDB - the Dark Brotherho
 // talk.js - see the note at its pickpocket arm), so the one home for
 // them has to be a leaf.
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from './crimeGuilds.js';
-import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, localizedTable } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 export { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID };
 
 /** CR1 - the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
@@ -174,14 +195,20 @@ export const RECOVERY_INTERVAL_MINUTES = 10080;
 /** REP5: the one ear on a legal standing's change - the host says it (a line on screen). Null by default: a host that
  *  hands none hears nothing, and the law is the same. `cause` names what moved it ('crime', 'sentence', ...). */
 let _legalRepNotifier = null;
-export function setLegalRepNotifier(fn) { _legalRepNotifier = typeof fn === 'function' ? fn : null; }
+export function setLegalRepNotifier(fn) {
+  _legalRepNotifier = typeof fn === 'function' ? fn : null;
+}
 
 export function changeLegalRep(player, regionIndex, delta, cause = null) {
   if (!player.legalRep) player.legalRep = {};
   const before = player.legalRep[regionIndex] ?? 0;
   player.legalRep[regionIndex] = before + delta;
   if (delta && _legalRepNotifier) {
-    try { _legalRepNotifier({ player, regionIndex, before, after: before + delta, delta, cause }); } catch (e) { console.error('[standing]', e); }
+    try {
+      _legalRepNotifier({ player, regionIndex, before, after: before + delta, delta, cause });
+    } catch (e) {
+      console.error('[standing]', e);
+    }
   }
 }
 
@@ -248,12 +275,14 @@ export function normalizeReputations(player, store, { recoveryOnly = false } = {
 /** SEAT1d (Seats-Arc 7.6): CURFEW - the host's word on what a crime where the player stands costs, as a multiple of its
  *  legal reputation (2 in a Curfew town; 1, DFU's, everywhere else and offline). */
 let _crimeFactor = () => 1;
-export function setCrimeRepFactor(fn) { _crimeFactor = typeof fn === 'function' ? fn : () => 1; }
+export function setCrimeRepFactor(fn) {
+  _crimeFactor = typeof fn === 'function' ? fn : () => 1;
+}
 /** AUDIT FB1021d SM-8: `curfew` - a crime the town's watch charges (arrestFlow.js chargeOnce) - takes the Curfew's
  *  factor; a report the road carried, a loan defaulted or a sea's piracy is no crime in the town the player stands in,
  *  and was doubled for standing there (and never given back: no court tries it). */
 export function lowerRepForCrime(player, regionIndex, crime, { curfew = false } = {}) {
-  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1;   // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's
+  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1; // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's
   changeLegalRep(player, regionIndex, -REPUTATION_LOSS_PER_CRIME[crime] * f, { kind: 'crime', crime });
   // PlayerEntity.cs:2294-2298 - the region's People faction takes HALF
   // the legal loss, propagating out to its allies and enemies. The
@@ -267,7 +296,7 @@ export function lowerRepForCrime(player, regionIndex, crime, { curfew = false } 
   if (people) {
     changeReputation(store, people.id, -Math.trunc(REPUTATION_LOSS_PER_CRIME[crime] / 2), true);
   }
-  return f;   // CURFEW-REFUND: the factor the legal loss was charged at - the court gives back what was charged
+  return f; // CURFEW-REFUND: the factor the legal loss was charged at - the court gives back what was charged
 }
 
 /** PlayerEntity.GoldPieces (:158). E4: THE COUNTER, not a bag stack -
@@ -281,7 +310,9 @@ export function goldAmount(player) {
  *  gold gate is DFU's GetGoldAmount, which is coins PLUS paper. */
 export function creditAmount(player) {
   return (player.items ?? []).reduce(
-    (sum, it) => (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? sum + (it.value ?? 0) : sum), 0);
+    (sum, it) => (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? sum + (it.value ?? 0) : sum),
+    0,
+  );
 }
 /** PlayerEntity.GetGoldAmount (:1313-1316) - what a purchase is
  *  tested against, where goldAmount alone is DFU's `goldPieces`. */
@@ -335,7 +366,11 @@ export function deductGold(player, amount) {
   for (;;) {
     const loc = items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);
     if (!loc) break;
-    if (owed < (loc.value ?? 0)) { loc.value -= owed; owed = 0; break; }
+    if (owed < (loc.value ?? 0)) {
+      loc.value -= owed;
+      owed = 0;
+      break;
+    }
     owed -= loc.value ?? 0;
     items.splice(items.indexOf(loc), 1);
   }
@@ -346,7 +381,7 @@ export function deductGold(player, amount) {
     }
     owed -= purse;
     player.goldPieces = 0;
-    return owed;   // underpaid - the caller decides what covers the rest
+    return owed; // underpaid - the caller decides what covers the rest
   }
   return 0;
 }
@@ -360,7 +395,9 @@ export function deductGoldUndoable(player, amount) {
   const letters = items.filter((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE).map((it) => [it, it.value ?? 0]);
   const owed = deductGold(player, amount);
   const coins = purse - goldPiecesOf(player);
-  const spent = letters.filter(([it, v]) => !items.includes(it) || (it.value ?? 0) !== v).map(([it, v]) => [it, v - (items.includes(it) ? (it.value ?? 0) : 0)]);
+  const spent = letters
+    .filter(([it, v]) => !items.includes(it) || (it.value ?? 0) !== v)
+    .map(([it, v]) => [it, v - (items.includes(it) ? (it.value ?? 0) : 0)]);
   let undone = false;
   const undo = () => {
     if (undone) return;
@@ -369,7 +406,10 @@ export function deductGoldUndoable(player, amount) {
     const pack = (player.items ??= []);
     for (const [it, back] of spent) {
       if (pack.includes(it)) it.value = (it.value ?? 0) + back;
-      else { it.value = back; pack.push(it); }
+      else {
+        it.value = back;
+        pack.push(it);
+      }
     }
   };
   return { owed, undo };
@@ -407,7 +447,16 @@ export function addGold(player, amount) {
  *  court now, unless a watchman fell to them in this chase (`watchSlain`, cityGuards.js - cleared with the crime). The
  *  vitals write still comes first, and a surrender still asks a living body. `regionIndex` and `dfRand` are no longer
  *  read (the coin is gone); the arguments stay so no caller moved. */
-export function surrenderToCityGuards(player, regionIndex, voluntary, { setHealth1 = () => { player.health = Math.max(1, Math.min(player.health, 1)); } } = {}) {
+export function surrenderToCityGuards(
+  player,
+  regionIndex,
+  voluntary,
+  {
+    setHealth1 = () => {
+      player.health = Math.max(1, Math.min(player.health, 1));
+    },
+  } = {},
+) {
   if (player.health <= 0) return false;
   setHealth1();
   if (!voluntary && player.watchSlain) return false;
@@ -427,7 +476,8 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
   if (!crime) return null;
   const crimeType = crime - 1;
   const legalRep = legalRepOf(player, regionIndex);
-  let threshold1 = 0, threshold2 = 0;
+  let threshold1 = 0,
+    threshold2 = 0;
   // REP3 (Mac: "Timed or pardoned" - "Only for Murder and worse"): the banishment roll is a Murder's or a Treason's
   // alone; every lesser crime is fined or jailed whatever the standing (DFU rolled it for every crime below zero - 12% on
   // a first Theft). No roll is drawn for a lesser crime, so its court takes nothing from the stream.
@@ -448,13 +498,15 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
 
   // REP2: a GOOD name no longer makes a fine dearer. DFU's `perRep * legalRep + base` on the good side priced a
   // respected citizen's first Theft above a stranger's (and a Murder at +100 at the table's cap); the bad side is DFU's.
-  let penaltyAmount = legalRep >= 0
-    ? BASE_PENALTY[crimeType]
-    : BASE_PENALTY[crimeType] - PENALTY_PER_LEGAL_REP_POINT[crimeType] * legalRep;
+  let penaltyAmount =
+    legalRep >= 0
+      ? BASE_PENALTY[crimeType]
+      : BASE_PENALTY[crimeType] - PENALTY_PER_LEGAL_REP_POINT[crimeType] * legalRep;
   penaltyAmount = Math.min(MAX_PENALTY[crimeType], Math.max(MIN_PENALTY[crimeType], penaltyAmount));
   penaltyAmount = Math.trunc(penaltyAmount / 40);
 
-  let fine = 0, daysInPrison = 0;
+  let fine = 0,
+    daysInPrison = 0;
   for (let i = 0; i < penaltyAmount; i++) {
     if ((dfRand() & 1) !== 0) fine += 40;
     else daysInPrison += 3;
@@ -488,10 +540,13 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
  */
 export function raiseRepForSentence(player, court, { acquitted = false } = {}) {
   const refund = sentenceRefund(court.crime, { acquitted, factor: court.factor });
-  changeLegalRep(player, court.regionIndex, refund.legal, { kind: acquitted ? 'acquittal' : 'sentence', crime: court.crime });
+  changeLegalRep(player, court.regionIndex, refund.legal, {
+    kind: acquitted ? 'acquittal' : 'sentence',
+    crime: court.crime,
+  });
 
   const store = player?.factionRep;
-  if (!store) return;                       // no store: same silence as the debit
+  if (!store) return; // no store: same silence as the debit
   const people = getPeopleOfCurrentRegion(store.dict, court.regionIndex);
   if (people && refund.people) changeReputation(store, people.id, refund.people, true);
 }
@@ -537,13 +592,15 @@ export function raisePeopleForAnswer(player, regionIndex, legalPts) {
  *  what lowerRepForCrime charged at). A Curfew town's crime costs double the law's loss (SEAT1d), and the sentence gave
  *  back the single loss: every Conspiracy served there kept two points for good (-20, -22, -24 ... a sentence at a
  *  time). A marked crime keeps half of what was charged; the People's half was never doubled and comes back as it was. */
-export const MARKED_CRIMES = Object.freeze(new Set([CRIMES.Assault, CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]));
+export const MARKED_CRIMES = Object.freeze(
+  new Set([CRIMES.Assault, CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]),
+);
 /** REP3: the crimes a court may banish for - "Murder and worse". */
 export const BANISHABLE_CRIMES = Object.freeze(new Set([CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]));
 export function sentenceRefund(crime, { acquitted = false, factor = 1 } = {}) {
   const loss = REPUTATION_LOSS_PER_CRIME[crime] ?? 0;
-  const people = Math.trunc(loss / 2);   // the charge's own People half (lowerRepForCrime)
-  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));   // CURFEW-REFUND: the legal loss as it was charged
+  const people = Math.trunc(loss / 2); // the charge's own People half (lowerRepForCrime)
+  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1)); // CURFEW-REFUND: the legal loss as it was charged
   if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };
   return { legal: Math.ceil(legal / 2), people: Math.ceil(people / 2) };
 }
@@ -595,11 +652,12 @@ export function pleaNotGuilty(court, player, useDebate, { rolls = Math.random } 
   const personality = player.stats?.personality == null ? 50 : liveStat(player, 'personality');
   let chance = legalRep + Math.trunc((playerSkill + personality) / 2);
   chance = Math.max(5, Math.min(95, chance));
-  if (Math.floor(rolls() * 100) >= chance) {   // FailedRoll
+  if (Math.floor(rolls() * 100) >= chance) {
+    // FailedRoll
     // The same three-way cascade, on the failed defense (:394-402).
     if (court.punishmentType === 0) return { outcome: 'banished' };
     if (court.punishmentType === 1) return { outcome: 'executed' };
-    const roll = legalRep + (Math.floor(rolls() * 100) + 1);   // Dice100.Roll 1..100
+    const roll = legalRep + (Math.floor(rolls() * 100) + 1); // Dice100.Roll 1..100
     if (roll < 25) court.fine *= 2;
     else if (roll > 75) court.fine >>= 1;
     return { outcome: 'guilty' };

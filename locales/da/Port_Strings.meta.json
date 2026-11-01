@@ -1360,8 +1360,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.cacheTaken": {
-  "en": "90e8e1c18163",
-  "tr": "e3ec51fd80c1",
+  "en": "bc6089841b25",
+  "tr": "2f838c73d5ed",
   "by": "claude-in-session"
  },
  "account.refusal.capped": {
@@ -4620,8 +4620,8 @@
   "by": "claude-in-session"
  },
  "aurumCache.empty": {
-  "en": "bd5fbad0d973",
-  "tr": "ac9049ddcf5a",
+  "en": "18cc5210064c",
+  "tr": "63565213633e",
   "by": "claude-in-session"
  },
  "aurumCache.emptyName": {
@@ -11179,6 +11179,11 @@
   "tr": "0772be797fd6",
   "by": "claude-in-session"
  },
+ "decor.yard.tooHighFree": {
+  "en": "73c4c8ba00a4",
+  "tr": "623135d0ac46",
+  "by": "claude-in-session"
+ },
  "delve.brazier.drop": {
   "en": "bb38295ce3d4",
   "tr": "a83ad4b89ca4",
@@ -13929,6 +13934,21 @@
   "tr": "7516c9528931",
   "by": "claude-in-session"
  },
+ "features.realWindows.light": {
+  "en": "33064adf0f79",
+  "tr": "c32d954fec78",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.day": {
+  "en": "2afe02177426",
+  "tr": "4b6b33d99ef9",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.on": {
+  "en": "e0049a66519c",
+  "tr": "c781a526ac69",
+  "by": "claude-in-session"
+ },
  "features.renderScale.note": {
   "en": "3d225bc9f38b",
   "tr": "268fcf804444",
@@ -14287,6 +14307,11 @@
  "festival.refusal.closed": {
   "en": "afe905f51239",
   "tr": "3dfcbd9fb37b",
+  "by": "claude-in-session"
+ },
+ "festival.refusal.count": {
+  "en": "a3a282c25ff9",
+  "tr": "d89264e4fcdb",
   "by": "claude-in-session"
  },
  "festival.refusal.empty": {
@@ -15732,6 +15757,11 @@
  "gate.vanguard.rises": {
   "en": "3f06c90930ce",
   "tr": "1eb4cd3a0172",
+  "by": "claude-in-session"
+ },
+ "gather.goods.andStores": {
+  "en": "2afef57ead7f",
+  "tr": "2afef57ead7f",
   "by": "claude-in-session"
  },
  "gather.stop.gone": {
@@ -18034,6 +18064,11 @@
   "tr": "75284f58f990",
   "by": "claude-in-session"
  },
+ "inventory.batch.aethericKept": {
+  "en": "6cc61475fe5d",
+  "tr": "c47dc1860d32",
+  "by": "claude-in-session"
+ },
  "inventory.batch.allJunk": {
   "en": "75567a2ade7b",
   "tr": "a9883a0c1dab",
@@ -18159,6 +18194,46 @@
   "tr": "2dc79d6f1ba4",
   "by": "claude-in-session"
  },
+ "inventory.destroy.act": {
+  "en": "577ef7dc1516",
+  "tr": "630debc30498",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.ask": {
+  "en": "23d8ce7b0c8a",
+  "tr": "3030addbf903",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.done": {
+  "en": "c12152d218ed",
+  "tr": "216358d3a57f",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.gone": {
+  "en": "92fb5b7d31a0",
+  "tr": "f3ad5db3d3b6",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.instead": {
+  "en": "acebad5dac26",
+  "tr": "f1dc7162f83e",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.keep": {
+  "en": "466fc492747c",
+  "tr": "e8381c0441d6",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.moved": {
+  "en": "5bd80bc5ba61",
+  "tr": "6a1347ecb54b",
+  "by": "claude-in-session"
+ },
+ "inventory.destroy.worn": {
+  "en": "1ff1048606ff",
+  "tr": "07e2be20455a",
+  "by": "claude-in-session"
+ },
  "inventory.quest.item": {
   "en": "18d4da5c6380",
   "tr": "8fd5b964752f",
@@ -18172,6 +18247,16 @@
  "inventory.quest.word": {
   "en": "1fac2a6125f4",
   "tr": "273c1c414656",
+  "by": "claude-in-session"
+ },
+ "inventory.sort.how": {
+  "en": "961dc2e3a247",
+  "tr": "f710dccb58e4",
+  "by": "claude-in-session"
+ },
+ "inventory.sort.label": {
+  "en": "adc4e96a478b",
+  "tr": "2e2ed8184714",
   "by": "claude-in-session"
  },
  "inventory.store.chestAct": {
@@ -28809,6 +28894,51 @@
   "tr": "903fd19aa3f6",
   "by": "claude-in-session"
  },
+ "newera.bombs": {
+  "en": "707dca73678b",
+  "tr": "388510acd20c",
+  "by": "claude-in-session"
+ },
+ "newera.crack": {
+  "en": "6ec037a5e54c",
+  "tr": "5346e7c77b34",
+  "by": "claude-in-session"
+ },
+ "newera.dawn": {
+  "en": "d1f5d928dec9",
+  "tr": "eebb4903b91e",
+  "by": "claude-in-session"
+ },
+ "newera.peel": {
+  "en": "0a1b57a26a42",
+  "tr": "644522caaf7f",
+  "by": "claude-in-session"
+ },
+ "newera.plane": {
+  "en": "1a78051ecaeb",
+  "tr": "51558e3658de",
+  "by": "claude-in-session"
+ },
+ "newera.rumble": {
+  "en": "c30e21ffd9a7",
+  "tr": "fbffdd2b34a6",
+  "by": "claude-in-session"
+ },
+ "newera.voice": {
+  "en": "70339d29524e",
+  "tr": "b5a5fedb0013",
+  "by": "claude-in-session"
+ },
+ "newera.voice1": {
+  "en": "2e8892a2d2db",
+  "tr": "ed4d8cdfc832",
+  "by": "claude-in-session"
+ },
+ "newera.voice2": {
+  "en": "5fd98edc0128",
+  "tr": "deca017c404a",
+  "by": "claude-in-session"
+ },
  "notice.chapters.head": {
   "en": "74d3bbe40195",
   "tr": "08502cf60f2f",
@@ -34189,6 +34319,16 @@
   "tr": "c7f2c1b7519a",
   "by": "claude-in-session"
  },
+ "prof.page.stores.allIn": {
+  "en": "c2d4598710b0",
+  "tr": "365b16ceb275",
+  "by": "claude-in-session"
+ },
+ "prof.page.stores.allInDone": {
+  "en": "1496902cff40",
+  "tr": "54817c04f01a",
+  "by": "claude-in-session"
+ },
  "prof.page.stores.bought": {
   "en": "ae284ff8ef81",
   "tr": "2351c763a9a3",
@@ -34252,6 +34392,11 @@
  "prof.page.stores.noMatch": {
   "en": "5e819085784c",
   "tr": "a5456a77097d",
+  "by": "claude-in-session"
+ },
+ "prof.page.stores.notPutIn": {
+  "en": "159ca8955625",
+  "tr": "ad6f57fabe21",
   "by": "claude-in-session"
  },
  "prof.page.stores.own": {
@@ -34782,6 +34927,31 @@
  "prof.reticle.useKey": {
   "en": "d576872c213b",
   "tr": "028e74cb970f",
+  "by": "claude-in-session"
+ },
+ "prof.witness.far": {
+  "en": "648a0e7b696e",
+  "tr": "960e1d6b62d4",
+  "by": "claude-in-session"
+ },
+ "prof.witness.hide": {
+  "en": "ab6ad72f2f5d",
+  "tr": "eb122cc08634",
+  "by": "claude-in-session"
+ },
+ "prof.witness.key": {
+  "en": "143e94af41ce",
+  "tr": "9a3fe990aa07",
+  "by": "claude-in-session"
+ },
+ "prof.witness.legend": {
+  "en": "765170ea8b07",
+  "tr": "4e938de3b7ca",
+  "by": "claude-in-session"
+ },
+ "prof.witness.show": {
+  "en": "fa7de7cb6de3",
+  "tr": "97da8c197828",
   "by": "claude-in-session"
  },
  "prof.work.aGuild": {
@@ -37152,6 +37322,11 @@
  "realm.locked.trade": {
   "en": "96456d744023",
   "tr": "341460ff0f4b",
+  "by": "claude-in-session"
+ },
+ "realm.private": {
+  "en": "40c5934fafa7",
+  "tr": "f7e1caca1c95",
   "by": "claude-in-session"
  },
  "realm.roll.stopped": {

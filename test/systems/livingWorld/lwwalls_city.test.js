@@ -156,8 +156,8 @@ test('LW-WALLS the game\'s own walled cities are read here as the streaming host
   // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): handed to scenes/livingWorld/livingTrips.js with the rest of the living world's ground
   assert.match(w, /peopleAt: \(px, py\) => getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\)\?\.people, maps, woods,/);
   assert.match(rd('src/scenes/livingWorld/livingIndex.js'), /people: peopleAt\(p\.px, p\.py\), blocks: p\.blocks,\n\s+w: p\.w, h: p\.h,[^\n]*\n\s+port: p\.port,/);
-  assert.match(rd('src/world/worldWide/bayPlaces.js'), /w: Math\.max\(1, ed\?\.width \?\? 1\), h: Math\.max\(1, ed\?\.height \?\? 1\), port: !!hasPort\(md\.mapId\),/);
-  assert.match(rd('src/world/worldWide/worldPlaces.js'), /const w = Math\.max\(1, row\.w \?\? 1\), h = Math\.max\(1, row\.h \?\? 1\);[\s\S]*?w, h, blocks: w \* h, port: !!row\.port,/);  // PIN MOVED (WALL-WAY): and its grid's own shape
+  assert.match(rd('src/world/worldWide/bayPlaces.js'), /w: Math\.max\(1, ed\?\.width \?\? 1\),\n\s*h: Math\.max\(1, ed\?\.height \?\? 1\),\n\s*port: !!hasPort\(md\.mapId\),/);
+  assert.match(rd('src/world/worldWide/worldPlaces.js'), /const w = Math\.max\(1, row\.w \?\? 1\),\n\s*h = Math\.max\(1, row\.h \?\? 1\);\n\s*return Object\.freeze\(\{\n\s*key: worldPixelKey\(px, py\),\n\s*mapId: row\.mapId >>> 0,\n\s*name: String\(row\.name \?\? ''\),\n\s*px,\n\s*py,\n\s*type: row\.type \| 0,\n\s*region,\n\s*area,\n\s*theatre,\n\s*w,\n\s*h,\n\s*blocks: w \* h,\n\s*port: !!row\.port,/);  // PIN MOVED (WALL-WAY): and its grid's own shape
 });
 
 test('LW-WALLS the game\'s own cities (ARENA2): Ripmarket, the report\'s - its fields larger than its streets, every building with a door its spot on its streets, an exit at each of its four gates, and its street at midday full to DFU\'s cap, every one on it inside the walls; and every one of the game\'s 410 cities, 407 of them with fields the larger: nearly every building with a door its spot (99%), most of its people homed on its street, and the whole watch (mutants: the largest kept, the vote on the largest, the census unwired)', { skip: skipReal }, () => {

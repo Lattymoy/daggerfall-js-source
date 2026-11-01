@@ -29,11 +29,18 @@ async function serveRepo(page) {
     try {
       if (url.pathname === '/') return route.fulfill({ status: 200, contentType: 'text/html', body: PAGE });
       const body = readFileSync(join(ROOT, url.pathname.replace(/^\/+/, '')), 'utf8');
-      const type = url.pathname.endsWith('.js') || url.pathname.endsWith('.mjs') ? 'text/javascript'
-        : url.pathname.endsWith('.json') ? 'application/json'
-        : url.pathname.endsWith('.css') ? 'text/css' : 'text/html';
+      const type =
+        url.pathname.endsWith('.js') || url.pathname.endsWith('.mjs')
+          ? 'text/javascript'
+          : url.pathname.endsWith('.json')
+            ? 'application/json'
+            : url.pathname.endsWith('.css')
+              ? 'text/css'
+              : 'text/html';
       route.fulfill({ status: 200, contentType: type, body });
-    } catch { route.fulfill({ status: 404, body: 'no' }); }
+    } catch {
+      route.fulfill({ status: 404, body: 'no' });
+    }
   });
 }
 
@@ -52,25 +59,40 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8">
 // quest box that MUST still wrap at the cap, and a toast.
 const CASES = [
   ['short', { rows: ['You are healthy.'] }],
-  ['status', { rows: [
-    { text: 'You are in Daggerfall.', center: true },
-    { text: 'It is 13:30 on Morndas, 11 Last Seed, 3E 405.', center: true },
-    { text: 'In the eyes of the law of Daggerfall,', center: true },
-    { text: 'you are an outlaw.', center: true },
-    '',
-    { text: 'You have contracted the Plague.', center: true },
-  ], hint: 'press I or ESC to close' }],
-  ['long', { rows: [
-    'The Blades have long memories, and a longer reach. You will go to the tomb',
-    'beneath the moors, and you will bring back what was left there, and you will',
-    'not ask whose it was.',
-  ] }],
+  [
+    'status',
+    {
+      rows: [
+        { text: 'You are in Daggerfall.', center: true },
+        { text: 'It is 13:30 on Morndas, 11 Last Seed, 3E 405.', center: true },
+        { text: 'In the eyes of the law of Daggerfall,', center: true },
+        { text: 'you are an outlaw.', center: true },
+        '',
+        { text: 'You have contracted the Plague.', center: true },
+      ],
+      hint: 'press I or ESC to close',
+    },
+  ],
+  [
+    'long',
+    {
+      rows: [
+        'The Blades have long memories, and a longer reach. You will go to the tomb',
+        'beneath the moors, and you will bring back what was left there, and you will',
+        'not ask whose it was.',
+      ],
+    },
+  ],
   ['toast', { rows: ['Your Long Blade skill has increased.'], toast: true }],
 ];
 
 const b = await chromium.launch();
 const rows = [];
-for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420, 780, 'phone']]) {
+for (const [W, H, label] of [
+  [1280, 720, 'desktop'],
+  [1024, 640, 'narrow'],
+  [420, 780, 'phone'],
+]) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
   const p = await ctx.newPage();
   p.on('pageerror', (e) => console.error('PAGEERR', String(e).slice(0, 300)));
@@ -93,17 +115,24 @@ for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420
     // module correctly decided the box was gone) and what the picture
     // showed was a slide-OUT halfway done. A harness that does not do
     // what the host does measures its own artefact.
-    const until = performance.now() + 520;   // past the 260ms slide, with the watchdog fed throughout
+    const until = performance.now() + 520; // past the 260ms slide, with the watchdog fed throughout
     await new Promise((done) => {
       const pump = () => {
         for (const { name, frame } of out) en.drawEnhancedNotice(frame, document, name);
-        if (performance.now() < until) requestAnimationFrame(pump); else done();
+        if (performance.now() < until) requestAnimationFrame(pump);
+        else done();
       };
       requestAnimationFrame(pump);
     });
     return out.map(({ name, host }) => {
       const r = host.getBoundingClientRect();
-      return { name, w: Math.round(r.width), right: Math.round(r.right), vw: window.innerWidth, resting: getComputedStyle(host).transform };
+      return {
+        name,
+        w: Math.round(r.width),
+        right: Math.round(r.right),
+        vw: window.innerWidth,
+        resting: getComputedStyle(host).transform,
+      };
     });
   }, CASES);
   const name = `${OUT}/noticefit-${label}.png`;
@@ -113,6 +142,8 @@ for (const [W, H, label] of [[1280, 720, 'desktop'], [1024, 640, 'narrow'], [420
 }
 await b.close();
 for (const r of rows) {
-  console.log(`${r.label.padEnd(8)} vp ${String(r.W).padStart(5)}  ${r.name.padEnd(8)} ${String(r.w).padStart(5)}px  right ${String(r.right).padStart(5)} of ${r.vw}  ${r.resting}`);
+  console.log(
+    `${r.label.padEnd(8)} vp ${String(r.W).padStart(5)}  ${r.name.padEnd(8)} ${String(r.w).padStart(5)}px  right ${String(r.right).padStart(5)} of ${r.vw}  ${r.resting}`,
+  );
 }
 console.log('\nshots:', [...new Set(rows.map((r) => r.shot))].join(' '));

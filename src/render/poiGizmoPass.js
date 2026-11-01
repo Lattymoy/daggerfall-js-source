@@ -13,8 +13,8 @@
 import { buildProgram } from './glProgram.js';
 import { telegraphLineW } from './gate/gateTelegraph.js';
 
-const FLOATS = 12;   // aA xyz, aB xyz, aM (side, end), aC rgba
-const VERTS = 6;     // two triangles a segment
+const FLOATS = 12; // aA xyz, aB xyz, aM (side, end), aC rgba
+const VERTS = 6; // two triangles a segment
 
 /**
  * Lines into a vertex buffer: each `{ a, b, color }` (world points, rgba 0 - 1) as one quad's six vertices. `out` is
@@ -23,13 +23,30 @@ const VERTS = 6;     // two triangles a segment
  */
 export function packLines(lines, out = null) {
   const need = lines.length * VERTS * FLOATS;
-  const data = out && out.length >= need ? out : new Float32Array(Math.max(need, (out?.length ?? 0) * 2, 64 * VERTS * FLOATS));
+  const data =
+    out && out.length >= need ? out : new Float32Array(Math.max(need, (out?.length ?? 0) * 2, 64 * VERTS * FLOATS));
   let o = 0;
   for (const { a, b, color } of lines) {
-    for (const [side, end] of [[-1, 0], [1, 0], [1, 1], [-1, 0], [1, 1], [-1, 1]]) {
-      data[o++] = a[0]; data[o++] = a[1]; data[o++] = a[2]; data[o++] = b[0]; data[o++] = b[1]; data[o++] = b[2];
-      data[o++] = side; data[o++] = end;
-      data[o++] = color[0]; data[o++] = color[1]; data[o++] = color[2]; data[o++] = color[3] ?? 1;
+    for (const [side, end] of [
+      [-1, 0],
+      [1, 0],
+      [1, 1],
+      [-1, 0],
+      [1, 1],
+      [-1, 1],
+    ]) {
+      data[o++] = a[0];
+      data[o++] = a[1];
+      data[o++] = a[2];
+      data[o++] = b[0];
+      data[o++] = b[1];
+      data[o++] = b[2];
+      data[o++] = side;
+      data[o++] = end;
+      data[o++] = color[0];
+      data[o++] = color[1];
+      data[o++] = color[2];
+      data[o++] = color[3] ?? 1;
     }
   }
   return { data, count: lines.length * VERTS };
@@ -83,14 +100,18 @@ export class PoiGizmoPass {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     const S = FLOATS * 4;
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, S, 12);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, S, 24);
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, S, 32);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, S, 12);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, S, 24);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, S, 32);
     gl.bindVertexArray(null);
     /** @type {Float32Array | null} */
     this.data = null;
-    this.capacity = 0;   // bytes the GPU buffer holds
+    this.capacity = 0; // bytes the GPU buffer holds
     this._vp = new Float32Array(16);
     this._viewport = new Float32Array(2);
   }
@@ -103,12 +124,21 @@ export class PoiGizmoPass {
    */
   draw(proj, view, lines, { onTop = true, px = 2, vw = 0, vh = 0 } = {}) {
     if (!lines.length) return false;
-    const gl = this.gl, U = this.u, V = this._vp;
+    const gl = this.gl,
+      U = this.u,
+      V = this._vp;
     const { data, count } = packLines(lines, this.data);
     this.data = data;
-    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) V[c * 4 + r] = proj[r] * view[c * 4] + proj[4 + r] * view[c * 4 + 1] + proj[8 + r] * view[c * 4 + 2] + proj[12 + r] * view[c * 4 + 3];
+    for (let c = 0; c < 4; c++)
+      for (let r = 0; r < 4; r++)
+        V[c * 4 + r] =
+          proj[r] * view[c * 4] +
+          proj[4 + r] * view[c * 4 + 1] +
+          proj[8 + r] * view[c * 4 + 2] +
+          proj[12 + r] * view[c * 4 + 3];
     const h = vh || gl.drawingBufferHeight;
-    this._viewport[0] = vw || gl.drawingBufferWidth; this._viewport[1] = h;
+    this._viewport[0] = vw || gl.drawingBufferWidth;
+    this._viewport[1] = h;
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, V);
     gl.uniform2fv(U.uViewport, this._viewport);
@@ -116,18 +146,29 @@ export class PoiGizmoPass {
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     const bytes = count * FLOATS * 4;
-    if (bytes > this.capacity) { gl.bufferData(gl.ARRAY_BUFFER, data.byteLength, gl.DYNAMIC_DRAW); this.capacity = data.byteLength; }
+    if (bytes > this.capacity) {
+      gl.bufferData(gl.ARRAY_BUFFER, data.byteLength, gl.DYNAMIC_DRAW);
+      this.capacity = data.byteLength;
+    }
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, data, 0, count * FLOATS);
-    if (onTop) gl.disable(gl.DEPTH_TEST); else gl.enable(gl.DEPTH_TEST);
-    gl.depthMask(false); gl.disable(gl.CULL_FACE);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    if (onTop) gl.disable(gl.DEPTH_TEST);
+    else gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, count);
     gl.bindVertexArray(null);
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
     return true;
   }
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.program);
   }
 }

@@ -94,13 +94,22 @@ export const ecoOrigin = (px, py) => [px * 128, (ECOTONE.row0 - py) * 128];
  * @param {number[]} origin ecoOrigin's
  */
 export function ecoNoise(origin, tx, tz, cell, salt) {
-  const qx = tx / cell, qz = tz / cell;
-  const fx0 = Math.floor(qx), fz0 = Math.floor(qz);
-  const ix = origin[0] / cell + fx0, iz = origin[1] / cell + fz0;
-  const fx = qx - fx0, fz = qz - fz0;
-  const ux = fx * fx * (3 - 2 * fx), uz = fz * fz * (3 - 2 * fz);
-  const a = ecoHash(ix, iz, salt), b = ecoHash(ix + 1, iz, salt), c = ecoHash(ix, iz + 1, salt), d = ecoHash(ix + 1, iz + 1, salt);
-  const top = a + (b - a) * ux, bot = c + (d - c) * ux;
+  const qx = tx / cell,
+    qz = tz / cell;
+  const fx0 = Math.floor(qx),
+    fz0 = Math.floor(qz);
+  const ix = origin[0] / cell + fx0,
+    iz = origin[1] / cell + fz0;
+  const fx = qx - fx0,
+    fz = qz - fz0;
+  const ux = fx * fx * (3 - 2 * fx),
+    uz = fz * fz * (3 - 2 * fz);
+  const a = ecoHash(ix, iz, salt),
+    b = ecoHash(ix + 1, iz, salt),
+    c = ecoHash(ix, iz + 1, salt),
+    d = ecoHash(ix + 1, iz + 1, salt);
+  const top = a + (b - a) * ux,
+    bot = c + (d - c) * ux;
   return top + (bot - top) * uz;
 }
 
@@ -116,10 +125,16 @@ const smoothstep = (a, b, v) => {
 export function ecoShare(origin, u, tx, tz, salt) {
   if (u <= -ECOTONE_REACH) return 0;
   if (u >= ECOTONE_REACH) return 1;
-  const [w0, w1] = ECOTONE.warp, [p0, p1] = ECOTONE.patch, e = ECOTONE.edge;
-  const d = u + w0.amp * (2 * ecoNoise(origin, tx, tz, w0.cell, salt) - 1) + w1.amp * (2 * ecoNoise(origin, tx, tz, w1.cell, salt + 1) - 1);
+  const [w0, w1] = ECOTONE.warp,
+    [p0, p1] = ECOTONE.patch,
+    e = ECOTONE.edge;
+  const d =
+    u +
+    w0.amp * (2 * ecoNoise(origin, tx, tz, w0.cell, salt) - 1) +
+    w1.amp * (2 * ecoNoise(origin, tx, tz, w1.cell, salt + 1) - 1);
   const p = Math.min(1, Math.max(0, 0.5 + d / (2 * ECOTONE.band)));
-  const n0 = p0.weight * ecoNoise(origin, tx, tz, p0.cell, salt + 2) + p1.weight * ecoNoise(origin, tx, tz, p1.cell, salt + 3);
+  const n0 =
+    p0.weight * ecoNoise(origin, tx, tz, p0.cell, salt + 2) + p1.weight * ecoNoise(origin, tx, tz, p1.cell, salt + 3);
   const n = Math.min(1, Math.max(0, (n0 - 0.5) * ECOTONE.stretch + 0.5));
   return smoothstep(-e, e, -e + (1 + 2 * e) * p - n);
 }
@@ -134,17 +149,33 @@ export function ecoShare(origin, u, tx, tz, salt) {
  * @param {{ sx: number, sz: number, own: number, nx: number, nz: number, nd: number }} [out] @param {number} [axes]
  */
 export function ecotoneShares(px, py, x, z, out = { sx: 0, sz: 0, own: 1, nx: 0, nz: 0, nd: 0 }, axes = 3) {
-  const sx = x < HALF_M ? -1 : 1, sz = z < HALF_M ? -1 : 1;
-  const ux = sx < 0 ? x : x - PIXEL_M, uz = sz < 0 ? z : z - PIXEL_M;
-  const askX = (axes & 1) && Math.abs(ux) < ECOTONE_REACH, askZ = (axes & 2) && Math.abs(uz) < ECOTONE_REACH;
-  let ox = 1, oz = 1;
+  const sx = x < HALF_M ? -1 : 1,
+    sz = z < HALF_M ? -1 : 1;
+  const ux = sx < 0 ? x : x - PIXEL_M,
+    uz = sz < 0 ? z : z - PIXEL_M;
+  const askX = axes & 1 && Math.abs(ux) < ECOTONE_REACH,
+    askZ = axes & 2 && Math.abs(uz) < ECOTONE_REACH;
+  let ox = 1,
+    oz = 1;
   if (askX || askZ) {
-    const origin = ecoOrigin(px, py), tx = x / TILE_M, tz = z / TILE_M;
-    if (askX) { const s = ecoShare(origin, ux, tx, tz, ECOTONE.saltX); ox = sx < 0 ? s : 1 - s; }
-    if (askZ) { const s = ecoShare(origin, uz, tx, tz, ECOTONE.saltZ); oz = sz < 0 ? s : 1 - s; }
+    const origin = ecoOrigin(px, py),
+      tx = x / TILE_M,
+      tz = z / TILE_M;
+    if (askX) {
+      const s = ecoShare(origin, ux, tx, tz, ECOTONE.saltX);
+      ox = sx < 0 ? s : 1 - s;
+    }
+    if (askZ) {
+      const s = ecoShare(origin, uz, tx, tz, ECOTONE.saltZ);
+      oz = sz < 0 ? s : 1 - s;
+    }
   }
-  out.sx = sx; out.sz = sz;
-  out.own = ox * oz; out.nx = (1 - ox) * oz; out.nz = ox * (1 - oz); out.nd = (1 - ox) * (1 - oz);
+  out.sx = sx;
+  out.sz = sz;
+  out.own = ox * oz;
+  out.nx = (1 - ox) * oz;
+  out.nz = ox * (1 - oz);
+  out.nd = (1 - ox) * (1 - oz);
   return out;
 }
 
@@ -157,23 +188,37 @@ const _shares = { sx: 0, sz: 0, own: 1, nx: 0, nz: 0, nd: 0 };
  * @param {(dx: number, dz: number) => any} key
  */
 export function ecotoneOwner(px, py, x, z, key) {
-  const sx = x < HALF_M ? -1 : 1, sz = z < HALF_M ? -1 : 1;
-  const k0 = key(0, 0), kx = key(sx, 0), kz = key(0, sz), kd = key(sx, sz);
+  const sx = x < HALF_M ? -1 : 1,
+    sz = z < HALF_M ? -1 : 1;
+  const k0 = key(0, 0),
+    kx = key(sx, 0),
+    kz = key(0, sz),
+    kd = key(sx, sz);
   // a seam moves weight only where the climate changes across it: across x, unless the neighbour is the pixel's own
   // and the corner its z-neighbour's (that row then wears one climate whatever the x share); across z the same way
   const axes = (kx === k0 && kd === kz ? 0 : 1) | (kz === k0 && kd === kx ? 0 : 2);
   if (!axes) return [0, 0];
   const s = ecotoneShares(px, py, x, z, _shares, axes);
   if (s.own >= 0.5) return [0, 0];
-  const cands = [[0, 0, s.own], [s.sx, 0, s.nx], [0, s.sz, s.nz], [s.sx, s.sz, s.nd]];
+  const cands = [
+    [0, 0, s.own],
+    [s.sx, 0, s.nx],
+    [0, s.sz, s.nz],
+    [s.sx, s.sz, s.nd],
+  ];
   const sums = new Map();
   for (const [dx, dz, w] of cands) {
     const k = key(dx, dz);
     sums.set(k, (sums.get(k) ?? 0) + w);
   }
   const ownKey = key(0, 0);
-  let best = ownKey, bestW = sums.get(ownKey);
-  for (const [k, w] of sums) if (w > bestW) { best = k; bestW = w; }
+  let best = ownKey,
+    bestW = sums.get(ownKey);
+  for (const [k, w] of sums)
+    if (w > bestW) {
+      best = k;
+      bestW = w;
+    }
   if (best === ownKey) return [0, 0];
   for (const [dx, dz] of cands) if (key(dx, dz) === best) return [dx, dz];
   return [0, 0];

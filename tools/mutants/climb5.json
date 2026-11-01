@@ -173,8 +173,8 @@
   {
     "name": "CLIMB5-peer-yaw-takes-a-missing-facing",
     "file": "src/net/peer/peerClimb.js",
-    "old": "return peerClimbing(shown) && Number.isFinite(shown.cw) ? shown.cw : shown?.yaw;",
-    "new": "return peerClimbing(shown) ? shown.cw : shown?.yaw;",
+    "old": "  return peerClimbing(shown) && Number.isFinite(shown.cw) ? shown.cw : shown?.yaw;",
+    "new": "  return peerClimbing(shown) ? shown.cw : shown?.yaw;",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CLIMB5-peer-walks-on-the-wall",
     "file": "src/net/peer/peerClimb.js",
-    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st;",
-    "new": "export const peerMoving = (shown) => !!shown?.mv && !shown?.st;",
+    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st; // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride",
+    "new": "export const peerMoving = (shown) => !!shown?.mv && !shown?.st; // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CLIMB5-cues-a-catch-onto-a-face",
     "file": "src/net/peer/peerClimb.js",
-    "old": "if (!was) return now === HANG ?",
-    "new": "if (!was) return now === FACE ?",
+    "old": "  if (!was) return now === HANG ? [['catch', C.CATCH_BASE + 0.1]] : [['grab', C.GRAB * (now === FACE ? 0.75 : 0.7)]];",
+    "new": "  if (!was) return now === FACE ? [['catch', C.CATCH_BASE + 0.1]] : [['grab', C.GRAB * (now === FACE ? 0.75 : 0.7)]];",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CLIMB5-cues-a-let-go-off-a-move",
     "file": "src/net/peer/peerClimb.js",
-    "old": "if (!now) return was === MOVE ? [] : [['step', C.LET_GO]];",
-    "new": "if (!now) return [['step', C.LET_GO]];",
+    "old": "  if (!now) return was === MOVE ? [] : [['step', C.LET_GO]];",
+    "new": "  if (!now) return [['step', C.LET_GO]];",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CLIMB5-cues-the-haul-weights-swapped",
     "file": "src/net/peer/peerClimb.js",
-    "old": "C.PULL * (was === HANG ? 1 : 0.7)",
-    "new": "C.PULL * (was === HANG ? 0.7 : 1)",
+    "old": "  if (now === MOVE) return [['pull', C.PULL * (was === HANG ? 1 : 0.7)]];",
+    "new": "  if (now === MOVE) return [['pull', C.PULL * (was === HANG ? 0.7 : 1)]];",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CLIMB5-sounds-replay-an-old-climb-on-first-sight",
     "file": "src/net/peer/peerClimb.js",
-    "old": "const s = this.peers.get(id);\n    if (!s) { this.peers.set(id, { cl, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 }); return; }",
-    "new": "let s = this.peers.get(id);\n    if (!s) { s = { cl: 0, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 }; this.peers.set(id, s); }",
+    "old": "    const s = this.peers.get(id);\n    if (!s) {\n      this.peers.set(id, { cl, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 });\n      return;",
+    "new": "    let s = this.peers.get(id);\n    if (!s) {\n      s = { cl: 0, at: at ? [at[0], at[1], at[2]] : null, climb: 0, shimmy: 0 };\n      this.peers.set(id, s);",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CLIMB5-sounds-heard-out-of-earshot",
     "file": "src/net/peer/peerClimb.js",
-    "old": "if (on && heard && at && cueOk) {",
-    "new": "if (on && at && cueOk) {",
+    "old": "    if (on && heard && at && cueOk) {",
+    "new": "    if (on && at && cueOk) {",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CLIMB5-sounds-ignore-the-ports-switch",
     "file": "src/net/peer/peerClimb.js",
-    "old": "const on = this.on() && !!this.audio?.play3d;",
-    "new": "const on = !!this.audio?.play3d;",
+    "old": "    const on = this.on() && !!this.audio?.play3d;",
+    "new": "    const on = !!this.audio?.play3d;",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CLIMB5-sounds-a-hand-per-span-up-a-face",
     "file": "src/net/peer/peerClimb.js",
-    "old": "s.climb += d / FEEL.REACH;",
-    "new": "s.climb += d / FEEL.SHIMMY_SPAN;",
+    "old": "          s.climb += d / FEEL.REACH;",
+    "new": "          s.climb += d / FEEL.SHIMMY_SPAN;",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CLIMB5-sounds-a-hand-per-reach-along-a-lip",
     "file": "src/net/peer/peerClimb.js",
-    "old": "s.shimmy += d / FEEL.SHIMMY_SPAN;",
-    "new": "s.shimmy += d / FEEL.REACH;",
+    "old": "          s.shimmy += d / FEEL.SHIMMY_SPAN;",
+    "new": "          s.shimmy += d / FEEL.REACH;",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "CLIMB5-sounds-a-snap-is-a-climb",
     "file": "src/net/peer/peerClimb.js",
-    "old": "if (d > 1e-5 && d < 1) {",
-    "new": "if (d > 1e-5) {",
+    "old": "      if (d > 1e-5 && d < 1) {",
+    "new": "      if (d > 1e-5) {",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CLIMB5-sounds-never-forget",
     "file": "src/net/peer/peerClimb.js",
-    "old": "forget(id) { this.peers.delete(id); }",
-    "new": "forget(id) { void id; }",
+    "old": "    this.peers.delete(id);",
+    "new": "    void id;",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CLIMB5-sounds-rebase-keeps-the-old-frame",
     "file": "src/net/peer/peerClimb.js",
-    "old": "rebase() { for (const s of this.peers.values()) s.at = null; }",
-    "new": "rebase() {}",
+    "old": "  rebase() {\n    for (const s of this.peers.values()) s.at = null;\n  }",
+    "new": "  rebase() {}",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CLIMB5-body-camera-grounded-on-the-wall",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  c.move.grounded = !peerClimbing(shown);",
-    "new": "  c.move.grounded = true;",
+    "old": "  c.move.grounded = !peerClimbing(shown); // CLIMB5: on the wall the body is off the ground - the in-air pose the local third person takes there",
+    "new": "  c.move.grounded = true; // CLIMB5: on the wall the body is off the ground - the in-air pose the local third person takes there",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CLIMB5-body-camera-walks-on-the-wall",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk",
-    "new": "const moving = !!shown.mv;   // CLIMB5: a shimmy along a lip is no walk",
+    "old": "  const moving = peerMoving(shown); // CLIMB5: a shimmy along a lip is no walk",
+    "new": "  const moving = !!shown.mv; // CLIMB5: a shimmy along a lip is no walk",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "CLIMB5-body-eases-to-the-camera",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const want = peerBodyYaw(peer.shown);",
-    "new": "const want = peer.shown.yaw;",
+    "old": "    const want = peerBodyYaw(peer.shown); // CLIMB5: to the wall, on the climb",
+    "new": "    const want = peer.shown.yaw; // CLIMB5: to the wall, on the climb",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "CLIMB5-sounds-rhythm-carried-across-a-change",
     "file": "src/net/peer/peerClimb.js",
-    "old": "    if (cl !== s.cl) { s.climb = 0; s.shimmy = 0; }\n",
-    "new": "",
+    "old": "    if (cl !== s.cl) {\n      s.climb = 0;\n      s.shimmy = 0;\n    }\n    if (at && s.at && cl === s.cl && (cl === PEER_CLIMB.FACE || cl === PEER_CLIMB.HANG)) {",
+    "new": "    if (at && s.at && cl === s.cl && (cl === PEER_CLIMB.FACE || cl === PEER_CLIMB.HANG)) {",
     "tests": [
       "test/net/climb5.test.js"
     ]

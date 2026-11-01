@@ -11,8 +11,8 @@
   {
     "name": "SHIPLIFE-berths-crowded",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;",
-    "new": "    if (false) continue;",
+    "old": "      if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;",
+    "new": "      if (false) continue;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SHIPLIFE-harbour-any-shore",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
+    "new": "      if (false) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SHIPLIFE-mouth-unsounded",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    for (let k = 0; k < 12 && open; k++) { const a = (k / 12) * TAU; open = water(",
-    "new": "    for (let k = 0; k < 0 && open; k++) { const a = (k / 12) * TAU; open = water(",
+    "old": "      for (let k = 0; k < 12 && open; k++) {",
+    "new": "      for (let k = 0; k < 0 && open; k++) {",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SHIPLIFE-berths-farthest-first",
     "file": "src/systems/naval/shipLife.js",
-    "old": "  cands.sort((a, b) => a.d - b.d ||",
-    "new": "  cands.sort((a, b) => b.d - a.d ||",
+    "old": "  cands.sort((a, b) => a.d - b.d || a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);",
+    "new": "  cands.sort((a, b) => b.d - a.d || a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SHIPLIFE-berth-across-the-shore",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    const along = Math.atan2(c.normal[0], c.normal[1]) + Math.PI / 2;",
-    "new": "    const along = Math.atan2(c.normal[0], c.normal[1]);",
+    "old": "      const along = Math.atan2(c.normal[0], c.normal[1]) + Math.PI / 2;",
+    "new": "      const along = Math.atan2(c.normal[0], c.normal[1]);",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SHIPLIFE-approach-unsounded",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (!footprintClear(approach, yaw, hull, isWater)) continue;",
-    "new": "      if (false) continue;",
+    "old": "        if (!footprintClear(approach, yaw, hull, isWater)) continue;",
+    "new": "        if (false) continue;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "SHIPLIFE-legs-hug-the-land",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (Math.min(t, 1 - t) * d > LEG_END_M && !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))) return false;",
+    "old": "      if (\n        Math.min(t, 1 - t) * d > LEG_END_M &&\n        !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))\n      )\n        return false;",
     "new": "      if (false) return false;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "SHIPLIFE-outbound-blind",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    if (clear(here, [here[0] + Math.sin(b) * OUTBOUND_OPEN, here[1] + Math.cos(b) * OUTBOUND_OPEN])) { a = b; break; }",
-    "new": "    if (true) { a = b; break; }",
+    "old": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 } : null;",
+    "new": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(a, VOYAGE_DIST), path: null, i: 0 } : null;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHIPLIFE-no-way-back-to-the-berth",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (dist2(here, b.pos) > BERTH_SNAP_M * 2) { ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 }; return stepErrand(ship, dt, ctx); }",
-    "new": "      if (false) { ship.errand = { kind: 'arrive', harbour: e.harbour, berth: e.berth, path: null, i: 0 }; return stepErrand(ship, dt, ctx); }",
+    "old": "      if (dist2(here, b.pos) > BERTH_SNAP_M * 2) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SHIPLIFE-no-stall-rule",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    if (e.stall >= STALL_S) {",
-    "new": "    if (false) {",
+    "old": "    } else if (e.stall >= STALL_S || held >= PROGRESS_S) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SHIPLIFE-AI-berthing-swings-off",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind);",
-    "new": "  want = avoidLand(ship, want, isWater, world.wind);",
+    "old": "  if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind); // SHIP-LIFE: the last leg into a sounded berth",
+    "new": "  want = avoidLand(ship, want, isWater, world.wind); // SHIP-LIFE: the last leg into a sounded berth",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SHIPLIFE-AI-no-sweeps-in-harbour",
     "file": "src/systems/naval/navalAI.js",
-    "old": "!== life.want) { life.sweeps = SWEEP_WAY; life.sailable = true; }",
-    "new": "!== life.want) { }",
+    "old": "        life.sweeps = SWEEP_WAY;\n        life.sailable = true;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SHIPLIFE-AI-stale-way",
     "file": "src/systems/naval/navalAI.js",
-    "old": "      if (ship.mode !== 'cruise' && ship.errand) ship.errand.path = null;",
-    "new": "      if (false) ship.errand.path = null;",
+    "old": "      if (ship.mode !== 'cruise' && ship.errand) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "SHIPLIFE-HOST-harbour-left-behind",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "  function offsetAll(o) { for (const h of book.values()) offsetHarbour(h.harbour, o); }",
-    "new": "  function offsetAll(o) { for (const h of []) offsetHarbour(h.harbour, o); }",
+    "old": "    for (const h of book.values()) offsetHarbour(h.harbour, o);",
+    "new": "    for (const h of []) offsetHarbour(h.harbour, o);",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "SHIPLIFE-DIRECTOR-moored-fill-the-sea",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "s.afloat !== false && !s.berthed).length;",
-    "new": "s.afloat !== false).length;",
+    "old": "      const alive = (ctx.ships ?? []).filter(\n        (s) => !out.despawn.includes(s.id) && s.afloat !== false && !s.berthed,\n      ).length;",
+    "new": "      const alive = (ctx.ships ?? []).filter((s) => !out.despawn.includes(s.id) && s.afloat !== false).length;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "SHIPLIFE-WORLD-no-harbour-door",
     "file": "src/scenes/harbourHost.js",
-    "old": "    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n",
-    "new": "    harbourNearX: navalHarbourNear,\n    isWater: navalIsWater,\n",
+    "old": "    harbourNear: navalHarbourNear,",
+    "new": "    harbourNearX: navalHarbourNear,",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ],

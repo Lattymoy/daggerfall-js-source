@@ -21,6 +21,7 @@ import { longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../../../src/format
 import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { REPOSITION } from '../../../src/systems/ship.js';
 import { BOOT_DOOR_KEYS } from '../../../src/systems/online/onlineLane.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const ARENA2 = process.env.ARENA2_PATH;
 const NO_DATA = ARENA2 ? false : 'ARENA2_PATH unset (sh tools/fetch-data.sh)';
@@ -162,7 +163,7 @@ test('BAY-LEFT-B B1: the birth\'s address carries the seat\'s map id (`seat`) wh
 });
 
 test('BAY-LEFT-B B1: the world host wires it - the start\'s module with its move\'s doors, the birth waiting on the move, and the seatless birth\'s nearest town the world\'s (mutants: the birth\'s wait; the nearest\'s law)', () => {
-  const W = rd('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT BAY-LEFT, its packages merged): world.js hands over its own bindings - the settled ones by value, its
   // readiness among them (`_worldReady`, the homes' sweep's and START2's too), the two declared below as getters
   // (test/tooling/hostseam.test.js)

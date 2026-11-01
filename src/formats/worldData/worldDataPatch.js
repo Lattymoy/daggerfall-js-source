@@ -31,13 +31,15 @@ export const PATCH_FORMAT = 'dfe-worlddata-patch/1';
  * @returns {object} the DFU world-data JSON
  */
 export function rebuildWorldDataPatch(patch, blocksFile) {
-  if (patch?.format !== PATCH_FORMAT) throw new Error(`world-data patch: ${patch?.rebuilds ?? '?'} is not ${PATCH_FORMAT}`);
+  if (patch?.format !== PATCH_FORMAT)
+    throw new Error(`world-data patch: ${patch?.rebuilds ?? '?'} is not ${PATCH_FORMAT}`);
   const { base } = patch;
   const docs = new Map();
   const classicJson = (index, name) => {
     if (!docs.has(index)) {
       const got = blocksFile.getBlockName(index);
-      if (name && got !== name) throw new Error(`world-data patch: ${patch.rebuilds} wants ${name} at block ${index}, BLOCKS.BSA has ${got}`);
+      if (name && got !== name)
+        throw new Error(`world-data patch: ${patch.rebuilds} wants ${name} at block ${index}, BLOCKS.BSA has ${got}`);
       const b = blocksFile.readClassicBlock(index);
       if (!b) throw new Error(`world-data patch: block ${index} did not read`);
       docs.set(index, b);

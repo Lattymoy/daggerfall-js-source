@@ -27,7 +27,11 @@ export function vfxFade(packed, count, alpha, srcBlend, out) {
   for (let i = 0; i < n; i++) out[i] = packed[i];
   for (let v = 0; v < count; v++) {
     const o = v * VFX_VERTEX_FLOATS + VFX_COLOR_AT;
-    if (srcBlend === 0) { out[o] *= alpha; out[o + 1] *= alpha; out[o + 2] *= alpha; }
+    if (srcBlend === 0) {
+      out[o] *= alpha;
+      out[o + 1] *= alpha;
+      out[o + 2] *= alpha;
+    }
     out[o + 3] *= alpha;
   }
   return out;
@@ -41,8 +45,8 @@ export function vfxFade(packed, count, alpha, srcBlend, out) {
  * @param {Map<string, number> | null | undefined} capacity
  */
 export function createVfxGpu(renderer, textures, capacity) {
-  const effects = new Map();   // stream key -> the renderer's particle effect
-  const texs = new Map();      // `${file}|${clamp}` -> GL texture, owned here
+  const effects = new Map(); // stream key -> the renderer's particle effect
+  const texs = new Map(); // `${file}|${clamp}` -> GL texture, owned here
   let released = false;
 
   function textureFor(file, clampMode) {
@@ -50,7 +54,10 @@ export function createVfxGpu(renderer, textures, capacity) {
     const key = `${file}|${clampMode}`;
     if (texs.has(key)) return texs.get(key);
     const entry = textures?.get?.(file);
-    const tex = entry && entry.image && entry.image.mips ? renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode)) : null;
+    const tex =
+      entry && entry.image && entry.image.mips
+        ? renderer.createCharacterTexture(entry.image.mips, wrapModes(clampMode))
+        : null;
     texs.set(key, tex);
     return tex;
   }
@@ -71,10 +78,22 @@ export function createVfxGpu(renderer, textures, capacity) {
           effects.set(s.key, e);
         }
         e.tex = textureFor(s.texture, s.drawState?.clampMode ?? 3);
-        e.blend = !!s.drawState?.blend; e.srcBlend = s.drawState?.srcBlend ?? 6; e.dstBlend = s.drawState?.dstBlend ?? 7;
-        e.alphaCut = s.drawState?.alphaCut ?? 0; e.depthTest = s.drawState?.depthTest !== false; e.depthWrite = s.drawState?.depthWrite !== false;
+        e.blend = !!s.drawState?.blend;
+        e.srcBlend = s.drawState?.srcBlend ?? 6;
+        e.dstBlend = s.drawState?.dstBlend ?? 7;
+        e.alphaCut = s.drawState?.alphaCut ?? 0;
+        e.depthTest = s.drawState?.depthTest !== false;
+        e.depthWrite = s.drawState?.depthWrite !== false;
         e.hidden = false;
-        if (alpha < 1 && s.count > 0) { const need = s.count * VFX_VERTEX_FLOATS; if (!e.faded || e.faded.length < need) e.faded = new Float32Array(need); renderer.updateParticleEffect(e, vfxFade(s.packed, s.count, alpha, e.blend ? e.srcBlend : -1, e.faded), s.count); }   // EG-ZG
+        if (alpha < 1 && s.count > 0) {
+          const need = s.count * VFX_VERTEX_FLOATS;
+          if (!e.faded || e.faded.length < need) e.faded = new Float32Array(need);
+          renderer.updateParticleEffect(
+            e,
+            vfxFade(s.packed, s.count, alpha, e.blend ? e.srcBlend : -1, e.faded),
+            s.count,
+          );
+        } // EG-ZG
         else renderer.updateParticleEffect(e, s.packed, s.count);
         live.add(s.key);
         out.push(e);
@@ -83,17 +102,24 @@ export function createVfxGpu(renderer, textures, capacity) {
       return out;
     },
     /** Every effect this holds, hidden or not - what a mesh's `effects` list carries. */
-    effects() { return [...effects.values()]; },
+    effects() {
+      return [...effects.values()];
+    },
     /** Frees the effects and the textures. The textures are this holder's, so each effect lets go of its own first:
      *  releaseParticleEffect deletes the texture an effect points at. */
     release() {
       if (released) return;
       released = true;
-      for (const e of effects.values()) { e.tex = null; renderer.releaseParticleEffect(e); }
+      for (const e of effects.values()) {
+        e.tex = null;
+        renderer.releaseParticleEffect(e);
+      }
       effects.clear();
       for (const tex of texs.values()) if (tex) renderer.releaseCharacterTexture(tex);
       texs.clear();
     },
-    get released() { return released; },
+    get released() {
+      return released;
+    },
   };
 }

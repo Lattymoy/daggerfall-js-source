@@ -4,7 +4,10 @@
     "file": "src/render/bootPrograms.js",
     "old": "  if (lane?.shadows && !renderer._shadowPass) programs.push(...shadowDepthPrograms(SHADOW_PASS_VS));",
     "new": "  void shadowDepthPrograms;",
-    "tests": ["test/render/bootcompile.test.js", "test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/bootcompile.test.js",
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the shadow pass's seven depth programs, built by setLightingLane, are on the lane's list"
   },
   {
@@ -12,7 +15,9 @@
     "file": "src/render/shadowPass.js",
     "old": "...(vs.char ? [/** @type {[string, string]} */ ([vs.char, DEPTH_FS])] : []), [vs.mesh, DEPTH_CUT_FS]",
     "new": "[vs.mesh, DEPTH_CUT_FS]",
-    "tests": ["test/render/bootcompile.test.js"],
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ],
     "note": "MOUNT-START: the rigs' depth program dropped from the list - the install builds one unlisted"
   },
   {
@@ -20,7 +25,9 @@
     "file": "src/render/shadowPass.js",
     "old": "/** @type {const} */ ([vs.charSkin, DEPTH_BB_FS])",
     "new": "/** @type {const} */ ([vs.charSkin, `${DEPTH_BB_FS}\\n`])",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: a body program's pair is not what _ensureBodyPrograms builds"
   },
   {
@@ -28,7 +35,9 @@
     "file": "src/render/bootPrograms.js",
     "old": "  return [...laneAndTerrain, ...blocking, ...behindDoors];",
     "new": "  return [...behindDoors, ...laneAndTerrain, ...blocking];",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the blocking builds are handed over before the clouds' door"
   },
   {
@@ -36,7 +45,9 @@
     "file": "src/render/bootPrograms.js",
     "old": "      await mount();",
     "new": "      void mount;",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the boot starts the mount set after its batch"
   },
   {
@@ -44,7 +55,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  return startProgramsInTurn(renderer.gl, mountPrograms(renderer, search), wait);",
     "new": "  return Promise.all(mountPrograms(renderer, search).map((p) => startProgramsInTurn(renderer.gl, [p], wait)));",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: queued one at a time (COMPILE-QUEUE), never as a batch a mount read waits behind"
   },
   {
@@ -52,7 +65,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  if (!o.outdoors) return [];",
     "new": "",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: ?interior and ?dungeon mount no outdoor host"
   },
   {
@@ -60,7 +75,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  const ring = world && isEnhanced() && !ringDisabled(search);",
     "new": "  const ring = world && isEnhanced();",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the far ring by world.js's own switch, ?ring=off"
   },
   {
@@ -68,7 +85,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  const ring = world && isEnhanced() && !ringDisabled(search);",
     "new": "  const ring = world && !ringDisabled(search);",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the far ring is the enhanced skin's"
   },
   {
@@ -76,7 +95,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  const trees = ring && !floraDisabled(search) && !farTreesDisabled(search);",
     "new": "  const trees = ring && !farTreesDisabled(search);",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the band needs the ring's woods (?farflora=off)"
   },
   {
@@ -84,7 +105,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  const trees = ring && !floraDisabled(search) && !farTreesDisabled(search);",
     "new": "  const trees = ring && !floraDisabled(search);",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: ?fartrees=off"
   },
   {
@@ -92,7 +115,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "    ...(ring ? farRingPrograms(lane) : []),",
     "new": "    ...(ring ? farRingPrograms(null) : []),",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the ring's source is its lane's"
   },
   {
@@ -100,7 +125,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "  const sky = o.enhancedSky;",
     "new": "  const sky = !!lane;",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the wisps, haze, Windfall and bolts ride sky.enhanced, not Enhanced Lighting"
   },
   {
@@ -108,7 +135,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "    ...(sky && !o.dynamicSky ? ENHANCED_SKY_PROGRAMS : []),",
     "new": "    ...(sky ? ENHANCED_SKY_PROGRAMS : []),",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: shared.js builds the dome only when the mod's sky is not the sky"
   },
   {
@@ -116,7 +145,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "    ...(world && isEnhanced() ? CURTAIN_PROGRAMS : []),",
     "new": "    ...(world ? CURTAIN_PROGRAMS : []),",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the curtains are the enhanced skin's"
   },
   {
@@ -124,7 +155,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "lane?.shadows && !renderer._shadowPass?._bodyBuilt ?",
     "new": "lane?.shadows ?",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: a body program already built is never started again"
   },
   {
@@ -132,7 +165,9 @@
     "file": "src/render/mountPrograms.js",
     "old": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []),",
     "new": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...FLAG_PROGRAMS] : []),",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: every pass the world host builds at mount is listed"
   },
   {
@@ -140,7 +175,9 @@
     "file": "src/render/windWisps.js",
     "old": "([WISP_VS, WISP_FS])",
     "new": "([WISP_VS, `${WISP_FS}\\n`])",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: a listed pair is the constructor's own"
   },
   {
@@ -148,23 +185,31 @@
     "file": "src/render/farTrees.js",
     "old": "export const farTreesPrograms = (lane) => [/** @type {const} */ ([VS, treesFsFor(lane)])];",
     "new": "export const farTreesPrograms = (lane) => [/** @type {const} */ ([VS, treesFsFor(null)])];",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "MOUNT-START: the band's source is its lane's"
   },
   {
     "name": "QO-long-ones-first-again",
     "file": "src/render/playPrograms.js",
-    "old": "...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];",
-    "new": "...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURORA_PROGRAMS];",
-    "tests": ["test/render/auditshaderstall.test.js", "test/render/shadermount.test.js"],
+    "old": "  ...FIRE_PROGRAMS,\n  ...GLOW_PROGRAMS,\n  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,\n  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,",
+    "new": "  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,\n  ...FIRE_PROGRAMS,\n  ...GLOW_PROGRAMS,\n  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,",
+    "tests": [
+      "test/render/auditshaderstall.test.js",
+      "test/render/shadermount.test.js"
+    ],
     "note": "QUEUE-ORDER: the auras and the armory last"
   },
   {
     "name": "QO-node-glow-left-out",
     "file": "src/render/playPrograms.js",
-    "old": ", ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS",
-    "new": ", ...NAVAL_PROGRAMS",
-    "tests": ["test/render/auditshaderstall.test.js", "test/render/shadermount.test.js"],
+    "old": "  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,",
+    "new": "  ...NAVAL_PROGRAMS,",
+    "tests": [
+      "test/render/auditshaderstall.test.js",
+      "test/render/shadermount.test.js"
+    ],
     "note": "QUEUE-ORDER: the nodes' glow is queued"
   },
   {
@@ -172,14 +217,16 @@
     "file": "src/render/navalRender.js",
     "old": "([VS, NAVAL_FS])",
     "new": "([VS, `${NAVAL_FS}\\n`])",
-    "tests": ["test/render/shadermount.test.js"],
+    "tests": [
+      "test/render/shadermount.test.js"
+    ],
     "note": "QUEUE-ORDER: the queued pair is the build's own"
   },
   {
     "name": "SM-mount-no-wait",
     "file": "src/render/bootPrograms.js",
     "old": "      for (let turn = 0; turn < MOUNT_WAIT_TURNS && !startedDone(renderer.gl, blocking); turn++) await wait();",
-    "new": "      void startedDone; void blocking;",
+    "new": "      void startedDone;\n      void blocking;",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -188,8 +235,8 @@
   {
     "name": "SM-mount-wait-no-cap",
     "file": "src/render/bootPrograms.js",
-    "old": "turn < MOUNT_WAIT_TURNS && !startedDone",
-    "new": "turn < MOUNT_WAIT_TURNS * 1000 && !startedDone",
+    "old": "      for (let turn = 0; turn < MOUNT_WAIT_TURNS && !startedDone(renderer.gl, blocking); turn++) await wait();",
+    "new": "      for (let turn = 0; turn < MOUNT_WAIT_TURNS * 1000 && !startedDone(renderer.gl, blocking); turn++) await wait();",
     "tests": [
       "test/render/shadermount.test.js"
     ],

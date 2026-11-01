@@ -338,7 +338,7 @@ test('EVENTS1 THE SEAMS: the gate\'s (its rite too - C6), the serpent\'s, the Ab
   assert.match(starHost, /const say = \(text, id = null\) => \(host\.eventNotice \?\? eventNotice\)\('star', text, id\);/);
   assert.match(starHost, /else say\(text, `star:\$\{S\.site\.n\}\.\$\{S\.site\.k\}`\);/);
   assert.match(starHost, /say\(line, `star:\$\{w\.n\}\.\$\{w\.s\}`\);/);
-  assert.match(read('src/systems/raidingParties.js'), /const say = \(line, raid = null\) => \{ const id = raid \? `raid:\$\{raidKey\(raid\)\}` : null; \(host\(\)\.say \?\? \(\(l, i\) => eventNotice\('raid', l, i\)\)\)\(line, id\); \};/);
+  assert.match(read('src/systems/raidingParties.js'), /const say = \(line, raid = null\) => \{\n\s*const id = raid \? `raid:\$\{raidKey\(raid\)\}` : null;\n\s*\(host\(\)\.say \?\? \(\(l, i\) => eventNotice\('raid', l, i\)\)\)\(line, id\);\n\s*\};/);
   assert.match(read('src/scenes/witchesHost.js'), /const herald = \(\/\*\* @type \{string\} \*\/ l\) => \(deps\.eventNotice \?\? eventNotice\)\('festival', l\);/);
   const hudSrc = read('src/ui/hud/hud.js');
   assert.match(hudSrc, /drawEventBoard\(\{ hidden: true \}\);[^\n]*\n  drawQuestHerald\(\{ hidden: true \}\);/, 'the hide door');

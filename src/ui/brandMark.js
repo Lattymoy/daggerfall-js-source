@@ -7,7 +7,7 @@
 // file cut to the 1680 x 1410 its paint covers (none outside it had any
 // alpha), then scaled to 1232 x 1034 at his word, the same 56:47, so the
 // page stays light; it is drawn no wider than 595px.
-import { t } from '../systems/textManager.js';   // L10N4: the mark's alt text in the player's language
+import { t } from '../systems/textManager.js'; // L10N4: the mark's alt text in the player's language
 
 export const BRAND_LOGO_URL = new URL('../assets/branding/dfo-online.png', import.meta.url).href;
 // LOGO-CENTRE (Mac, 2026-10-26: "The main logo is off center"): the file is cut to its paint, and the dragon's wing

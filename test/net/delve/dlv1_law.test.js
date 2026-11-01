@@ -250,7 +250,8 @@ test('DLV1 THE LITANY, WHOLE: the order shown, then worked - a plate stood on an
   assert.deepEqual(say(led, 'A', word({ st: 9 }), t += 100, { plate: 9 }), [], 'no such plate');
   assert.deepEqual(say(led, 'A', word({ st: 0 }), t += 100), [{ k: 'lit', j: 0, next: 1 }]);
   assert.deepEqual(say(led, 'B', word({ st: 1 }), t += 100), [{ k: 'lit', j: 1, next: 2 }], 'any member of the party');
-  assert.deepEqual(say(led, 'A', word({ st: 0 }), t += 100), [], 'a lit plate is stood on freely');
+  assert.deepEqual(say(led, 'A', word(), t += 100), [], 'off the plate');
+  assert.deepEqual(say(led, 'A', word({ st: 0 }), t += 100), [], 'a lit plate is stood on freely'); // stepped back onto, so judged (LITANY-STAND)
   assert.deepEqual(say(led, 'A', word({ st: 2 }), t += 100), [{ k: 'wrong', j: 2 }, { k: 'show', order }], 'out of turn: shown again, no foes in a regular dungeon');
   assert.equal(led.next, 0); assert.equal(led.shows, 2);
   stepDelve(led, t + 5_000);

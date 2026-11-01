@@ -32,9 +32,15 @@ export function canvasBoxUnder(canvas, box, w, h) {
   const sx = canvas.width / c.width;
   const sy = canvas.height / c.height;
   const k = Math.min(1, Math.floor(box.width * sx) / w, Math.floor(box.height * sy) / h);
-  const pw = Math.floor(w * k), ph = Math.floor(h * k);
+  const pw = Math.floor(w * k),
+    ph = Math.floor(h * k);
   if (!(pw >= 16) || !(ph >= 16)) return null;
-  return { x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2), y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2), w: pw, h: ph };
+  return {
+    x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2),
+    y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2),
+    w: pw,
+    h: ph,
+  };
 }
 
 /** The studio: the pass's own light and none of the world's (R6). Run inside the bracket's `setup`. */
@@ -58,16 +64,41 @@ export function panelPictureStudio(renderer) {
  * @returns {Promise<string|null>}
  */
 export function panelPicture({ renderer, canvas, doc, rect, proj, view, body }) {
-  renderer.panelFrame({ proj, view, lightDir: new Float32Array(PANEL_PICTURE_LIGHT), rect, clear: [...PANEL_PICTURE_CLEAR], setup: () => panelPictureStudio(renderer) }, body);
+  renderer.panelFrame(
+    {
+      proj,
+      view,
+      lightDir: new Float32Array(PANEL_PICTURE_LIGHT),
+      rect,
+      clear: [...PANEL_PICTURE_CLEAR],
+      setup: () => panelPictureStudio(renderer),
+    },
+    body,
+  );
   const out = doc.createElement('canvas');
   out.width = rect.w;
   out.height = rect.h;
-  try { out.getContext('2d')?.drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h); } catch { return Promise.resolve(null); }   // a lost context copies nothing
+  try {
+    out.getContext('2d')?.drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  } catch {
+    return Promise.resolve(null);
+  } // a lost context copies nothing
   return new Promise((resolve) => {
     try {
-      if (typeof out.toBlob !== 'function') { resolve(out.toDataURL?.('image/png') ?? null); return; }
+      if (typeof out.toBlob !== 'function') {
+        resolve(out.toDataURL?.('image/png') ?? null);
+        return;
+      }
       const URLs = doc.defaultView?.URL ?? globalThis.URL;
-      out.toBlob((blob) => { try { resolve(blob ? URLs?.createObjectURL?.(blob) ?? null : null); } catch { resolve(null); } }, 'image/png');
-    } catch { resolve(null); }
+      out.toBlob((blob) => {
+        try {
+          resolve(blob ? (URLs?.createObjectURL?.(blob) ?? null) : null);
+        } catch {
+          resolve(null);
+        }
+      }, 'image/png');
+    } catch {
+      resolve(null);
+    }
   });
 }

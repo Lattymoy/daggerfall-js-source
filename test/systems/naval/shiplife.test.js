@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   findHarbour, createWaterGrid, errandFor, stepErrand, footprintClear, hullSize, offsetErrand, alongside,
-  HARBOUR_REACH, BERTH_SPACING, BERTH_HULL, MOUTH_CLEAR, PATH_NODES, DWELL_S, BERTH_SNAP_M, STALL_S, VOYAGE_DIST, LURK_R, PATROL_R,
+  HARBOUR_REACH, BERTH_SPACING, BERTH_HULL, MOUTH_CLEAR, PATH_NODES, PATH_BUDGET_K, DWELL_S, BERTH_SNAP_M, STALL_S, VOYAGE_DIST, LURK_R, PATROL_R,
 } from '../../../src/systems/naval/shipLife.js';
 import { createSeaShip, stepCaptain, WIND_RATED } from '../../../src/systems/naval/navalAI.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
@@ -78,7 +78,7 @@ test('SHIP-LIFE A WAY THROUGH THE WATER: round the headland the grid finds a way
   const lake = (x, z) => coast(x, z) || Math.hypot(x, z - 800) < 60;
   const gl = createWaterGrid({ isWater: lake, hull: 2 });
   assert.equal(gl.path([0, 0], [0, 800]), null);
-  assert.ok(gl.expansions <= PATH_NODES + 1, `bounded: ${gl.expansions}`);
+  assert.ok(gl.expansions <= PATH_NODES * PATH_BUDGET_K + 1, `bounded: ${gl.expansions}`);
 });
 
 test('SHIP-LIFE THE ERRAND DRAWN AGAIN: off her seed and where she is - a ship lying still at a berth is moored there; a merchantman makes for a free berth, never a taken one; a navy patrols the harbour\'s approaches; a pirate lurks LURK_R off its mouth; with no harbour near, a merchantman sails out of the world over open water and a pirate keeps her own cruise; any client draws the same', () => {
@@ -349,7 +349,7 @@ test('SHIP-LIFE the world\'s wiring by source: the host is handed the port near 
   assert.match(WHOLE, /harbourNear: navalHarbourNear,/);
   // PIN MOVED (RPT1026-WORLD FAR-QUAY): the footprint is made in systems/naval/harbourBook.js harbourOf, which the host
   // maps over every port town near the player
-  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
+  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\),\n\s*\[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
   assert.match(WHOLE, /harbourOf\(t, \{ state, built: csaPixelAt, woods: host\.woods \}\)/);
   assert.match(WHOLE, /if \(_navalHarbourAt\.key !== key\) \{/);
   assert.match(WHOLE, /Object\.assign\(_navalHarbourAt, \{ key, towns \}\);/);

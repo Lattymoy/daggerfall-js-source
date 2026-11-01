@@ -72,7 +72,7 @@ test('DELVE-VAULT THE LADDER OFF: the piece still comes, known and plain (mutant
 
 test('DELVE-VAULT THE HOST\'S DOOR: the host rolls my vault - offline at the win, online as my share - at its dungeon\'s own type and tier and my level (mutants: the host\'s plain source)', () => {
   const host = readFileSync(new URL('../../../src/scenes/delve/delveHost.js', import.meta.url), 'utf8');
-  assert.match(host, /const myVault = \(\) => rollVault\(rollPile, lv\(\), vaultSource\(location\?\.mapTableData\?\.dungeonType, tier === 'elite', lv\(\)\)\);/);
+  assert.match(host, /const myVault = \(\) =>\n\s*rollVault\(rollPile, lv\(\), vaultSource\(location\?\.mapTableData\?\.dungeonType, tier === 'elite', lv\(\)\)\);/);
   assert.equal(host.match(/myVault\(\)/g).length, 2, 'the win\'s roll and the share\'s');
 });
 

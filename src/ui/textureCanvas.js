@@ -33,36 +33,48 @@
 // `scenes/dataSource.js`, which is the port's one data door.
 // ═══════════════════════════════════════════════════════════════════
 
-import { dfmodGeneration } from '../systems/dfmodTextures.js';   // DFMOD1-E: the icon cache keys on the attached-mod set
-import { studioGeneration } from '../systems/studioArt/studioArt.js';   // STUDIO1: and on the studio's pictures
+import { dfmodGeneration } from '../systems/dfmodTextures.js'; // DFMOD1-E: the icon cache keys on the attached-mod set
+import { studioGeneration } from '../systems/studioArt/studioArt.js'; // STUDIO1: and on the studio's pictures
 import { bitmapCanvas, color32Canvas, fitCanvas } from './bitmapCanvas.js';
-import { clampDpr, ICON_CAP } from './iconFit.js';   // UI1: the fit law's numbers, for requestFittedPicture's key
+import { clampDpr, ICON_CAP } from './iconFit.js'; // UI1: the fit law's numbers, for requestFittedPicture's key
 // SURV-ART: the DOM door needs the VENDOR arm the GL door already has
 // (scenes/dataPipeline.js getTexture). A vendored archive has no
 // TEXTURE.### to fetch, so `getArchive` below cached it as a miss and
 // every DOM screen drew initials where the mod's art should be.
-import { isVendorArchive, vendorRecordCount, hasTextureReplacement, preloadTextureRecord } from '../systems/textureReplacement.js';
-import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the dye is part of the ask, so it is part of the key; DYE-ICON: and the classic arm dyes by it
+import {
+  isVendorArchive,
+  vendorRecordCount,
+  hasTextureReplacement,
+  preloadTextureRecord,
+} from '../systems/textureReplacement.js';
+import { dyeToken, changeDyeBitmap } from '../characters/dyes.js'; // DW3: the dye is part of the ask, so it is part of the key; DYE-ICON: and the classic arm dyes by it
 // The name rule lives with the READER (U54 moved it there): both this
 // module and scenes/shared.js need it, and neither can import the
 // other without dragging in what the other is for.
-import { texName } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: GetInventoryImage's removeMask - the helm's 0xFF halo is a cutout, not a black box
+import { texName } from '../formats/textureFile.js';
+import { changeMask } from '../formats/baseImageFile.js'; // HM1: GetInventoryImage's removeMask - the helm's 0xFF halo is a cutout, not a black box
 
 export { texName };
 
-const archives = new Map();   // archive -> Promise<TextureFile|null>
-const icons = new Map();      // `${archive}_${record}_${scale}` -> dataURL | null
-const waiting = new Map();    // UI1: the same key -> the screens waiting on it, while it is in flight
-const settling = new Map();   // DECOR-MODFLATS: the same key -> a promise kept while it is in flight, settled as it lands or misses
+const archives = new Map(); // archive -> Promise<TextureFile|null>
+const icons = new Map(); // `${archive}_${record}_${scale}` -> dataURL | null
+const waiting = new Map(); // UI1: the same key -> the screens waiting on it, while it is in flight
+const settling = new Map(); // DECOR-MODFLATS: the same key -> a promise kept while it is in flight, settled as it lands or misses
 let palettePromise = null;
 
 /** UI1: THE SCREENS WAITING ON ONE PICTURE - each told once when it lands. A Set, so a screen asking on every repaint
  *  with the same `onReady` is one entry; and bounded, so a door handed a fresh closure a repaint keeps a handful. */
 const WAKE_MAX = 8;
-function hear(list, onReady) { if (onReady && list && list.size < WAKE_MAX) list.add(onReady); }
+function hear(list, onReady) {
+  if (onReady && list && list.size < WAKE_MAX) list.add(onReady);
+}
 function wakeAll(list) {
   for (const f of list) {
-    try { f(); } catch (e) { console.warn('[icons] a screen would not repaint', e); }
+    try {
+      f();
+    } catch (e) {
+      console.warn('[icons] a screen would not repaint', e);
+    }
   }
 }
 
@@ -102,7 +114,7 @@ function getArchive(archive) {
       return { file: t, palette: pal };
     } catch (e) {
       console.warn(`[icons] ${texName(archive)} unavailable`, e);
-      return null;   // cached as a miss - never fetched again
+      return null; // cached as a miss - never fetched again
     }
   })();
   archives.set(archive, p);
@@ -129,21 +141,27 @@ const iconKey = (archive, record, scale, dye, dyeTarget) => {
  * when a cold record lands so the screen can repaint itself. A record
  * that is already cached fires nothing, so a repaint cannot loop.
  */
-let _iconsGen = '';   // DFMOD1-E: the attached-mod set the icon cache was drawn from
+let _iconsGen = ''; // DFMOD1-E: the attached-mod set the icon cache was drawn from
 /** DFMOD1-E's key, and STUDIO1's: an icon drawn before the studio's pictures registered is not the answer after. */
 const iconsGeneration = () => `${dfmodGeneration()}:${studioGeneration()}`;
 export function requestIcon(archive, record, { scale = 2, onReady = null, dye = null, dyeTarget = null } = {}) {
   if (!Number.isInteger(archive) || !Number.isInteger(record) || record < 0) return null;
   // DFMOD1-E: an icon drawn before the attached texture mods landed (or changed) is not the answer after - the
   // cache is dropped whole when the set changes, and every icon is asked again
-  if (_iconsGen !== iconsGeneration()) { icons.clear(); _iconsGen = iconsGeneration(); }
+  if (_iconsGen !== iconsGeneration()) {
+    icons.clear();
+    _iconsGen = iconsGeneration();
+  }
   const token = dyeToken(dye);
   const key = iconKey(archive, record, scale, dye, dyeTarget);
   // UI1: EVERY SCREEN THAT ASKS WHILE IT IS IN FLIGHT HEARS IT LAND, not the first alone. A slot's fitted picture is
   // made from this record at scale 1 (requestFittedPicture below), which the world's loot billboard asks for too
   // (ui/item/itemIconColor32.js): the second ask's onReady was dropped, and its screen kept its initials until some other
   // repaint. A landed record or a miss has no list, so it hears nothing - a repaint still cannot loop.
-  if (icons.has(key)) { hear(waiting.get(key), onReady); return icons.get(key); }
+  if (icons.has(key)) {
+    hear(waiting.get(key), onReady);
+    return icons.get(key);
+  }
   // IN FLIGHT. Without this the next repaint finds nothing cached and
   // starts a SECOND decode of the same record, and the one after that
   // a third - measured at exactly double the repaints for a three-item
@@ -156,9 +174,24 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
   const wake = new Set(onReady ? [onReady] : []);
   waiting.set(key, wake);
   /** @type {() => void} */ let settle = () => {};
-  settling.set(key, new Promise((res) => { settle = res; }));   // DECOR-MODFLATS: what loadIcon waits on
-  const landed = (url) => { icons.set(key, url); waiting.delete(key); settling.delete(key); settle(); wakeAll(wake); };
-  const missed = () => { waiting.delete(key); settling.delete(key); settle(); };   // a miss is cached as the null above, and wakes no one
+  settling.set(
+    key,
+    new Promise((res) => {
+      settle = res;
+    }),
+  ); // DECOR-MODFLATS: what loadIcon waits on
+  const landed = (url) => {
+    icons.set(key, url);
+    waiting.delete(key);
+    settling.delete(key);
+    settle();
+    wakeAll(wake);
+  };
+  const missed = () => {
+    waiting.delete(key);
+    settling.delete(key);
+    settle();
+  }; // a miss is cached as the null above, and wakes no one
   // SURV-ART: THE VENDOR ARM, FIRST. An archive that exists only as the
   // port's own art (Climates & Calories' 532-539) has no file behind
   // `texName`, so the classic arm below fetched nothing, warned, and
@@ -168,16 +201,32 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
   // missing. It takes `decodedTexture`'s color32 shape straight to a
   // canvas rather than through the palette, because a PNG has no index.
   if (isVendorArchive(archive)) {
-    if (record >= vendorRecordCount(archive)) { console.warn(`[icons] vendored archive ${archive} has no record ${record}`); missed(); return null; }
+    if (record >= vendorRecordCount(archive)) {
+      console.warn(`[icons] vendored archive ${archive} has no record ${record}`);
+      missed();
+      return null;
+    }
     // DISC22-D: THIS record, by the item's dye - the ask GetItemImage makes (ItemHelper.cs:458). The whole-archive
     // preload skips a LAZY entry (Roleplay Realism Items' 514-526), and the bare read asked for the undyed name no
     // metal file answers, so the Steel Light Flail cached a miss and drew its initials.
-    preloadTextureRecord(archive, record, 0, 'Albedo', dye).then((img) => {
-      if (!img) { console.warn(`[icons] vendored ${archive}_${record}-0${token ? `_${token}` : ''} would not decode`); missed(); return; }
-      const canvas = color32Canvas(img, { scale });
-      if (!canvas) { missed(); return; }
-      landed(canvas.toDataURL('image/png'));
-    }).catch((e) => { missed(); console.warn(`[icons] vendored ${archive}_${record}-0 would not load`, e); });
+    preloadTextureRecord(archive, record, 0, 'Albedo', dye)
+      .then((img) => {
+        if (!img) {
+          console.warn(`[icons] vendored ${archive}_${record}-0${token ? `_${token}` : ''} would not decode`);
+          missed();
+          return;
+        }
+        const canvas = color32Canvas(img, { scale });
+        if (!canvas) {
+          missed();
+          return;
+        }
+        landed(canvas.toDataURL('image/png'));
+      })
+      .catch((e) => {
+        missed();
+        console.warn(`[icons] vendored ${archive}_${record}-0 would not load`, e);
+      });
     return null;
   }
   // DW3: A REPLACEMENT OF A REAL ARCHIVE'S RECORD, BY THE ITEM'S DYE -
@@ -189,36 +238,53 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
   // preloadTextureArchive), and a name that will not decode falls to
   // the classic arm below, as DFU's failed import does.
   const swap = hasTextureReplacement(archive, record, 0, 'Albedo', dye)
-    ? preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null)   // AUDIT-DW F1: this record alone, when it is drawn
+    ? preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null) // AUDIT-DW F1: this record alone, when it is drawn
     : Promise.resolve(null);
-  swap.then((img) => {
-    if (img) {
-      const canvas = color32Canvas(img, { scale });
-      if (!canvas) { missed(); return; }
-      landed(canvas.toDataURL('image/png'));
-      return;
-    }
-    return getArchive(archive).then((got) => {
-    if (!got) { missed(); return; }
-    try {
-      if (record >= got.file.recordCount) {
-        console.warn(`[icons] ${texName(archive)} has no record ${record}`);
-        missed();
+  swap
+    .then((img) => {
+      if (img) {
+        const canvas = color32Canvas(img, { scale });
+        if (!canvas) {
+          missed();
+          return;
+        }
+        landed(canvas.toDataURL('image/png'));
         return;
       }
-      // HM1: ItemHelper.cs GetInventoryImage -> GetItemImage(item, removeMask: true); DYE-ICON: then ChangeDye by the
-      // item's dye on the swatch it names (:473-476) - the classic arm drew every metal as the base one
-      const bmp = changeDyeBitmap(changeMask(got.file.getDFBitmap(record, 0)), dye, dyeTarget);
-      const rgb = (i) => { const c = got.palette.get(i); return [c.r, c.g, c.b]; };
-      const canvas = bitmapCanvas(bmp, rgb, { scale });
-      if (!canvas) { missed(); return; }
-      landed(canvas.toDataURL('image/png'));
-    } catch (e) {
+      return getArchive(archive).then((got) => {
+        if (!got) {
+          missed();
+          return;
+        }
+        try {
+          if (record >= got.file.recordCount) {
+            console.warn(`[icons] ${texName(archive)} has no record ${record}`);
+            missed();
+            return;
+          }
+          // HM1: ItemHelper.cs GetInventoryImage -> GetItemImage(item, removeMask: true); DYE-ICON: then ChangeDye by the
+          // item's dye on the swatch it names (:473-476) - the classic arm drew every metal as the base one
+          const bmp = changeDyeBitmap(changeMask(got.file.getDFBitmap(record, 0)), dye, dyeTarget);
+          const rgb = (i) => {
+            const c = got.palette.get(i);
+            return [c.r, c.g, c.b];
+          };
+          const canvas = bitmapCanvas(bmp, rgb, { scale });
+          if (!canvas) {
+            missed();
+            return;
+          }
+          landed(canvas.toDataURL('image/png'));
+        } catch (e) {
+          missed();
+          console.warn(`[icons] ${texName(archive)} record ${record} would not draw`, e);
+        }
+      });
+    })
+    .catch((e) => {
       missed();
-      console.warn(`[icons] ${texName(archive)} record ${record} would not draw`, e);
-    }
-    });
-  }).catch((e) => { missed(); console.warn(`[icons] ${archive}_${record} would not draw`, e); });   // DECOR-MODFLATS: a throw settles it too
+      console.warn(`[icons] ${archive}_${record} would not draw`, e);
+    }); // DECOR-MODFLATS: a throw settles it too
   return null;
 }
 
@@ -231,10 +297,10 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
 // the law in ui/iconFit.js and made at exactly the device size it is drawn at (bitmapCanvas.js fitCanvas), so the
 // page resamples nothing. Cached by the picture, the box, the device pixel ratio and the cap.
 
-const fitted = new Map();      // `${picture}@${box}x${dpr}c${cap}` -> { src, w, h, smooth } | null
-const fitWaiting = new Map();  // the same key -> the screens waiting on it, while it is made
-let fittedBytes = 0;           // AUDIT VIRT: the kept pictures' data URLs, in characters
-let _fittedGen = '';           // AUDIT VIRT: the attached-mod set the kept pictures were made from (STUDIO1: and the studio's)
+const fitted = new Map(); // `${picture}@${box}x${dpr}c${cap}` -> { src, w, h, smooth } | null
+const fitWaiting = new Map(); // the same key -> the screens waiting on it, while it is made
+let fittedBytes = 0; // AUDIT VIRT: the kept pictures' data URLs, in characters
+let _fittedGen = ''; // AUDIT VIRT: the attached-mod set the kept pictures were made from (STUDIO1: and the studio's)
 /** AUDIT UI A4: how many fitted pictures are kept - every zoom and every HUD scale is a new set, and a picture that never
  *  comes held its waiters for good. Past this the one asked for LEAST RECENTLY goes, and its waiters with it (a picture
  *  on screen keeps its source; asked again, it is made again).
@@ -282,16 +348,31 @@ async function fitUrl(url, opts) {
  * @param {string} name @param {(onReady: (() => void)|null) => string|null} ask
  * @param {{ box: number, dpr?: number, cap?: number, trim?: boolean, snap?: boolean, onReady?: (() => void)|null }} opts
  */
-export function requestFittedPicture(name, ask, { box, dpr = 1, cap = ICON_CAP, trim = true, snap = true, onReady = null } = /** @type {any} */ ({})) {
+export function requestFittedPicture(
+  name,
+  ask,
+  { box, dpr = 1, cap = ICON_CAP, trim = true, snap = true, onReady = null } = /** @type {any} */ ({}),
+) {
   if (!(box > 0) || typeof ask !== 'function') return null;
   // AUDIT VIRT: A FITTED PICTURE IS MADE FROM ITS SOURCE, and requestIcon drops its sources when the attached texture mods
   // change (DFMOD1-E) - this cache never did, so a slot kept the last mod's picture, and since VIRT kept it for as long as
   // it was asked. Dropped whole with them; a make still in flight from the old set keeps nothing it makes.
-  if (_fittedGen !== iconsGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = iconsGeneration(); }
+  if (_fittedGen !== iconsGeneration()) {
+    fitted.clear();
+    fitWaiting.clear();
+    fittedBytes = 0;
+    _fittedGen = iconsGeneration();
+  }
   const r = clampDpr(dpr);
   const key = `${name}@${box}x${r}c${cap}${trim ? '' : 'w'}${snap ? '' : 'nosnap'}`;
   // VIRT: AN ASK IS A USE - the picture goes to the back of the line the bound takes from
-  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }
+  if (fitted.has(key)) {
+    const pic = fitted.get(key);
+    fitted.delete(key);
+    fitted.set(key, pic);
+    hear(fitWaiting.get(key), onReady);
+    return pic;
+  }
   fitted.set(key, null);
   trimFitted();
   const wake = new Set(onReady ? [onReady] : []);
@@ -301,17 +382,31 @@ export function requestFittedPicture(name, ask, { box, dpr = 1, cap = ICON_CAP, 
     const url = ask(null);
     // AUDIT VIRT: the source landed and was gone again by this read (the attached mods changed between): the entry goes,
     // so the next ask makes it again, and its screens are told to ask - kept, it stood as a picture that never comes
-    if (!url) { if (fitted.get(key) === null) fitted.delete(key); fitWaiting.delete(key); wakeAll(wake); return; }
-    fitUrl(url, { box, dpr: r, cap, trim, snap }).then((pic) => {
+    if (!url) {
+      if (fitted.get(key) === null) fitted.delete(key);
       fitWaiting.delete(key);
-      if (gen !== _fittedGen) { wakeAll(wake); return; }   // made from a mod set since replaced: not kept, asked again
-      if (!pic) return;
-      fittedBytes += picBytes(pic) - picBytes(fitted.get(key));
-      fitted.delete(key);
-      fitted.set(key, pic);
-      trimFitted();   // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too
       wakeAll(wake);
-    }, (e) => { fitWaiting.delete(key); console.warn(`[icons] ${name} would not fit its slot`, e); });
+      return;
+    }
+    fitUrl(url, { box, dpr: r, cap, trim, snap }).then(
+      (pic) => {
+        fitWaiting.delete(key);
+        if (gen !== _fittedGen) {
+          wakeAll(wake);
+          return;
+        } // made from a mod set since replaced: not kept, asked again
+        if (!pic) return;
+        fittedBytes += picBytes(pic) - picBytes(fitted.get(key));
+        fitted.delete(key);
+        fitted.set(key, pic);
+        trimFitted(); // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too
+        wakeAll(wake);
+      },
+      (e) => {
+        fitWaiting.delete(key);
+        console.warn(`[icons] ${name} would not fit its slot`, e);
+      },
+    );
   };
   if (ask(make)) make();
   return null;
@@ -331,10 +426,17 @@ export function iconName(archive, record, dye = null, dyeTarget = null) {
 
 /** A texture record fitted to its slot - requestFittedPicture over requestIcon at scale 1, by the item's dye and the
  *  swatch it changes (DYE-ICON's `dyeTarget`, systems/item/itemDye.js itemDyeTarget). */
-export function requestFittedIcon(archive, record, { box, dpr = 1, cap = ICON_CAP, dye = null, dyeTarget = null, onReady = null } = /** @type {any} */ ({})) {
+export function requestFittedIcon(
+  archive,
+  record,
+  { box, dpr = 1, cap = ICON_CAP, dye = null, dyeTarget = null, onReady = null } = /** @type {any} */ ({}),
+) {
   if (!Number.isInteger(archive) || !Number.isInteger(record) || record < 0) return null;
-  return requestFittedPicture(iconName(archive, record, dye, dyeTarget),
-    (wake) => requestIcon(archive, record, { scale: 1, dye, dyeTarget, onReady: wake }), { box, dpr, cap, onReady });
+  return requestFittedPicture(
+    iconName(archive, record, dye, dyeTarget),
+    (wake) => requestIcon(archive, record, { scale: 1, dye, dyeTarget, onReady: wake }),
+    { box, dpr, cap, onReady },
+  );
 }
 
 /** UI1: A FITTED PICTURE AS ITS ELEMENT. Its own CSS size - the device size it was made at, so the page resamples
@@ -361,7 +463,12 @@ export function showFitted(img, pic) {
   // 13 at 1.25x, 1.5x, 1.75x and a phone's 2.625x). The sheets say `pixelated` (`img.fit`), lossless at 1:1 whatever
   // the offset; the one picture the page shrinks on purpose - a phone's accessory socket - is smoothed by its own rule.
   Object.assign(img.style, {
-    width: `${pic.w}px`, height: `${pic.h}px`, maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', imageRendering: '',
+    width: `${pic.w}px`,
+    height: `${pic.h}px`,
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain',
+    imageRendering: '',
   });
   return img;
 }
@@ -380,7 +487,7 @@ export async function loadIcon(archive, record, { scale = 2, dye = null, dyeTarg
   const already = requestIcon(archive, record, { scale, dye, dyeTarget });
   if (already) return already;
   const key = iconKey(archive, record, scale, dye, dyeTarget);
-  await settling.get(key);   // in flight: until it lands or misses; a miss already known: at once
+  await settling.get(key); // in flight: until it lands or misses; a miss already known: at once
   return icons.get(key) ?? null;
 }
 
@@ -397,7 +504,7 @@ export async function loadIcon(archive, record, { scale = 2, dye = null, dyeTarg
 // version on every recompose, so wearing a helm invalidates this and
 // nothing else does. A repaint with the same version is free.
 
-let dollCache = null;   // { version, scale, url }
+let dollCache = null; // { version, scale, url }
 
 /**
  * The live paperdoll as a data URL, or null when there is no doll -

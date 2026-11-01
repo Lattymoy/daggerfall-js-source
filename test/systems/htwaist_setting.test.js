@@ -81,16 +81,3 @@ test('HT-WAIST: lanternAtWaist - the ONE question: a lantern, with Handheld Torc
   } finally { _resetModSettings(); }
 });
 
-test('HT-WAIST: the departure is RECORDED where this pane\'s others are - Handheld-Torches.md\'s own section and a Ledger A row naming the key and the files (mutant: a record dropped)', () => {
-  const arc = read('bible/06-Systems/Handheld-Torches.md');
-  assert.match(arc, /^## HT-WAIST - THE LANTERN AT THE WAIST/m, 'the arc page has the section');
-  assert.match(arc, /Handling\.LanternsAtWaist/);
-  const ledger = read('bible/01-Overview/Port-Ledger.md');
-  const lo = ledger.indexOf('## A. Approved departures from DFU');
-  const hi = ledger.indexOf('## A-note (H1)');
-  const a = ledger.slice(lo, hi);
-  const row = a.split('\n').find((l) => l.startsWith('|') && /HT-WAIST/.test(l));
-  assert.ok(row, 'a section-A row');
-  assert.match(row, /Handling\.LanternsAtWaist/);
-  for (const f of ['systems/playerTorch.js', 'systems/handheldTorches.js', 'systems/lanternSwing.js', 'combat/fpArm.js', 'player/eyeOfTheBeholder/eotbBody.js']) assert.ok(row.includes(f), `the row names ${f}`);
-});

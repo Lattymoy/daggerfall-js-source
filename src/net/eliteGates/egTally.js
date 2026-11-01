@@ -22,8 +22,13 @@ import { healRef, HEAL_REFILL_S, HEAL_DEPTH_X } from '../gate/gateBrain.js';
 /** The most rows a chart or a tally carries: the company's eight (net/wire.js EG_COMPANY_MAX). */
 export const EG_TALLY_ROWS = 8;
 /** A Court's part, a member's: `[dealt, on the lord, blows landed, heaviest, falls, healed in others]`. */
-const T_D = 0, T_L = 1, T_H = 2, T_B = 3, T_F = 4, T_HL = 5;
-const rowOf = (F, sub) => ((F.tl[sub] ??= [0, 0, 0, 0, 0, 0]));
+const T_D = 0,
+  T_L = 1,
+  T_H = 2,
+  T_B = 3,
+  T_F = 4,
+  T_HL = 5;
+const rowOf = (F, sub) => (F.tl[sub] ??= [0, 0, 0, 0, 0, 0]);
 const whole = (v) => Math.max(0, Math.round(v || 0));
 
 /** A hall woken: a Court's fight lays its chart (empty - a member's row is made by their first blow, heal or fall). */
@@ -60,8 +65,13 @@ export function egTallyFall(F, sub) {
 export function egTallyHeal(B, sub, pairs, now) {
   const m = B?.mem?.[sub];
   if (!m || !m.in || m.forsaken || B.end || !Array.isArray(pairs)) return 0;
-  const ref = healRef(m.lv), depth = HEAL_DEPTH_X * ref;
-  m.hb = Math.min(depth, (Number.isFinite(m.hb) ? m.hb : depth) + (Math.max(0, now - (Number.isFinite(m.hbAt) ? m.hbAt : now)) / 1000) * (ref / HEAL_REFILL_S));
+  const ref = healRef(m.lv),
+    depth = HEAL_DEPTH_X * ref;
+  m.hb = Math.min(
+    depth,
+    (Number.isFinite(m.hb) ? m.hb : depth) +
+      (Math.max(0, now - (Number.isFinite(m.hbAt) ? m.hbAt : now)) / 1000) * (ref / HEAL_REFILL_S),
+  );
   m.hbAt = now;
   let all = 0;
   for (const [by, n] of pairs) {
@@ -88,13 +98,20 @@ export function egChartOf(B) {
   if (!F?.tl) return [];
   const order = B.co.map((c) => c.sub);
   const subs = order.filter((s) => B.mem[s] && (F.tl[s] || (B.mem[s].in && B.mem[s].alive && !B.mem[s].home)));
-  return subs.map((s) => {
-    const r = F.tl[s] ?? [0, 0, 0, 0, 0, 0], d = whole(r[T_D]);
-    return [s, Math.max(1, B.mem[s].lv | 0), d, whole(r[T_L]), r[T_H] | 0, whole(r[T_B]), r[T_F] | 0, whole(r[T_HL])];
-  }).sort((a, b) => b[2] - a[2] || order.indexOf(a[0]) - order.indexOf(b[0])).slice(0, EG_TALLY_ROWS);
+  return subs
+    .map((s) => {
+      const r = F.tl[s] ?? [0, 0, 0, 0, 0, 0],
+        d = whole(r[T_D]);
+      return [s, Math.max(1, B.mem[s].lv | 0), d, whole(r[T_L]), r[T_H] | 0, whole(r[T_B]), r[T_F] | 0, whole(r[T_HL])];
+    })
+    .sort((a, b) => b[2] - a[2] || order.indexOf(a[0]) - order.indexOf(b[0]))
+    .slice(0, EG_TALLY_ROWS);
 }
 /** EACH MEMBER'S PART IN THE BREACH (the wire's `ds`): every entrant in the company's order, `[sub, dealt, healed]`, whole
  *  numbers. */
 export function egTalliesOf(B) {
-  return (B?.co ?? []).filter((c) => B.mem[c.sub]?.in).slice(0, EG_TALLY_ROWS).map((c) => [c.sub, whole(B.mem[c.sub].dt), whole(B.mem[c.sub].ht)]);
+  return (B?.co ?? [])
+    .filter((c) => B.mem[c.sub]?.in)
+    .slice(0, EG_TALLY_ROWS)
+    .map((c) => [c.sub, whole(B.mem[c.sub].dt), whole(B.mem[c.sub].ht)]);
 }

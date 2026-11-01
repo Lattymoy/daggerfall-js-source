@@ -2,7 +2,7 @@
   {
     "name": "RETIRED-BLOW-remnant-unseen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "RETIRED-BLOW-echo-unseen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in - the Echoes rescaled with it - before its blow is judged",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): its share in - the Echoes rescaled with it - before its blow is judged",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "RETIRED-BLOW-heart-unseen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a Heart's striker stands in the arena too",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): a Heart's striker stands in the arena too",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "RETIRED-BLOW-sighting-never-restores",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (!p.retired) return;\n  restoreShare(f, p);\n  rescaleEchoes(f);",
-    "new": "  if (p.retired) return;\n  restoreShare(f, p);\n  rescaleEchoes(f);",
+    "old": "  if (!p.retired) return;",
+    "new": "  if (p.retired) return;",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "RETIRED-BLOW-echoes-not-rescaled",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  restoreShare(f, p);\n  rescaleEchoes(f);\n}",
-    "new": "  restoreShare(f, p);\n}",
+    "old": "  rescaleEchoes(f);\n}",
+    "new": "}",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "RETIRED-BLOW-gate-unseen",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  p.seenAt = now; restoreShare(f, p);",
-    "new": "  p.seenAt = now;",
+    "old": "  restoreShare(f, p);\n  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket",
+    "new": "  // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "RETIRED-BLOW-ketch-warden-unseen",
     "file": "src/net/ketch/ketchWarden.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -82,7 +82,7 @@
   {
     "name": "RETIRED-BLOW-ketch-fork-unseen",
     "file": "src/net/ketch/ketchWarden.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -132,7 +132,7 @@
   {
     "name": "STRIKE-UNVEILS-striker-never-unveiled",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
     "new": "",
     "tests": [
       "test/combat/rpt1026_fights_unveil.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STRIKE-UNVEILS-unveiled-on-a-miss",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
-    "new": "  if (target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "new": "  if (target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
     "tests": [
       "test/combat/rpt1026_fights_unveil.test.js"
     ],
@@ -202,7 +202,7 @@
   {
     "name": "TRAP-TO-OWNER-session-door-dead",
     "file": "src/systems/enchantments.js",
-    "old": "export const spellToFoeOwner = (foe, record, level) => { try { return !!_defaultCtx?.spellToOwner?.(foe, record, level); } catch { return false; } };",
+    "old": "export const spellToFoeOwner = (foe, record, level) => {\n  try {\n    return !!_defaultCtx?.spellToOwner?.(foe, record, level);\n  } catch {\n    return false;\n  }\n};",
     "new": "export const spellToFoeOwner = (foe, record, level) => false;",
     "tests": [
       "test/scenes/rpt1026_fights_trap.test.js"

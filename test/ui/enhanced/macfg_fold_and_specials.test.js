@@ -87,7 +87,7 @@ test('MAC-F: the head is the handle, and the body goes with the fold', () => {
   assert.match(cr, /fold\.setAttribute\('aria-expanded', String\(!shut\)\);/);
   // THE BODY IS WHAT FOLDS. The head, the date and the remove all stay.
   // PIN MOVED (QL2): a quest's card draws its objectives above its body - inside the same fold, so they go with it too
-  assert.match(cr, /if \(!isFolded\(folded, section, i\)\) \{\s*(?:\/\/[^\n]*\n\s*if \(section === 'quests'\)[^\n]*\n\s*)?for \(const line of e\.body\)/);
+  assert.match(cr, /if \(!isFolded\(folded, section, i\)\) \{\n\s*\/\/ QL2: what the quest asks now, above its journal - the pause tab's block, one home \(ui\/questlines\/qlJournal\.js\)\n\s*if \(section === 'quests'\) \{\n\s*const block = qlObjectivesBlock\(document, e\.ql\);\n\s*if \(block\) entry\.append\(block\);\n\s*\}\n\s*for \(const line of e\.body\)/);
   // and the remove is a SIBLING of that button, not inside it: a button
   // in a button is not HTML, and the click would toggle as well as remove
   assert.doesNotMatch(cr, /fold\.append\(rm\)/);
@@ -115,8 +115,8 @@ test('MAC-F: a fold is a reading position, not a setting', () => {
   const cr = read('src/ui/enhanced/enhancedChronicle.js');
   // cleared when the window opens and when it is torn down: a player who
   // shut every quest last night opens the book READ this morning
-  assert.match(cr, /folded\.clear\(\);   \/\/ MAC-F/);
-  assert.match(cr, /section = 'notes'; draft = ''; folded\.clear\(\);/);
+  assert.match(cr, /folded\.clear\(\); \/\/ MAC-F/);
+  assert.match(cr, /section = 'notes';\n\s*draft = '';\n\s*folded\.clear\(\);/);
   // and nothing about it reaches disk
   assert.doesNotMatch(cr, /localStorage|indexedDB|setItem/);
   // the style carries the fold's own parts, including the SHUT card -

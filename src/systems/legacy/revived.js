@@ -55,14 +55,20 @@ export function dropRevived(family) {
   if (!back.size) return false;
   let n = 0;
   for (const p of family.people) {
-    if (p.died && back.get(p.id)?.includes(Number(p.died.at))) { p.died = null; n++; }
+    if (p.died && back.get(p.id)?.includes(Number(p.died.at))) {
+      p.died = null;
+      n++;
+    }
   }
   if (Array.isArray(family.remains)) {
     const kept = family.remains.filter((r) => !back.get(r?.of)?.includes(Number(r?.at)));
     n += family.remains.length - kept.length;
     family.remains = kept;
   }
-  if (family.pending && back.get(family.pending.fallenId)?.includes(Number(family.pending.at))) { family.pending = null; n++; }
+  if (family.pending && back.get(family.pending.fallenId)?.includes(Number(family.pending.at))) {
+    family.pending = null;
+    n++;
+  }
   return n > 0;
 }
 

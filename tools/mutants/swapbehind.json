@@ -128,8 +128,8 @@
   {
     "name": "SWAP-BEHIND-late-parts-left",
     "file": "src/player/lateSolid.js",
-    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);",
-    "new": "",
+    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "SWAP-BEHIND-place-rekey-inert",
     "file": "src/scenes/placeHolds.js",
-    "old": "      rekey(to) { if (h.state === 'live') h.key = to; },",
-    "new": "      rekey(to) { },",
+    "old": "      rekey(to) {\n        if (h.state === 'live') h.key = to;\n      },",
+    "new": "      rekey(to) {},",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "SWAP-BEHIND-place-kept-under-its-first-key",
     "file": "src/scenes/placeHolds.js",
-    "old": "        const older = shelf.get(h.key);\n        if (older) { shelf.delete(h.key); drop(older); }\n        shelf.set(h.key, h);",
-    "new": "        const older = shelf.get(key);\n        if (older) { shelf.delete(key); drop(older); }\n        shelf.set(key, h);",
+    "old": "        const older = shelf.get(h.key);\n        if (older) {\n          shelf.delete(h.key);\n          drop(older);\n        }\n        shelf.set(h.key, h);",
+    "new": "        const older = shelf.get(key);\n        if (older) {\n          shelf.delete(key);\n          drop(older);\n        }\n        shelf.set(key, h);",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]

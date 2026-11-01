@@ -9,19 +9,46 @@ import { registerCustomTemplates, setItemFields, mintCondition } from '../item/i
 export const STORES_TEMPLATE = 1330;
 export const STORES_GROUP = 'UselessItems2';
 export const STORES_ROW = Object.freeze({
-  index: STORES_TEMPLATE, name: 'Carpenter\'s Stores', baseWeight: 10, hitPoints: 1, capacityOrTarget: 0, basePrice: 25,
-  enchantmentPoints: 0, rarity: 1, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 204, worldTextureRecord: 8, playerTextureArchive: 0,
-  playerTextureRecord: 0, stackable: true,
+  index: STORES_TEMPLATE,
+  name: "Carpenter's Stores",
+  baseWeight: 10,
+  hitPoints: 1,
+  capacityOrTarget: 0,
+  basePrice: 25,
+  enchantmentPoints: 0,
+  rarity: 1,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 204,
+  worldTextureRecord: 8,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: true,
 });
 registerCustomTemplates([STORES_ROW]);
 
 /** `n` stores as one stack. @param {number} n */
-export const mintStores = (n) => mintCondition(setItemFields({ group: STORES_GROUP, templateIndex: STORES_TEMPLATE, material: 0, flags: 0, variant: 0, message: 0, stackCount: Math.max(1, n | 0) }));
+export const mintStores = (n) =>
+  mintCondition(
+    setItemFields({
+      group: STORES_GROUP,
+      templateIndex: STORES_TEMPLATE,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: Math.max(1, n | 0),
+    }),
+  );
 /** Whether an item is the stores. */
 export const isStores = (it) => it?.templateIndex === STORES_TEMPLATE;
 /** How many stores a list of items holds. @param {any[]} items */
-export const storesIn = (items) => (items ?? []).reduce((n, it) => n + (isStores(it) ? Math.max(1, it.stackCount | 0) : 0), 0);
+export const storesIn = (items) =>
+  (items ?? []).reduce((n, it) => n + (isStores(it) ? Math.max(1, it.stackCount | 0) : 0), 0);
 /** One store taken from a list (a stack's count down, or the stack gone). Answers whether there was one. @param {any[]} items */
 export function spendStore(items) {
   const i = (items ?? []).findIndex(isStores);

@@ -56,7 +56,7 @@ test('audit26 F151: the frame loop feeds the back button as its own signal', () 
   const s = src('src/ui/videoPlayer.js');
   // the listener reports WHICH key, and only Escape counts as back
   assert.match(s, /const handler = \(ev\) => onAnyKey\(ev\?\.key === 'Escape'\);/);
-  assert.match(s, /listen\(\(back = false\) => \{ anyKey = true; if \(back\) backDown = true; \}\)/);
+  assert.match(s, /listen\(\(back = false\) => \{\n\s*anyKey = true;\n\s*if \(back\) backDown = true;\n\s*\}\)/);
   assert.match(s, /player\.shouldClose\(anyKey, endOnAnyKey, backDown\)/);
   // ...and the infection call site keeps DFU's endOnAnyKey false -
   // the flag is right, it just never meant unskippable.

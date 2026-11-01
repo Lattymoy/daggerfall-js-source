@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-B1-tax-not-running",
     "file": "server-account/src/contracts.js",
-    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100",
-    "new": "const deedTaxSql = `(((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100",
+    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
+    "new": "const deedTaxSql = `(((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
     "tests": [
       "test/net/auditsilver_service.test.js",
       "test/net/silverways_service.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-B1-paid-max-unread",
     "file": "server-account/src/contracts.js",
-    "old": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10`)",
-    "new": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10 + 5`)",
+    "old": "          AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10`,",
+    "new": "          AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10 + 5`,",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-B2-read-ignores-posters",
     "file": "server-account/src/contracts.js",
-    "old": " AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
-    "new": " AND left_deeds >= 1 AND (${posters('guild_contracts.guild_id')} OR 1)",
+    "old": "    WHERE region = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
+    "new": "    WHERE region = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND (${posters('guild_contracts.guild_id')} OR 1)",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C1-service-unasked",
     "file": "server-account/src/motherlodes.js",
-    "old": "c.y !== lode.y || !motherlodeWatchOk(c.i, at))",
-    "new": "c.y !== lode.y || c.i < at - 600)",
+    "old": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || !motherlodeWatchOk(c.i, at))",
+    "new": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || c.i < at - 600)",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C2-full-for-any",
     "file": "server-account/src/motherlodes.js",
-    "old": "return balance + MOTHERLODE_SILVER > MARKS_MAX ? { marks: { struck: 0, balance, why: 'full' } } : {};",
-    "new": "return { marks: { struck: 0, balance, why: 'full' } };",
+    "old": "  return balance + MOTHERLODE_SILVER > MARKS_MAX ? { marks: { struck: 0, balance, why: 'full' } } : {};",
+    "new": "  return { marks: { struck: 0, balance, why: 'full' } };",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -130,7 +130,7 @@
   {
     "name": "AUDIT-SILVER-WAYS-C3-no-mark-read",
     "file": "server-account/src/motherlodes.js",
-    "old": "  const marked = async (/** @type {any} */ db) => !!(await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first());",
+    "old": "  const marked = async (/** @type {any} */ db) =>\n    !!(await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first());",
     "new": "  const marked = async () => false;",
     "tests": [
       "test/net/auditsilver_service.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C3-picks-unguarded",
     "file": "server-account/src/motherlodes.js",
-    "old": "WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`)",
-    "new": "WHERE ?10 IS NOT NULL`)",
+    "old": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`,",
+    "new": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE ?10 IS NOT NULL`,",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D1-turn-unrated",
     "file": "src/net/motherlodeBook.js",
-    "old": " && nowMs() - askedAt >= MOTHERLODE_RETRY_MS;",
-    "new": ";",
+    "old": "      const turned =\n        state.day != null &&\n        state.day !== today &&\n        (t - today * 86400) * 1000 >= turnMs &&\n        nowMs() - askedAt >= MOTHERLODE_RETRY_MS;",
+    "new": "      const turned = state.day != null && state.day !== today && (t - today * 86400) * 1000 >= turnMs;",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D1-spread-unread",
     "file": "src/net/motherlodeBook.js",
-    "old": "state.day !== today && (t - today * 86400) * 1000 >= turnMs && ",
-    "new": "state.day !== today && ",
+    "old": "      const turned =\n        state.day != null &&\n        state.day !== today &&\n        (t - today * 86400) * 1000 >= turnMs &&\n        nowMs() - askedAt >= MOTHERLODE_RETRY_MS;",
+    "new": "      const turned = state.day != null && state.day !== today && nowMs() - askedAt >= MOTHERLODE_RETRY_MS;",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D2-full-unlearned",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (l) l.struck = Math.max(l.struck ?? 0, MOTHERLODE_STRIKERS);",
-    "new": "if (l) l.struck = l.struck ?? 0;",
+    "old": "        if (l) l.struck = Math.max(l.struck ?? 0, MOTHERLODE_STRIKERS);",
+    "new": "        if (l) l.struck = l.struck ?? 0;",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D2-found-unlearned",
     "file": "src/net/motherlodeBook.js",
-    "old": "else if (error === 'motherlode-found') state.found = state.found ?? key;",
-    "new": "else if (error === 'motherlode-found') state.found = state.found ?? null;",
+    "old": "      } else if (error === 'motherlode-found') state.found = state.found ?? key;",
+    "new": "      } else if (error === 'motherlode-found') state.found = state.found ?? null;",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D3-stand",
     "file": "src/net/motherlodeBook.js",
-    "old": "Keep moving on its ground: the Watch checks every 2 minutes.",
-    "new": "Stand a moment: the Watch will see you within 2 minutes.",
+    "old": "    'The Watch has not seen you on the Motherlode lately. Keep moving on its ground: the Watch checks every 2 minutes.',",
+    "new": "    'The Watch has not seen you on the Motherlode lately. Stand a moment: the Watch will see you within 2 minutes.',",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D6-account-unread",
     "file": "src/net/motherlodeBook.js",
-    "old": "      const m = meNow(true);\n      const w = watches.get(`${x},${y}`);",
-    "new": "      const m = meNowV;\n      const w = watches.get(`${x},${y}`);",
+    "old": "      const m = meNow(true);",
+    "new": "      const m = meNowV;",
     "tests": [
       "test/net/auditsilver_client.test.js",
       "test/net/motherlode_identity_regression.test.js"
@@ -258,8 +258,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D6-kept-for-return",
     "file": "src/net/motherlodeBook.js",
-    "old": "      meNowV = m;\n      watches.clear();",
-    "new": "      meNowV = m;",
+    "old": "      watches.clear();\n      // Applied results belong to the old account even if its next read fails. The host hears of it from the",
+    "new": "      // Applied results belong to the old account even if its next read fails. The host hears of it from the",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D7-account-each-frame",
     "file": "src/net/motherlodeBook.js",
-    "old": "    if (!force && t - meAt < MOTHERLODE_ME_MS) return meNowV;\n",
-    "new": "",
+    "old": "    if (!force && t - meAt < MOTHERLODE_ME_MS) return meNowV;\n    meAt = t;",
+    "new": "    meAt = t;",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ],
@@ -277,8 +277,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D7-list-a-frame",
     "file": "src/net/motherlodeBook.js",
-    "old": "    standingAll(out = []) {\n      meNow();\n      out.length = 0;",
-    "new": "    standingAll(out = []) {\n      meNow();\n      out = [];",
+    "old": "    standingAll(out = []) {\n      meNow();\n      out.length = 0;\n      const t = nowS();",
+    "new": "    standingAll(out = []) {\n      meNow();\n      out = [];\n      const t = nowS();",
     "tests": [
       "test/net/auditsilver_client.test.js"
     ]

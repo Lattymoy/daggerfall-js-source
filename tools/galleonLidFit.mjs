@@ -20,10 +20,18 @@ import { isMain } from './lib/isMain.mjs';
 export function hullTriangles(bake) {
   const hull = bake.parts.find((p) => p.role === 'hull');
   if (!hull) throw new Error('galleonLidFit: the bake has no hull');
-  const P = hull.positions, T = hull.triangles, out = [];
+  const P = hull.positions,
+    T = hull.triangles,
+    out = [];
   for (let t = 0; t < T.length; t += 3) {
     const v = [0, 1, 2].map((k) => [P[T[t + k] * 3], P[T[t + k] * 3 + 1], P[T[t + k] * 3 + 2]]);
-    out.push({ v, y0: Math.min(v[0][1], v[1][1], v[2][1]), y1: Math.max(v[0][1], v[1][1], v[2][1]), z0: Math.min(v[0][2], v[1][2], v[2][2]), z1: Math.max(v[0][2], v[1][2], v[2][2]) });
+    out.push({
+      v,
+      y0: Math.min(v[0][1], v[1][1], v[2][1]),
+      y1: Math.max(v[0][1], v[1][1], v[2][1]),
+      z0: Math.min(v[0][2], v[1][2], v[2][2]),
+      z1: Math.max(v[0][2], v[1][2], v[2][2]),
+    });
   }
   return out;
 }
@@ -32,7 +40,13 @@ export function hullTriangles(bake) {
  *  or null where none is (a zero-area triangle - the bake keeps 11 on collinear corners, Blender 5.1.1's own - AUDIT GN2-BK1 - meets no point). */
 export function halfBreadth(tris, y, z, s) {
   let best = null;
-  for (const { v: [a, b, c], y0, y1, z0, z1 } of tris) {
+  for (const {
+    v: [a, b, c],
+    y0,
+    y1,
+    z0,
+    z1,
+  } of tris) {
     if (y < y0 - 1e-9 || y > y1 + 1e-9 || z < z0 - 1e-9 || z > z1 + 1e-9) continue;
     const d = (b[1] - a[1]) * (c[2] - a[2]) - (c[1] - a[1]) * (b[2] - a[2]);
     if (Math.abs(d) < 1e-12) continue;
@@ -47,23 +61,34 @@ export function halfBreadth(tris, y, z, s) {
 }
 
 /** Whether (y, dz) about a port's middle lies over its opening (no planking behind a shutter there). */
-export const overOpening = (y, dz) => Math.abs(dz) < MEASURED.portHalfW && y > MEASURED.portSillY && y < MEASURED.portTopY;
+export const overOpening = (y, dz) =>
+  Math.abs(dz) < MEASURED.portHalfW && y > MEASURED.portSillY && y < MEASURED.portTopY;
 
 /** One side's fit at one port: her half-breadth at each of LID.rows x LID.cols (rows top down), the opening's stations
  *  the line between their row's outer ones. */
 export function sideFit(tris, z, s) {
   return LID.rows.map((y) => {
     const row = LID.cols.map((dz) => (overOpening(y, dz) ? null : halfBreadth(tris, y, z + dz, s)));
-    if (row[0] == null || row[row.length - 1] == null) throw new Error(`galleonLidFit: no planking at the edge of the shutter at z ${z}, y ${y}`);
-    return row.map((x, k) => x ?? row[0] + ((row[row.length - 1] - row[0]) * (LID.cols[k] - LID.cols[0])) / (LID.cols[LID.cols.length - 1] - LID.cols[0]));
+    if (row[0] == null || row[row.length - 1] == null)
+      throw new Error(`galleonLidFit: no planking at the edge of the shutter at z ${z}, y ${y}`);
+    return row.map(
+      (x, k) =>
+        x ??
+        row[0] +
+          ((row[row.length - 1] - row[0]) * (LID.cols[k] - LID.cols[0])) /
+            (LID.cols[LID.cols.length - 1] - LID.cols[0]),
+    );
   });
 }
 
 /** Every port's fit: each side's own, and the shutters' (the outer of the two at each station, to the millimetre). */
 export function measureLidFit(bake) {
   const tris = hullTriangles(bake);
-  const starboard = MEASURED.portZ.map((z) => sideFit(tris, z, 1)), port = MEASURED.portZ.map((z) => sideFit(tris, z, -1));
-  const fit = starboard.map((rows, i) => rows.map((row, r) => row.map((x, k) => Math.round(Math.max(x, port[i][r][k]) * 1000) / 1000)));
+  const starboard = MEASURED.portZ.map((z) => sideFit(tris, z, 1)),
+    port = MEASURED.portZ.map((z) => sideFit(tris, z, -1));
+  const fit = starboard.map((rows, i) =>
+    rows.map((row, r) => row.map((x, k) => Math.round(Math.max(x, port[i][r][k]) * 1000) / 1000)),
+  );
   return { fit, starboard, port };
 }
 
@@ -76,7 +101,14 @@ if (isMain(import.meta.url)) {
   console.log(']);');
   MEASURED.portZ.forEach((z, i) => {
     let worst = { d: 0, r: 0, k: 0 };
-    starboard[i].forEach((row, r) => row.forEach((x, k) => { const d = Math.abs(x - port[i][r][k]); if (d > worst.d) worst = { d, r, k }; }));
-    console.log(`// port ${i} (z ${z}): her two sides' stations differ by ${(worst.d * 100).toFixed(2)} cm at most${worst.d > 0 ? ` (row ${worst.r}, column ${worst.k}: starboard ${starboard[i][worst.r][worst.k].toFixed(4)}, port ${port[i][worst.r][worst.k].toFixed(4)})` : ''}`);
+    starboard[i].forEach((row, r) =>
+      row.forEach((x, k) => {
+        const d = Math.abs(x - port[i][r][k]);
+        if (d > worst.d) worst = { d, r, k };
+      }),
+    );
+    console.log(
+      `// port ${i} (z ${z}): her two sides' stations differ by ${(worst.d * 100).toFixed(2)} cm at most${worst.d > 0 ? ` (row ${worst.r}, column ${worst.k}: starboard ${starboard[i][worst.r][worst.k].toFixed(4)}, port ${port[i][worst.r][worst.k].toFixed(4)})` : ''}`,
+    );
   });
 }

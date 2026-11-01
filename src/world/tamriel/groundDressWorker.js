@@ -12,7 +12,10 @@ export function dressMessage(/** @type {any} */ m, /** @type {(msg: any, transfe
     const layers = dressLayers(m.layers, m.dress, m.exposure);
     /** @type {ArrayBuffer[]} */
     const moved = [];
-    for (const l of layers) { const b = /** @type {any} */ (l?.colors)?.buffer; if (b instanceof ArrayBuffer && !moved.includes(b)) moved.push(b); }
+    for (const l of layers) {
+      const b = /** @type {any} */ (l?.colors)?.buffer;
+      if (b instanceof ArrayBuffer && !moved.includes(b)) moved.push(b);
+    }
     post({ t: 'dressed', id: m.id, layers }, moved);
   } catch (e) {
     post({ t: 'error', id: m.id, message: String(/** @type {any} */ (e)?.message ?? e) });
@@ -23,5 +26,6 @@ export function dressMessage(/** @type {any} */ m, /** @type {(msg: any, transfe
 const G = /** @type {any} */ (globalThis);
 if (typeof G.WorkerGlobalScope !== 'undefined' && G instanceof G.WorkerGlobalScope) {
   const scope = G;
-  scope.onmessage = (/** @type {MessageEvent} */ e) => dressMessage(e.data, (msg, transfer) => scope.postMessage(msg, transfer ?? []));
+  scope.onmessage = (/** @type {MessageEvent} */ e) =>
+    dressMessage(e.data, (msg, transfer) => scope.postMessage(msg, transfer ?? []));
 }

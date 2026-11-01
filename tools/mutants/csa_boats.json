@@ -11,8 +11,8 @@
   {
     "name": "CSA-B-collect-enters-inactive",
     "file": "src/world/prefabNode.js",
-    "old": "for (const ch of n.children) if (ch.activeSelf) collectActive(ch, type, out);",
-    "new": "for (const ch of n.children) collectActive(ch, type, out);",
+    "old": "  for (const ch of n.children) if (ch.activeSelf) collectActive(ch, type, out);",
+    "new": "  for (const ch of n.children) collectActive(ch, type, out);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CSA-B-keepworld-scale-diagonal-x-only",
     "file": "src/world/prefabNode.js",
-    "old": "this.localScale = [m[0], m[4], m[8]];",
-    "new": "this.localScale = [m[0], m[0], m[0]];",
+    "old": "    this.localScale = [m[0], m[4], m[8]];",
+    "new": "    this.localScale = [m[0], m[0], m[0]];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CSA-B-keepworld-scale-not-reset",
     "file": "src/world/prefabNode.js",
-    "old": "    this.localScale = [1, 1, 1];\n    const m = mul3(",
-    "new": "    const m = mul3(",
+    "old": "    this.localScale = [1, 1, 1];\n    const m = mul3(inv3(rs3(this.worldMatrix())), worldRS);",
+    "new": "    const m = mul3(inv3(rs3(this.worldMatrix())), worldRS);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js",
       "test/world/csa_sails.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "CSA-B-active-in-hierarchy-self-only",
     "file": "src/world/prefabNode.js",
-    "old": "for (let n = /** @type {PrefabNode|null} */ (this); n; n = n.parent) if (!n.activeSelf) return false;",
-    "new": "if (!this.activeSelf) return false;",
+    "old": "    for (let n = /** @type {PrefabNode|null} */ (this); n; n = n.parent) if (!n.activeSelf) return false;",
+    "new": "    if (!this.activeSelf) return false;",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "CSA-B-instances-share-components",
     "file": "src/world/prefabNode.js",
-    "old": "components: t.components.map((i) => copy(components[i])),",
-    "new": "components: t.components.map((i) => components[i]),",
+    "old": "      components: t.components.map((i) => copy(components[i])),",
+    "new": "      components: t.components.map((i) => components[i]),",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "CSA-B-pointer-last-match",
     "file": "src/world/prefabNode.js",
-    "old": "if (!byPath.has(path)) byPath.set(path, node);",
-    "new": "byPath.set(path, node);",
+    "old": "    if (!byPath.has(path)) byPath.set(path, node); // Transform.Find's first match (no pointer in the files names a shared path - pinned)",
+    "new": "    byPath.set(path, node); // Transform.Find's first match (no pointer in the files names a shared path - pinned)",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "CSA-B-basevertex-dropped",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "indices[i] = raw[i] + s.baseVertex;",
-    "new": "indices[i] = raw[i];",
+    "old": "    for (let i = s.start; i < s.start + s.count; i++) indices[i] = raw[i] + s.baseVertex;",
+    "new": "    for (let i = s.start; i < s.start + s.count; i++) indices[i] = raw[i];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "CSA-B-normal-stride-ignored",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "normals[v * 3 + d] = rawNormals[v * nd + d];",
-    "new": "normals[v * 3 + d] = rawNormals[v * 3 + d];",
+    "old": "    for (let v = 0; v < n; v++) for (let d = 0; d < 3; d++) normals[v * 3 + d] = rawNormals[v * nd + d];",
+    "new": "    for (let v = 0; v < n; v++) for (let d = 0; d < 3; d++) normals[v * 3 + d] = rawNormals[v * 3 + d];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "CSA-B-bindpose-not-transposed",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "out[c * 4 + r] = m[r * 4 + c];",
-    "new": "out[r * 4 + c] = m[r * 4 + c];",
+    "old": "  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out[c * 4 + r] = m[r * 4 + c];",
+    "new": "  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) out[r * 4 + c] = m[r * 4 + c];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js",
       "test/world/csa_sails.test.js"
@@ -94,7 +94,7 @@
   {
     "name": "CSA-B-runtime-materials-bad-index-skips",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "      if (!(m.Index >= 0 && m.Index < materials.length)) { inRange = false; break; }",
+    "old": "      if (!(m.Index >= 0 && m.Index < materials.length)) {\n        inRange = false;\n        break;\n      }",
     "new": "      if (!(m.Index >= 0 && m.Index < materials.length)) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
@@ -104,7 +104,7 @@
     "name": "CSA-B-runtime-materials-first-wins",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "      materials[m.Index] = dfMaterial(m.Archive, m.Record);",
-    "new": "      if (!materials[m.Index]?.archive && materials[m.Index]?.archive !== 0) materials[m.Index] = dfMaterial(m.Archive, m.Record);",
+    "new": "      if (!materials[m.Index]?.archive && materials[m.Index]?.archive !== 0)\n        materials[m.Index] = dfMaterial(m.Archive, m.Record);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "CSA-B-texture-name-no-spaces",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "const toInt = (/** @type {string} */ s) => (/^\\s*[+-]?\\d+\\s*$/.test(s)",
-    "new": "const toInt = (/** @type {string} */ s) => (/^[+-]?\\d+$/.test(s)",
+    "old": "  const toInt = (/** @type {string} */ s) => (/^\\s*[+-]?\\d+\\s*$/.test(s) ? Number.parseInt(s.trim(), 10) : null);",
+    "new": "  const toInt = (/** @type {string} */ s) => (/^[+-]?\\d+$/.test(s) ? Number.parseInt(s.trim(), 10) : null);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "CSA-B-extra-material-own-submesh",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "const sm = g.subMeshes[Math.min(k, g.subMeshes.length - 1)];",
-    "new": "const sm = g.subMeshes[k];\n    if (!sm) continue;",
+    "old": "    const sm = g.subMeshes[Math.min(k, g.subMeshes.length - 1)];",
+    "new": "    const sm = g.subMeshes[k];\n    if (!sm) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "CSA-B-bundle-slot-drawn",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "    if (!isDfMaterial(s)) continue;\n    const sm",
-    "new": "    if (!s) continue;\n    const sm",
+    "old": "    if (!isDfMaterial(s)) continue;",
+    "new": "    if (!s) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js",
       "test/systems/comeSailAway/csa_pool.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "CSA-B-node-fore-aft-swapped",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "node(1, 'Fore', [c[0], c[1], c[2] + e[2]]);",
-    "new": "node(1, 'Fore', [c[0], c[1], c[2] - e[2]]);",
+    "old": "  node(1, 'Fore', [c[0], c[1], c[2] + e[2]]);",
+    "new": "  node(1, 'Fore', [c[0], c[1], c[2] - e[2]]);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "CSA-B-node-starboard-wrong-side",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "node(3, 'Starboard', [c[0] + e[0], c[1], c[2]]);",
-    "new": "node(3, 'Starboard', [c[0] - e[0], c[1], c[2]]);",
+    "old": "  node(3, 'Starboard', [c[0] + e[0], c[1], c[2]]);",
+    "new": "  node(3, 'Starboard', [c[0] - e[0], c[1], c[2]]);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "CSA-B-handling-ifs-exclusive",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "      if (name.includes('Sail')) {\n        boat.modifierMoveSpeedSail",
-    "new": "      else if (name.includes('Sail')) {\n        boat.modifierMoveSpeedSail",
+    "old": "      }\n      if (name.includes('Sail')) {",
+    "new": "      } else if (name.includes('Sail')) {",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "CSA-B-sails-take-meshes",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "!name.includes('Skelly') && !name.includes('Mesh') && !name.includes('Bones')",
-    "new": "!name.includes('Skelly') && !name.includes('Bones')",
+    "old": "    if (\n      name.includes('Sail') &&\n      !name.includes('Skelly') &&\n      !name.includes('Mesh') &&\n      !name.includes('Bones') &&\n      !name.includes('Handling')\n    ) {",
+    "new": "    if (name.includes('Sail') && !name.includes('Skelly') && !name.includes('Bones') && !name.includes('Handling')) {",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "CSA-B-small-sails-filed-large",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "if (name.includes('Small')) boat.SailsSmall.push(child);",
-    "new": "if (name.includes('Small')) boat.SailsLarge.push(child);",
+    "old": "      if (name.includes('Small')) boat.SailsSmall.push(child);",
+    "new": "      if (name.includes('Small')) boat.SailsLarge.push(child);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "CSA-B-door-under-its-trigger",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "const val2 = importCustomGameobject(ctx, TRIGGER_MODEL.door, child.parent);",
-    "new": "const val2 = importCustomGameobject(ctx, TRIGGER_MODEL.door, child);",
+    "old": "      const val2 = importCustomGameobject(ctx, TRIGGER_MODEL.door, child.parent);",
+    "new": "      const val2 = importCustomGameobject(ctx, TRIGGER_MODEL.door, child);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "CSA-B-door-box-margin",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "x: Math.fround(b.size[0] + 0.01)",
-    "new": "x: Math.fround(b.size[0] + 0.1)",
+    "old": "        x: Math.fround(b.size[0] + 0.01),",
+    "new": "        x: Math.fround(b.size[0] + 0.1),",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "CSA-B-board-scale-kept",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "      val.localRotation = [0, 0, 0, 1];\n      val.localScale = [1, 1, 1];\n      boat.BoardTriggers.push(val);",
-    "new": "      val.localRotation = [0, 0, 0, 1];\n      boat.BoardTriggers.push(val);",
+    "old": "      val.localScale = [1, 1, 1];\n      boat.BoardTriggers.push(val);",
+    "new": "      boat.BoardTriggers.push(val);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "CSA-B-variant-trigger-unturned",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "      boat.VariantTrigger.localPosition = [0, 0, 0];",
-    "new": "      boat.VariantTrigger.localPosition = [0, 0, 0];\n      boat.VariantTrigger.localRotation = [0, 0, 0, 1];",
+    "old": "      boat.VariantTrigger.localScale = [1, 1, 1];",
+    "new": "      boat.VariantTrigger.localRotation = [0, 0, 0, 1];\n      boat.VariantTrigger.localScale = [1, 1, 1];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "CSA-B-fire-full-scale",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "boat.FireObject.localScale = [0.5, 0.5, 0.5];",
-    "new": "boat.FireObject.localScale = [1, 1, 1];",
+    "old": "      boat.FireObject.localScale = [0.5, 0.5, 0.5];",
+    "new": "      boat.FireObject.localScale = [1, 1, 1];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "CSA-B-bed-zero-test-inverted",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "      if (name.includes('0')) {\n        boat.BedObject",
-    "new": "      if (!name.includes('0')) {\n        boat.BedObject",
+    "old": "      if (name.includes('0')) {",
+    "new": "      if (!name.includes('0')) {",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "CSA-B-billboard-stand-hangs",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "if (num3 === 1) val.localPosition = add3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));",
-    "new": "if (num3 === 1) val.localPosition = sub3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));",
+    "old": "  if (num3 === 1) val.localPosition = add3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));",
+    "new": "  if (num3 === 1) val.localPosition = sub3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "CSA-B-light-for-every-flat",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "if (num === LIGHT_ARCHIVE) boat.Lights.push(",
-    "new": "if (num !== -1) boat.Lights.push(",
+    "old": "  if (num === LIGHT_ARCHIVE) boat.Lights.push(addBillboardLight(component, val, ctx));",
+    "new": "  if (num !== -1) boat.Lights.push(addBillboardLight(component, val, ctx));",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "CSA-B-setlights-emission-inverted",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "component.emissionColor = value ? [1, 1, 1, 1] : [0, 0, 0, 1];",
-    "new": "component.emissionColor = value ? [0, 0, 0, 1] : [1, 1, 1, 1];",
+    "old": "    component.emissionColor = value ? [1, 1, 1, 1] : [0, 0, 0, 1];",
+    "new": "    component.emissionColor = value ? [0, 0, 0, 1] : [1, 1, 1, 1];",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js",
       "test/systems/comeSailAway/csa_pool.test.js"
@@ -305,8 +305,8 @@
   {
     "name": "CSA-B-game-textures-bad-name-skipped",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "      if (!m) return false;\n      shared[i] = m;",
-    "new": "      if (!m) continue;\n      shared[i] = m;",
+    "old": "      if (!m) return false;",
+    "new": "      if (!m) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "CSA-B-skinned-renderer-left-on",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "  skinned.m_Enabled = false;\n",
-    "new": "",
+    "old": "  skinned.m_Enabled = false;\n  script.meshFilter = node.addComponent({ type: 'MeshFilter', m_Mesh: null, baked: true });",
+    "new": "  script.meshFilter = node.addComponent({ type: 'MeshFilter', m_Mesh: null, baked: true });",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "CSA-B-audio-distance-off-width",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "src.minDistance = Math.fround(meshBounds.extent[2] * 0.5);",
-    "new": "src.minDistance = Math.fround(meshBounds.extent[0] * 0.5);",
+    "old": "    src.minDistance = Math.fround(meshBounds.extent[2] * 0.5);",
+    "new": "    src.minDistance = Math.fround(meshBounds.extent[0] * 0.5);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "CSA-B-sails-not-stowed",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "component.SetBool('Stowed', true);",
-    "new": "component.SetBool('Stowed', false);",
+    "old": "        component.SetBool('Stowed', true);",
+    "new": "        component.SetBool('Stowed', false);",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "CSA-B-walk-count-read-once",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "  for (let i = 0; i < parent.childCount; i++) {\n    const child = parent.getChild(i);\n    if (!child.activeSelf) continue;",
-    "new": "  const childCount = parent.childCount;\n  for (let i = 0; i < childCount; i++) {\n    const child = parent.getChild(i);\n    if (!child.activeSelf) continue;",
+    "old": "  for (let i = 0; i < parent.childCount; i++) {",
+    "new": "  const childCount = parent.childCount;\n  for (let i = 0; i < childCount; i++) {",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "CSA-B-bake-timer-at-interval",
     "file": "src/world/skinnedBake.js",
-    "old": "if (Math.fround(script.timer) > interval) { script.timer = 0; return true; }",
-    "new": "if (Math.fround(script.timer) >= interval) { script.timer = 0; return true; }",
+    "old": "  if (Math.fround(script.timer) > interval) {",
+    "new": "  if (Math.fround(script.timer) >= interval) {",
     "tests": [
       "test/world/csa_sails.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "CSA-B-bake-timer-never-reset",
     "file": "src/world/skinnedBake.js",
-    "old": "if (Math.fround(script.timer) > interval) { script.timer = 0; return true; }",
-    "new": "if (Math.fround(script.timer) > interval) { return true; }",
+    "old": "    script.timer = 0;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/world/csa_sails.test.js",
       "test/systems/comeSailAway/csa_pool.test.js"
@@ -379,8 +379,8 @@
   {
     "name": "CSA-B-bake-in-world",
     "file": "src/world/skinnedBake.js",
-    "old": "const toLocal = invertRigid(mat4FromQuatPos(renderer.rotation, renderer.position));",
-    "new": "const toLocal = mat4FromQuatPos([0, 0, 0, 1], [0, 0, 0]);",
+    "old": "  const toLocal = invertRigid(mat4FromQuatPos(renderer.rotation, renderer.position));",
+    "new": "  const toLocal = mat4FromQuatPos([0, 0, 0, 1], [0, 0, 0]);",
     "tests": [
       "test/world/csa_sails.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "CSA-B-normal-cross-reversed",
     "file": "src/world/skinnedBake.js",
-    "old": "const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;",
-    "new": "const nx = uz * vy - uy * vz, ny = ux * vz - uz * vx, nz = uy * vx - ux * vy;",
+    "old": "      const nx = uy * vz - uz * vy,\n        ny = uz * vx - ux * vz,\n        nz = ux * vy - uy * vx; // Vector3.Cross(b - a, c - a)",
+    "new": "      const nx = uz * vy - uy * vz,\n        ny = ux * vz - uz * vx,\n        nz = uy * vx - ux * vy; // Vector3.Cross(b - a, c - a)",
     "tests": [
       "test/world/csa_sails.test.js"
     ]
@@ -397,8 +397,8 @@
   {
     "name": "CSA-B-normals-unweighted",
     "file": "src/world/skinnedBake.js",
-    "old": "for (const i of [i0, i1, i2]) { acc[i * 3] += nx; acc[i * 3 + 1] += ny; acc[i * 3 + 2] += nz; }",
-    "new": "const fl = Math.hypot(nx, ny, nz) || 1; for (const i of [i0, i1, i2]) { acc[i * 3] += nx / fl; acc[i * 3 + 1] += ny / fl; acc[i * 3 + 2] += nz / fl; }",
+    "old": "      for (const i of [i0, i1, i2]) {\n        acc[i * 3] += nx;\n        acc[i * 3 + 1] += ny;\n        acc[i * 3 + 2] += nz;",
+    "new": "      const fl = Math.hypot(nx, ny, nz) || 1;\n      for (const i of [i0, i1, i2]) {\n        acc[i * 3] += nx / fl;\n        acc[i * 3 + 1] += ny / fl;\n        acc[i * 3 + 2] += nz / fl;",
     "tests": [
       "test/world/csa_sails.test.js"
     ]

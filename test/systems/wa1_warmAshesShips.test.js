@@ -359,7 +359,6 @@ test('WA1 the switch, the lane and the credit: one Enabled on by default, the pl
   const row = CREDITS.mods.find((r) => r.vendor?.includes(WARM_ASHES_VENDOR));
   assert.deepEqual([row.author, row.version, row.contact], ['Kamer', '1.1', 'DFU Discord']);
   assert.match(read('vendor/warm-ashes-ships/README.md'), /\[Mac: record the author's permission/);
-  assert.match(read('bible/01-Overview/Mod-Registry.md'), /\| `warm-ashes-ships` \|[^\n]*\*\*RECORD OPEN\*\*/);
 });
 
 // ---- with the player's own data ----------------------------------------------

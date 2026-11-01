@@ -95,8 +95,8 @@
 // with synthetic wind, no ARENA2 and no GL.
 // ═══════════════════════════════════════════════════════════════════
 
-import { getPref } from '../systems/uiPrefs.js';   // WM3: the pack's own switch
-import { WINDMILLS_KEY } from '../systems/features.js';   // WM3: declared with its row - see the note there for which way the import may point
+import { getPref } from '../systems/uiPrefs.js'; // WM3: the pack's own switch
+import { WINDMILLS_KEY } from '../systems/features.js'; // WM3: declared with its row - see the note there for which way the import may point
 
 /** WM3: whether the mills are drawn at all. The ENHANCED SKIN is the
  *  other half of the gate and stays the caller's
@@ -212,8 +212,7 @@ export function windSpeed(wind) {
  *  which is the only thing it is for. WIND_ROW_FAIR is the model's mean
  *  strength with no front up; a still day turns slower, a brisk one
  *  faster, and a full thunder front (strength 1) runs past the furl. */
-export const ROTOR_GAIN =
-  CALM_ROTOR_DEG_PER_SEC / (WIND_ROW_FAIR - STALL_WIND);
+export const ROTOR_GAIN = CALM_ROTOR_DEG_PER_SEC / (WIND_ROW_FAIR - STALL_WIND);
 
 /** Degrees a second, from the eased sky wind. Monotone in the speed,
  *  zero at and below the stall, never past the furl. */
@@ -292,9 +291,7 @@ export const ROTOR_HUB = Object.freeze([3.96, 6.01, -5.5]);
  */
 export function mountRotor(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
   const a = ROTOR_SIGN * angleDeg;
-  const rot = axis === 'x' ? trs(0, 0, 0, a, 0, 0)
-    : axis === 'y' ? trs(0, 0, 0, 0, a, 0)
-      : trs(0, 0, 0, 0, 0, a);
+  const rot = axis === 'x' ? trs(0, 0, 0, a, 0, 0) : axis === 'y' ? trs(0, 0, 0, 0, a, 0) : trs(0, 0, 0, 0, 0, a);
   return multiply(modelMatrix, multiply(trs(hub[0], hub[1], hub[2], 0, 0, 0), rot));
 }
 
@@ -315,12 +312,9 @@ export function mountRotor(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
  */
 export function rotorMatrix(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
   const a = ROTOR_SIGN * angleDeg;
-  const rot = axis === 'x' ? trs(0, 0, 0, a, 0, 0)
-    : axis === 'y' ? trs(0, 0, 0, 0, a, 0)
-      : trs(0, 0, 0, 0, 0, a);
+  const rot = axis === 'x' ? trs(0, 0, 0, a, 0, 0) : axis === 'y' ? trs(0, 0, 0, 0, a, 0) : trs(0, 0, 0, 0, 0, a);
   const [hx, hy, hz] = hub;
-  const spin = multiply(trs(hx, hy, hz, 0, 0, 0),
-    multiply(rot, trs(-hx, -hy, -hz, 0, 0, 0)));
+  const spin = multiply(trs(hx, hy, hz, 0, 0, 0), multiply(rot, trs(-hx, -hy, -hz, 0, 0, 0)));
   return multiply(modelMatrix, spin);
 }
 
@@ -343,11 +337,16 @@ export function rotorMatrix(modelMatrix, hub, angleDeg, axis = ROTOR_AXIS) {
  */
 export function mountMachineryChild(parentMatrix, child, angleDeg) {
   const [px, py, pz] = child.position;
-  const rot = child.axis === 'x' ? trs(0, 0, 0, angleDeg, 0, 0)
-    : child.axis === 'y' ? trs(0, 0, 0, 0, angleDeg, 0)
-      : trs(0, 0, 0, 0, 0, angleDeg);
+  const rot =
+    child.axis === 'x'
+      ? trs(0, 0, 0, angleDeg, 0, 0)
+      : child.axis === 'y'
+        ? trs(0, 0, 0, 0, angleDeg, 0)
+        : trs(0, 0, 0, 0, 0, angleDeg);
   const stand = quatToMat4(child.rotation);
-  stand[12] = px; stand[13] = py; stand[14] = pz;
+  stand[12] = px;
+  stand[13] = py;
+  stand[14] = pz;
   return multiply(parentMatrix, multiply(stand, rot));
 }
 
@@ -369,7 +368,7 @@ export function machineryChildPos(parentMatrix, child) {
  * @param {{degPerSec: number}} child
  */
 export function advanceMachinery(state, dt, child) {
-  state.angle = ((state.angle + child.degPerSec * dt) % 360 + 360) % 360;
+  state.angle = (((state.angle + child.degPerSec * dt) % 360) + 360) % 360;
   return state.angle;
 }
 

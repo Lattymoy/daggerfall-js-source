@@ -59,7 +59,7 @@ test('HAND-WRAPS the arm, third person: the body\'s picture wears the fists\' gl
     const tm = rig.thirdMesh();
     assert.equal(tm.handGlow, SPEC, `gloved ${gloved}`);
     assert.ok(tm.ranges.some((r) => inGlowSlot(r, 'hands') && !r.hidden), `gloved ${gloved}: a hand lit`);
-    // WRAPS-AWAY (mob: "keep glow on wrap whern put away", "in 3rd person on morrowind"): put away, the body still glows
+    // WRAPS-AWAY: put away, the body still glows
     rig.setSheathed(true);
     for (let i = 0; i < 200; i++) rig.update(0.05, { pose: true });
     assert.equal(rig.handGlow(), SPEC, `gloved ${gloved}: put away, third person`);

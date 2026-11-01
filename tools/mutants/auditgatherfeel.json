@@ -54,8 +54,8 @@
   {
     "name": "AUDITGF-F3-the-chop-landing-uncounted",
     "file": "src/systems/chopAct.js",
-    "old": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++;",
-    "new": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed += 0;",
+    "old": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
+    "new": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed += 0; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
       "test/systems/gatherfeel.test.js",
@@ -66,8 +66,8 @@
   {
     "name": "AUDITGF-F3-the-strike-landing-uncounted",
     "file": "src/systems/mineAct.js",
-    "old": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;",
-    "new": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed += 0;",
+    "old": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
+    "new": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed += 0; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
       "test/systems/gatherfeel.test.js",
@@ -160,8 +160,8 @@
   {
     "name": "AUDITGF-W2-the-stop-unheard",
     "file": "src/net/peer/peerGather.js",
-    "old": "    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length) { const was = (((gb >> 4) + 253) % 255) + 1; s.held = s.held.filter((h) => h.n !== was); }\n",
-    "new": "",
+    "old": "    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length) {\n      const was = (((gb >> 4) + 253) % 255) + 1;\n      s.held = s.held.filter((h) => h.n !== was);\n    }\n    // the held blows whose time has come, first - they were struck before anything this pose begins; dropped with the",
+    "new": "    // the held blows whose time has come, first - they were struck before anything this pose begins; dropped with the",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "AUDITGF-W2-the-wrong-blow-dropped",
     "file": "src/net/peer/peerGather.js",
-    "old": "const was = (((gb >> 4) + 253) % 255) + 1;",
-    "new": "const was = gb >> 4;",
+    "old": "      const was = (((gb >> 4) + 253) % 255) + 1;",
+    "new": "      const was = gb >> 4;",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -270,8 +270,8 @@
   {
     "name": "AUDITGF-W1-the-net-dropped-at-the-recentre",
     "file": "src/net/peer/peerGather.js",
-    "old": "    for (const s of this.peers.values()) for (const p of [s.net, ...s.held.map((h) => h.at)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
-    "new": "    for (const s of this.peers.values()) { s.net = null; s.held.length = 0; }",
+    "old": "    for (const s of this.peers.values())\n      for (const p of [s.net, ...s.held.map((h) => h.at)])\n        if (p) {\n          p[0] += offset[0];\n          p[1] += offset[1];\n          p[2] += offset[2];\n        }",
+    "new": "    for (const s of this.peers.values()) {\n      s.net = null;\n      s.held.length = 0;\n    }",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
       "test/systems/gf2_peeracts.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "AUDITGF-W3-the-gather-record-left-behind",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        if (b.gather) peerGatherSwing(b.gather, peer.shown);   // AUDIT GATHER-FEEL W3: and the act's beats (PEER-ACTS) - C7's law: a tool's blow out of sight is no strike on waking\n",
-    "new": "",
+    "old": "        if (b.gather) peerGatherSwing(b.gather, peer.shown); // AUDIT GATHER-FEEL W3: and the act's beats (PEER-ACTS) - C7's law: a tool's blow out of sight is no strike on waking\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -291,8 +291,8 @@
   {
     "name": "AUDITGF-W4-the-early-out-reads-an-absent-beat",
     "file": "src/net/peer/peerGather.js",
-    "old": "    if (!ga && !s.ga && !fresh && !s.held.length) return;",
-    "new": "    if (!ga && !s.ga && gb === s.gb && !s.held.length) return;",
+    "old": "    if (!ga && !s.ga && !fresh && !s.held.length) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)",
+    "new": "    if (!ga && !s.ga && gb === s.gb && !s.held.length) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -301,7 +301,7 @@
   {
     "name": "AUDITGF-RECENTRE-the-ear-places-left",
     "file": "src/systems/gatherSounds.js",
-    "old": "      for (const p of [node, net, ...pending.map((q) => q.place)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
+    "old": "      for (const p of [node, net, ...pending.map((q) => q.place)])\n        if (p) {\n          p[0] += offset[0];\n          p[1] += offset[1];\n          p[2] += offset[2];\n        }",
     "new": "      void pending;",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
@@ -342,7 +342,7 @@
   {
     "name": "AUDITGF-RECENTRE-the-held-place-shared",
     "file": "src/systems/gatherSounds.js",
-    "old": "    pending.push({ due: clock + wait, b, place: at ? [at[0], at[1], at[2]] : null, of, blow: aloft ? (of.state?.landed | 0) + 1 : 0, voice });",
+    "old": "    pending.push({\n      due: clock + wait,\n      b,\n      place: at ? [at[0], at[1], at[2]] : null,\n      of,\n      blow: aloft ? (of.state?.landed | 0) + 1 : 0,\n      voice,\n    });",
     "new": "    pending.push({ due: clock + wait, b, place: at, of, blow: aloft ? (of.state?.landed | 0) + 1 : 0, voice });",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "AUDITGF-R2-the-default-skin-unread",
     "file": "src/systems/gatherBlow.js",
-    "old": "enhanced = () => isEnhanced(),",
-    "new": "enhanced = () => true,",
+    "old": "  {\n    enhanced = () => isEnhanced(),\n    motion = techniqueMotion,\n    reduced = () => prefersReducedMotion(),\n    kick = kickFx,\n  } = {},",
+    "new": "  { enhanced = () => true, motion = techniqueMotion, reduced = () => prefersReducedMotion(), kick = kickFx } = {},",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "AUDITGF-R2-the-default-reduced-unread",
     "file": "src/systems/gatherBlow.js",
-    "old": "reduced = () => prefersReducedMotion(),",
-    "new": "reduced = () => false,",
+    "old": "  {\n    enhanced = () => isEnhanced(),\n    motion = techniqueMotion,\n    reduced = () => prefersReducedMotion(),\n    kick = kickFx,\n  } = {},",
+    "new": "  { enhanced = () => isEnhanced(), motion = techniqueMotion, reduced = () => false, kick = kickFx } = {},",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "AUDITGF-R2-the-default-motion-unread",
     "file": "src/systems/gatherBlow.js",
-    "old": "motion = techniqueMotion,",
-    "new": "motion = () => 1,",
+    "old": "  {\n    enhanced = () => isEnhanced(),\n    motion = techniqueMotion,\n    reduced = () => prefersReducedMotion(),\n    kick = kickFx,\n  } = {},",
+    "new": "  { enhanced = () => isEnhanced(), motion = () => 1, reduced = () => prefersReducedMotion(), kick = kickFx } = {},",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -381,7 +381,7 @@
   },
   {
     "name": "AUDITGF-R16-the-kick-written-into-the-camera",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: (cam.pitch * 180) / Math.PI }),",
     "new": "        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: ((cam.pitch + techniqueView().pitch) * 180) / Math.PI }),",
     "tests": [
@@ -392,8 +392,8 @@
   {
     "name": "AUDITGF-F5-the-look-past-cleave",
     "file": "src/systems/gatherBlow.js",
-    "old": "clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
-    "new": "clean: f({ cam: f({ pitch: -1.1, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "old": "    clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "new": "    clean: f({ cam: f({ pitch: -1.1, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ],
@@ -402,8 +402,8 @@
   {
     "name": "AUDITGF-R5-the-table-a-tenth",
     "file": "src/systems/gatherBlow.js",
-    "old": "plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
-    "new": "plain: f({ cam: f({ pitch: -0.045, eye: -0.0012 }), hands: f({ y: 0.0022 }) }),",
+    "old": "    plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
+    "new": "    plain: f({ cam: f({ pitch: -0.045, eye: -0.0012 }), hands: f({ y: 0.0022 }) }),",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ],
@@ -442,8 +442,8 @@
   {
     "name": "AUDITGF-R5-the-chunks-big",
     "file": "src/systems/gatherBlow.js",
-    "old": "  scale: 0.32,\n",
-    "new": "  scale: 0.6,\n",
+    "old": "  scale: 0.32,",
+    "new": "  scale: 0.6,",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "AUDITGF-R5-the-chunks-from-the-middle",
     "file": "src/systems/gatherBlow.js",
-    "old": "  face: 0.35, spread: 0.12,\n",
-    "new": "  face: 0.05, spread: 0.12,\n",
+    "old": "  face: 0.35,",
+    "new": "  face: 0.05,",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -462,8 +462,8 @@
   {
     "name": "AUDITGF-R5-the-chunks-slow",
     "file": "src/systems/gatherBlow.js",
-    "old": "  out: f([1.1, 2.4]), up: f([1.4, 3]), side: 1.1,\n",
-    "new": "  out: f([0.3, 0.6]), up: f([1.4, 3]), side: 1.1,\n",
+    "old": "  out: f([1.1, 2.4]),",
+    "new": "  out: f([0.3, 0.6]),",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -472,8 +472,8 @@
   {
     "name": "AUDITGF-R5-the-slip-quieter",
     "file": "src/systems/gatherSounds.js",
-    "old": "  THRASH_SLIP_GAIN: 1.35,",
-    "new": "  THRASH_SLIP_GAIN: 0.7,",
+    "old": "  THRASH_SLIP_GAIN: 1.35, // ...louder",
+    "new": "  THRASH_SLIP_GAIN: 0.7, // ...louder",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -482,8 +482,8 @@
   {
     "name": "AUDITGF-R5-the-plip-quick",
     "file": "src/systems/gatherSounds.js",
-    "old": "  PLIP_MIN_S: 2.2,",
-    "new": "  PLIP_MIN_S: 0.6,",
+    "old": "  PLIP_MIN_S: 2.2, // the water by the floats while the net waits: a plip every this...",
+    "new": "  PLIP_MIN_S: 0.6, // the water by the floats while the net waits: a plip every this...",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -492,8 +492,8 @@
   {
     "name": "AUDITGF-R5-the-pitch-wide",
     "file": "src/systems/gatherSounds.js",
-    "old": "  PITCH_JITTER: 0.05,",
-    "new": "  PITCH_JITTER: 0.3,",
+    "old": "  PITCH_JITTER: 0.05, // a clip's pitch moved by up to this, either way (none for a chime - a note keeps its pitch)",
+    "new": "  PITCH_JITTER: 0.3, // a clip's pitch moved by up to this, either way (none for a chime - a note keeps its pitch)",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -602,7 +602,7 @@
   {
     "name": "AUDITGF-V3-the-chunk-off-the-ground",
     "file": "src/systems/gatherBlow.js",
-    "old": "      return { t: b, y: ground(p[0] + v[0] * b, p[2] + v[2] * b) };   // lying on the ground where it came down, exactly",
+    "old": "      return { t: b, y: ground(p[0] + v[0] * b, p[2] + v[2] * b) }; // lying on the ground where it came down, exactly",
     "new": "      return { t: b, y: arcY(p, v, b) };",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
@@ -613,8 +613,8 @@
   {
     "name": "AUDITGF-V4-the-shade-on-the-linear-albedo",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));",
-    "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0)) * veinCrackShade(uv);",
+    "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));   // VEIN-CRACKS: a worked vein's seams, the classic lane's law - AUDIT GATHER-FEEL V4: the shade the texel's display colour takes there, then decoded with it (on the linear albedo a seam stood at half the classic's dark)",
+    "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0)) * veinCrackShade(uv);   // VEIN-CRACKS: a worked vein's seams, the classic lane's law - AUDIT GATHER-FEEL V4: the shade the texel's display colour takes there, then decoded with it (on the linear albedo a seam stood at half the classic's dark)",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
       "test/systems/gf2_veincracks.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "AUDITGF-F7-the-voice-unkept",
     "file": "src/systems/gatherSounds.js",
-    "old": "        if (voice != null && audio.play3dVoice) {   // AUDIT GATHER-FEEL F7: kept, to be taken back",
-    "new": "        if (false) {   // AUDIT GATHER-FEEL F7: kept, to be taken back",
+    "old": "        if (voice != null && audio.play3dVoice) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -784,7 +784,7 @@
   {
     "name": "AUDITGF-F7-the-hush-stops-nothing",
     "file": "src/systems/gatherSounds.js",
-    "old": "      try { h?.stop(); } catch { /* a sound never stops an act */ }",
+    "old": "      try {\n        h?.stop();\n      } catch {\n        /* a sound never stops an act */\n      }",
     "new": "      void h;",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"

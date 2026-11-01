@@ -74,8 +74,8 @@
   {
     "name": "FB1029U-heard-twice",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "let p = unionKinOf(family, sid).find((x) => x.union.key === c.key);",
-    "new": "let p = unionKinOf(family, sid).find((x) => x.union.key === -1);",
+    "old": "    let p = unionKinOf(family, sid).find((x) => x.union.key === c.key);",
+    "new": "    let p = unionKinOf(family, sid).find((x) => x.union.key === -1);",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FB1029U-client-no-cap",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "for (const raw of cards.slice(0, UNION_KIN_MAX)) {",
-    "new": "for (const raw of cards) {",
+    "old": "  for (const raw of cards.slice(0, UNION_KIN_MAX)) {",
+    "new": "  for (const raw of cards) {",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FB1029U-not-the-couples",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "parents: [member.id, spouse.id], born: c.born });",
-    "new": "parents: [member.id], born: c.born });",
+    "old": "        parents: [member.id, spouse.id],",
+    "new": "        parents: [member.id],",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FB1029U-unlinked",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "      for (const par of [member, spouse]) if (!par.children.includes(p.id)) par.children.push(p.id);\n",
-    "new": "",
+    "old": "      for (const par of [member, spouse]) if (!par.children.includes(p.id)) par.children.push(p.id);\n      out.added.push(p);",
+    "new": "      out.added.push(p);",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FB1029U-of-the-blood",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "Object.assign(p, { kind: 'union',",
-    "new": "Object.assign(p, { kind: 'member',",
+    "old": "        kind: 'union',",
+    "new": "        kind: 'member',",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "FB1029U-card-ignored",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "  for (const [k, v] of Object.entries(next)) if (p[k] !== v) { p[k] = v; changed = true; }\n",
-    "new": "",
+    "old": "  for (const [k, v] of Object.entries(next))\n    if (p[k] !== v) {\n      p[k] = v;\n      changed = true;\n    }\n  if (c.house && p.union.house !== c.house) {",
+    "new": "  if (c.house && p.union.house !== c.house) {",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FB1029U-death-undone",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "if (c.died && !p.died && !revivedOf(p).includes(c.died.at)) { p.died = { at: c.died.at, cause: c.died.cause, place: null, by: null }; changed = true; }",
-    "new": "if (p.died !== (c.died && 1)) { p.died = c.died ? { at: c.died.at, cause: c.died.cause, place: null, by: null } : null; changed = true; }",
+    "old": "  if (c.died && !p.died && !revivedOf(p).includes(c.died.at)) {\n    p.died = { at: c.died.at, cause: c.died.cause, place: null, by: null };",
+    "new": "  if (p.died !== (c.died && 1)) {\n    p.died = c.died ? { at: c.died.at, cause: c.died.cause, place: null, by: null } : null;",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FB1029U-death-unheard",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "if (c.died && !p.died && !revivedOf(p).includes(c.died.at)) {",
-    "new": "if (0) {",
+    "old": "  if (c.died && !p.died && !revivedOf(p).includes(c.died.at)) {",
+    "new": "  if (0) {",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "FB1029U-link-unshaped",
     "file": "src/systems/legacy/family.js",
-    "old": "if (p.kind === 'union') { p.union = readUnionKin(raw.union); p.characterId = null; } else delete p.union;",
-    "new": "if (p.kind === 'union') { p.union = raw.union; p.characterId = null; } else delete p.union;",
+    "old": "      p.union = readUnionKin(raw.union);",
+    "new": "      p.union = raw.union;",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FB1029U-union-played",
     "file": "src/systems/legacy/family.js",
-    "old": "if (p.kind === 'union') { p.union = readUnionKin(raw.union); p.characterId = null; }",
-    "new": "if (p.kind === 'union') { p.union = readUnionKin(raw.union); }",
+    "old": "      p.characterId = null;\n    } else delete p.union;",
+    "new": "    } else delete p.union;",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "FB1029U-lean-held",
     "file": "src/systems/legacy/family.js",
-    "old": "if (childrenOf(family, p).some((c) => (c.kind ?? 'member') === 'member' && !c.died && c.characterId == null)) continue;",
-    "new": "if (childrenOf(family, p).some((c) => !c.died && c.characterId == null)) continue;",
+    "old": "    if (childrenOf(family, p).some((c) => (c.kind ?? 'member') === 'member' && !c.died && c.characterId == null))\n      continue; // UNION-CHILDREN: of the blood",
+    "new": "    if (childrenOf(family, p).some((c) => !c.died && c.characterId == null)) continue; // UNION-CHILDREN: of the blood",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "FB1029U-one-of-two",
     "file": "src/systems/legacy/store.js",
-    "old": "  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null) || (p.union?.key ?? null) !== (o.union?.key ?? null)) return false;",
-    "new": "  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null)) return false;",
+    "old": "  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null) || (p.union?.key ?? null) !== (o.union?.key ?? null))\n    return false; // UNION-CHILDREN: the other house's child",
+    "new": "  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null)) return false; // UNION-CHILDREN: the other house's child",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "FB1029U-count-theirs",
     "file": "src/systems/legacy/marriage.js",
-    "old": "filter((p) => (p.kind ?? 'member') === 'member' && p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;",
-    "new": "filter((p) => p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;",
+    "old": "  (family?.people ?? []).filter(\n    (p) => (p.kind ?? 'member') === 'member' && p.parents.includes(member.id) && p.parents.includes(spouse.id),\n  ).length;",
+    "new": "  (family?.people ?? []).filter((p) => p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "FB1029U-raised-nameless",
     "file": "src/systems/legacy/unionKin.js",
-    "old": "  return house ? t('legacy.union.raised',",
-    "new": "  return !house ? t('legacy.union.raised',",
+    "old": "  return house",
+    "new": "  return !house",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "FB1029U-card-face",
     "file": "src/systems/legacy/unionKinLaw.js",
-    "old": "face: Number.isSafeInteger(c.face) && c.face >= 0 && c.face <= KIN_FACE_MAX ? c.face : 0,",
-    "new": "face: Number.isSafeInteger(c.face) ? c.face : 0,",
+    "old": "    face: Number.isSafeInteger(c.face) && c.face >= 0 && c.face <= KIN_FACE_MAX ? c.face : 0,",
+    "new": "    face: Number.isSafeInteger(c.face) ? c.face : 0,",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "FB1029U-card-cause",
     "file": "src/systems/legacy/unionKinLaw.js",
-    "old": "cause: KIN_CAUSES.includes(c.died.cause) ? String(c.died.cause) : 'unknown'",
-    "new": "cause: String(c.died.cause)",
+    "old": "      ? { at: Number(c.died.at), cause: KIN_CAUSES.includes(c.died.cause) ? String(c.died.cause) : 'unknown' }",
+    "new": "      ? { at: Number(c.died.at), cause: String(c.died.cause) }",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "FB1029U-link-key",
     "file": "src/systems/legacy/unionKinLaw.js",
-    "old": "!Number.isSafeInteger(u.key) || u.key < 0) return null;",
-    "new": "!Number.isSafeInteger(u.key)) return null;",
+    "old": "  if (\n    !u ||\n    typeof u !== 'object' ||\n    typeof u.sid !== 'string' ||\n    !SID_RE.test(u.sid) ||\n    !Number.isSafeInteger(u.key) ||\n    u.key < 0\n  )",
+    "new": "  if (!u || typeof u !== 'object' || typeof u.sid !== 'string' || !SID_RE.test(u.sid) || !Number.isSafeInteger(u.key))",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -287,13 +287,94 @@
       "test/systems/legacy/fb1029_union.test.js"
     ]
   },
-  {"name": "FB1029U-revived-uncarried", "file": "src/systems/legacy/unionKinLaw.js", "old": "    revived: Array.isArray(c.revived) ? c.revived", "new": "    revived: Array.isArray(null) ? c.revived", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S1: the bearer's revival never reaches the other house"},
-  {"name": "FB1029U-revived-untaken", "file": "src/systems/legacy/unionKin.js", "old": "  for (const at of c.revived) if (!revivedOf(p).includes(at)) { stampRevived(p, at); changed = true; }", "new": "", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S1: the stamp heard and dropped"},
-  {"name": "FB1029U-revived-undropped", "file": "src/systems/legacy/unionKin.js", "old": "  if (dropRevived(family)) out.changed = true;", "new": "", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S1: the stamp kept and the death still drawn"},
-  {"name": "FB1029U-law-any-union", "file": "src/systems/legacy/legacyLaw.js", "old": "(was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at))", "new": "(was.kind ?? 'member') === 'union'", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S1: a union child's death undone with no stamp taken"},
-  {"name": "FB1029U-law-any-stamp", "file": "src/systems/legacy/legacyLaw.js", "old": "(was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at))", "new": "revivedOf(now).includes(Number(was.died.at))", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S1: a member's death undone by a copy's own stamp"},
-  {"name": "FB1029U-twin-unread", "file": "src/systems/legacy/store.js", "old": "  for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));", "new": "", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S2: one union child, two people on the tree"},
-  {"name": "FB1029U-twin-past-counters", "file": "src/systems/legacy/store.js", "old": "  for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));", "new": "  for (const p of twin) moved.set(p.id, next++);", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-S2: the twin moved aside rather than made one"},
-  {"name": "FB1029U-host-grown-born", "file": "src/scenes/legacyHost.js", "old": "for (const k of kin?.added ?? []) if (!k.died && k.minor) deps.say(", "new": "for (const k of kin?.added ?? []) if (!k.died) deps.say(", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-M2: a child first heard grown announced as just born - every couple's at the deploy"},
-  {"name": "FB1029U-fallen-union", "file": "src/ui/familyPages.js", "old": " && p.kind !== 'union').sort(", "new": ").sort(", "tests": ["test/systems/legacy/fb1029_union.test.js"], "why": "AUDIT FB1029 E-M1: the other house's dead listed as wed into this one"}
+  {
+    "name": "FB1029U-revived-uncarried",
+    "file": "src/systems/legacy/unionKinLaw.js",
+    "old": "    revived: Array.isArray(c.revived)",
+    "new": "    revived: Array.isArray(null)",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S1: the bearer's revival never reaches the other house"
+  },
+  {
+    "name": "FB1029U-revived-untaken",
+    "file": "src/systems/legacy/unionKin.js",
+    "old": "  for (const at of c.revived)\n    if (!revivedOf(p).includes(at)) {\n      stampRevived(p, at);\n      changed = true;\n    }",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S1: the stamp heard and dropped"
+  },
+  {
+    "name": "FB1029U-revived-undropped",
+    "file": "src/systems/legacy/unionKin.js",
+    "old": "  if (dropRevived(family)) out.changed = true;",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S1: the stamp kept and the death still drawn"
+  },
+  {
+    "name": "FB1029U-law-any-union",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "      if (\n        was.died &&\n        !now.died &&\n        !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))\n      )\n        out.add('death');",
+    "new": "      if (was.died && !now.died && !((was.kind ?? 'member') === 'union')) out.add('death');",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S1: a union child's death undone with no stamp taken"
+  },
+  {
+    "name": "FB1029U-law-any-stamp",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "      if (\n        was.died &&\n        !now.died &&\n        !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))\n      )\n        out.add('death');",
+    "new": "      if (was.died && !now.died && !revivedOf(now).includes(Number(was.died.at))) out.add('death');",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S1: a member's death undone by a copy's own stamp"
+  },
+  {
+    "name": "FB1029U-twin-unread",
+    "file": "src/systems/legacy/store.js",
+    "old": "  for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S2: one union child, two people on the tree"
+  },
+  {
+    "name": "FB1029U-twin-past-counters",
+    "file": "src/systems/legacy/store.js",
+    "old": "  for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));",
+    "new": "  for (const p of twin) moved.set(p.id, next++);",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-S2: the twin moved aside rather than made one"
+  },
+  {
+    "name": "FB1029U-host-grown-born",
+    "file": "src/scenes/legacyHost.js",
+    "old": "for (const k of kin?.added ?? []) if (!k.died && k.minor) deps.say(",
+    "new": "for (const k of kin?.added ?? []) if (!k.died) deps.say(",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-M2: a child first heard grown announced as just born - every couple's at the deploy"
+  },
+  {
+    "name": "FB1029U-fallen-union",
+    "file": "src/ui/familyPages.js",
+    "old": " && p.kind !== 'union').sort(",
+    "new": ").sort(",
+    "tests": [
+      "test/systems/legacy/fb1029_union.test.js"
+    ],
+    "why": "AUDIT FB1029 E-M1: the other house's dead listed as wed into this one"
+  }
 ]

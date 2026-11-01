@@ -462,8 +462,8 @@
   {
     "name": "LD-NC-sea-work-dropped",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "ship.work = Number.isFinite(w.work) ? w.work : 0;",
-    "new": "ship.work = 0;",
+    "old": "      ship.work = Number.isFinite(w.work) ? w.work : 0; // SHIP-WATCH: what her hurts leave her crew to mend (the sea's ships)",
+    "new": "      ship.work = 0; // SHIP-WATCH: what her hurts leave her crew to mend (the sea's ships)",
     "tests": [
       "test/systems/naval/auditwatchkit_crew.test.js"
     ]

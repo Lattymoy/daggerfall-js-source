@@ -72,8 +72,8 @@
   {
     "name": "ACC4-8-hidden-page-knocks",
     "file": "src/net/playClock.js",
-    "old": "    if (!visible()) return;\n",
-    "new": "",
+    "old": "    if (!visible()) return;\n    try {",
+    "new": "    try {",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "ACC4-9-no-knock-at-start",
     "file": "src/net/playClock.js",
-    "old": "  knock();\n  const id",
-    "new": "  const id",
+    "old": "  knock();\n  const id = setInterval(knock, PLAY_BEAT_S * 1000);",
+    "new": "  const id = setInterval(knock, PLAY_BEAT_S * 1000);",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "ACC4-10-a-rejecting-beat-escapes",
     "file": "src/net/playClock.js",
-    "old": "    try { Promise.resolve(beat()).catch(() => {}); } catch { /* next beat */ }",
+    "old": "    try {\n      Promise.resolve(beat()).catch(() => {});\n    } catch {\n      /* next beat */\n    }",
     "new": "    beat();",
     "tests": [
       "test/server/acc4played.test.js"

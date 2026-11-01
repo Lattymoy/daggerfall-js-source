@@ -18,7 +18,10 @@
 import { chromium } from 'playwright';
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';
 const out = [];
-const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 const browser = await chromium.launch();
 const ctx = await browser.newContext();
 const page = await ctx.newPage();
@@ -26,19 +29,41 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
 await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
-if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+if (await page.locator('#enhanced-menu .doorbtn.door-offline').count())
+  await page.locator('#enhanced-menu .doorbtn.door-offline').click(); // UI-CALM: the games stand behind Offline
 await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
 await page.getByRole('button', { name: 'Begin', exact: true }).click();
 await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
-await page.waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 }).catch(() => {});
+await page
+  .waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 })
+  .catch(() => {});
 
 await page.evaluate(async () => {
   const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
   const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
   const { TEMPLATES } = await import('/src/systems/useItem.js');
   const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
-  const mk = (n, group = 'Weapons') => { const tp = t(n); return tp && { name: tp.name, templateIndex: tp.index, group, stackCount: 1, currentCondition: tp.hitPoints ?? 50, maxCondition: tp.hitPoints ?? 50 }; };
-  const torch = () => ({ name: 'Torch', group: 'UselessItems2', templateIndex: TEMPLATES.Torch, stackCount: 1, currentCondition: 50, maxCondition: 50 });
+  const mk = (n, group = 'Weapons') => {
+    const tp = t(n);
+    return (
+      tp && {
+        name: tp.name,
+        templateIndex: tp.index,
+        group,
+        stackCount: 1,
+        currentCondition: tp.hitPoints ?? 50,
+        maxCondition: tp.hitPoints ?? 50,
+      }
+    );
+  };
+  const torch = () => ({
+    name: 'Torch',
+    group: 'UselessItems2',
+    templateIndex: TEMPLATES.Torch,
+    stackCount: 1,
+    currentCondition: 50,
+    maxCondition: 50,
+  });
   const e = { name: 'Aelwyn', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48 }, items: [] };
   e.items = [mk('Longsword'), torch(), torch()].filter(Boolean);
   globalThis.__ent = e;
@@ -55,7 +80,9 @@ const before = await acts();
 check('the primary act on a torch reads Light, not Wear', before[0] === 'Light', before.join(' | '));
 check('...and Wear is nowhere on the card', !before.includes('Wear'), before.join(' | '));
 await page.locator('#enhanced-inventory .acts button', { hasText: 'Light' }).first().click();
-const lit = await page.evaluate(() => globalThis.__ent.lightSource === globalThis.__ent.items.find((i) => i.name === 'Torch'));
+const lit = await page.evaluate(
+  () => globalThis.__ent.lightSource === globalThis.__ent.items.find((i) => i.name === 'Torch'),
+);
 check('pressing it lights THAT torch', lit);
 const notice = await page.$eval('#enhanced-inventory', (n) => n.textContent);
 check('and the pane says so', /ignite|light/i.test(notice));

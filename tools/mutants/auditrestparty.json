@@ -1,447 +1,447 @@
 [
- {
-  "name": "AUDITRESTPARTY-a-tavern-carries",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
-  "new": "  if (!withParty || resterAlone || dead) return null;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-the-dead-sleep",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
-  "new": "  if (!withParty || resterAlone || exempt) return null;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-their-night-alone-carries",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
-  "new": "  if (!withParty || exempt || dead) return null;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-far-said-across-the-map",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (!near) return here ? 'far' : null;",
-  "new": "  if (!near) return 'far';",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-far-never-said",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (!near) return here ? 'far' : null;",
-  "new": "  if (!near) return null;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-busy-ignored",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (typeof busy === 'function' ? busy() : busy) return 'busy';",
-  "new": "  if (false) return 'busy';",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): carriedNightAction asks the town's law after the rest gate (P4); re-aimed by content."
- },
- {
-  "name": "AUDITRESTPARTY-busy-thunk-never-called",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (typeof busy === 'function' ? busy() : busy) return 'busy';",
-  "new": "  if (busy === true) return 'busy';",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): carriedNightAction asks the town's law after the rest gate (P4); re-aimed by content."
- },
- {
-  "name": "AUDITRESTPARTY-first-sight-carries",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "      if (!rec) { marks.set(acct, { high: at, answered: -Infinity }); return false; }",
-  "new": "      if (!rec) { marks.set(acct, { high: -Infinity, answered: -Infinity }); return this.moved(acct, posed, at, now, isNight); }",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/auditrest2_party.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): the first sight's baseline is the night watch's (partyRestLaw.js createNightWatch) - nightMoved's own guard was redundant once it read over the mark (no stamp stands over an unset one); re-aimed by content."
- },
- {
-  "name": "AUDITRESTPARTY-the-mark-ignored-in-the-law",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  return !!at && at > high && now - at <= freshMs && !!(typeof isNight === 'function' ? isNight(at) : isNight);",
-  "new": "  return !!at && at > high && now - at <= freshMs;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): nightMoved reads over the high-water mark and asks the mark lazily; re-aimed by content."
- },
- {
-  "name": "AUDITRESTPARTY-the-rester-s-spot-ignored",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  return t > o ? theirs : own;",
-  "new": "  return own;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-the-worse-of-the-two",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  return t > o ? theirs : own;",
-  "new": "  return t < o ? theirs : own;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-prototype-names-are-kinds",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "typeof k === 'string' && Object.hasOwn(KIND_RANK, k) ? ",
-  "new": "typeof k === 'string' && k in KIND_RANK ? ",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-the-stamp-says-no-kind",
-  "file": "src/systems/rest/restAct.js",
-  "old": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(kind);",
-  "new": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(REST_KIND.Camp);",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-the-kind-read-back-wrong",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  for (const kind of NIGHT_KINDS) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
-  "new": "  for (const kind of NIGHT_KINDS) if (PARTY_NIGHT_MARKS[kind] === ms) return REST_KIND.Camp;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): nightKindOf reads a frozen key array (P5); re-aimed by content."
- },
- {
-  "name": "AUDITRESTPARTY-the-spot-read-after-the-fuel",
-  "file": "src/scenes/shared.js",
-  "old": "      if (!carried) heardNight(spot);",
-  "new": "      if (!carried) heardNight(restKind());",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-placeKind-lies",
-  "file": "src/scenes/shared.js",
-  "old": "  out.placeKind = () => restKind();",
-  "new": "  out.placeKind = () => REST_KIND.Rough;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-the-follower-sleeps-where-they-stand",
-  "file": "src/scenes/shared.js",
-  "old": "      if (kind) _restKindOverride = () => kind;",
-  "new": "      if (kind) void kind;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ],
-  "note": "CAMP-ROLL (PIN MOVED): the carried night's sequence is the bag's one (scenes/shared.js restCampNight); re-aimed by content."
- },
- {
-  "name": "AUDITRESTPARTY-the-exemption-not-handed",
-  "file": "src/scenes/world.js",
-  "old": "exempt: !!modes?.insidePartyRestExempt, dead,",
-  "new": "exempt: false, dead,",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-the-tally-counts-online",
-  "file": "src/scenes/world.js",
-  "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether() || sharedClockOn()) { _partyRestVoteLastReady = null;",
-  "new": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/party/restopt.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B1-a-load-packs-the-fire",
-  "file": "src/scenes/worldModes.js",
-  "old": "      if (dungeonCtx) { if (load) dungeonCtx.camps?.dropOwn?.(); else carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
-  "new": "      if (dungeonCtx) { carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js",
-   "test/systems/auditrest2_camps.test.js"
-  ],
-  "note": "AUDIT REST II H1 (PIN MOVED): the arm reads the load's own flag, not cacheScene"
- },
- {
-  "name": "AUDITRESTPARTY-B3-the-memory-goes-first",
-  "file": "src/scenes/worldModes.js",
-  "old": "    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3",
-  "new": "    const carried = 0;   // AUDIT REST-PARTY B3",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B2-my-campfire-untended",
-  "file": "src/scenes/camps.js",
-  "old": "    const tended = c.rec.kind === CAMP_KIND.Tent || (c.rec.kind === CAMP_KIND.Fire && !!c.rec.fuel);",
-  "new": "    const tended = c.rec.kind === CAMP_KIND.Tent;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B3-a-present-owner-swept",
-  "file": "src/scenes/camps.js",
-  "old": "      if (c.owner == null || alive.has(c.owner) || c.rec.kind",
-  "new": "      if (c.owner == null || c.rec.kind",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B3-a-lit-fire-swept",
-  "file": "src/scenes/camps.js",
-  "old": "c.rec.kind !== CAMP_KIND.Fire || fireLit(c.rec, t)) continue;",
-  "new": "c.rec.kind !== CAMP_KIND.Fire) continue;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B3-the-room-never-swept",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "    if (peers) camps.sweepColdAbsent(new Set(peers.map((q) => q?.id)));\n  }",
-  "new": "  }",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): F9 moved the frame's sweep into sweepColdPeers (once a second, while a peer's camp stands); re-aimed by content at the same call - the room never swept."
- },
- {
-  "name": "AUDITRESTPARTY-B4-customs-lets-them-in",
-  "file": "src/systems/realmCustoms.js",
-  "old": "  if (!restItemsOnline()) {",
-  "new": "  if (false) {",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B4-used-online",
-  "file": "src/systems/rest/restItems.js",
-  "old": "  const h = (item, list, ctx) => (restItemsShut() ? { kind: 'text', text: REST_ITEM_TEXT.notOnline } : fn(item, list, ctx));",
-  "new": "  const h = (item, list, ctx) => fn(item, list, ctx);",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B4-use-offered-online",
-  "file": "src/systems/rest/restItems.js",
-  "old": "  h.usable = () => !restItemsShut();",
-  "new": "  h.usable = () => true;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B5-a-kit-fire-picked-up",
-  "file": "src/systems/survival/camp.js",
-  "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
-  "new": "  if (mine && !camp.jar) rows.push",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B5-a-kit-fire-minted",
-  "file": "src/systems/survival/camp.js",
-  "old": "  if (!tent && (camp?.kind !== CAMP_KIND.Fire || !camp.fuel)) return",
-  "new": "  if (!tent && camp?.kind !== CAMP_KIND.Fire) return",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B5-a-kit-fed-past-its-cap",
-  "file": "src/scenes/camps.js",
-  "old": "    const capOf = (it) => Math.min(CAMPFIRE_USES, it.maxCondition ?? CAMPFIRE_USES);",
-  "new": "    const capOf = () => CAMPFIRE_USES;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B6-salts-stack",
-  "file": "src/systems/rest/restItems.js",
-  "old": "  if (wakingHeld(s, now)) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld };",
-  "new": "  if (false) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld };",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-B7-the-first-campfire",
-  "file": "src/systems/quickslots.js",
-  "old": "    if (!item || (spentCharges(item) && !spentCharges(it))) item = it;",
-  "new": "    if (!item) item = it;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A1-a-night-an-hour-a-call",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK;",
-  "new": "  const step = (REST_WAIT_PER_HOUR / MINUTES_PER_TICK) * 6;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A1-the-latch-unheard",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  _night.abortForEnemySpawn();\n  return true;",
-  "new": "  return true;",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A1-the-dungeon-silent",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "    ambushNight();   // AUDIT REST-PARTY A1",
-  "new": "    void 0;   // AUDIT REST-PARTY A1",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A1-the-open-world-silent",
-  "file": "src/scenes/world.js",
-  "old": "    ambushNight();   // AUDIT REST-PARTY A1",
-  "new": "    void 0;   // AUDIT REST-PARTY A1",
-  "tests": [
-   "test/systems/rest/auditrestparty.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A2-classic-quest-foe-lost",
-  "file": "src/ui/restWindow.js",
-  "old": "    else if (!ambushNight()) this._pendingEnemySpawn = true;",
-  "new": "    else this._pendingEnemySpawn = true;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A2-enhanced-quest-foe-lost",
-  "file": "src/ui/enhanced/enhancedRest.js",
-  "old": "    else if (!ambushNight()) overlay._pendingEnemySpawn = true;",
-  "new": "    else overlay._pendingEnemySpawn = true;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A3-a-ship-bed-sleeps-rough",
-  "file": "src/scenes/world.js",
-  "old": "    restKind: () => (_restFromBed ? 'bed' : camps.fireNear(",
-  "new": "    restKind: () => (camps.fireNear(",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A4-a-cut-night-whole",
-  "file": "src/scenes/shared.js",
-  "old": "    const cut = !!result?.rentExpired && hours < NIGHT_HOURS;",
-  "new": "    const cut = false;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A5-a-gone-fire-sleeps",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (opened?.point?.where && !now?.point) return null;",
-  "new": "",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A5-a-blow-topped-up",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return null;",
-  "new": "",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A5-the-interval-read-at-the-open",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  return { ...opened, night: now ? !!now.night : !!opened?.night };",
-  "new": "  return { ...opened, night: !!opened?.night };",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-A5-a-bed-interrupted",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (opened?.point?.where && !now?.point) return null;",
-  "new": "  if (!now?.point) return null;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C1-the-ward-offline",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "      if (spot && sharedClockOn() && inFireWard(dungeonFires, spot)) spot = null;",
-  "new": "      if (spot && inFireWard(dungeonFires, spot)) spot = null;",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C7-the-modded-foot",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "[h.x, h.lawFoot ?? h.foot ?? h.y, h.z]",
-  "new": "[h.x, h.foot ?? h.y, h.z]",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C7-the-law-reads-the-mod",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "? classicBillboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7",
-  "new": "? billboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7",
-  "tests": [
-   "test/systems/survival/auditrestparty_camps.test.js"
-  ]
- }
+  {
+    "name": "AUDITRESTPARTY-a-tavern-carries",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+    "new": "  if (!withParty || resterAlone || dead) return null;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-the-dead-sleep",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+    "new": "  if (!withParty || resterAlone || exempt) return null;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-their-night-alone-carries",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (!withParty || resterAlone || exempt || dead) return null;",
+    "new": "  if (!withParty || exempt || dead) return null;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-far-said-across-the-map",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (!near) return here ? 'far' : null;",
+    "new": "  if (!near) return 'far';",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-far-never-said",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (!near) return here ? 'far' : null;",
+    "new": "  if (!near) return null;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-busy-ignored",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (typeof busy === 'function' ? busy() : busy) return 'busy';",
+    "new": "  if (false) return 'busy';",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): carriedNightAction asks the town's law after the rest gate (P4); re-aimed by content."
+  },
+  {
+    "name": "AUDITRESTPARTY-busy-thunk-never-called",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (typeof busy === 'function' ? busy() : busy) return 'busy';",
+    "new": "  if (busy === true) return 'busy';",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): carriedNightAction asks the town's law after the rest gate (P4); re-aimed by content."
+  },
+  {
+    "name": "AUDITRESTPARTY-first-sight-carries",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "        marks.set(acct, { high: at, answered: -Infinity });\n        return false;",
+    "new": "        marks.set(acct, { high: -Infinity, answered: -Infinity });\n        return this.moved(acct, posed, at, now, isNight);",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/auditrest2_party.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): the first sight's baseline is the night watch's (partyRestLaw.js createNightWatch) - nightMoved's own guard was redundant once it read over the mark (no stamp stands over an unset one); re-aimed by content."
+  },
+  {
+    "name": "AUDITRESTPARTY-the-mark-ignored-in-the-law",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  return !!at && at > high && now - at <= freshMs && !!(typeof isNight === 'function' ? isNight(at) : isNight);",
+    "new": "  return !!at && at > high && now - at <= freshMs;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): nightMoved reads over the high-water mark and asks the mark lazily; re-aimed by content."
+  },
+  {
+    "name": "AUDITRESTPARTY-the-rester-s-spot-ignored",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  return t > o ? theirs : own;",
+    "new": "  return own;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-the-worse-of-the-two",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  return t > o ? theirs : own;",
+    "new": "  return t < o ? theirs : own;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-prototype-names-are-kinds",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  typeof k === 'string' && Object.hasOwn(KIND_RANK, k) ? KIND_RANK[/** @type {'rough'|'camp'|'bed'} */ (k)] : -1;",
+    "new": "  typeof k === 'string' && k in KIND_RANK ? KIND_RANK[/** @type {'rough'|'camp'|'bed'} */ (k)] : -1;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-the-stamp-says-no-kind",
+    "file": "src/systems/rest/restAct.js",
+    "old": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(kind);",
+    "new": "export const nightStamp = (t, kind = REST_KIND.Camp) => Math.floor(t / 1000) * 1000 + markOf(REST_KIND.Camp);",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-the-kind-read-back-wrong",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  for (const kind of NIGHT_KINDS) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
+    "new": "  for (const kind of NIGHT_KINDS) if (PARTY_NIGHT_MARKS[kind] === ms) return REST_KIND.Camp;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): nightKindOf reads a frozen key array (P5); re-aimed by content."
+  },
+  {
+    "name": "AUDITRESTPARTY-the-spot-read-after-the-fuel",
+    "file": "src/scenes/shared.js",
+    "old": "      if (!carried) heardNight(spot);",
+    "new": "      if (!carried) heardNight(restKind());",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-placeKind-lies",
+    "file": "src/scenes/shared.js",
+    "old": "  out.placeKind = () => restKind();",
+    "new": "  out.placeKind = () => REST_KIND.Rough;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-the-follower-sleeps-where-they-stand",
+    "file": "src/scenes/shared.js",
+    "old": "      if (kind) _restKindOverride = () => kind;",
+    "new": "      if (kind) void kind;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ],
+    "note": "CAMP-ROLL (PIN MOVED): the carried night's sequence is the bag's one (scenes/shared.js restCampNight); re-aimed by content."
+  },
+  {
+    "name": "AUDITRESTPARTY-the-exemption-not-handed",
+    "file": "src/scenes/world.js",
+    "old": "exempt: !!modes?.insidePartyRestExempt, dead,",
+    "new": "exempt: false, dead,",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-the-tally-counts-online",
+    "file": "src/scenes/world.js",
+    "old": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether() || sharedClockOn()) { _partyRestVoteLastReady = null;",
+    "new": "    if (!social?.party || modes?.insidePartyRestExempt || !restTogether()) { _partyRestVoteLastReady = null;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/party/restopt.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B1-a-load-packs-the-fire",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (dungeonCtx) { if (load) dungeonCtx.camps?.dropOwn?.(); else carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
+    "new": "      if (dungeonCtx) { carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0; }",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js",
+      "test/systems/auditrest2_camps.test.js"
+    ],
+    "note": "AUDIT REST II H1 (PIN MOVED): the arm reads the load's own flag, not cacheScene"
+  },
+  {
+    "name": "AUDITRESTPARTY-B3-the-memory-goes-first",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3",
+    "new": "    const carried = 0;   // AUDIT REST-PARTY B3",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B2-my-campfire-untended",
+    "file": "src/scenes/camps.js",
+    "old": "    const tended = c.rec.kind === CAMP_KIND.Tent || (c.rec.kind === CAMP_KIND.Fire && !!c.rec.fuel);",
+    "new": "    const tended = c.rec.kind === CAMP_KIND.Tent;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B3-a-present-owner-swept",
+    "file": "src/scenes/camps.js",
+    "old": "      if (c.owner == null || alive.has(c.owner) || c.rec.kind",
+    "new": "      if (c.owner == null || c.rec.kind",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B3-a-lit-fire-swept",
+    "file": "src/scenes/camps.js",
+    "old": "c.rec.kind !== CAMP_KIND.Fire || fireLit(c.rec, t)) continue;",
+    "new": "c.rec.kind !== CAMP_KIND.Fire) continue;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B3-the-room-never-swept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (peers) camps.sweepColdAbsent(new Set(peers.map((q) => q?.id)));\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): F9 moved the frame's sweep into sweepColdPeers (once a second, while a peer's camp stands); re-aimed by content at the same call - the room never swept."
+  },
+  {
+    "name": "AUDITRESTPARTY-B4-customs-lets-them-in",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  if (!restItemsOnline()) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B4-used-online",
+    "file": "src/systems/rest/restItems.js",
+    "old": "  const h = (item, list, ctx) =>\n    restItemsShut() ? { kind: 'text', text: REST_ITEM_TEXT.notOnline } : fn(item, list, ctx);",
+    "new": "  const h = (item, list, ctx) => fn(item, list, ctx);",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B4-use-offered-online",
+    "file": "src/systems/rest/restItems.js",
+    "old": "  h.usable = () => !restItemsShut();",
+    "new": "  h.usable = () => true;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B5-a-kit-fire-picked-up",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
+    "new": "  if (mine && !camp.jar)",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B5-a-kit-fire-minted",
+    "file": "src/systems/survival/camp.js",
+    "old": "  if (!tent && (camp?.kind !== CAMP_KIND.Fire || !camp.fuel)) return { item: null, text: CAMP_TEXT.stamped }; // AUDIT REST-PARTY B5: a fire with no fuel of its own (a kit's, an Ember Jar's) is stamped out, never minted into a Campfire",
+    "new": "  if (!tent && camp?.kind !== CAMP_KIND.Fire) return { item: null, text: CAMP_TEXT.stamped }; // AUDIT REST-PARTY B5: a fire with no fuel of its own (a kit's, an Ember Jar's) is stamped out, never minted into a Campfire",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B5-a-kit-fed-past-its-cap",
+    "file": "src/scenes/camps.js",
+    "old": "    const capOf = (it) => Math.min(CAMPFIRE_USES, it.maxCondition ?? CAMPFIRE_USES);",
+    "new": "    const capOf = () => CAMPFIRE_USES;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B6-salts-stack",
+    "file": "src/systems/rest/restItems.js",
+    "old": "  if (wakingHeld(s, now)) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld }; // AUDIT REST-PARTY B6: one hour at a time - three taken at once held three hours and landed ONE hour's debt (needs.js landWakingDebt lands once), and at the debt's cap none",
+    "new": "  if (false) return { kind: 'text', text: REST_ITEM_TEXT.saltsHeld }; // AUDIT REST-PARTY B6: one hour at a time - three taken at once held three hours and landed ONE hour's debt (needs.js landWakingDebt lands once), and at the debt's cap none",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-B7-the-first-campfire",
+    "file": "src/systems/quickslots.js",
+    "old": "    if (!item || (spentCharges(item) && !spentCharges(it))) item = it; // AUDIT REST-PARTY B7: a charged kind (a Campfire, a Bedroll) answers with one that has charges left - an empty Campfire stays in the pack by design, and pressed first it was the one handed to the ground and refused",
+    "new": "    if (!item) item = it; // AUDIT REST-PARTY B7: a charged kind (a Campfire, a Bedroll) answers with one that has charges left - an empty Campfire stays in the pack by design, and pressed first it was the one handed to the ground and refused",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A1-a-night-an-hour-a-call",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  const step = REST_WAIT_PER_HOUR / MINUTES_PER_TICK; // the session's own sub-tick (RestSession _subTickEvery), one a call",
+    "new": "  const step = (REST_WAIT_PER_HOUR / MINUTES_PER_TICK) * 6; // the session's own sub-tick (RestSession _subTickEvery), one a call",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A1-the-latch-unheard",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  _night.abortForEnemySpawn();\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A1-the-dungeon-silent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    ambushNight();   // AUDIT REST-PARTY A1",
+    "new": "    void 0;   // AUDIT REST-PARTY A1",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A1-the-open-world-silent",
+    "file": "src/scenes/world.js",
+    "old": "    ambushNight();   // AUDIT REST-PARTY A1",
+    "new": "    void 0;   // AUDIT REST-PARTY A1",
+    "tests": [
+      "test/systems/rest/auditrestparty.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A2-classic-quest-foe-lost",
+    "file": "src/ui/restWindow.js",
+    "old": "    else if (!ambushNight()) this._pendingEnemySpawn = true;",
+    "new": "    else this._pendingEnemySpawn = true;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A2-enhanced-quest-foe-lost",
+    "file": "src/ui/enhanced/enhancedRest.js",
+    "old": "    else if (!ambushNight()) overlay._pendingEnemySpawn = true;",
+    "new": "    else overlay._pendingEnemySpawn = true;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A3-a-ship-bed-sleeps-rough",
+    "file": "src/scenes/world.js",
+    "old": "    restKind: () => (_restFromBed ? 'bed' : camps.fireNear(",
+    "new": "    restKind: () => (camps.fireNear(",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A4-a-cut-night-whole",
+    "file": "src/scenes/shared.js",
+    "old": "    const cut = !!result?.rentExpired && hours < NIGHT_HOURS;",
+    "new": "    const cut = false;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A5-a-gone-fire-sleeps",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (opened?.point?.where && !now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
+    "new": "  // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A5-a-blow-topped-up",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A5-the-interval-read-at-the-open",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  return { ...opened, night: now ? !!now.night : !!opened?.night }; // the point it opened on, the interval read now",
+    "new": "  return { ...opened, night: !!opened?.night }; // the point it opened on, the interval read now",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-A5-a-bed-interrupted",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (opened?.point?.where && !now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
+    "new": "  if (!now?.point) return null; // a fire, a tent or a Bedroll gone - a bed (no `where`) is the room's or the ship's, and a ship's press lasts only the press",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C1-the-ward-offline",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (spot && sharedClockOn() && inFireWard(dungeonFires, spot)) spot = null;",
+    "new": "      if (spot && inFireWard(dungeonFires, spot)) spot = null;",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C7-the-modded-foot",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.lawFoot ?? h.foot ?? h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's",
+    "new": "  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.foot ?? h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C7-the-law-reads-the-mod",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "? classicBillboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7",
+    "new": "? billboardSize(t, f.record) : null;   // AUDIT REST-PARTY C7",
+    "tests": [
+      "test/systems/survival/auditrestparty_camps.test.js"
+    ]
+  }
 ]

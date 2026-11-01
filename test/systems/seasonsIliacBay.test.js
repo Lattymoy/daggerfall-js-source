@@ -641,7 +641,6 @@ test('SIB1: the vendor tree carries the manifest and the record, and NO raster -
   const readme = read('vendor/seasons-iliac-bay/README.md');
   assert.match(readme, /permission/i);
   assert.match(readme, /re-shaded sprite|silhouette/i, 'the README says why the textures are not here');
-  assert.ok(existsSync(join(root, 'bible/07-Rendering/Seasons-Iliac-Bay.md')), 'the bible page');
 });
 
 // ---- SIB2 (2026-09-08, Mac: "ensure the seasons mod is 1:1 and working") --
@@ -656,7 +655,7 @@ test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name;
   const assets = read('src/systems/seasonsIliacBayAssets.js');
   assert.match(assets, /const isSeasonsDfmod = \(name\) => \/\\\.dfmod\$\/i\.test\(name\) && \/season\/i\.test\(name\);/);
   assert.match(assets, /if \(manifest\.GUID === SEASONS_MOD\.guid \|\| manifest\.ModTitle === SEASONS_MOD\.title\) \{/, 'the identity is the manifest\'s');
-  assert.match(assets, /if \(manifest\.ModVersion && String\(manifest\.ModVersion\) !== SEASONS_MOD\.version\) console\.warn/, 'a later build is said, not assumed');
+  assert.match(assets, /if \(manifest\.ModVersion && String\(manifest\.ModVersion\) !== SEASONS_MOD\.version\)\n\s*console\.warn/, 'a later build is said, not assumed');
   assert.equal(SEASONS_MOD.version, JSON.parse(read('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json')).ModVersion, 'the port\'s script is the vendored manifest\'s version');
   // the events per caller: the travel popup's arm raises OnPostFastTravel (+ OnUpdateTerrainsEnd), a quickload and the
   // classic import raise OnLoad, every other teleport raises neither (their terrains' OnInstantiateTerrain is the mod\'s word)

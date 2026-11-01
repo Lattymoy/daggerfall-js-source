@@ -74,7 +74,7 @@ import { PERMANENT_DISEASE_VALUE, COMPLETED_DISEASE_VALUE, endDisease } from './
 // modules, neither of which ports DaggerfallDateTime. V1 gave them
 // gameDate.js's roof and left re-exports behind.
 import { DUSK_HOUR, SECONDS_PER_WEEK } from './gameDate.js';
-import { DUNGEON_TYPES } from '../formats/mapsFile.js';   // V2e: the cemetery pick reads the region's mapTable
+import { DUNGEON_TYPES } from '../formats/mapsFile.js'; // V2e: the cemetery pick reads the region's mapTable
 
 /** DaggerfallUnityEnums.LycanthropyTypes (:660-665). */
 export const LYCANTHROPY_TYPES = Object.freeze({ None: 0, Werewolf: 1, Wereboar: 2 });
@@ -83,8 +83,16 @@ export const LYCANTHROPY_TYPES = Object.freeze({ None: 0, Werewolf: 1, Wereboar:
  *  clan factions' own ids, which is what makes GetVampireClan's
  *  nine-arm switch an identity read plus a membership test. */
 export const VAMPIRE_CLANS = Object.freeze({
-  None: 0, Vraseth: 150, Haarvenu: 151, Thrafey: 152, Lyrezi: 153,
-  Montalion: 154, Khulari: 155, Garlythi: 156, Anthotis: 157, Selenu: 158,
+  None: 0,
+  Vraseth: 150,
+  Haarvenu: 151,
+  Thrafey: 152,
+  Lyrezi: 153,
+  Montalion: 154,
+  Khulari: 155,
+  Garlythi: 156,
+  Anthotis: 157,
+  Selenu: 158,
 });
 const CLAN_IDS = new Set(Object.values(VAMPIRE_CLANS).filter((v) => v !== 0));
 
@@ -126,7 +134,7 @@ export const TURN_AFTER_DAYS = 3;
  * is a value the enum HAS and this function never returns.
  */
 export const vampireClanForFaction = (regionFaction) =>
-  (CLAN_IDS.has(regionFaction?.vam) ? regionFaction.vam : VAMPIRE_CLANS.Lyrezi);
+  CLAN_IDS.has(regionFaction?.vam) ? regionFaction.vam : VAMPIRE_CLANS.Lyrezi;
 
 /**
  * The disease entry an infection is. `kind: 'disease'` is not a
@@ -141,9 +149,9 @@ export const vampireClanForFaction = (regionFaction) =>
 export function createInfection(key, { day = 0, regionIndex = -1 } = {}) {
   return {
     kind: 'disease',
-    permanent: true,   // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)
+    permanent: true, // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)
     infection: key,
-    disease: null,                       // classicDiseaseType = Diseases.None
+    disease: null, // classicDiseaseType = Diseases.None
     daysOfSymptomsLeft: PERMANENT_DISEASE_VALUE,
     statMods: {},
     startingDay: day,
@@ -194,8 +202,7 @@ export function startInfection(target, key, { day = 0, regionIndex = -1 } = {}) 
 }
 
 /** The infection an entity is carrying, or null. */
-export const liveInfection = (entity) =>
-  (entity?.activeEffects ?? []).find((a) => a.infection && !a.ended) ?? null;
+export const liveInfection = (entity) => (entity?.activeEffects ?? []).find((a) => a.infection && !a.ended) ?? null;
 
 /** AUDIT 26 F109: ALL of them. DoMagicRound iterates every instanced
  *  bundle and calls MagicRound on every live effect
@@ -207,8 +214,7 @@ export const liveInfection = (entity) =>
  *  the FIRST unended entry - so a player carrying both saw only the
  *  earlier one progress: the second's warning dream and three-day
  *  turn stalled until the first deployed or was cured. */
-export const liveInfections = (entity) =>
-  (entity?.activeEffects ?? []).filter((a) => a.infection && !a.ended);
+export const liveInfections = (entity) => (entity?.activeEffects ?? []).filter((a) => a.infection && !a.ended);
 
 /**
  * ProgressDisease (:107-141 / :95-127) as a decision. `currentDay` is
@@ -255,7 +261,9 @@ export function infectionStep(entry, currentDay) {
  *  close runs. It does NOT clear the scheduled flag - DFU never does
  *  - and it does not have to, because `!dreamPlayed` already bars the
  *  gate from here on. */
-export const markDreamPlayed = (entry) => { if (entry) entry.dreamPlayed = true; };
+export const markDreamPlayed = (entry) => {
+  if (entry) entry.dreamPlayed = true;
+};
 
 /**
  * DeployFullBlownVampirism (:148-192) and DeployFullBlownLycanthropy
@@ -282,7 +290,19 @@ export const markDreamPlayed = (entry) => { if (entry) entry.dreamPlayed = true;
  * the round consumes it at its own clock, which is also the path of a
  * save restored between the turn and the curse.
  */
-export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = null, messageBox = null, clanOf = null, transferToCemetery = null, cancelRest = null, nowMinutes = null } = {}) {
+export function deployInfection(
+  entry,
+  entity,
+  {
+    hourNow = () => 0,
+    raiseTime = null,
+    messageBox = null,
+    clanOf = null,
+    transferToCemetery = null,
+    cancelRest = null,
+    nowMinutes = null,
+  } = {},
+) {
   if (!entry || entry.deployed) return null;
   entry.deployed = true;
   const key = entry.infection;
@@ -329,7 +349,11 @@ export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = 
  *  two curse modules import this one; worldTick.js, which already
  *  imports both consumers, registers it once for every host. */
 let _curseDeployer = null;
-export function setRacialCurseDeployer(fn) { const prev = _curseDeployer; _curseDeployer = typeof fn === 'function' ? fn : null; return prev; }
+export function setRacialCurseDeployer(fn) {
+  const prev = _curseDeployer;
+  _curseDeployer = typeof fn === 'function' ? fn : null;
+  return prev;
+}
 
 /**
  * THE ONE CONSTRUCTION SEAM for the three videos and the clock. The
@@ -348,7 +372,11 @@ let _host = null;
 /** AUDIT 39 (#37): answers the PREVIOUS host, the setDeathPresenter and
  *  setPassiveSpecialsHost idiom - a host that mounts another over it
  *  (worldModes mounting a dungeon) can hand the seam back on teardown. */
-export function setInfectionHost(host) { const prev = _host; _host = host ?? null; return prev; }
+export function setInfectionHost(host) {
+  const prev = _host;
+  _host = host ?? null;
+  return prev;
+}
 
 /**
  * UpdateDisease's override, as the per-day pass a host calls. The
@@ -379,10 +407,10 @@ export function runInfections(entity, currentDay, opts = {}) {
   for (const entry of entries) {
     const step = infectionStep(entry, currentDay);
     if (step.kind === 'dream') {
-      entry.dreamScheduled = true;                   // set at PUSH (:129)
+      entry.dreamScheduled = true; // set at PUSH (:129)
       playVideo(step.video, () => markDreamPlayed(entry));
     } else if (step.kind === 'death') {
-      entry.deathScheduled = true;                   // fakeDeathVideoPlayed (:139), also at PUSH
+      entry.deathScheduled = true; // fakeDeathVideoPlayed (:139), also at PUSH
       playVideo(step.video, () => deployInfection(entry, entity, o));
     } else if (step.kind === 'deploy') {
       deployInfection(entry, entity, syncOpts);
@@ -419,5 +447,4 @@ export function randomCemeteryLocationIndex(mapTable, roll = Math.random) {
  * turn lands at 19:00 whatever hour it began, which is the point: a
  * new vampire never wakes in daylight.
  */
-export const vampireTurnRaiseSeconds = (hour) =>
-  (2 * SECONDS_PER_WEEK) + (DUSK_HOUR + 1 - hour) * 3600;
+export const vampireTurnRaiseSeconds = (hour) => 2 * SECONDS_PER_WEEK + (DUSK_HOUR + 1 - hour) * 3600;

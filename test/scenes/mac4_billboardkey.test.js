@@ -98,5 +98,5 @@ test('MAC4: the five mobile producers write the record as `record#frame` and nev
   }
   // AUDIT 68 S16-bbkey-stale-shadow-reach: the key's one home is billboardKey.js - the pass and both replays call it
   const r = rd('src/render/billboardKey.js');
-  assert.match(r, /if \(b\._bbKey == null \|\| b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive\) \{\s*\n\s*b\._bbKeyRecord = b\.record; b\._bbKeyFrame = b\.frame; b\._bbKeyArchive = b\.archive;/, 'the key follows every field it is made of');
+  assert.match(r, /if \(b\._bbKey == null \|\| b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive\) \{\n\s*b\._bbKeyRecord = b\.record;\n\s*b\._bbKeyFrame = b\.frame;\n\s*b\._bbKeyArchive = b\.archive;/, 'the key follows every field it is made of');
 });

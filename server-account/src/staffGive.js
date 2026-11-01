@@ -1,8 +1,8 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-GIVE (2026-10-24, mob: "add yes we will work on add as well"; the card's pick "Pick from the item list"; "include
-// enchants") - ADD AN ITEM TO A PLAYER, the Remove from a player's twin. Admins alone (staffRealm.js asks the role before
-// any door); OFFLINE ONLY until mob tries it live.
+// STAFF-GIVE (2026-10-24; the card's pick "Pick from the item list", with
+// enchantments included) - ADD AN ITEM TO A PLAYER, the Remove from a player's twin. Admins alone (staffRealm.js asks the role before
+// any door); offline only, not tried live yet.
 //
 // The item is MINTED HERE, never written by the panel: staff name a template from the game's own list, a material where
 // the kind has one, a count where it stacks, and enchantments from the item maker's own catalogue - and the piece is made
@@ -24,8 +24,15 @@ import { GROUP_TEMPLATE_INDICES } from '../../src/systems/item/itemTemplatesData
 import { createWeapon, weaponOfMaterial, armorOfMaterial, ARROW_TEMPLATE } from '../../src/combat/enemyEquipment.js';
 import { applyEnchantments, itemEnchantmentPower, MAX_ENCHANTMENTS } from '../../src/systems/enchanting.js';
 import {
-  pickEnchantment, enchantmentTypes, enchantmentName, enchantmentParamValues, enchantmentParamName, enchantmentCost, isSideEffect,
-  hasItemMakerFlag, ITEM_MAKER_FLAGS,
+  pickEnchantment,
+  enchantmentTypes,
+  enchantmentName,
+  enchantmentParamValues,
+  enchantmentParamName,
+  enchantmentCost,
+  isSideEffect,
+  hasItemMakerFlag,
+  ITEM_MAKER_FLAGS,
 } from '../../src/systems/enchantmentCatalogue.js';
 import { WEAPON_MATERIALS } from '../../src/characters/weapons.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
@@ -37,16 +44,28 @@ export const GIVE_REASONS = Object.freeze(['bug-refund', 'event-prize', 'compens
 /** The most enchantments one gift names - the item maker's cap (enchanting.js applyEnchantments keeps eleven rows). */
 export const GIVE_ENCHANT_MAX = MAX_ENCHANTMENTS + 1;
 /** A weapon's materials and an armour's, by name, as the item list offers them. */
-const WEAPON_MATS = Object.freeze(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([name, v]) => [v, name]));
-const ARMOR_MATS = Object.freeze(Object.entries(ARMOR_MATERIAL).filter(([k, v]) => v >= 0 && k !== 'Chain2').map(([name, v]) => [v, name]));
+const WEAPON_MATS = Object.freeze(
+  Object.entries(WEAPON_MATERIALS)
+    .filter(([, v]) => v >= 0)
+    .map(([name, v]) => [v, name]),
+);
+const ARMOR_MATS = Object.freeze(
+  Object.entries(ARMOR_MATERIAL)
+    .filter(([k, v]) => v >= 0 && k !== 'Chain2')
+    .map(([name, v]) => [v, name]),
+);
 
 /** The groups each template stands in: the classic table's, then the port's own registered rows. */
 function templateList() {
   /** @type {Map<number, string[]>} */
   const groups = new Map();
-  for (const [g, list] of Object.entries(GROUP_TEMPLATE_INDICES)) for (const i of list) groups.set(i, [...(groups.get(i) ?? []), g]);
-  for (const r of customTemplateRows()) if (Number.isInteger(r?.index) && !groups.has(r.index)) groups.set(r.index, templateGroups(r.index));
-  return [...groups].map(([i, gs]) => ({ i, name: lawTemplate(i)?.name ?? `#${i}`, groups: gs })).filter((t) => t.name && t.groups.length);
+  for (const [g, list] of Object.entries(GROUP_TEMPLATE_INDICES))
+    for (const i of list) groups.set(i, [...(groups.get(i) ?? []), g]);
+  for (const r of customTemplateRows())
+    if (Number.isInteger(r?.index) && !groups.has(r.index)) groups.set(r.index, templateGroups(r.index));
+  return [...groups]
+    .map(([i, gs]) => ({ i, name: lawTemplate(i)?.name ?? `#${i}`, groups: gs }))
+    .filter((t) => t.name && t.groups.length);
 }
 
 /**
@@ -57,12 +76,25 @@ function templateList() {
 let _catalogue = /** @type {any} */ (null);
 export function giveCatalogue() {
   if (_catalogue) return _catalogue;
-  const items = templateList().map((t) => ({ ...t, stacks: t.groups.some((group) => isStackable({ group, templateIndex: t.i })) }));
+  const items = templateList().map((t) => ({
+    ...t,
+    stacks: t.groups.some((group) => isStackable({ group, templateIndex: t.i })),
+  }));
   const enchants = enchantmentTypes().map((key) => ({
-    key, name: enchantmentName(key), side: isSideEffect(key), weaponOnly: hasItemMakerFlag(key, ITEM_MAKER_FLAGS.WeaponOnly),
+    key,
+    name: enchantmentName(key),
+    side: isSideEffect(key),
+    weaponOnly: hasItemMakerFlag(key, ITEM_MAKER_FLAGS.WeaponOnly),
     params: enchantmentParamValues(key).map((p) => [p, enchantmentParamName(key, p), enchantmentCost(key, p)]),
   }));
-  _catalogue = { items, letter: LETTER_OF_CREDIT_TEMPLATE, materials: { Weapons: WEAPON_MATS, Armor: ARMOR_MATS }, enchants, enchantMax: GIVE_ENCHANT_MAX, reasons: GIVE_REASONS };
+  _catalogue = {
+    items,
+    letter: LETTER_OF_CREDIT_TEMPLATE,
+    materials: { Weapons: WEAPON_MATS, Armor: ARMOR_MATS },
+    enchants,
+    enchantMax: GIVE_ENCHANT_MAX,
+    reasons: GIVE_REASONS,
+  };
   return _catalogue;
 }
 
@@ -89,12 +121,19 @@ export function mintGift(spec, rand = undefined) {
   if (!mats && spec.material !== undefined) return { error: 'staff-item-template' };
   /** @type {any} */
   let item;
-  if (group === 'Weapons' && i === ARROW_TEMPLATE) item = { ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: count };   // CreateWeapon's arrow arm: its stack the count asked
+  if (group === 'Weapons' && i === ARROW_TEMPLATE)
+    item = { ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: count }; // CreateWeapon's arrow arm: its stack the count asked
   else if (group === 'Weapons') item = weaponOfMaterial(i, material);
   else if (group === 'Armor') item = armorOfMaterial(i, material);
   else item = mintCondition(setItemFields({ group, templateIndex: i }));
   if (spec.gold !== undefined) {
-    if (i !== LETTER_OF_CREDIT_TEMPLATE || !Number.isSafeInteger(spec.gold) || spec.gold < 1 || spec.gold > GOLD_INT_MAX) return { error: 'staff-item-template' };
+    if (
+      i !== LETTER_OF_CREDIT_TEMPLATE ||
+      !Number.isSafeInteger(spec.gold) ||
+      spec.gold < 1 ||
+      spec.gold > GOLD_INT_MAX
+    )
+      return { error: 'staff-item-template' };
     item.value = spec.gold;
   }
   if (count > 1) {
@@ -120,5 +159,9 @@ export function mintGift(spec, rand = undefined) {
 
 /** What the preview says of a minted gift - its worth as the wealth measure counts it, never a throw. @param {any} item */
 export function giftWorth(item) {
-  try { return itemWorth(item); } catch { return null; }
+  try {
+    return itemWorth(item);
+  } catch {
+    return null;
+  }
 }

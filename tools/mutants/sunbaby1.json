@@ -2,141 +2,181 @@
   {
     "name": "SUNBABY1-wire-word-dropped",
     "file": "src/net/wire.js",
-    "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket']);",
-    "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'rocket']);",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket', 'newera']);",
+    "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'rocket', 'newera']);",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-wire-row-at-162",
     "file": "src/net/wire.js",
-    "old": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 163, rocket: 253 });",
-    "new": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 162, rocket: 253 });",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 163, rocket: 253, newera: 303 });",
+    "new": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 162, rocket: 253, newera: 303 });",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-wire-row-check-dropped",
     "file": "src/net/wire.js",
     "old": "return !!m && Object.hasOwn(LIVE_EVENT_RELAY_MIN, kind) && Number(m[1]) >= LIVE_EVENT_RELAY_MIN[kind]; };",
     "new": "return !!m && Number(m[1]) >= (LIVE_EVENT_RELAY_MIN[kind] ?? 0); };",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-session-word-gate-dropped",
     "file": "src/net/online.js",
     "old": "    if (kind !== '' && !relayKnowsLiveEvent(this.eventV, kind)) return false;",
     "new": "    void 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-session-version-never-kept",
     "file": "src/net/online.js",
     "old": "      if (primary) this.eventV = relayV;",
     "new": "      void 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-fade-live-snapped",
     "file": "src/world/sunbabySky.js",
-    "old": "      target = ev?.kind === SUNBABY_EVENT ? 1 : 0;\n      if (!live) weight = target;",
-    "new": "      target = ev?.kind === SUNBABY_EVENT ? 1 : 0;\n      weight = target;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "      if (!live) weight = target;",
+    "new": "      weight = target;",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-fade-any-word",
     "file": "src/world/sunbabySky.js",
     "old": "      target = ev?.kind === SUNBABY_EVENT ? 1 : 0;",
     "new": "      target = ev ? 1 : 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-sun-never-rises",
     "file": "src/world/sunbabySky.js",
-    "old": "  const k = clamp01(w), e = 1 - (1 - k) ** 3;",
-    "new": "  const k = clamp01(w), e = 1;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "    e = 1 - (1 - k) ** 3;",
+    "new": "    e = 1;",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-light-darkens",
     "file": "src/world/sunbabySky.js",
-    "old": "rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k",
-    "new": "rgb[i] + (SUNBABY_AMBIENT[i] - rgb[i]) * k",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "    [0, 1, 2].map(\n      (i) => (rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e),\n    ),",
+    "new": "    [0, 1, 2].map((i) => (rgb[i] + (SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e)),",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-pass-drawn-at-zero",
     "file": "src/render/sunbabySkyRenderer.js",
-    "old": "    if (!(this.weight > 0)) return;\n",
-    "new": "",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "    if (!(this.weight > 0)) return;\n    const gl = this.gl,",
+    "new": "    const gl = this.gl,",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-pass-blend-left-on",
     "file": "src/render/sunbabySkyRenderer.js",
-    "old": "    gl.disable(gl.BLEND);\n",
-    "new": "",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "    gl.disable(gl.BLEND);\n    gl.enable(gl.CULL_FACE);",
+    "new": "    gl.enable(gl.CULL_FACE);",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-pass-not-drawn",
     "file": "src/scenes/shared.js",
     "old": "      if (sunbabyW > 0) sunbabySky?.draw(yaw, pitch, fovY, aspect);",
     "new": "      void 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-fog-unhazed",
     "file": "src/scenes/shared.js",
     "old": "const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW, sunbabyEvil) : own;",
     "new": "const c = own;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-storm-cells-kept",
     "file": "src/scenes/shared.js",
     "old": "      if (sunbabyOn && extra) extra = { ...extra, violence: extra.weather, cells: null, cloudBase: null, approach: 0 };",
     "new": "      void 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-weather-left",
     "file": "src/scenes/world.js",
     "old": "  const shownWeather = () => (sunbaby.on ? SUNBABY_WEATHER : seaStormShown() ?? currentWeather());",
     "new": "  const shownWeather = () => (seaStormShown() ?? currentWeather());",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-hub-word-unheard",
     "file": "src/scenes/world.js",
-    "old": "link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); rocket.set(ev, o); };",
-    "new": "link.onEvent = (ev, o) => { dread.set(ev, o); rocket.set(ev, o); };",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "old": "link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); rocket.set(ev, o); newEra.set(ev, o); };",
+    "new": "link.onEvent = (ev, o) => { dread.set(ev, o); rocket.set(ev, o); newEra.set(ev, o); };",
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-far-storms",
     "file": "src/scenes/world.js",
     "old": "    if (isEnhanced() && !weatherOverride && !sunbaby.on) {",
     "new": "    if (isEnhanced() && !weatherOverride) {",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-light-unlifted",
     "file": "src/scenes/world.js",
     "old": "sdBrassLight(sunbabyLight(dreadLight(withMoonAmbient(",
     "new": "sdBrassLight(((x) => x)(dreadLight(withMoonAmbient(",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-sky-never-told",
     "file": "src/scenes/world.js",
     "old": "    sky.setSunbaby(sunbabyW, sunbaby.on);",
     "new": "    void 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   },
   {
     "name": "SUNBABY1-host-word-to-old-relay",
     "file": "src/scenes/world.js",
     "old": "          if (staged.kind && !relayKnowsLiveEvent(hub.eventV, staged.kind)) return say('The server cannot stage that event yet.');",
     "new": "          void 0;",
-    "tests": ["test/net/sunbaby1_event.test.js"]
+    "tests": [
+      "test/net/sunbaby1_event.test.js"
+    ]
   }
 ]

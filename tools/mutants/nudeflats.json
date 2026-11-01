@@ -20,8 +20,8 @@
   {
     "name": "NUDEFLATS-kynareth-blonde-dropped",
     "file": "src/characters/nudeFlats.js",
-    "old": "  '184_11': Object.freeze([184, 29]),",
-    "new": "",
+    "old": "  '184_11': Object.freeze([184, 29]), // \"naked blonde woman\" (taverns, Temple of Kynareth) -> \"blonde wearing blue\"",
+    "new": "  // \"naked blonde woman\" (taverns, Temple of Kynareth) -> \"blonde wearing blue\"",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NUDEFLATS-unmarked-dancer-dropped",
     "file": "src/characters/nudeFlats.js",
-    "old": "  '179_3': Object.freeze([179, 2]),",
-    "new": "",
+    "old": "  '179_3': Object.freeze([179, 2]), // \"black-cowled dancer\" (coven witch; no \"?\" mark) -> \"mysterious woman\"",
+    "new": "  // \"black-cowled dancer\" (coven witch; no \"?\" mark) -> \"mysterious woman\"",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "NUDEFLATS-mw-weld-ignores-setting",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (!args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (!args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "NUDEFLATS-mw-weld-men-too",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (show || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (show || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "NUDEFLATS-mw-weld-under-cover",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (show || !args.female || worn.covers.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (show || !args.female || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/formats/nudeflats.test.js"
     ]

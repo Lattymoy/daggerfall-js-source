@@ -10,6 +10,7 @@ import { DEFAULT_SECONDARY_BINDINGS,
   resetDefaults, serializeKeyBinds, loadKeyBinds,
   createActionState, addAction, hasAction, actionStarted, actionComplete, endFrame,
 } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
   assert.deepEqual([...ACTIONS], [
@@ -459,6 +460,6 @@ test('HELM-KEYS the default share: More sail answers the up arrow beside ActChoi
   assert.deepEqual(actionsForCode(off, 'ArrowUp'), ['ActChoice']);
   // the two never live together: a helm's hands are on the wheel - the professions' choice is no press there
   const { readFileSync } = await import('node:fs');
-  const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(WORLD, /choice: !csaRuntime\?\.isSailing\(\) && pressed\(latch\.edge, keys, 'ActChoice'\)/);
+  const WORLD = hostText('src/scenes/world.js');
+  assert.match(WORLD, /choice: !csaRuntime\?\.isSailing\(\) && pressed\(host\.latch\.edge, host\.keys, 'ActChoice'\)/);
 });

@@ -46,7 +46,7 @@ export const GRANT_MEASURE_COUNT_MAX = 1_000_000;
 /** How long the relay waits on the service's answer, ms. */
 export const GRANT_MEASURE_POST_MS = 8_000;
 const ID_HEX_RE = /^[0-9a-f]{16}$/;
-const ROOM_RE = /^[A-Za-z0-9_.,:+-]{1,80}$/;   // net/wire.js roomOf's own
+const ROOM_RE = /^[A-Za-z0-9_.,:+-]{1,80}$/; // net/wire.js roomOf's own
 
 /** @typedef {{ a: string, k: string, asks: number, members: number, bucket: number, ceiling: number }} GrantMeasureRow */
 /** @typedef {{ a: string, b: string, r: string, n: number, e?: { t: number, k: number, mx: number } }} GrantTallyRow */
@@ -63,7 +63,8 @@ export const newGrantMeasure = (nowMs) => ({ from: nowMs, live: 0, rows: new Map
 const full = (w) => w.rows.size + w.tallies.size >= GRANT_MEASURE_ROWS;
 /** GRANT-SLEEP: whether a window is owed its post at `nowMs` - it holds anything, and it began GRANT_MEASURE_MS ago or
  *  more. The relay asks it at each fold, never on a timer. Pure. @param {GrantMeasure} w @param {number} nowMs */
-export const grantMeasureDue = (w, nowMs) => (w.rows.size > 0 || w.tallies.size > 0) && nowMs - w.from >= GRANT_MEASURE_MS;
+export const grantMeasureDue = (w, nowMs) =>
+  (w.rows.size > 0 || w.tallies.size > 0) && nowMs - w.from >= GRANT_MEASURE_MS;
 
 const capped = (n) => Math.min(GRANT_MEASURE_COUNT_MAX, n);
 /**
@@ -75,7 +76,10 @@ const capped = (n) => Math.min(GRANT_MEASURE_COUNT_MAX, n);
 export function foldGrantAsk(w, a, k, n, refusal, live) {
   const key = `${a}|${k}`;
   let row = w.rows.get(key);
-  if (!row) { row = { a, k, asks: 0, members: 0, bucket: 0, ceiling: 0 }; w.rows.set(key, row); }
+  if (!row) {
+    row = { a, k, asks: 0, members: 0, bucket: 0, ceiling: 0 };
+    w.rows.set(key, row);
+  }
   row.asks = capped(row.asks + 1);
   row.members = capped(row.members + n);
   if (refusal === 'bucket') row.bucket = capped(row.bucket + 1);
@@ -101,28 +105,90 @@ export function foldGrantTally(w, a, b, r, n, e = null) {
 
 const count = (n) => Number.isSafeInteger(n) && n >= 0 && n <= GRANT_MEASURE_COUNT_MAX;
 /** FOE-BOUNDS: a tally's evidence - none, or a type, a claim and a bound, each a number in its law. */
-const evidenceOk = (e) => e === undefined || (!!e && typeof e === 'object' && Number.isInteger(e.t) && e.t >= 0 && e.t <= 255 && Number.isFinite(e.k) && e.k >= 0 && e.k <= GRANT_MEASURE_COUNT_MAX && Number.isFinite(e.mx) && e.mx >= 0 && e.mx <= GRANT_MEASURE_COUNT_MAX * 1000);
+const evidenceOk = (e) =>
+  e === undefined ||
+  (!!e &&
+    typeof e === 'object' &&
+    Number.isInteger(e.t) &&
+    e.t >= 0 &&
+    e.t <= 255 &&
+    Number.isFinite(e.k) &&
+    e.k >= 0 &&
+    e.k <= GRANT_MEASURE_COUNT_MAX &&
+    Number.isFinite(e.mx) &&
+    e.mx >= 0 &&
+    e.mx <= GRANT_MEASURE_COUNT_MAX * 1000);
 /** Whether a parsed batch is one: its version, a 16-hex id, its clocks, its room, and 1 to GRANT_MEASURE_ROWS rows and
  *  tallies together - each row an account, a kind, and counts in their law (the members within the asks' most); each
  *  tally a reader's account, another's, a reader's reason and a count. Pure. @param {any} b */
 export function grantMeasureValid(b) {
   if (!b || typeof b !== 'object' || Array.isArray(b) || b.v !== GRANT_MEASURE_V) return false;
   if (typeof b.id !== 'string' || !ID_HEX_RE.test(b.id) || !Number.isSafeInteger(b.at) || b.at <= 0) return false;
-  if (!Number.isSafeInteger(b.from) || b.from <= 0 || b.from > b.at || typeof b.q !== 'string' || !ROOM_RE.test(b.q) || !count(b.live)) return false;
-  if (!Array.isArray(b.rows) || !Array.isArray(b.tl) || !(b.rows.length + b.tl.length) || b.rows.length + b.tl.length > GRANT_MEASURE_ROWS) return false;
-  const tallyOk = b.tl.every((t) => t && typeof t === 'object' && typeof t.a === 'string' && (ID_RE.test(t.a) || t.a === GRANT_RELAY_READER) && typeof t.b === 'string' && ID_RE.test(t.b)
-    && t.a !== t.b && GRANT_READER_REFUSALS.includes(t.r) && count(t.n) && t.n >= 1 && evidenceOk(t.e));
-  return tallyOk && b.rows.every((r) => r && typeof r === 'object' && typeof r.a === 'string' && ID_RE.test(r.a)
-    && typeof r.k === 'string' && Object.hasOwn(GRANT_KINDS, r.k)
-    && count(r.asks) && r.asks >= 1 && count(r.members) && r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max
-    && count(r.bucket) && count(r.ceiling) && r.bucket + r.ceiling <= r.asks);
+  if (
+    !Number.isSafeInteger(b.from) ||
+    b.from <= 0 ||
+    b.from > b.at ||
+    typeof b.q !== 'string' ||
+    !ROOM_RE.test(b.q) ||
+    !count(b.live)
+  )
+    return false;
+  if (
+    !Array.isArray(b.rows) ||
+    !Array.isArray(b.tl) ||
+    !(b.rows.length + b.tl.length) ||
+    b.rows.length + b.tl.length > GRANT_MEASURE_ROWS
+  )
+    return false;
+  const tallyOk = b.tl.every(
+    (t) =>
+      t &&
+      typeof t === 'object' &&
+      typeof t.a === 'string' &&
+      (ID_RE.test(t.a) || t.a === GRANT_RELAY_READER) &&
+      typeof t.b === 'string' &&
+      ID_RE.test(t.b) &&
+      t.a !== t.b &&
+      GRANT_READER_REFUSALS.includes(t.r) &&
+      count(t.n) &&
+      t.n >= 1 &&
+      evidenceOk(t.e),
+  );
+  return (
+    tallyOk &&
+    b.rows.every(
+      (r) =>
+        r &&
+        typeof r === 'object' &&
+        typeof r.a === 'string' &&
+        ID_RE.test(r.a) &&
+        typeof r.k === 'string' &&
+        Object.hasOwn(GRANT_KINDS, r.k) &&
+        count(r.asks) &&
+        r.asks >= 1 &&
+        count(r.members) &&
+        r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max &&
+        count(r.bucket) &&
+        count(r.ceiling) &&
+        r.bucket + r.ceiling <= r.asks,
+    )
+  );
 }
 
 /** A window's batch for room `q`, posted at `nowMs`: null when nothing was asked or tallied. Pure.
  *  @param {GrantMeasure} w @param {string} id @param {string} q @param {number} nowMs */
 export function grantMeasureBatch(w, id, q, nowMs) {
   if (!w.rows.size && !w.tallies.size) return null;
-  return { v: GRANT_MEASURE_V, id, at: nowMs, q, from: w.from, live: w.live, rows: [...w.rows.values()].map((r) => ({ ...r })), tl: [...w.tallies.values()].map((t) => ({ ...t })) };
+  return {
+    v: GRANT_MEASURE_V,
+    id,
+    at: nowMs,
+    q,
+    from: w.from,
+    live: w.live,
+    rows: [...w.rows.values()].map((r) => ({ ...r })),
+    tl: [...w.tallies.values()].map((t) => ({ ...t })),
+  };
 }
 
 const enc = new TextEncoder();
@@ -153,14 +219,23 @@ export async function sealGrantMeasure(batch, privateKey, { subtle }) {
  */
 export async function openGrantMeasure(body, sig64, publicKey, { subtle, nowMs }) {
   if (!publicKey) return { error: 'grant-closed' };
-  if (!(body instanceof Uint8Array) || !body.length || body.length > GRANT_MEASURE_MAX_BYTES) return { error: 'grant-shape' };
+  if (!(body instanceof Uint8Array) || !body.length || body.length > GRANT_MEASURE_MAX_BYTES)
+    return { error: 'grant-shape' };
   const sig = typeof sig64 === 'string' ? _b64url.decode(sig64) : null;
   if (!sig || sig.length !== SIG_BYTES) return { error: 'grant-signature' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, signedBytes(body)); } catch { good = false; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, signedBytes(body));
+  } catch {
+    good = false;
+  }
   if (!good) return { error: 'grant-signature' };
   let batch;
-  try { batch = JSON.parse(new TextDecoder().decode(body)); } catch { return { error: 'grant-shape' }; }
+  try {
+    batch = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return { error: 'grant-shape' };
+  }
   if (!grantMeasureValid(batch)) return { error: 'grant-shape' };
   if (Math.abs(nowMs - batch.at) > GRANT_MEASURE_AGE_MAX_MS) return { error: 'grant-stale' };
   return { ok: true, batch };

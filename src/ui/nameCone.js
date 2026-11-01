@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-CONE (the owner, 2026-10-29: "Was thinking we needed to make them not visible less u look within a angle"; then
+// PVP-CONE (then
 // "Yes" to everywhere): another player's name tag - its skull and bars with it - shows only near the crosshair, and
 // fades in and out. My party and my foe of the last minute always show. The law is here; net/remotePlayers.js namePoints
 // hands each point its angle (`off`), scenes/pvpFlagHost.js its `near`, and ui/nameLayer.js wears the answer.
@@ -13,7 +13,7 @@ export function nameOffDeg(view, p) {
   const x = view[0] * p[0] + view[4] * p[1] + view[8] * p[2] + view[12];
   const y = view[1] * p[0] + view[5] * p[1] + view[9] * p[2] + view[13];
   const z = view[2] * p[0] + view[6] * p[1] + view[10] * p[2] + view[14];
-  return Math.atan2(Math.hypot(x, y), -z) * 180 / Math.PI;
+  return (Math.atan2(Math.hypot(x, y), -z) * 180) / Math.PI;
 }
 
 /** A tag's wanted opacity: 1 for a point with no angle, my party or my foe; else the cone's band. (AUDIT FB1029g R4: a

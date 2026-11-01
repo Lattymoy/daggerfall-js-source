@@ -150,17 +150,23 @@ import { measureText } from './text.js';
 // ListBox hands every selected row (ListBox.cs:43) - one home for the
 // literal, the picker window's.
 import { SELECTED_TEXT_COLOR } from './listPicker.js';
-import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM10: the rename is a pushed DaggerfallInputMessageBox
+import { InputMessageBoxWindow } from './inputMessageBox.js'; // CM10: the rename is a pushed DaggerfallInputMessageBox
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { dateFromClassicMinutes, midDateTimeString } from '../systems/gameDate.js';
-import { packColourTexture } from './packArt.js';   // OVH2: a worn UI pack's panel and button textures
-import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { packColourTexture } from './packArt.js'; // OVH2: a worn UI pack's panel and button textures
+import { localizedStrings } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 import {
-  enumerateSaves, findSave, findMostRecentSave, saveInfoOf, screenshotOf,
-  deleteSave, renameSave, characterNames,
+  enumerateSaves,
+  findSave,
+  findMostRecentSave,
+  saveInfoOf,
+  screenshotOf,
+  deleteSave,
+  renameSave,
+  characterNames,
 } from '../systems/save/saveSlots.js';
 
 /** The window rects, panel-relative [x, y, w, h] (:34-270). The main
@@ -169,20 +175,20 @@ export const MAIN_PANEL = Object.freeze([20, 15, 280, 170]);
 export const SW_RECTS = Object.freeze({
   namePanel: Object.freeze([4, 12, 272, 9]),
   savesPanel: Object.freeze([4, 25, 100, 141]),
-  savesList: Object.freeze([6, 27, 91, 129]),      // savesPanel + (2,2)
-  scroller: Object.freeze([98, 27, 5, 129]),       // savesPanel + (94,2)
+  savesList: Object.freeze([6, 27, 91, 129]), // savesPanel + (2,2)
+  scroller: Object.freeze([98, 27, 5, 129]), // savesPanel + (94,2)
   go: Object.freeze([108, 150, 40, 16]),
   switchClassic: Object.freeze([172, 150, 40, 16]),
   cancel: Object.freeze([236, 150, 40, 16]),
   screenshot: Object.freeze([108, 25, 168, 95]),
   infoPanel: Object.freeze([108, 122, 168, 26]),
-  rename: Object.freeze([6, 157, 48, 8]),          // savesPanel + (2,132)
-  del: Object.freeze([55, 157, 48, 8]),            // savesPanel + (51,132)
+  rename: Object.freeze([6, 157, 48, 8]), // savesPanel + (2,132)
+  del: Object.freeze([55, 157, 48, 8]), // savesPanel + (51,132)
   switchChar: Object.freeze([216, 2, 60, 8]),
 });
-export const SW_LIST_ROWS = 16;                        // RowsDisplayed (:150)
-export const NAME_MAX_CHARS = 26;                   // saveNameTextBox (:133)
-export const RENAME_MAX_CHARS = 31;                 // the TextBox default (F171's law)
+export const SW_LIST_ROWS = 16; // RowsDisplayed (:150)
+export const NAME_MAX_CHARS = 26; // saveNameTextBox (:133)
+export const RENAME_MAX_CHARS = 31; // the TextBox default (F171's law)
 
 // The C# colors (:56-62), as [r,g,b,a] 0..1.
 export const SW_COLORS = Object.freeze({
@@ -201,24 +207,24 @@ export const SW_COLORS = Object.freeze({
  *  Internal_Strings.csv - the keys TextManager is asked for, with the
  *  English values verbatim (the port has one language). */
 export const SW_TEXT = localizedStrings({
-  savePrompt: 'Save Game',                                     // :924
-  loadPrompt: 'Load Game',                                     // :925
-  saveLoadPromptFormat: "{0} for '{1}'",                       // :1580
-  noSavesFound: 'No saves found. Load a Classic save?',        // :934
-  enterSaveName: 'Enter save name',                            // :928
-  selectSaveName: 'Select a save',                             // :929
-  saveButton: 'Save',                                          // :926
-  loadButton: 'Load',                                          // :927
-  classicSave: 'Classic',                                      // :919
+  savePrompt: 'Save Game', // :924
+  loadPrompt: 'Load Game', // :925
+  saveLoadPromptFormat: "{0} for '{1}'", // :1580
+  noSavesFound: 'No saves found. Load a Classic save?', // :934
+  enterSaveName: 'Enter save name', // :928
+  selectSaveName: 'Select a save', // :929
+  saveButton: 'Save', // :926
+  loadButton: 'Load', // :927
+  classicSave: 'Classic', // :919
   cancel: 'Cancel',
-  renameSave: 'Rename',                                        // :921
-  deleteSave: 'Delete',                                        // :922
-  switchChar: 'Switch Char',                                   // :923
-  loading: 'Please wait...',                                   // :918
-  confirmOverwriteSave: 'Overwrite this save?',                // :931
-  confirmDeleteSave: 'Are you sure you want to delete save?',  // :930
-  youMustEnterASaveName: 'You must enter a save name.',        // :932
-  youMustSelectASaveName: 'You must select a save name.',      // :933
+  renameSave: 'Rename', // :921
+  deleteSave: 'Delete', // :922
+  switchChar: 'Switch Char', // :923
+  loading: 'Please wait...', // :918
+  confirmOverwriteSave: 'Overwrite this save?', // :931
+  confirmDeleteSave: 'Are you sure you want to delete save?', // :930
+  youMustEnterASaveName: 'You must enter a save name.', // :932
+  youMustSelectASaveName: 'You must select a save name.', // :933
 });
 
 /** saveLoadPromptFormat's two slots (:369). */
@@ -228,7 +234,7 @@ export const saveLoadPrompt = (promptText, characterName) =>
 /** loadingCountdown's initial value (:69). */
 export const LOADING_FRAMES = 2;
 
-const ROW_H = 8;   // ListBox default row pitch at 16 rows in 129px
+const ROW_H = 8; // ListBox default row pitch at 16 rows in 129px
 
 const inRect = ([x, y, w, h], vx, vy) => vx >= x && vy >= y && vx < x + w && vy < y + h;
 
@@ -241,35 +247,37 @@ export class SaveWindow {
     this.mode = mode;
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;         // raw codes through the overlay channel
+    this.isChoiceWindow = true; // raw codes through the overlay channel
     this.displayMostRecentChar = displayMostRecentChar;
     this.currentPlayerName = hooks.playerName?.() ?? '';
-    this.currentCharacterId = hooks.playerId?.() ?? null;   // CHARID1: the live character's id - the identity a save is found and overwritten by
+    this.currentCharacterId = hooks.playerId?.() ?? null; // CHARID1: the live character's id - the identity a save is found and overwritten by
     this.nameText = '';
     this.selectedIndex = -1;
     this.scrollIndex = 0;
-    this.rows = [];                     // [{ key, saveName, info }]
+    this.rows = []; // [{ key, saveName, info }]
     this.noSaves = false;
-    this.characterCount = 0;            // SaveLoadManager.CharacterCount (:449)
+    this.characterCount = 0; // SaveLoadManager.CharacterCount (:449)
     // The :313-315 defer. `loading` raises the label; the countdown
     // spends the frames that let it draw.
     this.loading = false;
     this.loadingCountdown = LOADING_FRAMES;
     this._loadingKey = -1;
-    this.top = null;                    // 'overwrite'|'delete'|'note'|'rename'|'charPicker'
+    this.top = null; // 'overwrite'|'delete'|'note'|'rename'|'charPicker'
     this._noteRows = null;
     this._box = null;
-    this.renameBox = null;              // CM10: the pushed rename box while `top` is 'rename'
+    this.renameBox = null; // CM10: the pushed rename box while `top` is 'rename'
     this._charRows = [];
     this._lastClick = { t: 0, index: -1 };
-    this._shot = null;                  // SS1: the selected slot's decoded screenshot
-    this._renderer = null;              // latched at draw so dispose can release
+    this._shot = null; // SS1: the selected slot's decoded screenshot
+    this._renderer = null; // latched at draw so dispose can release
     this.refresh();
     // "Autoselect save at top of list" in load mode (:291-292).
     if (this.mode === 'load' && this.rows.length > 0) this._select(0);
   }
 
-  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
+  _click() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+  }
 
   /** OnPush + UpdateSavesList: enumerate fresh, honor
    *  displayMostRecentChar, order the character's saves by realTime
@@ -277,7 +285,7 @@ export class SaveWindow {
   refresh() {
     const { info, characterSaves } = enumerateSaves();
     const mostRecent = findMostRecentSave();
-    this.characterCount = characterSaves.size;   // CharacterCount, the :449 gate
+    this.characterCount = characterSaves.size; // CharacterCount, the :449 gate
     this.noSaves = this.mode === 'load' && mostRecent === -1;
     if (this.mode === 'load' && mostRecent !== -1 && this.displayMostRecentChar) {
       this.currentPlayerName = info.get(mostRecent)?.characterName ?? this.currentPlayerName;
@@ -299,19 +307,22 @@ export class SaveWindow {
    *  the window never trusts the row index alone, exactly as the C#
    *  re-finds by names at every action. */
   _selectedKey() {
-    return findSave(this.currentPlayerName, this.nameText, undefined, this.currentCharacterId);   // CHARID1: by id when the window has one
+    return findSave(this.currentPlayerName, this.nameText, undefined, this.currentCharacterId); // CHARID1: by id when the window has one
   }
 
   /** SaveLoadEventHandler - the go path for both modes (:480-522). */
   _go() {
-    if (this.loading) return;            // the defer owns the window now
+    if (this.loading) return; // the defer owns the window now
     if (this.mode === 'save') {
       if (this.nameText.length === 0) {
         this.top = 'note';
         this._noteRows = [SW_TEXT.youMustEnterASaveName];
         return;
       }
-      if (this._selectedKey() !== -1) { this.top = 'overwrite'; return; }
+      if (this._selectedKey() !== -1) {
+        this.top = 'overwrite';
+        return;
+      }
       this._saveGame();
     } else {
       if (this.nameText.length === 0) {
@@ -344,12 +355,12 @@ export class SaveWindow {
     this.loading = false;
     this.done = true;
     this.hooks.loadKey?.(this._loadingKey);
-    this.hooks.popToHUD?.();             // PopToHUD (:428), AFTER the load
+    this.hooks.popToHUD?.(); // PopToHUD (:428), AFTER the load
   }
 
   _saveGame() {
     const ok = this.hooks.saveAs?.(this.nameText);
-    this.done = true;                    // SaveGame() -> PopToHUD (:422)
+    this.done = true; // SaveGame() -> PopToHUD (:422)
     this.hooks.popToHUD?.();
     if (ok === false) this.hooks.onSaveFailed?.();
   }
@@ -358,7 +369,9 @@ export class SaveWindow {
    *  selection clears the screenshot, both time labels, the version
    *  and folder lines, and drops rename/delete to the plain colour.
    *  One predicate because the C# clears all of it in one branch. */
-  _infoShown() { return this.nameText.length > 0 && this.selectedIndex >= 0; }
+  _infoShown() {
+    return this.nameText.length > 0 && this.selectedIndex >= 0;
+  }
 
   /** The overlay channel's raw keys: typing the name box (save mode -
    *  load's box is READ-ONLY, :444), Return = go (:311-312), Escape =
@@ -375,10 +388,19 @@ export class SaveWindow {
       if (code === 'Escape') this.top = null;
       return true;
     }
-    if (code === 'Enter' || code === 'NumpadEnter') { this._go(); return true; }
-    if (code === 'Escape') { this._cancel(); return true; }
+    if (code === 'Enter' || code === 'NumpadEnter') {
+      this._go();
+      return true;
+    }
+    if (code === 'Escape') {
+      this._cancel();
+      return true;
+    }
     if (this.mode === 'save') {
-      if (code === 'Backspace') { this._onType(this.nameText.slice(0, -1)); return true; }
+      if (code === 'Backspace') {
+        this._onType(this.nameText.slice(0, -1));
+        return true;
+      }
       const ch = typedChar(code, e);
       if (ch && this.nameText.length < NAME_MAX_CHARS) this._onType(this.nameText + ch);
       return true;
@@ -399,7 +421,7 @@ export class SaveWindow {
    *  dungeonContext's overlayWheel), and this window has one scrolling
    *  list, so it still ignores the point and forwards the sign to it. */
   wheel(dir) {
-    if (this.top) return true;          // a stacked box is the top window, not this one
+    if (this.top) return true; // a stacked box is the top window, not this one
     const maxScroll = Math.max(0, this.rows.length - SW_LIST_ROWS);
     this.scrollIndex = Math.max(0, Math.min(maxScroll, this.scrollIndex + Math.sign(dir)));
     return true;
@@ -419,7 +441,8 @@ export class SaveWindow {
   _onType(text) {
     this.nameText = text;
     const index = this.rows.findIndex(
-      (r) => r.saveName.localeCompare(text, undefined, { sensitivity: 'accent' }) === 0);
+      (r) => r.saveName.localeCompare(text, undefined, { sensitivity: 'accent' }) === 0,
+    );
     if (index !== -1) this._select(index);
     else this.selectedIndex = -1;
   }
@@ -431,7 +454,10 @@ export class SaveWindow {
 
   _renameCommit(input) {
     // RenameSaveButton_OnGotUserInput: empty input is a no-op (:575).
-    if (input.length === 0) { this.top = null; return; }
+    if (input.length === 0) {
+      this.top = null;
+      return;
+    }
     const key = this._selectedKey();
     if (key !== -1 && renameSave(key, input)) {
       this.nameText = input;
@@ -457,7 +483,10 @@ export class SaveWindow {
   _shotTexture(renderer, key) {
     this._renderer = renderer;
     const url = screenshotOf(key);
-    if (!url) { this._dropShot(); return null; }
+    if (!url) {
+      this._dropShot();
+      return null;
+    }
     if (this._shot?.key === key && this._shot.url === url) return this._shot.tex;
     this._dropShot();
     const shot = { key, url, tex: null };
@@ -465,16 +494,23 @@ export class SaveWindow {
     if (typeof Image === 'undefined' || typeof document === 'undefined') return null;
     const img = new Image();
     img.onload = () => {
-      if (this._shot !== shot) return;   // superseded while decoding
+      if (this._shot !== shot) return; // superseded while decoding
       try {
         const c = document.createElement('canvas');
-        c.width = img.width; c.height = img.height;
-        const ctx = c.getContext('2d', { willReadFrequently: true });   // FIELD 2026-09-27: read back below (textureReplacement.decodePng's note)
+        c.width = img.width;
+        c.height = img.height;
+        const ctx = c.getContext('2d', { willReadFrequently: true }); // FIELD 2026-09-27: read back below (textureReplacement.decodePng's note)
         ctx.drawImage(img, 0, 0);
         const data = ctx.getImageData(0, 0, c.width, c.height);
-        shot.tex = renderer.uploadTexture('saveshot', key,
-          { width: c.width, height: c.height, colors: data.data }, { smooth: true });
-      } catch { /* a corrupt shot draws as none */ }
+        shot.tex = renderer.uploadTexture(
+          'saveshot',
+          key,
+          { width: c.width, height: c.height, colors: data.data },
+          { smooth: true },
+        );
+      } catch {
+        /* a corrupt shot draws as none */
+      }
     };
     img.src = url;
     return null;
@@ -486,16 +522,25 @@ export class SaveWindow {
   }
 
   /** Both stack pops and overlay disposal release the owned screenshot. */
-  onPop() { this._dropShot(); }
-  dispose() { this._dropShot(); }
+  onPop() {
+    this._dropShot();
+  }
+  dispose() {
+    this._dropShot();
+  }
 
   click(vx, vy) {
     // The stacked boxes swallow every click (their own hit tables).
     if (this.top === 'overwrite' || this.top === 'delete') {
       const hit = this._boxHit(vx, vy);
       if (this.top === 'overwrite') {
-        if (hit === MB_BUTTONS.Yes) { this._click(); this._saveGame(); }
-        else if (hit === MB_BUTTONS.No) { this._click(); this.top = null; }   // ConfirmOverwrite's No pops the confirm
+        if (hit === MB_BUTTONS.Yes) {
+          this._click();
+          this._saveGame();
+        } else if (hit === MB_BUTTONS.No) {
+          this._click();
+          this.top = null;
+        } // ConfirmOverwrite's No pops the confirm
       } else if (this.top === 'delete') {
         if (hit === MB_BUTTONS.Delete) {
           this._click();
@@ -504,12 +549,17 @@ export class SaveWindow {
           this.nameText = '';
           this.selectedIndex = -1;
           this.refresh();
-          this.top = null;               // ConfirmDelete's tail CloseWindow pops the confirm either way
-        } else if (hit === MB_BUTTONS.Cancel) { this._click(); this.top = null; }
+          this.top = null; // ConfirmDelete's tail CloseWindow pops the confirm either way
+        } else if (hit === MB_BUTTONS.Cancel) {
+          this._click();
+          this.top = null;
+        }
       }
       return true;
     }
-    if (this.top === 'rename') { return true; }   // the input box holds focus; Escape leaves
+    if (this.top === 'rename') {
+      return true;
+    } // the input box holds focus; Escape leaves
     if (this.top === 'charPicker') {
       const row = Math.floor((vy - 40) / 10);
       if (row >= 0 && row < this._charRows.length && vx >= 90 && vx < 230) {
@@ -518,7 +568,8 @@ export class SaveWindow {
         this.displayMostRecentChar = false;
         this.currentPlayerName = this._charRows[row];
         // CHARID1: another character's list is read by name; the live character keeps its id
-        this.currentCharacterId = this.currentPlayerName === (this.hooks.playerName?.() ?? '') ? (this.hooks.playerId?.() ?? null) : null;
+        this.currentCharacterId =
+          this.currentPlayerName === (this.hooks.playerName?.() ?? '') ? (this.hooks.playerId?.() ?? null) : null;
         this.nameText = '';
         this.selectedIndex = -1;
         this.refresh();
@@ -526,10 +577,14 @@ export class SaveWindow {
       this.top = null;
       return true;
     }
-    if (this.top) { this.top = null; return true; }
+    if (this.top) {
+      this.top = null;
+      return true;
+    }
 
     const M = MAIN_PANEL;
-    const px = vx - M[0], py = vy - M[1];
+    const px = vx - M[0],
+      py = vy - M[1];
     const R = SW_RECTS;
 
     // The list: a row click selects; a second click on the SAME row
@@ -553,12 +608,22 @@ export class SaveWindow {
       const frac = (py - R.scroller[1]) / R.scroller[3];
       const maxScroll = this.rows.length - SW_LIST_ROWS;
       const thumbAt = maxScroll ? this.scrollIndex / maxScroll : 0;
-      this.scrollIndex = Math.max(0, Math.min(maxScroll,
-        this.scrollIndex + (frac < thumbAt ? -SW_LIST_ROWS : SW_LIST_ROWS)));
+      this.scrollIndex = Math.max(
+        0,
+        Math.min(maxScroll, this.scrollIndex + (frac < thumbAt ? -SW_LIST_ROWS : SW_LIST_ROWS)),
+      );
       return true;
     }
-    if (inRect(R.go, px, py)) { this._click(); this._go(); return true; }
-    if (inRect(R.cancel, px, py)) { this._click(); this._cancel(); return true; }
+    if (inRect(R.go, px, py)) {
+      this._click();
+      this._go();
+      return true;
+    }
+    if (inRect(R.cancel, px, py)) {
+      this._click();
+      this._cancel();
+      return true;
+    }
     // The classic switch is a LOAD-mode door (:437 disables it for
     // save) and needs its mount.
     if (inRect(R.switchClassic, px, py) && this.mode === 'load' && this.hooks.onSwitchClassic) {
@@ -576,11 +641,13 @@ export class SaveWindow {
       // list under it holds still, as under any box.
       this.top = 'rename';
       this.renameBox = new InputMessageBoxWindow({
-        label: `${SW_TEXT.enterSaveName}: `,   // SetTextBoxLabel (:567)
+        label: `${SW_TEXT.enterSaveName}: `, // SetTextBoxLabel (:567)
         value: this.nameText,
         maxCharacters: RENAME_MAX_CHARS,
         onSubmit: (input) => this._renameCommit(input),
-        onCancel: () => { this.top = null; },
+        onCancel: () => {
+          this.top = null;
+        },
       });
       return true;
     }
@@ -591,7 +658,7 @@ export class SaveWindow {
     }
     // Switch character: load mode with at least one character (:449-452).
     if (inRect(R.switchChar, px, py) && this.mode === 'load') {
-      const names = characterNames().sort();   // OrderBy(o => o), :642
+      const names = characterNames().sort(); // OrderBy(o => o), :642
       if (names.length >= 1) {
         this._click();
         this._charRows = names;
@@ -599,19 +666,24 @@ export class SaveWindow {
       }
       return true;
     }
-    return true;   // the window is modal - a stray click never falls through
+    return true; // the window is modal - a stray click never falls through
   }
 
   /** OVH2: a worn UI pack's texture by DFU's name, warmed on first ask - null until it lands, and for good when the
    *  pack does not carry it (the colour alone, as DFU draws a panel whose import found nothing). */
   _packTexture(renderer, name) {
     const k = (this._packTex ??= new Map());
-    if (!k.has(name)) { k.set(name, null); packColourTexture(renderer, name).then((t) => { if (t) k.set(name, t); }); }
+    if (!k.has(name)) {
+      k.set(name, null);
+      packColourTexture(renderer, name).then((t) => {
+        if (t) k.set(name, t);
+      });
+    }
     return k.get(name);
   }
 
   draw(renderer, canvas, font) {
-    this.update();                       // Update() runs before Draw()
+    this.update(); // Update() runs before Draw()
     const m = nativeMetrics(canvas);
     const M = MAIN_PANEL;
     const R = SW_RECTS;
@@ -635,8 +707,7 @@ export class SaveWindow {
     // Prompt (savePrompt/loadPrompt + the character name, :363-369).
     const prompt = this.noSaves
       ? SW_TEXT.noSavesFound
-      : saveLoadPrompt(this.mode === 'save' ? SW_TEXT.savePrompt : SW_TEXT.loadPrompt,
-        this.currentPlayerName);
+      : saveLoadPrompt(this.mode === 'save' ? SW_TEXT.savePrompt : SW_TEXT.loadPrompt, this.currentPlayerName);
     // promptLabel.ShadowPosition = Vector2.zero (:119) - and a zero
     // position skips the shadow pass outright (TextLabel.cs:354-355).
     shadowText(renderer, font, prompt, m, M[0] + 4, M[1] + 4, { shadowOffset: 0 });
@@ -650,11 +721,14 @@ export class SaveWindow {
     // default text in save mode and never in load mode; the caret is
     // the port's plain underscore, drawn at the text's own width.
     panel(R.namePanel, SW_COLORS.namePanel, true, 'namePanelBackgroundColor');
-    const nameShown = this.nameText.length ? this.nameText
-      : (this.mode === 'save' ? SW_TEXT.enterSaveName : SW_TEXT.selectSaveName);
-    const nameX = M[0] + R.namePanel[0] + 2, nameY = M[1] + R.namePanel[1] + 1;
-    shadowText(renderer, font, nameShown, m, nameX, nameY,
-      this.nameText.length ? {} : { color: SW_COLORS.folder });
+    const nameShown = this.nameText.length
+      ? this.nameText
+      : this.mode === 'save'
+        ? SW_TEXT.enterSaveName
+        : SW_TEXT.selectSaveName;
+    const nameX = M[0] + R.namePanel[0] + 2,
+      nameY = M[1] + R.namePanel[1] + 1;
+    shadowText(renderer, font, nameShown, m, nameX, nameY, this.nameText.length ? {} : { color: SW_COLORS.folder });
     if (this.mode === 'save') {
       shadowText(renderer, font, '_', m, nameX + measureText(font.fnt, this.nameText), nameY);
     }
@@ -675,15 +749,25 @@ export class SaveWindow {
     visible.forEach((row, i) => {
       const index = this.scrollIndex + i;
       const y = M[1] + R.savesList[1] + i * ROW_H;
-      shadowText(renderer, font, row.saveName, m, M[0] + R.savesList[0] + 1, y + 1,
-        { color: index === this.selectedIndex ? SELECTED_TEXT_COLOR : SW_COLORS.listText, shadowOffset: 0 });
+      shadowText(renderer, font, row.saveName, m, M[0] + R.savesList[0] + 1, y + 1, {
+        color: index === this.selectedIndex ? SELECTED_TEXT_COLOR : SW_COLORS.listText,
+        shadowOffset: 0,
+      });
     });
     if (this.rows.length > SW_LIST_ROWS) {
       panel(R.scroller, SW_COLORS.namePanel, false);
       const maxScroll = this.rows.length - SW_LIST_ROWS;
-      const thumbH = Math.max(6, Math.floor(R.scroller[3] * SW_LIST_ROWS / this.rows.length));
+      const thumbH = Math.max(6, Math.floor((R.scroller[3] * SW_LIST_ROWS) / this.rows.length));
       const thumbY = Math.floor((R.scroller[3] - thumbH) * (maxScroll ? this.scrollIndex / maxScroll : 0));
-      drawRect(renderer, m, M[0] + R.scroller[0], M[1] + R.scroller[1] + thumbY, R.scroller[2], thumbH, [0.6, 0.6, 0.6, 1]);
+      drawRect(
+        renderer,
+        m,
+        M[0] + R.scroller[0],
+        M[1] + R.scroller[1] + thumbY,
+        R.scroller[2],
+        thumbH,
+        [0.6, 0.6, 0.6, 1],
+      );
     }
 
     // Screenshot + info panels. UpdateSelectedSaveInfo's clear arm
@@ -693,7 +777,7 @@ export class SaveWindow {
     // list selection had been dropped still drew a live info panel.
     panel(R.screenshot, SW_COLORS.list, true, 'screenshotPanelBackgroundColor');
     const key = this._infoShown() ? this._selectedKey() : -1;
-    if (key === -1) this._dropShot();    // the destroyed BackgroundTexture (:393-397)
+    if (key === -1) this._dropShot(); // the destroyed BackgroundTexture (:393-397)
     if (key !== -1) {
       // SS1: the WINDOW loads the shot itself, exactly as the C#'s
       // UpdateSelectedSaveInfo calls GetSaveScreenshot and sets the
@@ -707,20 +791,44 @@ export class SaveWindow {
       }
       const info = saveInfoOf(key);
       if (info) {
-        shadowText(renderer, font, `V${info.saveVersion}`, m, M[0] + R.screenshot[0] + 1, M[1] + R.screenshot[1] + 1, { color: SW_COLORS.folder });
+        shadowText(renderer, font, `V${info.saveVersion}`, m, M[0] + R.screenshot[0] + 1, M[1] + R.screenshot[1] + 1, {
+          color: SW_COLORS.folder,
+        });
         const folder = `SAVE${key}`;
-        shadowText(renderer, font, folder, m,
-          M[0] + R.screenshot[0] + R.screenshot[2] - 1 - measureText(font.fnt, folder), M[1] + R.screenshot[1] + 1,
-          { color: SW_COLORS.folder });
+        shadowText(
+          renderer,
+          font,
+          folder,
+          m,
+          M[0] + R.screenshot[0] + R.screenshot[2] - 1 - measureText(font.fnt, folder),
+          M[1] + R.screenshot[1] + 1,
+          { color: SW_COLORS.folder },
+        );
         const real = info.dateAndTime?.realTime
-          ? new Date(info.dateAndTime.realTime).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+          ? new Date(info.dateAndTime.realTime).toLocaleDateString(undefined, {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })
           : '';
         // saveTimeLabel (:226) and gameTimeLabel (:230) are the other
         // two ShadowPosition = Vector2.zero labels; the version and
         // folder lines above keep theirs (:209, :215).
-        shadowText(renderer, font, real, m, M[0] + R.infoPanel[0], M[1] + R.infoPanel[1], { align: 'center', w: R.infoPanel[2], shadowOffset: 0 });
-        shadowText(renderer, font, midDateTimeString(dateFromClassicMinutes(info.dateAndTime?.gameTime ?? 0)), m,
-          M[0] + R.infoPanel[0], M[1] + R.infoPanel[1] + 9, { align: 'center', w: R.infoPanel[2], shadowOffset: 0 });
+        shadowText(renderer, font, real, m, M[0] + R.infoPanel[0], M[1] + R.infoPanel[1], {
+          align: 'center',
+          w: R.infoPanel[2],
+          shadowOffset: 0,
+        });
+        shadowText(
+          renderer,
+          font,
+          midDateTimeString(dateFromClassicMinutes(info.dateAndTime?.gameTime ?? 0)),
+          m,
+          M[0] + R.infoPanel[0],
+          M[1] + R.infoPanel[1] + 9,
+          { align: 'center', w: R.infoPanel[2], shadowOffset: 0 },
+        );
       }
     }
 
@@ -731,26 +839,42 @@ export class SaveWindow {
     const button = (rect, label, color, { dim = false, outline = true, tex = null } = {}) => {
       panel(rect, color, outline, tex);
       const [x, y, w, h] = at(rect);
-      shadowText(renderer, font, label, m, x, y + Math.floor((h - 7) / 2),
-        { align: 'center', w, color: dim ? SW_COLORS.folder : undefined });
+      shadowText(renderer, font, label, m, x, y + Math.floor((h - 7) / 2), {
+        align: 'center',
+        w,
+        color: dim ? SW_COLORS.folder : undefined,
+      });
     };
-    const hasInfo = this._infoShown();   // UpdateSelectedSaveInfo's two colour arms (:382-383, :415-416)
-    button(R.go, this.mode === 'save' ? SW_TEXT.saveButton : SW_TEXT.loadButton, SW_COLORS.save, { tex: 'saveButtonBackgroundColor' });
+    const hasInfo = this._infoShown(); // UpdateSelectedSaveInfo's two colour arms (:382-383, :415-416)
+    button(R.go, this.mode === 'save' ? SW_TEXT.saveButton : SW_TEXT.loadButton, SW_COLORS.save, {
+      tex: 'saveButtonBackgroundColor',
+    });
     // SetMode disables the classic switch in save mode (:437) and an
     // Enabled=false component is NOT DRAWN. The dim arm below is the
     // port's own (a host that handed over no mount).
     if (this.mode === 'load') {
-      button(R.switchClassic, SW_TEXT.classicSave, SW_COLORS.classic,
-        { dim: !this.hooks.onSwitchClassic, tex: 'switchClassicButtonBackgroundColor' });
+      button(R.switchClassic, SW_TEXT.classicSave, SW_COLORS.classic, {
+        dim: !this.hooks.onSwitchClassic,
+        tex: 'switchClassicButtonBackgroundColor',
+      });
     }
     button(R.cancel, SW_TEXT.cancel, SW_COLORS.cancel, { tex: 'cancelButtonBackgroundColor' });
-    button(R.rename, SW_TEXT.renameSave, hasInfo ? SW_COLORS.save : SW_COLORS.namePanel,
-      { dim: !hasInfo, outline: false, tex: 'renameSaveButtonBackgroundColor' });
-    button(R.del, SW_TEXT.deleteSave, hasInfo ? SW_COLORS.cancel : SW_COLORS.namePanel,
-      { dim: !hasInfo, outline: false, tex: 'deleteSaveButtonBackgroundColor' });
+    button(R.rename, SW_TEXT.renameSave, hasInfo ? SW_COLORS.save : SW_COLORS.namePanel, {
+      dim: !hasInfo,
+      outline: false,
+      tex: 'renameSaveButtonBackgroundColor',
+    });
+    button(R.del, SW_TEXT.deleteSave, hasInfo ? SW_COLORS.cancel : SW_COLORS.namePanel, {
+      dim: !hasInfo,
+      outline: false,
+      tex: 'deleteSaveButtonBackgroundColor',
+    });
     // switchChar: load mode AND at least one character (:436, :449-452).
     if (this.mode === 'load' && this.characterCount >= 1) {
-      button(R.switchChar, SW_TEXT.switchChar, SW_COLORS.save, { outline: false, tex: 'switchCharButtonBackgroundColor' });
+      button(R.switchChar, SW_TEXT.switchChar, SW_COLORS.save, {
+        outline: false,
+        tex: 'switchCharButtonBackgroundColor',
+      });
     }
 
     // The loading label (:246-251, :518): gray ground, white text,
@@ -761,30 +885,38 @@ export class SaveWindow {
       const lw = measureText(font.fnt, SW_TEXT.loading);
       const lx = M[0] + Math.floor((M[2] - lw) / 2);
       const ly = M[1] + Math.floor((M[3] - 9) / 2);
-      drawRect(renderer, m, lx - 1, ly - 1, lw + 2, 11, [0.5, 0.5, 0.5, 1]);   // Color.gray
+      drawRect(renderer, m, lx - 1, ly - 1, lw + 2, 11, [0.5, 0.5, 0.5, 1]); // Color.gray
       shadowText(renderer, font, SW_TEXT.loading, m, lx, ly, { color: [1, 1, 1, 1] });
     }
 
     // The stacked boxes.
     this._box = null;
     if (this.top === 'overwrite' || this.top === 'delete' || this.top === 'note') {
-      const rows = this.top === 'overwrite' ? [SW_TEXT.confirmOverwriteSave, '']
-        : this.top === 'delete' ? [SW_TEXT.confirmDeleteSave, '']
-          : this._noteRows ?? [];
-      const buttons = this.top === 'overwrite' ? [MB_BUTTONS.Yes, MB_BUTTONS.No]
-        : this.top === 'delete' ? [MB_BUTTONS.Delete, MB_BUTTONS.Cancel] : [];
+      const rows =
+        this.top === 'overwrite'
+          ? [SW_TEXT.confirmOverwriteSave, '']
+          : this.top === 'delete'
+            ? [SW_TEXT.confirmDeleteSave, '']
+            : (this._noteRows ?? []);
+      const buttons =
+        this.top === 'overwrite'
+          ? [MB_BUTTONS.Yes, MB_BUTTONS.No]
+          : this.top === 'delete'
+            ? [MB_BUTTONS.Delete, MB_BUTTONS.Cancel]
+            : [];
       this._box = layoutMessageBox(font, rows, buttons);
       if (!drawMessageBox(renderer, m, font, this._box)) {
         rows.forEach((r, i) => shadowText(renderer, font, r, m, 20, 20 + i * 10));
       }
     } else if (this.top === 'rename') {
-      this.renameBox?.draw(renderer, canvas, font);   // CM10: the pushed box rides over the list
+      this.renameBox?.draw(renderer, canvas, font); // CM10: the pushed box rides over the list
     } else if (this.top === 'charPicker') {
       const h = this._charRows.length * 10 + 8;
       drawRect(renderer, m, 90, 36, 140, h, SW_COLORS.main);
       this._charRows.forEach((name, i) => {
         shadowText(renderer, font, name, m, 90, 40 + i * 10, {
-          align: 'center', w: 140,
+          align: 'center',
+          w: 140,
           color: name === this.currentPlayerName ? undefined : SW_COLORS.listText,
         });
       });

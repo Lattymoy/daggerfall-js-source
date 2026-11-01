@@ -16,7 +16,6 @@ import { validQuestTags, questMarkerYields, QUEST_PUPPETS_MAX, validLooseSeqs, c
 import { summonedWord, summonedRecord, markSummoned } from '../../src/systems/foeLootCap.js';   // PIN MOVED (RPT1026-PROGRESS, test/scenes/rpt1026_progress_peersummon.test.js): the own lane names its summons and marks their puppets
 import { isPrivateQuestFoe } from '../../src/scenes/quest/questFoeHost.js';   // CURSE-SYNC: the handovers' word for a quest's foe
 import { PARTY_ME, noteFighter, foeFighters, partyFoeLoses, partyFoeHeals, partyFoeHits, _resetPartyScaleForTests } from '../../src/systems/party/partyScale.js';
-import { indexText } from '../bibleIndex.mjs';
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
 import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
 import { bossClockS } from '../../src/systems/bossTraits.js';
@@ -309,8 +308,6 @@ test('SUMMON-SYNC by source: every loose stand is marked, a quest\'s foe unmarke
   assert.match(D, /if \(yawRad != null && f\.ai\) f\.ai\.yaw = yawRad;\n\s*(?:if \(bout\) \{ f\.entity\.bout = bout; f\.entity\.items = \[\]; f\._bout = true; return f; \}\n\s*)?f\._loose = true;/, 'spawnLooseFoe marks its stand');   // ARENA2: an arena bout's fighter is the bout's, not a loose stand (offline; ARENA4 carries it online)   // merged beside OH-F C4: the alliance rides the build's record (buildFoeAt), so the mark follows the yaw
   assert.match(D, /const f = await spawnLooseFoe\(mobileType, position, \{ gender, yawRad(?:, questSpawn: true)? \}\);\n\s*if \(!f\) \{[^\n]*\}\n\s*f\._loose = false;/, 'a quest\'s foe rides by its quest\'s law');
   assert.match(D, /SUMMON-SYNC \(2026-09-27, Mac: "Finish the 2 gaps"\) paid the last/);
-  assert.match(indexText(), /## Open flags/, 'the index still carries the open flags (a negative pin over a page that lost them would pass for ever - HARD5)');
-  assert.doesNotMatch(indexText(), /`src\/scenes\/dungeonContext\.js:\d+` - REPORTS ARE THIS ONE LINE/, 'the open flags no longer carry it');
 });
 
 test('SUMMON-SYNC: an ALLY goes with its summoner - neither handover names an heir for it (its record carries no side, and an heir stood it as everyone\'s foe); a loose foe goes to the nearest player, a shared quest\'s to a party member', () => {

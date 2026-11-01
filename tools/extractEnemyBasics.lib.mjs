@@ -9,7 +9,19 @@
 // from every pin, because every pin read the port. THE GATE MUST
 // RE-EXTRACT FROM THE SOURCE.
 
-const MATERIALS = { None: -1, Iron: 0, Steel: 1, Silver: 2, Elven: 3, Dwarven: 4, Mithril: 5, Adamantium: 6, Ebony: 7, Orcish: 8, Daedric: 9 };
+const MATERIALS = {
+  None: -1,
+  Iron: 0,
+  Steel: 1,
+  Silver: 2,
+  Elven: 3,
+  Dwarven: 4,
+  Mithril: 5,
+  Adamantium: 6,
+  Ebony: 7,
+  Orcish: 8,
+  Daedric: 9,
+};
 
 /** The Enemies[] initialiser block, source text. Shared so a gate can
  *  scan the SAME region the extraction reads.
@@ -34,8 +46,12 @@ export function sliceEnemyTable(src) {
  *  source text. Pure: no filesystem, no imports of the port. */
 export function extractEnemyBasics(src, soundClipsSrc) {
   const SOUNDCLIPS = Object.fromEntries(
-    [...soundClipsSrc.matchAll(/^\s*(\w+) = (\d+),/gm)].map((m) => [m[1], Number(m[2])]));
-  const field = (b, k) => { const m = b.match(new RegExp(`\\b${k} = ([^,\\n]+),`)); return m ? m[1].trim() : null; };
+    [...soundClipsSrc.matchAll(/^\s*(\w+) = (\d+),/gm)].map((m) => [m[1], Number(m[2])]),
+  );
+  const field = (b, k) => {
+    const m = b.match(new RegExp(`\\b${k} = ([^,\\n]+),`));
+    return m ? m[1].trim() : null;
+  };
   const num = (v) => (v === null ? null : Number(v));
   // An anim-frame element is a C# CONSTANT EXPRESSION, not a literal:
   // EnemyBasics.cs:1066 has a missing comma, so the Orc Warlord's
@@ -46,7 +62,11 @@ export function extractEnemyBasics(src, soundClipsSrc) {
   // fail on anything that is not an integer so a future regeneration
   // can never silently emit null again.
   function animFrame(s, id, key) {
-    const v = s.trim().split(/\s+/).map(Number).reduce((a, b) => a + b, 0);
+    const v = s
+      .trim()
+      .split(/\s+/)
+      .map(Number)
+      .reduce((a, b) => a + b, 0);
     if (!Number.isInteger(v)) throw new Error(`ASSERT FAIL: enemy ${id} ${key} element "${s.trim()}" -> ${v}`);
     return v;
   }
@@ -71,14 +91,33 @@ export function extractEnemyBasics(src, soundClipsSrc) {
     const corpse = b.match(/CorpseTexture = CorpseTexture\((\d+),\s*(\d+)\)/);
     if (corpse) e.corpseTexture = { archive: Number(corpse[1]), record: Number(corpse[2]) };
     const mm = field(b, 'MinMetalToHit');
-    e.minMetalToHit = mm ? MATERIALS[mm.replace('WeaponMaterialTypes.', '')] : 0;   // absent -> C# default(enum) = 0
+    e.minMetalToHit = mm ? MATERIALS[mm.replace('WeaponMaterialTypes.', '')] : 0; // absent -> C# default(enum) = 0
     // AUDIT 24 (wave 23): SoulPts is on the struct
     // (DaggerfallUnityStructs.cs:216, "Number of enchantment points in a
     // trapped soul of this enemy") and 32 of the 62 entries set it. The
     // extraction dropped the whole column, so ItemBuilder.cs:303's
     // `newItem.value = 5000 + mobileEnemy.SoulPts` and :626's
     // enchantment value had no data to read on this side.
-    for (const k of ['MinDamage', 'MaxDamage', 'MinDamage2', 'MaxDamage2', 'MinDamage3', 'MaxDamage3', 'MinHealth', 'MaxHealth', 'Level', 'ArmorValue', 'Weight', 'MapChance', 'SoulPts', 'BloodIndex', 'ChanceForAttack2', 'ChanceForAttack3', 'ChanceForAttack4', 'ChanceForAttack5']) {
+    for (const k of [
+      'MinDamage',
+      'MaxDamage',
+      'MinDamage2',
+      'MaxDamage2',
+      'MinDamage3',
+      'MaxDamage3',
+      'MinHealth',
+      'MaxHealth',
+      'Level',
+      'ArmorValue',
+      'Weight',
+      'MapChance',
+      'SoulPts',
+      'BloodIndex',
+      'ChanceForAttack2',
+      'ChanceForAttack3',
+      'ChanceForAttack4',
+      'ChanceForAttack5',
+    ]) {
       const v = num(field(b, k));
       if (v !== null) e[k[0].toLowerCase() + k.slice(1)] = v;
     }
@@ -92,7 +131,17 @@ export function extractEnemyBasics(src, soundClipsSrc) {
     // C17: class-enemy archer anims (records 20-24 with the -1 shoot marker)
     if (/HasRangedAttack1 = true/.test(b)) e.hasRangedAttack1 = true;
     if (/HasRangedAttack2 = true/.test(b)) e.hasRangedAttack2 = true;
-    for (const k of ['PrimaryAttackAnimFrames', 'PrimaryAttackAnimFrames2', 'PrimaryAttackAnimFrames3', 'PrimaryAttackAnimFrames4', 'PrimaryAttackAnimFrames5', 'SpellAnimFrames', 'RangedAttackAnimFrames', 'SeducerTransform1Frames', 'SeducerTransform2Frames']) {
+    for (const k of [
+      'PrimaryAttackAnimFrames',
+      'PrimaryAttackAnimFrames2',
+      'PrimaryAttackAnimFrames3',
+      'PrimaryAttackAnimFrames4',
+      'PrimaryAttackAnimFrames5',
+      'SpellAnimFrames',
+      'RangedAttackAnimFrames',
+      'SeducerTransform1Frames',
+      'SeducerTransform2Frames',
+    ]) {
       const m = b.match(new RegExp(`\\b${k} = new int\\[\\] \\{([^}]+)\\}`));
       if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => animFrame(s, id, k));
     }
@@ -111,7 +160,7 @@ export function extractEnemyBasics(src, soundClipsSrc) {
     // EnemyAttack.cs:371-373 read on a zero-damage hit.
     if (/ParrySounds = true/.test(b)) e.parrySounds = true;
     if (/CastsMagic = true/.test(b)) e.castsMagic = true;
-    if (/SeesThroughInvisibility = true/.test(b)) e.seesThroughInvisibility = true;   // P13: the illusion-gate exemption
+    if (/SeesThroughInvisibility = true/.test(b)) e.seesThroughInvisibility = true; // P13: the illusion-gate exemption
     // AUDIT 24 (wave 23): five more columns the extraction never
     // looked at, all with real DFU consumers. NoShadow gates the
     // shadow caster and GlowColor the point light

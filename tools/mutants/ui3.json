@@ -2,8 +2,8 @@
   {
     "name": "UI3-a-debuff-framed-as-a-buff",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "key: `spell${i}`, kind: e.self || e.ally ? 'buff' : 'debuff',",
-    "new": "key: `spell${i}`, kind: 'buff',",
+    "old": "      kind: e.self || e.ally ? 'buff' : 'debuff',",
+    "new": "      kind: 'buff',",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "UI3-an-item-blinking",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "blink: !!e.expiring && !e.item,",
-    "new": "blink: !!e.expiring,",
+    "old": "      blink: !!e.expiring && !e.item, // SetIconBlinkState: an item's never blinks",
+    "new": "      blink: !!e.expiring, // SetIconBlinkState: an item's never blinks",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "UI3-the-rounds-dropped",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,",
-    "new": "foot: null,",
+    "old": "      foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,",
+    "new": "      foot: null,",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "UI3-a-need-that-costs-framed-amber",
     "file": "src/ui/hud/hudStatus.js",
-    "old": ": c.level === 'danger' ? 'danger' : 'warn'",
-    "new": ": 'warn'",
+    "old": "      kind: c.level === 'boon' ? 'buff' : c.level === 'danger' ? 'danger' : 'warn',",
+    "new": "      kind: c.level === 'boon' ? 'buff' : 'warn',",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "UI3-a-waiting-poison-shown",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;",
-    "new": "if (a.kind === 'poison') poisoned = true;",
+    "old": "    if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;",
+    "new": "    if (a.kind === 'poison') poisoned = true;",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "UI3-a-tile-a-poison",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;",
-    "new": "if (a.kind === 'poison' && a.state !== 'waiting') { poisoned = true; out.push({ key: `poison${out.length}`, name: 'Poisoned', glyph: 'poison' }); }",
+    "old": "    if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;\n    else if (a.kind === 'disease' && a.incubationOver && a.disease != null && DISEASE_NAMES[a.disease]) {",
+    "new": "    if (a.kind === 'poison' && a.state !== 'waiting') {\n      poisoned = true;\n      out.push({ key: `poison${out.length}`, name: 'Poisoned', glyph: 'poison' });\n    } else if (a.kind === 'disease' && a.incubationOver && a.disease != null && DISEASE_NAMES[a.disease]) {",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "UI3-an-incubating-disease-shown",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "else if (a.kind === 'disease' && a.incubationOver && a.disease != null",
-    "new": "else if (a.kind === 'disease' && a.disease != null",
+    "old": "    else if (a.kind === 'disease' && a.incubationOver && a.disease != null && DISEASE_NAMES[a.disease]) {",
+    "new": "    else if (a.kind === 'disease' && a.disease != null && DISEASE_NAMES[a.disease]) {",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "UI3-an-ended-one-shown",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "    if (!a || a.ended) continue;\n",
-    "new": "    if (!a) continue;\n",
+    "old": "    if (!a || a.ended) continue;",
+    "new": "    if (!a) continue;",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "UI3-every-temperature-a-sun",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "return _coldWords.has(chip.text) ? 'cold' : 'hot';",
-    "new": "return 'hot';",
+    "old": "    return _coldWords.has(chip.text) ? 'cold' : 'hot';",
+    "new": "    return 'hot';",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "UI3-a-glyph-pixel-unoutlined",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "'.....kkbbbaakk..'",
-    "new": "'.....k.bbbaakk..'",
+    "old": "      '.....kkbbbaakk..',",
+    "new": "      '.....k.bbbaakk..',",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "UI3-the-runs-one-rect-a-pixel",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "      while (end < row.length && row[end] === ch) end++;\n",
-    "new": "",
+    "old": "      while (end < row.length && row[end] === ch) end++;\n      if (ch !== '.')",
+    "new": "      if (ch !== '.')",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -102,7 +102,7 @@
     "name": "UI3-the-scale-not-divided",
     "file": "src/ui/hud/hudStatus.js",
     "old": "  const room = Math.floor((captionTop - Math.max(0, Number(above) || 0) - STAT_AIR) / s - STAT_LIFT);",
-    "new": "  const room = Math.floor((captionTop - Math.max(0, Number(above) || 0) - STAT_AIR) - STAT_LIFT);",
+    "new": "  const room = Math.floor(captionTop - Math.max(0, Number(above) || 0) - STAT_AIR - STAT_LIFT);",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "UI3-over-what-stands-there-rather-than-aside",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "  if (!above && !beside) return { side: false, rows: 1, columns: 1, tight: true, none: true };\n",
-    "new": "",
+    "old": "  if (!above && !beside) return { side: false, rows: 1, columns: 1, tight: true, none: true };\n  const side = beside > above && above < Math.min(2, n);",
+    "new": "  const side = beside > above && above < Math.min(2, n);",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "UI3-names-in-a-wall-of-columns",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "rows < STAT_TIGHT_ROWS || cols > STAT_WIDE_COLUMNS ||",
-    "new": "rows < STAT_TIGHT_ROWS ||",
+    "old": "  const tight = side || rows < STAT_TIGHT_ROWS || cols > STAT_WIDE_COLUMNS || (Number.isFinite(width) && named > width);",
+    "new": "  const tight = side || rows < STAT_TIGHT_ROWS || (Number.isFinite(width) && named > width);",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "UI3-the-words-with-the-pending-in-them",
     "file": "src/ui/hud/hudRenown.js",
-    "old": "text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP` };",
-    "new": "text: `${groupedXp(p.into + more)} / ${groupedXp(p.need)} XP` };",
+    "old": "    text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP`,",
+    "new": "    text: `${groupedXp(p.into + more)} / ${groupedXp(p.need)} XP`,",
     "tests": [
       "test/server/renown4.test.js",
       "test/ui/enhanced/renownbar.test.js"
@@ -366,8 +366,8 @@
   {
     "name": "UI3-the-words-the-track-s-total",
     "file": "src/ui/hud/hudRenown.js",
-    "old": "text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP` };",
-    "new": "text: `${groupedXp(xp)} / ${groupedXp(p.need)} XP` };",
+    "old": "    text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP`,",
+    "new": "    text: `${groupedXp(xp)} / ${groupedXp(p.need)} XP`,",
     "tests": [
       "test/server/renown4.test.js",
       "test/ui/enhanced/renownbar.test.js"
@@ -376,8 +376,8 @@
   {
     "name": "UI3-the-cap-without-its-word",
     "file": "src/ui/hud/hudRenown.js",
-    "old": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: RENOWN_HUD_TOP };\n",
-    "new": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: '' };\n",
+    "old": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: RENOWN_HUD_TOP };",
+    "new": "  if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: '' };",
     "tests": [
       "test/server/renown4.test.js",
       "test/ui/enhanced/renownbar.test.js"
@@ -386,8 +386,8 @@
   {
     "name": "UI3-a-disease-s-name-out-of-its-place",
     "file": "src/systems/diseases.js",
-    "old": "  'Cholera', 'Leprosy',",
-    "new": "  'Leprosy', 'Cholera',",
+    "old": "  'Cholera',\n  'Leprosy',",
+    "new": "  'Leprosy',\n  'Cholera',",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "AUDIT-UI-C2-the-named-columns-across-the-middle",
     "file": "src/ui/hud/hudStatus.js",
-    "old": " || (Number.isFinite(width) && named > width);",
-    "new": ";",
+    "old": "  const tight = side || rows < STAT_TIGHT_ROWS || cols > STAT_WIDE_COLUMNS || (Number.isFinite(width) && named > width);",
+    "new": "  const tight = side || rows < STAT_TIGHT_ROWS || cols > STAT_WIDE_COLUMNS;",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-UI-C3-a-mate-s-gift-framed-a-debuff",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "kind: e.self || e.ally ? 'buff' : 'debuff',",
-    "new": "kind: e.self ? 'buff' : 'debuff',",
+    "old": "      kind: e.self || e.ally ? 'buff' : 'debuff',",
+    "new": "      kind: e.self ? 'buff' : 'debuff',",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "AUDIT-UI-C5-an-item-s-rounds-at-its-foot",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,",
-    "new": "foot: Number.isFinite(e.rounds) ? String(e.rounds) : null,",
+    "old": "      foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,",
+    "new": "      foot: Number.isFinite(e.rounds) ? String(e.rounds) : null,",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]

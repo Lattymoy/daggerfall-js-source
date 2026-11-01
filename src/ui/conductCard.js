@@ -13,9 +13,15 @@
 // pointer lock is let go so the mouse can reach it. Handed the document and the window so the pins drive it headless.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
-import { conductTitle, conductRules, conductConsequence, conductAgreeLabel, conductLaterLabel } from '../net/safety/conduct.js';
-import { registerOverlay } from './enhanced/enhancedOverlays.js';   // AUDIT SAFE CLIENT-10: the stack every enhanced window stands on
-import { overlayAction } from './input.js';   // AUDIT SAFE CLIENT-10: Escape as the windows read it ('back')
+import {
+  conductTitle,
+  conductRules,
+  conductConsequence,
+  conductAgreeLabel,
+  conductLaterLabel,
+} from '../net/safety/conduct.js';
+import { registerOverlay } from './enhanced/enhancedOverlays.js'; // AUDIT SAFE CLIENT-10: the stack every enhanced window stands on
+import { overlayAction } from './input.js'; // AUDIT SAFE CLIENT-10: Escape as the windows read it ('back')
 
 export const CONDUCT_STYLE_ID = 'dagger-conduct-style';
 export const CONDUCT_CSS = `
@@ -44,14 +50,26 @@ export const CONDUCT_CSS = `
  * @param {any} [o.win]  the window its Escape is read on (capture)
  * @param {(close: () => void) => () => void} [o.register]  the overlay stack's door (enhancedOverlays.js registerOverlay)
  */
-export function createConductCard({ agree, later = () => {}, touch = false, doc = document, win = globalThis, register = registerOverlay }) {
+export function createConductCard({
+  agree,
+  later = () => {},
+  touch = false,
+  doc = document,
+  win = globalThis,
+  register = registerOverlay,
+}) {
   if (doc?.getElementById && !doc.getElementById(CONDUCT_STYLE_ID)) {
     const st = doc.createElement('style');
     st.id = CONDUCT_STYLE_ID;
     st.textContent = CONDUCT_CSS;
     (doc.head ?? doc.body)?.append(st);
   }
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const root = el('div', `dfconduct${touch ? ' touch' : ''}`);
   root.dataset.up = '0';
   root.setAttribute('role', 'dialog');
@@ -59,14 +77,17 @@ export function createConductCard({ agree, later = () => {}, touch = false, doc 
   const rules = el('ul', 'dfconduct-rules');
   const after = el('p', 'dfconduct-after');
   const row = el('div', 'dfconduct-row');
-  const no = el('button', 'dfconduct-btn'); no.type = 'button';
-  const yes = el('button', 'dfconduct-btn yes'); yes.type = 'button';
+  const no = el('button', 'dfconduct-btn');
+  no.type = 'button';
+  const yes = el('button', 'dfconduct-btn yes');
+  yes.type = 'button';
   row.append(no, yes);
   root.append(title, rules, after, row);
   root.setAttribute('aria-label', conductTitle());
   doc.body?.append(root);
-  const swallow = (e) => e.stopPropagation();   // a press on the card is the card's - never a swing
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) root.addEventListener(t, swallow);
+  const swallow = (e) => e.stopPropagation(); // a press on the card is the card's - never a swing
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    root.addEventListener(t, swallow);
   let up = false;
   let unregister = () => {};
   /** AUDIT SAFE CLIENT-10: down, off the stack and out of the keyboard - THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD
@@ -81,7 +102,9 @@ export function createConductCard({ agree, later = () => {}, touch = false, doc 
     win?.removeEventListener?.('keydown', onKey, true);
     return true;
   };
-  const answer = (/** @type {() => void} */ fn) => { if (close()) fn(); };
+  const answer = (/** @type {() => void} */ fn) => {
+    if (close()) fn();
+  };
   /** AUDIT SAFE CLIENT-10: Escape is Not now - the card's, never the pause menu's or the game's. */
   function onKey(/** @type {any} */ e) {
     if (!up || typeof e?.key !== 'string' || e.metaKey || e.ctrlKey || e.altKey || overlayAction(e) !== 'back') return;
@@ -103,9 +126,13 @@ export function createConductCard({ agree, later = () => {}, touch = false, doc 
       no.textContent = conductLaterLabel();
       if (!up) {
         up = true;
-        unregister = register(() => answer(later));   // AUDIT SAFE CLIENT-10: the QuickDial key puts it away, as Not now
+        unregister = register(() => answer(later)); // AUDIT SAFE CLIENT-10: the QuickDial key puts it away, as Not now
         win?.addEventListener?.('keydown', onKey, true);
-        try { if (doc?.pointerLockElement) doc.exitPointerLock?.(); } catch { /* no lock to let go */ }
+        try {
+          if (doc?.pointerLockElement) doc.exitPointerLock?.();
+        } catch {
+          /* no lock to let go */
+        }
       }
       root.dataset.up = '1';
       yes.focus?.();
@@ -113,6 +140,9 @@ export function createConductCard({ agree, later = () => {}, touch = false, doc 
     /** Whether it stands. */
     isUp: () => up,
     close,
-    destroy() { close(); root.remove?.(); },
+    destroy() {
+      close();
+      root.remove?.();
+    },
   };
 }

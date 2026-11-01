@@ -22,8 +22,8 @@
 //    with mine; STORE-KEEPS (2026-10-26, the owner: "anything stored" is never lost on death) made his pack storage no death
 //    takes, and he is sent back aboard - his pack to her hold - in the zone as anywhere.
 
-import { entityMaxEncumbrance, maxEncumbrance } from '../../combat/formulas.js';   // COMPANION-WEIGHT: DFU's MaxEncumbrance
-import { companionsWithYou, COMPANION_SLOTS } from '../companionSlots.js';   // COMPANION-SLOTS: the crew and the sworn revenants share the player's side
+import { entityMaxEncumbrance, maxEncumbrance } from '../../combat/formulas.js'; // COMPANION-WEIGHT: DFU's MaxEncumbrance
+import { companionsWithYou, COMPANION_SLOTS } from '../companionSlots.js'; // COMPANION-SLOTS: the crew and the sworn revenants share the player's side
 
 /** How many hands walk ashore with the player at once (Mac: "Up to 2"). */
 export const COMPANION_MAX = 2;
@@ -35,13 +35,24 @@ export const COMPANION_MAX = 2;
  *  average person's, PACK_DEFAULT_STRENGTH's. A pack filled past it before the limit keeps what it holds; nothing more
  *  goes in (itemTransfer.js planStore). */
 export const PACK_DEFAULT_STRENGTH = 50;
-export const packCapacityKg = (entity) => (Number(entity?.stats?.strength) > 0 ? entityMaxEncumbrance(entity) : maxEncumbrance(PACK_DEFAULT_STRENGTH));
+export const packCapacityKg = (entity) =>
+  Number(entity?.stats?.strength) > 0 ? entityMaxEncumbrance(entity) : maxEncumbrance(PACK_DEFAULT_STRENGTH);
 /** How long a knocked-out companion rests aboard before he will come ashore again - the world's minutes (8 hours). */
 export const REST_MIN = 8 * 60;
 /** Why a hand will not come ashore - short, for the picker's "(why)". */
-export const COMPANION_WHY = Object.freeze({ full: 'two ashore already', resting: 'resting aboard', uncrewed: 'no crew', slots: 'no room at your side' });
+export const COMPANION_WHY = Object.freeze({
+  full: 'two ashore already',
+  resting: 'resting aboard',
+  uncrewed: 'no crew',
+  slots: 'no room at your side',
+});
 /** The picker's words. */
-export const COMPANION_TEXT = Object.freeze({ take: 'Take ashore', back: 'Send back aboard', ashore: 'ashore', resting: 'resting' });
+export const COMPANION_TEXT = Object.freeze({
+  take: 'Take ashore',
+  back: 'Send back aboard',
+  ashore: 'ashore',
+  resting: 'resting',
+});
 
 /** @typedef {{ boat: number, name: string, role: string, mobile: number, gender: 'male'|'female', health: number|null, maxHealth: number|null, items: any[], folk?: string|null }} Companion */
 /** @typedef {{ boat: number, name: string, until: number }} Resting */
@@ -57,25 +68,59 @@ const same = (a, boat, name) => a.boat === boat && a.name === name;
  *   host's item codec for the packs (Come Sail Away's cargo's, scenes/world.js packedItems); none: packs kept as given
  */
 export function createCompanions(record = null, codec = null) {
-  const packIn = (data) => { if (!Array.isArray(data) || !data.length) return []; try { const out = codec ? codec.deserialize(data) : data.slice(); return Array.isArray(out) ? out : []; } catch { return []; } };
-  const packOut = (items) => { if (!items?.length) return []; try { return codec ? codec.serialize(items) : items.slice(); } catch { return []; } };
+  const packIn = (data) => {
+    if (!Array.isArray(data) || !data.length) return [];
+    try {
+      const out = codec ? codec.deserialize(data) : data.slice();
+      return Array.isArray(out) ? out : [];
+    } catch {
+      return [];
+    }
+  };
+  const packOut = (items) => {
+    if (!items?.length) return [];
+    try {
+      return codec ? codec.serialize(items) : items.slice();
+    } catch {
+      return [];
+    }
+  };
   /** @type {Companion[]} */
   let party = [];
   /** @type {Resting[]} */
   let resting = [];
   if (record && typeof record === 'object') {
     for (const c of Array.isArray(record.party) ? record.party : []) {
-      if (party.length >= COMPANION_MAX || !c || !isBoat(c.boat) || !isName(c.name) || party.some((p) => same(p, c.boat, c.name))) continue;
-      const hp = Number(c.health), max = Number(c.maxHealth);
+      if (
+        party.length >= COMPANION_MAX ||
+        !c ||
+        !isBoat(c.boat) ||
+        !isName(c.name) ||
+        party.some((p) => same(p, c.boat, c.name))
+      )
+        continue;
+      const hp = Number(c.health),
+        max = Number(c.maxHealth);
       party.push({
-        boat: c.boat, name: c.name, role: isName(c.role) ? c.role : 'Deckhand', mobile: Number.isInteger(c.mobile) ? c.mobile : 0,
+        boat: c.boat,
+        name: c.name,
+        role: isName(c.role) ? c.role : 'Deckhand',
+        mobile: Number.isInteger(c.mobile) ? c.mobile : 0,
         gender: c.gender === 'female' ? 'female' : 'male',
-        health: c.health != null && Number.isFinite(hp) && hp > 0 ? hp : null, maxHealth: c.maxHealth != null && Number.isFinite(max) && max > 0 ? max : null,
-        items: packIn(c.items),   // COMPANION-KIT: his pack
+        health: c.health != null && Number.isFinite(hp) && hp > 0 ? hp : null,
+        maxHealth: c.maxHealth != null && Number.isFinite(max) && max > 0 ? max : null,
+        items: packIn(c.items), // COMPANION-KIT: his pack
       });
     }
     for (const r of Array.isArray(record.resting) ? record.resting : []) {
-      if (!r || !isBoat(r.boat) || !isName(r.name) || !Number.isFinite(r.until) || resting.some((o) => same(o, r.boat, r.name))) continue;
+      if (
+        !r ||
+        !isBoat(r.boat) ||
+        !isName(r.name) ||
+        !Number.isFinite(r.until) ||
+        resting.some((o) => same(o, r.boat, r.name))
+      )
+        continue;
       if (party.some((p) => same(p, r.boat, r.name))) continue;
       resting.push({ boat: r.boat, name: r.name, until: r.until });
     }
@@ -85,9 +130,13 @@ export function createCompanions(record = null, codec = null) {
 
   return {
     /** The companions ashore, in the order they came. */
-    get party() { return party; },
+    get party() {
+      return party;
+    },
     /** The hands resting aboard after a knock, each with the minute he is fit again. */
-    get resting() { return resting; },
+    get resting() {
+      return resting;
+    },
     /** Whether a hand walks ashore. @param {number} boat @param {string} name */
     isAshore: (boat, name) => !!find(boat, name),
     /** One companion ashore, or null. @param {number} boat @param {string} name */
@@ -110,10 +159,20 @@ export function createCompanions(record = null, codec = null) {
      * @param {number} boat @param {{ name: string, role: string, mobile: number, gender: string }} hand @param {number} now
      */
     take(boat, hand, now) {
-      if (!isBoat(boat) || !isName(hand?.name) || find(boat, hand.name) || this.why(boat, hand, now) != null) return null;
+      if (!isBoat(boat) || !isName(hand?.name) || find(boat, hand.name) || this.why(boat, hand, now) != null)
+        return null;
       resting = resting.filter((r) => !same(r, boat, hand.name));
       /** @type {Companion} */
-      const c = { boat, name: hand.name, role: hand.role, mobile: hand.mobile, gender: hand.gender === 'female' ? 'female' : 'male', health: null, maxHealth: null, items: [] };
+      const c = {
+        boat,
+        name: hand.name,
+        role: hand.role,
+        mobile: hand.mobile,
+        gender: hand.gender === 'female' ? 'female' : 'male',
+        health: null,
+        maxHealth: null,
+        items: [],
+      };
       party.push(c);
       return c;
     },
@@ -173,7 +232,10 @@ export function createCompanions(record = null, codec = null) {
       return out;
     },
     /** The party as the save keeps it - COMPANION-KIT: each pack through the codec. */
-    snapshot: () => ({ party: party.map((p) => ({ ...p, items: packOut(p.items) })), resting: resting.map((r) => ({ ...r })) }),
+    snapshot: () => ({
+      party: party.map((p) => ({ ...p, items: packOut(p.items) })),
+      resting: resting.map((r) => ({ ...r })),
+    }),
   };
 }
 
@@ -185,12 +247,18 @@ export function createCompanions(record = null, codec = null) {
 export function companionRows({ boat, crewed, hands, now, companions }) {
   return hands.map((h) => {
     const called = `${h.name}, ${h.role}`;
-    if (companions.isAshore(boat, h.name)) return { id: h.name, label: `${COMPANION_TEXT.back}: ${called}`, back: true };
+    if (companions.isAshore(boat, h.name))
+      return { id: h.name, label: `${COMPANION_TEXT.back}: ${called}`, back: true };
     const why = companions.why(boat, h, now, crewed);
     if (why === COMPANION_WHY.resting) {
       const r = companions.resting.find((x) => same(x, boat, h.name));
       const hours = Math.max(1, Math.ceil(((r?.until ?? now) - now) / 60));
-      return { id: h.name, label: `${called}`, disabled: true, why: `${COMPANION_TEXT.resting}, ${hours} ${hours === 1 ? 'hour' : 'hours'}` };
+      return {
+        id: h.name,
+        label: `${called}`,
+        disabled: true,
+        why: `${COMPANION_TEXT.resting}, ${hours} ${hours === 1 ? 'hour' : 'hours'}`,
+      };
     }
     if (why) return { id: h.name, label: `${called}`, disabled: true, why };
     return { id: h.name, label: `${COMPANION_TEXT.take}: ${called}` };
@@ -203,7 +271,9 @@ export function companionRows({ boat, crewed, hands, now, companions }) {
  * @param {number} yaw @param {number} i @param {number} n
  */
 export function companionSlot(yaw, i, n) {
-  const back = 1.8, side = n > 1 ? (i === 0 ? -1 : 1) * 1.1 : 0;
-  const fx = Math.sin(yaw), fz = Math.cos(yaw);
+  const back = 1.8,
+    side = n > 1 ? (i === 0 ? -1 : 1) * 1.1 : 0;
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw);
   return [-fx * back + fz * side, -fz * back - fx * side];
 }

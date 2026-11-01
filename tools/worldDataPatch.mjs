@@ -28,7 +28,14 @@ import { PATCH_FORMAT, rebuildWorldDataPatch } from '../src/formats/worldData/wo
 /** What a world-data asset name says it is: a block (with its variant) or a building record of a block. */
 export function parseWorldDataName(name) {
   const building = /^([A-Z0-9]+\.RMB)-(\d+)-building(\d+)(.*)$/.exec(name);
-  if (building) return { kind: 'building', block: building[1], index: Number(building[2]), record: Number(building[3]), variant: building[4] };
+  if (building)
+    return {
+      kind: 'building',
+      block: building[1],
+      index: Number(building[2]),
+      record: Number(building[3]),
+      variant: building[4],
+    };
   const block = /^([A-Z0-9]+\.(?:RMB|RDB|RDI))(.*)$/.exec(name);
   if (block) return { kind: 'block', block: block[1], variant: block[2] };
   throw new Error(`world-data patch: ${name} is neither a block nor a building file`);
@@ -38,10 +45,14 @@ export function parseWorldDataName(name) {
 export function classicBaseFor(blocks, parsed) {
   const index = blocks.getBlockIndex(parsed.block);
   if (index < 0) throw new Error(`world-data patch: ${parsed.block} is not in BLOCKS.BSA`);
-  if (parsed.kind === 'building' && parsed.index !== index) throw new Error(`world-data patch: ${parsed.block} is block ${index}, the file says ${parsed.index}`);
+  if (parsed.kind === 'building' && parsed.index !== index)
+    throw new Error(`world-data patch: ${parsed.block} is block ${index}, the file says ${parsed.index}`);
   const dfBlock = blocks.readClassicBlock(index);
   if (!dfBlock) throw new Error(`world-data patch: ${parsed.block} did not read`);
-  return { index, json: parsed.kind === 'building' ? buildingToDfuJson(dfBlock, parsed.record) : blockToDfuJson(dfBlock) };
+  return {
+    index,
+    json: parsed.kind === 'building' ? buildingToDfuJson(dfBlock, parsed.record) : blockToDfuJson(dfBlock),
+  };
 }
 
 export const sha256Canonical = (json) => createHash('sha256').update(canonicalJson(json)).digest('hex');
@@ -65,7 +76,7 @@ function recordsByArrayKey(doc, block, into) {
   return into;
 }
 
-const COPY_MIN_BYTES = 400;   // a record smaller than this is carried whole (a flat, a model)
+const COPY_MIN_BYTES = 400; // a record smaller than this is carried whole (a flat, a model)
 /** Replace each large inserted or set record that is a moved copy of a
  *  classic record by a copy op and the author's edits to it. */
 function preferCopies(ops, sources) {
@@ -73,7 +84,16 @@ function preferCopies(ops, sources) {
   for (const op of ops) {
     const [kind, path, value] = op;
     const whole = JSON.stringify(op);
-    if ((kind !== 'i' && kind !== 's') || !value || typeof value !== 'object' || Array.isArray(value) || whole.length < COPY_MIN_BYTES) { out.push(op); continue; }
+    if (
+      (kind !== 'i' && kind !== 's') ||
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      whole.length < COPY_MIN_BYTES
+    ) {
+      out.push(op);
+      continue;
+    }
     const key = [...path].reverse().find((k) => typeof k === 'string');
     let best = null;
     for (const c of sources.get(key) ?? []) {
@@ -99,12 +119,20 @@ export function makePatch(blocks, assetName, modJson, copyFrom = []) {
     if (b) recordsByArrayKey(blockToDfuJson(b), bi, sources);
   }
   const ops = preferCopies(diffJson(base, modJson), sources);
-  const baseRef = parsed.kind === 'building'
-    ? { kind: 'building', block: parsed.block, index, record: parsed.record }
-    : { kind: 'block', block: parsed.block, index };
-  const patch = { format: PATCH_FORMAT, rebuilds: `${assetName}.json`, base: baseRef, sha256: sha256Canonical(modJson), ops };
+  const baseRef =
+    parsed.kind === 'building'
+      ? { kind: 'building', block: parsed.block, index, record: parsed.record }
+      : { kind: 'block', block: parsed.block, index };
+  const patch = {
+    format: PATCH_FORMAT,
+    rebuilds: `${assetName}.json`,
+    base: baseRef,
+    sha256: sha256Canonical(modJson),
+    ops,
+  };
   // Checked through the runtime's own rebuild (formats/worldData/worldDataPatch.js), not a second copy of it.
-  if (sha256Canonical(rebuildWorldDataPatch(patch, blocks)) !== patch.sha256) throw new Error(`world-data patch: ${assetName} does not rebuild`);
+  if (sha256Canonical(rebuildWorldDataPatch(patch, blocks)) !== patch.sha256)
+    throw new Error(`world-data patch: ${assetName} does not rebuild`);
   return patch;
 }
 
@@ -122,10 +150,13 @@ if (isMain(import.meta.url)) {
     process.exit(1);
   }
   const blocks = new BlocksFile();
-  if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA'))))) throw new Error('BLOCKS.BSA did not load');
+  if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA')))))
+    throw new Error('BLOCKS.BSA did not load');
   mkdirSync(outDir, { recursive: true });
   // Every block the batch names is a copy source for every file in it.
-  const copyFrom = [...new Set(files.map((f) => blocks.getBlockIndex(parseWorldDataName(basename(f).replace(/\.json$/, '')).block)))];
+  const copyFrom = [
+    ...new Set(files.map((f) => blocks.getBlockIndex(parseWorldDataName(basename(f).replace(/\.json$/, '')).block))),
+  ];
   for (const file of files) {
     const name = basename(file).replace(/\.json$/, '');
     const text = readFileSync(file, 'utf8');
@@ -134,6 +165,8 @@ if (isMain(import.meta.url)) {
     const out = join(outDir, `${name}.json`);
     const body = formatPatch(patch);
     writeFileSync(out, body);
-    console.log(`  ${name}: ${patch.ops.length} ops, ${body.length} bytes (the shipped file is ${text.length}) -> ${out}`);
+    console.log(
+      `  ${name}: ${patch.ops.length} ops, ${body.length} bytes (the shipped file is ${text.length}) -> ${out}`,
+    );
   }
 }

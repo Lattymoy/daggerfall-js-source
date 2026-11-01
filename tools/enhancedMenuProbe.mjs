@@ -35,7 +35,7 @@ async function run(label, opts) {
   await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu', { timeout: 60000 });
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
-  await page.waitForSelector('.px-menu button', { timeout: 15000 });   // PX1: the door is the pixel home now
+  await page.waitForSelector('.px-menu button', { timeout: 15000 }); // PX1: the door is the pixel home now
 
   // 1. THE DOOR OPENED WITHOUT DATA. ensureArena2's picker is a fixed
   //    overlay with a #pick input; if it is up, the claim is false.
@@ -47,9 +47,15 @@ async function run(label, opts) {
   // this file goes on to drive. So it asks for those by name, and a
   // door added or moved is not a failure here.
   // AUDIT PLUS-MENU M2: a door's diamonds are drawing (aria-hidden) and stand at rest under Plus - the name is the words
-  const doors = (await page.locator('.px-menu button').allInnerTexts()).map((t) => t.replace(/\u25c6/g, '').trim().toUpperCase());
+  const doors = (await page.locator('.px-menu button').allInnerTexts()).map((t) =>
+    t
+      .replace(/\u25c6/g, '')
+      .trim()
+      .toUpperCase(),
+  );
   check(`${label}: the menu draws with no ARENA2`, doors.length > 0, `${doors.length} doors`);
-  for (const want of ['SETTINGS', 'OVERHAULS']) {   // ORG2: Features is Settings' tabs; the Overhauls door is the one this file drives next to it
+  for (const want of ['SETTINGS', 'OVERHAULS']) {
+    // ORG2: Features is Settings' tabs; the Overhauls door is the one this file drives next to it
     check(`${label}: the ${want.toLowerCase()} door is on the rail`, doors.includes(want), doors.join(' / '));
   }
 
@@ -58,20 +64,34 @@ async function run(label, opts) {
   const foot = await page.evaluate(() => {
     const about = document.querySelector('.px-foot .px-about:not(.px-shots)');
     const b = about?.getBoundingClientRect();
-    return { toggle: Boolean(document.querySelector('.skinswitch, .skinopt')), right: b ? Math.round(innerWidth - b.right) : null };
+    return {
+      toggle: Boolean(document.querySelector('.skinswitch, .skinopt')),
+      right: b ? Math.round(innerWidth - b.right) : null,
+    };
   });
-  check(`${label}: the foot carries no skin toggle, and About stands at its right`, !foot.toggle && foot.right != null && foot.right <= 24, JSON.stringify(foot));
-  check(`${label}: the folder pick has NOT been asked for`,
-    (await page.locator('#pick').count()) === 0);
+  check(
+    `${label}: the foot carries no skin toggle, and About stands at its right`,
+    !foot.toggle && foot.right != null && foot.right <= 24,
+    JSON.stringify(foot),
+  );
+  check(`${label}: the folder pick has NOT been asked for`, (await page.locator('#pick').count()) === 0);
 
   // 2. SETTINGS WORK WITHOUT DATA. The law modules are pure, so this
   //    should hold - it is exactly what the U29/U30 split bought.
-  await page.locator('.px-menu button').filter({ hasText: /Settings/ }).first().click();
+  await page
+    .locator('.px-menu button')
+    .filter({ hasText: /Settings/ })
+    .first()
+    .click();
   await page.waitForSelector('#enhanced-menu .row');
   // SO1 (2026-09-11) put the Enhanced category first, and FT8 (2026-09-14)
   // emptied it of switches (they are the Features home's now) - the rows
   // this step reads and the one it presses are the GAME category's (ORG2: the Gameplay tab's).
-  await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Gameplay/ }).first().click();
+  await page
+    .locator('#enhanced-menu .subbtn')
+    .filter({ hasText: /^Gameplay/ })
+    .first()
+    .click();
   await page.waitForTimeout(200);
   const rows = await page.locator('#enhanced-menu .row').count();
   check(`${label}: settings rows render`, rows > 10, `${rows} rows`);
@@ -81,15 +101,13 @@ async function run(label, opts) {
     const s = await import('/src/systems/settings/settings.js');
     return s.effectiveSettings().Enhancements.LoiterLimitInHours;
   });
-  await page.locator('#enhanced-menu .row', { hasText: 'Maximum Wait Time' })
-    .locator('.step').last().click();
+  await page.locator('#enhanced-menu .row', { hasText: 'Maximum Wait Time' }).locator('.step').last().click();
   const after = await page.evaluate(async () => {
     const s = await import('/src/systems/settings/settings.js');
     s._resetForTests();
     return s.effectiveSettings().Enhancements.LoiterLimitInHours;
   });
-  check(`${label}: a setting changed and PERSISTED`, String(before) !== String(after),
-    `${before} -> ${after}`);
+  check(`${label}: a setting changed and PERSISTED`, String(before) !== String(after), `${before} -> ${after}`);
 
   await page.screenshot({ path: `${shots}/door-${label}.png` });
 
@@ -126,9 +144,14 @@ async function run(label, opts) {
   await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu', { timeout: 60000 });
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
-  await page.locator('.px-menu button').filter({ hasText: /Settings/ }).first().click();
+  await page
+    .locator('.px-menu button')
+    .filter({ hasText: /Settings/ })
+    .first()
+    .click();
   await page.waitForSelector('#enhanced-menu .ft-tile', { timeout: 10000 });
-  const skyTile = page.locator('#enhanced-menu .ft-tile')
+  const skyTile = page
+    .locator('#enhanced-menu .ft-tile')
     .filter({ has: page.locator('.ft-tile-name', { hasText: /^Enhanced environments$/ }) });
   const pane = await page.evaluate(() => {
     const tiles = [...document.querySelectorAll('#enhanced-menu .ft-tile')];
@@ -141,29 +164,47 @@ async function run(label, opts) {
       labels: sky ? [...sky.querySelectorAll('.kind')].map((k) => k.textContent) : [],
     };
   });
-  check(`${label}: the Graphics tab opens with its Features rows`, pane.rows >= 15 && pane.sky !== null, JSON.stringify(pane));
-  check(`${label}: the outdoors read Dynamic Skies by default, wearing both labels`,
-    pane.sky === 'Dynamic Skies' && pane.labels.join('+') === 'Enhanced+Mod Authored', JSON.stringify(pane));
-  if (label === 'phone') check("phone: the outdoors switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
+  check(
+    `${label}: the Graphics tab opens with its Features rows`,
+    pane.rows >= 15 && pane.sky !== null,
+    JSON.stringify(pane),
+  );
+  check(
+    `${label}: the outdoors read Dynamic Skies by default, wearing both labels`,
+    pane.sky === 'Dynamic Skies' && pane.labels.join('+') === 'Enhanced+Mod Authored',
+    JSON.stringify(pane),
+  );
+  if (label === 'phone')
+    check("phone: the outdoors switch is a thumb's target", pane.skyTarget >= 38, `${pane.skyTarget}px`);
   // the bar's OFF segment is the pref off - pressed by name, where the old list stepped a cycling button
   await skyTile.locator('.ft-segb', { hasText: /^Off/ }).first().click();
   const skyOff = await page.evaluate(async () => {
     const m = await import('/src/systems/uiPrefs.js');
     m._resetForTests();
-    return m.getPref('enhancedEnvironments');   // EE1
+    return m.getPref('enhancedEnvironments'); // EE1
   });
   check(`${label}: the outdoors switch PERSISTS`, skyOff === false, String(skyOff));
-  await skyTile.locator('.ft-segb', { hasText: /Dynamic Skies/ }).first().click();   // back to where it was
+  await skyTile
+    .locator('.ft-segb', { hasText: /Dynamic Skies/ })
+    .first()
+    .click(); // back to where it was
 
   // 3. THE PICK APPEARS WHEN A GAME STARTS, and not one moment before.
   await page.goto(`${BASE}/play/?nointro`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.px-menu', { timeout: 60000 });
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
-  await page.keyboard.press('Escape');   // PX2: Escape backs a section out to home
+  await page.keyboard.press('Escape'); // PX2: Escape backs a section out to home
   await page.waitForSelector('.px-menu button', { timeout: 10000 });
-  await page.locator('.px-menu button').filter({ hasText: /New Game/ }).first().click();
+  await page
+    .locator('.px-menu button')
+    .filter({ hasText: /New Game/ })
+    .first()
+    .click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
-  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
+  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(
+    () => true,
+    () => false,
+  );
   check(`${label}: Begin raises the ARENA2 pick`, picked);
   check(`${label}: the menu is gone`, (await page.locator('#enhanced-menu').count()) === 0);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
@@ -189,11 +230,19 @@ await run('phone', { ...devices['Pixel 5'] });
   // FT14 took Mods off this rail and FT16 took Controls into Settings;
   // this line still expected both, which is the third thing in this
   // file that had gone stale unnoticed.
-  check('classic: the enhanced door mounts with the classic rail', JSON.stringify(st.sections) === JSON.stringify(['begin', 'online', 'settings', 'overhauls', 'screenshots', 'about']), JSON.stringify(st.sections));
+  check(
+    'classic: the enhanced door mounts with the classic rail',
+    JSON.stringify(st.sections) ===
+      JSON.stringify(['begin', 'online', 'settings', 'overhauls', 'screenshots', 'about']),
+    JSON.stringify(st.sections),
+  );
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
   await page.locator('.px-menu .door-begin').click();
-  await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the door opens the Begin pane; its button starts
-  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
+  await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click(); // FD1: the door opens the Begin pane; its button starts
+  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(
+    () => true,
+    () => false,
+  );
   check('classic: Begin gates the data before its own start sequence', picked);
   await ctx.close();
 }
@@ -208,20 +257,37 @@ await run('phone', { ...devices['Pixel 5'] });
   await page.waitForSelector('.px-menu', { timeout: 60000 });
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
   await page.waitForSelector('.px-menu button', { timeout: 20000 });
-  await page.locator('.px-menu button').filter({ hasText: /Overhauls/ }).first().click();
+  await page
+    .locator('.px-menu button')
+    .filter({ hasText: /Overhauls/ })
+    .first()
+    .click();
   const ui = page.locator('.look-panel[data-panel="ui"]');
   await ui.waitFor({ timeout: 20000 });
-  for (let i = 0; i < 3 && (await ui.locator('.look-name').innerText()).trim() !== 'Classic'; i++) await ui.locator('.look-arrow').last().click();
+  for (let i = 0; i < 3 && (await ui.locator('.look-name').innerText()).trim() !== 'Classic'; i++)
+    await ui.locator('.look-arrow').last().click();
   await ui.locator('.look-use').click();
   // FD1: the classic door is this same screen with the Begin rail; the pick rises behind Begin
   await page.waitForSelector('.px-menu .door-begin', { timeout: 60000 });
   if (await page.locator('.px-acctstage').count()) await page.keyboard.press('Escape');
   await page.locator('.px-menu .door-begin').click();
-  await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();   // FD1: the pane's own Begin
-  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(() => true, () => false);
-  check('use Classic on the UI card: the classic door opens, data first', picked && (await page.locator('#enhanced-menu').count()) === 0);
-  check('use Classic: the URL carries no override - the choice is STORED', !new URL(page.url()).searchParams.has('skin'));
-  const stored = await page.evaluate(async () => { const { uiSkin } = await import('/src/systems/uiSkin.js'); return uiSkin(''); });
+  await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click(); // FD1: the pane's own Begin
+  const picked = await page.waitForSelector('#pick', { timeout: 15000 }).then(
+    () => true,
+    () => false,
+  );
+  check(
+    'use Classic on the UI card: the classic door opens, data first',
+    picked && (await page.locator('#enhanced-menu').count()) === 0,
+  );
+  check(
+    'use Classic: the URL carries no override - the choice is STORED',
+    !new URL(page.url()).searchParams.has('skin'),
+  );
+  const stored = await page.evaluate(async () => {
+    const { uiSkin } = await import('/src/systems/uiSkin.js');
+    return uiSkin('');
+  });
   check('use Classic: uiSkin reads classic with no URL at all', stored === 'classic');
   await page.evaluate(() => localStorage.clear());
   await ctx.close();

@@ -66,7 +66,12 @@ export function vendorSearch(rows, q, { nameOf = () => '', townOf = () => '' } =
   if (!words.length) return Array.isArray(rows) ? rows : [];
   return (Array.isArray(rows) ? rows : []).filter((r) => {
     let hay = '';
-    try { hay = `${nameOf(r.item) ?? ''} ${r.owner ?? ''} ${Number.isSafeInteger(r.map) ? townOf(/** @type {number} */ (r.map)) ?? '' : ''}`.toLowerCase(); } catch { hay = ''; }
+    try {
+      hay =
+        `${nameOf(r.item) ?? ''} ${r.owner ?? ''} ${Number.isSafeInteger(r.map) ? (townOf(/** @type {number} */ (r.map)) ?? '') : ''}`.toLowerCase();
+    } catch {
+      hay = '';
+    }
     return words.every((w) => hay.includes(w));
   });
 }
@@ -74,11 +79,11 @@ export function vendorSearch(rows, q, { nameOf = () => '', townOf = () => '' } =
 /** The words a refusal of the vendor routes says (accountClient's accountRefusalText reads these). */
 export const VENDOR_REFUSAL_WORDS = Object.freeze({
   'vendor-only': 'That item is sold by a trader in a house. Buy it there.',
-  'vendor-not-here': 'That item is not this trader\'s.',
+  'vendor-not-here': "That item is not this trader's.",
   'vendor-gone': 'That trader is no longer standing.',
-  'vendor-not-yours': 'Only the house\'s owner stocks its trader.',
+  'vendor-not-yours': "Only the house's owner stocks its trader.",
   'vendor-stocked': 'The trader still has goods for sale. Take them back first.',
   'home-vendor-stocked': 'A trader in this house still has goods for sale. Take them back first.',
   'bad-vendor': 'That is not a trader.',
-  'vendor-full': `Your traders already hold ${VENDOR_STOCK_MAX} items. Take one back, or wait for one to sell.`,   // MARKET-AUDIT
+  'vendor-full': `Your traders already hold ${VENDOR_STOCK_MAX} items. Take one back, or wait for one to sell.`, // MARKET-AUDIT
 });

@@ -51,7 +51,7 @@
     "name": "BANK-REGION-the-turn-ends-the-guild-book-with-the-old-life",
     "file": "src/systems/lycanthropy.js",
     "old": "  if (!restore) endOldLifeEffects(entity);",
-    "new": "  if (!restore) { endOldLifeEffects(entity); entity.guildMemberships = null; }",
+    "new": "  if (!restore) {\n    endOldLifeEffects(entity);\n    entity.guildMemberships = null;\n  }",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ]
@@ -60,7 +60,7 @@
     "name": "BANK-REGION-the-turn-empties-the-bank-with-the-old-life",
     "file": "src/systems/lycanthropy.js",
     "old": "  if (!restore) endOldLifeEffects(entity);",
-    "new": "  if (!restore) { endOldLifeEffects(entity); for (const a of entity.bankAccounts ?? []) a.accountGold = 0; }",
+    "new": "  if (!restore) {\n    endOldLifeEffects(entity);\n    for (const a of entity.bankAccounts ?? []) a.accountGold = 0;\n  }",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ]

@@ -219,7 +219,7 @@ test('GRASS-LIT: the AO\'s depth is taken before the grass - one blit, the frame
   assert.ok(images.includes('const aoDepth = F.aoTaken && F.aoDepth ? F.aoDepth : F.depth;') && images.includes('F.aoTaken = false;'));
   assert.ok(images.includes('depthOn(this.programs.ao, aoDepth);') && images.includes('depthOn(this.programs.box, aoDepth);'));
   assert.equal((images.match(/aoDepth\)/g) ?? []).length, 2, 'the AO and its blur, and nothing else');
-  assert.ok(air2.includes('if (k.aoDepth) { gl.deleteTexture(k.aoDepth); gl.deleteFramebuffer(k.aoFbo); }'), 'freed with its frame');
+  assert.ok(air2.includes('if (k.aoDepth) {\n      gl.deleteTexture(k.aoDepth);\n      gl.deleteFramebuffer(k.aoFbo);\n    }'), 'freed with its frame');
   // the host takes it immediately before the grass draws
   const w = src('scenes/world.js');
   assert.ok(/renderer\.snapshotAoDepth\(\);[^\n]*\n\s+labGrass\.draw\(/.test(w));

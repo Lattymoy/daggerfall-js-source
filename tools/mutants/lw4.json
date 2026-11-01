@@ -2,8 +2,8 @@
   {
     "name": "LW4-hazard-merchant",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "export const HAZARD = Object.freeze({ merchant: 0.006,",
-    "new": "export const HAZARD = Object.freeze({ merchant: 0.012,",
+    "old": "  merchant: 0.006,",
+    "new": "  merchant: 0.012,",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "LW4-vacancy-unread",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  if (last != null && k - last <= VACANT_CYCLES) return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };",
+    "old": "  if (last != null && k - last <= VACANT_CYCLES)\n    return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };",
     "new": "  if (false) return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "LW4-life-windowed",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  for (let j = k - 1; j >= 0; j--) if (deathCounted(res, j, turns)) { last = j; break; }",
-    "new": "  for (let j = k - 1; j >= Math.max(0, k - 40); j--) if (deathCounted(res, j, turns)) { last = j; break; }",
+    "old": "  for (let j = k - 1; j >= 0; j--)",
+    "new": "  for (let j = k - 1; j >= Math.max(0, k - 40); j--)",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW4-newcomer-same-seed",
     "file": "src/systems/livingWorld/census.js",
-    "old": "lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen);   // 'gen'",
-    "new": "lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot);   // 'gen'",
+    "old": "      : lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen); // 'gen'",
+    "new": "      : lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot); // 'gen'",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW4-newcomer-same-id",
     "file": "src/systems/livingWorld/census.js",
-    "old": "${gen == null ? '' : `~${gen}`}`,",
-    "new": "${''}`,",
+    "old": "    id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${gen == null ? '' : `~${gen}`}`,",
+    "new": "    id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${''}`,",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "LW4-ground-unread",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  const ground = kinds.length ? kinds.reduce((a, k) => a + (GROUND_RISK[/** @type {keyof typeof GROUND_RISK} */ (k)] ?? 1), 0) / kinds.length : 1;",
+    "old": "  const ground = kinds.length\n    ? kinds.reduce((a, k) => a + (GROUND_RISK[/** @type {keyof typeof GROUND_RISK} */ (k)] ?? 1), 0) / kinds.length\n    : 1;",
     "new": "  const ground = 1;",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "LW4-camp-hour",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "{ wm = firstDay; t0 = dayEnd + 4 * 60; camp = true; }",
-    "new": "{ wm = firstDay; t0 = dayEnd + 3 * 60; camp = true; }",
+    "old": "    t0 = dayEnd + 4 * 60;",
+    "new": "    t0 = dayEnd + 3 * 60;",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW4-camp-never",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin)",
-    "new": "  if (rng() < 0 && firstDay > 0 && firstDay < walkMin)",
+    "old": "  if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin) {",
+    "new": "  if (rng() < 0 && firstDay > 0 && firstDay < walkMin) {",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW4-halt-is-the-fight",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  return { id: `${trip.id}:e`, leg, camp, t0, t1: t0 + HALT_MIN[shape],",
-    "new": "  return { id: `${trip.id}:e`, leg, camp, t0, t1: t0 + FIGHT_MIN[shape],",
+    "old": "    camp,\n    t0,\n    t1: t0 + HALT_MIN[shape],\n    fightEnd: t0 + FIGHT_MIN[shape],",
+    "new": "    camp,\n    t0,\n    t1: t0 + FIGHT_MIN[shape],\n    fightEnd: t0 + FIGHT_MIN[shape],",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
     ]
@@ -500,7 +500,7 @@
   {
     "name": "LW4-strike-dropped",
     "file": "src/world/travellerSprites.js",
-    "old": "        out = b.unit.update(dt, { moving: !!m.moving, striking: !!m.striking }, m.yaw, f, eye && eye.length === 3 ? eye : f);",
+    "old": "        out = b.unit.update(\n          dt,\n          { moving: !!m.moving, striking: !!m.striking },\n          m.yaw,\n          f,\n          eye && eye.length === 3 ? eye : f,\n        );",
     "new": "        out = b.unit.update(dt, { moving: !!m.moving }, m.yaw, f, eye && eye.length === 3 ? eye : f);",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"
@@ -527,7 +527,7 @@
   {
     "name": "LW4-host-foe-level-flat",
     "file": "src/characters/enemy/enemyBasics.js",
-    "old": "export const enemyLevelOf = (type, level) => (isClassEnemyId(type) ? level : ENEMY_BASICS[type]?.level ?? level);",
+    "old": "export const enemyLevelOf = (type, level) => (isClassEnemyId(type) ? level : (ENEMY_BASICS[type]?.level ?? level));",
     "new": "export const enemyLevelOf = (type, level) => level;",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"

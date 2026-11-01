@@ -20,8 +20,8 @@
   {
     "name": "CARP-YARD-a-counter-row",
     "file": "src/systems/merchantYards.js",
-    "old": "export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [YARD_BENCH_ROW]",
-    "new": "export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [...YARD_ROWS]",
+    "old": "    ? [YARD_BENCH_ROW]",
+    "new": "    ? [...YARD_ROWS]",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CARP-YARD-the-ground-not-closed",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "    out.push(s);\n    closeSite(g, s);\n  }\n  return out;\n}\n\n/**\n * The yards of a laid-out location",
-    "new": "    out.push(s);\n  }\n  return out;\n}\n\n/**\n * The yards of a laid-out location",
+    "old": "    closeSite(g, s);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "CARP-YARD-a-face-wound-in",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "    f.tri(YARD_REC.endgrain, [x, yc, z1], p(a, z1), p(b, z1), [0.5, 0.5], ua, ub);",
-    "new": "    f.tri(YARD_REC.endgrain, [x, yc, z1], p(b, z1), p(a, z1), [0.5, 0.5], ub, ua);",
+    "old": "    f.tri(YARD_REC.endgrain, [x, yc, z1], p(a, z1), p(b, z1), [0.5, 0.5], ua, ub); // +z: its normal cross(a - c, b - c) along +z",
+    "new": "    f.tri(YARD_REC.endgrain, [x, yc, z1], p(b, z1), p(a, z1), [0.5, 0.5], ub, ua); // +z: its normal cross(a - c, b - c) along +z",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "CARP-YARD-the-way-in-blocked",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "  fenceRun(f, F.x0, F.z1, -G.half, F.z1, { ...fence, ends: false });\n  fenceRun(f, G.half, F.z1, F.x1, F.z1, { ...fence, ends: false });\n  // the gate arch: its two posts, the beam over the way in, the JOINERY board",
-    "new": "  fenceRun(f, F.x0, F.z1, F.x1, F.z1, { ...fence, ends: false });\n  // the gate arch: its two posts, the beam over the way in, the JOINERY board",
+    "old": "  fenceRun(f, F.x1, S.z1, F.x1, F.z1, fence);\n  fenceRun(f, F.x0, F.z1, -G.half, F.z1, { ...fence, ends: false });\n  fenceRun(f, G.half, F.z1, F.x1, F.z1, { ...fence, ends: false });\n  // the gate arch: its two posts, the beam over the way in, the JOINERY board hung from the beam",
+    "new": "  fenceRun(f, F.x1, S.z1, F.x1, F.z1, fence);\n  fenceRun(f, F.x0, F.z1, F.x1, F.z1, { ...fence, ends: false });\n  // the gate arch: its two posts, the beam over the way in, the JOINERY board hung from the beam",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "CARP-YARD-a-letter-lost",
     "file": "src/world/merchantYards/merchantYardArt.js",
-    "old": "  J: ['..###', '....#', '....#', '....#', '#...#', '#...#', '.###.'],   // CARP-YARD: JOINERY's\n",
-    "new": "",
+    "old": "  J: ['..###', '....#', '....#', '....#', '#...#', '#...#', '.###.'], // CARP-YARD: JOINERY's\n  L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],",
+    "new": "  L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "CARP-YARD-the-stables-board",
     "file": "src/world/merchantYards/merchantYardArt.js",
-    "old": "  if (k === 'transport') paintWheel(img); else if (k === 'carpenter') paintSaw(img); else paintHorseshoe(img);",
-    "new": "  if (k === 'transport') paintWheel(img); else paintHorseshoe(img);",
+    "old": "  else if (k === 'carpenter') paintSaw(img);\n  else paintHorseshoe(img);",
+    "new": "  else paintHorseshoe(img);",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]
@@ -173,7 +173,7 @@
   },
   {
     "name": "CARP-YARD-a-call-site-still-the-modes",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        workbench: () => workbenchHere(),   // CARP-YARD: and a joinery's in the street",
     "new": "        workbench: () => modes?.workbenchHere?.() ?? null,",
     "tests": [

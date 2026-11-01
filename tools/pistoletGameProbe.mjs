@@ -17,11 +17,16 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const OUT = process.argv[2] || 'scratch/pistolet-game';
 mkdirSync(OUT, { recursive: true });
 const results = [];
-const check = (name, ok, detail = '') => { results.push(!!ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  results.push(!!ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 
 const server = await createServer({ server: { port: 5196, strictPort: true }, logLevel: 'error' });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
@@ -37,18 +42,28 @@ const worn = await page.evaluate(async () => {
   const T = await import('/src/systems/thunderlock.js');
   const { equipItem } = await import('/src/systems/equip.js');
   const e = window.__playerEntity;
-  const a = P.createPistolet(), b = P.createPistolet();
+  const a = P.createPistolet(),
+    b = P.createPistolet();
   e.items.push(a, b, T.createPellets(30));
-  equipItem(e, a); equipItem(e, b);
+  equipItem(e, a);
+  equipItem(e, b);
   return Object.values(e.equip?.slots ?? {}).filter((v) => v?.templateIndex === 562).length;
 });
 check('two Pistolets worn, one in each hand, through the equip law', worn === 2, `${worn} worn`);
 await waitFrames(20);
 await page.screenshot({ path: `${OUT}/pair-rest.png` });
 
-const pellets = () => page.evaluate(() => window.__playerEntity.items.filter((i) => i.templateIndex === 561).reduce((n, i) => n + i.stackCount, 0));
+const pellets = () =>
+  page.evaluate(() =>
+    window.__playerEntity.items.filter((i) => i.templateIndex === 561).reduce((n, i) => n + i.stackCount, 0),
+  );
 const p0 = await pellets();
-const pull = async () => { await page.mouse.move(640, 400); await page.mouse.down({ button: 'right' }); await waitFrames(3); await page.mouse.up({ button: 'right' }); };
+const pull = async () => {
+  await page.mouse.move(640, 400);
+  await page.mouse.down({ button: 'right' });
+  await waitFrames(3);
+  await page.mouse.up({ button: 'right' });
+};
 await pull();
 await page.screenshot({ path: `${OUT}/shot-right.png` });
 await waitFrames(8);
@@ -59,6 +74,7 @@ await page.screenshot({ path: `${OUT}/reloading.png` });
 const p1 = await pellets();
 check('each shot spends a Pellet', p0 - p1 === 2, `${p0} -> ${p1}`);
 check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
-await browser.close(); await server.close();
+await browser.close();
+await server.close();
 console.log(`${results.filter(Boolean).length}/${results.length} ok - shots in ${OUT}/`);
 process.exit(results.every(Boolean) ? 0 : 1);

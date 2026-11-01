@@ -1,450 +1,450 @@
 [
- {
-  "name": "CROWN1-kingdom-reach",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const KINGDOM_REACH = 0.25;",
-  "new": "export const KINGDOM_REACH = 0.2;",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-march-reach",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const MARCH_REACH = 0.125;",
-  "new": "export const MARCH_REACH = 0.25;",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-free-bonus",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const FREE_LAND_WATCH_BONUS = 0.1;",
-  "new": "export const FREE_LAND_WATCH_BONUS = 0.15;",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-crowns-tier",
-  "file": "src/net/townSeatLaw.js",
-  "old": ".filter((h) => h.tier === 'crown').map((h) => CROWN_SEAT_REGIONS[h.region])",
-  "new": ".map((h) => CROWN_SEAT_REGIONS[h.region])",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-reach-tier",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (seat?.tier !== 'palace' || !crowns?.size) return 0;",
-  "new": "  if (!crowns?.size) return 0;",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-reach-march-count",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (isMarch(seat.region)) return MARCHES[seat.region].filter((k) => crowns.has(k)).length * MARCH_REACH;",
-  "new": "  if (isMarch(seat.region)) return MARCHES[seat.region].some((k) => crowns.has(k)) ? MARCH_REACH : 0;",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-reach-march-none",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (isMarch(seat.region)) return MARCHES[seat.region].filter((k) => crowns.has(k)).length * MARCH_REACH;\n",
-  "new": "",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-reach-kingdom",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return k && crowns.has(k) ? KINGDOM_REACH : 0;",
-  "new": "  return k ? KINGDOM_REACH : 0;",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-withreach-tribute",
-  "file": "src/net/townSeatLaw.js",
-  "old": "total: Math.floor(st.others * (1 + reach) + 1e-9) + st.tribute, reach }",
-  "new": "total: Math.floor(st.total * (1 + reach) + 1e-9), reach }",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-withreach-round",
-  "file": "src/net/townSeatLaw.js",
-  "old": "total: Math.floor(st.others * (1 + reach) + 1e-9) + st.tribute, reach }",
-  "new": "total: Math.ceil(st.others * (1 + reach)) + st.tribute, reach }",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-watch-bonus",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-  "new": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-watch-bonus-floor",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-  "new": "  const w = amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1);",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-watch-bonus-neg",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-  "new": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (1 + Number(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-edict-crown",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  conscription: Object.freeze({ name: 'Conscription', standing: 0, cost: null, repeat: false, crown: true }),",
-  "new": "  conscription: Object.freeze({ name: 'Conscription', standing: 0, cost: null, repeat: false }),",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/ui/crown1_client.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-edict-tier",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const edictForTier = (edict, tier) => edictOk(edict) && (!EDICTS[edict].crown || tier === 'crown');",
-  "new": "export const edictForTier = (edict, tier) => edictOk(edict);",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/ui/crown1_client.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-edict-tier-ok",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const edictForTier = (edict, tier) => edictOk(edict) && (!EDICTS[edict].crown || tier === 'crown');",
-  "new": "export const edictForTier = (edict, tier) => !EDICTS[edict]?.crown || tier === 'crown';",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-rates",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const CONSCRIPTION = Object.freeze({ kingdom: 0.02, march: 0.01,",
-  "new": "export const CONSCRIPTION = Object.freeze({ kingdom: 0.02, march: 0.02,",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-own",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (guild === crownGuild || vassals.has(guild)) continue;   // CROWN2 (7.6): \"never a vassal's\"\n",
-  "new": "    if (vassals.has(guild)) continue;   // CROWN2 (7.6): \"never a vassal's\"\n",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-palace",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    const here = seats.filter((h) => h.tier === 'palace' && (isMarch(h.region)",
-  "new": "    const here = seats.filter((h) => (isMarch(h.region)",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-march",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : kingdomOf(h.region) === kingdom));",
-  "new": "(isMarch(h.region) || kingdomOf(h.region) === kingdom));",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-kingdom",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : kingdomOf(h.region) === kingdom));",
-  "new": "(isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : true));",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-share",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    const amount = Math.floor((Math.max(0, tithes?.get(guild) ?? 0) * rate) / seats.length + 1e-9);",
-  "new": "    const amount = Math.floor((Math.max(0, tithes?.get(guild) ?? 0) * rate) / here.length + 1e-9);",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-round",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    const amount = Math.floor((Math.max(0, tithes?.get(guild) ?? 0) * rate) / seats.length + 1e-9);",
-  "new": "    const amount = Math.round((Math.max(0, tithes?.get(guild) ?? 0) * rate) / seats.length);",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-consc-sort",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    out.push({ guild, keys: here.map((h) => h.key).sort((a, b) => a - b), amount });",
-  "new": "    out.push({ guild, keys: here.map((h) => h.key), amount });",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-standing-row",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  conscripted: -5,   // CROWN1 (7.6): a seat that paid a crown's Conscription",
-  "new": "  conscripted: -3,   // CROWN1 (7.6): a seat that paid a crown's Conscription",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-standing-apply",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (conscripted) add('conscripted', STANDING_CHANGES.conscripted);\n",
-  "new": "",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-plan-flag",
-  "file": "src/net/townSeatLaw.js",
-  "old": "upkeep: stateOf.get(s.key), edict: law, conscripted: !!s.holder.conscripted,",
-  "new": "upkeep: stateOf.get(s.key), edict: law,",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-chron-conscription",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    case 'conscription': return",
-  "new": "    case 'conscriptionX': return",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-chron-conscripted",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    case 'conscripted': return",
-  "new": "    case 'conscriptedX': return",
-  "tests": [
-   "test/net/crown1_law.test.js"
-  ]
- },
- {
-  "name": "CROWN1-words",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  conscription: 'The kingdom\\'s palace seats",
-  "new": "  conscriptionX: 'The kingdom\\'s palace seats",
-  "tests": [
-   "test/net/crown1_law.test.js",
-   "test/ui/crown1_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1-inf-bonus",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "accountSeatInfluence(v, freeLand ? FREE_LAND_WATCH_BONUS : 0, tide)",
-  "new": "accountSeatInfluence(v, 0, tide)",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-inf-reach",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "...withReach(guildSeatInfluence([...per.values()], tributeMarks), reach.get(g) ?? 0)",
-  "new": "...withReach(guildSeatInfluence([...per.values()], tributeMarks), 0)",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-inf-palace",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "const crownRows = seat.tier === 'palace' ? await allIn(",
-  "new": "const crownRows = seat.tier !== 'palace' ? await allIn(",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-inf-free",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "reach, freeLand: isFreeLand(seat.region), tide: tideAt(week, seat.region, counted),",
-  "new": "reach, freeLand: false, tide: tideAt(week, seat.region, counted),",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-inf-crown-tier",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "WHERE tier = 'crown' AND guild_id IN",
-  "new": "WHERE guild_id IN",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "crownsHeld (townSeatLaw.js) keeps a Charter's crown tier alone, so the SQL's own tier filter only spares the read the guilds' palace rows"
- },
- {
-  "name": "CROWN1-tur-edict",
-  "file": "server-account/src/seatTurning.js",
-  "old": "e.edict === 'conscription' && holds.get(key)?.guild_id === e.guild",
-  "new": "e.edict === 'festival' && holds.get(key)?.guild_id === e.guild",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-week",
-  "file": "server-account/src/seatTurning.js",
-  "old": "      WHERE day BETWEEN ? AND ? AND dst_kind = 'guild' AND kind = 'tithe' AND at >= ? AND at < ? GROUP BY dst_id`)\n      .bind(utcDay(fromS), utcDay(atS), fromS, atS)",
-  "new": "      WHERE day <= ? AND dst_kind = 'guild' AND kind = 'tithe' AND at < ? GROUP BY dst_id`)\n      .bind(utcDay(atS), atS)",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-dst",
-  "file": "server-account/src/seatTurning.js",
-  "old": "AND dst_kind = 'guild' AND kind = 'tithe' AND at >= ?",
-  "new": "AND dst_kind = 'guild' AND at >= ?",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a Tithe burnt at a full treasury is written with no dst_id (market.js titheEnd's CASE), so grouped by dst_id it never names a guild either way"
- },
- {
-  "name": "CROWN1-tur-paid-only",
-  "file": "server-account/src/seatTurning.js",
-  "old": "      if (d.amount > 0) conscriptions.push(",
-  "new": "      conscriptions.push(",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-flag",
-  "file": "server-account/src/seatTurning.js",
-  "old": "        conscripted: conscripted.has(key),\n",
-  "new": "",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-min",
-  "file": "server-account/src/seatTurning.js",
-  "old": "'conscription', MIN(?3, balance), ?4, ?5",
-  "new": "'conscription', ?3, ?4, ?5",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-dest",
-  "file": "server-account/src/seatTurning.js",
-  "old": "CASE WHEN ${to} THEN 'guild' ELSE 'burn' END, CASE WHEN ${to} THEN ?2 END, 'conscription'",
-  "new": "'burn', NULL, 'conscription'",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-history-crown",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    stmts.push(paidHistory(c.crownKey, 'conscription',",
-  "new": "    if (0) stmts.push(paidHistory(c.crownKey, 'conscription',",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tur-history-seat",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    for (const k of c.keys) stmts.push(paidHistory(k, 'conscripted',",
-  "new": "    for (const k of c.keys.slice(1)) stmts.push(paidHistory(k, 'conscripted',",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-hol-tier",
-  "file": "server-account/src/seatHolding.js",
-  "old": "  if (!edictForTier(edict, l.hold.tier)) return { error: 'edict-tier' };",
-  "new": "",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tab-tier",
-  "file": "src/ui/seatTab.js",
-  "old": "Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict))",
-  "new": "Object.keys(EDICTS).filter((k) => edictMayFollow(k, h.edict))",
-  "tests": [
-   "test/ui/crown1_client.test.js",
-   "test/systems/seat1d_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1-tab-tier-read",
-  "file": "src/ui/seatTab.js",
-  "old": "Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict))",
-  "new": "Object.keys(EDICTS).filter((k) => edictForTier(k, 'palace') && edictMayFollow(k, h.edict))",
-  "tests": [
-   "test/ui/crown1_client.test.js"
-  ]
- },
- {
-  "name": "CROWN1-status",
-  "file": "server-account/src/index.js",
-  "old": "'marks-full': 409, 'edict-tier': 409,",
-  "new": "'marks-full': 409,",
-  "tests": [
-   "test/net/crown1_service.test.js"
-  ]
- }
+  {
+    "name": "CROWN1-kingdom-reach",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const KINGDOM_REACH = 0.25;",
+    "new": "export const KINGDOM_REACH = 0.2;",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-march-reach",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const MARCH_REACH = 0.125;",
+    "new": "export const MARCH_REACH = 0.25;",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-free-bonus",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const FREE_LAND_WATCH_BONUS = 0.1;",
+    "new": "export const FREE_LAND_WATCH_BONUS = 0.15;",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-crowns-tier",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const crownsHeld = (holds) =>\n  new Set(\n    (holds ?? [])\n      .filter((h) => h.tier === 'crown')\n      .map((h) => CROWN_SEAT_REGIONS[h.region])\n      .filter(Boolean),\n  );",
+    "new": "export const crownsHeld = (holds) => new Set((holds ?? []).map((h) => CROWN_SEAT_REGIONS[h.region]).filter(Boolean));",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-reach-tier",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (seat?.tier !== 'palace' || !crowns?.size) return 0;",
+    "new": "  if (!crowns?.size) return 0;",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-reach-march-count",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (isMarch(seat.region)) return MARCHES[seat.region].filter((k) => crowns.has(k)).length * MARCH_REACH;",
+    "new": "  if (isMarch(seat.region)) return MARCHES[seat.region].some((k) => crowns.has(k)) ? MARCH_REACH : 0;",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-reach-march-none",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (isMarch(seat.region)) return MARCHES[seat.region].filter((k) => crowns.has(k)).length * MARCH_REACH;\n  const k = kingdomOf(seat.region);",
+    "new": "  const k = kingdomOf(seat.region);",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-reach-kingdom",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return k && crowns.has(k) ? KINGDOM_REACH : 0;",
+    "new": "  return k ? KINGDOM_REACH : 0;",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-withreach-tribute",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  reach > 0 ? { ...st, total: Math.floor(st.others * (1 + reach) + 1e-9) + st.tribute, reach } : { ...st, reach: 0 };",
+    "new": "  reach > 0 ? { ...st, total: Math.floor(st.total * (1 + reach) + 1e-9), reach } : { ...st, reach: 0 };",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-withreach-round",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  reach > 0 ? { ...st, total: Math.floor(st.others * (1 + reach) + 1e-9) + st.tribute, reach } : { ...st, reach: 0 };",
+    "new": "  reach > 0 ? { ...st, total: Math.ceil(st.others * (1 + reach)) + st.tribute, reach } : { ...st, reach: 0 };",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-watch-bonus",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const w = Math.floor(\n    amountOf(watch) *\n      WATCH_INFLUENCE *\n      (1 + amountOf(watchBonus)) *\n      (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) +\n      1e-9,\n  );",
+    "new": "  const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-watch-bonus-floor",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const w = Math.floor(\n    amountOf(watch) *\n      WATCH_INFLUENCE *\n      (1 + amountOf(watchBonus)) *\n      (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) +\n      1e-9,\n  );",
+    "new": "  const w =\n    amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1);",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-watch-bonus-neg",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    amountOf(watch) *\n      WATCH_INFLUENCE *\n      (1 + amountOf(watchBonus)) *\n      (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) +",
+    "new": "    amountOf(watch) * WATCH_INFLUENCE * (1 + Number(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) +",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-edict-crown",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  conscription: Object.freeze({ name: 'Conscription', standing: 0, cost: null, repeat: false, crown: true }),",
+    "new": "  conscription: Object.freeze({ name: 'Conscription', standing: 0, cost: null, repeat: false }),",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/ui/crown1_client.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-edict-tier",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const edictForTier = (edict, tier) => edictOk(edict) && (!EDICTS[edict].crown || tier === 'crown');",
+    "new": "export const edictForTier = (edict, tier) => edictOk(edict);",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/ui/crown1_client.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-edict-tier-ok",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const edictForTier = (edict, tier) => edictOk(edict) && (!EDICTS[edict].crown || tier === 'crown');",
+    "new": "export const edictForTier = (edict, tier) => !EDICTS[edict]?.crown || tier === 'crown';",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-rates",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const CONSCRIPTION = Object.freeze({ kingdom: 0.02, march: 0.01, standing: STANDING_CHANGES.conscripted });",
+    "new": "export const CONSCRIPTION = Object.freeze({ kingdom: 0.02, march: 0.02, standing: STANDING_CHANGES.conscripted });",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-own",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (guild === crownGuild || vassals.has(guild)) continue; // CROWN2 (7.6): \"never a vassal's\"",
+    "new": "    if (vassals.has(guild)) continue; // CROWN2 (7.6): \"never a vassal's\"",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-palace",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const here = seats.filter(\n      (h) =>\n        h.tier === 'palace' &&\n        (isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : kingdomOf(h.region) === kingdom),",
+    "new": "    const here = seats.filter((h) =>\n      isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : kingdomOf(h.region) === kingdom,",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-march",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const here = seats.filter(\n      (h) =>\n        h.tier === 'palace' &&\n        (isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : kingdomOf(h.region) === kingdom),\n    );",
+    "new": "    const here = seats.filter((h) => h.tier === 'palace' && (isMarch(h.region) || kingdomOf(h.region) === kingdom));",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-kingdom",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      (h) =>\n        h.tier === 'palace' &&\n        (isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : kingdomOf(h.region) === kingdom),",
+    "new": "      (h) => h.tier === 'palace' && (isMarch(h.region) ? MARCHES[h.region].includes(kingdom) : true),",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-share",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const amount = Math.floor((Math.max(0, tithes?.get(guild) ?? 0) * rate) / seats.length + 1e-9);",
+    "new": "    const amount = Math.floor((Math.max(0, tithes?.get(guild) ?? 0) * rate) / here.length + 1e-9);",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-round",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const amount = Math.floor((Math.max(0, tithes?.get(guild) ?? 0) * rate) / seats.length + 1e-9);",
+    "new": "    const amount = Math.round((Math.max(0, tithes?.get(guild) ?? 0) * rate) / seats.length);",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-consc-sort",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    out.push({ guild, keys: here.map((h) => h.key).sort((a, b) => a - b), amount });",
+    "new": "    out.push({ guild, keys: here.map((h) => h.key), amount });",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-standing-row",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  conscripted: -5, // CROWN1 (7.6): a seat that paid a crown's Conscription",
+    "new": "  conscripted: -3, // CROWN1 (7.6): a seat that paid a crown's Conscription",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-standing-apply",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (conscripted) add('conscripted', STANDING_CHANGES.conscripted);\n  if (brokeFealty) add('fealtyBroken', STANDING_CHANGES.fealtyBroken);",
+    "new": "  if (brokeFealty) add('fealtyBroken', STANDING_CHANGES.fealtyBroken);",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-plan-flag",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      conscripted: !!s.holder.conscripted,\n      brokeFealty: !!s.holder.brokeFealty,",
+    "new": "      brokeFealty: !!s.holder.brokeFealty,",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-chron-conscription",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    case 'conscription':",
+    "new": "    case 'conscriptionX':",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-chron-conscripted",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    case 'conscripted':",
+    "new": "    case 'conscriptedX':",
+    "tests": [
+      "test/net/crown1_law.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-words",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  bounty: 'Camps near the town yield double, and the treasury pays 20 silver a camp cleared, from what is set aside.',\n  conscription:",
+    "new": "  bounty: 'Camps near the town yield double, and the treasury pays 20 silver a camp cleared, from what is set aside.',\n  conscriptionX:",
+    "tests": [
+      "test/net/crown1_law.test.js",
+      "test/ui/crown1_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-inf-bonus",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "accountSeatInfluence(v, freeLand ? FREE_LAND_WATCH_BONUS : 0, tide)",
+    "new": "accountSeatInfluence(v, 0, tide)",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-inf-reach",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "...withReach(guildSeatInfluence([...per.values()], tributeMarks), reach.get(g) ?? 0)",
+    "new": "...withReach(guildSeatInfluence([...per.values()], tributeMarks), 0)",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-inf-palace",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "const crownRows = seat.tier === 'palace' ? await allIn(",
+    "new": "const crownRows = seat.tier !== 'palace' ? await allIn(",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-inf-free",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "reach, freeLand: isFreeLand(seat.region), tide: tideAt(week, seat.region, counted),",
+    "new": "reach, freeLand: false, tide: tideAt(week, seat.region, counted),",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-inf-crown-tier",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "WHERE tier = 'crown' AND guild_id IN",
+    "new": "WHERE guild_id IN",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "crownsHeld (townSeatLaw.js) keeps a Charter's crown tier alone, so the SQL's own tier filter only spares the read the guilds' palace rows"
+  },
+  {
+    "name": "CROWN1-tur-edict",
+    "file": "server-account/src/seatTurning.js",
+    "old": "e.edict === 'conscription' && holds.get(key)?.guild_id === e.guild",
+    "new": "e.edict === 'festival' && holds.get(key)?.guild_id === e.guild",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-week",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      WHERE day BETWEEN ? AND ? AND dst_kind = 'guild' AND kind = 'tithe' AND at >= ? AND at < ? GROUP BY dst_id`)\n      .bind(utcDay(fromS), utcDay(atS), fromS, atS)",
+    "new": "      WHERE day <= ? AND dst_kind = 'guild' AND kind = 'tithe' AND at < ? GROUP BY dst_id`)\n      .bind(utcDay(atS), atS)",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-dst",
+    "file": "server-account/src/seatTurning.js",
+    "old": "AND dst_kind = 'guild' AND kind = 'tithe' AND at >= ?",
+    "new": "AND dst_kind = 'guild' AND at >= ?",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a Tithe burnt at a full treasury is written with no dst_id (market.js titheEnd's CASE), so grouped by dst_id it never names a guild either way"
+  },
+  {
+    "name": "CROWN1-tur-paid-only",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      if (d.amount > 0) conscriptions.push(",
+    "new": "      conscriptions.push(",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-flag",
+    "file": "server-account/src/seatTurning.js",
+    "old": "        conscripted: conscripted.has(key),\n",
+    "new": "",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-min",
+    "file": "server-account/src/seatTurning.js",
+    "old": "'conscription', MIN(?3, balance), ?4, ?5",
+    "new": "'conscription', ?3, ?4, ?5",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-dest",
+    "file": "server-account/src/seatTurning.js",
+    "old": "CASE WHEN ${to} THEN 'guild' ELSE 'burn' END, CASE WHEN ${to} THEN ?2 END, 'conscription'",
+    "new": "'burn', NULL, 'conscription'",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-history-crown",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    stmts.push(paidHistory(c.crownKey, 'conscription',",
+    "new": "    if (0) stmts.push(paidHistory(c.crownKey, 'conscription',",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tur-history-seat",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    for (const k of c.keys) stmts.push(paidHistory(k, 'conscripted',",
+    "new": "    for (const k of c.keys.slice(1)) stmts.push(paidHistory(k, 'conscripted',",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-hol-tier",
+    "file": "server-account/src/seatHolding.js",
+    "old": "  if (!edictForTier(edict, l.hold.tier)) return { error: 'edict-tier' };",
+    "new": "",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tab-tier",
+    "file": "src/ui/seatTab.js",
+    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "tests": [
+      "test/ui/crown1_client.test.js",
+      "test/systems/seat1d_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-tab-tier-read",
+    "file": "src/ui/seatTab.js",
+    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, 'palace') && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "tests": [
+      "test/ui/crown1_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWN1-status",
+    "file": "server-account/src/index.js",
+    "old": "'marks-full': 409, 'edict-tier': 409,",
+    "new": "'marks-full': 409,",
+    "tests": [
+      "test/net/crown1_service.test.js"
+    ]
+  }
 ]

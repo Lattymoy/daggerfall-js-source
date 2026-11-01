@@ -2,8 +2,8 @@
   {
     "name": "SIT1-the-chair-not-a-seat",
     "file": "src/world/chairSeat.js",
-    "old": "new Set([41100, 41105,",
-    "new": "new Set([41105,",
+    "old": "export const CHAIR_MODELS = Object.freeze(new Set([41100, 41105, 41106, 41122, 41123, 43307]));",
+    "new": "export const CHAIR_MODELS = Object.freeze(new Set([41105, 41106, 41122, 41123, 43307]));",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SIT1-every-rise-a-back",
     "file": "src/world/chairSeat.js",
-    "old": "let back = null, backH = seatY + CHAIR_BACK_RISE;",
-    "new": "let back = null, backH = seatY;",
+    "old": "    backH = seatY + CHAIR_BACK_RISE;",
+    "new": "    backH = seatY;",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SIT1-a-bench-faces-away",
     "file": "src/world/chairSeat.js",
-    "old": "s[0] * to[0] + s[1] * to[1] > best[0] * to[0] + best[1] * to[1] ? s : best",
-    "new": "s[0] * to[0] + s[1] * to[1] < best[0] * to[0] + best[1] * to[1] ? s : best",
+    "old": "      (best, s) => (s[0] * to[0] + s[1] * to[1] > best[0] * to[0] + best[1] * to[1] ? s : best),",
+    "new": "      (best, s) => (s[0] * to[0] + s[1] * to[1] < best[0] * to[0] + best[1] * to[1] ? s : best),",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SIT1-any-seat-height",
     "file": "src/world/chairSeat.js",
-    "old": "rise >= CHAIR_SEAT_MIN && rise <= CHAIR_SEAT_MAX ?",
-    "new": "Number.isFinite(rise) ?",
+    "old": "  const seatY =\n    rise >= CHAIR_SEAT_MIN && rise <= CHAIR_SEAT_MAX ? /** @type {number} */ (h) : floorY + CHAIR_SEAT_DEFAULT;",
+    "new": "  const seatY = Number.isFinite(rise) ? /** @type {number} */ (h) : floorY + CHAIR_SEAT_DEFAULT;",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SIT1-the-shelf-taken-for-the-seat",
     "file": "src/world/chairSeat.js",
-    "old": "const h = probe(cx, cz, floorY + CHAIR_SEAT_MAX + CHAIR_PROBE_OVER);",
-    "new": "const h = probe(cx, cz, aabb.max[1] + CHAIR_PROBE_OVER);",
+    "old": "  const h = probe(cx, cz, floorY + CHAIR_SEAT_MAX + CHAIR_PROBE_OVER);",
+    "new": "  const h = probe(cx, cz, aabb.max[1] + CHAIR_PROBE_OVER);",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SIT1-the-probe-measured-upward",
     "file": "src/world/chairSeat.js",
-    "old": "return Number.isFinite(d) && d <= len ? fromY - d : null;",
-    "new": "return Number.isFinite(d) && d <= len ? fromY + d : null;",
+    "old": "  return Number.isFinite(d) && d <= len ? fromY - d : null;",
+    "new": "  return Number.isFinite(d) && d <= len ? fromY + d : null;",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]

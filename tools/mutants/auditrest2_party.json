@@ -1,479 +1,479 @@
 [
- {
-  "name": "AUDITREST2-P-P1-any-different-stamp-is-a-night",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  return !!at && at > high && now - at <= freshMs",
-  "new": "  return !!at && at !== high && now - at <= freshMs",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P1-no-gap",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": " && (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
-  "new": ";",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ],
-  "note": "AUDIT REST III C1 (PIN MOVED): the gap yields to a night my clock owes me; re-aimed by content - the gap gone whole."
- },
- {
-  "name": "AUDITREST2-P-P1-the-gap-is-nothing",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "export const PARTY_NIGHT_GAP_MS = 60_000;",
-  "new": "export const PARTY_NIGHT_GAP_MS = 0;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P1-the-gap-never-starts",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "      if (move) rec.answered = now;",
-  "new": "      if (move) void now;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P1-a-move-in-the-gap-unspent",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "      if (at > rec.high) rec.high = at;",
-  "new": "      if (move) rec.high = at;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P1-world-watches-with-no-gap",
-  "file": "src/scenes/world.js",
-  "old": "  const _nightWatch = createNightWatch();",
-  "new": "  const _nightWatch = createNightWatch({ gapMs: 0 });",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P2-a-missing-pose-is-a-baseline",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "      if (!posed) return false;",
-  "new": "      if (false) return false;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P2-the-departed-remembered",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "        if (!here) marks.delete(acct);",
-  "new": "        if (false) marks.delete(acct);",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P2-world-never-forgets",
-  "file": "src/scenes/world.js",
-  "old": "    _nightWatch.keep(others);",
-  "new": "    void others;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P2-world-a-missing-pose-is-a-pose",
-  "file": "src/scenes/world.js",
-  "old": "      if (!_nightWatch.moved(m.acct, !!m.p, at, now, isNightStamp, () => nightDue(playerEntity, ownMinutes()))) continue;",
-  "new": "      if (!_nightWatch.moved(m.acct, true, at, now, isNightStamp, () => nightDue(playerEntity, ownMinutes()))) continue;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ],
-  "note": "AUDIT REST III C1 (PIN MOVED): the watch is asked my clock's debt too; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P3-a-cut-night-is-whole",
-  "file": "src/systems/rest/restAct.js",
-  "old": "!r.enemyBroke && !r.prevented;",
-  "new": "!r.enemyBroke;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ],
-  "note": "AUDIT REST III C2 (PIN MOVED): the unreachable room's end left nightWhole; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P3-its-own-line-dropped",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  const own = r.text ?? (endLines?.(r.textId) ?? []).join(' ');",
-  "new": "  const own = '';",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P3-a-death-said-as-a-night",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (!r || r.died) return { raise, text: null };",
-  "new": "  if (!r) return { raise, text: null };",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ],
-  "note": "AUDIT REST III C3 (PIN MOVED): every arm raises now; re-aimed by content - death still says nothing."
- },
- {
-  "name": "AUDITREST2-P-P3-world-raises-anyway",
-  "file": "src/scenes/world.js",
-  "old": "    if (end.raise) bag.onRestFinished?.();",
-  "new": "    bag.onRestFinished?.();",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P3-world-says-the-whole-night",
-  "file": "src/scenes/world.js",
-  "old": "    if (end.text) setMidScreenText(end.text, 5);",
-  "new": "    setMidScreenText(REST_ACT_TEXT.carried(name), 5);",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P3-the-open-world-route-silent",
-  "file": "src/scenes/world.js",
-  "old": "      ambushNight();   // AUDIT REST II P3",
-  "new": "      void 0;   // AUDIT REST II P3",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/scenes/restlodging.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P3-the-modes-route-silent",
-  "file": "src/scenes/worldModes.js",
-  "old": "      ambushNight();   // AUDIT REST II P3",
-  "new": "      void 0;   // AUDIT REST II P3",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/scenes/restlodging.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P3-the-dungeon-route-silent",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "      ambushNight();   // AUDIT REST II P3",
-  "new": "      void 0;   // AUDIT REST II P3",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/scenes/restlodging.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P4-the-town-ignored",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  return (typeof town === 'function' ? town() : town) ? 'town' : 'carry';",
-  "new": "  return 'carry';",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P4-the-town-before-the-gate",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  if (typeof busy === 'function' ? busy() : busy) return 'busy';\n  return (typeof town === 'function' ? town() : town) ? 'town' : 'carry';",
-  "new": "  if (typeof town === 'function' ? town() : town) return 'town';\n  return (typeof busy === 'function' ? busy() : busy) ? 'busy' : 'carry';",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P4-world-town-unasked",
-  "file": "src/scenes/world.js",
-  "old": "        town: () => !!hostRestDeps()?.restPlace?.()?.inTownOutside,",
-  "new": "        town: () => false,",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P4-world-town-unsaid",
-  "file": "src/scenes/world.js",
-  "old": "      else if (act === 'town') setMidScreenText(REST_ACT_TEXT.carriedTown(name), 4);",
-  "new": "      else if (act === 'town') void name;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P5-the-mark-asked-first",
-  "file": "src/systems/party/partyRestLaw.js",
-  "old": "  return !!at && at > high && now - at <= freshMs && !!(typeof isNight === 'function' ? isNight(at) : isNight);",
-  "new": "  const night = !!(typeof isNight === 'function' ? isNight(at) : isNight);\n  return !!at && at > high && now - at <= freshMs && night;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P5-a-key-array-a-call",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  for (const kind of NIGHT_KINDS) if",
-  "new": "  for (const kind of Object.keys(PARTY_NIGHT_MARKS)) if",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P5-world-asks-eagerly",
-  "file": "src/scenes/world.js",
-  "old": "at, now, isNightStamp, () => nightDue(",
-  "new": "at, now, isNightStamp(at), () => nightDue(",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ],
-  "note": "AUDIT REST III C1 (PIN MOVED): the watch is asked my clock's debt too; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P6-a-rental-counts-no-nights",
-  "file": "src/systems/tavern.js",
-  "old": "    nights: days,\n",
-  "new": "",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P6-an-extension-adds-none",
-  "file": "src/systems/tavern.js",
-  "old": "    if (Number.isFinite(room.nights)) room.nights += days;",
-  "new": "    if (false) room.nights += days;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P6-a-night-spends-none",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1);",
-  "new": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes));",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P6-the-day-spent-again",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1);",
-  "new": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1); room.expiryMinutes -= 960;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P6-the-last-night-keeps-the-room",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (room.nights === 0 && Number.isFinite(nowMinutes)) room.expiryMinutes",
-  "new": "  if (false && Number.isFinite(nowMinutes)) room.expiryMinutes",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P6-the-days-floored",
-  "file": "src/systems/rest/restAct.js",
-  "old": "Math.max(0, Math.ceil(h / 24))",
-  "new": "Math.max(0, Math.floor(h / 24))",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P6-the-old-room-read-after-the-night",
-  "file": "src/scenes/shared.js",
-  "old": "    roomNightsLeft(room, ownMinutes());",
-  "new": "    void room;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P7-the-last-latch-unread",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {",
-  "new": "  if (false) {",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P7-the-break-unheard",
-  "file": "src/systems/rest/restAct.js",
-  "old": "    deps.onEnemyBreak?.();\n    r = {",
-  "new": "    r = {",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P7-a-death-becomes-a-break",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {",
-  "new": "  if (s._abortEnemySpawn && !r.enemyBroke) {",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P7-a-break-broken-twice",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {",
-  "new": "  if (s._abortEnemySpawn && !r.died) {",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P8-the-classic-hold-to-its-end",
-  "file": "src/ui/restWindow.js",
-  "old": "{ this._actT += dt; if (channelBroken(this._act, this._pendingEnemySpawn,",
-  "new": "{ this._actT += dt; if (this._actT >= this._act.channelSeconds && channelBroken(this._act, this._pendingEnemySpawn,",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ],
-  "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P8-the-enhanced-hold-to-its-end",
-  "file": "src/ui/enhanced/enhancedRest.js",
-  "old": "{ _actT += dt; if (channelBroken(act, overlay._pendingEnemySpawn,",
-  "new": "{ _actT += dt; if (_actT >= act.channelSeconds && channelBroken(act, overlay._pendingEnemySpawn,",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ],
-  "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P8-a-kneel-broken-by-a-blow",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (opened?.meditate) return false;\n  if (Number.isFinite(hpAtOpen)",
-  "new": "  if (Number.isFinite(hpAtOpen)",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ],
-  "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P8-no-foe-asked",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (pending || enemiesNearby?.()) return true;",
-  "new": "  if (pending) return true;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P8-the-latch-unread",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (pending || enemiesNearby?.()) return true;",
-  "new": "  if (enemiesNearby?.()) return true;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P8-no-blow-felt",
-  "file": "src/systems/rest/restAct.js",
-  "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;\n",
-  "new": "",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/rest1_act.test.js"
-  ],
-  "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
- },
- {
-  "name": "AUDITREST2-P-P9-the-carried-dead-sleep",
-  "file": "src/scenes/world.js",
-  "old": "      const dead = playerEntity.health <= 0 || !!modes?.deathUp?.();",
-  "new": "      const dead = false;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- },
- {
-  "name": "AUDITREST2-P-P9-the-death-screen-unasked",
-  "file": "src/scenes/world.js",
-  "old": "      const dead = playerEntity.health <= 0 || !!modes?.deathUp?.();",
-  "new": "      const dead = playerEntity.health <= 0;",
-  "tests": [
-   "test/systems/auditrest2_party.test.js",
-   "test/systems/rest/auditrestparty.test.js",
-   "test/systems/rest5_partynight.test.js"
-  ]
- }
+  {
+    "name": "AUDITREST2-P-P1-any-different-stamp-is-a-night",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  return !!at && at > high && now - at <= freshMs && !!(typeof isNight === 'function' ? isNight(at) : isNight);",
+    "new": "  return !!at && at !== high && now - at <= freshMs && !!(typeof isNight === 'function' ? isNight(at) : isNight);",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P1-no-gap",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "      const move =\n        nightMoved(rec.high, at, now, isNight, freshMs) &&\n        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "      const move = nightMoved(rec.high, at, now, isNight, freshMs);",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ],
+    "note": "AUDIT REST III C1 (PIN MOVED): the gap yields to a night my clock owes me; re-aimed by content - the gap gone whole."
+  },
+  {
+    "name": "AUDITREST2-P-P1-the-gap-is-nothing",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "export const PARTY_NIGHT_GAP_MS = 60_000;",
+    "new": "export const PARTY_NIGHT_GAP_MS = 0;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P1-the-gap-never-starts",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "      if (move) rec.answered = now;",
+    "new": "      if (move) void now;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P1-a-move-in-the-gap-unspent",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "      if (at > rec.high) rec.high = at;",
+    "new": "      if (move) rec.high = at;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P1-world-watches-with-no-gap",
+    "file": "src/scenes/world.js",
+    "old": "  const _nightWatch = createNightWatch();",
+    "new": "  const _nightWatch = createNightWatch({ gapMs: 0 });",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P2-a-missing-pose-is-a-baseline",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "      if (!posed) return false;",
+    "new": "      if (false) return false;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P2-the-departed-remembered",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "        if (!here) marks.delete(acct);",
+    "new": "        if (false) marks.delete(acct);",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P2-world-never-forgets",
+    "file": "src/scenes/world.js",
+    "old": "    _nightWatch.keep(others);",
+    "new": "    void others;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P2-world-a-missing-pose-is-a-pose",
+    "file": "src/scenes/world.js",
+    "old": "      if (!_nightWatch.moved(m.acct, !!m.p, at, now, isNightStamp, () => nightDue(playerEntity, ownMinutes()))) continue;",
+    "new": "      if (!_nightWatch.moved(m.acct, true, at, now, isNightStamp, () => nightDue(playerEntity, ownMinutes()))) continue;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ],
+    "note": "AUDIT REST III C1 (PIN MOVED): the watch is asked my clock's debt too; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P3-a-cut-night-is-whole",
+    "file": "src/systems/rest/restAct.js",
+    "old": "export const nightWhole = (r) => !!r && !r.died && !r.enemyBroke && !r.prevented;",
+    "new": "export const nightWhole = (r) => !!r && !r.died && !r.enemyBroke;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ],
+    "note": "AUDIT REST III C2 (PIN MOVED): the unreachable room's end left nightWhole; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P3-its-own-line-dropped",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  const own = r.text ?? (endLines?.(r.textId) ?? []).join(' ');",
+    "new": "  const own = '';",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P3-a-death-said-as-a-night",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (!r || r.died) return { raise, text: null };",
+    "new": "  if (!r) return { raise, text: null };",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ],
+    "note": "AUDIT REST III C3 (PIN MOVED): every arm raises now; re-aimed by content - death still says nothing."
+  },
+  {
+    "name": "AUDITREST2-P-P3-world-raises-anyway",
+    "file": "src/scenes/world.js",
+    "old": "    if (end.raise) bag.onRestFinished?.();",
+    "new": "    bag.onRestFinished?.();",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P3-world-says-the-whole-night",
+    "file": "src/scenes/world.js",
+    "old": "    if (end.text) setMidScreenText(end.text, 5);",
+    "new": "    setMidScreenText(REST_ACT_TEXT.carried(name), 5);",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P3-the-open-world-route-silent",
+    "file": "src/scenes/world.js",
+    "old": "      ambushNight();   // AUDIT REST II P3",
+    "new": "      void 0;   // AUDIT REST II P3",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/scenes/restlodging.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P3-the-modes-route-silent",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ambushNight();   // AUDIT REST II P3",
+    "new": "      void 0;   // AUDIT REST II P3",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/scenes/restlodging.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P3-the-dungeon-route-silent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      ambushNight();   // AUDIT REST II P3",
+    "new": "      void 0;   // AUDIT REST II P3",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/scenes/restlodging.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P4-the-town-ignored",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  return (typeof town === 'function' ? town() : town) ? 'town' : 'carry';",
+    "new": "  return 'carry';",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P4-the-town-before-the-gate",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  if (typeof busy === 'function' ? busy() : busy) return 'busy';\n  return (typeof town === 'function' ? town() : town) ? 'town' : 'carry';",
+    "new": "  if (typeof town === 'function' ? town() : town) return 'town';\n  return (typeof busy === 'function' ? busy() : busy) ? 'busy' : 'carry';",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P4-world-town-unasked",
+    "file": "src/scenes/world.js",
+    "old": "        town: () => !!hostRestDeps()?.restPlace?.()?.inTownOutside,",
+    "new": "        town: () => false,",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P4-world-town-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "      else if (act === 'town') setMidScreenText(REST_ACT_TEXT.carriedTown(name), 4);",
+    "new": "      else if (act === 'town') void name;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P5-the-mark-asked-first",
+    "file": "src/systems/party/partyRestLaw.js",
+    "old": "  return !!at && at > high && now - at <= freshMs && !!(typeof isNight === 'function' ? isNight(at) : isNight);",
+    "new": "  const night = !!(typeof isNight === 'function' ? isNight(at) : isNight);\n  return !!at && at > high && now - at <= freshMs && night;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P5-a-key-array-a-call",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  for (const kind of NIGHT_KINDS) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
+    "new": "  for (const kind of Object.keys(PARTY_NIGHT_MARKS)) if (PARTY_NIGHT_MARKS[kind] === ms) return kind;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P5-world-asks-eagerly",
+    "file": "src/scenes/world.js",
+    "old": "at, now, isNightStamp, () => nightDue(",
+    "new": "at, now, isNightStamp(at), () => nightDue(",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ],
+    "note": "AUDIT REST III C1 (PIN MOVED): the watch is asked my clock's debt too; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P6-a-rental-counts-no-nights",
+    "file": "src/systems/tavern.js",
+    "old": "    nights: days,\n  };",
+    "new": "  };",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P6-an-extension-adds-none",
+    "file": "src/systems/tavern.js",
+    "old": "    if (Number.isFinite(room.nights)) room.nights += days; // an old save's room (no count) reads its nights off its hours at its next night",
+    "new": "    if (false) room.nights += days; // an old save's room (no count) reads its nights off its hours at its next night",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P6-a-night-spends-none",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes) - 1);",
+    "new": "  room.nights = Math.max(0, roomNightsLeft(room, nowMinutes));",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P6-the-day-spent-again",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (room.nights === 0 && Number.isFinite(nowMinutes))",
+    "new": "  room.expiryMinutes -= 960;\n  if (room.nights === 0 && Number.isFinite(nowMinutes))",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P6-the-last-night-keeps-the-room",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (room.nights === 0 && Number.isFinite(nowMinutes))\n    room.expiryMinutes = Math.min(room.expiryMinutes, Math.floor(nowMinutes));",
+    "new": "  if (false && Number.isFinite(nowMinutes)) room.expiryMinutes = Math.min(room.expiryMinutes, Math.floor(nowMinutes));",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P6-the-days-floored",
+    "file": "src/systems/rest/restAct.js",
+    "old": "    room.nights = Number.isFinite(h) ? Math.max(0, Math.ceil(h / 24)) : 0;",
+    "new": "    room.nights = Number.isFinite(h) ? Math.max(0, Math.floor(h / 24)) : 0;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P6-the-old-room-read-after-the-night",
+    "file": "src/scenes/shared.js",
+    "old": "    roomNightsLeft(room, ownMinutes());",
+    "new": "    void room;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P7-the-last-latch-unread",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P7-the-break-unheard",
+    "file": "src/systems/rest/restAct.js",
+    "old": "    deps.onEnemyBreak?.();\n    r = { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };",
+    "new": "    r = { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P7-a-death-becomes-a-break",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {",
+    "new": "  if (s._abortEnemySpawn && !r.enemyBroke) {",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P7-a-break-broken-twice",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (s._abortEnemySpawn && !r.died && !r.enemyBroke) {",
+    "new": "  if (s._abortEnemySpawn && !r.died) {",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P8-the-classic-hold-to-its-end",
+    "file": "src/ui/restWindow.js",
+    "old": "{ this._actT += dt; if (channelBroken(this._act, this._pendingEnemySpawn,",
+    "new": "{ this._actT += dt; if (this._actT >= this._act.channelSeconds && channelBroken(this._act, this._pendingEnemySpawn,",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ],
+    "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P8-the-enhanced-hold-to-its-end",
+    "file": "src/ui/enhanced/enhancedRest.js",
+    "old": "{ _actT += dt; if (channelBroken(act, overlay._pendingEnemySpawn,",
+    "new": "{ _actT += dt; if (_actT >= act.channelSeconds && channelBroken(act, overlay._pendingEnemySpawn,",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ],
+    "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P8-a-kneel-broken-by-a-blow",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (opened?.meditate) return false;\n  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;",
+    "new": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ],
+    "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P8-no-foe-asked",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (pending || enemiesNearby?.()) return true;",
+    "new": "  if (pending) return true;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P8-the-latch-unread",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (pending || enemiesNearby?.()) return true;",
+    "new": "  if (enemiesNearby?.()) return true;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P8-no-blow-felt",
+    "file": "src/systems/rest/restAct.js",
+    "old": "  if (Number.isFinite(hpAtOpen) && Number.isFinite(hpNow) && hpNow < hpAtOpen) return true;\n  return !!opened?.point?.where && typeof restActNow === 'function' && !restActNow()?.point;",
+    "new": "  return !!opened?.point?.where && typeof restActNow === 'function' && !restActNow()?.point;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/rest1_act.test.js"
+    ],
+    "note": "AUDIT REST III C6 (PIN MOVED): the hold asks the point too; re-aimed by content."
+  },
+  {
+    "name": "AUDITREST2-P-P9-the-carried-dead-sleep",
+    "file": "src/scenes/world.js",
+    "old": "      const dead = playerEntity.health <= 0 || !!modes?.deathUp?.();",
+    "new": "      const dead = false;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITREST2-P-P9-the-death-screen-unasked",
+    "file": "src/scenes/world.js",
+    "old": "      const dead = playerEntity.health <= 0 || !!modes?.deathUp?.();",
+    "new": "      const dead = playerEntity.health <= 0;",
+    "tests": [
+      "test/systems/auditrest2_party.test.js",
+      "test/systems/rest/auditrestparty.test.js",
+      "test/systems/rest5_partynight.test.js"
+    ]
+  }
 ]

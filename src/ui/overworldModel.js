@@ -37,24 +37,25 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CLIMATES, getPixelFromPixelID } from '../formats/mapsFile.js';
-import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // AUDIT EV F-DOC7: one home for the byte*8 base term
+import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js'; // AUDIT EV F-DOC7: one home for the byte*8 base term
 import { getPixelColorIndex, checkLocationDiscovered } from './travel/travelMapWindow.js';
 
 // One map pixel = one scene unit; the streamed world's sign convention
 // (scene z = -py, so north is +z) kept so a mind that knows one map
 // knows both.
-export const OVERWORLD_RELIEF = 24;   // vertical exaggeration - skin, documented above
-export { BASE_HEIGHT_SCALE };   // AUDIT EV F-DOC7: re-exported from terrainSampler - was a private copy of the 8 here, one silent-divergence hazard
+export const OVERWORLD_RELIEF = 24; // vertical exaggeration - skin, documented above
+export { BASE_HEIGHT_SCALE }; // AUDIT EV F-DOC7: re-exported from terrainSampler - was a private copy of the 8 here, one silent-divergence hazard
 /** World units per map pixel in the STREAMED world - the divisor that
  *  brings the height law into map-pixel units. */
 const UNITS_PER_PIXEL = 819.2;
-const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE;   // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)
+const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE; // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)
 
 /** The height law in overworld units: max(byte*8, 27.2) through the
  *  streamed world's own vertical scale, exaggerated by OVERWORLD_RELIEF. */
 export function overworldHeight(byte) {
-  return (Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * TRUE_VERTICAL
-    / UNITS_PER_PIXEL) * OVERWORLD_RELIEF;
+  return (
+    ((Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * TRUE_VERTICAL) / UNITS_PER_PIXEL) * OVERWORLD_RELIEF
+  );
 }
 /** The flat sea, in the same units. */
 export const OVERWORLD_SEA_LEVEL = overworldHeight(0);
@@ -83,19 +84,15 @@ export const OVERWORLD_CLIMATE_COLORS = Object.freeze({
   [CLIMATES.HauntedWoodlands]: [67, 85, 67],
 });
 const DEFAULT_LAND = OVERWORLD_CLIMATE_COLORS[CLIMATES.Woodlands];
-const SHALLOWS = [40, 76, 96];        // byte 1-3 water shades toward the coast
-const HIGHLAND = [148, 142, 130];     // rock creeping in above the treeline
-const SNOWLINE = [232, 236, 240];     // the peaks
+const SHALLOWS = [40, 76, 96]; // byte 1-3 water shades toward the coast
+const HIGHLAND = [148, 142, 130]; // rock creeping in above the treeline
+const SNOWLINE = [232, 236, 240]; // the peaks
 /** Where the land tint starts lending itself to rock and then snow,
  *  in height-map bytes. SKIN. */
 export const TREELINE_BYTE = 64;
 export const SNOWLINE_BYTE = 104;
 
-const lerp3 = (a, b, t) => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-  a[2] + (b[2] - a[2]) * t,
-];
+const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 /** One vertex's tint before slope shading: water by depth, land by
  *  climate with rock/snow blended in above the treeline. Exported for
@@ -170,13 +167,20 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt, path
         // review's verifier executed it and caught the inversion.
         const slope = (cl(px + 1, py + 1) - cl(px - 1, py - 1)) * BASE_HEIGHT_SCALE;
         const shade = Math.min(1.18, Math.max(0.55, 0.9 + slope * 0.004));
-        r *= shade; g *= shade; b *= shade;
+        r *= shade;
+        g *= shade;
+        b *= shade;
         // ROADS 7/24: the thread. 2 = road, 1 = track, 4 = river, 3 = stream, 0 = nothing.
         const path = pathAt ? pathAt(px, py) : 0;
-        if (path === 2) { [r, g, b] = lerp3([r, g, b], OVERWORLD_ROAD, 0.85); }
-        else if (path === 1) { [r, g, b] = lerp3([r, g, b], OVERWORLD_TRACK, 0.55); }
-        else if (path === 4) { [r, g, b] = lerp3([r, g, b], OVERWORLD_RIVER, 0.85); }
-        else if (path === 3) { [r, g, b] = lerp3([r, g, b], OVERWORLD_STREAM, 0.6); }
+        if (path === 2) {
+          [r, g, b] = lerp3([r, g, b], OVERWORLD_ROAD, 0.85);
+        } else if (path === 1) {
+          [r, g, b] = lerp3([r, g, b], OVERWORLD_TRACK, 0.55);
+        } else if (path === 4) {
+          [r, g, b] = lerp3([r, g, b], OVERWORLD_RIVER, 0.85);
+        } else if (path === 3) {
+          [r, g, b] = lerp3([r, g, b], OVERWORLD_STREAM, 0.6);
+        }
       }
       colors[i * 3] = Math.min(255, r | 0);
       colors[i * 3 + 1] = Math.min(255, g | 0);
@@ -192,8 +196,12 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt, path
       const b2 = a + 1;
       const c = a + width;
       const d = c + 1;
-      indices[k++] = a; indices[k++] = c; indices[k++] = b2;
-      indices[k++] = b2; indices[k++] = c; indices[k++] = d;
+      indices[k++] = a;
+      indices[k++] = c;
+      indices[k++] = b2;
+      indices[k++] = b2;
+      indices[k++] = c;
+      indices[k++] = d;
     }
   }
   return { positions, colors, indices, width, height };
@@ -206,25 +214,24 @@ export function buildOverworldGrid({ heightBytes, width, height, climateAt, path
  *  classic map, so the BUCKETS are the one law and only the paint is
  *  ours. Towns gold, temples cool, dungeons ember, homes hearth. */
 export const OVERWORLD_DOT_COLORS = Object.freeze([
-  [255, 92, 60],    // 0 DungeonLabyrinth
-  [238, 118, 48],   // 1 DungeonKeep
-  [204, 126, 66],   // 2 DungeonRuin
-  [158, 116, 88],   // 3 Graveyard
-  [176, 82, 134],   // 4 Coven
-  [186, 168, 118],  // 5 HomeFarms
-  [224, 198, 134],  // 6 HomeWealthy
-  [166, 150, 114],  // 7 HomePoor
-  [102, 194, 208],  // 8 ReligionTemple
-  [134, 164, 224],  // 9 ReligionCult
-  [242, 202, 84],   // 10 Tavern
-  [255, 234, 152],  // 11 TownCity
-  [238, 216, 142],  // 12 TownHamlet
-  [212, 194, 132],  // 13 TownVillage
+  [255, 92, 60], // 0 DungeonLabyrinth
+  [238, 118, 48], // 1 DungeonKeep
+  [204, 126, 66], // 2 DungeonRuin
+  [158, 116, 88], // 3 Graveyard
+  [176, 82, 134], // 4 Coven
+  [186, 168, 118], // 5 HomeFarms
+  [224, 198, 134], // 6 HomeWealthy
+  [166, 150, 114], // 7 HomePoor
+  [102, 194, 208], // 8 ReligionTemple
+  [134, 164, 224], // 9 ReligionCult
+  [242, 202, 84], // 10 Tavern
+  [255, 234, 152], // 11 TownCity
+  [238, 216, 142], // 12 TownHamlet
+  [212, 194, 132], // 13 TownVillage
 ]);
 /** Marker radius by the same slots, in screen pixels at rest - a city
  *  reads from across the bay, a coven has to be looked for. */
-export const OVERWORLD_DOT_SIZES = Object.freeze([
-  5, 5, 4.5, 4, 4.5, 4, 4.5, 4, 5, 4.5, 4.5, 7.5, 6, 5]);
+export const OVERWORLD_DOT_SIZES = Object.freeze([5, 5, 4.5, 4, 4.5, 4, 4.5, 4, 5, 4.5, 4.5, 7.5, 6, 5]);
 
 /**
  * Every marker this skin may draw: the discovery law and the filter
@@ -238,7 +245,8 @@ export const OVERWORLD_DOT_SIZES = Object.freeze([
  */
 /** A place summary's map pixel: its own `pixel` where it carries one (WW-C2: a zone hall past the Bay - an id's
  *  `y * 1000 + x` names a pixel of the Bay's map alone), else its id's (MapsFile.getPixelFromPixelID). */
-export const summaryPixel = (summary) => (summary?.pixel ? { x: summary.pixel.x, y: summary.pixel.y } : getPixelFromPixelID(summary.id));
+export const summaryPixel = (summary) =>
+  summary?.pixel ? { x: summary.pixel.x, y: summary.pixel.y } : getPixelFromPixelID(summary.id);
 
 export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocationDiscovered } = {}) {
   const out = [];
@@ -290,11 +298,16 @@ export function buildMarkerModel(summaries, filters, { isDiscovered = checkLocat
 export function sampleHeightByte(heightBytes, width, height, px, py) {
   const cx = Math.min(width - 1, Math.max(0, px));
   const cy = Math.min(height - 1, Math.max(0, py));
-  const x0 = Math.floor(cx), y0 = Math.floor(cy);
-  const x1 = Math.min(width - 1, x0 + 1), y1 = Math.min(height - 1, y0 + 1);
-  const fx = cx - x0, fy = cy - y0;
-  const h00 = heightBytes[y0 * width + x0], h10 = heightBytes[y0 * width + x1];
-  const h01 = heightBytes[y1 * width + x0], h11 = heightBytes[y1 * width + x1];
+  const x0 = Math.floor(cx),
+    y0 = Math.floor(cy);
+  const x1 = Math.min(width - 1, x0 + 1),
+    y1 = Math.min(height - 1, y0 + 1);
+  const fx = cx - x0,
+    fy = cy - y0;
+  const h00 = heightBytes[y0 * width + x0],
+    h10 = heightBytes[y0 * width + x1];
+  const h01 = heightBytes[y1 * width + x0],
+    h11 = heightBytes[y1 * width + x1];
   return (h00 * (1 - fx) + h10 * fx) * (1 - fy) + (h01 * (1 - fx) + h11 * fx) * fy;
 }
 
@@ -321,7 +334,7 @@ export function reliefPoint(px, py, { heightBytes, width, height }, lift = 0) {
  *  and the numbers are skin: ground < stream < river < track < trunk <
  *  route. Equal lifts z-fight where two classes share a pixel, which
  *  they do at every junction. */
-export const RELIEF_LIFT = Object.freeze({ stream: 0.08, river: 0.11, track: 0.14, trunk: 0.20, route: 0.35 });
+export const RELIEF_LIFT = Object.freeze({ stream: 0.08, river: 0.11, track: 0.14, trunk: 0.2, route: 0.35 });
 
 /** RZ1 - Ramer-Douglas-Peucker, run BEFORE the corner cut. A traced
  *  chain walks map pixels, so a road running east-north-east is a
@@ -340,19 +353,27 @@ export const SIMPLIFY_EPSILON = 0.9;
 export function simplifyChain(line, eps = SIMPLIFY_EPSILON) {
   if (line.length < 3) return line.slice();
   const keep = new Uint8Array(line.length);
-  keep[0] = 1; keep[line.length - 1] = 1;
+  keep[0] = 1;
+  keep[line.length - 1] = 1;
   const stack = [[0, line.length - 1]];
   while (stack.length) {
     const [lo, hi] = stack.pop();
     if (hi - lo < 2) continue;
-    const a = line[lo], b = line[hi];
-    const dx = b.x - a.x, dy = b.y - a.y;
+    const a = line[lo],
+      b = line[hi];
+    const dx = b.x - a.x,
+      dy = b.y - a.y;
     const len = Math.hypot(dx, dy);
-    let idx = -1, dmax = 0;
+    let idx = -1,
+      dmax = 0;
     for (let i = lo + 1; i < hi; i++) {
       const p = line[i];
-      const d = len === 0 ? Math.hypot(p.x - a.x, p.y - a.y) : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len;
-      if (d > dmax) { dmax = d; idx = i; }
+      const d =
+        len === 0 ? Math.hypot(p.x - a.x, p.y - a.y) : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len;
+      if (d > dmax) {
+        dmax = d;
+        idx = i;
+      }
     }
     if (dmax <= eps) continue;
     keep[idx] = 1;
@@ -371,7 +392,8 @@ export function chaikin(line, passes = 2) {
     if (pts.length < 3) return pts;
     const out = [pts[0]];
     for (let i = 0; i < pts.length - 1; i++) {
-      const a = pts[i], b = pts[i + 1];
+      const a = pts[i],
+        b = pts[i + 1];
       out.push({ x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 });
       out.push({ x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 });
     }
@@ -393,14 +415,18 @@ const DIR_BIT = [128, 64, 32, 16, 8, 4, 2, 1];
 const DIR_DX = [0, 1, 1, 1, 0, -1, -1, -1];
 const DIR_DY = [-1, -1, 0, 1, 1, 1, 0, -1];
 const POPCOUNT = new Uint8Array(256);
-for (let b = 0; b < 256; b++) { let n = 0; for (let i = 0; i < 8; i++) if (b & (1 << i)) n++; POPCOUNT[b] = n; }
+for (let b = 0; b < 256; b++) {
+  let n = 0;
+  for (let i = 0; i < 8; i++) if (b & (1 << i)) n++;
+  POPCOUNT[b] = n;
+}
 /** AUDIT-MAP (perf): the walked edges are BITS in a per-pixel byte and
  *  the directions a table, where they were strings in a Set and a
  *  `find` per step - the same chains (checked identical on the shipped
  *  masks), eight times faster (roads 44 -> 8 ms, tracks 56 -> 5 ms),
  *  which is a hundred milliseconds off the held map's first open. */
 export function traceChains(mask, width, height) {
-  const walked = new Uint8Array(mask.length);   // the bits of each pixel already walked
+  const walked = new Uint8Array(mask.length); // the bits of each pixel already walked
   const chains = [];
   const walk = (start, d) => {
     const chain = [{ x: start % width, y: (start / width) | 0 }];
@@ -408,7 +434,8 @@ export function traceChains(mask, width, height) {
     for (;;) {
       if (walked[i] & DIR_BIT[d]) break;
       walked[i] |= DIR_BIT[d];
-      const x = (i % width) + DIR_DX[d], y = ((i / width) | 0) + DIR_DY[d];
+      const x = (i % width) + DIR_DX[d],
+        y = ((i / width) | 0) + DIR_DY[d];
       if (x < 0 || y < 0 || x >= width || y >= height) break;
       const j = y * width + x;
       const back = (d + 4) & 7;
@@ -416,21 +443,27 @@ export function traceChains(mask, width, height) {
       chain.push({ x, y });
       if (POPCOUNT[mask[j]] !== 2) break;
       let nd = -1;
-      for (let k = 0; k < 8; k++) if ((mask[j] & DIR_BIT[k]) && k !== back) { nd = k; break; }
+      for (let k = 0; k < 8; k++)
+        if (mask[j] & DIR_BIT[k] && k !== back) {
+          nd = k;
+          break;
+        }
       if (nd < 0) break;
-      i = j; d = nd;
+      i = j;
+      d = nd;
     }
     if (chain.length > 1) chains.push(chain);
   };
   for (let i = 0; i < mask.length; i++) {
     const m = mask[i];
     if (!m || POPCOUNT[m] === 2) continue;
-    for (let d = 0; d < 8; d++) if ((m & DIR_BIT[d]) && !(walked[i] & DIR_BIT[d])) walk(i, d);
+    for (let d = 0; d < 8; d++) if (m & DIR_BIT[d] && !(walked[i] & DIR_BIT[d])) walk(i, d);
   }
-  for (let i = 0; i < mask.length; i++) {   // pure loops
+  for (let i = 0; i < mask.length; i++) {
+    // pure loops
     const m = mask[i];
     if (!m) continue;
-    for (let d = 0; d < 8; d++) if ((m & DIR_BIT[d]) && !(walked[i] & DIR_BIT[d])) walk(i, d);
+    for (let d = 0; d < 8; d++) if (m & DIR_BIT[d] && !(walked[i] & DIR_BIT[d])) walk(i, d);
   }
   return chains;
 }
@@ -440,7 +473,12 @@ export function roadPoints(lines, ctx, lift) {
   return lines.map((line) => {
     const smooth = chaikin(simplifyChain(line));
     const pts = new Float32Array(smooth.length * 3);
-    smooth.forEach((p, i) => { const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift); pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z; });
+    smooth.forEach((p, i) => {
+      const [x, y, z] = reliefPoint(p.x, p.y, ctx, lift);
+      pts[i * 3] = x;
+      pts[i * 3 + 1] = y;
+      pts[i * 3 + 2] = z;
+    });
     return pts;
   });
 }
@@ -467,7 +505,9 @@ export function routePoints(start, path, ctx) {
   const pts = new Float32Array((path.length + 1) * 3);
   const set = (i, px, py) => {
     const [x, y, z] = reliefPoint(px, py, ctx, RELIEF_LIFT.route);
-    pts[i * 3] = x; pts[i * 3 + 1] = y; pts[i * 3 + 2] = z;
+    pts[i * 3] = x;
+    pts[i * 3 + 1] = y;
+    pts[i * 3 + 2] = z;
   };
   set(0, start.x, start.y);
   path.forEach((p, i) => set(i + 1, p.x, p.y));

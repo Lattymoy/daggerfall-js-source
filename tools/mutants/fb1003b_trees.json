@@ -56,8 +56,8 @@
   {
     "name": "TREES-seat-no-ground",
     "file": "src/world/townStandIns.js",
-    "old": "return top !== null && top > groundY ? top : groundY;",
-    "new": "return top !== null ? top : groundY;",
+    "old": "  return top !== null && top > groundY ? top : groundY;",
+    "new": "  return top !== null ? top : groundY;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TREES-seat-never",
     "file": "src/world/townStandIns.js",
-    "old": "return top !== null && top > groundY ? top : groundY;",
-    "new": "return groundY;",
+    "old": "  return top !== null && top > groundY ? top : groundY;",
+    "new": "  return groundY;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TREES-drawn-ignores-switch",
     "file": "src/world/townStandIns.js",
-    "old": "(RMBRP_HILLS[id] ? customModelFor(id) : null)",
-    "new": "(RMBRP_HILLS[id] ? RMBRP_PIECES[id]() : null)",
+    "old": "export const drawnHillStandIn = (id) => (RMBRP_HILLS[id] ? customModelFor(id) : null);",
+    "new": "export const drawnHillStandIn = (id) => (RMBRP_HILLS[id] ? RMBRP_PIECES[id]() : null);",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TREES-drawn-any-model",
     "file": "src/world/townStandIns.js",
-    "old": "(RMBRP_HILLS[id] ? customModelFor(id) : null)",
-    "new": "customModelFor(id)",
+    "old": "export const drawnHillStandIn = (id) => (RMBRP_HILLS[id] ? customModelFor(id) : null);",
+    "new": "export const drawnHillStandIn = (id) => customModelFor(id);",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TREES-matrix-untranslated",
     "file": "src/world/townStandIns.js",
-    "old": "m[0] * p[i] + m[4] * p[i + 1] + m[8] * p[i + 2] + m[12];",
-    "new": "m[0] * p[i] + m[4] * p[i + 1] + m[8] * p[i + 2];",
+    "old": "      w[i] = m[0] * p[i] + m[4] * p[i + 1] + m[8] * p[i + 2] + m[12];",
+    "new": "      w[i] = m[0] * p[i] + m[4] * p[i + 1] + m[8] * p[i + 2];",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TREES-height-untranslated",
     "file": "src/world/townStandIns.js",
-    "old": "m[1] * p[i] + m[5] * p[i + 1] + m[9] * p[i + 2] + m[13];",
-    "new": "m[1] * p[i] + m[5] * p[i + 1] + m[9] * p[i + 2];",
+    "old": "      w[i + 1] = m[1] * p[i] + m[5] * p[i + 1] + m[9] * p[i + 2] + m[13];",
+    "new": "      w[i + 1] = m[1] * p[i] + m[5] * p[i + 1] + m[9] * p[i + 2];",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TREES-outside-triangle",
     "file": "src/world/townStandIns.js",
-    "old": "if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue;",
-    "new": "if (l1 < -1e-9 || l2 < -1e-9) continue;",
+    "old": "        if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue;",
+    "new": "        if (l1 < -1e-9 || l2 < -1e-9) continue;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -128,26 +128,26 @@
   {
     "name": "TREES-empty-seat",
     "file": "src/world/townStandIns.js",
-    "old": "  if (!tris.length) return null;\n  return {\n    topAt(x, z) {",
-    "new": "  return {\n    topAt(x, z) {",
+    "old": "  if (!tris.length) return null;\n  return {",
+    "new": "  return {",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
   },
   {
     "name": "TREES-range-max",
-    "file": "src/world/rmbFlats.js",
-    "old": "archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
-    "new": "archive >= NATURE_ARCHIVE_MIN && archive < NATURE_ARCHIVE_MAX;",
+    "file": "src/world/natureArchives.js",
+    "old": "export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
+    "new": "export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive < NATURE_ARCHIVE_MAX;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
   },
   {
     "name": "TREES-range-min",
-    "file": "src/world/rmbFlats.js",
-    "old": "archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
-    "new": "archive > NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
+    "file": "src/world/natureArchives.js",
+    "old": "export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
+    "new": "export const isNatureArchive = (archive) => archive > NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]

@@ -22,8 +22,8 @@
   {
     "name": "AUDITR4-1-staff-timer-added",
     "file": "server/src/staffFeeds.js",
-    "old": "export async function staffNetFlush(room, now = Date.now()) {\n",
-    "new": "export async function staffNetFlush(room, now = Date.now()) {\n  setTimeout(() => {}, 1);\n",
+    "old": "export async function staffNetFlush(room, now = Date.now()) {\n  const W = room._staffNet;",
+    "new": "export async function staffNetFlush(room, now = Date.now()) {\n  setTimeout(() => {}, 1);\n  const W = room._staffNet;",
     "tests": [
       "test/net/auditr4_relaybill.test.js"
     ],

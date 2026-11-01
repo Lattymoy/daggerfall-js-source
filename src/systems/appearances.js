@@ -5,7 +5,15 @@
 // nothing. The look is the piece's `appearance` field - the wearer's mark, stripped when the piece changes hands
 // (net/realm/realmTradeLaw.js RECEIVER_MARKS). Cosmetic: the client's word is enough, and nothing rides the service.
 import {
-  ALL_LOOKS, LOOK_KIND_ORDER, lookCode, lookOfKey, lookOfPiece, appearanceOf, pieceKind, lookVariants, groupOfTemplate,
+  ALL_LOOKS,
+  LOOK_KIND_ORDER,
+  lookCode,
+  lookOfKey,
+  lookOfPiece,
+  appearanceOf,
+  pieceKind,
+  lookVariants,
+  groupOfTemplate,
 } from '../net/appearanceLaw.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { itemBaseValue } from './item/itemTemplates.js';
@@ -15,16 +23,25 @@ import { totalGoldAmount, deductGold } from './court.js';
 import { t } from './textManager.js';
 
 /** The shops that keep a wardrobe: the tailor and the two smiths (DFU's own Clothing Store, Armorer, Weaponsmith). */
-export const WARDROBE_SHOPS = Object.freeze(/** @type {number[]} */ ([BUILDING_TYPES.ClothingStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]));
-export const isWardrobeShop = (/** @type {unknown} */ buildingType) => WARDROBE_SHOPS.includes(/** @type {number} */ (buildingType));
+export const WARDROBE_SHOPS = Object.freeze(
+  /** @type {number[]} */ ([BUILDING_TYPES.ClothingStore, BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]),
+);
+export const isWardrobeShop = (/** @type {unknown} */ buildingType) =>
+  WARDROBE_SHOPS.includes(/** @type {number} */ (buildingType));
 
 /** THE FEE: a twentieth of what a piece of the look is minted at (systems/item/itemTemplates.js itemBaseValue), never
  *  under WARDROBE_FEE_MIN - an iron look is cheap, a Daedric one dear. Its own look back costs nothing. */
 export const WARDROBE_FEE_SHARE = 20;
 export const WARDROBE_FEE_MIN = 25;
 /** A look's stand-in piece: what a renderer or a namer is handed for it. */
-export const lookStub = (/** @type {{ t: number, m: number, v: number }} */ look) => ({ group: groupOfTemplate(look.t), templateIndex: look.t, material: look.m, variant: look.v });
-export const wardrobeFee = (/** @type {{ t: number, m: number, v: number }} */ look) => Math.max(WARDROBE_FEE_MIN, Math.round(itemBaseValue(lookStub(look)) / WARDROBE_FEE_SHARE));
+export const lookStub = (/** @type {{ t: number, m: number, v: number }} */ look) => ({
+  group: groupOfTemplate(look.t),
+  templateIndex: look.t,
+  material: look.m,
+  variant: look.v,
+});
+export const wardrobeFee = (/** @type {{ t: number, m: number, v: number }} */ look) =>
+  Math.max(WARDROBE_FEE_MIN, Math.round(itemBaseValue(lookStub(look)) / WARDROBE_FEE_SHARE));
 
 // ── THE COLLECTION ──────────────────────────────────────────────────
 
@@ -41,11 +58,13 @@ export function appearancesOf(entity) {
   return set;
 }
 /** Whether the character holds a look. */
-export const holdsLook = (entity, /** @type {{ t: number, m: number, v: number }} */ look) => !!look && appearancesOf(entity).has(lookCode(look));
+export const holdsLook = (entity, /** @type {{ t: number, m: number, v: number }} */ look) =>
+  !!look && appearancesOf(entity).has(lookCode(look));
 
 /** What a piece last read as - so a frame's sweep reads each record once until it changes. @type {WeakMap<object, string>} */
 const _read = new WeakMap();
-const readSig = (/** @type {any} */ it) => `${it.group}|${it.templateIndex}|${it.material}|${it.variant}|${it.artifact}|${it.rarity}`;
+const readSig = (/** @type {any} */ it) =>
+  `${it.group}|${it.templateIndex}|${it.material}|${it.variant}|${it.artifact}|${it.rarity}`;
 /**
  * THE SWEEP: every armour piece, shield and weapon in the character's pack, wagon and Materials Bag adds its look -
  * once a frame from the HUD's one call (ui/hud/hud.js drawHud, which every host makes), and when the Wardrobe opens.
@@ -92,26 +111,46 @@ export const looksCount = (entity) => ({ held: [...appearancesOf(entity)].length
 /** A kind's name, as a page heads its group. */
 export function kindName(/** @type {string} */ kind) {
   switch (kind) {
-    case 'head': return t('looks.kind.head', 'Head');
-    case 'rightArm': return t('looks.kind.rightArm', 'Right arm');
-    case 'leftArm': return t('looks.kind.leftArm', 'Left arm');
-    case 'chest': return t('looks.kind.chest', 'Chest');
-    case 'hands': return t('looks.kind.hands', 'Hands');
-    case 'legs': return t('looks.kind.legs', 'Legs');
-    case 'feet': return t('looks.kind.feet', 'Feet');
-    case 'shield': return t('looks.kind.shield', 'Shields');
-    case 'dagger': return t('looks.kind.dagger', 'Daggers');
-    case 'shortBlade': return t('looks.kind.shortBlade', 'Short blades');
-    case 'longBlade': return t('looks.kind.longBlade', 'Long blades');
-    case 'greatBlade': return t('looks.kind.greatBlade', 'Two-handed blades');
-    case 'axe': return t('looks.kind.axe', 'One-handed axes');
-    case 'greatAxe': return t('looks.kind.greatAxe', 'Two-handed axes');
-    case 'mace': return t('looks.kind.mace', 'Maces');
-    case 'flail': return t('looks.kind.flail', 'Flails');
-    case 'warhammer': return t('looks.kind.warhammer', 'Warhammers');
-    case 'staff': return t('looks.kind.staff', 'Staves');
-    case 'bow': return t('looks.kind.bow', 'Bows');
-    default: return kind;
+    case 'head':
+      return t('looks.kind.head', 'Head');
+    case 'rightArm':
+      return t('looks.kind.rightArm', 'Right arm');
+    case 'leftArm':
+      return t('looks.kind.leftArm', 'Left arm');
+    case 'chest':
+      return t('looks.kind.chest', 'Chest');
+    case 'hands':
+      return t('looks.kind.hands', 'Hands');
+    case 'legs':
+      return t('looks.kind.legs', 'Legs');
+    case 'feet':
+      return t('looks.kind.feet', 'Feet');
+    case 'shield':
+      return t('looks.kind.shield', 'Shields');
+    case 'dagger':
+      return t('looks.kind.dagger', 'Daggers');
+    case 'shortBlade':
+      return t('looks.kind.shortBlade', 'Short blades');
+    case 'longBlade':
+      return t('looks.kind.longBlade', 'Long blades');
+    case 'greatBlade':
+      return t('looks.kind.greatBlade', 'Two-handed blades');
+    case 'axe':
+      return t('looks.kind.axe', 'One-handed axes');
+    case 'greatAxe':
+      return t('looks.kind.greatAxe', 'Two-handed axes');
+    case 'mace':
+      return t('looks.kind.mace', 'Maces');
+    case 'flail':
+      return t('looks.kind.flail', 'Flails');
+    case 'warhammer':
+      return t('looks.kind.warhammer', 'Warhammers');
+    case 'staff':
+      return t('looks.kind.staff', 'Staves');
+    case 'bow':
+      return t('looks.kind.bow', 'Bows');
+    default:
+      return kind;
   }
 }
 /** A look's style among its material's, 1-based, or 0 where the material draws one style only. */
@@ -139,11 +178,15 @@ export function lookLine(item) {
 /** The worn pieces a look can be laid over, head to foot then the hands: `{ slot, item, kind }`. */
 export function wardrobePieces(entity) {
   let table = [];
-  try { table = equipTableOf(entity) ?? []; } catch { table = []; }
+  try {
+    table = equipTableOf(entity) ?? [];
+  } catch {
+    table = [];
+  }
   const out = [];
   for (const [slot, item] of table.entries()) {
     const kind = item ? pieceKind(item) : null;
-    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind });   // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none
+    if (kind && LOOK_KIND_ORDER.includes(kind)) out.push({ slot, item, kind }); // AUDIT HORIZONTAL E5: a kind no look is of (a Light Flail's) offers none
   }
   return out.sort((a, b) => LOOK_KIND_ORDER.indexOf(a.kind) - LOOK_KIND_ORDER.indexOf(b.kind) || a.slot - b.slot);
 }
@@ -156,7 +199,13 @@ export function looksForPiece(entity, item) {
   return ALL_LOOKS.filter((a) => a.kind === kind && a !== own && have.has(lookCode(a)));
 }
 /** Whether a piece is worn by the character now. */
-const isWorn = (entity, item) => { try { return (equipTableOf(entity) ?? []).includes(item); } catch { return false; } };
+const isWorn = (entity, item) => {
+  try {
+    return (equipTableOf(entity) ?? []).includes(item);
+  } catch {
+    return false;
+  }
+};
 
 /** Why a look cannot be laid over a piece now, by its word - or null. */
 export function wearRefusal(entity, item, look) {
@@ -188,7 +237,11 @@ export function wearAppearance(entity, item, look) {
  */
 export function previewWearer(entity, item, look) {
   let table = [];
-  try { table = equipTableOf(entity) ?? []; } catch { table = []; }
+  try {
+    table = equipTableOf(entity) ?? [];
+  } catch {
+    table = [];
+  }
   const slots = table.map((it) => (it && it === item ? previewPiece(item, look) : it));
   return Object.create(entity, { equip: { value: { slots }, enumerable: true } });
 }
@@ -208,15 +261,25 @@ export function clearAppearance(entity, item) {
 export function slotName(/** @type {number} */ slot) {
   const S = EQUIP_SLOTS;
   switch (slot) {
-    case S.Head: return kindName('head');
-    case S.RightArm: return kindName('rightArm');
-    case S.LeftArm: return kindName('leftArm');
-    case S.ChestArmor: return kindName('chest');
-    case S.Gloves: return kindName('hands');
-    case S.LegsArmor: return kindName('legs');
-    case S.Feet: return kindName('feet');
-    case S.RightHand: return t('looks.slot.rightHand', 'Right hand');
-    case S.LeftHand: return t('looks.slot.leftHand', 'Left hand');
-    default: return '';
+    case S.Head:
+      return kindName('head');
+    case S.RightArm:
+      return kindName('rightArm');
+    case S.LeftArm:
+      return kindName('leftArm');
+    case S.ChestArmor:
+      return kindName('chest');
+    case S.Gloves:
+      return kindName('hands');
+    case S.LegsArmor:
+      return kindName('legs');
+    case S.Feet:
+      return kindName('feet');
+    case S.RightHand:
+      return t('looks.slot.rightHand', 'Right hand');
+    case S.LeftHand:
+      return t('looks.slot.leftHand', 'Left hand');
+    default:
+      return '';
   }
 }

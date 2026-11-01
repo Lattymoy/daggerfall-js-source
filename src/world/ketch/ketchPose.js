@@ -15,14 +15,27 @@
 import { KT_HAMMER, KT_STEAM, KT_ARCS, KT_GALLERY, hammerPhase } from '../../net/ketch/ketchDeck.js';
 
 /** A hammer's head's foot (deck y) at rest, drawn back and slammed home; how long its slam takes and its haul back. */
-export const KT_HAMMER_POSE = Object.freeze({ rest: KT_GALLERY.y + 3.0, top: KT_GALLERY.y + 4.3, floor: KT_GALLERY.y + 0.02, slam: 0.12, haul: 0.7 });
-const ease = (k) => { const x = Math.max(0, Math.min(1, k)); return x * x * (3 - 2 * x); };
+export const KT_HAMMER_POSE = Object.freeze({
+  rest: KT_GALLERY.y + 3.0,
+  top: KT_GALLERY.y + 4.3,
+  floor: KT_GALLERY.y + 0.02,
+  slam: 0.12,
+  haul: 0.7,
+});
+const ease = (k) => {
+  const x = Math.max(0, Math.min(1, k));
+  return x * x * (3 - 2 * x);
+};
 const wrap = (t, c) => ((t % c) + c) % c;
 
 /** Hammer (row `ri`, lane `li`)'s head's foot at shared second `t` (deck y). Pure. */
 export function hammerHeadY(ri, li, t) {
-  const H = KT_HAMMER, P = KT_HAMMER_POSE, c = H.cycle, sp = H.sp / 1000, wu = H.wu / 1000;
-  const u = wrap(t - hammerPhase(ri, li), c);   // seconds since its last landing
+  const H = KT_HAMMER,
+    P = KT_HAMMER_POSE,
+    c = H.cycle,
+    sp = H.sp / 1000,
+    wu = H.wu / 1000;
+  const u = wrap(t - hammerPhase(ri, li), c); // seconds since its last landing
   if (u < sp) return P.floor;
   if (u < sp + P.haul) return P.floor + (P.rest - P.floor) * ease((u - sp) / P.haul);
   if (u < c - wu) return P.rest;
@@ -36,9 +49,23 @@ export function hammerHeadY(ri, li, t) {
  */
 export function hazardState(kind, j, t, out = { live: false, warn: false, k: 0 }) {
   const H = kind === 'steam' ? KT_STEAM : KT_ARCS;
-  const u = wrap(t - hazardPhase(kind, j), H.cycle), sp = H.sp / 1000, wu = H.wu / 1000;
-  if (u < sp) { out.live = true; out.warn = false; out.k = 1; } else if (u >= H.cycle - wu) { out.live = false; out.warn = true; out.k = (u - (H.cycle - wu)) / wu; } else { out.live = false; out.warn = false; out.k = 0; }
-  return out;   // `out` written in place (a frame's own - AUDIT KETCH L3-16: a new record each hazard each frame)
+  const u = wrap(t - hazardPhase(kind, j), H.cycle),
+    sp = H.sp / 1000,
+    wu = H.wu / 1000;
+  if (u < sp) {
+    out.live = true;
+    out.warn = false;
+    out.k = 1;
+  } else if (u >= H.cycle - wu) {
+    out.live = false;
+    out.warn = true;
+    out.k = (u - (H.cycle - wu)) / wu;
+  } else {
+    out.live = false;
+    out.warn = false;
+    out.k = 0;
+  }
+  return out; // `out` written in place (a frame's own - AUDIT KETCH L3-16: a new record each hazard each frame)
 }
 
 /** A steam lane's or an arc's phase in its cycle (s): the lanes half a cycle apart, the arcs a third. */
@@ -64,15 +91,38 @@ export const KT_SECTION_LURCH_HZ = 1.5;
  * `warnMs` how long its warning runs before its moment. Pure.
  */
 export function sectionPose(k, sec, now, warnMs, out = { solid: true, dy: 0, shake: 0, hidden: false }) {
-  const put = (solid, dy, shake, hidden) => { out.solid = solid; out.dy = dy; out.shake = shake; out.hidden = hidden; return out; };   // `out` written in place (AUDIT KETCH L3-16)
+  const put = (solid, dy, shake, hidden) => {
+    out.solid = solid;
+    out.dy = dy;
+    out.shake = shake;
+    out.hidden = hidden;
+    return out;
+  }; // `out` written in place (AUDIT KETCH L3-16)
   let s = null;
-  for (const e of sec ?? []) if (e[0] === k) { s = e; break; }
+  for (const e of sec ?? [])
+    if (e[0] === k) {
+      s = e;
+      break;
+    }
   if (!s || now >= s[2]) return put(true, 0, 0, false);
-  const at = s[1], back = s[2];
+  const at = s[1],
+    back = s[2];
   if (now < at - warnMs) return put(true, 0, 0, false);
-  if (now < at) return put(true, 0, KT_SECTION_DROP.shudder * Math.sin((2 * Math.PI * KT_SECTION_LURCH_HZ * now) / 1000) * ((now - (at - warnMs)) / warnMs), false);
+  if (now < at)
+    return put(
+      true,
+      0,
+      KT_SECTION_DROP.shudder *
+        Math.sin((2 * Math.PI * KT_SECTION_LURCH_HZ * now) / 1000) *
+        ((now - (at - warnMs)) / warnMs),
+      false,
+    );
   const D = KT_SECTION_DROP;
-  if (now >= back - KT_SECTION_RISE_MS) { const k2 = (back - now) / KT_SECTION_RISE_MS; return put(false, -D.seen * k2 * k2, 0, false); }
-  const f = (now - at) / 1000, dy = -0.5 * D.g * f * f;
+  if (now >= back - KT_SECTION_RISE_MS) {
+    const k2 = (back - now) / KT_SECTION_RISE_MS;
+    return put(false, -D.seen * k2 * k2, 0, false);
+  }
+  const f = (now - at) / 1000,
+    dy = -0.5 * D.g * f * f;
   return dy < -D.seen ? put(false, -D.seen, 0, true) : put(false, dy, 0, false);
 }

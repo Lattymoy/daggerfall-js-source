@@ -18,7 +18,7 @@
 // and the day's "Fine day." keep their hours (heard at six in the evening, and by the night watch), and a trade's pool
 // is the trade's once however many share it: a pair of homemakers drew their trade's one script half the time, and
 // "The baker's bread is getting smaller." opened a fifth of the town's talk.
-import { t, textRevision } from '../textManager.js';   // TOWN-ECON TE3: the town's talk of trade in the player's language (L10N4)
+import { t, textRevision } from '../textManager.js'; // TOWN-ECON TE3: the town's talk of trade in the player's language (L10N4)
 import { seededRng } from '../wind/wind.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 
@@ -26,12 +26,12 @@ const S = (...lines) => Object.freeze(lines);
 
 /** Any two of the town, any hour. */
 export const TOWN_TALKS = Object.freeze([
-  S('Did you hear about the miller\'s daughter?', 'Everyone\'s heard. Twice.', 'Then you\'ll hear it a third time.'),
-  S('Prices are up again.', 'They\'re always up again.', 'Not my wages.'),
-  S('They say the Underking walks again.', 'They\'ve said that since my grandfather\'s day.'),
-  S('Seen the new faces at the tavern?', 'Adventurers. They\'ll be gone by the week\'s end.', 'Or dead.'),
+  S("Did you hear about the miller's daughter?", "Everyone's heard. Twice.", "Then you'll hear it a third time."),
+  S('Prices are up again.', "They're always up again.", 'Not my wages.'),
+  S('They say the Underking walks again.', "They've said that since my grandfather's day."),
+  S('Seen the new faces at the tavern?', "Adventurers. They'll be gone by the week's end.", 'Or dead.'),
   S('The roads are bad this season.', 'The roads are bad every season.'),
-  S('How\'s your mother, {b}?', 'Still telling me I married wrong.', 'So, well, then.'),
+  S("How's your mother, {b}?", 'Still telling me I married wrong.', 'So, well, then.'),
   S('Taxes again. The court at {region} must eat gold.', 'And drink it, by the look of the castle.'),
   S('I hear the Orcs of Orsinium want a kingdom of their own.', 'Let them have it, if it keeps them in the mountains.'),
   S('Wayrest or Sentinel, which would you pick?', 'Neither. {town} suits me.', 'Liar.'),
@@ -39,16 +39,16 @@ export const TOWN_TALKS = Object.freeze([
   S('My knee says rain.', 'Your knee said rain yesterday.', 'And was it wrong? Wait.'),
   S('You owe me three septims.', 'Two. You ate half the pie.'),
   S('They hanged a thief in {place} last week.', 'Only one? Then they caught the slow one.'),
-  S('Heard the Emperor\'s men passed through {place}.', 'Looking for something, no doubt.', 'They always are.'),
+  S("Heard the Emperor's men passed through {place}.", 'Looking for something, no doubt.', 'They always are.'),
   S('Do you ever think of leaving {town}?', 'Every morning. Then I have breakfast.'),
-  S('The well water tastes of iron.', 'Better than tasting of what\'s in the river.'),
-  S('Someone\'s been stealing hens on the east side.', 'Foxes.', 'Foxes don\'t leave boot prints.'),
+  S('The well water tastes of iron.', "Better than tasting of what's in the river."),
+  S("Someone's been stealing hens on the east side.", 'Foxes.', "Foxes don't leave boot prints."),
   S('Did the courier come?', 'Came and went. Nothing for you.', 'There never is.'),
   S('I saw a wolf at the edge of town.', 'In daylight?', 'Bold as a tax collector.'),
   S('Mind the cart ruts by the gate.', 'Broke a wheel there myself, last spring.'),
   S('That adventurer paid in gold. Real gold.', 'Then count your fingers too.'),
-  S('They say there\'s a vampire in {place}.', 'They say a lot in {place}.'),
-  S('Have you been to the temple lately?', 'The gods know where I live.', 'That\'s what worries me.'),
+  S("They say there's a vampire in {place}.", 'They say a lot in {place}.'),
+  S('Have you been to the temple lately?', 'The gods know where I live.', "That's what worries me."),
 ]);
 
 /** By a speaker's trade (the first speaker's, else the second's). */
@@ -56,21 +56,21 @@ export const JOB_TALKS = Object.freeze({
   keeper: Object.freeze([
     S('Business is slow.', 'Lower your prices.', 'Raise my hopes, you mean.'),
     S('A fellow tried to sell me a "Daedric" dagger.', 'Painted iron?', 'Painted badly.'),
-    S('Stock came in from {place} at last.', 'Half of it broken, I\'ll wager.', 'Only a third.'),
+    S('Stock came in from {place} at last.', "Half of it broken, I'll wager.", 'Only a third.'),
   ]),
   smith: Object.freeze([
-    S('Good iron\'s dear this year.', 'The mines in the hills went quiet.', 'Something in them, I hear.'),
-    S('My arm aches from the hammer.', 'That\'s the trade.', 'That\'s the trade, and the trade aches.'),
+    S("Good iron's dear this year.", 'The mines in the hills went quiet.', 'Something in them, I hear.'),
+    S('My arm aches from the hammer.', "That's the trade.", "That's the trade, and the trade aches."),
     S('An adventurer wanted a sword by dawn.', 'Did you make it?', 'I made him a promise.'),
   ]),
   clerk: Object.freeze([
-    S('The Bank had a run on letters of credit.', 'Someone\'s nervous.', 'Everyone\'s nervous.'),
-    S('The ledgers won\'t balance.', 'Whose fault is that?', 'Mine, unless I find someone else\'s.'),
+    S('The Bank had a run on letters of credit.', "Someone's nervous.", "Everyone's nervous."),
+    S("The ledgers won't balance.", 'Whose fault is that?', "Mine, unless I find someone else's."),
     S('Another letter from the court.', 'Good news?', 'Is there ever?'),
   ]),
   scholar: Object.freeze([
     S('I found a book on the Dwemer today.', 'Any good?', 'Missing the last chapter. Typical.'),
-    S('The library\'s copy of the Annals is missing a page.', 'Which page?', 'The one I needed.'),
+    S("The library's copy of the Annals is missing a page.", 'Which page?', 'The one I needed.'),
     S('Do you read Old Bretic?', 'Badly.', 'Then better than the man who wrote it.'),
   ]),
   priest: Object.freeze([
@@ -79,15 +79,15 @@ export const JOB_TALKS = Object.freeze({
     S('Someone left flowers at the altar.', 'For which god?', 'For all of them. Hedging.'),
   ]),
   guard: Object.freeze([
-    S('Quiet watch?', 'Too quiet. I don\'t trust it.'),
+    S('Quiet watch?', "Too quiet. I don't trust it."),
     S('Caught a cutpurse by the market.', 'Only one?', 'Only one that ran slow enough.'),
     S('Keep your eyes on the gate tonight.', 'Something wrong?', 'Something always is.'),
-    S('Captain wants the north wall walked twice.', 'Captain doesn\'t walk it.'),
+    S('Captain wants the north wall walked twice.', "Captain doesn't walk it."),
   ]),
   farmer: Object.freeze([
-    S('Field\'s too wet to plow.', 'Last year it was too dry.', 'There\'s no pleasing it.'),
+    S("Field's too wet to plow.", 'Last year it was too dry.', "There's no pleasing it."),
     S('Lost two sheep to wolves.', 'Only two?', 'Two I could find.'),
-    S('Barley\'s coming in well.', 'Don\'t say it aloud. The gods listen.'),
+    S("Barley's coming in well.", "Don't say it aloud. The gods listen."),
   ]),
   fisher: Object.freeze([
     S('Nets came up empty.', 'Slaughterfish took them again?', 'Took the nets too.'),
@@ -107,124 +107,139 @@ export const JOB_TALKS = Object.freeze({
     S('Somebody left a tip.', 'A real one?', 'A button. But a nice button.'),
   ]),
   merchant: Object.freeze([
-    S('I\'m taking a load to {place}.', 'Take guards.', 'I take guards. Guards take my profit.'),
-    S('The road to {place} cost me a wheel and two days.', 'And the goods?', 'The goods arrived. My temper didn\'t.'),
+    S("I'm taking a load to {place}.", 'Take guards.', 'I take guards. Guards take my profit.'),
+    S('The road to {place} cost me a wheel and two days.', 'And the goods?', "The goods arrived. My temper didn't."),
     S('Silk from Sentinel fetches double here.', 'If you live to sell it.'),
   ]),
   mercenary: Object.freeze([
-    S('Any work going?', 'A merchant wants blades for the road to {place}. Paying, barely.', 'Barely is better than nothing.'),
-    S('I\'ve guarded worse.', 'You\'ve guarded better?', 'Once. He paid in wine.'),
+    S(
+      'Any work going?',
+      'A merchant wants blades for the road to {place}. Paying, barely.',
+      'Barely is better than nothing.',
+    ),
+    S("I've guarded worse.", "You've guarded better?", 'Once. He paid in wine.'),
   ]),
   adventurer: Object.freeze([
-    S('There\'s a crypt west of here nobody\'s cleared.', 'Nobody\'s come back from it, you mean.'),
-    S('Found a ring in the last ruin.', 'Magic?', 'It made my finger green. That\'s something.'),
-    S('Next time, you take the first door.', 'I took the first door last time.', 'And you\'re still alive. Lucky door.'),
+    S("There's a crypt west of here nobody's cleared.", "Nobody's come back from it, you mean."),
+    S('Found a ring in the last ruin.', 'Magic?', "It made my finger green. That's something."),
+    S('Next time, you take the first door.', 'I took the first door last time.', "And you're still alive. Lucky door."),
     S('Skeletons, three of them, and one with a crown.', 'Did you take the crown?', 'I took my legs out of there.'),
   ]),
   beggar: Object.freeze([
-    S('Spare a coin?', 'For you? I\'ve none to spare for me.'),
+    S('Spare a coin?', "For you? I've none to spare for me."),
     S('Kind folk today?', 'Kind enough to look the other way.'),
     S('A lady gave me a whole septim.', 'Spend it before someone takes it off you.'),
   ]),
   courtier: Object.freeze([
-    S('The court is all whispers this week.', 'About what?', 'If I knew, they wouldn\'t be whispers.'),
+    S('The court is all whispers this week.', 'About what?', "If I knew, they wouldn't be whispers."),
     S('Did you see what she wore to court?', 'Everyone saw. That was the point.'),
     S('The steward is in a temper.', 'Again?', 'Still.'),
   ]),
   pilgrim: Object.freeze([
-    S('I walk to the temple at {place} after the harvest.', 'Pray for my knees while you\'re there.'),
+    S('I walk to the temple at {place} after the harvest.', "Pray for my knees while you're there."),
     S('How far to the shrine?', 'Further than your feet would like.', 'Then my feet will learn.'),
-    S('I\'ve walked since the new moon.', 'And?', 'And I\'m not there yet.'),
+    S("I've walked since the new moon.", 'And?', "And I'm not there yet."),
   ]),
   labourer: Object.freeze([
     S('Hauled stone since dawn.', 'For the castle?', 'For a man who calls himself a castle.'),
-    S('My back\'s not what it was.', 'Neither is the pay.'),
-    S('The foreman wants the wall done by the week\'s end.', 'Which week?', 'He didn\'t say. That\'s the worry.'),
+    S("My back's not what it was.", 'Neither is the pay.'),
+    S("The foreman wants the wall done by the week's end.", 'Which week?', "He didn't say. That's the worry."),
     S('Dug a ditch, then filled it in again.', 'Why?', 'His lordship changed his mind.'),
     S('Carted timber to the docks all morning.', 'Any coin in it?', 'Splinters, mostly.'),
-    S('There\'s work on the bridge, they say.', 'There\'s always work. It\'s the pay that\'s scarce.'),
+    S("There's work on the bridge, they say.", "There's always work. It's the pay that's scarce."),
   ]),
   homemaker: Object.freeze([
-    S('The baker\'s bread is getting smaller.', 'And his prices bigger.', 'Funny how that works.'),
+    S("The baker's bread is getting smaller.", 'And his prices bigger.', 'Funny how that works.'),
     S('The little ones have the fever again.', 'All of them?', 'All of them. And the dog.'),
-    S('The well\'s running low.', 'Then it\'s the queue at dawn again.', 'Like every summer.'),
-    S('Have you seen the price of salt?', 'I\'ve seen it. I\'m still getting over it.'),
-    S('The shutter\'s mended, they swore.', 'And is it?', 'With string.'),
-    S('The washing won\'t dry in this damp.', 'Hang it by the fire.', 'And have it smell of smoke for a week.'),
+    S("The well's running low.", "Then it's the queue at dawn again.", 'Like every summer.'),
+    S('Have you seen the price of salt?', "I've seen it. I'm still getting over it."),
+    S("The shutter's mended, they swore.", 'And is it?', 'With string.'),
+    S("The washing won't dry in this damp.", 'Hang it by the fire.', 'And have it smell of smoke for a week.'),
   ]),
 });
 
 /** By the weather the reader passes (`weatherWord`). */
 export const WEATHER_TALKS = Object.freeze({
-  rain: Object.freeze([S('Wet again.', 'Good for the crops.', 'Bad for my roof.'), S('This rain will never stop.', 'It will. Then it\'ll snow.')]),
+  rain: Object.freeze([
+    S('Wet again.', 'Good for the crops.', 'Bad for my roof.'),
+    S('This rain will never stop.', "It will. Then it'll snow."),
+  ]),
   thunder: Object.freeze([S('Hear that thunder?', 'Gods are arguing again.')]),
   snow: Object.freeze([S('Snow already.', 'Fetch the firewood while you can still find it.')]),
-  fog: Object.freeze([S('Can\'t see the end of the street.', 'Then nobody can see you either. Hurry home.')]),
+  fog: Object.freeze([S("Can't see the end of the street.", 'Then nobody can see you either. Hurry home.')]),
   sunny: Object.freeze([S('Warm today.', 'Enjoy it. It never lasts.')]),
 });
 
 /** LW-TALK: the street's morning (05:00 to 11:00) and day (08:00 to 18:00) - before, "Morning" was heard at any hour. */
 export const MORNING_TALKS = Object.freeze([
-  S('Morning, {b}.', 'Is it? I hadn\'t noticed.'),
+  S('Morning, {b}.', "Is it? I hadn't noticed."),
   S('Up early, {b}?', 'Never went to bed.', 'It shows.'),
-  S('The first bread of the day\'s out.', 'I can smell it from here.'),
-  S('Cold this morning.', 'It\'ll warm up.', 'You say that every morning.'),
+  S("The first bread of the day's out.", 'I can smell it from here.'),
+  S('Cold this morning.', "It'll warm up.", 'You say that every morning.'),
   S('Sleep well?', 'The neighbors had other ideas.'),
-  S('The cock\'s been crowing since before light.', 'Somebody should have words with it.', 'Somebody should have it for supper.'),
-  S('Dew on everything.', 'It\'ll burn off by noon.'),
-  S('You\'re out early, {b}.', 'The day won\'t wait for me.', 'It\'s waited for you before.'),
+  S(
+    "The cock's been crowing since before light.",
+    'Somebody should have words with it.',
+    'Somebody should have it for supper.',
+  ),
+  S('Dew on everything.', "It'll burn off by noon."),
+  S("You're out early, {b}.", "The day won't wait for me.", "It's waited for you before."),
   S('Did you hear the bells for morning prayers?', 'Heard them. Slept through them.'),
 ]);
 export const DAY_TALKS = Object.freeze([
   S('Fine day.', 'For now.'),
   S('Busy in the market today.', 'Busy with lookers. Not buyers.'),
   S('Half the day gone already.', 'And nothing to show for it.', 'Speak for yourself.'),
-  S('The sun\'s high.', 'And my work\'s low. I\'ll call that fair.'),
+  S("The sun's high.", "And my work's low. I'll call that fair."),
   S('Have you eaten?', 'Not since breakfast.', 'Then eat before you fall over.'),
   S('Look at the crowd today.', 'Must be a ship in.', 'Or a hanging.'),
   S('Going to the market, {b}?', 'If my purse lets me.'),
   S('Too warm to work.', 'Too poor not to.'),
-  S('The street\'s full of carts again.', 'Somebody\'s getting rich.', 'Not us.'),
+  S("The street's full of carts again.", "Somebody's getting rich.", 'Not us.'),
 ]);
 
 /** After dusk (the evening), and deep in the night. */
 export const EVENING_TALKS = Object.freeze([
-  S('Long day.', 'They\'re all long.', 'This one longer.'),
+  S('Long day.', "They're all long.", 'This one longer.'),
   S('One for the road at the tavern?', 'One. Then two. Then the road forgets us.'),
   S('Lock your door tonight.', 'I always do.', 'Lock it twice.'),
-  S('Supper\'s waiting.', 'Then don\'t keep it waiting on my account.'),
-  S('They\'re lighting the lamps.', 'And filling the taverns.', 'Same thing, really.'),
+  S("Supper's waiting.", "Then don't keep it waiting on my account."),
+  S("They're lighting the lamps.", 'And filling the taverns.', 'Same thing, really.'),
   S('The sun goes down early these days.', 'So do I.'),
-  S('Coming to the tavern, {b}?', 'One cup.', 'It\'s never one cup.'),
+  S('Coming to the tavern, {b}?', 'One cup.', "It's never one cup."),
 ]);
 export const NIGHT_TALKS = Object.freeze([
-  S('Shouldn\'t you be abed?', 'Shouldn\'t you?'),
+  S("Shouldn't you be abed?", "Shouldn't you?"),
   S('Did you hear something?', 'Just the wind.', '...I hope.'),
   S('Late to be out.', 'Late to be asking.'),
   S('The watch is about.', 'Good. Then I can sleep.', 'You never sleep.'),
-  S('Can\'t sleep?', 'Not with that dog barking.'),
+  S("Can't sleep?", 'Not with that dog barking.'),
 ]);
 
 /** LW6c: the words of one of a household handed home the keepsake of one of theirs the deep kept (livingTown.js moment) -
  *  `{who}` the fallen's first name, `{player}` the player's. */
 export const LIVING_KEEPSAKE = Object.freeze([
-  S('This is {who}\'s.', 'You found {who}? Down there?', 'We had given up hope of anything coming home. Thank you.'),
-  S('Where did you get this?', '...So that is where {who} lies.', 'Thank you for bringing it home. We will not forget it.'),
-  S('{who}\'s. I would know it anywhere.', 'You are welcome in this house, {player}. Always.'),
+  S("This is {who}'s.", 'You found {who}? Down there?', 'We had given up hope of anything coming home. Thank you.'),
+  S(
+    'Where did you get this?',
+    '...So that is where {who} lies.',
+    'Thank you for bringing it home. We will not forget it.',
+  ),
+  S("{who}'s. I would know it anywhere.", 'You are welcome in this house, {player}. Always.'),
 ]);
 
 /** LW8b: THE ROOM'S OWN TALK - two or three met inside a building, by the room's kind (`roomKindOf`): the tavern's, the
  *  temple's, a shop's, the guild hall's, the palace's, a home's. */
 export const ROOM_TALKS = Object.freeze({
   tavern: Object.freeze([
-    S('Another round?', 'If you\'re buying.', 'I\'m always buying. That\'s the trouble.'),
-    S('This ale\'s been watered.', 'Then drink twice as much. Same effect.'),
-    S('Who\'s the stranger by the door?', 'Don\'t stare, {a}.', 'I wasn\'t staring. I was wondering.'),
+    S('Another round?', "If you're buying.", "I'm always buying. That's the trouble."),
+    S("This ale's been watered.", 'Then drink twice as much. Same effect.'),
+    S("Who's the stranger by the door?", "Don't stare, {a}.", "I wasn't staring. I was wondering."),
     S('Sing us the one about the miller and the Daedra.', 'Not before my third cup.'),
-    S('The stew\'s better tonight.', 'It\'s the same stew. You\'re hungrier.'),
+    S("The stew's better tonight.", "It's the same stew. You're hungrier."),
     S('A septim on the dice?', 'You still owe me from the last throw.', 'Then double or nothing.'),
     S('To {town}!', 'To {town}. Gods help it.'),
-    S('Keep your voice down. The walls listen.', 'Walls? In here it\'s the serving girl.'),
+    S('Keep your voice down. The walls listen.', "Walls? In here it's the serving girl."),
     S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the land.'),
     S('Is that seat taken?', 'It is now. Sit, {a}.'),
   ]),
@@ -232,38 +247,42 @@ export const ROOM_TALKS = Object.freeze({
     S('Have you made your offering?', 'Twice this week. The gods have dear tastes.'),
     S('Pray for me, {b}.', 'I already do. You need it.'),
     S('The sermon ran long.', 'Sin was up this month, I suppose.'),
-    S('Do you think they hear us?', 'Someone does. I hope it\'s them.'),
+    S('Do you think they hear us?', "Someone does. I hope it's them."),
     S('Hush. This is a holy place.', 'I was only whispering.', 'Whisper softer.'),
-    S('I lit a candle for my father.', 'He\'d have liked that.', 'He\'d have called it a waste of tallow.'),
-    S('A blessing before the road, {b}?', 'It couldn\'t hurt.', 'Not more than the road will.'),
+    S('I lit a candle for my father.', "He'd have liked that.", "He'd have called it a waste of tallow."),
+    S('A blessing before the road, {b}?', "It couldn't hurt.", 'Not more than the road will.'),
   ]),
   shop: Object.freeze([
     S('Is that the real price?', 'For you, {a}? The real price and a little.'),
-    S('Look at the work on this.', 'Look at the price on it.', 'I am. That\'s why I said look at the work.'),
+    S('Look at the work on this.', 'Look at the price on it.', "I am. That's why I said look at the work."),
     S('Do they have it in another color?', 'You always ask that.', 'And they never do.'),
     S('I need a new one. Mine broke.', 'Again? What do you do with them?'),
-    S('The last one I bought here fell apart in a week.', 'Then buy the dearer one.', 'That\'s what they want you to say.'),
-    S('Just looking.', 'That\'s what you said yesterday.'),
+    S(
+      'The last one I bought here fell apart in a week.',
+      'Then buy the dearer one.',
+      "That's what they want you to say.",
+    ),
+    S('Just looking.', "That's what you said yesterday."),
   ]),
   guild: Object.freeze([
     S('Have you paid your dues?', 'Paid them. Regretted them.', 'Same as every month, then.'),
-    S('There\'s a new contract on the board.', 'Dangerous?', 'Well paid. The same thing.'),
-    S('The guildmaster wants a word with you.', 'A good word or a bad one?', 'With her it\'s hard to tell.'),
-    S('Who\'s the new recruit?', 'Keen. Too keen.', 'We were all too keen once.'),
-    S('I hear they\'re poaching our members in {region}.', 'Let them. We keep the good ones.'),
+    S("There's a new contract on the board.", 'Dangerous?', 'Well paid. The same thing.'),
+    S('The guildmaster wants a word with you.', 'A good word or a bad one?', "With her it's hard to tell."),
+    S("Who's the new recruit?", 'Keen. Too keen.', 'We were all too keen once.'),
+    S("I hear they're poaching our members in {region}.", 'Let them. We keep the good ones.'),
     S('Been practicing, {b}?', 'Every day.', 'It shows. A little.'),
   ]),
   palace: Object.freeze([
-    S('Has the court sat yet?', 'Not yet. They\'re still deciding who sits where.'),
+    S('Has the court sat yet?', "Not yet. They're still deciding who sits where."),
     S('Mind what you say near the steward.', 'I mind what I say near everyone, {a}.'),
-    S('The envoy\'s still waiting.', 'Let him wait. It\'s good for envoys.'),
+    S("The envoy's still waiting.", "Let him wait. It's good for envoys."),
     S('New tapestries.', 'Paid for out of the taxes, no doubt.', 'Hush.'),
     S('Who has the ear of the court these days?', 'Whoever spoke last.'),
   ]),
   home: Object.freeze([
     S('Did you bank the fire?', 'I banked it. You never trust me with the fire.'),
-    S('What\'s for supper?', 'The same as yesterday.', 'Good. I liked yesterday.'),
-    S('The roof\'s leaking again.', 'I\'ll see to it.', 'You said that last spring.'),
+    S("What's for supper?", 'The same as yesterday.', 'Good. I liked yesterday.'),
+    S("The roof's leaking again.", "I'll see to it.", 'You said that last spring.'),
     S('Wipe your boots, {b}.', 'I did.', 'Wipe them again.'),
     S('Your sister wrote.', 'Asking for money?', 'Asking after you. And money.'),
     S('Come and sit by the fire.', 'In a moment.', 'Your moments last an hour.'),
@@ -273,21 +292,21 @@ export const ROOM_TALKS = Object.freeze({
 /** LW3: a party on the road, walking - the train's own talk. */
 export const ROAD_TALKS = Object.freeze([
   S('How far to {place}?', 'Two days, if the weather holds.', 'It never holds.'),
-  S('My feet are bleeding.', 'Walk on the grass, it\'s softer.', 'Then the snakes get me.'),
+  S('My feet are bleeding.', "Walk on the grass, it's softer.", 'Then the snakes get me.'),
   S('Keep your eyes on the treeline.', 'Bandits?', 'Or worse.'),
   S('This road used to be safer.', 'Every road used to be safer.'),
   S('Smell that? Rain coming.', 'Then we camp early.'),
   S('Did you pack the salt pork?', 'I thought you did.', 'Wonderful.'),
-  S('We\'ll make {place} by nightfall.', 'You said that yesterday.'),
+  S("We'll make {place} by nightfall.", 'You said that yesterday.'),
   S('Sing something.', 'Not unless you want the wolves to come running.'),
   S('Mind the wheel ruts.', 'I see them.', 'You saw the last one too.'),
-  S('Is that smoke ahead?', 'A farmstead, I hope.', 'Let\'s hope it\'s only a farmstead.'),
-  S('Back home they\'ll be at the tavern by now.', 'And we\'ll be in a ditch. Keep walking.'),
+  S('Is that smoke ahead?', 'A farmstead, I hope.', "Let's hope it's only a farmstead."),
+  S("Back home they'll be at the tavern by now.", "And we'll be in a ditch. Keep walking."),
 ]);
 /** LW3: a party camped for the night, about its fire. */
 export const CAMP_TALKS = Object.freeze([
-  S('I\'ll take first watch.', 'Wake me if anything moves.', 'Everything moves out here.'),
-  S('Pass the bread.', 'There\'s no bread.', 'Then pass whatever there is.'),
+  S("I'll take first watch.", 'Wake me if anything moves.', 'Everything moves out here.'),
+  S('Pass the bread.', "There's no bread.", 'Then pass whatever there is.'),
   S('Hear that howling?', 'Far off. Keep the fire high.'),
   S('Tell the one about the Wayrest sewer.', 'Not again.', 'Again!'),
   S('Stars are bright tonight.', 'Good for walking, bad for hiding.'),
@@ -297,16 +316,16 @@ export const CAMP_TALKS = Object.freeze([
 /** LW9: two parties passing on the road - a word from each (the first the one who speaks first): the road's own talk, or,
  *  where either has met trouble behind it ({foe}), its warning. */
 export const ROAD_PASS_SCRIPTS = Object.freeze([
-  S('Road\'s clear behind us.', 'And ahead of us. Safe travels.'),
+  S("Road's clear behind us.", 'And ahead of us. Safe travels.'),
   S('Far to go?', 'Far enough. Yourselves?'),
-  S('Weather\'s turning, friend.', 'We\'ll make the next town before it does.'),
+  S("Weather's turning, friend.", "We'll make the next town before it does."),
   S('Gods keep you.', 'And you.'),
   S('Mind the bridge, the planks are rotten.', 'Thanks for the word.'),
   S('Is the inn still open past the ford?', 'It was last week.'),
 ]);
 export const ROAD_PASS_WARNINGS = Object.freeze([
-  S('Watch yourselves - {foe} back the way we came.', 'We\'ll keep our eyes open.'),
-  S('{foe} on the road behind us. We lost time to them.', 'Then we\'ll go careful.'),
+  S('Watch yourselves - {foe} back the way we came.', "We'll keep our eyes open."),
+  S('{foe} on the road behind us. We lost time to them.', "Then we'll go careful."),
 ]);
 /** LW12: a traveller's warning of a band whose hideout lies near - `{band}` its name. */
 export const BAND_WARNINGS = Object.freeze([
@@ -316,9 +335,12 @@ export const BAND_WARNINGS = Object.freeze([
 ]);
 /** LW9: a minstrel playing a tavern's common room - the song's line over them. */
 export const MINSTREL_SONGS = Object.freeze([
-  '♪ The Lusty Argonian Maid, she sang it to the moon... ♪', '♪ Oh the road to {place} is long and the ale is thin... ♪',
-  '♪ Fair Wayrest, fair Wayrest, where the river runs to sea... ♪', '♪ The knight of the Dragon rode out in the rain... ♪',
-  '♪ Sing of the Iliac, the bay and the gold... ♪', '♪ Ten septims for a song, and a song for a kiss... ♪',
+  '♪ The Lusty Argonian Maid, she sang it to the moon... ♪',
+  '♪ Oh the road to {place} is long and the ale is thin... ♪',
+  '♪ Fair Wayrest, fair Wayrest, where the river runs to sea... ♪',
+  '♪ The knight of the Dragon rode out in the rain... ♪',
+  '♪ Sing of the Iliac, the bay and the gold... ♪',
+  '♪ Ten septims for a song, and a song for a kiss... ♪',
 ]);
 /** LW9: a minstrel plays a song every MINSTREL_EVERY_MIN of the clock, its line up MINSTREL_UP_MIN of it. */
 export const MINSTREL_EVERY_MIN = 4;
@@ -333,40 +355,67 @@ export function minstrelLine(res, t, ctx = {}) {
   return fillLine(MINSTREL_SONGS[h % MINSTREL_SONGS.length], ctx);
 }
 /** LW9: what a patrol says drawing on a player wanted in its region. */
-export const PATROL_HALT_LINES = Object.freeze(['Halt! You are wanted in these lands!', 'In the name of the law - stand and yield!', 'There\'s a price on your head. Draw!']);
+export const PATROL_HALT_LINES = Object.freeze([
+  'Halt! You are wanted in these lands!',
+  'In the name of the law - stand and yield!',
+  "There's a price on your head. Draw!",
+]);
 
 /** LW3: what a traveller says to the player met on the road, by their regard. */
 export const ROAD_GREETINGS = Object.freeze({
-  friend: Object.freeze(['{player}! Well met on the road.', 'Safe travels, {player}.', 'Good to see a friendly face out here, {player}.']),
-  known: Object.freeze(['Safe travels.', 'The road\'s quiet today.', 'Mind yourself out here.']),
+  friend: Object.freeze([
+    '{player}! Well met on the road.',
+    'Safe travels, {player}.',
+    'Good to see a friendly face out here, {player}.',
+  ]),
+  known: Object.freeze(['Safe travels.', "The road's quiet today.", 'Mind yourself out here.']),
   stranger: Object.freeze(['Traveller.', 'Safe road.', 'Watch the road ahead.', 'Keep your blade close.']),
-  enemy: Object.freeze(['Keep your distance.', 'Walk on.', 'I\'ve nothing for you.']),
+  enemy: Object.freeze(['Keep your distance.', 'Walk on.', "I've nothing for you."]),
 });
 
 /** LW13: a company's member's word in passing - `{company}` its name - by its head's regard. */
 export const COMPANY_GREETINGS = Object.freeze({
   friend: Object.freeze(['{player}! {company} remember their friends.', 'Walk with {company} a while, {player}?']),
   known: Object.freeze(['{company}, on the road again.', 'You again. {company} keep turning up where you are.']),
-  stranger: Object.freeze(['{company} - you\'ve heard of us?', 'Make way for {company}.', 'Good road. We\'re {company}.']),
+  stranger: Object.freeze([
+    "{company} - you've heard of us?",
+    'Make way for {company}.',
+    "Good road. We're {company}.",
+  ]),
 });
 
 /** What a resident says to the player in passing, by their regard (relations.js). */
 export const LIVING_GREETINGS = Object.freeze({
-  friend: Object.freeze(['Well met, {player}!', '{player}! Good to see you.', 'Ho, {player}. Keeping safe?', 'There\'s a friendly face.']),
+  friend: Object.freeze([
+    'Well met, {player}!',
+    '{player}! Good to see you.',
+    'Ho, {player}. Keeping safe?',
+    "There's a friendly face.",
+  ]),
   known: Object.freeze(['Good day.', 'Hello again.', 'You again.', 'Mind how you go.']),
   stranger: Object.freeze(['Good day, stranger.', 'Traveller.', 'Mm.', 'Fine day.']),
-  enemy: Object.freeze(['You.', 'Keep walking.', 'I\'ve nothing to say to you.', 'Get away from me.']),
+  enemy: Object.freeze(['You.', 'Keep walking.', "I've nothing to say to you.", 'Get away from me.']),
 });
 
 /** WATCH-KNOWS: the watch's word to the player on duty - by the player's legal standing in the town's region, not the
  *  man's own regard (`watchBand`): the honoured by name, the respected and the common citizen as the law sees them, one
  *  under its eye warned, a known criminal told so. */
 export const WATCH_GREETINGS = Object.freeze({
-  honoured: Object.freeze(['{player}. The watch salutes you.', 'An honor, {player}.', 'Safe roads, {player}.', 'Good day to you, {player}.']),
+  honoured: Object.freeze([
+    '{player}. The watch salutes you.',
+    'An honor, {player}.',
+    'Safe roads, {player}.',
+    'Good day to you, {player}.',
+  ]),
   respected: Object.freeze(['Good day, citizen.', 'Citizen. All well?', 'Keep well.', 'An honest face. Good day.']),
   citizen: Object.freeze(['Move along.', 'Citizen.', 'Mind the law.', 'Keep to the street.']),
   watched: Object.freeze(['I have my eye on you.', 'No trouble, now.', 'Watch yourself.', 'Mind your step in {town}.']),
-  known: Object.freeze(['We know your face.', 'One wrong step and it is the cells.', 'The watch has not forgotten you.', 'Keep your hands where I can see them.']),
+  known: Object.freeze([
+    'We know your face.',
+    'One wrong step and it is the cells.',
+    'The watch has not forgotten you.',
+    'Keep your hands where I can see them.',
+  ]),
 });
 /** WATCH-KNOWS: the watch's band for a legal standing (legalBands.js's ladder): above 40 honoured (honored and up), above
  *  10 respected, 0 to 10 a common citizen (and dependable), below 0 watched - and `known`, a known criminal (standing.js
@@ -377,7 +426,20 @@ export function watchBand(rep, known) {
 }
 
 /** The fallback for a token the reader cannot fill. LW-TALK: {place} is filled from the town's own road (meetups.js). */
-export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands', house: 'that house', hour: 'The hour', guild: 'the guild', from: 'the next town' });   // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call
+export const TOKEN_FALLBACK = Object.freeze({
+  town: 'town',
+  region: 'the court',
+  a: 'friend',
+  b: 'friend',
+  place: 'the next town',
+  player: 'friend',
+  who: 'someone',
+  foe: 'brigands',
+  house: 'that house',
+  hour: 'The hour',
+  guild: 'the guild',
+  from: 'the next town',
+}); // CHAP5b: {guild}, a chapter's; LW16: {from}, the town the word came from   // LW-STIR: {hour}, the watch's call
 
 /**
  * LW4: WHAT THE TOWN SAYS OF THE ROAD - two- and three-line scripts on a trouble its own travellers met: `{who}` the one
@@ -386,27 +448,50 @@ export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court',
  */
 export const ROAD_NEWS = Object.freeze({
   driven: Object.freeze([
-    Object.freeze(['{who} saw off a pack of {foe} on the road to {place}, I hear.', 'Good. The roads are no place for the timid.']),
+    Object.freeze([
+      '{who} saw off a pack of {foe} on the road to {place}, I hear.',
+      'Good. The roads are no place for the timid.',
+    ]),
     Object.freeze(['{foe} tried {who} on the way to {place}.', 'And?', 'And ran for it. {who} barely broke stride.']),
   ]),
   won: Object.freeze([
-    Object.freeze(['{who} came through a hard fight with {foe} near {place}.', 'Hard enough to show?', 'Bandages and a new limp. {who} will live.']),
-    Object.freeze(['They say {foe} fell on {who} on the {place} road.', 'And {who} is still walking. The gods favor the stubborn.']),
+    Object.freeze([
+      '{who} came through a hard fight with {foe} near {place}.',
+      'Hard enough to show?',
+      'Bandages and a new limp. {who} will live.',
+    ]),
+    Object.freeze([
+      'They say {foe} fell on {who} on the {place} road.',
+      'And {who} is still walking. The gods favor the stubborn.',
+    ]),
   ]),
   fled: Object.freeze([
-    Object.freeze(['{who} turned back before {place}. {foe} on the road.', 'No shame in that. Better turned back than carried back.']),
+    Object.freeze([
+      '{who} turned back before {place}. {foe} on the road.',
+      'No shame in that. Better turned back than carried back.',
+    ]),
     Object.freeze(['Did you hear? {who} ran from {foe}, all the way home.', 'I would have run faster.']),
   ]),
   fell: Object.freeze([
     Object.freeze(['{who} never came back from the road to {place}.', '{foe}?', 'So the ones who made it home say.']),
-    Object.freeze(['Have you heard about {who}? {foe}, near {place}.', 'Gods. I spoke with {who} only last week.', 'The road takes the best of us.']),
+    Object.freeze([
+      'Have you heard about {who}? {foe}, near {place}.',
+      'Gods. I spoke with {who} only last week.',
+      'The road takes the best of us.',
+    ]),
     Object.freeze(['They buried what they could find of {who}.', 'The road to {place}. Always that road.']),
   ]),
   // LW12: held up by a band - {foe} its name
   robbed: Object.freeze([
-    Object.freeze(['They say {foe} took {who}\'s goods on the road to {place}.', 'Again? Somebody should do something about them.']),
+    Object.freeze([
+      "They say {foe} took {who}'s goods on the road to {place}.",
+      'Again? Somebody should do something about them.',
+    ]),
     Object.freeze(['{who} came home with empty hands. {foe}, near {place}.', 'At least {who} came home.']),
-    Object.freeze(['Have you heard? {foe} held up {who} on the {place} road.', 'Not a drop of blood, they say. Just everything else.']),
+    Object.freeze([
+      'Have you heard? {foe} held up {who} on the {place} road.',
+      'Not a drop of blood, they say. Just everything else.',
+    ]),
   ]),
 });
 /** LW6: what the town says of a DIVE - `{place}` the dungeon. */
@@ -419,11 +504,15 @@ export const DIVE_NEWS = Object.freeze({
     Object.freeze(['They say {who} cleared a nest of {foe} out of {place}.', 'Somebody had to.']),
   ]),
   fled: Object.freeze([
-    Object.freeze(['{who} came running out of {place}, white as a sheet.', '{foe}?', 'Wouldn\'t say. Wouldn\'t stop shaking either.']),
+    Object.freeze([
+      '{who} came running out of {place}, white as a sheet.',
+      '{foe}?',
+      "Wouldn't say. Wouldn't stop shaking either.",
+    ]),
   ]),
   fell: Object.freeze([
     Object.freeze(['{who} went down into {place} and never came up.', 'The deep keeps what it takes.']),
-    Object.freeze(['Has anyone seen {who}?', 'Not since {place}. Not since the {foe} down there.', 'Then we won\'t.']),
+    Object.freeze(['Has anyone seen {who}?', 'Not since {place}. Not since the {foe} down there.', "Then we won't."]),
   ]),
 });
 /**
@@ -432,9 +521,16 @@ export const DIVE_NEWS = Object.freeze({
  */
 export const SLAIN_NEWS = Object.freeze({
   seen: Object.freeze([
-    Object.freeze(['{who} is dead. Cut down in the street, in plain sight.', 'By whose hand?', '{player}\'s. Half the street saw it.']),
-    Object.freeze(['Did you hear what {player} did to {who}?', 'I heard. Keep your voice down - and your door barred.']),
-    Object.freeze(['{who}\'s people want {player}\'s blood.', 'Can you blame them?']),
+    Object.freeze([
+      '{who} is dead. Cut down in the street, in plain sight.',
+      'By whose hand?',
+      "{player}'s. Half the street saw it.",
+    ]),
+    Object.freeze([
+      'Did you hear what {player} did to {who}?',
+      'I heard. Keep your voice down - and your door barred.',
+    ]),
+    Object.freeze(["{who}'s people want {player}'s blood.", 'Can you blame them?']),
   ]),
   unseen: Object.freeze([
     Object.freeze(['They found {who} dead in the street. Nobody saw a thing.', 'Somebody did. Somebody always does.']),
@@ -444,7 +540,10 @@ export const SLAIN_NEWS = Object.freeze({
 /** LW7: of one of its own who died fighting at the player's side. */
 export const DIED_NEWS = Object.freeze([
   Object.freeze(['{who} died fighting beside {player}, they say.', 'There are worse ways to go.']),
-  Object.freeze(['Have you heard? {who} fell at {player}\'s side.', 'Then {player} owes {who} a debt that can\'t be paid.']),
+  Object.freeze([
+    "Have you heard? {who} fell at {player}'s side.",
+    "Then {player} owes {who} a debt that can't be paid.",
+  ]),
 ]);
 /** WATCH-FIX: of one of its own another hand cut down in the street - a beast, a fall, a stranger (`killed`): one of the
  *  watch's, and anyone else's. */
@@ -460,35 +559,68 @@ export const KILLED_NEWS = Object.freeze({
 });
 /** LW6d: of a keepsake of one of its own the deep kept, carried home by the player - `{who}` the one it was. */
 export const HOME_NEWS = Object.freeze([
-  Object.freeze(['Did you hear? {player} brought {who}\'s keepsake up out of the deep.', 'Home to the family? Gods bless them.']),
-  Object.freeze(['{who}\'s people have something of theirs back, thanks to {player}.', 'Not many would go down there for the dead.']),
-  Object.freeze(['That {player} - went into the dark and came back with {who}\'s keepsake.', 'There is kindness in the world yet.']),
+  Object.freeze([
+    "Did you hear? {player} brought {who}'s keepsake up out of the deep.",
+    'Home to the family? Gods bless them.',
+  ]),
+  Object.freeze([
+    "{who}'s people have something of theirs back, thanks to {player}.",
+    'Not many would go down there for the dead.',
+  ]),
+  Object.freeze([
+    "That {player} - went into the dark and came back with {who}'s keepsake.",
+    'There is kindness in the world yet.',
+  ]),
 ]);
 /** LW12: of a band of the region the PLAYER routed - `{who}` its name. */
 export const ROUTED_NEWS = Object.freeze([
-  Object.freeze(['{player} routed {who}, they say. Their camp off the road stands empty.', 'Then the road is safe for a while. A while.']),
+  Object.freeze([
+    '{player} routed {who}, they say. Their camp off the road stands empty.',
+    'Then the road is safe for a while. A while.',
+  ]),
   Object.freeze(['Have you heard? {who} are finished. {player} saw to it.', 'Somebody had to. The watch never would.']),
 ]);
 /** LW16: of a party of the region the PLAYER robbed on the road, once a witness carried it in - `{who}` the one robbed. */
 export const HELD_NEWS = Object.freeze([
-  Object.freeze(['{player} robbed {who} on the road, they say.', 'In broad day?', 'Bold as brass. The watch has their name now.']),
-  Object.freeze(['Did you hear? {who} was held up on the road. {player}, they say.', 'Then I\'m keeping my purse close.']),
+  Object.freeze([
+    '{player} robbed {who} on the road, they say.',
+    'In broad day?',
+    'Bold as brass. The watch has their name now.',
+  ]),
+  Object.freeze([
+    'Did you hear? {who} was held up on the road. {player}, they say.',
+    "Then I'm keeping my purse close.",
+  ]),
 ]);
 /** LW7: of a fight on the road the PLAYER turned for its party (the character's `won`) - `{player}` the one who came. */
 export const HELPED_NEWS = Object.freeze({
   won: Object.freeze([
-    Object.freeze(['{foe} set on {who} on the road to {place}. {player} was there.', 'And?', 'And now the crows are fat.']),
-    Object.freeze(['They say {player} fought off {foe} for {who}, near {place}.', 'A stranger, doing that? There\'s hope for us yet.']),
+    Object.freeze([
+      '{foe} set on {who} on the road to {place}. {player} was there.',
+      'And?',
+      'And now the crows are fat.',
+    ]),
+    Object.freeze([
+      'They say {player} fought off {foe} for {who}, near {place}.',
+      "A stranger, doing that? There's hope for us yet.",
+    ]),
   ]),
   fell: Object.freeze([
-    Object.freeze(['{player} fought beside {who}\'s party near {place}. Not everyone came home.', 'More would be in the ground without {player}.']),
+    Object.freeze([
+      "{player} fought beside {who}'s party near {place}. Not everyone came home.",
+      'More would be in the ground without {player}.',
+    ]),
   ]),
 });
 /** LW5b: what the town says of a passage by sea that cost a life - `{place}` the port they sailed for. */
 export const SEA_NEWS = Object.freeze({
   fell: Object.freeze([
     Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The sea takes its share.']),
-    Object.freeze(['Did you hear? {who} went over the side, halfway to {place}.', 'In that weather?', 'In any weather. The sea does not ask.']),
+    Object.freeze([
+      'Did you hear? {who} went over the side, halfway to {place}.',
+      'In that weather?',
+      'In any weather. The sea does not ask.',
+    ]),
   ]),
 });
 /** LEGACY6 (Legacy-Arc.md section 10): what a town says of PROJECT LEGACY'S HOUSE - a member's death, a laying to rest, a
@@ -497,16 +629,25 @@ export const SEA_NEWS = Object.freeze({
 export const KIN_NEWS = Object.freeze({
   died: Object.freeze([
     Object.freeze(['Did you hear? {who} of House {house} is dead.', 'The house will feel that.']),
-    Object.freeze(['They are burying {who} - or would be, if anyone could find the body.', 'House {house} has had a hard year.']),
-    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),   // LEGACY-NAME: "{who} {house}" read "Tlist Sentinel" for a seat's house ({who} the first name, meetups.js firstNameOf - AUDIT LEGACY III A16)
+    Object.freeze([
+      'They are burying {who} - or would be, if anyone could find the body.',
+      'House {house} has had a hard year.',
+    ]),
+    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']), // LEGACY-NAME: "{who} {house}" read "Tlist Sentinel" for a seat's house ({who} the first name, meetups.js firstNameOf - AUDIT LEGACY III A16)
   ]),
   rested: Object.freeze([
-    Object.freeze(['{who} was laid to rest at last. The family brought the bones home.', 'Good. A house should keep its dead.']),
+    Object.freeze([
+      '{who} was laid to rest at last. The family brought the bones home.',
+      'Good. A house should keep its dead.',
+    ]),
     Object.freeze(['House {house} buried {who} properly, they say. Candles and all.', 'Then {who} can sleep.']),
   ]),
   wed: Object.freeze([
     Object.freeze(['{who} is wed - into House {house}, no less.', 'Gods give them joy of it.']),
-    Object.freeze(['Were you at the temple? {who} and House {house}.', 'I heard the bells. I thought someone had died.']),
+    Object.freeze([
+      'Were you at the temple? {who} and House {house}.',
+      'I heard the bells. I thought someone had died.',
+    ]),
   ]),
   born: Object.freeze([
     Object.freeze(['House {house} has a new child. {who}, they call them.', 'Another mouth. Gods bless it.']),
@@ -521,16 +662,25 @@ export const CHAPTER_NEWS = Object.freeze({
   failing: Object.freeze([
     Object.freeze(['The hall of {guild} is half empty of an evening.', 'Hard times for them.']),
     Object.freeze(['They say the chapter of {guild} here is failing.', 'Someone ought to help them, before it shuts.']),
-    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']),   // GUILD3e: a Decline's, the band's now
+    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']), // GUILD3e: a Decline's, the band's now
   ]),
   thriving: Object.freeze([
-    Object.freeze(['Have you seen the hall of {guild} of an evening? Full to the door.', 'Somebody is paying them well, then.']),
+    Object.freeze([
+      'Have you seen the hall of {guild} of an evening? Full to the door.',
+      'Somebody is paying them well, then.',
+    ]),
     Object.freeze(['The chapter of {guild} here is doing well, they say.', 'Good for {town}.']),
   ]),
   ascendant: Object.freeze([
-    Object.freeze(['They say the chapter of {guild} here is the strongest in {region}.', 'I believe it. You should see the hall.']),
+    Object.freeze([
+      'They say the chapter of {guild} here is the strongest in {region}.',
+      'I believe it. You should see the hall.',
+    ]),
     Object.freeze(['The chapter of {guild} has never stood higher in {town}.', 'Then we are in good hands.']),
-    Object.freeze(['The chapter of {guild} here is in its ascendancy, they say.', 'Everyone wants to be seen in that hall.']),   // GUILD3e: an Ascendancy's, the band's now
+    Object.freeze([
+      'The chapter of {guild} here is in its ascendancy, they say.',
+      'Everyone wants to be seen in that hall.',
+    ]), // GUILD3e: an Ascendancy's, the band's now
   ]),
 });
 /** CHAP5b: the days a week a chapter's news is told in its town - drawn on the seed, by the town and its guild. */
@@ -540,21 +690,36 @@ export const CHAPTER_NEWS_DAYS = 2;
  *  no news. Worded as CHAPTER_NEWS is: `{guild}` never first, never the subject. */
 export const CHAPTER_EVENT_NEWS = Object.freeze({
   schism: Object.freeze([
-    Object.freeze(['They say the chapter of {guild} here is split over who leads it.', 'Two of them, and neither will give way.']),
+    Object.freeze([
+      'They say the chapter of {guild} here is split over who leads it.',
+      'Two of them, and neither will give way.',
+    ]),
     Object.freeze(['There is a quarrel in the hall of {guild}, they say.', 'Over what it stands for, I hear.']),
   ]),
   succession: Object.freeze([
-    Object.freeze(['They say the head of the hall of {guild} is stepping down.', 'And who follows? That is the question.']),
+    Object.freeze([
+      'They say the head of the hall of {guild} is stepping down.',
+      'And who follows? That is the question.',
+    ]),
   ]),
   crackdown: Object.freeze([
-    Object.freeze(['The watch is after the chapter of {guild} here, they say.', 'Then its members had best keep their heads down.']),
+    Object.freeze([
+      'The watch is after the chapter of {guild} here, they say.',
+      'Then its members had best keep their heads down.',
+    ]),
     Object.freeze(['They say the hall of {guild} is watched day and night.', 'I would not be seen going in.']),
   ]),
   rivalry: Object.freeze([
-    Object.freeze(['They say the chapter of {guild} here has a rival this Season.', 'One of them will come out of it the poorer.']),
+    Object.freeze([
+      'They say the chapter of {guild} here has a rival this Season.',
+      'One of them will come out of it the poorer.',
+    ]),
   ]),
   shut: Object.freeze([
-    Object.freeze(['They say the halls of {guild} here are shut, by the watch\'s order.', 'For the whole Season, I hear.']),
+    Object.freeze([
+      "They say the halls of {guild} here are shut, by the watch's order.",
+      'For the whole Season, I hear.',
+    ]),
   ]),
 });
 
@@ -563,10 +728,26 @@ export const CHAPTER_EVENT_NEWS = Object.freeze({
  *  Through the text core (L10N4), read when it is told - each pool kept while the language holds, so a script is its
  *  pool's own. */
 const econRows = () => [
-  ['booming', t('lw.econ.booming.a', 'Trade has never been better in {town}.'), t('lw.econ.booming.b', 'Every stall sold out by noon.')],
-  ['thriving', t('lw.econ.thriving.a', 'Business is good in {town} these days.'), t('lw.econ.thriving.b', 'Long may it last.')],
-  ['struggling', t('lw.econ.struggling.a', 'Trade is slow in {town} lately.'), t('lw.econ.struggling.b', 'Everyone\'s holding on to their coin.')],
-  ['destitute', t('lw.econ.destitute.a', 'Half the shops in {town} have shut.'), t('lw.econ.destitute.b', 'Hard times. Hard times.')],
+  [
+    'booming',
+    t('lw.econ.booming.a', 'Trade has never been better in {town}.'),
+    t('lw.econ.booming.b', 'Every stall sold out by noon.'),
+  ],
+  [
+    'thriving',
+    t('lw.econ.thriving.a', 'Business is good in {town} these days.'),
+    t('lw.econ.thriving.b', 'Long may it last.'),
+  ],
+  [
+    'struggling',
+    t('lw.econ.struggling.a', 'Trade is slow in {town} lately.'),
+    t('lw.econ.struggling.b', "Everyone's holding on to their coin."),
+  ],
+  [
+    'destitute',
+    t('lw.econ.destitute.a', 'Half the shops in {town} have shut.'),
+    t('lw.econ.destitute.b', 'Hard times. Hard times.'),
+  ],
 ];
 /** @type {Readonly<Record<string, ReadonlyArray<ReadonlyArray<string>>>> | null} */
 let _econNews = null;
@@ -582,7 +763,9 @@ export function townEconNews() {
   const sig = rows.flat().join('\u0001');
   if (!_econNews || sig !== _econSig) {
     _econSig = sig;
-    _econNews = Object.freeze(Object.fromEntries(rows.map(([band, a, b]) => [band, Object.freeze([Object.freeze([a, b])])])));
+    _econNews = Object.freeze(
+      Object.fromEntries(rows.map(([band, a, b]) => [band, Object.freeze([Object.freeze([a, b])])])),
+    );
   }
   return _econNews;
 }
@@ -595,20 +778,36 @@ export const NEWS_SHARE = 0.4;
 export const CARRIED_SHARE = 0.3;
 /** LW16: the word carried's first line - `{from}` the town it came from (the script of the news itself after it). */
 export const CARRIED_OPENERS = Object.freeze([
-  'There\'s word from {from}.',
+  "There's word from {from}.",
   'A carter in from {from} had news.',
-  'You hear what they\'re saying in {from}?',
+  "You hear what they're saying in {from}?",
   'Travelers from {from} are telling it.',
 ]);
 /** LW16: A STRANGER WHO HAS HEARD of the character greets them by it - a fight they turned on the road (`helped`), a
  *  keepsake carried home (`saved`), a band routed, one of a town struck down where it was seen (`slain`), a party robbed
  *  (`robbed`); `{who}`, `{foe}`, `{place}` the deed's. */
 export const HEARD_GREETINGS = Object.freeze({
-  helped: Object.freeze(['You\'re the one who drove off {foe} on the road to {place}?', 'They say you stood with {who} against {foe}. Good day to you.', 'I heard what you did for {who}\'s party.']),
-  saved: Object.freeze(['You brought {who}\'s keepsake home, didn\'t you? Bless you.', 'You went into the dark for {who}. Not many would.']),
-  routed: Object.freeze(['You\'re the one who broke {who}? The road thanks you.', '{who} are finished, they say - and you\'re why.']),
-  slain: Object.freeze(['I know who you are. I heard about {who}.', 'Keep your distance. {who} was a friend of a friend.']),
-  robbed: Object.freeze(['You\'re the one who robbed {who} on the road. I\'m watching you.', 'Hand on my purse, stranger. I heard about {who}.']),
+  helped: Object.freeze([
+    "You're the one who drove off {foe} on the road to {place}?",
+    'They say you stood with {who} against {foe}. Good day to you.',
+    "I heard what you did for {who}'s party.",
+  ]),
+  saved: Object.freeze([
+    "You brought {who}'s keepsake home, didn't you? Bless you.",
+    'You went into the dark for {who}. Not many would.',
+  ]),
+  routed: Object.freeze([
+    "You're the one who broke {who}? The road thanks you.",
+    "{who} are finished, they say - and you're why.",
+  ]),
+  slain: Object.freeze([
+    'I know who you are. I heard about {who}.',
+    'Keep your distance. {who} was a friend of a friend.',
+  ]),
+  robbed: Object.freeze([
+    "You're the one who robbed {who} on the road. I'm watching you.",
+    'Hand on my purse, stranger. I heard about {who}.',
+  ]),
 });
 
 /** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side; WATCH-FIX: one of
@@ -616,18 +815,32 @@ export const HEARD_GREETINGS = Object.freeze({
  *  LEGACY6: or Project Legacy's house's (`kin`). CHAP5b: or a guild's chapter's (`chapter`). TOWN-ECON TE3: or the town's
  *  trade (`econ`).
  *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean, kin?: boolean, chapter?: boolean, econ?: boolean }} item */
-const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]   // LEGACY6: the house's own words
-  : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season
-  : item.econ ? townEconNews()[item.kind]   // TOWN-ECON TE3: the town's trade
-  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
-  : item.kind === 'died' ? DIED_NEWS
-  : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']
-  : item.kind === 'home' ? HOME_NEWS   // LW6d: a keepsake carried home
-  : item.kind === 'routed' ? ROUTED_NEWS   // LW12: a band the player routed
-  : item.kind === 'held' ? HELD_NEWS   // LW16: a party the player robbed
-    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
-      : item.sea ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)]   // LW5b: the sea's own words
-        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)]);
+const newsPool = (item) =>
+  item.kin
+    ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)] // LEGACY6: the house's own words
+    : item.chapter
+      ? /** @type {Record<string, any>} */ (
+          CHAPTER_EVENT_NEWS[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)]
+        ) // CHAP5b: a chapter's standing; CHAP6c: its Season
+      : item.econ
+        ? townEconNews()[item.kind] // TOWN-ECON TE3: the town's trade
+        : item.kind === 'slain'
+          ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
+          : item.kind === 'died'
+            ? DIED_NEWS
+            : item.kind === 'killed'
+              ? KILLED_NEWS[item.watch ? 'watch' : 'town']
+              : item.kind === 'home'
+                ? HOME_NEWS // LW6d: a keepsake carried home
+                : item.kind === 'routed'
+                  ? ROUTED_NEWS // LW12: a band the player routed
+                  : item.kind === 'held'
+                    ? HELD_NEWS // LW16: a party the player robbed
+                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
+                      ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
+                      : item.sea
+                        ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words
+                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];
 
 /**
  * LW4: a meeting's news, if it tells one - NEWS_SHARE of the meetings with news to tell, the item drawn on the seed -
@@ -637,7 +850,7 @@ const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS
  */
 export function newsScript(seed, news) {
   if (!news?.length) return null;
-  const rng = seededRng((seed ^ 0x4e455753) >>> 0);   // 'NEWS'
+  const rng = seededRng((seed ^ 0x4e455753) >>> 0); // 'NEWS'
   if (rng() >= NEWS_SHARE) return null;
   // LW16: the word carried in from the towns about, CARRIED_SHARE of the news told - on a draw of its own, so a town
   // with none tells its own as ever
@@ -645,7 +858,8 @@ export function newsScript(seed, news) {
   const own = carried.length ? news.filter((n) => !n.carried) : news;
   // AUDIT LW-II B10: a town with only the word carried tells it as often as another its own (on the draw it fell to its
   // own, found none and told nothing: a third as often)
-  const list = carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own;   // 'CARR'
+  const list =
+    carried.length && (!own.length || seededRng((seed ^ 0x43415252) >>> 0)() < CARRIED_SHARE) ? carried : own; // 'CARR'
   if (!list.length) return null;
   const item = list[Math.floor(rng() * list.length)];
   const pool = newsPool(item);
@@ -660,12 +874,23 @@ const _carriedScripts = new WeakMap();
 /** @param {number} o @param {readonly string[]} script */
 function carriedScript(o, script) {
   let row = _carriedScripts.get(script);
-  if (!row) { row = []; _carriedScripts.set(script, row); }
+  if (!row) {
+    row = [];
+    _carriedScripts.set(script, row);
+  }
   return (row[o] ??= Object.freeze([CARRIED_OPENERS[o], ...script]));
 }
 
 /** LW4: the names Daggerfall's foes take more than one at a time that no rule makes. */
-const FOE_PLURALS = Object.freeze({ Werewolf: 'Werewolves', Wereboar: 'Wereboars', Thief: 'Thieves', Slaughterfish: 'Slaughterfish', Dreugh: 'Dreugh', Lich: 'Liches', 'Ancient Lich': 'Ancient Liches' });
+const FOE_PLURALS = Object.freeze({
+  Werewolf: 'Werewolves',
+  Wereboar: 'Wereboars',
+  Thief: 'Thieves',
+  Slaughterfish: 'Slaughterfish',
+  Dreugh: 'Dreugh',
+  Lich: 'Liches',
+  'Ancient Lich': 'Ancient Liches',
+});
 
 /**
  * LW4: a foe's word for the town's talk and a mark - many ("Orcs", "Harpies", "Frost Daedra") or one ("a Giant", "an
@@ -675,7 +900,8 @@ const FOE_PLURALS = Object.freeze({ Werewolf: 'Werewolves', Wereboar: 'Wereboars
 export function foeWord(name, n) {
   const w = String(name ?? '').trim() || 'foe';
   if (n === 1) return `${/^[AEIOU]/i.test(w) ? 'an' : 'a'} ${w}`;
-  if (FOE_PLURALS[/** @type {keyof typeof FOE_PLURALS} */ (w)]) return FOE_PLURALS[/** @type {keyof typeof FOE_PLURALS} */ (w)];
+  if (FOE_PLURALS[/** @type {keyof typeof FOE_PLURALS} */ (w)])
+    return FOE_PLURALS[/** @type {keyof typeof FOE_PLURALS} */ (w)];
   if (/Daedra$/.test(w)) return w;
   if (/[^aeiou]y$/i.test(w)) return `${w.slice(0, -1)}ies`;
   if (/(s|sh|ch|x)$/i.test(w)) return `${w}es`;
@@ -687,7 +913,7 @@ export function foeWord(name, n) {
  *  sentence it keeps its case. @param {string} text @param {Record<string, string|undefined|null>} ctx */
 export function fillLine(text, ctx = {}) {
   return text.replace(/\{(\w+)\}/g, (_, k, at) => {
-    const s = ctx[k] ? String(ctx[k]) : TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? '';
+    const s = ctx[k] ? String(ctx[k]) : (TOKEN_FALLBACK[/** @type {keyof typeof TOKEN_FALLBACK} */ (k)] ?? '');
     return at === 0 || /[.?!]\s$/.test(text.slice(0, at)) ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   });
 }
@@ -706,8 +932,21 @@ export function roomKindOf(type) {
   if (type >= BUILDING_TYPES.House1 && type <= BUILDING_TYPES.House6) return 'home';
   return SHOP_ROOMS.has(type) ? 'shop' : null;
 }
-const SHOP_ROOMS = new Set(/** @type {number[]} */ ([BUILDING_TYPES.Alchemist, BUILDING_TYPES.Armorer, BUILDING_TYPES.Bank, BUILDING_TYPES.Bookseller, BUILDING_TYPES.ClothingStore,
-  BUILDING_TYPES.FurnitureStore, BUILDING_TYPES.GemStore, BUILDING_TYPES.GeneralStore, BUILDING_TYPES.Library, BUILDING_TYPES.PawnShop, BUILDING_TYPES.WeaponSmith]));
+const SHOP_ROOMS = new Set(
+  /** @type {number[]} */ ([
+    BUILDING_TYPES.Alchemist,
+    BUILDING_TYPES.Armorer,
+    BUILDING_TYPES.Bank,
+    BUILDING_TYPES.Bookseller,
+    BUILDING_TYPES.ClothingStore,
+    BUILDING_TYPES.FurnitureStore,
+    BUILDING_TYPES.GemStore,
+    BUILDING_TYPES.GeneralStore,
+    BUILDING_TYPES.Library,
+    BUILDING_TYPES.PawnShop,
+    BUILDING_TYPES.WeaponSmith,
+  ]),
+);
 
 /** A resident's first name (the walkers' FullName is "First Surname"; a single-part name is all first). @param {string} name */
 export const firstNameOf = (name) => String(name ?? '').split(' ')[0] || '';
@@ -722,13 +961,21 @@ export const firstNameOf = (name) => String(name ?? '').split(' ')[0] || '';
 export function pickScript(seed, { jobs = [], weather = null, hour = 12, road = null, room = null } = {}) {
   const rng = seededRng(seed);
   /** @type {(readonly (readonly string[])[])[]} */
-  const pools = road === 'camp' ? [CAMP_TALKS, CAMP_TALKS, CAMP_TALKS] : road === 'walk' ? [ROAD_TALKS, ROAD_TALKS, ROAD_TALKS] : [TOWN_TALKS, TOWN_TALKS];
+  const pools =
+    road === 'camp'
+      ? [CAMP_TALKS, CAMP_TALKS, CAMP_TALKS]
+      : road === 'walk'
+        ? [ROAD_TALKS, ROAD_TALKS, ROAD_TALKS]
+        : [TOWN_TALKS, TOWN_TALKS];
   const own = !road && room ? ROOM_TALKS[/** @type {keyof typeof ROOM_TALKS} */ (room)] : null;
-  if (own) pools.splice(0, 1, own, own);   // LW8b: inside, the room's own talk beside the town's
-  for (const j of new Set(jobs)) { const p = JOB_TALKS[/** @type {keyof typeof JOB_TALKS} */ (j)]; if (p) pools.push(p); }   // LW-TALK: a trade's once
+  if (own) pools.splice(0, 1, own, own); // LW8b: inside, the room's own talk beside the town's
+  for (const j of new Set(jobs)) {
+    const p = JOB_TALKS[/** @type {keyof typeof JOB_TALKS} */ (j)];
+    if (p) pools.push(p);
+  } // LW-TALK: a trade's once
   const w = weather ? WEATHER_TALKS[/** @type {keyof typeof WEATHER_TALKS} */ (weather)] : null;
   if (w) pools.push(w);
-  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS);   // LW-TALK: the street's - a room keeps its own two shares of three
+  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS); // LW-TALK: the street's - a room keeps its own two shares of three
   if (!road && !own && hour >= 8 && hour < 18) pools.push(DAY_TALKS);
   if (!road && hour >= 18 && hour < 23) pools.push(EVENING_TALKS);
   if (!road && (hour >= 23 || hour < 5)) pools.push(NIGHT_TALKS, NIGHT_TALKS);
@@ -742,28 +989,86 @@ export function pickScript(seed, { jobs = [], weather = null, hour = 12, road = 
  * beggar), `b` the one it is put to, `g` the watch stepping into a quarrel; a line `loud` is shouted (the HUD's shout).
  * A stranger answers the watch by their humour that day (stir.js humourOf): civil, curt or hostile.
  */
-const L = (/** @type {'a'|'b'|'g'} */ by, /** @type {string} */ text, loud = false) => Object.freeze({ by, text, loud });
+const L = (/** @type {'a'|'b'|'g'} */ by, /** @type {string} */ text, loud = false) =>
+  Object.freeze({ by, text, loud });
 const X = (/** @type {{ by: 'a'|'b'|'g', text: string, loud: boolean }[]} */ ...lines) => Object.freeze(lines);
 
 /** LW-STIR: the watch stops a stranger - by the stranger's humour. */
 export const CHALLENGE_SCRIPTS = Object.freeze({
   civil: Object.freeze([
-    X(L('a', 'You there. What\'s your business in {town}?'), L('b', 'Trade, officer. I\'ll be on my way by the week\'s end.'), L('a', 'See that you are. Keep the peace while you\'re here.')),
-    X(L('a', 'Hold a moment, traveler. Where from?'), L('b', '{place}, and glad of walls after the road.'), L('a', 'Well enough. Mind the cutpurses at the market.')),
-    X(L('a', 'New face. Staying long?'), L('b', 'A night or two. The tavern\'s expecting me.'), L('a', 'Then enjoy {town}. Quietly.')),
-    X(L('a', 'A name, stranger.'), L('b', '{b}, of {place}. I\'m no trouble to anyone.'), L('a', 'Nobody ever is. On your way, {b}.')),
+    X(
+      L('a', "You there. What's your business in {town}?"),
+      L('b', "Trade, officer. I'll be on my way by the week's end."),
+      L('a', "See that you are. Keep the peace while you're here."),
+    ),
+    X(
+      L('a', 'Hold a moment, traveler. Where from?'),
+      L('b', '{place}, and glad of walls after the road.'),
+      L('a', 'Well enough. Mind the cutpurses at the market.'),
+    ),
+    X(
+      L('a', 'New face. Staying long?'),
+      L('b', "A night or two. The tavern's expecting me."),
+      L('a', 'Then enjoy {town}. Quietly.'),
+    ),
+    X(
+      L('a', 'A name, stranger.'),
+      L('b', "{b}, of {place}. I'm no trouble to anyone."),
+      L('a', 'Nobody ever is. On your way, {b}.'),
+    ),
   ]),
   curt: Object.freeze([
-    X(L('a', 'Hold. What brings you to {town}?'), L('b', 'My own two feet. Is that a crime here?'), L('a', 'Not yet. Mind your tongue and it won\'t be.'), L('b', 'I\'ll mind it.')),
-    X(L('a', 'You. Your business.'), L('b', 'Mine.'), L('a', 'In {town}, it\'s mine too. Out with it.'), L('b', 'Passing through. Satisfied?')),
-    X(L('a', 'Where are you bound, stranger?'), L('b', 'Away from you, if you\'d let me.'), L('a', 'Keep that tone and you\'ll be bound for the cells.')),
-    X(L('a', 'That\'s the third time I\'ve seen you loitering here.'), L('b', 'Is standing still against the law now?'), L('a', 'It is when I say so. Move on.'), L('b', 'Fine. Fine.')),
+    X(
+      L('a', 'Hold. What brings you to {town}?'),
+      L('b', 'My own two feet. Is that a crime here?'),
+      L('a', "Not yet. Mind your tongue and it won't be."),
+      L('b', "I'll mind it."),
+    ),
+    X(
+      L('a', 'You. Your business.'),
+      L('b', 'Mine.'),
+      L('a', "In {town}, it's mine too. Out with it."),
+      L('b', 'Passing through. Satisfied?'),
+    ),
+    X(
+      L('a', 'Where are you bound, stranger?'),
+      L('b', "Away from you, if you'd let me."),
+      L('a', "Keep that tone and you'll be bound for the cells."),
+    ),
+    X(
+      L('a', "That's the third time I've seen you loitering here."),
+      L('b', 'Is standing still against the law now?'),
+      L('a', 'It is when I say so. Move on.'),
+      L('b', 'Fine. Fine.'),
+    ),
   ]),
   hostile: Object.freeze([
-    X(L('a', 'Halt! State your business in {town}!', true), L('b', 'Take your hands off me, you {town} dog!', true), L('a', 'Say that again and you\'ll say it through bars!', true), L('b', 'Bah. I\'ve seen better watchmen in a pigsty.'), L('a', 'Move along. Now!', true)),
-    X(L('a', 'You there! Stop!', true), L('b', 'Who are you to order me about?', true), L('a', 'The watch of {town}, and you\'d best remember it!', true), L('b', 'I\'ll remember your face, guardsman.'), L('a', 'Good. I\'ll remember yours.')),
-    X(L('a', 'That blade stays sheathed in {town}. Understood?'), L('b', 'Or what? You\'ll run and fetch your captain?', true), L('a', 'I\'ll fetch the stocks, and you\'ll sit in them till the crows have you!', true), L('b', 'Hmph. Have it your way.')),
-    X(L('a', 'There\'s word of a brawler off the {place} road. That you?'), L('b', 'And if it was? You\'ll not lay a hand on me!', true), L('a', 'Try me. One more word.', true), L('b', 'Pah. This whole town stinks.')),
+    X(
+      L('a', 'Halt! State your business in {town}!', true),
+      L('b', 'Take your hands off me, you {town} dog!', true),
+      L('a', "Say that again and you'll say it through bars!", true),
+      L('b', "Bah. I've seen better watchmen in a pigsty."),
+      L('a', 'Move along. Now!', true),
+    ),
+    X(
+      L('a', 'You there! Stop!', true),
+      L('b', 'Who are you to order me about?', true),
+      L('a', "The watch of {town}, and you'd best remember it!", true),
+      L('b', "I'll remember your face, guardsman."),
+      L('a', "Good. I'll remember yours."),
+    ),
+    X(
+      L('a', 'That blade stays sheathed in {town}. Understood?'),
+      L('b', "Or what? You'll run and fetch your captain?", true),
+      L('a', "I'll fetch the stocks, and you'll sit in them till the crows have you!", true),
+      L('b', 'Hmph. Have it your way.'),
+    ),
+    X(
+      L('a', "There's word of a brawler off the {place} road. That you?"),
+      L('b', "And if it was? You'll not lay a hand on me!", true),
+      L('a', 'Try me. One more word.', true),
+      L('b', 'Pah. This whole town stinks.'),
+    ),
   ]),
 });
 
@@ -771,54 +1076,151 @@ export const CHALLENGE_SCRIPTS = Object.freeze({
  *  GATE_LINES (stir.js gateHalt stands them there long enough for it). */
 export const GATE_SCRIPTS = Object.freeze({
   civil: Object.freeze([
-    X(L('a', 'Halt. What brings you to {town}?'), L('b', 'Trade, officer. I\'ll be gone by the week\'s end.'), L('a', 'Then welcome to {town}. Keep the peace.')),
-    X(L('a', 'Hold there, traveler. From where?'), L('b', '{place}, and a long road it was.'), L('a', 'In you go, then. Mind the cutpurses at the market.')),
-    X(L('a', 'Your business in {town}?'), L('b', 'Passing through, and in want of a bed.'), L('a', 'The tavern will see to that. Go on.')),
+    X(
+      L('a', 'Halt. What brings you to {town}?'),
+      L('b', "Trade, officer. I'll be gone by the week's end."),
+      L('a', 'Then welcome to {town}. Keep the peace.'),
+    ),
+    X(
+      L('a', 'Hold there, traveler. From where?'),
+      L('b', '{place}, and a long road it was.'),
+      L('a', 'In you go, then. Mind the cutpurses at the market.'),
+    ),
+    X(
+      L('a', 'Your business in {town}?'),
+      L('b', 'Passing through, and in want of a bed.'),
+      L('a', 'The tavern will see to that. Go on.'),
+    ),
     X(L('a', 'A name, stranger.'), L('b', '{b}, of {place}.'), L('a', 'Pass, {b}. And no trouble.')),
   ]),
   curt: Object.freeze([
-    X(L('a', 'Halt. State your business.'), L('b', 'My business is my own.'), L('a', 'Not at this gate it isn\'t.'), L('b', 'Trade. Now let me pass.')),
-    X(L('a', 'Hold. Where are you bound?'), L('b', 'Through this gate, if you\'d stand aside.'), L('a', 'Mind that tongue inside these walls.'), L('b', 'I\'ll mind it.')),
-    X(L('a', 'What\'s in the pack?'), L('b', 'Nothing that concerns you.'), L('a', 'Everything at this gate concerns me. Open it.'), L('b', 'There. Satisfied?')),
+    X(
+      L('a', 'Halt. State your business.'),
+      L('b', 'My business is my own.'),
+      L('a', "Not at this gate it isn't."),
+      L('b', 'Trade. Now let me pass.'),
+    ),
+    X(
+      L('a', 'Hold. Where are you bound?'),
+      L('b', "Through this gate, if you'd stand aside."),
+      L('a', 'Mind that tongue inside these walls.'),
+      L('b', "I'll mind it."),
+    ),
+    X(
+      L('a', "What's in the pack?"),
+      L('b', 'Nothing that concerns you.'),
+      L('a', 'Everything at this gate concerns me. Open it.'),
+      L('b', 'There. Satisfied?'),
+    ),
   ]),
   hostile: Object.freeze([
-    X(L('a', 'Halt! Who goes there?', true), L('b', 'Out of my way, gate-dog!', true), L('a', 'One more word and you\'ll spend the night in a cell!', true), L('b', 'Bah. Keep your stinking town.'), L('a', 'Move along. I\'ll be watching you.')),
-    X(L('a', 'Stop there! Blades stay sheathed in {town}!', true), L('b', 'Touch my blade and lose your hand!', true), L('a', 'Threaten the watch again. I dare you.', true), L('b', '...Fine. It stays sheathed.')),
-    X(L('a', 'Halt! Your business!', true), L('b', 'None of yours, guardsman!', true), L('a', 'At this gate, everything is my business!', true), L('b', 'Pah. Some welcome.')),
+    X(
+      L('a', 'Halt! Who goes there?', true),
+      L('b', 'Out of my way, gate-dog!', true),
+      L('a', "One more word and you'll spend the night in a cell!", true),
+      L('b', 'Bah. Keep your stinking town.'),
+      L('a', "Move along. I'll be watching you."),
+    ),
+    X(
+      L('a', 'Stop there! Blades stay sheathed in {town}!', true),
+      L('b', 'Touch my blade and lose your hand!', true),
+      L('a', 'Threaten the watch again. I dare you.', true),
+      L('b', '...Fine. It stays sheathed.'),
+    ),
+    X(
+      L('a', 'Halt! Your business!', true),
+      L('b', 'None of yours, guardsman!', true),
+      L('a', 'At this gate, everything is my business!', true),
+      L('b', 'Pah. Some welcome.'),
+    ),
   ]),
 });
 
 /** LW-STIR: two of the town fall out - the grievance's own (`a` the aggrieved). */
 export const QUARREL_SCRIPTS = Object.freeze([
-  X(L('a', 'You still owe me for that cart wheel, {b}.'), L('b', 'It was broken when you lent it, and you know it!', true), L('a', 'Liar! Pay up or I\'ll have it out of your hide!', true), L('b', 'Try it, and see what you get!', true)),
-  X(L('a', 'Your goat was in my garden again.'), L('b', 'My goat goes where it pleases.'), L('a', 'Then it\'ll please me to put it in a stew!', true), L('b', 'Lay a finger on her and you\'ll answer to me!', true)),
-  X(L('a', 'You\'ve moved the boundary stone, {b}. Don\'t deny it.'), L('b', 'That stone\'s stood there since my grandfather\'s day!', true), L('a', 'And your grandfather was a thief too!', true), L('b', 'Say that again!', true)),
-  X(L('a', 'You called me a cheat in front of the whole tavern.'), L('b', 'Because you are one!', true), L('a', 'Take it back, {b}.'), L('b', 'Make me!', true)),
-  X(L('a', 'That\'s my bucket. My mark\'s on the handle.'), L('b', 'Every bucket in {town} has a scratch on the handle!', true), L('a', 'Not my scratch!', true), L('b', 'Take it, then, and choke on it!', true)),
-  X(L('a', 'You sold me a lame horse, {b}.'), L('b', 'It walked well enough when you paid for it.'), L('a', 'It walked to the end of the street and lay down!', true), L('b', 'Then you rode it wrong!', true)),
+  X(
+    L('a', 'You still owe me for that cart wheel, {b}.'),
+    L('b', 'It was broken when you lent it, and you know it!', true),
+    L('a', "Liar! Pay up or I'll have it out of your hide!", true),
+    L('b', 'Try it, and see what you get!', true),
+  ),
+  X(
+    L('a', 'Your goat was in my garden again.'),
+    L('b', 'My goat goes where it pleases.'),
+    L('a', "Then it'll please me to put it in a stew!", true),
+    L('b', "Lay a finger on her and you'll answer to me!", true),
+  ),
+  X(
+    L('a', "You've moved the boundary stone, {b}. Don't deny it."),
+    L('b', "That stone's stood there since my grandfather's day!", true),
+    L('a', 'And your grandfather was a thief too!', true),
+    L('b', 'Say that again!', true),
+  ),
+  X(
+    L('a', 'You called me a cheat in front of the whole tavern.'),
+    L('b', 'Because you are one!', true),
+    L('a', 'Take it back, {b}.'),
+    L('b', 'Make me!', true),
+  ),
+  X(
+    L('a', "That's my bucket. My mark's on the handle."),
+    L('b', 'Every bucket in {town} has a scratch on the handle!', true),
+    L('a', 'Not my scratch!', true),
+    L('b', 'Take it, then, and choke on it!', true),
+  ),
+  X(
+    L('a', 'You sold me a lame horse, {b}.'),
+    L('b', 'It walked well enough when you paid for it.'),
+    L('a', 'It walked to the end of the street and lay down!', true),
+    L('b', 'Then you rode it wrong!', true),
+  ),
 ]);
 
 /** LW-STIR: the watch, standing by, steps into a quarrel (`g`, loud) - and the one who began it has the last word. */
 export const BREAK_UP_LINES = Object.freeze([
-  X(L('g', 'Break it up, you two! Or I\'ll break it up for you!', true), L('a', '...This isn\'t over.')),
-  X(L('g', 'Enough! Take it home, or take it to the cells!', true), L('a', 'We\'re done here.')),
-  X(L('g', 'That\'s enough! Both of you, move along!', true), L('a', 'Yes, officer.')),
+  X(L('g', "Break it up, you two! Or I'll break it up for you!", true), L('a', "...This isn't over.")),
+  X(L('g', 'Enough! Take it home, or take it to the cells!', true), L('a', "We're done here.")),
+  X(L('g', "That's enough! Both of you, move along!", true), L('a', 'Yes, officer.')),
 ]);
 
 /** LW-STIR: a buyer at a stall (`a`) and its keeper (`b`). */
 export const HAGGLE_SCRIPTS = Object.freeze([
-  X(L('a', 'How much for the cloth?'), L('b', 'Six septims. Finest in {town}.'), L('a', 'Six! I\'ll give you four.'), L('b', 'Five, and you\'re robbing me blind.')),
-  X(L('a', 'Are these fresh?'), L('b', 'Picked this very morning.'), L('a', 'Which morning?'), L('b', 'Two for the price of one, and not a word more.')),
-  X(L('a', 'Three septims for a pot with a hole in it?'), L('b', 'That\'s no hole. That\'s a spout.'), L('a', 'Two.'), L('b', 'Done, and good riddance.')),
-  X(L('a', 'I\'ll take the lot if you knock off a septim.'), L('b', 'And feed my children on what?'), L('a', 'On the rest of my septims.'), L('b', '...Done.')),
+  X(
+    L('a', 'How much for the cloth?'),
+    L('b', 'Six septims. Finest in {town}.'),
+    L('a', "Six! I'll give you four."),
+    L('b', "Five, and you're robbing me blind."),
+  ),
+  X(
+    L('a', 'Are these fresh?'),
+    L('b', 'Picked this very morning.'),
+    L('a', 'Which morning?'),
+    L('b', 'Two for the price of one, and not a word more.'),
+  ),
+  X(
+    L('a', 'Three septims for a pot with a hole in it?'),
+    L('b', "That's no hole. That's a spout."),
+    L('a', 'Two.'),
+    L('b', 'Done, and good riddance.'),
+  ),
+  X(
+    L('a', "I'll take the lot if you knock off a septim."),
+    L('b', 'And feed my children on what?'),
+    L('a', 'On the rest of my septims.'),
+    L('b', '...Done.'),
+  ),
 ]);
 
 /** LW-STIR: a beggar (`a`) asks one standing near (`b`). */
 export const PLEA_SCRIPTS = Object.freeze([
-  X(L('a', 'Spare a coin, friend? Just the one?'), L('b', 'Here. Don\'t drink it all at once.')),
+  X(L('a', 'Spare a coin, friend? Just the one?'), L('b', "Here. Don't drink it all at once.")),
   X(L('a', 'Alms, for an old soldier?'), L('b', 'Which war?'), L('a', 'All of them.')),
   X(L('a', 'A septim for bread, kind {b}?'), L('b', 'Away with you.')),
-  X(L('a', 'The gods bless you - a coin?'), L('b', 'I\'ve barely enough for myself.'), L('a', 'Then we\'re kin, you and I.')),
+  X(
+    L('a', 'The gods bless you - a coin?'),
+    L('b', "I've barely enough for myself."),
+    L('a', "Then we're kin, you and I."),
+  ),
 ]);
 
 /** L10N4: a table of the street's newer lines through the text core (`lw.<kind>.<script>.<line>`), made again only when
@@ -826,95 +1228,237 @@ export const PLEA_SCRIPTS = Object.freeze([
 const spoken = (make) => {
   /** @type {ReadonlyArray<T> | null} */ let v = null;
   let rev = -1;
-  return () => { if (v === null || rev !== textRevision()) { rev = textRevision(); v = Object.freeze(make()); } return /** @type {ReadonlyArray<T>} */ (v); };
+  return () => {
+    if (v === null || rev !== textRevision()) {
+      rev = textRevision();
+      v = Object.freeze(make());
+    }
+    return /** @type {ReadonlyArray<T>} */ (v);
+  };
 };
 /** WATCH-LIFE (the owner: "Guards should have a more Living world presence and NPC interaction"): the watch on its
  *  rounds (`a`) has a word with one of the town at its stop (`b`); at a stall of food it buys a bite; a beggar it moves
  *  along. AUDIT LW-ANTICS B6: the morning's words (`morningWatchWords`) in the morning alone (stir.js MORNING_HOURS). */
 export const morningWatchWords = spoken(() => [
-  X(L('a', t('lw.watch.word.0.0', 'Morning, {b}. Quiet night?')), L('b', t('lw.watch.word.0.1', 'Quiet enough. The dogs kept me up.')), L('a', t('lw.watch.word.0.2', 'Dogs I can\'t arrest.'))),
-  X(L('a', t('lw.watch.word.4.0', 'You\'re out early, {b}.')), L('b', t('lw.watch.word.4.1', 'Somebody has to be. You, for one.')), L('a', t('lw.watch.word.4.2', 'True enough.'))),
+  X(
+    L('a', t('lw.watch.word.0.0', 'Morning, {b}. Quiet night?')),
+    L('b', t('lw.watch.word.0.1', 'Quiet enough. The dogs kept me up.')),
+    L('a', t('lw.watch.word.0.2', "Dogs I can't arrest.")),
+  ),
+  X(
+    L('a', t('lw.watch.word.4.0', "You're out early, {b}.")),
+    L('b', t('lw.watch.word.4.1', 'Somebody has to be. You, for one.')),
+    L('a', t('lw.watch.word.4.2', 'True enough.')),
+  ),
 ]);
 export const watchWords = spoken(() => [
-  X(L('a', t('lw.watch.word.1.0', 'All well with you, {b}?')), L('b', t('lw.watch.word.1.1', 'Well enough. My roof leaks again.')), L('a', t('lw.watch.word.1.2', 'Not a matter for the watch, that.'))),
-  X(L('a', t('lw.watch.word.2.0', 'Seen any strangers about, {b}?')), L('b', t('lw.watch.word.2.1', 'Only the usual. Traders, mostly.')), L('a', t('lw.watch.word.2.2', 'Keep your eyes open.'))),
-  X(L('a', t('lw.watch.word.3.0', 'How is your mother, {b}?')), L('b', t('lw.watch.word.3.1', 'Better, thank the gods.')), L('a', t('lw.watch.word.3.2', 'Glad to hear it.'))),
-  X(L('a', t('lw.watch.word.5.0', 'Mind the cutpurses today, {b}.')), L('b', t('lw.watch.word.5.1', 'With you on the street? I\'ll sleep sound.'))),
+  X(
+    L('a', t('lw.watch.word.1.0', 'All well with you, {b}?')),
+    L('b', t('lw.watch.word.1.1', 'Well enough. My roof leaks again.')),
+    L('a', t('lw.watch.word.1.2', 'Not a matter for the watch, that.')),
+  ),
+  X(
+    L('a', t('lw.watch.word.2.0', 'Seen any strangers about, {b}?')),
+    L('b', t('lw.watch.word.2.1', 'Only the usual. Traders, mostly.')),
+    L('a', t('lw.watch.word.2.2', 'Keep your eyes open.')),
+  ),
+  X(
+    L('a', t('lw.watch.word.3.0', 'How is your mother, {b}?')),
+    L('b', t('lw.watch.word.3.1', 'Better, thank the gods.')),
+    L('a', t('lw.watch.word.3.2', 'Glad to hear it.')),
+  ),
+  X(
+    L('a', t('lw.watch.word.5.0', 'Mind the cutpurses today, {b}.')),
+    L('b', t('lw.watch.word.5.1', "With you on the street? I'll sleep sound.")),
+  ),
 ]);
 export const watchBuys = spoken(() => [
-  X(L('a', t('lw.watch.buy.0.0', 'One of those, if it\'s warm.')), L('b', t('lw.watch.buy.0.1', 'Two coins to you, officer.')), L('a', t('lw.watch.buy.0.2', 'Two? Robbery.')), L('b', t('lw.watch.buy.0.3', 'One, then. For the watch.'))),
-  X(L('a', t('lw.watch.buy.1.0', 'What\'s good today?')), L('b', t('lw.watch.buy.1.1', 'The same as yesterday, and cheaper.')), L('a', t('lw.watch.buy.1.2', 'I\'ll take it.'))),
-  X(L('a', t('lw.watch.buy.2.0', 'An apple for a hungry man on duty?')), L('b', t('lw.watch.buy.2.1', 'Here. Keep the cutpurses off my stall.')), L('a', t('lw.watch.buy.2.2', 'A bargain.'))),
+  X(
+    L('a', t('lw.watch.buy.0.0', "One of those, if it's warm.")),
+    L('b', t('lw.watch.buy.0.1', 'Two coins to you, officer.')),
+    L('a', t('lw.watch.buy.0.2', 'Two? Robbery.')),
+    L('b', t('lw.watch.buy.0.3', 'One, then. For the watch.')),
+  ),
+  X(
+    L('a', t('lw.watch.buy.1.0', "What's good today?")),
+    L('b', t('lw.watch.buy.1.1', 'The same as yesterday, and cheaper.')),
+    L('a', t('lw.watch.buy.1.2', "I'll take it.")),
+  ),
+  X(
+    L('a', t('lw.watch.buy.2.0', 'An apple for a hungry man on duty?')),
+    L('b', t('lw.watch.buy.2.1', 'Here. Keep the cutpurses off my stall.')),
+    L('a', t('lw.watch.buy.2.2', 'A bargain.')),
+  ),
 ]);
 /** AUDIT LW-ANTICS B9: the watch's word with a beggar who stays at their pitch - none says they go (moveAlong is said at
  *  a pitch's end, and they go). */
 export const beggarWords = spoken(() => [
-  X(L('a', t('lw.watch.beggar.0.0', 'Keep out of the way of the carts, you.')), L('b', t('lw.watch.beggar.0.1', 'Always do, officer.'))),
-  X(L('a', t('lw.watch.beggar.1.0', 'No trouble from you today?')), L('b', t('lw.watch.beggar.1.1', 'None, officer. The gods keep you.'))),
-  X(L('a', t('lw.watch.beggar.2.0', 'Here. Get yourself some bread.')), L('b', t('lw.watch.beggar.2.1', 'Bless you, officer!')), L('a', t('lw.watch.beggar.2.2', 'Not a word of it to the others.'))),
+  X(
+    L('a', t('lw.watch.beggar.0.0', 'Keep out of the way of the carts, you.')),
+    L('b', t('lw.watch.beggar.0.1', 'Always do, officer.')),
+  ),
+  X(
+    L('a', t('lw.watch.beggar.1.0', 'No trouble from you today?')),
+    L('b', t('lw.watch.beggar.1.1', 'None, officer. The gods keep you.')),
+  ),
+  X(
+    L('a', t('lw.watch.beggar.2.0', 'Here. Get yourself some bread.')),
+    L('b', t('lw.watch.beggar.2.1', 'Bless you, officer!')),
+    L('a', t('lw.watch.beggar.2.2', 'Not a word of it to the others.')),
+  ),
 ]);
 export const moveAlong = spoken(() => [
-  X(L('a', t('lw.watch.moveAlong.0.0', 'Move along, you. Not in front of the shops.')), L('b', t('lw.watch.moveAlong.0.1', 'I\'m going, I\'m going.'))),
-  X(L('a', t('lw.watch.moveAlong.1.0', 'You can\'t sleep here.')), L('b', t('lw.watch.moveAlong.1.1', 'Then where, officer?')), L('a', t('lw.watch.moveAlong.1.2', 'Anywhere but here.'))),
-  X(L('a', t('lw.watch.moveAlong.2.0', 'On your feet. The magistrate comes through today.')), L('b', t('lw.watch.moveAlong.2.1', 'The gods keep you, officer.')), L('a', t('lw.watch.moveAlong.2.2', 'And you. Elsewhere.'))),
+  X(
+    L('a', t('lw.watch.moveAlong.0.0', 'Move along, you. Not in front of the shops.')),
+    L('b', t('lw.watch.moveAlong.0.1', "I'm going, I'm going.")),
+  ),
+  X(
+    L('a', t('lw.watch.moveAlong.1.0', "You can't sleep here.")),
+    L('b', t('lw.watch.moveAlong.1.1', 'Then where, officer?')),
+    L('a', t('lw.watch.moveAlong.1.2', 'Anywhere but here.')),
+  ),
+  X(
+    L('a', t('lw.watch.moveAlong.2.0', 'On your feet. The magistrate comes through today.')),
+    L('b', t('lw.watch.moveAlong.2.1', 'The gods keep you, officer.')),
+    L('a', t('lw.watch.moveAlong.2.2', 'And you. Elsewhere.')),
+  ),
 ]);
 
 /** LW-ANTICS (the owner: "Living world NPCs should partake in more activities, more shenanigans"): a cutpurse (`a`) and
  *  the one robbed (`b`), shouting for the watch; the watch standing by (`g`) gives chase, else the thief gets away.
  *  AUDIT LW-ANTICS B3: a thief caught gives the purse back and is sent off - they walk on, as the street has them. */
 export const cutpurseScripts = spoken(() => [
-  X(L('a', t('lw.cutpurse.0.0', 'Pardon me, friend.')), L('b', t('lw.cutpurse.0.1', 'My purse! Thief! Stop that thief!'), true)),
-  X(L('a', t('lw.cutpurse.1.0', 'Lovely day, isn\'t it?')), L('b', t('lw.cutpurse.1.1', 'Hey - my purse! Thief!'), true)),
+  X(
+    L('a', t('lw.cutpurse.0.0', 'Pardon me, friend.')),
+    L('b', t('lw.cutpurse.0.1', 'My purse! Thief! Stop that thief!'), true),
+  ),
+  X(
+    L('a', t('lw.cutpurse.1.0', "Lovely day, isn't it?")),
+    L('b', t('lw.cutpurse.1.1', 'Hey - my purse! Thief!'), true),
+  ),
   X(L('a', t('lw.cutpurse.2.0', 'Oh! Clumsy of me.')), L('b', t('lw.cutpurse.2.1', 'Thief! My coin!'), true)),
 ]);
 export const chaseLines = spoken(() => [
-  X(L('g', t('lw.cutpurse.chase.0.0', 'Stop, thief! In the Emperor\'s name!'), true), L('a', t('lw.cutpurse.chase.0.1', 'Let go! I found it!'), true), L('g', t('lw.cutpurse.chase.0.2', 'Give it back. Now go, and stay off my street.'))),
-  X(L('g', t('lw.cutpurse.chase.1.0', 'Halt! Drop it!'), true), L('a', t('lw.cutpurse.chase.1.1', 'All right, all right!'), true), L('g', t('lw.cutpurse.chase.1.2', 'Back to its owner, that purse.'))),
+  X(
+    L('g', t('lw.cutpurse.chase.0.0', "Stop, thief! In the Emperor's name!"), true),
+    L('a', t('lw.cutpurse.chase.0.1', 'Let go! I found it!'), true),
+    L('g', t('lw.cutpurse.chase.0.2', 'Give it back. Now go, and stay off my street.')),
+  ),
+  X(
+    L('g', t('lw.cutpurse.chase.1.0', 'Halt! Drop it!'), true),
+    L('a', t('lw.cutpurse.chase.1.1', 'All right, all right!'), true),
+    L('g', t('lw.cutpurse.chase.1.2', 'Back to its owner, that purse.')),
+  ),
 ]);
 export const gotAwayLines = spoken(() => [
   X(L('b', t('lw.cutpurse.gotAway.0.0', 'Somebody stop that thief! Watch!'), true)),
-  X(L('b', t('lw.cutpurse.gotAway.1.0', 'Gone. A week\'s wages, gone.'))),
+  X(L('b', t('lw.cutpurse.gotAway.1.0', "Gone. A week's wages, gone."))),
 ]);
 /** LW-ANTICS: two at dice of an evening (`a`, `b`) - the throw, the cheer, the grumble. */
 export const diceScripts = spoken(() => [
-  X(L('a', t('lw.dice.0.0', 'Double or nothing, {b}?')), L('b', t('lw.dice.0.1', 'You\'re on.')), L('a', t('lw.dice.0.2', 'Sixes! Pay up!'), true), L('b', t('lw.dice.0.3', 'Loaded dice, I swear it.'))),
-  X(L('a', t('lw.dice.1.0', 'Your throw.')), L('b', t('lw.dice.1.1', 'Come on, come on...')), L('b', t('lw.dice.1.2', 'Ha! Mine!'), true), L('a', t('lw.dice.1.3', 'One more. Just one more.'))),
-  X(L('a', t('lw.dice.2.0', 'Snake eyes again!'), true), L('b', t('lw.dice.2.1', 'The gods hate you tonight, friend.')), L('a', t('lw.dice.2.2', 'The gods and my creditors both.'))),
+  X(
+    L('a', t('lw.dice.0.0', 'Double or nothing, {b}?')),
+    L('b', t('lw.dice.0.1', "You're on.")),
+    L('a', t('lw.dice.0.2', 'Sixes! Pay up!'), true),
+    L('b', t('lw.dice.0.3', 'Loaded dice, I swear it.')),
+  ),
+  X(
+    L('a', t('lw.dice.1.0', 'Your throw.')),
+    L('b', t('lw.dice.1.1', 'Come on, come on...')),
+    L('b', t('lw.dice.1.2', 'Ha! Mine!'), true),
+    L('a', t('lw.dice.1.3', 'One more. Just one more.')),
+  ),
+  X(
+    L('a', t('lw.dice.2.0', 'Snake eyes again!'), true),
+    L('b', t('lw.dice.2.1', 'The gods hate you tonight, friend.')),
+    L('a', t('lw.dice.2.2', 'The gods and my creditors both.')),
+  ),
 ]);
 /** LW-ANTICS: a priest (`a`) preaches at their temple's door, and one there (`b`) answers - an amen, or a heckle; AUDIT
  *  LW-ANTICS B7: `{god}` the temple's own (stir.js Incident god), a market's scales the town's. */
 /** AUDIT LW-ANTICS B7: a sermon's god where the temple's is not known. */
 export const theDivines = () => t('lw.sermon.divines', 'the Divines');
 export const sermonScripts = spoken(() => [
-  X(L('a', t('lw.sermon.0.0', 'Hear me, people of {town}! The Eight watch over all who do right!'), true), L('a', t('lw.sermon.0.1', 'Give alms, keep faith, and fear nothing!'), true), L('b', t('lw.sermon.0.2', 'Blessings on you.'))),
-  X(L('a', t('lw.sermon.1.0', 'Repent! The gods see every crooked scale in {town}!'), true), L('b', t('lw.sermon.1.1', 'And every crooked priest?'), true), L('a', t('lw.sermon.1.2', 'Them most of all, friend.'))),
-  X(L('a', t('lw.sermon.2.0', 'Remember {god}, friends, and be blessed!'), true), L('b', t('lw.sermon.2.1', 'Remember my debts, while you\'re at it.')), L('a', t('lw.sermon.2.2', 'Blessings on debtors too.'))),
+  X(
+    L('a', t('lw.sermon.0.0', 'Hear me, people of {town}! The Eight watch over all who do right!'), true),
+    L('a', t('lw.sermon.0.1', 'Give alms, keep faith, and fear nothing!'), true),
+    L('b', t('lw.sermon.0.2', 'Blessings on you.')),
+  ),
+  X(
+    L('a', t('lw.sermon.1.0', 'Repent! The gods see every crooked scale in {town}!'), true),
+    L('b', t('lw.sermon.1.1', 'And every crooked priest?'), true),
+    L('a', t('lw.sermon.1.2', 'Them most of all, friend.')),
+  ),
+  X(
+    L('a', t('lw.sermon.2.0', 'Remember {god}, friends, and be blessed!'), true),
+    L('b', t('lw.sermon.2.1', "Remember my debts, while you're at it.")),
+    L('a', t('lw.sermon.2.2', 'Blessings on debtors too.')),
+  ),
 ]);
 /** LW-ANTICS: two of the town of an evening (`a`, `b`) - a word too warm to be mere talk. */
 export const flirtScripts = spoken(() => [
-  X(L('a', t('lw.flirt.0.0', 'You look well tonight, {b}.')), L('b', t('lw.flirt.0.1', 'Do I? You\'ve had a cup or two.')), L('a', t('lw.flirt.0.2', 'Only the one. Honest.'))),
-  X(L('a', t('lw.flirt.1.0', 'Walk with me after supper?')), L('b', t('lw.flirt.1.1', 'Ask me again when you\'ve washed.'))),
-  X(L('a', t('lw.flirt.2.0', 'I saved you the last of the honey cake.')), L('b', t('lw.flirt.2.1', 'Did you now. Well. Sit, then.'))),
+  X(
+    L('a', t('lw.flirt.0.0', 'You look well tonight, {b}.')),
+    L('b', t('lw.flirt.0.1', "Do I? You've had a cup or two.")),
+    L('a', t('lw.flirt.0.2', 'Only the one. Honest.')),
+  ),
+  X(
+    L('a', t('lw.flirt.1.0', 'Walk with me after supper?')),
+    L('b', t('lw.flirt.1.1', "Ask me again when you've washed.")),
+  ),
+  X(
+    L('a', t('lw.flirt.2.0', 'I saved you the last of the honey cake.')),
+    L('b', t('lw.flirt.2.1', 'Did you now. Well. Sit, then.')),
+  ),
 ]);
 
 /** LW-STIR: THE STREET'S SMALL VOICES - the night watch calling the hour ({hour}) by the weather, a stall crying its
  *  wares, a beggar's call, a drinker's song on the way home from the tavern. */
-export const WATCH_HOURS = Object.freeze({ 21: 'Nine o\'clock', 22: 'Ten o\'clock', 23: 'Eleven o\'clock', 0: 'Midnight', 1: 'One o\'clock', 2: 'Two o\'clock', 3: 'Three o\'clock', 4: 'Four o\'clock', 5: 'Five o\'clock' });
+export const WATCH_HOURS = Object.freeze({
+  21: "Nine o'clock",
+  22: "Ten o'clock",
+  23: "Eleven o'clock",
+  0: 'Midnight',
+  1: "One o'clock",
+  2: "Two o'clock",
+  3: "Three o'clock",
+  4: "Four o'clock",
+  5: "Five o'clock",
+});
 export const WATCH_CALLS = Object.freeze({
-  fair: Object.freeze(['{hour}, and all\'s well!', '{hour}, and all\'s well in {town}!', '{hour}, and a quiet night!']),
+  fair: Object.freeze(["{hour}, and all's well!", "{hour}, and all's well in {town}!", '{hour}, and a quiet night!']),
   rain: Object.freeze(['{hour}, and raining!', '{hour}, and a wet night!']),
   thunder: Object.freeze(['{hour}, and a storm over {town}!', '{hour}, and thunder on the hills!']),
   snow: Object.freeze(['{hour}, and snowing!', '{hour}, and a cold night!']),
   fog: Object.freeze(['{hour}, and a fog on the walls!', '{hour}, and fog in the streets!']),
 });
 export const STALL_CRIES = Object.freeze([
-  'Fresh bread! Still warm!', 'Apples! Crisp apples!', 'Fine cloth, straight from {place}!', 'Fish! Fresh this morning!',
-  'Pots mended while you wait!', 'Candles! Tallow and beeswax!', 'Salt! Good salt from the coast!', 'Herbs for what ails you!',
+  'Fresh bread! Still warm!',
+  'Apples! Crisp apples!',
+  'Fine cloth, straight from {place}!',
+  'Fish! Fresh this morning!',
+  'Pots mended while you wait!',
+  'Candles! Tallow and beeswax!',
+  'Salt! Good salt from the coast!',
+  'Herbs for what ails you!',
 ]);
 /** LW-ANTICS: a courier at their stint in town cries the news - the town crier's word. */
-export const newsCries = spoken(() => [t('lw.news.cry.0', 'Hear ye! News from {place}!'), t('lw.news.cry.1', 'Letters for {place}! A coin a letter!'), t('lw.news.cry.2', 'Hear ye, people of {town}! The roads are open!'), t('lw.news.cry.3', 'News of {place}! Hear it here!')]);
-export const BEGGAR_CRIES = Object.freeze(['Alms! Alms for the poor!', 'A coin for an old soldier?', 'Spare a septim, good people!', 'The gods love a generous hand!']);
+export const newsCries = spoken(() => [
+  t('lw.news.cry.0', 'Hear ye! News from {place}!'),
+  t('lw.news.cry.1', 'Letters for {place}! A coin a letter!'),
+  t('lw.news.cry.2', 'Hear ye, people of {town}! The roads are open!'),
+  t('lw.news.cry.3', 'News of {place}! Hear it here!'),
+]);
+export const BEGGAR_CRIES = Object.freeze([
+  'Alms! Alms for the poor!',
+  'A coin for an old soldier?',
+  'Spare a septim, good people!',
+  'The gods love a generous hand!',
+]);
 export const DRINKING_SONGS = Object.freeze([
-  'Oh, the barmaid of {town}, she poured me a pint...', 'Another cup, another cup, the night is young!', 'The road to {place} is long and dry, so fill my cup before I die...',
-  'The miller\'s wife, the miller\'s wife, she\'s fairer than the miller...', 'We\'ll drink till the sun comes up, my lads!',
+  'Oh, the barmaid of {town}, she poured me a pint...',
+  'Another cup, another cup, the night is young!',
+  'The road to {place} is long and dry, so fill my cup before I die...',
+  "The miller's wife, the miller's wife, she's fairer than the miller...",
+  "We'll drink till the sun comes up, my lads!",
 ]);

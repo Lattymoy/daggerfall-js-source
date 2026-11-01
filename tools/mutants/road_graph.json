@@ -2,8 +2,8 @@
   {
     "name": "ROAD-GRAPH-the-chains-not-kept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "          graph.nChain[8 * u + o8] = ref;\n",
-    "new": "",
+    "old": "          graph.nChain[8 * u + o8] = ref;\n          // read back from its far junction too, when it is the same walk that way: from a junction, to a junction",
+    "new": "          // read back from its far junction too, when it is the same walk that way: from a junction, to a junction",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROAD-GRAPH-the-keep-never-reused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "k.pixels <= ROAD_GRAPH_MAX_PIXELS) return k;",
-    "new": "k.pixels > ROAD_GRAPH_MAX_PIXELS) return k;",
+    "old": "    k.pixels <= ROAD_GRAPH_MAX_PIXELS",
+    "new": "    k.pixels > ROAD_GRAPH_MAX_PIXELS",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROAD-GRAPH-the-keep-unhanded",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "keep: opts.roadKeep ?? null });",
-    "new": "keep: null });",
+    "old": "          keep: opts.roadKeep ?? null,",
+    "new": "          keep: null,",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ROAD-GRAPH-the-water-unkeyed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "k.isWater === isWater && ",
-    "new": "",
+    "old": "    k.isWater === isWater &&\n    k.width === width &&",
+    "new": "    k.width === width &&",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ROAD-GRAPH-the-walk-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "            if (++cells >= next) { next += PLAN_YIELD_CELLS; yield; if (moved()) return yield* searchByRoadSteps(from, to, { ...o, ends: null }); }\n            if (tally) tally.n++;",
-    "new": "            if (++cells >= next) { next += PLAN_YIELD_CELLS; yield; }\n            if (tally) tally.n++;",
+    "old": "              if (moved()) return yield* searchByRoadSteps(from, to, { ...o, ends: null });\n            }",
+    "new": "            }",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "ROAD-GRAPH-the-gaps-unboxed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": " || hits(c, bx0, by0, bx1, by1);",
-    "new": ";",
+    "old": "    hits(c, from.x - rf, from.y - rf, from.x + rf, from.y + rf) ||\n    hits(c, to.x - tr, to.y - tr, to.x + tr, to.y + tr) ||\n    hits(c, bx0, by0, bx1, by1);",
+    "new": "    hits(c, from.x - rf, from.y - rf, from.x + rf, from.y + rf) || hits(c, to.x - tr, to.y - tr, to.x + tr, to.y + tr);",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "ROAD-GRAPH-a-fork-passed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (roadOuts(graph, x, y, walk) !== 4) break;",
-    "new": "if (roadOuts(graph, x, y, walk) < 4) break;",
+    "old": "            if (roadOuts(graph, x, y, walk) !== 4) break; // an end or a fork",
+    "new": "            if (roadOuts(graph, x, y, walk) < 4) break; // an end or a fork",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "ROAD-GRAPH-the-goals-neighbours-chained",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const tr = Math.max(rt, 1);",
-    "new": "const tr = rt;",
+    "old": "  const tr = Math.max(rt, 1);",
+    "new": "  const tr = rt;",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "ROAD-GRAPH-the-scan-unpriced",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "          cost = 0;\n",
-    "new": "",
+    "old": "          cost = 0;\n          for (let j = 0, qx = cx, qy = cy; j < L; j++) {",
+    "new": "          for (let j = 0, qx = cx, qy = cy; j < L; j++) {",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "ROAD-GRAPH-the-ring-unseen",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "            if (x === cx && y === cy) break;   // a ring, back where it began\n",
-    "new": "",
+    "old": "            if (x === cx && y === cy) break; // a ring, back where it began\n            if (roadOuts(graph, x, y, walk) !== 4) break; // an end or a fork",
+    "new": "            if (roadOuts(graph, x, y, walk) !== 4) break; // an end or a fork",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ROAD-GRAPH-a-turns-kind-swapped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kind = back0 ? walk[3] : walk[1];",
-    "new": "kind = back0 ? walk[1] : walk[3];",
+    "old": "            kind = back0 ? walk[3] : walk[1];",
+    "new": "            kind = back0 ? walk[1] : walk[3];",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ROAD-GRAPH-the-read-back-off-by-one",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "return graph.pd[ref > 0 ? off + 1 + j : off + L - j]; };",
-    "new": "return graph.pd[ref > 0 ? off + 1 + j : off + L - 1 - j]; };",
+    "old": "    return graph.pd[ref > 0 ? off + 1 + j : off + L - j];",
+    "new": "    return graph.pd[ref > 0 ? off + 1 + j : off + L - 1 - j];",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "ROAD-GRAPH-the-link-kept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "{ reach(n, ng, c, nx, ny); via.set(n, kind); link.delete(n); }",
-    "new": "{ reach(n, ng, c, nx, ny); via.set(n, kind); }",
+    "old": "        link.delete(n);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "ROAD-GRAPH-the-flood-back-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "            if (!backPace()) return null;   // a long chain walked, the flood back keeping its pace\n",
-    "new": "",
+    "old": "            if (!backPace()) return null; // a long chain walked, the flood back keeping its pace\n            if (x === cx && y === cy) break; // a ring, back where it began",
+    "new": "            if (x === cx && y === cy) break; // a ring, back where it began",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "ROAD-GRAPH-the-ladders-count-not-its-own",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    spent = tally.n;   // ROAD-GRAPH: its answer is whole, so the ladder after it spends a count of its own (AUDIT ROAD-GRAPH H1)\n",
-    "new": "",
+    "old": "    spent = tally.n; // ROAD-GRAPH: its answer is whole, so the ladder after it spends a count of its own (AUDIT ROAD-GRAPH H1)\n    // ROAD-FOLLOW: the roads join the two - kept, however much dearer than the straight walk across the field they wind",
+    "new": "    // ROAD-FOLLOW: the roads join the two - kept, however much dearer than the straight walk across the field they wind",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "ROAD-GRAPH-the-roads-asked-anyway",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    byRoad = landApart ? null : yield* searchByRoadSteps(",
-    "new": "    byRoad = false ? null : yield* searchByRoadSteps(",
+    "old": "    byRoad = landApart",
+    "new": "    byRoad = false",
     "tests": [
       "test/systems/travel/road_graph.test.js"
     ]

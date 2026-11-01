@@ -8,13 +8,17 @@ import { deedsOf } from '../../net/realm/realmGoldLaw.js';
 
 const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
 const arrayOf = (/** @type {unknown} */ x) => (Array.isArray(x) ? x : []);
-const objectOf = (/** @type {unknown} */ x) => (x && typeof x === 'object' ? /** @type {Record<string, unknown>} */ (x) : {});
+const objectOf = (/** @type {unknown} */ x) =>
+  x && typeof x === 'object' ? /** @type {Record<string, unknown>} */ (x) : {};
 
 /** Come Sail Away's, the sea fight's and the feud's records in a save's per-mod slot (realmGoldLaw.js's own names). */
-const CSA_VENDOR = 'come-sail-away', NAVAL_VENDOR = 'NavalCombat', REVENANT_VENDOR = 'Revenant';
+const CSA_VENDOR = 'come-sail-away',
+  NAVAL_VENDOR = 'NavalCombat',
+  REVENANT_VENDOR = 'Revenant';
 /** A building's interior, by the name the scene cache files it under (sceneCache.js interiorSceneName; realmGoldLaw.js
  *  keeps the same). */
-const interiorSceneName = (/** @type {unknown} */ mapId, /** @type {unknown} */ buildingKey) => `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;
+const interiorSceneName = (/** @type {unknown} */ mapId, /** @type {unknown} */ buildingKey) =>
+  `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;
 
 /**
  * THE LISTS THE CHARACTER HOLDS - what the item law judges and the id ledger reads: its five own lists (the pack, the
@@ -27,21 +31,39 @@ const interiorSceneName = (/** @type {unknown} */ mapId, /** @type {unknown} */ 
  */
 export function possessedItemLists(save) {
   const out = lists(save?.items, save?.wagonItems, save?.bagItems, save?.furnishings, save?.otherItems);
-  const rooms = new Set(deedsOf(save).map((d) => d.room).filter(Boolean));
-  const rented = new Set(arrayOf(save?.rentedRooms).map((r) => interiorSceneName(/** @type {any} */ (r)?.mapId, /** @type {any} */ (r)?.buildingKey)));
+  const rooms = new Set(
+    deedsOf(save)
+      .map((d) => d.room)
+      .filter(Boolean),
+  );
+  const rented = new Set(
+    arrayOf(save?.rentedRooms).map((r) =>
+      interiorSceneName(/** @type {any} */ (r)?.mapId, /** @type {any} */ (r)?.buildingKey),
+    ),
+  );
   for (const scene of arrayOf(save?.sceneCache?.scenes)) {
     const sc = /** @type {any} */ (scene);
-    for (const piece of Object.values(objectOf(sc?.decorOwn))) if (piece && typeof piece === 'object') out.push([piece]);
+    for (const piece of Object.values(objectOf(sc?.decorOwn)))
+      if (piece && typeof piece === 'object') out.push([piece]);
     for (const held of Object.values(objectOf(sc?.decorItems))) out.push(...lists(held));
-    if (rooms.has(sc) || rented.has(sc?.sceneName)) for (const c of arrayOf(sc?.lootContainers)) out.push(...lists(/** @type {any} */ (c)?.items));
+    if (rooms.has(sc) || rented.has(sc?.sceneName))
+      for (const c of arrayOf(sc?.lootContainers)) out.push(...lists(/** @type {any} */ (c)?.items));
   }
   const csa = save?.modData?.[CSA_VENDOR];
   for (const boat of arrayOf(csa?.placedBoats)) out.push(...lists(/** @type {any} */ (boat)?.Items));
   out.push(...lists(...Object.values(objectOf(csa?.packedCargoes))));
-  for (const c of arrayOf(save?.modData?.[NAVAL_VENDOR]?.party?.party)) out.push(...lists(/** @type {any} */ (c)?.items));
-  for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list)) if (/** @type {any} */ (r)?.sworn && !/** @type {any} */ (r).defeated) out.push(...lists(/** @type {any} */ (r).companion?.items));
-  for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list)) if (/** @type {any} */ (r)?.sworn && !/** @type {any} */ (r).defeated) out.push(...lists(Object.values(objectOf(/** @type {any} */ (r).companion?.gear)).filter((it) => it && typeof it === 'object')));   // RVN-GEAR: and the kit it wears (revenantGear.js)
-  out.push(...lists(save?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags
+  for (const c of arrayOf(save?.modData?.[NAVAL_VENDOR]?.party?.party))
+    out.push(...lists(/** @type {any} */ (c)?.items));
+  for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list))
+    if (/** @type {any} */ (r)?.sworn && !(/** @type {any} */ (r).defeated))
+      out.push(...lists(/** @type {any} */ (r).companion?.items));
+  for (const r of arrayOf(save?.modData?.[REVENANT_VENDOR]?.list))
+    if (/** @type {any} */ (r)?.sworn && !(/** @type {any} */ (r).defeated))
+      out.push(
+        ...lists(
+          Object.values(objectOf(/** @type {any} */ (r).companion?.gear)).filter((it) => it && typeof it === 'object'),
+        ),
+      ); // RVN-GEAR: and the kit it wears (revenantGear.js)
+  out.push(...lists(save?.dragonKeep?.bags)); // DRAGON5b: the tamed dragon's saddlebags
   return out;
 }
-

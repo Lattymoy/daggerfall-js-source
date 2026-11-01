@@ -205,8 +205,8 @@
   {
     "name": "AUDITBAGCRAFT-A1-chain-room-without",
     "file": "src/net/chainLaw.js",
-    "old": " - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0));",
-    "new": " - ((s?.gold ?? 0) | 0));",
+    "old": ") =>\n  Math.max(0, STORES_MAX - ((s?.own ?? 0) | 0) - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0)); // AUDIT BAG-CRAFT A1: every origin fills the 5,000",
+    "new": ") => Math.max(0, STORES_MAX - ((s?.own ?? 0) | 0) - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0)); // AUDIT BAG-CRAFT A1: every origin fills the 5,000",
     "tests": [
       "test/net/auditbagcraft.test.js"
     ]

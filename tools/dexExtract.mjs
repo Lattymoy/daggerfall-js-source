@@ -100,7 +100,11 @@ export function outlineOf(pic) {
   const { width: w, height: h, data } = pic;
   const m = new Uint8Array(w * h);
   let n = 0;
-  for (let i = 0; i < m.length; i++) if (data[i * 4 + 3] !== 0) { m[i] = 1; n++; }
+  for (let i = 0; i < m.length; i++)
+    if (data[i * 4 + 3] !== 0) {
+      m[i] = 1;
+      n++;
+    }
   return n === 0 || n === m.length ? null : { w, h, m };
 }
 
@@ -118,13 +122,18 @@ export function outlinesBySize(records) {
 
 /** The share of their union two outlines both cover - `a` over `b` drawn `scale` times as large (1 or 2), `mirrored` or not. */
 function overlap(a, b, scale, mirrored) {
-  let both = 0, either = 0;
+  let both = 0,
+    either = 0;
   for (let y = 0; y < a.h; y++) {
     const row = ((y / scale) | 0) * b.w;
     for (let x = 0; x < a.w; x++) {
       const bx = (x / scale) | 0;
-      const p = a.m[y * a.w + x], q = b.m[row + (mirrored ? b.w - 1 - bx : bx)];
-      if (p | q) { either++; if (p & q) both++; }
+      const p = a.m[y * a.w + x],
+        q = b.m[row + (mirrored ? b.w - 1 - bx : bx)];
+      if (p | q) {
+        either++;
+        if (p & q) both++;
+      }
     }
   }
   return either ? both / either : 0;
@@ -153,8 +162,11 @@ export function bestTrace(pic, outlines) {
  *  and the measure disagree on, one sentence each (none: the lists are the measure's). */
 export function silhouetteLedger(records) {
   const outlines = outlinesBySize(records);
-  const by = new Map();   // archive -> { archive, of, traced, best }
-  const traced = () => [...by.values()].filter((e) => e.of > 0 && e.traced >= SILHOUETTE_TRACED * e.of).sort((x, y) => x.archive - y.archive);
+  const by = new Map(); // archive -> { archive, of, traced, best }
+  const traced = () =>
+    [...by.values()]
+      .filter((e) => e.of > 0 && e.traced >= SILHOUETTE_TRACED * e.of)
+      .sort((x, y) => x.archive - y.archive);
   return {
     measure(archive, name, pic) {
       const t = bestTrace(pic, outlines);
@@ -162,19 +174,31 @@ export function silhouetteLedger(records) {
       const e = by.get(archive) ?? by.set(archive, { archive, of: 0, traced: 0, best: null }).get(archive);
       e.of++;
       if (t.iou >= SILHOUETTE_IOU) e.traced++;
-      if (!e.best || t.iou > e.best.iou) e.best = { name, ...t };   // every picture with an outline counts, a frame of its size or none
+      if (!e.best || t.iou > e.best.iou) e.best = { name, ...t }; // every picture with an outline counts, a frame of its size or none
     },
     traced,
     refusals({ repainted = REPAINTED_ARCHIVES, allowed = SILHOUETTE_ALLOWED } = {}) {
-      const found = traced(), out = [];
-      const said = (e) => `${e.traced} of its ${e.of} pictures trace a TEXTURE frame's outline (${e.best.from ? `${e.best.name} follows TEXTURE.${String(e.best.from[0]).padStart(3, '0')} record ${e.best.from[1]} frame ${e.best.from[2]}${e.best.scale > 1 ? ' at twice its size' : ''}, IoU ${e.best.iou.toFixed(3)}` : 'no frame is of any of their sizes'})`;
+      const found = traced(),
+        out = [];
+      const said = (e) =>
+        `${e.traced} of its ${e.of} pictures trace a TEXTURE frame's outline (${e.best.from ? `${e.best.name} follows TEXTURE.${String(e.best.from[0]).padStart(3, '0')} record ${e.best.from[1]} frame ${e.best.from[2]}${e.best.scale > 1 ? ' at twice its size' : ''}, IoU ${e.best.iou.toFixed(3)}` : 'no frame is of any of their sizes'})`;
       for (const e of found) {
         if (repainted.includes(e.archive) || Object.hasOwn(allowed, e.archive)) continue;
-        out.push(`${e.archive}: ${said(e)} - Daggerfall's sprite under the authors' paint, which ships only as Port-Doctrine's fourth exception carries it (REPAINTED_ARCHIVES) or as the owner allows it (SILHOUETTE_ALLOWED, with the reason)`);
+        out.push(
+          `${e.archive}: ${said(e)} - Daggerfall's sprite under the authors' paint, which ships only as Port-Doctrine's fourth exception carries it (REPAINTED_ARCHIVES) or as the owner allows it (SILHOUETTE_ALLOWED, with the reason)`,
+        );
       }
       const at = new Set(found.map((e) => e.archive));
-      for (const a of repainted) if (!at.has(a)) out.push(`${a}: REPAINTED_ARCHIVES names it and the measure finds no repaint (${by.has(a) ? said(by.get(a)) : 'no picture of it measured'}) - the exception names what the measure finds`);
-      for (const a of Object.keys(allowed).map(Number)) if (!at.has(a)) out.push(`${a}: SILHOUETTE_ALLOWED names it and the measure finds nothing to allow (${by.has(a) ? said(by.get(a)) : 'no picture of it measured'})`);
+      for (const a of repainted)
+        if (!at.has(a))
+          out.push(
+            `${a}: REPAINTED_ARCHIVES names it and the measure finds no repaint (${by.has(a) ? said(by.get(a)) : 'no picture of it measured'}) - the exception names what the measure finds`,
+          );
+      for (const a of Object.keys(allowed).map(Number))
+        if (!at.has(a))
+          out.push(
+            `${a}: SILHOUETTE_ALLOWED names it and the measure finds nothing to allow (${by.has(a) ? said(by.get(a)) : 'no picture of it measured'})`,
+          );
       return out;
     },
   };
@@ -207,7 +231,15 @@ export const VERBATIM_TEXT = Object.freeze({
  *  fields, a collider with its shape. What the troll's corpse IS to DFU's physics and effects - its entity's type, its
  *  effect manager, its trigger - and so what reaches it (systems/enemyExpansion/dexTroll.js). */
 export const PREFAB_COMPONENTS = Object.freeze({ '1618_20': 'Prefabs/1618_20.components.json' });
-const UNITY_CLASS = Object.freeze({ 4: 'Transform', 23: 'MeshRenderer', 33: 'MeshFilter', 65: 'BoxCollider', 114: 'MonoBehaviour', 135: 'SphereCollider', 136: 'CapsuleCollider' });
+const UNITY_CLASS = Object.freeze({
+  4: 'Transform',
+  23: 'MeshRenderer',
+  33: 'MeshFilter',
+  65: 'BoxCollider',
+  114: 'MonoBehaviour',
+  135: 'SphereCollider',
+  136: 'CapsuleCollider',
+});
 export function prefabComponents(assets, name) {
   for (const a of assets) {
     const byId = new Map(a.objects.map((o) => [String(o.pathId), o]));
@@ -218,11 +250,15 @@ export function prefabComponents(assets, name) {
       const components = (g.m_Component ?? []).map((c) => {
         const co = byId.get(String((c.component ?? c).m_PathID));
         if (!co) throw new Error(`${name}: a component outside the asset`);
-        const body = co.read(), out = { class: UNITY_CLASS[co.classId] ?? `#${co.classId}` };
+        const body = co.read(),
+          out = { class: UNITY_CLASS[co.classId] ?? `#${co.classId}` };
         if (co.classId === 114) {
           out.script = byId.get(String(body.m_Script.m_PathID))?.read().m_ClassName ?? null;
-          for (const [k, v] of Object.entries(body)) if (!k.startsWith('m_') && (typeof v === 'number' || typeof v === 'boolean' || typeof v === 'string')) out[k] = v;
-        } else if (co.classId === 135) Object.assign(out, { m_IsTrigger: body.m_IsTrigger, m_Radius: body.m_Radius, m_Center: body.m_Center });
+          for (const [k, v] of Object.entries(body))
+            if (!k.startsWith('m_') && (typeof v === 'number' || typeof v === 'boolean' || typeof v === 'string'))
+              out[k] = v;
+        } else if (co.classId === 135)
+          Object.assign(out, { m_IsTrigger: body.m_IsTrigger, m_Radius: body.m_Radius, m_Center: body.m_Center });
         return out;
       });
       return `${JSON.stringify({ GameObject: name, Components: components }, null, 1)}\n`;
@@ -247,35 +283,51 @@ export function archivesDrawn(text) {
     }
   }
   const prefab = JSON.parse(text('1618_20.imported'));
-  for (const c of prefab.Components) for (const k of ['Archive', 'AshArchive']) if (Number.isInteger(c[k])) out.add(c[k]);
+  for (const c of prefab.Components)
+    for (const k of ['Archive', 'AshArchive']) if (Number.isInteger(c[k])) out.add(c[k]);
   return out;
 }
 
 /** The archive-level and per-record xml the bundle carries: `<scaleX>`/`<scaleY>` per record (frame 0's file is the
  *  record's, TextureReplacement.TryGetXml) and `<emission>` per archive (the `1610.xml`, `1614.xml`). */
 export function readXml(xmlByName) {
-  const scale = {}, emission = {};
+  const scale = {},
+    emission = {};
   for (const [name, text] of Object.entries(xmlByName)) {
-    const sx = /<scaleX>\s*([-\d.]+)\s*<\/scaleX>/.exec(text), sy = /<scaleY>\s*([-\d.]+)\s*<\/scaleY>/.exec(text);
+    const sx = /<scaleX>\s*([-\d.]+)\s*<\/scaleX>/.exec(text),
+      sy = /<scaleY>\s*([-\d.]+)\s*<\/scaleY>/.exec(text);
     const em = /<emission>\s*(\w+)\s*<\/emission>/i.exec(text);
-    const m = /^(\d+)_(\d+)-(\d+)$/.exec(name), a = /^(\d+)$/.exec(name);
-    if (m && (sx || sy)) ((scale[m[1]] ??= {})[m[2]] = [sx ? Number(sx[1]) : 1, sy ? Number(sy[1]) : 1]);
+    const m = /^(\d+)_(\d+)-(\d+)$/.exec(name),
+      a = /^(\d+)$/.exec(name);
+    if (m && (sx || sy)) (scale[m[1]] ??= {})[m[2]] = [sx ? Number(sx[1]) : 1, sy ? Number(sy[1]) : 1];
     if (a && em) emission[a[1]] = em[1].toLowerCase() === 'true';
   }
   return { scale, emission };
 }
 
-const listing = (title, version, author, bundleSha, note, files) => `${JSON.stringify({
-  ModTitle: title, ModVersion: version, ModAuthor: author,
-  Source: 'https://www.nexusmods.com/daggerfallunity/mods/372',
-  Bundle: 'Mods/daggerfall enemy expansion.dfmod', BundleSha256: bundleSha, Note: note,
-  Files: Object.keys(files).sort(), Sha256: Object.fromEntries(Object.entries(files).sort(([a], [b]) => (a < b ? -1 : 1))),
-}, null, 2)}\n`;
+const listing = (title, version, author, bundleSha, note, files) =>
+  `${JSON.stringify(
+    {
+      ModTitle: title,
+      ModVersion: version,
+      ModAuthor: author,
+      Source: 'https://www.nexusmods.com/daggerfallunity/mods/372',
+      Bundle: 'Mods/daggerfall enemy expansion.dfmod',
+      BundleSha256: bundleSha,
+      Note: note,
+      Files: Object.keys(files).sort(),
+      Sha256: Object.fromEntries(Object.entries(files).sort(([a], [b]) => (a < b ? -1 : 1))),
+    },
+    null,
+    2,
+  )}\n`;
 
 /** The vendored text files the game parses, in the manifest's order - GetDBAssets(extension) yields them so. */
 export function tableFilesInManifestOrder(manifest) {
   const wanted = new Set(['.cdb.csv', '.mdb.csv', '.tdb.csv']);
-  const tables = manifest.Files.map((f) => f.slice(f.lastIndexOf('/') + 1)).filter((n) => [...wanted].some((x) => n.endsWith(x)));
+  const tables = manifest.Files.map((f) => f.slice(f.lastIndexOf('/') + 1)).filter((n) =>
+    [...wanted].some((x) => n.endsWith(x)),
+  );
   return [...tables, 'SpellRecords.json', 'Prefabs/1618_20.imported.json'];
 }
 
@@ -292,7 +344,10 @@ ${rows.join('\n')}
 }
 
 export function renderArtIndex(index, version) {
-  const rows = Object.keys(index).map(Number).sort((a, b) => a - b).map((a) => `  ${a}: ${JSON.stringify(index[a])},`);
+  const rows = Object.keys(index)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map((a) => `  ${a}: ${JSON.stringify(index[a])},`);
   return `// GENERATED by tools/dexExtract.mjs from the shipped bundle (Daggerfall Enemy Expansion ${version}) and the player's
 // own ARENA2 - do not edit. Per archive the mod's tables draw: where its pictures come from (\`own\` - the authors'
 // renders under ${OWN_DIR}/; \`repainted\` - Port-Doctrine's fourth exception, under ${REPAINT_DIR}/;
@@ -312,15 +367,23 @@ ${rows.join('\n')}
 export function dexAssets(arena2, bundleBytes) {
   const bundle = readUnityBundle(bundleBytes);
   const textByName = new Map(bundle.textAssets.map((t) => [t.name, t]));
-  const text = (name) => { const t = textByName.get(name); if (!t) throw new Error(`the bundle carries no ${name}`); return t.text; };
+  const text = (name) => {
+    const t = textByName.get(name);
+    if (!t) throw new Error(`the bundle carries no ${name}`);
+    return t.text;
+  };
   const manifest = JSON.parse(text('DaggerfallBestiaryProject.dfmod'));
-  if (manifest.GUID !== DEX_GUID) throw new Error(`the bundle is ${manifest.ModTitle} (${manifest.GUID}), not Daggerfall Enemy Expansion`);
+  if (manifest.GUID !== DEX_GUID)
+    throw new Error(`the bundle is ${manifest.ModTitle} (${manifest.GUID}), not Daggerfall Enemy Expansion`);
   const out = {};
   for (const [name, path] of Object.entries(VERBATIM_TEXT)) out[`${VENDOR_DIR}/${path}`] = textByName.get(name).bytes;
-  for (const [name, path] of Object.entries(PREFAB_COMPONENTS)) out[`${VENDOR_DIR}/${path}`] = prefabComponents(bundle.assets, name);   // DEX5
+  for (const [name, path] of Object.entries(PREFAB_COMPONENTS))
+    out[`${VENDOR_DIR}/${path}`] = prefabComponents(bundle.assets, name); // DEX5
   const xmlByName = {};
-  for (const t of bundle.textAssets) if (/^\d+(_\d+-\d+)?$/.test(t.name) && /<info>/.test(t.text)) xmlByName[t.name] = t.text;
-  out[`${VENDOR_DIR}/Textures/xml.json`] = `${JSON.stringify(Object.fromEntries(Object.entries(xmlByName).sort(([a], [b]) => (a < b ? -1 : 1))), null, 1)}\n`;
+  for (const t of bundle.textAssets)
+    if (/^\d+(_\d+-\d+)?$/.test(t.name) && /<info>/.test(t.text)) xmlByName[t.name] = t.text;
+  out[`${VENDOR_DIR}/Textures/xml.json`] =
+    `${JSON.stringify(Object.fromEntries(Object.entries(xmlByName).sort(([a], [b]) => (a < b ? -1 : 1))), null, 1)}\n`;
   const { scale, emission } = readXml(xmlByName);
 
   const drawn = archivesDrawn(text);
@@ -328,44 +391,80 @@ export function dexAssets(arena2, bundleBytes) {
   const names = new Set(textures.map((t) => t.name));
   const wears = (a) => drawn.has(a) && drawnClassic(a, names, arena2);
   const carried = textures.filter((t) => wears(Number(NAME.exec(t.name)[1])));
-  const notCarried = [...new Set(textures.filter((t) => !wears(Number(NAME.exec(t.name)[1]))).map((t) => Number(NAME.exec(t.name)[1])))].sort((a, b) => a - b);
+  const notCarried = [
+    ...new Set(textures.filter((t) => !wears(Number(NAME.exec(t.name)[1]))).map((t) => Number(NAME.exec(t.name)[1]))),
+  ].sort((a, b) => a - b);
 
   const palette = new DFPalette();
   palette.load(new Uint8Array(readFileSync(join(arena2, 'ART_PAL.COL'))), 'ART_PAL.COL');
   const records = [...classicRecords(arena2, palette)];
   // exact copies first, by a key of the visible pixels (a clear pixel is clear whatever colour Unity bled under it)
-  const keyOf = (p) => { const d = Buffer.alloc(p.data.length); for (let i = 0; i < p.data.length; i += 4) if (p.data[i + 3] !== 0) { d[i] = p.data[i]; d[i + 1] = p.data[i + 1]; d[i + 2] = p.data[i + 2]; d[i + 3] = 255; } return `${p.width}x${p.height}:${sha(d)}`; };
+  const keyOf = (p) => {
+    const d = Buffer.alloc(p.data.length);
+    for (let i = 0; i < p.data.length; i += 4)
+      if (p.data[i + 3] !== 0) {
+        d[i] = p.data[i];
+        d[i + 1] = p.data[i + 1];
+        d[i + 2] = p.data[i + 2];
+        d[i + 3] = 255;
+      }
+    return `${p.width}x${p.height}:${sha(d)}`;
+  };
   const exact = new Map();
-  for (const r of records) { const k = keyOf(r.rgba); if (!exact.has(k)) exact.set(k, r); }
+  for (const r of records) {
+    const k = keyOf(r.rgba);
+    if (!exact.has(k)) exact.set(k, r);
+  }
   const bySize = new Map();
-  for (const r of records) for (const dw of [-1, 0, 1]) for (const dh of [-1, 0, 1]) { const k = `${r.rgba.width + dw}x${r.rgba.height + dh}`; (bySize.get(k) ?? bySize.set(k, []).get(k)).push(r); }
+  for (const r of records)
+    for (const dw of [-1, 0, 1])
+      for (const dh of [-1, 0, 1]) {
+        const k = `${r.rgba.width + dw}x${r.rgba.height + dh}`;
+        (bySize.get(k) ?? bySize.set(k, []).get(k)).push(r);
+      }
 
-  const derived = {}, own = {}, repainted = {}, index = {};
-  const held = {}, lit = {};   // archive -> record -> the frames its pictures (and its emission maps) are of
+  const derived = {},
+    own = {},
+    repainted = {},
+    index = {};
+  const held = {},
+    lit = {}; // archive -> record -> the frames its pictures (and its emission maps) are of
   const shipped = { own: 0, repainted: 0, indexed: 0, bytes: 0 };
-  const outlines = silhouetteLedger(records);   // AUDIT DEX B1: every shipped picture by its outline too
+  const outlines = silhouetteLedger(records); // AUDIT DEX B1: every shipped picture by its outline too
   for (const t of carried) {
     const [, a, r, f, map] = NAME.exec(t.name);
-    const archive = Number(a), record = Number(r), frame = Number(f);
+    const archive = Number(a),
+      record = Number(r),
+      frame = Number(f);
     const pic = t.rgba();
     // a repaint ships as the authors painted it (the exception's word: byte for byte) unless it IS a record, exactly
     const repaint = REPAINTED_ARCHIVES.includes(archive);
-    const hit = exact.get(keyOf(pic)) ?? (repaint ? null : findClassicSource(pic, bySize.get(`${pic.width}x${pic.height}`) ?? []));
-    const entry = (index[archive] ??= { from: null, frames: [], ...(scale[archive] ? { scale: scale[archive] } : {}), ...(emission[archive] ? { emission: true } : {}) });
+    const hit =
+      exact.get(keyOf(pic)) ??
+      (repaint ? null : findClassicSource(pic, bySize.get(`${pic.width}x${pic.height}`) ?? []));
+    const entry = (index[archive] ??= {
+      from: null,
+      frames: [],
+      ...(scale[archive] ? { scale: scale[archive] } : {}),
+      ...(emission[archive] ? { emission: true } : {}),
+    });
     if (!map || map === 'Emission') (((map ? lit : held)[archive] ??= {})[record] ??= new Set()).add(frame);
     if (hit) {
       const spec = deriveSpec([hit.archive, hit.record, hit.frame], pic, hit.rgba, hit.at ?? [0, 0]);
-      if (!sameOnScreen(composeDerivedPicture(spec, hit.rgba), pic)) throw new Error(`${t.name}: the rebuild from ${hit.archive}_${hit.record}-${hit.frame} differs from the texel`);
+      if (!sameOnScreen(composeDerivedPicture(spec, hit.rgba), pic))
+        throw new Error(`${t.name}: the rebuild from ${hit.archive}_${hit.record}-${hit.frame} differs from the texel`);
       derived[t.name] = spec;
       entry.derived = (entry.derived ?? 0) + 1;
       continue;
     }
-    if (!map) outlines.measure(archive, t.name, pic);   // a map follows its albedo's outline
+    if (!map) outlines.measure(archive, t.name, pic); // a map follows its albedo's outline
     const { png, indexed } = encodeSprite(pic);
     if (!sameOnScreen(pic, readPng(png))) throw new Error(`${t.name}: the PNG read back differs from the texel`);
     (repaint ? repainted : own)[`${t.name}.png`] = sha(png);
     out[`${repaint ? REPAINT_DIR : OWN_DIR}/${t.name}.png`] = png;
-    shipped[repaint ? 'repainted' : 'own']++; shipped.indexed += indexed ? 1 : 0; shipped.bytes += png.length;
+    shipped[repaint ? 'repainted' : 'own']++;
+    shipped.indexed += indexed ? 1 : 0;
+    shipped.bytes += png.length;
   }
   // AUDIT DEX B1: nothing is written, or found to be what the tree holds, while a list and the measure disagree
   const refused = outlines.refusals();
@@ -376,46 +475,103 @@ export function dexAssets(arena2, bundleBytes) {
     delete e.derived;
     // DEX2: AS DFU IMPORTS THEM (TextureReplacement.GetMobileBillboardMaterial) - a record's frames from 0 to the first one
     // missing (1500's record 14 carries frames 0 and 7: one frame), and a frame's emission map where the mod ships one
-    const h = held[a] ?? {}, l = lit[a] ?? {};
+    const h = held[a] ?? {},
+      l = lit[a] ?? {};
     const records = Math.max(...Object.keys(h).map(Number)) + 1;
-    e.frames = Array.from({ length: records }, (_, r) => { let n = 0; while (h[r]?.has(n)) n++; return n; });
+    e.frames = Array.from({ length: records }, (_, r) => {
+      let n = 0;
+      while (h[r]?.has(n)) n++;
+      return n;
+    });
     const emissive = {};
-    for (const [r, set] of Object.entries(l)) { const fs = [...set].filter((f) => f < e.frames[r]).sort((x, y) => x - y); if (fs.length) emissive[r] = fs; }
+    for (const [r, set] of Object.entries(l)) {
+      const fs = [...set].filter((f) => f < e.frames[r]).sort((x, y) => x - y);
+      if (fs.length) emissive[r] = fs;
+    }
     if (Object.keys(emissive).length) e.emissive = emissive;
   }
   const bundleSha = sha(bundleBytes);
-  const v = manifest.ModVersion, who = manifest.ModAuthor;
-  out[`${VENDOR_DIR}/derived.json`] = `{\n${Object.entries(derived).sort(([x], [y]) => (x < y ? -1 : 1)).map(([k, s]) => `${JSON.stringify(k)}: ${JSON.stringify(s)}`).join(',\n')}\n}\n`;   // one picture a line
-  out[`${VENDOR_DIR}/daggerfall-enemy-expansion.files.json`] = listing(manifest.ModTitle, v, who, bundleSha,
-    `Generated by tools/dexExtract.mjs from the shipped bundle - not written by hand. Every file under ${OWN_DIR}/: the authors' own enemy sprites (and their emission maps) for every archive the mod's tables draw, re-encoded as indexed PNG where the picture fits one, each read back against its texel. A picture any classic record covers is not here (derived.json rebuilds it from the player's own ARENA2) and neither is a repaint (repainted.files.json). The authority test/tooling/doctrine.test.js reads for what may stand in that directory.`, own);
-  out[`${VENDOR_DIR}/repainted.files.json`] = listing(manifest.ModTitle, v, who, bundleSha,
-    `Generated by tools/dexExtract.mjs from the shipped bundle - not written by hand. Every file under ${REPAINT_DIR}/: the archives Port-Doctrine's fourth exception carries (Mac, 2026-10-19) - ${REPAINTED_ARCHIVES.join(', ')} - Daggerfall's own sprites under the authors' paint, re-encoded losslessly. The authority test/tooling/doctrine.test.js reads for what may stand in that directory.`, repainted);
+  const v = manifest.ModVersion,
+    who = manifest.ModAuthor;
+  out[`${VENDOR_DIR}/derived.json`] = `{\n${Object.entries(derived)
+    .sort(([x], [y]) => (x < y ? -1 : 1))
+    .map(([k, s]) => `${JSON.stringify(k)}: ${JSON.stringify(s)}`)
+    .join(',\n')}\n}\n`; // one picture a line
+  out[`${VENDOR_DIR}/daggerfall-enemy-expansion.files.json`] = listing(
+    manifest.ModTitle,
+    v,
+    who,
+    bundleSha,
+    `Generated by tools/dexExtract.mjs from the shipped bundle - not written by hand. Every file under ${OWN_DIR}/: the authors' own enemy sprites (and their emission maps) for every archive the mod's tables draw, re-encoded as indexed PNG where the picture fits one, each read back against its texel. A picture any classic record covers is not here (derived.json rebuilds it from the player's own ARENA2) and neither is a repaint (repainted.files.json). The authority test/tooling/doctrine.test.js reads for what may stand in that directory.`,
+    own,
+  );
+  out[`${VENDOR_DIR}/repainted.files.json`] = listing(
+    manifest.ModTitle,
+    v,
+    who,
+    bundleSha,
+    `Generated by tools/dexExtract.mjs from the shipped bundle - not written by hand. Every file under ${REPAINT_DIR}/: the archives Port-Doctrine's fourth exception carries (Mac, 2026-10-19) - ${REPAINTED_ARCHIVES.join(', ')} - Daggerfall's own sprites under the authors' paint, re-encoded losslessly. The authority test/tooling/doctrine.test.js reads for what may stand in that directory.`,
+    repainted,
+  );
   out[ART_INDEX] = renderArtIndex(index, v);
   const decode = (b) => new TextDecoder('utf-8').decode(b);
-  out[TABLE_TEXT] = renderTableText(tableFilesInManifestOrder(manifest).map((f) => [f, decode(out[`${VENDOR_DIR}/${f}`])]), v);
-  return { out, report: { carried: carried.length, derived: Object.keys(derived).length, ...shipped, notCarried, archives: Object.keys(index).length, traced: outlines.traced() } };
+  out[TABLE_TEXT] = renderTableText(
+    tableFilesInManifestOrder(manifest).map((f) => [f, decode(out[`${VENDOR_DIR}/${f}`])]),
+    v,
+  );
+  return {
+    out,
+    report: {
+      carried: carried.length,
+      derived: Object.keys(derived).length,
+      ...shipped,
+      notCarried,
+      archives: Object.keys(index).length,
+      traced: outlines.traced(),
+    },
+  };
 }
 
 if (isMain(import.meta.url)) {
   const [arena2, src] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
   const write = process.argv.includes('--write');
-  if (!arena2 || !src) { console.error('usage: node tools/dexExtract.mjs <arena2> "<daggerfall enemy expansion.dfmod>" [--write]'); process.exit(2); }
+  if (!arena2 || !src) {
+    console.error('usage: node tools/dexExtract.mjs <arena2> "<daggerfall enemy expansion.dfmod>" [--write]');
+    process.exit(2);
+  }
   const t0 = Date.now();
   const { out, report } = dexAssets(arena2, new Uint8Array(readFileSync(src)));
-  console.log(`${report.carried} pictures of ${report.archives} archives: ${report.derived} derived from the player's records, ${report.own} own and ${report.repainted} repainted shipped (${report.indexed} indexed), ${(report.bytes / 1e6).toFixed(1)} MB; not carried (no table draws them, or DFU never wears them): ${report.notCarried.join(', ')}; ${Date.now() - t0} ms`);
-  console.log(`following Daggerfall's outlines (the silhouette guard): ${report.traced.map((e) => `${e.archive} ${e.traced}/${e.of}${Object.hasOwn(SILHOUETTE_ALLOWED, e.archive) ? ' (allowed)' : ''}`).join(', ')}`);
+  console.log(
+    `${report.carried} pictures of ${report.archives} archives: ${report.derived} derived from the player's records, ${report.own} own and ${report.repainted} repainted shipped (${report.indexed} indexed), ${(report.bytes / 1e6).toFixed(1)} MB; not carried (no table draws them, or DFU never wears them): ${report.notCarried.join(', ')}; ${Date.now() - t0} ms`,
+  );
+  console.log(
+    `following Daggerfall's outlines (the silhouette guard): ${report.traced.map((e) => `${e.archive} ${e.traced}/${e.of}${Object.hasOwn(SILHOUETTE_ALLOWED, e.archive) ? ' (allowed)' : ''}`).join(', ')}`,
+  );
   const wanted = new Set(Object.keys(out));
   if (write) {
     for (const dir of [OWN_DIR, REPAINT_DIR]) {
       mkdirSync(join(ROOT, dir), { recursive: true });
-      for (const f of readdirSync(join(ROOT, dir))) if (!wanted.has(`${dir}/${f}`)) unlinkSync(join(ROOT, dir, f));   // a clean set
+      for (const f of readdirSync(join(ROOT, dir))) if (!wanted.has(`${dir}/${f}`)) unlinkSync(join(ROOT, dir, f)); // a clean set
     }
-    for (const [p, b] of Object.entries(out)) { mkdirSync(dirname(join(ROOT, p)), { recursive: true }); writeFileSync(join(ROOT, p), b); }
+    for (const [p, b] of Object.entries(out)) {
+      mkdirSync(dirname(join(ROOT, p)), { recursive: true });
+      writeFileSync(join(ROOT, p), b);
+    }
     console.log(`wrote ${wanted.size} files`);
   } else {
-    const bad = Object.entries(out).filter(([p, b]) => !existsSync(join(ROOT, p)) || Buffer.compare(readFileSync(join(ROOT, p)), Buffer.from(b)) !== 0).map(([p]) => p);
-    for (const dir of [OWN_DIR, REPAINT_DIR]) if (existsSync(join(ROOT, dir))) for (const f of readdirSync(join(ROOT, dir))) if (!wanted.has(`${dir}/${f}`)) bad.push(`${dir}/${f} (a stranger)`);
-    if (bad.length) { console.error(`${bad.length} files differ from what the bundle makes:\n${bad.slice(0, 20).join('\n')}`); process.exit(1); }
+    const bad = Object.entries(out)
+      .filter(
+        ([p, b]) => !existsSync(join(ROOT, p)) || Buffer.compare(readFileSync(join(ROOT, p)), Buffer.from(b)) !== 0,
+      )
+      .map(([p]) => p);
+    for (const dir of [OWN_DIR, REPAINT_DIR])
+      if (existsSync(join(ROOT, dir)))
+        for (const f of readdirSync(join(ROOT, dir)))
+          if (!wanted.has(`${dir}/${f}`)) bad.push(`${dir}/${f} (a stranger)`);
+    if (bad.length) {
+      console.error(`${bad.length} files differ from what the bundle makes:\n${bad.slice(0, 20).join('\n')}`);
+      process.exit(1);
+    }
     console.log('the tree is what the bundle makes');
   }
 }

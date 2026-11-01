@@ -33,7 +33,17 @@
 // earns nothing - the service never sees it.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  recipeById, dishOf, dishMinutes, DISHES, DISH_TEMPLATES, DISH_ICON, HAND_CHEF, HAND_PROVISIONER, PROVENANCE_RE, makerMark, dishSpell,
+  recipeById,
+  dishOf,
+  dishMinutes,
+  DISHES,
+  DISH_TEMPLATES,
+  DISH_ICON,
+  HAND_CHEF,
+  HAND_PROVISIONER,
+  PROVENANCE_RE,
+  makerMark,
+  dishSpell,
 } from '../net/recipeLaw.js';
 import { setItemFields, mintCondition, registerItemUseHandler } from './item/itemTemplates.js';
 import { eatFood } from './survival/items.js';
@@ -58,18 +68,29 @@ export function mintDish({ recipe, maker = null, hand = null }, provenance) {
   const r = recipeById(recipe);
   if (!r || r.kind !== 'dish' || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;
   /** @type {any} */
-  const item = mintCondition(setItemFields({ group: PROF_ITEM_GROUP, templateIndex: r.templateIndex, material: 0, flags: 0, variant: 0, message: 0, stackCount: 1 }));
+  const item = mintCondition(
+    setItemFields({
+      group: PROF_ITEM_GROUP,
+      templateIndex: r.templateIndex,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: 1,
+    }),
+  );
   item.name = dishOf(r.id)?.name ?? item.name;
   item.recipe = r.id;
   item.provenance = provenance;
-  const mark = makerMark(maker);   // TEXT-F1
+  const mark = makerMark(maker); // TEXT-F1
   if (mark) item.maker = mark;
-  if (hand === HAND_PROVISIONER) item.noRot = true;   // 3.3: a Provisioner's dish never spoils
-  if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true;   // 3.3: a Chef's feast lasts half again
+  if (hand === HAND_PROVISIONER) item.noRot = true; // 3.3: a Provisioner's dish never spoils
+  if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true; // 3.3: a Chef's feast lasts half again
   return item;
 }
 /** Whether an item is one of the dishes. */
-export const isDish = (item) => !!item && DISH_TEMPLATES.includes(item.templateIndex) && recipeById(item.recipe)?.kind === 'dish';
+export const isDish = (item) =>
+  !!item && DISH_TEMPLATES.includes(item.templateIndex) && recipeById(item.recipe)?.kind === 'dish';
 /** The hand a minted dish carries, as recipeLaw counts it. */
 export const handOfDish = (item) => (item?.chef === true ? HAND_CHEF : item?.noRot === true ? HAND_PROVISIONER : null);
 
@@ -83,7 +104,7 @@ export const handOfDish = (item) => (item?.chef === true ? HAND_CHEF : item?.noR
 export function feedEffect(entity, d, hand = null, rolls = Math.random) {
   if (!entity || !d) return [];
   const rounds = dishMinutes(d, hand);
-  if (!renewDish(entity, d.name, rounds)) return [];   // AUDIT PROF-541 K4: renewed, never stacked - and never shortened
+  if (!renewDish(entity, d.name, rounds)) return []; // AUDIT PROF-541 K4: renewed, never stacked - and never shortened
   const stats = Object.entries(d.effect.stats ?? {});
   if (!stats.length) {
     const e = assignModBundle(entity, { name: d.name, kind: DISH_STAMINA_KIND, rounds, sinks: {}, rolls });
@@ -100,8 +121,17 @@ export function feedEffect(entity, d, hand = null, rolls = Math.random) {
     }
     const first = out[0];
     // the bundle's next entry: its tags the first's, DFU's initial round taken as the first's was (effects.js pushActive)
-    const e = { kind: 'fortifyAttribute', stat, magnitude, roundsRemaining: rounds - 1, bundleId: first.bundleId, bundleName: first.bundleName,
-      bundleType: first.bundleType, bundleIcon: DISH_ICON, bundleSelfCast: true };
+    const e = {
+      kind: 'fortifyAttribute',
+      stat,
+      magnitude,
+      roundsRemaining: rounds - 1,
+      bundleId: first.bundleId,
+      bundleName: first.bundleName,
+      bundleType: first.bundleType,
+      bundleIcon: DISH_ICON,
+      bundleSelfCast: true,
+    };
     (entity.activeEffects ??= []).push(e);
     out.push(e);
   }
@@ -109,12 +139,16 @@ export function feedEffect(entity, d, hand = null, rolls = Math.random) {
 }
 /** The Tart's stamina (scenes/shared.js fatigueLossMultiplierFor): a minute's drain's multiplier - 1 / 1.2 while a
  *  `dishStamina` entry stands, else 1. */
-export const dishStaminaFactor = (entity) => ((entity?.activeEffects ?? []).some((a) => a.kind === DISH_STAMINA_KIND && !a.ended && a.roundsRemaining > 0) ? 1 / DISH_STAMINA_DIVISOR : 1);
+export const dishStaminaFactor = (entity) =>
+  (entity?.activeEffects ?? []).some((a) => a.kind === DISH_STAMINA_KIND && !a.ended && a.roundsRemaining > 0)
+    ? 1 / DISH_STAMINA_DIVISOR
+    : 1;
 
 /** AUDIT PROF9 K2: whether a spell is a FEAST's - a party dish's record by its name (a mate's share of it arrives through
  *  ALLY-CAST's frame as `name: d.name`). The receiver takes its standing bundles of that name off first (world.js
  *  online.onCast), so a feast shared renews as one eaten does and its rounds never add up. */
-export const isPartyDishSpell = (name) => typeof name === 'string' && DISHES.some((d) => d.effect.party === true && d.name === name);
+export const isPartyDishSpell = (name) =>
+  typeof name === 'string' && DISHES.some((d) => d.effect.party === true && d.name === name);
 
 /** AUDIT PROF-541 K4: A DISH RENEWED, NEVER SHORTENED - the standing bundles of its name taken off before `rounds` more
  *  are laid on (renewed, never stacked), unless one has as many rounds left already (a Chef's day and a half is not cut
@@ -123,22 +157,33 @@ export const isPartyDishSpell = (name) => typeof name === 'string' && DISHES.som
 export function renewDish(entity, name, rounds) {
   // AUDIT PROF-541 R2-K9: the dish's own bundles alone (dishEntry) - a look-alike of its name (my own spellbook's
   // "Feast of the Hearth") neither stands for it nor is taken off by it
-  const mine = (entity?.activeEffects ?? []).filter((a) => a.bundleId != null && !a.ended && a.bundleName === name && dishEntry(a, name));
+  const mine = (entity?.activeEffects ?? []).filter(
+    (a) => a.bundleId != null && !a.ended && a.bundleName === name && dishEntry(a, name),
+  );
   if (mine.some((a) => a.roundsRemaining >= rounds)) return false;
   const ids = new Set(mine.map((a) => a.bundleId));
-  if (ids.size) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId));   // every bundle of the dish's - renewed, never stacked
+  if (ids.size) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId)); // every bundle of the dish's - renewed, never stacked
   return true;
 }
 /** AUDIT PROF-541 R2-K9: a spell record's identity - each effect's type, subType and settings (effects.js settingsKeyOf,
  *  CompareSettings's fields), in order. */
-const recordKey = (spell) => (spell?.effects ?? []).map((e) => `${e?.type}/${e?.subType}/${settingsKeyOf(e ?? {})}`).join('|');
+const recordKey = (spell) =>
+  (spell?.effects ?? []).map((e) => `${e?.type}/${e?.subType}/${settingsKeyOf(e ?? {})}`).join('|');
 /** AUDIT PROF-541 R2-K9: EACH FEAST'S OWN RECORD (dishSpell - a plain feast's and a Chef's), by name: the records a gift
  *  must be, and the `stat/settingsKey` its laid entries carry (effects.js applySpell's Fortify Attribute). */
-const FEAST_FORMS = new Map(DISHES.filter((d) => d.effect.party === true).map((d) => {
-  const recs = [null, HAND_CHEF].map((h) => dishSpell(d, h)).filter(Boolean);
-  const stats = Object.keys(d.effect.stats ?? {});
-  return [d.name, { records: new Set(recs.map(recordKey)), entries: new Set(recs.flatMap((sp) => sp.effects.map((e, i) => `${stats[i]}/${settingsKeyOf(e)}`))) }];
-}));
+const FEAST_FORMS = new Map(
+  DISHES.filter((d) => d.effect.party === true).map((d) => {
+    const recs = [null, HAND_CHEF].map((h) => dishSpell(d, h)).filter(Boolean);
+    const stats = Object.keys(d.effect.stats ?? {});
+    return [
+      d.name,
+      {
+        records: new Set(recs.map(recordKey)),
+        entries: new Set(recs.flatMap((sp) => sp.effects.map((e, i) => `${stats[i]}/${settingsKeyOf(e)}`))),
+      },
+    ];
+  }),
+);
 /** AUDIT PROF-541 R2-K9: WHETHER A FEAST-NAMED SPELL IS A FEAST - its effects the real feast's record (a plain one's or a
  *  Chef's), never its name alone: a mate's own spell named "Feast of the Hearth" (Fortify Strength 1 for 1,860 rounds)
  *  replaced a real feast and then, never shortened (K4), shut out every feast eaten after it. */
@@ -158,18 +203,23 @@ function dishEntry(a, name) {
 export function takeFeastGift(entity, spell, level, mate) {
   if (!isPartyDishSpell(spell?.name)) return true;
   if (!mate) return false;
-  if (!isFeastRecord(spell)) return false;   // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped
+  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped
   return renewDish(entity, spell.name, Math.max(0, ...(spell.effects ?? []).map((e) => rollDuration(e, level))));
 }
 
 /** AUDIT PROF-541 R2-K10: what eating a dish says when a longer one of it already stands (renewDish - never shortened):
  *  the dish eaten, nothing laid on. */
-export const dishStandsLine = (d) => (d?.effect?.party === true ? 'The feast you already enjoy lasts longer.' : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`);
+export const dishStandsLine = (d) =>
+  d?.effect?.party === true
+    ? 'The feast you already enjoy lasts longer.'
+    : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;
 
 /** The host's share of a feast with the party at the table (world.js, online): `(spell, name) => [names shared with]`. */
 let _share = /** @type {((spell: any, name: string) => string[])|null} */ (null);
 /** World.js registers it online; null takes it down (offline a feast is the eater's alone). */
-export function setFeastShare(fn) { _share = typeof fn === 'function' ? fn : null; }
+export function setFeastShare(fn) {
+  _share = typeof fn === 'function' ? fn : null;
+}
 /**
  * AUDIT PROF-541 K5, R2-H1: A FEAST SHARED (the host's share door, world.js setFeastShare): to each party mate among the
  * `peers` in sight at the table (world.js peersNear - the stranger's gift's own law, never the whole room and its halo),
@@ -203,7 +253,14 @@ export function dishUse(item, collection, { entity = null, nowMinute = 0, rolls 
   if (!d) return null;
   let out;
   if (survivalOn()) {
-    out = eatFood(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease, rules: survivalRules() ?? SURVIVAL_RULES.casual });
+    out = eatFood(item, collection, {
+      entity,
+      now: nowMinute,
+      rolls,
+      currentDay: Math.trunc(nowMinute / 1440),
+      inflict: inflictDisease,
+      rules: survivalRules() ?? SURVIVAL_RULES.casual,
+    });
     if (!out || out.kind !== 'ate') return out ?? { kind: 'none' };
   } else {
     const i = Array.isArray(collection) ? collection.indexOf(item) : -1;
@@ -213,7 +270,7 @@ export function dishUse(item, collection, { entity = null, nowMinute = 0, rolls 
   const hand = handOfDish(item);
   const laid = feedEffect(entity, d, hand, rolls);
   const lines = [out.text];
-  if (entity && !laid.length) lines.push(dishStandsLine(d));   // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)
+  if (entity && !laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)
   if (d.effect.party === true) {
     const sp = dishSpell(d, hand);
     const line = feastSharedLine(sp && _share ? _share(sp, d.name) : []);

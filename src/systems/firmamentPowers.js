@@ -32,12 +32,29 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SKILLS, SKILL_KEYS, permanentSkillValue } from './skills.js';
-import { ATTRIBUTES, COMBAT_SKILLS, LIFE_SKILLS, FIRM_ELEMENTS, blowPct, castCostPct, statDef, pctOf } from '../net/firmament/firmamentLaw.js';
+import {
+  ATTRIBUTES,
+  COMBAT_SKILLS,
+  LIFE_SKILLS,
+  FIRM_ELEMENTS,
+  blowPct,
+  castCostPct,
+  statDef,
+  pctOf,
+} from '../net/firmament/firmamentLaw.js';
 import { firmamentStats, firmamentStatsAt, onFirmamentChange, firmamentInForce } from './firmamentLive.js';
-import { mentorPowerScale } from './mentorMode.js';   // MENTOR2: the combat stars at the mentor's share
+import { mentorPowerScale } from './mentorMode.js'; // MENTOR2: the combat stars at the mentor's share
 import { sigilDueling } from './sigil/sigil.js';
-import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS, NUMBER_BODY_PARTS, STANDING_CHANNELS, computeEntityMods } from './entityMods.js';
-import { blowRoom, guardRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
+import {
+  registerEntityFold,
+  registerWeaponBlowMod,
+  newMods,
+  EMPTY_MODS,
+  NUMBER_BODY_PARTS,
+  STANDING_CHANNELS,
+  computeEntityMods,
+} from './entityMods.js';
+import { blowRoom, guardRoom } from './powerCeiling.js'; // POWER-CEILING: the blow's one product, the guards' one share
 import { registerSpellPowerMod, registerSpellPierceMod } from './spell/spellPower.js';
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
@@ -45,15 +62,15 @@ import { registerPlayerDamageMod, registerPlayerBlowEvasion, playerEntity } from
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
 import { registerAbsorptionChance } from './absorption.js';
-import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's one law of what a foe's blow is
-import { foeGroup } from './loot/lootPowers.js';   // the loot's one foe group
+import { pendingPlayerBlow } from './sigil/sigilSetPowers.js'; // the door's one law of what a foe's blow is
+import { foeGroup } from './loot/lootPowers.js'; // the loot's one foe group
 import { healMine, manaMine } from './playerHeal.js';
 import { playerDoor } from './playerDoor.js';
 import { setOnlineLayerExtra, renownHpOf, renownMpOf } from './renownLayer.js';
-import { evenHpOf } from './levelEven.js';   // AUDIT LEVEL-EVEN L2-4: the floored body a health star's share is of
+import { evenHpOf } from './levelEven.js'; // AUDIT LEVEL-EVEN L2-4: the floored body a health star's share is of
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
-import { regenShare } from './courtRules.js';   // AUDIT WORLD-EVENTS L1-3: the Firmament's hpRegen is a natural regeneration - a made level holds it
+import { regenShare } from './courtRules.js'; // AUDIT WORLD-EVENTS L1-3: the Firmament's hpRegen is a natural regeneration - a made level holds it
 
 /** @type {Readonly<Record<string, number>>} */
 const NONE = Object.freeze({});
@@ -73,7 +90,13 @@ export function withoutFirmament(entity, fn) {
   if (!entity || !firmamentInForce()) return fn();
   const kept = entity._mods;
   _quiet = true;
-  try { computeEntityMods(entity); return fn(); } finally { _quiet = false; entity._mods = kept; }
+  try {
+    computeEntityMods(entity);
+    return fn();
+  } finally {
+    _quiet = false;
+    entity._mods = kept;
+  }
 }
 
 let _rand = Math.random;
@@ -95,7 +118,10 @@ function shareOf(key, damage, pct, keep = true) {
 // ── the fold ────────────────────────────────────────────────────────
 
 /** `v` held inside channel `key`'s budget (STAT_DEFS) - a key star's raw points and a small star's share are one channel. */
-const capAt = (key, v) => { const d = statDef(key); return d ? Math.max(d.min, Math.min(d.max, v)) : v; };
+const capAt = (key, v) => {
+  const d = statDef(key);
+  return d ? Math.max(d.min, Math.min(d.max, v)) : v;
+};
 
 /** An attribute's gain off the stars `read` answers: a key star's raw points and a small star's share of the permanent
  *  value, the two held to the channel's budget together. The fold's, and the online layer's Endurance (LEVEL-EVEN). */
@@ -103,7 +129,8 @@ const attributeGain = (entity, a, read) => capAt(a, read(a) + pctOf(entity.stats
 /** THE ENTITY FOLD: the attributes, the skills, the saving throws, armour on every part, the carry, standing and the
  *  wardrobe's channels - the combat ones while awake, the life ones while in force. */
 export function firmamentFold(entity) {
-  const f = fight(entity), l = life(entity);
+  const f = fight(entity),
+    l = life(entity);
   if (f === NONE && l === NONE) return EMPTY_MODS;
   const mods = newMods();
   const read = (key) => (statDef(key)?.kind === 'life' ? l[key] : f[key]) ?? 0;
@@ -124,13 +151,17 @@ export function firmamentFold(entity) {
     const v = capAt(`skill.${n}`, read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0));
     if (v) mods.skills[id] = v;
   }
-  for (const e of FIRM_ELEMENTS) { const v = read(`resist.${e}`); if (v) mods.resist[e] = v; }
+  for (const e of FIRM_ELEMENTS) {
+    const v = read(`resist.${e}`);
+    if (v) mods.resist[e] = v;
+  }
   const armor = read('armor');
   if (armor) for (let p = 0; p < NUMBER_BODY_PARTS; p++) mods.armorParts[p] = armor;
   mods.weightMult = read('carry') / 100;
   const standing = read('standing');
   if (standing) for (let g = 0; g < STANDING_CHANNELS; g++) mods.standing[g] = standing;
-  for (const k of ['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess']) /** @type {any} */ (mods)[k] = read(k);
+  for (const k of ['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess'])
+    /** @type {any} */ (mods)[k] = read(k);
   return mods;
 }
 
@@ -142,9 +173,10 @@ export function firmamentBlow(weapon, damage, attacker, target, info) {
   if (!(damage > 0) || !target || target.isPlayer || target.warded) return damage;
   const c = fight(attacker);
   if (c === NONE) return damage;
-  const skill = weapon ? SKILL_KEYS[weaponSkillUsed(weapon.templateIndex)] ?? null : 'HandToHand';
-  const wounded = Number.isFinite(attacker.health) && attacker.maxHealth > 0 && attacker.health < attacker.maxHealth / 2;
-  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament');   // POWER-CEILING
+  const skill = weapon ? (SKILL_KEYS[weaponSkillUsed(weapon.templateIndex)] ?? null) : 'HandToHand';
+  const wounded =
+    Number.isFinite(attacker.health) && attacker.maxHealth > 0 && attacker.health < attacker.maxHealth / 2;
+  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament'); // POWER-CEILING
   if (!pct) return damage;
   return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));
 }
@@ -158,7 +190,10 @@ export const firmamentCastSpeed = (entity) => fight(entity).castSpeed ?? 0;
 export function firmamentCastCost(entity, sp, spell = null) {
   const c = fight(entity);
   if (c === NONE) return sp;
-  const schools = (spell?.effects ?? []).filter((e) => e && e.type > -1).map((e) => SKILL_KEYS[effectSchool(e)]).filter(Boolean);
+  const schools = (spell?.effects ?? [])
+    .filter((e) => e && e.type > -1)
+    .map((e) => SKILL_KEYS[effectSchool(e)])
+    .filter(Boolean);
   const pct = castCostPct(c, schools);
   return pct ? (sp * (100 - pct)) / 100 : sp;
 }
@@ -170,7 +205,7 @@ export function firmamentDamage(entity, dmg) {
   const c = fight(entity);
   if (c === NONE || !(dmg > 0)) return dmg;
   const ch = pendingPlayerBlow() ? 'blow' : 'spell';
-  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament');   // POWER-CEILING: a share off is the guards'; a price is taken whole
+  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament'); // POWER-CEILING: a share off is the guards'; a price is taken whole
   if (!pct) return dmg;
   const exact = (dmg * pct) / 100 + _takenOwed[ch];
   const whole = pct >= 0 ? Math.floor(exact + 1e-9) : Math.ceil(exact - 1e-9);
@@ -188,7 +223,12 @@ export const firmamentAbsorb = (target) => fight(target).absorb ?? 0;
 
 // ── the kill, the round, the layer ───────────────────────────────────
 
-const neverCounts = (e) => !!e?.isPlayer || !!e?.peer || e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';   // a player felled is no beast's kill
+const neverCounts = (e) =>
+  !!e?.isPlayer ||
+  !!e?.peer ||
+  e?.mobileType === KNIGHT_CITY_WATCH ||
+  e?.team === 'PlayerAlly' ||
+  e?.mobileTeam === 'PlayerAlly'; // a player felled is no beast's kill
 const me = () => playerDoor()?.player?.() ?? playerEntity;
 /** My kill: `killHeal` and `killMana` percent of my maximum back. */
 export function firmamentKill(foe) {
@@ -204,7 +244,10 @@ export function firmamentRound(entity) {
   if (!mine(entity)) return;
   firmamentLayer(entity);
   const c = fight(entity);
-  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity); if (held > 0) healMine(entity, held); }   // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)
+  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) {
+    const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity);
+    if (held > 0) healMine(entity, held);
+  } // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)
   if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);
 }
 /** The sky's health and magicka on the online layer - none while it sleeps: a key star's raw points, and a small
@@ -212,14 +255,21 @@ export function firmamentRound(entity) {
 export function firmamentLayer(entity = me()) {
   const c = fight(entity);
   if (!entity) return;
-  const baseHp = Number.isFinite(entity.rawMaxHealth) ? entity.rawMaxHealth : (entity.maxHealth ?? 0) - renownHpOf(entity);
+  const baseHp = Number.isFinite(entity.rawMaxHealth)
+    ? entity.rawMaxHealth
+    : (entity.maxHealth ?? 0) - renownHpOf(entity);
   const baseMp = (entity.maxMagicka ?? 0) - renownMpOf(entity);
   // AUDIT UICALM-FIRM1 L1 H1: the raw points and the share together inside the budget (+75 Health, +75 Spell Points)
   // LEVEL-EVEN (systems/levelEven.js): and the stars' Endurance, which the online health floor reads
-  const end = attributeGain(entity, 'endurance', (key) => c[key] ?? 0);   // an attribute is a combat channel (firmamentLaw.js statDef)
+  const end = attributeGain(entity, 'endurance', (key) => c[key] ?? 0); // an attribute is a combat channel (firmamentLaw.js statDef)
   // AUDIT LEVEL-EVEN L2-4: a small star's share is of the body the floor stands the stored one at (never of the layer)
-  const floored = baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);
-  setOnlineLayerExtra(entity, { hp: capAt('hp', (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0)), mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)), end });
+  const floored =
+    baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);
+  setOnlineLayerExtra(entity, {
+    hp: capAt('hp', (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0)),
+    mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)),
+    end,
+  });
 }
 
 // ── registered at import ───────────────────────────────────────────
@@ -239,9 +289,19 @@ registerMagicRoundHook(FIRMAMENT_POWERS, firmamentRound);
 onFirmamentChange(() => {
   const m = me();
   if (!m) return;
-  try { computeEntityMods(m); firmamentLayer(m); } catch { /* the entity is the host's */ }
+  try {
+    computeEntityMods(m);
+    firmamentLayer(m);
+  } catch {
+    /* the entity is the host's */
+  }
 });
 
 /** Tests only: fresh carries, and dice of their own ([0, 1)). */
-export function _resetFirmamentPowersForTests() { _carry = new WeakMap(); _takenOwed = { blow: 0, spell: 0 }; }
-export function _setFirmamentPowersRandForTests(fn) { _rand = typeof fn === 'function' ? fn : Math.random; }
+export function _resetFirmamentPowersForTests() {
+  _carry = new WeakMap();
+  _takenOwed = { blow: 0, spell: 0 };
+}
+export function _setFirmamentPowersRandForTests(fn) {
+  _rand = typeof fn === 'function' ? fn : Math.random;
+}

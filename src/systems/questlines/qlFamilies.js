@@ -4,20 +4,40 @@
 // reads the starts' names, another leaf, and nothing else): the sheets' and the patches' registries read it, and the pins (test/systems/questlines/ql1_sheets.test.js) hold every
 // quest a player can be given to exactly one family's sheet.
 
-import { START_QUESTS } from '../starts/starts.js';   // START1: the starts' quests, filed with the main quest
+import { START_QUESTS } from '../starts/starts.js'; // START1: the starts' quests, filed with the main quest
 
 /** The families, in the order the waves write them. */
 export const QL_FAMILY_NAMES = Object.freeze([
-  'FightersGuild', 'KnightlyOrders', 'MagesGuild', 'ThievesGuild', 'DarkBrotherhood', 'HolyOrders',
-  'Nobility', 'Merchants', 'Commoners', 'Witches', 'Vampires', 'Daedra', 'MainQuest', 'Mods',
-  'Questlines',   // QL12-QL16: the questlines' own quests (qlLines.js), written by the port
+  'FightersGuild',
+  'KnightlyOrders',
+  'MagesGuild',
+  'ThievesGuild',
+  'DarkBrotherhood',
+  'HolyOrders',
+  'Nobility',
+  'Merchants',
+  'Commoners',
+  'Witches',
+  'Vampires',
+  'Daedra',
+  'MainQuest',
+  'Mods',
+  'Questlines', // QL12-QL16: the questlines' own quests (qlLines.js), written by the port
 ]);
 
 /** A QuestList-Classic.txt group's family (the Thieves Guild is DFU's GeneralPopulace). */
 export const LIST_GROUP_FAMILY = Object.freeze({
-  FightersGuild: 'FightersGuild', KnightlyOrder: 'KnightlyOrders', MagesGuild: 'MagesGuild', GeneralPopulace: 'ThievesGuild',
-  DarkBrotherHood: 'DarkBrotherhood', HolyOrder: 'HolyOrders', Nobility: 'Nobility', Merchants: 'Merchants',
-  Commoners: 'Commoners', Witches: 'Witches', Vampires: 'Vampires',
+  FightersGuild: 'FightersGuild',
+  KnightlyOrder: 'KnightlyOrders',
+  MagesGuild: 'MagesGuild',
+  GeneralPopulace: 'ThievesGuild',
+  DarkBrotherHood: 'DarkBrotherhood',
+  HolyOrder: 'HolyOrders',
+  Nobility: 'Nobility',
+  Merchants: 'Merchants',
+  Commoners: 'Commoners',
+  Witches: 'Witches',
+  Vampires: 'Vampires',
 });
 
 /** The quests no classic list offers, by family: the sixteen Princes' summonings (systems/daedraSummoning.js), the two
@@ -25,8 +45,24 @@ export const LIST_GROUP_FAMILY = Object.freeze({
  *  set - read off the pack's own files, and the starts' quests named here: START1, systems/starts/starts.js), DFU's own
  *  custom list's one, and the mods' (vendored with their authors' permission). */
 export const UNLISTED_FAMILY = Object.freeze({
-  Daedra: Object.freeze(['10C00Y00', '20C00Y00', '30C00Y00', '40C00Y00', '50C00Y00', '60C00Y00', '70C00Y00', '80C0XY00', '90C00Y00',
-    'T0C00Y00', 'U0C00Y00', 'V0C00Y00', 'W0C00Y00', 'X0C00Y00', 'Y0C00Y00', 'Z0C00Y00']),
+  Daedra: Object.freeze([
+    '10C00Y00',
+    '20C00Y00',
+    '30C00Y00',
+    '40C00Y00',
+    '50C00Y00',
+    '60C00Y00',
+    '70C00Y00',
+    '80C0XY00',
+    '90C00Y00',
+    'T0C00Y00',
+    'U0C00Y00',
+    'V0C00Y00',
+    'W0C00Y00',
+    'X0C00Y00',
+    'Y0C00Y00',
+    'Z0C00Y00',
+  ]),
   Vampires: Object.freeze(['$CUREVAM', '$CUREWER']),
   MainQuest: Object.freeze([...START_QUESTS]),
 });

@@ -1,12 +1,10 @@
 // @ts-check
-// STAFF-VIEW1 (2026-10-23, mob: "np player esp in staff panel?", "i need staff panel to have esp", "i told you to add the
-// opther parts to the menu?", "wtf u had all this build"; design doc "DFO Staff Panel: design", In game: the staff view -
+// STAFF-VIEW1 (2026-10-23; design doc "DFO Staff Panel: design", In game: the staff view -
 // "Shift+M switches between the Overworld view and the ground view. In the Overworld every player has a name tag, and
 // crowded tags group", "Tags show the player's name and their most urgent flag ... Admins also see the monsters each
 // player owns, with lines to their owner. Moderators see report flags and WATCH on players they watch", "Clicking a tag
 // follows that player at once, invisibly (Invisible follow), and opens a small card") - THE STAFF VIEW, out of bootWorld
-// (HOST-SPLIT: THE HOSTS DO NOT GROW). The Overworld is the game's own travel view (mob: "lets use my tools overworld
-// system to have as a base in game"), entered and left with Shift+M; the ground view is wherever the staff member stands,
+// (HOST-SPLIT: THE HOSTS DO NOT GROW). The Overworld is the game's own travel view, entered and left with Shift+M; the ground view is wherever the staff member stands,
 // indoors and in dungeons too.
 //
 // WHO IS TAGGED. Every player the game receives - the followed room's while a follow is locked (the host has left its
@@ -42,7 +40,7 @@ import { worldViewportRect } from '../ui/hud/hudLarge.js';
 import { multiply } from '../world/mat4.js';
 import { STAFF_LINE, createStaffTags } from '../ui/staffTags.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
-import { createStaffFlatMapHost } from './staffFlatMapHost.js';   // STAFF-FLATMAP: Shift+N
+import { createStaffFlatMapHost } from './staffFlatMapHost.js'; // STAFF-FLATMAP: Shift+N
 import { t } from '../systems/textManager.js';
 
 /** The ground view's tags at most, nearest first - the relay's own fan (every pose only for the nearest POSE_FAN_MAX). */
@@ -53,7 +51,7 @@ export const STAFF_OW_TAGS_MAX = 256;
 export const STAFF_TAGS_ASK_MS = 60_000;
 /** How long a tag click waits for the hub's search before it says no account was found (ms). */
 export const STAFF_FIND_WAIT_MS = 5000;
-/** STAFF-LINES-SEA (mob, 2026-10-25: "not draw line to player from sea creature", "they arnt a threat"): the sea's
+/** STAFF-LINES-SEA: the sea's
  *  monsters, the relay's own list (server/src/staffFeeds.js FOE_SEA_TYPES) - no line to their owner and not in a tag's
  *  count; Monster watch still counts them apart, as sea. */
 export const STAFF_SEA_TYPES = new Set([MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);
@@ -69,25 +67,36 @@ export const STAFF_TAG_HEAD_M = 2.1;
 const KNOWN_MAX = 256;
 
 /** `peer:<id>` and `trav:<id>`, the travel view's player marks - the socket id, else null. @param {unknown} key */
-const markId = (key) => { const m = typeof key === 'string' ? /^(?:peer|trav):(.+)$/.exec(key) : null; return m ? m[1] : null; };
+const markId = (key) => {
+  const m = typeof key === 'string' ? /^(?:peer|trav):(.+)$/.exec(key) : null;
+  return m ? m[1] : null;
+};
 /** A peer magically concealed, by their pose's `cv` (systems/combatVisuals.js peerDraw's bits). @param {any} d */
 const concealedPose = (d) => ((d?.shown?.cv | 0) & 7) !== 0;
 /** CROWD-CHIPS: a tag's box on the screen, as ui/staffTags.js draws it (12 px pixel font, a padded plate) - a crowd a
  *  count's chip, a lone tag its name over its words - estimated, never measured (no layout read in the frame). */
-const TAG_CHAR_PX = 7, TAG_LINE_PX = 15, TAG_PAD_PX = 12, CROWD_WORDS_CHARS = 13;   // the head's words after the count, as English writes them
+const TAG_CHAR_PX = 7,
+  TAG_LINE_PX = 15,
+  TAG_PAD_PX = 12,
+  CROWD_WORDS_CHARS = 13; // the head's words after the count, as English writes them
 /** @param {{ members: Array<{ name?: string, line?: string }> }} g */
 function tagBox(g) {
-  if (g.members.length > 1) return { w: TAG_CHAR_PX * (String(g.members.length).length + CROWD_WORDS_CHARS) + TAG_PAD_PX, h: TAG_LINE_PX + 6 };
+  if (g.members.length > 1)
+    return { w: TAG_CHAR_PX * (String(g.members.length).length + CROWD_WORDS_CHARS) + TAG_PAD_PX, h: TAG_LINE_PX + 6 };
   const m = g.members[0];
-  return { w: TAG_CHAR_PX * Math.max(String(m.name ?? '').length, String(m.line ?? '').length) + TAG_PAD_PX, h: TAG_LINE_PX * (m.line ? 2 : 1) + 6 };
+  return {
+    w: TAG_CHAR_PX * Math.max(String(m.name ?? '').length, String(m.line ?? '').length) + TAG_PAD_PX,
+    h: TAG_LINE_PX * (m.line ? 2 : 1) + 6,
+  };
 }
 /** Whether two tags' boxes would touch - each stands centred over its point, its bottom on it. @param {any} a @param {any} b */
 function touching(a, b) {
-  const A = tagBox(a), B = tagBox(b);
-  return Math.abs(a.x - b.x) * 2 < A.w + B.w && Math.abs((a.y - A.h / 2) - (b.y - B.h / 2)) * 2 < A.h + B.h;
+  const A = tagBox(a),
+    B = tagBox(b);
+  return Math.abs(a.x - b.x) * 2 < A.w + B.w && Math.abs(a.y - A.h / 2 - (b.y - B.h / 2)) * 2 < A.h + B.h;
 }
 /** Tags this near one another on the screen as one box, in the order given (the nearest first leads) - and CROWD-CHIPS
- *  (2026-10-24, mob: "to many ocerlapping how would we clean thaT UP"; the card's pick "Merge close boxes, count only"):
+ *  (2026-10-24; the card's pick "Merge close boxes, count only"):
  *  boxes that would still touch merged into the one that leads, until none does, so no two overlap.
  *  @param {Array<{ p: { x: number, y: number }, m: { id: string } }>} tagged */
 export function crowded(tagged) {
@@ -116,11 +125,19 @@ export function crowded(tagged) {
 }
 /** A tag's words under the name. @param {{ level: string|null, why: string, watch: boolean }|null} flag @param {number} monsters @param {boolean} concealed */
 export function staffTagWords(flag, monsters, concealed) {
-  return [flag?.level ? flag.why : '', flag?.watch ? 'WATCH' : '', monsters > 0 ? `${monsters} monster${monsters === 1 ? '' : 's'}` : '', concealed ? 'concealed' : '']
-    .filter(Boolean).join(' · ');
+  return [
+    flag?.level ? flag.why : '',
+    flag?.watch ? 'WATCH' : '',
+    monsters > 0 ? `${monsters} monster${monsters === 1 ? '' : 's'}` : '',
+    concealed ? 'concealed' : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
-const noAccount = (/** @type {string} */ name) => (name ? t('net.staffView.noAccount', 'Staff view: no account found for {name} - not followed.', { name })
-  : t('net.staffView.noAccountAnon', 'Staff view: no account found for that player - not followed.'));
+const noAccount = (/** @type {string} */ name) =>
+  name
+    ? t('net.staffView.noAccount', 'Staff view: no account found for {name} - not followed.', { name })
+    : t('net.staffView.noAccountAnon', 'Staff view: no account found for that player - not followed.');
 
 /** FLAG-DISMISS: the most dismissed flags one browser keeps, and where. */
 export const DISMISSED_FLAGS_MAX = 500;
@@ -134,14 +151,23 @@ export function loadDismissedFlags(win) {
   const m = new Map();
   try {
     const o = JSON.parse(win?.localStorage?.getItem?.(DISMISSED_KEY) ?? 'null');
-    if (Array.isArray(o)) for (const e of o.slice(-DISMISSED_FLAGS_MAX)) if (Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string') m.set(e[0], e[1]);
-  } catch { /* private mode, or a value not ours: none kept */ }
+    if (Array.isArray(o))
+      for (const e of o.slice(-DISMISSED_FLAGS_MAX))
+        if (Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string')
+          m.set(e[0], e[1]);
+  } catch {
+    /* private mode, or a value not ours: none kept */
+  }
   return m;
 }
 /** @param {any} win @param {Map<string, string>} m */
 export function saveDismissedFlags(win, m) {
   while (m.size > DISMISSED_FLAGS_MAX) m.delete(/** @type {string} */ (m.keys().next().value));
-  try { win?.localStorage?.setItem?.(DISMISSED_KEY, JSON.stringify([...m])); } catch { /* storage full or blocked: kept for this page only */ }
+  try {
+    win?.localStorage?.setItem?.(DISMISSED_KEY, JSON.stringify([...m]));
+  } catch {
+    /* storage full or blocked: kept for this page only */
+  }
 }
 
 /**
@@ -151,9 +177,26 @@ export function saveDismissedFlags(win, m) {
  * the notice line.
  * @param {{ follow: any, glyphs: () => unknown, links: () => any, book: any, foes: any, overworld: () => void, up: () => boolean, canvas: any, say: (t: string) => void, politicAt?: ((x: number, y: number) => number) | null, acts?: ((p: { id: string, sub: string, name: string }, onFollow: (sub: string) => void) => any[]) | null, win?: any, doc?: any, now?: () => number, makeTags?: typeof createStaffTags }} deps
  */
-export function createStaffViewHost({ follow, glyphs, links, book, foes, overworld, up, canvas, say, acts = null, politicAt = null, win = globalThis.window, doc = globalThis.document, now = () => Date.now(), makeTags = createStaffTags }) {
+export function createStaffViewHost({
+  follow,
+  glyphs,
+  links,
+  book,
+  foes,
+  overworld,
+  up,
+  canvas,
+  say,
+  acts = null,
+  politicAt = null,
+  win = globalThis.window,
+  doc = globalThis.document,
+  now = () => Date.now(),
+  makeTags = createStaffTags,
+}) {
   let layer = /** @type {ReturnType<typeof createStaffTags>|null} */ (null);
-  let wasOn = false, askedAt = -Infinity;
+  let wasOn = false,
+    askedAt = -Infinity;
   /** A tag click waiting on the hub's search. @type {{ id: string, name: string, q: string, hub: any, was: any, at: number }|null} */
   let finding = null;
   /** @type {Map<string, string>} */
@@ -164,12 +207,22 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
    *  Admin's or a Moderator's (chatSafetyHost.js staffLineActs: dev, mod or Shadow Fang, never a Dungeon Master) - the true
    *  glyphs, which the issue keeps while Hide me is on. */
   const on = () => !!follow.panel() && staffLineActs(glyphs()).length > 0;
-  const admin = () => { const g = glyphs(); return Array.isArray(g) && g.includes('dev'); };
+  const admin = () => {
+    const g = glyphs();
+    return Array.isArray(g) && g.includes('dev');
+  };
   /** Every player the game receives: the followed room's while a follow is locked, else my own room's. */
-  const source = () => /** @type {any[]} */ (follow.locked() ? follow.peers() : follow.main()?.drawable?.() ?? []);
+  const source = () => /** @type {any[]} */ (follow.locked() ? follow.peers() : (follow.main()?.drawable?.() ?? []));
   /** The region's travellers by socket (their marks keep the account the bus named). @returns {Map<string, any>} */
-  const travellers = () => { const by = new Map(); for (const t of book?.live?.(Date.now()) ?? []) if (t?.id) by.set(t.id, t); return by; };
-  const ask = () => { askedAt = now(); follow.askTags(); };
+  const travellers = () => {
+    const by = new Map();
+    for (const t of book?.live?.(Date.now()) ?? []) if (t?.id) by.set(t.id, t);
+    return by;
+  };
+  const ask = () => {
+    askedAt = now();
+    follow.askTags();
+  };
   const okSub = (/** @type {unknown} */ s) => (typeof s === 'string' && ID_RE.test(s) ? s : null);
   /** A socket's account, as far as this page already knows it, in this order: the room's own word (a channel's hello
    *  names it; a place room's never does), then each chat link's - its room, then the hub's list of everyone - then the
@@ -183,22 +236,33 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
     }
     return okSub(tv.get(id)?.sub) ?? known.get(id) ?? null;
   }
-  /** STAFF-TAG-MENU (2026-10-24, mob: "when u lcick on someon", "i mean the pop up"): a picked player's menu - the chat
+  /** STAFF-TAG-MENU (2026-10-24): a picked player's menu - the chat
    *  line menu's staff acts (`acts`, scenes/chatSafetyHost.js playerActions), its Follow this view's own (`go`, which
    *  opens the panel's card); with no acts on this page, the follow at once, as before. */
-  function chosen(/** @type {string} */ id, /** @type {string} */ sub, /** @type {string} */ name, /** @type {{ x: number, y: number } | null} */ where = null) {
+  function chosen(
+    /** @type {string} */ id,
+    /** @type {string} */ sub,
+    /** @type {string} */ name,
+    /** @type {{ x: number, y: number } | null} */ where = null,
+  ) {
     const hint = groundOf(id);
-    const rows = [...(acts?.({ id, sub, name }, (/** @type {string} */ s) => { go(s, name, s === sub ? hint : null); }) ?? []), ...(acts ? dismissRow(sub) : [])];
+    const rows = [
+      ...(acts?.({ id, sub, name }, (/** @type {string} */ s) => {
+        go(s, name, s === sub ? hint : null);
+      }) ?? []),
+      ...(acts ? dismissRow(sub) : []),
+    ];
     if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));
     else go(sub, name, hint);
   }
-  /** FOLLOW-GROUND-HINT (mob: "following from ground does not work"): a player drawn on my own ground stands in my own
+  /** FOLLOW-GROUND-HINT: a player drawn on my own ground stands in my own
    *  room - its key, its layer and their socket there, for the follow to go to at once - else null (a traveller's mark,
    *  the flat map's dot, or the followed room's while a follow is locked: the hub says where those are). @param {string} id */
   function groundOf(id) {
     if (follow.locked()) return null;
     const m = follow.main?.();
-    if (typeof m?.room !== 'string' || !(m.drawable?.() ?? []).some((/** @type {any} */ p) => p?.id === id)) return null;
+    if (typeof m?.room !== 'string' || !(m.drawable?.() ?? []).some((/** @type {any} */ p) => p?.id === id))
+      return null;
     return { room: m.room, id, ly: m.layer ?? 0 };
   }
   /** Follow the account at once, and only when that took, hand the panel its card - to this page's own origin, never '*'. */
@@ -218,7 +282,10 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
     if (!sub && f === finding.was) return false;
     const { id, name } = finding;
     finding = null;
-    if (!sub) { say(noAccount(name)); return true; }
+    if (!sub) {
+      say(noAccount(name));
+      return true;
+    }
     if (known.size >= KNOWN_MAX) known.clear();
     known.set(id, sub);
     chosen(id, sub, name);
@@ -229,7 +296,8 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
    *  clicks never floods the relay's search bucket). An ask it refused is waited on all the same: an answer the box
    *  already has on its way lands, and none says no account found when the wait is out. False when no search can go. */
   function search(/** @type {string} */ id, /** @type {string} */ name) {
-    const hub = links()?.get?.('world'), q = name.trim().slice(0, HUB_FIND_Q_MAX).trim();   // askFind's own cut, so its answer names the same query
+    const hub = links()?.get?.('world'),
+      q = name.trim().slice(0, HUB_FIND_Q_MAX).trim(); // askFind's own cut, so its answer names the same query
     if (!q || typeof hub?.askFind !== 'function') return false;
     finding = { id, name, q: q.toLowerCase(), hub, was: hub.hubFound ?? null, at: now() };
     if (!answered()) hub.askFind(q);
@@ -241,7 +309,10 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
     const tv = travellers();
     const name = String(d?.name || tv.get(id)?.name || '');
     const sub = subOf(id, d, tv);
-    if (sub) { chosen(id, sub, name); return; }
+    if (sub) {
+      chosen(id, sub, name);
+      return;
+    }
     if (!search(id, name)) say(noAccount(name));
   }
   /** The monsters each player's game stands here, by their socket - the open air's puppets (`dev` only). */
@@ -257,12 +328,21 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
   const flatMap = () => {
     if (flat || !follow.map || typeof politicAt !== 'function') return flat;
     flat = createStaffFlatMapHost({
-      map: follow.map, politicAt, pixel: () => follow.pixel?.() ?? null, flagOf, words: (f) => staffTagWords(f, 0, false), doc,
-      choose: (id, sub, name, where) => { const s = okSub(sub) ?? subOf(id, null, travellers()); if (s) chosen(id, s, name, where); else if (!search(id, name)) say(noAccount(name)); },
+      map: follow.map,
+      politicAt,
+      pixel: () => follow.pixel?.() ?? null,
+      flagOf,
+      words: (f) => staffTagWords(f, 0, false),
+      doc,
+      choose: (id, sub, name, where) => {
+        const s = okSub(sub) ?? subOf(id, null, travellers());
+        if (s) chosen(id, s, name, where);
+        else if (!search(id, name)) say(noAccount(name));
+      },
     });
     return flat;
   };
-  /** FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card's pick "Hide it for
+  /** FLAG-DISMISS (the card's pick "Hide it for
    *  me only"): a flag this staff member dismissed is left off their own tags, lines and flat map - by what it says
    *  (`staffFlagKey`), so a new flag on that player shows again. Kept in this browser alone (nothing is sent: the flag stands
    *  for every other staff member), DISMISSED_FLAGS_MAX at most, the oldest let go first. */
@@ -272,19 +352,29 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
   const esp = () => follow.tags()?.esp !== false;
   const monsterLines = () => admin() && follow.tags()?.lines !== false;
   const flagOf = (/** @type {string|null} */ sub) => {
-    const f = sub ? follow.tags()?.flags?.get(sub) ?? null : null;
+    const f = sub ? (follow.tags()?.flags?.get(sub) ?? null) : null;
     return f && dismissed.get(/** @type {string} */ (sub)) === staffFlagKey(f) ? null : f;
   };
   /** FLAG-DISMISS: the tag menu's row for a flagged player. @param {string} sub */
   const dismissRow = (sub) => {
     const f = flagOf(sub);
-    return f ? [{ label: t('net.staffView.dismissFlag', 'Dismiss flag'), run: () => { dismissed.delete(sub); dismissed.set(sub, staffFlagKey(f)); saveDismissedFlags(win, dismissed); } }] : [];
+    return f
+      ? [
+          {
+            label: t('net.staffView.dismissFlag', 'Dismiss flag'),
+            run: () => {
+              dismissed.delete(sub);
+              dismissed.set(sub, staffFlagKey(f));
+              saveDismissedFlags(win, dismissed);
+            },
+          },
+        ]
+      : [];
   };
   /** STAFF-FLAG-LINES: a flag's line - a report waiting on review (any level) red, else none; STAFF-LINES-REVIEW: a watch
    *  alone draws none (it was gold). @param {any} flag */
   const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : null);
-  /** STAFF-FLAG-LINES (2026-10-24, mob: "need to port over my watch lines and review lines for flags in staff esp",
-   *  "helps flag bad players"): a line from the screen's middle to each flagged player in front of the eye, however far
+  /** STAFF-FLAG-LINES (2026-10-24): a line from the screen's middle to each flagged player in front of the eye, however far
    *  (the tags stop at the nameplate distance; a flag's line does not), STAFF_LINES_MAX at most with the others.
    *  @param {number[][]} segs @param {Array<{ at: number[], kind: number|null }>} who @param {(p: number[]) => any} at @param {number} w @param {number} h */
   function flagLines(segs, who, at, w, h) {
@@ -300,20 +390,42 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
      *  the tags; on the Overworld an Admin's monster lines (its tags are the travel view's marks). `covered` a window
      *  over the HUD. @param {any} proj @param {any} view @param {number[]} eye @param {boolean} [covered] */
     frame(proj, view, eye, covered = false) {
-      if (!on()) { if (wasOn) { wasOn = false; layer?.hide(); if (flat?.isOpen()) flat.toggle(); } return; }
-      flat?.frame();   // STAFF-FLATMAP: the sheet over everything while it is open
-      if (!wasOn) { wasOn = true; ask(); } else if (now() - askedAt >= STAFF_TAGS_ASK_MS) ask();
-      if (finding && !answered() && now() - finding.at >= STAFF_FIND_WAIT_MS) { const { name } = finding; finding = null; say(noAccount(name)); }
+      if (!on()) {
+        if (wasOn) {
+          wasOn = false;
+          layer?.hide();
+          if (flat?.isOpen()) flat.toggle();
+        }
+        return;
+      }
+      flat?.frame(); // STAFF-FLATMAP: the sheet over everything while it is open
+      if (!wasOn) {
+        wasOn = true;
+        ask();
+      } else if (now() - askedAt >= STAFF_TAGS_ASK_MS) ask();
+      if (finding && !answered() && now() - finding.at >= STAFF_FIND_WAIT_MS) {
+        const { name } = finding;
+        finding = null;
+        say(noAccount(name));
+      }
       layer ??= makeTags({ doc, onPick: pick });
-      const w = canvas?.clientWidth ?? 0, h = canvas?.clientHeight ?? 0;
-      if (covered || !proj || !view || !eye || !(w > 0) || !(h > 0)) { layer.hide(); return; }
-      const rect = worldViewportRect(w, h), pv = multiply(proj, view);
+      const w = canvas?.clientWidth ?? 0,
+        h = canvas?.clientHeight ?? 0;
+      if (covered || !proj || !view || !eye || !(w > 0) || !(h > 0)) {
+        layer.hide();
+        return;
+      }
+      const rect = worldViewportRect(w, h),
+        pv = multiply(proj, view);
       const at = (/** @type {number[]} */ p) => projectToScreen(p, w, h, proj, view, rect, false, pv);
       const peers = source();
       if (up()) {
         // STAFF-OW-TAGS: the Overworld's players as tags (marks() kept them this frame), nearest the eye first, crowds boxed
         const ow = [];
-        for (const m of owTags) { const p = at(m.at); if (p.front) ow.push({ m, p, r: Math.hypot(m.at[0] - eye[0], m.at[1] - eye[1], m.at[2] - eye[2]) }); }
+        for (const m of owTags) {
+          const p = at(m.at);
+          if (p.front) ow.push({ m, p, r: Math.hypot(m.at[0] - eye[0], m.at[1] - eye[1], m.at[2] - eye[2]) });
+        }
         ow.sort((a, b) => a.r - b.r || (a.m.id < b.m.id ? -1 : a.m.id > b.m.id ? 1 : 0));
         layer.render(crowded(ow.slice(0, STAFF_OW_TAGS_MAX)), Math.max(0, ow.length - STAFF_OW_TAGS_MAX));
         const segs = [];
@@ -325,18 +437,31 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
             const o = threatOf(f) && f.ai?.feet ? owners.get(f.puppet) : null;
             const q = o ? follow.toScene(o.shown) : null;
             if (!q) continue;
-            const a = at(f.ai.feet), b = at(q);
+            const a = at(f.ai.feet),
+              b = at(q);
             if (a.front && b.front) segs.push([a.x, a.y, b.x, b.y]);
           }
         }
-        flagLines(segs, owTags.map((m) => ({ at: m.at, kind: m.kind })), at, w, h);
+        flagLines(
+          segs,
+          owTags.map((m) => ({ at: m.at, kind: m.kind })),
+          at,
+          w,
+          h,
+        );
         layer.strokes(segs, w, h);
         return;
       }
-      if (!esp()) { layer.render([], 0); layer.strokes([], w, h); return; }
+      if (!esp()) {
+        layer.render([], 0);
+        layer.strokes([], w, h);
+        return;
+      }
       const dist = follow.tags()?.dist ?? NAMEPLATE_DIST;
-      const tv = travellers(), mons = admin() ? monstersBy() : null;
-      const near = [], flagged = [];
+      const tv = travellers(),
+        mons = admin() ? monstersBy() : null;
+      const near = [],
+        flagged = [];
       for (const d of peers) {
         if (!d?.shown || typeof d.id !== 'string') continue;
         const f = follow.toScene(d.shown);
@@ -354,41 +479,72 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
       const tagged = [];
       for (const { d, head } of near.slice(0, STAFF_TAGS_MAX)) {
         const p = at(head);
-        if (!p.front || p.depth < 1) continue;   // behind the eye, or the eye's own (a follow's target, whose eyes the camera is)
+        if (!p.front || p.depth < 1) continue; // behind the eye, or the eye's own (a follow's target, whose eyes the camera is)
         const flag = flagOf(subOf(d.id, d, tv));
-        tagged.push({ p, m: { id: d.id, name: String(d.name ?? ''), line: staffTagWords(flag, mons?.get(d.id) ?? 0, concealedPose(d)), level: flag?.level ?? '' } });
+        tagged.push({
+          p,
+          m: {
+            id: d.id,
+            name: String(d.name ?? ''),
+            line: staffTagWords(flag, mons?.get(d.id) ?? 0, concealedPose(d)),
+            level: flag?.level ?? '',
+          },
+        });
       }
       layer.render(crowded(tagged), Math.max(0, near.length - STAFF_TAGS_MAX));
     },
     /** THE OVERWORLD'S MARKS (the travel view's `marks`, scenes/travelViewMarks.js): a player's list goes back untouched.
      *  Staff's player marks leave the travel view's canvas for the staff tags (frame, `owTags`) - STAFF-OW-TAGS (2026-10-24,
-     *  mob: "overworl map is missing alot?", "like it show enemy to player but no players", "no esp no clickable tags", "no
-     *  menu pop up"): on the canvas the player's own Travellers and who switches hid them, and a crowd of them was one
+     *  ): on the canvas the player's own Travellers and who switches hid them, and a crowd of them was one
      *  unclickable "N travellers"; as tags every player stands whatever those switches say, wears their true name (a
      *  Stranger's too) and the flag, and a crowd is a box with a row a player, each a click. The players the travel view
      *  cut (past NAME_RANGE, concealed, veiled, hidden by the open zone) are tagged as well. @param {any[]} list */
     marks(list) {
-      if (!on() || !esp()) { owTags = []; return list; }
-      const peers = source(), tv = travellers(), mons = admin() ? monstersBy() : null;
+      if (!on() || !esp()) {
+        owTags = [];
+        return list;
+      }
+      const peers = source(),
+        tv = travellers(),
+        mons = admin() ? monstersBy() : null;
       const byId = new Map();
       for (const d of peers) if (d?.id) byId.set(d.id, d);
-      const seen = new Set(), out = [];
+      const seen = new Set(),
+        out = [];
       owTags = [];
       for (const m of list ?? []) {
         const id = markId(m?.key);
-        if (id == null) { out.push(m); continue; }
+        if (id == null) {
+          out.push(m);
+          continue;
+        }
         if (seen.has(id) || !Array.isArray(m.at)) continue;
         seen.add(id);
-        const d = byId.get(id) ?? null, t = tv.get(id) ?? null;
+        const d = byId.get(id) ?? null,
+          t = tv.get(id) ?? null;
         const flag = flagOf(subOf(id, d, tv));
-        owTags.push({ id, at: m.at, name: String(d?.name ?? t?.name ?? m.label ?? ''), line: staffTagWords(flag, mons?.get(id) ?? 0, concealedPose(d) || /^stranger\b/.test(m.kind ?? '')), level: flag?.level ?? '', kind: lineOf(flag) });
+        owTags.push({
+          id,
+          at: m.at,
+          name: String(d?.name ?? t?.name ?? m.label ?? ''),
+          line: staffTagWords(flag, mons?.get(id) ?? 0, concealedPose(d) || /^stranger\b/.test(m.kind ?? '')),
+          level: flag?.level ?? '',
+          kind: lineOf(flag),
+        });
       }
       for (const d of peers) {
         if (!d?.shown || typeof d.id !== 'string' || seen.has(d.id)) continue;
         const f = follow.toScene(d.shown);
         if (!f) continue;
         const flag = flagOf(subOf(d.id, d, tv));
-        owTags.push({ id: d.id, at: [f[0], f[1] + STAFF_TAG_HEAD_M, f[2]], name: String(d.name ?? ''), line: staffTagWords(flag, mons?.get(d.id) ?? 0, concealedPose(d)), level: flag?.level ?? '', kind: lineOf(flag) });
+        owTags.push({
+          id: d.id,
+          at: [f[0], f[1] + STAFF_TAG_HEAD_M, f[2]],
+          name: String(d.name ?? ''),
+          line: staffTagWords(flag, mons?.get(d.id) ?? 0, concealedPose(d)),
+          level: flag?.level ?? '',
+          kind: lineOf(flag),
+        });
       }
       return out;
     },
@@ -404,13 +560,29 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
      *  InputManager action: a default combo would make Shift a combo modifier for every player. @param {any} e */
     key(e) {
       // STAFF-FLATMAP: Shift+N, anywhere (the sheet needs no world under it) - open on the region stood in, or close
-      if (e?.code === 'KeyN' && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && e.isTrusted === true && on() && flatMap()) {
-        if (!e.repeat) { flat?.toggle(); ask(); }
+      if (
+        e?.code === 'KeyN' &&
+        e.shiftKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        e.isTrusted === true &&
+        on() &&
+        flatMap()
+      ) {
+        if (!e.repeat) {
+          flat?.toggle();
+          ask();
+        }
         return true;
       }
-      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isTrusted !== true || !on()) return false;
+      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isTrusted !== true || !on())
+        return false;
       if (!up() && follow.mode() !== 'exterior') return false;
-      if (!e.repeat) { overworld(); ask(); }
+      if (!e.repeat) {
+        overworld();
+        ask();
+      }
       return true;
     },
   };

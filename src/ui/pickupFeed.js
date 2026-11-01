@@ -39,22 +39,22 @@
 // a card stands, so a plaque that grows or shrinks as the player looks along a pile carries the feed with it rather
 // than covering it. tools/pickupFeedProbe.mjs photographed the first cut's fourth card under the hotbar at 1280x800.
 import { isEnhanced } from '../systems/uiSkin.js';
-import { itemNameParts } from '../systems/item/itemInfo.js';   // RF6: the long name's name part - the word the plaque's row and the take's line both wear
-import { rarityAttr } from '../systems/loot/lootRarity.js';   // LR1: the tier the plaque's row wears
-import { announces, isAcquired } from '../systems/acquireWatch.js';   // LOOT-BANNER: a new rare-or-better piece is the banner's
+import { itemNameParts } from '../systems/item/itemInfo.js'; // RF6: the long name's name part - the word the plaque's row and the take's line both wear
+import { rarityAttr } from '../systems/loot/lootRarity.js'; // LR1: the tier the plaque's row wears
+import { announces, isAcquired } from '../systems/acquireWatch.js'; // LOOT-BANNER: a new rare-or-better piece is the banner's
 import { isGoldPieces } from '../systems/inventory.js';
 import { inventoryItemImage } from '../systems/item/itemTemplates.js';
-import { requestFittedIcon, fittedImg } from './textureCanvas.js';   // UI1: the pack's own fitted, cached icon door - decoded once, never per frame
+import { requestFittedIcon, fittedImg } from './textureCanvas.js'; // UI1: the pack's own fitted, cached icon door - decoded once, never per frame
 import { screenDpr } from './iconFit.js';
 import { PIXEL_STACK, PIXEL_FONT_CSS, PIXELIFY_FIVE_FACE, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';
-import { rarityVarsCss } from './enhanced/enhancedPlusStyle.js';   // RARITY-UI: the tiers' colours, the one table
-import { FRAME_TONES, PLUS_THEMES, hudVeil, HUD_VEIL_LIGHT } from './enhanced/enhancedFrame.js';   // LOOT-BANNER: the veil's law, shared
+import { rarityVarsCss } from './enhanced/enhancedPlusStyle.js'; // RARITY-UI: the tiers' colours, the one table
+import { FRAME_TONES, PLUS_THEMES, hudVeil, HUD_VEIL_LIGHT } from './enhanced/enhancedFrame.js'; // LOOT-BANNER: the veil's law, shared
 import { midScreenText } from './midScreenText.js';
 import { ENHANCED_MID_TEXT_ID, midTextTopPx } from './enhanced/enhancedHudText.js';
 import { crosshairCentreY, CROSSHAIR_ARM } from './hud/hudCrosshair.js';
-import { hudReticle } from './hud/hud.js';   // the reticle's own two terms, from their home (the plaque's anchor reads the same)
+import { hudReticle } from './hud/hud.js'; // the reticle's own two terms, from their home (the plaque's anchor reads the same)
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';
-import { haulWords, HAUL_ICON_BOX, LODE_ICON_BOX } from './haulCards.js';   // HAUL-CARDS: a gather's, a strike's and a claim's cards - their words
+import { haulWords, HAUL_ICON_BOX, LODE_ICON_BOX } from './haulCards.js'; // HAUL-CARDS: a gather's, a strike's and a claim's cards - their words
 
 /** Four cards at most (the oldest goes past four). */
 export const PICKUP_FEED_MAX = 4;
@@ -84,7 +84,11 @@ export const PICKUP_FEED_STYLE_ID = 'enhanced-pickupfeed-style';
  *  `.wplaque`, `.on` while it shows) and its stat panel (absolutely placed, so it can reach past the plaque's own foot),
  *  and the profession act's panel (ui/professions/profHud.js `.prof-meter`, hidden between acts). The mid-screen label is the
  *  fourth, while it says something - measured by its id below. */
-export const PICKUP_KEEP_ABOVE = Object.freeze(['.wplaque.on', '.wplaque.on .wplaque-stats', '.prof-meter:not([hidden])']);
+export const PICKUP_KEEP_ABOVE = Object.freeze([
+  '.wplaque.on',
+  '.wplaque.on .wplaque-stats',
+  '.prof-meter:not([hidden])',
+]);
 /** WHAT STANDS AT THE FOOT, which the feed stands above: the HUD's bottom block (ui/enhanced/enhancedHud.js `.hud-bottom` - the
  *  vitals and the hotbar) and a profession's prompt over it (ui/professions/profHud.js `.prof-prompt`, empty between nodes). A
  *  docked large HUD's bar is the third, read off the reticle's own terms (ui/hud/hud.js hudReticle). */
@@ -108,15 +112,40 @@ export function pickupEntry(item, count = 1, identity = undefined) {
   if (!item) return null;
   const n = Math.max(0, Math.trunc(Number(count) || 0));
   if (!n) return null;
-  if (isGoldPieces(item)) return { key: 'gold', name: 'Gold', rarity: null, exalted: false, gold: true, count: n, image: imageOf(item, identity) };
+  if (isGoldPieces(item))
+    return {
+      key: 'gold',
+      name: 'Gold',
+      rarity: null,
+      exalted: false,
+      gold: true,
+      count: n,
+      image: imageOf(item, identity),
+    };
   let name = '';
-  try { name = itemNameParts(item).name; } catch { name = ''; }
+  try {
+    name = itemNameParts(item).name;
+  } catch {
+    name = '';
+  }
   name = name || item.name || 'Item';
   const rarity = rarityAttr(item);
-  return { key: `item\u0002${name}\u0002${rarity ?? ''}`, name, rarity, exalted: rarity === 'legendary' && item.exalted === true, gold: false, count: n, image: imageOf(item, identity) };
+  return {
+    key: `item\u0002${name}\u0002${rarity ?? ''}`,
+    name,
+    rarity,
+    exalted: rarity === 'legendary' && item.exalted === true,
+    gold: false,
+    count: n,
+    image: imageOf(item, identity),
+  };
 }
 function imageOf(item, identity) {
-  try { return inventoryItemImage(item, identity) ?? null; } catch { return null; }
+  try {
+    return inventoryItemImage(item, identity) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -129,7 +158,11 @@ function imageOf(item, identity) {
  *    centre.
  *  - Past `max`, the oldest go.
  */
-export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HOLD_MS, fade = PICKUP_FEED_FADE_MS } = {}) {
+export function createPickupQueue({
+  max = PICKUP_FEED_MAX,
+  hold = PICKUP_FEED_HOLD_MS,
+  fade = PICKUP_FEED_FADE_MS,
+} = {}) {
   // HAUL-CARDS: a card may carry its own hold (a gather's says more than a pickup's)
   const holdOf = (c) => (Number.isFinite(c.hold) && c.hold > 0 ? c.hold : hold);
   let seq = 0;
@@ -153,7 +186,11 @@ export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HO
       for (const e of entries ?? []) {
         if (!e || !(e.count > 0) || !e.key) continue;
         const mine = block.find((c) => c.key === e.key);
-        if (mine) { mine.count += e.count; merge(mine, e); continue; }
+        if (mine) {
+          mine.count += e.count;
+          merge(mine, e);
+          continue;
+        }
         const i = cards.findIndex((c) => c.key === e.key);
         if (i >= 0) {
           const c = cards.splice(i, 1)[0];
@@ -171,9 +208,15 @@ export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HO
       return true;
     },
     tick,
-    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) })); },
-    get size() { return cards.length; },
-    clear() { cards = []; },
+    standing(now) {
+      return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) }));
+    },
+    get size() {
+      return cards.length;
+    },
+    clear() {
+      cards = [];
+    },
   };
 }
 
@@ -185,11 +228,23 @@ export function createPickupQueue({ max = PICKUP_FEED_MAX, hold = PICKUP_FEED_HO
  * card shows the newest ones (they come first) and lets the oldest - the next to fade anyway - wait unseen. One card
  * always shows. `cardH` and `cardGap` are one card's height and the space between two, as drawn. CSS pixels.
  */
-export function pickupFeedLayout({ base, upper = 0, lower = Infinity, cardH = 0, cardGap = 0, count = 0, heights = null } = {}) {
+export function pickupFeedLayout({
+  base,
+  upper = 0,
+  lower = Infinity,
+  cardH = 0,
+  cardGap = 0,
+  count = 0,
+  heights = null,
+} = {}) {
   // HAUL-CARDS: a gather's card stands taller than a pickup's - each card its own height where the face measured them
   // (`heights`, newest first), else every card the first's
   const hOf = (i) => (Array.isArray(heights) && Number.isFinite(heights[i]) ? heights[i] : cardH);
-  const height = (n) => { let h = 0; for (let i = 0; i < n; i++) h += hOf(i); return n > 0 ? h + (n - 1) * cardGap : 0; };
+  const height = (n) => {
+    let h = 0;
+    for (let i = 0; i < n; i++) h += hOf(i);
+    return n > 0 ? h + (n - 1) * cardGap : 0;
+  };
   const up = Number.isFinite(upper) ? upper : 0;
   let top = Math.max(Number.isFinite(base) ? base : up, up);
   let shown = Math.max(0, Math.trunc(count) || 0);
@@ -212,8 +267,13 @@ const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2)
  *  HUD_VEIL_LIGHT (Stone's panel, 0.10) dropped them to 2:1; such a theme's feed wears its ink (ui/enhanced/enhancedFrame.js hudVeil -
  *  moved there at LOOT-BANNER, its second reader). */
 export const PICKUP_VEIL_LIGHT = HUD_VEIL_LIGHT;
-const THEME_TINTS = Object.entries(PLUS_THEMES).filter(([, th]) => th.panel)
-  .map(([id, th]) => `:root[data-plus-theme="${id}"] .pickfeed-card { background-color: rgba(${rgbOf(hudVeil(th))}, 0.9); }`).join('\n');
+const THEME_TINTS = Object.entries(PLUS_THEMES)
+  .filter(([, th]) => th.panel)
+  .map(
+    ([id, th]) =>
+      `:root[data-plus-theme="${id}"] .pickfeed-card { background-color: rgba(${rgbOf(hudVeil(th))}, 0.9); }`,
+  )
+  .join('\n');
 
 export const PICKUP_FEED_CSS = `${PIXELIFY_FIVE_FACE}
 /* PICKUP-FEED: what a press put in the pack, under the crosshair (ui/pickupFeed.js) */
@@ -315,7 +375,8 @@ let node = null;
 /** card id -> { el, name, count, bumps, fading } - what is drawn, so a still card costs nothing */
 const drawn = new Map();
 let shownOrder = '';
-let lastTop = null, lastScale = null;
+let lastTop = null,
+  lastScale = null;
 let _watchdog = null;
 let _ticking = false;
 /** The ticker's generation: a frame asked for before a teardown (or a test's new frame source) is not this ticker's,
@@ -325,21 +386,33 @@ let _faultSaid = false;
 let _now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 let _raf = (fn) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(fn) : null);
 let _schedule = (fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null);
-let _cancel = (t) => { if (t != null && typeof clearTimeout === 'function') clearTimeout(t); };
+let _cancel = (t) => {
+  if (t != null && typeof clearTimeout === 'function') clearTimeout(t);
+};
 /** An icon's picture for a card: `{ src, w, h, smooth }` or null while it is made (`onReady` fires once when it lands)
  *  and for a thing with no picture. The pack's own door (textureCanvas.requestFittedIcon over inventoryItemImage's
  *  address) - cached by its name, decoded once. */
 let _icon = (line, onReady) => {
   const img = line.image;
   if (!img || img.archive == null) return null;
-  const box = line.lode ? LODE_ICON_BOX : line.haul ? HAUL_ICON_BOX : PICKUP_ICON_BOX;   // HAUL-CARDS: fitted to the card's own box
-  return requestFittedIcon(img.archive, img.record, { box, dpr: screenDpr(), dye: img.dye, dyeTarget: img.dyeTarget, onReady });
+  const box = line.lode ? LODE_ICON_BOX : line.haul ? HAUL_ICON_BOX : PICKUP_ICON_BOX; // HAUL-CARDS: fitted to the card's own box
+  return requestFittedIcon(img.archive, img.record, {
+    box,
+    dpr: screenDpr(),
+    dye: img.dye,
+    dyeTarget: img.dyeTarget,
+    onReady,
+  });
 };
 
 /** Tests and the probe: the clock, the frame source, the watchdog's timers and the icon door. */
 export function _setPickupFeedForTests({ now, raf, schedule, cancel, icon } = {}) {
   if (now !== undefined) _now = now ?? (() => Date.now());
-  if (raf !== undefined) { _raf = raf ?? (() => null); _ticking = false; _tickGen += 1; }
+  if (raf !== undefined) {
+    _raf = raf ?? (() => null);
+    _ticking = false;
+    _tickGen += 1;
+  }
   if (schedule !== undefined) _schedule = schedule;
   if (cancel !== undefined) _cancel = cancel;
   if (icon !== undefined) _icon = icon;
@@ -360,7 +433,7 @@ function ensure(d) {
   node = d.createElement('div');
   node.id = PICKUP_FEED_ID;
   node.className = 'pickfeed';
-  node.setAttribute('aria-hidden', 'true');   // the HUD's text surfaces are not a reading order (the mid-screen label's own)
+  node.setAttribute('aria-hidden', 'true'); // the HUD's text surfaces are not a reading order (the mid-screen label's own)
   d.body.append(node);
   return node;
 }
@@ -380,7 +453,10 @@ export function showPickups(moved, identity = undefined) {
     // (ui/lootBanner.js, the next frame) - it takes no card here, and the take still says no line for it
     const fresh = (m) => !!m?.item && announces(m.item) && !isAcquired(m.item);
     const banners = (moved ?? []).some(fresh);
-    const entries = (moved ?? []).filter((m) => !fresh(m)).map((m) => pickupEntry(m?.item, m?.count, identity)).filter(Boolean);
+    const entries = (moved ?? [])
+      .filter((m) => !fresh(m))
+      .map((m) => pickupEntry(m?.item, m?.count, identity))
+      .filter(Boolean);
     if (!entries.length) return banners;
     if (!queue.push(entries, _now())) return banners;
     ensure(d);
@@ -388,7 +464,10 @@ export function showPickups(moved, identity = undefined) {
     return true;
   } catch (e) {
     // A face that cannot draw shows nothing, and the take says its line: a pickup is never lost to a draw.
-    if (!_faultSaid) { _faultSaid = true; console.warn(`[pickup-feed] the cards could not be drawn; the line is said instead: ${e?.message ?? e}`); }
+    if (!_faultSaid) {
+      _faultSaid = true;
+      console.warn(`[pickup-feed] the cards could not be drawn; the line is said instead: ${e?.message ?? e}`);
+    }
     return false;
   }
 }
@@ -412,7 +491,10 @@ export function showHaul(entries) {
     draw();
     return true;
   } catch (e) {
-    if (!_faultSaid) { _faultSaid = true; console.warn(`[pickup-feed] the haul's cards could not be drawn; the lines are said instead: ${e?.message ?? e}`); }
+    if (!_faultSaid) {
+      _faultSaid = true;
+      console.warn(`[pickup-feed] the haul's cards could not be drawn; the lines are said instead: ${e?.message ?? e}`);
+    }
     return false;
   }
 }
@@ -429,14 +511,29 @@ function draw() {
   _watchdog = null;
   if (!lines.length) return;
   place(lines.length);
-  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; clearPickupFeed(); }, { schedule: _schedule, cancel: _cancel });
-  if (!_ticking) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; }
+  _watchdog = armDrawWatchdog(
+    PICKUP_WATCHDOG_MS,
+    () => {
+      _watchdog = null;
+      clearPickupFeed();
+    },
+    { schedule: _schedule, cancel: _cancel },
+  );
+  if (!_ticking) {
+    const gen = _tickGen;
+    _ticking = _raf(() => frame(gen)) != null;
+  }
 }
 function frame(gen) {
   if (gen !== _tickGen) return;
   _ticking = false;
-  try { draw(); } catch (e) {
-    if (!_faultSaid) { _faultSaid = true; console.warn(`[pickup-feed] a frame failed; the watchdog takes the cards down: ${e?.message ?? e}`); }
+  try {
+    draw();
+  } catch (e) {
+    if (!_faultSaid) {
+      _faultSaid = true;
+      console.warn(`[pickup-feed] a frame failed; the watchdog takes the cards down: ${e?.message ?? e}`);
+    }
   }
 }
 
@@ -444,13 +541,29 @@ function paint(lines) {
   const d = doc();
   if (!d) return;
   const live = new Set(lines.map((l) => l.id));
-  for (const [id, c] of drawn) if (!live.has(id)) { try { c.el.remove(); } catch { /* already gone */ } drawn.delete(id); }
+  for (const [id, c] of drawn)
+    if (!live.has(id)) {
+      try {
+        c.el.remove();
+      } catch {
+        /* already gone */
+      }
+      drawn.delete(id);
+    }
   for (const l of lines) {
     let c = drawn.get(l.id);
-    if (!c) { c = build(d, l); drawn.set(l.id, c); }
+    if (!c) {
+      c = build(d, l);
+      drawn.set(l.id, c);
+    }
     if (c.haul) {
       // HAUL-CARDS: a bump rewrites the card's words (its count, its Stores, its XP and the bar), the "+N" pops
-      if (c.bumps !== l.bumps) { c.bumps = l.bumps; c.count = l.count; sayHaul(c, l); pop(c.plus, l.bumps); }
+      if (c.bumps !== l.bumps) {
+        c.bumps = l.bumps;
+        c.count = l.count;
+        sayHaul(c, l);
+        pop(c.plus, l.bumps);
+      }
     } else if (c.count !== l.count) {
       c.count = l.count;
       c.name.textContent = nameText(l);
@@ -462,7 +575,10 @@ function paint(lines) {
       target.classList.remove('bump-a', 'bump-b');
       target.classList.add(l.bumps % 2 ? 'bump-a' : 'bump-b');
     }
-    if (c.fading !== l.fading) { c.fading = l.fading; c.el.classList.toggle('fading', l.fading); }
+    if (c.fading !== l.fading) {
+      c.fading = l.fading;
+      c.el.classList.toggle('fading', l.fading);
+    }
   }
   // the order: newest first. Rewritten only when it changed - a still feed moves no node (a moved node restarts its
   // entrance in some engines).
@@ -476,31 +592,58 @@ function paint(lines) {
   }
 }
 
-const pop = (target, bumps) => { if (!target) return; target.classList.remove('bump-a', 'bump-b'); target.classList.add(bumps % 2 ? 'bump-a' : 'bump-b'); };
-const span = (d, cls, text = '') => { const s = d.createElement('span'); s.className = cls; s.textContent = text; return s; };
+const pop = (target, bumps) => {
+  if (!target) return;
+  target.classList.remove('bump-a', 'bump-b');
+  target.classList.add(bumps % 2 ? 'bump-a' : 'bump-b');
+};
+const span = (d, cls, text = '') => {
+  const s = d.createElement('span');
+  s.className = cls;
+  s.textContent = text;
+  return s;
+};
 /** HAUL-CARDS: a gather's, a strike's or a claim's card, built once - its words written by sayHaul, now and at a bump. */
 function buildHaul(d, l) {
   const el = d.createElement('div');
   el.className = `pickfeed-card haul is-${l.lode ? 'lode' : l.haul === 'note' ? 'note' : l.tone === 'treasury' ? 'treasury' : l.haul === 'silver' ? 'silver' : 'stores'}`;
   if (l.rarity) el.dataset.rarity = l.rarity;
   const c = { el, haul: true, count: l.count, bumps: l.bumps, fading: false };
-  if (l.haul === 'note') { c.note = span(d, 'haul-note'); el.append(c.note); sayHaul(c, l); return c; }
+  if (l.haul === 'note') {
+    c.note = span(d, 'haul-note');
+    el.append(c.note);
+    sayHaul(c, l);
+    return c;
+  }
   c.icon = span(d, 'pickfeed-icon');
   if (l.haul === 'silver') c.icon.append(span(d, l.tone === 'treasury' ? 'haul-chest' : 'haul-coin'));
   const body = d.createElement('div');
   body.className = 'haul-body';
-  c.head = d.createElement('div'); c.head.className = 'haul-head';
-  const line = d.createElement('div'); line.className = 'haul-line';
-  c.plus = span(d, 'pickfeed-plus'); c.name = span(d, 'pickfeed-name'); c.sub = span(d, 'haul-sub'); c.tag = span(d, 'haul-tag'); c.end = span(d, 'haul-end');
+  c.head = d.createElement('div');
+  c.head.className = 'haul-head';
+  const line = d.createElement('div');
+  line.className = 'haul-line';
+  c.plus = span(d, 'pickfeed-plus');
+  c.name = span(d, 'pickfeed-name');
+  c.sub = span(d, 'haul-sub');
+  c.tag = span(d, 'haul-tag');
+  c.end = span(d, 'haul-end');
   line.append(c.plus, c.name, c.sub, c.tag, c.end);
-  c.row = d.createElement('div'); c.row.className = 'haul-row';
-  c.rowText = span(d, 'haul-text'); c.bar = span(d, 'haul-bar'); c.fill = span(d, 'haul-fill'); c.rowEnd = span(d, 'haul-rank');
+  c.row = d.createElement('div');
+  c.row.className = 'haul-row';
+  c.rowText = span(d, 'haul-text');
+  c.bar = span(d, 'haul-bar');
+  c.fill = span(d, 'haul-fill');
+  c.rowEnd = span(d, 'haul-rank');
   c.bar.append(c.fill);
   c.row.append(c.rowText, c.bar, c.rowEnd);
   body.append(c.head, line, c.row);
   if (l.lode) {
-    c.lode = d.createElement('div'); c.lode.className = 'haul-row haul-lode';
-    c.lodeSilver = span(d, 'haul-silver'); c.lodeHeld = span(d, 'haul-sub'); c.miners = span(d, 'haul-end');   // AUDIT HAUL-CARDS B4: the purse beside the silver
+    c.lode = d.createElement('div');
+    c.lode.className = 'haul-row haul-lode';
+    c.lodeSilver = span(d, 'haul-silver');
+    c.lodeHeld = span(d, 'haul-sub');
+    c.miners = span(d, 'haul-end'); // AUDIT HAUL-CARDS B4: the purse beside the silver
     c.lodeCoin = span(d, 'haul-coin');
     c.lode.append(c.lodeCoin, c.lodeSilver, c.lodeHeld, c.miners);
     body.append(c.lode);
@@ -513,7 +656,10 @@ function buildHaul(d, l) {
 /** A haul card's words, written (haulCards.js haulWords - the pins read the same words). */
 function sayHaul(c, l) {
   const w = haulWords(l);
-  if (c.note) { c.note.textContent = w.note; return; }
+  if (c.note) {
+    c.note.textContent = w.note;
+    return;
+  }
   c.head.textContent = w.head ?? '';
   c.plus.textContent = w.plus;
   c.name.textContent = w.name;
@@ -526,11 +672,16 @@ function sayHaul(c, l) {
     c.fill.style.width = `${Math.round(w.row.fill * 100)}%`;
     c.rowEnd.textContent = w.row.end ?? '';
   }
-  if (c.lode && w.lode) { c.lodeSilver.textContent = w.lode.silver; c.lodeHeld.textContent = w.lode.held ?? ''; c.miners.textContent = w.lode.miners; c.lodeCoin.hidden = !w.lode.silver; }
+  if (c.lode && w.lode) {
+    c.lodeSilver.textContent = w.lode.silver;
+    c.lodeHeld.textContent = w.lode.held ?? '';
+    c.miners.textContent = w.lode.miners;
+    c.lodeCoin.hidden = !w.lode.silver;
+  }
 }
 
 function build(d, l) {
-  if (l.haul) return buildHaul(d, l);   // HAUL-CARDS
+  if (l.haul) return buildHaul(d, l); // HAUL-CARDS
   const el = d.createElement('div');
   el.className = 'pickfeed-card';
   if (l.gold) el.classList.add('is-gold');
@@ -569,10 +720,29 @@ function setIcon(c, l) {
     return true;
   };
   let pic = null;
-  try { pic = _icon(l, () => { if (drawn.get(l.id) === c) { try { put(_icon(l, null)); } catch { /* the words stand */ } } }); } catch { pic = null; }
+  try {
+    pic = _icon(l, () => {
+      if (drawn.get(l.id) === c) {
+        try {
+          put(_icon(l, null));
+        } catch {
+          /* the words stand */
+        }
+      }
+    });
+  } catch {
+    pic = null;
+  }
   let shown = false;
-  try { shown = put(pic); } catch { shown = false; }
-  if (!shown && !l.image) { c.icon.remove(); c.el.classList.add('no-icon'); }
+  try {
+    shown = put(pic);
+  } catch {
+    shown = false;
+  }
+  if (!shown && !l.image) {
+    c.icon.remove();
+    c.el.classList.add('no-icon');
+  }
 }
 
 /** Where the feed stands this frame, and how many cards fit (see the header and pickupFeedLayout). Reads every rect it
@@ -581,7 +751,8 @@ function place(count) {
   const d = doc();
   if (!d || !node) return;
   const win = globalThis;
-  const vw = Number(win.innerWidth) || 0, vh = Number(win.innerHeight) || 0;
+  const vw = Number(win.innerWidth) || 0,
+    vh = Number(win.innerHeight) || 0;
   const scale = Number.parseFloat(d.querySelector?.('.hud')?.style?.getPropertyValue?.('--hud-scale')) || 1;
   // the game's canvas is the window's whole size (play/index.html #c), so the native fit is the window's: the classic
   // label's top edge off the same floored arithmetic it is drawn by, at its own native y (a docked large HUD lifts it),
@@ -593,15 +764,24 @@ function place(count) {
   const { scale: reticle, largeHudHeight } = hudReticle(canvas);
   const gap = PICKUP_FEED_GAP * scale;
   let upper = (crosshairCentreY(canvas.height, largeHudHeight) + CROSSHAIR_ARM * reticle) / px + PICKUP_CROSS_GAP;
-  const rect = (n) => { const r = n?.getBoundingClientRect?.(); return r && r.height > 0 ? r : null; };
-  for (const sel of PICKUP_KEEP_ABOVE) { const r = rect(d.querySelector?.(sel)); if (r) upper = Math.max(upper, r.bottom + gap); }
+  const rect = (n) => {
+    const r = n?.getBoundingClientRect?.();
+    return r && r.height > 0 ? r : null;
+  };
+  for (const sel of PICKUP_KEEP_ABOVE) {
+    const r = rect(d.querySelector?.(sel));
+    if (r) upper = Math.max(upper, r.bottom + gap);
+  }
   const mid = d.getElementById?.(ENHANCED_MID_TEXT_ID);
-  if (mid && mid.style?.display !== 'none' && mid.textContent) { const r = rect(mid); if (r) upper = Math.max(upper, r.bottom + gap); }
+  if (mid && mid.style?.display !== 'none' && mid.textContent) {
+    const r = rect(mid);
+    if (r) upper = Math.max(upper, r.bottom + gap);
+  }
   let lower = vh - PICKUP_FEED_MARGIN;
   if (largeHudHeight > 0) lower = Math.min(lower, (canvas.height - largeHudHeight) / px - gap);
   for (const sel of PICKUP_KEEP_BELOW) {
     const n = d.querySelector?.(sel);
-    const r = n?.textContent ? rect(n) : null;   // an empty prompt holds no room
+    const r = n?.textContent ? rect(n) : null; // an empty prompt holds no room
     if (r) lower = Math.min(lower, r.top - gap);
   }
   const first = rect(node.firstElementChild);
@@ -610,15 +790,30 @@ function place(count) {
   // card out of the band fitted the next frame, stood, and went again, a flicker the whole of its hold
   const heights = [];
   for (let i = 0; i < count && i < (node.children?.length ?? 0); i++) {
-    const kid = node.children[i], r = rect(kid);
+    const kid = node.children[i],
+      r = rect(kid);
     if (r) kid._pfH = r.height;
     heights.push(r?.height ?? kid._pfH ?? first?.height ?? 0);
   }
-  const { top, shown } = pickupFeedLayout({ base, upper, lower, cardH: first?.height ?? 0, cardGap: PICKUP_CARD_GAP * scale, count, heights });
+  const { top, shown } = pickupFeedLayout({
+    base,
+    upper,
+    lower,
+    cardH: first?.height ?? 0,
+    cardGap: PICKUP_CARD_GAP * scale,
+    count,
+    heights,
+  });
   const t = `${top.toFixed(1)}px`;
-  if (t !== lastTop) { lastTop = t; node.style.setProperty('--pf-top', t); }
+  if (t !== lastTop) {
+    lastTop = t;
+    node.style.setProperty('--pf-top', t);
+  }
   const s = String(scale);
-  if (s !== lastScale) { lastScale = s; node.style.setProperty('--hud-scale', s); }
+  if (s !== lastScale) {
+    lastScale = s;
+    node.style.setProperty('--hud-scale', s);
+  }
   // the oldest wait unseen when the band is short (they are the next to fade): a class, so the sheet owns the look
   const kids = node.children ?? [];
   for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('pf-over', i >= shown);
@@ -629,7 +824,13 @@ export function clearPickupFeed() {
   disarmDraw(_watchdog);
   _watchdog = null;
   queue.clear();
-  for (const c of drawn.values()) { try { c.el.remove(); } catch { /* already gone */ } }
+  for (const c of drawn.values()) {
+    try {
+      c.el.remove();
+    } catch {
+      /* already gone */
+    }
+  }
   drawn.clear();
   shownOrder = '';
 }
@@ -638,7 +839,11 @@ export function clearPickupFeed() {
  *  cards, the node, the watchdog. The sheet stays, as every injected sheet in the skin does. */
 export function destroyPickupFeed() {
   clearPickupFeed();
-  try { node?.remove(); } catch { /* already gone */ }
+  try {
+    node?.remove();
+  } catch {
+    /* already gone */
+  }
   node = null;
   lastTop = null;
   lastScale = null;

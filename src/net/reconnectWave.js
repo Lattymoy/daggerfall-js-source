@@ -34,18 +34,23 @@ export function waveSpreadMs(online) {
  *  page's sessions share one, online.js steadyNow). `online()` is the browser's word (navigator.onLine). */
 export function reconnectWave({ rand = Math.random, online = () => globalThis.navigator?.onLine !== false } = {}) {
   let count = 0;
-  const drops = [];   // when each recent drop happened (pruned past the window of the newest)
-  let wave = null;    // { at, offset } - the wave in hand: its first drop, and this page's one offset for it
+  const drops = []; // when each recent drop happened (pruned past the window of the newest)
+  let wave = null; // { at, offset } - the wave in hand: its first drop, and this page's one offset for it
   return {
     /** The hub's count of everyone online (the hub link's welcome, joins and leaves). */
-    noteOnline(n) { if (Number.isSafeInteger(n) && n >= 0) count = n; },
-    get online() { return count; },
+    noteOnline(n) {
+      if (Number.isSafeInteger(n) && n >= 0) count = n;
+    },
+    get online() {
+      return count;
+    },
     /** An open socket of this page closed at `t`, not by us and not refused: a drop. Answers `t`, its retry's key. */
     dropped(t) {
-      if (!online()) return t;   // the browser lost its network - a blip, not the relay's wave
+      if (!online()) return t; // the browser lost its network - a blip, not the relay's wave
       while (drops.length && t - drops[0] > WAVE_WINDOW_MS) drops.shift();
       drops.push(t);
-      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS)) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };
+      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS))
+        wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };
       return t;
     },
     /** A socket that dropped at `droppedAt` is about to retry at `t`: the time it should retry instead, or null to go

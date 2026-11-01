@@ -2,8 +2,8 @@
   {
     "name": "SCALE5c-seventeenth",
     "file": "src/net/hubShards.js",
-    "old": "Number(m[1]) < HUB_SHARDS &&",
-    "new": "Number(m[1]) <= HUB_SHARDS &&",
+    "old": "  return !!m && Number(m[1]) < HUB_SHARDS && String(Number(m[1])) === m[1];",
+    "new": "  return !!m && Number(m[1]) <= HUB_SHARDS && String(Number(m[1])) === m[1];",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SCALE5c-leading-zero",
     "file": "src/net/hubShards.js",
-    "old": " && String(Number(m[1])) === m[1];",
-    "new": ";",
+    "old": "  return !!m && Number(m[1]) < HUB_SHARDS && String(Number(m[1])) === m[1];",
+    "new": "  return !!m && Number(m[1]) < HUB_SHARDS;",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE5c-subject-unread",
     "file": "src/net/hubShards.js",
-    "old": "chatHubRoom(shardHash(sub) % HUB_SHARDS)",
-    "new": "chatHubRoom(0)",
+    "old": "export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRoom(shardHash(sub) % HUB_SHARDS) : null);",
+    "new": "export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRoom(0) : null);",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SCALE5c-hash-prime",
     "file": "src/net/hubShards.js",
-    "old": "h = Math.imul(h, 0x01000193) >>> 0;",
-    "new": "h = Math.imul(h, 0x01000197) >>> 0;",
+    "old": "    h = Math.imul(h, 0x01000193) >>> 0;",
+    "new": "    h = Math.imul(h, 0x01000197) >>> 0;",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SCALE5c-hop-anywhere",
     "file": "src/net/hubShards.js",
-    "old": "m.t === 'hub' && (isChannelShard(m.key) || isChannelBus(m.key)) ? m.key : null",
-    "new": "m.t === 'hub' && typeof m.key === 'string' ? m.key : null",
+    "old": "  m && typeof m === 'object' && m.t === 'hub' && (isChannelShard(m.key) || isChannelBus(m.key)) ? m.key : null; // SCALE5c part two: a region's shard or its own channel too",
+    "new": "  m && typeof m === 'object' && m.t === 'hub' && typeof m.key === 'string' ? m.key : null; // SCALE5c part two: a region's shard or its own channel too",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SCALE5c-fold-spaces",
     "file": "src/net/hubShards.js",
-    "old": "replace(/['’\\s-]/g, '')",
-    "new": "replace(/['’-]/g, '')",
+    "old": "    .replace(/['’\\s-]/g, '');",
+    "new": "    .replace(/['’-]/g, '');",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SCALE5c-pose-handed-up",
     "file": "src/net/hubShards.js",
-    "old": " || s.startsWith('{\"t\":\"pose\"') || s.startsWith('{\"t\":\"lease\"');",
-    "new": " || s.startsWith('{\"t\":\"lease\"');",
+    "old": "  s.startsWith('{\"t\":\"hello\"') ||\n  s.startsWith('{\"t\":\"ping\"') ||\n  s.startsWith('{\"t\":\"pose\"') ||\n  s.startsWith('{\"t\":\"lease\"'); // LEASE1: and its lease - a hub shard mints one, a region's shard reads one (net/roomLease.js)",
+    "new": "  s.startsWith('{\"t\":\"hello\"') || s.startsWith('{\"t\":\"ping\"') || s.startsWith('{\"t\":\"lease\"'); // LEASE1: and its lease - a hub shard mints one, a region's shard reads one (net/roomLease.js)",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -573,8 +573,8 @@
   {
     "name": "SCALE5c-roster-unmerged",
     "file": "src/net/roster.js",
-    "old": "  if (tag) for (const [id, p] of hub?.guildOnline ?? []) if (!peers.has(id)) peers.set(id, p);   // SCALE5c: the guild on every shard\n",
-    "new": "",
+    "old": "  if (tag) for (const [id, p] of hub?.guildOnline ?? []) if (!peers.has(id)) peers.set(id, p); // SCALE5c: the guild on every shard\n  return {",
+    "new": "  return {",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -583,8 +583,8 @@
   {
     "name": "SCALE5c-find-unknown",
     "file": "src/net/chatCommands.js",
-    "old": "  if (name === 'find' || name === 'who') return rest ? { kind: 'find', q: rest } : { kind: 'empty', name };   // SCALE5c (Mac's decision 2)\n",
-    "new": "",
+    "old": "  if (name === 'find' || name === 'who') return rest ? { kind: 'find', q: rest } : { kind: 'empty', name }; // SCALE5c (Mac's decision 2)\n  if (Object.hasOwn(EMOTES, name)) return { kind: 'emote', text: emoteText(name, rest) };",
+    "new": "  if (Object.hasOwn(EMOTES, name)) return { kind: 'emote', text: emoteText(name, rest) };",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -593,8 +593,8 @@
   {
     "name": "SCALE5c-full-unsaid",
     "file": "src/net/chatCommands.js",
-    "old": "names.length >= HUB_FIND_MAX ?",
-    "new": "names.length > HUB_FIND_MAX ?",
+    "old": "  return `Online, by \"${q}\"${names.length >= HUB_FIND_MAX ? ` (the first ${HUB_FIND_MAX})` : ''}: ${names.join(', ')}.`;",
+    "new": "  return `Online, by \"${q}\"${names.length > HUB_FIND_MAX ? ` (the first ${HUB_FIND_MAX})` : ''}: ${names.join(', ')}.`;",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -653,8 +653,8 @@
   {
     "name": "SCALE5c-who-unmerged",
     "file": "src/net/roster.js",
-    "old": "  for (const p of session?.hubOnline?.values?.() ?? []) push(",
-    "new": "  for (const p of [] ?? []) push(",
+    "old": "  for (const p of session?.hubOnline?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p); // SCALE5c: and everyone on the hub's other shards, while it is small (a peer of my own shard is listed once, live)",
+    "new": "  for (const p of [] ?? []) push(p?.id ?? null, p?.name ?? '', false, p); // SCALE5c: and everyone on the hub's other shards, while it is small (a peer of my own shard is listed once, live)",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -703,8 +703,8 @@
   {
     "name": "SCALE5c-region-fifth-shard",
     "file": "src/net/hubShards.js",
-    "old": "canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS); };",
-    "new": "canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS + 1); };",
+    "old": "  return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS);",
+    "new": "  return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS + 1);",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -713,8 +713,8 @@
   {
     "name": "SCALE5c-region-bus-the-hub",
     "file": "src/net/hubShards.js",
-    "old": "isRegionShard(key) ? String(key).slice(0, String(key).lastIndexOf('.')) : null",
-    "new": "isRegionShard(key) ? HUB_BUS : null",
+    "old": "export const busOf = (key) =>\n  isHubShard(key) ? HUB_BUS : isRegionShard(key) ? String(key).slice(0, String(key).lastIndexOf('.')) : null;",
+    "new": "export const busOf = (key) => (isHubShard(key) ? HUB_BUS : isRegionShard(key) ? HUB_BUS : null);",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -833,8 +833,8 @@
   {
     "name": "SCALE5c-region-list-unmerged",
     "file": "src/net/roster.js",
-    "old": "hubOnline: link?.hubOnline ?? null, label: place }",
-    "new": "label: place }",
+    "old": "    hubOnline: link?.hubOnline ?? null,\n    label: place,",
+    "new": "    label: place,",
     "tests": [
       "test/net/scale5c.test.js"
     ],

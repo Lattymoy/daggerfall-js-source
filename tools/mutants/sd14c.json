@@ -29,8 +29,8 @@
   {
     "name": "SD14c-the-hours-off-the-arena",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "return { p: [SD_ARENA.x + Math.cos(ang) * rad, y, SD_ARENA.z + Math.sin(ang) * rad], size: 0.16",
-    "new": "return { p: [SD_ARENA.x + Math.cos(ang) * rad, y, SD_ORRERY.z + Math.sin(ang) * rad], size: 0.16",
+    "old": "      p: [SD_ARENA.x + Math.cos(ang) * rad, y, SD_ARENA.z + Math.sin(ang) * rad],",
+    "new": "      p: [SD_ARENA.x + Math.cos(ang) * rad, y, SD_ORRERY.z + Math.sin(ang) * rad],",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD14c-a-rate-not-whole",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "const life = SD_SKY_PERIOD / turnsOf(SD_MOTE_TURNS.dust, a), u = ((T + b * life) % life) / life;",
-    "new": "const life = SD_SKY_PERIOD / (turnsOf(SD_MOTE_TURNS.dust, a) + 0.5), u = ((T + b * life) % life) / life;",
+    "old": "    const life = SD_SKY_PERIOD / turnsOf(SD_MOTE_TURNS.dust, a),",
+    "new": "    const life = SD_SKY_PERIOD / (turnsOf(SD_MOTE_TURNS.dust, a) + 0.5),",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD14c-a-spark-seen-at-its-wrap",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "size: 0.12 + 0.12 * c, alpha: Math.min(1, u * 8) * (1 - u) * (1 - u), heat: 1 - u };",
-    "new": "size: 0.12 + 0.12 * c, alpha: 0.5, heat: 1 - u };",
+    "old": "    return {\n      p: [x, y, z0 + (z1 - z0) * ((a * 7.31 + b * 3.7) % 1)],\n      size: 0.12 + 0.12 * c,\n      alpha: Math.min(1, u * 8) * (1 - u) * (1 - u),\n      heat: 1 - u,\n    };",
+    "new": "    return { p: [x, y, z0 + (z1 - z0) * ((a * 7.31 + b * 3.7) % 1)], size: 0.12 + 0.12 * c, alpha: 0.5, heat: 1 - u };",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD14c-the-orbit-with-the-clock",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU + (T / SD_SKY_PERIOD) * turns * TAU;",
-    "new": "const turns = turnsOf(SD_MOTE_TURNS.hour, a), ang = c * TAU - (T / SD_SKY_PERIOD) * turns * TAU;",
+    "old": "      ang = c * TAU + (T / SD_SKY_PERIOD) * turns * TAU;",
+    "new": "      ang = c * TAU - (T / SD_SKY_PERIOD) * turns * TAU;",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD14c-small-motes-at-full-light",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "  vAlpha *= clamp(px / ${f(SD_MOTE_MIN_PX)}, 0.0, 1.0);\n",
-    "new": "",
+    "old": "  vAlpha *= clamp(px / ${f(SD_MOTE_MIN_PX)}, 0.0, 1.0);\n}`;",
+    "new": "}`;",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD14c-written-into-the-depth",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "    gl.enable(gl.DEPTH_TEST);\n    gl.depthMask(false);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.drawArrays(gl.POINTS, 0, this.count);",
-    "new": "    gl.enable(gl.DEPTH_TEST);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.drawArrays(gl.POINTS, 0, this.count);",
+    "old": "    gl.depthMask(false);\n    gl.enable(gl.BLEND);",
+    "new": "    gl.enable(gl.BLEND);",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD14c-laid-over-not-added",
     "file": "src/render/superDungeon/sdMotes.js",
-    "old": "    gl.blendFunc(gl.ONE, gl.ONE);\n    gl.drawArrays(gl.POINTS, 0, this.count);",
-    "new": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n    gl.drawArrays(gl.POINTS, 0, this.count);",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE);",
+    "new": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
       "test/world/superDungeon/sd14c_motes.test.js"
     ]

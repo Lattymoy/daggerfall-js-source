@@ -11,8 +11,8 @@
   {
     "name": "SEABED-shallow",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "floor.y > water - SEABED.depthM) continue;",
-    "new": "floor.y > water) continue;",
+    "old": "        if (!floor || !(floor.ny >= SEABED.flatNy) || floor.y > water - SEABED.depthM) continue;",
+    "new": "        if (!floor || !(floor.ny >= SEABED.flatNy) || floor.y > water) continue;",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SEABED-another-block",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (!inBlock(b, x, z)) continue;",
-    "new": "        if (!b) continue;",
+    "old": "        if (!inBlock(b, x, z)) continue; // its own block's water, the one the host draws and swims in there",
+    "new": "        if (!b) continue; // its own block's water, the one the host draws and swims in there",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEABED-marker-every-storey",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "const across = (m, p) => (Math.abs(m[1] - p[1]) < SEABED.storeyM ?",
-    "new": "const across = (m, p) => (true ?",
+    "old": "const across = (m, p) => (Math.abs(m[1] - p[1]) < SEABED.storeyM ? (m[0] - p[0]) ** 2 + (m[2] - p[2]) ** 2 : Infinity);",
+    "new": "const across = (m, p) => (true ? (m[0] - p[0]) ** 2 + (m[2] - p[2]) ** 2 : Infinity);",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SEABED-nearest",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (ranked > bestD || (ranked === bestD && c.h < best.h)) { best = c; bestD = ranked; }",
-    "new": "        if (best === null || ranked < bestD || (ranked === bestD && c.h < best.h)) { best = c; bestD = ranked; }",
+    "old": "        if (ranked > bestD || (ranked === bestD && c.h < best.h)) {",
+    "new": "        if (best === null || ranked < bestD || (ranked === bestD && c.h < best.h)) {",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SEABED-bubbles-kelp",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "  Object.freeze({ kind: 'kelp', weight: 4, records: Object.freeze([[106, 2], [106, 3], [106, 4]]) }),",
-    "new": "  Object.freeze({ kind: 'kelp', weight: 4, records: Object.freeze([[106, 2], [106, 3], [106, 4], [106, 6]]) }),",
+    "old": "      [106, 4],\n    ]),",
+    "new": "      [106, 4],\n      [106, 6],\n    ]),",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "SEABED-eight-bearings",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= SEABED.gapM) ?? 64];",
+    "old": "export const clearanceBearings = (half) =>\n  BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= SEABED.gapM) ?? 64];",
     "new": "export const clearanceBearings = (half) => BEARINGS[8];",
     "tests": [
       "test/world/dungeonFlora.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "SEABED-foot-on-floor",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "  footM: 0.06,",
-    "new": "  footM: 0,",
+    "old": "  footM: 0.06, // the lowest of those rays: over the 5 cm a level floor may rise (a stone under a fan)",
+    "new": "  footM: 0, // the lowest of those rays: over the 5 cm a level floor may rise (a stone under a fan)",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SEABED-walls-from-behind",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "        if (hit.back) return false;\n",
-    "new": "",
+    "old": "        if (hit.back) return false;\n        walls++;",
+    "new": "        walls++;",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SEABED-floor-any-bucket",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "!hit.back && hit.key === 'dungeon' ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;",
-    "new": "!hit.back ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;",
+    "old": "      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === 'dungeon'",
+    "new": "      return Number.isFinite(hit?.dist) && hit.normal && !hit.back",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEABED-door-hinge",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "      if (!p?.length) { out.push([m[12], m[13], m[14]]); continue; }",
-    "new": "      if (p) { out.push([m[12], m[13], m[14]]); continue; }",
+    "old": "      if (!p?.length) {",
+    "new": "      if (p) {",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SEABED-body",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true }));",
-    "new": "    flatGroups.get(key).push([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]]);",
+    "old": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true })); // a dungeon flat's point is its centre",
+    "new": "    flatGroups.get(key).push([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]]); // a dungeon flat's point is its centre",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SEABED-base-not-centre",
     "file": "src/world/dungeon/dungeonFlora.js",
-    "old": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true }));",
-    "new": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1], f.pos[2]], { noCover: true }));",
+    "old": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true })); // a dungeon flat's point is its centre",
+    "new": "    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1], f.pos[2]], { noCover: true })); // a dungeon flat's point is its centre",
     "tests": [
       "test/world/dungeonFlora.test.js"
     ]

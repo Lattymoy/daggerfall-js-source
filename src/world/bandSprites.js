@@ -16,7 +16,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { MobileUnit } from '../characters/mobile/mobileUnit.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
-import { setupFoeLook } from '../characters/enemy/foeLook.js';   // AUDIT DEX B6: SetupDemoEnemy.cs:129-151, the mobile's renderer
+import { setupFoeLook } from '../characters/enemy/foeLook.js'; // AUDIT DEX B6: SetupDemoEnemy.cs:129-151, the mobile's renderer
 import { mobileBillboardSize } from './rmbFlats.js';
 
 /** Past this (m) a band is only its mark. */
@@ -58,11 +58,18 @@ export function createBandSprites({ renderer, getTexture, uploadRecordFrame }) {
   function lookOf(mobileType) {
     if (looks.has(mobileType)) return looks.get(mobileType);
     const basics = ENEMY_BASICS[mobileType];
-    if (!basics?.maleTexture || !getTexture) { looks.set(mobileType, null); return null; }
+    if (!basics?.maleTexture || !getTexture) {
+      looks.set(mobileType, null);
+      return null;
+    }
     const archive = basics.maleTexture;
     const p = Promise.resolve(getTexture(archive))
-      .then((tex) => { looks.set(mobileType, tex ? { tex, archive, basics } : null); })
-      .catch(() => { looks.set(mobileType, null); });
+      .then((tex) => {
+        looks.set(mobileType, tex ? { tex, archive, basics } : null);
+      })
+      .catch(() => {
+        looks.set(mobileType, null);
+      });
     looks.set(mobileType, p);
     return p;
   }
@@ -85,19 +92,27 @@ export function createBandSprites({ renderer, getTexture, uploadRecordFrame }) {
     for (const b of bands ?? []) {
       if (!b?.feet || !Number.isInteger(b.mobileType)) continue;
       const look = lookOf(b.mobileType);
-      if (!look || typeof look.then === 'function') continue;   // loading, or no art for this kind: its mark stands alone
+      if (!look || typeof look.then === 'function') continue; // loading, or no art for this kind: its mark stands alone
       seen.add(b.id);
       let r = units.get(b.id);
       if (!r || r.mobileType !== b.mobileType) {
         if (r) drop(b.id);
-        r = { mobileType: b.mobileType, unit: new MobileUnit(b.mobileType, look.basics, (rec) => look.tex.getFrameCount(rec), Math.random, 'male'),
-          look, batch: null, alpha: 0, yaw: 0, last: null };
+        r = {
+          mobileType: b.mobileType,
+          unit: new MobileUnit(b.mobileType, look.basics, (rec) => look.tex.getFrameCount(rec), Math.random, 'male'),
+          look,
+          batch: null,
+          alpha: 0,
+          yaw: 0,
+          last: null,
+        };
         units.set(b.id, r);
       }
       // its heading off its own walk (a band has no facing but where it goes)
       const f = b.feet;
       if (r.last) {
-        const dx = f[0] - r.last[0], dz = f[2] - r.last[2];
+        const dx = f[0] - r.last[0],
+          dz = f[2] - r.last[2];
         if (dx * dx + dz * dz > 1e-4) r.yaw = Math.atan2(dx, dz);
       }
       r.last = [f[0], f[1], f[2]];
@@ -113,14 +128,19 @@ export function createBandSprites({ renderer, getTexture, uploadRecordFrame }) {
       if (!r.batch) {
         // AUDIT DEX B6: dressed as SetupDemoEnemy dresses a mobile, as the hosts' foes are - a Spectral row's band (the
         // mod's Will-o'-wisp and Faded Ghost) its ghost, a NoShadow row's (the vampires) casting none; the band stood opaque
-        r.batch = setupFoeLook(renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null, b.mobileType);
+        r.batch = setupFoeLook(
+          renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null,
+          b.mobileType,
+        );
         if (!r.batch) continue;
         r.batch.origin = [0, 0, 0];
       } else {
         r.batch.record = rkey;
         r.batch.size = size;
       }
-      r.batch.origin[0] = f[0]; r.batch.origin[1] = f[1]; r.batch.origin[2] = f[2];
+      r.batch.origin[0] = f[0];
+      r.batch.origin[1] = f[1];
+      r.batch.origin[2] = f[2];
       r.batch.conceal = r.alpha >= 0.99 ? null : { mode: PLAIN_BLEND_MODE, alpha: r.alpha, t: 0, phase: 0 };
       drawn.push(r.batch);
     }
@@ -132,7 +152,12 @@ export function createBandSprites({ renderer, getTexture, uploadRecordFrame }) {
     /** This frame's drawn sprites, for the exterior's billboard pass. */
     batches: () => drawn,
     /** The view went down, or the host is torn down: every sprite freed. */
-    clear() { for (const id of [...units.keys()]) drop(id); drawn.length = 0; },
-    get size() { return units.size; },
+    clear() {
+      for (const id of [...units.keys()]) drop(id);
+      drawn.length = 0;
+    },
+    get size() {
+      return units.size;
+    },
   };
 }

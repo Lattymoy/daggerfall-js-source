@@ -69,7 +69,15 @@ export const EG_LAW_KEEP_DAYS = 7;
  *  laid - net/eliteGates/egLaw.js EG_WAYS_LAW) beside laws 4 to 7, each kept its days. THE ASCENT: law 9 (the hall a way of rooms and
  *  climbs - net/eliteGates/egLaw.js EG_ASCENT_LAW, net/eliteGates/egAscent.js) beside laws 4 to 8, each kept its days. EG-PERFECT: law
  *  10 (THE BROKEN WAY - net/eliteGates/egAscent.js EG_BROKEN_LAW) beside laws 4 to 9, each kept its days (law 4's seventh day today). */
-export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });
+export const EG_LAWS = Object.freeze({
+  4: '2026-10-11',
+  5: '2026-10-12',
+  6: '2026-10-13',
+  7: '2026-10-13',
+  8: '2026-10-15',
+  9: '2026-10-16',
+  10: '2026-10-18',
+});
 /** Does this build draw spec law `v`? */
 export const egLawKnown = (/** @type {any} */ v) => Number.isSafeInteger(v) && Object.hasOwn(EG_LAWS, String(v));
 /** The most breaches live at once (section 22, THE COST - the Rehearsals among them). */
@@ -85,7 +93,8 @@ export const EG_INTERNAL_LIVE = '/internal/eg/live';
 export const EG_INTERNAL_STAGE = '/internal/eg/stage';
 
 /** Is breach `B` between trials - past its first wake, not ended, in a closing, the swap (an arrival) or a rest? */
-export const egBetween = (/** @type {any} */ B) => !!B && !B.end && B.wk > 0 && (B.sg === 'closing' || B.sg === 'rest' || B.sg === 'arrive');
+export const egBetween = (/** @type {any} */ B) =>
+  !!B && !B.end && B.wk > 0 && (B.sg === 'closing' || B.sg === 'rest' || B.sg === 'arrive');
 /** The living, entered members (`[sub, m]`). */
 const living = (B) => Object.entries(B.mem ?? {}).filter(([, m]) => m.in && m.alive && !m.home);
 /** The record's top-level fields that are never moved: the open (the last word's), the end, this law's own clocks, and
@@ -102,22 +111,27 @@ const KEPT = new Set(['op', 'endAt', 'tk', 'gv', 'hold', 'rc', 'zs', 'co', 'owe'
  */
 export function egGiveBack(B, gap, now, moves = null) {
   if (!B || !(gap > 0) || !(B.wk > 0) || B.end) return 0;
-  instantsOf(B, now, (o, k, v) => { if (!moves || moves(o, k, v)) o[k] = v + gap; });
+  instantsOf(B, now, (o, k, v) => {
+    if (!moves || moves(o, k, v)) o[k] = v + gap;
+  });
   B.gv = (B.gv ?? 0) + gap;
   return gap;
 }
 /** Every instant breach `B` holds at `now` - a number between its open (less EG_INSTANT_SLACK_MS) and the last word from
  *  `now`, outside a frozen piece and the KEPT fields - handed to `fn(object, key, value)`. */
 function instantsOf(B, now, fn) {
-  const lo = B.op - EG_INSTANT_SLACK_MS, hi = now + EG_LAST_WORD_MS, seen = new Set();
+  const lo = B.op - EG_INSTANT_SLACK_MS,
+    hi = now + EG_LAST_WORD_MS,
+    seen = new Set();
   const walk = (o, top) => {
     if (seen.has(o) || Object.isFrozen(o)) return;
     seen.add(o);
     for (const k of Object.keys(o)) {
       if (top && KEPT.has(k)) continue;
       const v = o[k];
-      if (typeof v === 'number') { if (v >= lo && v <= hi) fn(o, k, v); }
-      else if (v && typeof v === 'object') walk(v, false);
+      if (typeof v === 'number') {
+        if (v >= lo && v <= hi) fn(o, k, v);
+      } else if (v && typeof v === 'object') walk(v, false);
     }
   };
   walk(B, true);
@@ -138,7 +152,9 @@ function instantsOf(B, now, fn) {
  */
 function holdFind(B, at, now) {
   const f = new Set();
-  instantsOf(B, now, (_o, _k, v) => { if (v > at) f.add(v); });
+  instantsOf(B, now, (_o, _k, v) => {
+    if (v > at) f.add(v);
+  });
   return [...f].sort((a, b) => a - b);
 }
 
@@ -152,11 +168,17 @@ function holdFind(B, at, now) {
  */
 export function egResume(B, now, voidBefore = 0) {
   if (!B || B.end) return null;
-  if (!egLawKnown(B.egv) || egForceVoided(B, voidBefore)) return 'void';   // EG-ZA: and THE FORCE VOID - a breach live at a `force` deploy's stamp
-  if (!(B.wk > 0)) { B.tk = now; return null; }
+  if (!egLawKnown(B.egv) || egForceVoided(B, voidBefore)) return 'void'; // EG-ZA: and THE FORCE VOID - a breach live at a `force` deploy's stamp
+  if (!(B.wk > 0)) {
+    B.tk = now;
+    return null;
+  }
   const last = Number.isFinite(B.tk) && B.tk <= now ? B.tk : now;
-  if (B.hold) return 'hold';   // woken again inside a hold: its release gives the whole gap back (AUDIT EG III: to what it found - AUDIT EG V: the record's)
-  if (egBetween(B)) { egHoldBegin(B, last, now); return 'hold'; }
+  if (B.hold) return 'hold'; // woken again inside a hold: its release gives the whole gap back (AUDIT EG III: to what it found - AUDIT EG V: the record's)
+  if (egBetween(B)) {
+    egHoldBegin(B, last, now);
+    return 'hold';
+  }
   B.tk = now;
   return now - last > EG_GAP_MS && egGiveBack(B, now - last, now) > 0 ? 'gave' : null;
 }
@@ -167,7 +189,7 @@ export function egResume(B, now, voidBefore = 0) {
 export function egHoldBegin(B, at, now) {
   const ran = B.cnt?.at > 0 ? 1 : 0;
   if (B.cnt) B.cnt = egCountHold(B.cnt, at);
-  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: holdFind(B, at, now) };   // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record
+  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: holdFind(B, at, now) }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record
 }
 /**
  * May a held breach go on at `now`: every living member back in the room (`present` - the accounts with a fresh body
@@ -206,7 +228,9 @@ export function egRelease(B, now) {
 export function egBeatGap(B, now) {
   const last = B?.tk;
   if (B) B.tk = now;
-  return Number.isFinite(last) && now - last > EG_GAP_MS ? egGiveBack(B, now - last, now, (o, k, v) => v <= last || v > now) : 0;
+  return Number.isFinite(last) && now - last > EG_GAP_MS
+    ? egGiveBack(B, now - last, now, (o, k, v) => v <= last || v > now)
+    : 0;
 }
 
 /**
@@ -216,7 +240,7 @@ export function egBeatGap(B, now) {
  */
 export async function egReceiptSeed(rs, sub, R, kind, subtle) {
   const raw = new Uint8Array((String(rs).match(/[0-9a-f]{2}/g) ?? []).map((h) => parseInt(h, 16)));
-  if (raw.length !== 32) throw new TypeError('egReceiptSeed needs the room\'s 32-byte secret');
+  if (raw.length !== 32) throw new TypeError("egReceiptSeed needs the room's 32-byte secret");
   const key = await subtle.importKey('raw', raw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const mac = new Uint8Array(await subtle.sign('HMAC', key, new TextEncoder().encode(`${sub}|${R}|${kind}`)));
   return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;
@@ -260,19 +284,40 @@ export const egRcId = (/** @type {any} */ c) => `${c.b}:${c.q}:${Number.isSafeIn
 export function egRcFold(kept, add, nowS) {
   const by = new Map();
   for (const x of [...(Array.isArray(kept) ? kept : []), ...add]) {
-    if (!x || typeof x.id !== 'string' || !(Number.isSafeInteger(x.e) && x.e > nowS) || (!x.spent && typeof x.r !== 'string')) continue;
+    if (
+      !x ||
+      typeof x.id !== 'string' ||
+      !(Number.isSafeInteger(x.e) && x.e > nowS) ||
+      (!x.spent && typeof x.r !== 'string')
+    )
+      continue;
     if (by.get(x.id)?.spent) continue;
     by.delete(x.id);
     by.set(x.id, x);
   }
-  const all = [...by.values()], held = all.filter((x) => !x.spent).slice(-EG_RC_KEEP), spent = all.filter((x) => x.spent).slice(-EG_RC_KEEP);
+  const all = [...by.values()],
+    held = all.filter((x) => !x.spent).slice(-EG_RC_KEEP),
+    spent = all.filter((x) => x.spent).slice(-EG_RC_KEEP);
   return all.filter((x) => held.includes(x) || spent.includes(x));
 }
 /** An account's word that the service counted receipt `id`: its held copy forgotten, REMEMBERED AS SPENT until `e` (the
  *  gate's AUDIT WBX2 M3 law - the word may come before the room's own tell, and must stand over it). Pure. */
-export const egRcSpent = (/** @type {any} */ kept, /** @type {string} */ id, /** @type {number} */ nowS, /** @type {number} */ e) => egRcFold((Array.isArray(kept) ? kept : []).filter((x) => x?.id !== id), [{ id, spent: 1, e, r: '' }], nowS);
+export const egRcSpent = (
+  /** @type {any} */ kept,
+  /** @type {string} */ id,
+  /** @type {number} */ nowS,
+  /** @type {number} */ e,
+) =>
+  egRcFold(
+    (Array.isArray(kept) ? kept : []).filter((x) => x?.id !== id),
+    [{ id, spent: 1, e, r: '' }],
+    nowS,
+  );
 /** The receipts an account's hello is handed: every held one still good. Pure. */
-export const egRcLive = (/** @type {any} */ kept, /** @type {number} */ nowS) => (Array.isArray(kept) ? kept : []).filter((x) => x && !x.spent && typeof x.r === 'string' && x.e > nowS).map((x) => x.r);
+export const egRcLive = (/** @type {any} */ kept, /** @type {number} */ nowS) =>
+  (Array.isArray(kept) ? kept : [])
+    .filter((x) => x && !x.spent && typeof x.r === 'string' && x.e > nowS)
+    .map((x) => x.r);
 /**
  * A ROOM'S TOMBSTONE with order `ez` written (`why` 'void' with the receipt `r` it minted, or the breach's end) at `nowS`:
  * kept EG_VOID_MAX_S from now. Pure - a new record.
@@ -283,23 +328,33 @@ export function egDoneWith(done, ez, why, r, nowS) {
   return { until: nowS + EG_VOID_MAX_S, z: [...z, [ez, why, r ?? '']].slice(-EG_DONE_MAX) };
 }
 /** The tombstone's entry for order `ez` (`[ez, why, r]`), or null. */
-export const egDoneOf = (/** @type {any} */ done, /** @type {string} */ ez) => (Array.isArray(done?.z) ? done.z.find((e) => Array.isArray(e) && e[0] === ez) ?? null : null);
+export const egDoneOf = (/** @type {any} */ done, /** @type {string} */ ez) =>
+  Array.isArray(done?.z) ? (done.z.find((e) => Array.isArray(e) && e[0] === ez) ?? null) : null;
 /**
  * MAY A ROOM VOID breach `B` on its opener's ask (EG_INTERNAL_VOID naming `B.ez`): only while nothing has begun - no call
  * told out (`called`), no hall woken, no member entered, not ended. Otherwise the breach's own receipts settle its stake.
  * @param {any} B
  */
-export const egVoidable = (B) => !!B && !B.end && !B.called && !(B.wk > 0) && !Object.values(B.mem ?? {}).some((m) => m?.in);
+export const egVoidable = (B) =>
+  !!B && !B.end && !B.called && !(B.wk > 0) && !Object.values(B.mem ?? {}).some((m) => m?.in);
 /** THE FORCE VOID: breach `B` was live when a `force` deploy stamped the Worker at `before` (ms) - opened before it, not
  *  ended. */
-export const egForceVoided = (/** @type {any} */ B, /** @type {number} */ before) => Number.isSafeInteger(before) && before > 0 && !!B && !B.end && B.op < before;
+export const egForceVoided = (/** @type {any} */ B, /** @type {number} */ before) =>
+  Number.isSafeInteger(before) && before > 0 && !!B && !B.end && B.op < before;
 
 // ── EG-ZA: THE TICK (section 22, THE COST) ───────────────────────────────────────────────────────────────────────────
 /** A beat while a trial runs (the gate's BRAIN_TICK_MS - pinned equal), and otherwise (ms). */
 export const EG_BEAT_TRIAL_MS = 250;
 export const EG_BEAT_SLOW_MS = 1000;
 /** Does a trial run in breach `B` - its trial, or a closing whose fight still stands a foe (a Kyn Mimic's Lurker)? */
-export const egTrialRuns = (/** @type {any} */ B) => !!B && !B.end && (B.sg === 'trial' || (B.sg === 'closing' && (B.F?.bodies ?? []).some((t) => t.role !== EG_ROLE.obj && t.hp > 0 && !(t.fl & EG_FL.friend) && !(t.fl & EG_FL.fell))));
+export const egTrialRuns = (/** @type {any} */ B) =>
+  !!B &&
+  !B.end &&
+  (B.sg === 'trial' ||
+    (B.sg === 'closing' &&
+      (B.F?.bodies ?? []).some(
+        (t) => t.role !== EG_ROLE.obj && t.hp > 0 && !(t.fl & EG_FL.friend) && !(t.fl & EG_FL.fell),
+      )));
 /**
  * WHEN BREACH `B`'s NEXT BEAT FALLS at `now` (`here`: a member's socket is in the room): EG_BEAT_TRIAL_MS while a trial
  * runs with its company here; while the arch rises (`wait`) none until the open (`su`); otherwise EG_BEAT_SLOW_MS, or

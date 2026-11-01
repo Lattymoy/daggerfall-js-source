@@ -241,5 +241,4 @@ test('SD6b the relay by source: a turn routed before the find\'s bucket, on the 
   const hall = src.indexOf('      if (isSdRoom(a.key)) { try { if (!this._send(ws, this._sdHallWord(await this._sdHallOf(sdSlotOfRoom(a.key))))) return; }');
   assert.ok(welcome > 0 && hall > welcome, 'after the world path\'s welcome');
   assert.equal(SD_ORRERY_KEY, 'sdorrery');
-  assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD6b - shipped 2026-10-07/);
 });

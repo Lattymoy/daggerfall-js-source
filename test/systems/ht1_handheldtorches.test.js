@@ -856,19 +856,6 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rd('src/systems/lycanthropy.js'), /export const isTransformedLycanthrope = \(entity\) => isTransformedNow\(entity\);/);
   assert.match(rd('src/systems/playerTorch.js'), /const o = lanternAtWaist\(entity\?\.lightSource\) \? \(_waistOverride \?\? LANTERN_HIP\) : \(_offsetOverride \?\? TORCH_OFFSET\);/);   // HT-WAIST: a lantern at the waist lights from the hip
   assert.match(rd('src/systems/features.js'), /modFeature\('handheld-torches', \(\) => t\('features\.effect\.atOnce', 'Takes effect at once\.'\), '\w+'\)/);
-  // GUARD1 (2026-09-15): this line USED to read `/160 modules/`. It was
-  // a hand-written copy of a number `audit18_bible_docs.test.js` (U42)
-  // already DERIVES from the directory, so it said nothing U42 does not
-  // say better - and it went red the day an unrelated slice added a
-  // module, which is the only thing an enumerated count can ever do.
-  // What HT1 actually wants held is that the page counts THIS
-  // directory and that the count is live, so that is what it asks.
-  {
-    const m = /(\d+) modules\s*\n?\s*live under\s*\n?\s*`src\/systems\/`/.exec(rd('bible/06-Systems/Systems.md'));
-    assert.ok(m, 'Systems.md lost its "N modules live under `src/systems/`" line');
-    assert.equal(Number(m[1]), readdirSync(join(root, 'src/systems'), { recursive: true }).filter((f) => f.endsWith('.js')).length,
-      'Systems.md counts src/systems/ live - HT1 put playerTorch.js in that count');
-  }
 });
 
 test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the pool, composes the dropped lights into the point lights, draws the batches on the billboard pass, ticks the burn, puts the targets on the activation ray with a droppedTorch: arm, destroys all on a transition, and the streaming host stamps, sweeps and recenters them; the save envelope carries HandheldTorchesSaveData', () => {
@@ -986,7 +973,6 @@ test('HT5: the torch hand moves as the weapon does - every motion module the two
   r.frame(0.1); r.frame(0.1);
   assert.ok(r.h._w.position[0] !== 0 || r.h._w.position[1] !== 0, 'walking with Bob on: the hand has moved off its rest');
 });
-
 
 // ── TORCH-VIS: A SHEATHED STANCE IS NOT A STOWED LIGHT ──────────────
 //

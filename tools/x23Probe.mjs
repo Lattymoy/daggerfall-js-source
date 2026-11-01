@@ -23,8 +23,12 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(`[console] ${m.text()}`); });
-page.on('response', (r) => { if (r.status() === 404) errors.push(`[404] ${r.url()}`); });
+page.on('console', (m) => {
+  if (m.type() === 'error') errors.push(`[console] ${m.text()}`);
+});
+page.on('response', (r) => {
+  if (r.status() === 404) errors.push(`[404] ${r.url()}`);
+});
 
 await page.goto('http://localhost:5213/play/?world&nomenu&class=0&novideo&shot&play');
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 15000));
@@ -36,8 +40,10 @@ const waitFrames = async (n, cond = null, capMs = 240000) => {
   for (;;) {
     if (Date.now() - t0 > capMs) return false;
     const f = await frame();
-    if (cond) { const v = await cond(); if (v) return v; }
-    else if (f - f0 >= n) return true;
+    if (cond) {
+      const v = await cond();
+      if (v) return v;
+    } else if (f - f0 >= n) return true;
     await page.waitForTimeout(400);
   }
 };
@@ -47,7 +53,10 @@ await waitFrames(5, async () => page.evaluate(() => !!window.__x23 && !!window._
 const x23 = async () => JSON.parse(await page.evaluate(() => window.__x23()));
 
 let fails = 0;
-const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) fails++; };
+const check = (ok, label) => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`);
+  if (!ok) fails++;
+};
 
 // --- X2: the Archer ---
 const archerType = await page.evaluate(() => window.__spawnEncounter(141, 15));
@@ -75,8 +84,10 @@ const mageType = await page.evaluate(() => window.__spawnEncounter(128, 20));
 check(mageType === 128, `mage spawned (type ${mageType})`);
 s = await x23();
 const mage = s.foes.find((f) => f.type === 128);
-check(!!mage && mage.caster === true && mage.spells > 0,
-  `the mage MINTS a caster with a spell list (caster=${mage?.caster}, spells=${mage?.spells})`);
+check(
+  !!mage && mage.caster === true && mage.spells > 0,
+  `the mage MINTS a caster with a spell list (caster=${mage?.caster}, spells=${mage?.spells})`,
+);
 const mp0 = mage?.mp ?? 0;
 
 // a release shows as an engine missile OR the mage's magicka moving
@@ -107,7 +118,12 @@ check(!!sawCast, `the mage RELEASED a cast (${sawCast ? sawCast.via : 'nothing i
 // gracefully (its header: NEVER TRAPS) - the network 404 still logs,
 // so that ONE known miss is filtered; anything else fails.
 const realErrors = errors.filter((e) => !/CURSOR\.IMG|Failed to load resource/.test(e));
-check(realErrors.length === 0, realErrors.length ? `page errors: ${realErrors.slice(0, 3).join(' | ')}` : 'zero page errors (the guarded CURSOR.IMG 404 filtered)');
+check(
+  realErrors.length === 0,
+  realErrors.length
+    ? `page errors: ${realErrors.slice(0, 3).join(' | ')}`
+    : 'zero page errors (the guarded CURSOR.IMG 404 filtered)',
+);
 
 await browser.close();
 await server.close();

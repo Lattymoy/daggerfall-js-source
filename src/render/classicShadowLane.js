@@ -29,7 +29,8 @@ export function replaceGlslFunction(src, signature, body) {
   const at = src.indexOf(signature);
   if (at < 0) throw new Error(`classic shadow lane: '${signature}' is not in the shader`);
   const open = src.indexOf('{', at);
-  let depth = 0, i = open;
+  let depth = 0,
+    i = open;
   for (; i < src.length; i++) {
     if (src[i] === '{') depth++;
     else if (src[i] === '}' && --depth === 0) break;
@@ -58,8 +59,16 @@ export function classicLook(src) {
   return out;
 }
 
-const identity3 = (src, out) => { out[0] = src[0]; out[1] = src[1]; out[2] = src[2]; return out; };
-const identityN = (src, out, count) => { for (let i = 0; i < count * 3; i++) out[i] = src[i]; return out.subarray ? out.subarray(0, count * 3) : out; };
+const identity3 = (src, out) => {
+  out[0] = src[0];
+  out[1] = src[1];
+  out[2] = src[2];
+  return out;
+};
+const identityN = (src, out, count) => {
+  for (let i = 0; i < count * 3; i++) out[i] = src[i];
+  return out.subarray ? out.subarray(0, count * 3) : out;
+};
 
 let _lane = null;
 /** The lane, built on first ask (the shader rewrites run once). */
@@ -67,7 +76,7 @@ export function classicShadowLane() {
   _lane ??= Object.freeze({
     ...EL_LANE,
     key: 'classic-shadows',
-    classicLook: true,   // renderer.lightingLane answers null for it: the hosts stay classic
+    classicLook: true, // renderer.lightingLane answers null for it: the hosts stay classic
     meshFs: classicLook(EL_LANE.meshFs),
     bbFs: classicLook(EL_LANE.bbFs),
     terrainFs: classicLook(EL_LANE.terrainFs),
@@ -91,7 +100,7 @@ export function classicShadowLane() {
  */
 export function syncClassicShadowLane(renderer, want) {
   const key = renderer.installedLaneKey;
-  if (key && key !== 'classic-shadows') return false;   // Enhanced Lighting is on: its lane, its shadows
+  if (key && key !== 'classic-shadows') return false; // Enhanced Lighting is on: its lane, its shadows
   if (want && key !== 'classic-shadows') {
     renderer.setLightingLane(classicShadowLane());
     renderer.setExposure?.(1);

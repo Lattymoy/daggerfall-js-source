@@ -60,8 +60,12 @@ export const yawOfHeading = (h) => (h / 256) * 2 * Math.PI;
  */
 export function travellerMarkOf({ x, z, yaw = 0, mode = 'Foot', journey = false }) {
   const cx = Math.max((1 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min(WORLD_PIXEL_BOUND * NATIVE_PIXEL - 1, x));
-  const cz = Math.max((500 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min((499 + WORLD_PIXEL_BOUND) * NATIVE_PIXEL - 1, z));
-  const px = Math.floor(cx / NATIVE_PIXEL), pzRow = Math.floor(cz / NATIVE_PIXEL);
+  const cz = Math.max(
+    (500 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL,
+    Math.min((499 + WORLD_PIXEL_BOUND) * NATIVE_PIXEL - 1, z),
+  );
+  const px = Math.floor(cx / NATIVE_PIXEL),
+    pzRow = Math.floor(cz / NATIVE_PIXEL);
   const fx = Math.min(255, Math.floor((cx - px * NATIVE_PIXEL) / TRAV_FRACTION));
   const fy = Math.min(255, Math.floor((cz - pzRow * NATIVE_PIXEL) / TRAV_FRACTION));
   return { px, py: 499 - pzRow, fx, fy, h: headingByte(yaw), m: travelModeIndex(mode), tv: journey ? 1 : 0 };
@@ -70,7 +74,10 @@ export function travellerMarkOf({ x, z, yaw = 0, mode = 'Foot', journey = false 
 /** A mark's place in native world units - the middle of its 256th. */
 export function travellerWorldOf(p) {
   const zRow = 499 - p.py;
-  return { x: p.px * NATIVE_PIXEL + (p.fx + 0.5) * TRAV_FRACTION, z: zRow * NATIVE_PIXEL + (p.fy + 0.5) * TRAV_FRACTION };
+  return {
+    x: p.px * NATIVE_PIXEL + (p.fx + 0.5) * TRAV_FRACTION,
+    z: zRow * NATIVE_PIXEL + (p.fy + 0.5) * TRAV_FRACTION,
+  };
 }
 
 /** OW-CHASE-RANGE (bible/06-Systems/Travel-View.md): while a chase of me runs, my mark is said again this often - the
@@ -78,7 +85,8 @@ export function travellerWorldOf(p) {
 export const TRAV_CHASE_REFRESH_MS = TRAV_SEND_MIN_MS;
 /** OW-CHASE-RANGE: what a mark's chase words (`bd`, `sr`, beside it) say that a mark must go again for - who chases me and
  *  who is spent, never where (a chase moves every frame; its place rides the refresh). */
-export const chaseWordKey = (bd, sr = null) => [bd, sr].map((w) => (Array.isArray(w) ? w.map((e) => `${e[0]}:${e[3]}`).join(',') : '')).join('|');
+export const chaseWordKey = (bd, sr = null) =>
+  [bd, sr].map((w) => (Array.isArray(w) ? w.map((e) => `${e[0]}:${e[3]}`).join(',') : '')).join('|');
 
 /**
  * WHEN TO SEND: 'send' (the mark), 'clear' (null - I went indoors, or hid) or null (nothing). `st` is what the relay
@@ -96,9 +104,9 @@ export function travellerDue(st, { now, mark, alone, shown, chasing = undefined 
   const l = st.last;
   if (!l) return 'send';
   if (l.px !== mark.px || l.py !== mark.py || l.m !== mark.m || l.tv !== mark.tv) return 'send';
-  if (chaseWordKey(l.bd, l.sr) !== chaseWordKey(mark.bd, mark.sr)) return 'send';   // OW-CHASE-RANGE: a chase begun or ended, a band spent
+  if (chaseWordKey(l.bd, l.sr) !== chaseWordKey(mark.bd, mark.sr)) return 'send'; // OW-CHASE-RANGE: a chase begun or ended, a band spent
   const running = chasing ?? [...(mark.bd ?? []), ...(mark.sr ?? [])].some((e) => e[3] === 1);
-  if (running && now - st.at >= TRAV_CHASE_REFRESH_MS) return 'send';   // OW-CHASE-RANGE: a chase running, said where it runs
+  if (running && now - st.at >= TRAV_CHASE_REFRESH_MS) return 'send'; // OW-CHASE-RANGE: a chase running, said where it runs
   if (now - st.at >= TRAV_KEEPALIVE_MS) return 'send';
   return null;
 }
@@ -111,22 +119,47 @@ export function createTravellerBook() {
   const marks = new Map();
   const put = (f, now) => {
     if (!f?.id) return;
-    if (!f.p) { marks.delete(f.id); return; }
+    if (!f.p) {
+      marks.delete(f.id);
+      return;
+    }
     // AUDIT DEEP T3-6: a welcome's row carries its age (`ag`, seconds) - it is that old here too
     const age = Number.isFinite(f.ag) && f.ag > 0 ? f.ag * 1000 : 0;
-    marks.set(f.id, { id: f.id, name: f.name ?? '', sub: f.sub ?? null, title: f.title ?? null, glyphs: f.glyphs ?? [], lv: f.lv ?? null, gt: f.gt ?? null, p: f.p, at: now - age });   // OVERWORLD NAMES: the whole badge
+    marks.set(f.id, {
+      id: f.id,
+      name: f.name ?? '',
+      sub: f.sub ?? null,
+      title: f.title ?? null,
+      glyphs: f.glyphs ?? [],
+      lv: f.lv ?? null,
+      gt: f.gt ?? null,
+      p: f.p,
+      at: now - age,
+    }); // OVERWORLD NAMES: the whole badge
   };
   return {
     put,
-    drop(id) { marks.delete(id); },
-    reset(list, now) { marks.clear(); for (const f of list ?? []) put(f, now); },
-    clear() { marks.clear(); },
+    drop(id) {
+      marks.delete(id);
+    },
+    reset(list, now) {
+      marks.clear();
+      for (const f of list ?? []) put(f, now);
+    },
+    clear() {
+      marks.clear();
+    },
     /** The marks heard within TRAV_STALE_MS - the rest pruned on the way. */
     live(now) {
       const out = [];
-      for (const [id, m] of marks) { if (now - m.at > TRAV_STALE_MS) marks.delete(id); else out.push(m); }
+      for (const [id, m] of marks) {
+        if (now - m.at > TRAV_STALE_MS) marks.delete(id);
+        else out.push(m);
+      }
       return out;
     },
-    get size() { return marks.size; },
+    get size() {
+      return marks.size;
+    },
   };
 }

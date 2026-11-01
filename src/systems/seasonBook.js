@@ -14,7 +14,13 @@
 //   - THE FESTIVAL (net/festivalLaw.js FESTIVALS - the real calendar): the Witches' Festival and its Starfall.
 // Words through the text core (L10N4), read when built; every name a player reads in their own language (AUDIT
 // SEASON-BOOK W1: the seats' Season by the months' own table, never townSeatLaw's English).
-import { arenaSeasonOf, arenaSeasonDay, arenaSeasonEndsS, ARENA_SEASON_EPOCH_S, ARENA_SEASON_S } from '../net/arena/arenaLaw.js';
+import {
+  arenaSeasonOf,
+  arenaSeasonDay,
+  arenaSeasonEndsS,
+  ARENA_SEASON_EPOCH_S,
+  ARENA_SEASON_S,
+} from '../net/arena/arenaLaw.js';
 import { seasonOf, seatWeekOf, seatWeekStartMs, seatSeasonName } from '../net/townSeatLaw.js';
 import { festivalAt, festivalNext } from '../net/festivalLaw.js';
 import { monthNames } from './gameDate.js';
@@ -31,9 +37,16 @@ export const SEASON_TITLE_FOES = 5;
 /** THE SEASON at `nowMs` (the relay's clock): `{ n, day, days, startMs, endMs }`. AUDIT SEASON-BOOK L10: before the
  *  epoch (or with no clock) the arena's day would wrap round while its season held at 1 - the day holds at 1 with it. */
 export function realmSeasonAt(/** @type {number} */ nowMs) {
-  const s = Math.floor(nowMs / 1000), n = arenaSeasonOf(s);
+  const s = Math.floor(nowMs / 1000),
+    n = arenaSeasonOf(s);
   const day = Number.isFinite(s) && s >= ARENA_SEASON_EPOCH_S ? arenaSeasonDay(s) : 1;
-  return { n, day, days: SEASON_BOOK_DAYS, startMs: (ARENA_SEASON_EPOCH_S + (n - 1) * ARENA_SEASON_S) * 1000, endMs: arenaSeasonEndsS(n) * 1000 };
+  return {
+    n,
+    day,
+    days: SEASON_BOOK_DAYS,
+    startMs: (ARENA_SEASON_EPOCH_S + (n - 1) * ARENA_SEASON_S) * 1000,
+    endMs: arenaSeasonEndsS(n) * 1000,
+  };
 }
 
 /** THE SEATS' SEASON at `nowMs`, Season 0 at seat week `zero` (the service's - net/townSeatBook.js `zero`): `{ n, week,
@@ -41,10 +54,19 @@ export function realmSeasonAt(/** @type {number} */ nowMs) {
  *  for and `numeral` its round past the first - "II" - or null), or null - the seats shut to the account, or no Season. */
 export function seatSeasonAt(/** @type {number} */ nowMs, /** @type {number|null} */ zero, open = true) {
   if (!open || zero == null) return null;
-  const week = seatWeekOf(nowMs), s = seasonOf(week, zero);
+  const week = seatWeekOf(nowMs),
+    s = seasonOf(week, zero);
   if (!s) return null;
   const numeral = / ([IVXLCDM]+)$/.exec(seatSeasonName(s.n) ?? '')?.[1] ?? null;
-  return { n: s.n, week: week - s.start + 1, weeks: s.end - s.start, endMs: seatWeekStartMs(s.end), trial: s.n === 0, month: s.n > 0 ? (s.n - 1) % 12 : null, numeral };
+  return {
+    n: s.n,
+    week: week - s.start + 1,
+    weeks: s.end - s.start,
+    endMs: seatWeekStartMs(s.end),
+    trial: s.n === 0,
+    month: s.n > 0 ? (s.n - 1) % 12 : null,
+    numeral,
+  };
 }
 /** A seats' Season's name in the player's language: "Season 0", else "Season of Morning Star" by the months' own table
  *  (gameDate.js monthNames - townSeatLaw.js seatSeasonName's order), its round's numeral after it. */
@@ -63,7 +85,7 @@ function boardLine(/** @type {any} */ src, /** @type {any} */ b, /** @type {(dat
   if (src?.signedIn === false) return t('season.book.signin', 'Sign in to be ranked.');
   if (!b) return null;
   if (b.state === 'asking') return t('season.book.asking', 'Reading the board...');
-  if (b.state !== 'ok' || !b.data) return t('season.book.unread', 'The board can\'t be read right now.');
+  if (b.state !== 'ok' || !b.data) return t('season.book.unread', "The board can't be read right now.");
   return line(b.data) ?? t('season.book.signin', 'Sign in to be ranked.');
 }
 
@@ -73,18 +95,34 @@ function boardLine(/** @type {any} */ src, /** @type {any} */ b, /** @type {(dat
 export function arenaStanding(/** @type {any} */ board) {
   const me = board?.me;
   if (!me) return null;
-  const rating = Number(me.pvp?.rating) || 0, bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0) + (Number(me.pvp?.draws) || 0);
-  const line = !bouts ? t('season.book.arena.none', 'Rating {rating} - no rated bouts yet', { rating })
-    : Number.isSafeInteger(me.rank) && me.rank > 0 ? t('season.book.arena.ranked', '#{rank} - rating {rating}', { rank: me.rank, rating })
+  const rating = Number(me.pvp?.rating) || 0,
+    bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0) + (Number(me.pvp?.draws) || 0);
+  const line = !bouts
+    ? t('season.book.arena.none', 'Rating {rating} - no rated bouts yet', { rating })
+    : Number.isSafeInteger(me.rank) && me.rank > 0
+      ? t('season.book.arena.ranked', '#{rank} - rating {rating}', { rank: me.rank, rating })
       : t('season.book.arena.rated', 'Rating {rating}', { rating });
-  const banner = me.banner === 'red' ? t('season.book.arena.red', 'Red Banner') : me.banner === 'blue' ? t('season.book.arena.blue', 'Blue Banner') : null;
-  return banner ? t('season.book.arena.withBanner', '{line} - {points, plural, one {# point} other {# points}} for the {banner}', { line, banner, points: Number(me.points) || 0 }) : line;
+  const banner =
+    me.banner === 'red'
+      ? t('season.book.arena.red', 'Red Banner')
+      : me.banner === 'blue'
+        ? t('season.book.arena.blue', 'Blue Banner')
+        : null;
+  return banner
+    ? t('season.book.arena.withBanner', '{line} - {points, plural, one {# point} other {# points}} for the {banner}', {
+        line,
+        banner,
+        points: Number(me.points) || 0,
+      })
+    : line;
 }
 /** THE SPIRE'S LINE: the best Descent of the player's company this season (the board's `best` - the Spire's own window
  *  says it "Your best"; AUDIT SEASON-BOOK L3: a Descent, from Hall 1 - never the player's own deepest hall). */
 export function spireStanding(/** @type {any} */ data) {
   const h = Number(data?.best?.h);
-  return Number.isSafeInteger(h) && h > 0 ? t('season.book.spire.best', 'Your best Descent: Hall {hall}', { hall: h }) : t('season.book.spire.none', 'No Descent yet this season');
+  return Number.isSafeInteger(h) && h > 0
+    ? t('season.book.spire.best', 'Your best Descent: Hall {hall}', { hall: h })
+    : t('season.book.spire.none', 'No Descent yet this season');
 }
 /** A CARD OR GAMBIT BOARD'S LINE (iliac.js iliacBoardOf, gambit.js gambitBoardOf - one shape): rank, rating, games. */
 export function ladderStanding(/** @type {any} */ data) {
@@ -94,13 +132,22 @@ export function ladderStanding(/** @type {any} */ data) {
   if (!games) return t('season.book.ladder.none', 'No rated games yet');
   const mine = [...(Array.isArray(data.rows) ? data.rows : []), data.pinned].find((r) => r?.you);
   const args = { rating: Number(me.rating) || 0, games };
-  return Number.isSafeInteger(mine?.rank) && mine.rank > 0 ? t('season.book.ladder.ranked', '#{rank} - rating {rating} - {games, plural, one {# game} other {# games}}', { rank: mine.rank, ...args })
+  return Number.isSafeInteger(mine?.rank) && mine.rank > 0
+    ? t('season.book.ladder.ranked', '#{rank} - rating {rating} - {games, plural, one {# game} other {# games}}', {
+        rank: mine.rank,
+        ...args,
+      })
     : t('season.book.ladder.rated', 'Rating {rating} - {games, plural, one {# game} other {# games}}', args);
 }
 /** THE SEA'S LINE: the captain's ledger's season figures (captainLedger.js `season`) - this season's alone. */
 export function seaStanding(/** @type {any} */ figures, /** @type {number} */ n) {
-  if (!figures || figures.n !== n || (!(figures.deepest > 0) && !(figures.legends > 0))) return t('season.book.sea.none', 'No voyage counted yet this season');
-  return t('season.book.sea.figures', 'Deepest: {leagues, plural, one {# league} other {# leagues}} past the Veil - {legends, plural, one {# legend} other {# legends}} ended', { leagues: Math.floor(figures.deepest) || 0, legends: Math.floor(figures.legends) || 0 });
+  if (!figures || figures.n !== n || (!(figures.deepest > 0) && !(figures.legends > 0)))
+    return t('season.book.sea.none', 'No voyage counted yet this season');
+  return t(
+    'season.book.sea.figures',
+    'Deepest: {leagues, plural, one {# league} other {# leagues}} past the Veil - {legends, plural, one {# legend} other {# legends}} ended',
+    { leagues: Math.floor(figures.deepest) || 0, legends: Math.floor(figures.legends) || 0 },
+  );
 }
 
 /**
@@ -123,27 +170,61 @@ export function seasonBookModel(/** @type {any} */ src) {
     id: 'realm',
     title: t('season.book.realm.title', 'Season {n}', { n: realm.n }),
     sub: t('season.book.realm.sub', 'Day {day} of {days}', { day: realm.day, days: realm.days }),
-    at: realm.endMs, atLabel: 'ends',
+    at: realm.endMs,
+    atLabel: 'ends',
     lead: t('season.book.realm.lead', 'Every board here starts fresh each season.'),
     rows: [
-      { id: 'arena', name: t('season.book.arena.name', 'The Arena'),
-        about: t('season.book.arena.about', 'Rated bouts set your season rating. The leader wears Arena Champion, and the banner with more points wears the laurel next season.'),
-        standing: boardLine(src, b.arena, arenaStanding), door: src?.doors?.arena && !src?.guest ? 'arena' : null },
-      { id: 'spire', name: t('season.book.spire.name', 'The Spire'),
-        about: t('season.book.spire.about', 'Each bracket ranks companies by their deepest Descent from Hall 1. The top ten are Spire Champions next season. A new season lets you start from half your deepest Redoubt.'),
-        standing: boardLine(src, b.spire, spireStanding), door: src?.doors?.spire ? 'spire' : null },
-      { id: 'iliac', name: t('season.book.iliac.name', 'Iliac Hand'),
+      {
+        id: 'arena',
+        name: t('season.book.arena.name', 'The Arena'),
+        about: t(
+          'season.book.arena.about',
+          'Rated bouts set your season rating. The leader wears Arena Champion, and the banner with more points wears the laurel next season.',
+        ),
+        standing: boardLine(src, b.arena, arenaStanding),
+        door: src?.doors?.arena && !src?.guest ? 'arena' : null,
+      },
+      {
+        id: 'spire',
+        name: t('season.book.spire.name', 'The Spire'),
+        about: t(
+          'season.book.spire.about',
+          'Each bracket ranks companies by their deepest Descent from Hall 1. The top ten are Spire Champions next season. A new season lets you start from half your deepest Redoubt.',
+        ),
+        standing: boardLine(src, b.spire, spireStanding),
+        door: src?.doors?.spire ? 'spire' : null,
+      },
+      {
+        id: 'iliac',
+        name: t('season.book.iliac.name', 'Iliac Hand'),
         about: t('season.book.iliac.about', 'Rated games at the card table. The leader wears Iliac Champion.'),
-        standing: boardLine(src, b.iliac, ladderStanding), door: null },
-      { id: 'gambit', name: t('season.book.gambit.name', 'The King\'s Gambit'),
+        standing: boardLine(src, b.iliac, ladderStanding),
+        door: null,
+      },
+      {
+        id: 'gambit',
+        name: t('season.book.gambit.name', "The King's Gambit"),
         about: t('season.book.gambit.about', 'Rated games between registered accounts. The leader wears Grandmaster.'),
-        standing: boardLine(src, b.gambit, ladderStanding), door: null },
-      { id: 'sea', name: t('season.book.sea.name', 'The season\'s captains'),
-        about: t('season.book.sea.about', 'The deepest voyage past the Veil and the most legends sunk or taken, on the board at any freeport\'s harbormaster.'),
-        standing: src?.boards ? seaStanding(src.sea, realm.n) : null, door: null },
+        standing: boardLine(src, b.gambit, ladderStanding),
+        door: null,
+      },
+      {
+        id: 'sea',
+        name: t('season.book.sea.name', "The season's captains"),
+        about: t(
+          'season.book.sea.about',
+          "The deepest voyage past the Veil and the most legends sunk or taken, on the board at any freeport's harbormaster.",
+        ),
+        standing: src?.boards ? seaStanding(src.sea, realm.n) : null,
+        door: null,
+      },
     ],
     // AUDIT SEASON-BOOK L1/W4: the three titles the rule is theirs, by name - Spire Champion is the top ten's, above
-    foot: t('season.book.realm.foot', 'Arena Champion, Iliac Champion and Grandmaster are worn by the leader, once they have {games} rated bouts or games against {foes} different opponents.', { games: SEASON_TITLE_GAMES, foes: SEASON_TITLE_FOES }),
+    foot: t(
+      'season.book.realm.foot',
+      'Arena Champion, Iliac Champion and Grandmaster are worn by the leader, once they have {games} rated bouts or games against {foes} different opponents.',
+      { games: SEASON_TITLE_GAMES, foes: SEASON_TITLE_FOES },
+    ),
   });
   const seat = seatSeasonAt(now, src?.zero ?? null, !!src?.seatsOpen);
   if (seat) {
@@ -151,44 +232,98 @@ export function seasonBookModel(/** @type {any} */ src) {
       id: 'seats',
       title: t('season.book.seats.title', 'The Seats: {name}', { name: seatSeasonTitle(seat) }),
       sub: t('season.book.seats.sub', 'Week {week} of {weeks}', { week: seat.week, weeks: seat.weeks }),
-      at: seat.endMs, atLabel: 'ends',
+      at: seat.endMs,
+      atLabel: 'ends',
       lead: seat.trial
-        ? t('season.book.seats.trialLead', 'Season 0 is the beta. When it ends, the seats\' war is wiped and no one is crowned. Silver, the Stores and your professions stay.')
-        : t('season.book.seats.lead', 'The guilds\' war for the towns. A Season ends at its last Sunday Turning.'),
+        ? t(
+            'season.book.seats.trialLead',
+            "Season 0 is the beta. When it ends, the seats' war is wiped and no one is crowned. Silver, the Stores and your professions stay.",
+          )
+        : t('season.book.seats.lead', "The guilds' war for the towns. A Season ends at its last Sunday Turning."),
       rows: [
-        ...(seat.trial ? [] : [
-          { id: 'crowns', name: t('season.book.crowns.name', 'Crowns and keepers'),
-            about: t('season.book.crowns.about', 'Each crown\'s guildmaster earns Crowned in Season {n}. The guildmaster of a guild that holds a seat all Season earns Keeper of its town.', { n: seat.n }) },
-          { id: 'ribbon', name: t('season.book.ribbon.name', 'The banner ribbon'),
-            about: t('season.book.ribbon.about', 'Members of a guild that kept a seat all Season wear its ribbon through the next.') },
-          { id: 'reset', name: t('season.book.reset.name', 'The turn of the Season'),
-            about: t('season.book.reset.about', 'Standing drifts halfway back to 50 and every fortification loses a tier. Charters stand.') },
-        ]),
-        { id: 'tides', name: t('season.book.tides.name', 'Tides'),
-          about: t('season.book.tides.about', 'Each week every kingdom, the Marches and the Free Lands draw a Tide - a harvest, a plague, raiders - or stay Calm.') },
-        { id: 'chapters', name: t('season.book.chapters.name', 'Guild chapters'),
-          about: t('season.book.chapters.about', 'Every chapter draws an event when the Season opens. In a Schism or a Succession, members back a side.') },
+        ...(seat.trial
+          ? []
+          : [
+              {
+                id: 'crowns',
+                name: t('season.book.crowns.name', 'Crowns and keepers'),
+                about: t(
+                  'season.book.crowns.about',
+                  "Each crown's guildmaster earns Crowned in Season {n}. The guildmaster of a guild that holds a seat all Season earns Keeper of its town.",
+                  { n: seat.n },
+                ),
+              },
+              {
+                id: 'ribbon',
+                name: t('season.book.ribbon.name', 'The banner ribbon'),
+                about: t(
+                  'season.book.ribbon.about',
+                  'Members of a guild that kept a seat all Season wear its ribbon through the next.',
+                ),
+              },
+              {
+                id: 'reset',
+                name: t('season.book.reset.name', 'The turn of the Season'),
+                about: t(
+                  'season.book.reset.about',
+                  'Standing drifts halfway back to 50 and every fortification loses a tier. Charters stand.',
+                ),
+              },
+            ]),
+        {
+          id: 'tides',
+          name: t('season.book.tides.name', 'Tides'),
+          about: t(
+            'season.book.tides.about',
+            'Each week every kingdom, the Marches and the Free Lands draw a Tide - a harvest, a plague, raiders - or stay Calm.',
+          ),
+        },
+        {
+          id: 'chapters',
+          name: t('season.book.chapters.name', 'Guild chapters'),
+          about: t(
+            'season.book.chapters.about',
+            'Every chapter draws an event when the Season opens. In a Schism or a Succession, members back a side.',
+          ),
+        },
       ].map((r) => ({ ...r, standing: null, door: null })),
-      foot: t('season.book.seats.foot', 'The Notice Board\'s Seat tab has the week\'s standings.'),
+      foot: t('season.book.seats.foot', "The Notice Board's Seat tab has the week's standings."),
     });
   }
-  const fest = festivalNext(now), open = festivalAt(now);
+  const fest = festivalNext(now),
+    open = festivalAt(now);
   if (fest) {
     sections.push({
       id: 'festival',
-      title: t('season.book.festival.title', 'The Witches\' Festival'),
+      title: t('season.book.festival.title', "The Witches' Festival"),
       sub: open ? t('season.book.festival.open', 'On now') : t('season.book.festival.coming', 'Coming'),
-      at: open ? fest.toMs : fest.fromMs, atLabel: open ? 'ends' : 'opens',
-      lead: null,   // AUDIT SEASON-BOOK W5: its days are the real calendar's, its nights the sky's - each row says which
+      at: open ? fest.toMs : fest.fromMs,
+      atLabel: open ? 'ends' : 'opens',
+      lead: null, // AUDIT SEASON-BOOK W5: its days are the real calendar's, its nights the sky's - each row says which
       rows: [
-        { id: 'cakes', name: t('season.book.cakes.name', 'Soul Cakes'),
-          about: t('season.book.cakes.about', 'Found on foes, the dead and the summoned most often, and in gathering, crafting, looting and at sea. Spend them with the Wyrd Sister outside any tavern. Finds count double on 31 October (UTC) and on in-game nights the dead walk.') },
-        { id: 'starfall', name: t('season.book.starfall.name', 'The Starfall'),
-          about: t('season.book.starfall.about', 'Every in-game night, about once a real hour, one coven pulls three stars down near its region\'s towns. Hold the crater against the waves.') },
+        {
+          id: 'cakes',
+          name: t('season.book.cakes.name', 'Soul Cakes'),
+          about: t(
+            'season.book.cakes.about',
+            'Found on foes, the dead and the summoned most often, and in gathering, crafting, looting and at sea. Spend them with the Wyrd Sister outside any tavern. Finds count double on 31 October (UTC) and on in-game nights the dead walk.',
+          ),
+        },
+        {
+          id: 'starfall',
+          name: t('season.book.starfall.name', 'The Starfall'),
+          about: t(
+            'season.book.starfall.about',
+            "Every in-game night, about once a real hour, one coven pulls three stars down near its region's towns. Hold the crater against the waves.",
+          ),
+        },
       ].map((r) => ({ ...r, standing: null, door: null })),
       // AUDIT SEASON-BOOK L4: the festival is shut to a guest (festivalClient.js festivalShut) - said, never implied
-      foot: src?.guest ? t('season.book.festival.guest', 'Add a username to join the festival.')
-        : src?.signedIn === false ? t('season.book.festival.signin', 'Sign in to join the festival.') : null,
+      foot: src?.guest
+        ? t('season.book.festival.guest', 'Add a username to join the festival.')
+        : src?.signedIn === false
+          ? t('season.book.festival.signin', 'Sign in to join the festival.')
+          : null,
     });
   }
   return { sections };

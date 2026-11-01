@@ -250,7 +250,7 @@ test('AUDIT LIVED1b T4, T5, T8 (23 host and UI reads, by source): every read LIV
     ["src/ui/enhanced/enhancedHud.js", /import \{ ownMinutes(?:, sharedClockOn)? \} from '\.\.\/\.\.\/systems\/worldTick\.js';[^\n]*\n[\s\S]*survivalHudChips\(vitals, Math\.floor\(ownMinutes\(\)\),/,"the needs strip reads the character's clock (ui-hud-needs-on-the-worlds-clock)"],
     ["src/ui/enhanced/enhancedTavern.js", /const t = deps\.ownTimeOf\?\.\(expiry\);/, "the enhanced offer says the room in the character's time (ui-enhanced-tavern-no-own-time)"],
     ["src/ui/enhanced/enhancedTavern.js", /gameMinutes: h\.worldNow\?\.\(\) \?\? now \}\);/, "the enhanced meal's holiday is the world's (ui-enhanced-tavern-meal-holiday-own)"],
-    ["src/ui/enhanced/enhancedTavern.js", /hour: Math\.trunc\(\(\(\(h\.worldNow\?\.\(\) \?\? now\) % 1440\) \+ 1440\) % 1440 \/ 60\) \}\);/, "the enhanced kitchen keeps the world's hours (ui-enhanced-tavern-kitchen-own)"],
+    ["src/ui/enhanced/enhancedTavern.js", /hour: Math\.trunc\(\(\(\(\(h\.worldNow\?\.\(\) \?\? now\) % 1440\) \+ 1440\) % 1440\) \/ 60\),\n\s*\}\);/, "the enhanced kitchen keeps the world's hours (ui-enhanced-tavern-kitchen-own)"],
   ];
   for (const [file, re, what] of rows) assert.match(rd(file), re, `${file}: ${what}`);
 });

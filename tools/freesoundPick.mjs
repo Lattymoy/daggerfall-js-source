@@ -33,7 +33,10 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const TOKEN = process.env.FREESOUND_TOKEN;
-if (!TOKEN) { console.error('FREESOUND_TOKEN is not set'); process.exit(2); }
+if (!TOKEN) {
+  console.error('FREESOUND_TOKEN is not set');
+  process.exit(2);
+}
 
 // Node's fetch (undici) ignores HTTPS_PROXY unless told to, and behind
 // an egress proxy the direct attempt comes back 403 "Host not in
@@ -59,23 +62,43 @@ export const SLOTS = {
   fire: {
     seconds: [0.25, 3.0],
     queries: [
-      'shotgun blast', 'shotgun shot', 'double barrel shotgun', 'shotgun fire',
-      '12 gauge shot', 'musket shot', 'blunderbuss', 'black powder gunshot',
-      'flintlock shot', 'gunshot close', 'rifle shot echo', 'cannon small shot',
+      'shotgun blast',
+      'shotgun shot',
+      'double barrel shotgun',
+      'shotgun fire',
+      '12 gauge shot',
+      'musket shot',
+      'blunderbuss',
+      'black powder gunshot',
+      'flintlock shot',
+      'gunshot close',
+      'rifle shot echo',
+      'cannon small shot',
     ],
   },
   'reload-open': {
     seconds: [0.15, 2.5],
     queries: [
-      'shotgun break open', 'shotgun pump', 'shotgun cock', 'break action shotgun',
-      'shotgun shell eject', 'gun cocking metal', 'rifle bolt open', 'lever action',
+      'shotgun break open',
+      'shotgun pump',
+      'shotgun cock',
+      'break action shotgun',
+      'shotgun shell eject',
+      'gun cocking metal',
+      'rifle bolt open',
+      'lever action',
     ],
   },
   'reload-close': {
     seconds: [0.15, 2.5],
     queries: [
-      'shotgun close', 'shotgun breech close', 'shotgun shell insert', 'shotgun load shell',
-      'rifle bolt close', 'gun lock metal clack', 'shotgun pump forward',
+      'shotgun close',
+      'shotgun breech close',
+      'shotgun shell insert',
+      'shotgun load shell',
+      'rifle bolt close',
+      'gun lock metal clack',
+      'shotgun pump forward',
     ],
   },
 };
@@ -89,7 +112,8 @@ async function api(path, params) {
   return res.json();
 }
 
-const FIELDS = 'id,name,license,duration,samplerate,channels,filesize,type,username,tags,description,avg_rating,num_ratings,num_downloads,previews,url';
+const FIELDS =
+  'id,name,license,duration,samplerate,channels,filesize,type,username,tags,description,avg_rating,num_ratings,num_downloads,previews,url';
 
 async function search(query, { seconds, license, per }) {
   const filters = [`duration:[${seconds[0]} TO ${seconds[1]}]`];
@@ -112,12 +136,14 @@ async function search(query, { seconds, license, per }) {
 export function score(s, slot) {
   const ratings = s.num_ratings ?? 0;
   const rating = (s.avg_rating ?? 0) / 5;
-  const confidence = ratings / (ratings + 6);            // a Bayesian-ish damp
+  const confidence = ratings / (ratings + 6); // a Bayesian-ish damp
   const downloads = Math.log10(1 + (s.num_downloads ?? 0)) / 5;
   const [lo, hi] = SLOTS[slot].seconds;
-  const mid = lo + (hi - lo) * 0.25;                      // short end of the window
+  const mid = lo + (hi - lo) * 0.25; // short end of the window
   const brevity = 1 - Math.min(1, Math.abs((s.duration ?? 0) - mid) / (hi - lo));
-  const clean = /loop|music|song|ambient|montage|compilation|pack/i.test(`${s.name} ${(s.tags ?? []).join(' ')}`) ? 0.45 : 1;
+  const clean = /loop|music|song|ambient|montage|compilation|pack/i.test(`${s.name} ${(s.tags ?? []).join(' ')}`)
+    ? 0.45
+    : 1;
   return (rating * confidence * 2.2 + downloads * 1.4 + brevity * 1.0) * clean;
 }
 
@@ -137,15 +163,17 @@ async function run() {
         for (const s of await search(q, { ...spec, license, per })) {
           if (!byId.has(s.id)) byId.set(s.id, s);
         }
-      } catch (e) { console.error(`  ! "${q}": ${e.message}`); }
-      await sleep(120);   // the API is rate limited; be a good guest
+      } catch (e) {
+        console.error(`  ! "${q}": ${e.message}`);
+      }
+      await sleep(120); // the API is rate limited; be a good guest
     }
-    const ranked = [...byId.values()]
-      .map((s) => ({ ...s, score: score(s, slot) }))
-      .sort((a, b) => b.score - a.score);
+    const ranked = [...byId.values()].map((s) => ({ ...s, score: score(s, slot) })).sort((a, b) => b.score - a.score);
     console.log(`\n${slot}: ${byId.size} distinct sounds from ${spec.queries.length} queries`);
     for (const s of ranked.slice(0, 10)) {
-      console.log(`  ${String(s.score.toFixed(2)).padStart(5)}  ${String(s.id).padStart(7)}  ${s.duration.toFixed(2)}s  ${(s.avg_rating ?? 0).toFixed(1)}/${s.num_ratings ?? 0}  ${s.num_downloads} dl  ${s.name}`);
+      console.log(
+        `  ${String(s.score.toFixed(2)).padStart(5)}  ${String(s.id).padStart(7)}  ${s.duration.toFixed(2)}s  ${(s.avg_rating ?? 0).toFixed(1)}/${s.num_ratings ?? 0}  ${s.num_downloads} dl  ${s.name}`,
+      );
     }
     report.slots[slot] = ranked.map(({ previews, description, ...rest }) => ({
       ...rest,
@@ -159,9 +187,16 @@ async function run() {
       for (const s of ranked.slice(0, Number(arg('keep', 8)))) {
         const url = s.previews?.['preview-hq-mp3'];
         if (!url) continue;
-        const safe = s.name.replace(/\.[a-z0-9]+$/i, '').replace(/[^a-z0-9]+/gi, '-').slice(0, 48).toLowerCase();
+        const safe = s.name
+          .replace(/\.[a-z0-9]+$/i, '')
+          .replace(/[^a-z0-9]+/gi, '-')
+          .slice(0, 48)
+          .toLowerCase();
         const res = await fetch(`${url}?token=${TOKEN}`);
-        if (!res.ok) { console.error(`  ! download ${s.id}: ${res.status}`); continue; }
+        if (!res.ok) {
+          console.error(`  ! download ${s.id}: ${res.status}`);
+          continue;
+        }
         writeFileSync(join(dir, `${s.id}-${safe}.mp3`), Buffer.from(await res.arrayBuffer()));
       }
     }
@@ -171,4 +206,7 @@ async function run() {
   console.log(`\nreport: ${OUT}/report.json`);
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

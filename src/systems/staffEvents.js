@@ -7,8 +7,14 @@
 // is never shown it.
 //
 // Nothing here is saved: an event is the hub's, said again at every hello.
-import { validStaffEvent, staffEventKey, staffEventIdOf, isAreaEvent, STAFF_EVENTS_MAX } from '../net/staffEvent/staffEventLaw.js';
-import { raidTownIs } from '../world/raidShared.js';   // WW6: a town's event's town - the Bay's by region and location, past the Bay by its own index
+import {
+  validStaffEvent,
+  staffEventKey,
+  staffEventIdOf,
+  isAreaEvent,
+  STAFF_EVENTS_MAX,
+} from '../net/staffEvent/staffEventLaw.js';
+import { raidTownIs } from '../world/raidShared.js'; // WW6: a town's event's town - the Bay's by region and location, past the Bay by its own index
 
 /**
  * A staff event held as a raid: the fields systems/raidingParties.js reads off a raid, and the event's own.
@@ -34,9 +40,29 @@ const ENDED_KEPT = 32;
 
 /** @param {import('../net/staffEvent/staffEventLaw.js').StaffEvent} e @returns {StaffRaid} */
 const raidOf = (e) => ({
-  staff: e, key: staffEventKey(e.id), regionIndex: e.rg, locationIndex: e.loc, locationName: e.nm, px: e.px, py: e.py,
-  startMinute: -Infinity, endMinute: Infinity, attackAmount: e.n, type: 9, killed: 0, struck: false, announced: false,
-  cleansed: false, routed: false, bossFc: -1, bossUp: 0, bossDown: 0, bossSaid: -1, mine: 0, fillS: undefined, handSeen: e.fb,
+  staff: e,
+  key: staffEventKey(e.id),
+  regionIndex: e.rg,
+  locationIndex: e.loc,
+  locationName: e.nm,
+  px: e.px,
+  py: e.py,
+  startMinute: -Infinity,
+  endMinute: Infinity,
+  attackAmount: e.n,
+  type: 9,
+  killed: 0,
+  struck: false,
+  announced: false,
+  cleansed: false,
+  routed: false,
+  bossFc: -1,
+  bossUp: 0,
+  bossDown: 0,
+  bossSaid: -1,
+  mine: 0,
+  fillS: undefined,
+  handSeen: e.fb,
 });
 
 const endOne = (/** @type {string} */ id) => {
@@ -59,13 +85,19 @@ export function staffEventBook(list) {
     if (!e || _ended.has(e.id)) continue;
     seen.add(e.id);
     const had = _raids.get(e.id);
-    if (had) { had.staff = e; had.attackAmount = e.n; } else _raids.set(e.id, raidOf(e));
+    if (had) {
+      had.staff = e;
+      had.attackAmount = e.n;
+    } else _raids.set(e.id, raidOf(e));
   }
   for (const id of [..._raids.keys()]) if (!seen.has(id) && !_raids.get(id)?.cleansed) endOne(id);
   return [..._raids.values()].filter((r) => !r.cleansed).length;
 }
 /** AN END (`{k:'end', id}`), whatever ended it - staff, its boss's fall, its clock, its last monster. */
-export const staffEventEnd = (/** @type {string} */ id) => { endOne(id); return true; };
+export const staffEventEnd = (/** @type {string} */ id) => {
+  endOne(id);
+  return true;
+};
 /** A CELL'S LEDGER (`{k:'st'}`) for an event I hold. @param {{ id: string, n: number, bd: 0|1, bu: 0|1, bk: 0|1, fc: number }} st */
 export function staffEventLedger(st) {
   if (!_raids.has(st.id)) return false;
@@ -79,7 +111,7 @@ export const staffLedgerOf = (id) => _ledgers.get(id) ?? null;
 export const staffRaids = () => [..._raids.values()].filter((r) => !r.cleansed);
 /** The events that ended and whose monsters are not yet routed (raidingParties routs each once). */
 /**
- * BOSS-BOUND (2026-10-25, mob: "heal was set to 10000 for zombie its wromng", "the event boss had to low of health"): the
+ * BOSS-BOUND (2026-10-25): the
  * most health a peer's mini boss of the event `key` may claim - the exact health staff typed (`hp`), or its kind's
  * normal bound (net/foeBounds.js, `normal`) times the event's multiplier (`bh`), whichever is more. FOE-BOUNDS judged it
  * as a plain elite, and every copy but its owner's took a boss past that down as impossible. Null when no live event
@@ -93,7 +125,10 @@ export function staffBossBound(key, normal) {
 }
 export const staffRaidsEnded = () => [..._raids.values()].filter((r) => r.cleansed && !r.routed);
 /** A key's raid, or null. @param {string} key */
-export const staffRaidOfKey = (key) => { const id = staffEventIdOf(key); return id ? _raids.get(id) ?? null : null; };
+export const staffRaidOfKey = (key) => {
+  const id = staffEventIdOf(key);
+  return id ? (_raids.get(id) ?? null) : null;
+};
 
 /**
  * THE EVENT I STAND IN, or null: a town's while I stand in its town (the host's `townHere` - outdoors, in the rect, the
@@ -110,7 +145,8 @@ export function staffRaidHere(town, px, outdoors) {
 }
 
 /** A monster for the event: one of its kinds, evenly. @param {StaffRaid} r @param {() => number} random */
-export const staffRaider = (r, random) => r.staff.mt[Math.min(r.staff.mt.length - 1, Math.floor(random() * r.staff.mt.length))];
+export const staffRaider = (r, random) =>
+  r.staff.mt[Math.min(r.staff.mt.length - 1, Math.floor(random() * r.staff.mt.length))];
 /** Is there room for one more of the event's monsters - fewer than `cap` standing of mine, and the event's kills and my
  *  standing ones short of its total? @param {StaffRaid} r @param {number} standing @param {number} cap */
 export function staffRaidRoom(r, standing, cap) {
@@ -128,7 +164,7 @@ export function staffBossWanted(r) {
 /** @param {StaffRaid} r */
 export const staffBossByHand = (r) => (r.staff.fb ?? 0) > (r.handSeen ?? 0);
 /**
- * BOSS-LOST (mob 2026-10-25: "boss seems to not spawn every time"): the call whose boss stood but stands nowhere now -
+ * BOSS-LOST: the call whose boss stood but stands nowhere now -
  * not fallen, not mine, no puppet of it - for STAFF_BOSS_LOST_MS, or -1. A jump's sweep, a removal or a runner gone took
  * it, and the cell, told it stood, would never call it again: the one who runs the event stands it again, for the same
  * call. The wait lets a fallen runner's boss come over to me (raidingParties.js tookStaffBoss) first.
@@ -136,7 +172,10 @@ export const staffBossByHand = (r) => (r.staff.fb ?? 0) > (r.handSeen ?? 0);
  */
 export function staffBossLost(r, standing, nowMs) {
   const led = _ledgers.get(r.staff.id);
-  if (!led || !led.bd || !led.bu || led.bk || standing || (r.bossDown && r.bossFc === led.fc)) { r.bossLostAt = undefined; return -1; }
+  if (!led || !led.bd || !led.bu || led.bk || standing || (r.bossDown && r.bossFc === led.fc)) {
+    r.bossLostAt = undefined;
+    return -1;
+  }
   r.bossLostAt ??= nowMs;
   if (nowMs - r.bossLostAt < STAFF_BOSS_LOST_MS) return -1;
   r.bossLostAt = undefined;
@@ -146,10 +185,14 @@ export const STAFF_BOSS_LOST_MS = 8000;
 /** The boss line, once a call, where the player stands in the event: the call whose boss is due, or -1. @param {StaffRaid} r */
 export function staffBossToSay(r) {
   const led = _ledgers.get(r.staff.id);
-  if (!led || !led.bd || !led.bu || r.bossSaid === led.fc) return -1;   // BOSS-CLEAR: said once it stands, not at its call
+  if (!led || !led.bd || !led.bu || r.bossSaid === led.fc) return -1; // BOSS-CLEAR: said once it stands, not at its call
   r.bossSaid = led.fc;
   return led.fc;
 }
 
 /** Test seam. */
-export function _resetStaffEvents() { _raids = new Map(); _ledgers = new Map(); _ended = new Set(); }
+export function _resetStaffEvents() {
+  _raids = new Map();
+  _ledgers = new Map();
+  _ended = new Set();
+}

@@ -11,8 +11,8 @@
 // declared after the program's ROT and TRANS tables, which it turns a neighbour's picture by.
 import { ROAD_EDGE, ROAD_EDGE_WET, ROAD_PAVING, ROAD_RECORDS } from '../world/road/roadEdge.js';
 import { GROUND_RECORD_LIMIT } from '../world/terrain/terrainTiles.js';
-import { pageParam } from '../systems/pageQuery.js';   // the kill door
-import { isEnhanced } from '../systems/uiSkin.js';   // the skin
+import { pageParam } from '../systems/pageQuery.js'; // the kill door
+import { isEnhanced } from '../systems/uiSkin.js'; // the skin
 
 /** A ROAD'S EDGE BLENDED INTO ITS GROUND - the enhanced skin's ground, whatever the page (it moves no flat and no step: a
  *  picture alone); the classic skin keeps DFU's tiles to their edges. `?roadedges=off` the kill door. No Features row.

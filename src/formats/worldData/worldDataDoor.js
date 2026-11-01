@@ -7,5 +7,7 @@
 // this leaf. Unset, every ask answers "no replacement" - DFU with
 // AssetInjection off.
 let _door = null;
-export function setWorldDataDoor(door) { _door = door ?? null; }
+export function setWorldDataDoor(door) {
+  _door = door ?? null;
+}
 export const worldDataDoor = () => _door;

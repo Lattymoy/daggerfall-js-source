@@ -14,21 +14,28 @@
 // pictures rather than a guess (section 21's NOT HERE). They stand idle and turn to face the player, as Daggerfall's
 // billboards always did, at a person's pace.
 import { GENDERS } from './nameHelper.js';
-import { isChildNPCData, isChildNPCTexture, staticNpcData } from './staticNpc.js';   // MWNPC18: and a child's picture, a figure's; AUDIT PROVINCE-FOLK A2: a room's person's record
-import { flatGender } from '../formats/flatsFile.js';   // MWNPC18: a figure's sex, FLATS.CFG's column
-import { textSeed } from '../systems/livingWorld/seed.js';   // MWNPC18: a figure's seed, its piece's id
+import { isChildNPCData, isChildNPCTexture, staticNpcData } from './staticNpc.js'; // MWNPC18: and a child's picture, a figure's; AUDIT PROVINCE-FOLK A2: a room's person's record
+import { flatGender } from '../formats/flatsFile.js'; // MWNPC18: a figure's sex, FLATS.CFG's column
+import { textSeed } from '../systems/livingWorld/seed.js'; // MWNPC18: a figure's seed, its piece's id
 import { RACES } from '../systems/races.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
-import { isNpcFlat } from '../world/npcFlatArchives.js';   // STALL-FLATS: RDBLayout.NPCFlatArchives, the people's pictures
-import { dressPerson } from './wardrobe.js';   // MWNPC17: the wardrobe's roles
-import { nativeAt } from './provinceFolk.js';   // PROVINCE-FOLK: the place's own people past the Bay
+import { isNpcFlat } from '../world/npcFlatArchives.js'; // STALL-FLATS: RDBLayout.NPCFlatArchives, the people's pictures
+import { dressPerson } from './wardrobe.js'; // MWNPC17: the wardrobe's roles
+import { nativeAt } from './provinceFolk.js'; // PROVINCE-FOLK: the place's own people past the Bay
 
 const RACE_NAME = Object.freeze(Object.fromEntries(Object.entries(RACES).map(([k, v]) => [v, k])));
 
 /** MWNPC17: the wardrobe's role (characters/wardrobe.js WARDROBE_ROLES) each kind of person is dressed by. */
 export const KIND_ROLE = Object.freeze({
-  priest: 'priest', mage: 'mage', knight: 'knight', fighter: 'fighter', noble: 'noble', merchant: 'merchant',
-  underworld: 'rogue', scholar: 'scholar', common: 'commoner',
+  priest: 'priest',
+  mage: 'mage',
+  knight: 'knight',
+  fighter: 'fighter',
+  noble: 'noble',
+  merchant: 'merchant',
+  underworld: 'rogue',
+  scholar: 'scholar',
+  common: 'commoner',
 });
 
 function mix(h) {
@@ -45,17 +52,38 @@ function mix(h) {
  *  @param {any} f the FACTION.TXT row */
 export function wardrobeOf(f) {
   if (!f) return 'common';
-  if (f.type === FACTION_TYPES.VampireClan || f.ggroup === GUILD_GROUPS.Vampires || f.sgroup === SOCIAL_GROUPS.SupernaturalBeings) return 'none';
+  if (
+    f.type === FACTION_TYPES.VampireClan ||
+    f.ggroup === GUILD_GROUPS.Vampires ||
+    f.sgroup === SOCIAL_GROUPS.SupernaturalBeings
+  )
+    return 'none';
   // MWNPC8b: nor anyone not mortal - a Daedra, a god, Oblivion's or the Fey's: their sprite is no person in clothes
-  if (f.type === FACTION_TYPES.Daedra || f.type === FACTION_TYPES.God || f.ggroup === GUILD_GROUPS.Oblivion || f.ggroup === GUILD_GROUPS.TheFey) return 'none';
+  if (
+    f.type === FACTION_TYPES.Daedra ||
+    f.type === FACTION_TYPES.God ||
+    f.ggroup === GUILD_GROUPS.Oblivion ||
+    f.ggroup === GUILD_GROUPS.TheFey
+  )
+    return 'none';
   if (f.type === FACTION_TYPES.Temple || f.ggroup === GUILD_GROUPS.HolyOrder) return 'priest';
   if (f.ggroup === GUILD_GROUPS.MagesGuild || f.type === FACTION_TYPES.MagicUser) return 'mage';
-  if (f.type === FACTION_TYPES.WitchesCoven || f.ggroup === GUILD_GROUPS.Witches || f.ggroup === GUILD_GROUPS.Necromancers) return 'mage';   // MWNPC17
-  if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.type === FACTION_TYPES.KnightlyGuard) return 'knight';   // MWNPC17: was 'steel'
-  if (f.ggroup === GUILD_GROUPS.FightersGuild) return 'fighter';   // MWNPC17: was 'steel'
+  if (
+    f.type === FACTION_TYPES.WitchesCoven ||
+    f.ggroup === GUILD_GROUPS.Witches ||
+    f.ggroup === GUILD_GROUPS.Necromancers
+  )
+    return 'mage'; // MWNPC17
+  if (f.ggroup === GUILD_GROUPS.KnightlyOrder || f.type === FACTION_TYPES.KnightlyGuard) return 'knight'; // MWNPC17: was 'steel'
+  if (f.ggroup === GUILD_GROUPS.FightersGuild) return 'fighter'; // MWNPC17: was 'steel'
   if (f.sgroup === SOCIAL_GROUPS.Nobility || f.type === FACTION_TYPES.Courts) return 'noble';
   if (f.sgroup === SOCIAL_GROUPS.Merchants) return 'merchant';
-  if (f.sgroup === SOCIAL_GROUPS.Underworld || f.type === FACTION_TYPES.Thieves || f.ggroup === GUILD_GROUPS.DarkBrotherHood) return 'underworld';   // MWNPC17: and the Brotherhood
+  if (
+    f.sgroup === SOCIAL_GROUPS.Underworld ||
+    f.type === FACTION_TYPES.Thieves ||
+    f.ggroup === GUILD_GROUPS.DarkBrotherHood
+  )
+    return 'underworld'; // MWNPC17: and the Brotherhood
   if (f.sgroup === SOCIAL_GROUPS.Scholars) return 'scholar';
   return 'common';
 }
@@ -80,7 +108,7 @@ export function personLook(pn, data, faction, feet = null) {
   // no person's archive, so this one law keeps the marker's sprite-less flat bodiless too.
   if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);
   const kind = wardrobeOf(faction);
-  const race = standingRace(data, faction, feet);   // PROVINCE-FOLK: past the Bay the place's own people - AUDIT TAMRIEL-WIDE E2: where they stand
+  const race = standingRace(data, faction, feet); // PROVINCE-FOLK: past the Bay the place's own people - AUDIT TAMRIEL-WIDE E2: where they stand
   if (kind === 'none' || !race) return (pn._mwLook = null);
   const gender = data.gender === GENDERS.Female ? 'female' : 'male';
   const seed = mix((data.nameSeed | 0) ^ mix(data.hash | 0));
@@ -103,7 +131,8 @@ export function personLook(pn, data, faction, feet = null) {
  */
 export function figureLook(fig, ctx = null, feet = null) {
   if (fig._mwLook !== undefined) return fig._mwLook;
-  const piece = fig.piece, flat = piece?.flat;
+  const piece = fig.piece,
+    flat = piece?.flat;
   if (!Array.isArray(flat)) return (fig._mwLook = null);
   const [a, r] = flat;
   if (a === DAEDRA_PRINCES_ARCHIVE || isChildNPCTexture(a, r)) return (fig._mwLook = null);
@@ -114,7 +143,13 @@ export function figureLook(fig, ctx = null, feet = null) {
   if (!gender) return (fig._mwLook = null);
   const seed = textSeed(`decor:${piece.id}`);
   const d = dressPerson({ role: figureRole(row.caption), gender, seed });
-  return (fig._mwLook = { race: nativeAt(feet) ?? raceNameOf(ctx?.race ?? null), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });   // PROVINCE-FOLK: past the Bay the place's own people
+  return (fig._mwLook = {
+    race: nativeAt(feet) ?? raceNameOf(ctx?.race ?? null),
+    gender,
+    faceIndex: seed % 10,
+    items: d.items,
+    npc: d.npc,
+  }); // PROVINCE-FOLK: past the Bay the place's own people
 }
 /** PROVINCE-FOLK (bible/03-World/World-Wide.md): A STANDING PERSON'S BODY'S RACE - their record's (GetRaceFromFaction), but
  *  past the Bay one whose race is the region's, or a region's faction's (a Bay town's People, a province's Court), is the
@@ -122,9 +157,15 @@ export function figureLook(fig, ctx = null, feet = null) {
  *  Reachmen, Skyrim's Nords); a named one (an Individual faction) and a faction's own people keep theirs.
  *  @param {any} data staticNpcData's @param {any} faction its FACTION.TXT row */
 export function standingRace(data, faction, feet = null) {
-  const own = RACE_NAME[data.race], native = own ? nativeAt(feet) : null;
+  const own = RACE_NAME[data.race],
+    native = own ? nativeAt(feet) : null;
   if (!native || faction?.type === FACTION_TYPES.Individual) return own;
-  const regional = !faction || !Number.isInteger(faction.race) || faction.race < 0 || faction.race > 7 || (Number.isInteger(faction.region) && faction.region >= 0);
+  const regional =
+    !faction ||
+    !Number.isInteger(faction.race) ||
+    faction.race < 0 ||
+    faction.race > 7 ||
+    (Number.isInteger(faction.region) && faction.region >= 0);
   return regional ? native : own;
 }
 /** AUDIT PROVINCE-FOLK A2: A ROOM'S PERSON, read as the street reads one (world.js's): their record with the faction table
@@ -133,12 +174,17 @@ export function standingRace(data, faction, feet = null) {
  *  @param {any} pn @param {any} sceneCtx @param {Map<number, any>} dict @param {number|null} regionRace REGION_RACES + 1 */
 export function standingPersonLook(pn, sceneCtx, dict, regionRace) {
   const getFaction = (/** @type {number} */ id) => dict.get(id) ?? null;
-  return personLook(pn, staticNpcData(pn, { ...sceneCtx, getFaction, raceOfCurrentRegion: () => regionRace ?? 0 }), getFaction(pn.factionID));
+  return personLook(
+    pn,
+    staticNpcData(pn, { ...sceneCtx, getFaction, raceOfCurrentRegion: () => regionRace ?? 0 }),
+    getFaction(pn.factionID),
+  );
 }
 /** MWNPC18: TEXTURE.175, the Daedra Princes as their quests summon them - never a person's body. */
 export const DAEDRA_PRINCES_ARCHIVE = 175;
 /** MWNPC18: a race the host names (a RACES id, or a name) as the look spells it - the Bay's Breton when it names none. */
-const raceNameOf = (race) => (typeof race === 'number' ? RACE_NAME[race] : typeof race === 'string' && race in RACES ? race : null) ?? 'Breton';
+const raceNameOf = (race) =>
+  (typeof race === 'number' ? RACE_NAME[race] : typeof race === 'string' && race in RACES ? race : null) ?? 'Breton';
 /** MWNPC18: THE CAPTION'S WORDS, to a wardrobe role (characters/wardrobe.js WARDROBE_ROLES) - the first that matches, in this
  *  order (a "noble knight" is a knight); none, the street's. A judgement over FLATS.CFG's own words, recorded here.
  *  AUDIT MWNPC16-18 D3: each word from its start (`\b`), and a short one whole - "good-looking" and "walking" held a
@@ -149,8 +195,14 @@ export const FIGURE_ROLE_WORDS = Object.freeze([
   ['priest', /\b(?:priest|monks?\b|nuns?\b|cleric|healer|acolyte|templar|abbot|abbess|holy\b)/i],
   ['mage', /\b(?:mages?\b|wizard|sorcer|witch|warlock|necromanc|magician|enchant|seers?\b|mystic|alchemist)/i],
   ['knight', /\b(?:knight|soldier|captain|sentry|sentries|paladin|sergeant)|guard/i],
-  ['fighter', /\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i],
-  ['noble', /\b(?:noble|lords?\b|lady|ladies|kings?\b|queen|prince|baron|duke|duchess|count(?:ess)?\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i],
+  [
+    'fighter',
+    /\b(?:warrior|fighter|barbarian|mercenar|swordsm|archer|spear|axes?\b|axe-?m[ae]n|crossbow|amazon|gladiator)/i,
+  ],
+  [
+    'noble',
+    /\b(?:noble|lords?\b|lady|ladies|kings?\b|queen|prince|baron|duke|duchess|count(?:ess)?\b|regent|courtier|elegant|royal|emperor|empress|aristocra)/i,
+  ],
   ['rogue', /\b(?:thief|thieves|rogue|assassin|cutthroat|bandit|brotherhood|smuggler|pirate|cowl)/i],
   ['merchant', /\b(?:merchant|shopkeep|trader|vendor|innkeep|barkeep|bartender|banker|tailor|grocer)|smith/i],
   ['scholar', /\b(?:scholar|sages?\b|librarian|scribe|teacher|professor|clerk|historian)/i],
@@ -174,12 +226,28 @@ let _ids = 0;
  * @param {any} pn @param {any} look @param {number[]} feet @param {number[]} eye @param {number} dt
  */
 export function personActor(pn, look, feet, eye, dt) {
-  const a = pn._mwActor ??= { id: `p${++_ids}`, look: null, feet: null, yaw: 0, moving: false, running: false, drawn: false, swings: 0, strike: 0, casts: 0, castRange: 0, hits: 0, dead: 0 };
-  a.look = look; a.feet = feet;
+  const a = (pn._mwActor ??= {
+    id: `p${++_ids}`,
+    look: null,
+    feet: null,
+    yaw: 0,
+    moving: false,
+    running: false,
+    drawn: false,
+    swings: 0,
+    strike: 0,
+    casts: 0,
+    castRange: 0,
+    hits: 0,
+    dead: 0,
+  });
+  a.look = look;
+  a.feet = feet;
   const want = Math.atan2(eye[0] - feet[0], eye[2] - feet[2]);
   if (pn._mwYaw == null) pn._mwYaw = want;
   else {
-    const d = wrap(want - pn._mwYaw), step = PERSON_TURN_RATE * Math.max(0, dt);
+    const d = wrap(want - pn._mwYaw),
+      step = PERSON_TURN_RATE * Math.max(0, dt);
     pn._mwYaw = wrap(pn._mwYaw + (Math.abs(d) <= step ? d : Math.sign(d) * step));
   }
   a.yaw = pn._mwYaw;

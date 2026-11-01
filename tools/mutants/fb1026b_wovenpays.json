@@ -211,8 +211,8 @@
   {
     "name": "WOVEN-PAYS-realm-delete-leaves-the-count",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id),   // WOVEN-PAYS: and its cloth's silver counts\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id), // WOVEN-PAYS: and its cloth's silver counts\n    db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP1: its standing with the guilds (npcRoll.js)",
+    "new": "    db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP1: its standing with the guilds (npcRoll.js)",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "WOVEN-PAYS-words-share-beside-count",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
-    "new": "  const more = firstCraftXp(r, true);",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true); // FIRST-BUDGET: its track's first-make share",
+    "new": "  const more = firstCraftXp(r, true); // FIRST-BUDGET: its track's first-make share",
     "tests": [
       "test/net/fb1026b_wovenpays.test.js"
     ],
@@ -259,8 +259,8 @@
   {
     "name": "WOVEN-PAYS-words-count-unread",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const walled = counterMade(r) && silver > 0;",
-    "new": "  const walled = false;",
+    "old": "  const walled = counterMade(r) && silver > 0; // WOVEN-PAYS: a cloth piece's first, while its cloth's silver count stands",
+    "new": "  const walled = false; // WOVEN-PAYS: a cloth piece's first, while its cloth's silver count stands",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js",
       "test/systems/clothgems_client.test.js",
@@ -270,7 +270,7 @@
   {
     "name": "WOVEN-PAYS-law-cloth-another-key",
     "file": "src/net/recipeLaw.js",
-    "old": "export const JUDGED_CLOTH = Object.freeze([...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key)))]);",
+    "old": "export const JUDGED_CLOTH = Object.freeze([\n  ...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key))),\n]);",
     "new": "export const JUDGED_CLOTH = Object.freeze(['cloth:linen']);",
     "tests": [
       "test/net/fb1026b_wovenpays.test.js"

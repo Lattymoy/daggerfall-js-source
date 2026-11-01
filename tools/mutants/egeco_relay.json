@@ -2,8 +2,8 @@
   {
     "name": "EGECO3-forsake-refused",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "'rehearsal', 'forsake', 'seal']);",
-    "new": "'rehearsal', 'seal']);",
+    "old": "  'forsake',\n  'seal',",
+    "new": "  'seal',",
     "tests": [
       "test/net/eliteGates/egeco_receipts.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGECO3-seal-refused",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "'rehearsal', 'forsake', 'seal']);",
-    "new": "'rehearsal', 'forsake']);",
+    "old": "  'seal',\n]);",
+    "new": "]);",
     "tests": [
       "test/net/eliteGates/egeco_receipts.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "EGECO3-guard-gone",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "  if (signedLen(body.length) > EG_RECEIPT_MAX) throw new TypeError('mintEgReceipt could not keep a receipt inside its bound');",
+    "old": "  if (signedLen(body.length) > EG_RECEIPT_MAX)\n    throw new TypeError('mintEgReceipt could not keep a receipt inside its bound');",
     "new": "",
     "tests": [
       "test/net/eliteGates/egeco_receipts.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "EGECO3-a-post-may-ping",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "heraldCard({ family: 'spire', moment, title, text, fields });",
-    "new": "heraldCard({ family: 'spire', moment, title, text, fields, role: '1555589839825670258' });",
+    "old": "  heraldCard({ family: 'spire', moment, title, text, fields });",
+    "new": "  heraldCard({ family: 'spire', moment, title, text, fields, role: '1555589839825670258' });",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGECO3-name-taken-raw",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "const companyOf = (o) => { const n = heraldName(o);",
-    "new": "const companyOf = (o) => { const n = String(o ?? '');",
+    "old": "  const n = heraldName(o);",
+    "new": "  const n = String(o ?? '');",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGECO3-lords-the-kept",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "return L ? L.name.replace(/^The /, 'the ') : 'the Court\\'s lord';",
-    "new": "return L ? L.name : 'the Court\\'s lord';",
+    "old": "  return L ? L.name.replace(/^The /, 'the ') : \"the Court's lord\";",
+    "new": "  return L ? L.name : \"the Court's lord\";",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGECO3-seen-ignored",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "    if (S.seen.includes(id)) continue;\n",
-    "new": "",
+    "old": "    if (S.seen.includes(id)) continue;\n    S.seen.push(id);",
+    "new": "    S.seen.push(id);",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGECO3-owed-with-no-herald",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "const owe = (p) => { if (post) {",
-    "new": "const owe = (p) => { if (true) {",
+    "old": "    if (post) {",
+    "new": "    if (true) {",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGECO3-seal-every-breach",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "below < open && below >= S.base && below > S.said)",
-    "new": "below < open && below >= S.base)",
+    "old": "      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) {",
+    "new": "      if (e.h % 25 === 0 && below < open && below >= S.base) {",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGECO3-seal-open-from-the-start",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "below < open && below >= S.base && below > S.said)",
-    "new": "below < open && below > S.said)",
+    "old": "      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) {",
+    "new": "      if (e.h % 25 === 0 && below < open && below > S.said) {",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGECO3-seal-past-the-open",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "below < open && below >= S.base && below > S.said)",
-    "new": "below >= S.base && below > S.said)",
+    "old": "      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) {",
+    "new": "      if (e.h % 25 === 0 && below >= S.base && below > S.said) {",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGECO3-bracket-off-by-one",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "n >= 2 && n <= 4 ? 1",
-    "new": "n >= 2 && n <= 5 ? 1",
+    "old": "export const egDescentBracket = (n) => (n === 1 ? 0 : n >= 2 && n <= 4 ? 1 : n >= 5 && n <= EG_PARTY_MAX ? 2 : -1);",
+    "new": "export const egDescentBracket = (n) => (n === 1 ? 0 : n >= 2 && n <= 5 ? 1 : n >= 5 && n <= EG_PARTY_MAX ? 2 : -1);",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGECO3-tie-break-inverted",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "(e.h === cur[0] && e.td >= cur[1])",
-    "new": "(e.h === cur[0] && e.td <= cur[1])",
+    "old": "      if (cur && (e.h < cur[0] || (e.h === cur[0] && e.td >= cur[1]))) continue;",
+    "new": "      if (cur && (e.h < cur[0] || (e.h === cur[0] && e.td <= cur[1]))) continue;",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGECO3-floor-gone",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "      if (e.h >= EG_HERALD_TOP_HALL) owe({ kind: 'top'",
-    "new": "      owe({ kind: 'top'",
+    "old": "      if (e.h >= EG_HERALD_TOP_HALL) owe({ kind: 'top', br, by: e.by, o: e.o, h: e.h, td: e.td });",
+    "new": "      owe({ kind: 'top', br, by: e.by, o: e.o, h: e.h, td: e.td });",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGECO3-tell-of-another-shape",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "typeof body.b !== 'string' || !EG_BREACH_RE.test(body.b) ||",
-    "new": "typeof body.b !== 'string' ||",
+    "old": "    !EG_BREACH_RE.test(body.b) ||\n    !Array.isArray(body.ev) ||",
+    "new": "    !Array.isArray(body.ev) ||",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGECO3-bad-lord-taken",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "(e.lk === '' || (typeof e.lk === 'string' && LORD_RE.test(e.lk)))",
-    "new": "typeof e.lk === 'string'",
+    "old": "    else if (\n      e.k === 'lb' &&\n      nat(e.c, 1, EG_PARTY_MAX) &&\n      (e.lk === '' || (typeof e.lk === 'string' && LORD_RE.test(e.lk)))\n    )",
+    "new": "    else if (e.k === 'lb' && nat(e.c, 1, EG_PARTY_MAX) && typeof e.lk === 'string')",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGECO3-owner-asks-a-joiners-kill",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "(by == null || by === selfId() ? find(entity, room) : Promise.resolve(false))",
-    "new": "find(entity, room)",
+    "old": "  const death = (entity, by = null, room = false) =>\n    by == null || by === selfId() ? find(entity, room) : Promise.resolve(false);",
+    "new": "  const death = (entity, by = null, room = false) => find(entity, room);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGECO3-a-body-asked-twice",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "if (!egFindAsks(entity, tier, online()) || asked.has(entity)) return false;",
-    "new": "if (!egFindAsks(entity, tier, online())) return false;",
+    "old": "    if (!egFindAsks(entity, tier, online()) || asked.has(entity)) return false;",
+    "new": "    if (!egFindAsks(entity, tier, online())) return false;",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGECO3-a-plain-foe-asked",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier)",
-    "new": "online === true && DUNGEON_TIERS.includes(tier)",
+    "old": "  online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);",
+    "new": "  online === true && DUNGEON_TIERS.includes(tier);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGECO3-the-key-not-thrown",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n",
-    "new": "",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n    say(EG_FIND_TEXT.found);",
+    "new": "    say(EG_FIND_TEXT.found);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGECO3-offline-asked",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "online === true && entity?.eliteFoe === true",
-    "new": "entity?.eliteFoe === true",
+    "old": "  online === true && entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);",
+    "new": "  entity?.eliteFoe === true && DUNGEON_TIERS.includes(tier);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGECO3-find-proof-unasked",
     "file": "server-account/src/eg.js",
-    "old": "  if (!(await proven(db, player.id))) return { error: 'unproven' };\n  const day = utcDay(nowS), wk",
-    "new": "  const day = utcDay(nowS), wk",
+    "old": "  if (!(await proven(db, player.id))) return { error: 'unproven' };\n  const day = utcDay(nowS),",
+    "new": "  const day = utcDay(nowS),",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGECO3-find-any-tier",
     "file": "server-account/src/eg.js",
-    "old": "if (typeof tier !== 'string' || !Object.hasOwn(EG_FIND_ODDS, tier)) return { error: 'tier' };",
-    "new": "if (typeof tier !== 'string') return { error: 'tier' };",
+    "old": "  if (typeof tier !== 'string' || !Object.hasOwn(EG_FIND_ODDS, tier)) return { error: 'tier' };",
+    "new": "  if (typeof tier !== 'string') return { error: 'tier' };",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGECO3-abyss-odds-moved",
     "file": "server-account/src/eg.js",
-    "old": "super: 1 / 60,",
-    "new": "super: 1 / 61,",
+    "old": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 400 });",
+    "new": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 61, elite: 1 / 150, regular: 1 / 400 });",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGECO3-elite-odds-moved",
     "file": "server-account/src/eg.js",
-    "old": "elite: 1 / 150,",
-    "new": "elite: 1 / 149,",
+    "old": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 400 });",
+    "new": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 149, regular: 1 / 400 });",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "EGECO3-regular-odds-moved",
     "file": "server-account/src/eg.js",
-    "old": "regular: 1 / 400 }",
-    "new": "regular: 1 / 401 }",
+    "old": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 400 });",
+    "new": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 401 });",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGECO3-the-key-never-added",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT",
-    "new": "UPDATE players SET eg_keys = eg_keys + 0 WHERE id = ?1 AND (SELECT",
+    "old": "          'UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys',",
+    "new": "          'UPDATE players SET eg_keys = eg_keys + 0 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys',",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGECO3-day-cap-off-by-one",
     "file": "server-account/src/eg.js",
-    "old": "ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks < ?5 RETURNING asks",
-    "new": "ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks <= ?5 RETURNING asks",
+    "old": "    ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks < ?5 RETURNING asks`,",
+    "new": "    ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks <= ?5 RETURNING asks`,",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGECO3-one-cap-every-tier",
     "file": "server-account/src/eg.js",
-    "old": ".bind(player.id, day, tier, wk, EG_FIND_PER_DAY).first();",
-    "new": ".bind(player.id, day, 'all', wk, EG_FIND_PER_DAY).first();",
+    "old": "    .bind(player.id, day, tier, wk, EG_FIND_PER_DAY)",
+    "new": "    .bind(player.id, day, 'all', wk, EG_FIND_PER_DAY)",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGECO3-day-never-turning",
     "file": "server-account/src/eg.js",
-    "old": "  const day = utcDay(nowS), wk = arenaWeekOf(nowS);",
-    "new": "  const day = 0, wk = arenaWeekOf(nowS);",
+    "old": "  const day = utcDay(nowS),",
+    "new": "  const day = 0,",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGECO3-week-never-turning",
     "file": "server-account/src/eg.js",
-    "old": "  const day = utcDay(nowS), wk = arenaWeekOf(nowS);",
-    "new": "  const day = utcDay(nowS), wk = 0;",
+    "old": "    wk = arenaWeekOf(nowS);",
+    "new": "    wk = 0;",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "EGECO3-capped-yes-marked",
     "file": "server-account/src/eg.js",
-    "old": "      db.prepare('UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?4) < ?5')",
-    "new": "      db.prepare('UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND ?4 = ?4 AND ?5 = ?5')",
+    "old": "          'UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?4) < ?5',",
+    "new": "          'UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND ?4 = ?4 AND ?5 = ?5',",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "EGECO3-capped-yes-paid",
     "file": "server-account/src/eg.js",
-    "old": "      db.prepare('UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys')",
-    "new": "      db.prepare('UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND ?2 = ?2 AND ?3 = ?3 RETURNING eg_keys')",
+    "old": "        .prepare(\n          'UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys',\n        )",
+    "new": "        .prepare('UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND ?2 = ?2 AND ?3 = ?3 RETURNING eg_keys')",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "EGECO3-PL-room-raise-answered",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "{ if (opts.room) return; death(entity, opts.by ?? null)",
-    "new": "{ death(entity, opts.by ?? null)",
+    "old": "    if (opts.room) return;\n    death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e));",
+    "new": "    death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e));",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "EGECO3-PL-key-on-the-copy",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n",
-    "new": "    throwKey(here() !== at?.visit ? null : entity, d.keys);\n",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);",
+    "new": "    throwKey(here() !== at?.visit ? null : entity, d.keys);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "EGECO3-PL-kill-not-a-room",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "_registered?.death(entity, by, true) ??",
-    "new": "_registered?.death(entity, by) ??",
+    "old": "  _registered?.death(entity, by, true) ?? Promise.resolve(false);",
+    "new": "  _registered?.death(entity, by) ?? Promise.resolve(false);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "EGECO3-PL-joiner-room-lost",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "_registered?.struck(entity, room) ??",
-    "new": "_registered?.struck(entity) ??",
+    "old": "  _registered?.struck(entity, room) ?? Promise.resolve(false);",
+    "new": "  _registered?.struck(entity) ?? Promise.resolve(false);",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "EGECO3-PL-pack-short",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);",
-    "new": "  throwWeirKeyFace(Array.isArray(entity?.items) ? entity.items : []);",
+    "old": "  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items); // PARTY-LOOT: no body (a room's) - the pack holds the whole balance",
+    "new": "  throwWeirKeyFace(Array.isArray(entity?.items) ? entity.items : []); // PARTY-LOOT: no body (a room's) - the pack holds the whole balance",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]

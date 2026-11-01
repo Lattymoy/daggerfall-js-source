@@ -1,223 +1,276 @@
 [
- {
-  "name": "BREATHTAKER2-the-gain-higher",
-  "file": "src/world/landforms.js",
-  "old": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 180 * BASE_HEIGHT_SCALE });",
-  "new": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.6, top: 180 * BASE_HEIGHT_SCALE });",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER2-the-top-moved",
-  "file": "src/world/landforms.js",
-  "old": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 180 * BASE_HEIGHT_SCALE });",
-  "new": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 181 * BASE_HEIGHT_SCALE });",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER2-the-7-bit-knee-lower",
-  "file": "src/world/landforms.js",
-  "old": "  const e = (low < CONTINENT_LIFT.top ? low : CONTINENT_LIFT.top) - LOW_TOP;",
-  "new": "  const e = (low < CONTINENT_LIFT.top ? low : CONTINENT_LIFT.top) - LOW_TOP + 8;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER2-the-continuation-on-the-bay",
-  "file": "src/world/landforms.js",
-  "old": "return lift ? held + (reliefLift(low) + beyond * continentLift(low)) * fade : held;",
-  "new": "return lift ? held + (reliefLift(low) + continentLift(low)) * fade : held;",
-  "tests": ["test/world/breathtaker.test.js"],
-  "note": "Re-aimed by content (RELIEF-PEAKS): a byte's height is nodeGround now (reliefByteHeight is gone)"
- },
- {
-  "name": "BREATHTAKER3-the-seam-band-narrower",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "  return d <= seam ? 0 : smooth01((d - seam) / TAMRIEL_LANDFORM_DIALS.ramp);",
-  "new": "  return d <= seam - 1 ? 0 : smooth01((d - seam + 1) / TAMRIEL_LANDFORM_DIALS.ramp);",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-share-blind-north",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "  const d = Math.max(0, -bx, bx - mapW, -by, by - mapH);",
-  "new": "  const d = Math.max(0, -bx, bx - mapW, by - mapH);",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-ramp-whole-too-soon",
-  "file": "src/world/landforms.js",
-  "old": "  const whole = !!tl && past >= SEAM_PX + 1 + TAMRIEL_LANDFORM_DIALS.ramp;",
-  "new": "  const whole = !!tl && past >= SEAM_PX + 1;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-clip-knee-lower",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "  if (a <= k) return v;",
-  "new": "  if (a <= k * 0.9) return v;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-clip-unbounded",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "  const x = (a - k) / (T - k), o = k + (T - k) * (x / (1 + x));",
-  "new": "  const x = (a - k) / (T - k), o = k + (T - k) * x;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-a-centre-off",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "const CENTRE = Object.freeze({ ridge: 1.07,",
-  "new": "const CENTRE = Object.freeze({ ridge: 1.1,",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-ease-too-short",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "  const ease = smooth01(e / (1.25 * (m > 1 ? m : 1)));",
-  "new": "  const ease = smooth01(e / (0.5 * (m > 1 ? m : 1)));",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-off-the-table-a-different-read",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "    V = _off; i00 = 0; i10 = NV; i01 = 2 * NV; i11 = 3 * NV;",
-  "new": "    return smoothAt(L, gx, gy);",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-a-palette-lost",
-  "file": "src/world/tamriel/tamrielLandforms.js",
-  "old": "  skyrimPeaks: { ridge: 1 },",
-  "new": "",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-large-map-hashed-again",
-  "file": "src/world/tamriel/tamrielGround.js",
-  "old": "col[iy] = Math.round(keep * largeOfByte(cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)));",
-  "new": "col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);",
-  "tests": ["test/world/reliefpeaks.test.js"],
-  "note": "Re-aimed by content (RELIEF-PEAKS): the swell is gone - the large map past the Bay is the law of its bytes; hashed again"
- },
- {
-  "name": "BREATHTAKER3-the-large-map-cell-off-its-place",
-  "file": "src/world/tamriel/tamrielGround.js",
-  "old": "const fx = (ix - 2) / 3, X = Math.floor(fx), tx = fx - X;",
-  "new": "const fx = (ix - 2) / 2, X = Math.floor(fx), tx = fx - X;",
-  "tests": ["test/world/reliefpeaks.test.js"],
-  "note": "Re-aimed by content (RELIEF-PEAKS): was BREATHTAKER3-the-swell-short: the swell is gone; the large map is the law of the small term read where the kernel reads each cell, a third of a pixel apart - here a half"
- },
- {
-  "name": "CYRODIIL-WATERS-no-running-minimum",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "      if (g < z) z = g;",
-  "new": "      z = g;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-outflow-not-from-its-lake",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "    let z = from ? from.level : Infinity, last = 0;",
-  "new": "    let z = from ? from.level + 40 : Infinity, last = 0;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-tributary-over-its-river-where-they-meet",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "        level[i] = j + (level[i] - j) * smooth01((total - len[i]) / run);",
-  "new": "        level[i] = j + (level[i] - j) * smooth01((total - len[i]) / run + 1);",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-floor-gone",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "      level[i] = z > LANDFORM_FLOOR ? z : LANDFORM_FLOOR;",
-  "new": "      level[i] = z > LANDFORM_FLOOR - 20 ? z : LANDFORM_FLOOR - 20;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-a-river-laid-through-the-city",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "[169.45, 106.39], [169.52, 105.94]] },",
-  "new": "[169.45, 106.39], [171.4, 99.8]] },",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-channel-wider-to-waterAt",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "  if (rids) { const r = nearestRiver(law, rids, x, y); if (r && r.d < r.w / 2) return { kind: 'river',",
-  "new": "  if (rids) { const r = nearestRiver(law, rids, x, y); if (r && r.d < r.w) return { kind: 'river',",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-a-vertex-crossed-twice",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": " || (u >= 1 - 1e-9 && i < r.n - 2)) continue;",
-  "new": ") continue;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-index-without-its-reach",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "      const reach = reachOf(w) / PIXEL_M;",
-  "new": "      const reach = 0;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-channel-over-its-surface",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "    const z = r.level;",
-  "new": "    const z = r.level + 5;",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-paint-wider-than-the-channel",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "  if (rids) { const r = nearestRiver(law, rids, x, y); if (r && r.d < r.w / 2) return true; }",
-  "new": "  if (rids) { const r = nearestRiver(law, rids, x, y); if (r && r.d < r.w * 0.6) return true; }",
-  "tests": ["test/world/breathtaker.test.js"]
- },
- {
-  "name": "BREATHTAKER3-the-eltheric-isles-the-continents",
-  "file": "src/world/landforms.js",
-  "old": "export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y);",
-  "new": "export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX;",
-  "tests": ["test/world/breathtaker.test.js", "test/world/audittesa2g_landforms.test.js"]
- },
- {
-  "name": "CYRODIIL-WATERS-the-river-short-of-its-water",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "        if (t > 0) ctl.push([lx + ux * (t + 0.5), ly + uy * (t + 0.5)]);",
-  "new": "        if (t > 0) ctl.push([lx + ux * (t - 4), ly + uy * (t - 4)]);",
-  "tests": [
-   "test/world/breathtaker.test.js"
-  ]
- },
- {
-  "name": "CYRODIIL-WATERS-the-compass-north-for-south",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.N : DIR.S;",
-  "new": "  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.S : DIR.N;",
-  "tests": [
-   "test/world/breathtaker.test.js"
-  ]
- },
- {
-  "name": "CYRODIIL-WATERS-the-pixel-the-narrower",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "      if (had && had.width >= r.width[i])",
-  "new": "      if (had && had.width <= r.width[i])",
-  "tests": [
-   "test/world/breathtaker.test.js"
-  ]
- },
- {
-  "name": "CYRODIIL-WATERS-the-raster-off-by-one",
-  "file": "src/world/tamriel/tamrielWaters.js",
-  "old": "    const x = Math.floor(k / 65536) - x0,",
-  "new": "    const x = Math.floor(k / 65536) - x0 + 1,",
-  "tests": [
-   "test/world/breathtaker.test.js"
-  ]
- }
+  {
+    "name": "BREATHTAKER2-the-gain-higher",
+    "file": "src/world/landforms.js",
+    "old": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 180 * BASE_HEIGHT_SCALE });",
+    "new": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.6, top: 180 * BASE_HEIGHT_SCALE });",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-the-top-moved",
+    "file": "src/world/landforms.js",
+    "old": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 180 * BASE_HEIGHT_SCALE });",
+    "new": "export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 181 * BASE_HEIGHT_SCALE });",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-the-7-bit-knee-lower",
+    "file": "src/world/landforms.js",
+    "old": "  const e = (low < CONTINENT_LIFT.top ? low : CONTINENT_LIFT.top) - LOW_TOP;",
+    "new": "  const e = (low < CONTINENT_LIFT.top ? low : CONTINENT_LIFT.top) - LOW_TOP + 8;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-the-continuation-on-the-bay",
+    "file": "src/world/landforms.js",
+    "old": "return lift ? held + (reliefLift(low) + beyond * continentLift(low)) * fade : held;",
+    "new": "return lift ? held + (reliefLift(low) + continentLift(low)) * fade : held;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): a byte's height is nodeGround now (reliefByteHeight is gone)"
+  },
+  {
+    "name": "BREATHTAKER3-the-seam-band-narrower",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "  return d <= seam ? 0 : smooth01((d - seam) / TAMRIEL_LANDFORM_DIALS.ramp);",
+    "new": "  return d <= seam - 1 ? 0 : smooth01((d - seam + 1) / TAMRIEL_LANDFORM_DIALS.ramp);",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-share-blind-north",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "  const d = Math.max(0, -bx, bx - mapW, -by, by - mapH); // Chebyshev, continuous, past the rectangle",
+    "new": "  const d = Math.max(0, -bx, bx - mapW, by - mapH); // Chebyshev, continuous, past the rectangle",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-ramp-whole-too-soon",
+    "file": "src/world/landforms.js",
+    "old": "  const whole = !!tl && past >= SEAM_PX + 1 + TAMRIEL_LANDFORM_DIALS.ramp;",
+    "new": "  const whole = !!tl && past >= SEAM_PX + 1;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-clip-knee-lower",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "  if (a <= k) return v;",
+    "new": "  if (a <= k * 0.9) return v;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-clip-unbounded",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "    o = k + (T - k) * (x / (1 + x));",
+    "new": "    o = k + (T - k) * x;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-a-centre-off",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "  ridge: 1.07,",
+    "new": "  ridge: 1.1,",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-ease-too-short",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "  const ease = smooth01(e / (1.25 * (m > 1 ? m : 1)));",
+    "new": "  const ease = smooth01(e / (0.5 * (m > 1 ? m : 1)));",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-off-the-table-a-different-read",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "    V = _off;\n    i00 = 0;\n    i10 = NV;\n    i01 = 2 * NV;\n    i11 = 3 * NV;",
+    "new": "    return smoothAt(L, gx, gy);",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-a-palette-lost",
+    "file": "src/world/tamriel/tamrielLandforms.js",
+    "old": "  skyrimPeaks: { ridge: 1 },",
+    "new": "",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-large-map-hashed-again",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "col[iy] = Math.round(keep * largeOfByte(cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)));",
+    "new": "col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);",
+    "tests": [
+      "test/world/reliefpeaks.test.js"
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the swell is gone - the large map past the Bay is the law of its bytes; hashed again"
+  },
+  {
+    "name": "BREATHTAKER3-the-large-map-cell-off-its-place",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "const fx = (ix - 2) / 3, X = Math.floor(fx), tx = fx - X;",
+    "new": "const fx = (ix - 2) / 2, X = Math.floor(fx), tx = fx - X;",
+    "tests": [
+      "test/world/reliefpeaks.test.js"
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): was BREATHTAKER3-the-swell-short: the swell is gone; the large map is the law of the small term read where the kernel reads each cell, a third of a pixel apart - here a half"
+  },
+  {
+    "name": "CYRODIIL-WATERS-no-running-minimum",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      if (g < z) z = g;",
+    "new": "      z = g;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-outflow-not-from-its-lake",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "    let z = from ? from.level : Infinity,",
+    "new": "    let z = from ? from.level + 40 : Infinity,",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-tributary-over-its-river-where-they-meet",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "        level[i] = j + (level[i] - j) * smooth01((total - len[i]) / run);",
+    "new": "        level[i] = j + (level[i] - j) * smooth01((total - len[i]) / run + 1);",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-floor-gone",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      level[i] = z > LANDFORM_FLOOR ? z : LANDFORM_FLOOR;",
+    "new": "      level[i] = z > LANDFORM_FLOOR - 20 ? z : LANDFORM_FLOOR - 20;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-a-river-laid-through-the-city",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "        [169.52, 105.94],",
+    "new": "        [171.4, 99.8],",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-channel-wider-to-waterAt",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "    if (r && r.d < r.w / 2) return { kind: 'river', key: r.river.key, name: r.river.name, level: r.level * UNIT_M };",
+    "new": "    if (r && r.d < r.w) return { kind: 'river', key: r.river.key, name: r.river.name, level: r.level * UNIT_M };",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-a-vertex-crossed-twice",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      if (t < 0 || t > 1 || u < -1e-9 || u > 1 || (u >= 1 - 1e-9 && i < r.n - 2)) continue;",
+    "new": "      if (t < 0 || t > 1 || u < -1e-9 || u > 1) continue;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-index-without-its-reach",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      const reach = reachOf(w) / PIXEL_M;",
+    "new": "      const reach = 0;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-channel-over-its-surface",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "    const z = r.level;",
+    "new": "    const z = r.level + 5;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-paint-wider-than-the-channel",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "    if (r && r.d < r.w / 2) return true;",
+    "new": "    if (r && r.d < r.w * 0.6) return true;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER3-the-eltheric-isles-the-continents",
+    "file": "src/world/landforms.js",
+    "old": "export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y);",
+    "new": "export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX;",
+    "tests": [
+      "test/world/breathtaker.test.js",
+      "test/world/audittesa2g_landforms.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-river-short-of-its-water",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "        if (t > 0) ctl.push([lx + ux * (t + 0.5), ly + uy * (t + 0.5)]);",
+    "new": "        if (t > 0) ctl.push([lx + ux * (t - 4), ly + uy * (t - 4)]);",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-compass-north-for-south",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.N : DIR.S;",
+    "new": "  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.S : DIR.N;",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-pixel-the-narrower",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "      if (had && had.width >= r.width[i]) {",
+    "new": "      if (had && had.width <= r.width[i]) {",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  },
+  {
+    "name": "CYRODIIL-WATERS-the-raster-off-by-one",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "    const x = Math.floor(k / 65536) - x0,",
+    "new": "    const x = Math.floor(k / 65536) - x0 + 1,",
+    "tests": [
+      "test/world/breathtaker.test.js"
+    ]
+  }
 ]

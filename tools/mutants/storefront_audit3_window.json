@@ -131,8 +131,8 @@
   {
     "name": "AUDIT3-C7-the-tab-count-dimmed",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ".px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; }",
-    "new": ".px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; opacity: 0.75; }",
+    "old": ".px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; }   /* AUDIT-STOREFRONT III C7: dimmed, it read 3.9:1 on Stone */",
+    "new": ".px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; opacity: 0.75; }   /* AUDIT-STOREFRONT III C7: dimmed, it read 3.9:1 on Stone */",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDIT3-C7-stone-gold-heads-unlit",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ":root[data-plus-theme=\"stone\"] .px-shopwin :is(.sh-ppanelnum, .sh-subhead) { color: #e8c98a; }",
-    "new": "",
+    "old": ":root[data-plus-theme=\"stone\"] .px-shopwin :is(.sh-ppanelnum, .sh-subhead) { color: #e8c98a; }   /* AUDIT-STOREFRONT III C7: #d8b56a read 4.3:1 */",
+    "new": "   /* AUDIT-STOREFRONT III C7: #d8b56a read 4.3:1 */",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDIT3-C8-the-window-back-unasked",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "back: () => passView?.back() ?? false,",
-    "new": "back: () => false,",
+    "old": "    back: () => passView?.back() ?? false, // AUDIT-STOREFRONT III C8: Escape asks this first - an open folio closes to its covers",
+    "new": "    back: () => false, // AUDIT-STOREFRONT III C8: Escape asks this first - an open folio closes to its covers",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "AUDIT3-C9-a-wear-press-names-nothing",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "b.setAttribute('aria-label', wearLabel(w, st.worn));",
-    "new": "",
+    "old": "      b.setAttribute('aria-label', wearLabel(w, st.worn)); // AUDIT-STOREFRONT III C9: which item it wears",
+    "new": "      // AUDIT-STOREFRONT III C9: which item it wears",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AUDIT3-C9-a-daily-price-unsaid",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "if (d.priceSay && d.priceSay.textContent !== say) d.priceSay.textContent = say;",
-    "new": "",
+    "old": "      if (d.priceSay && d.priceSay.textContent !== say) d.priceSay.textContent = say;\n    } else {",
+    "new": "    } else {",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -222,7 +222,7 @@
   {
     "name": "AUDIT3-C9-the-balance-unsaid",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "if (balanceSay.textContent !== bs) balanceSay.textContent = bs;",
+    "old": "      if (balanceSay.textContent !== bs) balanceSay.textContent = bs;",
     "new": "",
     "tests": [
       "test/ui/aurum_shop.test.js"
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT3-C10-the-window-line-says-it-too",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "const line = passView?.says(fl) ? '' : fl?.error || fl?.note || '';",
-    "new": "const line = fl?.error || fl?.note || '';",
+    "old": "    const line = passView?.says(fl) ? '' : fl?.error || fl?.note || ''; // AUDIT-STOREFRONT III C10/C11: said once, by the Folios",
+    "new": "    const line = fl?.error || fl?.note || ''; // AUDIT-STOREFRONT III C10/C11: said once, by the Folios",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "AUDIT3-C10-busy-a-word-no-table-says",
     "file": "src/ui/accountFlow.js",
-    "old": "return { ok: false, error: 'pass-busy' };",
-    "new": "return { ok: false, error: 'busy' };",
+    "old": "    if (self.busy || self.stage !== 'in') return { ok: false, error: 'pass-busy' }; // AUDIT-STOREFRONT III C10: a word the refusals' table says",
+    "new": "    if (self.busy || self.stage !== 'in') return { ok: false, error: 'busy' }; // AUDIT-STOREFRONT III C10: a word the refusals' table says",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "AUDIT3-C12-a-daily-buy-again-while-it-goes",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "going ? t('shop.pass.buying', 'Buying...') : on ?",
-    "new": "on ?",
+    "old": "        going\n          ? t('shop.pass.buying', 'Buying...')\n          : on\n            ? t('shop.daily.confirm', 'Confirm: {n, number} Aurum', { n })\n            : t('shop.daily.buy', 'Buy for {n, number} Aurum', { n }),",
+    "new": "        on\n          ? t('shop.daily.confirm', 'Confirm: {n, number} Aurum', { n })\n          : t('shop.daily.buy', 'Buy for {n, number} Aurum', { n }),",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "AUDIT3-C14-the-pause-face-drawn-under-the-shop",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ".px-home > .px-stage:has(~ .px-shopstage) { visibility: hidden; }",
-    "new": "",
+    "old": ".px-home > .px-stage:has(~ .px-shopstage) { visibility: hidden; }   /* AUDIT-STOREFRONT III C14: the inert pause window under it, unseen */",
+    "new": "   /* AUDIT-STOREFRONT III C14: the inert pause window under it, unseen */",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "AUDIT3-C15-a-finger-press-under-44",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ".px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 44px; }",
-    "new": ".px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 36px; }",
+    "old": "  .px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 44px; }",
+    "new": "  .px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 36px; }",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "AUDIT3-C15-the-dots-24",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ".px-shopwin .sh-cdot { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }",
-    "new": ".px-shopwin .sh-cdot { width: 24px; height: 24px; min-width: 24px; min-height: 24px; }",
+    "old": "  .px-shopwin .sh-cdot { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }",
+    "new": "  .px-shopwin .sh-cdot { width: 24px; height: 24px; min-width: 24px; min-height: 24px; }",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "AUDIT3-C15-a-numeral-tab-27-wide",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  .px-shopwin .sh-pagetab { min-width: 44px; justify-content: center; }\n",
-    "new": "",
+    "old": "  .px-shopwin .sh-pagetab { min-width: 44px; justify-content: center; }\n  .px-shopwin .sh-terms { display: inline-flex; align-items: center; min-height: 44px; }",
+    "new": "  .px-shopwin .sh-terms { display: inline-flex; align-items: center; min-height: 44px; }",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "AUDIT3-C16-the-sections-wrapped",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": ".px-shopwin .sh-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto;",
-    "new": ".px-shopwin .sh-tabs { flex-wrap: wrap; justify-content: flex-start; overflow-x: auto;",
+    "old": "  .px-shopwin .sh-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; flex-shrink: 0; }",
+    "new": "  .px-shopwin .sh-tabs { flex-wrap: wrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; flex-shrink: 0; }",
     "tests": [
       "test/ui/storefront_audit3_window.test.js"
     ]

@@ -24,11 +24,29 @@ export const BAY_REGION_COUNT = 62;
  *  world's registry's - world/worldWide/worldPlaces.js), so MapsFile.getRegion answers none for it, as for an empty Bay
  *  region. The names are the provinces' as the map names them (tamrielGeography.js PROVINCES - pinned), the Imperial
  *  Province by the owner's word: Cyrodiil. */
-export const PROVINCE_REGION_NAMES = Object.freeze(['High Rock', 'Hammerfell', 'Skyrim', 'Morrowind', 'Sumurset Isle', 'Valenwood', 'Elsweyr', 'Black Marsh', 'Cyrodiil']);
+export const PROVINCE_REGION_NAMES = Object.freeze([
+  'High Rock',
+  'Hammerfell',
+  'Skyrim',
+  'Morrowind',
+  'Sumurset Isle',
+  'Valenwood',
+  'Elsweyr',
+  'Black Marsh',
+  'Cyrodiil',
+]);
 /** A province's region by its theatre (1..9), or -1. @param {number} t */
-export const regionOfTheatre = (t) => (Number.isInteger(t) && t >= 1 && t <= PROVINCE_REGION_NAMES.length ? BAY_REGION_COUNT - 1 + t : -1);
+export const regionOfTheatre = (t) =>
+  Number.isInteger(t) && t >= 1 && t <= PROVINCE_REGION_NAMES.length ? BAY_REGION_COUNT - 1 + t : -1;
 /** The theatre a province's region is (1..9), 0 for a Bay region, -1 for none. @param {number} r */
-export const theatreOfRegion = (r) => (!Number.isInteger(r) || r < 0 ? -1 : r < BAY_REGION_COUNT ? 0 : r < BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length ? r - BAY_REGION_COUNT + 1 : -1);
+export const theatreOfRegion = (r) =>
+  !Number.isInteger(r) || r < 0
+    ? -1
+    : r < BAY_REGION_COUNT
+      ? 0
+      : r < BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length
+        ? r - BAY_REGION_COUNT + 1
+        : -1;
 /** Is region `r` a province's past the Bay? @param {number} r */
 export const isProvinceRegion = (r) => theatreOfRegion(r) > 0;
 /** Cyrodiil's region (WW-C: the open zone). */
@@ -36,17 +54,68 @@ export const CYRODIIL_REGION = BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length -
 
 /** All region names (index = region index): the Bay's 62, then the provinces' (WW-R). */
 export const REGION_NAMES = Object.freeze([
-  "Alik'r Desert", 'Dragontail Mountains', 'Glenpoint Foothills', 'Daggerfall Bluffs',
-  'Yeorth Burrowland', 'Dwynnen', 'Ravennian Forest', 'Devilrock',
-  'Malekna Forest', 'Isle of Balfiera', 'Bantha', "Dak'fron",
-  'Islands in the Western Iliac Bay', 'Tamarilyn Point', 'Lainlyn Cliffs', 'Bjoulsae River',
-  'Wrothgarian Mountains', 'Daggerfall', 'Glenpoint', 'Betony', 'Sentinel', 'Anticlere', 'Lainlyn', 'Wayrest',
-  'Gen Tem High Rock village', 'Gen Rai Hammerfell village', 'Orsinium Area', 'Skeffington Wood',
-  'Hammerfell bay coast', 'Hammerfell sea coast', 'High Rock bay coast', 'High Rock sea coast',
-  'Northmoor', 'Menevia', 'Alcaire', 'Koegria', 'Bhoriane', 'Kambria', 'Phrygias', 'Urvaius',
-  'Ykalon', 'Daenia', 'Shalgora', 'Abibon-Gora', 'Kairou', 'Pothago', 'Myrkwasa', 'Ayasofya',
-  'Tigonus', 'Kozanset', 'Satakalaam', 'Totambu', 'Mournoth', 'Ephesus', 'Santaki', 'Antiphyllos',
-  'Bergama', 'Gavaudon', 'Tulune', 'Glenumbra Moors', 'Ilessan Hills', 'Cybiades',
+  "Alik'r Desert",
+  'Dragontail Mountains',
+  'Glenpoint Foothills',
+  'Daggerfall Bluffs',
+  'Yeorth Burrowland',
+  'Dwynnen',
+  'Ravennian Forest',
+  'Devilrock',
+  'Malekna Forest',
+  'Isle of Balfiera',
+  'Bantha',
+  "Dak'fron",
+  'Islands in the Western Iliac Bay',
+  'Tamarilyn Point',
+  'Lainlyn Cliffs',
+  'Bjoulsae River',
+  'Wrothgarian Mountains',
+  'Daggerfall',
+  'Glenpoint',
+  'Betony',
+  'Sentinel',
+  'Anticlere',
+  'Lainlyn',
+  'Wayrest',
+  'Gen Tem High Rock village',
+  'Gen Rai Hammerfell village',
+  'Orsinium Area',
+  'Skeffington Wood',
+  'Hammerfell bay coast',
+  'Hammerfell sea coast',
+  'High Rock bay coast',
+  'High Rock sea coast',
+  'Northmoor',
+  'Menevia',
+  'Alcaire',
+  'Koegria',
+  'Bhoriane',
+  'Kambria',
+  'Phrygias',
+  'Urvaius',
+  'Ykalon',
+  'Daenia',
+  'Shalgora',
+  'Abibon-Gora',
+  'Kairou',
+  'Pothago',
+  'Myrkwasa',
+  'Ayasofya',
+  'Tigonus',
+  'Kozanset',
+  'Satakalaam',
+  'Totambu',
+  'Mournoth',
+  'Ephesus',
+  'Santaki',
+  'Antiphyllos',
+  'Bergama',
+  'Gavaudon',
+  'Tulune',
+  'Glenumbra Moors',
+  'Ilessan Hills',
+  'Cybiades',
   ...PROVINCE_REGION_NAMES,
 ]);
 
@@ -56,20 +125,26 @@ export const REGION_NAMES = Object.freeze([
  *  Cyrodiil's Imperials stand as Bretons (Daggerfall has no Imperial body; their names are the Imperial bank's,
  *  REGION_NAME_BANKS). */
 export const REGION_RACES = Object.freeze([
-  1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1,
-  0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
-  0, 1,
-  0, 1, 2, 3, 4, 5, 6, 7, 0,
+  1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 0,
 ]);
 /** WW-R: each region's people's name bank (characters/nameHelper.js BANK_TYPES) - the Bay's its race's (FALL.EXE's,
  *  MapsFile.GetNameBankOfRegion's own), a province's its people's: an Argonian's the Imperial bank (NameHelper.GetNameBank:
  *  "expect Argonian names"), Cyrodiil's the Imperial. */
 export const REGION_NAME_BANKS = Object.freeze([...REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 7]);
 /** WW-R: each region's people, by race key (systems/races.js) - the Bay's Breton or Redguard, a province's its own. */
-export const REGION_PEOPLE = Object.freeze([...REGION_RACES.slice(0, BAY_REGION_COUNT).map((r) => (r === 1 ? 'Redguard' : 'Breton')),
-  'Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf', 'WoodElf', 'Khajiit', 'Argonian', 'Imperial']);
+export const REGION_PEOPLE = Object.freeze([
+  ...REGION_RACES.slice(0, BAY_REGION_COUNT).map((r) => (r === 1 ? 'Redguard' : 'Breton')),
+  'Breton',
+  'Redguard',
+  'Nord',
+  'DarkElf',
+  'HighElf',
+  'WoodElf',
+  'Khajiit',
+  'Argonian',
+  'Imperial',
+]);
 
 export const CLIMATES = Object.freeze({
   Ocean: 223,

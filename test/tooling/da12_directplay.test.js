@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { attachMenuPad } from '../../src/ui/menu/menuPad.js';
+import { DESKTOP_STAGED } from '../../scripts/desktopRelease.mjs';
 
 const require = createRequire(import.meta.url);
 const L = require('../../app/lib/launcherState.cjs');
@@ -76,7 +77,8 @@ test('DA12: the launcher answers a controller - the game\'s own pad loop, one mo
   assert.match(main, /const MENU_PAD = app\.isPackaged \? path\.join\(LAUNCHER_DIR, 'menuPad\.js'\) : path\.join\(__dirname, '\.\.', 'src', 'ui', 'menu', 'menuPad\.js'\);/);
   assert.match(main, /const p = parts\.length === 1 && parts\[0\] === 'menuPad\.js'\s*\? MENU_PAD/);
   const build = JSON.parse(rd('app/package.json')).build;
-  assert.deepEqual(build.files.find((f) => f?.from === '../src/ui/menu'), { from: '../src/ui/menu', to: 'launcher', filter: ['menuPad.js'] });   // TIDY2: the menu's folder
+  assert.ok(build.files.includes('launcher/**'), 'packed beside the page');
+  assert.ok(DESKTOP_STAGED.some((s) => s.from === 'src/ui/menu/menuPad.js' && s.to === 'app/launcher/menuPad.js'), 'copied there from the menu\'s own folder');
   // the pad's focus is drawn by the page's own stylesheet
   const css = rd('app/launcher/launcher.css');
   for (const sel of ['.plaque.pad-focus', '.play:not(:disabled).pad-focus', '.link.pad-focus', '.check input.pad-focus', '.feed.pad-focus']) {

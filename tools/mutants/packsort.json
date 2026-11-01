@@ -1,0 +1,245 @@
+[
+  {
+    "name": "PACK-SORT-pages-reversed",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return b.page - a.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-pages-dropped",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-rarity-low-first",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || a.rank - b.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-rarity-dropped",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-name-dropped",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || b.rank - a.rank || b.value - a.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-name-reversed",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || b.rank - a.rank || collator.compare(b.name, a.name) || b.value - a.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-value-low-first",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || a.value - b.value || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-tie-broken-by-the-count",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || (b.it.stackCount ?? 1) - (a.it.stackCount ?? 1) || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-tie-broken-by-the-condition",
+    "file": "src/ui/packSort.js",
+    "old": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || a.at - b.at;",
+    "new": "  return a.page - b.page || b.rank - a.rank || collator.compare(a.name, b.name) || b.value - a.value || (b.it.currentCondition ?? 0) - (a.it.currentCondition ?? 0) || a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-quest-items-last",
+    "file": "src/ui/packSort.js",
+    "old": "  if (a.quest !== b.quest) return a.quest ? -1 : 1;",
+    "new": "  if (a.quest !== b.quest) return a.quest ? 1 : -1;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-quest-items-sorted-among-themselves",
+    "file": "src/ui/packSort.js",
+    "old": "  if (a.quest || a.hole) return a.at - b.at;",
+    "new": "  if (a.hole) return a.at - b.at;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-hole-first",
+    "file": "src/ui/packSort.js",
+    "old": "  if (a.hole !== b.hole) return a.hole ? 1 : -1;",
+    "new": "  if (a.hole !== b.hole) return a.hole ? -1 : 1;",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-the-raw-name",
+    "file": "src/ui/packSort.js",
+    "old": "const rowName = (it) => itemNameParts(it).name || it?.name || '';",
+    "new": "const rowName = (it) => it?.name || '';",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-a-copy-sorted",
+    "file": "src/ui/packSort.js",
+    "old": "    if (list[i] !== order[i]) { list[i] = order[i]; moved = true; }",
+    "new": "    if (list[i] !== order[i]) { moved = true; }",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-a-container-sorts",
+    "file": "src/ui/packSort.js",
+    "old": "export const SORT_STORE_KINDS = Object.freeze(new Set(['wagon', 'bag', 'storage']));",
+    "new": "export const SORT_STORE_KINDS = Object.freeze(new Set(['wagon', 'bag', 'storage', 'container']));",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-no-header-button",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (!salvageSel) head.append(sortButton(sortPack));",
+    "new": "    // no Sort",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-header-button-while-choosing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (!salvageSel) head.append(sortButton(sortPack));",
+    "new": "    head.append(sortButton(sortPack));",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-strip-button-while-choosing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (!salvageSel) col.append(sortButton(sortPack));",
+    "new": "  col.append(sortButton(sortPack));",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-no-strip-button",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (!salvageSel) col.append(sortButton(sortPack));",
+    "new": "  // no strip Sort",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-over-a-shared-chest",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  { const no = chestActRefusal(deps); if (no) return refuse(no); }\n  if (!sortInPlace(deps.entity?.items, { nameOf: storeNameOf })) return render();",
+    "new": "  if (!sortInPlace(deps.entity?.items, { nameOf: storeNameOf })) return render();",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-shared-chest-side-sort",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const storeSorts = () => SORT_STORE_KINDS.has(remote?.kind) && !settlesOwnPieces(deps);",
+    "new": "const storeSorts = () => SORT_STORE_KINDS.has(remote?.kind);",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-side-sorts-the-pack",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (!sortInPlace(remoteTarget(deps, sessionState()), { nameOf: storeNameOf })) return render();",
+    "new": "  if (!sortInPlace(deps.entity?.items, { nameOf: storeNameOf })) return render();",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-no-side-button",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (storeSorts() && remote.items.length > 1) acts.append(sortButton(sortStore));",
+    "new": "  // no side Sort",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-phone-header-kept",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .pack-shell .pack-id .sortbtn { display: none; }",
+    "new": "  .pack-shell .pack-id .sortbtn { display: inline-block; }",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-strip-on-the-desk",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".pack-shell .packcats > .sortbtn { display: none; }",
+    "new": ".pack-shell .packcats > .sortbtn { display: inline-block; }",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-strip-wraps",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .pack-shell .pack-dock .packcats { flex-wrap: nowrap; align-items: center; }",
+    "new": "  .pack-shell .pack-dock .packcats { align-items: center; }",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  },
+  {
+    "name": "PACK-SORT-side-at-layout-width",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".loot-win .remoteacts .sortbtn { min-width: 0; padding-left: 10px; padding-right: 10px; }",
+    "new": ".loot-win .remoteacts .sortbtn { padding-left: 10px; padding-right: 10px; }",
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
+  }
+]

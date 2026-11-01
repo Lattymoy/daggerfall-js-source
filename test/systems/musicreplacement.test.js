@@ -177,7 +177,7 @@ test('music: the service commits BEFORE the await, or the director storms it', (
   assert.ok(raise < body.indexOf('await'),
     'the playing flag must be raised before the first await');
   // and `playing` must ANSWER for the audio player, not just the MIDI one
-  assert.match(m, /get playing\(\) \{ return Boolean\(this\.player\?\.playing \|\| this\._audio\?\.playing\); \}/);
+  assert.match(m, /get playing\(\) \{\n\s*return Boolean\(this\.player\?\.playing \|\| this\._audio\?\.playing\);\n\s*\}/);
   // a mode change can overtake a decode - the result is dropped, not
   // played over the song that replaced it
   assert.ok((body.match(/this\._current !== name/g) ?? []).length >= 2,
@@ -201,7 +201,7 @@ test('music: a replacement OVERRIDES, and a miss falls through to MIDI.BSA', () 
   // the fallback is reachable from the FAILURE path too, not just the
   // no-replacement path - a pack file that will not decode still plays
   const start = m.slice(m.indexOf('async _startReplacement('));
-  assert.match(start.slice(0, start.indexOf('\n  }')), /if \(!buffer\) \{ player\.playing = false; this\._playBuiltIn\(name\); return; \}/);
+  assert.match(start.slice(0, start.indexOf('\n  }')), /if \(!buffer\) \{\n\s*player\.playing = false;\n\s*this\._playBuiltIn\(name\);\n\s*return;\n\s*\}/);
   // ONE SETTING moves both players (the service's resync); the LAW split
   // on 2026-08-27 (Mac: "fix it also"): the scheduler keeps the FM
   // bank's trim, a replacement - a mastered file - takes the setting

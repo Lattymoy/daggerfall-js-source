@@ -38,7 +38,7 @@
 // when `!playerEnterExit.IsPlayerInside` (:518-529).
 
 import { audio as defaultAudio } from './audio.js';
-import { soundSilenced } from './soundReplacer.js';   // SNDREP1: the player's crickets switch
+import { soundSilenced } from './soundReplacer.js'; // SNDREP1: the player's crickets switch
 import { rand } from '../formats/dfRandom.js';
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 
@@ -49,11 +49,11 @@ export const AMBIENT_SOUNDS = Object.freeze({
   // AmbientDoorOpen, AmbientGrind, AmbientStrumming, AmbientWindBlow1,
   // AmbientWindBlow1a, AmbientWindBlow1b, AmbientMonsterRoar,
   // AmbientGoldPieces, AmbientBirdCall, AmbientDoorClose
-  storm: Object.freeze([348, 349, 350]),   // StormLightningShort/LightningThunder/ThunderRoll
-  sunnyDay: Object.freeze([437, 438]),     // BirdCall1/2
+  storm: Object.freeze([348, 349, 350]), // StormLightningShort/LightningThunder/ThunderRoll
+  sunnyDay: Object.freeze([437, 438]), // BirdCall1/2
 });
-export const AMBIENT_RAIN_LOOP = 389;      // AmbientRaining
-export const AMBIENT_CRICKETS_LOOP = 6;    // AmbientCrickets
+export const AMBIENT_RAIN_LOOP = 389; // AmbientRaining
+export const AMBIENT_CRICKETS_LOOP = 6; // AmbientCrickets
 /** CRICKET-QUIET (2026-09-22, Mac: "The cricket noise at night is way
  *  too persistent. I want to make a change that lowers its occurrence
  *  and persistence, but doesn't remove it as a sound"). A DEPARTURE,
@@ -65,14 +65,14 @@ export const AMBIENT_CRICKETS_LOOP = 6;    // AmbientCrickets
  *  before the next. Integer-second rolls, System.Random.Next's
  *  exclusive max, the same as every other wait in this player. */
 export const CRICKET_CHORUS = Object.freeze({
-  volume: 0.55,           // a chorus's gain - DFU plays the loop at 1
-  bout: Object.freeze([20, 46]),    // a chorus lasts 20..45 s
-  quiet: Object.freeze([45, 121]),  // then 45..120 s of silence
-  fade: 3,                // seconds to swell in and to die away
+  volume: 0.55, // a chorus's gain - DFU plays the loop at 1
+  bout: Object.freeze([20, 46]), // a chorus lasts 20..45 s
+  quiet: Object.freeze([45, 121]), // then 45..120 s of silence
+  fade: 3, // seconds to swell in and to die away
 });
 /** AUDIT 26 F089: cemeteryAmbientSounds (:45-50) - the bird is listed
  *  TWICE, so a graveyard calls it two draws in three. */
-export const CEMETERY_AMBIENT_SOUNDS = Object.freeze([113, 14, 14]);   // AmbientDistantHowl, AmbientCreepyBirdCall x2
+export const CEMETERY_AMBIENT_SOUNDS = Object.freeze([113, 14, 14]); // AmbientDistantHowl, AmbientCreepyBirdCall x2
 /** CemeteryMinWaitTime / CemeteryMaxWaitTime (:28-29) - its OWN
  *  window, far wider than the shared one. */
 export const CEMETERY_AMBIENT_WAITS = Object.freeze({ minWait: 1, maxWait: 80 });
@@ -85,9 +85,9 @@ export const EXTERIOR_AMBIENT_WAITS = Object.freeze({ minWait: 5, maxWait: 25 })
 
 /** WeatherManager.SetAmbientEffects, verbatim mapping. */
 export function presetForExterior(weather, night) {
-  if (weather === 'rain') return 'rain';        // IsRaining && !IsStorming
-  if (weather === 'thunder') return 'storm';    // IsRaining && IsStorming
-  return night ? 'clearNight' : 'sunnyDay';     // IsDay / IsNight
+  if (weather === 'rain') return 'rain'; // IsRaining && !IsStorming
+  if (weather === 'thunder') return 'storm'; // IsRaining && IsStorming
+  return night ? 'clearNight' : 'sunnyDay'; // IsDay / IsNight
 }
 
 /** AUDIT 64 F41: DFU reaches every live AmbientEffectsPlayer through a
@@ -95,7 +95,7 @@ export function presetForExterior(weather, night) {
  *  subscribed per instance at AmbientEffectsPlayer.cs:92-93. The port
  *  has no static events, and the video player can reach none of the
  *  three hosts that own an instance privately (dungeonContext.js:"UnderwaterFog.UpdateFog's",
- *  exterior.js:"resolved to, so every", world.js:"window.__spellbook"), so the registry IS that event:
+ *  exterior.js:"resolved to, so every", worldShotProbes.js:"window.__spellbook"), so the registry IS that event:
  *  every instance joins on construction and leaves on dispose(). A
  *  mute wired into one host only would leave the rain audible over a
  *  video raised from another. */
@@ -137,7 +137,7 @@ export class AmbientEffects {
     this.rng = rng;
     this.classicRand = classicRand;
     this.preset = 'none';
-    this._busy = 0;            // the shared ambient channel (isPlaying)
+    this._busy = 0; // the shared ambient channel (isPlaying)
     this._waterCounter = 0;
     this._rainLoop = null;
     this._cricketsLoop = null;
@@ -195,7 +195,7 @@ export class AmbientEffects {
    *  PlaySomewhereAround the dungeon one-shots use. */
   _playCemeteryEffects(deps) {
     const list = CEMETERY_AMBIENT_SOUNDS;
-    const index = Math.floor(this.rng() * list.length);   // Next(0, length)
+    const index = Math.floor(this.rng() * list.length); // Next(0, length)
     this._playSomewhereAround(list[index], deps.playerPos ?? [0, 0, 0]);
   }
 
@@ -249,8 +249,14 @@ export class AmbientEffects {
     if (preset === this.preset) return;
     this.preset = preset;
     // preset change stops any loop; the wanted one restarts next update
-    if (this._rainLoop) { this._rainLoop.stop(); this._rainLoop = null; }
-    if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }
+    if (this._rainLoop) {
+      this._rainLoop.stop();
+      this._rainLoop = null;
+    }
+    if (this._cricketsLoop) {
+      this._cricketsLoop.stop();
+      this._cricketsLoop = null;
+    }
     this._startWaiting();
     // CRICKET-QUIET: a clear night opens with a chorus, as DFU's does
     this._cricketPhase = null;
@@ -276,7 +282,10 @@ export class AmbientEffects {
       return;
     }
     if (this._cricketT >= this._cricketLen) {
-      if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }
+      if (this._cricketsLoop) {
+        this._cricketsLoop.stop();
+        this._cricketsLoop = null;
+      }
       this._cricketPhaseTo('quiet');
       return;
     }
@@ -293,21 +302,25 @@ export class AmbientEffects {
   setMuted(v) {
     if (v) {
       // :538-547 - the handles go first, then the source is stopped.
-      if (this._rainLoop) { this._rainLoop.stop(); }
-      if (this._cricketsLoop) { this._cricketsLoop.stop(); }
+      if (this._rainLoop) {
+        this._rainLoop.stop();
+      }
+      if (this._cricketsLoop) {
+        this._cricketsLoop.stop();
+      }
       this._rainLoop = null;
       this._cricketsLoop = null;
       this._rainGainSet = null;
-      this.isMuted = true;   // :548
+      this.isMuted = true; // :548
     } else {
-      this.isMuted = false;  // :553 - and nothing else
+      this.isMuted = false; // :553 - and nothing else
     }
   }
 
   /** Scene teardown. */
   dispose() {
     this.setPreset('none');
-    liveAmbients.delete(this);   // F41: leaves the static event with the scene
+    liveAmbients.delete(this); // F41: leaves the static event with the scene
   }
 
   /** The shared one-shot channel: skipped while a clip still plays. */
@@ -330,34 +343,35 @@ export class AmbientEffects {
     const z = this.rng() * 2 - 1;
     const theta = this.rng() * Math.PI * 2;
     const r = Math.sqrt(1 - z * z);
-    const dist = Math.sqrt(100 + this.rng() * (400 - 100));   // sqrt(Range(10^2, 20^2))
-    this._spatialized(index, [
-      playerPos[0] + r * Math.cos(theta) * dist,
-      playerPos[1] + z * dist,
-      playerPos[2] + r * Math.sin(theta) * dist,
-    ], 13);
+    const dist = Math.sqrt(100 + this.rng() * (400 - 100)); // sqrt(Range(10^2, 20^2))
+    this._spatialized(
+      index,
+      [playerPos[0] + r * Math.cos(theta) * dist, playerPos[1] + z * dist, playerPos[2] + r * Math.sin(theta) * dist],
+      13,
+    );
   }
 
   /** PlaySomewhereOnHorizon: a random yaw about +y applied to
    *  (0.94, 0.34, 0) - ~20deg above the horizon - min 3000. */
   _playSomewhereOnHorizon(index, playerPos) {
-    const deg = Math.sqrt(this.rng() * 10000 * 10000);   // AngleAxis(sqrt(Range(0, 10000^2)))
-    const a = deg * Math.PI / 180;
-    const x = 0.94 * Math.cos(a), zz = -0.94 * Math.sin(a);   // Unity AngleAxis about +y (left-handed)
+    const deg = Math.sqrt(this.rng() * 10000 * 10000); // AngleAxis(sqrt(Range(0, 10000^2)))
+    const a = (deg * Math.PI) / 180;
+    const x = 0.94 * Math.cos(a),
+      zz = -0.94 * Math.sin(a); // Unity AngleAxis about +y (left-handed)
     this._spatialized(index, [playerPos[0] + x, playerPos[1] + 0.34, playerPos[2] + zz], 3000);
   }
 
   _playEffects(deps) {
     const sounds = AMBIENT_SOUNDS[this.preset];
-    if (!sounds) return;   // rain/clearNight/none: loops only
-    const index = Math.floor(this.rng() * sounds.length);   // Next(0, length)
+    if (!sounds) return; // rain/clearNight/none: loops only
+    const index = Math.floor(this.rng() * sounds.length); // Next(0, length)
     if (this.preset === 'storm') {
       this._playSomewhereOnHorizon(sounds[index], deps.playerPos ?? [0, 0, 0]);
-      this.onPlayEffect?.(sounds[index], deps.playerPos ?? null);   // DS1: RaiseOnPlayEffectEvent (:285)
+      this.onPlayEffect?.(sounds[index], deps.playerPos ?? null); // DS1: RaiseOnPlayEffectEvent (:285)
     } else {
-      if (deps.inCastle) return;   // doNotPlayInCastle
+      if (deps.inCastle) return; // doNotPlayInCastle
       this._playSomewhereAround(sounds[index], deps.playerPos ?? [0, 0, 0]);
-      this.onPlayEffect?.(sounds[index], deps.playerPos ?? null);   // DS1: RaiseOnPlayEffectEvent (:304)
+      this.onPlayEffect?.(sounds[index], deps.playerPos ?? null); // DS1: RaiseOnPlayEffectEvent (:304)
     }
   }
 
@@ -377,14 +391,16 @@ export class AmbientEffects {
     // loops start lazily for their presets (Update, verbatim)
     if ((this.preset === 'rain' || this.preset === 'storm') && !this._rainLoop) {
       this._rainLoop = this.engine.loop(AMBIENT_RAIN_LOOP, 1);
-      this._rainGainSet = null;   // WX2: a fresh source takes the gain below
+      this._rainGainSet = null; // WX2: a fresh source takes the gain below
     }
     // WX2: the gain follows the front. Written only when it moves, and
     // only to a handle that carries the setter (a stub engine's may not).
     const building = !!deps.inside && !deps.underground;
     // DISC6: through the walls. DISC11: underground too, the carried loop stands down while the mod's rain at the
     // exit plays (it IS the street, heard at the door) - two rains stacked were louder than the street itself.
-    const rainGain = this.rainGain * (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : (deps.underground && deps.indoorRainSource ? 0 : 1));
+    const rainGain =
+      this.rainGain *
+      (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : deps.underground && deps.indoorRainSource ? 0 : 1);
     if (this._rainLoop && this._rainGainSet !== rainGain) {
       this._rainLoop.setVolume?.(rainGain);
       this._rainGainSet = rainGain;
@@ -405,14 +421,19 @@ export class AmbientEffects {
     // on for the rest of its bout (up to 45 s) after "Off: silent". So
     // the arm stops it here and holds the clock, as it does underground.
     if (this.preset === 'clearNight') {
-      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }   // DISC8-A: no crickets indoors, in a building or underground
+      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {
+        if (this._cricketsLoop) {
+          this._cricketsLoop.stop();
+          this._cricketsLoop = null;
+        }
+      } // DISC8-A: no crickets indoors, in a building or underground
       else this._updateCrickets(dt);
     }
     this._busy = Math.max(0, this._busy - dt);
     this._counter += dt;
     this._waterCounter += dt;
     if (this._counter > this._wait) {
-      if (!deps.inside) this._playEffects(deps);   // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays
+      if (!deps.inside) this._playEffects(deps); // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays
       this._startWaiting();
     }
     // F089: `if (IsCemeteryNearby && !playerEnterExit.IsPlayerInside)`
@@ -430,11 +451,15 @@ export class AmbientEffects {
     if (this._waterCounter > CLASSIC_UPDATE_INTERVAL) {
       if (deps.waterSurfaceY != null && deps.playerPos) {
         if (this.classicRand() < 50) {
-          this._spatialized(WATER_GENTLE, [
-            deps.playerPos[0] + (this.rng() * 6 - 3),   // Range(-3f, 3f)
-            deps.waterSurfaceY,
-            deps.playerPos[2] + (this.rng() * 6 - 3),
-          ], 8);
+          this._spatialized(
+            WATER_GENTLE,
+            [
+              deps.playerPos[0] + (this.rng() * 6 - 3), // Range(-3f, 3f)
+              deps.waterSurfaceY,
+              deps.playerPos[2] + (this.rng() * 6 - 3),
+            ],
+            8,
+          );
         }
         if (deps.submerged && this.classicRand() < 100) {
           this._flat(AMBIENT_WATER_BUBBLES);

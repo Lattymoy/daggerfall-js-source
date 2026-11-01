@@ -2,8 +2,8 @@
   {
     "name": "SD2D-never-cast-out",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "      else if (again(stood.s)) { asked = true; ask(stood.s, stood.key); }\n",
-    "new": "",
+    "old": "      else if (again(stood.s)) {\n        asked = true;\n        ask(stood.s, stood.key);\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/superDungeon/sd2d_castout.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD2D-cast-out-every-frame",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "      else if (again(stood.s)) { asked = true; ask(stood.s, stood.key); }",
-    "new": "      else { asked = true; ask(stood.s, stood.key); }",
+    "old": "      else if (again(stood.s)) {",
+    "new": "      else {",
     "tests": [
       "test/systems/superDungeon/sd2d_castout.test.js"
     ]
@@ -21,8 +21,8 @@
     "name": "SD2D-cast-out-while-it-stands",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {   // WW5: or the same slot's Hollow found again elsewhere (a province's ground made anew - rescan)\n      if (!inside(stood.loc))",
-    "new": "    if (stood) {\n      if (!inside(stood.loc))",
+    "old": "    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {\n      // WW5: or the same slot's Hollow found again elsewhere (a province's ground made anew - rescan)",
+    "new": "    if (stood) {",
     "tests": [
       "test/systems/superDungeon/sd2d_castout.test.js"
     ]

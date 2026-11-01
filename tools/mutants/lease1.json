@@ -126,8 +126,8 @@
   {
     "name": "LEASE1-the-shard-not-told",
     "file": "src/net/hubShards.js",
-    "old": "'rb', 'lv', 'fz', 'lt']",
-    "new": "'rb', 'lv']",
+    "old": "export const SHARD_LAW_KEYS = Object.freeze(['mu', 'gi', 'gt', 'gm', 'gio', 'rb', 'lv', 'fz', 'lt']);",
+    "new": "export const SHARD_LAW_KEYS = Object.freeze(['mu', 'gi', 'gt', 'gm', 'gio', 'rb', 'lv']);",
     "why": "a hub shard mints a lease from a stale freeze and law time",
     "tests": [
       "test/net/lease1.test.js"
@@ -136,7 +136,7 @@
   {
     "name": "LEASE1-the-mac-unchecked",
     "file": "src/net/roomLease.js",
-    "old": "if (!ok) return null;",
+    "old": "  if (!ok) return null;",
     "new": "",
     "why": "a forged lease read",
     "tests": [
@@ -146,8 +146,8 @@
   {
     "name": "LEASE1-the-life-unchecked",
     "file": "src/net/roomLease.js",
-    "old": "|| c.u !== c.a + LEASE_LIFE_S ||",
-    "new": "||",
+    "old": "    c.u !== c.a + LEASE_LIFE_S ||\n    (c.p !== undefined && c.p !== 1)",
+    "new": "    (c.p !== undefined && c.p !== 1)",
     "why": "a lease with any life read",
     "tests": [
       "test/net/lease1.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "LEASE1-the-lapse-unread",
     "file": "src/net/roomLease.js",
-    "old": "if (c.u <= nowS || c.a > nowS + 30) return null;",
-    "new": "if (c.a > nowS + 30) return null;",
+    "old": "  if (c.u <= nowS || c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew",
+    "new": "  if (c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew",
     "why": "a lapsed lease read",
     "tests": [
       "test/net/lease1.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "LEASE1-the-skew-unread",
     "file": "src/net/roomLease.js",
-    "old": "if (c.u <= nowS || c.a > nowS + 30) return null;",
-    "new": "if (c.u <= nowS) return null;",
+    "old": "  if (c.u <= nowS || c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew",
+    "new": "  if (c.u <= nowS) return null; // lapsed, or from a clock past the relay's own skew",
     "why": "a lease from the future read",
     "tests": [
       "test/net/lease1.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "LEASE1-the-lease-kept",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    link.onLease = (l) => { for (const x of allLinks()) x?.sendLease?.(l); };",
-    "new": "    link.onLease = () => {};",
+    "old": "    link.onLease = (l) => {\n      for (const x of allLinks()) x?.sendLease?.(l);\n    }; // LEASE1 (net/roomLease.js): my hub's lease, handed to every room I hold",
+    "new": "    link.onLease = () => {}; // LEASE1 (net/roomLease.js): my hub's lease, handed to every room I hold",
     "why": "the page keeps its hub's lease to itself",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -582,8 +582,8 @@
   {
     "name": "LEASE1-the-cabin-lane-unleased",
     "file": "src/net/sailingCabinLink.js",
-    "old": "      link.leaseFrom?.(main);   // LEASE1: the page's lease rides this lane's frames too (net/roomLease.js)\n",
-    "new": "",
+    "old": "      link.leaseFrom?.(main); // LEASE1: the page's lease rides this lane's frames too (net/roomLease.js)\n      const pose = { x: cabin.origin[0], y: cabin.origin[1], z: cabin.origin[2], yaw: cabin.yaw, pitch: 0, mv: 0 };",
+    "new": "      const pose = { x: cabin.origin[0], y: cabin.origin[1], z: cabin.origin[2], yaw: cabin.yaw, pitch: 0, mv: 0 };",
     "why": "the sailing cabin lane hands on no lease: with the door on its boat goes unheard",
     "tests": [
       "test/net/lease1.test.js"
@@ -722,8 +722,8 @@
   {
     "name": "HIBERNATE-halo-peer-heartbeat-dropped",
     "file": "src/net/loneSleep.js",
-    "old": "s.others === 0 && s.peers === 0 &&",
-    "new": "s.others === 0 &&",
+    "old": "  return !s.refereed && s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
+    "new": "  return !s.refereed && s.others === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
     "why": "alone in my cell beside a cell with a player, standing still sends no heartbeat and that player loses me (re-aimed by content at the merge with LONE-SLEEP: alone is net/loneSleep.js aloneNow)",
     "tests": [
       "test/net/halothin.test.js"

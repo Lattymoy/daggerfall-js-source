@@ -239,8 +239,8 @@ test('SD20e A REGION SAID AS A REGION (T19): where no city is known, the find an
   assert.equal(sdFoundLine({ who: 'Mara', region: 'Dragontail Mountains' }), 'Mara has found an Abyss Dungeon in the Dragontail Mountains region!');
   assert.equal(sdHourLine({ name: 'The Stopped Bell', region: 'Dragontail Mountains' }), 'The Stopped Bell in the Dragontail Mountains region will fade within the hour.');
   const H2 = read('src/scenes/superDungeon/sdHost.js');
-  assert.match(H2, /const near = h\?\.site\?\.cityName \|\| '', region = province \? '' : regionName\(o\.rec\.r\) \|\| '';/);   // PIN MOVED (WW5): a province lane's Hollow said in its province, never as a region
-  assert.match(H2, /sdHourLine\(\{ name: hh\?\.loc\?\.name, near: hh\?\.site\?\.cityName \|\| '', region: province \? '' : regionName\(rec\.r\) \|\| '', province \}\)/);
+  assert.match(H2, /const near = h\?\.site\?\.cityName \|\| '',\n\s*region = province \? '' : regionName\(o\.rec\.r\) \|\| '';/);   // PIN MOVED (WW5): a province lane's Hollow said in its province, never as a region
+  assert.match(H2, /sdHourLine\(\{\n\s*name: hh\?\.loc\?\.name,\n\s*near: hh\?\.site\?\.cityName \|\| '',\n\s*region: province \? '' : regionName\(rec\.r\) \|\| '',\n\s*province,\n\s*\}\)/);
 });
 
 // ── T16: the Features rows ─────────────────────────────────────────────

@@ -1,5 +1,4 @@
-// STAFF-PANEL-SPEED (2026-10-23, mob: "slow when moving in menus", "The click takes a while before the new page shows
-// (it's waiting on the server)") - THE REALM'S, THE ECONOMY'S, THE CENSUS'S, STATUS'S AND THE FEEDS' READ PAGES PINNED TO
+// STAFF-PANEL-SPEED (2026-10-23) - THE REALM'S, THE ECONOMY'S, THE CENSUS'S, STATUS'S AND THE FEEDS' READ PAGES PINNED TO
 // THEIR D1 ROUND TRIPS (server-account/src/staffRealm.js, staffEconomy.js, staffCensus.js, staffStatus.js,
 // staffMonsters.js, staffReactions.js, staffNet.js): what a click waits on is each statement awaited after the last, times
 // the network to D1, so the reads a page makes together share one trip (a batch, a Promise.all) and its audit row goes

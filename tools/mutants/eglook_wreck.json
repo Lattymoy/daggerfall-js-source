@@ -2,8 +2,8 @@
   {
     "name": "EGLOOK-wreck-normals-unturned",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "    N[i] = cn * nx + sn * nz; N[i + 2] = -sn * nx + cn * nz;",
-    "new": "    N[i] = nx; N[i + 2] = nz;",
+    "old": "    N[i] = cn * nx + sn * nz;\n    N[i + 2] = -sn * nx + cn * nz;",
+    "new": "    N[i] = nx;\n    N[i + 2] = nz;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGLOOK-wreck-size-not-up",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "P[i + 1] = (P[i + 1] - cy) * size;",
-    "new": "P[i + 1] = P[i + 1] - cy;",
+    "old": "    P[i + 1] = (P[i + 1] - cy) * size;",
+    "new": "    P[i + 1] = P[i + 1] - cy;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGLOOK-wreck-ledge-up",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "      kit.quad(rec, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, -1, 0], true,",
-    "new": "      kit.quad(rec, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, 1, 0], true,",
+    "old": "      kit.quad(rec, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, -1, 0], true, [",
+    "new": "      kit.quad(rec, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, 1, 0], true, [",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGLOOK-wreck-tip-out-of-haze",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "(tipEnd ? Math.max(EG_VISTA_HAZE, vOf(p[1])) : vOf(p[1]))",
-    "new": "(tipEnd ? vOf(p[1]) * 0.8 : vOf(p[1]))",
+    "old": "    const v = (p, tipEnd) => (tipEnd ? Math.max(EG_VISTA_HAZE, vOf(p[1])) : vOf(p[1]));",
+    "new": "    const v = (p, tipEnd) => (tipEnd ? vOf(p[1]) * 0.8 : vOf(p[1]));",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGLOOK-wreck-court-places-the-trials",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "court: [x, P.court ?? P.h, z]",
-    "new": "court: [x, P.h, z]",
+    "old": "      court: [x, P.court ?? P.h, z],",
+    "new": "      court: [x, P.h, z],",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGLOOK-wreck-galleries-wear-the-cairns",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "[['rotunda', 1.4, 0.06], ['belltower', 1.45, 0.24]",
-    "new": "[['tomb', 1.4, 0.06], ['belltower', 1.45, 0.24]",
+    "old": "      ['rotunda', 1.4, 0.06],",
+    "new": "      ['tomb', 1.4, 0.06],",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGLOOK-wreck-a-wing-across-the-moon",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "[-95, 178, 40, -108]",
-    "new": "[-80, 185, 40, -108]",
+    "old": "    [-95, 178, 40, -108],",
+    "new": "    [-80, 185, 40, -108],",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGLOOK-wreck-two-wings-through-each-other",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "[-158, 300, -150, null]",
-    "new": "[-146, 245, -100, null]",
+    "old": "    [-158, 300, -150, null],",
+    "new": "    [-146, 245, -100, null],",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGLOOK-wreck-phones-turning",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "spin: lite ? 0 : egVistaTurn(i)",
-    "new": "spin: egVistaTurn(i)",
+    "old": "      spin: lite ? 0 : egVistaTurn(i),",
+    "new": "      spin: egVistaTurn(i),",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGLOOK-wreck-every-wing-one-way",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "((i % 2 ? -1 : 1) * TAU) / (240 + 30 * ((i * 3) % 5))",
-    "new": "(TAU) / (240 + 30 * ((i * 3) % 5))",
+    "old": "export const egVistaTurn = (i) => ((i % 2 ? -1 : 1) * TAU) / (240 + 30 * ((i * 3) % 5));",
+    "new": "export const egVistaTurn = (i) => TAU / (240 + 30 * ((i * 3) % 5));",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGLOOK-wreck-turn-in-a-minute",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "((i % 2 ? -1 : 1) * TAU) / (240 + 30 * ((i * 3) % 5))",
-    "new": "((i % 2 ? -1 : 1) * TAU) / (60 + 30 * ((i * 3) % 5))",
+    "old": "export const egVistaTurn = (i) => ((i % 2 ? -1 : 1) * TAU) / (240 + 30 * ((i * 3) % 5));",
+    "new": "export const egVistaTurn = (i) => ((i % 2 ? -1 : 1) * TAU) / (60 + 30 * ((i * 3) % 5));",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGLOOK-wreck-underside-by-sine",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "scale = (U.d * Math.tan(U.radius)) / EG_UNDERSIDE.r;",
-    "new": "scale = (U.d * Math.sin(U.radius)) / EG_UNDERSIDE.r;",
+    "old": "    scale = (U.d * Math.tan(U.radius)) / EG_UNDERSIDE.r;",
+    "new": "    scale = (U.d * Math.sin(U.radius)) / EG_UNDERSIDE.r;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGLOOK-wreck-underside-leans-back",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "const at = [0, U.d * Math.cos(U.lean), U.d * Math.sin(U.lean)]",
-    "new": "const at = [0, U.d * Math.cos(U.lean), -U.d * Math.sin(U.lean)]",
+    "old": "  const at = [0, U.d * Math.cos(U.lean), U.d * Math.sin(U.lean)],",
+    "new": "  const at = [0, U.d * Math.cos(U.lean), -U.d * Math.sin(U.lean)],",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGLOOK-wreck-underside-stone-at-the-models-metres",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "const f = scale / (0.5 * EG_VISTA_UV.stone);",
-    "new": "const f = 1 / (0.5 * EG_VISTA_UV.stone);",
+    "old": "  const f = scale / (0.5 * EG_VISTA_UV.stone);",
+    "new": "  const f = 1 / (0.5 * EG_VISTA_UV.stone);",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGLOOK-wreck-metal-wears-the-picture",
     "file": "src/world/eliteGates/egVista.js",
-    "old": "    for (let i = 0; i < mm.uvs.length; i += 2) { mm.uvs[i] = t[0]; mm.uvs[i + 1] = t[1]; }",
-    "new": "    for (let i = 0; i < mm.uvs.length; i += 2) { mm.uvs[i] += t[0]; mm.uvs[i + 1] += t[1]; }",
+    "old": "      mm.uvs[i] = t[0];\n      mm.uvs[i + 1] = t[1];",
+    "new": "      mm.uvs[i] += t[0];\n      mm.uvs[i + 1] += t[1];",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGLOOK-wreck-lay-turn-misread",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "M[o] = cy; M[o + 1] = sy * sx; M[o + 2] = sy * cx;",
-    "new": "M[o] = cy; M[o + 1] = sy * sx; M[o + 2] = sy * sx;",
+    "old": "    M[o + 2] = sy * cx;",
+    "new": "    M[o + 2] = sy * sx;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGLOOK-wreck-lay-court-never",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "at = court ? W[w].court : W[w].at;",
-    "new": "at = W[w].at;",
+    "old": "      at = court ? W[w].court : W[w].at;",
+    "new": "      at = W[w].at;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGLOOK-wreck-turn-never-relaid",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "if (tick !== held.tick || !!court !== B.court) {",
-    "new": "if (!!court !== B.court) {",
+    "old": "        if (tick !== held.tick || !!court !== B.court) {",
+    "new": "        if (!!court !== B.court) {",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGLOOK-wreck-underside-left-at-the-hall",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "moveTo(U.draw.object.matrix, eye[0] + U.at[0], eye[1] + U.at[1], eye[2] + U.at[2], U.scale);",
-    "new": "moveTo(U.draw.object.matrix, cx + U.at[0], cy + U.at[1], cz + U.at[2], U.scale);",
+    "old": "      if (U && eye) moveTo(U.draw.object.matrix, eye[0] + U.at[0], eye[1] + U.at[1], eye[2] + U.at[2], U.scale);",
+    "new": "      if (U && eye) moveTo(U.draw.object.matrix, cx + U.at[0], cy + U.at[1], cz + U.at[2], U.scale);",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGLOOK-wreck-underside-never-freed",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "      free(h?.wings?.gpu); free(h?.under?.gpu);",
-    "new": "      free(h?.wings?.gpu);",
+    "old": "      free(h?.under?.gpu);\n    },",
+    "new": "    },",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGLOOK-wreck-every-hall-a-trial",
     "file": "src/scenes/eliteGates/egGroundLook.js",
-    "old": "court: !!s.lord }));",
-    "new": "court: false }));",
+    "old": "      halls = egCircleSpecs(seed, c, geo).map((s) => ({ x0: s.x0, zc: (s.len ?? 80) / 2, court: !!s.lord }));",
+    "new": "      halls = egCircleSpecs(seed, c, geo).map((s) => ({ x0: s.x0, zc: (s.len ?? 80) / 2, court: false }));",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]

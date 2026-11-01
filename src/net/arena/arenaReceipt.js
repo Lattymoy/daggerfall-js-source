@@ -56,10 +56,16 @@ export function arenaReceiptValid(c) {
     if (!Number.isInteger(c.q) || c.q < 0 || c.q >= ARENA_TIERS) return false;
     if (!Number.isInteger(c.u) || c.u < 0 || c.u > ARENA_TIER_BOUTS) return false;
     if (c.r !== 0 && c.r !== 1) return false;
-    if (c.z !== undefined && (typeof c.z !== 'string' || !ARENA_TICKET_RE.test(c.z))) return false;   // AUDIT ARENA-LADDER
+    if (c.z !== undefined && (typeof c.z !== 'string' || !ARENA_TICKET_RE.test(c.z))) return false; // AUDIT ARENA-LADDER
   } else if (c.a === 'p') {
     if (c.s !== undefined || c.q !== undefined || c.u !== undefined || c.z !== undefined) return false;
-    if (!Array.isArray(c.f) || c.f.length !== 2 || !c.f.every((s) => typeof s === 'string' && ID_RE.test(s)) || c.f[0] === c.f[1]) return false;
+    if (
+      !Array.isArray(c.f) ||
+      c.f.length !== 2 ||
+      !c.f.every((s) => typeof s === 'string' && ID_RE.test(s)) ||
+      c.f[0] === c.f[1]
+    )
+      return false;
     if (c.r !== 0 && c.r !== 1 && c.r !== 2) return false;
   } else return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
@@ -69,9 +75,19 @@ export function arenaReceiptValid(c) {
 
 /** The claims in the order the minter writes them - one byte string for one receipt. */
 function claimsOf(what, nowS) {
-  const head = what.a === 'l'
-    ? { a: 'l', j: what.j, s: what.s, q: what.q, u: what.u, r: what.r, h: what.h, ...(what.z !== undefined ? { z: what.z } : {}) }
-    : { a: 'p', j: what.j, f: [what.f?.[0], what.f?.[1]], r: what.r, h: what.h };
+  const head =
+    what.a === 'l'
+      ? {
+          a: 'l',
+          j: what.j,
+          s: what.s,
+          q: what.q,
+          u: what.u,
+          r: what.r,
+          h: what.h,
+          ...(what.z !== undefined ? { z: what.z } : {}),
+        }
+      : { a: 'p', j: what.j, f: [what.f?.[0], what.f?.[1]], r: what.r, h: what.h };
   return { ...head, i: nowS, e: nowS + ARENA_RECEIPT_TTL_S };
 }
 
@@ -88,7 +104,9 @@ export async function mintArenaReceipt(what, privateKey, { subtle, nowS }) {
   if (!arenaReceiptValid(claims)) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${ARENA_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${ARENA_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${ARENA_RECEIPT_V}.${body}`)),
+  );
   return `${ARENA_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -104,7 +122,11 @@ export function readArenaReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return arenaReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -128,10 +150,18 @@ export async function verifyArenaReceipt(r, publicKey, { subtle, nowS, skewS = S
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!arenaReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

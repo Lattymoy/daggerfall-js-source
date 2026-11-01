@@ -153,5 +153,5 @@ test('L10N3b by source: the pack row under the language row on the front door al
   assert.match(ds, /const record = await installTranslationPack\(code, packEntriesFromFiles\(files\)\);/);
   const ld = rd('src/scenes/localeData.js');
   assert.match(ld, /\.then\(\(\) => applyPack\(tag\)\)/, 'the pack after the drafts');
-  assert.match(ld, /_packs = await packStore\.installedPacks\(\);   \/\/ L10N3b: before anything is registered/);
+  assert.match(ld, /_packs = await packStore\.installedPacks\(\); \/\/ L10N3b: before anything is registered/);
 });

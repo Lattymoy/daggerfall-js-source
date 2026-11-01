@@ -26,14 +26,23 @@
 import { drawImgCrop, shadowText } from './native/nativePanel.js';
 import { DEFAULT_TOOLTIP_TEXT_FG } from './toolTip.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { TextureFile, texName } from '../formats/textureFile.js';   // G5: the drop icon is a WORLD FLAT's record
+import { TextureFile, texName } from '../formats/textureFile.js'; // G5: the drop icon is a WORLD FLAT's record
 import { bitmapToColor32 } from '../formats/color32Order.js';
 
 /** InventoryContainerImages (DaggerfallUnityEnums.cs:540-553) - the
  *  record index into INVE16I0.CIF, in the enum's own order. */
 export const CONTAINER_IMAGES = Object.freeze({
-  Corpse1: 0, Corpse2: 1, Ground: 2, Wagon: 3, Shelves: 4,
-  Chest: 5, Merchant: 6, Anvil: 7, Magic: 8, Backpack: 9, Corpse3: 10,
+  Corpse1: 0,
+  Corpse2: 1,
+  Ground: 2,
+  Wagon: 3,
+  Shelves: 4,
+  Chest: 5,
+  Merchant: 6,
+  Anvil: 7,
+  Magic: 8,
+  Backpack: 9,
+  Corpse3: 10,
 });
 /** ItemHelper.containerIconsFilename (:47). */
 export const CONTAINER_ICONS_FILE = 'INVE16I0.CIF';
@@ -54,9 +63,9 @@ export function targetIconWeightText(weight, max) {
   return `${w % 1 === 0 ? w.toFixed(0) : w.toFixed(2)} / ${max}`;
 }
 
-let _icons = null;      // record -> { tex, w, h }
+let _icons = null; // record -> { tex, w, h }
 let _warned = false;
-let _deps = null;       // G5: kept for the TEXTURE.### reader below
+let _deps = null; // G5: kept for the TEXTURE.### reader below
 
 /** Warm INVE16I0.CIF. A missing CIF is NOT fatal - the panels simply
  *  keep the base INVE00I0 art under them, exactly as a missing
@@ -75,17 +84,24 @@ export async function preloadContainerIconArt(deps) {
       const bmp = cif.getDFBitmap(r, 0);
       icons.set(r, {
         tex: deps.renderer.uploadTexture('cif', `${CONTAINER_ICONS_FILE}#${r}`, bitmapToColor32(bmp, deps.palette)),
-        w: bmp.width, h: bmp.height,
+        w: bmp.width,
+        h: bmp.height,
       });
     }
     _icons = icons;
   } catch (e) {
-    if (!_warned) { _warned = true; console.warn('[inventory] INVE16I0 unavailable; the target icons keep the background art:', e?.message ?? e); }
+    if (!_warned) {
+      _warned = true;
+      console.warn('[inventory] INVE16I0 unavailable; the target icons keep the background art:', e?.message ?? e);
+    }
   }
 }
 export const containerIconArtLoaded = () => !!_icons;
 /** The test seam, and the door a fresh renderer closes. */
-export function _setContainerIconsForTests(icons) { _icons = icons; _warned = false; }
+export function _setContainerIconsForTests(icons) {
+  _icons = icons;
+  _warned = false;
+}
 
 // ── G5: THE DROP ICON'S PICTURE ──────────────────────────────────
 // UpdateRemoteTargetIcon's two flat arms (:875-884) do NOT read
@@ -99,11 +115,17 @@ export function _setContainerIconsForTests(icons) { _icons = icons; _warned = fa
 // shape is paintingImage.js's, for the same reason: the draw pass asks
 // every frame, the first ask starts the load, and every failure is
 // cached as a MISS so a missing archive is asked for once.
-const _flats = new Map();      // `${archive}:${record}` -> { tex, w, h } | null
+const _flats = new Map(); // `${archive}:${record}` -> { tex, w, h } | null
 const _flatsPending = new Set();
-export function _resetDropIconsForTests() { _flats.clear(); _flatsPending.clear(); _deps = null; }
+export function _resetDropIconsForTests() {
+  _flats.clear();
+  _flatsPending.clear();
+  _deps = null;
+}
 /** The test seam for a picture that is already "loaded". */
-export function _setDropIconForTests(archive, record, image) { _flats.set(`${archive}:${record}`, image); }
+export function _setDropIconForTests(archive, record, image) {
+  _flats.set(`${archive}:${record}`, image);
+}
 
 /**
  * One TEXTURE.### record as the panel's background, or null while it
@@ -126,12 +148,15 @@ export function dropIconImage(archive, record) {
       if (!bmp?.width) throw new Error(`record ${record} is empty`);
       _flats.set(key, {
         tex: _deps.renderer.uploadTexture('img', `dropicon:${key}`, bitmapToColor32(bmp, _deps.palette)),
-        w: bmp.width, h: bmp.height,
+        w: bmp.width,
+        h: bmp.height,
       });
     } catch (e) {
       console.warn(`[inventory] drop icon ${archive}.${record} unavailable:`, e?.message ?? e);
-      _flats.set(key, null);   // asked and answered - never retried
-    } finally { _flatsPending.delete(key); }
+      _flats.set(key, null); // asked and answered - never retried
+    } finally {
+      _flatsPending.delete(key);
+    }
   })();
   return null;
 }
@@ -153,14 +178,14 @@ export function drawTargetIconPanel(renderer, m, font, rect, containerType, labe
   const icon = image ?? _icons?.get(containerType) ?? null;
   if (icon && icon.w > 0 && icon.h > 0) {
     const fit = Math.min(rw / icon.w, rh / icon.h);
-    const w = icon.w * fit, h = icon.h * fit;
-    drawImgCrop(renderer, icon, m, [0, 0, icon.w, icon.h],
-      [rx + (rw - w) / 2, ry + (rh - h) / 2, w, h]);
+    const w = icon.w * fit,
+      h = icon.h * fit;
+    drawImgCrop(renderer, icon, m, [0, 0, icon.w, icon.h], [rx + (rw - w) / 2, ry + (rh - h) / 2, w, h]);
   }
   if (labelText && font) {
-    shadowText(renderer, font, labelText, m,
-      rx + TARGET_ICON_LABEL_POS[0], ry + TARGET_ICON_LABEL_POS[1],
-      { color: DEFAULT_TOOLTIP_TEXT_FG });
+    shadowText(renderer, font, labelText, m, rx + TARGET_ICON_LABEL_POS[0], ry + TARGET_ICON_LABEL_POS[1], {
+      color: DEFAULT_TOOLTIP_TEXT_FG,
+    });
   }
   return !!icon;
 }

@@ -11,8 +11,8 @@
   {
     "name": "ED-frame-x0",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "    const num = f32(f32(f32((mapPixelX - this.frame.x0) * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5);   // ETHER-DEEP",
-    "new": "    const num = f32(f32(f32((mapPixelX) * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5);   // ETHER-DEEP",
+    "old": "    const num = f32(f32(f32((mapPixelX - this.frame.x0) * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5); // ETHER-DEEP: the frame's own cells (the Bay's: the pixel less 0)",
+    "new": "    const num = f32(f32(f32(mapPixelX * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5); // ETHER-DEEP: the frame's own cells (the Bay's: the pixel less 0)",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ED-carved-frame",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "    const num = f32(f32(f32((mapPixelX - this.frame.x0) * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5);",
-    "new": "    const num = f32(f32(f32((mapPixelX) * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5);",
+    "old": "    const num = f32(\n      f32(f32((mapPixelX - this.frame.x0) * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5,\n    );",
+    "new": "    const num = f32(f32(f32(mapPixelX * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ED-byte-frame",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "    const px = (x >> 3) + this.frame.x0, py = (y >> 3) + this.frame.y0;   // ETHER-DEEP: a cell is the frame's own",
-    "new": "    const px = (x >> 3), py = (y >> 3);   // ETHER-DEEP: a cell is the frame's own",
+    "old": "    const px = (x >> 3) + this.frame.x0,\n      py = (y >> 3) + this.frame.y0; // ETHER-DEEP: a cell is the frame's own",
+    "new": "    const px = x >> 3,\n      py = y >> 3; // ETHER-DEEP: a cell is the frame's own",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -39,7 +39,7 @@
     "name": "ED-candidates-for-sea",
     "file": "src/world/etherWatersBake.js",
     "old": "      const bits = s === 1 ? ALL8 : s === 2 ? partial.get(k) : NONE8;",
-    "new": "      const qx = x0 + (k % w), qy = y0 + Math.floor(k / w), c = this._class(i, qx, qy); const bits = c === PIXEL_SEA ? ALL8 : c === PIXEL_LAND ? NONE8 : coarseCandidateBits(pixelWaterSampler(this.woods, qx, qy, this.locationRectAt(qx, qy)));",
+    "new": "      const qx = x0 + (k % w),\n        qy = y0 + Math.floor(k / w),\n        c = this._class(i, qx, qy);\n      const bits =\n        c === PIXEL_SEA\n          ? ALL8\n          : c === PIXEL_LAND\n            ? NONE8\n            : coarseCandidateBits(pixelWaterSampler(this.woods, qx, qy, this.locationRectAt(qx, qy)));",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ED-flood-wrong-cell",
     "file": "src/world/etherWatersBake.js",
-    "old": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;",
-    "new": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX + 1, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;",
+    "old": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX,",
+    "new": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX + 1,",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -75,7 +75,7 @@
     "name": "ED-kept-forever",
     "file": "src/world/deepWater/deepWatersBake.js",
     "old": "    if (this._caches().some((c) => c.size > PLANE_KEEP_MAX)) this.evictOutside(px, py, PLANE_KEEP_RADIUS);",
-    "new": "    void px; void py;",
+    "new": "    void px;\n    void py;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ED-no-rect",
     "file": "src/world/etherWatersBake.js",
-    "old": "    if (!r) return null;\n    const basis = r[4] >= 0",
-    "new": "    return null;\n    const basis = r[4] >= 0",
+    "old": "    if (!r) return null;",
+    "new": "    return null;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ED-tile-bay-frame",
     "file": "src/world/deepWater/deepWaterTileData.js",
-    "old": "    this.frame = this.bake?.frameOf?.(mapPixelX, mapPixelY) ?? BAY_FRAME;",
-    "new": "    this.frame = BAY_FRAME;",
+    "old": "    this.frame = this.bake?.frameOf?.(mapPixelX, mapPixelY) ?? BAY_FRAME; // ETHER-DEEP: the map this pixel's queries clamp to",
+    "new": "    this.frame = BAY_FRAME; // ETHER-DEEP: the map this pixel's queries clamp to",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "ED-client-no-ether",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether, continent });",
+    "old": "    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), {\n      woods: ether ? etherGround(woods) : woods,\n      ether,\n      continent,\n    });",
     "new": "    bake = new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) });",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "ED-worker-raw",
     "file": "src/world/deepWater/deepWatersWorker.js",
-    "old": "{ woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null, continent: !!m.continent }",
-    "new": "{ woods, ether: m.ether ?? null, continent: !!m.continent }",
+    "old": "      woods: m.ether ? etherWoods(woods) : woods,",
+    "new": "      woods,",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "ED-pits-everywhere",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) {\n      markTerrainProcessed(st, v, 'rejected:off-the-map');\n      return;\n    }",
     "new": "",
     "tests": [
       "test/scenes/oh_host.test.js"

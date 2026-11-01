@@ -82,9 +82,12 @@ export function trs(tx, ty, tz, rxDeg, ryDeg, rzDeg, sx = 1, sy = 1, sz = 1) {
   const rx = rxDeg * DEG2RAD;
   const ry = ryDeg * DEG2RAD;
   const rz = rzDeg * DEG2RAD;
-  const cx = Math.cos(rx), sxn = Math.sin(rx);
-  const cy = Math.cos(ry), syn = Math.sin(ry);
-  const cz = Math.cos(rz), szn = Math.sin(rz);
+  const cx = Math.cos(rx),
+    sxn = Math.sin(rx);
+  const cy = Math.cos(ry),
+    syn = Math.sin(ry);
+  const cz = Math.cos(rz),
+    szn = Math.sin(rz);
 
   // R = Ry * Rx * Rz
   const r00 = cy * cz + syn * sxn * szn;
@@ -110,8 +113,15 @@ export function trs(tx, ty, tz, rxDeg, ryDeg, rzDeg, sx = 1, sy = 1, sz = 1) {
  *  quaternion [x, y, z, w] - Unity's component order, the standard
  *  formula, so a prefab's m_LocalRotation is usable verbatim. */
 export function quatToMat4([x, y, z, w]) {
-  const xx = x * x, yy = y * y, zz = z * z;
-  const xy = x * y, xz = x * z, yz = y * z, wx = w * x, wy = w * y, wz = w * z;
+  const xx = x * x,
+    yy = y * y,
+    zz = z * z;
+  const xy = x * y,
+    xz = x * z,
+    yz = y * z,
+    wx = w * x,
+    wy = w * y,
+    wz = w * z;
   // prettier-ignore
   return new Float32Array([
     1 - 2 * (yy + zz), 2 * (xy + wz),     2 * (xz - wy),     0,
@@ -169,17 +179,21 @@ export function perspective(fovYRad, aspect, near, far) {
  *  perspective (its pass never culls). */
 export function mirrorProjectionX(m) {
   m[0] = -m[0];
-  m[8] = -m[8];   // col2row0 - zero for this perspective, kept general
+  m[8] = -m[8]; // col2row0 - zero for this perspective, kept general
   return m;
 }
 
 export function lookAt(eye, center, up) {
-  const zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+  const zx = eye[0] - center[0],
+    zy = eye[1] - center[1],
+    zz = eye[2] - center[2];
   let zl = Math.hypot(zx, zy, zz);
   const z = [zx / zl, zy / zl, zz / zl];
   const x = [up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]];
   const xl = Math.hypot(x[0], x[1], x[2]);
-  x[0] /= xl; x[1] /= xl; x[2] /= xl;
+  x[0] /= xl;
+  x[1] /= xl;
+  x[2] /= xl;
   const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
   // prettier-ignore
   return new Float32Array([

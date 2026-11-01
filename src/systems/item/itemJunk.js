@@ -21,12 +21,16 @@ export const JUNK_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'Mens
 /** Whether a piece is marked junk. */
 export const isJunk = (/** @type {any} */ item) => item?.junk === true;
 /** Whether a piece may take the mark: gear, never a quest's item or a bound one. */
-export const junkable = (/** @type {any} */ item) => !!item && JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);
+export const junkable = (/** @type {any} */ item) =>
+  !!item && JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);
 /** Mark or clear a piece; answers whether it could (an item record to write on). Marked, its lock is lifted; cleared is
  *  the field ABSENT, as the lock's is. */
 export function setJunk(/** @type {any} */ item, /** @type {boolean} */ on) {
   if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
-  if (on) { item.junk = true; setLocked(item, false); } else delete item.junk;
+  if (on) {
+    item.junk = true;
+    setLocked(item, false);
+  } else delete item.junk;
   return true;
 }
 /** Flip a piece's mark; answers the mark it now has. */

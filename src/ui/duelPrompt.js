@@ -48,35 +48,66 @@ export function duelPromptSub(msLeft) {
  * @param {boolean} [o.second]  WAGONS2 (FINAL AUDIT): a second strip, stood below the duel's - a ride's ask and a
  *   challenge standing at once covered the challenge, which lapsed unseen
  */
-export function createDuelPrompt({ asks, accept, decline, name, now, touch = false, doc = document, line: lineOf = (_peer, who) => `${who} challenges you to a duel`, ttlMs = DUEL_ASK_TTL_MS, second = false }) {
+export function createDuelPrompt({
+  asks,
+  accept,
+  decline,
+  name,
+  now,
+  touch = false,
+  doc = document,
+  line: lineOf = (_peer, who) => `${who} challenges you to a duel`,
+  ttlMs = DUEL_ASK_TTL_MS,
+  second = false,
+}) {
   if (doc?.getElementById && !doc.getElementById(DUEL_PROMPT_STYLE_ID)) {
     const st = doc.createElement('style');
     st.id = DUEL_PROMPT_STYLE_ID;
     st.textContent = DUEL_PROMPT_CSS;
     (doc.head ?? doc.body)?.append(st);
   }
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const root = el('div', `dfduel-toast${touch ? ' touch' : ''}${second ? ' second' : ''}`);
   root.dataset.up = '0';
   const who = el('div', 'dfduel-who');
   const nm = el('div', 'dfduel-name');
   const sub = el('div', 'dfduel-sub');
   who.append(nm, sub);
-  const yes = el('button', 'dfduel-btn', 'Accept'); yes.type = 'button';
-  const no = el('button', 'dfduel-btn', 'Decline'); no.type = 'button';
+  const yes = el('button', 'dfduel-btn', 'Accept');
+  yes.type = 'button';
+  const no = el('button', 'dfduel-btn', 'Decline');
+  no.type = 'button';
   root.append(who, yes, no);
   doc.body?.append(root);
-  let shown = null;   // the peer the strip stands for
+  let shown = null; // the peer the strip stands for
   let alive = true;
-  const swallow = (e) => e.stopPropagation();   // a press on the strip is the strip's - never a swing
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) root.addEventListener(t, swallow);
-  const answer = (fn) => { const p = shown; if (!p) return; try { fn(p); } finally { paint(); } };
+  const swallow = (e) => e.stopPropagation(); // a press on the strip is the strip's - never a swing
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    root.addEventListener(t, swallow);
+  const answer = (fn) => {
+    const p = shown;
+    if (!p) return;
+    try {
+      fn(p);
+    } finally {
+      paint();
+    }
+  };
   yes.addEventListener('click', () => answer(accept));
   no.addEventListener('click', () => answer(decline));
   const paint = () => {
     if (!alive) return;
     let list = [];
-    try { list = asks() ?? []; } catch { list = []; }
+    try {
+      list = asks() ?? [];
+    } catch {
+      list = [];
+    }
     const top = list[0] ?? null;
     shown = top ? top.peer : null;
     const up = !!top;
@@ -93,6 +124,10 @@ export function createDuelPrompt({ asks, accept, decline, name, now, touch = fal
     render: paint,
     /** Which peer the strip stands for, or null. */
     peer: () => shown,
-    destroy() { if (!alive) return; alive = false; root.remove?.(); },
+    destroy() {
+      if (!alive) return;
+      alive = false;
+      root.remove?.();
+    },
   };
 }

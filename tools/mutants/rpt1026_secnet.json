@@ -4,7 +4,9 @@
     "file": "server-account/src/accounts.js",
     "old": "'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)'",
     "new": "'UPDATE players SET password = ? WHERE id = ? AND (password = ? OR 1) AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)'",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "the change lands on a password that moved since it proved the old one - of two changes at once the second writes over the first and signs its device out"
   },
   {
@@ -12,7 +14,9 @@
     "file": "server-account/src/accounts.js",
     "old": "'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)'",
     "new": "'UPDATE players SET password = ? WHERE id = ? AND password = ? AND (1 OR EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?))'",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "a device signed out while its change ran still sets the password"
   },
   {
@@ -20,7 +24,9 @@
     "file": "server-account/src/accounts.js",
     "old": "  if (!wrote.meta.changes) return { error: 'bad-login' };\n  // and the sign-out only while",
     "new": "  // and the sign-out only while",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "a change that wrote nothing answers ok and signs the other devices out"
   },
   {
@@ -28,7 +34,9 @@
     "file": "server-account/src/accounts.js",
     "old": "'DELETE FROM sessions WHERE player_id = ? AND id != ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, session.id, player.id, pw)",
     "new": "'DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id)",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "a recovery between the change's write and its sign-out loses the session it opened"
   },
   {
@@ -36,7 +44,9 @@
     "file": "server-account/src/accounts.js",
     "old": "  let session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: held });",
     "new": "  let session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel);",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "a sign-in on the former password, still deriving as the recovery lands, keeps a session the recovery should have ended"
   },
   {
@@ -44,7 +54,9 @@
     "file": "server-account/src/accounts.js",
     "old": "'UPDATE players SET password = ? WHERE id = ? AND password = ?').bind(fresh, player.id, held)",
     "new": "'UPDATE players SET password = ? WHERE id = ?').bind(fresh, player.id)",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "the rehash puts the former password back in place of the recovered hash"
   },
   {
@@ -52,7 +64,9 @@
     "file": "server-account/src/accounts.js",
     "old": "    if (now && await verifyPassword(password, now, { subtle })) session =",
     "new": "    if (false && now) session =",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "of two honest sign-ins at once on a hash due its rehash, the one whose rehash lost is refused"
   },
   {
@@ -60,7 +74,9 @@
     "file": "server-account/src/accounts.js",
     "old": "    if (now && await verifyPassword(password, now, { subtle })) session =",
     "new": "    if (now) session =",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "the second asking opens a session on the recovered password for whoever typed the old one"
   },
   {
@@ -68,7 +84,9 @@
     "file": "server-account/src/index.js",
     "old": "openSession(ctx, who.player.id, body.label ?? null, { session: who.session.id })",
     "new": "openSession(ctx, who.player.id, body.label ?? null)",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "the thief's session admits a second device that outlives the recovery"
   },
   {
@@ -76,7 +94,9 @@
     "file": "server-account/src/accounts.js",
     "old": "openSession({ db, subtle, rand, nowS }, player.id, null, { password: pw })",
     "new": "openSession({ db, subtle, rand, nowS }, player.id, null)",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "a recovery's session outlives a second recovery that signed every device out after its write"
   },
   {
@@ -84,7 +104,9 @@
     "file": "server-account/src/accounts.js",
     "old": "WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`)",
     "new": "WHERE 1 OR EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`)",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "openSession's device guard written and never asked"
   },
   {
@@ -92,7 +114,9 @@
     "file": "server-account/src/accounts.js",
     "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`)",
     "new": "WHERE 1 OR EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`)",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "openSession's password guard written and never asked"
   },
   {
@@ -100,7 +124,9 @@
     "file": "server-account/src/accounts.js",
     "old": "  return wrote?.meta?.changes ? { sessionId, secret } : null;",
     "new": "  return { sessionId, secret };",
-    "tests": ["test/server/rpt1026_secnet.test.js"],
+    "tests": [
+      "test/server/rpt1026_secnet.test.js"
+    ],
     "note": "a session the guard refused is answered as made - a secret that resolves to nothing"
   },
   {
@@ -108,7 +134,10 @@
     "file": "server/src/index.js",
     "old": "  _directedFrame(t, a, data) { return JSON.stringify({ t, id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data }); }",
     "new": "  _directedFrame(t, a, data) { return JSON.stringify({ t, id: a.id, data }); }",
-    "tests": ["test/net/safety/safe_client.test.js", "test/net/journal1.test.js"],
+    "tests": [
+      "test/net/safety/safe_client.test.js",
+      "test/net/journal1.test.js"
+    ],
     "note": "the directed frames' builder drops the account - a blocked account's trade and page reach its blocker"
   },
   {
@@ -116,7 +145,9 @@
     "file": "server/src/index.js",
     "old": "      const out = this._directedFrame('trade', a, m.data);",
     "new": "      const out = JSON.stringify({ t: 'trade', id: a.id, data: m.data });",
-    "tests": ["test/net/safety/safe_client.test.js"],
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
     "note": "the trade arm as it stood: the sender's id alone"
   },
   {
@@ -124,7 +155,10 @@
     "file": "server/src/index.js",
     "old": "      this._send(tws, this._directedFrame('page', a, m.data));",
     "new": "      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
-    "tests": ["test/net/safety/safe_client.test.js", "test/net/journal1.test.js"],
+    "tests": [
+      "test/net/safety/safe_client.test.js",
+      "test/net/journal1.test.js"
+    ],
     "note": "the page arm as it stood: the writer's id alone"
   },
   {
@@ -132,7 +166,10 @@
     "file": "src/net/online.js",
     "old": "!this.hears(subOf(m) ?? this.peers.get(m.id)?.sub ?? null)) return;",
     "new": "!this.hears(subOf(m) ?? null)) return;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js", "test/net/audit_rpt1026_secnet.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js",
+      "test/net/audit_rpt1026_secnet.test.js"
+    ],
     "note": "a request from a relay before the stamp is asked by no account: an honest sender the roster names is dropped while anyone is blocked",
     "equivalent": true,
     "why": "AUDIT RPT1026 A2: no producer names a sender's account in a place room's roster or join (MOD1 - test/net/audit_rpt1026_secnet.test.js A2, through the real Room), so the fallback has no account to ask and this mutant changes nothing a relay sends; the pin that killed it hand-built a roster naming one. Kept as belt-and-braces for a roster that names one."
@@ -142,7 +179,9 @@
     "file": "src/scenes/chatSafetyHost.js",
     "old": "  const hears = (sub) => (sub ? !blocked.has(sub) : blocked.size === 0);",
     "new": "  const hears = (sub) => (sub ? !blocked.has(sub) : true);",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a request naming no account is heard as nobody's - the report's hole"
   },
   {
@@ -150,7 +189,9 @@
     "file": "src/net/online.js",
     "old": "    if (this.hears && BLOCKED_KINDS.includes(kind) && !this.hears(subOf(m) ?? this.peers.get(m.id)?.sub ?? null)) return;",
     "new": "    if (this.hears && BLOCKED_KINDS.includes(kind)) { const sub = subOf(m); if (sub && !this.hears(sub)) return; }",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "the session's check as it stood: asked only when the frame names an account"
   },
   {
@@ -158,7 +199,9 @@
     "file": "src/net/online.js",
     "old": "    if (!isWorldRoom(this.room) || !this.welcomed) return false;",
     "new": "    if (!isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "sendAct as it stood: the socket open is enough - at an instance whose hub is slow the act is read before the hello and the socket closed for good"
   },
   {
@@ -166,7 +209,9 @@
     "file": "src/net/online.js",
     "old": "  _poseHeld(ws, now) { return this._stalled(ws, now) && now - this._earOf(ws).posed < HEARTBEAT_MS; }",
     "new": "  _poseHeld(ws, now) { return false; }",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a stalled line is handed every pose as it stood - the report's burst, struck out as a flood"
   },
   {
@@ -174,7 +219,9 @@
     "file": "src/net/online.js",
     "old": "  _poseHeld(ws, now) { return this._stalled(ws, now) && now - this._earOf(ws).posed < HEARTBEAT_MS; }",
     "new": "  _poseHeld(ws, now) { return this._stalled(ws, now); }",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a stalled line hears no heartbeat at all - a room past the stall reads the player gone"
   },
   {
@@ -182,7 +229,9 @@
     "file": "src/net/online.js",
     "old": "    const deaf = !!this._ws && now - this._earOf(this._ws).heard >= PING_MS && now - this._lastPingAt >= PING_MS;",
     "new": "    const deaf = false;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a walking player is never pinged (RELAY-H1 pinged a quiet socket alone), so its stall is never known"
   },
   {
@@ -190,7 +239,9 @@
     "file": "src/net/online.js",
     "old": "      if (this._ws) this._askedOn(this._ws, now);   // RPT1026-SECNET: asked before it goes - an answer is heard after it\n",
     "new": "",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "my own cell's ping starts no stall's clock"
   },
   {
@@ -198,7 +249,9 @@
     "file": "src/net/online.js",
     "old": "    ws.onmessage = (ev) => { this._heardOn(ws); this._deliver(",
     "new": "    ws.onmessage = (ev) => { this._deliver(",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "the line's answer is never heard - once stalled, held for good"
   },
   {
@@ -206,7 +259,9 @@
     "file": "src/net/online.js",
     "old": "    if (this._stalled(this._ws, this._now())) return false;   // RPT1026-SECNET: a stalled line is handed no burst (LINE_STALL_MS) - the host's next frame carries every foe\n",
     "new": "",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a host's foes stream (12 a second) handed to a stalled line - its burst struck out as 'too many foes'"
   },
   {
@@ -214,7 +269,9 @@
     "file": "src/net/online.js",
     "old": "    if (this._stalled(this._ws, this._now())) return false;   // RPT1026-SECNET: as the host's stream - its next frame is whole (world.js ownStream)\n",
     "new": "",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "my own foes' lane handed to a stalled line"
   },
   {
@@ -222,7 +279,9 @@
     "file": "src/net/online.js",
     "old": "|| !this._welcomed.has(h.ws) || this._poseHeld(h.ws, now)) continue;",
     "new": "|| !this._welcomed.has(h.ws)) continue;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a halo's stalled line handed every pose due"
   },
   {
@@ -230,7 +289,9 @@
     "file": "src/net/online.js",
     "old": "try { this._askedOn(h.ws, now); h.ws.send('{\"t\":\"ping\"}'); } catch",
     "new": "try { h.ws.send('{\"t\":\"ping\"}'); } catch",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "the halos' share of my own cell's ping starts no clock"
   },
   {
@@ -238,7 +299,9 @@
     "file": "src/net/online.js",
     "old": "      const haloDeaf = now - this._earOf(h.ws).heard >= PING_MS && now - pinged >= PING_MS;",
     "new": "      const haloDeaf = false;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a halo posed now and then is never pinged while my own cell is busy - its stall never known"
   },
   {
@@ -246,7 +309,9 @@
     "file": "src/net/online.js",
     "old": "try { this._askedOn(h.ws, now); h.ws.send('{\"t\":\"ping\"}'); this._haloPinged.set(h.ws, now); }",
     "new": "try { h.ws.send('{\"t\":\"ping\"}'); this._haloPinged.set(h.ws, now); }",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a halo's own ping starts no clock"
   },
   {
@@ -254,7 +319,9 @@
     "file": "src/net/online.js",
     "old": "export const LINE_STALL_MS = PING_MS;",
     "new": "export const LINE_STALL_MS = 60 * PING_MS;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "a stall known too late - what the line was handed by then is a strike-out"
   },
   {
@@ -262,7 +329,9 @@
     "file": "src/net/online.js",
     "old": "    // blow is no blow (a late blow is a wrong one) and an end waits in the bout's outbox (net/duel/duelSession.js post)\n    if (!ws || !this._welcomed.has(ws)) return false;",
     "new": "    // blow is no blow (a late blow is a wrong one) and an end waits in the bout's outbox (net/duel/duelSession.js post)\n    if (!ws) return false;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "sendDuel's bout-room path as it stood: a blow down a socket whose hello the room is still reading"
   },
   {
@@ -270,7 +339,9 @@
     "file": "src/net/online.js",
     "old": "    // by its owner: a deposit's chunk a frame later, a take put back on its pile, a pick to press again\n    if (!ws || !this._welcomed.has(ws)) return false;",
     "new": "    // by its owner: a deposit's chunk a frame later, a take put back on its pile, a pick to press again\n    if (!ws) return false;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "sendWild as it stood: the zone's room words down a socket whose hello the room is still reading"
   },
   {
@@ -278,7 +349,9 @@
     "file": "src/net/online.js",
     "old": "return w && this._welcomed.has(w) ? w : null; };",
     "new": "return w; };",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
+    "tests": [
+      "test/net/rpt1026_secnet_net.test.js"
+    ],
     "note": "sendHit's cell routing loop as it stood: a blow by the kept roster down a retry's socket ahead of its welcome"
   }
 ]

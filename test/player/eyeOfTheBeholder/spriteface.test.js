@@ -203,8 +203,8 @@ test('SPRITE-FACE the aura\'s side: a sprite wearer is posed on its picture\'s f
 
 test('SPRITE-FACE the wiring: the view keeps the sprite\'s facing beside its figure; the host hangs mine and each peer\'s on it, in the gather and the draw, and swings it by the turning; the layers hand it; the body hands it (read as code)', () => {
   const mv = rd('src/player/mwView.js');
-  assert.match(mv, /spriteFigure = drawn \? eotbFigure\(\) : null; spriteFacing = drawn \? eotbFacing\(\) : null; return drawn;/);
-  assert.match(mv, /export function mwViewSpriteFacing\(\) \{ return eotbLane\(\) \? spriteFacing : null; \}/);
+  assert.match(mv, /spriteFigure = drawn \? eotbFigure\(\) : null;\n\s*spriteFacing = drawn \? eotbFacing\(\) : null;\n\s*return drawn;/);
+  assert.match(mv, /export function mwViewSpriteFacing\(\) \{\n\s*return eotbLane\(\) \? spriteFacing : null;\n\s*\}/);
   const eb = rd('src/player/eyeOfTheBeholder/eotbBody.js');
   assert.match(eb, /const seen = FP \? null : portrayedYaw\(shown\.orientation, \[cam\.pos\[0\] - cam\.feet\[0\], 0, cam\.pos\[2\] - cam\.feet\[2\]\]\);\n\s+facingDrawn = seen === null \? null : \{ yaw: seen, turn: turnYaw\(\) \?\? seen \};/, 'the picture shown, about the eye of the frame it was drawn in');
   // PIN MOVED (ARMORY, HOST-SPLIT): the gather and the draw are scenes/auraHost.js's, the facing read once a frame there

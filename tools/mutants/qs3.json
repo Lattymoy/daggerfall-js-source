@@ -113,7 +113,7 @@
   {
     "name": "QS3-the-family-outlives-the-pad",
     "file": "src/ui/gamepadInput.js",
-    "old": "      setPadFamily(null);   // QS3: a glyph for a pad nobody is holding is a lie",
+    "old": "      setPadFamily(null); // QS3: a glyph for a pad nobody is holding is a lie",
     "new": "      /* QS3: a glyph for a pad nobody is holding is a lie */",
     "tests": [
       "test/systems/gamepad.test.js",
@@ -123,8 +123,8 @@
   {
     "name": "QS3-the-glyph-is-drawn-smooth-rather-than-crisp",
     "file": "src/ui/padGlyphs.js",
-    "old": "viewBox=\"0 0 ${W} ${W}\" shape-rendering=\"crispEdges\"",
-    "new": "viewBox=\"0 0 ${W} ${W}\"",
+    "old": "  const svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${size}\" height=\"${size}\" viewBox=\"0 0 ${W} ${W}\" shape-rendering=\"crispEdges\">${rects}</svg>`;",
+    "new": "  const svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${size}\" height=\"${size}\" viewBox=\"0 0 ${W} ${W}\">${rects}</svg>`;",
     "tests": [
       "test/ui/enhanced/qs3_hud.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "QS3-the-marks-accent-is-painted-in-the-shapes-colour",
     "file": "src/ui/padGlyphs.js",
-    "old": "fill=\"${ch === 'o' ? ink : color}\"",
-    "new": "fill=\"${color}\"",
+    "old": "      rects += `<rect x=\"${x}\" y=\"${y}\" width=\"${run}\" height=\"1\" fill=\"${ch === 'o' ? ink : color}\"/>`;",
+    "new": "      rects += `<rect x=\"${x}\" y=\"${y}\" width=\"${run}\" height=\"1\" fill=\"${color}\"/>`;",
     "tests": [
       "test/ui/enhanced/qs3_hud.test.js"
     ]
@@ -196,7 +196,7 @@
   {
     "name": "AUDITQS-F6-a-combo-chip-reads-dots",
     "file": "src/ui/quickslotTags.js",
-    "old": "  if (isCombo(code)) { const [mod, key] = getCombo(code); return `${tagText(mod)}+${tagText(key)}`; }",
+    "old": "  if (isCombo(code)) {\n    const [mod, key] = getCombo(code);\n    return `${tagText(mod)}+${tagText(key)}`;\n  }",
     "new": "",
     "tests": [
       "test/ui/enhanced/qs3_hud.test.js"

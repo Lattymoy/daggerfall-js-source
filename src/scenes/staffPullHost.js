@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us") - BRING A PLAYER TO ME, out of bootWorld (HOST-SPLIT).
+// STAFF-PULL (2026-10-28) - BRING A PLAYER TO ME, out of bootWorld (HOST-SPLIT).
 // Staff side: my own place (the /tp capture) goes to the hub with the player named (net/staffTeleport.js `pull`).
 // Player side: the hub's `pull` lands me there through the /tp loader, and my game answers the hub. The relay
 // (server/src/staffTeleport.js routeStaffPull) lets only an Admin or the Shadow Fang ask.
@@ -15,8 +15,13 @@ export function createStaffPull({ client, glyphs, here, prepare, place, why, ali
   return {
     /** Staff: /tpa <player>, its lines to the typer (`tell`). @param {string} player @param {(line: string) => void} tell */
     command(player, tell) {
-      if (!staffPullAllowed(glyphs())) { tell(t('net.staffPull.denied', 'Only an admin or the Shadow Fang may bring a player.')); return; }
-      this.pull({ name: player }).then(tell, (e) => tell(e?.message || t('net.staffPull.failed', 'The player could not be brought.')));
+      if (!staffPullAllowed(glyphs())) {
+        tell(t('net.staffPull.denied', 'Only an admin or the Shadow Fang may bring a player.'));
+        return;
+      }
+      this.pull({ name: player }).then(tell, (e) =>
+        tell(e?.message || t('net.staffPull.failed', 'The player could not be brought.')),
+      );
     },
     /** Staff: bring `target` (`{ id }`, `{ acct }` or `{ name }`) to where I stand. Resolves the line to say. */
     async pull(/** @type {any} */ target) {
@@ -41,7 +46,10 @@ export function createStaffPull({ client, glyphs, here, prepare, place, why, ali
       } catch (e) {
         console.warn('[staff] pull landing:', /** @type {any} */ (e)?.message ?? e);
         return { error: 'unavailable' };
-      } finally { hold(false); fade.fadeHUDFromBlack(); }
+      } finally {
+        hold(false);
+        fade.fadeHUDFromBlack();
+      }
     },
   };
 }

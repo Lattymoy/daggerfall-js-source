@@ -2,8 +2,8 @@
   {
     "name": "OW6-B-old-day-chance",
     "file": "src/systems/travel/travelBands.js",
-    "old": "export const BAND_CHANCE_DAY = 0.75;",
-    "new": "export const BAND_CHANCE_DAY = 0.45;",
+    "old": "export const BAND_CHANCE_DAY = 0.75; // was 0.45: a band in three cells of four, so the nearest one is about a quarter nearer",
+    "new": "export const BAND_CHANCE_DAY = 0.45; // was 0.45: a band in three cells of four, so the nearest one is about a quarter nearer",
     "tests": [
       "test/systems/travel/ow6_bands.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "OW6-B-old-night-chance",
     "file": "src/systems/travel/travelBands.js",
-    "old": "export const BAND_CHANCE_NIGHT = 0.9;",
-    "new": "export const BAND_CHANCE_NIGHT = 0.6;",
+    "old": "export const BAND_CHANCE_NIGHT = 0.9; // was 0.6",
+    "new": "export const BAND_CHANCE_NIGHT = 0.6; // was 0.6",
     "tests": [
       "test/systems/travel/ow6_bands.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "OW6-B-size-weight-skipped",
     "file": "src/systems/travel/travelBands.js",
-    "old": "x -= BAND_SIZE_WEIGHTS[i]; if (x < 0) return i + 1; }",
-    "new": "x -= BAND_SIZE_WEIGHTS[i]; if (x < 0) return Math.max(2, i + 1); }",
+    "old": "    if (x < 0) return i + 1;",
+    "new": "    if (x < 0) return Math.max(2, i + 1);",
     "tests": [
       "test/systems/travel/ow6_bands.test.js"
     ],
@@ -52,7 +52,7 @@
   {
     "name": "OW6-B-size-off-birth-stream",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  let x = seededRng((band.seed ^ 0x53495a45) >>> 0)() * total;   // 'SIZE'",
+    "old": "  let x = seededRng((band.seed ^ 0x53495a45) >>> 0)() * total; // 'SIZE'",
     "new": "  let x = seededRng(band.seed)() * total;",
     "tests": [
       "test/systems/travel/ow6_bands.test.js"

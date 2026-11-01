@@ -2,8 +2,8 @@
   {
     "name": "TRAIL-no-trail-handed",
     "file": "src/scenes/crewAshore.js",
-    "old": "stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });",
-    "new": "stop: HEEL_M + i * HEEL_STEP_M, trail: () => null });",
+    "old": "    stop: HEEL_M + i * HEEL_STEP_M,\n    trail: () => trail,",
+    "new": "    stop: HEEL_M + i * HEEL_STEP_M,\n    trail: () => null,",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TRAIL-crumbs-in-air",
     "file": "src/scenes/crewAshore.js",
-    "old": "    if (L.grounded === false) return;   // a jump's arc",
-    "new": "    // a jump's arc",
+    "old": "    if (L.grounded === false) return; // a jump's arc, a swim, a levitation leave no crumb in the air",
+    "new": "    // a jump's arc, a swim, a levitation leave no crumb in the air",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TRAIL-no-cap",
     "file": "src/scenes/crewAshore.js",
-    "old": "    if (trail.length > TRAIL_MAX) trail.shift();",
-    "new": "",
+    "old": "    if (trail.length > TRAIL_MAX) trail.shift();\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TRAIL-no-jump-reset",
     "file": "src/scenes/crewAshore.js",
-    "old": "leaderWas[2]) > TRAIL_JUMP_M) trail.length = 0;",
-    "new": "leaderWas[2]) > TRAIL_JUMP_M) void 0;",
+    "old": "    if (leaderWas && Math.hypot(f[0] - leaderWas[0], f[1] - leaderWas[1], f[2] - leaderWas[2]) > TRAIL_JUMP_M)\n      trail.length = 0;",
+    "new": "    if (leaderWas && Math.hypot(f[0] - leaderWas[0], f[1] - leaderWas[1], f[2] - leaderWas[2]) > TRAIL_JUMP_M) void 0;",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TRAIL-no-place-reset",
     "file": "src/scenes/crewAshore.js",
-    "old": "placeKey = key; epoch++; trail.length = 0; leaderWas = null; }",
-    "new": "placeKey = key; epoch++; leaderWas = null; }",
+    "old": "      epoch++;\n      trail.length = 0;\n      leaderWas = null;\n    } // COMPANION-TRAIL: a new place, a new trail",
+    "new": "      epoch++;\n      leaderWas = null;\n    } // COMPANION-TRAIL: a new place, a new trail",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TRAIL-route-first",
     "file": "src/ai/enhancedMotor.js",
-    "old": "    const trail = this._trailGoal(leader, dt);\n    if (trail) return trail;\n",
-    "new": "",
+    "old": "    const trail = this._trailGoal(leader, dt);\n    if (trail) return trail;\n    if (this.navBroken || this.avoidObstaclesTimer > 0) return leader;",
+    "new": "    if (this.navBroken || this.avoidObstaclesTimer > 0) return leader;",
     "tests": [
       "test/scenes/fb1004b_companions.test.js",
       "test/systems/naval/crewcompanions.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "QUIET-scale-dropped",
     "file": "src/characters/enemy/enemySounds.js",
-    "old": "const wait = companion ? this.waitTime * COMPANION_ATTRACT_SCALE : this.waitTime;",
-    "new": "const wait = this.waitTime;",
+    "old": "    const wait = companion ? this.waitTime * COMPANION_ATTRACT_SCALE : this.waitTime;",
+    "new": "    const wait = this.waitTime;",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "QUIET-portal-no-gap",
     "file": "src/scenes/portalFx.js",
-    "old": "if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) {",
-    "new": "if (!quiet) {",
+    "old": "    if (!quiet && p.at - soundAt >= PORTAL_SOUND_GAP_MS) {",
+    "new": "    if (!quiet) {",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]

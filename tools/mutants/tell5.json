@@ -2,8 +2,8 @@
   {
     "name": "TELL5-vary",
     "file": "src/ai/tells.js",
-    "old": "  WINDUP_VARY: Object.freeze([0.9, 1.25]),",
-    "new": "  WINDUP_VARY: Object.freeze([1, 1]),",
+    "old": "  WINDUP_VARY: Object.freeze([0.9, 1.25]), // a wind-up's length: its shape's times U(these), drawn at its start",
+    "new": "  WINDUP_VARY: Object.freeze([1, 1]), // a wind-up's length: its shape's times U(these), drawn at its start",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "TELL5-elite-quick",
     "file": "src/ai/tells.js",
-    "old": "  WINDUP_ELITE: 0.9,",
-    "new": "  WINDUP_ELITE: 1,",
+    "old": "  WINDUP_ELITE: 0.9, // ...an elite's times this",
+    "new": "  WINDUP_ELITE: 1, // ...an elite's times this",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "TELL5-floor",
     "file": "src/ai/tells.js",
-    "old": "  TELL_MIN_WINDUP: 0.55,",
-    "new": "  TELL_MIN_WINDUP: 0.5,",
+    "old": "  TELL_MIN_WINDUP: 0.55, // ...never under this (iron's extra after)",
+    "new": "  TELL_MIN_WINDUP: 0.5, // ...never under this (iron's extra after)",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "TELL5-track-rate",
     "file": "src/ai/tells.js",
-    "old": "  TRACK_RATE: 120,",
-    "new": "  TRACK_RATE: 240,",
+    "old": "  TRACK_RATE: 120, // degrees a second",
+    "new": "  TRACK_RATE: 240, // degrees a second",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "TELL5-track-share",
     "file": "src/ai/tells.js",
-    "old": "  TRACK_SHARE: 0.5,",
-    "new": "  TRACK_SHARE: 1,",
+    "old": "  TRACK_SHARE: 0.5, // through this share of the wind-up, then locked",
+    "new": "  TRACK_SHARE: 1, // through this share of the wind-up, then locked",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "TELL5-feint-at",
     "file": "src/ai/tells.js",
-    "old": "  FEINT_AT: 0.55,",
-    "new": "  FEINT_AT: 0.8,",
+    "old": "  FEINT_AT: 0.55, // the mark fills to here, then is cut",
+    "new": "  FEINT_AT: 0.8, // the mark fills to here, then is cut",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "TELL5-chain-windup",
     "file": "src/ai/tells.js",
-    "old": "  CHAIN_WINDUP: 0.5,",
-    "new": "  CHAIN_WINDUP: 0.8,",
+    "old": "  CHAIN_WINDUP: 0.5, // its wind-up...",
+    "new": "  CHAIN_WINDUP: 0.8, // its wind-up...",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "TELL5-chain-next",
     "file": "src/ai/tells.js",
-    "old": "slam: 'sweep', ring: 'slam' }),",
-    "new": "slam: 'slam', ring: 'slam' }),",
+    "old": "  CHAIN_NEXT: Object.freeze({ sweep: 'lunge', lunge: 'sweep', slam: 'sweep', ring: 'slam' }), // a sweep then a lunge; a slam then a sweep; a ring then a slam",
+    "new": "  CHAIN_NEXT: Object.freeze({ sweep: 'lunge', lunge: 'sweep', slam: 'slam', ring: 'slam' }), // a sweep then a lunge; a slam then a sweep; a ring then a slam",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js",
       "test/systems/tell1_poise.test.js"
@@ -118,8 +118,8 @@
   {
     "name": "TELL5-no-floor",
     "file": "src/ai/tells.js",
-    "old": "  return Math.max(floor, w);\n}",
-    "new": "  return w;\n}",
+    "old": "  return Math.max(floor, w);",
+    "new": "  return w;",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TELL5-tier-rank1",
     "file": "src/ai/tells.js",
-    "old": "isElite(ent) || !!ent?.champion || revenantRank(ent) >= 2;",
-    "new": "isElite(ent) || !!ent?.champion || revenantRank(ent) >= 1;",
+    "old": "export const higherTier = (ent) => isElite(ent) || !!ent?.champion || revenantRank(ent) >= 2;",
+    "new": "export const higherTier = (ent) => isElite(ent) || !!ent?.champion || revenantRank(ent) >= 1;",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TELL5-tier-no-champion",
     "file": "src/ai/tells.js",
-    "old": "isElite(ent) || !!ent?.champion || revenantRank(ent) >= 2;",
-    "new": "isElite(ent) || revenantRank(ent) >= 2;",
+    "old": "export const higherTier = (ent) => isElite(ent) || !!ent?.champion || revenantRank(ent) >= 2;",
+    "new": "export const higherTier = (ent) => isElite(ent) || revenantRank(ent) >= 2;",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TELL5-track-long-way",
     "file": "src/ai/tells.js",
-    "old": "  d = Math.atan2(Math.sin(d), Math.cos(d));\n  const max",
-    "new": "  const max",
+    "old": "  d = Math.atan2(Math.sin(d), Math.cos(d));\n  const max = ((TELL.TRACK_RATE * Math.PI) / 180) * Math.max(0, dt);",
+    "new": "  const max = ((TELL.TRACK_RATE * Math.PI) / 180) * Math.max(0, dt);",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "TELL5-cut-near",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
-    "new": "    if (ai === except || gone(ai, now)) continue;",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    if (ai === except || gone(ai, now)) continue; // A cut feint is no wind-up",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TELL5-chain-gap-open",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue;",
-    "new": "    if (now >= b.land && !(b.dashUntil > now)) continue;",
+    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "new": "    if (now >= b.land && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "TELL5-cut-overreaches",
     "file": "src/ai/tactics.js",
-    "old": "    b0.cut = now;   // its mark fades out dashed (ai/foeBlows.js blowPhase)\n    s.blow = null; s.state = 'engage'; s.blowReady = cooled;",
-    "new": "    b0.cut = now;   // its mark fades out dashed (ai/foeBlows.js blowPhase)\n    s.blow = null; s.state = 'overreach'; s.until = now + 1; s.blowReady = cooled;",
+    "old": "    b0.cut = now; // its mark fades out dashed (ai/foeBlows.js blowPhase)\n    s.blow = null;\n    s.state = 'engage';\n    s.blowReady = cooled;",
+    "new": "    b0.cut = now; // its mark fades out dashed (ai/foeBlows.js blowPhase)\n    s.blow = null;\n    s.state = 'overreach';\n    s.until = now + 1;\n    s.blowReady = cooled;",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "TELL5-cut-weighed",
     "file": "src/ai/tactics.js",
-    "old": "    clearBlowState(ai);\n    ai._blowSwing = true; ai._blowAt = now; ai._blowHold = false;",
-    "new": "    clearBlowState(ai);\n    ai._blowSwing = true; ai._blowAt = now; ai._blowHold = false; ai._blowVerdict = true; ai._blowMult = b0.mult;",
+    "old": "    ai._blowHold = false; // the held swing goes - the attack component releases it",
+    "new": "    ai._blowHold = false;\n    ai._blowVerdict = true;\n    ai._blowMult = b0.mult; // the held swing goes - the attack component releases it",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "TELL5-cut-held",
     "file": "src/ai/tactics.js",
-    "old": "    ai._blowSwing = true; ai._blowAt = now; ai._blowHold = false;   // the held swing goes",
-    "new": "    ai._blowSwing = true; ai._blowAt = now;   // the held swing goes",
+    "old": "    ai._blowAt = now;\n    ai._blowHold = false; // the held swing goes - the attack component releases it",
+    "new": "    ai._blowAt = now; // the held swing goes - the attack component releases it",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "TELL5-track-everything",
     "file": "src/ai/tactics.js",
-    "old": "  if (tf && TELL.TRACKERS.includes(b0.kind) && now < b0.start",
-    "new": "  if (tf && now < b0.start",
+    "old": "  if (tf && TELL.TRACKERS.includes(b0.kind) && now < b0.start + trackShare(ai.vitals?.()) * (b0.land - b0.start)) {",
+    "new": "  if (tf && now < b0.start + trackShare(ai.vitals?.()) * (b0.land - b0.start)) {",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ],
@@ -320,8 +320,8 @@
   {
     "name": "TELL5-foe-unturned",
     "file": "src/ai/tactics.js",
-    "old": "    if (y !== b0.yaw) { b0.yaw = y; ai.yaw = y; fitBlowToGround(b0, ai.collider); }",
-    "new": "    if (y !== b0.yaw) { b0.yaw = y; fitBlowToGround(b0, ai.collider); }",
+    "old": "      ai.yaw = y;\n      fitBlowToGround(b0, ai.collider);",
+    "new": "      fitBlowToGround(b0, ai.collider);",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -329,7 +329,7 @@
   {
     "name": "TELL5-never-chain",
     "file": "src/ai/tactics.js",
-    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) && chains(blowFamily(ent?.mobileType), ent, shapes) && Math.random() < TELL.CHAIN_CHANCE) {",
+    "old": "  if (\n    !GAP_CLOSERS.includes(b.kind) &&\n    (b.chain ?? 0) < chainMax(ent) &&\n    chains(blowFamily(ent?.mobileType), ent, shapes) &&\n    Math.random() < TELL.CHAIN_CHANCE\n  ) {",
     "new": "  if (false) {",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
@@ -338,8 +338,8 @@
   {
     "name": "TELL5-chain-of-chains",
     "file": "src/ai/tactics.js",
-    "old": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < chainMax(ent) && chains(",
-    "new": "  if (!GAP_CLOSERS.includes(b.kind) && (b.chain ?? 0) < 9 && chains(",
+    "old": "    (b.chain ?? 0) < chainMax(ent) &&",
+    "new": "    (b.chain ?? 0) < 9 &&",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "TELL5-gap-unheld",
     "file": "src/ai/tactics.js",
-    "old": "      b.chainUntil = s.chainAt + 0.2;",
-    "new": "      b.chainUntil = 0;",
+    "old": "      b.chainUntil = s.chainAt + 0.2; // still its foe's one wind-up near me through the gap (foeBlows.windupNear)",
+    "new": "      b.chainUntil = 0; // still its foe's one wind-up near me through the gap (foeBlows.windupNear)",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "TELL5-chain-old-facing",
     "file": "src/ai/tactics.js",
-    "old": "beginWindup(ai, s, ent, s.chainShape, tf[0] - ai.feet[0], tf[2] - ai.feet[2], now, s.chainN);",
-    "new": "beginWindup(ai, s, ent, s.chainShape, Math.sin(ai.yaw + 2), Math.cos(ai.yaw + 2), now, s.chainN);",
+    "old": "      beginWindup(ai, s, ent, s.chainShape, tf[0] - ai.feet[0], tf[2] - ai.feet[2], now, s.chainN);",
+    "new": "      beginWindup(ai, s, ent, s.chainShape, Math.sin(ai.yaw + 2), Math.cos(ai.yaw + 2), now, s.chainN);",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ],
@@ -366,8 +366,8 @@
   {
     "name": "TELL5-chain-slow",
     "file": "src/ai/tactics.js",
-    "old": "    ? windupSeconds(TELL.CHAIN_WINDUP, ent, { guard, roll: null, floor: TELL.CHAIN_FLOOR })",
-    "new": "    ? windupSeconds(BLOW[shape].windup, ent, { guard })",
+    "old": "    chain > 0\n      ? windupSeconds(TELL.CHAIN_WINDUP, ent, { guard, roll: null, floor: TELL.CHAIN_FLOOR })\n      : windupSeconds(BLOW[shape].windup, ent, { guard });",
+    "new": "    chain > 0 ? windupSeconds(BLOW[shape].windup, ent, { guard }) : windupSeconds(BLOW[shape].windup, ent, { guard });",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "TELL5-length-undrawn",
     "file": "src/ai/tactics.js",
-    "old": "    : windupSeconds(BLOW[shape].windup, ent, { guard });",
-    "new": "    : BLOW[shape].windup + (guard === 'iron' ? TELL.IRON_EXTRA : 0);",
+    "old": "      : windupSeconds(BLOW[shape].windup, ent, { guard });",
+    "new": "      : BLOW[shape].windup + (guard === 'iron' ? TELL.IRON_EXTRA : 0);",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -384,7 +384,7 @@
   {
     "name": "TELL5-never-feint",
     "file": "src/ai/tactics.js",
-    "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random() < feintChance(ent)) {",
+    "old": "  if (\n    chain === 0 &&\n    !sig &&\n    shape !== 'aimed' &&\n    shape !== 'pyre' &&\n    !GAP_CLOSERS.includes(shape) &&\n    feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) &&\n    Math.random() < feintChance(ent)\n  ) {",
     "new": "  if (false) {",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "TELL5-feint-anyone",
     "file": "src/ai/tactics.js",
-    "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) && Math.random()",
-    "new": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && Math.random()",
+    "old": "    feints(blowFamily(ent.mobileType), ent, n - (s.lastFeint ?? -Infinity)) &&\n    Math.random() < feintChance(ent)",
+    "new": "    Math.random() < feintChance(ent)",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "TELL5-ucut-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0);   // TELL5",
-    "new": "      gl.uniform1f(U.uCut, 0);   // TELL5",
+    "old": "      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0); // TELL5",
+    "new": "      gl.uniform1f(U.uCut, 0); // TELL5",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]

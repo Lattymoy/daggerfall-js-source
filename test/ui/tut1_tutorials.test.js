@@ -343,7 +343,7 @@ test('AUDIT TUT1: a page waits out the loading screen; a scene\'s page is asked 
   // another player's team is theirs: only my own horse and wagon keys pop a page
   assert.match(read('src/scenes/horseCartPool.js'), /if \(key === KEY_WAGON \|\| key === KEY_FOLLOWING_WAGON\) noteFirstUse\('wagon'\); else if \(key === KEY_HORSE\) noteFirstUse\('horse'\);/);
   // a refusal opens nothing, and pops nothing
-  assert.match(read('src/ui/tradeDoor.js'), /if \(sup\) \{ messageBox\(sup\.text\); return null; \}\n {2}noteFirstUse\('shops'\);/);
+  assert.match(read('src/ui/tradeDoor.js'), /if \(sup\) \{\n\s*messageBox\(sup\.text\);\n\s*return null;\n\s*\}\n\s*noteFirstUse\('shops'\);/);
   assert.match(read('src/systems/daedraSummoning.js'), /if \(gold < cost\) return \{ kind: 'poor', cost \};\n {2}noteFirstUse\('daedra-summoning'\);/);
 });
 

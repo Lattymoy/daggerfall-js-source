@@ -57,8 +57,8 @@
   {
     "name": "AURUM-CACHES-the-lines-amount",
     "file": "server-account/src/aurumCache.js",
-    "old": ".bind(player.id, id, aurum, utcDay(nowS), nowS)",
-    "new": ".bind(player.id, id, 10, utcDay(nowS), nowS)",
+    "old": ".bind(player.id, ref, aurum, utcDay(nowS), nowS)",
+    "new": ".bind(player.id, ref, 10, utcDay(nowS), nowS)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "CACHE-SPREAD-the-answer-not-the-lines",
     "file": "server-account/src/aurumCache.js",
-    "old": "? { ok: true, id, aurum }",
-    "new": "? { ok: true, id, aurum: 10 }",
+    "old": "? { ok: true, id, aurum, until }",
+    "new": "? { ok: true, id, aurum: 10, until }",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "CACHE-SPREAD-the-lines-day-not-the-claims",
     "file": "server-account/src/aurumCache.js",
-    "old": ".bind(player.id, id, aurum, utcDay(nowS), nowS)",
-    "new": ".bind(player.id, id, aurum, 0, nowS)",
+    "old": ".bind(player.id, ref, aurum, utcDay(nowS), nowS)",
+    "new": ".bind(player.id, ref, aurum, 0, nowS)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AURUM-CACHES-the-route-no-progression-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]),",
-    "new": "",
+    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
+    "new": "  // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "CACHES-ONCE-a-days-id-kept-on-the-device",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "all[k] = (Array.isArray(all[k]) ? all[k] : []).filter(aurumCacheIdOk);",
-    "new": "all[k] = (Array.isArray(all[k]) ? all[k] : []).filter((x) => typeof x === 'string');",
+    "old": ".filter((e) => keptThisWeek(e, week) !== null);",
+    "new": ".filter((x) => typeof x === 'string');",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -256,7 +256,7 @@
   {
     "name": "AURUM-CACHES-the-open-not-kept",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);\n",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, weekNow());\n",
     "new": "",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
@@ -393,6 +393,24 @@
     "file": "src/scenes/dungeonContext.js",
     "old": "      if (kind === 'aurum') return _aurumCache?.press(key) ? 1 : 0;",
     "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-WEEKLY-the-claim-not-keyed-by-week",
+    "file": "server-account/src/aurumCache.js",
+    "old": "ref = `${id}:${week}`,",
+    "new": "ref = id,",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-WEEKLY-the-device-ignores-the-week",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "return at > 0 && entry.slice(at + 1) === String(week) && aurumCacheIdOk(id) ? id : null;",
+    "new": "return at > 0 && aurumCacheIdOk(id) ? id : null;",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]

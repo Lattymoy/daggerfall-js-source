@@ -22,8 +22,8 @@
   {
     "name": "COURT-DEEDS-stamps-unsaved",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        for (const k of Object.values(DEED_STAMPS)) if (/** @type {any} */ (e)[k] != null) /** @type {any} */ (people[id])[k] = /** @type {any} */ (e)[k];",
-    "new": "",
+    "old": "        for (const k of Object.values(DEED_STAMPS))\n          if (/** @type {any} */ (e)[k] != null) /** @type {any} */ (people[id])[k] = /** @type {any} */ (e)[k]; // COURT-DEEDS: likewise",
+    "new": "        // COURT-DEEDS: likewise",
     "tests": [
       "test/systems/legacy/fb1026d_courtdeeds.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "COURT-DEEDS-day-dropped-at-load",
     "file": "src/systems/legacy/family.js",
-    "old": "          ...(c.deeds && typeof c.deeds === 'object' ? { deeds: Object.fromEntries(Object.entries(c.deeds).filter(([k, d]) => COURT_DEEDS.includes(k) && Number.isInteger(d))) } : {}),",
-    "new": "",
+    "old": "                  ...(c.deeds && typeof c.deeds === 'object'\n                    ? {\n                        deeds: Object.fromEntries(\n                          Object.entries(c.deeds).filter(([k, d]) => COURT_DEEDS.includes(k) && Number.isInteger(d)),\n                        ),\n                      }\n                    : {}),\n                },",
+    "new": "                },",
     "tests": [
       "test/systems/legacy/fb1026d_courtdeeds.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "COURT-DEEDS-badge-promises",
     "file": "src/systems/livingWorld/people.js",
-    "old": "raise it; with Project Legacy, so do the deeds Tell me about offers a townsperson you could court - a compliment, a gift, and a hug once you are friends - each once a day.",
-    "new": "raise it, and so do a compliment, a gift, and a hug once you are friends - each once a day, under Tell me about.",
+    "old": "      'Talking once a day, speaking in a tone they like and fighting at their side raise it; with Project Legacy, so do the deeds Tell me about offers a townsperson you could court - a compliment, a gift, and a hug once you are friends - each once a day. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 by half a point for each of your days apart - time away from the game does not count. A townsperson who is your friend - not one of the watch, a traveller or your own blood - can be courted: ask about Courtship under Tell me about.', // TONE-TASTE; COURT-DEEDS (systems/legacy/courtDeeds.js): the deeds named, as offered (AUDIT FB1026d B4: never promised to the watch, a traveller or kin; II B4: nor without the house that offers them - legacyHost.js topicRows); FIELD BUGS 2026-10-21d REGARD-OWN: the fade in the character's own days, and where a courtship begins (AUDIT FB1021d RO-7: as marriage.js courtable reads it)",
+    "new": "      'Talking once a day, speaking in a tone they like and fighting at their side raise it, and so do a compliment, a gift, and a hug once you are friends - each once a day, under Tell me about. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 by half a point for each of your days apart - time away from the game does not count. A townsperson who is your friend - not one of the watch, a traveller or your own blood - can be courted: ask about Courtship under Tell me about.', // TONE-TASTE; COURT-DEEDS (systems/legacy/courtDeeds.js): the deeds named, as offered (AUDIT FB1026d B4: never promised to the watch, a traveller or kin; II B4: nor without the house that offers them - legacyHost.js topicRows); FIELD BUGS 2026-10-21d REGARD-OWN: the fade in the character's own days, and where a courtship begins (AUDIT FB1021d RO-7: as marriage.js courtable reads it)",
     "tests": [
       "test/systems/legacy/fb1026d_courtdeeds.test.js",
       "test/systems/legacy/plainui.test.js"

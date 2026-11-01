@@ -42,8 +42,8 @@
   {
     "name": "CROWD-CLEAR-kind-unread",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "...(items ? siteDetails?.questItemMarkers ?? [] : [])",
-    "new": "...(siteDetails?.questItemMarkers ?? [])",
+    "old": "  return [...(siteDetails?.questSpawnMarkers ?? []), ...(items ? (siteDetails?.questItemMarkers ?? []) : [])]",
+    "new": "  return [...(siteDetails?.questSpawnMarkers ?? []), ...(siteDetails?.questItemMarkers ?? [])]",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CROWD-CLEAR-floor-unasked",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "if (hasFloor(p) && !crowdingPerson(p, w, crowd)) return p;",
-    "new": "if (!crowdingPerson(p, w, crowd)) return p;",
+    "old": "  for (const p of spots?.spawns ?? []) if (hasFloor(p) && !crowdingPerson(p, w, crowd)) return p;",
+    "new": "  for (const p of spots?.spawns ?? []) if (!crowdingPerson(p, w, crowd)) return p;",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "CROWD-CLEAR-the-reach",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "const reach = (w + (pn.width || w)) / 2;",
-    "new": "const reach = (w + (pn.width || w)) / 3;",
+    "old": "    const reach = (w + (pn.width || w)) / 2;",
+    "new": "    const reach = (w + (pn.width || w)) / 3;",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "CROWD-CLEAR-x-dropped",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "Math.abs(pn.x - p[0]) < reach && ",
-    "new": "",
+    "old": "    if (Math.abs(pn.x - p[0]) < reach && Math.abs(pn.z - p[2]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M)\n      return pn;",
+    "new": "    if (Math.abs(pn.z - p[2]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M) return pn;",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "CROWD-CLEAR-z-dropped",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "Math.abs(pn.z - p[2]) < reach && ",
-    "new": "",
+    "old": "    if (Math.abs(pn.x - p[0]) < reach && Math.abs(pn.z - p[2]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M)\n      return pn;",
+    "new": "    if (Math.abs(pn.x - p[0]) < reach && Math.abs(pn.y - p[1]) < CROWD_STOREY_M) return pn;",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],

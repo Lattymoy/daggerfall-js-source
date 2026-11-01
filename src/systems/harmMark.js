@@ -45,11 +45,17 @@ export function harmFightSince(entity, now = Date.now()) {
  *  signal a long gun's aim reads (the mark itself stands two minutes for a revenant's credit, far past the fight). */
 export const playerHarmedWithin = (ms, now = Date.now()) => _harmAt != null && now - _harmAt <= ms;
 /** RVN10: a hurt left the player under half its health now. */
-export function markPlayerLow(now = Date.now()) { _lowAt = now; }
+export function markPlayerLow(now = Date.now()) {
+  _lowAt = now;
+}
 /** RVN10: did a hurt leave the player under half its health since `since` (a fight's start)? */
 export const playerLowSince = (since) => _lowAt != null && since != null && _lowAt >= since;
 /** RVN10: every fight ended - the player's death (no rout after it: the respawn's jump is no flight), a load, a new game. */
-export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }
+export function endPlayerFights() {
+  _fights = new WeakMap();
+  _lowAt = null;
+  _harmAt = null;
+}
 /** The foe whose harm last reached the player, while its mark stands - or null. */
 export function playerHarmMark(now = Date.now()) {
   return _mark && now <= _mark.until ? _mark.entity : null;
@@ -58,7 +64,10 @@ export function playerHarmMark(now = Date.now()) {
  *  judged (a beaten revenant kneels: its harm is no one's death now). */
 export function clearPlayerHarm(entity = null) {
   if (!entity || _mark?.entity === entity) _mark = null;
-  if (entity) _fights.delete(entity);   // RVN10: a judged foe's fight is over
+  if (entity) _fights.delete(entity); // RVN10: a judged foe's fight is over
 }
 /** Tests only. */
-export function _resetHarmMarkForTests() { _mark = null; endPlayerFights(); }
+export function _resetHarmMarkForTests() {
+  _mark = null;
+  endPlayerFights();
+}

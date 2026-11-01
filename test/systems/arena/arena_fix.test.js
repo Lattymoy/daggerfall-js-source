@@ -191,12 +191,6 @@ test('ARENA-FIX 2: the gate\'s people named by their office - the plaque, "You s
   assert.ok((W.match(/const display = officeName\(pn\) \?\? npcShownName\(staticNpcData\(pn, staticNpcSceneCtx\(pn\)\)\);/g) ?? []).length >= 3, 'the plaques (the street, the dungeon, the interior)');
 });
 
-test('ARENA-FIX 7: the record says which way the gate faces - north, onto the market (the compass calls +z north)', () => {
-  const A = rd('bible/11-Multiplayer/Arena.md');
-  assert.match(A, /The gate opens onto the market \(cell 4,4\), to the north/);
-  assert.doesNotMatch(A, /cell 4,4, south/);
-});
-
 /** The undercroft's markers: a start, then random markers out along x, one block. */
 function undercroftBlocks(n = 20) {
   const markers = [{ archive: 199, record: 10, x: 0, y: 1, z: 0 }];
@@ -396,7 +390,7 @@ test('ARENA-FIX 9/10: the misses and the real crits - every resolution heard, a 
   const W = rd('src/scenes/world.js'), PW = rd('src/combat/playerWeapon.js');
   assert.match(W, /registerAttackResolutionListener\('arena', \(r\) => arenaBouts\.attackResolved\(r\)\);/);
   assert.match(W, /registerPlayerSwingListener\('arena', \(n\) => arenaBouts\.playerSwing\(n\)\);/);
-  assert.match(PW, /for \(const fn of _swingListeners\.values\(\)\) \{ try \{ fn\(results\.length\); \}/);
+  assert.match(PW, /for \(const fn of _swingListeners\.values\(\)\) \{\n\s*try \{\n\s*fn\(results\.length\);\n\s*\}/);
 });
 
 test('ARENA-FIX 11: a light left burning on the old floor is put out and carried - the item picking it up gives', () => {

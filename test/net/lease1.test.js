@@ -1,4 +1,4 @@
-// LEASE1 (2026-10-22, mob of the staff panel's freeze and mute: "this need addressed"; design doc "DFO Staff Panel: design",
+// LEASE1 (2026-10-22; design doc "DFO Staff Panel: design",
 // "Holding against a modded game: room leases"; net/roomLease.js): THE HUB'S WORD IN EVERY ROOM. The hub hands each socket a
 // signed lease - its account, its mute and freeze, when it lapses - and the game hands it to every lease room it holds; a
 // lease room takes the hub's word from one newer than its own, and while `leaseDoor` is on, a build that hands on none is
@@ -66,7 +66,7 @@ test('LEASE1 THE LEASE: minted with the relay\'s key and read back whole; anothe
   assert.equal(hello(1).ls, 1);
   for (const v of [undefined, 0, 2, '1', true]) assert.equal(hello(v).ls, undefined, String(v));
   // the rooms
-  // PIN MOVED (STAFF-PANEL5-FREEZE-FIX, mob: "freeze they can only talk to staff while frozen"): every room but the hub's
+  // PIN MOVED (STAFF-PANEL5-FREEZE-FIX): every room but the hub's
   // binds - a town, a home, a caravan, a siege, an arena, a gate, a breach and a Super dungeon realm too
   for (const key of [CHAT_TRADE_ROOM, CHAT_LFG_ROOM, chatRegionRoom(3), H.regionShardRoom(3, 1), chatLangRoom('de'), CELL, 'dungeon:m123', 'interior:m123456.7', 'town:m9', 'owned:x', 'caravan:x', 'siege:x', 'arena:x', 'gate:x', 'eg:x', 'sd:x', 'nowhere']) assert.equal(leaseRoom(key), true, key);
   for (const key of [CHAT_WORLD_ROOM, H.hubOfSubject('acct-mac-0001'), null, undefined]) assert.equal(leaseRoom(key), false, String(key));
@@ -315,7 +315,7 @@ test('LEASE1 THE DOOR: off, a build that hands on no lease is let in, and a boun
   assert.ok(lines(hEar).includes('the hub'), 'and heard');
 });
 
-test('LEASE1 THE LOAD (mob, 07:57Z: "we need to test if this affected load times", "for players", "if we affected server performasnce"): a lease room whose every socket holds a live lease never asks the hub - not on a fresh object\'s first frame past a hello, not once a minute after; a cold room lets a build that hands on no lease in without waiting on the hub, asks the hub for it once a wake and never once a minute, and turns it away at its next frame once the hub\'s answer says the door is on; and a cold room\'s bound socket with no live lease is never heard on the Worker\'s var - not its first frame, not a second during the first\'s wait, not a lapsed socket\'s in a room just woken (mutants: the door asked of every frame; the hello door awaited; the unbound let stand; a cold room\'s guess; an old build asking every minute; the ask in flight skipped; the cold wait a fresh socket\'s alone)', async () => {
+test('LEASE1 THE LOAD: a lease room whose every socket holds a live lease never asks the hub - not on a fresh object\'s first frame past a hello, not once a minute after; a cold room lets a build that hands on no lease in without waiting on the hub, asks the hub for it once a wake and never once a minute, and turns it away at its next frame once the hub\'s answer says the door is on; and a cold room\'s bound socket with no live lease is never heard on the Worker\'s var - not its first frame, not a second during the first\'s wait, not a lapsed socket\'s in a room just woken (mutants: the door asked of every frame; the hello door awaited; the unbound let stand; a cold room\'s guess; an old build asking every minute; the ask in flight skipped; the cold wait a fresh socket\'s alone)', async () => {
   const realNow = Date.now;
   let clock = 1_800_000_000_000;
   Date.now = () => clock;
@@ -657,7 +657,7 @@ test('LEASE1 A REGION\'S SHARD ASKS THE DOOR BEFORE ITS BUS HEARS (a review of t
   }, { LEASE_DOOR: 'on' });
 });
 
-test('LEASE1 THE GAME: a hello to a lease room says `ls` 1 and to the hub none; the hub link asks every LEASE_MS of a relay that knows the frame and never of an older one; the hub\'s lease is kept, never sent on its own - each lease room\'s socket, the primary\'s and every halo\'s, hands it just ahead of the next frame it sends, once, never ahead of a ping and never two inside the room\'s meter (mob, 07:57Z: "if we affected server performasnce" - a room where I do nothing is woken by nothing); a lease is kept wherever I stand, for LEASE_HELD_MS, and the sailing cabin\'s lane hands the page\'s on too (mutants: `ls` everywhere; the ask unpaced; an old relay asked; a halo skipped; a lease from any room; sent on its own; handed ahead of every frame; handed ahead of a ping; the pace dropped; a lease thrown away outside a lease room; a lease held forever; the cabin lane unleased)', async () => {
+test('LEASE1 THE GAME: a hello to a lease room says `ls` 1 and to the hub none; the hub link asks every LEASE_MS of a relay that knows the frame and never of an older one; the hub\'s lease is kept, never sent on its own - each lease room\'s socket, the primary\'s and every halo\'s, hands it just ahead of the next frame it sends, once, never ahead of a ping and never two inside the room\'s meter (- a room where I do nothing is woken by nothing); a lease is kept wherever I stand, for LEASE_HELD_MS, and the sailing cabin\'s lane hands the page\'s on too (mutants: `ls` everywhere; the ask unpaced; an old relay asked; a halo skipped; a lease from any room; sent on its own; handed ahead of every frame; handed ahead of a ping; the pace dropped; a lease thrown away outside a lease room; a lease held forever; the cabin lane unleased)', async () => {
   const { FakeWS, sockets } = fakeSocketClass();
   let now = 1_000_000;
   const session = (room, v, opts = {}) => {

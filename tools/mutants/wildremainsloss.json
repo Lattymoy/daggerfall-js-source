@@ -4,62 +4,80 @@
     "file": "server/src/index.js",
     "old": "      await this._loadKey();\n      const o = this._verifyKey ? await verifyOrder(d.o, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'remains' }) : { ok: false };",
     "new": "      const o = this._verifyKey ? await verifyOrder(d.o, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'remains' }) : { ok: false };",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-order-without-the-name",
     "file": "server-account/src/wild.js",
-    "old": "...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing,",
-    "new": "...(wg ? { wg } : {}) }, signing,",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "old": "        ...(wnm ? { wnm } : {}),\n      },",
+    "new": "      },",
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-name-from-the-carrier",
     "file": "server/src/index.js",
     "old": "nm: c.wnm ?? (a.sub === c.s ? (a.name ?? '') : ''), p: d.p,",
     "new": "nm: a.sub === c.s ? (a.name ?? '') : '', p: d.p,",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-mine-by-the-carriers-peer",
     "file": "src/net/wild/wildRemains.js",
     "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "new": "  (!!rec.os && rec.os === acct) || (!!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-peer-read-where-an-account-is-named",
     "file": "src/net/wild/wildRemains.js",
     "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "new": "  (rec.os && acct ? rec.os === acct || rec.oid === peer : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-laid-id-ignored",
     "file": "src/net/wild/wildRemains.js",
     "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
-    "new": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer);",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "new": "  rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer;",
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-account-trusted-when-null",
     "file": "src/net/wild/wildRemains.js",
     "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "new": "  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-any-string-a-name",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false;",
-    "new": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string')) return false;",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "old": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false; // WILD-REMAINS-LOSS: a name as the wire keeps one",
+    "new": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string')) return false; // WILD-REMAINS-LOSS: a name as the wire keeps one",
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-characters-name-past-the-choice",
     "file": "server-account/src/wild.js",
     "old": "  const name = sanitizeName((await wornNameOf(ctx, player, row?.name ?? null)).name);",
     "new": "  const name = sanitizeName(row?.name ?? '');",
-    "tests": ["test/net/wildremainsloss.test.js"]
+    "tests": [
+      "test/net/wildremainsloss.test.js"
+    ]
   }
 ]

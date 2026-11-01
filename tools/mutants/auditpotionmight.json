@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-PM-C2-the-door-never-told",
     "file": "src/combat/pvpPotions.js",
-    "old": "  else { try { toldHere?.(kinds); } catch",
-    "new": "  else { try { void kinds; } catch",
+    "old": "      toldHere?.(kinds);",
+    "new": "      void kinds;",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-PM-B2-the-breachs-whole-unset",
     "file": "src/world/gate/gateBoss.js",
-    "old": "export function breachStandIn(/** @type {any} */ e) { e.maxHealth = e.health = EG_STAND_IN_WHOLE; return e; }",
-    "new": "export function breachStandIn(/** @type {any} */ e) { return e; }",
+    "old": "  e.maxHealth = e.health = EG_STAND_IN_WHOLE;\n  return e;",
+    "new": "  return e;",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-PM-B2-a-hosts-body-at-the-gates-whole",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "entity: breachStandIn(hostStandIn(",
-    "new": "entity: (hostStandIn(",
+    "old": "        entity: breachStandIn(\n          hostStandIn(\n            { mobile: look.mobile, name: look.name },\n            b.i,\n            () => wordShare(d.target?.hp, d.target?.m),\n            myBlowX,\n          ),",
+    "new": "        entity: hostStandIn(\n          { mobile: look.mobile, name: look.name },\n          b.i,\n          () => wordShare(d.target?.hp, d.target?.m),\n          myBlowX,",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-PM-B2-an-object-at-the-gates-whole",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "entity: breachStandIn(crystalStandIn(",
-    "new": "entity: (crystalStandIn(",
+    "old": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)),",
+    "new": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-PM-B5-my-might-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "vs) : 1) * egPurseX(link.might?.()); };",
-    "new": "vs) : 1); };",
+    "old": "    return (E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1) * egPurseX(link.might?.());",
+    "new": "    return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1;",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-PM-B5-the-links-might-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    now,\n    might,\n",
-    "new": "    now,\n    might: () => null,\n",
+    "old": "    might,",
+    "new": "    might: () => null,",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-PM-D3-the-seconds-rounded",
     "file": "src/combat/pvpPotions.js",
-    "old": "([k, Math.ceil(leftOf(k, now) / 1000)])",
-    "new": "([k, Math.round(leftOf(k, now) / 1000)])",
+    "old": "  return POTION_KINDS.map((k) => /** @type {[string, number]} */ ([k, Math.ceil(leftOf(k, now) / 1000)])).filter(",
+    "new": "  return POTION_KINDS.map((k) => /** @type {[string, number]} */ ([k, Math.round(leftOf(k, now) / 1000)])).filter(",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]

@@ -313,8 +313,8 @@
   {
     "name": "LW8b-room-shares",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  if (own) pools.splice(0, 1, own, own);",
-    "new": "  if (own) pools.splice(0, 1, own);",
+    "old": "  if (own) pools.splice(0, 1, own, own); // LW8b: inside, the room's own talk beside the town's",
+    "new": "  if (own) pools.splice(0, 1, own); // LW8b: inside, the room's own talk beside the town's",
     "tests": [
       "test/systems/livingWorld/lw8b_talk.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "LW8b-room-road",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  const own = !road && room ?",
-    "new": "  const own = room ?",
+    "old": "  const own = !road && room ? ROOM_TALKS[/** @type {keyof typeof ROOM_TALKS} */ (room)] : null;",
+    "new": "  const own = room ? ROOM_TALKS[/** @type {keyof typeof ROOM_TALKS} */ (room)] : null;",
     "tests": [
       "test/systems/livingWorld/lw8b_talk.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "LW8b-room-shops",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "BUILDING_TYPES.Library, BUILDING_TYPES.PawnShop,",
-    "new": "BUILDING_TYPES.PawnShop,",
+    "old": "    BUILDING_TYPES.Library,\n    BUILDING_TYPES.PawnShop,",
+    "new": "    BUILDING_TYPES.PawnShop,",
     "tests": [
       "test/systems/livingWorld/lw8b_talk.test.js"
     ]

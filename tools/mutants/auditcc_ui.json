@@ -62,8 +62,8 @@
   {
     "name": "AUDITCC-UI-S3-no-piece-of-its-own",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },\n",
-    "new": "",
+    "old": "    { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },\n    // `dummy`: hidden until there is something to show (no foe targeted) - while unlocked it stands as a preview to move",
+    "new": "    // `dummy`: hidden until there is something to show (no foe targeted) - while unlocked it stands as a preview to move",
     "why": "the plate the quick block's: its X hides the plate, the plate has no X and no move of its own",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "AUDITCC-UI-S3-not-inside-the-quick-block",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "name: 'Temperature', inside: 'quick' }",
-    "new": "name: 'Temperature' }",
+    "old": "    { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },",
+    "new": "    { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature' },",
     "why": "the quick block's move and size not undone on the plate: it moves twice (UI-CALM: the corner's caption is its place)",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "AUDITCC-UI-S3-the-quick-block-off-takes-it",
     "file": "src/ui/hud/hudLayout.js",
-    "old": ".hud-quick[data-hm-off]:not([data-hm-edit]) .hud-temp[data-hm]:not([data-hm-off]) { visibility: visible !important; }",
-    "new": "",
+    "old": ".hud-quick[data-hm-off]:not([data-hm-edit]) .hud-temp[data-hm]:not([data-hm-off]) { visibility: visible !important; }   /* UI-CALM: the plate's outer piece is the quick block */",
+    "new": "   /* UI-CALM: the plate's outer piece is the quick block */",
     "why": "the quick block switched off hides the plate with it while the plate's own part stands on (UI-CALM: the plate's outer piece)",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "AUDITCC-UI-S5-hungry-red",
     "file": "src/systems/survival/status.js",
-    "old": "if (key === 'hunger') return tires && stage === 'starving' ? 'danger' : 'warn';",
-    "new": "if (key === 'hunger') return tires && stage !== 'peckish' ? 'danger' : 'warn';",
+    "old": "  if (key === 'hunger') return tires && stage === 'starving' ? 'danger' : 'warn';",
+    "new": "  if (key === 'hunger') return tires && stage !== 'peckish' ? 'danger' : 'warn';",
     "why": "a Hungry chip red where Hungry charges nothing",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "AUDITCC-UI-S5-parched-amber",
     "file": "src/systems/survival/status.js",
-    "old": "(stage === 'parched' || stage === 'dehydrated')",
-    "new": "stage === 'dehydrated'",
+    "old": "  if (key === 'thirst') return tires && (stage === 'parched' || stage === 'dehydrated') ? 'danger' : 'warn';",
+    "new": "  if (key === 'thirst') return tires && stage === 'dehydrated' ? 'danger' : 'warn';",
     "why": "a costing Parched amber",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "AUDITCC-UI-S5-hard-tired-amber",
     "file": "src/systems/survival/status.js",
-    "old": "if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
-    "new": "if (key === 'sleep') return !held && (tires && stage === 'exhausted') ? 'danger' : 'warn';",
+    "old": "  if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "new": "  if (key === 'sleep') return !held && tires && stage === 'exhausted' ? 'danger' : 'warn';",
     "why": "Hard's Tired and Drowsy amber while they take the attributes (the audit's S5)",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDITCC-UI-S5-the-heat-s-edge-amber",
     "file": "src/systems/survival/status.js",
-    "old": "felt >= r.stamina.hotFrom",
-    "new": "felt > r.stamina.hotFrom",
+    "old": "    return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
+    "new": "    return tires && !warmed && (felt > r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
     "why": "a Warm of 20 in Hard amber while it charges",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDITCC-UI-S5-the-cold-s-edge-amber",
     "file": "src/systems/survival/status.js",
-    "old": "felt <= r.stamina.coldFrom",
-    "new": "felt < r.stamina.coldFrom",
+    "old": "    return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
+    "new": "    return tires && !warmed && (felt >= r.stamina.hotFrom || felt < r.stamina.coldFrom) ? 'danger' : 'warn';",
     "why": "a Cold of -20 in Hard amber while it charges",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "AUDITCC-UI-S5-hard-stiff-amber",
     "file": "src/systems/survival/status.js",
-    "old": "if (key === 'stiff') return takes ? 'danger' : 'warn';",
-    "new": "if (key === 'stiff') return 'warn';",
+    "old": "  if (key === 'stiff') return takes ? 'danger' : 'warn';",
+    "new": "  if (key === 'stiff') return 'warn';",
     "why": "Hard's stiff morning amber while it takes the attributes",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "AUDITCC-UI-S5-the-stiff-chip-the-table-s",
     "file": "src/systems/survival/status.js",
-    "old": "out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });",
-    "new": "out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });",
+    "old": "  if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });",
+    "new": "  if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });",
     "why": "the strip's Stiff amber in every tier",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "AUDITCC-UI-S5-no-tier-is-hard",
     "file": "src/systems/survival/status.js",
-    "old": "const r = rules ?? SURVIVAL_RULES[SURVIVAL_DEFAULT];",
-    "new": "const r = rules ?? SURVIVAL_RULES.hard;",
+    "old": "  const r = rules ?? SURVIVAL_RULES[SURVIVAL_DEFAULT];",
+    "new": "  const r = rules ?? SURVIVAL_RULES.hard;",
     "why": "a reader that hands no tier read by Hard's, not the default's",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "AUDITCC-UI-S9-the-strip-s-fire-the-record-s",
     "file": "src/systems/survival/status.js",
-    "old": "warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word) });",
-    "new": "warmed: warmedBy(s, word) });",
+    "old": "    push('temp', HUD_NEED_WORDS.temp, word, {\n      felt,\n      warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word),\n    });",
+    "new": "    push('temp', HUD_NEED_WORDS.temp, word, { felt, warmed: warmedBy(s, word) });",
     "why": "a step to a fire: the chip red until the minute turns, the plate amber",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDITCC-UI-S11-the-lines-read-the-record",
     "file": "src/systems/survival/status.js",
-    "old": "const kept = !!tierOf(s, rules).boons;",
-    "new": "const kept = Array.isArray(s.boons);",
+    "old": "  const kept = !!tierOf(s, rules).boons;",
+    "new": "  const kept = Array.isArray(s.boons);",
     "why": "the page's boons kept by the record, not the tier handed in",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "AUDITCC-UI-S6-the-hidden-power-counted",
     "file": "src/ui/armourCard.js",
-    "old": "affixes: [], legendary: null, imprint: null, gilded: null }",
-    "new": "affixes: [] }",
+    "old": "export const asKnown = (item) =>\n  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "export const asKnown = (item) => (itemIsIdentified(item) ? item : { ...item, affixes: [] });",
     "why": "the unknown Mantle's Mountain-Born counted: -85 to -53",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "AUDITCC-UI-S6-the-hidden-lines-counted",
     "file": "src/ui/armourCard.js",
-    "old": "affixes: [], legendary: null, imprint: null, gilded: null }",
-    "new": "legendary: null, imprint: null, gilded: null }",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  itemIsIdentified(item) ? item : { ...item, legendary: null, imprint: null, gilded: null };",
     "why": "the unknown Mantle's lining counted",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "AUDITCC-UI-S6-the-imprint-kept",
     "file": "src/ui/armourCard.js",
-    "old": "legendary: null, imprint: null, gilded: null }",
-    "new": "legendary: null, gilded: null }",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, gilded: null };",
     "why": "a Rare's hidden imprint in the view",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "AUDITCC-UI-S6-the-gilding-kept",
     "file": "src/ui/armourCard.js",
-    "old": "legendary: null, imprint: null, gilded: null }",
-    "new": "legendary: null, imprint: null }",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null };",
     "why": "a Gilded's hidden id in the view",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "AUDITCC-UI-S6-known-read-as-unknown",
     "file": "src/ui/armourCard.js",
-    "old": "(itemIsIdentified(item) ? item :",
-    "new": "(false ? item :",
+    "old": "  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
+    "new": "  false ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };",
     "why": "an identified piece's powers left out",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "AUDITCC-UI-S8-nothing-taken",
     "file": "src/ui/credits.js",
-    "old": "Boons (the default: neglect costs nothing, and staying",
-    "new": "Boons (the default: nothing taken, and staying",
+    "old": "          'Survival. You feel the temperature from the climate, season, hour, weather, clothes and armor. Hunger, thirst, sleep and wetness are needs, food spoils, you can make camp and light campfires, and where you sleep matters. There are four tiers in Settings: Off, Boons (the default: neglect costs nothing, and staying fed, watered and rested gives bonuses), Casual (neglect only borrows stamina, which comes back once the need is met) and Hard (needs can hurt your attributes and health and make you sick).',",
+    "new": "          'Survival. You feel the temperature from the climate, season, hour, weather, clothes and armor. Hunger, thirst, sleep and wetness are needs, food spoils, you can make camp and light campfires, and where you sleep matters. There are four tiers in Settings: Off, Boons (the default: nothing taken, and staying fed, watered and rested gives bonuses), Casual (neglect only borrows stamina, which comes back once the need is met) and Hard (needs can hurt your attributes and health and make you sick).',",
     "why": "the credits say Boons takes nothing: the drink swings the attributes there",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the credits name Boons the default.",
     "tests": [
@@ -443,8 +443,8 @@
   {
     "name": "AUDITCC-UI-S14-the-cost-unsaid",
     "file": "src/systems/survival/status.js",
-    "old": "danger: 'it costs you'",
-    "new": "danger: 'red'",
+    "old": "export const LEVEL_WORDS = Object.freeze({ danger: 'it costs you', warn: 'no cost to you yet' });",
+    "new": "export const LEVEL_WORDS = Object.freeze({ danger: 'red', warn: 'no cost to you yet' });",
     "why": "the level said as its colour",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "AUDITCC-UI-S14-a-comfort-said",
     "file": "src/systems/survival/status.js",
-    "old": "(Object.hasOwn(LEVEL_WORDS, level) ? ",
-    "new": "(level ? ",
+    "old": "export const levelSaid = (word, level) =>\n  Object.hasOwn(LEVEL_WORDS, level) ? `${word} - ${LEVEL_WORDS[level]}` : word;",
+    "new": "export const levelSaid = (word, level) => (level ? `${word} - ${LEVEL_WORDS[level]}` : word);",
     "why": "a comfortable reading says \"undefined\"",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -463,8 +463,8 @@
   {
     "name": "AUDITCC-UI-S14-the-tile-unsaid",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost:",
-    "new": "say: null, cost:",
+    "old": "      say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level),",
+    "new": "      say: null,",
     "why": "a need's tile says no level",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "AUDITCC-UI-S14-a-boon-said-as-a-level",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost:",
-    "new": "say: levelSaid(String(c.text ?? ''), c.level), cost:",
+    "old": "      say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level),",
+    "new": "      say: levelSaid(String(c.text ?? ''), c.level),",
     "why": "a boon's tile titled as a need",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -483,8 +483,8 @@
   {
     "name": "AUDITCC-UI-S14-no-cost-flag",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "cost: c.level === 'danger' });",
-    "new": "cost: false });",
+    "old": "      cost: c.level === 'danger',",
+    "new": "      cost: false,",
     "why": "a costing need's tile unmarked",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "AUDITCC-UI-S14-the-plaque-unlabelled",
     "file": "src/ui/temperatureCard.js",
-    "old": "n.setAttribute('aria-label', `Felt temperature ${r.text}, ${levelSaid(r.label, r.level)}`);",
-    "new": "n.setAttribute('aria-label', `Felt temperature ${r.text}, ${r.label}`);",
+    "old": "  n.setAttribute('aria-label', `Felt temperature ${r.text}, ${levelSaid(r.label, r.level)}`);",
+    "new": "  n.setAttribute('aria-label', `Felt temperature ${r.text}, ${r.label}`);",
     "why": "the plaque's label says no level",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "AUDITCC-UI-S14-the-plaque-untitled",
     "file": "src/ui/temperatureCard.js",
-    "old": "${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})",
-    "new": "${r.label.toLowerCase()} (${BAND_TEXT})",
+    "old": "  n.title = `Felt temperature ${r.text}: ${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})${sum.length ? `\\n${sum.join('\\n')}` : ''}`;",
+    "new": "  n.title = `Felt temperature ${r.text}: ${r.label.toLowerCase()} (${BAND_TEXT})${sum.length ? `\\n${sum.join('\\n')}` : ''}`;",
     "why": "the plaque's title says no level",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "AUDITCC-UI-D6-the-red-thermometer",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "r: '#b8ab8c', h: '#efe6cf'",
-    "new": "r: '#e0584a', h: '#ffb0a0'",
+    "old": "    pal: { g: '#cfd4dc', w: '#eef2f6', r: '#b8ab8c', h: '#efe6cf', t: '#a8b0bc' },",
+    "new": "    pal: { g: '#cfd4dc', w: '#eef2f6', r: '#e0584a', h: '#ffb0a0', t: '#a8b0bc' },",
     "why": "the comfortable reading's thermometer in the red of a cost",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "AUDITCC-UI-R11-the-campfire-for-the-hearth",
     "file": "src/systems/survival/status.js",
-    "old": "own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for",
-    "new": "own for the need it rewards, the campfire for the hearth, a sparkle for",
+    "old": " * own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for",
+    "new": " * own for the need it rewards, the campfire for the hearth, a sparkle for",
     "why": "the code names the hearth's glyph wrong",
     "note": "AUDIT C&C (lens S): re-aimed by content - REST1's tile is Next night now.",
     "tests": [
@@ -594,8 +594,8 @@
   {
     "name": "AUDITCC-UI-R7-the-wear-s-wardrobe-unread",
     "file": "src/ui/temperatureCard.js",
-    "old": "const after = feltNow(entity, { worn: slots, mods: modsForSlots(entity, slots) });",
-    "new": "const after = feltNow(entity, { worn: slots });",
+    "old": "  const after = feltNow(entity, { worn: slots, mods: modsForSlots(entity, slots) });",
+    "new": "  const after = feltNow(entity, { worn: slots });",
     "why": "a lined cloak's card counts the cloak and not its lining: +12 for +16",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -624,8 +624,8 @@
   {
     "name": "AUDITCC-UI-R6-the-section-unhung",
     "file": "src/ui/statsCard.js",
-    "old": "    page.append(bn);\n",
-    "new": "",
+    "old": "    page.append(bn);\n  }",
+    "new": "  }",
     "why": "the Stats side's Boons section built and never shown",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -644,8 +644,8 @@
   {
     "name": "AUDITCC-UI-R6-one-boon",
     "file": "src/ui/statsCard.js",
-    "old": "for (const [k, v] of boonRows) bn.append",
-    "new": "for (const [k, v] of boonRows.slice(0, 1)) bn.append",
+    "old": "    for (const [k, v] of boonRows) bn.append(row(k, v));",
+    "new": "    for (const [k, v] of boonRows.slice(0, 1)) bn.append(row(k, v));",
     "why": "one boon of four",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -695,7 +695,7 @@
     "name": "AUDITCC-UI-S5-the-salts-hold-nothing",
     "file": "src/systems/survival/status.js",
     "old": "  if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
-    "new": "  if (key === 'sleep') return (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "new": "  if (key === 'sleep') return takes || (tires && stage === 'exhausted') ? 'danger' : 'warn';",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -704,8 +704,8 @@
   {
     "name": "AUDITCC-UI-S5-the-strip-hears-no-salts",
     "file": "src/systems/survival/status.js",
-    "old": "sleepStage(s.sleepDebt), { held: wakingHeld(s, now) });",
-    "new": "sleepStage(s.sleepDebt));",
+    "old": "  if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt), { held: wakingHeld(s, now) });",
+    "new": "  if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt));",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -714,8 +714,8 @@
   {
     "name": "AUDITCC-UI-R-the-boon-tile-amber",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "kind: c.level === 'boon' ? 'buff' : c.level === 'danger'",
-    "new": "kind: c.level === 'boon' ? 'warn' : c.level === 'danger'",
+    "old": "      kind: c.level === 'boon' ? 'buff' : c.level === 'danger' ? 'danger' : 'warn',",
+    "new": "      kind: c.level === 'boon' ? 'warn' : c.level === 'danger' ? 'danger' : 'warn',",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -724,8 +724,8 @@
   {
     "name": "AUDITCC-UI-S-the-bank-s-line-runs-wide",
     "file": "src/systems/survival/status.js",
-    "old": "`Rested for another ${restedLeft(s)}.`",
-    "new": "`Well rested (${restedLeft(s)} left): +5 Intelligence, +5 Willpower.`",
+    "old": "  restedFor: (s) => (restedLeft(s) ? `Rested for another ${restedLeft(s)}.` : null),",
+    "new": "  restedFor: (s) => (restedLeft(s) ? `Well rested (${restedLeft(s)} left): +5 Intelligence, +5 Willpower.` : null),",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -734,8 +734,8 @@
   {
     "name": "AUDITCC-UI-S-the-night-tile-named-rested",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "name: 'Next night', foot: `${rested.minutes}m`",
-    "new": "name: 'Rested', foot: `${rested.minutes}m`",
+    "old": "    tile({ key: 'rested', kind: 'buff', name: 'Next night', foot: `${rested.minutes}m`, glyph: 'rested' });",
+    "new": "    tile({ key: 'rested', kind: 'buff', name: 'Rested', foot: `${rested.minutes}m`, glyph: 'rested' });",
     "tests": [
       "test/systems/rest/rest1_act.test.js"
     ],

@@ -44,11 +44,7 @@ export function subMeshDoorType(textureArchive, textureRecord) {
   // Base climate archive for the door check. All base door textures are
   // > 100 with some exceptions (verbatim DFU).
   let doorArchive = textureArchive;
-  if (
-    doorArchive > 100 &&
-    doorArchive !== DUNGEON_RUIN_ENTER_DOORS &&
-    doorArchive !== SCOURG_EXTERIOR
-  ) {
+  if (doorArchive > 100 && doorArchive !== DUNGEON_RUIN_ENTER_DOORS && doorArchive !== SCOURG_EXTERIOR) {
     doorArchive = textureArchive - Math.trunc(textureArchive / 100) * 100;
   }
   switch (doorArchive) {
@@ -57,7 +53,7 @@ export function subMeshDoorType(textureArchive, textureRecord) {
     case DUNGEON_ENTER_DOORS:
       return DOOR_TYPE.DUNGEON_ENTRANCE;
     case DUNGEON_RUIN_ENTER_DOORS:
-      return textureRecord > 0 ? DOOR_TYPE.DUNGEON_ENTRANCE : DOOR_TYPE.NONE;   // Dungeon ruins index 0 is just a stone texture
+      return textureRecord > 0 ? DOOR_TYPE.DUNGEON_ENTRANCE : DOOR_TYPE.NONE; // Dungeon ruins index 0 is just a stone texture
     case DUNGEON_EXIT_DOORS:
       return DOOR_TYPE.DUNGEON_EXIT;
     default:
@@ -104,26 +100,40 @@ export function dfMeshToModel(dfMesh, getTextureSize) {
         const p1 = plane.points[1];
         const p2 = plane.points[2];
         const vert0 = {
-          x: p0.x * GLOBAL_SCALE, y: -p0.y * GLOBAL_SCALE, z: p0.z * GLOBAL_SCALE,
+          x: p0.x * GLOBAL_SCALE,
+          y: -p0.y * GLOBAL_SCALE,
+          z: p0.z * GLOBAL_SCALE,
         };
         const vert1 = {
-          x: p1.x * GLOBAL_SCALE, y: -p1.y * GLOBAL_SCALE, z: p1.z * GLOBAL_SCALE,
+          x: p1.x * GLOBAL_SCALE,
+          y: -p1.y * GLOBAL_SCALE,
+          z: p1.z * GLOBAL_SCALE,
         };
         const vert2 = {
-          x: p2.x * GLOBAL_SCALE, y: -p2.y * GLOBAL_SCALE, z: p2.z * GLOBAL_SCALE,
+          x: p2.x * GLOBAL_SCALE,
+          y: -p2.y * GLOBAL_SCALE,
+          z: p2.z * GLOBAL_SCALE,
         };
         // Normal facing away from door: normalize(cross(v0 - v2, v0 - v1)).
-        const ux = vert0.x - vert2.x, uy = vert0.y - vert2.y, uz = vert0.z - vert2.z;
-        const vx = vert0.x - vert1.x, vy = vert0.y - vert1.y, vz = vert0.z - vert1.z;
+        const ux = vert0.x - vert2.x,
+          uy = vert0.y - vert2.y,
+          uz = vert0.z - vert2.z;
+        const vx = vert0.x - vert1.x,
+          vy = vert0.y - vert1.y,
+          vz = vert0.z - vert1.z;
         let nx = uy * vz - uz * vy;
         let ny = uz * vx - ux * vz;
         let nz = ux * vy - uy * vx;
         const nl = Math.hypot(nx, ny, nz) || 1;
-        nx /= nl; ny /= nl; nz /= nl;
+        nx /= nl;
+        ny /= nl;
+        nz /= nl;
         doors.push({
           index: doorCount++,
           type: doorType,
-          vert0, vert1, vert2,
+          vert0,
+          vert1,
+          vert2,
           normal: { x: nx, y: ny, z: nz },
         });
       }

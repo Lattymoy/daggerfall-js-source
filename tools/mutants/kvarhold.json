@@ -83,8 +83,8 @@
   {
     "name": "KVAR-the-fit-unwired",
     "file": "src/systems/quest/machine.js",
-    "old": "      resource.fitSiteToBuild?.(world);   // KVAR-HOLD's audit: a dungeon drawn again, fitted to the size its link now builds\n",
-    "new": "",
+    "old": "      resource.fitSiteToBuild?.(world); // KVAR-HOLD's audit: a dungeon drawn again, fitted to the size its link now builds\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/kvarhold.test.js"
     ]

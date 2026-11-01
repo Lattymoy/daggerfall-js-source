@@ -2,7 +2,7 @@
   {
     "name": "HD-everyones-day-not-kept",
     "file": "src/systems/holidays.js",
-    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;",
+    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex + 1;",
     "new": "export const holidayKeptIn = (row, regionIndex) => row.region === regionIndex + 1;",
     "tests": [
       "test/systems/livingWorld/holydays.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "HD-region-one-off",
     "file": "src/systems/holidays.js",
-    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;",
-    "new": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex;",
+    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex + 1;",
+    "new": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex;",
     "tests": [
       "test/systems/livingWorld/holydays.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "HD-everyones-day-a-holy-day",
     "file": "src/systems/livingWorld/companies.js",
-    "old": "    if (!row || row.region === 0xFF) continue;   // never a day every region keeps",
+    "old": "    if (!row || row.region === 0xff) continue; // never a day every region keeps",
     "new": "    if (!row) continue;",
     "tests": [
       "test/systems/livingWorld/holydays.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "HD-nobodys-day-ends-the-search",
     "file": "src/systems/livingWorld/companies.js",
-    "old": "    if (!row || row.region === 0xFF) continue;",
-    "new": "    if (!row || row.region === 0xFF) return null;",
+    "old": "    if (!row || row.region === 0xff) continue; // never a day every region keeps",
+    "new": "    if (!row || row.region === 0xff) return null; // never a day every region keeps",
     "tests": [
       "test/systems/livingWorld/holydays.test.js"
     ]

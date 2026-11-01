@@ -13,19 +13,21 @@
 
 const WINDOW_MS = 1000;
 
-let open = null;       // the frame in flight: its start, ms
-let openAt = null;     // SCRIPT-SPLIT: when the host's callback really began (performance.now() at frameBegin)
-let samples = [];      // [end ms, busy ms, in-frame ms, before ms, stream ms, the frame's stamp] within the window
+let open = null; // the frame in flight: its start, ms
+let openAt = null; // SCRIPT-SPLIT: when the host's callback really began (performance.now() at frameBegin)
+let samples = []; // [end ms, busy ms, in-frame ms, before ms, stream ms, the frame's stamp] within the window
 // PERF-EXT24: the stream build's slices run in their own animation-frame
 // callback AFTER a host's frameEnd, so no sample ever held them: frameCpu,
 // the FPS counter's script ms and `?perf=cpu` all read a streaming frame
 // as the frame alone. `lent` is what the breather reports between two
 // samples, folded into the next one's busy.
 let lent = 0;
-let lastOwn = 0;       // PERF-EXT24: the last sample's own script, lent time excluded - what the next slice is sized against
-const BEGINS = 15;     // PERF-EXT24: the frame intervals kept for their median
+let lastOwn = 0; // PERF-EXT24: the last sample's own script, lent time excluded - what the next slice is sized against
+const BEGINS = 15; // PERF-EXT24: the frame intervals kept for their median
 const intervals = new Float64Array(BEGINS);
-let intervalCount = 0, intervalAt = 0, lastBegin = null;
+let intervalCount = 0,
+  intervalAt = 0,
+  lastBegin = null;
 // PERF-EXT24 (the review, 2026-09-25): every frame begun, counted - the
 // breather's witness. A slice that ends with this changed had a frame run
 // inside it, so its wall clock holds that frame's script (already in its
@@ -37,7 +39,7 @@ let begun = 0;
  *  before this callback runs when the main thread was busy with anything
  *  else first. SCRIPT-SPLIT: `startedAt` is when the callback itself began,
  *  so a sample can say which of the two its milliseconds were. */
-export function frameBegin(now, startedAt = (typeof performance !== 'undefined' ? performance.now() : now)) {
+export function frameBegin(now, startedAt = typeof performance !== 'undefined' ? performance.now() : now) {
   // PERF-EXT24: the rAF stamps a frame apart - the display's own period
   // (16.7 at 60 Hz, 6.9 at 144), measured rather than assumed.
   if (lastBegin != null && now > lastBegin) {
@@ -47,8 +49,8 @@ export function frameBegin(now, startedAt = (typeof performance !== 'undefined' 
   }
   lastBegin = now;
   open = now;
-  openAt = startedAt;   // SCRIPT-SPLIT
-  begun++;   // PERF-EXT24 (the review)
+  openAt = startedAt; // SCRIPT-SPLIT
+  begun++; // PERF-EXT24 (the review)
 }
 
 /** PERF-EXT24 (the review): how many frames have begun - a count, only
@@ -61,10 +63,10 @@ export function frameInterval() {
   if (!intervalCount) return 1000 / 60;
   const s = sortedIntervals.subarray(0, intervalCount);
   s.set(intervals.subarray(0, intervalCount));
-  s.sort();   // a typed array sorts by value
+  s.sort(); // a typed array sorts by value
   return s[intervalCount >> 1];
 }
-const sortedIntervals = new Float64Array(BEGINS);   // frameInterval's scratch - asked once a build slice
+const sortedIntervals = new Float64Array(BEGINS); // frameInterval's scratch - asked once a build slice
 
 /** PERF-EXT24: the last frame's own script ms (0 before any). */
 export const lastBusy = () => lastOwn;
@@ -72,7 +74,9 @@ export const lastBusy = () => lastOwn;
 /** PERF-EXT24: work done between frames, on the frame's thread - a build
  *  slice - lent to the next sample, so the script time says what the main
  *  thread really spent. */
-export function lendFrame(ms) { if (ms > 0) lent += ms; }
+export function lendFrame(ms) {
+  if (ms > 0) lent += ms;
+}
 
 /**
  * THE FRAME IN FLIGHT, AS A TOKEN - or null between frames.
@@ -122,14 +126,21 @@ export const frameMark = () => open;
  * every time a modal went up. PERF1's measurement is unchanged; only
  * the token is cleared.
  */
-export function frameAbort() { open = null; openAt = null; }
+export function frameAbort() {
+  open = null;
+  openAt = null;
+}
 
 /** The bottom of the same callback, before it re-arms. `now` defaults
  *  to performance.now() - the end is measured, not the rAF's stamp. */
-export function frameEnd(now = (typeof performance !== 'undefined' ? performance.now() : null)) {
-  if (open == null || now == null) { open = null; openAt = null; return; }
+export function frameEnd(now = typeof performance !== 'undefined' ? performance.now() : null) {
+  if (open == null || now == null) {
+    open = null;
+    openAt = null;
+    return;
+  }
   lastOwn = Math.max(0, now - open);
-  const busy = lastOwn + lent;   // PERF-EXT24: and the stream's slices since the last sample
+  const busy = lastOwn + lent; // PERF-EXT24: and the stream's slices since the last sample
   // SCRIPT-SPLIT: the sample's three parts, which sum to it - the host's own callback (`inFrame`), the main thread's
   // time between the frame's stamp and that callback (`before`: whatever ran first - the browser's own work, a
   // message, a timer, a collection), and the stream's lent slices. Clamped into the frame so they always sum.
@@ -138,7 +149,7 @@ export function frameEnd(now = (typeof performance !== 'undefined' ? performance
   const before = Math.max(0, at - open);
   const stream = lent;
   lent = 0;
-  const stamp = open;   // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame
+  const stamp = open; // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame
   open = null;
   openAt = null;
   samples.push([now, busy, inFrame, before, stream, stamp]);
@@ -152,11 +163,28 @@ export function frameEnd(now = (typeof performance !== 'undefined' ? performance
  *  before any frame has been stamped. */
 export function frameCpu() {
   if (!samples.length) return null;
-  let sum = 0, worst = 0, inFrame = 0, before = 0, stream = 0;
-  for (const [, b, f, w, l] of samples) { sum += b; if (b > worst) worst = b; inFrame += f; before += w; stream += l; }
+  let sum = 0,
+    worst = 0,
+    inFrame = 0,
+    before = 0,
+    stream = 0;
+  for (const [, b, f, w, l] of samples) {
+    sum += b;
+    if (b > worst) worst = b;
+    inFrame += f;
+    before += w;
+    stream += l;
+  }
   const n = samples.length;
   // SCRIPT-SPLIT: the mean's three parts beside it - `inFrameMs + beforeMs + streamMs === meanMs`
-  return { meanMs: sum / n, worstMs: worst, frames: n, inFrameMs: inFrame / n, beforeMs: before / n, streamMs: stream / n };
+  return {
+    meanMs: sum / n,
+    worstMs: worst,
+    frames: n,
+    inFrameMs: inFrame / n,
+    beforeMs: before / n,
+    streamMs: stream / n,
+  };
 }
 
 /** FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): ONE FRAME'S SCRIPT, by the rAF stamp it began at - its script and SCRIPT-SPLIT's
@@ -171,4 +199,14 @@ export function frameSampleAt(stamp) {
   return null;
 }
 
-export function _resetFrameClock() { open = null; openAt = null; samples = []; lent = 0; lastOwn = 0; intervalCount = 0; intervalAt = 0; lastBegin = null; begun = 0; }
+export function _resetFrameClock() {
+  open = null;
+  openAt = null;
+  samples = [];
+  lent = 0;
+  lastOwn = 0;
+  intervalCount = 0;
+  intervalAt = 0;
+  lastBegin = null;
+  begun = 0;
+}

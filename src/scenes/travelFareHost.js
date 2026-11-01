@@ -17,9 +17,8 @@ import { TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';
 
 /** @param {any} host */
 export function createTravelFareDeps(host) {
-  const {
-    hasTransport, locationIndex, playerTravelPixel, refreshTravelOptionsSettings, townTalk, travelOriginMapId
-  } = host;
+  const { hasTransport, locationIndex, playerTravelPixel, refreshTravelOptionsSettings, townTalk, travelOriginMapId } =
+    host;
   /** PARTY-TRAVEL (2026-09-25): THE TRAVEL POPUP'S OWN DEP BAG - every read ui/travel/travelPopUp.js prices a trip with and
    *  its gold check asks, lifted out of buildTravelMapWindow's bag (which spreads it, so both maps read it as before)
    *  so the party's journeys price a trip through the SAME popup without opening a map (partyTripFare). One bag: a
@@ -72,12 +71,15 @@ export function createTravelFareDeps(host) {
       },
       diseaseCount: () => diseaseCount(playerEntity),
       poisonCount: () => poisonCount(playerEntity),
-      noWorldTime: () => sharedClockOn(),   // OL2: online the trip takes no world time (WORLD5), and the popup says so
+      noWorldTime: () => sharedClockOn(), // OL2: online the trip takes no world time (WORLD5), and the popup says so
       // TO1: the mod itself, and the six reads its additions to the
       // map need. Every one is guarded on the other side - with
       // Travel Options off `travelOptions` answers null and the map is
       // DFU's own, whole.
-      travelOptions: () => { refreshTravelOptionsSettings(); return host.travelOptions; },   // TO-LIVE: the live keys as they stand at the map's open
+      travelOptions: () => {
+        refreshTravelOptionsSettings();
+        return host.travelOptions;
+      }, // TO-LIVE: the live keys as they stand at the map's open
       // AUDIT-TO1 D1: PlayerGPS.CurrentLocation's MapId (null in open wilderness, the C#'s !Loaded) and
       // TransportManager.IsOnShip - the two reads IsNotAtPort / HasNoOceanTravel need. SHIP-PORT (2026-09-28,
       // Discord: "a player is at a port but unable to set sail"): ON THE SHIP, the port it was boarded at. The deck

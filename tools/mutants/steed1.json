@@ -1,100 +1,293 @@
 [
-  { "name": "STEED1-one-draw-not-two", "file": "src/systems/steedCare.js",
-    "old": "STEED_BORN_MIN + Math.round(span * (mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2)) / 2)", "new": "STEED_BORN_MIN + Math.round(span * mix(seed, 2 * i + 1))",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-a-stat-off-another-draw", "file": "src/systems/steedCare.js",
-    "old": "mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2)", "new": "mix(seed, 1) + mix(seed, 2 * i + 2)",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-bond-step", "file": "src/systems/steedCare.js",
-    "old": "export const BOND_STEP = 5;", "new": "export const BOND_STEP = 4;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-love-unread", "file": "src/systems/steedCare.js",
-    "old": "* DAY_BOND_TENTHS * f.love);", "new": "* DAY_BOND_TENTHS);",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-full-at-the-edge", "file": "src/systems/steedCare.js",
-    "old": "if (from - now >= FULL_AHEAD) return", "new": "if (from - now > FULL_AHEAD) return",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-starving-a-minute-late", "file": "src/systems/steedCare.js",
-    "old": "return now - f >= STARVING_AFTER ? 'starving' : 'hungry';", "new": "return now - f > STARVING_AFTER ? 'starving' : 'hungry';",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-fade-never-taken", "file": "src/systems/steedCare.js",
-    "old": "  if (fade > 0) setBond(item, bondTenths(item) - fade);\n", "new": "\n",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-stable-unread", "file": "src/systems/steedCare.js",
-    "old": "  if (where === 'stabled') {", "new": "  if (where === 'stable') {",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-no-grazing-floor", "file": "src/systems/steedCare.js",
-    "old": "if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) {", "new": "if (false) {",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-span-eats-nothing", "file": "src/systems/steedCare.js",
-    "old": "const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : Array.isArray(stores) && steedFoodIn(stores, kind) ? stores : null;", "new": "const from = null;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-winded-to-half", "file": "src/systems/steedCare.js",
-    "old": "else if (winded && max - spent >= WINDED_UNTIL * max) winded = false;", "new": "else if (winded && max - spent >= 0.5 * max) winded = false;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-ridden-share", "file": "src/systems/steedCare.js",
-    "old": "* (ridden ? RIDDEN_BACK : 1) * t;", "new": "* t;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-endurance-unread", "file": "src/systems/steedCare.js",
-    "old": "spent += GALLOP_SPEND * (1.25 - end / 200) * t;", "new": "spent += GALLOP_SPEND * t;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-starving-gallop", "file": "src/systems/steedCare.js",
-    "old": "export const canGallop = (b, hunger) => !b?.winded && hunger !== 'starving';", "new": "export const canGallop = (b, hunger) => !b?.winded;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-ride-reorder", "file": "src/systems/steedCare.js",
-    "old": "  items.splice(items.indexOf(horses[0]), 0, pick);\n", "new": "  items.push(pick);\n",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-mods-no-overridden", "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "    if (base === false) return false;\n", "new": "\n",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-gate-unread", "file": "src/systems/transport.js",
-    "old": "  return _gallop?.(mode, mods) ?? mods ?? !isRiding(mode);", "new": "  return mods ?? !isRiding(mode);",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-gallop-unscaled", "file": "src/player/motor.js", "note": "EG-ZR (PIN MOVED): re-aimed by content - the run's modifiers hang an `else` on this line (player/motor.js, Fleetfoot's), so the gallop's scale is unapplied in place, never the line taken out",
-    "old": "      if (rideBase != null) speed *= this._rideScale();   // STEED1: a gallop at the horse's own pace\n", "new": "      if (rideBase != null) speed *= 1;\n",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-half-speed-base-unscaled", "file": "src/player/motor.js",
-    "old": "rideSpeed(this.stats.speed, this._rideBaseNow()) * this._rideScale() : this._refreshWalkSpeed();", "new": "rideSpeed(this.stats.speed, this._rideBaseNow()) : this._refreshWalkSpeed();",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-team-mean-unread", "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "strengths.reduce((a, b) => a + b, 0) / strengths.length", "new": "strengths[0]",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-skip-keeps-the-breath", "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "      if (skipped) { breaths.clear(); dragonBreath = freshBreath(); }", "new": "      if (false) { breaths.clear(); dragonBreath = freshBreath(); }",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-bond-carried-to-the-next", "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'wagonEntry', 'horseBond', 'horseFed', 'appearance']);", "new": "'wagonEntry', 'horseFed', 'appearance']);",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-fields-on-any-item", "file": "src/systems/item/itemLaw.js",
-    "old": "  if (['horseBond', 'horseFed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE && !isDragonMount(item)) out.add('horse');", "new": "  if (false) out.add('horse');",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-owned-stood-again", "file": "src/systems/merchantYards.js",
-    "old": "    if (have.has(h.horseSeed)) continue;\n", "new": "\n",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-stall-unread", "file": "src/systems/merchantYards.js",
-    "old": "stream(mix3(mapId | 0, day | 0, i))", "new": "stream(mix3(mapId | 0, day | 0, 0))",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-rider-pays", "file": "src/scenes/world.js",
-    "old": "running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),", "new": "running: player.isRunning && !player.standing,",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-wagon-stores-unread", "file": "src/systems/steedCare.js",
-    "old": "const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : Array.isArray(stores) && steedFoodIn(stores, kind) ? stores : null;", "new": "const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : null;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "STEED1-the-card-feeds-from-the-pack-alone", "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": ": store().some((x) => steedFoodOf(x)?.key === kind) ? store() : its);", "new": ": its);",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "AUDIT-STEED1-grazing-fade-for-span", "file": "src/systems/steedCare.js",
-    "old": "const owedTo = since != null && since < now ? since : now;", "new": "const owedTo = now;",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "AUDIT-STEED1-off-keeps-clock", "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "breaths.clear(); wasRiding = false; wasWinded = false; tendedAt = null;   // AUDIT STEED1", "new": "breaths.clear(); wasRiding = false; wasWinded = false;   // AUDIT STEED1",
-    "tests": ["test/systems/steed1_horsecare.test.js"],
+  {
+    "name": "STEED1-one-draw-not-two",
+    "file": "src/systems/steedCare.js",
+    "old": "    out[k] = STEED_BORN_MIN + Math.round((span * (mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2))) / 2);",
+    "new": "    out[k] = STEED_BORN_MIN + Math.round(span * mix(seed, 2 * i + 1));",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-a-stat-off-another-draw",
+    "file": "src/systems/steedCare.js",
+    "old": "    out[k] = STEED_BORN_MIN + Math.round((span * (mix(seed, 2 * i + 1) + mix(seed, 2 * i + 2))) / 2);",
+    "new": "    out[k] = STEED_BORN_MIN + Math.round((span * (mix(seed, 1) + mix(seed, 2 * i + 2))) / 2);",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-bond-step",
+    "file": "src/systems/steedCare.js",
+    "old": "export const BOND_STEP = 5;",
+    "new": "export const BOND_STEP = 4;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-love-unread",
+    "file": "src/systems/steedCare.js",
+    "old": "  const gained = Math.round(((until - from) / MINUTES_A_DAY) * DAY_BOND_TENTHS * f.love);",
+    "new": "  const gained = Math.round(((until - from) / MINUTES_A_DAY) * DAY_BOND_TENTHS);",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-full-at-the-edge",
+    "file": "src/systems/steedCare.js",
+    "old": "  if (from - now >= FULL_AHEAD) return { ok: false, text: STEED_TEXT.full(who), gained: 0 };",
+    "new": "  if (from - now > FULL_AHEAD) return { ok: false, text: STEED_TEXT.full(who), gained: 0 };",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-starving-a-minute-late",
+    "file": "src/systems/steedCare.js",
+    "old": "  return now - f >= STARVING_AFTER ? 'starving' : 'hungry';",
+    "new": "  return now - f > STARVING_AFTER ? 'starving' : 'hungry';",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-fade-never-taken",
+    "file": "src/systems/steedCare.js",
+    "old": "  if (fade > 0) setBond(item, bondTenths(item) - fade);",
+    "new": "",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-stable-unread",
+    "file": "src/systems/steedCare.js",
+    "old": "  if (where === 'stabled') {",
+    "new": "  if (where === 'stable') {",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-no-grazing-floor",
+    "file": "src/systems/steedCare.js",
+    "old": "    if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-span-eats-nothing",
+    "file": "src/systems/steedCare.js",
+    "old": "      const from =\n        Array.isArray(items) && steedFoodIn(items, kind)\n          ? items\n          : Array.isArray(stores) && steedFoodIn(stores, kind)\n            ? stores\n            : null;",
+    "new": "      const from = null;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-winded-to-half",
+    "file": "src/systems/steedCare.js",
+    "old": "  else if (winded && max - spent >= WINDED_UNTIL * max) winded = false;",
+    "new": "  else if (winded && max - spent >= 0.5 * max) winded = false;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-ridden-share",
+    "file": "src/systems/steedCare.js",
+    "old": "  else\n    spent -=\n      BREATH_BACK *\n      (0.75 + end / 200) *\n      (rules.hungerCosts ? (HUNGER[hunger]?.breath ?? 1) : 1) *\n      (ridden ? RIDDEN_BACK : 1) *\n      t;",
+    "new": "  else spent -= BREATH_BACK * (0.75 + end / 200) * (rules.hungerCosts ? (HUNGER[hunger]?.breath ?? 1) : 1) * t;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-endurance-unread",
+    "file": "src/systems/steedCare.js",
+    "old": "  if (galloping && !winded) spent += GALLOP_SPEND * (1.25 - end / 200) * t;",
+    "new": "  if (galloping && !winded) spent += GALLOP_SPEND * t;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-starving-gallop",
+    "file": "src/systems/steedCare.js",
+    "old": "export const canGallop = (b, hunger) => !b?.winded && hunger !== 'starving';",
+    "new": "export const canGallop = (b, hunger) => !b?.winded;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-ride-reorder",
+    "file": "src/systems/steedCare.js",
+    "old": "  items.splice(items.indexOf(horses[0]), 0, pick);",
+    "new": "  items.push(pick);",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-mods-no-overridden",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    if (base === false) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-gate-unread",
+    "file": "src/systems/transport.js",
+    "old": "  return _gallop?.(mode, mods) ?? mods ?? !isRiding(mode);",
+    "new": "  return mods ?? !isRiding(mode);",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-gallop-unscaled",
+    "file": "src/player/motor.js",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the run's modifiers hang an `else` on this line (player/motor.js, Fleetfoot's), so the gallop's scale is unapplied in place, never the line taken out",
+    "old": "      if (rideBase != null) speed *= this._rideScale();   // STEED1: a gallop at the horse's own pace\n",
+    "new": "      if (rideBase != null) speed *= 1;\n",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-half-speed-base-unscaled",
+    "file": "src/player/motor.js",
+    "old": "rideSpeed(this.stats.speed, this._rideBaseNow()) * this._rideScale() : this._refreshWalkSpeed();",
+    "new": "rideSpeed(this.stats.speed, this._rideBaseNow()) : this._refreshWalkSpeed();",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-team-mean-unread",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "        if (strengths.length) k *= teamDraftScale(strengths.reduce((a, b) => a + b, 0) / strengths.length, load, care);",
+    "new": "        if (strengths.length) k *= teamDraftScale(strengths[0], load, care);",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-skip-keeps-the-breath",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      if (skipped) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-bond-carried-to-the-next",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  'horseBond',\n  'horseFed',",
+    "new": "  'horseFed',",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-fields-on-any-item",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if (['horseBond', 'horseFed'].some((k) => has(item, k)) && item.templateIndex !== TRANSPORT_HORSE && !isDragonMount(item)) out.add('horse');",
+    "new": "  if (false) out.add('horse');",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-owned-stood-again",
+    "file": "src/systems/merchantYards.js",
+    "old": "    if (have.has(h.horseSeed)) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-stall-unread",
+    "file": "src/systems/merchantYards.js",
+    "old": "    birthHorses([h], stream(mix3(mapId | 0, day | 0, i)));",
+    "new": "    birthHorses([h], stream(mix3(mapId | 0, day | 0, 0)));",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-rider-pays",
+    "file": "src/scenes/world.js",
+    "old": "running: player.isRunning && !player.standing && upkeep.riderPaysGallop(player.transportMode),",
+    "new": "running: player.isRunning && !player.standing,",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-wagon-stores-unread",
+    "file": "src/systems/steedCare.js",
+    "old": "      const from =\n        Array.isArray(items) && steedFoodIn(items, kind)\n          ? items\n          : Array.isArray(stores) && steedFoodIn(stores, kind)\n            ? stores\n            : null;",
+    "new": "      const from = Array.isArray(items) && steedFoodIn(items, kind) ? items : null;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "STEED1-the-card-feeds-from-the-pack-alone",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      const list =\n        from ??\n        (steedFoodOf(its.find((x) => steedFoodOf(x)?.key === kind))\n          ? its\n          : store().some((x) => steedFoodOf(x)?.key === kind)\n            ? store()\n            : its); // the pack's first, then the wagon's load",
+    "new": "      const list = from ?? (steedFoodOf(its.find((x) => steedFoodOf(x)?.key === kind)) ? its : its); // the pack's first, then the wagon's load",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STEED1-grazing-fade-for-span",
+    "file": "src/systems/steedCare.js",
+    "old": "  const owedTo = since != null && since < now ? since : now;",
+    "new": "  const owedTo = now;",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STEED1-off-keeps-clock",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "      wasWinded = false;\n      tendedAt = null; // AUDIT STEED1: off, no keep ran - none to catch up when it is on again",
+    "new": "      wasWinded = false; // AUDIT STEED1: off, no keep ran - none to catch up when it is on again",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ],
     "equivalent": true,
-    "why": "HORSE-TIERS (2026-10-15): Off now carries every horse's food clock with the clock (upkeepRuntime.js tick, Climates & Calories' 'its minutes are nobody's needs'), so a stale keep span on again finds no food run out inside it and no fade owed - the reset AUDIT STEED1 added for the same law decides nothing now; kept as belt-and-braces, and the pause is pinned by test/systems/horsetiers.test.js (HORSE-TIERS-offs-clock-left-running)." },
-  { "name": "AUDIT-STEED1-load-no-reset", "file": "src/scenes/world.js",
-    "old": "      upkeep.reset();   // AUDIT STEED1: the old character's", "new": "      void 0;   // AUDIT STEED1: the old character's",
-    "tests": ["test/systems/steed1_horsecare.test.js"] },
-  { "name": "AUDIT-STEED1-fed-traded", "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'horseBond', 'horseFed', 'appearance']", "new": "'horseBond', 'appearance']",
-    "tests": ["test/systems/steed1_horsecare.test.js"] }
+    "why": "HORSE-TIERS (2026-10-15): Off now carries every horse's food clock with the clock (upkeepRuntime.js tick, Climates & Calories' 'its minutes are nobody's needs'), so a stale keep span on again finds no food run out inside it and no fade owed - the reset AUDIT STEED1 added for the same law decides nothing now; kept as belt-and-braces, and the pause is pinned by test/systems/horsetiers.test.js (HORSE-TIERS-offs-clock-left-running)."
+  },
+  {
+    "name": "AUDIT-STEED1-load-no-reset",
+    "file": "src/scenes/world.js",
+    "old": "      upkeep.reset();   // AUDIT STEED1: the old character's",
+    "new": "      void 0;   // AUDIT STEED1: the old character's",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STEED1-fed-traded",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  'horseFed',\n  'appearance',",
+    "new": "  'appearance',",
+    "tests": [
+      "test/systems/steed1_horsecare.test.js"
+    ]
+  }
 ]

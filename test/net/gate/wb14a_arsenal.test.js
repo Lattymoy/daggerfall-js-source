@@ -332,7 +332,7 @@ test('WB14a the ground shows what lands: the chain a path from him to the chaine
     assert.equal(telegraphField(us, x, z).inside, inWedges(un, x, z), `point ${i}`);
   }
   assert.match(TELEGRAPH_FS, /\} else if \(uKind == 8\) \{/);
-  assert.match(read('src/render/gate/gateTelegraph.js'), /shape\.kind === TELEGRAPH_KIND\.spokes \|\| shape\.kind === TELEGRAPH_KIND\.wedges \? \(shape\.n \?\? 0\)/);
+  assert.match(read('src/render/gate/gateTelegraph.js'), /shape\.kind === TELEGRAPH_KIND\.spokes \|\| shape\.kind === TELEGRAPH_KIND\.wedges\n\s*\? \(shape\.n \?\? 0\)/);
 });
 
 // ═══ MY SCREEN ═══════════════════════════════════════════════════════════════════════════════════════════════════════

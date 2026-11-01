@@ -58,7 +58,10 @@ export function techniqueCard(item, { full = false, keyWord = '' } = {}) {
   glyph.innerHTML = TECHNIQUE_GLYPH_SVG;
   glyph.setAttribute('aria-hidden', 'true');
   const roll = el('span', 'tech-roll', `+${v.value}%`);
-  if (v.band) { roll.append(el('span', 'tech-band', ` [${v.band[0]}-${v.band[1]}]`)); roll.title = `Rolled in ${v.band[0]}-${v.band[1]}`; }
+  if (v.band) {
+    roll.append(el('span', 'tech-band', ` [${v.band[0]}-${v.band[1]}]`));
+    roll.title = `Rolled in ${v.band[0]}-${v.band[1]}`;
+  }
   if (full) head.append(glyph, el('span', 'tech-word', 'Technique'), roll, el('span', 'tech-name', v.name));
   else head.append(glyph, el('span', 'tech-name', v.name), roll);
   box.append(head);
@@ -78,10 +81,24 @@ export function techniqueCard(item, { full = false, keyWord = '' } = {}) {
   box.append(foot);
   if (full) {
     // the two numbers the card shows, tied together: the roll is on the technique's own blow
-    box.append(el('p', 'tech-power', `+${v.value}% rolled${v.band ? ` (${v.band[0]}-${v.band[1]})` : ''} on its ${pct(v.base)} base hit: ${pct(v.mult)} of a normal hit.`));
-    box.append(el('p', 'tech-press', !keyWord
-      ? 'Bind Weapon technique in Controls to use it.'
-      : v.aims ? `Hold ${keyWord} to aim and release to strike. Tap it to strike where you're looking.` : `Press ${keyWord} to strike.`));
+    box.append(
+      el(
+        'p',
+        'tech-power',
+        `+${v.value}% rolled${v.band ? ` (${v.band[0]}-${v.band[1]})` : ''} on its ${pct(v.base)} base hit: ${pct(v.mult)} of a normal hit.`,
+      ),
+    );
+    box.append(
+      el(
+        'p',
+        'tech-press',
+        !keyWord
+          ? 'Bind Weapon technique in Controls to use it.'
+          : v.aims
+            ? `Hold ${keyWord} to aim and release to strike. Tap it to strike where you're looking.`
+            : `Press ${keyWord} to strike.`,
+      ),
+    );
   }
   if (asleep) box.append(el('p', 'tech-note', TECH_DUEL_NOTE));
   return box;

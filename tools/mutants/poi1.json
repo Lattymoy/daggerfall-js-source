@@ -2,7 +2,7 @@
   {
     "name": "POI1-the-bounds-unchecked",
     "file": "src/poi/poiMesh.js",
-    "old": "  for (let k = 0; k < 3; k++) if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3)) return { error: 'bounds' };",
+    "old": "  for (let k = 0; k < 3; k++)\n    if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3))\n      return { error: 'bounds' };",
     "new": "  for (let k = 0; k < 3; k++) if (false) return { error: 'bounds' };",
     "tests": [
       "test/poi/poi1_store.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "POI1-a-run-not-whole-triangles",
     "file": "src/poi/poiMesh.js",
-    "old": "    if (!s || !Number.isInteger(s.start) || !Number.isInteger(s.count) || s.start !== at || s.count <= 0 || s.count % 3) return 'submesh-run';",
-    "new": "    if (!s || !Number.isInteger(s.start) || !Number.isInteger(s.count) || s.count <= 0 || s.count % 3) return 'submesh-run';",
+    "old": "    if (!s || !Number.isInteger(s.start) || !Number.isInteger(s.count) || s.start !== at || s.count <= 0 || s.count % 3)",
+    "new": "    if (!s || !Number.isInteger(s.start) || !Number.isInteger(s.count) || s.count <= 0 || s.count % 3)",
     "tests": [
       "test/poi/poi1_store.test.js"
     ]

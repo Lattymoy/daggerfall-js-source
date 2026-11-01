@@ -2,8 +2,8 @@
   {
     "name": "TV6-a-temple-is-a-dungeon",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "  LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard, LOCATION_TYPES.Coven]));",
-    "new": "  LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard, LOCATION_TYPES.Coven, LOCATION_TYPES.ReligionTemple]));",
+    "old": "  ]),",
+    "new": "    LOCATION_TYPES.ReligionTemple,\n  ]),",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TV6-no-cap",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "...rest.slice(0, max)].sort(nearer);",
-    "new": "...rest].sort(nearer);",
+    "old": "  return [...out.filter(inGrid), ...rest.slice(0, max)].sort(nearer);",
+    "new": "  return [...out.filter(inGrid), ...rest].sort(nearer);",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TV6-found-again",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "    if (g.found || g.spawn) continue;\n    const m = mid(g);",
-    "new": "    if (g.spawn) continue;\n    const m = mid(g);",
+    "old": "    if (g.found || g.spawn) continue;",
+    "new": "    if (g.spawn) continue;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TV6-found-from-afar",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "  let best = null, bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M;",
-    "new": "  let best = null, bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M * 10;",
+    "old": "    bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M;",
+    "new": "    bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M * 10;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TV6-the-farthest",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "    if (d <= bestD) { best = g; bestD = d; }",
-    "new": "    if (d <= TV_DUNGEON_FIND_M * NATIVE_PER_M) { best = g; }",
+    "old": "    if (d <= bestD) {\n      best = g;\n      bestD = d;",
+    "new": "    if (d <= TV_DUNGEON_FIND_M * NATIVE_PER_M) {\n      best = g;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],

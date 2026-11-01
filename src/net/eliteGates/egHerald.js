@@ -40,7 +40,7 @@
 //   gold, the moment's title and its facts as fields (the hall, the time, where it began, the company).
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (ELITE-GATES).
-import { heraldCard, heraldName, heraldList } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
+import { heraldCard, heraldName, heraldList } from '../herald/heraldCard.js'; // HERALD-CARDS: the one card
 import { EG_BREACH_RE, EG_PARTY_MAX, EG_LORDS, EG_OPEN, egBandOfHall } from './egLaw.js';
 import { arenaSeasonOf } from '../arena/arenaLaw.js';
 
@@ -68,16 +68,26 @@ export const EG_DESCENT_BRACKETS = Object.freeze(['Alone', 'the Few', 'the Compa
 /** A company of `n`'s bracket (0 Alone, 1 the Few, 2 the Company), or -1. */
 export const egDescentBracket = (n) => (n === 1 ? 0 : n >= 2 && n <= 4 ? 1 : n >= 5 && n <= EG_PARTY_MAX ? 2 : -1);
 /** Each band as the seal's post names it ("The way below the Galleries is open."). */
-export const EG_HERALD_BAND_WORDS = Object.freeze(['the Galleries', 'the Soul Cairn', 'the Shade Perilous', 'the Havoc Wellhead']);
+export const EG_HERALD_BAND_WORDS = Object.freeze([
+  'the Galleries',
+  'the Soul Cairn',
+  'the Shade Perilous',
+  'the Havoc Wellhead',
+]);
 
 /** Seconds as the posts say them: `h:mm:ss`, or `m:ss` under the hour. */
 export function egHeraldTime(s) {
-  const t = Math.max(0, Math.floor(Number(s) || 0)), h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60);
+  const t = Math.max(0, Math.floor(Number(s) || 0)),
+    h = Math.floor(t / 3600),
+    m = Math.floor((t % 3600) / 60);
   const two = (v) => String(v).padStart(2, '0');
   return h > 0 ? `${h}:${two(m)}:${two(t % 60)}` : `${m}:${two(t % 60)}`;
 }
 /** "<opener>'s company", or "A company" for a name that says nothing. */
-const companyOf = (o) => { const n = heraldName(o); return n ? `${n}'s company` : 'A company'; };
+const companyOf = (o) => {
+  const n = heraldName(o);
+  return n ? `${n}'s company` : 'A company';
+};
 /** FIELD BUGS 2026-10-20d LONE-HERALD: is the news's company one member (`n`, its entrants - 0 when the news did not say)? */
 const lone = (n) => n === 1;
 /** Who a post names: a company of one by its member's name ("Someone" for a name that says nothing); any other company - and
@@ -86,21 +96,29 @@ const whoOf = (o, n) => (lone(n) ? heraldName(o) || 'Someone' : companyOf(o));
 /** The names a post may say, at most a company's. */
 const namesOf = (by) => (Array.isArray(by) ? by : []).slice(0, EG_PARTY_MAX).map(heraldName).filter(Boolean);
 /** A lord mid-sentence: its name (a leading "The" lowered), or the Court's lord for a key the table lacks. */
-export const egHeraldLord = (lk) => { const L = EG_LORDS[lk]; return L ? L.name.replace(/^The /, 'the ') : 'the Court\'s lord'; };
+export const egHeraldLord = (lk) => {
+  const L = EG_LORDS[lk];
+  return L ? L.name.replace(/^The /, 'the ') : "the Court's lord";
+};
 
 /** AUDIT EG V (L8-7): the start a post's time ran from, said when it was not Hall 1 (`ew` the Redoubt the breach began at).
  *  HERALD-CARDS: a field of its own. */
 const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `Redoubt ${ew}` : null);
 /** HERALD-CARDS: a Spire card - the Battlespire's family, pinging nobody. */
-const spireCard = (moment, title, fields = [], text = '') => heraldCard({ family: 'spire', moment, title, text, fields });
+const spireCard = (moment, title, fields = [], text = '') =>
+  heraldCard({ family: 'spire', moment, title, text, fields });
 /**
  * EVERY TENTH REDOUBT: the opener's company - or a company of one's member, alone (`n` 1) - the Redoubt, its hall and the time
  * since the breach's first hall woke - Hall 1's, or the Redoubt it began at said (`ew`). Pings nobody. HERALD-CARDS: the card's
  * title who took which Redoubt, its fields the hall, the time and where it began.
  * @param {{o?: string, n?: number, w: number, h: number, t: number, ew?: number}} p
  */
-export const egRedoubtPost = ({ o = '', n = 0, w, h, t, ew = 0 }) => spireCard('Redoubt', `${whoOf(o, n)} took Redoubt ${w}${lone(n) ? ' alone' : ''}`,
-  [['Hall', `Hall ${h}`], ['Time', egHeraldTime(t)], ['Began at', fromOf(ew)]]);
+export const egRedoubtPost = ({ o = '', n = 0, w, h, t, ew = 0 }) =>
+  spireCard('Redoubt', `${whoOf(o, n)} took Redoubt ${w}${lone(n) ? ' alone' : ''}`, [
+    ['Hall', `Hall ${h}`],
+    ['Time', egHeraldTime(t)],
+    ['Began at', fromOf(ew)],
+  ]);
 /**
  * FIRST OF THE SPIRE: the first company ever to take Redoubt 10 - the opener's company and every name in it, or a company of
  * one's member, alone (AUDIT EG V, L8-7: its time's start said as the Redoubt's post says it). Pings nobody. HERALD-CARDS:
@@ -109,15 +127,28 @@ export const egRedoubtPost = ({ o = '', n = 0, w, h, t, ew = 0 }) => spireCard('
  */
 export function egFirstPost({ o = '', n = 0, by = [], w, h, t, ew = 0 }) {
   const names = lone(n) ? [] : namesOf(by);
-  return spireCard('First of the Spire', `${whoOf(o, n)} is the first ever to take Redoubt ${w}${lone(n) ? ', alone' : ''}`,
-    [['Hall', `Hall ${h}`], ['Time', egHeraldTime(t)], ['Began at', fromOf(ew)], ['Company', names.length ? heraldList(names) : null, false]]);
+  return spireCard(
+    'First of the Spire',
+    `${whoOf(o, n)} is the first ever to take Redoubt ${w}${lone(n) ? ', alone' : ''}`,
+    [
+      ['Hall', `Hall ${h}`],
+      ['Time', egHeraldTime(t)],
+      ['Began at', fromOf(ew)],
+      ['Company', names.length ? heraldList(names) : null, false],
+    ],
+  );
 }
 /**
  * THE LONE BEACON: who felled which lord alone, and the company they were the last standing of. Pings nobody.
  * @param {{n?: string, lk?: string, c: number}} p
  */
-export const egLonePost = ({ n = '', lk = '', c }) => spireCard('The Lone Beacon', `${heraldName(n) || 'Someone'} felled ${egHeraldLord(lk)} alone`,
-  [], `The last of a company of ${c} still standing.`);
+export const egLonePost = ({ n = '', lk = '', c }) =>
+  spireCard(
+    'The Lone Beacon',
+    `${heraldName(n) || 'Someone'} felled ${egHeraldLord(lk)} alone`,
+    [],
+    `The last of a company of ${c} still standing.`,
+  );
 /**
  * A NEW TOP OF THE DESCENT: the bracket, the company's names, the hall and its seconds. Pings nobody.
  * @param {{br: number, by?: ReadonlyArray<string>, o?: string, h: number, td: number}} p
@@ -125,15 +156,24 @@ export const egLonePost = ({ n = '', lk = '', c }) => spireCard('The Lone Beacon
 export function egTopPost({ br, by = [], o = '', h, td }) {
   const names = namesOf(by);
   const bracket = EG_DESCENT_BRACKETS[br] ?? '';
-  return spireCard('Descent record', 'A new top of the Descent',
-    [['Bracket', bracket && bracket[0].toUpperCase() + bracket.slice(1)], ['Company', names.length ? heraldList(names) : companyOf(o)], ['Deepest hall', `Hall ${h}`], ['Time', egHeraldTime(td)]]);
+  return spireCard('Descent record', 'A new top of the Descent', [
+    ['Bracket', bracket && bracket[0].toUpperCase() + bracket.slice(1)],
+    ['Company', names.length ? heraldList(names) : companyOf(o)],
+    ['Deepest hall', `Hall ${h}`],
+    ['Time', egHeraldTime(td)],
+  ]);
 }
 /**
  * A BAND'S SEAL LIFTED: the way below the band, and the company first through (a company of one's member, alone). Pings nobody.
  * @param {{band: number, o?: string, n?: number}} p
  */
-export const egSealPost = ({ band, o = '', n = 0 }) => spireCard('Seal lifted', `The way below ${EG_HERALD_BAND_WORDS[band] ?? 'the Spire'} is open`,
-  [], `${whoOf(o, n)} is the first through${lone(n) ? ', alone' : ''}.`);
+export const egSealPost = ({ band, o = '', n = 0 }) =>
+  spireCard(
+    'Seal lifted',
+    `The way below ${EG_HERALD_BAND_WORDS[band] ?? 'the Spire'} is open`,
+    [],
+    `${whoOf(o, n)} is the first through${lone(n) ? ', alone' : ''}.`,
+  );
 /** The post for an owed record (egHeraldFold's `q`), by its kind. */
 export function egHeraldPost(p) {
   if (p.kind === 'first') return egFirstPost(p);
@@ -161,14 +201,40 @@ const LORD_RE = /^[a-z]{1,16}$/;
  * @returns {{ b: string, ev: any[] }|null}
  */
 export function validEgHeraldTell(body) {
-  if (!body || typeof body !== 'object' || typeof body.b !== 'string' || !EG_BREACH_RE.test(body.b) || !Array.isArray(body.ev) || body.ev.length > EG_HERALD_TELL_MAX) return null;
+  if (
+    !body ||
+    typeof body !== 'object' ||
+    typeof body.b !== 'string' ||
+    !EG_BREACH_RE.test(body.b) ||
+    !Array.isArray(body.ev) ||
+    body.ev.length > EG_HERALD_TELL_MAX
+  )
+    return null;
   const ev = [];
   for (const e of body.ev) {
     if (!e || typeof e !== 'object' || !nat(e.i, 1, 1e9) || !nat(e.at, 0, Number.MAX_SAFE_INTEGER)) continue;
     const by = Array.isArray(e.by) ? e.by.slice(0, EG_PARTY_MAX).map(str) : [];
-    if (e.k === 'rd' && nat(e.w, 1, 19_999) && nat(e.h, 1, 99_999) && nat(e.t, 0, 7 * 86_400)) ev.push({ i: e.i, at: e.at, k: 'rd', w: e.w, h: e.h, t: e.t, n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0, ew: nat(e.ew, 0, 19_999) ? e.ew : 0, o: str(e.o), by });
-    else if (e.k === 'lb' && nat(e.c, 1, EG_PARTY_MAX) && (e.lk === '' || (typeof e.lk === 'string' && LORD_RE.test(e.lk)))) ev.push({ i: e.i, at: e.at, k: 'lb', n: str(e.n), lk: e.lk, c: e.c });
-    else if (e.k === 'dc' && nat(e.h, 1, 99_999) && nat(e.td, 0, 7 * 86_400) && nat(e.n, 1, EG_PARTY_MAX)) ev.push({ i: e.i, at: e.at, k: 'dc', h: e.h, td: e.td, n: e.n, o: str(e.o), by });
+    if (e.k === 'rd' && nat(e.w, 1, 19_999) && nat(e.h, 1, 99_999) && nat(e.t, 0, 7 * 86_400))
+      ev.push({
+        i: e.i,
+        at: e.at,
+        k: 'rd',
+        w: e.w,
+        h: e.h,
+        t: e.t,
+        n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0,
+        ew: nat(e.ew, 0, 19_999) ? e.ew : 0,
+        o: str(e.o),
+        by,
+      });
+    else if (
+      e.k === 'lb' &&
+      nat(e.c, 1, EG_PARTY_MAX) &&
+      (e.lk === '' || (typeof e.lk === 'string' && LORD_RE.test(e.lk)))
+    )
+      ev.push({ i: e.i, at: e.at, k: 'lb', n: str(e.n), lk: e.lk, c: e.c });
+    else if (e.k === 'dc' && nat(e.h, 1, 99_999) && nat(e.td, 0, 7 * 86_400) && nat(e.n, 1, EG_PARTY_MAX))
+      ev.push({ i: e.i, at: e.at, k: 'dc', h: e.h, td: e.td, n: e.n, o: str(e.o), by });
   }
   return { b: body.b, ev };
 }
@@ -184,9 +250,21 @@ export function validEgHeraldTell(body) {
 export function readEgHeraldState(v) {
   const o = v && typeof v === 'object' ? v : {};
   const tb = Array.isArray(o.top?.b) ? o.top.b : [];
-  const pair = (x) => (Array.isArray(x) && Number.isSafeInteger(x[0]) && Number.isSafeInteger(x[1]) ? [x[0], x[1]] : null);
+  const pair = (x) =>
+    Array.isArray(x) && Number.isSafeInteger(x[0]) && Number.isSafeInteger(x[1]) ? [x[0], x[1]] : null;
   return {
-    q: Array.isArray(o.q) ? o.q.filter((p) => p && typeof p === 'object' && Number.isSafeInteger(p.i) && Number.isSafeInteger(p.at) && typeof p.kind === 'string').slice(-EG_HERALD_OWE_MAX) : [],
+    q: Array.isArray(o.q)
+      ? o.q
+          .filter(
+            (p) =>
+              p &&
+              typeof p === 'object' &&
+              Number.isSafeInteger(p.i) &&
+              Number.isSafeInteger(p.at) &&
+              typeof p.kind === 'string',
+          )
+          .slice(-EG_HERALD_OWE_MAX)
+      : [],
     n: Number.isSafeInteger(o.n) ? o.n : 0,
     first: o.first === 1 ? 1 : 0,
     base: Number.isSafeInteger(o.base) ? o.base : -1,
@@ -214,21 +292,32 @@ export function readEgHeraldState(v) {
 export function egHeraldFold(st, tell, { nowMs, open = EG_OPEN, post = true }) {
   const S = { ...st, q: [...st.q], top: { s: st.top.s, b: [...st.top.b] }, seen: [...st.seen] };
   if (S.base < 0) S.base = open;
-  const owe = (p) => { if (post) { S.n += 1; S.q.push({ i: S.n, at: nowMs, ...p }); } };
+  const owe = (p) => {
+    if (post) {
+      S.n += 1;
+      S.q.push({ i: S.n, at: nowMs, ...p });
+    }
+  };
   for (const e of tell.ev) {
     const id = `${tell.b}:${e.i}`;
     if (S.seen.includes(id)) continue;
     S.seen.push(id);
     if (e.k === 'rd') {
       if (e.w % EG_HERALD_EVERY === 0) {
-        if (e.w === EG_HERALD_FIRST && !S.first) { S.first = 1; owe({ kind: 'first', o: e.o, n: e.n ?? 0, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 }); }
-        else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });
+        if (e.w === EG_HERALD_FIRST && !S.first) {
+          S.first = 1;
+          owe({ kind: 'first', o: e.o, n: e.n ?? 0, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });
+        } else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });
       }
       const below = egBandOfHall(e.h) + 1;
-      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) { S.said = below; owe({ kind: 'seal', band: below - 1, o: e.o, n: e.n ?? 0 }); }
+      if (e.h % 25 === 0 && below < open && below >= S.base && below > S.said) {
+        S.said = below;
+        owe({ kind: 'seal', band: below - 1, o: e.o, n: e.n ?? 0 });
+      }
     } else if (e.k === 'lb') owe({ kind: 'lb', n: e.n, lk: e.lk, c: e.c });
     else if (e.k === 'dc') {
-      const br = egDescentBracket(e.n), season = arenaSeasonOf(Math.floor(nowMs / 1000));
+      const br = egDescentBracket(e.n),
+        season = arenaSeasonOf(Math.floor(nowMs / 1000));
       if (br < 0) continue;
       if (S.top.s !== season) S.top = { s: season, b: [null, null, null] };
       const cur = S.top.b[br];

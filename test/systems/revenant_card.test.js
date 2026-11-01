@@ -211,7 +211,7 @@ test('REVENANT-CARD ENHANCED PLUS: the kit dresses it by role - a panel with an 
   assert.match(h, /drawRevenantCards\(\{ hidden: cursorActive \|\| !hudRenderEnabled\(\), dt \}\);/);
   assert.match(h, /drawQuestTracker\(\{ hidden: true \}\);\s*\n\s*drawRevenantCards\(\{ hidden: true \}\);/, 'the hide door');
   assert.ok(HUD_PIECES.some((p) => p.id === 'revenant' && p.sel === '.rvncard-stack' && p.ghost === 'revenant'), 'movable, with a preview');
-  assert.match(read('src/ui/hud/hudLayout.js'), /} else if \(kind === 'revenant'\) \{\s*\n\s*try \{ g = ghostDeps\.buildRevenantPreview\?\.\(doc\) \?\? null; \}/);
+  assert.match(read('src/ui/hud/hudLayout.js'), /\} else if \(kind === 'revenant'\) \{\n\s*try \{\n\s*g = ghostDeps\.buildRevenantPreview\?\.\(doc\) \?\? null;\n\s*\}/);
 });
 
 test('REVENANT-PAGE: the living strongest first - name, rank, kind and trait, what it has done, when it will come, its deeds - then the fallen struck through; none, and the words say how one is made; off, that it is off (mutants: the fallen among the living; the order; the empty words)', () => {

@@ -23,7 +23,7 @@
 // hands the guild on, and disbands it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { HALL_POWERS } from '../hallLaw.js';   // GUILD-RANKS: the hall's powers among a guild's own
+import { HALL_POWERS } from '../hallLaw.js'; // GUILD-RANKS: the hall's powers among a guild's own
 
 /** What founding costs: gold (the purse, then the bank - a fee, the treasury starts empty) and the founder's Renown. */
 export const GUILD_FOUND_GOLD = 10_000;
@@ -48,14 +48,14 @@ export const GUILD_POWERS = Object.freeze({
   remove: Object.freeze([0, 1]),
   promote: Object.freeze([0, 1]),
   deposit: Object.freeze([0, 1, 2, 3]),
-  withdraw: Object.freeze([0]),        // Mac: "Guildmaster only"
+  withdraw: Object.freeze([0]), // Mac: "Guildmaster only"
   renameRanks: Object.freeze([0]),
   handOver: Object.freeze([0]),
   disband: Object.freeze([0]),
-  rename: Object.freeze([0]),          // GUILD2a: the guild's own name and tag - the guildmaster's, for a price
-  vaultGrant: Object.freeze([0]),      // GUILD2b: who may put in and take out of the guild's vault - the leader's to grant and revoke
-  shop: Object.freeze([0]),            // GUILD-SHOP: the hall's furniture bought from the silver treasury
-  logo: Object.freeze([0]),            // GUILD-LOGO: the guild's own picture sent for review, its fee from the silver treasury
+  rename: Object.freeze([0]), // GUILD2a: the guild's own name and tag - the guildmaster's, for a price
+  vaultGrant: Object.freeze([0]), // GUILD2b: who may put in and take out of the guild's vault - the leader's to grant and revoke
+  shop: Object.freeze([0]), // GUILD-SHOP: the hall's furniture bought from the silver treasury
+  logo: Object.freeze([0]), // GUILD-LOGO: the guild's own picture sent for review, its fee from the silver treasury
 });
 // ─── GUILD-RANKS (2026-10-30, the owner: "More guild ranks plus rank permission edits"; bible/11-Multiplayer/Guild-Shop.md
 // section 13): four to eight ranks, added or taken at the bottom; a new member joins at the lowest. The guildmaster sets
@@ -65,7 +65,19 @@ export const GUILD_POWERS = Object.freeze({
 export const GUILD_RANKS_MIN = 4;
 export const GUILD_RANKS_MAX = 8;
 /** The powers a guildmaster may give to ranks - the guild's own, and its hall's (hallLaw.js HALL_POWERS). */
-export const GUILD_POWERS_EDITABLE = Object.freeze(['invite', 'remove', 'promote', 'deposit', 'withdraw', 'vaultGrant', 'shop', 'logo', 'hallEntry', 'decorate', 'notes']);
+export const GUILD_POWERS_EDITABLE = Object.freeze([
+  'invite',
+  'remove',
+  'promote',
+  'deposit',
+  'withdraw',
+  'vaultGrant',
+  'shop',
+  'logo',
+  'hallEntry',
+  'decorate',
+  'notes',
+]);
 /** One deposit or withdrawal, and the most a treasury holds. */
 export const GUILD_MOVE_MAX = 1_000_000;
 export const GUILD_TREASURY_MAX = 1_000_000_000;
@@ -89,12 +101,21 @@ export const GUILD_MEMBER_RE = /^m[0-9]{1,15}$/;
 export const GUILD_REQUEST_RE = /^q[0-9]{1,15}$/;
 
 /** GUILD-RANKS: whether `r` is a rank of a guild of `n` ranks (any guild's, unnamed). */
-export const guildRankOk = (r, n = GUILD_RANKS_MAX) => Number.isInteger(r) && r >= 0 && r < Math.min(GUILD_RANKS_MAX, n);
+export const guildRankOk = (r, n = GUILD_RANKS_MAX) =>
+  Number.isInteger(r) && r >= 0 && r < Math.min(GUILD_RANKS_MAX, n);
 /** GUILD-RANKS: how many ranks a guild's names (its `ranks` row, JSON or a list) say it keeps - four where they say none. */
 export function guildRankCount(raw) {
   let list = raw;
-  if (typeof raw === 'string') { try { list = JSON.parse(raw); } catch { list = null; } }
-  return Array.isArray(list) && list.length >= GUILD_RANKS_MIN && list.length <= GUILD_RANKS_MAX ? list.length : GUILD_RANKS_MIN;
+  if (typeof raw === 'string') {
+    try {
+      list = JSON.parse(raw);
+    } catch {
+      list = null;
+    }
+  }
+  return Array.isArray(list) && list.length >= GUILD_RANKS_MIN && list.length <= GUILD_RANKS_MAX
+    ? list.length
+    : GUILD_RANKS_MIN;
 }
 /**
  * GUILD-RANKS: A GUILD'S POWERS, WHOLE - each power the ranks that hold it, for a guild of `n` ranks: an editable power as
@@ -105,13 +126,24 @@ export function guildRankCount(raw) {
  */
 export function guildPowersOf(raw, n = GUILD_RANKS_MIN) {
   let set = raw;
-  if (typeof raw === 'string') { try { set = JSON.parse(raw); } catch { set = null; } }
+  if (typeof raw === 'string') {
+    try {
+      set = JSON.parse(raw);
+    } catch {
+      set = null;
+    }
+  }
   const k = Math.max(GUILD_RANKS_MIN, Math.min(GUILD_RANKS_MAX, Number(n) || GUILD_RANKS_MIN));
   /** @type {Record<string, readonly number[]>} */
   const out = {};
   for (const [p, def] of Object.entries({ ...HALL_POWERS, ...GUILD_POWERS })) {
-    const given = GUILD_POWERS_EDITABLE.includes(p) && set && typeof set === 'object' ? /** @type {any} */ (set)[p] : undefined;
-    const ranks = Array.isArray(given) ? given.filter((r) => guildRankOk(r, k)) : p === 'deposit' ? [...Array(k).keys()] : def.filter((r) => r < k);
+    const given =
+      GUILD_POWERS_EDITABLE.includes(p) && set && typeof set === 'object' ? /** @type {any} */ (set)[p] : undefined;
+    const ranks = Array.isArray(given)
+      ? given.filter((r) => guildRankOk(r, k))
+      : p === 'deposit'
+        ? [...Array(k).keys()]
+        : def.filter((r) => r < k);
     out[p] = Object.freeze([...new Set([0, ...ranks])].sort((a, b) => a - b));
   }
   return Object.freeze(out);
@@ -133,7 +165,8 @@ export function guildPowersEditOf(raw, n) {
 const DEFAULT_POWERS = guildPowersOf(null, GUILD_RANKS_MAX);
 
 /** Whether a rank may do a thing - GUILD-RANKS: in its guild's own powers (`table`, guildPowersOf), else the defaults. */
-export const guildMay = (rank, power, table = null) => ((table ?? DEFAULT_POWERS)[power] ?? GUILD_POWERS[power] ?? []).includes(rank);
+export const guildMay = (rank, power, table = null) =>
+  ((table ?? DEFAULT_POWERS)[power] ?? GUILD_POWERS[power] ?? []).includes(rank);
 /** GUILD-RANKS: the ranks that hold `power` by the law's defaults (`table` null) or a guild's own table. */
 export const guildPowerRanks = (power, table = null) => [...((table ?? DEFAULT_POWERS)[power] ?? [0])];
 
@@ -158,7 +191,10 @@ export function guildNameOf(raw) {
   return /^[A-Za-z0-9][A-Za-z0-9 '\-]*[A-Za-z0-9]$/.test(s) ? s : null;
 }
 /** The key two names are the same guild by - the case and the spaces aside. */
-export const guildNameKey = (name) => String(name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+export const guildNameKey = (name) =>
+  String(name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 
 /** A guild's tag, upper-cased, or null. */
 export function guildTagOf(raw) {
@@ -189,9 +225,13 @@ export function guildRankNamesOf(raw) {
 /** How long a guild keeps a name before it may change it again, in seconds - a fortnight. */
 export const GUILD_RENAME_COOLDOWN_S = 14 * 24 * 3600;
 /** When a guild renamed at `renamedAt` (epoch seconds, or null for never) may rename again - null for now. */
-export const guildRenameAt = (renamedAt) => (Number.isSafeInteger(renamedAt) && renamedAt > 0 ? renamedAt + GUILD_RENAME_COOLDOWN_S : null);
+export const guildRenameAt = (renamedAt) =>
+  Number.isSafeInteger(renamedAt) && renamedAt > 0 ? renamedAt + GUILD_RENAME_COOLDOWN_S : null;
 /** Whether a guild renamed at `renamedAt` may rename at `nowS`. */
-export const guildRenameOpen = (renamedAt, nowS) => { const at = guildRenameAt(renamedAt); return at === null || nowS >= at; };
+export const guildRenameOpen = (renamedAt, nowS) => {
+  const at = guildRenameAt(renamedAt);
+  return at === null || nowS >= at;
+};
 
 /** A treasury movement: a whole number of gold, at least one, at most GUILD_MOVE_MAX. */
 export const guildGoldOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= GUILD_MOVE_MAX;

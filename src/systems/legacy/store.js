@@ -13,8 +13,8 @@
 // Storage is handed in (systems/appStorage.js appStorage / tabStorage), so this is headless-testable; every read and
 // write is shielded, because storage throws under some privacy modes and a family must never cost the player a game.
 import { readFamily, FAMILY_VERSION, nameAtSeat, nameHouse, leanRecord } from './family.js';
-import { mergeNews, mergeHeard } from './influence.js';   // LEGACY6; AUDIT LEGACY III A8: a reader's heard news
-import { takeRevived } from './revived.js';   // REVIVE: a death taken back is a fact as a death is
+import { mergeNews, mergeHeard } from './influence.js'; // LEGACY6; AUDIT LEGACY III A8: a reader's heard news
+import { takeRevived } from './revived.js'; // REVIVE: a death taken back is a fact as a death is
 
 export const FAMILY_KEY_PREFIX = 'dagger.legacy.family.';
 export const BIRTH_KEY = 'dagger.legacy.birth';
@@ -26,7 +26,11 @@ const keyOf = (id) => `${FAMILY_KEY_PREFIX}${id}`;
 /** The stored family `id`, read and shaped, or null. */
 export function loadFamily(storage, id) {
   if (!storage || !id) return null;
-  try { return readFamily(JSON.parse(storage.getItem(keyOf(id)) ?? 'null')); } catch { return null; }
+  try {
+    return readFamily(JSON.parse(storage.getItem(keyOf(id)) ?? 'null'));
+  } catch {
+    return null;
+  }
 }
 
 /** AUDIT LEGACY III A2: THE STORED REV EACH COPY WAS MADE FROM - the store's rev as the page last read it or wrote it,
@@ -38,7 +42,7 @@ export function noteSeen(family, rev) {
   if (family && typeof family === 'object' && Number.isSafeInteger(rev)) seenRevs.set(family, rev);
 }
 /** The stored rev `family` was made from, or null when nothing noted it. */
-export const seenRevOf = (family) => (family && typeof family === 'object' ? seenRevs.get(family) ?? null : null);
+export const seenRevOf = (family) => (family && typeof family === 'object' ? (seenRevs.get(family) ?? null) : null);
 
 /**
  * Write a family. AUDIT LEGACY II A4/P1: the store is the authority for the world's facts, so a write never loses one
@@ -62,17 +66,37 @@ export function storeFamily(storage, family, base = seenRevOf(family)) {
       mergeFacts(family, was);
       family.rev = Math.max(was.rev, family.rev) + 1;
     }
-    leanRecord(family);   // AUDIT LEGACY III O10/P1
+    leanRecord(family); // AUDIT LEGACY III O10/P1
     storage.setItem(keyOf(family.id), JSON.stringify(family));
     seenRevs.set(family, family.rev);
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 /** AUDIT LEGACY III P5: what a member's own save writes of them (legacyHost.js writeCurrent - writePlayer, their
  *  standing, their look, where they were saved) - kept, as a whole, from the copy that saved that member LAST. */
-export const MEMBER_SAVE_FIELDS = Object.freeze(['given', 'surname', 'gender', 'race', 'raceId', 'face', 'careerIndex', 'className', 'career', 'groups',
-  'level', 'stats', 'skills', 'leveling', 'standing', 'look', 'parked', 'deedsTaken']);   // PERMADEATH-HOUSES: the dead's deeds their save took up
+export const MEMBER_SAVE_FIELDS = Object.freeze([
+  'given',
+  'surname',
+  'gender',
+  'race',
+  'raceId',
+  'face',
+  'careerIndex',
+  'className',
+  'career',
+  'groups',
+  'level',
+  'stats',
+  'skills',
+  'leveling',
+  'standing',
+  'look',
+  'parked',
+  'deedsTaken',
+]); // PERMADEATH-HOUSES: the dead's deeds their save took up
 
 /** AUDIT LEGACY III A3/P3: whether two copies' persons of one id are ONE person. Ids are minted by each copy's own
  *  counter (nextId), so two copies that each minted someone - a child here, a spouse there - gave two people one id. One
@@ -81,10 +105,13 @@ export const MEMBER_SAVE_FIELDS = Object.freeze(['given', 'surname', 'gender', '
  *  they wear may differ (a save rewrites them). */
 export function samePerson(p, o) {
   if (!p || !o || (p.kind ?? 'member') !== (o.kind ?? 'member')) return false;
-  if ((p.residentId ?? null) !== (o.residentId ?? null) || (p.realm?.sid ?? null) !== (o.realm?.sid ?? null)) return false;
-  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null) || (p.union?.key ?? null) !== (o.union?.key ?? null)) return false;   // UNION-CHILDREN: the other house's child
+  if ((p.residentId ?? null) !== (o.residentId ?? null) || (p.realm?.sid ?? null) !== (o.realm?.sid ?? null))
+    return false;
+  if ((p.union?.sid ?? null) !== (o.union?.sid ?? null) || (p.union?.key ?? null) !== (o.union?.key ?? null))
+    return false; // UNION-CHILDREN: the other house's child
   if ((Number(p.born) || 0) !== (Number(o.born) || 0)) return false;
-  const a = [...(p.parents ?? [])].sort((x, y) => x - y), b = [...(o.parents ?? [])].sort((x, y) => x - y);
+  const a = [...(p.parents ?? [])].sort((x, y) => x - y),
+    b = [...(o.parents ?? [])].sort((x, y) => x - y);
   return a.length === b.length && a.every((x, i) => x === b[i]);
 }
 
@@ -102,11 +129,18 @@ export function rekeyClashes(mine, other) {
   const theirKin = new Map((other?.people ?? []).filter(kin).map((o) => [kin(o), o.id]));
   const twin = (mine?.people ?? []).filter((p) => kin(p) && theirKin.has(kin(p)) && theirKin.get(kin(p)) !== p.id);
   const twinIds = new Set(twin.map((p) => p.id));
-  const clash = (mine?.people ?? []).filter((p) => !twinIds.has(p.id) && theirs.has(p.id) && !samePerson(p, theirs.get(p.id)));
+  const clash = (mine?.people ?? []).filter(
+    (p) => !twinIds.has(p.id) && theirs.has(p.id) && !samePerson(p, theirs.get(p.id)),
+  );
   /** @type {Map<number, number>} */
   const moved = new Map();
   if (!clash.length && !twin.length) return moved;
-  let next = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1), ...other.people.map((o) => o.id + 1));
+  let next = Math.max(
+    mine.nextId | 0,
+    other.nextId | 0,
+    ...mine.people.map((p) => p.id + 1),
+    ...other.people.map((o) => o.id + 1),
+  );
   for (const p of twin) moved.set(p.id, /** @type {number} */ (theirKin.get(kin(p))));
   for (const p of clash) moved.set(p.id, next++);
   const to = (/** @type {number} */ id) => (moved.has(id) ? /** @type {number} */ (moved.get(id)) : id);
@@ -119,10 +153,16 @@ export function rekeyClashes(mine, other) {
   mine.currentId = to(mine.currentId);
   if (mine.pending) mine.pending.fallenId = to(mine.pending.fallenId);
   for (const r of mine.remains ?? []) {
-    if (Number.isInteger(r.of) && moved.has(r.of)) { r.of = to(r.of); r.id = `r${r.of}`; }
+    if (Number.isInteger(r.of) && moved.has(r.of)) {
+      r.of = to(r.of);
+      r.id = `r${r.of}`;
+    }
     if (Number.isInteger(r.by)) r.by = to(r.by);
   }
-  for (const h of mine.houses ?? []) { if (Number.isInteger(h.by)) h.by = to(h.by); if (Number.isInteger(h.from)) h.from = to(h.from); }   // PERMADEATH-HOUSES: and who left it
+  for (const h of mine.houses ?? []) {
+    if (Number.isInteger(h.by)) h.by = to(h.by);
+    if (Number.isInteger(h.from)) h.from = to(h.from);
+  } // PERMADEATH-HOUSES: and who left it
   mine.nextId = next;
   return moved;
 }
@@ -144,7 +184,10 @@ export function mergeFacts(mine, other) {
   const knew = new Map(mine.people.map((p) => [p.id, !!p.died]));
   for (const o of other.people) {
     const p = mine.people.find((x) => x.id === o.id);
-    if (!p) { mine.people.push(JSON.parse(JSON.stringify(o))); continue; }
+    if (!p) {
+      mine.people.push(JSON.parse(JSON.stringify(o)));
+      continue;
+    }
     if (!p.died && o.died) p.died = o.died;
     if (p.retired == null && o.retired != null) p.retired = o.retired;
     p.toll = Math.max(p.toll | 0, o.toll | 0);
@@ -157,9 +200,14 @@ export function mergeFacts(mine, other) {
       }
       p.savedAt = o.savedAt;
     }
-    if (!p.standing && o.standing) p.standing = JSON.parse(JSON.stringify(o.standing));   // LEGACY6: a standing either copy saved
-    if (p.died) delete p.heard;   // A8: the dead hear nothing - and the living's, the earlier hearing of each
-    else if (p.heard || o.heard) { const h = mergeHeard(p.heard, o.heard); if (h) p.heard = h; else delete p.heard; }
+    if (!p.standing && o.standing) p.standing = JSON.parse(JSON.stringify(o.standing)); // LEGACY6: a standing either copy saved
+    if (p.died)
+      delete p.heard; // A8: the dead hear nothing - and the living's, the earlier hearing of each
+    else if (p.heard || o.heard) {
+      const h = mergeHeard(p.heard, o.heard);
+      if (h) p.heard = h;
+      else delete p.heard;
+    }
     if (p.childDay == null && o.childDay != null && p.spouse === o.spouse) p.childDay = o.childDay;
     for (const c of o.children ?? []) if (!p.children.includes(c)) p.children.push(c);
   }
@@ -176,24 +224,27 @@ export function mergeFacts(mine, other) {
     p.wedAt = o.wedAt ?? p.wedAt ?? null;
     p.childDay = o.childDay ?? null;
   }
-  for (const r of other.remains ?? []) if (!(mine.remains ??= []).some((x) => x.id === r.id)) mine.remains.push(JSON.parse(JSON.stringify(r)));
+  for (const r of other.remains ?? [])
+    if (!(mine.remains ??= []).some((x) => x.id === r.id)) mine.remains.push(JSON.parse(JSON.stringify(r)));
   for (const h of other.houses ?? []) {
     const same = (x) => (x.mapId | 0) === (h.mapId | 0) && (x.buildingKey | 0) === (h.buildingKey | 0);
     if (!(mine.houses ??= []).some(same)) mine.houses.push({ ...h });
   }
-  if (!mine.pending && other.pending && knew.get(other.pending.fallenId) === false) mine.pending = JSON.parse(JSON.stringify(other.pending));
+  if (!mine.pending && other.pending && knew.get(other.pending.fallenId) === false)
+    mine.pending = JSON.parse(JSON.stringify(other.pending));
   // FAMILY-SEAT (FIELD BUGS 2026-10-07b): a seat the player moved carries when (`at`), and the later move stands -
   // whichever copy is the base by rev: a stale tab's or device's write carried the old seat back over the move. A seat
   // neither copy moved is the base's, or the other's when the base has none (the first town noted, as ever)
-  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };
+  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)))
+    mine.seat = { ...other.seat };
   // AUDIT FB1007b S1: THE NAME IS THE HOUSE'S, never its seat's - the seat moves now, and a copy that never learned the
   // name (a tab still in Privateer's Hold) named itself for the moved seat: the house's name flipped, the founder's with
   // it. It takes the name the other copy holds; and a member of the blood a stale save left nameless takes the house's
   const houseName = String(mine.surname ?? '').trim() || String(other.surname ?? '').trim();
   if (houseName) nameHouse(mine, houseName);
-  nameAtSeat(mine);   // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it
+  nameAtSeat(mine); // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it
   if (!mine.home && other.home) mine.home = { ...other.home };
-  mine.news = mergeNews(mine.news, other.news);   // LEGACY6: what the towns heard is never unheard
+  mine.news = mergeNews(mine.news, other.news); // LEGACY6: what the towns heard is never unheard
   mine.nextId = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1));
   // REVIVE: and a death either copy says was TAKEN BACK goes, with its remains and its Succession - taken in above from
   // a stale copy (a device that never heard of the revival), it would have killed the revived member again
@@ -212,7 +263,9 @@ export function listFamilies(storage) {
       const f = loadFamily(storage, k.slice(FAMILY_KEY_PREFIX.length));
       if (f) out.push(f);
     }
-  } catch { /* a storage that throws lists nothing */ }
+  } catch {
+    /* a storage that throws lists nothing */
+  }
   return out.sort((a, b) => b.founded - a.founded || (a.id < b.id ? -1 : 1));
 }
 
@@ -222,7 +275,12 @@ export function listFamilies(storage) {
  */
 export function leaveBirth(tab, birth, now = Date.now()) {
   if (!tab) return false;
-  try { tab.setItem(BIRTH_KEY, JSON.stringify({ v: FAMILY_VERSION, ...birth, at: now })); return true; } catch { return false; }
+  try {
+    tab.setItem(BIRTH_KEY, JSON.stringify({ v: FAMILY_VERSION, ...birth, at: now }));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** The boot's read of the waiting birth for `personId`, LEFT where it waits - AUDIT LEGACY B7: it was taken at the
@@ -232,12 +290,20 @@ export function leaveBirth(tab, birth, now = Date.now()) {
 export function readBirth(tab, personId, now = Date.now()) {
   if (!tab) return null;
   let b = null;
-  try { b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null'); } catch { return null; }
+  try {
+    b = JSON.parse(tab.getItem(BIRTH_KEY) ?? 'null');
+  } catch {
+    return null;
+  }
   return birthOf(b, personId, now);
 }
 /** The birth answered - the born member stands and is saved. */
 export function clearBirth(tab) {
-  try { tab?.removeItem(BIRTH_KEY); } catch { /* a storage that throws holds nothing to clear */ }
+  try {
+    tab?.removeItem(BIRTH_KEY);
+  } catch {
+    /* a storage that throws holds nothing to clear */
+  }
 }
 
 function birthOf(b, personId, now) {
@@ -245,8 +311,12 @@ function birthOf(b, personId, now) {
   if (!(now - (Number(b.at) || 0) <= BIRTH_MAX_AGE_MS)) return null;
   if (String(b.personId) !== String(personId)) return null;
   return {
-    familyId: b.familyId, personId: Number(b.personId), region: String(b.region ?? ''), loc: String(b.loc ?? ''), estate: Math.max(0, Number(b.estate) | 0),
-    ...(b.newborn === true ? { newborn: true } : {}),   // AUDIT LEGACY III A9: the Succession's newborn heir - the towns' news of a birth
+    familyId: b.familyId,
+    personId: Number(b.personId),
+    region: String(b.region ?? ''),
+    loc: String(b.loc ?? ''),
+    estate: Math.max(0, Number(b.estate) | 0),
+    ...(b.newborn === true ? { newborn: true } : {}), // AUDIT LEGACY III A9: the Succession's newborn heir - the towns' news of a birth
   };
 }
 
@@ -258,7 +328,10 @@ export function newestSaveOf(info, characterId) {
   for (const [key, card] of info ?? []) {
     if (!characterId || card?.characterId !== characterId) continue;
     const t = Number(card?.dateAndTime?.realTime) || 0;
-    if (t > bestT) { bestT = t; best = key; }
+    if (t > bestT) {
+      bestT = t;
+      best = key;
+    }
   }
   return best;
 }

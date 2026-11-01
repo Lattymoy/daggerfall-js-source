@@ -2,7 +2,7 @@
   {
     "name": "DISCORD-GATES-any-https-a-webhook",
     "file": "src/net/herald/heraldCard.js",
-    "old": "const WEBHOOK_RE = /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
+    "old": "const WEBHOOK_RE =\n  /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
     "new": "const WEBHOOK_RE = /^https:\\/\\/\\S+$/;",
     "tests": [
       "test/net/gate/discordgates.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "DISCORD-GATES-the-role-taken-unread",
     "file": "src/net/herald/heraldCard.js",
-    "old": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return SNOWFLAKE_RE.test(s) ? s : null; };",
-    "new": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return s || null; };",
+    "old": "export const heraldRole = (raw) => {\n  const s = String(raw ?? '').trim();\n  return SNOWFLAKE_RE.test(s) ? s : null;\n};",
+    "new": "export const heraldRole = (raw) => {\n  const s = String(raw ?? '').trim();\n  return s || null;\n};",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DISCORD-GATES-the-omen-pings-nobody",
     "file": "src/net/gate/gateHerald.js",
-    "old": "family: 'gate', moment: 'Omen', role,",
-    "new": "family: 'gate', moment: 'Omen',",
+    "old": "    role,\n    title: `The sky burns ${place ? `near ${place}` : 'over the wilds'}`,",
+    "new": "    title: `The sky burns ${place ? `near ${place}` : 'over the wilds'}`,",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISCORD-GATES-every-mention-allowed",
     "file": "src/net/herald/heraldCard.js",
-    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DISCORD-GATES-the-open-said-as-the-seal",
     "file": "src/net/gate/gateHerald.js",
-    "old": "fields: [['Opens', heraldWhen(t.openAt)]",
-    "new": "fields: [['Opens', heraldWhen(t.sealAt)]",
+    "old": "      ['Opens', heraldWhen(t.openAt)],",
+    "new": "      ['Opens', heraldWhen(t.sealAt)],",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DISCORD-GATES-the-kill-pings",
     "file": "src/net/gate/gateHerald.js",
-    "old": "family: 'gate', moment: 'Slain',",
-    "new": "family: 'gate', moment: 'Slain', role: '1555589839825670258',",
+    "old": "    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)",
+    "new": "    role: '1555589839825670258',\n    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISCORD-GATES-the-others-miscounted",
     "file": "src/net/herald/heraldCard.js",
-    "old": "Math.max(0, n - shown.length)",
-    "new": "Math.max(0, n)",
+    "old": "  const others = Number.isSafeInteger(n) ? Math.max(0, n - shown.length) : 0;",
+    "new": "  const others = Number.isSafeInteger(n) ? Math.max(0, n) : 0;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISCORD-GATES-a-name-posted-raw",
     "file": "src/net/herald/heraldCard.js",
-    "old": "String(n ?? '').replace(/[^A-Za-z0-9 '-]/g, '')",
-    "new": "String(n ?? '')",
+    "old": "    .replace(/[^A-Za-z0-9 '-]/g, '')\n    .replace(/\\s+/g, ' ')",
+    "new": "    .replace(/\\s+/g, ' ')",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DISCORD-GATES-posted-after-the-open",
     "file": "src/net/gate/gateHerald.js",
-    "old": "if (t.openAt <= nowMs) continue;",
-    "new": "if (t.wrathAt <= nowMs) continue;",
+    "old": "    if (t.openAt <= nowMs) continue;",
+    "new": "    if (t.wrathAt <= nowMs) continue;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DISCORD-GATES-a-day-not-come-trusted",
     "file": "src/net/gate/gateHerald.js",
-    "old": "  const posted = was <= today ? was : -1;   // a day not yet come is no post made",
-    "new": "  const posted = was;   // a day not yet come is no post made",
+    "old": "  const posted = was <= today ? was : -1; // a day not yet come is no post made",
+    "new": "  const posted = was; // a day not yet come is no post made",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DISCORD-GATES-a-kill-news-for-ever",
     "file": "src/net/gate/gateHerald.js",
-    "old": "nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS",
-    "new": "nowMs < Infinity",
+    "old": "export const heraldFellLive = (day, nowMs) =>\n  isGateDay(day) && nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS;",
+    "new": "export const heraldFellLive = (day, nowMs) => isGateDay(day) && nowMs < Infinity;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DISCORD-GATES-a-site-for-any-day",
     "file": "src/net/gate/gateHerald.js",
-    "old": "(day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day)",
-    "new": "day >= 0",
+    "old": "export const gateSiteDayOk = (day, nowMs) =>\n  isGateDay(day) &&\n  (day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day);",
+    "new": "export const gateSiteDayOk = (day, nowMs) => isGateDay(day) && day >= 0;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DISCORD-GATES-one-account-names-the-place",
     "file": "src/net/gate/gateHerald.js",
-    "old": "if (e[3].length >= GATE_SITE_AGREE &&",
-    "new": "if (e[3].length >= 1 &&",
+    "old": "  for (const e of rec.c) if (e[3].length >= GATE_SITE_AGREE && (!best || e[3].length > best[3].length)) best = e;",
+    "new": "  for (const e of rec.c) if (e[3].length >= 1 && (!best || e[3].length > best[3].length)) best = e;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DISCORD-GATES-a-second-word-counted",
     "file": "src/net/gate/gateHerald.js",
-    "old": "  if (c.some((e) => e[3].includes(sub))) return rec;\n",
-    "new": "",
+    "old": "  if (c.some((e) => e[3].includes(sub))) return rec;\n  const i = c.findIndex((e) => e[0] === px && e[1] === py && e[2] === pl);",
+    "new": "  const i = c.findIndex((e) => e[0] === px && e[1] === py && e[2] === pl);",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DISCORD-GATES-the-last-said-wins-a-tie",
     "file": "src/net/gate/gateHerald.js",
-    "old": "(!best || e[3].length > best[3].length)",
-    "new": "(!best || e[3].length >= best[3].length)",
+    "old": "  for (const e of rec.c) if (e[3].length >= GATE_SITE_AGREE && (!best || e[3].length > best[3].length)) best = e;",
+    "new": "  for (const e of rec.c) if (e[3].length >= GATE_SITE_AGREE && (!best || e[3].length >= best[3].length)) best = e;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DISCORD-GATES-places-unbounded",
     "file": "src/net/gate/gateHerald.js",
-    "old": "    if (c.length >= GATE_SITE_CANDIDATES_MAX) return rec;\n",
-    "new": "",
+    "old": "    if (c.length >= GATE_SITE_CANDIDATES_MAX) return rec;\n    c.push([px, py, pl, [sub]]);",
+    "new": "    c.push([px, py, pl, [sub]]);",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DISCORD-GATES-votes-unbounded",
     "file": "src/net/gate/gateHerald.js",
-    "old": "    if (c[i][3].length >= GATE_SITE_VOTES_MAX) return rec;\n",
-    "new": "",
+    "old": "    if (c[i][3].length >= GATE_SITE_VOTES_MAX) return rec;\n    c[i] = [px, py, pl, [...c[i][3], sub]];",
+    "new": "    c[i] = [px, py, pl, [...c[i][3], sub]];",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DISCORD-GATES-an-older-day-restarts",
     "file": "src/net/gate/gateHerald.js",
-    "old": "  if (cur && cur.d > day) return rec;\n",
-    "new": "",
+    "old": "  if (cur && cur.d > day) return rec;\n  const c = cur && cur.d === day ? cur.c.slice() : [];",
+    "new": "  const c = cur && cur.d === day ? cur.c.slice() : [];",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]

@@ -31,6 +31,7 @@ import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, isThunderlock, isPellet, pelletCount } from '../../src/systems/thunderlock.js';
 import { baseDamageMin, baseDamageMax } from '../../src/combat/formulas.js';   // TSR-GUN: AUDIT 18 F1's law - damage is the TEMPLATE's, never a baked field
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const read = (p) => readFileSync(p, 'utf8');
 
@@ -172,7 +173,7 @@ test('TSR3: the three doors all read the one home', () => {
   // The boot: preset resolved BEFORE the branch (an unknown id falls
   // through to the wizard), the same headless seam, the armory, and
   // the arms built only when the data is attached.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const testEntry = !playerEntity\.chargenDone && params\.has\('test'\) \? testEntryById\(params\.get\('test'\)\) : null;\s*\n\s*const testPreset = testEntry\?\.preset \?\? null;/,
     'TSR4: the entry resolves first, the preset off it - an unknown id is still null before the branch');
   assert.match(world, /await applyTestCharacter\(playerEntity, preset, \{ fetchBytes, spellsByIndex: sbi \}\)/);
@@ -252,10 +253,10 @@ test('TSR4: the pane, the boot and the frame gate - the edge landing, the ONE tr
   assert.match(main, /const \{ testStartsOutdoors \} = await import\('\.\/systems\/testRoom\.js'\);\s*\n\s*if \(testStartsOutdoors\(params\.get\('test'\)\)\) params\.delete\('classic'\);\s*\n\s*else params\.set\('classic', '1'\);/,
     'the ride drops the classic start through the one home\'s list; every other choice still sets it');
   assert.ok(main.indexOf("params.delete('classic')") > main.indexOf("else params.delete('test');"), 'decided after the test param is settled');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // the horse lands with the armory; the mount is DEFERRED to the frame
   // loop's spawn gate, so it can never run before the player has a floor
-  assert.match(world, /if \(testEntry\.ride\) \{ seedTestMount\(playerEntity\); rideOutWanted = true; \}/);
+  assert.match(world, /if \(testEntry\.ride\) \{ seedTestMount\(playerEntity\); boot\.rideOutWanted = true; \}/);
   assert.match(world, /if \(rideOutWanted && playerSpawned\) rideOut\(\);/, 'the frame gate');
   const rideAt = world.indexOf('const rideOut = () => {');
   const gateAt = world.indexOf('if (rideOutWanted && playerSpawned) rideOut();');

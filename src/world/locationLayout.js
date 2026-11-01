@@ -14,7 +14,7 @@
 import { GLOBAL_SCALE } from './meshReader.js';
 import { layoutRmbBlock } from './rmbLayout.js';
 import { RMB_DIMENSION } from '../formats/blocksFile.js';
-import { stepsDone } from './puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
+import { stepsDone } from './puddleMask.js'; // IC-STUTTER: OW-HITCH's runner, the one export
 
 export const RMB_SIDE = RMB_DIMENSION * GLOBAL_SCALE;
 
@@ -45,7 +45,8 @@ export function hasCustomLocationPosition(dfLocation) {
  *   blocks:Array<{x:number,y:number,blockName:string,dfBlock:object,
  *   layout:object,originX:number,originZ:number}>}}
  */
-export const layoutLocation = (dfLocation, mapsFile, blocksFile, opts = {}) => stepsDone(layoutLocationSteps(dfLocation, mapsFile, blocksFile, opts));
+export const layoutLocation = (dfLocation, mapsFile, blocksFile, opts = {}) =>
+  stepsDone(layoutLocationSteps(dfLocation, mapsFile, blocksFile, opts));
 /**
  * IC-STUTTER (2026-10-27, bible/03-World/Arena-Provinces.md IC-STUTTER): layoutLocation a block at a time - the same
  * blocks laid out in the same order. A city of sixty-four blocks (a near slice of the Imperial City, every few seconds at
@@ -67,7 +68,7 @@ export function* layoutLocationSteps(dfLocation, mapsFile, blocksFile, { enhance
         y,
         blockName,
         dfBlock,
-        layout: layoutRmbBlock(dfBlock, { enhanced, windmills }),   // WM3: the pack's switch rides beside the skin
+        layout: layoutRmbBlock(dfBlock, { enhanced, windmills }), // WM3: the pack's switch rides beside the skin
         originX: x * RMB_SIDE,
         originZ: y * RMB_SIDE,
       });

@@ -7,11 +7,13 @@
 import { poisonCount } from '../poisons.js';
 
 /** The plain diseases running now (never a vampirism or lycanthropy infection). */
-const plainDiseases = (entity) => (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended && !a.infection).length;
+const plainDiseases = (entity) =>
+  (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended && !a.infection).length;
 
 /** The warning's lines, or null when nothing ails the player. */
 export function restAilmentLines(entity) {
-  const p = poisonCount(entity), d = plainDiseases(entity);
+  const p = poisonCount(entity),
+    d = plainDiseases(entity);
   if (!p && !d) return null;
   // REST-WARN2: three short lines - each fits the box on one line, none left dangling
   const what = p && d ? 'You are poisoned and diseased.' : p ? 'You are poisoned.' : 'You are diseased.';

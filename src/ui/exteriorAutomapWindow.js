@@ -125,57 +125,70 @@ import { hexColor32 } from './automap/automapWindow.js';
 // the enhanced town sheet reads them there too - they sat in this file
 // and in ui/ink/inkTown.js at once, which is how the same building could
 // have come to be drawn as a shop on one map and a house on the next.
-import {
-  QUARTERS, quarterOf, isShowAllByte, CLASSIC_ARGB, CLASSIC_SETTING,
-} from './town/townQuarters.js';
-import { CAPITAL_CLOSED_BYTE } from '../world/tamrielCapitals.js';   // IC-TOWNMAP: a capital's closed cell, the town map painting none
+import { QUARTERS, quarterOf, isShowAllByte, CLASSIC_ARGB, CLASSIC_SETTING } from './town/townQuarters.js';
+import { CAPITAL_CLOSED_BYTE } from '../world/tamrielCapitals.js'; // IC-TOWNMAP: a capital's closed cell, the town map painting none
 import { shortcutOrFallback, exteriorAutomapTooltipFor } from './automap/automapText.js';
 import { bindings } from './input.js';
 import { getBinding } from '../systems/inputActions.js';
 import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { resolveNameplates, nameplateAnchor, WORLD_PER_PX, STAR_PLATE } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there; FB1020c STAR-PLATE: and the surrender's "*"
-import { shownBuildingName } from '../systems/discovery.js';   // EMPIRE-BANK
+import { resolveNameplates, nameplateAnchor, WORLD_PER_PX, STAR_PLATE } from './nameplateLayout.js'; // EM4: WORLD_PER_PX has one home there; FB1020c STAR-PLATE: and the surrender's "*"
+import { shownBuildingName } from '../systems/discovery.js'; // EMPIRE-BANK
+import { nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM } from './native/nativePanel.js';
 import {
-  nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
-} from './native/nativePanel.js';
-import {
-  AutomapChrome, CHROME_RECTS, CAPTION_STRIP, CAPTION_SWATCHES, EXTERIOR_ACTIONS,
+  AutomapChrome,
+  CHROME_RECTS,
+  CAPTION_STRIP,
+  CAPTION_SWATCHES,
+  EXTERIOR_ACTIONS,
   compassHeading01,
 } from './automap/automapChrome.js';
 import {
-  EXT_SCROLL_LEFT_RIGHT_SPEED, EXT_SCROLL_UP_DOWN_SPEED, EXT_ROTATE_SPEED,
-  EXT_ZOOM_SPEED, EXT_ZOOM_SPEED_MOUSE_WHEEL, EXT_DRAG_ROTATE_SPEED,
-  EXT_MAX_ZOOM, EXT_MIN_ZOOM, EXT_NUM_MAX_BLOCKS, EXT_LAYOUT_MULTIPLIER,
-  computeExteriorZoom, exteriorZoom, exteriorApplyMinZoom, exteriorApplyMaxZoom,
-  exteriorRotate, exteriorRotateAroundPlayerPos, exteriorDragPan, getLocationBorderPos,
+  EXT_SCROLL_LEFT_RIGHT_SPEED,
+  EXT_SCROLL_UP_DOWN_SPEED,
+  EXT_ROTATE_SPEED,
+  EXT_ZOOM_SPEED,
+  EXT_ZOOM_SPEED_MOUSE_WHEEL,
+  EXT_DRAG_ROTATE_SPEED,
+  EXT_MAX_ZOOM,
+  EXT_MIN_ZOOM,
+  EXT_NUM_MAX_BLOCKS,
+  EXT_LAYOUT_MULTIPLIER,
+  computeExteriorZoom,
+  exteriorZoom,
+  exteriorApplyMinZoom,
+  exteriorApplyMaxZoom,
+  exteriorRotate,
+  exteriorRotateAroundPlayerPos,
+  exteriorDragPan,
+  getLocationBorderPos,
 } from './automap/automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
-import { drawCompassStrip } from './hud/hud.js';   // ONE HOME for the strip (hud.js:"HUDCompass.DrawCompass")
+import { drawCompassStrip } from './hud/hud.js'; // ONE HOME for the strip (hud.js:"HUDCompass.DrawCompass")
 import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
-import { registerCommand } from '../systems/consoleCommands.js';   // E3: the console command database
-import { processGrammar } from '../systems/textManager.js';   // L10N3g: a plate's words through the grammar (:878, :885)
+import { registerCommand } from '../systems/consoleCommands.js'; // E3: the console command database
+import { processGrammar } from '../systems/textManager.js'; // L10N3g: a plate's words through the grammar (:878, :885)
 
 // E3: RevealUndiscoveredBuildings (:230-234) - the persistent
 // component's flag, set by the console with no window open and read by
 // the next one that opens.
-let _revealUndiscoveredBuildings = false;   // map_revealbuildings / map_hidebuildings (:1796-1830)
+let _revealUndiscoveredBuildings = false; // map_revealbuildings / map_hidebuildings (:1796-1830)
 
-export const BLOCK_PX = 64;                      // blockSizeWidth/Height (ExteriorAutomap.cs:153-154)
+export const BLOCK_PX = 64; // blockSizeWidth/Height (ExteriorAutomap.cs:153-154)
 // WORLD_PER_PX has ONE HOME in ui/nameplateLayout.js (EM4) - it is imported above
-export const ZOOM_MIN = EXT_MAX_ZOOM;            // 25 - DFU's maxZoom, "the minimum camera height"
-export const ZOOM_MAX = EXT_MIN_ZOOM;            // 250 - DFU's minZoom (the names invert the meaning)
-const NAMEPLATE_YELLOW = [243 / 255, 239 / 255, 44 / 255, 1];   // DaggerfallDefaultTextColor (DaggerfallUI.cs:52)
+export const ZOOM_MIN = EXT_MAX_ZOOM; // 25 - DFU's maxZoom, "the minimum camera height"
+export const ZOOM_MAX = EXT_MIN_ZOOM; // 250 - DFU's minZoom (the names invert the meaning)
+const NAMEPLATE_YELLOW = [243 / 255, 239 / 255, 44 / 255, 1]; // DaggerfallDefaultTextColor (DaggerfallUI.cs:52)
 /** MapsFile.WorldMapTerrainDim (MapsFile.cs:33) - one map pixel's
  *  terrain in Daggerfall units; x GlobalScale it is 819.2 world units,
  *  and it is EXACTLY the 8x8-block span the player marker is placed
  *  against (:1382-1403). */
 export const WORLD_MAP_TERRAIN_DIM = 32768;
-export const MARKER_TILE_SCALE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE;   // 819.2
+export const MARKER_TILE_SCALE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE; // 819.2
 /** refWidth/refHeight (:1396-1397): blockSize x numMaxBlocks x layoutMultiplier. */
-export const MARKER_REF_SPAN = BLOCK_PX * EXT_NUM_MAX_BLOCKS * EXT_LAYOUT_MULTIPLIER;   // 512
+export const MARKER_REF_SPAN = BLOCK_PX * EXT_NUM_MAX_BLOCKS * EXT_LAYOUT_MULTIPLIER; // 512
 /** the custom-location offsets (:1391-1395). DFLocation.HasCustomLocationPosition
  *  (DFLocation.cs:87-97, ported at world/locationLayout.js:"export function hasCustomLocationPosition") picks out 1x1
  *  locations whose block 0 carries the CUST prefix; those are laid out
@@ -193,17 +206,17 @@ export const MARKER_REF_SPAN = BLOCK_PX * EXT_NUM_MAX_BLOCKS * EXT_LAYOUT_MULTIP
  *  wording (DFLocation.cs:87) says "1x1 locations", not towns. */
 export const CUSTOM_LOCATION_OFFSET = Object.freeze([-64, +3]);
 // the marker trio's colours and sizes (:1616-1649)
-const MARKER_CIRCLE_RGBA = [0.75, 0.71, 0.71, 1];        // :1646
-const MARKER_STAMP_RGBA = [0.353, 0.086, 0.086, 1];      // :1624
-export const MARKER_CIRCLE_UNITS = 12.0;                 // localScale (12,1,12) :1647
-export const MARKER_ARROW_SCALE = 2.5;                   // :1616
-export const MARKER_STAMP_SCALE = 4.0;                   // :1626
-export const MARKER_STAMP_BIAS = 0.8;                    // -normalize(forward) * 0.8 (:1411)
-const STAMP_PX = 128;                                    // the rasteriser's edge (meshStamp.js records the oversampling)
+const MARKER_CIRCLE_RGBA = [0.75, 0.71, 0.71, 1]; // :1646
+const MARKER_STAMP_RGBA = [0.353, 0.086, 0.086, 1]; // :1624
+export const MARKER_CIRCLE_UNITS = 12.0; // localScale (12,1,12) :1647
+export const MARKER_ARROW_SCALE = 2.5; // :1616
+export const MARKER_STAMP_SCALE = 4.0; // :1626
+export const MARKER_STAMP_BIAS = 0.8; // -normalize(forward) * 0.8 (:1411)
+const STAMP_PX = 128; // the rasteriser's edge (meshStamp.js records the oversampling)
 
 // the byte groups (ExteriorAutomap.cs:1482-1541; byte = BuildingType + 1)
 // live in ui/town/townQuarters.js, imported above - see EM7.
-export const VIEW_MODES = ['original', 'extra', 'all'];   // (showAll, removeGroundFlats) = (f,t) (t,t) (t,f) (:318-337)
+export const VIEW_MODES = ['original', 'extra', 'all']; // (showAll, removeGroundFlats) = (f,t) (t,t) (t,f) (:318-337)
 
 /**
  * The four backgrounds (window :283-327). "original" draws NOTHING -
@@ -252,10 +265,13 @@ let _yawDeg = 0;
  *  law automapWindow.js:"── THE PERSISTENT" already states for the dungeon map. */
 let _viewMode = VIEW_MODES[0];
 let _background = 'original';
-let _texVer = 0;   // module-level, the A1 lesson: versioned keys never collide across instances
+let _texVer = 0; // module-level, the A1 lesson: versioned keys never collide across instances
 export function _resetZoomForTests() {
-  _zoomLevel = -1; _zoomLocation = null; _yawDeg = 0;
-  _viewMode = VIEW_MODES[0]; _background = 'original';
+  _zoomLevel = -1;
+  _zoomLocation = null;
+  _yawDeg = 0;
+  _viewMode = VIEW_MODES[0];
+  _background = 'original';
 }
 
 // ---- the native art (the U23 preload shape) --------------------------
@@ -270,7 +286,9 @@ export async function preloadExteriorAutomapArt(deps) {
   return _art;
 }
 export const exteriorAutomapArtLoaded = () => !!_art;
-export function _setExteriorAutomapArtForTests(a) { _art = a; }
+export function _setExteriorAutomapArtForTests(a) {
+  _art = a;
+}
 
 /** The layout bitmap as an uploadTexture color32. blocks =
  *  [{ x, y, autoMap }] (grid coords + the retained 64x64 bytes);
@@ -280,15 +298,16 @@ export function _setExteriorAutomapArtForTests(a) { _art = a; }
 export function buildExteriorLayout(gridW, gridH, blocks, mode, colours) {
   const showAll = mode !== 'original';
   const removeGroundFlats = mode !== 'all';
-  const w = gridW * BLOCK_PX, h = gridH * BLOCK_PX;
-  const colors = new Uint32Array(w * h);   // cleared transparent, byte 0's own colour (:1529-1534)
+  const w = gridW * BLOCK_PX,
+    h = gridH * BLOCK_PX;
+  const colors = new Uint32Array(w * h); // cleared transparent, byte 0's own colour (:1529-1534)
   for (const b of blocks) {
     const data = b.autoMap;
     if (!data) continue;
     for (let y = 0; y < BLOCK_PX; y++) {
       for (let x = 0; x < BLOCK_PX; x++) {
         let byte = data[y * BLOCK_PX + x];
-        if (removeGroundFlats && byte === 0xfb) byte = 0;   // the copy-side strip (BlocksFile.cs:434-440; never in place here)
+        if (removeGroundFlats && byte === 0xfb) byte = 0; // the copy-side strip (BlocksFile.cs:434-440; never in place here)
         // IC-TOWNMAP (the owner: "Curious how the town map will look"): a capital's closed cell (world/tamrielCapitals.js
         // CAPITAL_CLOSED_BYTE - a wall, a tower, a court the walkers may not cross) is in no quarter and no show-all byte, so
         // the ladder below gave it the debug red (255, 0, 254) and painted the Imperial City's tower and palace solid magenta;
@@ -299,8 +318,11 @@ export function buildExteriorLayout(gridW, gridH, blocks, mode, colours) {
         const quarter = quarterOf(byte);
         let c;
         if (quarter) c = colours[quarter];
-        else if (isShowAllByte(byte)) { if (!showAll) continue; c = colours.house; }   // ships + specials (:1519-1528)
-        else c = (0xff000000 | (byte << 16) | 0x0000ff) >>> 0;   // the debug red (255, 0, byte) (:1535-1540)
+        else if (isShowAllByte(byte)) {
+          if (!showAll) continue;
+          c = colours.house;
+        } // ships + specials (:1519-1528)
+        else c = (0xff000000 | (byte << 16) | 0x0000ff) >>> 0; // the debug red (255, 0, byte) (:1535-1540)
         // per-block row flip (:1481) = the navgrid's own law; then
         // whole-map flip so north lands at data row 0 (drawn top)
         const worldRow = b.y * BLOCK_PX + (BLOCK_PX - 1 - y);
@@ -349,7 +371,8 @@ export function playerMarkerLayoutPos(tileXZ, isCustomLocation = false) {
 export function toPanelScreen(cam, rect, worldX, worldZ) {
   const yaw = cam.yawDeg * DEG;
   const k = rect.h / (2 * cam.orthoSize);
-  const dx = worldX - cam.center[0], dz = worldZ - cam.center[2];
+  const dx = worldX - cam.center[0],
+    dz = worldZ - cam.center[2];
   const sx = dx * Math.cos(yaw) + dz * -Math.sin(yaw);
   const sy = dx * Math.sin(yaw) + dz * Math.cos(yaw);
   return [rect.x + rect.w / 2 + sx * k, rect.y + rect.h / 2 - sy * k];
@@ -388,15 +411,26 @@ export const EXT_HOTKEYS_DOWN = Object.freeze([
  * rather than fired on the browser's auto-repeat.
  */
 export const EXT_HOTKEYS_HELD = Object.freeze([
-  'ExtAutomapMoveForward', 'ExtAutomapMoveBackward',
-  'ExtAutomapMoveLeft', 'ExtAutomapMoveRight',
-  'ExtAutomapMoveToNorthLocationBorder', 'ExtAutomapMoveToSouthLocationBorder',
-  'ExtAutomapMoveToWestLocationBorder', 'ExtAutomapMoveToEastLocationBorder',
-  'ExtAutomapRotateLeft', 'ExtAutomapRotateRight',
-  'ExtAutomapRotateAroundPlayerPosLeft', 'ExtAutomapRotateAroundPlayerPosRight',
-  'ExtAutomapUpstairs', 'ExtAutomapDownstairs',
-  'ExtAutomapZoomIn', 'ExtAutomapZoomOut',
-  'ExtAutomapMaxZoom1', 'ExtAutomapMinZoom1', 'ExtAutomapMinZoom2', 'ExtAutomapMaxZoom2',
+  'ExtAutomapMoveForward',
+  'ExtAutomapMoveBackward',
+  'ExtAutomapMoveLeft',
+  'ExtAutomapMoveRight',
+  'ExtAutomapMoveToNorthLocationBorder',
+  'ExtAutomapMoveToSouthLocationBorder',
+  'ExtAutomapMoveToWestLocationBorder',
+  'ExtAutomapMoveToEastLocationBorder',
+  'ExtAutomapRotateLeft',
+  'ExtAutomapRotateRight',
+  'ExtAutomapRotateAroundPlayerPosLeft',
+  'ExtAutomapRotateAroundPlayerPosRight',
+  'ExtAutomapUpstairs',
+  'ExtAutomapDownstairs',
+  'ExtAutomapZoomIn',
+  'ExtAutomapZoomOut',
+  'ExtAutomapMaxZoom1',
+  'ExtAutomapMinZoom1',
+  'ExtAutomapMinZoom2',
+  'ExtAutomapMaxZoom2',
 ]);
 
 /** Which chrome VERB each hotkey runs - the same table the buttons
@@ -481,12 +515,12 @@ export const EXT_BACKGROUND_HOTKEYS = Object.freeze({
  * mapID, buildingKey) }. Pure - no host, no window.
  */
 export function residenceQuestName(questSource, mapID, buildingKey) {
-  let buildingQuestName = '';   // string.Empty if building not involved in active quest
+  let buildingQuestName = ''; // string.Empty if building not involved in active quest
   for (const questID of questSource?.getAllActiveQuestIds?.() ?? []) {
     const quest = questSource.getQuest?.(questID);
     if (!quest) continue;
     for (const resource of quest.resources?.values?.() ?? []) {
-      if (!resource.isPlace) continue;   // GetAllResources(typeof(Place))
+      if (!resource.isPlace) continue; // GetAllResources(typeof(Place))
       if (resource.siteDetails?.buildingKey !== buildingKey) continue;
       const r = questSource.isBuildingQuestResource?.(mapID, buildingKey);
       if (!r?.isQuestResource) continue;
@@ -522,7 +556,7 @@ export function stampResidenceQuestNames(summaries, discoveredRows, questSource,
     // Enhanced sheet's ring and pen. Every quest house the player learns of is override-named at discovery (AUDIT 63
     // F49), so the arm below never ran for one and the sheet drew the house a townsperson had just marked as any house
     b.questMarked = marked !== '';
-    if (rec.isOverrideName) continue;   // :676-682 - the display-name arm returns first (the classic plate, unchanged)
+    if (rec.isOverrideName) continue; // :676-682 - the display-name arm returns first (the classic plate, unchanged)
     b.questName = marked;
   }
   return summaries;
@@ -586,16 +620,16 @@ export class ExteriorAutomapWindow {
     }
     _zoomLocation = deps.locationId;
     this.cam = { center: [0, 0, 0], yawDeg: _yawDeg, orthoSize: _zoomLevel };
-    this.actionFocusPlayerPosition();   // OnPush's last act before UpdateAutomapView (:544)
+    this.actionFocusPlayerPosition(); // OnPush's last act before UpdateAutomapView (:544)
     this._renderer = null;
-    this._scale = 1;      // draw() captures the live letterbox factor
-    this._tex = null;     // { key, tex, w, h, mode }
-    this._stamp = null;   // { key, tex, span, worldPerPx }
+    this._scale = 1; // draw() captures the live letterbox factor
+    this._tex = null; // { key, tex, w, h, mode }
+    this._stamp = null; // { key, tex, span, worldPerPx }
     this._disc = null;
-    this._plates = null;  // cached solver output for the current view
+    this._plates = null; // cached solver output for the current view
     this._platesKey = '';
     this._hoverPlate = null;
-    this._tooltipRect = null;   // the chrome rect whose tooltip is due (automapChrome.tick)
+    this._tooltipRect = null; // the chrome rect whose tooltip is due (automapChrome.tick)
   }
 
   /** E3: RevealUndiscoveredBuildings (ExteriorAutomap.cs:230-234) is a
@@ -605,9 +639,13 @@ export class ExteriorAutomapWindow {
    *  ui/travel/travelMapWindow.js has always used for its own pair) and the
    *  window's property is the same value under the name the drawing
    *  code and its pins already read. */
-  get revealUndiscoveredBuildings() { return _revealUndiscoveredBuildings; }
+  get revealUndiscoveredBuildings() {
+    return _revealUndiscoveredBuildings;
+  }
 
-  set revealUndiscoveredBuildings(on) { _revealUndiscoveredBuildings = !!on; }
+  set revealUndiscoveredBuildings(on) {
+    _revealUndiscoveredBuildings = !!on;
+  }
 
   /** AUDIT 64 F55: the same shape for the two the file had missed.
    *  ExteriorAutomap.cs:101's currentExteriorAutomapViewMode and the
@@ -616,13 +654,21 @@ export class ExteriorAutomapWindow {
    *  (ExteriorAutomap.cs:1650-1660 raises only
    *  ResetAutomapSettingsSignalForExternalScript, which the window
    *  spends on ResetCameraPosition and the zoom, :512-524). */
-  get mode() { return _viewMode; }
+  get mode() {
+    return _viewMode;
+  }
 
-  set mode(m) { _viewMode = m; }
+  set mode(m) {
+    _viewMode = m;
+  }
 
-  get background() { return _background; }
+  get background() {
+    return _background;
+  }
 
-  set background(b) { _background = b; }
+  set background(b) {
+    _background = b;
+  }
 
   // ---- the verb table (ui/automap/automapChrome.js answers NAMES) -----------
 
@@ -653,7 +699,9 @@ export class ExteriorAutomapWindow {
    *  answers, bound to this window's camera. `dt` is the frame's. */
   runVerb(verb, dt) {
     const c = this.cam;
-    const pan = (dx, dz) => { this.cam = { ...c, center: [c.center[0] + dx, 0, c.center[2] + dz] }; };
+    const pan = (dx, dz) => {
+      this.cam = { ...c, center: [c.center[0] + dx, 0, c.center[2] + dz] };
+    };
     const yaw = c.yawDeg * DEG;
     // the camera's own screen basis, the same one exteriorDragPan uses
     const right = [Math.cos(yaw), -Math.sin(yaw)];
@@ -662,49 +710,86 @@ export class ExteriorAutomapWindow {
       // ActionMoveForward/Backward (:1116-1140): the camera's UP with
       // the y component zeroed - under a straight-down lens that is
       // the map's own north-ish axis at the current yaw.
-      case 'ActionMoveForward': return pan(up[0] * EXT_SCROLL_UP_DOWN_SPEED * dt, up[1] * EXT_SCROLL_UP_DOWN_SPEED * dt);
-      case 'ActionMoveBackward': return pan(-up[0] * EXT_SCROLL_UP_DOWN_SPEED * dt, -up[1] * EXT_SCROLL_UP_DOWN_SPEED * dt);
-      case 'ActionMoveLeft': return pan(-right[0] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt, -right[1] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt);
-      case 'ActionMoveRight': return pan(right[0] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt, right[1] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt);
+      case 'ActionMoveForward':
+        return pan(up[0] * EXT_SCROLL_UP_DOWN_SPEED * dt, up[1] * EXT_SCROLL_UP_DOWN_SPEED * dt);
+      case 'ActionMoveBackward':
+        return pan(-up[0] * EXT_SCROLL_UP_DOWN_SPEED * dt, -up[1] * EXT_SCROLL_UP_DOWN_SPEED * dt);
+      case 'ActionMoveLeft':
+        return pan(-right[0] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt, -right[1] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt);
+      case 'ActionMoveRight':
+        return pan(right[0] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt, right[1] * EXT_SCROLL_LEFT_RIGHT_SPEED * dt);
       // the four border jumps (:1184-1220): ONE axis each, the other
       // left exactly where it was
-      case 'ActionMoveToNorthLocationBorder': return this.jumpToBorder('Top');
-      case 'ActionMoveToSouthLocationBorder': return this.jumpToBorder('Bottom');
-      case 'ActionMoveToWestLocationBorder': return this.jumpToBorder('Left');
-      case 'ActionMoveToEastLocationBorder': return this.jumpToBorder('Right');
-      case 'ActionRotateLeft': this.cam = exteriorRotate(c, +EXT_ROTATE_SPEED, dt); return undefined;
-      case 'ActionRotateRight': this.cam = exteriorRotate(c, -EXT_ROTATE_SPEED, dt); return undefined;
+      case 'ActionMoveToNorthLocationBorder':
+        return this.jumpToBorder('Top');
+      case 'ActionMoveToSouthLocationBorder':
+        return this.jumpToBorder('Bottom');
+      case 'ActionMoveToWestLocationBorder':
+        return this.jumpToBorder('Left');
+      case 'ActionMoveToEastLocationBorder':
+        return this.jumpToBorder('Right');
+      case 'ActionRotateLeft':
+        this.cam = exteriorRotate(c, +EXT_ROTATE_SPEED, dt);
+        return undefined;
+      case 'ActionRotateRight':
+        this.cam = exteriorRotate(c, -EXT_ROTATE_SPEED, dt);
+        return undefined;
       case 'ActionRotateAroundPlayerPosLeft':
-        this.cam = exteriorRotateAroundPlayerPos(c, +EXT_ROTATE_SPEED, dt, this.markerPos()); return undefined;
+        this.cam = exteriorRotateAroundPlayerPos(c, +EXT_ROTATE_SPEED, dt, this.markerPos());
+        return undefined;
       case 'ActionRotateAroundPlayerPosRight':
-        this.cam = exteriorRotateAroundPlayerPos(c, -EXT_ROTATE_SPEED, dt, this.markerPos()); return undefined;
+        this.cam = exteriorRotateAroundPlayerPos(c, -EXT_ROTATE_SPEED, dt, this.markerPos());
+        return undefined;
       // ActionMoveUpstairs/Downstairs ARE the zoom (:1135-1148 - the
       // translate is commented out and the body is ActionZoom)
-      case 'ActionMoveUpstairs': this.cam = exteriorZoom(c, -EXT_ZOOM_SPEED * dt); return undefined;
-      case 'ActionMoveDownstairs': this.cam = exteriorZoom(c, +EXT_ZOOM_SPEED * dt); return undefined;
-      case 'ActionApplyMaxZoom': this.cam = exteriorApplyMaxZoom(c); return undefined;
-      case 'ActionApplyMinZoom': this.cam = exteriorApplyMinZoom(c); return undefined;
+      case 'ActionMoveUpstairs':
+        this.cam = exteriorZoom(c, -EXT_ZOOM_SPEED * dt);
+        return undefined;
+      case 'ActionMoveDownstairs':
+        this.cam = exteriorZoom(c, +EXT_ZOOM_SPEED * dt);
+        return undefined;
+      case 'ActionApplyMaxZoom':
+        this.cam = exteriorApplyMaxZoom(c);
+        return undefined;
+      case 'ActionApplyMinZoom':
+        this.cam = exteriorApplyMinZoom(c);
+        return undefined;
       case 'ActionSwitchToNextExteriorAutomapViewMode':
-        this.mode = VIEW_MODES[(VIEW_MODES.indexOf(this.mode) + 1) % VIEW_MODES.length]; return undefined;
+        this.mode = VIEW_MODES[(VIEW_MODES.indexOf(this.mode) + 1) % VIEW_MODES.length];
+        return undefined;
       // the three DIRECT view-mode verbs (:1235-1262) - F2/F3/F4 in
       // DFU's table, and each SETS the mode rather than cycling to it
-      case 'ActionSwitchToExteriorAutomapViewModeOriginal': this.mode = VIEW_MODES[0]; return undefined;
-      case 'ActionSwitchToExteriorAutomapViewModeExtra': this.mode = VIEW_MODES[1]; return undefined;
-      case 'ActionSwitchToExteriorAutomapViewModeAll': this.mode = VIEW_MODES[2]; return undefined;
-      case 'ActionFocusPlayerPosition': return this.actionFocusPlayerPosition();
-      case 'ActionResetView': return this.actionResetView();
-      case 'ActionExit': this.done = true; this.dispose(); return undefined;
-      case 'ActionClickSoundOnly': return undefined;   // :1380 - the sound IS the whole handler
-      default: return undefined;
+      case 'ActionSwitchToExteriorAutomapViewModeOriginal':
+        this.mode = VIEW_MODES[0];
+        return undefined;
+      case 'ActionSwitchToExteriorAutomapViewModeExtra':
+        this.mode = VIEW_MODES[1];
+        return undefined;
+      case 'ActionSwitchToExteriorAutomapViewModeAll':
+        this.mode = VIEW_MODES[2];
+        return undefined;
+      case 'ActionFocusPlayerPosition':
+        return this.actionFocusPlayerPosition();
+      case 'ActionResetView':
+        return this.actionResetView();
+      case 'ActionExit':
+        this.done = true;
+        this.dispose();
+        return undefined;
+      case 'ActionClickSoundOnly':
+        return undefined; // :1380 - the sound IS the whole handler
+      default:
+        return undefined;
     }
   }
 
   jumpToBorder(border) {
     const pos = getLocationBorderPos(border, this.layoutW, this.layoutH);
     const c = this.cam;
-    this.cam = (border === 'Left' || border === 'Right')
-      ? { ...c, center: [pos[0], 0, c.center[2]] }
-      : { ...c, center: [c.center[0], 0, pos[2]] };
+    this.cam =
+      border === 'Left' || border === 'Right'
+        ? { ...c, center: [pos[0], 0, c.center[2]] }
+        : { ...c, center: [c.center[0], 0, pos[2]] };
   }
 
   // ---- input ---------------------------------------------------------
@@ -723,7 +808,10 @@ export class ExteriorAutomapWindow {
    *  dungeon window's `_noteKey` verbatim. */
   _noteKey(code, e, down) {
     const nc = normalizeCode(code, e);
-    if (nc) { if (down) this._heldCodes.add(nc); else this._heldCodes.delete(nc); }
+    if (nc) {
+      if (down) this._heldCodes.add(nc);
+      else this._heldCodes.delete(nc);
+    }
     this._keyModifiers = keyboardModifiers(e, this._heldCodes);
   }
 
@@ -749,12 +837,18 @@ export class ExteriorAutomapWindow {
     }
     // ":587 - GetBackButtonDown()" is the same statement as the toggle
     // key, so Escape takes the same door.
-    if (normalizeCode(code, e) === 'Escape') { this.isCloseWindowDeferred = true; return; }
+    if (normalizeCode(code, e) === 'Escape') {
+      this.isCloseWindowDeferred = true;
+      return;
+    }
     const dt = this._dt || 1 / 60;
     for (const button of EXT_HOTKEYS_DOWN) {
       if (!this._hotkeyHit(button, code, e)) continue;
       const bg = EXT_BACKGROUND_HOTKEYS[button];
-      if (bg) { this.background = bg; return; }
+      if (bg) {
+        this.background = bg;
+        return;
+      }
       this.runVerb(EXT_HOTKEY_VERBS[button], dt);
       return;
     }
@@ -770,7 +864,7 @@ export class ExteriorAutomapWindow {
     const isToggle = (this.automapBinding && nc === this.automapBinding) || nc === 'Escape';
     if (isToggle && this.isCloseWindowDeferred && !this.done) {
       this.isCloseWindowDeferred = false;
-      this.runVerb('ActionExit', this._dt || 1 / 60);   // CloseWindow() (:592-594), and it plays no sound
+      this.runVerb('ActionExit', this._dt || 1 / 60); // CloseWindow() (:592-594), and it plays no sound
     }
   }
 
@@ -825,7 +919,9 @@ export class ExteriorAutomapWindow {
 
   /** townTalk's click seam still exists; a native window that has a
    *  pointer seam takes the press through it so the two never disagree. */
-  click(nx, ny, isRight = false) { this.pointer('down', nx, ny, isRight ? 2 : 0); }
+  click(nx, ny, isRight = false) {
+    this.pointer('down', nx, ny, isRight ? 2 : 0);
+  }
 
   /** THE SENTINEL GUARD, and it is the dungeon window's law verbatim
    *  (automapWindow.js's own `hover`). townTalk's hover seam delivers
@@ -838,15 +934,25 @@ export class ExteriorAutomapWindow {
    *  tracking a real delta. Freezing the drag while the pointer is out
    *  and resuming from the re-entry point is the closest a
    *  clamped-coordinate seam gets to that. */
-  hover(nx, ny) { if (nx >= 0 && ny >= 0) this.pointer('move', nx, ny, 0); }
+  hover(nx, ny) {
+    if (nx >= 0 && ny >= 0) this.pointer('move', nx, ny, 0);
+  }
 
   /** PanelAutomap_OnMouseScrollUp/Down (:1319-1327): ActionZoom at the
    *  wheel speed, and ONLY over the render panel - the exterior grid
    *  button registers no scroll handler at all. */
   wheel(dir) {
     const v = this._hoverAt ?? null;
-    if (v && !(v[0] >= CHROME_RECTS.panel.x && v[0] < CHROME_RECTS.panel.x + CHROME_RECTS.panel.w
-      && v[1] >= CHROME_RECTS.panel.y && v[1] < CHROME_RECTS.panel.y + CHROME_RECTS.panel.h)) return;
+    if (
+      v &&
+      !(
+        v[0] >= CHROME_RECTS.panel.x &&
+        v[0] < CHROME_RECTS.panel.x + CHROME_RECTS.panel.w &&
+        v[1] >= CHROME_RECTS.panel.y &&
+        v[1] < CHROME_RECTS.panel.y + CHROME_RECTS.panel.h
+      )
+    )
+      return;
     this.cam = exteriorZoom(this.cam, dir < 0 ? -EXT_ZOOM_SPEED_MOUSE_WHEEL : +EXT_ZOOM_SPEED_MOUSE_WHEEL);
   }
 
@@ -866,8 +972,8 @@ export class ExteriorAutomapWindow {
     const { verbs, tooltip } = this.chrome.tick(dt);
     this._tooltipRect = tooltip;
     for (const v of verbs) this.runVerb(v, dt);
-    _zoomLevel = this.cam.orthoSize;   // OnPop stores the level (:551)
-    _yawDeg = this.cam.yawDeg;         // ...and the automap script stores the rotation
+    _zoomLevel = this.cam.orthoSize; // OnPop stores the level (:551)
+    _yawDeg = this.cam.yawDeg; // ...and the automap script stores the rotation
   }
 
   /**
@@ -890,14 +996,25 @@ export class ExteriorAutomapWindow {
    * zero frames. Releasing every flag when the map comes back is the
    * routed seam's equivalent, and it covers any future push as well.
    */
-  onReturn() { this.chrome.releaseAll(); }
+  onReturn() {
+    this.chrome.releaseAll();
+  }
 
   dispose() {
     const r = this._renderer;
     if (!r) return;
-    if (this._tex) { r.releaseTexture('amap', this._tex.key); this._tex = null; }
-    if (this._stamp) { r.releaseTexture('amap', this._stamp.key); this._stamp = null; }
-    if (this._disc) { r.releaseTexture('amap', this._disc.key); this._disc = null; }
+    if (this._tex) {
+      r.releaseTexture('amap', this._tex.key);
+      this._tex = null;
+    }
+    if (this._stamp) {
+      r.releaseTexture('amap', this._stamp.key);
+      this._stamp = null;
+    }
+    if (this._disc) {
+      r.releaseTexture('amap', this._disc.key);
+      this._disc = null;
+    }
   }
 
   // ---- the composition ------------------------------------------------
@@ -906,8 +1023,9 @@ export class ExteriorAutomapWindow {
     if (this._tex?.mode === this.mode) return;
     // EM7: one read per quarter, off the one table - a fifth quarter
     // added at the home would be drawn here without this line moving.
-    const colours = Object.fromEntries(QUARTERS.map((q) => [q,
-      hexColor32(getString('Map', CLASSIC_SETTING[q]), CLASSIC_ARGB[q])]));
+    const colours = Object.fromEntries(
+      QUARTERS.map((q) => [q, hexColor32(getString('Map', CLASSIC_SETTING[q]), CLASSIC_ARGB[q])]),
+    );
     const bmp = buildExteriorLayout(this.deps.gridW, this.deps.gridH, this.deps.blocks, this.mode, colours);
     if (this._tex) renderer.releaseTexture('amap', this._tex.key);
     const key = `ext-${++_texVer}`;
@@ -926,7 +1044,8 @@ export class ExteriorAutomapWindow {
     const bmp = rasterizeTopDown(mesh, STAMP_PX);
     const key = `ext-stamp-${++_texVer}`;
     this._stamp = {
-      key, tex: renderer.uploadTexture('amap', key, bmp),
+      key,
+      tex: renderer.uploadTexture('amap', key, bmp),
       // the whole bitmap covers this many world units at scale 1
       units: bmp.span > 0 ? bmp.width * bmp.worldPerPx : 0,
     };
@@ -947,12 +1066,12 @@ export class ExteriorAutomapWindow {
     this._ensureTexture(renderer);
     this._ensureStamp(renderer);
     const m = nativeMetrics(canvas);
-    this._scale = m.s;   // the letterbox factor the two drags spend
+    this._scale = m.s; // the letterbox factor the two drags spend
     // ScreenDimColor is Color.clear (nativePanel records why) - the
     // letterbox is painted, nothing is dimmed
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, SCREEN_DIM);
     if (_art) drawImg(renderer, _art.amap, m, 0, 0, NATIVE_W, NATIVE_H);
-    else drawRect(renderer, m, 0, 0, NATIVE_W, NATIVE_H, [0.04, 0.03, 0.02, 1]);   // the art-less fallback shell
+    else drawRect(renderer, m, 0, 0, NATIVE_W, NATIVE_H, [0.04, 0.03, 0.02, 1]); // the art-less fallback shell
     const rect = this.panelRect(m);
     const bg = BACKGROUNDS[this.background];
     if (bg) renderer.drawScreenQuad(null, rect, undefined, bg);
@@ -977,34 +1096,53 @@ export class ExteriorAutomapWindow {
 
       // 1. the circle (y = -20)
       const cd = MARKER_CIRCLE_UNITS * k;
-      renderer.drawScreenQuad(this._disc.tex,
-        { x: mx - cd / 2, y: my - cd / 2, w: cd, h: cd }, undefined, MARKER_CIRCLE_RGBA);
+      renderer.drawScreenQuad(
+        this._disc.tex,
+        { x: mx - cd / 2, y: my - cd / 2, w: cd, h: cd },
+        undefined,
+        MARKER_CIRCLE_RGBA,
+      );
 
       // 2. the dark stamp (y = -10), offset by -normalize(forward)*0.8
       if (stampUnits > 0) {
-        const fx = Math.sin(yaw), fz = Math.cos(yaw);   // the player's forward, port convention
-        const [sx, sy] = toPanelScreen(this.cam, rect,
-          marker[0] - fx * MARKER_STAMP_BIAS, marker[2] - fz * MARKER_STAMP_BIAS);
+        const fx = Math.sin(yaw),
+          fz = Math.cos(yaw); // the player's forward, port convention
+        const [sx, sy] = toPanelScreen(
+          this.cam,
+          rect,
+          marker[0] - fx * MARKER_STAMP_BIAS,
+          marker[2] - fz * MARKER_STAMP_BIAS,
+        );
         const sd = stampUnits * MARKER_STAMP_SCALE * k;
-        renderer.drawScreenQuad(this._stamp.tex,
-          { x: sx - sd / 2, y: sy - sd / 2, w: sd, h: sd }, undefined, MARKER_STAMP_RGBA,
-          { rotate: { rad, px: sx, py: sy } });
+        renderer.drawScreenQuad(
+          this._stamp.tex,
+          { x: sx - sd / 2, y: sy - sd / 2, w: sd, h: sd },
+          undefined,
+          MARKER_STAMP_RGBA,
+          { rotate: { rad, px: sx, py: sy } },
+        );
       }
 
       // 3. the layout quad (y = +0.01) - a WORLD-axis-aligned quad, so
       // on screen it is the map's own turn about its centre
       const [lx, ly] = toPanelScreen(this.cam, rect, 0, 0);
-      const lw = this._tex.w * k, lh = this._tex.h * k;
-      renderer.drawScreenQuad(this._tex.tex, { x: lx - lw / 2, y: ly - lh / 2, w: lw, h: lh }, undefined, undefined,
-        { rotate: { rad: layoutQuadRotation(this.cam), px: lx, py: ly } });
+      const lw = this._tex.w * k,
+        lh = this._tex.h * k;
+      renderer.drawScreenQuad(this._tex.tex, { x: lx - lw / 2, y: ly - lh / 2, w: lw, h: lh }, undefined, undefined, {
+        rotate: { rad: layoutQuadRotation(this.cam), px: lx, py: ly },
+      });
 
       // 4. the arrow (y = +0.1), unlit texture - the port's stamp is a
       // silhouette, so it draws WHITE rather than mesh 99900's skin
       if (stampUnits > 0) {
         const ad = stampUnits * MARKER_ARROW_SCALE * k;
-        renderer.drawScreenQuad(this._stamp.tex,
-          { x: mx - ad / 2, y: my - ad / 2, w: ad, h: ad }, undefined, [1, 1, 1, 1],
-          { rotate: { rad, px: mx, py: my } });
+        renderer.drawScreenQuad(
+          this._stamp.tex,
+          { x: mx - ad / 2, y: my - ad / 2, w: ad, h: ad },
+          undefined,
+          [1, 1, 1, 1],
+          { rotate: { rad, px: mx, py: my } },
+        );
       }
     });
   }
@@ -1028,21 +1166,26 @@ export class ExteriorAutomapWindow {
   _drawNameplates(renderer, rect, font, m) {
     if (!font) return;
     const plates = this.buildPlates(font, m);
-    if (!plates.length) { this._hoverPlate = null; return; }
+    if (!plates.length) {
+      this._hoverPlate = null;
+      return;
+    }
     const key = `${this.cam.center[0]},${this.cam.center[2]},${this.cam.orthoSize},${this.cam.yawDeg},${plates.length}`;
     if (this._platesKey !== key) {
       this._platesKey = key;
       this._plates = resolveNameplates(plates);
     }
-    renderer.screenScissor(rect, () => {   // RectRestrictedRenderArea (:868-869)
+    renderer.screenScissor(rect, () => {
+      // RectRestrictedRenderArea (:868-869)
       this._hoverPlate = null;
       const hv = this._hoverAt ? [m.ox + this._hoverAt[0] * m.s, m.oy + this._hoverAt[1] * m.s] : null;
       for (let i = 0; i < plates.length; i++) {
-        const p = plates[i], r = this._plates[i] ?? { offY: 0, replaced: false };
+        const p = plates[i],
+          r = this._plates[i] ?? { offY: 0, replaced: false };
         const y = p.y + r.offY;
         drawText(renderer, font, r.replaced ? STAR_PLATE : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);
         if (hv && hv[0] >= p.x && hv[0] < p.x + p.w && hv[1] >= y - p.h / 2 && hv[1] < y + p.h / 2) {
-          this._hoverPlate = p;   // ToolTipDelay 0 (:874) - it shows at once
+          this._hoverPlate = p; // ToolTipDelay 0 (:874) - it shows at once
         }
       }
     });
@@ -1087,7 +1230,7 @@ export class ExteriorAutomapWindow {
       let custom = '';
       if (rec) {
         if (!b.isResidence || rec.isOverrideName) {
-          name = shownBuildingName(rec, byKey.get(b.buildingKey)?.name) || byKey.get(b.buildingKey)?.name || '';   // EMPIRE-BANK: a bank's name now
+          name = shownBuildingName(rec, byKey.get(b.buildingKey)?.name) || byKey.get(b.buildingKey)?.name || ''; // EMPIRE-BANK: a bank's name now
           custom = rec.customUserDisplayName || '';
         } else if (b.questName) {
           // :705-707 - `if (!string.IsNullOrEmpty(buildingQuestName))`,
@@ -1109,8 +1252,16 @@ export class ExteriorAutomapWindow {
       // the rename falls back to. English is the identity.
       const text = processGrammar(custom || name);
       out.push({
-        x: sx, y: sy, w: measureText(font.fnt, text) * scale, h: lineH,
-        text, name, tip: processGrammar(name), scale, buildingKey: b.buildingKey, isResidence: !!b.isResidence,
+        x: sx,
+        y: sy,
+        w: measureText(font.fnt, text) * scale,
+        h: lineH,
+        text,
+        name,
+        tip: processGrammar(name),
+        scale,
+        buildingKey: b.buildingKey,
+        isResidence: !!b.isResidence,
       });
     }
     // ARENA-MAP: a block's LANDMARK - a named place that is no building of the list (the Arena, world/arena/arenaCity.js
@@ -1122,7 +1273,18 @@ export class ExteriorAutomapWindow {
         if (!lm?.name) continue;
         const anchor = nameplateAnchor(bl.x, bl.y, lm.position);
         const [sx, sy] = toPanelScreen(this.cam, rect, anchor[0] - this.layoutW / 2, anchor[1] - this.layoutH / 2);
-        out.push({ x: sx, y: sy, w: measureText(font.fnt, lm.name) * scale, h: lineH, text: lm.name, name: lm.name, scale, buildingKey: 0, isResidence: false, landmark: true });
+        out.push({
+          x: sx,
+          y: sy,
+          w: measureText(font.fnt, lm.name) * scale,
+          h: lineH,
+          text: lm.name,
+          name: lm.name,
+          scale,
+          buildingKey: 0,
+          isResidence: false,
+          landmark: true,
+        });
       }
     }
     return out;
@@ -1147,7 +1309,7 @@ export class ExteriorAutomapWindow {
    */
   _renameAt(nx, ny) {
     const p = this._hoverPlate;
-    if (!p || p.isResidence || p.landmark) return;   // ARENA-MAP: a landmark is no building to rename
+    if (!p || p.isResidence || p.landmark) return; // ARENA-MAP: a landmark is no building to rename
     this.deps.rename?.(p.buildingKey, p.text ?? p.name);
   }
 
@@ -1164,8 +1326,12 @@ export class ExteriorAutomapWindow {
       for (const name of QUARTERS.filter((q) => CAPTION_SWATCHES[q])) {
         const r = CAPTION_SWATCHES[name];
         const c = hexColor32(getString('Map', CLASSIC_SETTING[name]), CLASSIC_ARGB[name]);
-        drawRect(renderer, m, CAPTION_STRIP.x + r.x, CAPTION_STRIP.y + r.y, r.w, r.h,
-          [(c & 0xff) / 255, ((c >>> 8) & 0xff) / 255, ((c >>> 16) & 0xff) / 255, 1]);
+        drawRect(renderer, m, CAPTION_STRIP.x + r.x, CAPTION_STRIP.y + r.y, r.w, r.h, [
+          (c & 0xff) / 255,
+          ((c >>> 8) & 0xff) / 255,
+          ((c >>> 16) & 0xff) / 255,
+          1,
+        ]);
       }
     }
     const art = this.deps.compassArt ?? null;
@@ -1180,13 +1346,20 @@ export class ExteriorAutomapWindow {
       // COMPBOX.IMG at 69x17). rectDummyPanelCompass' own 76x17 (:433)
       // is the click/tooltip target only and never reaches the compass.
       const r = CHROME_RECTS.compass;
-      drawCompassStrip(renderer, art, m.ox + r.x * m.s, m.oy + r.y * m.s, m.s,
-        compassHeading01(this.cam.yawDeg));
+      drawCompassStrip(renderer, art, m.ox + r.x * m.s, m.oy + r.y * m.s, m.s, compassHeading01(this.cam.yawDeg));
     }
     if (!font) return;
     if (!_art) {
       // the keyed fallback shell: the location name and the controls
-      drawText(renderer, font, `${this.deps.locationName ?? ''} - ${this.mode} view`, m.ox + 4 * s, m.oy + 191 * s, s, [0.9, 0.9, 0.75, 1]);
+      drawText(
+        renderer,
+        font,
+        `${this.deps.locationName ?? ''} - ${this.mode} view`,
+        m.ox + 4 * s,
+        m.oy + 191 * s,
+        s,
+        [0.9, 0.9, 0.75, 1],
+      );
     }
     // THE EIGHT BUTTON TOOLTIPS + THE COMPASS PANEL'S
     // (UpdateButtonToolTipsText, :230-239), through the block
@@ -1229,8 +1402,9 @@ export class ExteriorAutomapWindow {
       // L10N3g: the plate's ToolTipText, already through the grammar
       // (:878) - and the tooltip runs it once more as it draws (ToolTip
       // .cs:215), as DFU does.
-      drawToolTipBox(renderer, m, font, t.tip ?? t.name, this._hoverAt[0], this._hoverAt[1],
-        { ignoreEnableSetting: true });
+      drawToolTipBox(renderer, m, font, t.tip ?? t.name, this._hoverAt[0], this._hoverAt[1], {
+        ignoreEnableSetting: true,
+      });
     }
   }
 }
@@ -1255,22 +1429,26 @@ export class ExteriorAutomapWindow {
 export function registerExteriorAutomapConsoleCommands(deps = {}) {
   const inside = () => !!deps.isPlayerInside?.();
   try {
-    registerCommand('map_revealbuildings',
+    registerCommand(
+      'map_revealbuildings',
       'Reveals undiscovered buildings on exterior automap (temporary)',
       'map_revealbuildings',
       () => {
         if (inside()) return 'this command only has an effect when outside and at a location';
         _revealUndiscoveredBuildings = true;
         return 'undiscovered buildings have been revealed (temporary) on the exterior automap';
-      });
-    registerCommand('map_hidebuildings',
+      },
+    );
+    registerCommand(
+      'map_hidebuildings',
       'Hides undiscovered buildings on exterior automap',
       'map_hidebuildings',
       () => {
         if (inside()) return 'this command only has an effect when outside and at a location';
         _revealUndiscoveredBuildings = false;
         return 'undiscovered buildings have been hidden on the exterior automap again';
-      });
+      },
+    );
   } catch (ex) {
     console.error(`Error Registering Exterior Automap Console commands: ${ex?.message ?? ex}`);
   }

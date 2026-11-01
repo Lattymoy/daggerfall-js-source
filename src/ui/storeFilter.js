@@ -28,7 +28,7 @@
 import { PACK_PAGES, pageOf } from './packPages.js';
 import { isMaterialItem } from '../systems/materialsBag.js';
 import { RARITIES, RARITY_ORDER, rarityOf } from '../systems/loot/lootRarity.js';
-import { materialName, metalLabel, itemSaysMaterial } from '../systems/item/itemInfo.js';   // MAT-FILTER: the metal the card already says
+import { materialName, metalLabel, itemSaysMaterial } from '../systems/item/itemInfo.js'; // MAT-FILTER: the metal the card already says
 import { t } from '../systems/textManager.js';
 
 /** The remote kinds (enhancedInventory.js remoteModel) that carry the bar: the player's own stores, and a container. */
@@ -41,14 +41,19 @@ const IDS = new Set(STORE_FILTERS.map(([id]) => id));
 export const freshStoreFilter = (kind = null) => ({ kind, cat: 'all', rarity: 'all', material: 'all', query: '' });
 
 /** Whether an item answers a category. Total over the ids; an id the list does not have answers everything. */
-export const storeFilterAccepts = (it, cat) => (!IDS.has(cat) || cat === 'all' ? true : cat === 'materials' ? isMaterialItem(it) : pageOf(it) === cat);
+export const storeFilterAccepts = (it, cat) =>
+  !IDS.has(cat) || cat === 'all' ? true : cat === 'materials' ? isMaterialItem(it) : pageOf(it) === cat;
 
 const RARITY_IDS = new Set(RARITY_ORDER);
 /** Whether an item answers a rarity. An id the ladder does not have answers everything, as an unknown page does. */
 export const storeRarityAccepts = (it, rarity) => !RARITY_IDS.has(rarity) || rarityOf(it) === rarity;
 
 /** The search's own form of a typed text: trimmed, lower-cased, at most 40 characters. */
-export const storeQuery = (q) => String(q ?? '').trim().toLowerCase().slice(0, 40);
+export const storeQuery = (q) =>
+  String(q ?? '')
+    .trim()
+    .toLowerCase()
+    .slice(0, 40);
 
 /**
  * The items a filter shows, in the store's own order. `nameOf` is the row's name (enhancedInventory.js itemLine), so
@@ -57,9 +62,22 @@ export const storeQuery = (q) => String(q ?? '').trim().toLowerCase().slice(0, 4
  * @param {{ cat?: string, rarity?: string, material?: string, query?: string }} filter
  * @param {(it: any) => string} nameOf
  */
-export function filterStore(items, { cat = 'all', rarity = 'all', material = 'all', query = '' } = {}, nameOf = (it) => it?.name ?? '') {
+export function filterStore(
+  items,
+  { cat = 'all', rarity = 'all', material = 'all', query = '' } = {},
+  nameOf = (it) => it?.name ?? '',
+) {
   const q = storeQuery(query);
-  return items.filter((it) => storeFilterAccepts(it, cat) && storeRarityAccepts(it, rarity) && storeMaterialAccepts(it, material) && (!q || String(nameOf(it) ?? '').toLowerCase().includes(q)));
+  return items.filter(
+    (it) =>
+      storeFilterAccepts(it, cat) &&
+      storeRarityAccepts(it, rarity) &&
+      storeMaterialAccepts(it, material) &&
+      (!q ||
+        String(nameOf(it) ?? '')
+          .toLowerCase()
+          .includes(q)),
+  );
 }
 
 /**
@@ -101,7 +119,20 @@ export function storeRarityOptions(items, chosen = 'all') {
 
 /** The metals a piece of armour or a weapon is made of, in the order the menu lists them. Leather and chain are
  *  armour's own; the ten after them are the plate and weapon metals (itemInfo.js MATERIAL_NAMES). */
-const MATERIAL_ORDER = Object.freeze(['Leather', 'Chain', 'Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']);
+const MATERIAL_ORDER = Object.freeze([
+  'Leather',
+  'Chain',
+  'Iron',
+  'Steel',
+  'Silver',
+  'Elven',
+  'Dwarven',
+  'Mithril',
+  'Adamantium',
+  'Ebony',
+  'Orcish',
+  'Daedric',
+]);
 const MATERIAL_IDS = new Set(MATERIAL_ORDER);
 /** The metal a row is filtered by, or '' when its card says none: not armour, not a weapon, an arrow, or a metal the
  *  card withholds (an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay) -

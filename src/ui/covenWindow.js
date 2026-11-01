@@ -35,13 +35,13 @@
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
-import { audio } from '../systems/audio.js';   // F141: the ButtonClick roster
+import { audio } from '../systems/audio.js'; // F141: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, latchBoxRows } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
-import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
-import { isServiceBox } from '../systems/guild/guildServiceFlow.js';   // STATION-ROWS: a box is rows that are a list
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { firstHotkey } from '../systems/dialogShortcuts.js'; // A8: the DaggerfallShortcut table
+import { isServiceBox } from '../systems/guild/guildServiceFlow.js'; // STATION-ROWS: a box is rows that are a list
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The window's DaggerfallShortcut.Buttons, in ctor ADD order
  *  (:82-103) - which is the order Panel.ProcessHotkeySequences asks.
@@ -50,12 +50,11 @@ import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first tou
  *  :207-220, :227-240); the port's windows are handed KeyDown only, so
  *  the sound and the action land together - the same one-frame
  *  collapse dialogShortcuts.hotkeyHit already records. */
-export const COVEN_BUTTONS = Object.freeze([
-  'WitchesTalk', 'WitchesDaedraSummon', 'WitchesQuest', 'WitchesExit',
-]);
+export const COVEN_BUTTONS = Object.freeze(['WitchesTalk', 'WitchesDaedraSummon', 'WitchesQuest', 'WitchesExit']);
 
 /** mainPanel.Size (:79) - and the size of the IMG. */
-export const COVEN_PANEL_W = 130, COVEN_PANEL_H = 51;
+export const COVEN_PANEL_W = 130,
+  COVEN_PANEL_H = 51;
 /** Center/Middle on the 320x200 native panel (:76-77). */
 export const COVEN_PANEL_X = Math.round((320 - COVEN_PANEL_W) / 2);
 export const COVEN_PANEL_Y = Math.round((200 - COVEN_PANEL_H) / 2);
@@ -70,17 +69,21 @@ export const COVEN_RECTS = Object.freeze({
 
 let _art = null;
 /** BOX1: the test seam every other art-gated window carries. */
-export function _setCovenArtForTests(art) { _art = art; }
+export function _setCovenArtForTests(art) {
+  _art = art;
+}
 export async function preloadCovenArt(deps) {
   if (_art) return;
   try {
     _art = { base: await loadImg(deps, 'DAED00I0.IMG') };
-  } catch { console.warn('[coven] DAED00I0 unavailable; the coven popup stays text'); }
+  } catch {
+    console.warn('[coven] DAED00I0 unavailable; the coven popup stays text');
+  }
 }
 export const covenArtLoaded = () => !!_art;
 
-const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + COVEN_PANEL_X && y >= ry + COVEN_PANEL_Y
-  && x < rx + COVEN_PANEL_X + rw && y < ry + COVEN_PANEL_Y + rh;
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + COVEN_PANEL_X && y >= ry + COVEN_PANEL_Y && x < rx + COVEN_PANEL_X + rw && y < ry + COVEN_PANEL_Y + rh;
 
 /** hooks:
  *   rows(textId) -> [{text,center}] (TEXT.RSC through the host)
@@ -91,14 +94,16 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + COVEN_PANEL_X && y >= ry + 
  */
 export class CovenWindow {
   constructor(hooks) {
-    noteFirstUse('guilds');   // TUT1: a coven is a guild's door
+    noteFirstUse('guilds'); // TUT1: a coven is a guild's door
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
+    this.isChoiceWindow = true; // raw codes through the overlay seam
     this.boxes = [];
   }
 
-  get top() { return this.boxes.length ? this.boxes[0] : null; }
+  get top() {
+    return this.boxes.length ? this.boxes[0] : null;
+  }
 
   _dismissTop(button = null) {
     const b = this.boxes.shift();
@@ -117,11 +122,18 @@ export class CovenWindow {
     b.onDismiss?.();
   }
 
-  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    noticeRelease(this);
+    this.hooks.onClose?.();
+  }
 
   _summon() {
     const r = this.hooks.onSummon?.();
-    if (isServiceBox(r)) { this.boxes.push({ ...r }); return; }   // STATION-ROWS
+    if (isServiceBox(r)) {
+      this.boxes.push({ ...r });
+      return;
+    } // STATION-ROWS
     if (r?.dispatched || r === null) this._close();
   }
 
@@ -145,15 +157,32 @@ export class CovenWindow {
       return;
     }
     // Escape/Enter are the port host's close keys, not DFU buttons.
-    if (code === 'Escape' || code === 'Enter') { this._close(); return; }
+    if (code === 'Escape' || code === 'Enter') {
+      this._close();
+      return;
+    }
     // D1: the four Hotkeys, from the table, in DFU's button ADD order.
     // Each fires the SAME handler its click does, sound and all.
     switch (firstHotkey(COVEN_BUTTONS, code, e)) {
-      case 'WitchesTalk': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); this.hooks.onTalk?.(); return;
-      case 'WitchesDaedraSummon': audio.playOneShot(SOUND.ButtonClick, 1); this._summon(); return;
-      case 'WitchesQuest': audio.playOneShot(SOUND.ButtonClick, 1); this._quest(); return;
-      case 'WitchesExit': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return;
-      default: break;   // DFU hangs no other accelerator on this window
+      case 'WitchesTalk':
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        this._close();
+        this.hooks.onTalk?.();
+        return;
+      case 'WitchesDaedraSummon':
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        this._summon();
+        return;
+      case 'WitchesQuest':
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        this._quest();
+        return;
+      case 'WitchesExit':
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        this._close();
+        return;
+      default:
+        break; // DFU hangs no other accelerator on this window
     }
   }
 
@@ -171,28 +200,50 @@ export class CovenWindow {
     // Talk (:166), Summon (:184), Quest (:203), Exit (:222).
     // TALK: CloseWindow THEN TalkToStaticNPC (:167-168) - the popup
     // yields to the conversation, so the close comes first.
-    if (inRect(COVEN_RECTS.talk, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); this.hooks.onTalk?.(); return true; }
-    if (inRect(COVEN_RECTS.summon, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._summon(); return true; }
-    if (inRect(COVEN_RECTS.quest, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._quest(); return true; }
-    if (inRect(COVEN_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    if (inRect(COVEN_RECTS.talk, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      this.hooks.onTalk?.();
+      return true;
+    }
+    if (inRect(COVEN_RECTS.summon, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._summon();
+      return true;
+    }
+    if (inRect(COVEN_RECTS.quest, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._quest();
+      return true;
+    }
+    if (inRect(COVEN_RECTS.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
     return false;
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._close(); return; }
+    if (!_art) {
+      this._close();
+      return;
+    }
     const m = nativeMetrics(canvas);
     // ParentPanel.BackgroundColor = Color.clear (:62): the room stays
     // visible behind the panel (the AUDIT 26 F136 law).
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, COVEN_PANEL_X, COVEN_PANEL_Y);
     const top = this.top;
-    if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2
+    if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) {
+      this._box = null;
+      return;
+    } // ENH-NOTICE2
     if (top) {
       const buttons = top.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
-      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);   // BOX1: a textId box reads its (random-variant) record ONCE
+      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons); // BOX1: a textId box reads its (random-variant) record ONCE
       if (!drawMessageBox(renderer, m, font, this._box)) {
-        (this._box.rows ?? []).forEach((r, i) =>
-          shadowText(renderer, font, r.text, m, 20, 20 + i * this._box.rowH));
+        (this._box.rows ?? []).forEach((r, i) => shadowText(renderer, font, r.text, m, 20, 20 + i * this._box.rowH));
       }
     } else this._box = null;
   }

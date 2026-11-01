@@ -29,7 +29,7 @@
 // Not a DFU member: DFU's items carry no theft and its court takes nothing; DaggerfallTradeWindow's Sell discards every
 // sold piece (ConfirmTrade's `remoteItems.Clear()`, :1051). This module imports the text core alone (a leaf of the
 // item modules' graph: systems/textManager.js imports nothing).
-import { t } from './textManager.js';   // L10N4: its two lines are the port's own words
+import { t } from './textManager.js'; // L10N4: its two lines are the port's own words
 
 /** The field. */
 export const STOLEN_MARK = 'stolen';
@@ -59,7 +59,11 @@ export function clearStolen(/** @type {any} */ item) {
  *  minted off it) is marked when its SOURCE is the owner's, and joins the keeping - a split off the owner's stack is the
  *  owner's piece out of their keeping (the basket counts it, where a diff of the list saw its stack still standing). The
  *  player's own piece lying there, put in this window, is no theft. */
-export function takenFromKeeping(/** @type {Set<any>|null|undefined} */ keeping, /** @type {any} */ source, /** @type {any} */ moved) {
+export function takenFromKeeping(
+  /** @type {Set<any>|null|undefined} */ keeping,
+  /** @type {any} */ source,
+  /** @type {any} */ moved,
+) {
   if (!(keeping instanceof Set) || !keeping.has(source)) return false;
   markStolen([moved]);
   keeping.add(moved);
@@ -69,7 +73,11 @@ export function takenFromKeeping(/** @type {Set<any>|null|undefined} */ keeping,
 /** A put into a keeping: the OWNER'S piece (its source in the keeping - taken this window, or split off one) is theirs
  *  again, its mark cleared before it lands; any other piece keeps what it was - the player's own stays theirs to take
  *  back clean, and a piece stolen elsewhere is not laundered by a cupboard. Answers whether it was the owner's. */
-export function returnedToKeeping(/** @type {Set<any>|null|undefined} */ keeping, /** @type {any} */ source, /** @type {any} */ moved) {
+export function returnedToKeeping(
+  /** @type {Set<any>|null|undefined} */ keeping,
+  /** @type {any} */ source,
+  /** @type {any} */ moved,
+) {
   if (!(keeping instanceof Set) || !keeping.has(source)) return false;
   clearStolen(moved);
   return true;
@@ -78,7 +86,12 @@ export function returnedToKeeping(/** @type {Set<any>|null|undefined} */ keeping
 /** ...and where the owner's piece came to rest (inventory.js addItem's answer): the record holding it is in their keeping
  *  (a split's half put back, or a stack it merged into, joins it - taken again, it is marked again), and a moved record
  *  that merged leaves it, so the basket counts nothing that is back. Answers whether it was the owner's. */
-export function landedInKeeping(/** @type {Set<any>|null|undefined} */ keeping, /** @type {any} */ source, /** @type {any} */ moved, /** @type {any} */ held) {
+export function landedInKeeping(
+  /** @type {Set<any>|null|undefined} */ keeping,
+  /** @type {any} */ source,
+  /** @type {any} */ moved,
+  /** @type {any} */ held,
+) {
   if (!(keeping instanceof Set) || !keeping.has(source)) return false;
   if (held !== moved) keeping.delete(moved);
   keeping.add(held);
@@ -89,18 +102,22 @@ export function landedInKeeping(/** @type {Set<any>|null|undefined} */ keeping, 
  *  counter sat in the shop's shelf and could be stolen straight back and sold again. `shelfItems` is left untouched;
  *  the shelf keeps its own stock. Answers whether it was shelved: never. */
 export function landSold(/** @type {any[]} */ shelfItems, /** @type {any} */ item) {
-  void shelfItems; void item;
+  void shelfItems;
+  void item;
   return false;
 }
 
 /** How many pieces a list holds - a stack counts its own. */
-export const piecesOf = (/** @type {any[]} */ items) => (items ?? []).reduce((n, it) => n + (Number.isInteger(it?.stackCount) && it.stackCount > 0 ? it.stackCount : 1), 0);
+export const piecesOf = (/** @type {any[]} */ items) =>
+  (items ?? []).reduce((n, it) => n + (Number.isInteger(it?.stackCount) && it.stackCount > 0 ? it.stackCount : 1), 0);
 
 /** The court's word for what it took. */
-export const confiscatedText = (/** @type {number} */ n) => t('stolen.taken', 'The guards take the stolen goods you carried ({n, plural, one {# item} other {# items}}).', { n });
+export const confiscatedText = (/** @type {number} */ n) =>
+  t('stolen.taken', 'The guards take the stolen goods you carried ({n, plural, one {# item} other {# items}}).', { n });
 
 /** The piece's card line (the enhanced pack's, beside the lock's and the junk's). */
-export const stolenLine = () => t('stolen.card', 'Stolen. Merchants buy it but never sell it on, and the court takes it if you are convicted.');
+export const stolenLine = () =>
+  t('stolen.card', 'Stolen. Merchants buy it but never sell it on, and the court takes it if you are convicted.');
 
 /** RPT1026-LEDGERLAW (a private report: a stolen piece another player sold looked like any other): the word a piece
  *  offered to another player carries in its row - the market's Goods (ui/marketTab.js) and a home's trader

@@ -175,7 +175,7 @@ test('WILD-INSURE THE SERVICE, WRITTEN (server-account/src/wildInsure.js): a pol
   assert.equal(WILD_INSURE_MAX, 32);
 });
 
-test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall) - PIN MOVED (PVP-REWARD, the owner: "they only get a piece that isnt insured", "random policy gold"): a policy in force keeps its piece - the roll lands on the one worn piece no policy keeps, the bag drops nothing, and no policy is spent; every worn piece insured, the killer is paid one policy\'s gold, that policy spent and the piece kept, escrowed for his collect - coin where it fits his weight, a letter of credit where it would not, never hers to take back; a room that signs no collect pays none and spends none; a policy written too late for the fall keeps nothing (mutants: the policies unread; spent unread; the settle unread; spent outside the batch; the roll on an insured piece; the gold paid as coin past the weight)', async () => {
+test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall) - PIN MOVED (PVP-REWARD): a policy in force keeps its piece - the roll lands on the one worn piece no policy keeps, the bag drops nothing, and no policy is spent; every worn piece insured, the killer is paid one policy\'s gold, that policy spent and the piece kept, escrowed for his collect - coin where it fits his weight, a letter of credit where it would not, never hers to take back; a room that signs no collect pays none and spends none; a policy written too late for the fall keeps nothing (mutants: the policies unread; spent unread; the settle unread; spent outside the batch; the roll on an insured piece; the gold paid as coin past the weight)', async () => {
   const s = await stood();
   const sk = ledgerKeyOf(s.sword), ck = ledgerKeyOf(s.claymore);
   assert.equal((await s.insure([sk, ck])).status, 200);
@@ -200,7 +200,7 @@ test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall) - PI
   assert.deepEqual([pg.body.wi, pg.body.items[0].group, pg.body.items[0].stackCount, pg.body.insured, pg.body.took, pg.body.escrow], [0, 'Currency', premium, [gk], [], undefined], 'the gold first, his alone; the sword\'s policy spent; nothing of hers taken, nothing for her to watch');
   assert.ok(byKey(g.record().items, gk) && isEquipped(byKey(g.record().items, gk)), 'the sword still worn');
   assert.equal(state(g, gk), 'spent');
-  assert.ok(rd('server-account/src/wild.js').includes("...spent.map((k) => ctx.db.prepare(\"UPDATE wild_insurance SET state = 'spent'"), 'spent in the batch that keeps');
+  assert.ok(rd('server-account/src/wild.js').includes("...spent.map((k) =>\n      ctx.db\n        .prepare(\n          \"UPDATE wild_insurance SET state = 'spent'"), 'spent in the batch that keeps');
   const reclaim = await quiet(() => g.svc.call('/v1/wild/reclaim', { r: '0123456789b1', realm: g.R.at() }, g.ria.secret));
   assert.equal(reclaim.body.error, 'no-escrow', 'never hers to take back');
   assert.deepEqual((await quiet(() => g.svc.call('/v1/wild/escrows', { character: g.R.id }, g.ria.secret))).body.escrows, [], 'nor listed for her');
@@ -230,7 +230,7 @@ test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall) - PI
   assert.equal(state(late, lk), 'active', 'and not spent');
 });
 
-test('PVP-NO-TENTH THE SERVICE (server-account/src/wild.js wildFall, the owner: "No gold dropped on death", "=10% if they domt have initem to roll on", "Letter only pay out 10% if they have not enough gold"): a kill with a worn piece to take or a policy to pay takes no gold and lowers no letter; with neither, the last roll - a tenth of her coin and letters together, the purse first - escrowed for the killer alone: coin where it fits his weight, else one letter of credit, said as the last roll, never hers to take back; a room that signs no collect takes none (mutants: the tenth taken at every kill; the last roll past a piece; the letters before the purse; the last roll unsaid; no collect still taking)', async () => {
+test('PVP-NO-TENTH THE SERVICE (server-account/src/wild.js wildFall): a kill with a worn piece to take or a policy to pay takes no gold and lowers no letter; with neither, the last roll - a tenth of her coin and letters together, the purse first - escrowed for the killer alone: coin where it fits his weight, else one letter of credit, said as the last roll, never hers to take back; a room that signs no collect takes none (mutants: the tenth taken at every kill; the last roll past a piece; the letters before the purse; the last roll unsaid; no collect still taking)', async () => {
   const { seatRealm: seat, layRecord } = await import('../../realmSeat.mjs');
   // a worn piece to take: the axe goes, the purse and the letter whole, nothing else in the remains
   const w = await stood();
@@ -430,7 +430,7 @@ test('WILD-INSURE AND REPEAT-SHIELD THE WORDS AND THE HOST: the death screen say
   assert.equal(WILD_TEXT.insureAct(1234), 'Insure (1,234 gold)');
 });
 
-test('WILD-INSURE THE SERVICE, A VILLAIN (server-account/src/wild.js wildFall, the owner: "villian lose insurance"): a fallen whose meter is red (villainLaw.js isVillain) holds no policy - the roll takes the insured sword as if bare and spends nothing (mutants: the meter unread)', async () => {
+test('WILD-INSURE THE SERVICE, A VILLAIN (server-account/src/wild.js wildFall): a fallen whose meter is red (villainLaw.js isVillain) holds no policy - the roll takes the insured sword as if bare and spends nothing (mutants: the meter unread)', async () => {
   const g = await stood({ axeWorn: false });
   const gk = ledgerKeyOf(g.sword);
   assert.equal((await g.insure([gk])).status, 200);

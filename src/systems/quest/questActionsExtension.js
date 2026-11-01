@@ -101,13 +101,23 @@ const RAISE_TIME = Object.freeze([
 /** RaiseTime.cs: `raise time by H:MM` (a bare advance) or `raise time to H:MM` (to that hour, today or tomorrow). */
 export class RaiseTime extends ActionTemplate {
   static typeName = 'RaiseTime';
-  get saveShape() { return [['hours'], ['minutes'], ['hoursTo'], ['minutesTo'], ['sayingID']]; }
+  get saveShape() {
+    return [['hours'], ['minutes'], ['hoursTo'], ['minutesTo'], ['sayingID']];
+  }
   constructor(parentQuest) {
     super(parentQuest);
-    this.hours = 0; this.minutes = 0; this.hoursTo = 0; this.minutesTo = 0; this.sayingID = 0;
+    this.hours = 0;
+    this.minutes = 0;
+    this.hoursTo = 0;
+    this.minutesTo = 0;
+    this.sayingID = 0;
   }
-  get pattern() { return RAISE_TIME[2]; }
-  test(source) { return matchAlternatives(RAISE_TIME, source)?.m ?? null; }
+  get pattern() {
+    return RAISE_TIME[2];
+  }
+  test(source) {
+    return matchAlternatives(RAISE_TIME, source)?.m ?? null;
+  }
   createNew(source, parentQuest) {
     const m = this.test(source);
     if (!m) return null;
@@ -118,7 +128,7 @@ export class RaiseTime extends ActionTemplate {
     a.hoursTo = g.hoursTo != null ? Math.min(Math.max(Number(g.hoursTo), 0), 23) : 0;
     a.minutesTo = g.minutesTo != null ? Math.min(Math.max(Number(g.minutesTo), 0), 59) : 0;
     a.sayingID = g.sayingID != null ? Number(g.sayingID) : 0;
-    if (a.hours + a.minutes + a.hoursTo + a.minutesTo === 0) return null;   // CreateNew's own refusal: DFU drops the line
+    if (a.hours + a.minutes + a.hoursTo + a.minutesTo === 0) return null; // CreateNew's own refusal: DFU drops the line
     return a;
   }
   update(_caller) {
@@ -127,7 +137,7 @@ export class RaiseTime extends ActionTemplate {
     if (this.minutes + this.hours > 0) {
       seconds = raiseTimeSeconds(this.hours, this.minutes);
     } else if (this.minutesTo + this.hoursTo > 0) {
-      const now = Math.floor(((hooks?.skySeconds ?? hooks?.nowSeconds)?.() ?? 0) / 60);   // classic minutes: midnight on a whole day - TIME3: the time of day is the sky's
+      const now = Math.floor(((hooks?.skySeconds ?? hooks?.nowSeconds)?.() ?? 0) / 60); // classic minutes: midnight on a whole day - TIME3: the time of day is the sky's
       const current = 60 * (now % 60) + 3600 * (Math.floor(now / 60) % 24);
       const desired = 60 * this.minutesTo + 3600 * this.hoursTo;
       seconds = desired >= current ? desired - current : desired - current + 86400;
@@ -145,15 +155,28 @@ export class RaiseTime extends ActionTemplate {
   }
 }
 
-const REDUCE_FATIGUE = Object.freeze([/reduce player fatigue by (?<percent>\d+)/, /reduce player fatigue on (?<amount>\d+)/]);
+const REDUCE_FATIGUE = Object.freeze([
+  /reduce player fatigue by (?<percent>\d+)/,
+  /reduce player fatigue on (?<amount>\d+)/,
+]);
 
 /** ReducePlayerFatigue.cs: `by N` is N percent of the maximum, `on N` is N raw; never below 1. */
 export class ReducePlayerFatigue extends ActionTemplate {
   static typeName = 'ReducePlayerFatigue';
-  get saveShape() { return [['percent'], ['amount']]; }
-  constructor(parentQuest) { super(parentQuest); this.percent = 0; this.amount = 0; }
-  get pattern() { return REDUCE_FATIGUE[0]; }
-  test(source) { return matchAlternatives(REDUCE_FATIGUE, source)?.m ?? null; }
+  get saveShape() {
+    return [['percent'], ['amount']];
+  }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.percent = 0;
+    this.amount = 0;
+  }
+  get pattern() {
+    return REDUCE_FATIGUE[0];
+  }
+  test(source) {
+    return matchAlternatives(REDUCE_FATIGUE, source)?.m ?? null;
+  }
   createNew(source, parentQuest) {
     const m = this.test(source);
     if (!m) return null;
@@ -169,7 +192,7 @@ export class ReducePlayerFatigue extends ActionTemplate {
       let fatigue = 0;
       if (this.percent > 0) fatigue = reduceFatigueBy(current, maxFatigue(e), this.percent);
       if (this.amount > 0) fatigue = current - this.amount;
-      e.fatigue = Math.min(maxFatigue(e), Math.max(1, fatigue));   // then CurrentFatigue's setter clamps to the maximum
+      e.fatigue = Math.min(maxFatigue(e), Math.max(1, fatigue)); // then CurrentFatigue's setter clamps to the maximum
     }
     this.setComplete();
   }
@@ -187,14 +210,20 @@ const itemFields = (a, m) => {
 /** PlayerPossesses.cs: true while the pack and the wagon together hold N (quest items not counted). */
 export class PlayerPossesses extends ActionTemplate {
   static typeName = 'PlayerPossesses';
-  get saveShape() { return [['numberOfItems'], ['itemClass'], ['itemSubClass']]; }
+  get saveShape() {
+    return [['numberOfItems'], ['itemClass'], ['itemSubClass']];
+  }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
     this.isAlwaysOnTriggerCondition = true;
-    this.numberOfItems = 0; this.itemClass = 0; this.itemSubClass = 0;
+    this.numberOfItems = 0;
+    this.itemClass = 0;
+    this.itemSubClass = 0;
   }
-  get pattern() { return POSSESSES; }
+  get pattern() {
+    return POSSESSES;
+  }
   createNew(source, parentQuest) {
     const m = this.test(source);
     return m ? itemFields(new PlayerPossesses(parentQuest), m) : null;
@@ -210,9 +239,18 @@ export class PlayerPossesses extends ActionTemplate {
 /** PlayerHandsover.cs: takes N from the pack first and the rest from the wagon; nothing unless all N are held. */
 export class PlayerHandsover extends ActionTemplate {
   static typeName = 'PlayerHandsover';
-  get saveShape() { return [['numberOfItems'], ['itemClass'], ['itemSubClass']]; }
-  constructor(parentQuest) { super(parentQuest); this.numberOfItems = 0; this.itemClass = 0; this.itemSubClass = 0; }
-  get pattern() { return HANDSOVER; }
+  get saveShape() {
+    return [['numberOfItems'], ['itemClass'], ['itemSubClass']];
+  }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.numberOfItems = 0;
+    this.itemClass = 0;
+    this.itemSubClass = 0;
+  }
+  get pattern() {
+    return HANDSOVER;
+  }
   createNew(source, parentQuest) {
     const m = this.test(source);
     return m ? itemFields(new PlayerHandsover(parentQuest), m) : null;
@@ -220,7 +258,7 @@ export class PlayerHandsover extends ActionTemplate {
   update(_caller) {
     const e = this.parentQuest?.hooks?.playerEntity?.();
     if (!e) return;
-    const { pack, wagon, inPack, inWagon } = heldCounts(e, this.itemClass, this.itemSubClass);   // Q11: the wagon's own
+    const { pack, wagon, inPack, inWagon } = heldCounts(e, this.itemClass, this.itemSubClass); // Q11: the wagon's own
     if (inPack + inWagon < this.numberOfItems) return;
     const fromPack = Math.min(this.numberOfItems, inPack);
     const fromWagon = this.numberOfItems - fromPack;
@@ -231,4 +269,9 @@ export class PlayerHandsover extends ActionTemplate {
 }
 
 /** The four, for a quest machine to register (the host does, before any save's quests are restored). */
-export const questActionsExtensionTemplates = () => [new RaiseTime(null), new ReducePlayerFatigue(null), new PlayerPossesses(null), new PlayerHandsover(null)];
+export const questActionsExtensionTemplates = () => [
+  new RaiseTime(null),
+  new ReducePlayerFatigue(null),
+  new PlayerPossesses(null),
+  new PlayerHandsover(null),
+];

@@ -50,9 +50,15 @@
 
 import { verifyRaidReceipt } from '../../src/net/raid/raidReceipt.js';
 import { raidDayOfKey } from '../../src/net/raid/raidLaw.js';
-import { renownForXp, renownRaidXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
+import {
+  renownForXp,
+  renownRaidXp,
+  RENOWN_XP_MAX,
+  RENOWN_XP_HOUR_MAX,
+  RENOWN_TRACKS_MAX,
+} from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
-import { villainRaidStep } from './villainy.js';   // PVP-VILLAIN-KEEP: a raid lowers the villain meter
+import { villainRaidStep } from './villainy.js'; // PVP-VILLAIN-KEEP: a raid lowers the villain meter
 
 /** The raids an account is counted for in one game day. */
 export const RAID_CLAIMS_DAY_MAX = 6;
@@ -63,7 +69,9 @@ const HOUR_S = 3600;
 /** AUDIT RAID R4: the statements that write a (raid, account)'s thanks row for `cid` if none is yet, and read whose it
  *  is - the claim's `spoils` is that row's cid being its own. */
 const thanksOf = (db, raid, account, cid, nowS) => [
-  db.prepare('INSERT OR IGNORE INTO raid_spoils (raid, account, cid, at) VALUES (?1, ?2, ?3, ?4)').bind(raid, account, cid, nowS),
+  db
+    .prepare('INSERT OR IGNORE INTO raid_spoils (raid, account, cid, at) VALUES (?1, ?2, ?3, ?4)')
+    .bind(raid, account, cid, nowS),
   db.prepare('SELECT cid FROM raid_spoils WHERE raid = ?1 AND account = ?2').bind(raid, account),
 ];
 const thanksAnswer = (res, cid) => res?.results?.[0]?.cid === cid;
@@ -100,14 +108,21 @@ export async function raidRecordOf({ db }, playerId) {
  *   claim's silver, each a statement (or statements) its batch runs by its own row - null where Marks are not this
  *   account's (marks.js raidStrikeStatement, deedStatements; contracts.js contractPayStatements)
  */
-export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null, deeds = null, contracts = null, econ = null } = {}) {
+export async function claimRaid(
+  { db, nowS, subtle, rand },
+  player,
+  { receipt, character, name = null, cid = null },
+  publicKey,
+  { strike = null, deeds = null, contracts = null, econ = null } = {},
+) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyRaidReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
   const c = v.claims;
   if (c.s !== player.id) return { error: 'not-yours' };
   const thanks = typeof cid === 'string' && RAID_CID_RE.test(cid);
-  if (!player.handle) {   // a guest: never counted - but thanked, once
+  if (!player.handle) {
+    // a guest: never counted - but thanked, once
     const spoils = thanks ? thanksAnswer((await db.batch(thanksOf(db, c.w, player.id, cid, nowS)))[1], cid) : false;
     return { recorded: false, why: 'guest', ...(await raidRecordOf({ db }, player.id)), spoils };
   }
@@ -120,7 +135,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const mint = strike?.(c.w, nonce) ?? null;
   const deed = deeds?.(c.w, nonce, character) ?? null;
   const paid = contracts ? await contracts(c.w, nonce) : null;
-  const town = econ?.(c.w, nonce) ?? null;   // TOWN-ECON TE2: the town driven clear of it (townEcon.js raidActStatements)
+  const town = econ?.(c.w, nonce) ?? null; // TOWN-ECON TE2: the town driven clear of it (townEcon.js raidActStatements)
   const mine = 'EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
   // AUDIT RAID R5: WHAT THE TRACK CAN TAKE and WHAT THE HOUR HAS LEFT, as a report's (renownTracks.js) - and a new
@@ -131,38 +146,49 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const credit = `CASE WHEN ${mine} THEN MIN(${want}, ${room}) ELSE 0 END`;
   const res = await db.batch([
     // THE ROW, under the day's bound, stamped with this claim's nonce - RETURNING it only when it was written
-    db.prepare(
-      `INSERT OR IGNORE INTO raid_cleanses (raid, account, day, party, char_id, xp, nonce, at)
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO raid_cleanses (raid, account, day, party, char_id, xp, nonce, at)
        SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
        WHERE (SELECT COUNT(*) FROM raid_cleanses WHERE account = ?2 AND day = ?3) < ?9
        RETURNING nonce`,
-    ).bind(c.w, player.id, day, c.y, character, xp, nonce, nowS, RAID_CLAIMS_DAY_MAX),
+      )
+      .bind(c.w, player.id, day, c.y, character, xp, nonce, nowS, RAID_CLAIMS_DAY_MAX),
     // THE HOUR SPENT and THE CREDIT DECIDED - by THIS claim's row alone. Every SET reads the row as it WAS, so
     // `renown_last_credit` is what this claim took out of the window before `renown_hour_xp` moved
-    db.prepare(
-      `UPDATE players SET
+    db
+      .prepare(
+        `UPDATE players SET
          renown_last_credit = ${credit},
          renown_hour_xp = CASE WHEN ${mine} THEN (CASE WHEN renown_hour >= ?8 THEN renown_hour_xp + ${credit} ELSE ${credit} END) ELSE renown_hour_xp END,
          renown_hour = CASE WHEN ${mine} THEN MAX(renown_hour, ?8) ELSE renown_hour END
        WHERE id = ?1
        RETURNING renown_last_credit AS credit`,
-    ).bind(player.id, character, c.w, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX),
+      )
+      .bind(player.id, character, c.w, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX),
     // THE TRACK THAT EXISTS grows by the credit (never past the cap's total) - by THIS claim's row alone
-    db.prepare(
-      `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
+    db
+      .prepare(
+        `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
        WHERE player = ?1 AND char_id = ?2 AND ${mine}`,
-    ).bind(player.id, character, c.w, nonce, RENOWN_XP_MAX, renownNameOf(name), nowS),
+      )
+      .bind(player.id, character, c.w, nonce, RENOWN_XP_MAX, renownNameOf(name), nowS),
     // A NEW TRACK, with Renown to hold and under the bound - by THIS claim's row alone
-    db.prepare(
-      `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
+    db
+      .prepare(
+        `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
        SELECT ?1, ?2, ?5, renown_last_credit, ?6, ?6 FROM players
        WHERE id = ?1 AND renown_last_credit > 0
          AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
          AND ${renownHeldSql('?1')} < ?7
          AND ${mine}`,
-    ).bind(player.id, character, c.w, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
+      )
+      .bind(player.id, character, c.w, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
     // the row says what the claim PAID (the hour may have left less than the raid is worth)
-    db.prepare(`UPDATE raid_cleanses SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE raid = ?3 AND account = ?1 AND nonce = ?4`)
+    db
+      .prepare(
+        `UPDATE raid_cleanses SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE raid = ?3 AND account = ?1 AND nonce = ?4`,
+      )
       .bind(player.id, character, c.w, nonce),
     db.prepare(track).bind(player.id, character),
     db.prepare('SELECT COUNT(*) AS n FROM raid_cleanses WHERE account = ?1').bind(player.id),
@@ -174,24 +200,37 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
     ...(deed ?? []),
     ...(paid?.statements ?? []),
     ...(town ?? []),
-    villainRaidStep(db, player.id, character, c.w, nonce),   // PVP-VILLAIN-KEEP: last, so no place above moves
+    villainRaidStep(db, player.id, character, c.w, nonce), // PVP-VILLAIN-KEEP: last, so no place above moves
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = thanks ? thanksAnswer(res[8], cid) : false;
-  const at = 7 + (thanks ? 2 : 0);   // the first SILVER-WAYS statement's place in the batch
+  const at = 7 + (thanks ? 2 : 0); // the first SILVER-WAYS statement's place in the batch
   const struck = !!mint && Number(res[at]?.meta?.changes ?? 0) > 0;
   const deedStruck = !!deed && Number(res[at + (mint ? 1 : 0) + 1]?.meta?.changes ?? 0) > 0;
   const defended = int(count?.results?.[0]?.n);
   if (!row?.results?.length) {
-    const had = await db.prepare('SELECT 1 AS x FROM raid_cleanses WHERE raid = ?1 AND account = ?2').bind(c.w, player.id).first();
+    const had = await db
+      .prepare('SELECT 1 AS x FROM raid_cleanses WHERE raid = ?1 AND account = ?2')
+      .bind(c.w, player.id)
+      .first();
     return { recorded: false, why: had ? 'claimed' : 'day-full', defended, spoils };
   }
   const total = after?.results?.length ? int(after.results[0].xp) : null;
   const was = before?.xp ?? 0;
   return {
-    recorded: true, defended, spoils, ...(strike || deeds || contracts ? { key: c.w, struck, ...(deed ? { deedStruck } : {}) } : {}),   // SILVER-WAYS: the service's own - index.js answers them in words
-    renown: total === null
-      ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing
-      : { character, xp: total, level: renownForXp(total), credited: Math.max(0, int(decided?.results?.[0]?.credit)), rose: renownForXp(total) > renownForXp(was) },
+    recorded: true,
+    defended,
+    spoils,
+    ...(strike || deeds || contracts ? { key: c.w, struck, ...(deed ? { deedStruck } : {}) } : {}), // SILVER-WAYS: the service's own - index.js answers them in words
+    renown:
+      total === null
+        ? { character, xp: null, level: null, credited: 0, rose: false } // no place for a new track: counted, paid nothing
+        : {
+            character,
+            xp: total,
+            level: renownForXp(total),
+            credited: Math.max(0, int(decided?.results?.[0]?.credit)),
+            rose: renownForXp(total) > renownForXp(was),
+          },
   };
 }

@@ -47,8 +47,8 @@
   {
     "name": "DISC12-body-never-follows",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (look && !look.creature) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? (hands?.dual",
-    "new": "    if (false) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? (hands?.dual",
+    "old": "    if (look && !look.creature) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/disc12.test.js"
     ]

@@ -95,22 +95,26 @@ export const PLACE_AVOID_DY = 2.5;
  * @param {number[][]} [avoid]
  */
 export function placedTableSpot(box, start, probe, avoid = []) {
-  const sx = start[0] + PLACE_GRID_OFF[0], sz = start[2] + PLACE_GRID_OFF[1];
+  const sx = start[0] + PLACE_GRID_OFF[0],
+    sz = start[2] + PLACE_GRID_OFF[1];
   const floor0 = probe.floor(sx, start[1] + 1, sz);
-  if (floor0 == null) return null;   // (a NaN floor walks no cell: every storey test fails it)
+  if (floor0 == null) return null; // (a NaN floor walks no cell: every storey test fails it)
   const n = Math.round(PLACE_REACH_M / PLACE_CELL);
   const side = 2 * n + 1;
-  const at = (i) => (i - n) * PLACE_CELL;   // a cell's offset from the entrance
-  const walk = new Int8Array(side * side);   // 0 unasked, 1 walkable, -1 not
-  const floorOf = new Float64Array(side * side);   // a walkable cell's own floor
+  const at = (i) => (i - n) * PLACE_CELL; // a cell's offset from the entrance
+  const walk = new Int8Array(side * side); // 0 unasked, 1 walkable, -1 not
+  const floorOf = new Float64Array(side * side); // a walkable cell's own floor
   const walkable = (i, k) => {
     if (i < 0 || k < 0 || i >= side || k >= side) return false;
     const c = k * side + i;
     if (!walk[c]) {
-      const x = sx + at(i), z = sz + at(k);
+      const x = sx + at(i),
+        z = sz + at(k);
       const fy = probe.floor(x, floor0 + PLACE_PROBE_M, z);
-      const ok = fy != null && Math.abs(fy - floor0) <= PLACE_STOREY_SLACK
-        && PLACE_CLEAR_HEIGHTS.every((h) => probe.open(x, floor0 + h, z, PLACE_BODY_R));
+      const ok =
+        fy != null &&
+        Math.abs(fy - floor0) <= PLACE_STOREY_SLACK &&
+        PLACE_CLEAR_HEIGHTS.every((h) => probe.open(x, floor0 + h, z, PLACE_BODY_R));
       walk[c] = ok ? 1 : -1;
       if (ok) floorOf[c] = fy;
     }
@@ -119,19 +123,28 @@ export function placedTableSpot(box, start, probe, avoid = []) {
   // the walk's first cell: the entrance's own, or the nearest walkable one beside it (a marker at the door's frame)
   let first = -1;
   for (let r = 0; r <= 2 && first < 0; r++) {
-    for (let dk = -r; dk <= r && first < 0; dk++) for (let di = -r; di <= r && first < 0; di++) {
-      if (Math.max(Math.abs(di), Math.abs(dk)) !== r) continue;
-      if (walkable(n + di, n + dk)) first = (n + dk) * side + (n + di);
-    }
+    for (let dk = -r; dk <= r && first < 0; dk++)
+      for (let di = -r; di <= r && first < 0; di++) {
+        if (Math.max(Math.abs(di), Math.abs(dk)) !== r) continue;
+        if (walkable(n + di, n + dk)) first = (n + dk) * side + (n + di);
+      }
   }
   if (first < 0) return null;
   const dist = new Int32Array(side * side).fill(-1);
   dist[first] = 0;
   const order = [first];
   for (let q = 0; q < order.length; q++) {
-    const c = order[q], i = c % side, k = (c - i) / side;
-    for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const ni = i + di, nk = k + dk;
+    const c = order[q],
+      i = c % side,
+      k = (c - i) / side;
+    for (const [di, dk] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const ni = i + di,
+        nk = k + dk;
       if (!walkable(ni, nk)) continue;
       const nc = nk * side + ni;
       if (dist[nc] >= 0) continue;
@@ -139,53 +152,72 @@ export function placedTableSpot(box, start, probe, avoid = []) {
       order.push(nc);
     }
   }
-  const [x0, y0, z0] = box.min, [x1, , z1] = box.max;
+  const [x0, y0, z0] = box.min,
+    [x1, , z1] = box.max;
   const mid = [(x0 + x1) / 2, (z0 + z1) / 2];
   // the two ways it may stand: its half-extents along x and z, the ring's and the top's
   const ways = [0, 90].map((yawDeg) => {
     const [ax, az] = yawDeg ? [(z1 - z0) / 2, (x1 - x0) / 2] : [(x1 - x0) / 2, (z1 - z0) / 2];
-    const hx = ax + PLACE_RING_M, hz = az + PLACE_RING_M;
+    const hx = ax + PLACE_RING_M,
+      hz = az + PLACE_RING_M;
     // AUDIT TAVERN-TABLE M4: the cells out to where their own clear radius reaches the ring's edge - no further (a
     // cell a step past it asked half a metre of floor the ring never needs)
-    const ri = Math.max(0, Math.ceil((hx - PLACE_BODY_R) / PLACE_CELL)), rk = Math.max(0, Math.ceil((hz - PLACE_BODY_R) / PLACE_CELL));
-    const ti = Math.floor(ax / PLACE_CELL), tk = Math.floor(az / PLACE_CELL);   // the cells under its top
-    const m = transformPoint(trs(0, 0, 0, 0, yawDeg, 0), mid[0], 0, mid[1]);   // its middle, turned with it
+    const ri = Math.max(0, Math.ceil((hx - PLACE_BODY_R) / PLACE_CELL)),
+      rk = Math.max(0, Math.ceil((hz - PLACE_BODY_R) / PLACE_CELL));
+    const ti = Math.floor(ax / PLACE_CELL),
+      tk = Math.floor(az / PLACE_CELL); // the cells under its top
+    const m = transformPoint(trs(0, 0, 0, 0, yawDeg, 0), mid[0], 0, mid[1]); // its middle, turned with it
     return { yawDeg, hx, hz, ri, rk, ti, tk, mx: m[0], mz: m[2] };
   });
   const near = avoid.filter((a) => Math.abs(a[1] - floor0) <= PLACE_AVOID_DY);
   const fromDoor = Math.ceil(PLACE_FROM_DOOR_M / PLACE_CELL);
   // WAY-ROUND: the tables already stood (an avoid box is one, TAVERN-TABLES) - each one's ring and lane, in the walk's
   // cells as its own walk counted them, [i0, i1, k0, k1]
-  const stood = near.filter((a) => a.length > 4).map(([ax, , az, rx, rz]) => {
-    const ri = Math.max(0, Math.ceil((rx - PLACE_BODY_R) / PLACE_CELL)) + PLACE_LANE_CELLS, rk = Math.max(0, Math.ceil((rz - PLACE_BODY_R) / PLACE_CELL)) + PLACE_LANE_CELLS;
-    const ai = Math.round((ax - sx) / PLACE_CELL) + n, ak = Math.round((az - sz) / PLACE_CELL) + n;
-    return [ai - ri, ai + ri, ak - rk, ak + rk];
-  });
-  const before = new Int32Array(side * side), after = new Int32Array(side * side), seen = new Int32Array(side * side);
+  const stood = near
+    .filter((a) => a.length > 4)
+    .map(([ax, , az, rx, rz]) => {
+      const ri = Math.max(0, Math.ceil((rx - PLACE_BODY_R) / PLACE_CELL)) + PLACE_LANE_CELLS,
+        rk = Math.max(0, Math.ceil((rz - PLACE_BODY_R) / PLACE_CELL)) + PLACE_LANE_CELLS;
+      const ai = Math.round((ax - sx) / PLACE_CELL) + n,
+        ak = Math.round((az - sz) / PLACE_CELL) + n;
+      return [ai - ri, ai + ri, ak - rk, ak + rk];
+    });
+  const before = new Int32Array(side * side),
+    after = new Int32Array(side * side),
+    seen = new Int32Array(side * side);
   let stamp = 0;
   /** Labels the walked cells of the window [i0, i1] x [k0, k1] that `out` leaves in pieces, joined within the window -
    *  each cell's label its piece's first cell. */
   const pieces = (lab, i0, i1, k0, k1, out) => {
     stamp++;
-    for (let ck = k0; ck <= k1; ck++) for (let ci = i0; ci <= i1; ci++) {
-      const c0 = ck * side + ci;
-      if (dist[c0] < 0 || seen[c0] === stamp || out(ci, ck)) continue;
-      seen[c0] = stamp;
-      lab[c0] = c0;
-      const q = [c0];
-      for (let h = 0; h < q.length; h++) {
-        const c = q[h], qi = c % side, qk = (c - qi) / side;
-        for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-          const ni = qi + di, nk = qk + dk;
-          if (ni < i0 || nk < k0 || ni > i1 || nk > k1) continue;
-          const nc = nk * side + ni;
-          if (dist[nc] < 0 || seen[nc] === stamp || out(ni, nk)) continue;
-          seen[nc] = stamp;
-          lab[nc] = c0;
-          q.push(nc);
+    for (let ck = k0; ck <= k1; ck++)
+      for (let ci = i0; ci <= i1; ci++) {
+        const c0 = ck * side + ci;
+        if (dist[c0] < 0 || seen[c0] === stamp || out(ci, ck)) continue;
+        seen[c0] = stamp;
+        lab[c0] = c0;
+        const q = [c0];
+        for (let h = 0; h < q.length; h++) {
+          const c = q[h],
+            qi = c % side,
+            qk = (c - qi) / side;
+          for (const [di, dk] of [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ]) {
+            const ni = qi + di,
+              nk = qk + dk;
+            if (ni < i0 || nk < k0 || ni > i1 || nk > k1) continue;
+            const nc = nk * side + ni;
+            if (dist[nc] < 0 || seen[nc] === stamp || out(ni, nk)) continue;
+            seen[nc] = stamp;
+            lab[nc] = c0;
+            q.push(nc);
+          }
         }
       }
-    }
   };
   // whether the table and its ring at cell (i, k), and a lane round them, stand in the walk's way. WAY-ROUND: the walked
   // cells round them, out to PLACE_ROUND_CELLS past the lane, in pieces before and after they are taken out - a piece
@@ -194,43 +226,55 @@ export function placedTableSpot(box, start, probe, avoid = []) {
   // by, so the walk again from the entrance (WALK-WHOLE's own test) asks nothing this does not. A table already stood
   // that the window meets is in it whole, lane and all: the way round the two goes round them both.
   const inTheWay = (i, k, w) => {
-    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk + PLACE_LANE_CELLS;
+    const li = w.ri + PLACE_LANE_CELLS,
+      lk = w.rk + PLACE_LANE_CELLS;
     const out = (ci, ck) => Math.abs(ci - i) <= li && Math.abs(ck - k) <= lk;
     const fi = first % side;
     if (out(fi, (first - fi) / side)) return true;
     const m = PLACE_ROUND_CELLS;
     let [i0, i1, k0, k1] = [i - li, i + li, k - lk, k + lk];
     for (const [a0, a1, b0, b1] of stood) {
-      if (a0 > i1 + m || a1 < i0 - m || b0 > k1 + m || b1 < k0 - m) continue;   // short of the window
+      if (a0 > i1 + m || a1 < i0 - m || b0 > k1 + m || b1 < k0 - m) continue; // short of the window
       [i0, i1, k0, k1] = [Math.min(i0, a0), Math.max(i1, a1), Math.min(k0, b0), Math.max(k1, b1)];
     }
-    [i0, i1, k0, k1] = [Math.max(0, i0 - m), Math.min(side - 1, i1 + m), Math.max(0, k0 - m), Math.min(side - 1, k1 + m)];
+    [i0, i1, k0, k1] = [
+      Math.max(0, i0 - m),
+      Math.min(side - 1, i1 + m),
+      Math.max(0, k0 - m),
+      Math.min(side - 1, k1 + m),
+    ];
     pieces(before, i0, i1, k0, k1, () => false);
     pieces(after, i0, i1, k0, k1, out);
-    const joined = new Map();   // a piece before -> the piece after its cells are in
-    for (let ck = k0; ck <= k1; ck++) for (let ci = i0; ci <= i1; ci++) {
-      const c = ck * side + ci;
-      if (dist[c] < 0 || out(ci, ck)) continue;
-      const was = joined.get(before[c]);
-      if (was === undefined) joined.set(before[c], after[c]);
-      else if (was !== after[c]) return true;
-    }
+    const joined = new Map(); // a piece before -> the piece after its cells are in
+    for (let ck = k0; ck <= k1; ck++)
+      for (let ci = i0; ci <= i1; ci++) {
+        const c = ck * side + ci;
+        if (dist[c] < 0 || out(ci, ck)) continue;
+        const was = joined.get(before[c]);
+        if (was === undefined) joined.set(before[c], after[c]);
+        else if (was !== after[c]) return true;
+      }
     return false;
   };
   for (const c of order) {
     if (dist[c] < fromDoor) continue;
-    const i = c % side, k = (c - i) / side;
-    const cx = sx + at(i), cz = sz + at(k);
+    const i = c % side,
+      k = (c - i) / side;
+    const cx = sx + at(i),
+      cz = sz + at(k);
     for (const w of ways) {
-      let ok = true;   // every cell the table and its ring cover, walked to
-      for (let dk = -w.rk; dk <= w.rk && ok; dk++) for (let di = -w.ri; di <= w.ri && ok; di++) {
-        if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[(k + dk) * side + (i + di)] < 0) ok = false;
-      }
+      let ok = true; // every cell the table and its ring cover, walked to
+      for (let dk = -w.rk; dk <= w.rk && ok; dk++)
+        for (let di = -w.ri; di <= w.ri && ok; di++) {
+          if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[(k + dk) * side + (i + di)] < 0)
+            ok = false;
+        }
       if (!ok) continue;
       if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + rz)) continue;
       if (inTheWay(i, k, w)) continue;
-      let fy = -Infinity;   // the highest floor under its top
-      for (let dk = -w.tk; dk <= w.tk; dk++) for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);
+      let fy = -Infinity; // the highest floor under its top
+      for (let dk = -w.tk; dk <= w.tk; dk++)
+        for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);
       return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };
     }
   }

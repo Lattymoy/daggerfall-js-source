@@ -45,7 +45,21 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, bandSweep } from './sfxSynth.mjs';
+import {
+  RATE,
+  rng,
+  seconds,
+  buf,
+  decay,
+  attack,
+  biquad,
+  sweepLowpass,
+  noise,
+  mix,
+  softClip,
+  envelope,
+  bandSweep,
+} from './sfxSynth.mjs';
 
 const OUT = 'public/sfx';
 
@@ -55,7 +69,7 @@ function thump(len, from, to, tau, decayTau, attackMs = 1) {
   let phase = 0;
   for (let i = 0; i < out.length; i++) {
     const f = to + (from - to) * decay(i, tau);
-    phase += 2 * Math.PI * f / RATE;
+    phase += (2 * Math.PI * f) / RATE;
     out[i] = Math.sin(phase) * attack(i, attackMs) * decay(i, decayTau);
   }
   return out;
@@ -63,12 +77,12 @@ function thump(len, from, to, tau, decayTau, attackMs = 1) {
 /** Short bandpassed ticks at uneven times, each quieter than the last on average - splinters, debris. */
 function ticks(out, rand, { count, from, to, lo, hi, tauLo, tauHi, gain }) {
   for (let k = 0; k < count; k++) {
-    const at = from + (to - from) * Math.pow(rand(), 1.6);   // bunched to the front: most fly at once
+    const at = from + (to - from) * Math.pow(rand(), 1.6); // bunched to the front: most fly at once
     const f0 = lo + (hi - lo) * rand();
     const tau = tauLo + (tauHi - tauLo) * rand();
     const t = biquad(noise(seconds(tau * 8), rand), { type: 'bandpass', f0, q: 1.8 });
     envelope(t, (i) => attack(i, 0.2) * decay(i, tau));
-    mix(out, t, at, gain * (0.45 + 0.55 * rand()) * (1 - 0.6 * (at - from) / Math.max(1e-6, to - from)));
+    mix(out, t, at, gain * (0.45 + 0.55 * rand()) * (1 - (0.6 * (at - from)) / Math.max(1e-6, to - from)));
   }
   return out;
 }
@@ -81,11 +95,13 @@ function clank(rand, { partials = [1870, 2950, 4100], taus = [0.09, 0.06, 0.035]
   partials.forEach((f, k) => {
     const ring = buf(len);
     const ph = rand() * Math.PI * 2;
-    for (let i = 0; i < ring.length; i++) ring[i] = Math.sin(ph + 2 * Math.PI * f * i / RATE) * attack(i, 0.3) * decay(i, taus[k]);
+    for (let i = 0; i < ring.length; i++)
+      ring[i] = Math.sin(ph + (2 * Math.PI * f * i) / RATE) * attack(i, 0.3) * decay(i, taus[k]);
     mix(out, ring, 0, 0.42 / (k + 1));
   });
   const knock = buf(len);
-  for (let i = 0; i < knock.length; i++) knock[i] = Math.sin(2 * Math.PI * wood * i / RATE) * attack(i, 0.6) * decay(i, 0.028);
+  for (let i = 0; i < knock.length; i++)
+    knock[i] = Math.sin((2 * Math.PI * wood * i) / RATE) * attack(i, 0.6) * decay(i, 0.028);
   mix(out, knock, 0, 0.6);
   return out;
 }
@@ -115,7 +131,7 @@ function cannonFar() {
   const rand = rng(0xfa7ca77);
   const out = buf(2.2);
   mix(out, thump(1.1, 58, 32, 0.12, 0.3, 25), 0, 1.0);
-  mix(out, thump(1.1, 52, 30, 0.12, 0.28, 25), 0.14, 0.7);   // the next gun of the broadside
+  mix(out, thump(1.1, 52, 30, 0.12, 0.28, 25), 0.14, 0.7); // the next gun of the broadside
   const rumble = biquad(noise(seconds(2.0), rand), { type: 'lowpass', f0: 260, q: 0.7 });
   envelope(rumble, (i) => attack(i, 40) * decay(i, 0.6));
   mix(out, rumble, 0.01, 0.9);
@@ -154,8 +170,8 @@ function hit() {
   const groan = buf(0.6);
   let ph = 0;
   for (let i = 0; i < groan.length; i++) {
-    const f = 150 + 18 * Math.sin(2 * Math.PI * 3.1 * i / RATE);
-    ph += 2 * Math.PI * f / RATE;
+    const f = 150 + 18 * Math.sin((2 * Math.PI * 3.1 * i) / RATE);
+    ph += (2 * Math.PI * f) / RATE;
     const tone = Math.sin(ph) + 0.5 * Math.sin(2 * ph) + 0.25 * Math.sin(3 * ph);
     groan[i] = tone * attack(i, 30) * decay(i, 0.16);
   }
@@ -190,11 +206,18 @@ function grapple() {
   mix(out, clank(rand), 0.28, 1.0);
   mix(out, clank(rand, { partials: [2140, 3310, 4600], taus: [0.07, 0.05, 0.03], wood: 230 }), 0.37, 0.7);
   // the hawsers creak taut: a jittered pulse train through a woody band
-  for (const [at, g] of [[0.5, 0.45], [0.72, 0.38], [0.95, 0.3]]) {
+  for (const [at, g] of [
+    [0.5, 0.45],
+    [0.72, 0.38],
+    [0.95, 0.3],
+  ]) {
     const creak = buf(0.16);
     let next = 0;
     for (let i = 0; i < creak.length; i++) {
-      if (i >= next) { creak[i] = 1; next = i + seconds((1 / 90) * (0.85 + 0.3 * rand())); }
+      if (i >= next) {
+        creak[i] = 1;
+        next = i + seconds((1 / 90) * (0.85 + 0.3 * rand()));
+      }
     }
     envelope(creak, (i) => attack(i, 25) * decay(i, 0.07));
     mix(out, biquad(creak, { type: 'bandpass', f0: 700, q: 1.4 }), at, g * 8);
@@ -211,11 +234,11 @@ function runout() {
     const at = 0.02 + g * 0.11 + rand() * 0.04;
     const len = 0.78 + rand() * 0.12;
     const roll = biquad(noise(seconds(len), rand), { type: 'lowpass', f0: 230 + rand() * 60, q: 0.9 });
-    const seam = 11 + rand() * 4;   // the trucks over the plank seams, a beat a second
+    const seam = 11 + rand() * 4; // the trucks over the plank seams, a beat a second
     const ph = rand() * Math.PI * 2;
     envelope(roll, (i) => {
       const t = i / RATE;
-      const beat = 0.55 + 0.45 * Math.max(0, Math.sin(ph + 2 * Math.PI * seam * t * (1 + 0.35 * t)));   // quickening as she comes out
+      const beat = 0.55 + 0.45 * Math.max(0, Math.sin(ph + 2 * Math.PI * seam * t * (1 + 0.35 * t))); // quickening as she comes out
       return attack(i, 90) * Math.min(1, (len - t) / 0.06) * beat;
     });
     mix(out, roll, at, 0.85 - g * 0.08);
@@ -227,11 +250,18 @@ function runout() {
     mix(out, clack, knockAt, 0.5);
   }
   // the tackles creaking as the crews haul: jittered pulse trains through a woody band
-  for (const [at, g] of [[0.12, 0.3], [0.38, 0.26], [0.61, 0.22]]) {
+  for (const [at, g] of [
+    [0.12, 0.3],
+    [0.38, 0.26],
+    [0.61, 0.22],
+  ]) {
     const creak = buf(0.2);
     let next = 0;
     for (let i = 0; i < creak.length; i++) {
-      if (i >= next) { creak[i] = 1; next = i + seconds((1 / 70) * (0.8 + 0.4 * rand())); }
+      if (i >= next) {
+        creak[i] = 1;
+        next = i + seconds((1 / 70) * (0.8 + 0.4 * rand()));
+      }
     }
     envelope(creak, (i) => attack(i, 30) * decay(i, 0.08));
     mix(out, biquad(creak, { type: 'bandpass', f0: 620, q: 1.5 }), at, g * 8);
@@ -243,8 +273,11 @@ function runout() {
 function ready() {
   const rand = rng(0x4ead1ed);
   const out = buf(0.55);
-  for (const [at, g] of [[0, 0.9], [0.11, 0.75]]) {
-    mix(out, thump(0.12, 420, 260, 0.01, 0.02, 0.3), at, g);   // the rammer's head on the muzzle: a hollow wooden rap
+  for (const [at, g] of [
+    [0, 0.9],
+    [0.11, 0.75],
+  ]) {
+    mix(out, thump(0.12, 420, 260, 0.01, 0.02, 0.3), at, g); // the rammer's head on the muzzle: a hollow wooden rap
     const rap = biquad(noise(seconds(0.04), rand), { type: 'bandpass', f0: 900 + rand() * 200, q: 1.8 });
     envelope(rap, (i) => attack(i, 0.2) * decay(i, 0.008));
     mix(out, rap, at, g * 0.8);
@@ -257,14 +290,18 @@ function ready() {
 // ---- a ship going down (a loop) -------------------------------------
 function sinking() {
   const rand = rng(0x51c4ed0);
-  const LEN = 4, JOIN = 0.3;
+  const LEN = 4,
+    JOIN = 0.3;
   const out = buf(LEN + JOIN);
   // the sea rushing into her: low noise, one swell a loop
   const rush = biquad(noise(out.length, rand), { type: 'lowpass', f0: 380, q: 0.7 });
   envelope(rush, (i) => 0.55 + 0.45 * Math.sin((2 * Math.PI * i) / seconds(LEN)));
   mix(out, rush, 0, 0.55);
   // her timbers groaning: a slow saw through a woody band, its pitch sagging, a tremble in it
-  for (const [at, f0, len] of [[0.25, 96, 1.6], [2.2, 82, 1.45]]) {
+  for (const [at, f0, len] of [
+    [0.25, 96, 1.6],
+    [2.2, 82, 1.45],
+  ]) {
     const g = buf(len);
     let ph = 0;
     for (let i = 0; i < g.length; i++) {
@@ -277,14 +314,20 @@ function sinking() {
   }
   // the air leaving her: short rising chirps at uneven times
   for (let k = 0; k < 18; k++) {
-    const at = rand() * (LEN - 0.1), f0 = 180 + rand() * 380, len = 0.03 + rand() * 0.05;
+    const at = rand() * (LEN - 0.1),
+      f0 = 180 + rand() * 380,
+      len = 0.03 + rand() * 0.05;
     const b = buf(len);
     let ph = 0;
-    for (let i = 0; i < b.length; i++) { ph += (2 * Math.PI * f0 * (1 + (1.8 * i) / b.length)) / RATE; b[i] = Math.sin(ph) * decay(i, len / 3); }
+    for (let i = 0; i < b.length; i++) {
+      ph += (2 * Math.PI * f0 * (1 + (1.8 * i) / b.length)) / RATE;
+      b[i] = Math.sin(ph) * decay(i, len / 3);
+    }
     mix(out, b, at, 0.22 + rand() * 0.2);
   }
   // the loop's join: its last JOIN seconds crossfaded into its first, and cut there
-  const n = seconds(LEN), j = seconds(JOIN);
+  const n = seconds(LEN),
+    j = seconds(JOIN);
   for (let i = 0; i < j; i++) out[i] = out[i] * (i / j) + out[n + i] * (1 - i / j);
   return softClip(out.slice(0, n), 1.5);
 }
@@ -292,11 +335,15 @@ function sinking() {
 // ---- a ball going by close (NEAR-MISS) -------------------------------
 function whistle() {
   const rand = rng(0x5ba11b7);
-  const LEN = 1, PASS = 0.55;
+  const LEN = 1,
+    PASS = 0.55;
   // the band's centre: from 1500 Hz coming to 620 going, the fall quickest at the pass (its Doppler)
   const f = (t) => 1060 + 440 * Math.tanh(-(t - PASS) / 0.07);
   // its level: swelling to the pass (an inverse square of the distance gone by), cut soon after
-  const swell = (i) => { const t = i / RATE; return attack(i, 30) / (1 + ((t - PASS) / (t < PASS ? 0.16 : 0.09)) ** 2); };
+  const swell = (i) => {
+    const t = i / RATE;
+    return attack(i, 30) / (1 + ((t - PASS) / (t < PASS ? 0.16 : 0.09)) ** 2);
+  };
   const rush = envelope(bandSweep(noise(seconds(LEN), rand), f, 4.5), swell);
   const out = buf(LEN);
   mix(out, rush, 0, 1);
@@ -305,7 +352,10 @@ function whistle() {
   // the faint tone the band rides: a sine on the same fall, an octave's ninth below its top
   const tone = buf(LEN);
   let ph = 0;
-  for (let i = 0; i < tone.length; i++) { ph += (2 * Math.PI * f(i / RATE) * 0.9) / RATE; tone[i] = Math.sin(ph) * swell(i); }
+  for (let i = 0; i < tone.length; i++) {
+    ph += (2 * Math.PI * f(i / RATE) * 0.9) / RATE;
+    tone[i] = Math.sin(ph) * swell(i);
+  }
   mix(out, tone, 0, 0.12);
   return softClip(out, 1.3);
 }
@@ -321,7 +371,7 @@ export const CLIPS = [
   ['naval-runout', runout, 0.82],
   ['naval-ready', ready, 0.8],
   ['naval-sinking', sinking, 0.8],
-  ['naval-whistle', whistle, 0.8],   // COMBAT-FEEL NEAR-MISS
+  ['naval-whistle', whistle, 0.8], // COMBAT-FEEL NEAR-MISS
 ];
 
 const rawDir = process.argv.find((a) => a.startsWith('--raw='))?.split('=')[1] ?? null;
@@ -333,7 +383,9 @@ for (const [name, make, peak] of CLIPS) {
   const pcm = bake(mono, RATE, { peak });
   writeFileSync(join(OUT, `${name}.wav`), writeWav8(pcm));
   if (rawDir) writeFileSync(join(rawDir, `${name}-44k.wav`), writeWav8(bakeRaw(mono), RATE));
-  console.log(`${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${(44 + pcm.length)} bytes`);
+  console.log(
+    `${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${44 + pcm.length} bytes`,
+  );
 }
 
 function bakeRaw(mono) {
@@ -341,6 +393,7 @@ function bakeRaw(mono) {
   for (const v of mono) max = Math.max(max, Math.abs(v));
   const g = max > 0 ? 0.92 / max : 1;
   const out = new Uint8Array(mono.length);
-  for (let i = 0; i < mono.length; i++) out[i] = Math.max(0, Math.min(255, Math.round(Math.max(-1, Math.min(1, mono[i] * g)) * 127 + 128)));
+  for (let i = 0; i < mono.length; i++)
+    out[i] = Math.max(0, Math.min(255, Math.round(Math.max(-1, Math.min(1, mono[i] * g)) * 127 + 128)));
   return out;
 }

@@ -1,104 +1,342 @@
 [
-  { "name": "B1-summon-on-deck", "file": "src/systems/horse/horseCart.js",
-    "old": "    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };", "new": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a summon at the helm sets the wagon down in the sea" },
-  { "name": "B1-send-away-on-deck", "file": "src/systems/horse/horseCart.js",
-    "old": "    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };", "new": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "Send away sheds the load from a ship under way" },
-  { "name": "B1-quick-mount-on-deck", "file": "src/systems/horse/horseCart.js",
-    "old": "    if (pee().isPlayerInside() || aboard()) { say(HCC_TEXT.mountOutdoorsOnly); return; }", "new": "    if (pee().isPlayerInside() || tm().isOnShip()) { say(HCC_TEXT.mountOutdoorsOnly); return; }",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the mount key answers on a deck" },
-  { "name": "B1-horse-check-on-deck", "file": "src/systems/horse/horseCart.js",
-    "old": "    if (wagonState.HorseMode === HORSE_MODE.WithPlayer) return true;\n    if (pee().isPlayerInside() || aboard()) return false;", "new": "    if (wagonState.HorseMode === HORSE_MODE.WithPlayer) return true;\n    if (pee().isPlayerInside() || tm().isOnShip()) return false;",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a horse left on the quay is ridden from the deck" },
-  { "name": "B1-cart-check-on-deck", "file": "src/systems/horse/horseCart.js",
-    "old": "    if (wagonState.Mode !== WAGON_MODE.Deployed && wagonState.Mode !== WAGON_MODE.FollowingPlayer) return false;\n    if (pee().isPlayerInside() || aboard()) return false;", "new": "    if (wagonState.Mode !== WAGON_MODE.Deployed && wagonState.Mode !== WAGON_MODE.FollowingPlayer) return false;\n    if (pee().isPlayerInside() || tm().isOnShip()) return false;",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a wagon parked on the quay is driven from the deck" },
-  { "name": "B1-observe-on-deck", "file": "src/systems/horse/horseCart.js",
-    "old": "    if ((mode === TRANSPORT.Cart || mode === TRANSPORT.Horse) && deps.transport.onDeck?.()) { rejectTransportChange(prev, HCC_TEXT.mountOutdoorsOnly); return; }   // AUDIT FB1029d B1: no pair mounted on a deck\n", "new": "",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the Transport window's set rides a horse on deck" },
-  { "name": "B1-aboard-is-the-ship-alone", "file": "src/systems/horse/horseCart.js",
-    "old": "  const aboard = () => tm().isOnShip() || !!deps.transport.onDeck?.();", "new": "  const aboard = () => tm().isOnShip();",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the deck unread: only Daggerfall's own ship refuses" },
-  { "name": "B1-host-deck-unread", "file": "src/scenes/world.js",
-    "old": "      onDeck: () => !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat),", "new": "      onDeck: () => !!csaBoatUnderMe(),",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a deck I stand on, not at its helm, reads as land" },
-  { "name": "B2-keeping-before-the-park", "file": "src/systems/horse/horseCart.js",
-    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);", "new": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled;",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a cart left for the helm weighs on her until the next frame's park" },
-  { "name": "B8-following-counts", "file": "src/systems/horse/horseCart.js",
-    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);", "new": "  const wagonWithPlayer = () => wagonState.Mode !== WAGON_MODE.Deployed && wagonState.Mode !== WAGON_MODE.None && !wagonState.WagonStabled && !parkDue(cartParks);",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a team following on foot weighs on the hull" },
-  { "name": "B6-horse-stabled-counts", "file": "src/systems/horse/horseCart.js",
-    "old": "  const horseWithPlayer = () => !wagonState.HorseStabled && ((", "new": "  const horseWithPlayer = () => ((",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a stabled horse weighs on the hull" },
-  { "name": "B6-hitched-to-a-parked-wagon", "file": "src/systems/horse/horseCart.js",
-    "old": "(wagonState.HorseMode === HORSE_MODE.HitchedToWagon && wagonWithPlayer()));", "new": "(wagonState.HorseMode === HORSE_MODE.HitchedToWagon));",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a horse in a parked wagon's shafts weighs on the hull" },
-  { "name": "B6-loose-horse-counts", "file": "src/systems/horse/horseCart.js",
-    "old": "((wagonState.HorseMode === HORSE_MODE.WithPlayer && !parkDue(horseParks) && !parkDue(cartParks)) ||", "new": "((wagonState.HorseMode !== HORSE_MODE.None) ||",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a horse waiting where I left it weighs on the hull" },
-  { "name": "B6-host-items-unkept", "file": "src/scenes/world.js",
-    "old": "      hasHorse: () => hasTransport(TRANSPORT_HORSE) && (!hccOn() || !!hccRuntime?.horseWithPlayer?.()), hasCart: () => hasTransport(TRANSPORT_SMALL_CART) && (!hccOn() || !!hccRuntime?.wagonWithPlayer?.()),", "new": "      hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART),",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the opt-in items weigh wherever the pair stands" },
-  { "name": "B3-threshold-unkept", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    state.cargoThreshold = threshold;\n", "new": "",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the hold unread: the helm never says a load" },
-  { "name": "B3-the-Carrack-told", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,", "new": "        heavy: state.boatCargoMod < 0.5,",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the Classic Carrack, dead by her missing hold, is told to lighten" },
-  { "name": "B3-threshold-0.6", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,", "new": "        heavy: state.boatCargoMod < 0.6 && state.cargoThreshold > 0,",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "over half her way is called too heavy" },
-  { "name": "B3-threshold-at-half", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,", "new": "        heavy: state.boatCargoMod <= 0.5 && state.cargoThreshold > 0,",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "at half the mod's lighter word is overruled" },
-  { "name": "B3-threshold-any-load", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,", "new": "        heavy: state.boatCargoMod < 1 && state.cargoThreshold > 0,",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "every load is called too heavy" },
-  { "name": "B4-irons-under-a-dead-load", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (!(state.boatCargoMod > 0)) return false;\n", "new": "",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a hull her load holds dead is told she is in irons" },
-  { "name": "B5-card-unweighed", "file": "src/scenes/naval/passageHelm.js",
-    "old": "heavy: !!helm?.heavy,", "new": "heavy: false,",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the passenger's card never carries the load" },
-  { "name": "B5-line-unpainted", "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : '';", "new": "  const hint = h ? helmHint(h, state) : '';",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the passenger's line never says the load" },
-  { "name": "C3-preview-heavy", "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  inIrons: false, way: 0, heavy: false,", "new": "  inIrons: false, way: 0, heavy: true,",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the HUD's preview says a load" },
-  { "name": "A1-the-guess-kept", "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  if (t0 == null) return deps.currentMapPixel();", "new": "  if (t0 == null) return (boat.MapPixel = deps.currentMapPixel());",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "an inn's load pins her to the inn's pixel for good" },
-  { "name": "A2-her-own-unread", "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  if (boat.MapPixel != null) return boat.MapPixel;\n", "new": "",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "her own pixel overread by the player's or the terrain's" },
-  { "name": "A2-dungeon-boat-read-outdoors", "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();", "new": "  const t0 = deps.isPlayerInside() ? null : deps.playerTerrain?.();",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a dungeon's boat is given an outdoor pixel" },
-  { "name": "A2-indoors-reads-terrain", "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();", "new": "  const t0 = boat.inside ? null : deps.playerTerrain?.();",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "indoors she is read off a terrain and kept" },
-  { "name": "A2-fallback-nowhere", "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  if (t0 == null) return deps.currentMapPixel();", "new": "  if (t0 == null) return { X: 0, Y: 0 };",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the fallback is no place: a dungeon's boat is hidden in her dungeon" },
-  { "name": "A3-nodes-bare-pixel", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // AUDIT FB1029d A3: a dungeon's boat with none, read outdoors", "new": "    UpdateBoatNodesAtMapPixel(boat, boat.MapPixel);",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a dungeon's boat with none throws in her nodes outdoors" },
-  { "name": "C1-dungeon-arm-bare", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && pixelOf(allBoat).Y === cur.Y) {", "new": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the door's visibility throws at a dungeon's boat with none" },
-  { "name": "C1-one-dungeon-arm-bare", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && pixelOf(boat).Y === cur.Y) {", "new": "      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && boat.MapPixel.Y === cur.Y) {",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "one boat's visibility throws at a dungeon's boat with none" },
-  { "name": "C1-placing-unread", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    pixelOf(boat);   // NO-PIXEL: a terrain the streamer no longer holds - the pixel she stands on\n", "new": "",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a boat placed on a terrain the streamer dropped keeps none" },
-  { "name": "A5-console-throws", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "      const boat = state.AllBoats[i], px = pixelOf(boat);", "new": "      const boat = state.AllBoats[i], px = boat.MapPixel;",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "the console's list throws at a boat with none" },
-  { "name": "WIND-HELD-unlaid", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) { log('COME SAIL AWAY - A WIND OF NOUGHT OUTDOORS: THE DOOR\\'S WIND LAID'); UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny); }\n", "new": "",
-    "tests": ["test/systems/comeSailAway/audit_fb1029d.test.js"], "why": "a door whose chain stopped before OnTransition leaves the sea becalmed" }
+  {
+    "name": "B1-summon-on-deck",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
+    "new": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.summonOutdoorsOnly };",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a summon at the helm sets the wagon down in the sea"
+  },
+  {
+    "name": "B1-send-away-on-deck",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (pee().isPlayerInside() || aboard()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
+    "new": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "Send away sheds the load from a ship under way"
+  },
+  {
+    "name": "B1-quick-mount-on-deck",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (pee().isPlayerInside() || aboard()) {",
+    "new": "    if (pee().isPlayerInside() || tm().isOnShip()) {",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the mount key answers on a deck"
+  },
+  {
+    "name": "B1-horse-check-on-deck",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (wagonState.HorseMode === HORSE_MODE.WithPlayer) return true;\n    if (pee().isPlayerInside() || aboard()) return false;",
+    "new": "    if (wagonState.HorseMode === HORSE_MODE.WithPlayer) return true;\n    if (pee().isPlayerInside() || tm().isOnShip()) return false;",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a horse left on the quay is ridden from the deck"
+  },
+  {
+    "name": "B1-cart-check-on-deck",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (wagonState.Mode !== WAGON_MODE.Deployed && wagonState.Mode !== WAGON_MODE.FollowingPlayer) return false;\n    if (pee().isPlayerInside() || aboard()) return false;",
+    "new": "    if (wagonState.Mode !== WAGON_MODE.Deployed && wagonState.Mode !== WAGON_MODE.FollowingPlayer) return false;\n    if (pee().isPlayerInside() || tm().isOnShip()) return false;",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a wagon parked on the quay is driven from the deck"
+  },
+  {
+    "name": "B1-observe-on-deck",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if ((mode === TRANSPORT.Cart || mode === TRANSPORT.Horse) && deps.transport.onDeck?.()) {\n      rejectTransportChange(prev, HCC_TEXT.mountOutdoorsOnly);\n      return;\n    } // AUDIT FB1029d B1: no pair mounted on a deck\n    if (mode === TRANSPORT.Cart && teamShort()) {",
+    "new": "    if (mode === TRANSPORT.Cart && teamShort()) {",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the Transport window's set rides a horse on deck"
+  },
+  {
+    "name": "B1-aboard-is-the-ship-alone",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "  const aboard = () => tm().isOnShip() || !!deps.transport.onDeck?.();",
+    "new": "  const aboard = () => tm().isOnShip();",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the deck unread: only Daggerfall's own ship refuses"
+  },
+  {
+    "name": "B1-host-deck-unread",
+    "file": "src/scenes/world.js",
+    "old": "      onDeck: () => !!(csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat),",
+    "new": "      onDeck: () => !!csaBoatUnderMe(),",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a deck I stand on, not at its helm, reads as land"
+  },
+  {
+    "name": "B2-keeping-before-the-park",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "  const wagonWithPlayer = () =>\n    wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);",
+    "new": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled;",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a cart left for the helm weighs on her until the next frame's park"
+  },
+  {
+    "name": "B8-following-counts",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);",
+    "new": "    wagonState.Mode !== WAGON_MODE.Deployed &&\n    wagonState.Mode !== WAGON_MODE.None &&\n    !wagonState.WagonStabled &&\n    !parkDue(cartParks);",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a team following on foot weighs on the hull"
+  },
+  {
+    "name": "B6-horse-stabled-counts",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    !wagonState.HorseStabled &&\n    ((wagonState.HorseMode === HORSE_MODE.WithPlayer && !parkDue(horseParks) && !parkDue(cartParks)) ||\n      (wagonState.HorseMode === HORSE_MODE.HitchedToWagon && wagonWithPlayer()));",
+    "new": "    (wagonState.HorseMode === HORSE_MODE.WithPlayer && !parkDue(horseParks) && !parkDue(cartParks)) ||\n    (wagonState.HorseMode === HORSE_MODE.HitchedToWagon && wagonWithPlayer());",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a stabled horse weighs on the hull"
+  },
+  {
+    "name": "B6-hitched-to-a-parked-wagon",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "      (wagonState.HorseMode === HORSE_MODE.HitchedToWagon && wagonWithPlayer()));",
+    "new": "      wagonState.HorseMode === HORSE_MODE.HitchedToWagon);",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a horse in a parked wagon's shafts weighs on the hull"
+  },
+  {
+    "name": "B6-loose-horse-counts",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    ((wagonState.HorseMode === HORSE_MODE.WithPlayer && !parkDue(horseParks) && !parkDue(cartParks)) ||",
+    "new": "    (wagonState.HorseMode !== HORSE_MODE.None ||",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a horse waiting where I left it weighs on the hull"
+  },
+  {
+    "name": "B6-host-items-unkept",
+    "file": "src/scenes/world.js",
+    "old": "      hasHorse: () => hasTransport(TRANSPORT_HORSE) && (!hccOn() || !!hccRuntime?.horseWithPlayer?.()), hasCart: () => hasTransport(TRANSPORT_SMALL_CART) && (!hccOn() || !!hccRuntime?.wagonWithPlayer?.()),",
+    "new": "      hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART),",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the opt-in items weigh wherever the pair stands"
+  },
+  {
+    "name": "B3-threshold-unkept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    state.cargoThreshold = threshold;\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the hold unread: the helm never says a load"
+  },
+  {
+    "name": "B3-the-Carrack-told",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,",
+    "new": "        heavy: state.boatCargoMod < 0.5,",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the Classic Carrack, dead by her missing hold, is told to lighten"
+  },
+  {
+    "name": "B3-threshold-0.6",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,",
+    "new": "        heavy: state.boatCargoMod < 0.6 && state.cargoThreshold > 0,",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "over half her way is called too heavy"
+  },
+  {
+    "name": "B3-threshold-at-half",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,",
+    "new": "        heavy: state.boatCargoMod <= 0.5 && state.cargoThreshold > 0,",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "at half the mod's lighter word is overruled"
+  },
+  {
+    "name": "B3-threshold-any-load",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,",
+    "new": "        heavy: state.boatCargoMod < 1 && state.cargoThreshold > 0,",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "every load is called too heavy"
+  },
+  {
+    "name": "B4-irons-under-a-dead-load",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!(state.boatCargoMod > 0)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a hull her load holds dead is told she is in irons"
+  },
+  {
+    "name": "B5-card-unweighed",
+    "file": "src/scenes/naval/passageHelm.js",
+    "old": "    heavy: !!helm?.heavy, // AUDIT FB1029d B5: her load said to the passenger too",
+    "new": "    heavy: false, // AUDIT FB1029d B5: her load said to the passenger too",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the passenger's card never carries the load"
+  },
+  {
+    "name": "B5-line-unpainted",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : ''; // AUDIT FB1029d B5: a passenger's load",
+    "new": "  const hint = h ? helmHint(h, state) : ''; // AUDIT FB1029d B5: a passenger's load",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the passenger's line never says the load"
+  },
+  {
+    "name": "C3-preview-heavy",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  heavy: false,",
+    "new": "  heavy: true,",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the HUD's preview says a load"
+  },
+  {
+    "name": "A1-the-guess-kept",
+    "file": "src/systems/comeSailAway/csaPixel.js",
+    "old": "  if (t0 == null) return deps.currentMapPixel();",
+    "new": "  if (t0 == null) return (boat.MapPixel = deps.currentMapPixel());",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "an inn's load pins her to the inn's pixel for good"
+  },
+  {
+    "name": "A2-her-own-unread",
+    "file": "src/systems/comeSailAway/csaPixel.js",
+    "old": "  if (boat.MapPixel != null) return boat.MapPixel;\n  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();",
+    "new": "  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "her own pixel overread by the player's or the terrain's"
+  },
+  {
+    "name": "A2-dungeon-boat-read-outdoors",
+    "file": "src/systems/comeSailAway/csaPixel.js",
+    "old": "  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();",
+    "new": "  const t0 = deps.isPlayerInside() ? null : deps.playerTerrain?.();",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a dungeon's boat is given an outdoor pixel"
+  },
+  {
+    "name": "A2-indoors-reads-terrain",
+    "file": "src/systems/comeSailAway/csaPixel.js",
+    "old": "  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();",
+    "new": "  const t0 = boat.inside ? null : deps.playerTerrain?.();",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "indoors she is read off a terrain and kept"
+  },
+  {
+    "name": "A2-fallback-nowhere",
+    "file": "src/systems/comeSailAway/csaPixel.js",
+    "old": "  if (t0 == null) return deps.currentMapPixel();",
+    "new": "  if (t0 == null) return { X: 0, Y: 0 };",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the fallback is no place: a dungeon's boat is hidden in her dungeon"
+  },
+  {
+    "name": "A3-nodes-bare-pixel",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // AUDIT FB1029d A3: a dungeon's boat with none, read outdoors",
+    "new": "    UpdateBoatNodesAtMapPixel(boat, boat.MapPixel);",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a dungeon's boat with none throws in her nodes outdoors"
+  },
+  {
+    "name": "C1-dungeon-arm-bare",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && pixelOf(allBoat).Y === cur.Y) {",
+    "new": "        if (allBoat.inside && inDungeon() && pixelOf(allBoat).X === cur.X && allBoat.MapPixel.Y === cur.Y) {",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the door's visibility throws at a dungeon's boat with none"
+  },
+  {
+    "name": "C1-one-dungeon-arm-bare",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && pixelOf(boat).Y === cur.Y) {",
+    "new": "      if (boat.inside && inDungeon() && pixelOf(boat).X === cur.X && boat.MapPixel.Y === cur.Y) {",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "one boat's visibility throws at a dungeon's boat with none"
+  },
+  {
+    "name": "C1-placing-unread",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    pixelOf(boat);   // NO-PIXEL: a terrain the streamer no longer holds - the pixel she stands on\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a boat placed on a terrain the streamer dropped keeps none"
+  },
+  {
+    "name": "A5-console-throws",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      const boat = state.AllBoats[i], px = pixelOf(boat);",
+    "new": "      const boat = state.AllBoats[i], px = boat.MapPixel;",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "the console's list throws at a boat with none"
+  },
+  {
+    "name": "WIND-HELD-unlaid",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) { log('COME SAIL AWAY - A WIND OF NOUGHT OUTDOORS: THE DOOR\\'S WIND LAID'); UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/audit_fb1029d.test.js"
+    ],
+    "why": "a door whose chain stopped before OnTransition leaves the sea becalmed"
+  }
 ]

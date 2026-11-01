@@ -12,8 +12,8 @@
   {
     "name": "PLACE-LRU-release-never-trims",
     "file": "src/scenes/placeHolds.js",
-    "old": "        shelf.set(h.key, h);\n        trim(kind);",
-    "new": "        shelf.set(h.key, h);",
+    "old": "        trim(kind);\n        sweep();",
+    "new": "        sweep();",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PLACE-LRU-a-models-pictures-never-let-go",
     "file": "src/scenes/placeHolds.js",
-    "old": "      for (const t of pictures ?? []) sub('tex', t);",
-    "new": "",
+    "old": "      for (const t of pictures ?? []) sub('tex', t);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "PLACE-LRU-a-second-keep-of-one-place-never-dropped",
     "file": "src/scenes/placeHolds.js",
-    "old": "        if (older) { shelf.delete(h.key); drop(older); }",
+    "old": "        if (older) {\n          shelf.delete(h.key);\n          drop(older);\n        }",
     "new": "",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "PLACE-LRU-a-dropped-place-still-holds",
     "file": "src/scenes/placeHolds.js",
-    "old": "        if (h.state === 'dropped') { if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k); return; }",
-    "new": "",
+    "old": "        if (h.state === 'dropped') {\n          if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k);\n          return;\n        }\n        if (h.holds[what].has(k)) return;",
+    "new": "        if (h.holds[what].has(k)) return;",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PLACE-LRU-a-drop-lets-nothing-go",
     "file": "src/scenes/placeHolds.js",
-    "old": "      for (const key of h.holds[what]) sub(what, key);",
-    "new": "",
+    "old": "      for (const key of h.holds[what]) sub(what, key);\n      h.holds[what].clear();",
+    "new": "      h.holds[what].clear();",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],

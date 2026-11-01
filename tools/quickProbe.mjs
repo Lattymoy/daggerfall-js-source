@@ -16,18 +16,38 @@ const ROOT = process.env.TREE || fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT || 5251);
 const RADIUS = Number(process.env.RADIUS || 2);
 const N_SETTLE = Number(process.env.N_SETTLE || 20);
-const W = Number(process.env.W || 320), H = Number(process.env.H || 180);
-const ALL = { ...SCENES, snow: '/play/?world&region=Wayrest&loc=Knightstale&class=1&novideo&shot&play&fps&tod=13:00&season=winter&weather=snow' };
+const W = Number(process.env.W || 320),
+  H = Number(process.env.H || 180);
+const ALL = {
+  ...SCENES,
+  snow: '/play/?world&region=Wayrest&loc=Knightstale&class=1&novideo&shot&play&fps&tod=13:00&season=winter&weather=snow',
+};
 
 const names = process.argv.slice(2);
-if (!names.length || names.some((n) => !ALL[n])) throw new Error(`quickProbe: name scenes of ${Object.keys(ALL).join(', ')}`);
-const server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, plugins: [probeTransforms()], server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
+if (!names.length || names.some((n) => !ALL[n]))
+  throw new Error(`quickProbe: name scenes of ${Object.keys(ALL).join(', ')}`);
+const server = await createServer({
+  root: ROOT,
+  configFile: `${ROOT}/vite.config.js`,
+  plugins: [probeTransforms()],
+  server: { port: PORT, strictPort: true, hmr: false, watch: null },
+  logLevel: 'error',
+});
 await server.listen();
 const browser = await chromium.launch({ args: SWIFTSHADER_ARGS });
 try {
   for (const name of names) {
     const ctx = await browser.newContext({ viewport: { width: W, height: H } });
-    await ctx.addInitScript((r) => { try { const k = 'dagger.ui.v1'; const o = JSON.parse(localStorage.getItem(k) || '{}'); o.landViewDistance = r; localStorage.setItem(k, JSON.stringify(o)); } catch { /* none */ } }, RADIUS);
+    await ctx.addInitScript((r) => {
+      try {
+        const k = 'dagger.ui.v1';
+        const o = JSON.parse(localStorage.getItem(k) || '{}');
+        o.landViewDistance = r;
+        localStorage.setItem(k, JSON.stringify(o));
+      } catch {
+        /* none */
+      }
+    }, RADIUS);
     await ctx.addInitScript(CENSUS);
     const page = await ctx.newPage();
     const errors = [];
@@ -40,7 +60,12 @@ try {
     const r = await measure(ctx, page, { name, url: ALL[name], bootS, errors });
     console.log(`== ${name}${process.env.TAG ? ` [${process.env.TAG}]` : ''}: ${summaryLine(r)}`);
     const pick = (k) => r.cpu.inclusive.find(([n]) => n.startsWith(k))?.[1] ?? 0;
-    console.log(`   frame ${pick('frame src/scenes/world.js').toFixed(2)} ms, GC ${(r.cpu.self.find(([n]) => n.startsWith('(garbage'))?.[1] ?? 0).toFixed(2)} ms, heap ${r.heap.bytesPerFrame} B/frame`);
+    console.log(
+      `   frame ${pick('frame src/scenes/world.js').toFixed(2)} ms, GC ${(r.cpu.self.find(([n]) => n.startsWith('(garbage'))?.[1] ?? 0).toFixed(2)} ms, heap ${r.heap.bytesPerFrame} B/frame`,
+    );
     await ctx.close();
   }
-} finally { await browser.close(); await server.close(); }
+} finally {
+  await browser.close();
+  await server.close();
+}

@@ -28,7 +28,7 @@ import { membersAt } from '../systems/livingWorld/trips.js';
 import { NATIVE_PER_M } from '../systems/livingWorld/trips.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
 import { clearOfTeam } from '../systems/livingWorld/wagons.js';
-import { killed } from './hideouts.js';   // AUDIT LW-III: a body gone from the pool is a fall only where it was killed   // AUDIT LW-III: a fight's bodies clear of the beset party's team
+import { killed } from './hideouts.js'; // AUDIT LW-III: a body gone from the pool is a fall only where it was killed   // AUDIT LW-III: a fight's bodies clear of the beset party's team
 
 /** A fight this near the player (m, on the ground) is stood live. */
 export const LIVE_M = 150;
@@ -68,14 +68,23 @@ export function createRoadFights(deps) {
   const ended = new Set();
   const day = () => Math.floor((deps.clock() - 240) / 1440);
 
-  const takeOut = (rec) => { try { if (deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[road fights] a body would not leave', e?.message ?? e); } };
+  const takeOut = (rec) => {
+    try {
+      if (deps.inPool(rec)) deps.remove(rec);
+    } catch (e) {
+      console.warn('[road fights] a body would not leave', e?.message ?? e);
+    }
+  };
   /** Let a fight go: its bodies out (a fight lost leaves its foes to the pool's own law). */
   function letGo(id) {
     const f = fights.get(id);
     if (!f) return;
-    for (const rec of f.allies.values()) if (!rec.dead) takeOut(rec);   // AUDIT-C4: one cut down is the pool's own (a corpse to search, as a foe's)
+    for (const rec of f.allies.values()) if (!rec.dead) takeOut(rec); // AUDIT-C4: one cut down is the pool's own (a corpse to search, as a foe's)
     if (f.state !== 'lost') for (const rec of f.foes) takeOut(rec);
-    if (f.state === 'won' || f.state === 'lost') { ended.add(id); if (ended.size > ENDED_MAX) ended.delete(ended.values().next().value); }
+    if (f.state === 'won' || f.state === 'lost') {
+      ended.add(id);
+      if (ended.size > ENDED_MAX) ended.delete(ended.values().next().value);
+    }
     fights.delete(id);
   }
 
@@ -86,40 +95,78 @@ export function createRoadFights(deps) {
     const clear = (/** @type {number} */ x, /** @type {number} */ z) => (team ? clearOfTeam(x, z, team) : { x, z });
     const enc = trip.enc;
     /** @type {{ trip: any, enc: any, at: number[], foes: any[], allies: Map<string, any>, state: 'standing'|'live'|'won'|'lost', fell: Set<string> }} */
-    const f = { trip, enc, at: deps.sceneOf(at.x, at.z), foes: [], allies: new Map(), state: 'standing', fell: new Set() };
+    const f = {
+      trip,
+      enc,
+      at: deps.sceneOf(at.x, at.z),
+      foes: [],
+      allies: new Map(),
+      state: 'standing',
+      fell: new Set(),
+    };
     fights.set(enc.id, f);
     const [near, far] = FOE_STAND_M;
-    const turn = (lwSeed(textSeed(enc.id), 0x6c697665) % 628) / 100;   // 'live'
+    const turn = (lwSeed(textSeed(enc.id), 0x6c697665) % 628) / 100; // 'live'
     const stands = [];
     enc.foes.forEach((type, i) => {
       const a = ((i + 0.5) / enc.foes.length) * Math.PI * 2 + turn;
       const r = (near + ((lwSeed(textSeed(enc.id), i, 0x72) % 1000) / 1000) * (far - near)) * NATIVE_PER_M;
       const { x: nx, z: nz } = clear(at.x + Math.sin(a) * r, at.z + Math.cos(a) * r);
       const feet = deps.sceneOf(nx, nz);
-      stands.push(Promise.resolve(deps.spawn(type, feet, { yaw: Math.atan2(f.at[0] - feet[0], f.at[2] - feet[2]), level: enc.level, allied: false, gender: 'male' }))
-        .then((rec) => { if (rec) { if (fights.get(enc.id) !== f) takeOut(rec); else { rec._lwFight = enc.id; f.foes.push(rec); } } }));
+      stands.push(
+        Promise.resolve(
+          deps.spawn(type, feet, {
+            yaw: Math.atan2(f.at[0] - feet[0], f.at[2] - feet[2]),
+            level: enc.level,
+            allied: false,
+            gender: 'male',
+          }),
+        ).then((rec) => {
+          if (rec) {
+            if (fights.get(enc.id) !== f) takeOut(rec);
+            else {
+              rec._lwFight = enc.id;
+              f.foes.push(rec);
+            }
+          }
+        }),
+      );
     });
     const members = membersAt(trip, t);
     const rel = deps.relations?.();
     members.forEach((m, i) => {
       if (m.cls == null) return;
       const standing = rel?.standing(m.id, day());
-      if (standing === 'enemy' || standing === 'hostile') return;   // LW7b: no enemy of the player's fights beside them - they keep the ring
+      if (standing === 'enemy' || standing === 'hostile') return; // LW7b: no enemy of the player's fights beside them - they keep the ring
       const a = (i / Math.max(1, members.length)) * Math.PI * 2;
       const c = clear(at.x + Math.sin(a) * 64, at.z + Math.cos(a) * 64);
       const feet = deps.sceneOf(c.x, c.z);
-      stands.push(Promise.resolve(deps.spawn(m.cls, feet, { yaw: a, level: m.level ?? 1, allied: true, gender: m.sex ?? 'male' }))
-        .then((rec) => {
+      stands.push(
+        Promise.resolve(
+          deps.spawn(m.cls, feet, { yaw: a, level: m.level ?? 1, allied: true, gender: m.sex ?? 'male' }),
+        ).then((rec) => {
           if (!rec) return;
-          if (fights.get(enc.id) !== f) { takeOut(rec); return; }
+          if (fights.get(enc.id) !== f) {
+            takeOut(rec);
+            return;
+          }
           rec._lwFight = enc.id;
           rec.shipmate = true;
           rec.living = { id: m.id, res: m, town: deps.door ?? null };
-          if (rec.entity) { rec.entity.name = m.name; rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }
+          if (rec.entity) {
+            rec.entity.name = m.name;
+            rec.entity.team = 'PlayerAlly';
+            rec.entity.mobileTeam = 'PlayerAlly';
+          }
           f.allies.set(m.id, rec);
-        }));
+        }),
+      );
     });
-    Promise.all(stands).then(() => { if (fights.get(enc.id) === f && f.state === 'standing') f.state = 'live'; }).catch(() => letGo(enc.id));
+    Promise.all(stands)
+      .then(() => {
+        if (fights.get(enc.id) === f && f.state === 'standing') f.state = 'live';
+      })
+      .catch(() => letGo(enc.id));
   }
 
   /** A turn of the character's, and the host's books told. */
@@ -130,7 +177,10 @@ export function createRoadFights(deps) {
   /** AUDIT-C3: an ally cut down beside the player DIED at their side, at that minute (the host's hand turn - gone from the
    *  party from then, their body the pool's, their town's talk); a host without one keeps the old `fallen`. */
   function fell(res, trip, t) {
-    if (deps.died) { deps.died(res, t); deps.onTurn?.(); } else turn('fallen', deps.turnKeyOf(res, trip));
+    if (deps.died) {
+      deps.died(res, t);
+      deps.onTurn?.();
+    } else turn('fallen', deps.turnKeyOf(res, trip));
   }
 
   /** Read a live fight: the fallen, the won, the lost. AUDIT LW-III (KILLED, NOT GONE): a body is down only where it was
@@ -143,7 +193,7 @@ export function createRoadFights(deps) {
     for (const [id, rec] of f.allies) {
       if (!killed(rec) || f.fell.has(id)) continue;
       f.fell.add(id);
-      fell(rec.living.res, f.trip, t);   // cut down beside the player: the lives read it
+      fell(rec.living.res, f.trip, t); // cut down beside the player: the lives read it
     }
     const foesStanding = f.foes.filter((rec) => !rec.dead && deps.inPool(rec));
     const foesFell = f.foes.filter((rec) => killed(rec)).length;
@@ -155,7 +205,8 @@ export function createRoadFights(deps) {
       // fated ally stood before the road's minute for their fall, alive at the win, is spared (read off the road alone
       // they were already its dead, never spared - and their body drawn beside them)
       const standing = new Map(membersAt(f.trip, t).map((m) => [m.id, m]));
-      for (const [id, rec] of f.allies) if (!rec.dead && deps.inPool(rec) && rec.living?.res) standing.set(id, rec.living.res);
+      for (const [id, rec] of f.allies)
+        if (!rec.dead && deps.inPool(rec) && rec.living?.res) standing.set(id, rec.living.res);
       for (const m of standing.values()) {
         if (f.fell.has(m.id)) continue;
         const fated = deps.dies(m, f.trip);
@@ -194,24 +245,40 @@ export function createRoadFights(deps) {
         judge(f, t);
         const far = !here || Math.hypot(f.trip.enc.x - here.x, f.trip.enc.z - here.z) / NATIVE_PER_M > LIVE_KEEP_M;
         const late = t > f.enc.t1 + LIVE_GRACE_MIN;
-        const walkedOn = f.state === 'won' && t >= f.enc.t1;   // the halt over: the party walks on, its own again
+        const walkedOn = f.state === 'won' && t >= f.enc.t1; // the halt over: the party walks on, its own again
         if (far || late || walkedOn || !can) letGo(id);
       }
     },
     /** Whether a party's fight is stood here - its foes and its armed are bodies of the pool, not the roads'. @param {string} tripId */
-    stood(tripId) { for (const f of fights.values()) if (f.trip.id === tripId) return true; return false; },
+    stood(tripId) {
+      for (const f of fights.values()) if (f.trip.id === tripId) return true;
+      return false;
+    },
     /** The members of a party stood as allies here (the roads draw them not). @param {string} tripId */
-    alliesOf(tripId) { for (const f of fights.values()) if (f.trip.id === tripId) return new Set(f.allies.keys()); return new Set(); },
+    alliesOf(tripId) {
+      for (const f of fights.values()) if (f.trip.id === tripId) return new Set(f.allies.keys());
+      return new Set();
+    },
     /**
      * Whether a beset party near the player is a PEER's to stand (online: another player elected for it) - the roads
      * show no foes of their own for it; the peer's come through the stream.
      * @param {{ x: number, z: number }} at @param {{ x: number, z: number } | null} here
      */
-    peerStands(at, here) { return !!here && Math.hypot(at.x - here.x, at.z - here.z) / NATIVE_PER_M <= LIVE_M && !deps.owner(deps.sceneOf(at.x, at.z)); },
+    peerStands(at, here) {
+      return (
+        !!here &&
+        Math.hypot(at.x - here.x, at.z - here.z) / NATIVE_PER_M <= LIVE_M &&
+        !deps.owner(deps.sceneOf(at.x, at.z))
+      );
+    },
     /** The fights stood (the probes; the pins). */
     fights: () => [...fights.values()],
     /** Every body taken out and every fight forgotten (the host's teardown, a sweep, the switch off). */
-    clear() { for (const id of [...fights.keys()]) letGo(id); },
-    get size() { return fights.size; },
+    clear() {
+      for (const id of [...fights.keys()]) letGo(id);
+    },
+    get size() {
+      return fights.size;
+    },
   };
 }

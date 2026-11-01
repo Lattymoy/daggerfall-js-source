@@ -36,12 +36,15 @@ for (const [label, opts] of [
   page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`${BASE}/play/`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 30000 });
-  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count())
+    await page.locator('#enhanced-menu .doorbtn.door-offline').click(); // UI-CALM: the games stand behind Offline
   await page.locator('#enhanced-menu .doorbtn.door-new').click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
 
-  const mounted = await page.waitForSelector('#enhanced-chargen .prov', { timeout: 180000 })
-    .then(() => true, () => false);
+  const mounted = await page.waitForSelector('#enhanced-chargen .prov', { timeout: 180000 }).then(
+    () => true,
+    () => false,
+  );
   check(`${label}: New Game mounts the ENHANCED wizard`, mounted);
   if (mounted) {
     // the map is traced from the player's OWN files, so this also

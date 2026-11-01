@@ -1,23 +1,31 @@
 # Characters
 
-PARKED under pivot 3 (classic visuals) - see Characters-Arc.md for the live
-record, which runs past this page's summary: C8 shipped the enemy rigs E1-E4b
-end to end plus spectral (E4c deferred by Mac), and the remaining interims
-are Systems work (ledger below). The C9-C17 slices that carry the same letter
-are recorded in `05-Combat/Combat.md`, not here. AUDIT 18 corrected the status
-word and the cutoff: this page said ACTIVE and stopped its record at C5 while
-Home.md's arc index said PARKED with C8 and the E-series shipped.
+The people and monsters of the world, and how bodies are drawn and dressed: the data layer from Daggerfall's files,
+the enemy port, the Morrowind bodies the port stands actors in when Morrowind's data is attached, the port's own
+models for them, and the cosmetic systems worn on a body. Combat itself is in `05-Combat/`.
 
-C1-C3 SHIPPED (interior people, exterior
-NPCs + name banks, dungeon enemies). C4 voxel rigs SHIPPED (character
-render path, ?voxelfolk). C5 SHIPPED: the vendored/trace rigs are retired
-for a designed `buildNeutralBody` figure, plus a full race system -
-geometric armour (body-displacement + standoff pieces), clothing (1:1
-with the item DB), simulated draped garments (verlet cloth with body
-collision + bone-driven leg-drapes - see C-Drapes), race heads/hairstyles,
-tails, body scales/fur,
-per-race colour palettes with client-side tone selection, and an
-in-engine bake (`raceCharacter.js` -> one cached mesh per race,
-instanced by archive-derived race). Prerequisites (Readers, World)
-COMPLETE; items routed here are collected in 01-Overview/Port-Ledger.md
-section C. Scope in 01-Overview/Port-Doctrine.md phase plan.
+## Pages
+
+- `Characters-Arc.md` - People and Foes: standing people, names, dungeon foes, the foe hosts, teams and targets
+- `Region-Names.md` - names by culture and region across Tamriel
+- `Stock-Classes.md` - the premade classes' revised skill lists
+- `Enemy-Expansion.md` - Daggerfall Enemy Expansion, ported, and MUDEX
+- `Meaner-Monsters.md` - Meaner Monsters, ported
+- `Morrowind-NPCs.md` - every actor in a Morrowind body: lanes, budget, wardrobe, creatures, marks
+- `Body-Motion.md` - the Morrowind body's own gait, carry and blows in third person
+- `Werewolf-Body.md` - Bloodmoon's werewolf and the Shadow Fang skin
+- `Head-Portraits.md` - faces drawn as the Morrowind head
+- `Own-Heads.md` - the port's own Breton heads, for players
+- `Steel-Plate.md` - the port's own armour: steel plate, ebony plate, brigandine
+- `Cloak.md` - the port's own cloak, its fits, and the cape switch
+- `Townsfolk-Outfits.md` - each walker sprite's own outfit
+- `Layered-Gearing.md` - the sprite body in the armour and weapon it wears
+- `Wardrobe.md` - collected looks for gear (transmog)
+- `Aura-Armory.md` - cosmetic effects worn on the body's parts
+
+## Rules
+
+- DFU's look is the baseline for every actor; Morrowind bodies stand only with Morrowind's data attached, and fall
+  back to DFU's billboard.
+- Morrowind's and Bloodmoon's files are the player's own and never ship; the port's own models ship under
+  `src/assets/mw/` (`src/systems/ownMwAssets.js`).

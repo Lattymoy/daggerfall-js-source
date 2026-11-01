@@ -42,8 +42,8 @@
   {
     "name": "FB1018E-repair-uncounted",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "    if (Number.isFinite(kg) && item.weightInKg !== kg) { item.weightInKg = kg; n++; }",
-    "new": "    if (Number.isFinite(kg)) { item.weightInKg = kg; n++; }",
+    "old": "    if (Number.isFinite(kg) && item.weightInKg !== kg) {",
+    "new": "    if (Number.isFinite(kg)) {",
     "tests": [
       "test/systems/comeSailAway/fb1018e_partsweight.test.js"
     ]

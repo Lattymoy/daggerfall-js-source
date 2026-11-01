@@ -353,7 +353,7 @@ test('STAFF-PANEL2-CHATMENU FOLLOW AND TP: Follow calls the staff hook with the 
   rowOf(fail.host.lineActions(STAFF_LINE), 'Follow').run();
   await settle(); await settle();
   assert.equal(fail.log.tab(fail.log.active).messages.at(-1).text, 'Follow needs the Staff Panel.');
-  // STAFF-PANEL5-FOLLOW (mob 2026-10-23: "why doesnt follow work?"): no Staff Panel over the game - the hook's follow says
+  // STAFF-PANEL5-FOLLOW: no Staff Panel over the game - the hook's follow says
   // false - is said as the panel's other acts say it, never silence
   const none = staffRig(['dev'], { opts: { follow: () => () => false } });
   rowOf(none.host.lineActions(STAFF_LINE), 'Follow').run();
@@ -366,7 +366,7 @@ test('STAFF-PANEL2-CHATMENU FOLLOW AND TP: Follow calls the staff hook with the 
   await settle(); await settle();
   assert.equal(on.log.tab(on.log.active).messages.length, before, 'a follow that started says nothing');
   assert.ok(said > 0);
-  // CHAT-FOLLOW-CARD (mob: "no panel pops up when followingf from chat"): a follow that took hands the panel the player's
+  // CHAT-FOLLOW-CARD: a follow that took hands the panel the player's
   // card, as a tag's click does - the act word to the page's own origin; one refused, or the tag menu's own follow (which
   // hands its own), hands nothing
   const posted = [];
@@ -946,7 +946,7 @@ test('LEASE1 THE PAGE HANDS ITS HUB\'S LEASE TO EVERY ROOM IT HOLDS (net/roomLea
   assert.deepEqual(leases(old.ws), [], 'nor a relay that closes on the frame');
 });
 
-test('ROSTER-STAFF rosterActions (mob, 2026-10-24: "need to add follor to find a player in chat as well", over the chat\'s Find a player list): a roster row\'s staff acts are the line menu\'s, for the player the row names by socket - their account as a room here holds it, or the hub\'s lists (everyone online, a search\'s answer); none for a player, for a row no list names an account for, or for an id that is no id (mutants: the hub\'s list unread, the search unread, a player given the acts)', async () => {
+test('ROSTER-STAFF rosterActions (over the chat\'s Find a player list): a roster row\'s staff acts are the line menu\'s, for the player the row names by socket - their account as a room here holds it, or the hub\'s lists (everyone online, a search\'s answer); none for a player, for a row no list names an account for, or for an id that is no id (mutants: the hub\'s list unread, the search unread, a player given the acts)', async () => {
   let followed = null;
   const r = staffRig(['dev'], { opts: { follow: () => (sub) => { followed = sub; return true; }, teleport: () => {} } });
   const rows = r.host.rosterActions('p2');

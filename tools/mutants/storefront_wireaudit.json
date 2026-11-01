@@ -2,8 +2,8 @@
   {
     "name": "WIREAUDIT-1-a-peers-kill-anywhere",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (at && within(at, feet, KILL_FX_PEER_M) && ",
-    "new": "if (at && ",
+    "old": "        if (at && within(at, feet, KILL_FX_PEER_M) && !(t - (s.kt ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "        if (at && !(t - (s.kt ?? -Infinity) < FX_MIN_GAP_S)) {",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WIREAUDIT-1-a-peers-blow-anywhere",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (at && within(at, feet, BLOW_PEER_M) && ",
-    "new": "if (at && ",
+    "old": "        if (at && within(at, feet, BLOW_PEER_M) && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "        if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WIREAUDIT-1-no-feet-anywhere",
     "file": "src/net/peer/peerFx.js",
-    "old": "=> !!b && Math.hypot(a[0] - b[0]",
-    "new": "=> !b || Math.hypot(a[0] - b[0]",
+    "old": ") => !!b && Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) <= m;",
+    "new": ") => !b || Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) <= m;",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "WIREAUDIT-1-the-blow-reach-a-plain-arrow",
     "file": "src/net/peer/peerFx.js",
-    "old": "(t.mech === 'pierce' ? t.speed ?? 1 : 1)",
-    "new": "1",
+    "old": "  ARROW_FLIGHT_SPEED *\n    MISSILE_LIFESPAN_S *\n    Math.max(\n      1,\n      ...Object.values(TECHNIQUES).map((/** @type {any} */ t) => (t.mech === 'pierce' ? (t.speed ?? 1) : 1)),\n    ) +",
+    "new": "  ARROW_FLIGHT_SPEED * MISSILE_LIFESPAN_S * Math.max(1, ...Object.values(TECHNIQUES).map((/** @type {any} */ t) => 1)) +",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "WIREAUDIT-3-the-dye-ungated",
     "file": "src/systems/horse/mountLook.js",
-    "old": "othersEffectShown(at) ? peerEffectWorn(id, 'mount') : null",
-    "new": "peerEffectWorn(id, 'mount')",
+    "old": ") => withMountLook(code, othersEffectShown(at) ? peerEffectWorn(id, 'mount') : null);",
+    "new": ") => withMountLook(code, peerEffectWorn(id, 'mount'));",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "WIREAUDIT-3-the-beat-ungated",
     "file": "src/net/peer/peerFx.js",
-    "old": "&& !pose.wb && othersEffectShown(feet) ?",
-    "new": "&& !pose.wb ?",
+    "old": "      const ridden =\n        pose.rd === POSE_RIDE.Horse && !pose.wb && othersEffectShown(feet) ? effectWorn(kit, 'mount') : null;",
+    "new": "      const ridden = pose.rd === POSE_RIDE.Horse && !pose.wb ? effectWorn(kit, 'mount') : null;",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -120,8 +120,8 @@
   {
     "name": "WIREAUDIT-4-a-kill-rides-for-ever",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (!mine.xk || !(now - mine.xt <= KILL_FX_RIDE_S)) return out;",
-    "new": "if (!mine.xk) return out;",
+    "old": "  if (!mine.xk || !(now - mine.xt <= KILL_FX_RIDE_S)) return out;",
+    "new": "  if (!mine.xk) return out;",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -159,8 +159,8 @@
   {
     "name": "WIREAUDIT-5-told-from-anywhere",
     "file": "src/net/peer/peerFx.js",
-    "old": " || !within(at, from, KILL_FX_SAY_M)) return false;",
-    "new": ") return false;",
+    "old": "  if (!at || !at.every?.(Number.isFinite) || !within(at, from, KILL_FX_SAY_M)) return false;",
+    "new": "  if (!at || !at.every?.(Number.isFinite)) return false;",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -169,8 +169,8 @@
   {
     "name": "WIREAUDIT-6-the-floor-unsaid",
     "file": "src/net/wire.js",
-    "old": "its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
-    "new": "",
+    "old": "and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire, and its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
+    "new": "and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ]
@@ -188,8 +188,8 @@
   {
     "name": "WIREAUDIT-7-a-glyph-inserted-mid-list",
     "file": "src/net/identityToken.js",
-    "old": "'penitent', 'herald', 'tower',",
-    "new": "'penitent', 'herald', 'kitten', 'tower',",
+    "old": "  'tower',",
+    "new": "  'kitten',\n  'tower',",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "WIREAUDIT-8-the-mask-order-not-kept",
     "file": "src/net/identityToken.js",
-    "old": "=> GLYPHS.filter((g) => list.includes(g));",
-    "new": "=> [...new Set(list)].filter((g) => GLYPHS.includes(g));",
+    "old": "export const glyphsInOrder = (/** @type {ReadonlyArray<string>} */ list) => GLYPHS.filter((g) => list.includes(g));",
+    "new": "export const glyphsInOrder = (/** @type {ReadonlyArray<string>} */ list) =>\n  [...new Set(list)].filter((g) => GLYPHS.includes(g));",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ]

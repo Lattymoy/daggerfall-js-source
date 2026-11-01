@@ -25,11 +25,17 @@ export const layoutMatchBinds = (layout) => {
 };
 /** The layout a new row of the town is written with: its oldest home's stamp - a town of no homes, the row's own. Binds
  *  `mapId, mapId, layout`. */
-export const TOWN_LAYOUT_SQL = 'COALESCE((SELECT t.layout FROM homes t WHERE t.map_id = ? ORDER BY t.bought_at, t.building_key LIMIT 1), CASE WHEN EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ?) THEN NULL ELSE ? END)';
+export const TOWN_LAYOUT_SQL =
+  'COALESCE((SELECT t.layout FROM homes t WHERE t.map_id = ? ORDER BY t.bought_at, t.building_key LIMIT 1), CASE WHEN EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ?) THEN NULL ELSE ? END)';
 
 /** WD3 (AUDIT WD3 O1): a row in another layout of a town that holds homes is refused - `{ error: 'home-layout',
  *  layout }`, the layout the town keeps for the client to hear - or null. */
 export async function townLayoutRefusal(db, mapId, layout) {
-  const town = await db.prepare('SELECT layout FROM homes WHERE map_id = ? ORDER BY bought_at, building_key LIMIT 1').bind(mapId).first();
-  return town && !homeLayoutsMatch(town.layout, layout) ? { error: 'home-layout', layout: homeLayoutOk(town.layout) ? town.layout ?? null : null } : null;
+  const town = await db
+    .prepare('SELECT layout FROM homes WHERE map_id = ? ORDER BY bought_at, building_key LIMIT 1')
+    .bind(mapId)
+    .first();
+  return town && !homeLayoutsMatch(town.layout, layout)
+    ? { error: 'home-layout', layout: homeLayoutOk(town.layout) ? (town.layout ?? null) : null }
+    : null;
 }

@@ -20,8 +20,8 @@
   {
     "name": "LEGACY6-factions-unbounded",
     "file": "src/systems/legacy/influence.js",
-    "old": "factions: Object.fromEntries(top(facs, FACTIONS_KEPT))",
-    "new": "factions: Object.fromEntries(facs)",
+    "old": "  return {\n    legal,\n    factions: Object.fromEntries(top(facs, FACTIONS_KEPT)),\n    regard: Object.fromEntries(top(regs, REGARDS_KEPT)),\n  };",
+    "new": "  return { legal, factions: Object.fromEntries(facs), regard: Object.fromEntries(top(regs, REGARDS_KEPT)) };",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LEGACY6-regard-floor-gone",
     "file": "src/systems/legacy/influence.js",
-    "old": ".filter(([, r]) => Math.abs(Number(r)) >= REGARD_FLOOR)",
-    "new": ".filter(([, r]) => Number(r) !== 0)",
+    "old": "          .filter(([, r]) => Math.abs(Number(r)) >= REGARD_FLOOR)",
+    "new": "          .filter(([, r]) => Number(r) !== 0)",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LEGACY6-inherit-counts-a-word",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };\n      e.r = clamp(eased(e, day) + amount);",
-    "new": "      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: day };\n      e.r = clamp(eased(e, day) + amount);",
+    "old": "      /** @type {Regard} */\n      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };\n      e.r = clamp(eased(e, day) + amount);",
+    "new": "      /** @type {Regard} */\n      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: day };\n      e.r = clamp(eased(e, day) + amount);",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LEGACY6-news-twice",
     "file": "src/systems/legacy/influence.js",
-    "old": "  if (list.some((x) => x.k === n.k && x.who === n.who && x.t === n.t)) return false;\n",
-    "new": "",
+    "old": "  if (list.some((x) => x.k === n.k && x.who === n.who && x.t === n.t)) return false;\n  list.push(n);",
+    "new": "  list.push(n);",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LEGACY6-news-forever",
     "file": "src/systems/legacy/influence.js",
-    "old": "at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && ",
-    "new": "at(n) <= t && ",
+    "old": "    .filter((n) => at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))",
+    "new": "    .filter((n) => at(n) <= t && (seat || (n.m != null && n.m === here)))",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LEGACY6-seat-deaf",
     "file": "src/systems/legacy/influence.js",
-    "old": "(seat || (n.m != null && n.m === here))",
-    "new": "(n.m != null && n.m === here)",
+    "old": "    .filter((n) => at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))",
+    "new": "    .filter((n) => at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && n.m != null && n.m === here)",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LEGACY6-news-unmerged",
     "file": "src/systems/legacy/store.js",
-    "old": "  mine.news = mergeNews(mine.news, other.news);",
-    "new": "  mine.news = mergeNews(mine.news, []);",
+    "old": "  mine.news = mergeNews(mine.news, other.news); // LEGACY6: what the towns heard is never unheard",
+    "new": "  mine.news = mergeNews(mine.news, []); // LEGACY6: what the towns heard is never unheard",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LEGACY6-news-unread",
     "file": "src/systems/legacy/family.js",
-    "old": "    news: readNews(rec.news),",
-    "new": "    news: [],",
+    "old": "    news: readNews(rec.news), // LEGACY6: what the house's towns talk of (influence.js)",
+    "new": "    news: [], // LEGACY6: what the house's towns talk of (influence.js)",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LEGACY6-kin-words-the-roads",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]",
-    "new": "const newsPool = (item) => (false ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]",
+    "old": "  item.kin",
+    "new": "  false",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]

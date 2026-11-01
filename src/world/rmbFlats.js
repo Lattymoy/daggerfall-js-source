@@ -37,11 +37,12 @@
 
 import { RMB_DIMENSION, SCALE_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { applyBillboardXml, billboardXmlScaleOf, billboardXmlGeneration } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
-import { textureReplacementEnabled, hasTextureReplacement } from '../systems/textureReplacement.js';   // AUDIT MM1: DFU's two gates on the xml scale
-import { flatFieldFor, sowField } from './flatFields.js';   // WD3: a scene model that is a field of flats (the town mods' crops)
-import { PROPS_OFFSET_Y } from './rmbLayout.js';   // FIELD BUGS 2026-10-04d CROPS: a field's batch stands where its misc model does
-import { quarterOf } from '../ui/town/townQuarters.js';   // HOUSE-BUSH: an automap byte's building, by the town map's own ladder
+import { applyBillboardXml, billboardXmlScaleOf, billboardXmlGeneration } from './billboardXml.js'; // MM1: the xml scale registry (a leaf)
+import { textureReplacementEnabled, hasTextureReplacement } from '../systems/textureReplacement.js'; // AUDIT MM1: DFU's two gates on the xml scale
+import { flatFieldFor, sowField } from './flatFields.js'; // WD3: a scene model that is a field of flats (the town mods' crops)
+import { PROPS_OFFSET_Y } from './rmbLayout.js'; // FIELD BUGS 2026-10-04d CROPS: a field's batch stands where its misc model does
+import { quarterOf } from '../ui/town/townQuarters.js'; // HOUSE-BUSH: an automap byte's building, by the town map's own ladder
+import { NATURE_ARCHIVE_MIN, NATURE_ARCHIVE_MAX, isNatureArchive } from './natureArchives.js'; // TREES-SEATED: a leaf (AUDIT FB1031 Y6)
 
 /** RMBLayout's blockFlatsOffsetY: a block's flats stand this far (native units) below their records - and their lights
  *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/city/cityLights.js). */
@@ -49,18 +50,14 @@ export const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
 export const EDITOR_FLATS_ARCHIVE = 199;
 export const LIGHTS_ARCHIVE = 210;
-const NATURE_ARCHIVE_MIN = 500; // ClimateTextureSet.Nature_RainForest
-const NATURE_ARCHIVE_MAX = 511; // ClimateTextureSet.Nature_Mountains_Snow
-/** TREES-SEATED: an archive in the nature range - AddExteriorBlockFlats' own test (RMBLayout.cs:421, master), which swaps such a
- *  sub-record flat to the climate's archive. A MISC flat in the range keeps the archive it names (AddMiscBlockFlats,
- *  :326-380, swaps nothing), so a block's tree can be a nature archive that is not the pixel's. */
-export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;
+export { isNatureArchive }; // AUDIT FB1031 Y6: its home is the leaf world/natureArchives.js, the decor law's too
 /** TREES-SEATED: where a nature flat stands on the location's plane - AddNatureFlats' `natureFlatsOffsetY`, scaled
  *  (the ground scenery's y below). */
 export const NATURE_FLATS_Y = NATURE_FLATS_OFFSET_Y * GLOBAL_SCALE;
 
 /** HOUSE-BUSH: an RMB block's automap is AUTOMAP_SIDE pixels a side, AUTOMAP_SIDE / 16 to a ground tile. */
-const AUTOMAP_SIDE = 64, AUTOMAP_PER_TILE = AUTOMAP_SIDE / 16;
+const AUTOMAP_SIDE = 64,
+  AUTOMAP_PER_TILE = AUTOMAP_SIDE / 16;
 /**
  * HOUSE-BUSH (FIELD BUGS 2026-10-18f, æther on the Discord: "Small bush in a house wall, near east gate of Penwall
  * Derry"). WHETHER A GROUND-SCENERY CELL'S FOOT STANDS INSIDE A BUILDING, as the block's own automap draws it.
@@ -88,10 +85,12 @@ const AUTOMAP_SIDE = 64, AUTOMAP_PER_TILE = AUTOMAP_SIDE / 16;
  */
 export function sceneryUnderRoof(autoMap, x, y, held) {
   if (!autoMap || autoMap.length < AUTOMAP_SIDE * AUTOMAP_SIDE || !held) return false;
-  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);
+  const col = AUTOMAP_PER_TILE * x,
+    row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);
   if (col < 1 || row < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;
-  for (const r of [row - 1, row]) for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;
-  return held(row * AUTOMAP_SIDE + col);   // the four are one footprint: architecture, side by side
+  for (const r of [row - 1, row])
+    for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;
+  return held(row * AUTOMAP_SIDE + col); // the four are one footprint: architecture, side by side
 }
 
 /**
@@ -112,19 +111,31 @@ export function heldFootprints(autoMap, subRecords) {
     const open = [i];
     run[i] = runs;
     while (open.length) {
-      const k = open.pop(), r = Math.floor(k / AUTOMAP_SIDE), c = k % AUTOMAP_SIDE;
-      for (const [rr, cc] of [[r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]]) {
+      const k = open.pop(),
+        r = Math.floor(k / AUTOMAP_SIDE),
+        c = k % AUTOMAP_SIDE;
+      for (const [rr, cc] of [
+        [r + 1, c],
+        [r - 1, c],
+        [r, c + 1],
+        [r, c - 1],
+      ]) {
         if (rr < 0 || cc < 0 || rr >= AUTOMAP_SIDE || cc >= AUTOMAP_SIDE) continue;
         const kk = rr * AUTOMAP_SIDE + cc;
-        if (run[kk] < 0 && quarterOf(autoMap[kk]) !== null) { run[kk] = runs; open.push(kk); }
+        if (run[kk] < 0 && quarterOf(autoMap[kk]) !== null) {
+          run[kk] = runs;
+          open.push(kk);
+        }
       }
     }
     runs++;
   }
   const held = new Set();
   for (const s of subRecords ?? []) {
-    const c = Math.floor(s.xPos / 64), r = Math.floor(s.zPos / 64);
-    if (r >= 0 && c >= 0 && r < AUTOMAP_SIDE && c < AUTOMAP_SIDE && run[r * AUTOMAP_SIDE + c] >= 0) held.add(run[r * AUTOMAP_SIDE + c]);
+    const c = Math.floor(s.xPos / 64),
+      r = Math.floor(s.zPos / 64);
+    if (r >= 0 && c >= 0 && r < AUTOMAP_SIDE && c < AUTOMAP_SIDE && run[r * AUTOMAP_SIDE + c] >= 0)
+      held.add(run[r * AUTOMAP_SIDE + c]);
   }
   return (i) => run[i] >= 0 && held.has(run[i]);
 }
@@ -187,14 +198,20 @@ export function heldFootprints(autoMap, subRecords) {
  * moves it) under the same registrations (billboardXmlGeneration - a table
  * registered again moves it).
  */
-const _mobileSize = new WeakMap();   // texture -> size by record
-const _mobileXml = new WeakMap();    // AUDIT DEX B7: texture -> by record { s, gen, size } - the xml-applied size
+const _mobileSize = new WeakMap(); // texture -> size by record
+const _mobileXml = new WeakMap(); // AUDIT DEX B7: texture -> by record { s, gen, size } - the xml-applied size
 
 export function mobileBillboardSize(t, record) {
   let byRecord = _mobileSize.get(t);
-  if (!byRecord) { byRecord = []; _mobileSize.set(t, byRecord); }
+  if (!byRecord) {
+    byRecord = [];
+    _mobileSize.set(t, byRecord);
+  }
   let size = byRecord[record];
-  if (!size) { size = scaledBillboardSize(t.getSize(record), t.getScale(record)); byRecord[record] = size; }
+  if (!size) {
+    size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    byRecord[record] = size;
+  }
   // DEX2: and a stand-in's whatever the switch - a mod-only archive's pictures ARE the port's vendored art, drawn
   // ungated (systems/textureReplacement.js SURV2), so the xml that sizes them goes with them (Daggerfall Enemy
   // Expansion's riders at 1.3, its centurion at 0.7); DFU draws a mod's enemy only under AssetInjection, scale and all
@@ -202,15 +219,23 @@ export function mobileBillboardSize(t, record) {
   const s = billboardXmlScaleOf(t?.archive, record);
   if (!s) return size;
   let byXml = _mobileXml.get(t);
-  if (!byXml) { byXml = []; _mobileXml.set(t, byXml); }
+  if (!byXml) {
+    byXml = [];
+    _mobileXml.set(t, byXml);
+  }
   const gen = billboardXmlGeneration();
   let x = byXml[record];
-  if (!x || x.s !== s || x.gen !== gen) { x = { s, gen, size: { w: size.w * s[0], h: size.h * s[1] } }; byXml[record] = x; }   // applyBillboardXml's product
+  if (!x || x.s !== s || x.gen !== gen) {
+    x = { s, gen, size: { w: size.w * s[0], h: size.h * s[1] } };
+    byXml[record] = x;
+  } // applyBillboardXml's product
   return x.size;
 }
 export function billboardSize(t, record) {
   const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-  return t?.archive != null && hasTextureReplacement(t.archive, record, 0) ? applyBillboardXml(t.archive, record, size) : size;
+  return t?.archive != null && hasTextureReplacement(t.archive, record, 0)
+    ? applyBillboardXml(t.archive, record, size)
+    : size;
 }
 /**
  * DW-E2: MeshReader.GetScaledBillboardSize - the CLASSIC record's scaled
@@ -277,13 +302,17 @@ export function collectMiscFlats(dfBlock) {
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
       // C2: StaticNPC inputs ride every flat (a non-zero factionID IS
       // an exterior NPC - RMBLayout verbatim); scenery carries zeros.
-      factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position,
+      factionID: obj.factionID,
+      flags: obj.flags,
+      recordPosition: obj.position,
       // ...and the RAW record triple, which is the other half of those
       // inputs: StaticNPC.SetLayoutData hashes the UNSCALED XPos/YPos/
       // ZPos (StaticNPC.cs:210/:333-336), never the scaled position.
       // Same field names collectInteriorPeople writes, so both people
       // paths hand the layout one record shape.
-      rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
+      rawX: obj.xPos,
+      rawY: obj.yPos,
+      rawZ: obj.zPos,
     });
   }
   return flats;
@@ -320,7 +349,16 @@ export function collectBlockFlats(dfBlock, natureArchive, { climateIndex = null,
     for (const obj of rmb.misc3dObjectRecords ?? []) {
       const spec = flatFieldFor(obj.modelIdNum);
       if (!spec) continue;
-      flats.push(...sowField(spec, natureArchive, obj.xPos * GLOBAL_SCALE, (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE, (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));
+      flats.push(
+        ...sowField(
+          spec,
+          natureArchive,
+          obj.xPos * GLOBAL_SCALE,
+          (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
+          (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+          { climateIndex, solid },
+        ),
+      );
     }
   }
 
@@ -343,19 +381,31 @@ export function collectBlockFlats(dfBlock, natureArchive, { climateIndex = null,
         z = NATURE_FLATS_OFFSET_Y;
       }
 
-      flats.push({ archive, record: obj.textureRecord, x, y, z, factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position, rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos });
+      flats.push({
+        archive,
+        record: obj.textureRecord,
+        x,
+        y,
+        z,
+        factionID: obj.factionID,
+        flags: obj.flags,
+        recordPosition: obj.position,
+        rawX: obj.xPos,
+        rawY: obj.yPos,
+        rawZ: obj.zPos,
+      });
     }
   }
 
   // Ground scenery -> climate nature flats.
   const scenery = rmb.fldHeader.groundData.groundScenery;
-  const autoMap = rmb.fldHeader.autoMapData;   // HOUSE-BUSH
-  const held = heldFootprints(autoMap, rmb.subRecords);   // AUDIT FB1018f L4-1: the footprints a building of the block stands on
+  const autoMap = rmb.fldHeader.autoMapData; // HOUSE-BUSH
+  const held = heldFootprints(autoMap, rmb.subRecords); // AUDIT FB1018f L4-1: the footprints a building of the block stands on
   for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 16; x++) {
       const item = scenery[x][15 - y];
       if (item.textureRecord < 1) continue;
-      if (sceneryUnderRoof(autoMap, x, y, held)) continue;   // HOUSE-BUSH: a cell its author left under a house
+      if (sceneryUnderRoof(autoMap, x, y, held)) continue; // HOUSE-BUSH: a cell its author left under a house
       flats.push({
         archive: natureArchive,
         record: item.textureRecord,

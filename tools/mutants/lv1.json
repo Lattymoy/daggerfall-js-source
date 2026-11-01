@@ -50,8 +50,8 @@
   {
     "name": "the-ribbon-does-not-lead-with-what-rose",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "    .sort((a, b) => (Number(b.r.risen) - Number(a.r.risen)) || (a.i - b.i))",
-    "new": "    .sort((a, b) => (a.i - b.i))",
+    "old": "    .sort((a, b) => Number(b.r.risen) - Number(a.r.risen) || a.i - b.i)",
+    "new": "    .sort((a, b) => a.i - b.i)",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"
     ]
@@ -68,7 +68,7 @@
   {
     "name": "the-oghma-is-promised-a-level-it-does-not-grant",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "    to: (viewOnly || lane === LANE_OGHMA) ? from : (e.pendingLevel ?? from + 1),",
+    "old": "    to: viewOnly || lane === LANE_OGHMA ? from : (e.pendingLevel ?? from + 1),",
     "new": "    to: viewOnly ? from : (e.pendingLevel ?? from + 1),",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"
@@ -88,8 +88,8 @@
   {
     "name": "each-lane-is-refused-in-the-other-lanes-words",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  (levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText());",
-    "new": "  (levelUpLane(screen) === LANE_VIRTUE ? mustDistributeBonusPointsText() : REMAINING_POINTS_ERROR);",
+    "old": "  levelUpLane(screen) === LANE_VIRTUE ? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText();",
+    "new": "  levelUpLane(screen) === LANE_VIRTUE ? mustDistributeBonusPointsText() : REMAINING_POINTS_ERROR;",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "the-chronicle-forgets-the-key-it-is-named-after",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  if (eventMeans(e, 'LogBook')) {   // UXB1-S: its key, shared or not",
+    "old": "  if (eventMeans(e, 'LogBook')) {\n    // UXB1-S: its key, shared or not",
     "new": "  if (false) {",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"
@@ -282,7 +282,7 @@
   {
     "name": "the-chronicle-reads-the-literal-instead-of-the-registry",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  if (eventMeans(e, 'LogBook')) {   // UXB1-S: its key, shared or not",
+    "old": "  if (eventMeans(e, 'LogBook')) {\n    // UXB1-S: its key, shared or not",
     "new": "  if (e.code === 'KeyL') {",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"

@@ -171,36 +171,58 @@ globalThis.__ready = true;
 const VIEWS = [
   { name: 'wide', viewport: { width: 1920, height: 1080 } },
   { name: 'laptop', viewport: { width: 1366, height: 768 } },
-  { name: 'laptop-bars', viewport: { width: 1366, height: 625 } },   // a 768 laptop less its taskbar and the browser's bars
+  { name: 'laptop-bars', viewport: { width: 1366, height: 625 } }, // a 768 laptop less its taskbar and the browser's bars
   { name: 'small', viewport: { width: 1280, height: 720 } },
   { name: 'netbook', viewport: { width: 1024, height: 600 } },
-  { name: 'tablet', viewport: { width: 768, height: 1024 }, isMobile: true, hasTouch: true },   // the 641-860 band, upright
-  { name: 'phone-wide', viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true },   // the band, a phone on its side
+  { name: 'tablet', viewport: { width: 768, height: 1024 }, isMobile: true, hasTouch: true }, // the 641-860 band, upright
+  { name: 'phone-wide', viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true }, // the band, a phone on its side
   { name: 'phone-land', viewport: { width: 740, height: 360 }, isMobile: true, hasTouch: true },
   { name: 'phone', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
 ];
 // each card: its key in the page's kit and the pack page it is on
 const CARDS = [
-  ['crown', 'Armor'], ['worn', 'Armor'], ['pauldron', 'Armor'], ['locked', 'Armor'],
-  ['oathsunder', 'Weapons'], ['gatecleaver', 'Weapons'], ['stack', 'Weapons'], ['legendary', 'Magic'],
+  ['crown', 'Armor'],
+  ['worn', 'Armor'],
+  ['pauldron', 'Armor'],
+  ['locked', 'Armor'],
+  ['oathsunder', 'Weapons'],
+  ['gatecleaver', 'Weapons'],
+  ['stack', 'Weapons'],
+  ['legendary', 'Magic'],
 ];
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
-const settle = (page) => page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(res)))));
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
+const settle = (page) =>
+  page.evaluate(
+    () => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(res)))),
+  );
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: 1 });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: 1,
+    });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
     check(await page.evaluate(() => globalThis.__openPack()), `${v.name}: the pack did not open`);
     await page.waitForSelector('#enhanced-inventory .packtab', { timeout: 30000 });
@@ -216,21 +238,35 @@ try {
       const m = await page.evaluate(() => globalThis.__measure());
       check(!!m, `${v.name}: the ${key} card did not open`);
       if (!m) continue;
-      const unreachable = m.acts.filter((a) => !a.inside || !a.pressable).map((a) => `${a.label}@${a.box.y.toFixed(0)}..${a.box.b.toFixed(0)}`);
+      const unreachable = m.acts
+        .filter((a) => !a.inside || !a.pressable)
+        .map((a) => `${a.label}@${a.box.y.toFixed(0)}..${a.box.b.toFixed(0)}`);
       const scrolls = m.body && m.body.sh > m.body.ch + 1;
-      console.log(`${v.name} ${key.padEnd(11)} card ${m.card.w.toFixed(0)}x${m.card.h.toFixed(0)} at ${m.card.y.toFixed(0)}..${m.card.b.toFixed(0)} of ${m.vh} (frame ${m.frame.y.toFixed(0)}..${m.frame.b.toFixed(0)}) lines ${m.lines} ${scrolls ? `BODY SCROLLS ${m.body.sh}/${m.body.ch}` : 'whole'} [${m.fits.join(' ')}] acts ${m.acts.length}${unreachable.length ? ` UNREACHABLE ${unreachable.join(', ')}` : ''}`);
+      console.log(
+        `${v.name} ${key.padEnd(11)} card ${m.card.w.toFixed(0)}x${m.card.h.toFixed(0)} at ${m.card.y.toFixed(0)}..${m.card.b.toFixed(0)} of ${m.vh} (frame ${m.frame.y.toFixed(0)}..${m.frame.b.toFixed(0)}) lines ${m.lines} ${scrolls ? `BODY SCROLLS ${m.body.sh}/${m.body.ch}` : 'whole'} [${m.fits.join(' ')}] acts ${m.acts.length}${unreachable.length ? ` UNREACHABLE ${unreachable.join(', ')}` : ''}`,
+      );
       // a laptop and up: the heaviest card is read WHOLE, no scroll (a netbook's and a phone's may scroll under their buttons)
-      if (v.viewport.height >= 720) check(!scrolls, `${v.name}: the ${key} card needs a scroll (${m.body?.sh} of ${m.body?.ch})`);
+      if (v.viewport.height >= 720)
+        check(!scrolls, `${v.name}: the ${key} card needs a scroll (${m.body?.sh} of ${m.body?.ch})`);
       check(m.acts.length > 0, `${v.name}: the ${key} card has no buttons`);
       check(!unreachable.length, `${v.name}: the ${key} card's buttons cannot be pressed: ${unreachable.join(', ')}`);
-      check(m.name && m.name.y >= -0.5 && m.name.b <= m.vh + 0.5, `${v.name}: the ${key} card's name is off the screen (${m.name?.y.toFixed(0)}..${m.name?.b.toFixed(0)})`);
-      check(m.card.y >= -0.5 && m.card.b <= m.vh + 0.5, `${v.name}: the ${key} card runs off the screen (${m.card.y.toFixed(0)}..${m.card.b.toFixed(0)} of ${m.vh})`);
+      check(
+        m.name && m.name.y >= -0.5 && m.name.b <= m.vh + 0.5,
+        `${v.name}: the ${key} card's name is off the screen (${m.name?.y.toFixed(0)}..${m.name?.b.toFixed(0)})`,
+      );
+      check(
+        m.card.y >= -0.5 && m.card.b <= m.vh + 0.5,
+        `${v.name}: the ${key} card runs off the screen (${m.card.y.toFixed(0)}..${m.card.b.toFixed(0)} of ${m.vh})`,
+      );
       await page.screenshot({ path: join(OUT, `cardfit-${v.name}-${key}.png`) });
       // THE HOVER CARD, on a pointer's screen: inside the screen, nothing cut
       if (!v.hasTouch) {
         const t = await page.evaluate((k) => globalThis.__hover(k), key);
         if (t) {
-          check(t.y >= -0.5 && t.b <= v.viewport.height + 0.5, `${v.name}: the ${key} hover card runs off the screen (${t.y.toFixed(0)}..${t.b.toFixed(0)})`);
+          check(
+            t.y >= -0.5 && t.b <= v.viewport.height + 0.5,
+            `${v.name}: the ${key} hover card runs off the screen (${t.y.toFixed(0)}..${t.b.toFixed(0)})`,
+          );
           check(t.sh <= t.ch + 1, `${v.name}: the ${key} hover card is cut (${t.sh} of ${t.ch})`);
         }
         await page.evaluate(() => globalThis.__closeCard());
@@ -241,16 +277,27 @@ try {
     check(await page.evaluate(() => globalThis.__trade()), `${v.name}: the trade window did not open`);
     await settle(page);
     for (const key of ['crown', 'gatecleaver', 'oathsunder', 'stack']) {
-      if (!(await page.evaluate((k) => globalThis.__tradePick(k), key))) { check(false, `${v.name}: no trade row for the ${key}`); continue; }
+      if (!(await page.evaluate((k) => globalThis.__tradePick(k), key))) {
+        check(false, `${v.name}: no trade row for the ${key}`);
+        continue;
+      }
       await settle(page);
       const t = await page.evaluate(() => globalThis.__tradeMeasure());
       check(!!t, `${v.name}: the ${key} trade strip did not open`);
       if (!t) continue;
       const stuck = t.acts.filter((a) => !a.pressable).map((a) => `${a.label}@${a.box.y.toFixed(0)}`);
-      console.log(`${v.name} trade ${key.padEnd(11)} strip ${t.detail.h.toFixed(0)} tall at ${t.detail.y.toFixed(0)}..${t.detail.b.toFixed(0)} (window ..${t.win.b.toFixed(0)}) lists ${t.lists.map((h) => h.toFixed(0)).join('/')}${stuck.length ? ` STUCK ${stuck.join(', ')}` : ''}`);
+      console.log(
+        `${v.name} trade ${key.padEnd(11)} strip ${t.detail.h.toFixed(0)} tall at ${t.detail.y.toFixed(0)}..${t.detail.b.toFixed(0)} (window ..${t.win.b.toFixed(0)}) lists ${t.lists.map((h) => h.toFixed(0)).join('/')}${stuck.length ? ` STUCK ${stuck.join(', ')}` : ''}`,
+      );
       check(!stuck.length, `${v.name}: the ${key} trade strip's buttons cannot be pressed: ${stuck.join(', ')}`);
-      check(t.detail.b <= Math.min(t.win.b, t.vh) + 0.5, `${v.name}: the ${key} trade strip runs past the window (${t.detail.b.toFixed(0)})`);
-      check(Math.max(...t.lists) >= 80, `${v.name}: the ${key} trade strip squeezed the lists to ${t.lists.map((h) => h.toFixed(0)).join('/')}`);
+      check(
+        t.detail.b <= Math.min(t.win.b, t.vh) + 0.5,
+        `${v.name}: the ${key} trade strip runs past the window (${t.detail.b.toFixed(0)})`,
+      );
+      check(
+        Math.max(...t.lists) >= 80,
+        `${v.name}: the ${key} trade strip squeezed the lists to ${t.lists.map((h) => h.toFixed(0)).join('/')}`,
+      );
       await page.screenshot({ path: join(OUT, `cardfit-${v.name}-trade-${key}.png`) });
     }
     await ctx.close();

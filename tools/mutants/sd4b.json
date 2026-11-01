@@ -11,8 +11,8 @@
   {
     "name": "SD4B-the-height-asked",
     "file": "src/world/dungeon/dungeonEnd.js",
-    "old": "Math.hypot(m.x - from.x, m.z - from.z);",
-    "new": "Math.hypot(m.x - from.x, /** @type {any} */ (m).y ?? 0, m.z - from.z);",
+    "old": "  const d = (/** @type {M} */ m) => Math.hypot(m.x - from.x, m.z - from.z);",
+    "new": "  const d = (/** @type {M} */ m) => Math.hypot(m.x - from.x, /** @type {any} */ (m).y ?? 0, m.z - from.z);",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "SD4B-the-copies-counted",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "if (e && !e.eliteCopy && Number.isFinite(e.x)",
-    "new": "if (e && Number.isFinite(e.x)",
+    "old": "    if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });",
+    "new": "    if (e && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SD4B-the-start-markers-unplaced",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });",
-    "new": "out.push({ x: m.x, y: m.y, z: m.z });",
+    "old": "      if (Number.isFinite(m?.x) && Number.isFinite(m?.z))\n        out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });",
+    "new": "      if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x, y: m.y, z: m.z });",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "SD4B-through-a-wall",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;\n",
-    "new": "",
+    "old": "  if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;\n  const x = from[0] + dir[0] * r,",
+    "new": "  const x = from[0] + dir[0] * r,",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "SD4B-the-Return-inside-the-ring",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {",
-    "new": "  for (const r of [SD_RETURN_GAP_M, 1.5]) {",
+    "old": "    for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {",
+    "new": "    for (const r of [SD_RETURN_GAP_M, 1.5]) {",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SD4B-another-slot-through",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
-    "new": "  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
+    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  if (fallen) return SD_NO_FALLEN;",
+    "new": "  if (fallen) return SD_NO_FALLEN;",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SD4B-the-Return-after-the-kill",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  return ph === 'risen' || ph === 'found';\n}",
-    "new": "  return ph === 'risen' || ph === 'found' || ph === 'fell';\n}",
+    "old": "  return ph === 'risen' || ph === 'found';",
+    "new": "  return ph === 'risen' || ph === 'found' || ph === 'fell';",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD4B-a-jump-a-step",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      const gap = t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || ",
-    "new": "      const gap = false && ",
+    "old": "      const gap =\n        t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;",
+    "new": "      const gap = false && dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SD4B-the-Return-kept",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null; wasRet = null; retarget(); },",
-    "new": "    returnOut() { if (!ret) return; dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); },",
+    "old": "      ret = null;\n      wasRet = null;\n      retarget();\n    },",
+    "new": "    },",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SD4B-the-Return's-box-the-Rift's",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "aabb: boxOf(ret.at, (SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale)",
-    "new": "aabb: boxOf(ret.at, rift.size / 2, rift.size)",
+    "old": "        aabb: boxOf(ret.at, (SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale),",
+    "new": "        aabb: boxOf(ret.at, rift.size / 2, rift.size),",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SD4B-not-under-water",
     "file": "src/systems/superDungeon/sdRiftSound.js",
-    "old": "distanceModel: 'linear', lowpass: RIFT_BELL_LOWPASS_HZ })",
-    "new": "distanceModel: 'linear', lowpass: 0 })",
+    "old": "    return (\n      audio.loop3d(RIFT_BELL_KEY, at, 1, {\n        ...RIFT_BELL_RANGE,\n        distanceModel: 'linear',\n        lowpass: RIFT_BELL_LOWPASS_HZ,\n      }) ?? null\n    );",
+    "new": "    return audio.loop3d(RIFT_BELL_KEY, at, 1, { ...RIFT_BELL_RANGE, distanceModel: 'linear', lowpass: 0 }) ?? null;",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SD4B-the-bell-undarkened",
     "file": "src/systems/superDungeon/sdRiftSound.js",
-    "old": "  lowpassLoop(out, rate, S.darkHz);   // AUDIT SD III (A3): its seam whole\n",
-    "new": "",
+    "old": "  lowpassLoop(out, rate, S.darkHz); // AUDIT SD III (A3): its seam whole\n  // the swell: a whole number of slow waves in the loop, so its end meets its start",
+    "new": "  // the swell: a whole number of slow waves in the loop, so its end meets its start",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]

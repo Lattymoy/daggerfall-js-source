@@ -46,8 +46,14 @@ export function runBulk(items, decide, commit) {
   let skipText = null;
   for (const item of items) {
     const d = decide(item);
-    if (d.verdict === 'skip') { skipText ??= d.refusal?.text ?? null; continue; }
-    if (d.verdict === 'stop') { stopText = d.refusal?.text ?? stopText; break; }
+    if (d.verdict === 'skip') {
+      skipText ??= d.refusal?.text ?? null;
+      continue;
+    }
+    if (d.verdict === 'stop') {
+      stopText = d.refusal?.text ?? stopText;
+      break;
+    }
     commit(item, d);
     moved += 1;
     if (d.verdict === 'partial') break;

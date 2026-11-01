@@ -54,7 +54,9 @@ export const WALL_ROUND = Object.freeze({ line: 2.5, close: 5, apron: 4.5 });
  * @returns {Uint8Array} 1 a building's tile, (w*16) x (h*16), row-major from the south-west
  */
 export function townOccupancy(w, h, automapOf, isWall = () => false) {
-  const T = SHAPE_TILES_PER_BLOCK, W = w * T, out = new Uint8Array(W * h * T);
+  const T = SHAPE_TILES_PER_BLOCK,
+    W = w * T,
+    out = new Uint8Array(W * h * T);
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       if (isWall(bx, by)) continue;
@@ -82,17 +84,22 @@ const RECORD_TILE_UNITS = 256;
  * @returns {Uint8Array} (w*16) x (h*16), row-major from the south-west
  */
 export function townTiles(w, h, rmbAt) {
-  const T = SHAPE_TILES_PER_BLOCK, W = w * T, H = h * T;
+  const T = SHAPE_TILES_PER_BLOCK,
+    W = w * T,
+    H = h * T;
   const occ = townOccupancy(w, h, (bx, by) => rmbAt(bx, by)?.fldHeader?.autoMapData ?? null);
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       const rmb = rmbAt(bx, by);
       for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {
-        const tx = Math.floor(r.xPos / RECORD_TILE_UNITS), ty = Math.floor((r.zPos + 4096) / RECORD_TILE_UNITS);
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const x = bx * T + tx + dx, y = by * T + ty + dy;
-          if (x >= 0 && x < W && y >= 0 && y < H) occ[y * W + x] = 1;
-        }
+        const tx = Math.floor(r.xPos / RECORD_TILE_UNITS),
+          ty = Math.floor((r.zPos + 4096) / RECORD_TILE_UNITS);
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const x = bx * T + tx + dx,
+              y = by * T + ty + dy;
+            if (x >= 0 && x < W && y >= 0 && y < H) occ[y * W + x] = 1;
+          }
       }
     }
   }
@@ -103,10 +110,17 @@ export function townTiles(w, h, rmbAt) {
  *  and its measure. Kept here so the terrain's outline reads it with no module more on the boot path. */
 const _fields = new Map();
 /** @param {number} id @param {{ rangeX: number, rangeZ: number, spacing: number, noise: number, firstRecordOnly?: boolean }} spec @param {() => boolean} [isOn] */
-export function registerFlatField(id, spec, isOn = () => true) { _fields.set(Number(id), { spec: Object.freeze({ ...spec }), isOn }); }
+export function registerFlatField(id, spec, isOn = () => true) {
+  _fields.set(Number(id), { spec: Object.freeze({ ...spec }), isOn });
+}
 /** @param {number} id */
-export function flatFieldFor(id) { const f = _fields.get(Number(id)); return f && f.isOn() ? f.spec : null; }
-export function _resetFlatFields() { _fields.clear(); }
+export function flatFieldFor(id) {
+  const f = _fields.get(Number(id));
+  return f && f.isOn() ? f.spec : null;
+}
+export function _resetFlatFields() {
+  _fields.clear();
+}
 
 /**
  * FB1028 CROP-GROUND: THE TILES A TOWN'S FIELDS ARE SOWN OVER. A field's plants stand on its block's plane, over a
@@ -116,18 +130,28 @@ export function _resetFlatFields() { _fields.clear(); }
  * @returns {?Uint8Array} 1 a field's tile, (w*16 + 2pad) x (h*16 + 2pad) row-major from the south-west, or null for none
  */
 export function townFieldTiles(w, h, rmbAt, pad = 0) {
-  const T = SHAPE_TILES_PER_BLOCK, PW = w * T + 2 * pad, PH = h * T + 2 * pad, UNITS = 40;   // a block unit is 0.025 m
+  const T = SHAPE_TILES_PER_BLOCK,
+    PW = w * T + 2 * pad,
+    PH = h * T + 2 * pad,
+    UNITS = 40; // a block unit is 0.025 m
   let out = null;
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       for (const r of rmbAt(bx, by)?.misc3dObjectRecords ?? []) {
         const f = flatFieldFor(r.modelIdNum);
         if (!f) continue;
-        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;
+        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS,
+          hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS,
+          z = r.zPos + 4096;
         out ??= new Uint8Array(PW * PH);
         for (let y = Math.floor((z - hz) / RECORD_TILE_UNITS); y <= Math.floor((z + hz) / RECORD_TILE_UNITS); y++) {
-          for (let x = Math.floor((r.xPos - hx) / RECORD_TILE_UNITS); x <= Math.floor((r.xPos + hx) / RECORD_TILE_UNITS); x++) {
-            const X = pad + bx * T + x, Y = pad + by * T + y;
+          for (
+            let x = Math.floor((r.xPos - hx) / RECORD_TILE_UNITS);
+            x <= Math.floor((r.xPos + hx) / RECORD_TILE_UNITS);
+            x++
+          ) {
+            const X = pad + bx * T + x,
+              Y = pad + by * T + y;
             if (X >= 0 && Y >= 0 && X < PW && Y < PH) out[Y * PW + X] = 1;
           }
         }
@@ -140,20 +164,39 @@ export function townFieldTiles(w, h, rmbAt, pad = 0) {
 /** A hash of integers in [0, 1) - the outline's own noise, the same on every client and in every worker. */
 function hash01(seed, x, y) {
   let h = (seed ^ 0x9e3779b9) >>> 0;
-  for (const v of [x, y]) { h = Math.imul(h ^ (v | 0), 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; }
+  for (const v of [x, y]) {
+    h = Math.imul(h ^ (v | 0), 0x85ebca6b);
+    h ^= h >>> 13;
+    h = Math.imul(h, 0xc2b2ae35);
+    h ^= h >>> 16;
+  }
   return (h >>> 0) / 4294967296;
 }
 /** The outline's wander at tile (x, y): two octaves of smoothed value noise on the town's seed, in [-1, 1].
  *  @param {number} seed @param {number} x @param {number} y @param {number} [scale] its noise's cell, in tiles */
 export function shapeWander(seed, x, y, scale = TOWN_SHAPE.scale) {
-  let v = 0, amp = 1, sum = 0, s = scale;
+  let v = 0,
+    amp = 1,
+    sum = 0,
+    s = scale;
   for (let o = 0; o < 2; o++) {
-    const fx = x / s, fy = y / s, ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy;
-    const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+    const fx = x / s,
+      fy = y / s,
+      ix = Math.floor(fx),
+      iy = Math.floor(fy),
+      tx = fx - ix,
+      ty = fy - iy;
+    const sx = tx * tx * (3 - 2 * tx),
+      sy = ty * ty * (3 - 2 * ty);
     const k = seed + o * 0x51ed27;
-    const a = hash01(k, ix, iy), b = hash01(k, ix + 1, iy), c = hash01(k, ix, iy + 1), d = hash01(k, ix + 1, iy + 1);
-    v += amp * ((a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy);
-    sum += amp; amp *= 0.5; s /= 2;
+    const a = hash01(k, ix, iy),
+      b = hash01(k, ix + 1, iy),
+      c = hash01(k, ix, iy + 1),
+      d = hash01(k, ix + 1, iy + 1);
+    v += amp * (a + (b - a) * sx + (c + (d - c) * sx - (a + (b - a) * sx)) * sy);
+    sum += amp;
+    amp *= 0.5;
+    s /= 2;
   }
   return (v / sum) * 2 - 1;
 }
@@ -169,22 +212,54 @@ export const RING = Object.freeze({ road: 1, NW: 2, NE: 3, SE: 4, SW: 5 });
  * @param {Uint8Array} occ @param {number} W @param {number} H @returns {Float64Array}
  */
 export function tileDistance(occ, W, H) {
-  const INF = 1e20, f = new Float64Array(Math.max(W, H)), d = new Float64Array(W * H);
+  const INF = 1e20,
+    f = new Float64Array(Math.max(W, H)),
+    d = new Float64Array(W * H);
   const line = (n, get, set) => {
-    const v = new Int32Array(n), z = new Float64Array(n + 1), g = new Float64Array(n);
+    const v = new Int32Array(n),
+      z = new Float64Array(n + 1),
+      g = new Float64Array(n);
     for (let i = 0; i < n; i++) g[i] = get(i);
-    let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+    let k = 0;
+    v[0] = 0;
+    z[0] = -INF;
+    z[1] = INF;
     for (let q = 1; q < n; q++) {
-      let s = ((g[q] + q * q) - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
-      while (s <= z[k]) { k--; s = ((g[q] + q * q) - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
-      k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+      let s = (g[q] + q * q - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]) {
+        k--;
+        s = (g[q] + q * q - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      }
+      k++;
+      v[k] = q;
+      z[k] = s;
+      z[k + 1] = INF;
     }
     k = 0;
-    for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; set(q, (q - v[k]) ** 2 + g[v[k]]); }
+    for (let q = 0; q < n; q++) {
+      while (z[k + 1] < q) k++;
+      set(q, (q - v[k]) ** 2 + g[v[k]]);
+    }
   };
   for (let i = 0; i < W * H; i++) d[i] = occ[i] ? 0 : INF;
-  for (let x = 0; x < W; x++) line(H, (y) => d[y * W + x], (y, val) => { f[y] = val; if (y === H - 1) for (let yy = 0; yy < H; yy++) d[yy * W + x] = f[yy]; });
-  for (let y = 0; y < H; y++) line(W, (x) => d[y * W + x], (x, val) => { f[x] = val; if (x === W - 1) for (let xx = 0; xx < W; xx++) d[y * W + xx] = f[xx]; });
+  for (let x = 0; x < W; x++)
+    line(
+      H,
+      (y) => d[y * W + x],
+      (y, val) => {
+        f[y] = val;
+        if (y === H - 1) for (let yy = 0; yy < H; yy++) d[yy * W + x] = f[yy];
+      },
+    );
+  for (let y = 0; y < H; y++)
+    line(
+      W,
+      (x) => d[y * W + x],
+      (x, val) => {
+        f[x] = val;
+        if (x === W - 1) for (let xx = 0; xx < W; xx++) d[y * W + xx] = f[xx];
+      },
+    );
   for (let i = 0; i < W * H; i++) d[i] = d[i] >= INF / 2 ? Infinity : Math.sqrt(d[i]);
   return d;
 }
@@ -198,19 +273,47 @@ export function tileDistance(occ, W, H) {
  * @returns {{ inside: Uint8Array, level: Float64Array }}
  */
 export function townRound(occ, W, H, line = WALL_ROUND.line, close = WALL_ROUND.close) {
-  const d = tileDistance(occ, W, H), grown = new Uint8Array(W * H);
+  const d = tileDistance(occ, W, H),
+    grown = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) grown[i] = d[i] > line + close ? 1 : 0;
-  const e = tileDistance(grown, W, H), inside = new Uint8Array(W * H), level = new Float64Array(W * H);
-  for (let i = 0; i < W * H; i++) { inside[i] = !grown[i] && e[i] > close ? 1 : 0; level[i] = grown[i] ? -1 : e[i] - close; }
-  const seen = new Uint8Array(W * H), stack = [];
-  const push = (x, y) => { const i = y * W + x; if (!inside[i] && !seen[i]) { seen[i] = 1; stack.push(i); } };
-  for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); }
-  for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
-  while (stack.length) {
-    const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
-    if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1);
+  const e = tileDistance(grown, W, H),
+    inside = new Uint8Array(W * H),
+    level = new Float64Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    inside[i] = !grown[i] && e[i] > close ? 1 : 0;
+    level[i] = grown[i] ? -1 : e[i] - close;
   }
-  for (let i = 0; i < W * H; i++) if (!inside[i] && !seen[i]) { inside[i] = 1; level[i] = 0.5; }
+  const seen = new Uint8Array(W * H),
+    stack = [];
+  const push = (x, y) => {
+    const i = y * W + x;
+    if (!inside[i] && !seen[i]) {
+      seen[i] = 1;
+      stack.push(i);
+    }
+  };
+  for (let x = 0; x < W; x++) {
+    push(x, 0);
+    push(x, H - 1);
+  }
+  for (let y = 0; y < H; y++) {
+    push(0, y);
+    push(W - 1, y);
+  }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()),
+      x = i % W,
+      y = (i - x) / W;
+    if (x > 0) push(x - 1, y);
+    if (x < W - 1) push(x + 1, y);
+    if (y > 0) push(x, y - 1);
+    if (y < H - 1) push(x, y + 1);
+  }
+  for (let i = 0; i < W * H; i++)
+    if (!inside[i] && !seen[i]) {
+      inside[i] = 1;
+      level[i] = 0.5;
+    }
   return { inside, level };
 }
 
@@ -228,26 +331,48 @@ export function townRound(occ, W, H, line = WALL_ROUND.line, close = WALL_ROUND.
  * @returns {Uint8Array}
  */
 export function townShapeField(occ, W, H, seed, o = {}) {
-  const margin = o.margin ?? TOWN_SHAPE.margin, wander = Math.min(o.wander ?? TOWN_SHAPE.wander, margin - 0.5), core = o.core ?? 0;
+  const margin = o.margin ?? TOWN_SHAPE.margin,
+    wander = Math.min(o.wander ?? TOWN_SHAPE.wander, margin - 0.5),
+    core = o.core ?? 0;
   const out = new Uint8Array(W * H);
   if (!occ.some((v) => v)) return out.fill(1);
   const dist = tileDistance(occ, W, H);
   const enc = (d) => 1 + Math.min(253, Math.round(d * 4));
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const i = y * W + x, d = dist[i];
-      if (d <= core) out[i] = 1;   // TS4: the round's own ground - a wall's, its markers' - its distance none
+      const i = y * W + x,
+        d = dist[i];
+      if (d <= core)
+        out[i] = 1; // TS4: the round's own ground - a wall's, its markers' - its distance none
       else if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);
     }
   }
   // the holes: every tile the outside cannot reach is the town's
-  const seen = new Uint8Array(W * H), stack = [];
-  const push = (x, y) => { const i = y * W + x; if (!out[i] && !seen[i]) { seen[i] = 1; stack.push(i); } };
-  for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); }
-  for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
+  const seen = new Uint8Array(W * H),
+    stack = [];
+  const push = (x, y) => {
+    const i = y * W + x;
+    if (!out[i] && !seen[i]) {
+      seen[i] = 1;
+      stack.push(i);
+    }
+  };
+  for (let x = 0; x < W; x++) {
+    push(x, 0);
+    push(x, H - 1);
+  }
+  for (let y = 0; y < H; y++) {
+    push(0, y);
+    push(W - 1, y);
+  }
   while (stack.length) {
-    const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
-    if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1);
+    const i = /** @type {number} */ (stack.pop()),
+      x = i % W,
+      y = (i - x) / W;
+    if (x > 0) push(x - 1, y);
+    if (x < W - 1) push(x + 1, y);
+    if (y > 0) push(x, y - 1);
+    if (y < H - 1) push(x, y + 1);
   }
   for (let i = 0; i < W * H; i++) if (!out[i] && !seen[i]) out[i] = enc(dist[i]);
   return out;
@@ -299,4 +424,3 @@ export function unwalledLocation(loc) {
   const { outline, ...out } = loc;
   return { ...out, exterior: { ...loc.exterior, exteriorData: { ...rest, blockNames: wallTook } } };
 }
-

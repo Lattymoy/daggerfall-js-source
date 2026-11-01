@@ -51,7 +51,11 @@ export function drawSpellBurst(out, fr, element, stage, view, cm, throwFr = null
   const [lx, ly, ex, ey] = line.w ?? [...line.q, ...line.t], D = Math.hypot(ex - lx, ey - ly) || 1, fx = FACING_X[v];
   const [ux, uy] = thrown && fx ? [Math.sign(fx), 0] : [(ex - lx) / D, (ey - ly) / D];   // thrown: ahead, level
   const w = out.width, h = out.height, d = out.data, behind = v >= 3 && thrown;
-  const solid = (x, y) => (x = Math.round(x), y = Math.round(y), x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 0);
+  const solid = (x, y) => {
+    x = Math.round(x);
+    y = Math.round(y);
+    return x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 0;
+  };
   let along = S.at * k * (!thrown ? 1 : fx ? Math.abs(fx) : END_ON);
   const r0 = S.r * k, hidden = (a) => solid(lx + ux * a, ly + uy * a) || solid(lx + ux * (a - r0 / 2), ly + uy * (a - r0 / 2));
   // Thrown from behind it is past the body only, so it flies on until its heart, and half of it, clear the body.

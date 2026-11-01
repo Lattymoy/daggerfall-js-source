@@ -56,7 +56,10 @@ function serve(root, port) {
     // GitHub Pages answers a trailing slash the same way.
     let path = join(root, decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
     if (existsSync(path) && statSync(path).isDirectory()) path = join(path, 'index.html');
-    if (!path.startsWith(root) || !existsSync(path)) { res.statusCode = 404; return res.end('not found'); }
+    if (!path.startsWith(root) || !existsSync(path)) {
+      res.statusCode = 404;
+      return res.end('not found');
+    }
     const ext = path.slice(path.lastIndexOf('.'));
     res.setHeader('Content-Type', types[ext] ?? 'application/octet-stream');
     res.end(readFileSync(path));
@@ -85,8 +88,11 @@ try {
   for (const f of named) if (!existsSync(join(site, f))) cpSync(join(dN, f), join(site, f));
 
   check('the two builds really differ', staleIndex !== freshIndex);
-  check('deploy N\'s eager chunks are all present (the page can start)',
-    named.every((f) => existsSync(join(site, f))), `${named.length} chunks`);
+  check(
+    "deploy N's eager chunks are all present (the page can start)",
+    named.every((f) => existsSync(join(site, f))),
+    `${named.length} chunks`,
+  );
 
   server = await serve(site, 5299);
   const base = 'http://127.0.0.1:5299/play/';
@@ -104,10 +110,14 @@ try {
       // The FIRST document is the player's cache. Every one after it is
       // a real fetch - which is what a reload performs.
       await route.fulfill({
-        status: 200, contentType: 'text/html', body: docs === 1 ? firstDoc : freshIndex,
+        status: 200,
+        contentType: 'text/html',
+        body: docs === 1 ? firstDoc : freshIndex,
       });
     });
-    page.on('response', (r) => { if (r.status() === 404) gone.push(r.url().split('/').pop()); });
+    page.on('response', (r) => {
+      if (r.status() === 404) gone.push(r.url().split('/').pop());
+    });
     await page.goto(base, { waitUntil: 'networkidle' });
     await new Promise((r) => setTimeout(r, 4000));
     const out = {
@@ -122,17 +132,20 @@ try {
 
   // ── THE FAILURE IS REAL ────────────────────────────────────────
   const run = await visit('stale', staleIndex);
-  check('a lazy chunk of the old build is 404 - the reported failure',
-    run.gone.length > 0, run.gone.join(', ') || 'nothing 404d, the scenario did not arm');
+  check(
+    'a lazy chunk of the old build is 404 - the reported failure',
+    run.gone.length > 0,
+    run.gone.join(', ') || 'nothing 404d, the scenario did not arm',
+  );
 
   // ── AND THE PAGE RECOVERS ──────────────────────────────────────
-  check('the page RELOADS onto the current build', run.docs === 2,
-    `${run.docs} documents (1 = never reloaded)`);
+  check('the page RELOADS onto the current build', run.docs === 2, `${run.docs} documents (1 = never reloaded)`);
   check('...and the front door mounts', run.mounted > 0);
-  check('...on the NEW build, not the one that was cached',
-    run.body.includes('bbbbbbb'), run.body.slice(0, 80));
-  check('the player is never shown the browser\'s sentence',
-    !/Failed to fetch dynamically imported module/i.test(run.body));
+  check('...on the NEW build, not the one that was cached', run.body.includes('bbbbbbb'), run.body.slice(0, 80));
+  check(
+    "the player is never shown the browser's sentence",
+    !/Failed to fetch dynamically imported module/i.test(run.body),
+  );
 
   // ── THE CONTROL: the same page with the recovery removed ───────
   // Without this the checks above pass for a build that simply never
@@ -140,9 +153,13 @@ try {
   // finding.
   const src = readFileSync('src/systems/staleChunk.js', 'utf8');
   try {
-    writeFileSync('src/systems/staleChunk.js',
-      src.replace("  if (!isStaleChunk(err)) return 'rethrow';\n  return reloaded ? 'explain' : 'reload';",
-        "  return 'rethrow';   // control"));
+    writeFileSync(
+      'src/systems/staleChunk.js',
+      src.replace(
+        "  if (!isStaleChunk(err)) return 'rethrow';\n  return reloaded ? 'explain' : 'reload';",
+        "  return 'rethrow';   // control",
+      ),
+    );
     const dOld = join(work, 'deployOld');
     buildAs('aaaaaaa', dOld);
     // The control is a DIFFERENT build (its source differs), so its
@@ -155,12 +172,21 @@ try {
       if (!existsSync(join(site, f))) cpSync(join(dOld, f), join(site, f));
     }
     const control = await visit('control', controlIndex);
-    check('CONTROL: it really booted (the entry was cached)', control.body.length > 0,
-      'an empty body proves nothing - the page never ran');
-    check('CONTROL: without the recovery the page dies', control.docs === 1 && control.mounted === 0,
-      `${control.docs} documents, ${control.mounted} rail buttons`);
-    check('CONTROL: ...with the exact error that was reported',
-      /Failed to fetch dynamically imported module/i.test(control.body), control.body.slice(0, 100));
+    check(
+      'CONTROL: it really booted (the entry was cached)',
+      control.body.length > 0,
+      'an empty body proves nothing - the page never ran',
+    );
+    check(
+      'CONTROL: without the recovery the page dies',
+      control.docs === 1 && control.mounted === 0,
+      `${control.docs} documents, ${control.mounted} rail buttons`,
+    );
+    check(
+      'CONTROL: ...with the exact error that was reported',
+      /Failed to fetch dynamically imported module/i.test(control.body),
+      control.body.slice(0, 100),
+    );
   } finally {
     writeFileSync('src/systems/staleChunk.js', src);
   }

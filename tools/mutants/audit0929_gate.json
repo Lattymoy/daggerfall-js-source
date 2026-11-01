@@ -32,8 +32,8 @@
   {
     "name": "AUDIT0929-W1-2-the-cone-unscaled",
     "file": "src/net/gate/gateBrain.js",
-    "old": "A.shape === 'cone' ? A.r + BOSS_R * (size - 1) : A.r,",
-    "new": "A.r,",
+    "old": "      r: A === ATTACKS.slam && colossal ? colossal.slamR : A.shape === 'cone' ? A.r + BOSS_R * (size - 1) : A.r,",
+    "new": "      r: A === ATTACKS.slam && colossal ? colossal.slamR : A.r,",
     "tests": [
       "test/net/gate/audit0929_gate.test.js",
       "test/net/gate/wb8b_gate_marks.test.js"
@@ -81,8 +81,8 @@
   {
     "name": "AUDIT0929-W2-2-the-trials-joined-a-frame",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "trials: P.trialsLine,",
-    "new": "trials: P.trials.map((t) => t.name).join(' - '),",
+    "old": "    trials: P.trialsLine, // AUDIT PRE-MERGE 0929 W2-2: joined once, on the profile",
+    "new": "    trials: P.trials.map((t) => t.name).join(' - '), // AUDIT PRE-MERGE 0929 W2-2: joined once, on the profile",
     "tests": [
       "test/net/gate/audit0929_gate.test.js",
       "test/net/gate/wb8b_gate_marks.test.js"

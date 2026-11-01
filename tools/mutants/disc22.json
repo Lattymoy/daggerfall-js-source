@@ -32,8 +32,8 @@
     "tests": [
       "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
-    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)",
-    "new": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key)"
+    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)\n    ? ONLINE_FORCED_SETTINGS[section][key]\n    : undefined;",
+    "new": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;"
   },
   {
     "name": "D22A-row-not-locked",
@@ -59,8 +59,8 @@
     "tests": [
       "test/systems/disc22b_pause_settings.test.js"
     ],
-    "old": "    openControls: hooks.openSettings ?? (controlsArtLoaded()",
-    "new": "    openControls: (controlsArtLoaded()"
+    "old": "    openControls:\n      hooks.openSettings ??\n      (controlsArtLoaded()\n        ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))\n        : null),",
+    "new": "    openControls: controlsArtLoaded()\n      ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))\n      : null,"
   },
   {
     "name": "D22B-resume-relocks",
@@ -86,8 +86,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "  if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return",
-    "new": "  if (machine.hasFinishedSharedQuestNamed?.(questName)) return"
+    "old": "  if (\n    shareId !== undefined\n      ? machine.hasFinishedSharedCopy?.(questName, shareId)\n      : machine.hasFinishedSharedQuestNamed?.(questName)\n  )\n    return { ok: false, reason: 'done' };",
+    "new": "  if (machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };"
   },
   {
     "name": "D22F-envelope-id-not-passed",
@@ -95,8 +95,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "{ ...ctx, shareId: data?.shareId ?? null, factionId",
-    "new": "{ ...ctx, shareId: null, factionId"
+    "old": "    shareId: data?.shareId ?? null,",
+    "new": "    shareId: null,"
   },
   {
     "name": "D22F-never-stamped",
@@ -104,8 +104,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "    quest.shareId ??= mintShareId();",
-    "new": ""
+    "old": "    quest.shareId ??= mintShareId(); // DISC22-F: the copy's identity, stamped the first time it is shared out, then carried",
+    "new": "    // DISC22-F: the copy's identity, stamped the first time it is shared out, then carried"
   },
   {
     "name": "D22F-restamped-each-share",
@@ -113,8 +113,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "    quest.shareId ??= mintShareId();",
-    "new": "    quest.shareId = mintShareId();"
+    "old": "    quest.shareId ??= mintShareId(); // DISC22-F: the copy's identity, stamped the first time it is shared out, then carried",
+    "new": "    quest.shareId = mintShareId(); // DISC22-F: the copy's identity, stamped the first time it is shared out, then carried"
   },
   {
     "name": "D22F-tombstone-forgets-the-copy",
@@ -122,8 +122,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "    if (quest.shareId) this.finishedShareIds.add(quest.shareId);",
-    "new": ""
+    "old": "    if (quest.shareId) this.finishedShareIds.add(quest.shareId); // DISC22-F: this copy, whatever its name",
+    "new": "    // DISC22-F: this copy, whatever its name"
   },
   {
     "name": "D22F-id-not-restored",
@@ -131,8 +131,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "    this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null;",
-    "new": "    this.shareId = null;"
+    "old": "    this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null; // DISC22-F",
+    "new": "    this.shareId = null; // DISC22-F"
   },
   {
     "name": "D22F-id-not-saved",
@@ -140,8 +140,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "      shareId: this.shareId ?? null,",
-    "new": ""
+    "old": "      shareId: this.shareId ?? null, // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves",
+    "new": "      // DISC22-F: the shared copy's identity - the port's own member, absent in DFU's saves"
   },
   {
     "name": "D22F-load-keeps-memory",
@@ -149,8 +149,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "    this.finishedShareIds.clear();\n",
-    "new": ""
+    "old": "    this.finishedShareIds.clear();\n    this._finishedShares = []; // DISC28-I",
+    "new": "    this._finishedShares = []; // DISC28-I"
   },
   {
     "name": "D22F-third-person",
@@ -158,8 +158,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "  get active() { return t('quest.share.active', 'already have this quest.'); },",
-    "new": "  get active() { return t('quest.share.active', 'already has this quest.'); },"
+    "old": "    return t('quest.share.active', 'already have this quest.');",
+    "new": "    return t('quest.share.active', 'already has this quest.');"
   },
   {
     "name": "D22D-drawer-decodes-only-with-the-hook",
@@ -185,8 +185,8 @@
     "tests": [
       "test/ui/enhanced/disc22d_flail_icon.test.js"
     ],
-    "old": "    preloadTextureRecord(archive, record, 0, 'Albedo', dye).then((img) => {",
-    "new": "    preloadTextureRecord(archive, record, 0, 'Albedo', null).then((img) => {"
+    "old": "    preloadTextureRecord(archive, record, 0, 'Albedo', dye)",
+    "new": "    preloadTextureRecord(archive, record, 0, 'Albedo', null)"
   },
   {
     "name": "D22D-trade-drops-the-metal",

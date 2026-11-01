@@ -12,7 +12,8 @@ import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
-const PORT = Number(process.env.PORT ?? 5183), OUT = process.env.OUT ?? 'solitude-view';
+const PORT = Number(process.env.PORT ?? 5183),
+  OUT = process.env.OUT ?? 'solitude-view';
 mkdirSync(OUT, { recursive: true });
 /** [label, x east, z south (the anchor's metres), eye over the sea, yaw (degrees from north, clockwise), pitch (degrees)] */
 const STATIONS = [
@@ -22,9 +23,9 @@ const STATIONS = [
   ['arch-under', -60, 150, 4, -20, 22],
   ['docks-sea', 560, -330, 22, -120, -4],
   ['docks-quay', 260, -150, 4.2, 75, 6],
-  ['docks-way', 100, -131.2, 34, 80, -8],   // on the causeway, down it to the quay
+  ['docks-way', 100, -131.2, 34, 80, -8], // on the causeway, down it to the quay
   ['gate-road', 330, 560, 60, 0, -8],
-  ['gate-front', 318.4, 470, 62, 0, -12],   // the main gate from its road
+  ['gate-front', 318.4, 470, 62, 0, -12], // the main gate from its road
   ['gate-air', 300, 455, 260, 0, -89],
   ['palace-court', 40, 0, 59.7, -90, 4],
   ['arch-deck', -90, 0, 63.7, 90, -2],
@@ -140,15 +141,37 @@ window.__ready = true;
 </script></body></html>`;
 
 const server = await createServer({
-  root: process.cwd(), server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'silent',
-  plugins: [{ name: 'solitude-view', configureServer(s) { s.middlewares.use((req, res, next) => { if (req.url === '/__solitude.html') { res.setHeader('content-type', 'text/html'); res.end(PAGE); } else next(); }); } }],
+  root: process.cwd(),
+  server: { port: PORT, strictPort: true, hmr: false, watch: null },
+  logLevel: 'silent',
+  plugins: [
+    {
+      name: 'solitude-view',
+      configureServer(s) {
+        s.middlewares.use((req, res, next) => {
+          if (req.url === '/__solitude.html') {
+            res.setHeader('content-type', 'text/html');
+            res.end(PAGE);
+          } else next();
+        });
+      },
+    },
+  ],
 });
 await server.listen();
-const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const page = await browser.newPage({ viewport: { width: Number(process.env.W ?? 1280), height: Number(process.env.H ?? 720) } });
+const browser = await chromium.launch({
+  headless: true,
+  ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}),
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
+const page = await browser.newPage({
+  viewport: { width: Number(process.env.W ?? 1280), height: Number(process.env.H ?? 720) },
+});
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e.message)));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') errors.push(m.text());
+});
 await page.goto(`http://localhost:${PORT}/__solitude.html`);
 await page.waitForFunction(() => window.__ready === true || false, null, { timeout: 300000 }).catch(() => null);
 if (errors.length) console.log(errors.join('\n'));

@@ -47,8 +47,8 @@
   {
     "name": "ARMORY-MIRROR-the-arms-called-read",
     "file": "src/render/armoryPose.js",
-    "old": "  out.armsTurned = !arms;",
-    "new": "  out.armsTurned = false;",
+    "old": "  out.armsTurned = !arms; // ARMORY-MIRROR: no arms read - the sets' rows turned with the body, its own sides (armoryPass.js armletSide)",
+    "new": "  out.armsTurned = false; // ARMORY-MIRROR: no arms read - the sets' rows turned with the body, its own sides (armoryPass.js armletSide)",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARMORY-MIRROR-the-band-by-its-far-end",
     "file": "src/render/armoryPose.js",
-    "old": "band = { row: r / A, c: (run[0] + run[1]) / 2 - mid,",
-    "new": "band = { row: r / A, c: (s > 0 ? run[1] : run[0]) - mid,",
+    "old": "      band = { row: r / A, c: (run[0] + run[1]) / 2 - mid, wd: Math.max(ARM_BAND.min * A, run[1] - run[0] + 1) };",
+    "new": "      band = { row: r / A, c: (s > 0 ? run[1] : run[0]) - mid, wd: Math.max(ARM_BAND.min * A, run[1] - run[0] + 1) };",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARMORY-MIRROR-a-side-views-edges-unread",
     "file": "src/render/armoryPose.js",
-    "old": "flank = arms ? null : flankAt(flankRow);",
-    "new": "flank = null;",
+    "old": "    flank = arms ? null : flankAt(flankRow);",
+    "new": "    flank = null;",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARMORY-MIRROR-the-bands-width-unread",
     "file": "src/render/armoryPass.js",
-    "old": "k: band ? band.w / (2 * r0 * s) : 1 };",
-    "new": "k: 1 };",
+    "old": "const k = band ? band.w / (2 * r0 * s) : 1,",
+    "new": "const k = 1,",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ARMORY-MIRROR-the-colour-unread",
     "file": "src/render/armoryPose.js",
-    "old": "    if (!band) {\n      const lum",
-    "new": "    if (false) {\n      const lum",
+    "old": "    if (!band) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ARMORY-MIRROR-the-far-side-of-the-step",
     "file": "src/render/armoryPose.js",
-    "old": "if (d > best) { best = d; inner = x; }",
-    "new": "if (d > best) { best = d; inner = x - s; }",
+    "old": "            inner = x;",
+    "new": "            inner = x - s;",
     "tests": [
       "test/render/armorymirror.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ARMORY-MIRROR-an-unsteady-width-taken",
     "file": "src/render/armoryPose.js",
-    "old": "wds[wds.length - 1] - wds[0] <= 2 * A &&",
-    "new": "",
+    "old": "      if (\n        found.length >= (fromRow - toRow + 1) * 0.6 &&\n        wds[wds.length - 1] - wds[0] <= 2 * A &&\n        md <= ARM_BAND.max * A\n      ) {",
+    "new": "      if (found.length >= (fromRow - toRow + 1) * 0.6 && md <= ARM_BAND.max * A) {",
     "tests": [
       "test/render/armorymirror.test.js"
     ]

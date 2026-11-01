@@ -241,7 +241,9 @@ function figurePane() {
   const strip = el('div', 'slots');
   for (const pair of PAIRS) {
     const line = el('div', 'slotline');
-    const label = pretty(pair[0]).replace(/ ?[01]$/, '').replace(/^Right |^Left /, '');
+    const label = pretty(pair[0])
+      .replace(/ ?[01]$/, '')
+      .replace(/^Right |^Left /, '');
     line.append(el('span', 'slot-k', label));
     const pips = el('span', 'pips');
     for (const slot of pair) {

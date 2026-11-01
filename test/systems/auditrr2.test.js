@@ -75,7 +75,7 @@ test('AUDIT-RR2 G3: a duplicate mapId or name is refused BEFORE any write to the
   const throwAt = fn.indexOf('throw new Error');
   const writeAt = fn.indexOf('dfRegion.locationCount++');
   assert.ok(throwAt > 0 && writeAt > throwAt, 'both checks stand before locationCount++');
-  assert.match(s, /try \{\s+const dfLocation = locationFromJson\(json, regionIndex\);\s+locationAssignmentSuccess = addLocationToRegion\(regionIndex, dfRegion, dfLocation\) && locationAssignmentSuccess;\s+\} catch \(e\) \{ console\.error\(`\[worlddata\] \$\{name\}: \$\{e\?\.message \?\? e\}`\); locationAssignmentSuccess = false; \}/);
+  assert.match(s, /try \{\n\s*const dfLocation = locationFromJson\(json, regionIndex\);\n\s*locationAssignmentSuccess = addLocationToRegion\(regionIndex, dfRegion, dfLocation\) && locationAssignmentSuccess;\n\s*\} catch \(e\) \{\n\s*console\.error\(`\[worlddata\] \$\{name\}: \$\{e\?\.message \?\? e\}`\);\n\s*locationAssignmentSuccess = false;\n\s*\}/);
 });
 
 test('AUDIT-RR2 G4/G26: the docked HUD lift is `(int)` (EnhancedRiding.cs:257) and the pitch floor rests while paused (:122-131)', () => {
@@ -239,12 +239,3 @@ test('AUDIT-RR2 G21/G22/G23: the five-day box answers Y and N (DaggerfallMessage
   } finally { setPitchFloorProvider(null); }
 });
 
-test('AUDIT-RR2: the record - both bible pages carry every paid number, and the named-not-changed list', () => {
-  const rr = rd('bible/06-Systems/Roleplay-Realism.md');
-  const rri = rd('bible/06-Systems/Roleplay-Realism-Items.md');
-  assert.match(rr, /^## AUDIT-RR2 \(2026-09-23\)/m);
-  assert.match(rri, /^## AUDIT-RR2 \(2026-09-23\)/m);
-  for (const g of ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G13', 'G14', 'G15', 'G16', 'G17', 'G19', 'G20', 'G21', 'G22', 'G23', 'G24', 'G25', 'G26']) assert.match(rr, new RegExp(`\\*\\*${g} `), `${g} recorded`);
-  for (const g of ['G7', 'G8', 'G9', 'G10', 'G11', 'G12']) assert.match(rri, new RegExp(`\\*\\*${g} `), `RRI ${g} recorded`);
-  assert.match(rr, /named, not changed/i);
-});

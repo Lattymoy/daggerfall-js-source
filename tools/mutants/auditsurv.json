@@ -20,8 +20,8 @@
   {
     "name": "AUDITSURV-food-ages-from-the-world-s-first-day",
     "file": "src/systems/survival/food.js",
-    "old": "    const kept = Math.max(0, rotDay - item.rotDay);",
-    "new": "    const kept = rotDay;",
+    "old": "      const kept = Math.max(0, rotDay - item.rotDay);",
+    "new": "      const kept = rotDay;",
     "tests": [
       "test/systems/survival/auditsurv.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDITSURV-spent-gear-pitches-for-ever",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (uses <= 0) return { ok: false, text: kind === CAMP_KIND.Fire ? CAMP_TEXT.noFuel : CAMP_TEXT.wornOut, camp: null, spent: false };\n",
-    "new": "",
+    "old": "  if (uses <= 0)\n    return {\n      ok: false,\n      text: kind === CAMP_KIND.Fire ? CAMP_TEXT.noFuel : CAMP_TEXT.wornOut,\n      camp: null,\n      spent: false,\n    };\n  const camp = newCamp({",
+    "new": "  const camp = newCamp({",
     "tests": [
       "test/systems/survival/auditsurv.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "AUDITSURV-a-hood-shades-below-nothing",
     "file": "src/systems/survival/temperature.js",
-    "old": "  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n",
-    "new": "  const pure = warmth;   // AUDIT SURV D: never below nothing, as the law says\n",
+    "old": "  const pure = Math.max(0, warmth); // AUDIT SURV D: never below nothing, as the law says",
+    "new": "  const pure = warmth; // AUDIT SURV D: never below nothing, as the law says",
     "tests": [
       "test/systems/survival/auditsurv.test.js",
       "test/systems/auditcc.test.js"
@@ -121,7 +121,7 @@
   {
     "name": "AUDITSURV-a-dropped-wait-window-never-closes",
     "file": "src/ui/waitWindow.js",
-    "old": "  dispose() { this._end(false); }",
+    "old": "  dispose() {\n    this._end(false);\n  }",
     "new": "  dispose() {}",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "AUDITSURV-the-last-dot-is-never-drawn",
     "file": "src/ui/waitWindow.js",
-    "old": "  get dots() { return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1)); }",
-    "new": "  get dots() { return '.'.repeat(Math.max(1, Math.round(this.progress * BUSY_DOTS))); }",
+    "old": "    return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1));",
+    "new": "    return '.'.repeat(Math.max(1, Math.round(this.progress * BUSY_DOTS)));",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -177,7 +177,7 @@
   {
     "name": "AUDITSURV-the-vampire-is-told-of-hunger-on-the-strip",
     "file": "src/systems/survival/status.js",
-    "old": "  if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));   // AUDIT SURV C: no need for food or sleep",
+    "old": "  if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now))); // AUDIT SURV C: no need for food or sleep",
     "new": "  push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));",
     "tests": [
       "test/systems/survival/auditsurv.test.js"
@@ -186,8 +186,8 @@
   {
     "name": "AUDITSURV-the-hud-drunk-band-ignores-the-endurance",
     "file": "src/systems/survival/status.js",
-    "old": "  const drunk = s.drunk > endurance / 2 ? { key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn', tier: s.drunk > endurance - 10 ? 2 : 1, of: 2 } : null;",
-    "new": "  const drunk = s.drunk > 0 ? { key: 'drunk', text: s.drunk > 40 ? 'Very drunk' : 'Drunk', level: s.drunk > 40 ? 'danger' : 'warn', tier: s.drunk > 40 ? 2 : 1, of: 2 } : null;",
+    "old": "    s.drunk > endurance / 2\n      ? {\n          key: 'drunk',\n          text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk',\n          level: s.drunk > endurance - 10 ? 'danger' : 'warn',\n          tier: s.drunk > endurance - 10 ? 2 : 1,",
+    "new": "    s.drunk > 0\n      ? {\n          key: 'drunk',\n          text: s.drunk > 40 ? 'Very drunk' : 'Drunk',\n          level: s.drunk > 40 ? 'danger' : 'warn',\n          tier: s.drunk > 40 ? 2 : 1,",
     "tests": [
       "test/systems/survival/auditsurv.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDITSURV-the-chargen-kit-carries-no-provisions",
     "file": "src/systems/startingGear.js",
-    "old": "for (const it of startingProvisions(entity)) { addItem(entity.items, it); added.push(it); }",
-    "new": "{ }",
+    "old": "  if (survivalOn())\n    for (const it of startingProvisions(entity)) {\n      addItem(entity.items, it);\n      added.push(it);\n    } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak",
+    "new": "  if (survivalOn()) {\n  } // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak",
     "tests": [
       "test/systems/survival/auditsurv.test.js"
     ],

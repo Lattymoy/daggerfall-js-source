@@ -24,11 +24,11 @@
 
 /** A gathering profession's mark colour (CSS hex) - its compass mark and its node's glow. */
 export const NODE_MARK_CSS = Object.freeze({
-  herbalism: '#e586ec',   // a blossom's orchid
-  mining: '#d9894a',      // PROF2's copper
-  logging: '#d4e157',     // a new leaf's sap green
-  hunting: '#ff6f91',     // the rose of a fresh hide
-  fishing: '#5ec8ff',     // the shallows' blue
+  herbalism: '#e586ec', // a blossom's orchid
+  mining: '#d9894a', // PROF2's copper
+  logging: '#d4e157', // a new leaf's sap green
+  hunting: '#ff6f91', // the rose of a fresh hide
+  fishing: '#5ec8ff', // the shallows' blue
 });
 /** A profession no colour is named for is drawn in Mining's (the first the compass marked). */
 const FALLBACK = 'mining';
@@ -44,15 +44,25 @@ export const MOTHERLODE_MARK_CSS = '#00e5c8';
 export const FIRE_MARK_REACH = 120;
 
 /** The mark's CSS colour for a profession (or REST3's 'fire'). Pure. */
-export const nodeMarkCss = (profession) => (profession === 'fire' ? FIRE_MARK_CSS : profession === 'motherlode' ? MOTHERLODE_MARK_CSS : NODE_MARK_CSS[profession] ?? NODE_MARK_CSS[FALLBACK]);
+export const nodeMarkCss = (profession) =>
+  profession === 'fire'
+    ? FIRE_MARK_CSS
+    : profession === 'motherlode'
+      ? MOTHERLODE_MARK_CSS
+      : (NODE_MARK_CSS[profession] ?? NODE_MARK_CSS[FALLBACK]);
 /** The mark's colour as display-encoded floats [r, g, b], one frozen triple a profession. Pure. */
-const RGB = Object.freeze(Object.fromEntries(Object.entries(NODE_MARK_CSS).map(([k, hex]) => {
-  const n = parseInt(hex.slice(1), 16);
-  return [k, Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255])];
-})));
+const RGB = Object.freeze(
+  Object.fromEntries(
+    Object.entries(NODE_MARK_CSS).map(([k, hex]) => {
+      const n = parseInt(hex.slice(1), 16);
+      return [k, Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255])];
+    }),
+  ),
+);
 const FIRE_RGB = Object.freeze([0xff / 255, 0xd0 / 255, 0]);
 const LODE_RGB = Object.freeze([0, 0xe5 / 255, 0xc8 / 255]);
-export const nodeMarkRgb = (profession) => (profession === 'fire' ? FIRE_RGB : profession === 'motherlode' ? LODE_RGB : RGB[profession] ?? RGB[FALLBACK]);
+export const nodeMarkRgb = (profession) =>
+  profession === 'fire' ? FIRE_RGB : profession === 'motherlode' ? LODE_RGB : (RGB[profession] ?? RGB[FALLBACK]);
 
 /** How dim a mark at the edge of its reach stands beside one at the player's feet: nearer reads brighter. */
 export const NODE_MARK_FAR_DIM = 0.45;
@@ -78,13 +88,20 @@ export function nodeCompassPoints(marks, animals = null) {
   _points.length = 0;
   let used = 0;
   const put = (x, z, mark, a) => {
-    const p = _pool[used] ??= { xz: [0, 0], mark: '', a: 1 };
+    const p = (_pool[used] ??= { xz: [0, 0], mark: '', a: 1 });
     used++;
-    p.xz[0] = x; p.xz[1] = z; p.mark = mark; p.a = a;
+    p.xz[0] = x;
+    p.xz[1] = z;
+    p.mark = mark;
+    p.a = a;
     _points.push(p);
   };
   for (const v of animals ?? []) put(v[0], v[1], 'hunting', 1);
-  if (marks) for (let i = marks.length - 1; i >= 0; i--) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }
+  if (marks)
+    for (let i = marks.length - 1; i >= 0; i--) {
+      const m = marks[i];
+      put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));
+    }
   return _points.length ? _points : null;
 }
 
@@ -107,9 +124,12 @@ export function withFireMarks(points, fires, feet, reach = FIRE_MARK_REACH) {
   for (const f of fires) {
     const d = Math.hypot(f[0] - feet[0], f[2] - feet[2]);
     if (!(d <= reach)) continue;
-    const p = _firePool[used] ??= { xz: [0, 0], mark: 'fire', a: 1 };
+    const p = (_firePool[used] ??= { xz: [0, 0], mark: 'fire', a: 1 });
     used++;
-    p.xz[0] = f[0]; p.xz[1] = f[2]; p.mark = 'fire'; p.a = nodeMarkAlpha(d, reach);
+    p.xz[0] = f[0];
+    p.xz[1] = f[2];
+    p.mark = 'fire';
+    p.a = nodeMarkAlpha(d, reach);
     _fires.push(p);
   }
   if (!_fires.length) return points;

@@ -47,8 +47,8 @@
   {
     "name": "FAST-REFUSAL-no-trace-pieces-anyway",
     "file": "src/systems/travel/landPieces.js",
-    "old": "  if (!trace || !fit) return null;\n  if (trace === _for",
-    "new": "  if (!fit) return null;\n  if (trace === _for",
+    "old": "  if (!trace || !fit) return null;",
+    "new": "  if (!fit) return null;",
     "tests": [
       "test/systems/travel/fast_refusal.test.js"
     ]

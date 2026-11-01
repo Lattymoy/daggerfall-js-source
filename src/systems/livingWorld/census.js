@@ -16,11 +16,25 @@
 //
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
-import { folkOfArea, folkOfRegion, folkRace, folkNameBank, withZone, folkKeyOf } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK
+import {
+  PERSON_TEXTURES,
+  PERSON_FACE_RECORDS,
+  NUM_PERSON_FACE_VARIANTS,
+  GUARD_TEXTURE,
+  walkerRace,
+  spriteRaceOf,
+} from '../../characters/mobile/mobilePerson.js';
+import {
+  folkOfArea,
+  folkOfRegion,
+  folkRace,
+  folkNameBank,
+  withZone,
+  folkKeyOf,
+} from '../../characters/provinceFolk.js'; // PROVINCE-FOLK
 import { fullName, GENDERS } from '../../characters/nameHelper.js';
-import { seededPersonName } from '../../characters/personNames.js';   // REGION-NAMES: a resident named by their people's customs and their town's
-import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's bank on the Bay
+import { seededPersonName } from '../../characters/personNames.js'; // REGION-NAMES: a resident named by their people's customs and their town's
+import { nameBankOfArea } from '../../characters/areaNameBank.js'; // WW1: an area's people - the region's bank on the Bay
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
@@ -42,7 +56,8 @@ export const CENSUS_CROWD_MAX = 2;
 /** LW-DENSE: the crowd's stream, apart from the households' ('cr'), so every one minted before is as they were. */
 const CROWD_SALT = 0x6372;
 /** @param {LwTown} town */
-export const censusMaxOf = (town) => Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));
+export const censusMaxOf = (town) =>
+  Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));
 /** @param {LwTown} town */
 export const houseCrowdOf = (town) => {
   const b = Math.max(1, town.blocks | 0);
@@ -54,16 +69,48 @@ export { RACE_OF_PEOPLE, raceOfPeople } from '../../characters/mobile/mobilePers
 
 /** What a resident does - the day's plan reads it (dayPlan.js), the lines read it (lines.js). */
 export const JOBS = Object.freeze({
-  keeper: 'keeper', helper: 'helper', smith: 'smith', clerk: 'clerk', scholar: 'scholar', innkeeper: 'innkeeper',
-  server: 'server', priest: 'priest', guildsman: 'guildsman', courtier: 'courtier', guard: 'guard',
-  labourer: 'labourer', farmer: 'farmer', fisher: 'fisher', crafter: 'crafter', homemaker: 'homemaker', beggar: 'beggar',
-  merchant: 'merchant', mercenary: 'mercenary', adventurer: 'adventurer', sailor: 'sailor', pilgrim: 'pilgrim',
-  courier: 'courier', pedlar: 'pedlar',
+  keeper: 'keeper',
+  helper: 'helper',
+  smith: 'smith',
+  clerk: 'clerk',
+  scholar: 'scholar',
+  innkeeper: 'innkeeper',
+  server: 'server',
+  priest: 'priest',
+  guildsman: 'guildsman',
+  courtier: 'courtier',
+  guard: 'guard',
+  labourer: 'labourer',
+  farmer: 'farmer',
+  fisher: 'fisher',
+  crafter: 'crafter',
+  homemaker: 'homemaker',
+  beggar: 'beggar',
+  merchant: 'merchant',
+  mercenary: 'mercenary',
+  adventurer: 'adventurer',
+  sailor: 'sailor',
+  pilgrim: 'pilgrim',
+  courier: 'courier',
+  pedlar: 'pedlar',
   // LW9 (bible/06-Systems/Living-World-II.md): the road's new traffic
-  carter: 'carter', hunter: 'hunter', patrol: 'patrol', noble: 'noble', retainer: 'retainer', minstrel: 'minstrel',
+  carter: 'carter',
+  hunter: 'hunter',
+  patrol: 'patrol',
+  noble: 'noble',
+  retainer: 'retainer',
+  minstrel: 'minstrel',
 });
 /** The jobs that travel (trips.js): the traveller roster's own. */
-export const TRAVELLER_JOBS = Object.freeze(['merchant', 'mercenary', 'adventurer', 'sailor', 'pilgrim', 'courier', 'pedlar']);
+export const TRAVELLER_JOBS = Object.freeze([
+  'merchant',
+  'mercenary',
+  'adventurer',
+  'sailor',
+  'pilgrim',
+  'courier',
+  'pedlar',
+]);
 /** LW9: THE ROAD'S NEW TRAFFIC, APPENDED - a traveller's id is `L<mapId>.t<slot>`, dealt in the jobs' order, so a job
  *  anywhere but after every one before it would re-key the regard and the turns of every traveller after it (Living
  *  World II decision 9): these are dealt after TRAVELLER_JOBS' own, in this order. A farm's or a village's CARTER takes
@@ -73,10 +120,17 @@ export const ROAD_JOBS = Object.freeze(['carter', 'hunter', 'patrol', 'noble', '
 
 /** The shops a keeper keeps, and the trade it makes them. */
 const SHOP_JOB = Object.freeze({
-  [BUILDING_TYPES.Alchemist]: 'keeper', [BUILDING_TYPES.Armorer]: 'smith', [BUILDING_TYPES.Bank]: 'clerk',
-  [BUILDING_TYPES.Bookseller]: 'scholar', [BUILDING_TYPES.ClothingStore]: 'keeper', [BUILDING_TYPES.FurnitureStore]: 'keeper',
-  [BUILDING_TYPES.GemStore]: 'keeper', [BUILDING_TYPES.GeneralStore]: 'keeper', [BUILDING_TYPES.Library]: 'scholar',
-  [BUILDING_TYPES.PawnShop]: 'keeper', [BUILDING_TYPES.WeaponSmith]: 'smith',
+  [BUILDING_TYPES.Alchemist]: 'keeper',
+  [BUILDING_TYPES.Armorer]: 'smith',
+  [BUILDING_TYPES.Bank]: 'clerk',
+  [BUILDING_TYPES.Bookseller]: 'scholar',
+  [BUILDING_TYPES.ClothingStore]: 'keeper',
+  [BUILDING_TYPES.FurnitureStore]: 'keeper',
+  [BUILDING_TYPES.GemStore]: 'keeper',
+  [BUILDING_TYPES.GeneralStore]: 'keeper',
+  [BUILDING_TYPES.Library]: 'scholar',
+  [BUILDING_TYPES.PawnShop]: 'keeper',
+  [BUILDING_TYPES.WeaponSmith]: 'smith',
 });
 /** A building a household lives in: House1-House6 (IsResidence is House1-4; 5 and 6 are lived in all the same). */
 export const isHome = (type) => type >= BUILDING_TYPES.House1 && type <= BUILDING_TYPES.House6;
@@ -84,9 +138,18 @@ export const hasShopJob = (type) => Object.prototype.hasOwnProperty.call(SHOP_JO
 
 /** The classes a traveller of each job walks out in (MOBILE_TYPES 128-145): an adventurer any of the eighteen, a
  *  sellsword the fighting ones, a courier the light-footed. */
-export const ADVENTURER_CLASSES = Object.freeze([128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145]);
-export const MERCENARY_CLASSES = Object.freeze([MOBILE_TYPES.Warrior, MOBILE_TYPES.Knight, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Archer,
-  MOBILE_TYPES.Ranger, MOBILE_TYPES.Spellsword, MOBILE_TYPES.Battlemage]);
+export const ADVENTURER_CLASSES = Object.freeze([
+  128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145,
+]);
+export const MERCENARY_CLASSES = Object.freeze([
+  MOBILE_TYPES.Warrior,
+  MOBILE_TYPES.Knight,
+  MOBILE_TYPES.Barbarian,
+  MOBILE_TYPES.Archer,
+  MOBILE_TYPES.Ranger,
+  MOBILE_TYPES.Spellsword,
+  MOBILE_TYPES.Battlemage,
+]);
 export const COURIER_CLASSES = Object.freeze([MOBILE_TYPES.Acrobat, MOBILE_TYPES.Ranger, MOBILE_TYPES.Rogue]);
 /** LW9: a hunter goes out with a bow; a noble's retainers are the fighting gentry's; a minstrel is a bard. */
 export const HUNTER_CLASSES = Object.freeze([MOBILE_TYPES.Archer, MOBILE_TYPES.Ranger]);
@@ -114,15 +177,28 @@ export const RETAINER_CLASSES = Object.freeze([MOBILE_TYPES.Knight, MOBILE_TYPES
 export function residentName(seed, bank, gender) {
   const saved = getSeed();
   try {
-    srand((seed >>> 0) || 1);
+    srand(seed >>> 0 || 1);
     return fullName(bank, gender);
-  } finally { setSeed(saved); }
+  } finally {
+    setSeed(saved);
+  }
 }
 
 /** The tempers by job: [lark, day, owl] weights. */
 const TEMPER_OF = Object.freeze({
-  farmer: [6, 3, 0], fisher: [6, 3, 0], carter: [6, 3, 0], hunter: [6, 3, 0], minstrel: [0, 3, 6], innkeeper: [0, 2, 6], server: [0, 2, 6], guard: [2, 6, 2], beggar: [1, 4, 3],
-  adventurer: [1, 5, 3], mercenary: [1, 5, 3], sailor: [4, 4, 1], priest: [5, 4, 0],
+  farmer: [6, 3, 0],
+  fisher: [6, 3, 0],
+  carter: [6, 3, 0],
+  hunter: [6, 3, 0],
+  minstrel: [0, 3, 6],
+  innkeeper: [0, 2, 6],
+  server: [0, 2, 6],
+  guard: [2, 6, 2],
+  beggar: [1, 4, 3],
+  adventurer: [1, 5, 3],
+  mercenary: [1, 5, 3],
+  sailor: [4, 4, 1],
+  priest: [5, 4, 0],
 });
 const DEFAULT_TEMPER = Object.freeze([2, 7, 1]);
 
@@ -136,13 +212,20 @@ const DEFAULT_TEMPER = Object.freeze([2, 7, 1]);
  */
 export function mintResident(town, roll, slot, job, at = {}) {
   const gen = at.gen ?? null;
-  const seed = gen == null ? lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot) : lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen);   // 'gen'
+  const seed =
+    gen == null
+      ? lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot)
+      : lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen); // 'gen'
   const rng = seededRng(seed);
-  const climate = walkerRace(town.people, town.area ?? town.region);   // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)
+  const climate = walkerRace(town.people, town.area ?? town.region); // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)
   // PROVINCE-FOLK: past the Bay a resident is one of the province's people, on a stream of their own (the rest of them
   // is drawn as it was); their picture their race's where Daggerfall draws one, else the town's
-  const people = withZone(town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1), town.px, town.py);   // AUDIT PROVINCE-FOLK B6: its zone's
-  const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate;   // 'folk'
+  const people = withZone(
+    town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1),
+    town.px,
+    town.py,
+  ); // AUDIT PROVINCE-FOLK B6: its zone's
+  const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate; // 'folk'
   const sprite = spriteRaceOf(race, climate);
   const guard = job === 'guard';
   const female = !guard && rng() < 0.5;
@@ -154,26 +237,65 @@ export function mintResident(town, roll, slot, job, at = {}) {
   const gender = female ? GENDERS.Female : GENDERS.Male;
   const w = TEMPER_OF[/** @type {keyof typeof TEMPER_OF} */ (job)] ?? DEFAULT_TEMPER;
   const temper = /** @type {0|1|2} */ (Number(pickWeighted(rng, { 0: w[0], 1: w[1], 2: w[2] }) ?? 1));
-  const social = rng(), pious = rng(), drink = rng();
-  let cls = null, level = rollInt(rng, 1, 5);
-  if (job === 'adventurer') { cls = pickOf(rng, ADVENTURER_CLASSES); level = 1 + Math.floor(19 * Math.pow(rng(), 1.6)); }
-  else if (job === 'mercenary') { cls = pickOf(rng, MERCENARY_CLASSES); level = rollInt(rng, 3, 14); }
-  else if (job === 'courier') { cls = pickOf(rng, COURIER_CLASSES); level = rollInt(rng, 2, 8); }
-  else if (job === 'hunter') { cls = pickOf(rng, HUNTER_CLASSES); level = rollInt(rng, 2, 8); }   // LW9
-  else if (job === 'patrol') { cls = MOBILE_TYPES.Knight; level = rollInt(rng, 6, 14); }
-  else if (job === 'retainer') { cls = pickOf(rng, RETAINER_CLASSES); level = rollInt(rng, 4, 12); }
-  else if (job === 'minstrel') { cls = MOBILE_TYPES.Bard; level = rollInt(rng, 2, 8); }
-  else if (job === 'guard') level = rollInt(rng, 5, 15);
+  const social = rng(),
+    pious = rng(),
+    drink = rng();
+  let cls = null,
+    level = rollInt(rng, 1, 5);
+  if (job === 'adventurer') {
+    cls = pickOf(rng, ADVENTURER_CLASSES);
+    level = 1 + Math.floor(19 * Math.pow(rng(), 1.6));
+  } else if (job === 'mercenary') {
+    cls = pickOf(rng, MERCENARY_CLASSES);
+    level = rollInt(rng, 3, 14);
+  } else if (job === 'courier') {
+    cls = pickOf(rng, COURIER_CLASSES);
+    level = rollInt(rng, 2, 8);
+  } else if (job === 'hunter') {
+    cls = pickOf(rng, HUNTER_CLASSES);
+    level = rollInt(rng, 2, 8);
+  } // LW9
+  else if (job === 'patrol') {
+    cls = MOBILE_TYPES.Knight;
+    level = rollInt(rng, 6, 14);
+  } else if (job === 'retainer') {
+    cls = pickOf(rng, RETAINER_CLASSES);
+    level = rollInt(rng, 4, 12);
+  } else if (job === 'minstrel') {
+    cls = MOBILE_TYPES.Bard;
+    level = rollInt(rng, 2, 8);
+  } else if (job === 'guard') level = rollInt(rng, 5, 15);
   return {
     id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${gen == null ? '' : `~${gen}`}`,
-    town: town.mapId >>> 0, slot, roll,
-    name: seededPersonName(seed ^ 0x5eed1e55, people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1), gender, { race, region: town.area ?? town.region ?? -1, home: folkKeyOf(people) }),   // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's; REGION-NAMES: their customs, their town's region's
-    gender, sex: female ? 'female' : 'male', race, variant,
-    archive: guard ? GUARD_TEXTURE : set[variant], face, guard, job,
+    town: town.mapId >>> 0,
+    slot,
+    roll,
+    name: seededPersonName(
+      seed ^ 0x5eed1e55,
+      people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1),
+      gender,
+      { race, region: town.area ?? town.region ?? -1, home: folkKeyOf(people) },
+    ), // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's; REGION-NAMES: their customs, their town's region's
+    gender,
+    sex: female ? 'female' : 'male',
+    race,
+    variant,
+    archive: guard ? GUARD_TEXTURE : set[variant],
+    face,
+    guard,
+    job,
     // WATCH-DAY: a watchman's own clothes, for off duty - one of his people's outfits, drawn on its own stream so the
     // rest of him is as he was
     ...(guard ? { civvies: tables.male[lwSeed(seed, 0x63697673) % tables.male.length] } : {}),
-    home: at.home ?? null, work: at.work ?? null, temper, social, pious, drink, cls, level, faction: at.faction ?? 0,
+    home: at.home ?? null,
+    work: at.work ?? null,
+    temper,
+    social,
+    pious,
+    drink,
+    cls,
+    level,
+    faction: at.faction ?? 0,
   };
 }
 
@@ -182,7 +304,7 @@ export function travellerCounts(town) {
   const b = Math.max(1, town.blocks | 0);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   return {
-    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : (b >= 2 ? 1 : 0),
+    merchant: b >= 4 ? clamp(1 + Math.floor(b / 8), 1, 5) : b >= 2 ? 1 : 0,
     mercenary: b >= 9 ? clamp(Math.floor(b / 8), 1, 6) : 0,
     adventurer: b >= 4 ? clamp(1 + Math.floor(b / 10), 1, 6) : 0,
     sailor: town.port ? clamp(2 + Math.floor(b / 10), 2, 6) : 0,
@@ -193,7 +315,10 @@ export function travellerCounts(town) {
 }
 
 /** LW9: a place's MAPS location type (formats/mapsFile.js LOCATION_TYPES): a city, a hamlet, a village, a farm. */
-const CITY = 0, HAMLET = 1, VILLAGE = 2, FARM = 3;
+const CITY = 0,
+  HAMLET = 1,
+  VILLAGE = 2,
+  FARM = 3;
 /** LW9: a city keeps a patrol, a noble and a minstrel from this many blocks (a palace's city). */
 export const CITY_COURT_BLOCKS = 16;
 /** LW9: how many of each of the road's new travellers a place keeps, by its kind and its size - a farm one carter; a
@@ -282,22 +407,26 @@ export function travellerRoster(town) {
   const out = [];
   let slot = 0;
   for (const job of TRAVELLER_JOBS) {
-    for (let i = 0; i < counts[/** @type {keyof ReturnType<typeof travellerCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+    for (let i = 0; i < counts[/** @type {keyof ReturnType<typeof travellerCounts>} */ (job)]; i++)
+      out.push(mintResident(town, 't', slot++, job));
   }
   // LW9: the road's new traffic after them (ROAD_JOBS - every id before it unchanged)
   const more = roadCounts(town);
   for (const job of ROAD_JOBS) {
-    for (let i = 0; i < more[/** @type {keyof ReturnType<typeof roadCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+    for (let i = 0; i < more[/** @type {keyof ReturnType<typeof roadCounts>} */ (job)]; i++)
+      out.push(mintResident(town, 't', slot++, job));
   }
   const again = moreCounts(town);
   for (const job of MORE_JOBS) {
-    for (let i = 0; i < again[/** @type {keyof ReturnType<typeof moreCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+    for (let i = 0; i < again[/** @type {keyof ReturnType<typeof moreCounts>} */ (job)]; i++)
+      out.push(mintResident(town, 't', slot++, job));
   }
   // LW-WIDE: the fourth rank after them, its first slot kept on the roster (a place's holder any cycle is one of it by slot)
   const wideFrom = slot;
   const wide = wideCounts(town);
   for (const job of WIDE_JOBS) {
-    for (let i = 0; i < wide[/** @type {keyof ReturnType<typeof wideCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+    for (let i = 0; i < wide[/** @type {keyof ReturnType<typeof wideCounts>} */ (job)]; i++)
+      out.push(mintResident(town, 't', slot++, job));
   }
   return Object.assign(out, { wideFrom });
 }
@@ -322,7 +451,7 @@ export function watchRoster(town) {
  * @param {LwTown} town @param {readonly LwBuilding[]} buildings @param {{ quarter?: number }} [o] @returns {Resident[]}
  */
 export function householdCensus(town, buildings, { quarter = 0 } = {}) {
-  const rng = seededRng(quarter ? lwSeed(town.mapId >>> 0, 0x686f, quarter) : lwSeed(town.mapId >>> 0, 0x686f));   // 'ho'
+  const rng = seededRng(quarter ? lwSeed(town.mapId >>> 0, 0x686f, quarter) : lwSeed(town.mapId >>> 0, 0x686f)); // 'ho'
   const list = [...(buildings ?? [])].filter((b) => b && Number.isFinite(b.key)).sort((a, b) => a.key - b.key);
   const houses = list.filter((b) => isHome(b.type));
   /** @type {{ job: string, work: number|null, faction: number, livesAt: number|null }[]} */
@@ -334,13 +463,17 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
       if (q >= 12 && rng() < 0.5) trades.push({ job: 'helper', work: b.key, faction: b.factionId ?? 0, livesAt: null });
     } else if (b.type === BUILDING_TYPES.Tavern) {
       trades.push({ job: 'innkeeper', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
-      for (let i = 0, n = q >= 12 ? 2 : 1; i < n; i++) trades.push({ job: 'server', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
+      for (let i = 0, n = q >= 12 ? 2 : 1; i < n; i++)
+        trades.push({ job: 'server', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
     } else if (b.type === BUILDING_TYPES.Temple) {
-      for (let i = 0; i < 2; i++) trades.push({ job: 'priest', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
+      for (let i = 0; i < 2; i++)
+        trades.push({ job: 'priest', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
     } else if (b.type === BUILDING_TYPES.GuildHall) {
-      for (let i = 0; i < 2; i++) trades.push({ job: 'guildsman', work: b.key, faction: b.factionId ?? 0, livesAt: null });
+      for (let i = 0; i < 2; i++)
+        trades.push({ job: 'guildsman', work: b.key, faction: b.factionId ?? 0, livesAt: null });
     } else if (b.type === BUILDING_TYPES.Palace) {
-      for (let i = 0; i < 2; i++) trades.push({ job: 'courtier', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
+      for (let i = 0; i < 2; i++)
+        trades.push({ job: 'courtier', work: b.key, faction: b.factionId ?? 0, livesAt: b.key });
     }
   }
   // the houses' people, each house its family
@@ -353,12 +486,19 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
   }
   // the trades dealt to the people in a seeded order (a Fisher-Yates on the town's own stream)
   const order = people.map((_, i) => i);
-  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
   const blocks = Math.max(1, town.blocks | 0);
   /** The common work of the town: a port fishes, a village farms, a city has its beggars. */
   const commonJob = (r = rng) => {
     const w = {
-      labourer: blocks >= 9 ? 5 : 2, farmer: blocks >= 16 ? 0.5 : 5, fisher: town.port ? 3 : 0, crafter: 3, homemaker: 4,
+      labourer: blocks >= 9 ? 5 : 2,
+      farmer: blocks >= 16 ? 0.5 : 5,
+      fisher: town.port ? 3 : 0,
+      crafter: 3,
+      homemaker: 4,
       beggar: blocks >= 16 ? 0.6 : 0,
     };
     return pickWeighted(r, w) ?? 'labourer';
@@ -367,9 +507,15 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
   const placed = [];
   let k = 0;
   for (const t of trades) {
-    if (t.livesAt != null) { placed.push({ job: t.job, home: t.livesAt, work: t.work, faction: t.faction }); continue; }
-    if (k < order.length) { placed.push({ job: t.job, home: people[order[k++]], work: t.work, faction: t.faction }); continue; }
-    placed.push({ job: t.job, home: t.work, work: t.work, faction: t.faction });   // no house left: lives where it works
+    if (t.livesAt != null) {
+      placed.push({ job: t.job, home: t.livesAt, work: t.work, faction: t.faction });
+      continue;
+    }
+    if (k < order.length) {
+      placed.push({ job: t.job, home: people[order[k++]], work: t.work, faction: t.faction });
+      continue;
+    }
+    placed.push({ job: t.job, home: t.work, work: t.work, faction: t.faction }); // no house left: lives where it works
   }
   const common = [];
   for (; k < order.length; k++) common.push({ job: commonJob(), home: people[order[k]], work: null, faction: 0 });
@@ -379,13 +525,22 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
   // LW-DENSE: a city's houses fuller - each house its houseCrowdOf share more, of the common work, after everyone kept above
   const crowd = houseCrowdOf(town);
   if (crowd > 0 && keep.length < max) {
-    const crng = seededRng(quarter ? lwSeed(town.mapId >>> 0, CROWD_SALT, quarter) : lwSeed(town.mapId >>> 0, CROWD_SALT));
+    const crng = seededRng(
+      quarter ? lwSeed(town.mapId >>> 0, CROWD_SALT, quarter) : lwSeed(town.mapId >>> 0, CROWD_SALT),
+    );
     for (const h of houses) {
       const n = Math.floor(crowd) + (crng() < crowd % 1 ? 1 : 0);
-      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });
+      for (let i = 0; i < n && keep.length < max; i++)
+        keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });
     }
   }
-  return keep.map((p, slot) => mintResident(town, quarter ? 'q' : 'h', quarter * QUARTER_SLOTS + slot, p.job, { home: p.home, work: p.work, faction: p.faction }));
+  return keep.map((p, slot) =>
+    mintResident(town, quarter ? 'q' : 'h', quarter * QUARTER_SLOTS + slot, p.job, {
+      home: p.home,
+      work: p.work,
+      faction: p.faction,
+    }),
+  );
 }
 /** IC-GRAND: a quarter's households' slots begin at its number times this (CENSUS_CAP a quarter at the most). */
 export const QUARTER_SLOTS = 1000;
@@ -400,8 +555,19 @@ export const QUARTER_SLOTS = 1000;
  */
 export function quarterCensus(town, buildings, opens) {
   const elsewhere = (/** @type {LwBuilding} */ b) => opens.some((keys, q) => q > 0 && keys.has(b.key));
-  const out = townCensus(town, (buildings ?? []).filter((b) => b && !elsewhere(b)), opens[0]);
-  for (let q = 1; q < opens.length; q++) out.push(...householdCensus(town, (buildings ?? []).filter((b) => b && opens[q].has(b.key)), { quarter: q }));
+  const out = townCensus(
+    town,
+    (buildings ?? []).filter((b) => b && !elsewhere(b)),
+    opens[0],
+  );
+  for (let q = 1; q < opens.length; q++)
+    out.push(
+      ...householdCensus(
+        town,
+        (buildings ?? []).filter((b) => b && opens[q].has(b.key)),
+        { quarter: q },
+      ),
+    );
   return out;
 }
 
@@ -418,14 +584,21 @@ export function quarterCensus(town, buildings, opens) {
 export function townCensus(town, buildings, opens = null) {
   const households = householdCensus(town, buildings);
   const open = (/** @type {LwBuilding} */ b) => !opens || opens.has(b.key);
-  const houses = (buildings ?? []).filter((b) => b && isHome(b.type) && open(b)).map((b) => b.key).sort((a, b) => a - b);
+  const houses = (buildings ?? [])
+    .filter((b) => b && isHome(b.type) && open(b))
+    .map((b) => b.key)
+    .sort((a, b) => a - b);
   const palace = (buildings ?? []).find((b) => b?.type === BUILDING_TYPES.Palace && open(b))?.key ?? null;
-  const tavern = (buildings ?? []).filter((b) => b?.type === BUILDING_TYPES.Tavern && open(b)).map((b) => b.key).sort((a, b) => a - b);
+  const tavern = (buildings ?? [])
+    .filter((b) => b?.type === BUILDING_TYPES.Tavern && open(b))
+    .map((b) => b.key)
+    .sort((a, b) => a - b);
   const homeOf = (r) => {
-    const pick = lwSeed(r.town, r.roll.charCodeAt(0), r.slot, 0x686d);   // 'hm'
+    const pick = lwSeed(r.town, r.roll.charCodeAt(0), r.slot, 0x686d); // 'hm'
     if (r.guard && palace != null) return palace;
-    if (r.job === 'adventurer' && tavern.length && (!houses.length || (pick & 3) === 0)) return tavern[pick % tavern.length];
-    return houses.length ? houses[pick % houses.length] : (tavern.length ? tavern[pick % tavern.length] : null);
+    if (r.job === 'adventurer' && tavern.length && (!houses.length || (pick & 3) === 0))
+      return tavern[pick % tavern.length];
+    return houses.length ? houses[pick % houses.length] : tavern.length ? tavern[pick % tavern.length] : null;
   };
   const others = [...watchRoster(town), ...travellerRoster(town)].map((r) => ({ ...r, home: homeOf(r) }));
   return households.concat(others);

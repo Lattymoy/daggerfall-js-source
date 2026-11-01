@@ -28,7 +28,7 @@
 // which was always taken this way): every host draws the frame first, and a frame that draws nothing never reaches
 // a foot, so the shot waits for the next one that does.
 
-import { getPref } from '../systems/uiPrefs.js';   // LOAD1: the download's switch - already on the entry's graph (main.js reads it), so it adds no file there
+import { getPref } from '../systems/uiPrefs.js'; // LOAD1: the download's switch - already on the entry's graph (main.js reads it), so it adds no file there
 
 // LOAD1 (2026-10-05): THE SHOT IS KEPT, TOO. The same PNG goes to the gallery (systems/shotGallery.js) - a JPEG in
 // this browser's own IndexedDB, never the repository (Port-Doctrine: a render of game data is game data) - where the
@@ -40,7 +40,10 @@ export const SHOT_DOWNLOAD_PREF = 'shotDownload';
 const keepInGallery = (blob, place) => import('../systems/shotGallery.js').then((g) => g.keepShot(blob, { place }));
 /** LOAD1: what the HUD says once the gallery has answered - the id kept, 'full', or null (not kept). */
 export function keptLine(kept, downloaded) {
-  if (kept === 'full') return downloaded ? 'Screenshot saved. The gallery is full. Delete some under Screenshots.' : 'The gallery is full. Delete some under Screenshots.';
+  if (kept === 'full')
+    return downloaded
+      ? 'Screenshot saved. The gallery is full. Delete some under Screenshots.'
+      : 'The gallery is full. Delete some under Screenshots.';
   if (kept == null) return downloaded ? 'Screenshot saved.' : 'The screenshot could not be kept.';
   return 'Screenshot added to Screenshots in the menu.';
 }
@@ -61,7 +64,9 @@ export const REVOKE_AFTER_MS = 40_000;
 // before one foot are two shots of that frame, never one).
 const _owed = [];
 /** SHOT1: queue `fn` for the next host frame foot - takeScreenshot's default `afterDraw`. */
-export function oweToFrameFoot(fn) { _owed.push(fn); }
+export function oweToFrameFoot(fn) {
+  _owed.push(fn);
+}
 /** SHOT1: how many shots wait for a drawn frame (the tests' window). */
 export const owedShots = () => _owed.length;
 /** SHOT1: THE HOSTS' FRAME FOOT - called after the frame's last draw (`renderer.resolveFrame()`), while the buffer is
@@ -70,7 +75,13 @@ export const owedShots = () => _owed.length;
 export function deliverOwedShots() {
   if (!_owed.length) return 0;
   const batch = _owed.splice(0);
-  for (const fn of batch) { try { fn(); } catch (e) { console.warn('[shot] the screenshot could not be read:', e?.message ?? e); } }
+  for (const fn of batch) {
+    try {
+      fn();
+    } catch (e) {
+      console.warn('[shot] the screenshot could not be read:', e?.message ?? e);
+    }
+  }
   return batch.length;
 }
 
@@ -78,14 +89,24 @@ export function deliverOwedShots() {
  *  canvas gave no image (a lost context) or the download is switched off. LOAD1: `keep` hands the same PNG to the
  *  gallery (its answer is `said` to the HUD); `download` false skips the file. SHOT1: `afterDraw` is when the canvas
  *  is read - the host's frame foot (`oweToFrameFoot`) by default; the tests pass null to read at once. */
-export function takeScreenshot(canvas, {
-  afterDraw = oweToFrameFoot, doc = globalThis.document, later = setTimeout,
-  keep = null, download = true, said = null,
-} = {}) {
+export function takeScreenshot(
+  canvas,
+  {
+    afterDraw = oweToFrameFoot,
+    doc = globalThis.document,
+    later = setTimeout,
+    keep = null,
+    download = true,
+    said = null,
+  } = {},
+) {
   return new Promise((resolve) => {
     const shoot = () => {
       canvas.toBlob((blob) => {
-        if (!blob) { resolve(null); return; }
+        if (!blob) {
+          resolve(null);
+          return;
+        }
         let name = null;
         if (download) {
           const url = URL.createObjectURL(blob);
@@ -99,12 +120,16 @@ export function takeScreenshot(canvas, {
           name = a.download;
         }
         if (typeof keep === 'function') {
-          Promise.resolve().then(() => keep(blob)).catch(() => null).then((kept) => said?.(keptLine(kept, download)));
+          Promise.resolve()
+            .then(() => keep(blob))
+            .catch(() => null)
+            .then((kept) => said?.(keptLine(kept, download)));
         }
         resolve(name);
       }, 'image/png');
     };
-    if (typeof afterDraw === 'function') afterDraw(shoot); else shoot();
+    if (typeof afterDraw === 'function') afterDraw(shoot);
+    else shoot();
   });
 }
 
@@ -112,15 +137,30 @@ let _canvas = null;
 let _shoot = takeScreenshot;
 let _place = () => '';
 /** Boot hands the game canvas in, once (main.js). `shoot` is the tests' seam. */
-export function setScreenshotCanvas(canvas, { shoot = takeScreenshot } = {}) { _canvas = canvas ?? null; _shoot = shoot; }
+export function setScreenshotCanvas(canvas, { shoot = takeScreenshot } = {}) {
+  _canvas = canvas ?? null;
+  _shoot = shoot;
+}
 /** LOAD1: the world host says where the player stands (scenes/world.js), so a kept shot carries its place. */
-export function setShotPlace(fn) { _place = typeof fn === 'function' ? fn : () => ''; }
-const placeNow = () => { try { return String(_place() ?? ''); } catch { return ''; } };
+export function setShotPlace(fn) {
+  _place = typeof fn === 'function' ? fn : () => '';
+}
+const placeNow = () => {
+  try {
+    return String(_place() ?? '');
+  } catch {
+    return '';
+  }
+};
 /** routeAction's PrintScreen arm: true when a shot was taken (a canvas stands), false otherwise - so a host with no
  *  canvas leaves the key alone, as every door-less arm does. */
 export function printScreen() {
   if (!_canvas) return false;
-  const place = placeNow();   // where the key was pressed, not where the gallery's answer finds the player
-  _shoot(_canvas, { keep: (blob) => keepInGallery(blob, place), download: getPref(SHOT_DOWNLOAD_PREF) !== false, said: sayOnHud });
+  const place = placeNow(); // where the key was pressed, not where the gallery's answer finds the player
+  _shoot(_canvas, {
+    keep: (blob) => keepInGallery(blob, place),
+    download: getPref(SHOT_DOWNLOAD_PREF) !== false,
+    said: sayOnHud,
+  });
   return true;
 }

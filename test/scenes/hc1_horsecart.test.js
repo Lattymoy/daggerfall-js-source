@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { KEEP } from '../../src/scenes/dataSource.js';
 import { HORSE_TEXTURE, CART_TEXTURE, ridingTextureName } from '../../src/systems/riding.js';
 import { TRANSPORT_MODES } from '../../src/systems/transport.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT SHIP-BOARD): the ship's landing is scenes/shipBoardHost.js
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -79,7 +80,7 @@ test('HC1: the art loads in the ONE place the mode changes, so every path to a s
 
   // the three paths that used to leave a rider with no horse all go
   // through the one place, still
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const setTransportModeHere = \(mode\) => mountRig\.setMode\(mode\);/);
   assert.match(w, /if \(pose\.transport != null\) setTransportModeHere\(pose\.transport\);/, 'a loaded save on horseback');
   assert.match(w, /setTransportModeHere\(TRANSPORT_MODES\.Horse\);\s*\n\s*console\.log\(`\[testroom\] ride out/, 'the Test Room\'s ride out');

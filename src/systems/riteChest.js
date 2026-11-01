@@ -14,16 +14,16 @@ import { applyRarity } from './loot/lootRarity.js';
 import { goldStack } from './inventory.js';
 import { sigilParty } from './sigil/sigil.js';
 import { registerModSaveData } from './modSaveData.js';
-import { DAEDRA_HEART } from '../net/professionLaw.js';   // DAEDRIC-SMELT: the heart's one row (ONE DFU MEMBER, ONE EXPORT)
+import { DAEDRA_HEART } from '../net/professionLaw.js'; // DAEDRIC-SMELT: the heart's one row (ONE DFU MEMBER, ONE EXPORT)
 
 /** Gold a level of the opener's, the low and high of the roll. */
 export const RITE_CHEST_GOLD = Object.freeze([20, 40]);
 /** The rite's reagents (their templates and groups), two to four of them. */
 export const RITE_REAGENTS = Object.freeze([
-  Object.freeze({ templateIndex: 69, group: 'MetalIngredients' }),           // Sulphur
-  Object.freeze({ templateIndex: 64, group: 'MiscellaneousIngredients1' }),  // Ichor
-  Object.freeze({ templateIndex: 39, group: 'CreatureIngredients1' }),       // Ectoplasm
-  Object.freeze({ templateIndex: 45, group: 'CreatureIngredients1' }),       // Lich Dust
+  Object.freeze({ templateIndex: 69, group: 'MetalIngredients' }), // Sulphur
+  Object.freeze({ templateIndex: 64, group: 'MiscellaneousIngredients1' }), // Ichor
+  Object.freeze({ templateIndex: 39, group: 'CreatureIngredients1' }), // Ectoplasm
+  Object.freeze({ templateIndex: 45, group: 'CreatureIngredients1' }), // Lich Dust
 ]);
 export const RITE_REAGENTS_MIN = 2;
 export const RITE_REAGENTS_MAX = 4;
@@ -46,7 +46,10 @@ export function riteChestItems(level, rolls = Math.random) {
   const items = [goldStack(Math.round(lv * (lo + rolls() * (hi - lo))))];
   const n = RITE_REAGENTS_MIN + Math.floor(rolls() * (RITE_REAGENTS_MAX - RITE_REAGENTS_MIN + 1));
   for (let i = 0; i < n; i++) {
-    const r = rolls() < RITE_HEART_CHANCE ? RITE_HEART : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];
+    const r =
+      rolls() < RITE_HEART_CHANCE
+        ? RITE_HEART
+        : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];
     items.push(mintCondition(setItemFields({ group: r.group, templateIndex: r.templateIndex })));
   }
   if (rolls() * RITE_BRAND_IN < 1) items.push(riteBrand(lv, rolls));
@@ -68,11 +71,15 @@ let _day = -1;
 /** Whether this character has opened `day`'s chest. */
 export const riteChestOpened = (day) => _day === day;
 /** This character has opened `day`'s chest. */
-export function markRiteChest(day) { if (Number.isSafeInteger(day)) _day = day; }
+export function markRiteChest(day) {
+  if (Number.isSafeInteger(day)) _day = day;
+}
 registerModSaveData(RITE_CHEST_SAVE_VENDOR, {
   newSaveData: () => ({ day: -1 }),
   getSaveData: () => ({ day: _day }),
-  restoreSaveData: (r) => { _day = Number.isSafeInteger(r?.day) ? r.day : -1; },
+  restoreSaveData: (r) => {
+    _day = Number.isSafeInteger(r?.day) ? r.day : -1;
+  },
 });
 
 // ── AUDIT WB12d (C1, C5): THE RITE'S MEMORY - what this character saw of a day's faithful, in the save beside the chest:
@@ -96,9 +103,20 @@ registerModSaveData(RITE_DAY_SAVE_VENDOR, {
   newSaveData: () => blank(-1),
   getSaveData: () => ({ ..._rite, slain: { ..._rite.slain } }),
   restoreSaveData: (r) => {
-    if (!r || !Number.isSafeInteger(r.d)) { _rite = blank(-1); return; }
+    if (!r || !Number.isSafeInteger(r.d)) {
+      _rite = blank(-1);
+      return;
+    }
     const slain = {};
-    for (const [k, v] of Object.entries(r.slain && typeof r.slain === 'object' ? r.slain : {})) if (/^\d{1,4}$/.test(k) && Number.isSafeInteger(v) && v > 0) slain[k] = Math.min(v, SLAIN_MAX);
-    _rite = { d: r.d, slain, fell: bit(r.fell), struck: bit(r.struck), passed: bit(r.passed), saidBroken: bit(r.saidBroken) };
+    for (const [k, v] of Object.entries(r.slain && typeof r.slain === 'object' ? r.slain : {}))
+      if (/^\d{1,4}$/.test(k) && Number.isSafeInteger(v) && v > 0) slain[k] = Math.min(v, SLAIN_MAX);
+    _rite = {
+      d: r.d,
+      slain,
+      fell: bit(r.fell),
+      struck: bit(r.struck),
+      passed: bit(r.passed),
+      saidBroken: bit(r.saidBroken),
+    };
   },
 });

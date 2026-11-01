@@ -5,7 +5,7 @@
 // THE LAW (bible/11-Multiplayer/Wild-Zone.md section 4b). A leaf the account Worker bundles
 // (server-account/src/wildInsure.js writes a policy, server-account/src/wild.js spends it): one law at both ends.
 //
-//  - WHAT MAY BE INSURED (INSURE-ALL, 2026-10-29, the owner: "make sure all equpiment cost even old ones"): any piece of
+//  - WHAT MAY BE INSURED (INSURE-ALL, 2026-10-29): any piece of
 //    gear - a weapon, armour, a shield, jewellery, clothing - and any piece the ledger follows, that a death in the zone
 //    could take (wildDropLaw.js wildCanLose), carried in the pack or worn. Never a stack, a bound or quest piece, or a
 //    letter of credit: coin, which pays its tenth (LETTERS-TENTH). A policy names its piece by insureKeyOf.
@@ -29,7 +29,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { ledgerKeyOf, valuablePiece, mintItemId } from '../item/itemIds.js';
 import { ITEM_UID_RE, PROVENANCE_RE, itemWorth } from '../item/itemLaw.js';
-import { enchantmentRowCost, makerLaid, GOLD_PER_ENCHANTMENT_POINT } from '../enchanting.js';   // INSURE-ALL: the maker's rows, at their gold
+import { enchantmentRowCost, makerLaid, GOLD_PER_ENCHANTMENT_POINT } from '../enchanting.js'; // INSURE-ALL: the maker's rows, at their gold
 import { TEMPLATES } from '../item/itemKinds.js';
 import { wildCanLose } from './wildDropLaw.js';
 
@@ -45,7 +45,8 @@ export const WILD_INSURE_MAX = 32;
 export const WILD_INSURE_ASK_MAX = 8;
 
 /** A policy's key as the wire carries it: a piece's insurance key (an id, or a crafted piece's provenance). */
-export const wildPolicyKeyOk = (/** @type {unknown} */ k) => typeof k === 'string' && (ITEM_UID_RE.test(k) || PROVENANCE_RE.test(k));
+export const wildPolicyKeyOk = (/** @type {unknown} */ k) =>
+  typeof k === 'string' && (ITEM_UID_RE.test(k) || PROVENANCE_RE.test(k));
 
 /** INSURE-ALL: the groups of gear - every piece a slot takes, by the group the record says (headless: no equip table). */
 export const WILD_GEAR_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);
@@ -55,7 +56,8 @@ export const WILD_GEAR_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 
  *  the asker's to say (the pack or worn: wildInsureTargets). @param {any} item */
 export function wildInsurable(item) {
   if (!item || typeof item !== 'object' || item.templateIndex === TEMPLATES.Letter_of_credit) return false;
-  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;
+  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1))
+    return false;
   return (valuablePiece(item) || WILD_GEAR_GROUPS.includes(item.group)) && wildCanLose(item);
 }
 
@@ -86,10 +88,12 @@ export function wildMakerGold(item) {
 }
 
 /** A policy's premium on `item`: a fifth of its worth and its maker's gold, rounded up, at least one gold. @param {any} item */
-export const wildPremium = (item) => Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));
+export const wildPremium = (item) =>
+  Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));
 
 /** Whether a policy written at `at` (epoch seconds) is in force for a fall signed at `fallAt`. */
-export const wildPolicyInForce = (/** @type {number} */ at, /** @type {number} */ fallAt) => Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at + WILD_INSURE_SETTLE_S <= fallAt;
+export const wildPolicyInForce = (/** @type {number} */ at, /** @type {number} */ fallAt) =>
+  Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at + WILD_INSURE_SETTLE_S <= fallAt;
 
 /** THE PREDICATE A DEATH KEEPS BY (wildDropLaw.js takeWildDeath's `insured`): a piece whose insurance key is one of
  *  `keys`. INSURE-ALL: `among` the fallen's pieces - a key two of them carry keeps neither, so an id copied onto a second
@@ -105,7 +109,12 @@ export function wildInsuredBy(keys, among = null) {
     seen.add(k);
   }
   // the rule rides the predicate: wildDropLaw.js names what it saved by it, and cannot import this leaf (its cycle)
-  const by = set.size ? (/** @type {any} */ item) => { const k = insureKeyOf(item); return k != null && set.has(k); } : () => false;
+  const by = set.size
+    ? (/** @type {any} */ item) => {
+        const k = insureKeyOf(item);
+        return k != null && set.has(k);
+      }
+    : () => false;
   return Object.assign(by, { keyOf: insureKeyOf });
 }
 
@@ -119,6 +128,10 @@ export const wildInsureTargets = (entity) => (Array.isArray(entity?.items) ? ent
  *  @param {any} save @param {string} key */
 export function wildPolicyHeld(save, key) {
   let text = '';
-  try { text = JSON.stringify(save) ?? ''; } catch { return true; }
+  try {
+    text = JSON.stringify(save) ?? '';
+  } catch {
+    return true;
+  }
   return text.includes(JSON.stringify(key));
 }

@@ -1,4 +1,4 @@
-// STAFF-EVENT (2026-10-24, mob: "lets start making an event tool for staff to use"; bible/11-Multiplayer/Staff-Events.md) -
+// STAFF-EVENT (2026-10-24; bible/11-Multiplayer/Staff-Events.md) -
 // THE LAW (net/staffEvent/staffEventLaw.js): an event's shape and bounds, the words each way, the cell's ledger (the cap,
 // the meter's boss once, a hand call one more, the boss's moments from the one who stands it, done), the signed order
 // (identityToken.js 'sevent'), and the place picker's game half (net/staffPlaces.js).
@@ -93,7 +93,7 @@ test('STAFF-EVENT: THE LEDGER - kills credited the most each account said, under
   assert.deepEqual(foldStaffWord(led, e2, 'acctC', 'C', { n: 5 }, t0), { credited: 0, known: false, boss: false }, 'an ended ledger hears nothing');
 });
 
-test('BOSS-HP and BOSS-AGAIN (mob 2026-10-25: "need be able to eneter a exact amount of healt for mini bosses", "boss seems to not spawn every time"): an exact health carried; the meter calls a boss each time it fills, one at a time; a hand call between moves the next call on', () => {
+test('BOSS-HP and BOSS-AGAIN: an exact health carried; the meter calls a boss each time it fills, one at a time; a hand call between moves the next call on', () => {
   assert.equal(validStaffEvent({ ...EV, hp: 12345 }).hp, 12345, 'the exact health staff typed');
   assert.equal(validStaffEvent({ ...EV, hp: undefined }).hp, 0, 'an order before it reads none - the times its kind\'s');
   const e = validStaffEvent({ ...EV, n: 100, m: 10, eb: 0 });

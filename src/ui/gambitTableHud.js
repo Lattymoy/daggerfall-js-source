@@ -24,8 +24,27 @@
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
 import {
-  KG_COLS, KG_ROWS, KG_POINT_BUDGET, KG_MAX_UNITS, KG_ACTIONS_PER_TURN, KG_POTION_HEAL, KG_ROSTER, KG_TILE, warningsArmAt,
-  rosterUnit, armyCost, canRecruit, reachable, foesInRange, pieceById, pieceAt, hazardAt, tileAt, distance, rangeOf, hasLineOfSight,
+  KG_COLS,
+  KG_ROWS,
+  KG_POINT_BUDGET,
+  KG_MAX_UNITS,
+  KG_ACTIONS_PER_TURN,
+  KG_POTION_HEAL,
+  KG_ROSTER,
+  KG_TILE,
+  warningsArmAt,
+  rosterUnit,
+  armyCost,
+  canRecruit,
+  reachable,
+  foesInRange,
+  pieceById,
+  pieceAt,
+  hazardAt,
+  tileAt,
+  distance,
+  rangeOf,
+  hasLineOfSight,
 } from '../net/kingsGambit.js';
 import { GAMBIT_STAKE_MULTS, GAMBIT_CROWNS, crownIndex, stakeOf } from '../systems/gambit/gambitTableSession.js';
 import { FOE_CARDS } from '../systems/card/cardSources.js';
@@ -38,13 +57,72 @@ import { PIXELIFY_FIVE_FACE } from './pixelifyFive.js';
 import { noteFirstUse } from '../systems/tutorials.js';
 import { DPAD_CODES } from './plus/plusPad.js';
 import {
-  unitName, kingName, pieceName, regularLines, stakeLabel, stakeWhat, stakePurse, stakeNight,
-  kingLine, unitLine, unitCost, unitChips, armyPointsLeft, unitsHeld, armyKingLine, actionsLeft, refusalWords, cellWords,
-  pieceInfoLines, gambitTitle, GAMBIT_HEADS, GAMBIT_PRESS, pressStart, pressForfeit, pressStandCost, pressDrink, pressStrike,
-  potionsChip, fallenChip, healthOf, nextStep, resultHead, kingFalls, resultGold, nightSpent, gambitWhat, gambitGuide,
-  gambitWords, layoutName, GAMBIT_ONLINE_PRESS, onlineHead, onlineSeat, clockChip, onlineStep, onlineEnd, watchWin,
-  pressReadyStake, stakeHead, stakePick, stakeOnline, stakeChoose, boardHead, boardRow, boardYou, boardChampion, boardNeeds,
-  boardReading, boardFailed, armyFull, actionsLeftOf, watchGold, armyEmpty, armySpent, stakeWhileReady, stakingWait, boardHide,
+  unitName,
+  kingName,
+  pieceName,
+  regularLines,
+  stakeLabel,
+  stakeWhat,
+  stakePurse,
+  stakeNight,
+  kingLine,
+  unitLine,
+  unitCost,
+  unitChips,
+  armyPointsLeft,
+  unitsHeld,
+  armyKingLine,
+  actionsLeft,
+  refusalWords,
+  cellWords,
+  pieceInfoLines,
+  gambitTitle,
+  GAMBIT_HEADS,
+  GAMBIT_PRESS,
+  pressStart,
+  pressForfeit,
+  pressStandCost,
+  pressDrink,
+  pressStrike,
+  potionsChip,
+  fallenChip,
+  healthOf,
+  nextStep,
+  resultHead,
+  kingFalls,
+  resultGold,
+  nightSpent,
+  gambitWhat,
+  gambitGuide,
+  gambitWords,
+  layoutName,
+  GAMBIT_ONLINE_PRESS,
+  onlineHead,
+  onlineSeat,
+  clockChip,
+  onlineStep,
+  onlineEnd,
+  watchWin,
+  pressReadyStake,
+  stakeHead,
+  stakePick,
+  stakeOnline,
+  stakeChoose,
+  boardHead,
+  boardRow,
+  boardYou,
+  boardChampion,
+  boardNeeds,
+  boardReading,
+  boardFailed,
+  armyFull,
+  actionsLeftOf,
+  watchGold,
+  armyEmpty,
+  armySpent,
+  stakeWhileReady,
+  stakingWait,
+  boardHide,
 } from './gambitTableWords.js';
 
 /** The card a unit stands as - its creature's or its calling's (systems/card/cardSources.js FOE_CARDS: every unit of the
@@ -52,13 +130,19 @@ import {
 export const unitCardId = (id) => FOE_CARDS[id] ?? null;
 
 /** A tier's place on its four-step mark (a picture before a word - MENU-ORDER law 1). */
-export const tierStep = (/** @type {string} */ key) => Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key) + 1);
+export const tierStep = (/** @type {string} */ key) =>
+  Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key) + 1);
 
 /** THE GRID'S ORDER (10.2): the law's roster by cost, a cost's ties by the names the player reads (ordinal, as the mod
  *  compared them), then by id - the law keeps DFU's English order for every client and the relay. */
 export function gridOrder() {
   const name = new Map(KG_ROSTER.map((u) => [u.id, unitName(u.id)]));
-  return KG_ROSTER.slice().sort((a, b) => a.cost - b.cost || (name.get(a.id) < name.get(b.id) ? -1 : name.get(a.id) > name.get(b.id) ? 1 : 0) || a.id - b.id);
+  return KG_ROSTER.slice().sort(
+    (a, b) =>
+      a.cost - b.cost ||
+      (name.get(a.id) < name.get(b.id) ? -1 : name.get(a.id) > name.get(b.id) ? 1 : 0) ||
+      a.id - b.id,
+  );
 }
 
 /** A PIECE'S RANGE (10.7, 14.8 - an outline alone on the cloth): the floor cells its blow or its shot reaches from where
@@ -68,17 +152,22 @@ export function rangeCells(st, p) {
   /** @type {number[][]} */ const out = [];
   if (!st || !p) return out;
   const reach = rangeOf(p);
-  for (let r = 0; r < KG_ROWS; r++) for (let c = 0; c < KG_COLS; c++) {
-    const d = distance(p.col, p.row, c, r);
-    if (d < 1 || d > reach || tileAt(st.tiles, c, r) !== KG_TILE.floor) continue;
-    if (p.ranged && d > 1 && !hasLineOfSight(st.tiles, p.col, p.row, c, r)) continue;
-    out.push([c, r]);
-  }
+  for (let r = 0; r < KG_ROWS; r++)
+    for (let c = 0; c < KG_COLS; c++) {
+      const d = distance(p.col, p.row, c, r);
+      if (d < 1 || d > reach || tileAt(st.tiles, c, r) !== KG_TILE.floor) continue;
+      if (p.ranged && d > 1 && !hasLineOfSight(st.tiles, p.col, p.row, c, r)) continue;
+      out.push([c, r]);
+    }
   return out;
 }
 
 /** The cells a stake's pick, the night and the purse allow: each pick lawful or the reason it is not. */
-export function stakePicks(/** @type {{tier: any, nightLeft: number, name: string}} */ r, /** @type {number} */ purse, /** @type {number|null} */ chosen) {
+export function stakePicks(
+  /** @type {{tier: any, nightLeft: number, name: string}} */ r,
+  /** @type {number} */ purse,
+  /** @type {number|null} */ chosen,
+) {
   return GAMBIT_STAKE_MULTS.map((m) => {
     const gold = stakeOf(r.tier, m);
     const why = gold > purse ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;
@@ -112,60 +201,112 @@ export function stakePicks(/** @type {{tier: any, nightLeft: number, name: strin
 export function gambitHudModel(p) {
   const phase = p.phase;
   const regs = (p.regulars ?? []).map((r, i) => ({ ...r, i }));
-  const chosen = p.regular != null ? regs[p.regular] ?? null : null;
+  const chosen = p.regular != null ? (regs[p.regular] ?? null) : null;
   const friendly = !!p.friendly;
   const forFun = friendly || !!chosen?.forFun;
   const short = !!chosen && !forFun && p.purse < chosen.tier.stake;
   const picks = chosen && !forFun ? stakePicks(chosen, p.purse, p.stakeMult) : null;
-  const stake = forFun || !chosen ? 0 : picks?.find((x) => x.chosen)?.gold ?? 0;
+  const stake = forFun || !chosen ? 0 : (picks?.find((x) => x.chosen)?.gold ?? 0);
   const game = p.game ?? null;
   const st = game?.state ?? null;
   const out = {
-    phase, what: gambitWhat(), title: '', next: '', message: '', tone: '',
+    phase,
+    what: gambitWhat(),
+    title: '',
+    next: '',
+    message: '',
+    tone: '',
     // AUDIT KG II D9: at the board online, the guide's first steps and the words are another player's and the table's gold
-    guide: { open: !!p.guideOpen, head: GAMBIT_HEADS.guide, paras: gambitGuide(p.online ? { gold: !!p.online.gold } : null) },
+    guide: {
+      open: !!p.guideOpen,
+      head: GAMBIT_HEADS.guide,
+      paras: gambitGuide(p.online ? { gold: !!p.online.gold } : null),
+    },
     words: { open: !!p.wordsOpen, head: GAMBIT_HEADS.words, items: gambitWords(!!p.online) },
-    /** @type {any} */ setup: null, /** @type {any} */ army: null, /** @type {any} */ battle: null, /** @type {any} */ result: null,
-    /** @type {any[]} */ actions: [], log: (p.log ?? []).slice(), touch: !!p.touch, more: !!p.more,
+    /** @type {any} */ setup: null,
+    /** @type {any} */ army: null,
+    /** @type {any} */ battle: null,
+    /** @type {any} */ result: null,
+    /** @type {any[]} */ actions: [],
+    log: (p.log ?? []).slice(),
+    touch: !!p.touch,
+    more: !!p.more,
   };
-  let next = 'chooseRegular', nextArgs = {};
-  /** @type {string|null} */ let line = null;   // KG5: an online next step, said as it is
+  let next = 'chooseRegular',
+    nextArgs = {};
+  /** @type {string|null} */ let line = null; // KG5: an online next step, said as it is
   const online = p.online ?? null;
   if (phase === 'setup' && online) {
     out.title = gambitTitle({ phase });
     out.setup = {
       heads: { regulars: GAMBIT_HEADS.regulars, stake: GAMBIT_HEADS.stake, crown: GAMBIT_HEADS.crown },
-      online: { head: onlineHead(), seats: online.seats.map((/** @type {any} */ x) => ({ line: onlineSeat(x), mine: !!x?.mine })) },
-      regulars: [], stakes: null, stakeLine: null,
+      online: {
+        head: onlineHead(),
+        seats: online.seats.map((/** @type {any} */ x) => ({ line: onlineSeat(x), mine: !!x?.mine })),
+      },
+      regulars: [],
+      stakes: null,
+      stakeLine: null,
       crowns: GAMBIT_CROWNS.map((key, i) => ({ key, i, name: kingName(key), chosen: crownIndex(p.crown) === i })),
       kingLine: kingLine(),
     };
     line = onlineStep(online.step, online.stepArgs);
-    out.actions.push({ id: 'sit', label: GAMBIT_ONLINE_PRESS.sit, enabled: !!online.canSit, kind: 'primary', why: online.canSit ? null : onlineStep('full') });
-    if (online.canBoard) out.actions.push({ id: 'board', label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board, enabled: true });   // KG6; AUDIT KG II D18
+    out.actions.push({
+      id: 'sit',
+      label: GAMBIT_ONLINE_PRESS.sit,
+      enabled: !!online.canSit,
+      kind: 'primary',
+      why: online.canSit ? null : onlineStep('full'),
+    });
+    if (online.canBoard)
+      out.actions.push({ id: 'board', label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board, enabled: true }); // KG6; AUDIT KG II D18
     out.actions.push({ id: 'regulars', label: GAMBIT_ONLINE_PRESS.regulars, enabled: true });
-    out.actions.push({ id: 'holdem', label: GAMBIT_PRESS.holdem, enabled: true }, { id: 'iliac', label: GAMBIT_PRESS.iliac, enabled: true });
+    out.actions.push(
+      { id: 'holdem', label: GAMBIT_PRESS.holdem, enabled: true },
+      { id: 'iliac', label: GAMBIT_PRESS.iliac, enabled: true },
+    );
     out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet' });
   } else if (phase === 'setup') {
     out.title = gambitTitle({ phase });
     out.setup = {
       heads: { regulars: GAMBIT_HEADS.regulars, stake: GAMBIT_HEADS.stake, crown: GAMBIT_HEADS.crown },
-      regulars: regs.map((r) => ({ i: r.i, name: r.name, tierKey: r.tier.key, step: tierStep(r.tier.key), chosen: chosen?.i === r.i, ...regularLines(r, friendly) })),
-      stakes: picks, stakeLine: chosen && !forFun && stake ? stakeWhat(stake, chosen.name) : null,
+      regulars: regs.map((r) => ({
+        i: r.i,
+        name: r.name,
+        tierKey: r.tier.key,
+        step: tierStep(r.tier.key),
+        chosen: chosen?.i === r.i,
+        ...regularLines(r, friendly),
+      })),
+      stakes: picks,
+      stakeLine: chosen && !forFun && stake ? stakeWhat(stake, chosen.name) : null,
       crowns: GAMBIT_CROWNS.map((key, i) => ({ key, i, name: kingName(key), chosen: crownIndex(p.crown) === i })),
       kingLine: kingLine(),
     };
     if (!regs.length) next = 'noRegular';
     else if (!chosen) next = 'chooseRegular';
     else if (friendly) next = 'online';
-    else if (chosen.forFun) { next = 'forFun'; nextArgs = { name: chosen.name }; }
-    else if (short) { next = 'short'; nextArgs = { name: chosen.name, stake: chosen.tier.stake }; }
-    else if (!stake) next = 'chooseStake';
+    else if (chosen.forFun) {
+      next = 'forFun';
+      nextArgs = { name: chosen.name };
+    } else if (short) {
+      next = 'short';
+      nextArgs = { name: chosen.name, stake: chosen.tier.stake };
+    } else if (!stake) next = 'chooseStake';
     else next = 'chooseKing';
     const ready = !!chosen && (forFun || (!short && stake > 0));
-    out.actions.push({ id: 'next', label: GAMBIT_PRESS.next, enabled: ready, kind: 'primary', why: ready ? null : nextStep(next, nextArgs) });
+    out.actions.push({
+      id: 'next',
+      label: GAMBIT_PRESS.next,
+      enabled: ready,
+      kind: 'primary',
+      why: ready ? null : nextStep(next, nextArgs),
+    });
     if (p.canOnline) out.actions.push({ id: 'online', label: GAMBIT_ONLINE_PRESS.online, enabled: true });
-    out.actions.push({ id: 'holdem', label: GAMBIT_PRESS.holdem, enabled: true }, { id: 'iliac', label: GAMBIT_PRESS.iliac, enabled: true });
+    out.actions.push(
+      { id: 'holdem', label: GAMBIT_PRESS.holdem, enabled: true },
+      { id: 'iliac', label: GAMBIT_PRESS.iliac, enabled: true },
+    );
     out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet' });
   } else if (phase === 'army') {
     const army = (p.army ?? []).slice();
@@ -175,75 +316,196 @@ export function gambitHudModel(p) {
     out.army = {
       heads: { unit: GAMBIT_HEADS.unit, grid: GAMBIT_HEADS.grid, army: GAMBIT_HEADS.army },
       chips: [armyPointsLeft(left), unitsHeld(army.length)],
-      unit: pressed ? { id: pressed.id, card: unitCardId(pressed.id), name: unitName(pressed.id), line: unitLine(pressed), cost: unitCost(pressed.cost), said: p.said ?? null } : null,
+      unit: pressed
+        ? {
+            id: pressed.id,
+            card: unitCardId(pressed.id),
+            name: unitName(pressed.id),
+            line: unitLine(pressed),
+            cost: unitCost(pressed.cost),
+            said: p.said ?? null,
+          }
+        : null,
       grid: gridOrder().map((u) => {
         const ok = canRecruit(army, u.id);
-        return { id: u.id, card: unitCardId(u.id), name: unitName(u.id), chips: unitChips(u), ok, dim: !ok, chosen: p.pressed === u.id };
+        return {
+          id: u.id,
+          card: unitCardId(u.id),
+          name: unitName(u.id),
+          chips: unitChips(u),
+          ok,
+          dim: !ok,
+          chosen: p.pressed === u.id,
+        };
       }),
-      rows: army.map((id, at) => ({ at, id, name: unitName(id), cost: unitCost(rosterUnit(id)?.cost ?? 0) }))
+      rows: army
+        .map((id, at) => ({ at, id, name: unitName(id), cost: unitCost(rosterUnit(id)?.cost ?? 0) }))
         .sort((a, b) => (rosterUnit(b.id)?.cost ?? 0) - (rosterUnit(a.id)?.cost ?? 0) || a.at - b.at),
       kingLine: armyKingLine(p.crown),
       remove: GAMBIT_PRESS.remove,
     };
     next = army.length ? 'start' : 'addUnit';
     // AUDIT KG II D17: a press that cannot act says why
-    const fillWhy = army.length >= KG_MAX_UNITS ? armyFull() : left < Math.min(...KG_ROSTER.map((u) => u.cost)) ? armySpent() : null;
+    const fillWhy =
+      army.length >= KG_MAX_UNITS ? armyFull() : left < Math.min(...KG_ROSTER.map((u) => u.cost)) ? armySpent() : null;
     out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: fillWhy });
-    out.actions.push({ id: 'clear', label: GAMBIT_PRESS.clear, enabled: army.length > 0, why: army.length ? null : armyEmpty() });
+    out.actions.push({
+      id: 'clear',
+      label: GAMBIT_PRESS.clear,
+      enabled: army.length > 0,
+      why: army.length ? null : armyEmpty(),
+    });
     if (online) {
       // KG5: Ready says the army to the relay; a ready army is taken back by Not ready before it changes
-      if (army.length || online.step === 'theirReady') line = onlineStep(online.step, online.stepArgs);   // the other ready: said first
+      if (army.length || online.step === 'theirReady') line = onlineStep(online.step, online.stepArgs); // the other ready: said first
       // KG6: at the gold table the stake is picked here and put down with Ready - what it wins and loses said first
-      const pick = online.gold ? (online.stakes ?? []).find((/** @type {any} */ x) => x.chosen) ?? null : null;
+      const pick = online.gold ? ((online.stakes ?? []).find((/** @type {any} */ x) => x.chosen) ?? null) : null;
       if (online.gold) {
-        out.army.stakes = { head: stakeHead(), picks: (online.stakes ?? []).map((/** @type {any} */ x) => ({ n: x.n, label: stakePick(x.n), enabled: !!x.enabled, chosen: !!x.chosen, why: x.why ?? (online.ready ? stakeWhileReady() : null) })), line: pick ? stakeOnline(pick.n) : null };   // AUDIT KG II D17
+        out.army.stakes = {
+          head: stakeHead(),
+          picks: (online.stakes ?? []).map((/** @type {any} */ x) => ({
+            n: x.n,
+            label: stakePick(x.n),
+            enabled: !!x.enabled,
+            chosen: !!x.chosen,
+            why: x.why ?? (online.ready ? stakeWhileReady() : null),
+          })),
+          line: pick ? stakeOnline(pick.n) : null,
+        }; // AUDIT KG II D17
         if (army.length && !pick && !online.ready) line = stakeChoose();
       }
       out.actions.push({ id: 'leave', label: GAMBIT_ONLINE_PRESS.leave, enabled: true });
       // AUDIT KG II B8: a pick the other seat's stake has closed says why, and Ready waits on another
-      const readyWhy = !army.length ? refusalWords('empty') : online.gold && !pick ? stakeChoose() : online.gold && !pick.enabled ? pick.why : null;
-      out.actions.push(online.ready
-        ? { id: 'unready', label: GAMBIT_ONLINE_PRESS.unready, enabled: true, kind: 'primary' }
-        : online.staking ? { id: 'ready', label: GAMBIT_ONLINE_PRESS.staking, enabled: false, kind: 'primary', why: stakingWait() }   // AUDIT KG II D17
-        : { id: 'ready', label: pick ? pressReadyStake(pick.n) : GAMBIT_ONLINE_PRESS.ready, enabled: !readyWhy, kind: 'primary', why: readyWhy });
+      const readyWhy = !army.length
+        ? refusalWords('empty')
+        : online.gold && !pick
+          ? stakeChoose()
+          : online.gold && !pick.enabled
+            ? pick.why
+            : null;
+      out.actions.push(
+        online.ready
+          ? { id: 'unready', label: GAMBIT_ONLINE_PRESS.unready, enabled: true, kind: 'primary' }
+          : online.staking
+            ? { id: 'ready', label: GAMBIT_ONLINE_PRESS.staking, enabled: false, kind: 'primary', why: stakingWait() } // AUDIT KG II D17
+            : {
+                id: 'ready',
+                label: pick ? pressReadyStake(pick.n) : GAMBIT_ONLINE_PRESS.ready,
+                enabled: !readyWhy,
+                kind: 'primary',
+                why: readyWhy,
+              },
+      );
     } else {
       out.actions.push({ id: 'back', label: GAMBIT_PRESS.back, enabled: true });
-      out.actions.push({ id: 'start', label: stake ? pressStart(stake) : GAMBIT_PRESS.startFun, enabled: army.length > 0, kind: 'primary', why: army.length ? null : refusalWords('empty') });
+      out.actions.push({
+        id: 'start',
+        label: stake ? pressStart(stake) : GAMBIT_PRESS.startFun,
+        enabled: army.length > 0,
+        kind: 'primary',
+        why: army.length ? null : refusalWords('empty'),
+      });
     }
     out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet' });
   } else if (st) {
-    const watching = !!online?.watching;   // KG5: a game watched - the host's side read as side 0, no press of the game's
+    const watching = !!online?.watching; // KG5: a game watched - the host's side read as side 0, no press of the game's
     // AUDIT KG II C6: a game decided (a forfeit, a game that did not stand) is nobody's turn in the beat before its result
     const decided = !!game.decided || !!game.over;
-    const crowns = game.crowns, name = game.name, mine = !watching && st.turn === 0 && !st.over && !decided;
-    const names = (id) => { const pc = pieceById(st, id); return pc ? pieceName(pc, crowns) : '?'; };
+    const crowns = game.crowns,
+      name = game.name,
+      mine = !watching && st.turn === 0 && !st.over && !decided;
+    const names = (id) => {
+      const pc = pieceById(st, id);
+      return pc ? pieceName(pc, crowns) : '?';
+    };
     const sel = mine && p.selected != null ? pieceById(st, p.selected) : null;
     const lit = sel && sel.side === 0 ? reachable(st, sel) : [];
     const targets = sel && sel.side === 0 ? foesInRange(st, sel).map((x) => x.id) : [];
     // a press on any piece shows its range, either side's (the mod's hover - 10.7): the piece shown, else the chosen one
-    const shown = p.info?.piece != null ? pieceById(st, p.info.piece) : Array.isArray(p.info?.cell) ? pieceAt(st, p.info.cell[0], p.info.cell[1]) : null;
+    const shown =
+      p.info?.piece != null
+        ? pieceById(st, p.info.piece)
+        : Array.isArray(p.info?.cell)
+          ? pieceAt(st, p.info.cell[0], p.info.cell[1])
+          : null;
     if (phase === 'battle') {
       // AUDIT KG II D4: a watcher's game is neither side's own - whose turn it is, by name
-      out.title = gambitTitle({ phase: decided ? 'over' : phase, round: st.round, mine: !watching && st.turn === 0, name: watching ? online.names?.[st.turn] ?? '' : name });
+      out.title = gambitTitle({
+        phase: decided ? 'over' : phase,
+        round: st.round,
+        mine: !watching && st.turn === 0,
+        name: watching ? (online.names?.[st.turn] ?? '') : name,
+      });
       const fallen = [0, 1].map((s) => (game.dealt?.[s] ?? 0) - st.pieces.filter((x) => x.side === s).length);
       out.battle = {
         // AUDIT KG II D3: the phone's strip holds the clock and the actions alone, the clock first - the rest (`more`) in
         // More's sheet; D4: a watcher's actions are the side whose turn it is, by name
         chips: [
-          ...(online?.clock != null ? [{ key: 'clock', text: clockChip(online.clock) }] : []),   // KG5: the relay's turn clock
+          ...(online?.clock != null ? [{ key: 'clock', text: clockChip(online.clock) }] : []), // KG5: the relay's turn clock
           watching
-            ? { key: 'actions', pips: st.actions, of: KG_ACTIONS_PER_TURN, text: actionsLeftOf(online.names?.[st.turn] ?? '', st.actions) }
-            : { key: 'actions', pips: st.turn === 0 ? st.actions : 0, of: KG_ACTIONS_PER_TURN, text: actionsLeft(st.turn === 0 ? st.actions : 0) },
+            ? {
+                key: 'actions',
+                pips: st.actions,
+                of: KG_ACTIONS_PER_TURN,
+                text: actionsLeftOf(online.names?.[st.turn] ?? '', st.actions),
+              }
+            : {
+                key: 'actions',
+                pips: st.turn === 0 ? st.actions : 0,
+                of: KG_ACTIONS_PER_TURN,
+                text: actionsLeft(st.turn === 0 ? st.actions : 0),
+              },
           // a watcher reads both sides by their players' names
-          { key: 'potionsMine', more: true, text: watching ? potionsChip(false, st.potions[0], online.names?.[0] ?? '') : potionsChip(true, st.potions[0], name) },
-          { key: 'potionsTheirs', more: true, text: potionsChip(false, st.potions[1], watching ? online.names?.[1] ?? '' : name) },
-          { key: 'fallenMine', more: true, text: watching ? fallenChip(false, Math.max(0, fallen[0]), online.names?.[0] ?? '') : fallenChip(true, Math.max(0, fallen[0]), name) },
-          { key: 'fallenTheirs', more: true, text: fallenChip(false, Math.max(0, fallen[1]), watching ? online.names?.[1] ?? '' : name) },
+          {
+            key: 'potionsMine',
+            more: true,
+            text: watching
+              ? potionsChip(false, st.potions[0], online.names?.[0] ?? '')
+              : potionsChip(true, st.potions[0], name),
+          },
+          {
+            key: 'potionsTheirs',
+            more: true,
+            text: potionsChip(false, st.potions[1], watching ? (online.names?.[1] ?? '') : name),
+          },
+          {
+            key: 'fallenMine',
+            more: true,
+            text: watching
+              ? fallenChip(false, Math.max(0, fallen[0]), online.names?.[0] ?? '')
+              : fallenChip(true, Math.max(0, fallen[0]), name),
+          },
+          {
+            key: 'fallenTheirs',
+            more: true,
+            text: fallenChip(false, Math.max(0, fallen[1]), watching ? (online.names?.[1] ?? '') : name),
+          },
         ],
         layout: layoutName(st.layout),
-        info: infoBox(st, p.info, crowns, name, watching ? online.names ?? null : null),   // AUDIT KG II D4: a watcher's by name
-        armies: { open: !!p.armiesOpen, head: GAMBIT_HEADS.armies, sides: [0, 1].map((s) => st.pieces.filter((x) => x.side === s).map((x) => ({ id: x.id, name: names(x.id), hp: x.hp, max: x.maxHp, health: healthOf(x.hp, x.maxHp), king: x.king, selected: x.id === p.selected, mine: s === 0 }))) },
-        lit, targets, range: rangeCells(st, shown ?? sel), selected: sel?.id ?? null, staged: p.staged ?? null,
+        info: infoBox(st, p.info, crowns, name, watching ? (online.names ?? null) : null), // AUDIT KG II D4: a watcher's by name
+        armies: {
+          open: !!p.armiesOpen,
+          head: GAMBIT_HEADS.armies,
+          sides: [0, 1].map((s) =>
+            st.pieces
+              .filter((x) => x.side === s)
+              .map((x) => ({
+                id: x.id,
+                name: names(x.id),
+                hp: x.hp,
+                max: x.maxHp,
+                health: healthOf(x.hp, x.maxHp),
+                king: x.king,
+                selected: x.id === p.selected,
+                mine: s === 0,
+              })),
+          ),
+        },
+        lit,
+        targets,
+        range: rangeCells(st, shown ?? sel),
+        selected: sel?.id ?? null,
+        staged: p.staged ?? null,
       };
       if (!mine) next = st.ending ? (st.turn === 0 ? 'ending' : 'theirTurn') : 'theirTurn';
       else if (sel) next = 'piece';
@@ -257,52 +519,114 @@ export function gambitHudModel(p) {
         line = onlineStep('watch', { a: online.names?.[0] ?? '', b: online.names?.[1] ?? '' });
         out.actions.push({ id: 'regulars', label: GAMBIT_ONLINE_PRESS.regulars, enabled: true, strip: true });
         out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });
-        out.actions.push({ id: 'more', label: GAMBIT_PRESS.more, enabled: true, kind: 'quiet', strip: true, phone: true });
+        out.actions.push({
+          id: 'more',
+          label: GAMBIT_PRESS.more,
+          enabled: true,
+          kind: 'quiet',
+          strip: true,
+          phone: true,
+        });
       }
       const staked = game.stake > 0;
       // THE STRIP (14.7): on a phone the battle's presses are the staged one and Cancel, else Drink, End turn and More -
       // `strip` marks them; Forfeit and Stand up wait in More's sheet
-      if (watching) { /* the watcher's two presses, above */ } else if (p.staged && mine) {
+      if (watching) {
+        /* the watcher's two presses, above */
+      } else if (p.staged && mine) {
         const s = p.staged;
         const target = s.kind === 'attack' ? pieceById(st, s.target) : null;
-        out.actions.push(s.kind === 'attack' ? { id: 'strike', label: pressStrike(target ? names(target.id) : '?'), enabled: !!target, kind: 'primary', strip: true } : { id: 'move', label: GAMBIT_PRESS.moveHere, enabled: true, kind: 'primary', strip: true });
+        out.actions.push(
+          s.kind === 'attack'
+            ? {
+                id: 'strike',
+                label: pressStrike(target ? names(target.id) : '?'),
+                enabled: !!target,
+                kind: 'primary',
+                strip: true,
+              }
+            : { id: 'move', label: GAMBIT_PRESS.moveHere, enabled: true, kind: 'primary', strip: true },
+        );
         out.actions.push({ id: 'cancel', label: GAMBIT_PRESS.cancel, enabled: true, strip: true });
       } else {
         if (sel) {
           const healed = Math.min(KG_POTION_HEAL, sel.maxHp - sel.hp);
-          const why = sel.hp >= sel.maxHp ? refusalWords('full', { piece: names(sel.id) }) : st.potions[0] <= 0 ? refusalWords('potions') : null;
+          const why =
+            sel.hp >= sel.maxHp
+              ? refusalWords('full', { piece: names(sel.id) })
+              : st.potions[0] <= 0
+                ? refusalWords('potions')
+                : null;
           out.actions.push({ id: 'drink', label: pressDrink(names(sel.id), healed), enabled: !why, why, strip: true });
-          if (p.touch) out.actions.push({ id: 'cancel', label: GAMBIT_PRESS.cancel, enabled: true, strip: true });   // a finger has no Escape
+          if (p.touch) out.actions.push({ id: 'cancel', label: GAMBIT_PRESS.cancel, enabled: true, strip: true }); // a finger has no Escape
         }
-        out.actions.push({ id: 'end', label: GAMBIT_PRESS.endTurn, enabled: mine && !st.ending, kind: 'primary', why: mine ? null : st.turn === 0 && st.ending ? refusalWords('ending') : refusalWords('turn'), strip: true });
+        out.actions.push({
+          id: 'end',
+          label: GAMBIT_PRESS.endTurn,
+          enabled: mine && !st.ending,
+          kind: 'primary',
+          why: mine ? null : st.turn === 0 && st.ending ? refusalWords('ending') : refusalWords('turn'),
+          strip: true,
+        });
       }
       if (!watching) {
-        out.actions.push({ id: 'forfeit', label: p.armed === 'forfeit' ? GAMBIT_PRESS.armed : staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun, enabled: !decided, kind: 'warn', armed: p.armed === 'forfeit' });
-        out.actions.push({ id: 'stand', label: p.armed === 'stand' ? GAMBIT_PRESS.armed : staked ? pressStandCost(game.stake) : GAMBIT_PRESS.stand, enabled: true, kind: 'warn', armed: p.armed === 'stand' });
-        out.actions.push({ id: 'more', label: GAMBIT_PRESS.more, enabled: true, kind: 'quiet', strip: true, phone: true });   // the phone's alone - its sheet's door
+        out.actions.push({
+          id: 'forfeit',
+          label:
+            p.armed === 'forfeit' ? GAMBIT_PRESS.armed : staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun,
+          enabled: !decided,
+          kind: 'warn',
+          armed: p.armed === 'forfeit',
+        });
+        out.actions.push({
+          id: 'stand',
+          label: p.armed === 'stand' ? GAMBIT_PRESS.armed : staked ? pressStandCost(game.stake) : GAMBIT_PRESS.stand,
+          enabled: true,
+          kind: 'warn',
+          armed: p.armed === 'stand',
+        });
+        out.actions.push({
+          id: 'more',
+          label: GAMBIT_PRESS.more,
+          enabled: true,
+          kind: 'quiet',
+          strip: true,
+          phone: true,
+        }); // the phone's alone - its sheet's door
       }
     } else {
       out.title = gambitTitle({ phase: 'over' });
       const over = game.over ?? { winner: null, by: 'void' };
       const fallenCrown = over.winner === 0 ? crowns[1] : over.winner === 1 ? crowns[0] : null;
       out.result = {
-        head: watching && over.winner !== null && over.by !== 'void' ? watchWin(online.names?.[over.winner] ?? '') : resultHead(over),
+        head:
+          watching && over.winner !== null && over.by !== 'void'
+            ? watchWin(online.names?.[over.winner] ?? '')
+            : resultHead(over),
         tone: watching ? '' : over.winner === 0 ? 'won' : over.winner === 1 ? 'lost' : '',
         king: over.by === 'king' && fallenCrown ? kingFalls(fallenCrown) : null,
         why: online && !watching ? onlineEnd(over, name) : null,
-        gold: watching ? watchGold(over, game.pot ?? 0, online.names ?? []) : resultGold(over, game.stake, name),   // AUDIT KG II B4 + D5: a watcher's gold is not in it - the pot's, said as the players'
+        gold: watching ? watchGold(over, game.pot ?? 0, online.names ?? []) : resultGold(over, game.stake, name), // AUDIT KG II B4 + D5: a watcher's gold is not in it - the pot's, said as the players'
         night: game.nightSpent ? nightSpent(name) : null,
       };
       next = 'over';
       if (online) {
         // KG5: another game is the army built again and Ready said again; or the regulars
-        if (!watching) { line = onlineStep('over'); out.actions.push({ id: 'again', label: GAMBIT_PRESS.again, enabled: true, kind: 'primary' }); }
-        else {
+        if (!watching) {
+          line = onlineStep('over');
+          out.actions.push({ id: 'again', label: GAMBIT_PRESS.again, enabled: true, kind: 'primary' });
+        } else {
           line = onlineStep(online.step, online.stepArgs);
           // AUDIT KG II B7: the step a watcher is told - a seat free - is a press here
-          if (online.canSit) out.actions.push({ id: 'sit', label: GAMBIT_ONLINE_PRESS.sit, enabled: true, kind: 'primary' });
+          if (online.canSit)
+            out.actions.push({ id: 'sit', label: GAMBIT_ONLINE_PRESS.sit, enabled: true, kind: 'primary' });
         }
-        if (online.canBoard) out.actions.push({ id: 'board', label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board, enabled: true });   // KG6; AUDIT KG II D18: open, it hides
+        if (online.canBoard)
+          out.actions.push({
+            id: 'board',
+            label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board,
+            enabled: true,
+          }); // KG6; AUDIT KG II D18: open, it hides
         out.actions.push({ id: 'regulars', label: GAMBIT_ONLINE_PRESS.regulars, enabled: true });
       } else {
         out.actions.push({ id: 'again', label: GAMBIT_PRESS.again, enabled: true, kind: 'primary' });
@@ -315,31 +639,78 @@ export function gambitHudModel(p) {
   // KG6: THE SEASON BOARD, as read - a top ten, the reader's own, its Grandmaster, what the title needs
   if (online && p.boardOpen && p.board) {
     const b = p.board;
-    out.board = b === 'reading' || b === 'failed' ? { head: GAMBIT_ONLINE_PRESS.board, rows: [], lines: [b === 'reading' ? boardReading() : boardFailed()] }
-      : { head: boardHead(b.season?.n ?? 0), rows: (b.rows ?? []).map((/** @type {any} */ r) => ({ line: boardRow(r), you: !!r.you })), lines: [boardYou(b.me && b.me.games ? { ...b.me, rank: (b.rows ?? []).concat(b.pinned ? [b.pinned] : []).find((/** @type {any} */ r) => r.you)?.rank ?? 0 } : null), boardChampion(b.champion?.name ?? null), boardNeeds(b.titleNeeds?.games ?? 0, b.titleNeeds?.foes ?? 0)] };
+    out.board =
+      b === 'reading' || b === 'failed'
+        ? { head: GAMBIT_ONLINE_PRESS.board, rows: [], lines: [b === 'reading' ? boardReading() : boardFailed()] }
+        : {
+            head: boardHead(b.season?.n ?? 0),
+            rows: (b.rows ?? []).map((/** @type {any} */ r) => ({ line: boardRow(r), you: !!r.you })),
+            lines: [
+              boardYou(
+                b.me && b.me.games
+                  ? {
+                      ...b.me,
+                      rank:
+                        (b.rows ?? []).concat(b.pinned ? [b.pinned] : []).find((/** @type {any} */ r) => r.you)?.rank ??
+                        0,
+                    }
+                  : null,
+              ),
+              boardChampion(b.champion?.name ?? null),
+              boardNeeds(b.titleNeeds?.games ?? 0, b.titleNeeds?.foes ?? 0),
+            ],
+          };
   }
   out.next = line ?? nextStep(next, nextArgs);
   out.message = p.why ?? out.next;
   // the line's tone is the chrome's three (a refusal, your turn, theirs): the line says the next step - at the end too,
   // where the verdict is the result box's own (its head's dfgambit-won / -lost)
-  out.tone = p.why ? 'warn' : phase === 'battle' && !online?.watching && st?.turn === 0 && !st.ending ? 'turn' : phase === 'battle' ? 'wait' : '';
+  out.tone = p.why
+    ? 'warn'
+    : phase === 'battle' && !online?.watching && st?.turn === 0 && !st.ending
+      ? 'turn'
+      : phase === 'battle'
+        ? 'wait'
+        : '';
   return out;
 }
 
 /** THE INFORMATION BOX (14.5): a piece - its picture, name, side, numbers, reach, foes in reach, a king's warning; or a
  *  cell - its ground or its hazard. Null when nothing is chosen. */
-export function infoBox(/** @type {any} */ st, /** @type {any} */ info, /** @type {string[]} */ crowns, /** @type {string} */ regular, /** @type {string[]|null} */ names = null) {
+export function infoBox(
+  /** @type {any} */ st,
+  /** @type {any} */ info,
+  /** @type {string[]} */ crowns,
+  /** @type {string} */ regular,
+  /** @type {string[]|null} */ names = null,
+) {
   if (!info) return null;
   if (info.piece != null) {
     const pc = pieceById(st, info.piece);
     if (!pc) return null;
-    const name = pc.king ? kingName(crowns[pc.side]) : pieceName(pc, crowns);   // the box's head: a king's whole title
+    const name = pc.king ? kingName(crowns[pc.side]) : pieceName(pc, crowns); // the box's head: a king's whole title
     // AUDIT KG II C8: the foes it can strike now named, and its own cell's hazard (14.5)
     const hz = hazardAt(st, pc.col, pc.row);
-    const hazard = hz ? cellWords({ tile: tileAt(st.tiles, pc.col, pc.row), hazard: hz, round: warningsArmAt(st.round) }) : null;
+    const hazard = hz
+      ? cellWords({ tile: tileAt(st.tiles, pc.col, pc.row), hazard: hz, round: warningsArmAt(st.round) })
+      : null;
     const foes = foesInRange(st, pc).map((x) => (x.king ? kingName(crowns[x.side]) : pieceName(x, crowns)));
     // AUDIT KG II D4: a watcher's piece is neither's own - each side its player's, by name (`names`)
-    return { kind: 'piece', id: pc.id, card: pc.king ? null : unitCardId(pc.unit), crown: pc.king ? crowns[pc.side] : null, name, lines: pieceInfoLines({ name, mine: !names && pc.side === 0, regular: names ? names[pc.side] ?? '' : regular, piece: pc, foes, hazard }) };
+    return {
+      kind: 'piece',
+      id: pc.id,
+      card: pc.king ? null : unitCardId(pc.unit),
+      crown: pc.king ? crowns[pc.side] : null,
+      name,
+      lines: pieceInfoLines({
+        name,
+        mine: !names && pc.side === 0,
+        regular: names ? (names[pc.side] ?? '') : regular,
+        piece: pc,
+        foes,
+        hazard,
+      }),
+    };
   }
   if (Array.isArray(info.cell)) {
     const [c, r] = info.cell;
@@ -348,7 +719,12 @@ export function infoBox(/** @type {any} */ st, /** @type {any} */ info, /** @typ
     if (pc) return infoBox(st, { piece: pc.id }, crowns, regular, names);
     const hz = hazardAt(st, c, r);
     const armsAt = warningsArmAt(st.round);
-    return { kind: 'cell', col: c, row: r, lines: [cellWords({ tile: tileAt(st.tiles, c, r), hazard: hz, round: armsAt })] };
+    return {
+      kind: 'cell',
+      col: c,
+      row: r,
+      lines: [cellWords({ tile: tileAt(st.tiles, c, r), hazard: hz, round: armsAt })],
+    };
   }
   return null;
 }
@@ -456,7 +832,8 @@ ${cardPanelChromeCss('.dfgambit')}
 /** A press on the panel is the panel's - never a swing, a look or a step off the seat (the other two panels' law). */
 const swallowPresses = (/** @type {any} */ node) => {
   const swallow = (/** @type {any} */ e) => e.stopPropagation();
-  for (const k of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) node.addEventListener(k, swallow);
+  for (const k of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    node.addEventListener(k, swallow);
 };
 
 /**
@@ -469,72 +846,154 @@ const swallowPresses = (/** @type {any} */ node) => {
 export function createGambitTableHud({ onPress, doc = globalThis.document }) {
   if (doc?.getElementById && !doc.getElementById(STYLE_ID)) {
     const s = doc.createElement('style');
-    s.id = STYLE_ID; s.textContent = GAMBIT_TABLE_CSS;
+    s.id = STYLE_ID;
+    s.textContent = GAMBIT_TABLE_CSS;
     (doc.head ?? doc.body)?.append(s);
   }
-  dressCardPanel(doc);   // the kit on the classic skin, the face on every skin (CARDS-PLUS)
-  noteFirstUse('kings-gambit');   // 14.5: the page's first sight inside the panel's own painter (TUT1)
+  dressCardPanel(doc); // the kit on the classic skin, the face on every skin (CARDS-PLUS)
+  noteFirstUse('kings-gambit'); // 14.5: the page's first sight inside the panel's own painter (TUT1)
   const root = doc.createElement('div');
   root.className = 'dfgambit';
   root.setAttribute('tabindex', '-1');
   swallowPresses(root);
   // Tab walks the panel, and Space and Enter on it are the panel's - never the game's jump, which stands the player up
-  root.addEventListener('keydown', (/** @type {any} */ e) => { if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.(); });
+  root.addEventListener('keydown', (/** @type {any} */ e) => {
+    if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.();
+  });
   doc.body?.append(root);
-  try { root.focus?.({ preventScroll: true }); } catch { /* a page that cannot focus */ }
-  const el = (/** @type {string} */ tag, /** @type {string|null} */ cls, /** @type {any} */ text) => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  try {
+    root.focus?.({ preventScroll: true });
+  } catch {
+    /* a page that cannot focus */
+  }
+  const el = (/** @type {string} */ tag, /** @type {string|null} */ cls, /** @type {any} */ text) => {
+    const n = doc.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const ACTIVATE = new Set(['Enter', ' ']);
   const pressable = (/** @type {any} */ n, /** @type {string} */ key, /** @type {() => void} */ fn) => {
     n.setAttribute('tabindex', '0');
     n.setAttribute('role', 'button');
     n.setAttribute('data-focus', key);
     n.addEventListener('click', fn);
-    n.addEventListener('keydown', (/** @type {any} */ e) => { if (!ACTIVATE.has(e.key)) return; e.preventDefault?.(); e.stopPropagation?.(); fn(); });
+    n.addEventListener('keydown', (/** @type {any} */ e) => {
+      if (!ACTIVATE.has(e.key)) return;
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      fn();
+    });
   };
-  const focusedKey = () => { const a = doc.activeElement; return a && a !== root && root.contains?.(a) ? a.getAttribute?.('data-focus') ?? null : null; };
+  const focusedKey = () => {
+    const a = doc.activeElement;
+    return a && a !== root && root.contains?.(a) ? (a.getAttribute?.('data-focus') ?? null) : null;
+  };
   const refocus = (/** @type {string|null} */ key) => {
     if (!key) return;
     const keyed = [];
-    const walk = (/** @type {any} */ n) => { for (const c of n.children ?? []) { if (c.getAttribute?.('data-focus')) keyed.push(c); walk(c); } };
+    const walk = (/** @type {any} */ n) => {
+      for (const c of n.children ?? []) {
+        if (c.getAttribute?.('data-focus')) keyed.push(c);
+        walk(c);
+      }
+    };
     walk(root);
-    const took = (/** @type {any} */ n) => { try { n.focus({ preventScroll: true }); } catch { n.focus?.(); } return doc.activeElement === n; };
+    const took = (/** @type {any} */ n) => {
+      try {
+        n.focus({ preventScroll: true });
+      } catch {
+        n.focus?.();
+      }
+      return doc.activeElement === n;
+    };
     const at = keyed.find((n) => n.getAttribute('data-focus') === key);
     if (at && took(at)) return;
     took(root);
   };
   const canPaint = !!doc.createElement('canvas')?.getContext?.('2d');
   /** A unit's picture (its card's, picture-only), a fresh copy for each place it stands. */
-  const unitFace = (/** @type {string|null} */ cardId, /** @type {number} */ h) => (canPaint && cardId ? cardCanvasCopy(doc, cardById(cardId), h, { picture: true }) : null);
+  const unitFace = (/** @type {string|null} */ cardId, /** @type {number} */ h) =>
+    canPaint && cardId ? cardCanvasCopy(doc, cardById(cardId), h, { picture: true }) : null;
   /** A crown's King, the Bay deck's own painting. */
   const kingFace = (/** @type {string} */ crown, /** @type {number} */ h) => {
     if (!canPaint) return null;
-    const cv = doc.createElement('canvas'), dpr = Math.min(2, Number(globalThis.devicePixelRatio) || 1), w = cardW(h);
-    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const cv = doc.createElement('canvas'),
+      dpr = Math.min(2, Number(globalThis.devicePixelRatio) || 1),
+      w = cardW(h);
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
     const ctx = cv.getContext('2d');
-    try { ctx.scale(dpr, dpr); paintFace(ctx, crownIndex(crown) * 13 + RANK_KING, w, h); } catch { /* a face that will not paint is a blank one */ }
+    try {
+      ctx.scale(dpr, dpr);
+      paintFace(ctx, crownIndex(crown) * 13 + RANK_KING, w, h);
+    } catch {
+      /* a face that will not paint is a blank one */
+    }
     return cv;
   };
-  const sec = (/** @type {string} */ head, /** @type {any[]} */ parts) => { const s = el('div', 'dfgambit-sec', null); s.append(el('h3', null, head), ...parts); return s; };
-  const fold = (/** @type {string} */ id, /** @type {string} */ head, /** @type {boolean} */ open, /** @type {any[]} */ parts) => {
+  const sec = (/** @type {string} */ head, /** @type {any[]} */ parts) => {
+    const s = el('div', 'dfgambit-sec', null);
+    s.append(el('h3', null, head), ...parts);
+    return s;
+  };
+  const fold = (
+    /** @type {string} */ id,
+    /** @type {string} */ head,
+    /** @type {boolean} */ open,
+    /** @type {any[]} */ parts,
+  ) => {
     const d = el('details', 'dfgambit-sec', null);
     d.open = open;
     const s = el('summary', null, head);
     s.setAttribute('data-focus', `fold-${id}`);
     // the reader's own choice, from the summary's press - never the `toggle` event (AUDIT PLAIN-UI C1)
-    s.addEventListener('click', (/** @type {any} */ e) => { e.preventDefault?.(); onPress(id, !d.open); });
-    s.addEventListener('keydown', (/** @type {any} */ e) => { if (!ACTIVATE.has(e.key)) return; e.preventDefault?.(); e.stopPropagation?.(); onPress(id, !d.open); });
+    s.addEventListener('click', (/** @type {any} */ e) => {
+      e.preventDefault?.();
+      onPress(id, !d.open);
+    });
+    s.addEventListener('keydown', (/** @type {any} */ e) => {
+      if (!ACTIVATE.has(e.key)) return;
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      onPress(id, !d.open);
+    });
     d.append(s, ...parts);
     return d;
   };
-  const chips = (/** @type {string[]} */ words, /** @type {string} */ cls = '') => { const c = el('div', 'dfgambit-chips', null); for (const w of words) c.append(el('span', `dfgambit-chip${cls}`, w)); return c; };
-  let alive = true, shownKey = null, msgEl = null, collapsed = false, lastModel = null;
+  const chips = (/** @type {string[]} */ words, /** @type {string} */ cls = '') => {
+    const c = el('div', 'dfgambit-chips', null);
+    for (const w of words) c.append(el('span', `dfgambit-chip${cls}`, w));
+    return c;
+  };
+  let alive = true,
+    shownKey = null,
+    msgEl = null,
+    collapsed = false,
+    lastModel = null;
   /** The root's words: the panel, folded, the battle (the phone's strip), More's sheet over it. */
-  const rootWords = (/** @type {any} */ m) => ['dfgambit', collapsed ? 'collapsed' : '', m?.phase === 'battle' ? 'dfgambit-battle' : '', m?.more ? 'dfgambit-more' : ''].filter(Boolean).join(' ');
+  const rootWords = (/** @type {any} */ m) =>
+    [
+      'dfgambit',
+      collapsed ? 'collapsed' : '',
+      m?.phase === 'battle' ? 'dfgambit-battle' : '',
+      m?.more ? 'dfgambit-more' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
   const foldToggle = () => {
     const f = el('span', 'fold', collapsed ? '+' : '−');
-    const say = () => { f.textContent = collapsed ? '+' : '−'; foldWords(f, collapsed); f.setAttribute('aria-expanded', String(!collapsed)); };
+    const say = () => {
+      f.textContent = collapsed ? '+' : '−';
+      foldWords(f, collapsed);
+      f.setAttribute('aria-expanded', String(!collapsed));
+    };
     say();
-    pressable(f, 'fold', () => { collapsed = !collapsed; root.className = rootWords(lastModel); say(); });
+    pressable(f, 'fold', () => {
+      collapsed = !collapsed;
+      root.className = rootWords(lastModel);
+      say();
+    });
     return f;
   };
   return {
@@ -544,7 +1003,10 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
       if (!alive) return;
       lastModel = m;
       const key = JSON.stringify({ ...m, message: null });
-      if (key === shownKey && msgEl) { msgEl.textContent = m.message; return; }
+      if (key === shownKey && msgEl) {
+        msgEl.textContent = m.message;
+        return;
+      }
       shownKey = key;
       const kept = focusedKey();
       root.replaceChildren();
@@ -552,18 +1014,20 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
       const head = el('h3', 'tablehead', null);
       head.append(el('span', 'tabletitle', m.title), foldToggle());
       root.append(head);
-      if (m.battle) {   // the turn's chips stand outside the body: the phone's strip shows them (14.7)
+      if (m.battle) {
+        // the turn's chips stand outside the body: the phone's strip shows them (14.7)
         const row = el('div', 'dfgambit-chips dfgambit-chiprow', null);
         for (const c of m.battle.chips) {
           const n = el('span', 'dfgambit-chip', null);
           if (c.key === 'actions') {
             const pips = el('span', 'dfgambit-pips', null);
-            pips.setAttribute('aria-hidden', 'true');   // the words beside them say it
-            for (let k = 0; k < c.of; k++) pips.append(el('i', `dfgambit-pip${k < c.pips ? ' dfgambit-lit' : ''}`, null));
+            pips.setAttribute('aria-hidden', 'true'); // the words beside them say it
+            for (let k = 0; k < c.of; k++)
+              pips.append(el('i', `dfgambit-pip${k < c.pips ? ' dfgambit-lit' : ''}`, null));
             n.append(pips);
           }
           n.append(el('span', null, c.text));
-          if (c.more) n.setAttribute('data-more', 'true');   // AUDIT KG II D3: More's sheet's, not the phone's strip
+          if (c.more) n.setAttribute('data-more', 'true'); // AUDIT KG II D3: More's sheet's, not the phone's strip
           row.append(n);
         }
         root.append(row);
@@ -574,17 +1038,24 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
         const s = m.setup;
         const list = el('div', 'dfgambit-list', null);
         // KG5: online, the board's two seats in the regulars' place - who sits, who is ready, the player's own marked
-        if (s.online) for (const x of s.online.seats) list.append(el('div', `dfgambit-seat${x.mine ? ' on' : ''}`, x.line));   // AUDIT KG II D18: a seat is read, never pressed
+        if (s.online)
+          for (const x of s.online.seats) list.append(el('div', `dfgambit-seat${x.mine ? ' on' : ''}`, x.line)); // AUDIT KG II D18: a seat is read, never pressed
         for (const r of s.regulars) {
-          const row = el('div', `dfgambit-regular${r.chosen ? ' on' : ''}`, null);   // a chosen list row is the kit's .on
+          const row = el('div', `dfgambit-regular${r.chosen ? ' on' : ''}`, null); // a chosen list row is the kit's .on
           row.setAttribute('aria-pressed', String(!!r.chosen));
           const step = el('span', 'dfgambit-step', null);
-          step.setAttribute('aria-hidden', 'true');   // a picture beside the tier's word, which says it
+          step.setAttribute('aria-hidden', 'true'); // a picture beside the tier's word, which says it
           for (let k = 1; k <= 4; k++) step.append(el('i', k <= r.step ? 'dfgambit-lit' : null, null));
           const tierChip = el('span', 'dfgambit-chip', null);
           tierChip.append(step, el('span', null, r.tier));
           const words = el('div', null, null);
-          words.append(el('div', 'dfgambit-regname', r.name), el('div', 'dfgambit-line', r.fields), el('div', 'dfgambit-line', r.least), el('div', 'dfgambit-line dfgambit-dim', r.blurb), el('div', 'dfgambit-line', r.night));
+          words.append(
+            el('div', 'dfgambit-regname', r.name),
+            el('div', 'dfgambit-line', r.fields),
+            el('div', 'dfgambit-line', r.least),
+            el('div', 'dfgambit-line dfgambit-dim', r.blurb),
+            el('div', 'dfgambit-line', r.night),
+          );
           row.append(tierChip, words);
           pressable(row, `regular-${r.i}`, () => onPress('regular', r.i));
           list.append(row);
@@ -617,7 +1088,8 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
       }
       if (m.army) {
         const a = m.army;
-        if (a.stakes) {   // KG6: the gold table's stake picks - AUDIT KG II D14: first, where the line that asks for them is read
+        if (a.stakes) {
+          // KG6: the gold table's stake picks - AUDIT KG II D14: first, where the line that asks for them is read
           const tiles = el('div', 'dfgambit-tiles', null);
           for (const k of a.stakes.picks) {
             const n = el('div', 'dfgambit-stake', k.label);
@@ -634,7 +1106,11 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
           const cv = unitFace(a.unit.card, GAMBIT_UNIT_H);
           if (cv) face.append(cv);
           const words = el('div', null, null);
-          words.append(el('div', 'dfgambit-regname', a.unit.name), el('div', 'dfgambit-line', a.unit.line), el('div', 'dfgambit-line', a.unit.cost));
+          words.append(
+            el('div', 'dfgambit-regname', a.unit.name),
+            el('div', 'dfgambit-line', a.unit.line),
+            el('div', 'dfgambit-line', a.unit.cost),
+          );
           if (a.unit.said) words.append(el('div', 'dfgambit-line', a.unit.said));
           face.append(words);
           body.append(sec(a.heads.unit, [face]));
@@ -646,7 +1122,9 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
           if (cv) tile.append(cv);
           tile.append(el('div', 'dfgambit-uname', u.name));
           const c = el('div', 'dfgambit-chips', null);
-          u.chips.forEach((w, k) => c.append(el('span', `dfgambit-chip${k === u.chips.length - 1 ? ' dfgambit-cost' : ''}`, w)));
+          u.chips.forEach((w, k) =>
+            c.append(el('span', `dfgambit-chip${k === u.chips.length - 1 ? ' dfgambit-cost' : ''}`, w)),
+          );
           tile.append(c);
           tile.setAttribute('aria-pressed', String(!!u.chosen));
           pressable(tile, `unit-${u.id}`, () => onPress('unit', u.id));
@@ -669,7 +1147,11 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
         if (b.info) {
           const box = el('div', 'dfgambit-info', null);
           const top = el('div', 'dfgambit-face', null);
-          const cv = b.info.card ? unitFace(b.info.card, GAMBIT_TILE_H) : b.info.crown ? kingFace(b.info.crown, GAMBIT_TILE_H) : null;
+          const cv = b.info.card
+            ? unitFace(b.info.card, GAMBIT_TILE_H)
+            : b.info.crown
+              ? kingFace(b.info.crown, GAMBIT_TILE_H)
+              : null;
           if (cv) top.append(cv);
           const words = el('div', null, null);
           for (const line of b.info.lines) words.append(el('div', 'dfgambit-line', line));
@@ -678,32 +1160,46 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
           body.append(box);
         }
         const sides = el('div', 'dfgambit-list', null);
-        for (const side of b.armies.sides) for (const pc of side) {
-          const r = el('div', `dfgambit-piece${pc.selected ? ' on' : ''}`, null);
-          r.setAttribute('aria-pressed', String(!!pc.selected));
-          const meter = el('span', 'dfgambit-meter', null), fill = el('span', 'dfgambit-fill', null);
-          fill.style && (fill.style.width = `${Math.round((100 * Math.max(0, pc.hp)) / Math.max(1, pc.max))}%`);
-          meter.append(fill);
-          r.append(el('span', 'dfgambit-grow', pc.name), meter, el('span', 'dfgambit-dim', pc.health));
-          pressable(r, `piece-${pc.id}`, () => onPress('piece', pc.id));
-          sides.append(r);
-        }
+        for (const side of b.armies.sides)
+          for (const pc of side) {
+            const r = el('div', `dfgambit-piece${pc.selected ? ' on' : ''}`, null);
+            r.setAttribute('aria-pressed', String(!!pc.selected));
+            const meter = el('span', 'dfgambit-meter', null),
+              fill = el('span', 'dfgambit-fill', null);
+            fill.style && (fill.style.width = `${Math.round((100 * Math.max(0, pc.hp)) / Math.max(1, pc.max))}%`);
+            meter.append(fill);
+            r.append(el('span', 'dfgambit-grow', pc.name), meter, el('span', 'dfgambit-dim', pc.health));
+            pressable(r, `piece-${pc.id}`, () => onPress('piece', pc.id));
+            sides.append(r);
+          }
         body.append(fold('armies', b.armies.head, b.armies.open, [sides]));
       }
       if (m.result) {
-        const r = m.result, box = el('div', 'dfgambit-result', null);
+        const r = m.result,
+          box = el('div', 'dfgambit-result', null);
         box.append(el('div', `dfgambit-head${r.tone ? ` dfgambit-${r.tone}` : ''}`, r.head));
         for (const line of [r.king, r.why, r.gold, r.night]) if (line) box.append(el('p', 'dfgambit-line', line));
         body.append(box);
       }
-      if (m.board) {   // KG6: the season board - AUDIT KG II D18: after the result it would push down; a rank is read, never pressed
+      if (m.board) {
+        // KG6: the season board - AUDIT KG II D18: after the result it would push down; a rank is read, never pressed
         const list = el('div', 'dfgambit-list', null);
         for (const r of m.board.rows) list.append(el('div', `dfgambit-rank${r.you ? ' on' : ''}`, r.line));
-        body.append(sec(m.board.head, [list, ...m.board.lines.map((/** @type {string} */ l) => el('p', 'dfgambit-line', l))]));
+        body.append(
+          sec(m.board.head, [list, ...m.board.lines.map((/** @type {string} */ l) => el('p', 'dfgambit-line', l))]),
+        );
       }
-      const guide = m.guide.paras.map((g) => { const d = el('div', 'dfgambit-para', null); d.append(el('div', 'dfgambit-term', g.head), el('div', 'dfgambit-line', g.body)); return d; });
+      const guide = m.guide.paras.map((g) => {
+        const d = el('div', 'dfgambit-para', null);
+        d.append(el('div', 'dfgambit-term', g.head), el('div', 'dfgambit-line', g.body));
+        return d;
+      });
       body.append(fold('guide', m.guide.head, m.guide.open, guide));
-      const words = m.words.items.map((w) => { const d = el('div', 'dfgambit-para', null); d.append(el('div', 'dfgambit-term', w.term), el('div', 'dfgambit-line', w.meaning)); return d; });
+      const words = m.words.items.map((w) => {
+        const d = el('div', 'dfgambit-para', null);
+        d.append(el('div', 'dfgambit-term', w.term), el('div', 'dfgambit-line', w.meaning));
+        return d;
+      });
       body.append(fold('words', m.words.head, m.words.open, words));
       root.append(body);
       msgEl = el('div', `msg${m.tone ? ` ${m.tone}` : ''}`, m.message);
@@ -712,13 +1208,15 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
       const acts = el('div', 'tableacts', null);
       for (const a of m.actions) {
         const b = el('button', null, a.label);
-        if (!a.enabled) b.setAttribute('aria-disabled', 'true');   // a refused press keeps its edge and says why when pressed
+        if (!a.enabled) b.setAttribute('aria-disabled', 'true'); // a refused press keeps its edge and says why when pressed
         if (a.kind) b.dataset.kind = a.kind;
         if (a.armed) b.setAttribute('data-armed', 'true');
-        if (a.strip) b.setAttribute('data-strip', a.id);   // the phone's strip shows it (14.7)
-        if (a.phone) b.setAttribute('data-phone', 'true');   // the phone's alone
+        if (a.strip) b.setAttribute('data-strip', a.id); // the phone's strip shows it (14.7)
+        if (a.phone) b.setAttribute('data-phone', 'true'); // the phone's alone
         b.setAttribute('data-focus', `act-${a.id}`);
-        b.addEventListener('keydown', (/** @type {any} */ e) => { if (ACTIVATE.has(e.key)) e.stopPropagation?.(); });
+        b.addEventListener('keydown', (/** @type {any} */ e) => {
+          if (ACTIVATE.has(e.key)) e.stopPropagation?.();
+        });
         b.addEventListener('click', () => (a.enabled ? onPress(a.id) : a.why ? onPress('say', a.why) : null));
         acts.append(b);
       }
@@ -731,7 +1229,11 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
       }
       refocus(kept);
     },
-    destroy() { if (!alive) return; alive = false; root.remove?.(); },
+    destroy() {
+      if (!alive) return;
+      alive = false;
+      root.remove?.();
+    },
   };
 }
 
@@ -740,15 +1242,27 @@ export function createGambitTableHud({ onPress, doc = globalThis.document }) {
  *  ui/input.js's overlayAction reads a window's arrows and Enter - so the hosts ask `gambitBoardKey` and read no bound
  *  key raw (KB1 law 5; test/scenes/inputmap.test.js I2). */
 export const GAMBIT_CURSOR_KEYS = Object.freeze({
-  ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown',
-  [DPAD_CODES.left]: 'ArrowLeft', [DPAD_CODES.right]: 'ArrowRight', [DPAD_CODES.up]: 'ArrowUp', [DPAD_CODES.down]: 'ArrowDown',
+  ArrowLeft: 'ArrowLeft',
+  ArrowRight: 'ArrowRight',
+  ArrowUp: 'ArrowUp',
+  ArrowDown: 'ArrowDown',
+  [DPAD_CODES.left]: 'ArrowLeft',
+  [DPAD_CODES.right]: 'ArrowRight',
+  [DPAD_CODES.up]: 'ArrowUp',
+  [DPAD_CODES.down]: 'ArrowDown',
 });
 export const GAMBIT_PRESS_KEYS = Object.freeze(['Enter', 'NumpadEnter', 'Space', 'JoystickButton0']);
 export const GAMBIT_CANCEL_KEYS = Object.freeze(['Escape', 'JoystickButton1']);
 /** What a key's or a pad button's code does on the board: the arrow its cursor step is, 'press', 'cancel', or null.
  *  @param {string} code @returns {string|null} */
-export const gambitBoardKey = (code) => (Object.hasOwn(GAMBIT_CURSOR_KEYS, code) ? GAMBIT_CURSOR_KEYS[code]
-  : GAMBIT_PRESS_KEYS.includes(code) ? 'press' : GAMBIT_CANCEL_KEYS.includes(code) ? 'cancel' : null);
+export const gambitBoardKey = (code) =>
+  Object.hasOwn(GAMBIT_CURSOR_KEYS, code)
+    ? GAMBIT_CURSOR_KEYS[code]
+    : GAMBIT_PRESS_KEYS.includes(code)
+      ? 'press'
+      : GAMBIT_CANCEL_KEYS.includes(code)
+        ? 'cancel'
+        : null;
 
 /** The cell a key moves the board's cursor to (14.3: the arrows or the d-pad; the board's edges hold it). */
 export const boardCursorStep = (/** @type {number[]} */ at, /** @type {string} */ key) => {

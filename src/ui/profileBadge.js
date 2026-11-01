@@ -45,13 +45,21 @@ export function portraitSave(saves) {
  */
 export function liveCharacter(entity) {
   if (!entity || typeof entity.race !== 'string' || !entity.race) return null;
-  return { name: entity.name, level: entity.level, race: entity.race, gender: entity.gender, faceIndex: entity.faceIndex };
+  return {
+    name: entity.name,
+    level: entity.level,
+    race: entity.race,
+    gender: entity.gender,
+    faceIndex: entity.faceIndex,
+  };
 }
 
 /** The caption's second line: whose face this is. */
 export function characterLine(save) {
   if (!save) return 'No character yet';
-  return [save.name || 'Unnamed', Number.isFinite(save.level) ? `level ${save.level}` : null].filter(Boolean).join(' \u00b7 ');
+  return [save.name || 'Unnamed', Number.isFinite(save.level) ? `level ${save.level}` : null]
+    .filter(Boolean)
+    .join(' \u00b7 ');
 }
 
 /**
@@ -69,9 +77,12 @@ export function profileBadge(doc, { session = null, save = null, face = null, on
   };
   const b = el('button', 'px-profile');
   b.type = 'button';
-  b.setAttribute('aria-label', session
-    ? `Profile: ${session.name ?? 'signed in'}${save ? `, playing ${characterLine(save)}` : ''}`
-    : 'Sign in or create an account');
+  b.setAttribute(
+    'aria-label',
+    session
+      ? `Profile: ${session.name ?? 'signed in'}${save ? `, playing ${characterLine(save)}` : ''}`
+      : 'Sign in or create an account',
+  );
 
   // ── THE PORTRAIT ────────────────────────────────────────────────
   const frame = el('span', 'px-portrait');

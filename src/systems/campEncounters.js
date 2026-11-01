@@ -43,9 +43,9 @@
 // a check duplicated across a party would silently double this
 // section's frequency for anyone travelling together.
 import { chooseRandomEnemy, resolveEncounterTableIndex, playerReading } from './encounters.js';
-import { encounterTable } from '../characters/encounterTableDoor.js';   // DEX3: the one table a group rolls from
+import { encounterTable } from '../characters/encounterTableDoor.js'; // DEX3: the one table a group rolls from
 import { factionOf, SOLITARY_TYPES, NIGHT_ONLY_FACTIONS } from '../characters/mobile/mobileFactions.js';
-import { CLASSIC_MINUTES_PER_SECOND } from './worldTick.js';   // real-seconds -> game-minutes, so the cadence below can be stated in real play time
+import { CLASSIC_MINUTES_PER_SECOND } from './worldTick.js'; // real-seconds -> game-minutes, so the cadence below can be stated in real play time
 
 // A camp/pack seed roll that lands on a SOLITARY type (Dragonling,
 // Daedra, an Atronach, ...) gets this many extra tries at a normal
@@ -66,7 +66,7 @@ const MAX_SEED_ATTEMPTS = 4;
 // on top of the player before they have turned round. A camp is a
 // thing you come across, so it is stood well out: a hundred to a
 // hundred and fifty metres (world units are metres, this port's scale).
-export const MIN_CAMP_SPAWN_DISTANCE = 100;   // a camp is come across, never landed on
+export const MIN_CAMP_SPAWN_DISTANCE = 100; // a camp is come across, never landed on
 export const MAX_CAMP_SPAWN_DISTANCE = 150;
 
 /**
@@ -89,7 +89,16 @@ export const MAX_CAMP_SPAWN_DISTANCE = 150;
  *          minDistance?:number, maxDistance?:number, rolls?:() => number}} o
  * @returns {{x:number,y:number,z:number}|null}
  */
-export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance = MIN_CAMP_SPAWN_DISTANCE, maxDistance = MAX_CAMP_SPAWN_DISTANCE, rolls = Math.random, bearingDegrees = null }) {
+export function campAnchorSpot({
+  feet,
+  yawRad,
+  fovDegrees,
+  groundAt,
+  minDistance = MIN_CAMP_SPAWN_DISTANCE,
+  maxDistance = MAX_CAMP_SPAWN_DISTANCE,
+  rolls = Math.random,
+  bearingDegrees = null,
+}) {
   if (!feet || typeof groundAt !== 'function') return null;
   // CAMP-RING: a group handed its own bearing (campGroupBearings - one of several groups spread
   // round the player) stands on that bearing, jittered two degrees either way; a lone group keeps
@@ -101,12 +110,12 @@ export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance
     const side = fovDegrees + rolls() * 4;
     yawDegrees = rolls() > 0.5 ? -side : side;
   }
-  const yaw = yawRad + yawDegrees * Math.PI / 180;
+  const yaw = yawRad + (yawDegrees * Math.PI) / 180;
   const dist = minDistance + rolls() * (maxDistance - minDistance);
   const x = feet[0] + Math.sin(yaw) * dist;
   const z = feet[2] + Math.cos(yaw) * dist;
   const y = groundAt(x, z);
-  if (!Number.isFinite(y)) return null;   // off the built ground: no spot this try
+  if (!Number.isFinite(y)) return null; // off the built ground: no spot this try
   return { x, y, z };
 }
 
@@ -115,10 +124,10 @@ export function campAnchorSpot({ feet, yawRad, fovDegrees, groundAt, minDistance
 // it appears, and a camp can be approached before it notices. Every other foe keeps SIGHT_RADIUS.
 export const CAMP_SIGHT_RADIUS = 60;
 
-export const CAMP_SIZE = Object.freeze([3, 5]);   // inclusive
+export const CAMP_SIZE = Object.freeze([3, 5]); // inclusive
 export const PACK_SIZE = Object.freeze([2, 4]);
-export const CAMP_SPACING = 3;     // metres between members - tight, a settled group
-export const PACK_SPACING = 6;     // metres between members - loose, a group in transit
+export const CAMP_SPACING = 3; // metres between members - tight, a settled group
+export const PACK_SPACING = 6; // metres between members - loose, a group in transit
 export const CAMP_ALERT_RADIUS = CAMP_SPACING * 3;
 export const PACK_ALERT_RADIUS = PACK_SPACING * 2;
 
@@ -129,7 +138,7 @@ export const PACK_ALERT_RADIUS = PACK_SPACING * 2;
 // stated in game-minutes alone would drift out of what a real 15-minute
 // play session feels like. 15 * 60 * (12/60) = 180 game-minutes.
 export const CAMP_WINDOW_REAL_MINUTES = 15;
-export const CAMP_WINDOW_MINUTES = CAMP_WINDOW_REAL_MINUTES * 60 * CLASSIC_MINUTES_PER_SECOND;   // 180
+export const CAMP_WINDOW_MINUTES = CAMP_WINDOW_REAL_MINUTES * 60 * CLASSIC_MINUTES_PER_SECOND; // 180
 export const campWindowOpen = (gameMinutes) => Math.floor(gameMinutes) % CAMP_WINDOW_MINUTES === 0;
 
 // Mac (2026-09-17): "every 15 minutes guaranteed the rest based on
@@ -174,7 +183,7 @@ export const rollCampKind = (roll01 = Math.random()) => (roll01 < 0.5 ? 'camp' :
 //
 // CAMP-RING (2026-09-25): the chance is 50% per chunk entered, and a hit stands THREE groups at
 // once, spread round the player a hundred to a hundred and fifty metres out (campGroupBearings).
-export const CAMP_CHANCE_ON_CHUNK_LOAD = 0.50;   // 50% per chunk entered
+export const CAMP_CHANCE_ON_CHUNK_LOAD = 0.5; // 50% per chunk entered
 export const rollCampChanceOnChunkLoad = (roll01 = Math.random()) => roll01 < CAMP_CHANCE_ON_CHUNK_LOAD;
 /** CAMP-RING: how many groups one chunk-load hit stands. */
 export const CAMP_GROUPS_ON_CHUNK_LOAD = 3;
@@ -186,7 +195,7 @@ export const CAMP_GROUPS_ON_CHUNK_LOAD = 3;
  * metres that group is seen standing there, which is the point. More than three groups continue
  * round the circle evenly; `fovDegrees` is kept for the call shape and not read.
  */
-export const CAMP_GROUP_BEARINGS = Object.freeze([0, 90, 270]);   // front, right, left
+export const CAMP_GROUP_BEARINGS = Object.freeze([0, 90, 270]); // front, right, left
 export function campGroupBearings(fovDegrees, n = CAMP_GROUPS_ON_CHUNK_LOAD) {
   void fovDegrees;
   if (n <= CAMP_GROUP_BEARINGS.length) return CAMP_GROUP_BEARINGS.slice(0, Math.max(1, n));
@@ -212,12 +221,17 @@ export function amGroupRollOwner(myId, myFeet, peers, radius = GROUP_ROLL_RADIUS
   if (myId == null || !myFeet || !peers?.length) return true;
   const r2 = radius * radius;
   const me = String(myId);
-  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };
+  const near = (a, b) => {
+    const dx = a[0] - b[0],
+      dz = a[2] - b[2];
+    return dx * dx + dz * dz <= r2;
+  };
   // AUDIT PSCALE1 COUNT-5: GREEDY BY ID, over everyone this client can place. The lowest id rolls; each next id rolls
   // unless a roller already chosen stands within `radius` of it. Deferring to ANY lower id within reach let a chain
   // (A, B, C sixty apart, ids ascending) elect A alone, and C - 120 from A - met nothing: A's wanderers stand at A.
   const all = [{ id: me, feet: myFeet }];
-  for (const p of peers) if (p?.id != null && String(p.id) !== me && Array.isArray(p.feet)) all.push({ id: String(p.id), feet: p.feet });
+  for (const p of peers)
+    if (p?.id != null && String(p.id) !== me && Array.isArray(p.feet)) all.push({ id: String(p.id), feet: p.feet });
   all.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const rollers = [];
   for (const p of all) {
@@ -245,13 +259,18 @@ export function amGroupRollOwner(myId, myFeet, peers, radius = GROUP_ROLL_RADIUS
  *  camp reads as "a knot of bandits", "an orc raiding party", "a
  *  cluster of spiders", never a grab-bag, and a table entry that was
  *  never in that climate's list to begin with still can't appear. */
-export function rollGroupComposition(ctx, rolls) {   // TV7: exported - a roaming band is made of the same themed group
-  const timeOfDay = ((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440 + 1440) % 1440;   // LIVED1: the sky's day and night, when handed
+export function rollGroupComposition(ctx, rolls) {
+  // TV7: exported - a roaming band is made of the same themed group
+  const timeOfDay = (((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440) + 1440) % 1440; // LIVED1: the sky's day and night, when handed
   const isDay = timeOfDay >= 360 && timeOfDay <= 1080;
   // DEX3: ONE TABLE for the seed and its mates, read once as the door reads this roll (characters/encounterTableDoor.js):
   // the player's own camp as a mod's events wrote it, a band's or a road's trouble by its own die among the mod's
   const tableIdx = resolveEncounterTableIndex({ ...ctx, isDay });
-  const rollCtx = { ...ctx, isDay, table: tableIdx != null ? (ctx.table ?? encounterTable(tableIdx, { ...ctx, isDay }, rolls)) : null };
+  const rollCtx = {
+    ...ctx,
+    isDay,
+    table: tableIdx != null ? (ctx.table ?? encounterTable(tableIdx, { ...ctx, isDay }, rolls)) : null,
+  };
 
   // Seed roll: same odds as a lone wanderer would get, but re-rolled
   // away from SOLITARY types (never forced into a group), and away
@@ -264,17 +283,17 @@ export function rollGroupComposition(ctx, rolls) {   // TV7: exported - a roamin
   let seed = -1;
   for (let attempt = 0; attempt < MAX_SEED_ATTEMPTS; attempt++) {
     const m = chooseRandomEnemy(rollCtx, rolls);
-    if (m === -1) return null;   // an unknown climate, or a town's day - nothing to spawn at all
+    if (m === -1) return null; // an unknown climate, or a town's day - nothing to spawn at all
     if (SOLITARY_TYPES.has(m) && !lone) continue;
     if (isDay && NIGHT_ONLY_FACTIONS.has(factionOf(m))) continue;
     seed = m;
     break;
   }
-  if (seed === -1) return null;   // kept landing on a bad-fit type - no group this time
+  if (seed === -1) return null; // kept landing on a bad-fit type - no group this time
 
   const kind = rollCampKind(rolls());
   const [lo, hi] = kind === 'camp' ? CAMP_SIZE : PACK_SIZE;
-  const rolled = lo + Math.floor(rolls() * (hi - lo + 1));   // drawn even when the caller sized it: the members' draws after it keep their place in the stream
+  const rolled = lo + Math.floor(rolls() * (hi - lo + 1)); // drawn even when the caller sized it: the members' draws after it keep their place in the stream
   const size = sized ? ctx.size : rolled;
   const mobileTypes = [seed];
 
@@ -294,10 +313,12 @@ export function rollGroupComposition(ctx, rolls) {   // TV7: exported - a roamin
   }
 
   return {
-    kind, mobileTypes,
+    kind,
+    mobileTypes,
     spacing: kind === 'camp' ? CAMP_SPACING : PACK_SPACING,
     alertRadius: kind === 'camp' ? CAMP_ALERT_RADIUS : PACK_ALERT_RADIUS,
-    minDistance: MIN_CAMP_SPAWN_DISTANCE, maxDistance: MAX_CAMP_SPAWN_DISTANCE,
+    minDistance: MIN_CAMP_SPAWN_DISTANCE,
+    maxDistance: MAX_CAMP_SPAWN_DISTANCE,
   };
 }
 
@@ -324,7 +345,7 @@ const campGateOk = (ctx) => !(ctx.inside || ctx.inLocationRect || ctx.preventEne
  * ring return null before any roll is spent.
  */
 export function rollCampEncounter(ctx, rolls = Math.random) {
-  ctx = playerReading(ctx);   // DEX3: the player's own roll, where it stands
+  ctx = playerReading(ctx); // DEX3: the player's own roll, where it stands
   if (!campGateOk(ctx)) return null;
   if (!campWindowOpen(ctx.gameMinutes)) return null;
   // GUARANTEED: no chance check here any more - every open window (once
@@ -340,7 +361,7 @@ const chunkGps = (ctx) => ({ climateIndex: ctx.climateIndex });
 /** The chunk-load twin: same chance, same composition, no time gate at
  *  all - the caller's own `pixelChanged` event IS the cadence. */
 export function rollCampEncounterOnChunkLoad(ctx, rolls = Math.random) {
-  ctx = playerReading(ctx, chunkGps(ctx));   // DEX3: the player's own roll, where it stands
+  ctx = playerReading(ctx, chunkGps(ctx)); // DEX3: the player's own roll, where it stands
   if (!campGateOk(ctx)) return null;
   if (!rollCampChanceOnChunkLoad(rolls())) return null;
   return rollGroupComposition(ctx, rolls);
@@ -349,8 +370,12 @@ export function rollCampEncounterOnChunkLoad(ctx, rolls = Math.random) {
 /** CAMP-RING: the chunk-load roll that stands SEVERAL groups. One chance roll for the chunk; on a
  *  hit, each group rolls its own composition (so one can be bandits and the next wolves) and
  *  takes its own bearing round the player. Null on a miss, else the non-empty list of groups. */
-export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {
-  ctx = playerReading(ctx, chunkGps(ctx));   // DEX3: the player's own roll, where it stands
+export function rollCampEncountersOnChunkLoad(
+  ctx,
+  rolls = Math.random,
+  { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {},
+) {
+  ctx = playerReading(ctx, chunkGps(ctx)); // DEX3: the player's own roll, where it stands
   if (!campGateOk(ctx)) return null;
   if (!rollCampChanceOnChunkLoad(rolls())) return null;
   const bearings = campGroupBearings(fovDegrees, groups);

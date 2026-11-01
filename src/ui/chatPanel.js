@@ -658,7 +658,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     b.addEventListener('click', () => { insertAtCaret(ch); setEmojiOpen(false); });
     emojiGrid.append(b);
   }
-  // STAFF-CHAT-RED (mob, 2026-10-23: "give me a option next to chat to chat as /red or myself at all times"): THE VOICE
+  // STAFF-CHAT-RED: THE VOICE
   // SWITCH, built only when the host hands `voice` - Me and Red, two toggle buttons in a group before the field. A press is
   // the voice's (`pick`: Me while hidden asks first), and the caret goes back to the field; `paintVoice` draws it.
   const voiceBox = voice ? el('div', 'dfchat-voice') : null;

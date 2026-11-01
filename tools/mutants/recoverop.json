@@ -2,41 +2,51 @@
   {
     "name": "RECOVEROP-the-password-set-instead",
     "file": "tools/reissueRecoveryCode.mjs",
-    "old": "UPDATE players SET recovery_hash = '${hash}'",
-    "new": "UPDATE players SET password = '${hash}'",
-    "tests": ["test/server/recoverop.test.js"],
+    "old": "  return `UPDATE players SET recovery_hash = '${hash}' WHERE handle_lc = '${lc}' AND handle IS NOT NULL RETURNING handle;`;",
+    "new": "  return `UPDATE players SET password = '${hash}' WHERE handle_lc = '${lc}' AND handle IS NOT NULL RETURNING handle;`;",
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "The operator would know the player's password, the lost code would still be the only code, and the game's recovery would refuse the new one."
   },
   {
     "name": "RECOVEROP-the-pretty-code-hashed",
     "file": "tools/reissueRecoveryCode.mjs",
-    "old": "hash: await hashPassword(codeForHashing(code), { subtle, rand })",
-    "new": "hash: await hashPassword(code, { subtle, rand })",
-    "tests": ["test/server/recoverop.test.js"],
+    "old": "  return { code, hash: await hashPassword(codeForHashing(code), { subtle, rand }) };",
+    "new": "  return { code, hash: await hashPassword(code, { subtle, rand }) };",
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "recover hashes the canonical code (no dashes), so a hash of the dashed one never matches: a code that cannot be used."
   },
   {
     "name": "RECOVEROP-the-handle-as-typed",
     "file": "tools/reissueRecoveryCode.mjs",
-    "old": "const lc = handle.toLowerCase().replaceAll(\"'\", \"''\");",
-    "new": "const lc = handle.replaceAll(\"'\", \"''\");",
-    "tests": ["test/server/recoverop.test.js"],
+    "old": "  const lc = handle.toLowerCase().replaceAll(\"'\", \"''\");",
+    "new": "  const lc = handle.replaceAll(\"'\", \"''\");",
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "handle_lc is folded; 'TWODDLE' typed into the workflow would match no row."
   },
   {
     "name": "RECOVEROP-the-quote-not-doubled",
     "file": "tools/reissueRecoveryCode.mjs",
-    "old": "const lc = handle.toLowerCase().replaceAll(\"'\", \"''\");",
-    "new": "const lc = handle.toLowerCase();",
-    "tests": ["test/server/recoverop.test.js"],
+    "old": "  const lc = handle.toLowerCase().replaceAll(\"'\", \"''\");",
+    "new": "  const lc = handle.toLowerCase();",
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "A username may carry a quote, and without doubling it ends the string: a syntax error, or SQL a username wrote."
   },
   {
     "name": "RECOVEROP-the-hash-form-unchecked",
     "file": "tools/reissueRecoveryCode.mjs",
-    "old": "if (typeof hash !== 'string' || !HASH_RE.test(hash) || !parseStored(hash))",
-    "new": "if (typeof hash !== 'string' || !parseStored(hash))",
-    "tests": ["test/server/recoverop.test.js"],
+    "old": "  if (typeof hash !== 'string' || !HASH_RE.test(hash) || !parseStored(hash))\n    throw new Error('not a recovery-code hash from this tool');",
+    "new": "  if (typeof hash !== 'string' || !parseStored(hash)) throw new Error('not a recovery-code hash from this tool');",
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "atob skips whitespace, so a hash with a space pasted into it would be stored as something the tool never wrote."
   },
   {
@@ -44,7 +54,9 @@
     "file": ".github/workflows/account-recovery.yml",
     "old": "          if [ \"$n\" != \"1\" ]; then",
     "new": "          if [ \"$n\" = \"-1\" ]; then",
-    "tests": ["test/server/recoverop.test.js"],
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "A misspelled username changes no row, and a green run would tell the operator the code was set."
   },
   {
@@ -52,7 +64,9 @@
     "file": ".github/workflows/account-recovery.yml",
     "old": "node tools/reissueRecoveryCode.mjs --sql \"$HANDLE\" \"$HASH\"",
     "new": "node tools/reissueRecoveryCode.mjs --sql \"${{ inputs.handle }}\" \"$HASH\"",
-    "tests": ["test/server/recoverop.test.js"],
+    "tests": [
+      "test/server/recoverop.test.js"
+    ],
     "note": "An input pasted into a run: line is a shell command whoever runs the workflow can type."
   }
 ]

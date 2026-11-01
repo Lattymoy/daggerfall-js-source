@@ -1,31 +1,296 @@
 [
-  {"name": "WEBKIT-TLA-await", "file": "src/systems/firstVisit/firstVisitStore.js", "old": "import { FIRST_VISIT_PINS } from '../../firstVisitPins.js';", "new": "const { FIRST_VISIT_PINS = null } = await import('../../firstVisitPins.js').catch(() => ({}));", "tests": ["test/tree/toplevelawait.test.js"], "why": "the report's law: the pins awaited at the top again - every graph that imports the store async, and WebKit's Play resolving before the world ran"},
-  {"name": "WEBKIT-TLA-dev-load", "file": "scripts/firstVisitPins.mjs", "old": "?? []) graph.invalidateModule(mod);", "new": "?? []) void mod;", "tests": ["test/systems/firstVisit/fv_versions.test.js"], "why": "a dev page load keeps the pins it was served - a dev edit no new key until the server restarts"},
-  {"name": "STAR-MASTER-FLED-candidate", "file": "src/systems/revenant/revenant.js", "old": "  if (isEventFoe(entity)) return false;   // STAR-MASTER-FLED", "new": "  if (!isEventFoe) return false;   // STAR-MASTER-FLED", "tests": ["test/systems/revenant/auditunquiet.test.js"], "why": "an event's own foe already a revenant stays a candidate - it runs and rises again; a fresh one draws no mark (the gate), so the master's run is the rule's joint revert (AFB-STAR-F8-the-rule-unread)"},
-  {"name": "STAR-MASTER-FLED-mark", "file": "src/systems/revenant/unquietMark.js", "old": "!entity.wildGiant && !entity.bout && !isEventFoe(entity);", "new": "!entity.wildGiant && !entity.bout;", "tests": ["test/systems/revenant/auditunquiet.test.js"], "why": "an event's own foe reads as marked - Unquiet on a body that can never rise"},
-  {"name": "STAR-MASTER-FLED-title", "file": "src/systems/foeTitle.js", "old": "!entity.bout && entity.eventFoe !== true ? `Unquiet ${traited}`", "new": "!entity.bout ? `Unquiet ${traited}`", "tests": ["test/systems/revenant/auditunquiet.test.js"], "why": "the master's, the boss's or the faithful's title says Unquiet"},
-  {"name": "STAR-MASTER-FLED-restand", "file": "src/scenes/starfall/starfallHost.js", "old": "if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;", "new": "", "tests": ["test/scenes/starfall/star5_host.test.js"], "why": "a master gone without a fall kept as the master - the star waits on it until dawn"},
-  {"name": "STAR-MASTER-FLED-fall", "file": "src/scenes/starfall/starfallHost.js", "old": "S.master?.dead && !S.master.corpse && !S.mf) S.master = null;", "new": "S.master?.dead && !S.master.corpse) S.master = null;", "tests": ["test/scenes/starfall/star5_host.test.js"], "why": "a master that fell read as gone once its body is looted - a second stood over a held star"},
-  {"name": "SEA-ROWS-rows", "file": "src/world/ethericSea.js", "old": "landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX;", "new": "landPx >= CROSS_LAND_PX;", "tests": ["test/world/ethersea.test.js", "test/systems/naval/auditcaptsea.test.js", "test/systems/naval/fb1029g_searows.test.js"], "why": "the report's law: the crossing asked across the sea the world sails - Sumurset's lanes and the serpent's waters asked to cross"},
-  {"name": "SEA-ROWS-journey", "file": "src/scenes/world.js", "old": "if (!crossGate.offer(way, travelOptions)) return;", "new": "if (!crossGate.offer(way)) return;", "tests": ["test/systems/naval/auditcaptsea.test.js"], "why": "a voyage to a place it chose asked to cross on its way"},
-  {"name": "SEA-TAUT-pull", "file": "src/systems/travel/travelRoute.js", "old": "const taut = yield* seaTautSteps(pixels, isWater, tally);", "new": "const taut = pixels.slice();", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "the report's law: the floods' Λ and the lanes' eight headings sailed"},
-  {"name": "SEA-TAUT-diagonal", "file": "src/systems/travel/travelRoute.js", "old": "const nd = dist[i] + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1);", "new": "const nd = dist[i] + 1;", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "a diagonal step counted as one - a coast's way bent up to √2 the line"},
-  {"name": "SEA-TAUT-open", "file": "src/systems/travel/travelRoute.js", "old": "const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => open(qx, qy));", "new": "const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => water(qx, qy));", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "a run past a land pixel's corner - ashore between the middles (SEA-SQUARE)"},
-  {"name": "NOTICE-PANEL-shown-under-a-window", "file": "src/scenes/townPanelHost.js", "old": "if (!town || host.covered()) { view.hide(); if (!town) shownFor = null; return; }", "new": "if (!town) { view.hide(); shownFor = null; return; }", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "a window, the helm or a journey bar under the compass - the panel stood over it"},
-  {"name": "NOTICE-PANEL-read-every-frame", "file": "src/scenes/townPanelHost.js", "old": "&& view.shown && t - readAt < TOWN_PANEL_READ_MS) return;", "new": "&& view.shown && false) return;", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the town's card worked out every frame, a seat list scan each time"},
-  {"name": "NOTICE-PANEL-the-count-unsaid", "file": "src/scenes/townPanelHost.js", "old": "unseen: host.unseen?.(town.mapId) ?? 0,", "new": "unseen: 0,", "tests": ["test/scenes/fb1029g_townpanel.test.js", "test/net/notice1.test.js"], "why": "the Notice Board's new notes no longer said anywhere - the count over a board went with the boards"},
-  {"name": "NOTICE-PANEL-the-fold-forgotten", "file": "src/scenes/townPanelHost.js", "old": "onFold: (f) => setPref('townPanelFolded', f),", "new": "onFold: () => {},", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the panel folded to its name opens again at the next town"},
-  {"name": "NOTICE-PANEL-the-box-never-shown", "file": "src/scenes/townPanelHost.js", "old": "    host.showBox?.(new ChoiceWindow({ lines: rows.map((r) => r.text) }));\n", "new": "", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "offline, or before the service says the board is open, the Notice Board press does nothing - DFU's rumour box gone"},
-  {"name": "NOTICE-PANEL-the-bounty-offered-everywhere", "file": "src/ui/hud/townPanel.js", "old": "bounty.hidden = !view.bounty;", "new": "bounty.hidden = false;", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "a Bounty Board offered where no hunt is kept"},
-  {"name": "NOTICE-PANEL-a-press-reaching-the-world", "file": "src/ui/hud/townPanel.js", "old": "    n.addEventListener('mousedown', (e) => { if (!hudArranging()) e.stopPropagation(); });\n", "new": "", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "a press on the panel swings the weapon too - the hosts read a window mousedown"},
-  {"name": "NOTICE-PANEL-control-left-out", "file": "src/net/townEconLaw.js", "old": "const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];", "new": "const lines = [];", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the owner's guild control missing from the panel"},
-  {"name": "NOTICE-PANEL-the-area-where-no-seat-holds", "file": "src/net/townEconLaw.js", "old": ": area ? [townAreaLine(area)] : [];", "new": ": area !== undefined ? [townAreaLine(area)] : [];", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "a region no guild can hold says \"No guild holds this area\" - the owner: \"If a place cannot be guild controlled, then this can be left out\""},
-  {"name": "NOTICE-PANEL-lines-of-no-town", "file": "src/systems/town/townEcon.js", "old": "      if (!r) return [];\n      return townPanelLinesOf(", "new": "      if (!r) return [''];\n      return townPanelLinesOf(", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "offline, or a place with no economy, the panel carries an empty line"},
-  {"name": "NOTICE-PANEL-the-kit-press-dropped", "file": "src/ui/enhanced/enhancedFrame.js", "old": "    'body .dftown-panel .dftown-btn'],   // NOTICE-PANEL: the town panel's Notice Board and Bounty Board", "new": "    ],   // NOTICE-PANEL: the town panel's Notice Board and Bounty Board", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the panel's buttons drawn flat - no kit press"},
-  {"name": "NOTICE-PANEL-in-the-wild", "file": "src/scenes/world.js", "old": "const settlementHere = () => (_storesReached() ? panelTownOf(", "new": "const settlementHere = () => (true ? panelTownOf(", "tests": ["test/scenes/fb1029g_townpanel.test.js", "test/systems/l10n3e_scenes.test.js"], "why": "the panel on any pixel a location stands on - outside its walls, under it in a dungeon"},
-  {"name": "NOTICE-PANEL-under-the-modal-gate", "file": "src/scenes/world.js", "old": "    townPanel.frame();   // NOTICE-PANEL: above the modal gate as the quest sync is - a town's buildings are the town too\n", "new": "", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the panel never framed - or framed in the street alone"},
-  {"name": "NOTICE-PANEL-under-the-helm", "file": "src/scenes/world.js", "old": "|| !!arenaBouts.bout() || !!csaAboard.aboard || !!csaRuntime?.state?.CurrentBoat,", "new": "|| !!arenaBouts.bout(),", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the panel over the helm panel and the ship's card in a port town"},
-  {"name": "NOTICE-PANEL-the-board-stood-again", "file": "src/scenes/pixelBuild.js", "old": "if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }", "new": "if (false) { pixelBoards.push({ box, local }); continue; }", "tests": ["test/systems/bulletinboard.test.js"], "why": "the owner's \"remove the notice board prop from all cities\" undone"},
-  {"name": "NOTICE-PANEL-the-bench-board-stood", "file": "src/scenes/exterior.js", "old": "      if (isBulletinBoard(placed.modelIdNum)) continue;\n", "new": "", "tests": ["test/systems/bulletinboard.test.js"], "why": "the bench stands the board prop again"},
-  {"name": "NOTICE-PANEL-not-movable", "file": "src/ui/hud/hudLayout.js", "old": "  { id: 'town', sel: '.hud .dftown-panel', get name() { return t('menu.hud.piece.town', 'Town panel'); }, dummy: true },\n", "new": "", "tests": ["test/scenes/fb1029g_townpanel.test.js"], "why": "the panel the one HUD piece the editor cannot move (Mac's HUD-MOVE)"}
+  {
+    "name": "WEBKIT-TLA-await",
+    "file": "src/systems/firstVisit/firstVisitStore.js",
+    "old": "import { FIRST_VISIT_PINS } from '../../firstVisitPins.js';",
+    "new": "const { FIRST_VISIT_PINS = null } = await import('../../firstVisitPins.js').catch(() => ({}));",
+    "tests": [
+      "test/tree/toplevelawait.test.js"
+    ],
+    "why": "the report's law: the pins awaited at the top again - every graph that imports the store async, and WebKit's Play resolving before the world ran"
+  },
+  {
+    "name": "WEBKIT-TLA-dev-load",
+    "file": "scripts/firstVisitPins.mjs",
+    "old": "      for (const mod of graph?.getModulesByFile(resolve(root, PINS_PATH).split('\\\\').join('/')) ?? [])\n        graph.invalidateModule(mod);",
+    "new": "      for (const mod of graph?.getModulesByFile(resolve(root, PINS_PATH).split('\\\\').join('/')) ?? []) void mod;",
+    "tests": [
+      "test/systems/firstVisit/fv_versions.test.js"
+    ],
+    "why": "a dev page load keeps the pins it was served - a dev edit no new key until the server restarts"
+  },
+  {
+    "name": "STAR-MASTER-FLED-candidate",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (isEventFoe(entity)) return false;   // STAR-MASTER-FLED",
+    "new": "  if (!isEventFoe) return false;   // STAR-MASTER-FLED",
+    "tests": [
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "an event's own foe already a revenant stays a candidate - it runs and rises again; a fresh one draws no mark (the gate), so the master's run is the rule's joint revert (AFB-STAR-F8-the-rule-unread)"
+  },
+  {
+    "name": "STAR-MASTER-FLED-mark",
+    "file": "src/systems/revenant/unquietMark.js",
+    "old": "export const isUnquiet = (entity) =>\n  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "export const isUnquiet = (entity) => entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout;",
+    "tests": [
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "an event's own foe reads as marked - Unquiet on a body that can never rise"
+  },
+  {
+    "name": "STAR-MASTER-FLED-title",
+    "file": "src/systems/foeTitle.js",
+    "old": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true",
+    "new": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout",
+    "tests": [
+      "test/systems/revenant/auditunquiet.test.js"
+    ],
+    "why": "the master's, the boss's or the faithful's title says Unquiet"
+  },
+  {
+    "name": "STAR-MASTER-FLED-restand",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
+    "new": "",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a master gone without a fall kept as the master - the star waits on it until dawn"
+  },
+  {
+    "name": "STAR-MASTER-FLED-fall",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
+    "new": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse) S.master = null;",
+    "tests": [
+      "test/scenes/starfall/star5_host.test.js"
+    ],
+    "why": "a master that fell read as gone once its body is looted - a second stood over a held star"
+  },
+  {
+    "name": "SEA-ROWS-rows",
+    "file": "src/world/ethericSea.js",
+    "old": "landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX;",
+    "new": "landPx >= CROSS_LAND_PX;",
+    "tests": [
+      "test/world/ethersea.test.js",
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the report's law: the crossing asked across the sea the world sails - Sumurset's lanes and the serpent's waters asked to cross"
+  },
+  {
+    "name": "SEA-ROWS-journey",
+    "file": "src/scenes/world.js",
+    "old": "if (!crossGate.offer(way, travelOptions)) return;",
+    "new": "if (!crossGate.offer(way)) return;",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js"
+    ],
+    "why": "a voyage to a place it chose asked to cross on its way"
+  },
+  {
+    "name": "SEA-TAUT-pull",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const taut = yield* seaTautSteps(pixels, isWater, tally);",
+    "new": "  const taut = pixels.slice();",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "the report's law: the floods' Λ and the lanes' eight headings sailed"
+  },
+  {
+    "name": "SEA-TAUT-diagonal",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "          const nd = dist[i] + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1);",
+    "new": "          const nd = dist[i] + 1;",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "a diagonal step counted as one - a coast's way bent up to √2 the line"
+  },
+  {
+    "name": "SEA-TAUT-open",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => open(qx, qy));",
+    "new": "  const clear = (a, b) => open(a.x, a.y) && lineSteps(a, b, (_ax, _ay, qx, qy) => water(qx, qy));",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "a run past a land pixel's corner - ashore between the middles (SEA-SQUARE)"
+  },
+  {
+    "name": "NOTICE-PANEL-shown-under-a-window",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "      if (!town || host.covered()) {\n        view.hide();\n        if (!town) shownFor = null;",
+    "new": "      if (!town) {\n        view.hide();\n        shownFor = null;",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "a window, the helm or a journey bar under the compass - the panel stood over it"
+  },
+  {
+    "name": "NOTICE-PANEL-read-every-frame",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "      if (\n        shownFor?.mapId === town.mapId &&\n        shownFor.district === town.district &&\n        view.shown &&\n        t - readAt < TOWN_PANEL_READ_MS\n      )\n        return;",
+    "new": "      if (shownFor?.mapId === town.mapId && shownFor.district === town.district && view.shown && false) return;",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the town's card worked out every frame, a seat list scan each time"
+  },
+  {
+    "name": "NOTICE-PANEL-the-count-unsaid",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "        unseen: host.unseen?.(town.mapId) ?? 0,",
+    "new": "        unseen: 0,",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js",
+      "test/net/notice1.test.js"
+    ],
+    "why": "the Notice Board's new notes no longer said anywhere - the count over a board went with the boards"
+  },
+  {
+    "name": "NOTICE-PANEL-the-fold-forgotten",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "      onFold: (f) => setPref('townPanelFolded', f),",
+    "new": "      onFold: () => {},",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the panel folded to its name opens again at the next town"
+  },
+  {
+    "name": "NOTICE-PANEL-the-box-never-shown",
+    "file": "src/scenes/townPanelHost.js",
+    "old": "    host.showBox?.(new ChoiceWindow({ lines: rows.map((r) => r.text) }));\n  }",
+    "new": "  }",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "offline, or before the service says the board is open, the Notice Board press does nothing - DFU's rumour box gone"
+  },
+  {
+    "name": "NOTICE-PANEL-the-bounty-offered-everywhere",
+    "file": "src/ui/hud/townPanel.js",
+    "old": "        bounty.hidden = !view.bounty;",
+    "new": "        bounty.hidden = false;",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "a Bounty Board offered where no hunt is kept"
+  },
+  {
+    "name": "NOTICE-PANEL-a-press-reaching-the-world",
+    "file": "src/ui/hud/townPanel.js",
+    "old": "    n.addEventListener('mousedown', (e) => {\n      if (!hudArranging()) e.stopPropagation();\n    });\n    n.addEventListener('mouseup', (e) => {",
+    "new": "    n.addEventListener('mouseup', (e) => {",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "a press on the panel swings the weapon too - the hosts read a window mousedown"
+  },
+  {
+    "name": "NOTICE-PANEL-control-left-out",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];",
+    "new": "  const lines = [];",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the owner's guild control missing from the panel"
+  },
+  {
+    "name": "NOTICE-PANEL-the-area-where-no-seat-holds",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];",
+    "new": "  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area !== undefined ? [townAreaLine(area)] : [];",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "a region no guild can hold says \"No guild holds this area\" - the owner: \"If a place cannot be guild controlled, then this can be left out\""
+  },
+  {
+    "name": "NOTICE-PANEL-lines-of-no-town",
+    "file": "src/systems/town/townEcon.js",
+    "old": "      if (!r) return [];",
+    "new": "      if (!r) return [''];",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "offline, or a place with no economy, the panel carries an empty line"
+  },
+  {
+    "name": "NOTICE-PANEL-the-kit-press-dropped",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    'body .dftown-panel .dftown-btn',\n  ], // NOTICE-PANEL: the town panel's Notice Board and Bounty Board",
+    "new": "  ], // NOTICE-PANEL: the town panel's Notice Board and Bounty Board",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the panel's buttons drawn flat - no kit press"
+  },
+  {
+    "name": "NOTICE-PANEL-in-the-wild",
+    "file": "src/scenes/world.js",
+    "old": "const settlementHere = () => (_storesReached() ? panelTownOf(",
+    "new": "const settlementHere = () => (true ? panelTownOf(",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js",
+      "test/systems/l10n3e_scenes.test.js"
+    ],
+    "why": "the panel on any pixel a location stands on - outside its walls, under it in a dungeon"
+  },
+  {
+    "name": "NOTICE-PANEL-under-the-modal-gate",
+    "file": "src/scenes/world.js",
+    "old": "    townPanel.frame();   // NOTICE-PANEL: above the modal gate as the quest sync is - a town's buildings are the town too\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the panel never framed - or framed in the street alone"
+  },
+  {
+    "name": "NOTICE-PANEL-under-the-helm",
+    "file": "src/scenes/world.js",
+    "old": "|| !!arenaBouts.bout() || !!csaAboard.aboard || !!csaRuntime?.state?.CurrentBoat,",
+    "new": "|| !!arenaBouts.bout(),",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the panel over the helm panel and the ship's card in a port town"
+  },
+  {
+    "name": "NOTICE-PANEL-the-board-stood-again",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
+    "new": "if (false) { pixelBoards.push({ box, local }); continue; }",
+    "tests": [
+      "test/systems/bulletinboard.test.js"
+    ],
+    "why": "the owner's \"remove the notice board prop from all cities\" undone"
+  },
+  {
+    "name": "NOTICE-PANEL-the-bench-board-stood",
+    "file": "src/scenes/exterior.js",
+    "old": "      if (isBulletinBoard(placed.modelIdNum)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/bulletinboard.test.js"
+    ],
+    "why": "the bench stands the board prop again"
+  },
+  {
+    "name": "NOTICE-PANEL-not-movable",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "    {\n      id: 'town',\n      sel: '.hud .dftown-panel',\n      get name() {\n        return t('menu.hud.piece.town', 'Town panel');\n      },\n      dummy: true,\n    },\n    // HUD-SADDLE (FIELD BUGS 2026-10-14, Discord: \"Riding Window is not able to be edited in the HUD Editor (Alt+U)\"): the",
+    "new": "    // HUD-SADDLE (FIELD BUGS 2026-10-14, Discord: \"Riding Window is not able to be edited in the HUD Editor (Alt+U)\"): the",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ],
+    "why": "the panel the one HUD piece the editor cannot move (Mac's HUD-MOVE)"
+  }
 ]

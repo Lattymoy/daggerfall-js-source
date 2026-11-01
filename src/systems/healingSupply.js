@@ -41,7 +41,7 @@
 // A departure (Ledger A, POTION-COMMON; POT-THIN its numbers).
 import { createPotion, registerTabledLootHandler, registerEnemyLootExtra, CLASSIC_RECIPE_KEYS } from './loot/loot.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { renownLootQuarters, lootEased } from './renownLoot.js';   // RENOWN-LOOT: the chances by the roller's Renown
+import { renownLootQuarters, lootEased } from './renownLoot.js'; // RENOWN-LOOT: the chances by the roller's Renown
 
 /** PotionRecipe "healing" (potions.js: Heal Health, 5 + 9 a level; price 50) - classicRecipeKeys[2], ONE DFU MEMBER,
  *  ONE EXPORT (AUDIT ECON: the key was a second literal of loot.js's). */
@@ -66,8 +66,14 @@ export const HEALING_PILE_CHANCE_BEFORE = 4;
  *  at Renown 20. */
 export function healingSupplyChances(quarters = renownLootQuarters()) {
   return {
-    enemy: { healing: lootEased(HEALING_ENEMY_CHANCE_BEFORE, HEALING_ENEMY_CHANCE, quarters), magicka: lootEased(0, MAGICKA_ENEMY_CHANCE, quarters) },
-    pile: { healing: lootEased(HEALING_PILE_CHANCE_BEFORE, HEALING_PILE_CHANCE, quarters), magicka: lootEased(0, MAGICKA_PILE_CHANCE, quarters) },
+    enemy: {
+      healing: lootEased(HEALING_ENEMY_CHANCE_BEFORE, HEALING_ENEMY_CHANCE, quarters),
+      magicka: lootEased(0, MAGICKA_ENEMY_CHANCE, quarters),
+    },
+    pile: {
+      healing: lootEased(HEALING_PILE_CHANCE_BEFORE, HEALING_PILE_CHANCE, quarters),
+      magicka: lootEased(0, MAGICKA_PILE_CHANCE, quarters),
+    },
   };
 }
 
@@ -104,7 +110,15 @@ export function installHealingSupply() {
   // PARTY-LOOT: at the roll's own RENOWN-LOOT share when the raiser names one (a room's base), else the roller's
   registerTabledLootHandler('healing-potion', ({ key, items, rolls, quarters }) => {
     const i = typeof key === 'string' ? key.charCodeAt(0) - 64 : 0;
-    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion(items, pile.healing, rolls); maybeAddMagickaPotion(items, pile.magicka, rolls); }
+    if (i >= 10 && i <= 15) {
+      const { pile } = healingSupplyChances(quarters);
+      maybeAddHealingPotion(items, pile.healing, rolls);
+      maybeAddMagickaPotion(items, pile.magicka, rolls);
+    }
   });
-  registerEnemyLootExtra('healing-potion', ({ items, rolls, quarters }) => { const { enemy } = healingSupplyChances(quarters); maybeAddHealingPotion(items, enemy.healing, rolls); maybeAddMagickaPotion(items, enemy.magicka, rolls); });
+  registerEnemyLootExtra('healing-potion', ({ items, rolls, quarters }) => {
+    const { enemy } = healingSupplyChances(quarters);
+    maybeAddHealingPotion(items, enemy.healing, rolls);
+    maybeAddMagickaPotion(items, enemy.magicka, rolls);
+  });
 }

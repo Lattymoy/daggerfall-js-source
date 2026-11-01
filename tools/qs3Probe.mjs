@@ -147,7 +147,11 @@ const notes = [];
 try {
   // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
   await writeFile(PAGE_PATH, PAGE);
-  const sizes = [['desktop', { width: 1280, height: 800 }], ['phone-landscape', { width: 860, height: 400 }], ['phone-portrait', { width: 430, height: 860 }]];
+  const sizes = [
+    ['desktop', { width: 1280, height: 800 }],
+    ['phone-landscape', { width: 860, height: 400 }],
+    ['phone-portrait', { width: 430, height: 860 }],
+  ];
   for (const [name, size] of sizes) {
     for (const scale of [1, 1.5, 2]) {
       for (const stick of ['float', 'fixed']) {
@@ -158,21 +162,43 @@ try {
         const page = await browser.newPage({ viewport: size, hasTouch: touch, isMobile: touch });
         const errors = [];
         page.on('pageerror', (e) => errors.push(String(e)));
-        await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=${scale}&stick=${stick}&spell=1`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch((e) => errors.push(e.message));
+        await page
+          .goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=${scale}&stick=${stick}&spell=1`, {
+            waitUntil: 'domcontentloaded',
+            timeout: 60000,
+          })
+          .catch((e) => errors.push(e.message));
         await page.waitForFunction(() => !!window.__probe, null, { timeout: 30000 }).catch(() => {});
         const p = await page.evaluate(() => window.__probe ?? null);
-        if (!p) { fails.push(`${name} x${scale} ${stick}: the page never reported (${errors.join('; ') || 'no error'})`); await page.close(); continue; }
-        const btns = touchButtons(p.W, p.H), stickBox = fixedStickBox(p.H);
+        if (!p) {
+          fails.push(`${name} x${scale} ${stick}: the page never reported (${errors.join('; ') || 'no error'})`);
+          await page.close();
+          continue;
+        }
+        const btns = touchButtons(p.W, p.H),
+          stickBox = fixedStickBox(p.H);
         const label = `${name} ${p.W}x${p.H} scale ${scale} stick ${stick}`;
         console.log(`\n== ${label}  (--hud-scale ${p.scale})`);
-        console.log(`   .hud-quick    x ${p.quick.x} y ${p.quick.y} ${p.quick.w}x${p.quick.h}  right ${p.quick.right} bottom ${p.quick.bottom}`);
+        console.log(
+          `   .hud-quick    x ${p.quick.x} y ${p.quick.y} ${p.quick.w}x${p.quick.h}  right ${p.quick.right} bottom ${p.quick.bottom}`,
+        );
         console.log(`   .hud-qdiamond x ${p.diamond.x} y ${p.diamond.y} ${p.diamond.w}x${p.diamond.h}`);
         console.log(`   .hud-bars     x ${p.bars.x} y ${p.bars.y} ${p.bars.w}x${p.bars.h}`);
         console.log(`   .hud-qcap     x ${p.cap.x} y ${p.cap.y} ${p.cap.w}x${p.cap.h}`);
-        for (const k of ['main', 'off', 'c1', 'c2']) console.log(`   cell ${k.padEnd(4)}     x ${p.cells[k].x} y ${p.cells[k].y} ${p.cells[k].w}x${p.cells[k].h}  [${p.classes[k]}]`);
-        for (const k of ['top', 'left', 'right', 'bottom']) console.log(`   tag  ${k.padEnd(6)}   ${p.tagsOn[k] ? `x ${p.tags[k].x} y ${p.tags[k].y} ${p.tags[k].w}x${p.tags[k].h}` : 'hidden (nothing bound)'}`);
-        console.log(`   counts c1 "${p.counts.c1}" c2 "${p.counts.c2}"; cell pointer-events ${p.pointer}, root ${p.rootPointer}; .hud-hands present: ${p.hands}`);
-        console.log(`   touch buttons ${JSON.stringify(btns)}${stick === 'fixed' ? `  fixed stick ${JSON.stringify(stickBox)}` : ''}`);
+        for (const k of ['main', 'off', 'c1', 'c2'])
+          console.log(
+            `   cell ${k.padEnd(4)}     x ${p.cells[k].x} y ${p.cells[k].y} ${p.cells[k].w}x${p.cells[k].h}  [${p.classes[k]}]`,
+          );
+        for (const k of ['top', 'left', 'right', 'bottom'])
+          console.log(
+            `   tag  ${k.padEnd(6)}   ${p.tagsOn[k] ? `x ${p.tags[k].x} y ${p.tags[k].y} ${p.tags[k].w}x${p.tags[k].h}` : 'hidden (nothing bound)'}`,
+          );
+        console.log(
+          `   counts c1 "${p.counts.c1}" c2 "${p.counts.c2}"; cell pointer-events ${p.pointer}, root ${p.rootPointer}; .hud-hands present: ${p.hands}`,
+        );
+        console.log(
+          `   touch buttons ${JSON.stringify(btns)}${stick === 'fixed' ? `  fixed stick ${JSON.stringify(stickBox)}` : ''}`,
+        );
 
         // WHAT IS CHECKED IS WHAT IS DRAWN. `.hud-quick` is a padded box
         // whose caption row is as wide as its longest chip and whose
@@ -181,20 +207,30 @@ try {
         // diamond, the caption and whichever tags are standing.
         // ...and the diamond's own SQUARE is four corners of nothing, so
         // the four cells are measured rather than the box round them.
-        console.log(`   .hud-qspell   ${p.spellOn ? `x ${p.spellChip.x} y ${p.spellChip.y} ${p.spellChip.w}x${p.spellChip.h} "${p.spellName}" key "${p.spellKey}" [${p.spellClass}]` : 'hidden'}; the readied chip ${p.readiedOn ? 'drawn' : 'stood down'}`);
+        console.log(
+          `   .hud-qspell   ${p.spellOn ? `x ${p.spellChip.x} y ${p.spellChip.y} ${p.spellChip.w}x${p.spellChip.h} "${p.spellName}" key "${p.spellKey}" [${p.spellClass}]` : 'hidden'}; the readied chip ${p.readiedOn ? 'drawn' : 'stood down'}`,
+        );
         // QS6: the chip is drawn, it names the slot's spell, and - when the
         // readied spell IS the slot's - the generic readied chip stands down
         // rather than saying the same word twice.
         if (!p.spellOn) fails.push(`${label}: the caption's spell chip is not drawn`);
         if (p.spellOn && !p.spellName) fails.push(`${label}: the spell chip carries no name`);
-        if (p.spellOn && p.readiedOn) fails.push(`${label}: the readied chip doubles the spell chip's own word ("${p.readiedName}")`);
-        if (p.spellOn && !p.spellClass.includes('readied')) fails.push(`${label}: the spell in hand does not light its own chip`);
-        if (touch && p.spellOn && p.spellPointer !== 'auto') fails.push(`${label}: a phone cannot reach the spell chip (pointer-events ${p.spellPointer})`);
+        if (p.spellOn && p.readiedOn)
+          fails.push(`${label}: the readied chip doubles the spell chip's own word ("${p.readiedName}")`);
+        if (p.spellOn && !p.spellClass.includes('readied'))
+          fails.push(`${label}: the spell in hand does not light its own chip`);
+        if (touch && p.spellOn && p.spellPointer !== 'auto')
+          fails.push(`${label}: a phone cannot reach the spell chip (pointer-events ${p.spellPointer})`);
         if (touch && p.spellKeyShown) fails.push(`${label}: a KEY chip is drawn on a device with no keyboard`);
         if (!touch && !p.spellKeyShown) fails.push(`${label}: the spell chip names no key`);
-        const drawn = [...['main', 'off', 'c1', 'c2'].map((k) => [`the ${k} cell`, p.cells[k]]), ['the caption', p.cap],
-          ...['top', 'left', 'right', 'bottom'].filter((k) => p.tagsOn[k]).map((k) => [`the ${k} tag`, p.tags[k]])];
-        const hit = (box, what) => { for (const [name, r] of drawn) if (overlaps(r, box)) fails.push(`${label}: ${name} overlaps ${what}`); };
+        const drawn = [
+          ...['main', 'off', 'c1', 'c2'].map((k) => [`the ${k} cell`, p.cells[k]]),
+          ['the caption', p.cap],
+          ...['top', 'left', 'right', 'bottom'].filter((k) => p.tagsOn[k]).map((k) => [`the ${k} tag`, p.tags[k]]),
+        ];
+        const hit = (box, what) => {
+          for (const [name, r] of drawn) if (overlaps(r, box)) fails.push(`${label}: ${name} overlaps ${what}`);
+        };
         // AT hudScale 2 ON A PHONE THE WHOLE HUD IS OVER-SCALED, and
         // that is not this slice's doing: the vitals column itself is
         // 710px wide on a 430px screen and hangs off BOTH edges
@@ -211,21 +247,32 @@ try {
           const off = r.x < 0 || r.right > p.W || r.y < 0 || r.bottom > p.H + 0.5;
           if (!off) continue;
           const line = `${label}: ${name} leaves the viewport (x ${r.x} right ${r.right} y ${r.y} bottom ${r.bottom} of ${p.W}x${p.H})`;
-          if (hudFits) fails.push(line); else notes.push(`${line} - and so does the vitals column (x ${p.bars.x} right ${p.bars.right})`);
+          if (hudFits) fails.push(line);
+          else notes.push(`${line} - and so does the vitals column (x ${p.bars.x} right ${p.bars.right})`);
         }
-        if (stick === 'fixed' && !p.classes.quick.includes('stickclear')) fails.push(`${label}: the stick-clear class was not toggled`);
-        if (stick === 'float' && p.classes.quick.includes('stickclear')) fails.push(`${label}: the stick-clear class stuck on`);
+        if (stick === 'fixed' && !p.classes.quick.includes('stickclear'))
+          fails.push(`${label}: the stick-clear class was not toggled`);
+        if (stick === 'float' && p.classes.quick.includes('stickclear'))
+          fails.push(`${label}: the stick-clear class stuck on`);
         if (p.rootPointer !== 'none') fails.push(`${label}: the HUD root takes the pointer`);
         if (touch) {
-          if (p.pointer !== 'auto') fails.push(`${label}: a phone's cells do not take the finger (pointer-events ${p.pointer})`);
-          for (const k of ['c1', 'off', 'main', 'c2']) if (p.hit[k] !== k) fails.push(`${label}: the centre of the ${k} cell hits ${p.hit[k]}`);
+          if (p.pointer !== 'auto')
+            fails.push(`${label}: a phone's cells do not take the finger (pointer-events ${p.pointer})`);
+          for (const k of ['c1', 'off', 'main', 'c2'])
+            if (p.hit[k] !== k) fails.push(`${label}: the centre of the ${k} cell hits ${p.hit[k]}`);
           if (p.hit.middle !== null) fails.push(`${label}: the diamond's empty middle hits the ${p.hit.middle} cell`);
-          if (p.hit.corner !== null) fails.push(`${label}: c1's square corner hits the ${p.hit.corner} cell - the cell is a square, not a rhombus`);
+          if (p.hit.corner !== null)
+            fails.push(
+              `${label}: c1's square corner hits the ${p.hit.corner} cell - the cell is a square, not a rhombus`,
+            );
         } else if (p.pointer !== 'none') fails.push(`${label}: a desktop's cells take the pointer`);
-        console.log(`   hit test: centres ${['c1', 'off', 'main', 'c2'].map((k) => p.hit[k]).join('/')}, middle ${p.hit.middle}, corner ${p.hit.corner}, gap ${p.hit.gap}`);
+        console.log(
+          `   hit test: centres ${['c1', 'off', 'main', 'c2'].map((k) => p.hit[k]).join('/')}, middle ${p.hit.middle}, corner ${p.hit.corner}, gap ${p.hit.gap}`,
+        );
         // QS3_SHOTS=<dir>: a screenshot per page, for a reader who wants
         // to SEE the diamond rather than read its rectangles.
-        if (process.env.QS3_SHOTS) await page.screenshot({ path: join(process.env.QS3_SHOTS, `qs3-${name}-x${scale}-${stick}.png`) });
+        if (process.env.QS3_SHOTS)
+          await page.screenshot({ path: join(process.env.QS3_SHOTS, `qs3-${name}-x${scale}-${stick}.png`) });
         await page.close();
       }
     }
@@ -235,27 +282,42 @@ try {
   // about the chip merely existing.
   {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=1&stick=float&spell=1&other=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=1&stick=float&spell=1&other=1`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
     await page.waitForFunction(() => !!window.__probe, null, { timeout: 30000 }).catch(() => {});
     const p2 = await page.evaluate(() => window.__probe ?? null);
     console.log(`\n== desktop, a spell readied from the BOOK (not the slot's)`);
-    console.log(`   .hud-qspell "${p2?.spellName}" [${p2?.spellClass}]; .hud-readied ${p2?.readiedOn ? `"${p2.readiedName}"` : 'hidden'}`);
+    console.log(
+      `   .hud-qspell "${p2?.spellName}" [${p2?.spellClass}]; .hud-readied ${p2?.readiedOn ? `"${p2.readiedName}"` : 'hidden'}`,
+    );
     if (!p2?.spellOn) fails.push('book-readied: the spell chip vanished');
     if (!p2?.readiedOn) fails.push('book-readied: the readied chip stood down for a spell the slot does NOT name');
-    if (p2?.spellClass.includes('readied')) fails.push('book-readied: the slot\'s chip lit for a spell that is not in it');
+    if (p2?.spellClass.includes('readied'))
+      fails.push("book-readied: the slot's chip lit for a spell that is not in it");
     await page.close();
   }
   // QS6: A LONG SPELL NAME on the narrowest screen. A spell can be called
   // anything a player types, and an unbounded chip on this row is exactly
   // what ran the whole block off a 430px phone once already (the qcap cap).
-  for (const [name, size] of [['phone-portrait', { width: 430, height: 860 }], ['desktop', { width: 1280, height: 800 }]]) {
+  for (const [name, size] of [
+    ['phone-portrait', { width: 430, height: 860 }],
+    ['desktop', { width: 1280, height: 800 }],
+  ]) {
     const page = await browser.newPage({ viewport: size, hasTouch: name !== 'desktop', isMobile: name !== 'desktop' });
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=1&stick=float&longspell=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts&scale=1&stick=float&longspell=1`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
     await page.waitForFunction(() => !!window.__probe, null, { timeout: 30000 }).catch(() => {});
     const p3 = await page.evaluate(() => window.__probe ?? null);
     console.log(`\n== ${name}, a spell with a long name`);
-    console.log(`   .hud-qcap ${p3.cap.w}x${p3.cap.h} right ${p3.cap.right}; .hud-qspell ${p3.spellChip.w}x${p3.spellChip.h} "${p3.spellName}" of ${p3.W} wide`);
-    if (p3.cap.right > p3.W) fails.push(`${name} long name: the caption runs off the right edge (right ${p3.cap.right} of ${p3.W})`);
+    console.log(
+      `   .hud-qcap ${p3.cap.w}x${p3.cap.h} right ${p3.cap.right}; .hud-qspell ${p3.spellChip.w}x${p3.spellChip.h} "${p3.spellName}" of ${p3.W} wide`,
+    );
+    if (p3.cap.right > p3.W)
+      fails.push(`${name} long name: the caption runs off the right edge (right ${p3.cap.right} of ${p3.W})`);
     if (p3.spellChip.right > p3.cap.right + 0.5) fails.push(`${name} long name: the chip escapes the caption's cap`);
     await page.close();
   }
@@ -264,6 +326,13 @@ try {
   await vite.close();
   await unlink(PAGE_PATH).catch(() => {});
 }
-if (notes.length) { console.log('\nNOTES (the whole HUD is over-scaled here, the vitals column included):'); for (const n of notes) console.log(`  - ${n}`); }
-if (fails.length) { console.log('\nFAILED:'); for (const f of fails) console.log(`  - ${f}`); process.exit(1); }
+if (notes.length) {
+  console.log('\nNOTES (the whole HUD is over-scaled here, the vitals column included):');
+  for (const n of notes) console.log(`  - ${n}`);
+}
+if (fails.length) {
+  console.log('\nFAILED:');
+  for (const f of fails) console.log(`  - ${f}`);
+  process.exit(1);
+}
 console.log('\nall clear');

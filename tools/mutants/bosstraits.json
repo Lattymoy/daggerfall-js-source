@@ -2,8 +2,8 @@
   {
     "name": "BOSS-TRAITS-the-element-unread",
     "file": "src/systems/bossTraits.js",
-    "old": "if (kind === 'spell' && Number.isInteger(element) && traits.includes(ELEMENT_TRAITS[/** @type {number} */ (element)])) d *= RESIST_SHARE;",
-    "new": "if (kind === 'spell' && traits.includes('flameproof')) d *= RESIST_SHARE;",
+    "old": "  if (kind === 'spell' && Number.isInteger(element) && traits.includes(ELEMENT_TRAITS[/** @type {number} */ (element)]))\n    d *= RESIST_SHARE;",
+    "new": "  if (kind === 'spell' && traits.includes('flameproof')) d *= RESIST_SHARE;",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BOSS-TRAITS-arrows-pass-the-blade-turning",
     "file": "src/systems/bossTraits.js",
-    "old": "const bladeBlow = (kind, weapon) => kind === 'arrow' || (kind === 'melee'",
-    "new": "const bladeBlow = (kind, weapon) => (kind === 'melee'",
+    "old": "  kind === 'arrow' ||\n  (kind === 'melee' &&\n    !!weapon &&\n    !isHandWraps(weapon) &&\n    weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);",
+    "new": "  kind === 'melee' && !!weapon && !isHandWraps(weapon) && weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon;",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BOSS-TRAITS-a-fist-read-as-a-blade",
     "file": "src/systems/bossTraits.js",
-    "old": "const bluntBlow = (kind, weapon) => kind === 'melee' && (!weapon || ",
-    "new": "const bluntBlow = (kind, weapon) => kind === 'melee' && !!weapon && (",
+    "old": "  kind === 'melee' && (!weapon || isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist",
+    "new": "  kind === 'melee' && !!weapon && (isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BOSS-TRAITS-thorns-on-a-spell",
     "file": "src/systems/bossTraits.js",
-    "old": "traits.includes('thorned') && (kind === 'melee' || kind === 'arrow')",
-    "new": "traits.includes('thorned')",
+    "old": "  const thorns =\n    traits.includes('thorned') && (kind === 'melee' || kind === 'arrow')\n      ? Math.max(1, Math.round(landed * THORN_SHARE))\n      : 0;",
+    "new": "  const thorns = traits.includes('thorned') ? Math.max(1, Math.round(landed * THORN_SHARE)) : 0;",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOSS-TRAITS-thorns-of-the-whole-blow",
     "file": "src/systems/bossTraits.js",
-    "old": "Math.max(1, Math.round(landed * THORN_SHARE))",
-    "new": "Math.max(1, Math.round(damage * THORN_SHARE))",
+    "old": "      ? Math.max(1, Math.round(landed * THORN_SHARE))",
+    "new": "      ? Math.max(1, Math.round(damage * THORN_SHARE))",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BOSS-TRAITS-the-curb-off",
     "file": "src/systems/bossTraits.js",
-    "old": "  if (traits.includes('curbing')) d = Math.min(",
-    "new": "  if (false) d = Math.min(",
+    "old": "  if (traits.includes('curbing')) d = Math.min(d, Math.max(1, Math.round((entity.maxHealth || 1) * CURB_SHARE)));",
+    "new": "  if (false) d = Math.min(d, Math.max(1, Math.round((entity.maxHealth || 1) * CURB_SHARE)));",
     "tests": [
       "test/systems/bosstraits.test.js",
       "test/scenes/bosstraits_hosts.test.js"
@@ -95,8 +95,8 @@
   {
     "name": "BOSS-TRAITS-the-wrath-twice",
     "file": "src/systems/bossTraits.js",
-    "old": "  if (!entity || entity.bossWrath) return false;\n  entity.bossWrath = true;",
-    "new": "  if (!entity) return false;\n  entity.bossWrath = true;",
+    "old": "  if (!entity || entity.bossWrath) return false;",
+    "new": "  if (!entity) return false;",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "BOSS-TRAITS-the-wrath-from-the-last-wound",
     "file": "src/systems/bossTraits.js",
-    "old": "if (traits.includes('wrathful') && entity.bossWrathFrom == null) entity.bossWrathFrom = nowS; }",
-    "new": "if (traits.includes('wrathful')) entity.bossWrathFrom = nowS; }",
+    "old": "    if (traits.includes('wrathful') && entity.bossWrathFrom == null) entity.bossWrathFrom = nowS;",
+    "new": "    if (traits.includes('wrathful')) entity.bossWrathFrom = nowS;",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "BOSS-TRAITS-both-weapon-resistances",
     "file": "src/systems/bossTraits.js",
-    "old": "    for (const pair of EXCLUSIVE) if (pair.includes(id))",
-    "new": "    for (const pair of []) if (pair.includes(id))",
+    "old": "    for (const pair of EXCLUSIVE)",
+    "new": "    for (const pair of [])",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "BOSS-TRAITS-the-dungeon-unseeded",
     "file": "src/systems/bossTraits.js",
-    "old": "rollBossTraits(1, Number.isSafeInteger(seed) ? eliteRng(seed) : Math.random)",
-    "new": "rollBossTraits(1, Math.random)",
+    "old": "  return giveBossTraits(entity, rollBossTraits(1, Number.isSafeInteger(seed) ? eliteRng(seed) : Math.random));",
+    "new": "  return giveBossTraits(entity, rollBossTraits(1, Math.random));",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "BOSS-TRAITS-the-title-bare",
     "file": "src/systems/foeTitle.js",
-    "old": "const traited = traits && typeof entity?.bossTitle === 'string' && entity.bossTitle ? _traitTitle(entity.bossTitle, special) : special;",
-    "new": "const traited = special;",
+    "old": "  const traited =\n    traits && typeof entity?.bossTitle === 'string' && entity.bossTitle\n      ? _traitTitle(entity.bossTitle, special)\n      : special; // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)",
+    "new": "  const traited = special; // BOSS-TRAITS: its first trait's word (systems/bossTraits.js giveBossTraits)",
     "tests": [
       "test/systems/bosstraits.test.js"
     ]
@@ -233,8 +233,8 @@
   {
     "name": "BOSS-TRAITS-a-spell-on-a-stand-in-unresisted",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    const dealt = counted >= 1 ? bossStrike(body.entity, counted, { kind: 'spell', element: sp.element ?? null }).damage : counted;",
-    "new": "    const dealt = counted;",
+    "old": "    const dealt =\n      counted >= 1 ? bossStrike(body.entity, counted, { kind: 'spell', element: sp.element ?? null }).damage : counted; // BOSS-TRAITS: a relay boss's resistance to the spell's element (systems/bossTraits.js)",
+    "new": "    const dealt = counted; // BOSS-TRAITS: a relay boss's resistance to the spell's element (systems/bossTraits.js)",
     "tests": [
       "test/scenes/bosstraits_hosts.test.js",
       "test/systems/audit_schools.test.js"
@@ -243,8 +243,8 @@
   {
     "name": "BOSS-TRAITS-the-frame-blind",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "    traits: bossTraitWords(e),",
-    "new": "    traits: [],",
+    "old": "    traits: bossTraitWords(e), // BOSS-TRAITS: every trait's word (systems/bossTraits.js)",
+    "new": "    traits: [], // BOSS-TRAITS: every trait's word (systems/bossTraits.js)",
     "tests": [
       "test/scenes/bosstraits_hosts.test.js",
       "test/ui/enhanced/enhancedHud.test.js"

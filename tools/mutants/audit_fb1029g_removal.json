@@ -1,62 +1,62 @@
 [
- {
-  "name": "AFB-REMOVAL-R1-a-second-reckoning",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
-  "new": "if (isBulletinBoard(placed.modelIdNum)) { const at = multiply(originMatrix, placed.matrix); pixelBoards.push({ box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), at), local: at }); continue; }",
-  "tests": [
-   "test/systems/bulletinboard.test.js"
-  ],
-  "why": "the board's place reckoned apart from the drawn model's - free to drift, and the siege field's Market with it, on new clients only"
- },
- {
-  "name": "AFB-REMOVAL-R4-a-board-outside-the-cone",
-  "file": "src/ui/nameCone.js",
-  "old": "if (!p || p.near || !Number.isFinite(p.off)) return 1;",
-  "new": "if (!p || p.near || p.kind === 'board' || !Number.isFinite(p.off)) return 1;",
-  "tests": [
-   "test/ui/pvpcone.test.js"
-  ],
-  "why": "a dead branch back for a point no pass makes"
- },
- {
-  "name": "AFB-REMOVAL-R6-the-road-weight-a-number",
-  "file": "src/world/city/cityNavigation.js",
-  "old": "case 46: case 47: case 55: return ROAD_WEIGHT;",
-  "new": "case 46: case 47: case 55: return 16;",
-  "tests": [
-   "test/world/waternpc.test.js"
-  ],
-  "why": "the walk grid's road weight and the readers' ROAD_WEIGHT two numbers again"
- },
- {
-  "name": "AFB-REMOVAL-R6-the-bench-fetches-a-board",
-  "file": "src/scenes/exterior.js",
-  "old": "if (!isBulletinBoard(placed.modelIdNum)) modelIds.add(placed.modelIdNum);",
-  "new": "modelIds.add(placed.modelIdNum);",
-  "tests": [
-   "test/systems/bulletinboard.test.js"
-  ],
-  "why": "the bench fetches, remaps and uploads a model it never stands"
- },
- {
-  "name": "AFB-REMOVAL-R6-the-sweep-counts-boards",
-  "file": "tools/townSolidsSweep.mjs",
-  "old": " && !isBulletinBoard(p.id));",
-  "new": ");",
-  "tests": [
-   "test/systems/bulletinboard.test.js"
-  ],
-  "why": "the solids sweep reports a board's overlaps that no host stands"
- },
- {
-  "name": "AFB-R2-the-board-indoors",
-  "file": "src/scenes/interiorContext.js",
-  "old": "    if (isBulletinBoard(p.modelIdNum)) continue;\n",
-  "new": "",
-  "tests": [
-   "test/scenes/fb1029g_boardsindoors.test.js"
-  ],
-  "why": "a town pack's tavern, temple or gate room stands the board the owner took out of every city"
- }
+  {
+    "name": "AFB-REMOVAL-R1-a-second-reckoning",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
+    "new": "if (isBulletinBoard(placed.modelIdNum)) { const at = multiply(originMatrix, placed.matrix); pixelBoards.push({ box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), at), local: at }); continue; }",
+    "tests": [
+      "test/systems/bulletinboard.test.js"
+    ],
+    "why": "the board's place reckoned apart from the drawn model's - free to drift, and the siege field's Market with it, on new clients only"
+  },
+  {
+    "name": "AFB-REMOVAL-R4-a-board-outside-the-cone",
+    "file": "src/ui/nameCone.js",
+    "old": "  if (!p || p.near || !Number.isFinite(p.off)) return 1;",
+    "new": "  if (!p || p.near || p.kind === 'board' || !Number.isFinite(p.off)) return 1;",
+    "tests": [
+      "test/ui/pvpcone.test.js"
+    ],
+    "why": "a dead branch back for a point no pass makes"
+  },
+  {
+    "name": "AFB-REMOVAL-R6-the-road-weight-a-number",
+    "file": "src/world/city/cityNavigation.js",
+    "old": "      return ROAD_WEIGHT; // Roads are great!",
+    "new": "      return 16; // Roads are great!",
+    "tests": [
+      "test/world/waternpc.test.js"
+    ],
+    "why": "the walk grid's road weight and the readers' ROAD_WEIGHT two numbers again"
+  },
+  {
+    "name": "AFB-REMOVAL-R6-the-bench-fetches-a-board",
+    "file": "src/scenes/exterior.js",
+    "old": "if (!isBulletinBoard(placed.modelIdNum)) modelIds.add(placed.modelIdNum);",
+    "new": "modelIds.add(placed.modelIdNum);",
+    "tests": [
+      "test/systems/bulletinboard.test.js"
+    ],
+    "why": "the bench fetches, remaps and uploads a model it never stands"
+  },
+  {
+    "name": "AFB-REMOVAL-R6-the-sweep-counts-boards",
+    "file": "tools/townSolidsSweep.mjs",
+    "old": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id)); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)",
+    "new": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id]); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)",
+    "tests": [
+      "test/systems/bulletinboard.test.js"
+    ],
+    "why": "the solids sweep reports a board's overlaps that no host stands"
+  },
+  {
+    "name": "AFB-R2-the-board-indoors",
+    "file": "src/scenes/interiorContext.js",
+    "old": "    if (isBulletinBoard(p.modelIdNum)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1029g_boardsindoors.test.js"
+    ],
+    "why": "a town pack's tavern, temple or gate room stands the board the owner took out of every city"
+  }
 ]

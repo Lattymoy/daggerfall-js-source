@@ -59,15 +59,19 @@ export function hullPlan(boat, geometry) {
   let k = _local.get(boat);
   if (!k || k.root !== root || k.variant !== boat.variant) {
     const inv = invertAffine(root.worldMatrix());
-    const box = [Infinity, -Infinity, Infinity, -Infinity];   // x min, x max, z min, z max in the root's frame
+    const box = [Infinity, -Infinity, Infinity, -Infinity]; // x min, x max, z min, z max in the root's frame
     for (const { collider: c, world: m } of inv ? colliderPoses(root) : []) {
       if (c.m_IsTrigger) continue;
       const tri = c.type === 'BoxCollider' ? boxColliderTriangles(c) : geometry?.(c);
       const p = tri?.positions;
       for (let i = 0; p && i + 2 < p.length; i += 3) {
         const w = [0, 1, 2].map((d) => m[d] * p[i] + m[4 + d] * p[i + 1] + m[8 + d] * p[i + 2] + m[12 + d]);
-        const x = inv[0] * w[0] + inv[4] * w[1] + inv[8] * w[2] + inv[12], z = inv[2] * w[0] + inv[6] * w[1] + inv[10] * w[2] + inv[14];
-        box[0] = Math.min(box[0], x); box[1] = Math.max(box[1], x); box[2] = Math.min(box[2], z); box[3] = Math.max(box[3], z);
+        const x = inv[0] * w[0] + inv[4] * w[1] + inv[8] * w[2] + inv[12],
+          z = inv[2] * w[0] + inv[6] * w[1] + inv[10] * w[2] + inv[14];
+        box[0] = Math.min(box[0], x);
+        box[1] = Math.max(box[1], x);
+        box[2] = Math.min(box[2], z);
+        box[3] = Math.max(box[3], z);
       }
     }
     k = { root, variant: boat.variant, box: Number.isFinite(box[0]) ? box : null };
@@ -75,10 +79,19 @@ export function hullPlan(boat, geometry) {
   }
   if (!k.box) return null;
   const m = root.worldMatrix();
-  const rl = Math.hypot(m[0], m[2]) || 1, fl = Math.hypot(m[8], m[10]) || 1;
-  const r = [m[0] / rl, m[2] / rl], f = [m[8] / fl, m[10] / fl];
-  const cx = (k.box[0] + k.box[1]) / 2, cz = (k.box[2] + k.box[3]) / 2;
-  return { c: [m[12] + m[0] * cx + m[8] * cz, m[14] + m[2] * cx + m[10] * cz], f, r, hl: (k.box[3] - k.box[2]) / 2, hw: (k.box[1] - k.box[0]) / 2 };
+  const rl = Math.hypot(m[0], m[2]) || 1,
+    fl = Math.hypot(m[8], m[10]) || 1;
+  const r = [m[0] / rl, m[2] / rl],
+    f = [m[8] / fl, m[10] / fl];
+  const cx = (k.box[0] + k.box[1]) / 2,
+    cz = (k.box[2] + k.box[3]) / 2;
+  return {
+    c: [m[12] + m[0] * cx + m[8] * cz, m[14] + m[2] * cx + m[10] * cz],
+    f,
+    r,
+    hl: (k.box[3] - k.box[2]) / 2,
+    hw: (k.box[1] - k.box[0]) / 2,
+  };
 }
 /** Whether flat point `p` (x, z) stands within hull plan `h`. */
 const within = (h, p) => {
@@ -92,16 +105,25 @@ let _latch = { deck: /** @type {any} */ (null), passing: /** @type {Set<any>} */
  *  while my feet stay over it and the host's word stands (another ladder, a helm taken, a landing - the host's again). */
 let _pressed = /** @type {{ boat: any, word: any } | null} */ (null);
 /** For a test: the latch let go. */
-export const resetHullLatch = () => { _latch = { deck: null, passing: new Set() }; _pressed = null; };
+export const resetHullLatch = () => {
+  _latch = { deck: null, passing: new Set() };
+  _pressed = null;
+};
 /** A ladder set me on `boat`'s deck (world.js csaFinishBoarding) - none: a ladder of no boat said. @param {any} boat */
-export const deckPressed = (boat) => { _pressed = boat ? { boat, word: undefined } : null; };
+export const deckPressed = (boat) => {
+  _pressed = boat ? { boat, word: undefined } : null;
+};
 /** Whether `boat` is passing through the deck my body stands on (the last sync's word) - the aboard door never boards
  *  it from the air (world.js deckGround: a jump over my deck as she sails under it lands on mine, never on hers). */
 export const hullPassesMyDeck = (boat) => _latch.passing.has(boat);
 
 /** Whose hull `b` is (AUDIT FB1026d II E1): `mine` my own boats (Come Sail Away's), else her key's owner
  *  (comeSailAwayPeers.js `${owner}:${slot}`) - a boat with no key its own. @param {any} b @param {Set<any>} mine */
-const ownerOf = (b, mine) => { if (mine.has(b)) return mine; const k = b?.peerKey; return typeof k === 'string' && k.includes(':') ? k.slice(0, k.lastIndexOf(':')) : b; };
+const ownerOf = (b, mine) => {
+  if (mine.has(b)) return mine;
+  const k = b?.peerKey;
+  return typeof k === 'string' && k.includes(':') ? k.slice(0, k.lastIndexOf(':')) : b;
+};
 
 /**
  * The players' hulls passing through `deck` now (AUDIT FB1026d D1/D2): outside a PvP zone every one of `hulls` that
@@ -112,12 +134,17 @@ const ownerOf = (b, mine) => { if (mine.has(b)) return mine; const k = b?.peerKe
 export function hullsPassing(deck, hulls, geometry, whose = null) {
   const D = deck ? hullPlan(deck, geometry) : null;
   const over = new Set();
-  if (D) for (const b of hulls) {
-    if (b === deck || (whose && whose(b) === whose(deck))) continue;
-    const P = hullPlan(b, geometry);
-    if (P && hullOverlap(D, P)) over.add(b);
-  }
-  const passing = !peerHullsMeet() ? over : deck !== _latch.deck ? new Set() : new Set([..._latch.passing].filter((b) => over.has(b)));
+  if (D)
+    for (const b of hulls) {
+      if (b === deck || (whose && whose(b) === whose(deck))) continue;
+      const P = hullPlan(b, geometry);
+      if (P && hullOverlap(D, P)) over.add(b);
+    }
+  const passing = !peerHullsMeet()
+    ? over
+    : deck !== _latch.deck
+      ? new Set()
+      : new Set([..._latch.passing].filter((b) => over.has(b)));
   _latch = { deck, passing };
   return passing;
 }
@@ -131,8 +158,12 @@ export function hullsPassing(deck, hulls, geometry, whose = null) {
  * @param {any[]} boats @param {any} deck @param {number[] | null} feet @param {any} pool @param {(c: any) => any} geometry
  */
 export function hullsStood(boats, deck, feet, pool, geometry) {
-  const mine = new Set(pool?.boats ?? []), hulls = [...mine, ...(pool?.peerBoats ?? [])];
-  const over = (b) => { const P = b && feet && hulls.includes(b) ? hullPlan(b, geometry) : null; return !!P && within(P, [feet[0], feet[2]]); };
+  const mine = new Set(pool?.boats ?? []),
+    hulls = [...mine, ...(pool?.peerBoats ?? [])];
+  const over = (b) => {
+    const P = b && feet && hulls.includes(b) ? hullPlan(b, geometry) : null;
+    return !!P && within(P, [feet[0], feet[2]]);
+  };
   if (_pressed && _pressed.word === undefined) _pressed.word = deck;
   if (_pressed && (deck !== _pressed.word || !over(_pressed.boat))) _pressed = null;
   const on = _pressed?.boat ?? deck ?? (over(_latch.deck) ? _latch.deck : null);

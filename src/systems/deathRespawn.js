@@ -22,19 +22,27 @@
 // just a different, distance-based pick of where to land, and three
 // kinds to choose among instead of one.
 import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
-import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
-import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
-import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js';   // DISC28-E: the dead live no minutes
-import { SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
+import { cureAllOfKind } from './effects.js'; // DEATHLOOP1
+import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js'; // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
+import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js'; // DISC28-E: the dead live no minutes
+import { SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js'; // AUDIT SD II (L6 F4): the Shattered Hour's own waking
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
-  { kind: 'city', match: (e) => e.locationType === LOCATION_TYPES.TownCity
-    || e.locationType === LOCATION_TYPES.TownHamlet || e.locationType === LOCATION_TYPES.TownVillage },
+  {
+    kind: 'city',
+    match: (e) =>
+      e.locationType === LOCATION_TYPES.TownCity ||
+      e.locationType === LOCATION_TYPES.TownHamlet ||
+      e.locationType === LOCATION_TYPES.TownVillage,
+  },
   // The same subtype `randomCemeteryLocationIndex` reads (systems/infection.js) -
   // a GRAVEYARD location whose dungeonType is specifically the small Cemetery,
   // not the other dungeon shapes a Graveyard-type location can carry.
-  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery },
+  {
+    kind: 'graveyard',
+    match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery,
+  },
 ]);
 
 /**
@@ -48,7 +56,8 @@ const SAFE_KINDS = Object.freeze([
  * - vanishingly rare, but not a throw; the caller falls back to
  * whatever it already had (see respawnOnlinePlayer's own fallback).
  */
-export function nearestSafeLocation(mapTable, mapPixelXY, accept = null) {   // WILD1: `accept(hit)` - a hit the caller turns down is no answer (the open zone's rise: a town outside the mountains)
+export function nearestSafeLocation(mapTable, mapPixelXY, accept = null) {
+  // WILD1: `accept(hit)` - a hit the caller turns down is no answer (the open zone's rise: a town outside the mountains)
   let best = null;
   let bestDist = Infinity;
   for (let i = 0; i < (mapTable?.length ?? 0); i++) {
@@ -57,12 +66,14 @@ export function nearestSafeLocation(mapTable, mapPixelXY, accept = null) {   // 
     const found = SAFE_KINDS.find((t) => t.match(e));
     if (!found) continue;
     const px = longitudeLatitudeToMapPixel(e.longitude, e.latitude);
-    const dx = px.x - mapPixelXY.x, dz = px.y - mapPixelXY.y;
+    const dx = px.x - mapPixelXY.x,
+      dz = px.y - mapPixelXY.y;
     const d2 = dx * dx + dz * dz;
     if (d2 >= bestDist) continue;
     const hit = { kind: found.kind, locationIndex: i, mapPixel: px };
     if (accept && !accept(hit)) continue;
-    bestDist = d2; best = hit;
+    bestDist = d2;
+    best = hit;
   }
   return best;
 }
@@ -76,16 +87,21 @@ export function nearestSafeLocation(mapTable, mapPixelXY, accept = null) {   // 
  * resident at a time and the one resident before put back - world/roadsProducer.js settlementsOf's sweep. Returns
  * nearestSafeLocation's shape, or null when no region carries one (no map at all).
  */
-export function nearestSafeLocationAnywhere(maps, mapPixelXY, accept = null) {   // WILD1: `accept`, nearestSafeLocation's own
+export function nearestSafeLocationAnywhere(maps, mapPixelXY, accept = null) {
+  // WILD1: `accept`, nearestSafeLocation's own
   const before = maps?._lastRegion ?? -1;
   let best = null;
   let bestDist = Infinity;
   for (let r = 0; r < (maps?.regionCount ?? 0); r++) {
     const hit = nearestSafeLocation(maps.getRegion(r)?.mapTable ?? [], mapPixelXY, accept);
     if (!hit) continue;
-    const dx = hit.mapPixel.x - mapPixelXY.x, dz = hit.mapPixel.y - mapPixelXY.y;
+    const dx = hit.mapPixel.x - mapPixelXY.x,
+      dz = hit.mapPixel.y - mapPixelXY.y;
     const d2 = dx * dx + dz * dz;
-    if (d2 < bestDist) { bestDist = d2; best = hit; }
+    if (d2 < bestDist) {
+      bestDist = d2;
+      best = hit;
+    }
   }
   if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);
   return best;
@@ -110,12 +126,14 @@ export function nearestSafePlace(lists, mapPixelXY, accept = null) {
       const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };
       const found = SAFE_KINDS.find((t) => t.match(e));
       if (!found) continue;
-      const dx = p.px - mapPixelXY.x, dz = p.py - mapPixelXY.y;
+      const dx = p.px - mapPixelXY.x,
+        dz = p.py - mapPixelXY.y;
       const d2 = dx * dx + dz * dz;
       if (d2 >= bestDist) continue;
       const hit = { kind: found.kind, locationIndex: -1, mapPixel: { x: p.px, y: p.py }, place: p };
       if (accept && !accept(hit)) continue;
-      bestDist = d2; best = hit;
+      bestDist = d2;
+      best = hit;
     }
   }
   return best;
@@ -193,12 +211,12 @@ const WAKE_FLAVOR = Object.freeze({
   temple: 'You fell asleep underground and wake on the temple steps. Someone carried you out while you were away.',
   city: 'You fell asleep underground and wake just outside the city gate. Someone carried you out while you were away.',
   graveyard: 'You fell asleep underground and wake among the headstones. Someone carried you out while you were away.',
-  dungeon: 'You fell asleep underground and wake outside the dungeon door. Someone carried you out while you were away.',
+  dungeon:
+    'You fell asleep underground and wake outside the dungeon door. Someone carried you out while you were away.',
 });
 
 /** The one line said when an online load wakes a character above ground; an unknown kind reads as the city's. */
 export const undergroundWakeText = (kind) => WAKE_FLAVOR[kind] ?? WAKE_FLAVOR.city;
-
 
 // ── DEATHLOOP1: A REVIVAL HAS TO END WHAT KILLED THEM ────────────
 //
@@ -277,7 +295,12 @@ export function endLethalDrains(entity) {
  * the player's own buffs and enchantments are theirs. Answers the kinds
  * it ended.
  */
-export const DEATH_HOLDS = Object.freeze(['paralyze', 'silenced', 'continuousDamageFatigue', 'continuousDamageSpellPoints']);
+export const DEATH_HOLDS = Object.freeze([
+  'paralyze',
+  'silenced',
+  'continuousDamageFatigue',
+  'continuousDamageSpellPoints',
+]);
 
 export function endDeathHolds(entity) {
   const had = new Set((entity?.activeEffects ?? []).map((a) => a?.kind));
@@ -329,7 +352,10 @@ export function endLethalExposure(entity) {
   if (!s || typeof s !== 'object') return [];
   const cleared = [];
   for (const [k, v] of Object.entries(REVIVED_SURVIVAL_RESET)) {
-    if ((s[k] ?? 0) !== v) { s[k] = v; cleared.push(k); }
+    if ((s[k] ?? 0) !== v) {
+      s[k] = v;
+      cleared.push(k);
+    }
   }
   return cleared;
 }
@@ -371,7 +397,10 @@ export function liftZeroedStats(entity) {
       if (!(hold.get() < 0)) continue;
       hold.set(0);
       const live = liveStat(entity, stat);
-      if (live >= target) { hold.set(-(live - target)); break; }   // give back all but the lift
+      if (live >= target) {
+        hold.set(-(live - target));
+        break;
+      } // give back all but the lift
     }
     if (liveStat(entity, stat) > 0) lifted.push(stat);
   }
@@ -386,10 +415,22 @@ export function liftZeroedStats(entity) {
 function holdsOn(entity, stat) {
   const holds = [];
   for (const a of entity.activeEffects ?? []) {
-    if (a?.kind === 'disease' && a.statMods) holds.push({ get: () => a.statMods[stat] ?? 0, set: (v) => { a.statMods[stat] = v; } });
+    if (a?.kind === 'disease' && a.statMods)
+      holds.push({
+        get: () => a.statMods[stat] ?? 0,
+        set: (v) => {
+          a.statMods[stat] = v;
+        },
+      });
   }
   for (const a of entity.activeEffects ?? []) {
-    if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat) holds.push({ get: () => -(a.magnitude ?? 0), set: (v) => { a.magnitude = -v; } });
+    if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat)
+      holds.push({
+        get: () => -(a.magnitude ?? 0),
+        set: (v) => {
+          a.magnitude = -v;
+        },
+      });
   }
   return holds;
 }
@@ -413,9 +454,10 @@ export function reviveForPlay(entity, { force = false } = {}) {
   // DEATHLOOP2: the effects AND the exposure. Either alone leaves a
   // loop - the poison one for a poisoned character, the cold one for a
   // freezing one, and the second is what a player actually reported.
-  const cleared = endLethalDrains(entity), exposure = endLethalExposure(entity);
+  const cleared = endLethalDrains(entity),
+    exposure = endLethalExposure(entity);
   // FIELD BUGS 2026-10-05 DEATH-HOLDS: ...and what the killer held them by - a paralysis woke with every round it had.
-  const released = (dead || force) ? endDeathHolds(entity) : [];
+  const released = dead || force ? endDeathHolds(entity) : [];
   // DISC24-D: ...and a stat held at zero, the loop Lynk reported - after
   // the drains end, so a poison's own stat damage is gone before this
   // measures what is left. On a living release too: a live 0 kills
@@ -432,7 +474,8 @@ export function reviveForPlay(entity, { force = false } = {}) {
   // paid its eighth - at 0-12% of the pool, and the next walking drain collapsed them again beside the same foes.
   // The respawn's fatigue is at least the health's fraction; more than that is kept. A living release (no force) is
   // untouched, as its health is.
-  if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));
+  if (dead || force)
+    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));
   // DISC28-E: ...and the minutes spent dead are not the BODY's to pay (worldTick.js skipDeadMinutes). Online the shared
   // clock ran through the death screen with nothing ticking under it, and the first tick after this charged the whole
   // span - stamina drain, needs, magic rounds - to the body just revived. AUDIT DISC28 TM-2/3/4, as LIVED1 has them:

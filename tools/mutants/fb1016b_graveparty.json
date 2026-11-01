@@ -2,8 +2,8 @@
   {
     "name": "GRAVE-PARTY-the-name-dropped",
     "file": "src/systems/searchables.js",
-    "old": "t: nowMinutes, w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null });",
-    "new": "t: nowMinutes, w: null });",
+    "old": "  _ledger.set(key, {\n    ...(e ?? { u: false }),\n    t: nowMinutes,\n    w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null,\n  });",
+    "new": "  _ledger.set(key, { ...(e ?? { u: false }), t: nowMinutes, w: null });",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "GRAVE-PARTY-an-earlier-word-shortens",
     "file": "src/systems/searchables.js",
-    "old": "  if (e && Number.isFinite(e.t) && e.t > nowMinutes) return;\n",
-    "new": "",
+    "old": "  if (e && Number.isFinite(e.t) && e.t > nowMinutes) return;\n  _ledger.set(key, {",
+    "new": "  _ledger.set(key, {",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "GRAVE-PARTY-the-text-never-names",
     "file": "src/systems/searchables.js",
-    "old": "return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT; };",
-    "new": "return SEARCHED_TEXT; };",
+    "old": "  return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT;",
+    "new": "  return SEARCHED_TEXT;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "GRAVE-PARTY-the-save-drops-the-name",
     "file": "src/systems/searchables.js",
-    "old": "rows.push(e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w] : [k,",
-    "new": "rows.push(e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0] : [k,",
+    "old": "        e.w\n          ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w]\n          : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0],",
+    "new": "        e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0] : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0],",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "GRAVE-PARTY-the-restore-drops-the-name",
     "file": "src/systems/searchables.js",
-    "old": "_ledger.set(r[0], { t, u: r[2] === 1, w: typeof r[3] === 'string' && r[3] ? r[3].slice(0, SEARCH_WHO_MAX) : null });",
-    "new": "_ledger.set(r[0], { t, u: r[2] === 1, w: null });",
+    "old": "    _ledger.set(r[0], { t, u: r[2] === 1, w: typeof r[3] === 'string' && r[3] ? r[3].slice(0, SEARCH_WHO_MAX) : null });",
+    "new": "    _ledger.set(r[0], { t, u: r[2] === 1, w: null });",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "GRAVE-PARTY-the-reach-from-the-eye",
     "file": "src/systems/searchables.js",
-    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH ? RAY_DISTANCE : SEARCH_REACH;",
+    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH\n    ? RAY_DISTANCE\n    : SEARCH_REACH;",
     "new": "  return SEARCH_REACH;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -82,7 +82,7 @@
   {
     "name": "GRAVE-PARTY-the-reach-unbounded",
     "file": "src/systems/searchables.js",
-    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH ? RAY_DISTANCE : SEARCH_REACH;",
+    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH\n    ? RAY_DISTANCE\n    : SEARCH_REACH;",
     "new": "  return RAY_DISTANCE;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "GRAVE-PARTY-the-body-has-no-height",
     "file": "src/systems/searchables.js",
-    "old": "  const lo = Math.min(feet[1], top), hi = Math.max(feet[1], top);",
-    "new": "  const lo = feet[1], hi = feet[1];",
+    "old": "  const lo = Math.min(feet[1], top),\n    hi = Math.max(feet[1], top);",
+    "new": "  const lo = feet[1],\n    hi = feet[1];",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "GRAVE-PARTY-a-grave-re-taken",
     "file": "src/net/overworldLaw.js",
-    "old": "    if (led.gr[k]) continue;\n",
-    "new": "",
+    "old": "    if (led.gr[k]) continue;\n    led.gr[k] = g;",
+    "new": "    led.gr[k] = g;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "GRAVE-PARTY-a-grave-kept-past-its-hours",
     "file": "src/net/overworldLaw.js",
-    "old": "nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN;",
-    "new": "nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN * 2;",
+    "old": "  Number.isFinite(nowMin) && nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN;",
+    "new": "  Number.isFinite(nowMin) && nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN * 2;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "GRAVE-PARTY-the-graves-unread",
     "file": "src/net/overworldLaw.js",
-    "old": "  for (const r of gsrc && typeof gsrc === 'object' ? Object.values(gsrc) : []) { const g = owGraveOut(r); if (g) led.gr[owGraveKey(g)] = g; }\n",
-    "new": "",
+    "old": "  for (const r of gsrc && typeof gsrc === 'object' ? Object.values(gsrc) : []) {\n    const g = owGraveOut(r);\n    if (g) led.gr[owGraveKey(g)] = g;\n  }\n  capGraves(led);",
+    "new": "  capGraves(led);",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "GRAVE-PARTY-the-prune-keeps-them",
     "file": "src/net/overworldLaw.js",
-    "old": "  for (const [k, g] of Object.entries(led.gr)) if (!owGraveLive(g, nowMin)) { delete led.gr[k]; dropped = true; }",
-    "new": "",
+    "old": "  for (const [k, g] of Object.entries(led.gr))\n    if (!owGraveLive(g, nowMin)) {\n      delete led.gr[k];\n      dropped = true;\n    } // GRAVE-PARTY: a search past its hours",
+    "new": "  // GRAVE-PARTY: a search past its hours",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -296,8 +296,8 @@
   {
     "name": "GRAVE-PARTY-the-stone-never-owed",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    owe(row);   // GRAVE-PARTY: the cell hears it - my party's games lock the stone\n",
-    "new": "",
+    "old": "    owe(row); // GRAVE-PARTY: the cell hears it - my party's games lock the stone\n    const outcome = rollSearchOutcome({ graveyard: true });",
+    "new": "    const outcome = rollSearchOutcome({ graveyard: true });",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -306,8 +306,8 @@
   {
     "name": "GRAVE-PARTY-the-book-not-read-at-the-stone",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    adopt(row);   // GRAVE-PARTY: the cell's word about this stone, read against my party now\n",
-    "new": "",
+    "old": "    adopt(row); // GRAVE-PARTY: the cell's word about this stone, read against my party now\n    if (searchCooldownLeft(key, now) > 0) {",
+    "new": "    if (searchCooldownLeft(key, now) > 0) {",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -316,8 +316,8 @@
   {
     "name": "GRAVE-PARTY-a-strangers-row-landed",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    if (!searchKinOf(g[4])) return false;\n",
-    "new": "",
+    "old": "    if (!searchKinOf(g[4])) return false;\n    const now = worldMinutes();",
+    "new": "    const now = worldMinutes();",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -327,8 +327,8 @@
   {
     "name": "GRAVE-PARTY-the-stone-unnamed",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "searchToldBy(g[4], g[5]));",
-    "new": "null);",
+    "old": "    markSearched(\n      searchKey(`g${g[0]},${g[1]}`, String(g[2])),\n      sharedClockOn() ? Math.min(g[3], now) : now,\n      searchToldBy(g[4], g[5]),\n    );",
+    "new": "    markSearched(searchKey(`g${g[0]},${g[1]}`, String(g[2])), sharedClockOn() ? Math.min(g[3], now) : now, null);",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -338,8 +338,8 @@
   {
     "name": "GRAVE-PARTY-the-stone-says-the-old-words",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "if (searchCooldownLeft(key, now) > 0) { setMidScreenText(searchedText(key)); return true; }",
-    "new": "if (searchCooldownLeft(key, now) > 0) { setMidScreenText('You have already searched here.'); return true; }",
+    "old": "      setMidScreenText(searchedText(key));",
+    "new": "      setMidScreenText('You have already searched here.');",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "GRAVE-PARTY-the-frame-says-nothing",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    for (const r of online.sendOverworld('gr', [...owed.values()].map((o) => o.row))) owed.delete(`${r[0]},${r[1]}|${r[2]}`);",
-    "new": "",
+    "old": "    for (const r of online.sendOverworld(\n      'gr',\n      [...owed.values()].map((o) => o.row),\n    ))\n      owed.delete(`${r[0]},${r[1]}|${r[2]}`);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -642,7 +642,7 @@
   {
     "name": "AUDIT-G3-the-oldest-in-the-cell-out",
     "file": "src/net/overworldLaw.js",
-    "old": "    for (const keys of by.values()) if (!most || keys.length > most.length || (keys.length === most.length && age(keys[0]) < age(most[0]))) most = keys;",
+    "old": "    for (const keys of by.values())\n      if (!most || keys.length > most.length || (keys.length === most.length && age(keys[0]) < age(most[0])))\n        most = keys;",
     "new": "    for (const keys of by.values()) if (!most || age(keys[0]) < age(most[0])) most = keys;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -732,8 +732,8 @@
   {
     "name": "AUDIT-G5-the-fold-unnamed",
     "file": "src/net/overworldLaw.js",
-    "old": "    const g = [...w, nowMin, acct, who], k = owGraveKey(g);",
-    "new": "    const g = [...w, nowMin, acct, ''], k = owGraveKey(g);",
+    "old": "    const g = [...w, nowMin, acct, who],",
+    "new": "    const g = [...w, nowMin, acct, ''],",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "AUDIT-G5-the-lens-names-nobody",
     "file": "src/scenes/searchPartyHost.js",
-    "old": "    selfName: () => host.online?.name || host.social?.name || null,",
-    "new": "    selfName: () => null,",
+    "old": "    selfName: () => host.online?.name || host.social?.name || null, // AUDIT GRAVE-PARTY G5: my character's name, the issued one the relay stamps",
+    "new": "    selfName: () => null, // AUDIT GRAVE-PARTY G5: my character's name, the issued one the relay stamps",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],

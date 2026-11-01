@@ -9,15 +9,6 @@
     ]
   },
   {
-    "name": "SD26-R6-the-endings-lights-unsaid",
-    "file": "bible/11-Multiplayer/Super-Dungeons.md",
-    "old": "23-24 the Echoes, 25-30 the\nEndings' lights, 31-32",
-    "new": "23-24 the Echoes, 31-32",
-    "tests": [
-      "test/world/superDungeon/sd26_render.test.js"
-    ]
-  },
-  {
     "name": "SD26-S1-the-stand-left-to-the-first-frame",
     "file": "src/scenes/dungeonContext.js",
     "old": "  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }\n  return api;",
@@ -56,8 +47,8 @@
   {
     "name": "SD26-R3-the-edge-never-handed",
     "file": "src/render/gate/gateFx.js",
-    "old": "      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0);",
-    "new": "      gl.uniform3f(S.uEdge, 0, 0, 0);",
+    "old": "      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0); // AUDIT SD IV (R3): and where it ends, if it says",
+    "new": "      gl.uniform3f(S.uEdge, 0, 0, 0); // AUDIT SD IV (R3): and where it ends, if it says",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
     ]
@@ -65,8 +56,8 @@
   {
     "name": "SD26-R3-the-shader-rests-past-it",
     "file": "src/render/gate/gateFx.js",
-    "old": "  if (uEdge.z > 0.0) {",
-    "new": "  if (false) {",
+    "old": "  if (uEdge.z > 0.0) {   // AUDIT SD IV (R3): past the floor's edge it rests on nothing - flying, it flies on down; at rest, it slides off",
+    "new": "  if (false) {   // AUDIT SD IV (R3): past the floor's edge it rests on nothing - flying, it flies on down; at rest, it slides off",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
     ]
@@ -74,8 +65,8 @@
   {
     "name": "SD26-R3-slid-off-on-air",
     "file": "src/render/gate/gateFx.js",
-    "old": "upv * t - g * t * t : rest - g * (t - tc) * (t - tc));",
-    "new": "upv * t - g * t * t : rest);",
+    "old": "    if (t > tc) p.y = uAt.y + (upv * tc - g * tc * tc > rest ? upv * t - g * t * t : rest - g * (t - tc) * (t - tc));",
+    "new": "    if (t > tc) p.y = uAt.y + (upv * tc - g * tc * tc > rest ? upv * t - g * t * t : rest);",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
     ]
@@ -119,8 +110,8 @@
   {
     "name": "SD26-R4-the-caps-underside-dropped",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "d / 2 + 0.05, 0.12, true)],",
-    "new": "d / 2 + 0.05, 0.12)],",
+    "old": "    [SD_REALM_BRASS_RECORD, boxQuads(add(at, [0, h, 0]), R, n, w / 2 + 0.05, d / 2 + 0.05, 0.12, true)], // AUDIT SD IV (R4): its overhang shut underneath",
+    "new": "    [SD_REALM_BRASS_RECORD, boxQuads(add(at, [0, h, 0]), R, n, w / 2 + 0.05, d / 2 + 0.05, 0.12)], // AUDIT SD IV (R4): its overhang shut underneath",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
     ]
@@ -137,8 +128,8 @@
   {
     "name": "SD26-R4-the-caps-underside-wound-in",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "out.push([q(-1, -1), q(-1, 1), q(1, 1), q(1, -1)]); }",
-    "new": "out.push([q(-1, -1), q(1, -1), q(1, 1), q(-1, 1)]); }",
+    "old": "    out.push([q(-1, -1), q(-1, 1), q(1, 1), q(1, -1)]);",
+    "new": "    out.push([q(-1, -1), q(1, -1), q(1, 1), q(-1, 1)]);",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
     ]

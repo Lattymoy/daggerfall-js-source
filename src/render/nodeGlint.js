@@ -45,7 +45,7 @@
 // midnight as at noon - and the node an act works is quiet under it as under the glints (nodeGlows).
 import { bbVertexShader, FLAT_LIGHT_FLOOR } from './renderer.js';
 import { buildProgram, startPrograms, releasePrograms } from './glProgram.js';
-import { getPref } from '../systems/uiPrefs.js';   // RESOURCE-HIGHLIGHTS: the player's choice, read as the pass draws
+import { getPref } from '../systems/uiPrefs.js'; // RESOURCE-HIGHLIGHTS: the player's choice, read as the pass draws
 import { BAYER_GLSL } from './orderedDither.js';
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { billboardKey } from './billboardKey.js';
@@ -129,7 +129,8 @@ export const RESOURCE_HIGHLIGHTS = Object.freeze({
   both: Object.freeze({ glint: true, ring: true }),
 });
 /** A tier's look - an unknown one (an old save, a typo) the glints, the default. Pure. */
-export const highlightLook = (tier) => RESOURCE_HIGHLIGHTS[/** @type {keyof typeof RESOURCE_HIGHLIGHTS} */ (tier)] ?? RESOURCE_HIGHLIGHTS.glint;
+export const highlightLook = (tier) =>
+  RESOURCE_HIGHLIGHTS[/** @type {keyof typeof RESOURCE_HIGHLIGHTS} */ (tier)] ?? RESOURCE_HIGHLIGHTS.glint;
 /** NODE-OUTLINE's ring (section 46, its numbers as they shipped): its width in the drawn image's pixels at GLINT_REF_ROWS
  *  rows, never under OUTLINE_PX_MIN; the taps round a fragment (OUTLINE_TAPS directions, at the width and half of it);
  *  its opacity at its fullest and its breath (a share, at OUTLINE_BREATH_HZ - whole over the glow's clock, still under
@@ -148,9 +149,12 @@ export const OUTLINE_RING_BACK = 0.08;
 export const GLINT_NEAR_W = 1e-3;
 export const GLINT_OVERHANG = 2;
 
-if (GLINT_MAX !== NODE_GLOW_MAX) throw new Error('NODE-GLINT: the atlas holds the glow\'s budget');
+if (GLINT_MAX !== NODE_GLOW_MAX) throw new Error("NODE-GLINT: the atlas holds the glow's budget");
 
-const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const smooth = (a, b, x) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 /** A glint's reach in pixels, in an image `rows` tall, on a picture whose longer side stands `sidePx` on screen. Pure. */
 export const glintPx = (rows, sidePx) => {
   const scale = rows / GLINT_REF_ROWS;
@@ -163,7 +167,11 @@ export const glintPxMax = (rows) => Math.max(GLINT_PX_FLOOR, (GLINT_PX * rows) /
  *  screen (crownSidePx): from the side a herb's glint stops growing at (GLINT_PX / GLINT_SHARE, with the image) its
  *  side's share to the two thirds - its glints' light (their count, times their reach squared) then keeps the share of
  *  its picture a herb's keeps - between 1 (a crown no bigger: a herb's six at a herb's reach) and GLINT_CROWN_GROWTH. Pure. */
-export const glintCrownGrowth = (rows, crownPx) => Math.min(GLINT_CROWN_GROWTH, Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)));
+export const glintCrownGrowth = (rows, crownPx) =>
+  Math.min(
+    GLINT_CROWN_GROWTH,
+    Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)),
+  );
 /** NODE-CROWN: a 3D crown's glints - GLINT_COUNT grown (glintCrownGrowth), to a whole one. Pure. */
 export const glintCrownCount = (rows, crownPx) => Math.round(GLINT_COUNT * glintCrownGrowth(rows, crownPx));
 /** NODE-CROWN: a 3D crown's glint's reach - a picture's (glintPx) of its side, grown (glintCrownGrowth). Pure. */
@@ -171,8 +179,10 @@ export const glintCrownPx = (rows, crownPx) => glintPx(rows, crownPx) * glintCro
 /** NODE-CROWN: a 3D crown's side on screen in pixels - the square root of its standing area (its width `w` and height
  *  `h`, metres) at its root's clip w `cw`, through the projection `proj` onto a `vw` x `vh` image; its root at or behind
  *  the eye, the most there is. Pure. @param {ArrayLike<number>} proj */
-export const crownSidePx = (proj, cw, w, h, vw, vh) => (cw > GLINT_NEAR_W
-  ? Math.sqrt(((w * Math.abs(proj[0]) * vw) / (2 * cw)) * ((h * Math.abs(proj[5]) * vh) / (2 * cw))) : Infinity);
+export const crownSidePx = (proj, cw, w, h, vw, vh) =>
+  cw > GLINT_NEAR_W
+    ? Math.sqrt(((w * Math.abs(proj[0]) * vw) / (2 * cw)) * ((h * Math.abs(proj[5]) * vh) / (2 * cw)))
+    : Infinity;
 /** The light a node's glints are lit in: the warm light with GLINT_TINT of its profession's `rgb`, written into `out`.
  *  Pure but for `out`. @param {ArrayLike<number>} rgb @param {number[]} out */
 export const glintTint = (rgb, out) => {
@@ -182,7 +192,8 @@ export const glintTint = (rgb, out) => {
 /** RESOURCE-HIGHLIGHTS: the ring's width in pixels for an image `rows` tall. Pure. */
 export const outlinePx = (rows) => Math.max(OUTLINE_PX_MIN, (OUTLINE_PX * rows) / GLINT_REF_ROWS);
 /** RESOURCE-HIGHLIGHTS: the ring's opacity share at `seconds` (the glow's wrapped clock) - whole under reduced motion. Pure. */
-export const outlineBreath = (seconds, still = false) => (still ? 1 : 1 - OUTLINE_BREATH * 0.5 * (1 - Math.cos(2 * Math.PI * OUTLINE_BREATH_HZ * seconds)));
+export const outlineBreath = (seconds, still = false) =>
+  still ? 1 : 1 - OUTLINE_BREATH * 0.5 * (1 - Math.cos(2 * Math.PI * OUTLINE_BREATH_HZ * seconds));
 /** The sheen's gain for a node `d` metres from the eye: none near, GLINT_GAIN.sheen from GLINT_SHEEN_FULL_M. Pure. */
 export const glintSheen = (d) => GLINT_GAIN.sheen * smooth(GLINT_SHEEN_NEAR_M, GLINT_SHEEN_FULL_M, d);
 /** GLINT-LIGHT: how bright a light `rgb` is - its luma by the 601 weights (0.299, 0.587, 0.114), in the display space
@@ -193,14 +204,18 @@ export const glintLightLevel = (rgb) => rgb[1] + 0.299 * (rgb[0] - rgb[1]) + 0.1
 export const glintSheenLight = (level) => smooth(GLINT_SHEEN_DARK, GLINT_SHEEN_LIT, level);
 /** Every rate is whole over the glow's 60 s clock - the last glint's (a big crown's last, NODE-CROWN), the sheen's and the
  *  ring's breath (RESOURCE-HIGHLIGHTS) included. Pure. */
-export const glintRatesWhole = () => [GLINT_SHEEN_HZ, OUTLINE_BREATH_HZ, ...Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => GLINT_RATE + i * GLINT_RATE_STEP)]
-  .every((r) => Math.abs(r * 60 - Math.round(r * 60)) < 1e-9);
+export const glintRatesWhole = () =>
+  [
+    GLINT_SHEEN_HZ,
+    OUTLINE_BREATH_HZ,
+    ...Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => GLINT_RATE + i * GLINT_RATE_STEP),
+  ].every((r) => Math.abs(r * 60 - Math.round(r * 60)) < 1e-9);
 
 /** THE MASK'S VERTEX STAGE: the billboard program's own, and after it places the vertex, the node's rectangle on screen
  *  (uMaskRect: its NDC centre, and one over its half size) stretched over the tile the viewport is. A vertex given way
  *  (`gone`, a far picture inside its 3D tree's radius) stays off the clip volume. */
 export const NODE_MASK_VS = bbVertexShader({
-  head: 'uniform vec4 uMaskRect;   // NODE-OUTLINE: the node\'s rectangle in NDC - its centre (xy), one over its half size (zw)',
+  head: "uniform vec4 uMaskRect;   // NODE-OUTLINE: the node's rectangle in NDC - its centre (xy), one over its half size (zw)",
   main: '  if (!gone) gl_Position.xy = (gl_Position.xy - uMaskRect.xy * gl_Position.w) * uMaskRect.zw;   // NODE-OUTLINE (render/nodeGlint.js): the rectangle over the tile',
 });
 
@@ -411,7 +426,10 @@ layout(location = 0) in vec2 aP;
 uniform vec4 uRect;
 void main() { gl_Position = vec4(uRect.xy + aP * uRect.zw, 0.0, 1.0); }`;
 
-const TAP_DIRS = Array.from({ length: OUTLINE_TAPS }, (_, k) => [Math.cos((2 * Math.PI * k) / OUTLINE_TAPS), Math.sin((2 * Math.PI * k) / OUTLINE_TAPS)]);
+const TAP_DIRS = Array.from({ length: OUTLINE_TAPS }, (_, k) => [
+  Math.cos((2 * Math.PI * k) / OUTLINE_TAPS),
+  Math.sin((2 * Math.PI * k) / OUTLINE_TAPS),
+]);
 /** RESOURCE-HIGHLIGHTS - THE RING'S FRAGMENT STAGE (NODE-OUTLINE's): where the fragment falls in the node's tile; inside
  *  the silhouette, nothing (a node fitted into its tile, by the four texels round the fragment - tools/nodeGlintProbe.mjs
  *  found a near tree's edge ringed over at its coarser texels); else the nearest depth of the silhouette among the taps round it - none, nothing; one, the ring,
@@ -455,14 +473,80 @@ ${TAP_DIRS.map(([x, y]) => `  d = min(d, min(maskAt(at + vec2(${x.toFixed(6)}, $
   o = vec4(dwWaterFog(uOutlineColor.rgb, at3), uOutlineColor.a * fogFactorAt(at3));
 }`;
 
-const MASK_UNIFORMS = ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uFlatWind', 'uSway', 'uWindfallSway', 'uWindfallAxis', 'uTip',
-  'uFacePoint', 'uElitePad', 'uTex', 'uMesh', 'uMeshScale', 'uMeshColor', 'uMeshAlpha', 'uLptCut', 'uLptBand', 'uLptSun', 'uMaskRect'];
-const GLINT_UNIFORMS = ['uMask', 'uRect', 'uTile', 'uInner', 'uHold', 'uRight', 'uUp', 'uAnchor', 'uAnchors', 'uCount', 'uFlatTex', 'uViewport', 'uGlint', 'uColor', 'uAlpha', 'uSeed', 'uSheen', 'uTime', 'uStill',
-  'uInvVP', 'uVP', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uDwFog'];
-const RING_UNIFORMS = ['uMask', 'uRect', 'uTile', 'uViewport', 'uRing', 'uOutlineColor', 'uInvVP', 'uVP', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uDwFog'];
+const MASK_UNIFORMS = [
+  'uProj',
+  'uView',
+  'uRight',
+  'uUp',
+  'uOrigin',
+  'uSize',
+  'uFlatWind',
+  'uSway',
+  'uWindfallSway',
+  'uWindfallAxis',
+  'uTip',
+  'uFacePoint',
+  'uElitePad',
+  'uTex',
+  'uMesh',
+  'uMeshScale',
+  'uMeshColor',
+  'uMeshAlpha',
+  'uLptCut',
+  'uLptBand',
+  'uLptSun',
+  'uMaskRect',
+];
+const GLINT_UNIFORMS = [
+  'uMask',
+  'uRect',
+  'uTile',
+  'uInner',
+  'uHold',
+  'uRight',
+  'uUp',
+  'uAnchor',
+  'uAnchors',
+  'uCount',
+  'uFlatTex',
+  'uViewport',
+  'uGlint',
+  'uColor',
+  'uAlpha',
+  'uSeed',
+  'uSheen',
+  'uTime',
+  'uStill',
+  'uInvVP',
+  'uVP',
+  'uFogMode',
+  'uFogDensity',
+  'uFogRange',
+  'uCamPos',
+  'uFocus',
+  'uJungleHaze',
+  'uDwFog',
+];
+const RING_UNIFORMS = [
+  'uMask',
+  'uRect',
+  'uTile',
+  'uViewport',
+  'uRing',
+  'uOutlineColor',
+  'uInvVP',
+  'uVP',
+  'uFogMode',
+  'uFogDensity',
+  'uFogRange',
+  'uCamPos',
+  'uFocus',
+  'uJungleHaze',
+  'uDwFog',
+];
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
-const NO_WATER_FOG = new Float32Array(20);   // DW-C: uDwFog off ([0].x 0)
+const NO_WATER_FOG = new Float32Array(20); // DW-C: uDwFog off ([0].x 0)
 const ZERO4 = new Float32Array(4);
 const ZERO_ORIGIN = Object.freeze([0, 0, 0]);
 const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
@@ -484,15 +568,24 @@ export function treeInstanceOf(pic, frames, rows, out) {
   for (const set of [pic.entry.lowPolyTrees, pic.entry.jungleTrees]) {
     if (!set?.trees || !set.centers) continue;
     let byCenter = rows.get(set.centers);
-    if (!byCenter) { byCenter = new Map(); for (let k = 0; k < set.centers.length; k++) byCenter.set(set.centers[k], k); rows.set(set.centers, byCenter); }
+    if (!byCenter) {
+      byCenter = new Map();
+      for (let k = 0; k < set.centers.length; k++) byCenter.set(set.centers[k], k);
+      rows.set(set.centers, byCenter);
+    }
     const k = byCenter.get(pic.center);
     if (k === undefined) continue;
-    const o = k * 6, handle = set.handles[set.trees[o]];
+    const o = k * 6,
+      handle = set.handles[set.trees[o]];
     for (const f of frames) {
       if (!f?.cut?.has(handle)) continue;
       const run = f.runs.find((r) => r.run.handle === handle);
       if (!run) return null;
-      out[0] = set.trees[o + 1] + set.ox; out[1] = set.trees[o + 2] + set.oy; out[2] = set.trees[o + 3] + set.oz; out[3] = set.trees[o + 5]; out[4] = set.trees[o + 4];
+      out[0] = set.trees[o + 1] + set.ox;
+      out[1] = set.trees[o + 2] + set.oy;
+      out[2] = set.trees[o + 3] + set.oz;
+      out[3] = set.trees[o + 5];
+      out[4] = set.trees[o + 4];
       return { frame: f, run };
     }
     return null;
@@ -503,7 +596,9 @@ export function treeInstanceOf(pic, frames, rows, out) {
 /** A box's corners' clip x, y and w (8 x 3), filled a box at a time. */
 const _clip = new Float64Array(24);
 /** A box's twelve edges, as the corners they join (a corner's bits: x 1, y 2, z 4). */
-const BOX_EDGES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7].flatMap((c) => [1, 2, 4].filter((b) => !(c & b)).map((b) => [c, c | b])));
+const BOX_EDGES = Object.freeze(
+  [0, 1, 2, 3, 4, 5, 6, 7].flatMap((c) => [1, 2, 4].filter((b) => !(c & b)).map((b) => [c, c | b])),
+);
 
 /**
  * THE NODE'S PICTURE ON SCREEN: the first `count` of `boxes` (each [x0, y0, z0, x1, y1, z1], scene) through `vp`
@@ -514,87 +609,146 @@ const BOX_EDGES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7].flatMap((c) => [1, 2, 4
  * @param {ReadonlyArray<ArrayLike<number>>} boxes @param {number} count @param {ArrayLike<number>} vp @param {number[]} out
  */
 export function screenRect(boxes, count, vp, out) {
-  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  let x0 = Infinity,
+    y0 = Infinity,
+    x1 = -Infinity,
+    y1 = -Infinity;
   const take = (x, y, w) => {
-    const px = x / w, py = y / w;
-    if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py;
+    const px = x / w,
+      py = y / w;
+    if (px < x0) x0 = px;
+    if (px > x1) x1 = px;
+    if (py < y0) y0 = py;
+    if (py > y1) y1 = py;
   };
   for (let i = 0; i < count; i++) {
     const b = boxes[i];
     for (let c = 0; c < 8; c++) {
-      const x = c & 1 ? b[3] : b[0], y = c & 2 ? b[4] : b[1], z = c & 4 ? b[5] : b[2];
+      const x = c & 1 ? b[3] : b[0],
+        y = c & 2 ? b[4] : b[1],
+        z = c & 4 ? b[5] : b[2];
       _clip[c * 3] = vp[0] * x + vp[4] * y + vp[8] * z + vp[12];
       _clip[c * 3 + 1] = vp[1] * x + vp[5] * y + vp[9] * z + vp[13];
       _clip[c * 3 + 2] = vp[3] * x + vp[7] * y + vp[11] * z + vp[15];
       if (_clip[c * 3 + 2] > GLINT_NEAR_W) take(_clip[c * 3], _clip[c * 3 + 1], _clip[c * 3 + 2]);
     }
     for (const [a, e] of BOX_EDGES) {
-      const wa = _clip[a * 3 + 2], we = _clip[e * 3 + 2];
-      if ((wa > GLINT_NEAR_W) === (we > GLINT_NEAR_W)) continue;   // both before the eye, or both behind it
+      const wa = _clip[a * 3 + 2],
+        we = _clip[e * 3 + 2];
+      if (wa > GLINT_NEAR_W === we > GLINT_NEAR_W) continue; // both before the eye, or both behind it
       const t = (GLINT_NEAR_W - wa) / (we - wa);
-      take(_clip[a * 3] + t * (_clip[e * 3] - _clip[a * 3]), _clip[a * 3 + 1] + t * (_clip[e * 3 + 1] - _clip[a * 3 + 1]), GLINT_NEAR_W);
+      take(
+        _clip[a * 3] + t * (_clip[e * 3] - _clip[a * 3]),
+        _clip[a * 3 + 1] + t * (_clip[e * 3 + 1] - _clip[a * 3 + 1]),
+        GLINT_NEAR_W,
+      );
     }
   }
-  if (!(x1 > -1 && x0 < 1 && y1 > -1 && y0 < 1)) return null;   // behind the eye (nothing taken), or off the screen
-  x0 = Math.max(-GLINT_OVERHANG, x0); y0 = Math.max(-GLINT_OVERHANG, y0); x1 = Math.min(GLINT_OVERHANG, x1); y1 = Math.min(GLINT_OVERHANG, y1);
-  out[0] = (x0 + x1) / 2; out[1] = (y0 + y1) / 2; out[2] = (x1 - x0) / 2; out[3] = (y1 - y0) / 2;
+  if (!(x1 > -1 && x0 < 1 && y1 > -1 && y0 < 1)) return null; // behind the eye (nothing taken), or off the screen
+  x0 = Math.max(-GLINT_OVERHANG, x0);
+  y0 = Math.max(-GLINT_OVERHANG, y0);
+  x1 = Math.min(GLINT_OVERHANG, x1);
+  y1 = Math.min(GLINT_OVERHANG, y1);
+  out[0] = (x0 + x1) / 2;
+  out[1] = (y0 + y1) / 2;
+  out[2] = (x1 - x0) / 2;
+  out[3] = (y1 - y0) / 2;
   return out;
 }
 
 /** A rectangle `rect` `[cx, cy, hx, hy]` (NDC) widened by `pad` (NDC, x and y) and held to the screen, written into `out`
  *  - the room a glint's rays reach into round its picture. Pure but for `out`. */
 export function widenRect(rect, pad, out) {
-  const x0 = Math.max(-1, rect[0] - rect[2] - pad[0]), x1 = Math.min(1, rect[0] + rect[2] + pad[0]);
-  const y0 = Math.max(-1, rect[1] - rect[3] - pad[1]), y1 = Math.min(1, rect[1] + rect[3] + pad[1]);
-  out[0] = (x0 + x1) / 2; out[1] = (y0 + y1) / 2; out[2] = (x1 - x0) / 2; out[3] = (y1 - y0) / 2;
+  const x0 = Math.max(-1, rect[0] - rect[2] - pad[0]),
+    x1 = Math.min(1, rect[0] + rect[2] + pad[0]);
+  const y0 = Math.max(-1, rect[1] - rect[3] - pad[1]),
+    y1 = Math.min(1, rect[1] + rect[3] + pad[1]);
+  out[0] = (x0 + x1) / 2;
+  out[1] = (y0 + y1) / 2;
+  out[2] = (x1 - x0) / 2;
+  out[3] = (y1 - y0) / 2;
   return out;
 }
 
 /** A rectangle `[cx, cy, hx, hy]` (NDC) widened to whole pixels of a `vw` x `vh` viewport, in place. Pure but for
  *  `rect`. */
 export function snapRect(rect, vw, vh) {
-  const x0 = Math.floor((rect[0] - rect[2] + 1) * 0.5 * vw), x1 = Math.ceil((rect[0] + rect[2] + 1) * 0.5 * vw);
-  const y0 = Math.floor((rect[1] - rect[3] + 1) * 0.5 * vh), y1 = Math.ceil((rect[1] + rect[3] + 1) * 0.5 * vh);
-  rect[0] = ((x0 + x1) / vw) - 1; rect[2] = (x1 - x0) / vw;
-  rect[1] = ((y0 + y1) / vh) - 1; rect[3] = (y1 - y0) / vh;
+  const x0 = Math.floor((rect[0] - rect[2] + 1) * 0.5 * vw),
+    x1 = Math.ceil((rect[0] + rect[2] + 1) * 0.5 * vw);
+  const y0 = Math.floor((rect[1] - rect[3] + 1) * 0.5 * vh),
+    y1 = Math.ceil((rect[1] + rect[3] + 1) * 0.5 * vh);
+  rect[0] = (x0 + x1) / vw - 1;
+  rect[2] = (x1 - x0) / vw;
+  rect[1] = (y0 + y1) / vh - 1;
+  rect[3] = (y1 - y0) / vh;
   return rect;
 }
 
 /** The picture's own box `inner` as its shares of the rectangle `rect` it stands in (both `[cx, cy, hx, hy]`, NDC):
  *  `[x0, y0, x1, y1]`, each 0..1, written into `out` - where the shader's glints may stand. Pure but for `out`. */
 export function innerShare(inner, rect, out) {
-  const rx0 = rect[0] - rect[2], ry0 = rect[1] - rect[3], rw = 2 * rect[2], rh = 2 * rect[3];
-  out[0] = (inner[0] - inner[2] - rx0) / rw; out[1] = (inner[1] - inner[3] - ry0) / rh;
-  out[2] = (inner[0] + inner[2] - rx0) / rw; out[3] = (inner[1] + inner[3] - ry0) / rh;
+  const rx0 = rect[0] - rect[2],
+    ry0 = rect[1] - rect[3],
+    rw = 2 * rect[2],
+    rh = 2 * rect[3];
+  out[0] = (inner[0] - inner[2] - rx0) / rw;
+  out[1] = (inner[1] - inner[3] - ry0) / rh;
+  out[2] = (inner[0] + inner[2] - rx0) / rw;
+  out[3] = (inner[1] + inner[3] - ry0) / rh;
   return out;
 }
 
 function invert4(m, out) {
   const [a00, a01, a02, a03, a10, a11, a12, a13, a20, a21, a22, a23, a30, a31, a32, a33] = m;
-  const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11;
-  const b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12, b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30;
-  const b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+  const b00 = a00 * a11 - a01 * a10,
+    b01 = a00 * a12 - a02 * a10,
+    b02 = a00 * a13 - a03 * a10,
+    b03 = a01 * a12 - a02 * a11;
+  const b04 = a01 * a13 - a03 * a11,
+    b05 = a02 * a13 - a03 * a12,
+    b06 = a20 * a31 - a21 * a30,
+    b07 = a20 * a32 - a22 * a30;
+  const b08 = a20 * a33 - a23 * a30,
+    b09 = a21 * a32 - a22 * a31,
+    b10 = a21 * a33 - a23 * a31,
+    b11 = a22 * a33 - a23 * a32;
   const det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
   if (!det) return null;
   const id = 1 / det;
-  out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * id; out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * id;
-  out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * id; out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * id;
-  out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * id; out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * id;
-  out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * id; out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * id;
-  out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * id; out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * id;
-  out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * id; out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * id;
-  out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * id; out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * id;
-  out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * id; out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * id;
+  out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * id;
+  out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * id;
+  out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * id;
+  out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * id;
+  out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * id;
+  out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * id;
+  out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * id;
+  out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * id;
+  out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * id;
+  out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * id;
+  out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * id;
+  out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * id;
+  out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * id;
+  out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * id;
+  out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * id;
+  out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * id;
   return out;
 }
 function mul4(a, b, out) {
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++)
+      out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
   return out;
 }
 
 /** SHADER-STALL: the pass's programs, the mask's, the light's and (RESOURCE-HIGHLIGHTS) the ring's, as its constructor
  *  builds them - what the host starts ahead of the build (createNodeGlintPass; render/glProgram.js startPrograms). */
-export const NODE_GLINT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[NODE_MASK_VS, NODE_MASK_FS], [NODE_GLINT_VS, NODE_GLINT_FS], [NODE_RING_VS, NODE_RING_FS]]));
+export const NODE_GLINT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([
+    [NODE_MASK_VS, NODE_MASK_FS],
+    [NODE_GLINT_VS, NODE_GLINT_FS],
+    [NODE_RING_VS, NODE_RING_FS],
+  ])
+);
 
 export class NodeGlintRenderer {
   /** @param {WebGL2RenderingContext} gl */
@@ -605,10 +759,13 @@ export class NodeGlintRenderer {
     // light's link failing leaked the mask's for the session
     const built = [];
     try {
-      built.push(this.mask = buildProgram(gl, mask[0], mask[1], 'node glint mask'));
-      built.push(this.light = buildProgram(gl, light[0], light[1], 'node glint light'));
-      built.push(this.ring = buildProgram(gl, ring[0], ring[1], 'node outline ring'));   // RESOURCE-HIGHLIGHTS
-    } catch (e) { for (const p of built) gl.deleteProgram(p); throw e; }
+      built.push((this.mask = buildProgram(gl, mask[0], mask[1], 'node glint mask')));
+      built.push((this.light = buildProgram(gl, light[0], light[1], 'node glint light')));
+      built.push((this.ring = buildProgram(gl, ring[0], ring[1], 'node outline ring'))); // RESOURCE-HIGHLIGHTS
+    } catch (e) {
+      for (const p of built) gl.deleteProgram(p);
+      throw e;
+    }
     /** @type {Record<string, WebGLUniformLocation|null>} */
     this.um = {};
     for (const n of MASK_UNIFORMS) this.um[n] = gl.getUniformLocation(this.mask, n);
@@ -622,8 +779,10 @@ export class NodeGlintRenderer {
     this.atlas = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
     gl.texStorage2D(gl.TEXTURE_2D, 1, gl.DEPTH_COMPONENT24, size, size);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.fb = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb);
@@ -636,7 +795,8 @@ export class NodeGlintRenderer {
     this.quadVb = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVb);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     /** one tree's instance row */
     this.inst = gl.createBuffer();
@@ -652,12 +812,27 @@ export class NodeGlintRenderer {
     this._rows = new WeakMap();
     // the frame's scratch: each node's picture's box and its rectangle on screen, its tile, its glint's reach, its
     // picture's share of the rectangle, its boxes; the matrices; the light's colour
-    this._nodes = Array.from({ length: GLINT_MAX }, () => ({ g: null, inner: [0, 0, 0, 0], rect: [0, 0, 0, 0], tile: [0, 0, 0, 0], share: [0, 0, 0, 0], glint: 1, count: GLINT_COUNT, hold: 1, ring: 1, boxes: /** @type {number[][]} */ ([]), spans: /** @type {number[][]} */ ([]), anchors: new Float32Array(GLINT_ANCHORS * 8), anchorN: 0, flatTex: null }));
+    this._nodes = Array.from({ length: GLINT_MAX }, () => ({
+      g: null,
+      inner: [0, 0, 0, 0],
+      rect: [0, 0, 0, 0],
+      tile: [0, 0, 0, 0],
+      share: [0, 0, 0, 0],
+      glint: 1,
+      count: GLINT_COUNT,
+      hold: 1,
+      ring: 1,
+      boxes: /** @type {number[][]} */ ([]),
+      spans: /** @type {number[][]} */ ([]),
+      anchors: new Float32Array(GLINT_ANCHORS * 8),
+      anchorN: 0,
+      flatTex: null,
+    }));
     this._vp = new Float32Array(16);
     this._inv = new Float32Array(16);
     this._pad = /** @type {[number, number]} */ ([0, 0]);
     this._tint = [0, 0, 0];
-    this._lit = [1, 1, 1];   // GLINT-LIGHT: the light where the node stands, asked a node at a time
+    this._lit = [1, 1, 1]; // GLINT-LIGHT: the light where the node stands, asked a node at a time
     /** how many nodes the last draw lit, how many of their pictures were 3D trees, and (RESOURCE-HIGHLIGHTS) how many it
      *  ringed - for the stats and the tests */
     this.drawn = 0;
@@ -673,14 +848,21 @@ export class NodeGlintRenderer {
     vao = /** @type {WebGLVertexArrayObject} */ (gl.createVertexArray());
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, gpu.vb);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 12);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 24);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 12);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 24);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, gpu.ib);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
     const stride = LPT_INSTANCE_FLOATS * 4;
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 0); gl.vertexAttribDivisor(3, 1);
-    gl.enableVertexAttribArray(4); gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, 16); gl.vertexAttribDivisor(4, 1);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 4, gl.FLOAT, false, stride, 0);
+    gl.vertexAttribDivisor(3, 1);
+    gl.enableVertexAttribArray(4);
+    gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, 16);
+    gl.vertexAttribDivisor(4, 1);
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this._vaos.set(gpu, vao);
@@ -690,14 +872,24 @@ export class NodeGlintRenderer {
 
   /** A picture's span a slot of `spans` (grown as needed), written: its base, its width and its height. */
   static _span(spans, i, x, y, z, w, h, own) {
-    const p = spans[i] ??= [0, 0, 0, 0, 0, 0];
-    p[0] = x; p[1] = y; p[2] = z; p[3] = w; p[4] = h; p[5] = own;
+    const p = (spans[i] ??= [0, 0, 0, 0, 0, 0]);
+    p[0] = x;
+    p[1] = y;
+    p[2] = z;
+    p[3] = w;
+    p[4] = h;
+    p[5] = own;
   }
 
   /** A box a slot of `boxes` (grown as needed), written. */
   static _box(boxes, i, x0, y0, z0, x1, y1, z1) {
-    const b = boxes[i] ??= [0, 0, 0, 0, 0, 0];
-    b[0] = x0; b[1] = y0; b[2] = z0; b[3] = x1; b[4] = y1; b[5] = z1;
+    const b = (boxes[i] ??= [0, 0, 0, 0, 0, 0]);
+    b[0] = x0;
+    b[1] = y0;
+    b[2] = z0;
+    b[3] = x1;
+    b[4] = y1;
+    b[5] = z1;
   }
 
   /**
@@ -710,13 +902,18 @@ export class NodeGlintRenderer {
    * @param {{ glint: boolean, ring: boolean }} [look]
    */
   draw(list, r, seconds, still = false, look = RESOURCE_HIGHLIGHTS.glint) {
-    this.drawn = 0; this.trees = 0; this.ringed = 0;
+    this.drawn = 0;
+    this.trees = 0;
+    this.ringed = 0;
     const gl = this.gl;
     if (!list.length || !r._proj || !r._view || !isVec3(r._camPos) || !(look.glint || look.ring)) return 0;
     const vpm = mul4(r._proj, r._view, this._vp);
-    const view = gl.getParameter(gl.VIEWPORT), target = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-    const vw = Math.max(1, view[2]), vh = Math.max(1, view[3]);
-    const roomPx = glintPxMax(vh) + 2, ringPx = outlinePx(vh);   // RESOURCE-HIGHLIGHTS: the ring within the rays' room (2.5 px against 16)
+    const view = gl.getParameter(gl.VIEWPORT),
+      target = gl.getParameter(gl.FRAMEBUFFER_BINDING);
+    const vw = Math.max(1, view[2]),
+      vh = Math.max(1, view[3]);
+    const roomPx = glintPxMax(vh) + 2,
+      ringPx = outlinePx(vh); // RESOURCE-HIGHLIGHTS: the ring within the rays' room (2.5 px against 16)
     const frames = r.lptDrawnFrames?.() ?? [];
     // THE NODES' RECTANGLES: each picture's box - a flat's quad about each centre (its batch's size at the flat's own scale),
     // a 3D tree's crown about its root - through the frame's camera, and the room a glint's rays reach into round it
@@ -726,13 +923,14 @@ export class NodeGlintRenderer {
       const pics = g.mark?.pictures;
       if (!pics?.length || !(g.alpha > 0.001)) continue;
       const s = this._nodes[n];
-      let k = 0, crown = 0;   // NODE-CROWN: its 3D crown's side on screen (crownSidePx), none a flat's
+      let k = 0,
+        crown = 0; // NODE-CROWN: its 3D crown's side on screen (crownSidePx), none a flat's
       s.flatTex = null;
       for (const pic of /** @type {NodePicture[]} */ (pics)) {
         const b = pic.batch;
         const t = pic.center ? treeInstanceOf(pic, frames, this._rows, this._row) : null;
         // AUDIT NODE-GLINT: the node's flats' own picture, its first batch's that has one - a flat of it is judged there
-        const tex = !t && b?.vao && !b._dead && pic.count > 0 ? r.textures?.get(billboardKey(b)) ?? null : null;
+        const tex = !t && b?.vao && !b._dead && pic.count > 0 ? (r.textures?.get(billboardKey(b)) ?? null) : null;
         if (tex && !s.flatTex) s.flatTex = tex;
         const own = tex && tex === s.flatTex ? 1 : 0;
         // AUDIT NODE-GLINT: a far flat's own scale (a Low Poly Trees' or the jungle's batch is sized for its tallest tree - a
@@ -741,9 +939,21 @@ export class NodeGlintRenderer {
         if (!t && b?.size && pic.centers?.length) {
           const o = b.origin || g.mark.origin || ZERO_ORIGIN;
           for (let j = 0; j < pic.centers.length; j++) {
-            const c = pic.centers[j], fs = b._scales?.[pic.first + j] ?? 1, hw = b.size.w * 0.5 * fs, h = b.size.h * fs;
-            NodeGlintRenderer._span(s.spans, k, c[0] + o[0], c[1] + o[1], c[2] + o[2], 2 * hw, h, own);   // AUDIT NODE-GLINT: the flat its glints stand on
-            NodeGlintRenderer._box(s.boxes, k++, c[0] + o[0] - hw, c[1] + o[1], c[2] + o[2] - hw, c[0] + o[0] + hw, c[1] + o[1] + h, c[2] + o[2] + hw);
+            const c = pic.centers[j],
+              fs = b._scales?.[pic.first + j] ?? 1,
+              hw = b.size.w * 0.5 * fs,
+              h = b.size.h * fs;
+            NodeGlintRenderer._span(s.spans, k, c[0] + o[0], c[1] + o[1], c[2] + o[2], 2 * hw, h, own); // AUDIT NODE-GLINT: the flat its glints stand on
+            NodeGlintRenderer._box(
+              s.boxes,
+              k++,
+              c[0] + o[0] - hw,
+              c[1] + o[1],
+              c[2] + o[2] - hw,
+              c[0] + o[0] + hw,
+              c[1] + o[1] + h,
+              c[2] + o[2] + hw,
+            );
           }
         }
         if (t) {
@@ -752,45 +962,85 @@ export class NodeGlintRenderer {
           // (world/lowPolyTrees.js readLowPolyTrees), and counted again it stood most of a temperate or mountain wood's
           // crowns at half to four fifths of their trees (504_16's 16 m tree lit to 8 m, its top never) and a swamp's, a
           // desert's or a winter wood's 15 over up to four times their height (AUDIT FB1025i C2: 74 of the climates' 93)
-          const row = this._row, reach = t.run.size[0] * GLINT_TREE_REACH * row[4], h = t.run.size[1] * row[4];
-          NodeGlintRenderer._span(s.spans, k, row[0], row[1], row[2], 2 * reach, h, 0);   // AUDIT NODE-GLINT: its crown, about its root
-          NodeGlintRenderer._box(s.boxes, k++, row[0] - reach, row[1], row[2] - reach, row[0] + reach, row[1] + h, row[2] + reach);
+          const row = this._row,
+            reach = t.run.size[0] * GLINT_TREE_REACH * row[4],
+            h = t.run.size[1] * row[4];
+          NodeGlintRenderer._span(s.spans, k, row[0], row[1], row[2], 2 * reach, h, 0); // AUDIT NODE-GLINT: its crown, about its root
+          NodeGlintRenderer._box(
+            s.boxes,
+            k++,
+            row[0] - reach,
+            row[1],
+            row[2] - reach,
+            row[0] + reach,
+            row[1] + h,
+            row[2] + reach,
+          );
           // NODE-CROWN (AUDIT FB1025i C1): its standing width and height at its root's depth, the size its glints grow by
-          crown = Math.max(crown, crownSidePx(r._proj, vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15], t.run.size[0] * row[4], h, vw, vh));
+          crown = Math.max(
+            crown,
+            crownSidePx(
+              r._proj,
+              vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15],
+              t.run.size[0] * row[4],
+              h,
+              vw,
+              vh,
+            ),
+          );
         }
       }
       if (!k || !screenRect(s.boxes, k, vpm, s.inner)) continue;
       // AUDIT NODE-GLINT: the pictures its glints stand on - GLINT_ANCHORS at most, taken evenly (base xyz, width; height)
       s.anchorN = Math.min(k, GLINT_ANCHORS);
       for (let i = 0; i < s.anchorN; i++) {
-        const sp = s.spans[Math.floor((i * k) / s.anchorN)], o = i * 8;
-        s.anchors[o] = sp[0]; s.anchors[o + 1] = sp[1]; s.anchors[o + 2] = sp[2]; s.anchors[o + 3] = sp[3]; s.anchors[o + 4] = sp[4]; s.anchors[o + 5] = sp[5];
+        const sp = s.spans[Math.floor((i * k) / s.anchorN)],
+          o = i * 8;
+        s.anchors[o] = sp[0];
+        s.anchors[o + 1] = sp[1];
+        s.anchors[o + 2] = sp[2];
+        s.anchors[o + 3] = sp[3];
+        s.anchors[o + 4] = sp[4];
+        s.anchors[o + 5] = sp[5];
       }
       // NODE-CROWN (AUDIT FB1025i C1, the report's "Needs to be size aware"): a 3D crown's glints grown by its size on
       // screen - more of them, each reaching further (a big tree's six herb-sized glints were lost in it); a flat's
       // GLINT_COUNT at its picture's reach, as they were. And the room its rays take round it.
-      if (crown > 0) { s.count = glintCrownCount(vh, crown); s.glint = glintCrownPx(vh, crown); } else { s.count = GLINT_COUNT; s.glint = glintPx(vh, Math.max(s.inner[2] * vw, s.inner[3] * vh)); }
-      const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2;   // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel
-      this._pad[0] = (2 * room) / vw; this._pad[1] = (2 * room) / vh;
-      snapRect(widenRect(s.inner, this._pad, s.rect), vw, vh);   // whole pixels: a tile that holds the node whole holds it a texel a pixel
+      if (crown > 0) {
+        s.count = glintCrownCount(vh, crown);
+        s.glint = glintCrownPx(vh, crown);
+      } else {
+        s.count = GLINT_COUNT;
+        s.glint = glintPx(vh, Math.max(s.inner[2] * vw, s.inner[3] * vh));
+      }
+      const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2; // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel
+      this._pad[0] = (2 * room) / vw;
+      this._pad[1] = (2 * room) / vh;
+      snapRect(widenRect(s.inner, this._pad, s.rect), vw, vh); // whole pixels: a tile that holds the node whole holds it a texel a pixel
       innerShare(s.inner, s.rect, s.share);
-      const wPx = Math.round(s.rect[2] * vw), hPx = Math.round(s.rect[3] * vh), fit = Math.min(1, GLINT_TILE / Math.max(wPx, hPx));   // AUDIT NODE-GLINT: whole pixels, never one over
-      s.tile[0] = (n % GLINT_GRID) * GLINT_TILE; s.tile[1] = Math.floor(n / GLINT_GRID) * GLINT_TILE;
-      s.tile[2] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(wPx * fit))); s.tile[3] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(hPx * fit)));
+      const wPx = Math.round(s.rect[2] * vw),
+        hPx = Math.round(s.rect[3] * vh),
+        fit = Math.min(1, GLINT_TILE / Math.max(wPx, hPx)); // AUDIT NODE-GLINT: whole pixels, never one over
+      s.tile[0] = (n % GLINT_GRID) * GLINT_TILE;
+      s.tile[1] = Math.floor(n / GLINT_GRID) * GLINT_TILE;
+      s.tile[2] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(wPx * fit)));
+      s.tile[3] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(hPx * fit)));
       s.hold = Math.max(1, GLINT_HOLD_PX * fit);
-      s.ring = Math.max(1, ringPx * fit);   // RESOURCE-HIGHLIGHTS: the ring's width in the tile's texels
+      s.ring = Math.max(1, ringPx * fit); // RESOURCE-HIGHLIGHTS: the ring's width in the tile's texels
       s.g = g;
       n++;
     }
     if (!n) return 0;
     // 1. THE MASKS, a tile each
     const U = this.um;
-    const scissor = gl.isEnabled(gl.SCISSOR_TEST);   // a world frame keeps none; a UI scissor would cut the atlas
+    const scissor = gl.isEnabled(gl.SCISSOR_TEST); // a world frame keeps none; a UI scissor would cut the atlas
     if (scissor) gl.disable(gl.SCISSOR_TEST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb);
     gl.viewport(0, 0, GLINT_TILE * GLINT_GRID, GLINT_TILE * GLINT_GRID);
     gl.disable(gl.BLEND);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.depthMask(true);
     gl.disable(gl.CULL_FACE);
     gl.clearDepth(1);
     gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -800,7 +1050,10 @@ export class NodeGlintRenderer {
     gl.uniform3fv(U.uRight, r._bbRight);
     gl.uniform3fv(U.uUp, r._bbUp);
     gl.uniform4fv(U.uFlatWind, r._flatWind ?? ZERO4);
-    if (U.uWindfallAxis) { gl.uniform4fv(U.uWindfallSway, r._windfallSway ?? ZERO4); gl.uniform4fv(U.uWindfallAxis, r._windfallAxis ?? ZERO4); }
+    if (U.uWindfallAxis) {
+      gl.uniform4fv(U.uWindfallSway, r._windfallSway ?? ZERO4);
+      gl.uniform4fv(U.uWindfallAxis, r._windfallAxis ?? ZERO4);
+    }
     gl.uniform4f(U.uFacePoint, 0, 0, 0, 0);
     gl.uniform4f(U.uElitePad, 0, 0, 0, 0);
     gl.uniform1i(U.uTex, 0);
@@ -823,19 +1076,24 @@ export class NodeGlintRenderer {
         const b = pic.batch;
         // THE FLAT: its own six indices a flat (its far picture's handover by the frame that drew its 3D tree - a far
         // picture inside the radius draws none)
-        const tex = b?.vao && !b._dead && pic.count > 0 ? r.textures?.get(billboardKey(b)) ?? null : null;
+        const tex = b?.vao && !b._dead && pic.count > 0 ? (r.textures?.get(billboardKey(b)) ?? null) : null;
         if (tex) {
           gl.bindTexture(gl.TEXTURE_2D, tex);
           gl.uniform1f(U.uMesh, 0);
           gl.uniform2f(U.uSize, b.size.w, b.size.h);
-          const o = b.origin || s.g.mark.origin || ZERO_ORIGIN;   // AUDIT NODE-GLINT: as its box stood
+          const o = b.origin || s.g.mark.origin || ZERO_ORIGIN; // AUDIT NODE-GLINT: as its box stood
           gl.uniform3f(U.uOrigin, o[0], o[1], o[2]);
           gl.uniform1f(U.uSway, swayShare(b, wfLaw));
           const tp = b.tip;
           gl.uniform3f(U.uTip, tp ? tp[0] : 0, tp ? tp[1] : 0, tp ? tp[2] : 0);
-          sendCut(b.lptProto ? frames.find((f) => f?.cut && lptCuts(f.cut, b.lptProto)) ?? null : null);
+          sendCut(b.lptProto ? (frames.find((f) => f?.cut && lptCuts(f.cut, b.lptProto)) ?? null) : null);
           gl.bindVertexArray(b.vao);
-          gl.drawElements(gl.TRIANGLES, 6 * pic.count, gl.UNSIGNED_INT, (b._ibOff | 0) + pic.first * GLINT_QUAD_INDEX_BYTES);
+          gl.drawElements(
+            gl.TRIANGLES,
+            6 * pic.count,
+            gl.UNSIGNED_INT,
+            (b._ibOff | 0) + pic.first * GLINT_QUAD_INDEX_BYTES,
+          );
         }
         // THE 3D TREE the flat gives way to near the eye: its door's buffers, this pass's one instance row
         const t = pic.center ? treeInstanceOf(pic, frames, this._rows, this._row) : null;
@@ -868,16 +1126,21 @@ export class NodeGlintRenderer {
     gl.viewport(view[0], view[1], view[2], view[3]);
     if (scissor) gl.enable(gl.SCISSOR_TEST);
     if (look.ring) this._rings(n, r, vpm, view, vw, vh, seconds, still);
-    if (!look.glint) { for (let i = 0; i < n; i++) this._nodes[i].g = null; this._handBack(); this.drawn = n; return n; }
+    if (!look.glint) {
+      for (let i = 0; i < n; i++) this._nodes[i].g = null;
+      this._handBack();
+      this.drawn = n;
+      return n;
+    }
     const L = this.ul;
     gl.useProgram(this.light);
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
     gl.uniform1i(L.uMask, 0);
-    gl.uniform1i(L.uFlatTex, 1);   // AUDIT NODE-GLINT: each node's flats' own picture, on unit 1
+    gl.uniform1i(L.uFlatTex, 1); // AUDIT NODE-GLINT: each node's flats' own picture, on unit 1
     gl.uniform4f(L.uViewport, view[0], view[1], vw, vh);
     gl.uniformMatrix4fv(L.uInvVP, false, invert4(vpm, this._inv) ?? this._inv);
     gl.uniformMatrix4fv(L.uVP, false, vpm);
-    gl.uniform3fv(L.uRight, r._bbRight);   // AUDIT NODE-GLINT: the plane each picture stands in, as the flats' call stood them
+    gl.uniform3fv(L.uRight, r._bbRight); // AUDIT NODE-GLINT: the plane each picture stands in, as the flats' call stood them
     gl.uniform3fv(L.uUp, r._bbUp);
     gl.uniform1f(L.uTime, seconds);
     gl.uniform1f(L.uStill, still ? 1 : 0);
@@ -886,32 +1149,43 @@ export class NodeGlintRenderer {
     gl.uniform2fv(L.uFogRange, r._fogRange ?? NO_FOG_RANGE);
     gl.uniform3fv(L.uCamPos, r._camPos);
     if (L.uFocus) gl.uniform4fv(L.uFocus, r._focus ?? NO_FOCUS);
-    if (L.uJungleHaze) gl.uniform4fv(L.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze, the frame's (renderer.setJungleHaze), as every fogged pass
-    if (L.uDwFog) gl.uniform4fv(L.uDwFog, r._dwFog ?? NO_WATER_FOG);   // AUDIT NODE-GLINT (DW-C): the sea's murk, the frame's (renderer.setWaterFog); none, off
+    if (L.uJungleHaze) gl.uniform4fv(L.uJungleHaze, r._haze); // BANTHA1: the jungle's haze, the frame's (renderer.setJungleHaze), as every fogged pass
+    if (L.uDwFog) gl.uniform4fv(L.uDwFog, r._dwFog ?? NO_WATER_FOG); // AUDIT NODE-GLINT (DW-C): the sea's murk, the frame's (renderer.setWaterFog); none, off
     gl.bindVertexArray(this.quad);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     const eye = r._camPos;
     for (let i = 0; i < n; i++) {
-      const s = this._nodes[i], g = s.g;
+      const s = this._nodes[i],
+        g = s.g;
       gl.uniform4f(L.uRect, s.rect[0], s.rect[1], s.rect[2], s.rect[3]);
       gl.uniform4f(L.uTile, s.tile[0], s.tile[1], s.tile[2], s.tile[3]);
       gl.uniform4f(L.uInner, s.share[0], s.share[1], s.share[2], s.share[3]);
       gl.uniform1f(L.uHold, s.hold);
-      gl.uniform4fv(L.uAnchor, s.anchors, 0, s.anchorN * 8);   // AUDIT NODE-GLINT: the pictures its glints stand on
+      gl.uniform4fv(L.uAnchor, s.anchors, 0, s.anchorN * 8); // AUDIT NODE-GLINT: the pictures its glints stand on
       gl.uniform1i(L.uAnchors, s.anchorN);
-      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, s.flatTex); gl.activeTexture(gl.TEXTURE0);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, s.flatTex);
+      gl.activeTexture(gl.TEXTURE0);
       gl.uniform1f(L.uGlint, s.glint);
-      gl.uniform1i(L.uCount, s.count);   // NODE-CROWN: its glints
+      gl.uniform1i(L.uCount, s.count); // NODE-CROWN: its glints
       const tint = glintTint(g.rgb, this._tint);
       gl.uniform3f(L.uColor, tint[0], tint[1], tint[2]);
       // GLINT-LIGHT: the light the node's own flat takes where it stands (the sun's half, the moons', the lamps', the
       // ambient), under the floor that keeps a picture readable in a black room - so a node stays findable at night and
       // underground, its glints as bright as that light, its sheen out in the dark. A renderer that answers none: day.
-      const level = r.flatLightAt ? glintLightLevel(r.flatLightAt(isVec3(g.at) ? g.at : null, FLAT_LIGHT_FLOOR, this._lit)) : 1;
+      const level = r.flatLightAt
+        ? glintLightLevel(r.flatLightAt(isVec3(g.at) ? g.at : null, FLAT_LIGHT_FLOOR, this._lit))
+        : 1;
       gl.uniform1f(L.uAlpha, Math.min(1, g.alpha) * level);
       gl.uniform1f(L.uSeed, Number.isFinite(g.seed) ? g.seed : 0);
-      gl.uniform1f(L.uSheen, isVec3(g.at) ? glintSheen(Math.hypot(g.at[0] - eye[0], g.at[1] - eye[1], g.at[2] - eye[2])) * glintSheenLight(level) : 0);
+      gl.uniform1f(
+        L.uSheen,
+        isVec3(g.at)
+          ? glintSheen(Math.hypot(g.at[0] - eye[0], g.at[1] - eye[1], g.at[2] - eye[2])) * glintSheenLight(level)
+          : 0,
+      );
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       s.g = null;
     }
@@ -924,7 +1198,9 @@ export class NodeGlintRenderer {
   _handBack() {
     const gl = this.gl;
     gl.bindVertexArray(null);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.disable(gl.BLEND);
     gl.depthMask(true);
@@ -935,7 +1211,8 @@ export class NodeGlintRenderer {
    *  in its profession's colour at OUTLINE_ALPHA, kindled and faded as its light is (nodeGlows - the act's node quiet),
    *  breathing (still under reduced motion); blended over the frame against its depth, never writing it. */
   _rings(n, r, vpm, view, vw, vh, seconds, still) {
-    const gl = this.gl, R = this.ur;
+    const gl = this.gl,
+      R = this.ur;
     gl.useProgram(this.ring);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
@@ -948,14 +1225,16 @@ export class NodeGlintRenderer {
     gl.uniform2fv(R.uFogRange, r._fogRange ?? NO_FOG_RANGE);
     gl.uniform3fv(R.uCamPos, r._camPos);
     if (R.uFocus) gl.uniform4fv(R.uFocus, r._focus ?? NO_FOCUS);
-    if (R.uJungleHaze) gl.uniform4fv(R.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze, as every fogged pass
-    if (R.uDwFog) gl.uniform4fv(R.uDwFog, r._dwFog ?? NO_WATER_FOG);   // the sea's murk, the frame's
+    if (R.uJungleHaze) gl.uniform4fv(R.uJungleHaze, r._haze); // BANTHA1: the jungle's haze, as every fogged pass
+    if (R.uDwFog) gl.uniform4fv(R.uDwFog, r._dwFog ?? NO_WATER_FOG); // the sea's murk, the frame's
     gl.bindVertexArray(this.quad);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     const breath = outlineBreath(seconds, still);
     for (let i = 0; i < n; i++) {
-      const s = this._nodes[i], g = s.g;
+      const s = this._nodes[i],
+        g = s.g;
       gl.uniform4f(R.uRect, s.rect[0], s.rect[1], s.rect[2], s.rect[3]);
       gl.uniform4f(R.uTile, s.tile[0], s.tile[1], s.tile[2], s.tile[3]);
       gl.uniform1f(R.uRing, s.ring);
@@ -968,25 +1247,46 @@ export class NodeGlintRenderer {
   /** EVERY ALLOCATION HAS AN OWNER: the programs, the atlas and its framebuffer, the buffers and every VAO it made. */
   dispose() {
     const gl = this.gl;
-    gl.deleteProgram(this.mask); gl.deleteProgram(this.light); gl.deleteProgram(this.ring);
-    gl.deleteFramebuffer(this.fb); gl.deleteTexture(this.atlas);
-    gl.deleteVertexArray(this.quad); gl.deleteBuffer(this.quadVb); gl.deleteBuffer(this.inst);
+    gl.deleteProgram(this.mask);
+    gl.deleteProgram(this.light);
+    gl.deleteProgram(this.ring);
+    gl.deleteFramebuffer(this.fb);
+    gl.deleteTexture(this.atlas);
+    gl.deleteVertexArray(this.quad);
+    gl.deleteBuffer(this.quadVb);
+    gl.deleteBuffer(this.inst);
     for (const v of this._made) gl.deleteVertexArray(v);
     this._made.length = 0;
-    this.mask = null; this.light = null; this.ring = null; this.fb = null; this.atlas = null; this.quad = null; this.quadVb = null; this.inst = null;
+    this.mask = null;
+    this.light = null;
+    this.ring = null;
+    this.fb = null;
+    this.atlas = null;
+    this.quad = null;
+    this.quadVb = null;
+    this.inst = null;
   }
 }
 
 /** AUDIT NODE-MARKS: the system's reduced motion, asked once a second at most (nodeGlow.js's own reading). */
 function reducedMotionReader() {
-  let at = -Infinity, reduced = false;
+  let at = -Infinity,
+    reduced = false;
   return (nowS) => {
-    if (nowS - at > 1) { at = nowS; try { reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { reduced = false; } }
+    if (nowS - at > 1) {
+      at = nowS;
+      try {
+        reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      } catch {
+        reduced = false;
+      }
+    }
     return reduced;
   };
 }
 /** PERF-WARM's idle wait (render/warmPrograms.js). */
-const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0));
+const idleCall = (fn) =>
+  globalThis.requestIdleCallback ? globalThis.requestIdleCallback(fn, { timeout: 1000 }) : setTimeout(fn, 0);
 
 /**
  * THE WORLD HOST'S PASS: the gathering host's marks each frame - a mark with its pictures lit by its glints, a mark with
@@ -1003,32 +1303,68 @@ const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdl
  *   start?: (gl: any) => () => boolean, idle?: (fn: () => void) => void, reduced?: (nowS: number) => boolean,
  *   look?: () => { glint: boolean, ring: boolean } }} [o]
  */
-export function createNodeGlintPass(renderer, { glow: handed, now = () => performance.now() / 1000, build = (gl) => new NodeGlintRenderer(gl), start = (gl) => startPrograms(gl, NODE_GLINT_PROGRAMS), idle = idleCall, reduced = reducedMotionReader(),
-  look = () => highlightLook(getPref(RESOURCE_HIGHLIGHT_PREF)) } = {}) {
-  const glow = handed === undefined ? createNodeGlowPass(renderer) : handed;   // the glow its own when the host hands none - and freed with it (AUDIT NODE-GLINT)
-  const state = createNodeGlowState(), list = /** @type {any[]} */ ([]), bare = /** @type {any[]} */ ([]), pictured = /** @type {any[]} */ ([]);
-  let pass = /** @type {NodeGlintRenderer|null} */ (null), asked = false, dead = false, failed = false, ready = /** @type {(() => boolean)|null} */ (null);
+export function createNodeGlintPass(
+  renderer,
+  {
+    glow: handed,
+    now = () => performance.now() / 1000,
+    build = (gl) => new NodeGlintRenderer(gl),
+    start = (gl) => startPrograms(gl, NODE_GLINT_PROGRAMS),
+    idle = idleCall,
+    reduced = reducedMotionReader(),
+    look = () => highlightLook(getPref(RESOURCE_HIGHLIGHT_PREF)),
+  } = {},
+) {
+  const glow = handed === undefined ? createNodeGlowPass(renderer) : handed; // the glow its own when the host hands none - and freed with it (AUDIT NODE-GLINT)
+  const state = createNodeGlowState(),
+    list = /** @type {any[]} */ ([]),
+    bare = /** @type {any[]} */ ([]),
+    pictured = /** @type {any[]} */ ([]);
+  let pass = /** @type {NodeGlintRenderer|null} */ (null),
+    asked = false,
+    dead = false,
+    failed = false,
+    ready = /** @type {(() => boolean)|null} */ (null);
   const make = () => {
     if (dead) return;
     // AUDIT GATHER F9: a build that threw lets go of the programs it left started (glProgram.js's own law)
-    try { pass = build(renderer.gl); } catch (e) { failed = true; console.warn('[prof] the nodes\' glint would not build', e?.message ?? e); pass = null; releasePrograms(renderer.gl, NODE_GLINT_PROGRAMS); }
+    try {
+      pass = build(renderer.gl);
+    } catch (e) {
+      failed = true;
+      console.warn("[prof] the nodes' glint would not build", e?.message ?? e);
+      pass = null;
+      releasePrograms(renderer.gl, NODE_GLINT_PROGRAMS);
+    }
   };
   return {
     /** @param {ReadonlyArray<any>|null|undefined} marks */
     draw(marks) {
-      bare.length = 0; pictured.length = 0;
+      bare.length = 0;
+      pictured.length = 0;
       if (marks) for (const m of marks) (failed || !m?.pictures?.length ? bare : pictured).push(m);
-      glow?.draw(marks ? bare : null);   // a node with no picture to light keeps its glow
+      glow?.draw(marks ? bare : null); // a node with no picture to light keeps its glow
       const t = now();
-      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) { asked = true; idle(make); }   // the first node lit: the compile started; the build at idle once it is done
+      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) {
+        asked = true;
+        idle(make);
+      } // the first node lit: the compile started; the build at idle once it is done
       if (!nodeGlows(marks ? pictured : null, renderer._camPos, t, state, list).length || !pass) return 0;
       const n = pass.draw(list, renderer, t % 60, reduced(t), look());
       renderer.markForeignPass();
       return n;
     },
     /** The pass's end - its programs and its atlas freed, and never built again. */
-    dispose() { dead = true; asked = true; pass?.dispose(); pass = null; if (handed === undefined) glow?.dispose?.(); },
+    dispose() {
+      dead = true;
+      asked = true;
+      pass?.dispose();
+      pass = null;
+      if (handed === undefined) glow?.dispose?.();
+    },
     /** For the tests and the probes. */
-    get pass() { return pass; },
+    get pass() {
+      return pass;
+    },
   };
 }

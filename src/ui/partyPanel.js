@@ -69,14 +69,14 @@
 // Not a DFU member: Daggerfall Unity has no parties. Ledger A row (ONLINE).
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { raceArt, FACES_PER_RACE } from '../systems/races.js';
-import { bitmapToColor32 } from '../formats/color32Order.js';   // the same indexed-to-RGBA door every classic screen reads
+import { bitmapToColor32 } from '../formats/color32Order.js'; // the same indexed-to-RGBA door every classic screen reads
 import { isTouchDevice } from './touch/touch.js';
-import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js';   // one home for the green - "should turn green"
-import { PARTY_MAX } from '../net/wire.js';   // PARTY8: the seat count in the title
-import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
-import { partyFxKey, partyFxAbbrev, partyHealOf } from '../net/partyBuffs.js';   // PARTY-BUFFS: a member's own effects, and the heal they gained
-import { portraitRenderer } from '../render/portraitRenderer.js';   // PORTRAIT3D: the renderer a Morrowind head is taken with (a leaf)
-import { spellIconUrl } from './enhanced/enhancedArt.js';   // PARTY-BUFFS: the spell's own icon, cut from ICON00I0 as the enhanced spellbook cuts it
+import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js'; // one home for the green - "should turn green"
+import { PARTY_MAX } from '../net/wire.js'; // PARTY8: the seat count in the title
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js'; // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
+import { partyFxKey, partyFxAbbrev, partyHealOf } from '../net/partyBuffs.js'; // PARTY-BUFFS: a member's own effects, and the heal they gained
+import { portraitRenderer } from '../render/portraitRenderer.js'; // PORTRAIT3D: the renderer a Morrowind head is taken with (a leaf)
+import { spellIconUrl } from './enhanced/enhancedArt.js'; // PARTY-BUFFS: the spell's own icon, cut from ICON00I0 as the enhanced spellbook cuts it
 
 export const PARTY_STYLE_ID = 'dagger-party-style';
 
@@ -89,7 +89,7 @@ export const FACE_BLANK_MARK = '?';
 /** The portrait plate, in CSS pixels. A racial head record fits this at 1x and draws at an integer NEAREST scale
  *  (1996 pixels, and they should look it - ui/bitmapCanvas.js' own rule); anything larger is clamped by the sheet's
  *  max-width rather than overflowing the card. PARTY8 halved it from 72x80; PARTY8-B fits it to the record. */
-export const FACE_BOX_W = 32;   // PARTY8-B: the widest head record measured in FACE##I0.CIF is 31x32 (tools/partyHudProbe.mjs' note): 1x fits, and the plate is no bigger than the face
+export const FACE_BOX_W = 32; // PARTY8-B: the widest head record measured in FACE##I0.CIF is 31x32 (tools/partyHudProbe.mjs' note): 1x fits, and the plate is no bigger than the face
 export const FACE_BOX_H = 34;
 
 /** The panel's sheet: the enhanced skin's tokens (ui/enhanced/enhancedStyle.js) where they exist, a fallback where the
@@ -239,7 +239,8 @@ export const PARTY_VITALS = Object.freeze([
 ]);
 
 /** The portrait cache's key - a face is a race, a gender and an index, and nothing else. */
-export const faceKeyOf = (p) => `${p?.race ?? 'Breton'}|${p?.gender === 'female' ? 'female' : 'male'}|${Math.max(0, Math.min(FACES_PER_RACE - 1, (p?.face ?? 0) | 0))}`;
+export const faceKeyOf = (p) =>
+  `${p?.race ?? 'Breton'}|${p?.gender === 'female' ? 'female' : 'male'}|${Math.max(0, Math.min(FACES_PER_RACE - 1, (p?.face ?? 0) | 0))}`;
 
 /** Where a member is, in words: the place their pose names, plus what KIND of place it is when they are not out in
  *  the open (net/wire.js validPartyPose `in`: 1 a dungeon, 2 a building's inside). A pose with no place name at all
@@ -255,7 +256,8 @@ export function placeText(p) {
 /** A bar's fill, 0..100, rounded to whole percent - a bar is read, not measured, and a whole percent means a pose
  *  that moved a vital by one point writes no style at all. */
 export function barPercent(v, max) {
-  const m = Number(max), x = Number(v);
+  const m = Number(max),
+    x = Number(v);
   if (!Number.isFinite(m) || m <= 0 || !Number.isFinite(x)) return 0;
   return Math.max(0, Math.min(100, Math.round((x / m) * 100)));
 }
@@ -269,15 +271,20 @@ export const HP_DIGITS_BELOW = 50;
  *  pixels 800 apart both read "the wilderness", two shops in one town both "Daggerfall - inside", two nameless
  *  dungeons both "dungeon": a healer three regions away drew no line, which says "with me". `here` is the pose
  *  the host last composed; none yet means nothing can be said to be with me, and the line is drawn. */
-export const withMe = (p, here) => !!p && !!here
-  && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)
-  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));
+export const withMe = (p, here) =>
+  !!p &&
+  !!here &&
+  p.px === here.px &&
+  p.py === here.py &&
+  (p.in ?? 0) === (here.in ?? 0) &&
+  ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));
 /** The one string a frame compares to know whether my place moved (paintLive) - the coordinates withMe reads. */
 export const hereKeyOf = (h) => (h ? `${h.px},${h.py},${h.in ?? 0},${h.bk ?? ''}` : '');
 
 /** The digits beside a bar: "50 / 60". */
 export function vitalsText(v, max) {
-  const x = Number(v), m = Number(max);
+  const x = Number(v),
+    m = Number(max);
   if (!Number.isFinite(x) || !Number.isFinite(m)) return VITALS_BLANK;
   return `${Math.max(0, Math.round(x))} / ${Math.max(0, Math.round(m))}`;
 }
@@ -297,11 +304,19 @@ export function vitalsText(v, max) {
  */
 /** PORTRAIT3D: the data's stamp a seat's face key carries (`|mw<generation>`), so a face drawn before Morrowind's data
  *  came is drawn again as its head - '' with no renderer, no data, or until the heads' module has loaded (behind a door). */
-let _heads = null, _headsAsked = false;
+let _heads = null,
+  _headsAsked = false;
 export function headSuffix() {
   if (!portraitRenderer()) return '';
   if (!_heads) {
-    if (!_headsAsked) { _headsAsked = true; import('../characters/headPortraits.js').then((m) => { _heads = m; }).catch(() => {}); }
+    if (!_headsAsked) {
+      _headsAsked = true;
+      import('../characters/headPortraits.js')
+        .then((m) => {
+          _heads = m;
+        })
+        .catch(() => {});
+    }
     return '';
   }
   const g = _heads.headDataStamp();
@@ -310,7 +325,10 @@ export function headSuffix() {
 /** PORTRAIT3D: a pose's Morrowind head as the loader answers it - `{ width, height, colors, scale }`, or null. */
 async function morrowindFaceOf(pose) {
   const { poseHeadImage, HEAD_RECORD } = await import('../characters/headPortraits.js');
-  const img = await poseHeadImage(pose, { px: HEAD_RECORD.w * HEAD_RECORD.scale, ph: HEAD_RECORD.h * HEAD_RECORD.scale });
+  const img = await poseHeadImage(pose, {
+    px: HEAD_RECORD.w * HEAD_RECORD.scale,
+    ph: HEAD_RECORD.h * HEAD_RECORD.scale,
+  });
   if (!img) return null;
   const colors = new Uint8ClampedArray(img.width * img.height * 4);
   colors.set(img.data);
@@ -319,11 +337,15 @@ async function morrowindFaceOf(pose) {
 /** The talk's common faces (DaggerfallTalkWindow's CommonFaces archive). */
 export const COMMON_FACES_FILE = 'TFAC00I0.RCI';
 export function createFaceLoader({ fetchBytes, palette } = {}) {
-  const files = new Map();   // name -> Promise<CifRciFile>
+  const files = new Map(); // name -> Promise<CifRciFile>
   const load = (name) => {
     let p = files.get(name);
     if (!p) {
-      p = (async () => { const cif = new CifRciFile(); cif.load(await fetchBytes(name), name, palette); return cif; })();
+      p = (async () => {
+        const cif = new CifRciFile();
+        cif.load(await fetchBytes(name), name, palette);
+        return cif;
+      })();
       files.set(name, p);
     }
     return p;
@@ -359,48 +381,84 @@ export function createFaceLoader({ fetchBytes, palette } = {}) {
  * on its own, and `destroy()`.
  */
 /** COMPANION-KIT: the one string a companion's card is repainted on - his name, role, health and effects. */
-export const companionKey = (c) => `${c?.key}|${c?.name}|${c?.role}|${Math.round(Number(c?.h) || 0)}/${Math.round(Number(c?.hm) || 0)}|${partyFxKey(c?.fx)}`;
-export function createPartyPanel({ social, doc = document, art = null, faceLoader = null, touch = isTouchDevice(), here = null, fxIcon = null, companions: companionsIn = null } = {}) {
+export const companionKey = (c) =>
+  `${c?.key}|${c?.name}|${c?.role}|${Math.round(Number(c?.h) || 0)}/${Math.round(Number(c?.hm) || 0)}|${partyFxKey(c?.fx)}`;
+export function createPartyPanel({
+  social,
+  doc = document,
+  art = null,
+  faceLoader = null,
+  touch = isTouchDevice(),
+  here = null,
+  fxIcon = null,
+  companions: companionsIn = null,
+} = {}) {
   let companions = companionsIn;
   injectPartyStyle(doc);
   // PARTY-BUFFS: an effect's icon - the enhanced spellbook's own cut of ICON00I0 (null until the sheet lands); a seam
   // so the pins can hand one in without loading the sheet
-  const iconOf = fxIcon ?? ((i) => { try { return spellIconUrl(i); } catch { return null; } });
+  const iconOf =
+    fxIcon ??
+    ((i) => {
+      try {
+        return spellIconUrl(i);
+      } catch {
+        return null;
+      }
+    });
   // PARTY8-B: my own place, as the host last composed it (scenes/world.js partyFrame's pose) - read, never composed
   // here (AUDIT SOC B18: composing a pose reads the travel pixel and the location index, and this runs per frame)
   const herePose = () => here?.() ?? null;
   const hereKey = () => hereKeyOf(herePose());
   const loader = faceLoader ?? createFaceLoader(art ?? {});
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
-  const setText = (n, t) => { if (n.textContent !== t) n.textContent = t; };
-  const setCls = (n, c) => { if (n.className !== c) n.className = c; };
-  const setWidth = (n, w) => { if (n.style.width !== w) n.style.width = w; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const setText = (n, t) => {
+    if (n.textContent !== t) n.textContent = t;
+  };
+  const setCls = (n, c) => {
+    if (n.className !== c) n.className = c;
+  };
+  const setWidth = (n, w) => {
+    if (n.style.width !== w) n.style.width = w;
+  };
 
   const root = el('div', `dfparty${touch ? ' touch' : ''}`);
   root.setAttribute('role', 'group');
   root.setAttribute('aria-label', 'Party');
   const title = el('div', 'dfparty-title', 'Party');
-  const count = el('span', 'dfparty-count', '');   // PARTY8: the seats filled, of PARTY_MAX
+  const count = el('span', 'dfparty-count', ''); // PARTY8: the seats filled, of PARTY_MAX
   title.append(count);
   const list = el('div', 'dfparty-list');
-  const mateList = el('div', 'dfparty-mates');   // AUDIT WK-U6: my companions' cards, a list of their own after the seats'
+  const mateList = el('div', 'dfparty-mates'); // AUDIT WK-U6: my companions' cards, a list of their own after the seats'
   root.append(title, list, mateList);
   doc.body.append(root);
-  root.style.display = 'none';   // nothing is drawn before the first paint says there is a party to draw
+  root.style.display = 'none'; // nothing is drawn before the first paint says there is a party to draw
 
   /** acct -> the card's nodes. The MAP IS THE IDENTITY: a member who stays in the party keeps their node across
    *  every repaint, which is what lets a pose move a bar in place. */
   const cards = new Map();
-  const faces = new Map();     // race|gender|face -> the decoded image, or null when the art could not be read
-  const pending = new Map();   // the same key -> the load in flight, so two seats with one face load it once
-  let painted = -1;            // the `social.version` the cards were written from
-  let paintedPose = -1;        // AUDIT PARTY8: ...and the `social.poseVersion` - a pose alone moves this one, never the version
-  let hereWas = '';            // PARTY8-B: my place's words at the last pass, so the place lines follow ME as well as them
-  let covered = false;         // the host's word: a window over the HUD
-  let showing = false;         // is there a party with somebody else in it - COMPANION-KIT: or a companion of mine
-  let compPainted = null;      // COMPANION-KIT: the companions' key the cards were last written from
+  const faces = new Map(); // race|gender|face -> the decoded image, or null when the art could not be read
+  const pending = new Map(); // the same key -> the load in flight, so two seats with one face load it once
+  let painted = -1; // the `social.version` the cards were written from
+  let paintedPose = -1; // AUDIT PARTY8: ...and the `social.poseVersion` - a pose alone moves this one, never the version
+  let hereWas = ''; // PARTY8-B: my place's words at the last pass, so the place lines follow ME as well as them
+  let covered = false; // the host's word: a window over the HUD
+  let showing = false; // is there a party with somebody else in it - COMPANION-KIT: or a companion of mine
+  let compPainted = null; // COMPANION-KIT: the companions' key the cards were last written from
   /** COMPANION-KIT: the host's companions this frame, or none. */
-  const comps = () => { try { const l = companions?.() ?? []; return Array.isArray(l) ? l : []; } catch { return []; } };
+  const comps = () => {
+    try {
+      const l = companions?.() ?? [];
+      return Array.isArray(l) ? l : [];
+    } catch {
+      return [];
+    }
+  };
   let alive = true;
   let warned = false;
   // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 27.4): THE SPIRE'S ROWS - the host's word, by account, of each
@@ -413,7 +471,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   let spireTap = null;
 
   const applyVisible = () => {
-    const want = (!covered && showing) ? '' : 'none';
+    const want = !covered && showing ? '' : 'none';
     if (root.style.display !== want) root.style.display = want;
   };
   const setCovered = (value) => {
@@ -438,13 +496,16 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     // portrait, never the frame (Ledger A's rule - a missing record costs the picture, not the session).
     if (img.colors?.byteLength !== img.width * img.height * 4) return;
     const ctx = card.pix.getContext?.('2d');
-    if (!ctx?.createImageData || !ctx.putImageData) return;   // no 2D context (a stub canvas): the plate stands
+    if (!ctx?.createImageData || !ctx.putImageData) return; // no 2D context (a stub canvas): the plate stands
     card.pix.width = img.width;
     card.pix.height = img.height;
     // AN INTEGER SCALE OR NONE. The backing store is the record's own pixels; the CSS size is a whole multiple of
     // it, so the plate shows NEAREST-scaled 1996 art rather than a smeared bilinear one.
     // PORTRAIT3D: a Morrowind head is its picture `scale` times smaller, smooth - the record's own size
-    const s = img.scale > 0 ? 1 / img.scale : Math.max(1, Math.min(Math.floor(FACE_BOX_W / img.width), Math.floor(FACE_BOX_H / img.height)));
+    const s =
+      img.scale > 0
+        ? 1 / img.scale
+        : Math.max(1, Math.min(Math.floor(FACE_BOX_W / img.width), Math.floor(FACE_BOX_H / img.height)));
     card.pix.style.width = `${img.width * s}px`;
     card.pix.style.height = `${img.height * s}px`;
     card.pix.style.imageRendering = img.scale > 0 ? 'auto' : '';
@@ -456,19 +517,36 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   };
 
   const wantFace = (card, key, pose) => {
-    if (faces.has(key)) { const img = faces.get(key); if (img) drawFace(card, key, img); return; }
+    if (faces.has(key)) {
+      const img = faces.get(key);
+      if (img) drawFace(card, key, img);
+      return;
+    }
     let job = pending.get(key);
     if (!job) {
-      job = Promise.resolve().then(() => loader(pose)).then(
-        (img) => { pending.delete(key); faces.set(key, img ?? null); return img ?? null; },
-        (e) => {
-          pending.delete(key); faces.set(key, null);
-          if (!warned) { warned = true; console.warn('[party] portrait art unavailable:', e?.message ?? e); }
-          return null;
-        });
+      job = Promise.resolve()
+        .then(() => loader(pose))
+        .then(
+          (img) => {
+            pending.delete(key);
+            faces.set(key, img ?? null);
+            return img ?? null;
+          },
+          (e) => {
+            pending.delete(key);
+            faces.set(key, null);
+            if (!warned) {
+              warned = true;
+              console.warn('[party] portrait art unavailable:', e?.message ?? e);
+            }
+            return null;
+          },
+        );
       pending.set(key, job);
     }
-    job.then((img) => { if (alive && img && card.faceKey === key) drawFace(card, key, img); });
+    job.then((img) => {
+      if (alive && img && card.faceKey === key) drawFace(card, key, img);
+    });
   };
 
   const makeCard = () => {
@@ -477,7 +555,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const pix = doc.createElement('canvas');
     pix.className = 'dfparty-facepix';
     const facemark = el('span', 'dfparty-facemark', FACE_BLANK_MARK);
-    facemark.setAttribute('aria-hidden', 'true');   // AUDIT WK-U4: the plate's mark, never a word - a reader said "B Hilda Moyle"
+    facemark.setAttribute('aria-hidden', 'true'); // AUDIT WK-U4: the plate's mark, never a word - a reader said "B Hilda Moyle"
     facebox.append(pix, facemark);
     const body = el('div', 'dfparty-body');
     const head = el('div', 'dfparty-head');
@@ -485,9 +563,9 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const lead = el('span', 'dfparty-lead off', LEADER_MARK);
     lead.setAttribute('title', 'Party leader');
     lead.setAttribute('aria-label', 'Party leader');
-    const hp = el('span', 'dfparty-hp off', VITALS_BLANK);   // PARTY8: the one number the card says - the health; PARTY8-B: drawn only while it is low
+    const hp = el('span', 'dfparty-hp off', VITALS_BLANK); // PARTY8: the one number the card says - the health; PARTY8-B: drawn only while it is low
     head.append(name, lead, hp);
-    const where = el('div', 'dfparty-where off');   // PARTY8-B: under the bars, drawn only for a seat that is not with me
+    const where = el('div', 'dfparty-where off'); // PARTY8-B: under the bars, drawn only for a seat that is not with me
     const bars = el('div', 'dfparty-bars');
     const vitals = PARTY_VITALS.map((v) => {
       const row = el('div', `dfparty-vital ${v.key}`);
@@ -506,14 +584,33 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const thin = el('div', 'dfparty-thin');
     thin.append(vitals[1].row, vitals[2].row);
     bars.append(vitals[0].row, thin);
-    const fx = el('div', 'dfparty-fx off');   // PARTY-BUFFS: the member's own live effects, drawn only while there are any
+    const fx = el('div', 'dfparty-fx off'); // PARTY-BUFFS: the member's own live effects, drawn only while there are any
     body.append(head, bars, fx, where);
     node.append(facebox, body);
     // AUDIT PARTY8: the flare's class comes OFF when the animation ends - a class left on the fill replays it whenever the
     // root comes back from display:none (a window closing) or the row is re-inserted (a seat joining): every seat that
     // took any hit this session flashed at once
     for (const slot of vitals) slot.fill.addEventListener?.('animationend', () => setCls(slot.fill, 'dfparty-fill'));
-    return { node, facebox, pix, facemark, name, lead, where, hp, vitals, fx, fxKey: '#', faceKey: null, drawn: null, away: null, hpPct: null, hpH: null, hmH: null, hitFlip: false };   // AUDIT WK-U2: `hmH`, the whole a companion's health was last measured against
+    return {
+      node,
+      facebox,
+      pix,
+      facemark,
+      name,
+      lead,
+      where,
+      hp,
+      vitals,
+      fx,
+      fxKey: '#',
+      faceKey: null,
+      drawn: null,
+      away: null,
+      hpPct: null,
+      hpH: null,
+      hmH: null,
+      hitFlip: false,
+    }; // AUDIT WK-U2: `hmH`, the whole a companion's health was last measured against
   };
 
   /** PARTY-BUFFS: the member's own effects row, rewritten only when what it says moved (the icon, the rounds, the
@@ -530,8 +627,12 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     list.forEach((e, k) => {
       const tile = el('span', `dfparty-fxe${e.d ? ' debuff' : ''}`);
       const url = urls[k];
-      if (url) { const img = doc.createElement('img'); img.src = url; img.alt = ''; tile.append(img); }
-      else tile.append(el('span', 'dfparty-fxw', partyFxAbbrev(e.n)));
+      if (url) {
+        const img = doc.createElement('img');
+        img.src = url;
+        img.alt = '';
+        tile.append(img);
+      } else tile.append(el('span', 'dfparty-fxw', partyFxAbbrev(e.n)));
       tile.append(el('span', 'dfparty-fxr', String(e.r)));
       tile.setAttribute('title', `${e.n || 'Spell'} - ${e.r} rounds${e.d ? ' (harmful)' : ''}`);
       card.fx.append(tile);
@@ -554,25 +655,32 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const nm = m.name ?? '';
     // AUDIT SOC C22: the name ellipsizes at the card's width (a 24-character name is cut mid-word and there is no
     // second place in the HUD that says it), so the full one rides on the node as a title - written with the name.
-    if (card.name.textContent !== nm) { setText(card.name, nm); card.name.setAttribute('title', nm); }
+    if (card.name.textContent !== nm) {
+      setText(card.name, nm);
+      card.name.setAttribute('title', nm);
+    }
     setCls(card.lead, `dfparty-lead${isLeader ? '' : ' off'}`);
     // Online: where they are. Away: when they were last seen, in the picture's own words (the relay's clock).
-    card.away = m.online ? null : { seen: m.seen };   // AUDIT SOC B8: the live pass re-reads this one sentence
+    card.away = m.online ? null : { seen: m.seen }; // AUDIT SOC B8: the live pass re-reads this one sentence
     setText(card.where, m.online ? placeText(p) : lastOnlineText(false, m.seen, social.now()));
     // PARTY8-B: the place line is drawn for an away seat (its "last online") and for a live seat somewhere else
     setCls(card.where, `dfparty-where${!m.online || (p && !withMe(p, herePose())) ? '' : ' off'}`);
     for (let i = 0; i < PARTY_VITALS.length; i++) {
-      const v = PARTY_VITALS[i], slot = card.vitals[i];
+      const v = PARTY_VITALS[i],
+        slot = card.vitals[i];
       setWidth(slot.fill, `${p ? barPercent(p[v.now], p[v.max]) : 0}%`);
       setText(slot.num, p ? vitalsText(p[v.now], p[v.max]) : VITALS_BLANK);
     }
-    setText(card.hp, card.vitals[0].num.textContent);   // PARTY8: the health digits, written for every pose
+    setText(card.hp, card.vitals[0].num.textContent); // PARTY8: the health digits, written for every pose
     // PARTY8-B: ...and DRAWN only while the health is low; a DROP flares the fill (a heal, a first pose and an
     // away seat's stale pose do not - the flare says "took a hit", nothing else)
     const pct = p ? barPercent(p.h, p.hm) : null;
     // AUDIT PARTY8: a seat with no pose yet shows its dashes (the header's own promise), dimmed - never a zeroed bar
     // that reads as dying and nothing beside it to say why
-    setCls(card.hp, `dfparty-hp${pct == null && m.online ? ' blank' : pct != null && pct < HP_DIGITS_BELOW && m.online ? '' : ' off'}`);
+    setCls(
+      card.hp,
+      `dfparty-hp${pct == null && m.online ? ' blank' : pct != null && pct < HP_DIGITS_BELOW && m.online ? '' : ' off'}`,
+    );
     // AUDIT PARTY8: the flare is keyed on the HEALTH, not its percent - a max that rose dropped the percent with no
     // wound and flared, and a one-point hit on a large pool rounded to the same percent and did not
     const h = p && Number.isFinite(Number(p.h)) ? Number(p.h) : null;
@@ -586,11 +694,11 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     card.hpH = h;
     paintFx(card, m.online ? p?.fx : null);
     card.hpPct = pct;
-    const key = p ? `${faceKeyOf(p)}${headSuffix()}` : null;   // PORTRAIT3D: and the data's stamp
+    const key = p ? `${faceKeyOf(p)}${headSuffix()}` : null; // PORTRAIT3D: and the data's stamp
     if (key !== card.faceKey) {
       card.faceKey = key;
       card.drawn = null;
-      setCls(card.facebox, 'dfparty-face');   // back to the plate while the new face is fetched
+      setCls(card.facebox, 'dfparty-face'); // back to the plate while the new face is fetched
       if (key) wantFace(card, key, p);
     } else if (key && !card.drawn && faces.get(key)) {
       // The art is in hand but this card is not wearing it yet - it landed for another seat while this one was
@@ -613,7 +721,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       hereWas = hk;
       const hp = herePose();
       for (const [acct, card] of cards) {
-        if (card.away || acct.startsWith('companion:')) continue;   // COMPANION-KIT: a companion's line is his role, not a place
+        if (card.away || acct.startsWith('companion:')) continue; // COMPANION-KIT: a companion's line is his role, not a place
         const p = social.party?.members?.find((x) => x.acct === acct)?.p ?? null;
         setCls(card.where, `dfparty-where${p && !withMe(p, hp) ? '' : ' off'}`);
       }
@@ -622,7 +730,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       if (!card.away) continue;
       setText(card.where, lastOnlineText(false, card.away.seen, social.now()));
     }
-    paintSpire();   // EG-G1
+    paintSpire(); // EG-G1
   };
 
   /** EG-G1: THE SPIRE'S ROWS onto the cards - written only when the host's word moved (its key), or after a paint that
@@ -630,8 +738,19 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
    *  took is given back by a repaint. */
   const paintSpire = () => {
     let deco = null;
-    try { deco = spire?.() ?? null; } catch { deco = null; }
-    const key = deco ? [...deco].map(([s, d]) => `${s}|${d.num}|${d.cls}|${d.mark}|${d.ring == null ? '' : Math.round(d.ring * 100)}|${d.where ?? ''}|${d.title}`).join('#') : '';
+    try {
+      deco = spire?.() ?? null;
+    } catch {
+      deco = null;
+    }
+    const key = deco
+      ? [...deco]
+          .map(
+            ([s, d]) =>
+              `${s}|${d.num}|${d.cls}|${d.mark}|${d.ring == null ? '' : Math.round(d.ring * 100)}|${d.where ?? ''}|${d.title}`,
+          )
+          .join('#')
+      : '';
     if (key === spireWas) return;
     spireWas = key;
     for (const [acct, card] of cards) {
@@ -639,22 +758,37 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       const d = deco?.get(acct) ?? null;
       if (d && !card.egNum) {
         const head = card.name.parentNode ?? card.name.parent;
-        card.egNum = el('span', 'dfparty-egn'); card.egMark = el('span', 'dfparty-egm'); card.egRing = el('div', 'dfparty-egring');
+        card.egNum = el('span', 'dfparty-egn');
+        card.egMark = el('span', 'dfparty-egm');
+        card.egRing = el('div', 'dfparty-egring');
         card.egMark.setAttribute('aria-hidden', 'true');
-        head?.insertBefore?.(card.egNum, card.name); head?.insertBefore?.(card.egMark, card.lead);
+        head?.insertBefore?.(card.egNum, card.name);
+        head?.insertBefore?.(card.egMark, card.lead);
         card.facebox.append(card.egRing);
-        card.node.addEventListener?.('click', () => { if (String(card.node.className).split(/\s+/).includes('eg-tap')) spireTap?.(acct); });   // AUDIT EG V (c, L7-7)
+        card.node.addEventListener?.('click', () => {
+          if (String(card.node.className).split(/\s+/).includes('eg-tap')) spireTap?.(acct);
+        }); // AUDIT EG V (c, L7-7)
       }
       if (!card.egNum) continue;
       setText(card.egNum, d ? d.num : '');
       setText(card.egMark, d ? d.mark : '');
-      const base = String(card.node.className).split(/\s+/).filter((c) => c && !c.startsWith('eg-')).join(' ');
+      const base = String(card.node.className)
+        .split(/\s+/)
+        .filter((c) => c && !c.startsWith('eg-'))
+        .join(' ');
       setCls(card.node, d?.cls ? `${base} ${d.cls}` : base);
       card.node.setAttribute('title', d?.title ?? '');
       const ring = d?.ring == null ? '' : String(Math.round(d.ring * 1000) / 1000);
-      if (card.egRing.style.getPropertyValue?.('--eg-ring') !== ring) card.egRing.style.setProperty?.('--eg-ring', ring);
-      if (d?.where) { setText(card.where, d.where); setCls(card.where, 'dfparty-where'); card.egWhere = true; }
-      else if (card.egWhere) { card.egWhere = false; painted = -1; }
+      if (card.egRing.style.getPropertyValue?.('--eg-ring') !== ring)
+        card.egRing.style.setProperty?.('--eg-ring', ring);
+      if (d?.where) {
+        setText(card.where, d.where);
+        setCls(card.where, 'dfparty-where');
+        card.egWhere = true;
+      } else if (card.egWhere) {
+        card.egWhere = false;
+        painted = -1;
+      }
     }
   };
 
@@ -662,11 +796,15 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   const paintCompanion = (card, c) => {
     setCls(card.node, 'dfparty-card mate');
     const nm = String(c.name ?? '');
-    if (card.name.textContent !== nm) { setText(card.name, nm); card.name.setAttribute('title', nm); }
+    if (card.name.textContent !== nm) {
+      setText(card.name, nm);
+      card.name.setAttribute('title', nm);
+    }
     setCls(card.lead, 'dfparty-lead off');
     setText(card.where, String(c.role ?? ''));
     setCls(card.where, `dfparty-where${c.role ? '' : ' off'}`);
-    const h = Number(c.h), hm = Number(c.hm);
+    const h = Number(c.h),
+      hm = Number(c.hm);
     const pose = Number.isFinite(h) && Number.isFinite(hm) && hm > 0 ? { h, hm } : null;
     setWidth(card.vitals[0].fill, `${pose ? barPercent(pose.h, pose.hm) : 0}%`);
     setText(card.vitals[0].num, pose ? vitalsText(pose.h, pose.hm) : VITALS_BLANK);
@@ -691,19 +829,26 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;
   };
   const paint = () => {
-    hereWas = hereKey();   // PARTY8-B: paintCard reads my place as it writes each line; the live pass starts from there
+    hereWas = hereKey(); // PARTY8-B: paintCard reads my place as it writes each line; the live pass starts from there
     const rows = social?.others?.() ?? [];
     const leader = social?.party?.leader ?? null;
-    const mates = comps();   // COMPANION-KIT
+    const mates = comps(); // COMPANION-KIT
     compPainted = mates.map(companionKey).join('#');
     showing = rows.length > 0 || mates.length > 0;
-    setText(count, social?.party ? `${(social?.party?.members?.length ?? rows.length + 1)}/${PARTY_MAX}` : '');   // PARTY8: the seats filled, me included - COMPANION-KIT: no seats with no party
+    setText(count, social?.party ? `${social?.party?.members?.length ?? rows.length + 1}/${PARTY_MAX}` : ''); // PARTY8: the seats filled, me included - COMPANION-KIT: no seats with no party
     const keep = new Set([...rows.map((m) => m.acct), ...mates.map((c) => `companion:${c.key}`)]);
-    for (const [acct, card] of cards) if (!keep.has(acct)) { card.node.remove?.(); cards.delete(acct); }
+    for (const [acct, card] of cards)
+      if (!keep.has(acct)) {
+        card.node.remove?.();
+        cards.delete(acct);
+      }
     const order = [];
     for (const m of rows) {
       let card = cards.get(m.acct);
-      if (!card) { card = makeCard(); cards.set(m.acct, card); }
+      if (!card) {
+        card = makeCard();
+        cards.set(m.acct, card);
+      }
       paintCard(card, m, m.acct === leader);
       order.push(card.node);
     }
@@ -712,23 +857,28 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     for (const c of mates) {
       const id = `companion:${c.key}`;
       let card = cards.get(id);
-      if (!card) { card = makeCard(); cards.set(id, card); }
+      if (!card) {
+        card = makeCard();
+        cards.set(id, card);
+      }
       paintCompanion(card, c);
       mateOrder.push(card.node);
     }
     // The seats' order is the hub's; re-parent only when it actually moved, so a pose writes no structure.
-    const same = (into, nodes) => into.children.length === nodes.length && nodes.every((n, i) => into.children[i] === n);
+    const same = (into, nodes) =>
+      into.children.length === nodes.length && nodes.every((n, i) => into.children[i] === n);
     if (!same(list, order)) list.replaceChildren(...order);
     if (!same(mateList, mateOrder)) mateList.replaceChildren(...mateOrder);
     applyVisible();
-    spireWas = null; paintSpire();   // EG-G1: the cards' own parts rewritten, the Spire's laid over them again
+    spireWas = null;
+    paintSpire(); // EG-G1: the cards' own parts rewritten, the Spire's laid over them again
   };
 
   return {
     /** The tests' (and a host's) window into the built DOM. */
     root,
     list,
-    mates: mateList,   // AUDIT WK-U6
+    mates: mateList, // AUDIT WK-U6
     /** The host's word: a window covers the HUD, so it covers this too (ui/chatPanel.js render's `covered`). */
     setHidden: setCovered,
     /**
@@ -744,16 +894,35 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       if (covered) return;
       // COMPANION-KIT: my companions repaint the panel when their cards' words moved, a party or none
       const ck = comps().map(companionKey).join('#');
-      if (!social) { if (ck !== compPainted) paint(); return; }
-      if (ck !== compPainted) { painted = social.version; paintedPose = social.poseVersion ?? 0; paint(); return; }
-      if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { paintLive(); return; }   // AUDIT SOC B8: the clock moves where the version does not
-      painted = social.version; paintedPose = social.poseVersion ?? 0;
+      if (!social) {
+        if (ck !== compPainted) paint();
+        return;
+      }
+      if (ck !== compPainted) {
+        painted = social.version;
+        paintedPose = social.poseVersion ?? 0;
+        paint();
+        return;
+      }
+      if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) {
+        paintLive();
+        return;
+      } // AUDIT SOC B8: the clock moves where the version does not
+      painted = social.version;
+      paintedPose = social.poseVersion ?? 0;
       paint();
     },
     /** COMPANION-KIT: the host's companions seam, handed in after the build (the party's panel is made over `social`). */
-    setCompanions(fn) { companions = typeof fn === 'function' ? fn : null; compPainted = null; },
+    setCompanions(fn) {
+      companions = typeof fn === 'function' ? fn : null;
+      compPainted = null;
+    },
     /** EG-G1: the host's Spire rows seam (ui/eliteGates/egParty.js egPartyDeco by account, or null outside a breach). */
-    setSpire(fn, onTap = null) { spire = typeof fn === 'function' ? fn : null; spireTap = typeof onTap === 'function' ? onTap : null; spireWas = null; },   // AUDIT EG V (c, L7-7): and a row's tap
+    setSpire(fn, onTap = null) {
+      spire = typeof fn === 'function' ? fn : null;
+      spireTap = typeof onTap === 'function' ? onTap : null;
+      spireWas = null;
+    }, // AUDIT EG V (c, L7-7): and a row's tap
     /** What the panel currently draws, for a host or a pin that wants it without walking the DOM. */
     cardCount: () => cards.size,
     cardFor: (acct) => cards.get(acct) ?? null,

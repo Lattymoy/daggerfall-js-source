@@ -44,11 +44,28 @@ export const JUNGLE_HAZE = Object.freeze({
   start: 8,
   /** the density's factor through the day: [hour, factor], read linearly between, round the clock */
   day: Object.freeze([
-    Object.freeze([0, 1.25]), Object.freeze([4.5, 1.35]), Object.freeze([6.5, 1.65]), Object.freeze([9, 1.15]),
-    Object.freeze([13, 0.82]), Object.freeze([16, 0.9]), Object.freeze([18.5, 1.08]), Object.freeze([21, 1.2]), Object.freeze([24, 1.25]),
+    Object.freeze([0, 1.25]),
+    Object.freeze([4.5, 1.35]),
+    Object.freeze([6.5, 1.65]),
+    Object.freeze([9, 1.15]),
+    Object.freeze([13, 0.82]),
+    Object.freeze([16, 0.9]),
+    Object.freeze([18.5, 1.08]),
+    Object.freeze([21, 1.2]),
+    Object.freeze([24, 1.25]),
   ]),
   /** ...by the weather (world/weather.js WEATHER_TYPES - DFU's WeatherType by name, and the port's sandstorm and ashfall) */
-  weather: Object.freeze({ sunny: 1, cloudy: 1.05, overcast: 1.12, fog: 1.4, rain: 1.3, thunder: 1.42, snow: 1.15, sandstorm: 1, ashfall: 1.12 }),
+  weather: Object.freeze({
+    sunny: 1,
+    cloudy: 1.05,
+    overcast: 1.12,
+    fog: 1.4,
+    rain: 1.3,
+    thunder: 1.42,
+    snow: 1.15,
+    sandstorm: 1,
+    ashfall: 1.12,
+  }),
   /** the drifting banks: a value noise of `cell` metres, the density times 1 +- `amp`, blown at `speed` m/s along the
    *  wind (or `still` m/s east with none) */
   drift: Object.freeze({ cell: 540, amp: 0.24, speed: 1.6, still: 0.35, salt: 811 }),
@@ -75,7 +92,8 @@ export const hazeShare = (depth) => smoothstep(-JUNGLE_HAZE.edge.out, JUNGLE_HAZ
 
 /** The day's factor at an hour (0-24, fractional). */
 export function hazeDayFactor(hour) {
-  const h = ((hour % 24) + 24) % 24, k = JUNGLE_HAZE.day;
+  const h = ((hour % 24) + 24) % 24,
+    k = JUNGLE_HAZE.day;
   for (let i = 1; i < k.length; i++) {
     if (h <= k[i][0]) {
       const t = (h - k[i - 1][0]) / (k[i][0] - k[i - 1][0]);
@@ -86,31 +104,43 @@ export function hazeDayFactor(hour) {
 }
 
 /** The weather's factor (its WEATHER_TYPES name; anything else fair). */
-export const hazeWeatherFactor = (weather) => (Object.hasOwn(JUNGLE_HAZE.weather, weather) ? JUNGLE_HAZE.weather[weather] : 1);
+export const hazeWeatherFactor = (weather) =>
+  Object.hasOwn(JUNGLE_HAZE.weather, weather) ? JUNGLE_HAZE.weather[weather] : 1;
 
 /** The drifting banks' factor at a world point (m - absolute, the floating origin's shift added by the caller) and a
  *  time (s), blown along `wind` ([x, z] - its way alone; null or still, east at JUNGLE_HAZE.drift.still): a smoothstepped
  *  value noise on the ecotone's own hash. */
 export function hazeDrift(x, z, t, wind = null) {
-  const d = JUNGLE_HAZE.drift, wl = wind ? Math.hypot(wind[0], wind[1]) : 0;   // the wind's way alone - the banks keep their own pace
-  const wx = wl > 1e-6 ? (wind[0] / wl) * d.speed : d.still, wz = wl > 1e-6 ? (wind[1] / wl) * d.speed : 0;
-  const qx = (x - wx * t) / d.cell, qz = (z - wz * t) / d.cell;
-  const ix = Math.floor(qx), iz = Math.floor(qz), fx = qx - ix, fz = qz - iz;
-  const ux = fx * fx * (3 - 2 * fx), uz = fz * fz * (3 - 2 * fz);
-  const a = ecoHash(ix, iz, d.salt), b = ecoHash(ix + 1, iz, d.salt), c = ecoHash(ix, iz + 1, d.salt), e = ecoHash(ix + 1, iz + 1, d.salt);
-  const n = (a + (b - a) * ux) + ((c + (e - c) * ux) - (a + (b - a) * ux)) * uz;
+  const d = JUNGLE_HAZE.drift,
+    wl = wind ? Math.hypot(wind[0], wind[1]) : 0; // the wind's way alone - the banks keep their own pace
+  const wx = wl > 1e-6 ? (wind[0] / wl) * d.speed : d.still,
+    wz = wl > 1e-6 ? (wind[1] / wl) * d.speed : 0;
+  const qx = (x - wx * t) / d.cell,
+    qz = (z - wz * t) / d.cell;
+  const ix = Math.floor(qx),
+    iz = Math.floor(qz),
+    fx = qx - ix,
+    fz = qz - iz;
+  const ux = fx * fx * (3 - 2 * fx),
+    uz = fz * fz * (3 - 2 * fz);
+  const a = ecoHash(ix, iz, d.salt),
+    b = ecoHash(ix + 1, iz, d.salt),
+    c = ecoHash(ix, iz + 1, d.salt),
+    e = ecoHash(ix + 1, iz + 1, d.salt);
+  const n = a + (b - a) * ux + (c + (e - c) * ux - (a + (b - a) * ux)) * uz;
   return 1 + d.amp * (2 * n - 1);
 }
 
 /** The mean density along a ray from height `a` to `b` - each in falloffs over the floor - as a share of the floor's
  *  (render/hazeGlsl.js hazeMean, term for term). */
 export function hazeMean(a, b) {
-  const lo = Math.min(a, b), hi = Math.max(a, b);
+  const lo = Math.min(a, b),
+    hi = Math.max(a, b);
   if (hi <= 0) return 1;
   const span = hi - lo;
   if (span < 1e-4) return Math.exp(-Math.max(lo, 0));
   const lo0 = Math.max(lo, 0);
-  return ((lo0 - lo) + (Math.exp(-lo0) - Math.exp(-hi))) / span;
+  return (lo0 - lo + (Math.exp(-lo0) - Math.exp(-hi))) / span;
 }
 
 /**
@@ -141,12 +171,15 @@ export function stepHaze(s, { dt, eye, share, density, floor }) {
   s.share = eased(jumped, s.share, share, dt, JUNGLE_HAZE.lag.share);
   s.density = eased(jumped, s.density, density, dt, JUNGLE_HAZE.lag.density);
   s.floor = eased(jumped, s.floor, floor, dt, JUNGLE_HAZE.lag.floor);
-  const e = (s.eye ??= [0, 0, 0]);   // AUDIT BANTHA1 HOST-8: the state's own, never a frame's allocation
-  e[0] = eye[0]; e[1] = eye[1]; e[2] = eye[2];
+  const e = (s.eye ??= [0, 0, 0]); // AUDIT BANTHA1 HOST-8: the state's own, never a frame's allocation
+  e[0] = eye[0];
+  e[1] = eye[1];
+  e[2] = eye[2];
   s.primed = true;
   return s;
 }
-const eased = (jumped, from, to, dt, lag) => (jumped ? to : from + (to - from) * (1 - Math.exp(-Math.max(0, dt) / lag)));
+const eased = (jumped, from, to, dt, lag) =>
+  jumped ? to : from + (to - from) * (1 - Math.exp(-Math.max(0, dt) / lag));
 
 /**
  * THE EIGHT UNIFORMS (render/hazeGlsl.js uJungleHaze): [extinction at the floor, the floor's height, 1 / falloff, the clear
@@ -155,8 +188,14 @@ const eased = (jumped, from, to, dt, lag) => (jumped ? to : from + (to - from) *
  */
 export function hazeUniforms(s, out = new Float32Array(8)) {
   const k = s.share * s.density;
-  out[0] = k; out[1] = s.floor; out[2] = 1 / JUNGLE_HAZE.falloff; out[3] = JUNGLE_HAZE.start;
-  out[4] = k > 1e-7 ? 1 : 0; out[5] = 0; out[6] = 0; out[7] = 0;
+  out[0] = k;
+  out[1] = s.floor;
+  out[2] = 1 / JUNGLE_HAZE.falloff;
+  out[3] = JUNGLE_HAZE.start;
+  out[4] = k > 1e-7 ? 1 : 0;
+  out[5] = 0;
+  out[6] = 0;
+  out[7] = 0;
   return out;
 }
 
@@ -173,8 +212,10 @@ export function hazeColumn(u, y) {
 /** The haze's own colour from the weather's fog colour: leaned to its grey and tinted, its brightness kept. */
 export function hazeColorOf(fog, out = new Float32Array(3)) {
   const lum = 0.299 * fog[0] + 0.587 * fog[1] + 0.114 * fog[2];
-  const t = JUNGLE_HAZE.tint, tl = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2];
-  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, (fog[c] + (lum - fog[c]) * JUNGLE_HAZE.grey) * (t[c] / tl)));
+  const t = JUNGLE_HAZE.tint,
+    tl = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2];
+  for (let c = 0; c < 3; c++)
+    out[c] = Math.min(1, Math.max(0, (fog[c] + (lum - fog[c]) * JUNGLE_HAZE.grey) * (t[c] / tl)));
   return out;
 }
 
@@ -185,20 +226,29 @@ export function hazeColorOf(fog, out = new Float32Array(3)) {
  * @param {ArrayLike<number>} fogColor @param {any} fogRow @param {ArrayLike<number>} u hazeUniforms's @param {number} eyeY
  * @param {Float32Array} [out]
  */
-const _hazeColour = new Float32Array(3);   // HOST-8: fogColorWith's scratch
+const _hazeColour = new Float32Array(3); // HOST-8: fogColorWith's scratch
 export function fogColorWith(fogColor, fogRow, u, eyeY, out = new Float32Array(3)) {
   const th = hazeDensityAt(u, eyeY) * Math.max(0, JUNGLE_HAZE.weighAt - (u[3] ?? 0));
-  if (!(th > 0)) { out[0] = fogColor[0]; out[1] = fogColor[1]; out[2] = fogColor[2]; return out; }
+  if (!(th > 0)) {
+    out[0] = fogColor[0];
+    out[1] = fogColor[1];
+    out[2] = fogColor[2];
+    return out;
+  }
   const fw = fogRow ? fogFactor(fogRow, JUNGLE_HAZE.weighAt) : 1;
   const tw = -Math.log(Math.max(1e-4, Math.min(1, fw)));
-  const h = hazeColorOf(fogColor, _hazeColour), w = th / (th + tw);
+  const h = hazeColorOf(fogColor, _hazeColour),
+    w = th / (th + tw);
   for (let c = 0; c < 3; c++) out[c] = fogColor[c] + (h[c] - fogColor[c]) * w;
   return out;
 }
 
 /** The sky's uniform (render/hazeGlsl.js uHazeSky): the frame's fog colour and the depth straight up from the eye. */
 export function hazeSkyUniform(color, u, eyeY, out = new Float32Array(4)) {
-  out[0] = color[0]; out[1] = color[1]; out[2] = color[2]; out[3] = hazeColumn(u, eyeY);
+  out[0] = color[0];
+  out[1] = color[1];
+  out[2] = color[2];
+  out[3] = hazeColumn(u, eyeY);
   return out;
 }
 

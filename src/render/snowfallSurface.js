@@ -12,12 +12,27 @@ import { MID, BLANKET, snowUniforms } from '../systems/snowfallRuntime.js';
 /** The generic values a tier's absent channels read: the local window has no contexts of its own (Excluded), no tier
  *  but the ring has a blanket target. */
 const EXCLUDED = [-1, 0, 0, 0];
-const LOCAL_GENERIC = [[SNOW_ATTR.ctxA, EXCLUDED], [SNOW_ATTR.blanket, [0, 0, 1, 0]], [SNOW_ATTR.ctxB, EXCLUDED], [SNOW_ATTR.ctxC, EXCLUDED], [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]]];
-const BLANKET_GENERIC = [[SNOW_ATTR.blanket, [0, 0, 1, 0]], [SNOW_ATTR.ctxB, EXCLUDED], [SNOW_ATTR.ctxC, EXCLUDED], [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]]];
+const LOCAL_GENERIC = [
+  [SNOW_ATTR.ctxA, EXCLUDED],
+  [SNOW_ATTR.blanket, [0, 0, 1, 0]],
+  [SNOW_ATTR.ctxB, EXCLUDED],
+  [SNOW_ATTR.ctxC, EXCLUDED],
+  [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]],
+];
+const BLANKET_GENERIC = [
+  [SNOW_ATTR.blanket, [0, 0, 1, 0]],
+  [SNOW_ATTR.ctxB, EXCLUDED],
+  [SNOW_ATTR.ctxC, EXCLUDED],
+  [SNOW_ATTR.blanketNormal, [0, 1, 0, 0]],
+];
 
 /** A draw's five pictures, written into `t` (AUDIT ENVIRONS P1). */
 function textures(t, dynamic, statics, context, far, albedo) {
-  t.dynamic = dynamic; t.static = statics; t.context = context; t.far = far; t.albedo = albedo;
+  t.dynamic = dynamic;
+  t.static = statics;
+  t.context = context;
+  t.far = far;
+  t.albedo = albedo;
   return t;
 }
 
@@ -36,9 +51,9 @@ export class SnowfallSurface {
     this.tiles = new Map();
     this.nextHistoryUpload = 0;
     this.drawn = 0;
-    this.localUploads = 0;   // UploadDynamicMask's count (snow_status)
+    this.localUploads = 0; // UploadDynamicMask's count (snow_status)
     this._og = [0, 0, 0];
-    this._box = new Float32Array(6);   // a blanket tile's bounds, local to its origin (the cull's)
+    this._box = new Float32Array(6); // a blanket tile's bounds, local to its origin (the cull's)
     // AUDIT ENVIRONS P1: each tier's uniforms and pictures, filled in place each draw (no object a draw)
     this._u = { local: snowUniforms(), mid: snowUniforms(), blanket: snowUniforms() };
     this._tex = { local: {}, mid: {}, blanket: {} };
@@ -73,7 +88,8 @@ export class SnowfallSurface {
   }
 
   _texture(w, h, filter, data = null) {
-    const gl = this.gl, tex = gl.createTexture();
+    const gl = this.gl,
+      tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
@@ -89,73 +105,155 @@ export class SnowfallSurface {
     gl.bindTexture(gl.TEXTURE_2D, tex);
     if (part.full) gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, res, res, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
     else {
-      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, res); gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, part.x); gl.pixelStorei(gl.UNPACK_SKIP_ROWS, part.z);
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, res);
+      gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, part.x);
+      gl.pixelStorei(gl.UNPACK_SKIP_ROWS, part.z);
       gl.texSubImage2D(gl.TEXTURE_2D, 0, part.x, part.z, part.w, part.h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0); gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0); gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
+      gl.pixelStorei(gl.UNPACK_ROW_LENGTH, 0);
+      gl.pixelStorei(gl.UNPACK_SKIP_PIXELS, 0);
+      gl.pixelStorei(gl.UNPACK_SKIP_ROWS, 0);
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
   /** A VAO over `channels` [location, size, Float32Array], and its indices. */
   _mesh(channels, index) {
-    const gl = this.gl, vao = gl.createVertexArray(), buffers = [];
+    const gl = this.gl,
+      vao = gl.createVertexArray(),
+      buffers = [];
     gl.bindVertexArray(vao);
     for (const [loc, size, data, shared] of channels) {
       const b = shared ?? gl.createBuffer();
-      if (!shared) { buffers.push(b); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW); } else gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      if (!shared) {
+        buffers.push(b);
+        gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+      } else gl.bindBuffer(gl.ARRAY_BUFFER, b);
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
     }
     const ib = index.shared ?? gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
-    if (!index.shared) { buffers.push(ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, index.data, gl.STATIC_DRAW); }
+    if (!index.shared) {
+      buffers.push(ib);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, index.data, gl.STATIC_DRAW);
+    }
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     return { vao, buffers, indexCount: index.count };
   }
-  _rewrite(buffer, data) { const gl = this.gl; gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, data); gl.bindBuffer(gl.ARRAY_BUFFER, null); }
-  _dropMesh(m) { if (!m) return; const gl = this.gl; gl.deleteVertexArray(m.vao); for (const b of m.buffers) gl.deleteBuffer(b); }
+  _rewrite(buffer, data) {
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, data);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  }
+  _dropMesh(m) {
+    if (!m) return;
+    const gl = this.gl;
+    gl.deleteVertexArray(m.vao);
+    for (const b of m.buffers) gl.deleteBuffer(b);
+  }
 
   /**
    * Upload what the runtime changed since the last frame. `now` real seconds (the history's upload interval).
    * @param {any} rt - systems/snowfallRuntime.js SnowfallRuntime
    */
   sync(rt, now) {
-    const gl = this.gl, L = rt.local, M = rt.mid, B = rt.blanket, F = rt.far;
+    const gl = this.gl,
+      L = rt.local,
+      M = rt.mid,
+      B = rt.blanket,
+      F = rt.far;
     this._seam();
     // the local window - rebuilt whole when its resolution changes
-    if (!this.local || this.local.res !== L.res || this.local.mres !== L.mres || this.local.sres !== L.sres || rt.dirty.gridRebuilt) {
+    if (
+      !this.local ||
+      this.local.res !== L.res ||
+      this.local.mres !== L.mres ||
+      this.local.sres !== L.sres ||
+      rt.dirty.gridRebuilt
+    ) {
       rt.dirty.gridRebuilt = false;
       this._dropLocal();
-      const mesh = this._mesh([[SNOW_ATTR.pos, 3, L.pos], [SNOW_ATTR.normal, 3, L.nrm], [SNOW_ATTR.uv, 2, L.uv]], { data: L.index, count: L.index.length });
-      this.local = { res: L.res, mres: L.mres, sres: L.sres, mesh: { ...mesh, generic: LOCAL_GENERIC },
-        dynamic: this._texture(L.mres, L.mres, gl.LINEAR, L.dynamic), statics: this._texture(L.sres, L.sres, gl.LINEAR, L.statics), context: this._texture(L.sres, L.sres, gl.LINEAR, L.context) };
-      rt.dirty.localMesh = false; rt.dirty.localStatic = false; rt.rects.local.take();
+      const mesh = this._mesh(
+        [
+          [SNOW_ATTR.pos, 3, L.pos],
+          [SNOW_ATTR.normal, 3, L.nrm],
+          [SNOW_ATTR.uv, 2, L.uv],
+        ],
+        { data: L.index, count: L.index.length },
+      );
+      this.local = {
+        res: L.res,
+        mres: L.mres,
+        sres: L.sres,
+        mesh: { ...mesh, generic: LOCAL_GENERIC },
+        dynamic: this._texture(L.mres, L.mres, gl.LINEAR, L.dynamic),
+        statics: this._texture(L.sres, L.sres, gl.LINEAR, L.statics),
+        context: this._texture(L.sres, L.sres, gl.LINEAR, L.context),
+      };
+      rt.dirty.localMesh = false;
+      rt.dirty.localStatic = false;
+      rt.rects.local.take();
     }
     // AUDIT ENVIRONS P2: the window's changes go up on a frame that draws it - the ring stands over it most of the time
     // (it draws only while the ring is not ready round the player). Its flags stay set and its rectangle keeps growing
     // meanwhile, all of it up the first frame it stands again (`visible` is the frame's own by now).
     if (L.visible) {
-      if (rt.dirty.localMesh) { rt.dirty.localMesh = false; this._rewrite(this.local.mesh.buffers[0], L.pos); this._rewrite(this.local.mesh.buffers[1], L.nrm); }
-      if (rt.dirty.localStatic) { rt.dirty.localStatic = false; this._upload(this.local.statics, L.sres, L.statics); this._upload(this.local.context, L.sres, L.context); }
+      if (rt.dirty.localMesh) {
+        rt.dirty.localMesh = false;
+        this._rewrite(this.local.mesh.buffers[0], L.pos);
+        this._rewrite(this.local.mesh.buffers[1], L.nrm);
+      }
+      if (rt.dirty.localStatic) {
+        rt.dirty.localStatic = false;
+        this._upload(this.local.statics, L.sres, L.statics);
+        this._upload(this.local.context, L.sres, L.context);
+      }
       const lp = rt.rects.local.take();
-      if (lp) { this._upload(this.local.dynamic, L.mres, L.dynamic, lp); this.localUploads++; }
+      if (lp) {
+        this._upload(this.local.dynamic, L.mres, L.dynamic, lp);
+        this.localUploads++;
+      }
     }
     // the middle ring
     if (!this.mid) {
-      const mesh = this._mesh([[SNOW_ATTR.pos, 3, M.pos], [SNOW_ATTR.normal, 3, M.nrm], [SNOW_ATTR.uv, 2, M.uv], [SNOW_ATTR.ctxA, 4, M.ctxA], [SNOW_ATTR.blanket, 4, M.heights],
-        [SNOW_ATTR.ctxB, 4, M.ctxB], [SNOW_ATTR.ctxC, 4, M.ctxC], [SNOW_ATTR.blanketNormal, 3, M.bnrm]], { data: M.index, count: M.index.length });
-      this.mid = { mesh, history: this._texture(MID.history, MID.history, gl.LINEAR, M.history), statics: this._texture(MID.staticRes, MID.staticRes, gl.LINEAR), context: this._texture(MID.staticRes, MID.staticRes, gl.LINEAR) };
+      const mesh = this._mesh(
+        [
+          [SNOW_ATTR.pos, 3, M.pos],
+          [SNOW_ATTR.normal, 3, M.nrm],
+          [SNOW_ATTR.uv, 2, M.uv],
+          [SNOW_ATTR.ctxA, 4, M.ctxA],
+          [SNOW_ATTR.blanket, 4, M.heights],
+          [SNOW_ATTR.ctxB, 4, M.ctxB],
+          [SNOW_ATTR.ctxC, 4, M.ctxC],
+          [SNOW_ATTR.blanketNormal, 3, M.bnrm],
+        ],
+        { data: M.index, count: M.index.length },
+      );
+      this.mid = {
+        mesh,
+        history: this._texture(MID.history, MID.history, gl.LINEAR, M.history),
+        statics: this._texture(MID.staticRes, MID.staticRes, gl.LINEAR),
+        context: this._texture(MID.staticRes, MID.staticRes, gl.LINEAR),
+      };
     }
     if (rt.dirty.mid) {
       rt.dirty.mid = false;
       const b = this.mid.mesh.buffers;
-      for (const [i, data] of [M.pos, M.nrm, M.uv, M.ctxA, M.heights, M.ctxB, M.ctxC, M.bnrm].entries()) if (i !== 2) this._rewrite(b[i], data);
-      this._upload(this.mid.statics, MID.staticRes, M.statics); this._upload(this.mid.context, MID.staticRes, M.context);
-      this._upload(this.mid.history, MID.history, M.history); rt.rects.mid.take();
+      for (const [i, data] of [M.pos, M.nrm, M.uv, M.ctxA, M.heights, M.ctxB, M.ctxC, M.bnrm].entries())
+        if (i !== 2) this._rewrite(b[i], data);
+      this._upload(this.mid.statics, MID.staticRes, M.statics);
+      this._upload(this.mid.context, MID.staticRes, M.context);
+      this._upload(this.mid.history, MID.history, M.history);
+      rt.rects.mid.take();
     }
     if (rt.rects.mid.full || now >= this.nextHistoryUpload) {
       const mp = rt.rects.mid.take();
-      if (mp) { this._upload(this.mid.history, MID.history, M.history, mp); this.nextHistoryUpload = now + MID.historyUpload; }
+      if (mp) {
+        this._upload(this.mid.history, MID.history, M.history, mp);
+        this.nextHistoryUpload = now + MID.historyUpload;
+      }
     }
     // the far track mask
     if (!this.far) this.far = this._texture(641, 641, gl.LINEAR, F.pixels);
@@ -164,28 +262,54 @@ export class SnowfallSurface {
     // the blanket's tiles
     for (const o of rt.dirty.blanket) {
       let g = this.tiles.get(o);
-      if (o.dead) { if (g) { this._dropMesh(g.mesh); gl.deleteTexture(g.statics); this.tiles.delete(o); } continue; }
+      if (o.dead) {
+        if (g) {
+          this._dropMesh(g.mesh);
+          gl.deleteTexture(g.statics);
+          this.tiles.delete(o);
+        }
+        continue;
+      }
       if (!g) {
         this._blanketShared ??= this._sharedBlanket(B);
-        const mesh = this._mesh([[SNOW_ATTR.pos, 3, o.pos], [SNOW_ATTR.normal, 3, o.nrm], [SNOW_ATTR.uv, 2, null, this._blanketShared.uv], [SNOW_ATTR.ctxA, 4, o.ctx]],
-          { shared: this._blanketShared.index, count: B.index.length });
-        g = { mesh: { ...mesh, generic: BLANKET_GENERIC }, statics: this._texture(BLANKET.staticRes, BLANKET.staticRes, gl.NEAREST, o.statics) };
+        const mesh = this._mesh(
+          [
+            [SNOW_ATTR.pos, 3, o.pos],
+            [SNOW_ATTR.normal, 3, o.nrm],
+            [SNOW_ATTR.uv, 2, null, this._blanketShared.uv],
+            [SNOW_ATTR.ctxA, 4, o.ctx],
+          ],
+          { shared: this._blanketShared.index, count: B.index.length },
+        );
+        g = {
+          mesh: { ...mesh, generic: BLANKET_GENERIC },
+          statics: this._texture(BLANKET.staticRes, BLANKET.staticRes, gl.NEAREST, o.statics),
+        };
         this.tiles.set(o, g);
       } else {
-        this._rewrite(g.mesh.buffers[0], o.pos); this._rewrite(g.mesh.buffers[1], o.nrm); this._rewrite(g.mesh.buffers[2], o.ctx);
+        this._rewrite(g.mesh.buffers[0], o.pos);
+        this._rewrite(g.mesh.buffers[1], o.nrm);
+        this._rewrite(g.mesh.buffers[2], o.ctx);
         this._upload(g.statics, BLANKET.staticRes, o.statics);
       }
     }
     rt.dirty.blanket.clear();
   }
   _sharedBlanket(B) {
-    const gl = this.gl, uv = gl.createBuffer(), index = gl.createBuffer();
+    const gl = this.gl,
+      uv = gl.createBuffer(),
+      index = gl.createBuffer();
     // PERF-ARENA: an element buffer bound is the BOUND VAO's state - with whatever array the last pass left bound (every
     // still flat shares one now: render/renderer.js's arena), this bind and its unbind would have cut that array's
     // indices away. No array bound, through the renderer so its shadow stays true
-    if (this.renderer?._bindVao) this.renderer._bindVao(null); else gl.bindVertexArray(null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, uv); gl.bufferData(gl.ARRAY_BUFFER, B.uv, gl.STATIC_DRAW); gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, B.index, gl.STATIC_DRAW); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if (this.renderer?._bindVao) this.renderer._bindVao(null);
+    else gl.bindVertexArray(null);
+    gl.bindBuffer(gl.ARRAY_BUFFER, uv);
+    gl.bufferData(gl.ARRAY_BUFFER, B.uv, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, B.index, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     return { uv, index };
   }
 
@@ -199,9 +323,12 @@ export class SnowfallSurface {
   draw(rt, outside = null) {
     this.drawn = 0;
     if (!this.albedo || !this.local) return false;
-    const R = this.renderer, tiers = rt.visibleTiers(), U = this._u, T = this._tex;
+    const R = this.renderer,
+      tiers = rt.visibleTiers(),
+      U = this._u,
+      T = this._tex;
     const distant = tiers.far;
-    R.drawSnowBegin?.();   // AUDIT ENVIRONS P1: one pass - the state its draws share set once (render/renderer.js)
+    R.drawSnowBegin?.(); // AUDIT ENVIRONS P1: one pass - the state its draws share set once (render/renderer.js)
     try {
       if (tiers.local) {
         textures(T.local, this.local.dynamic, this.local.statics, this.local.context, this.white, this.albedo);
@@ -209,18 +336,33 @@ export class SnowfallSurface {
         this.drawn++;
       }
       if (tiers.mid && this.mid) {
-        textures(T.mid, this.mid.history, this.mid.statics, this.mid.context, distant ? this.far : this.white, this.albedo);
+        textures(
+          T.mid,
+          this.mid.history,
+          this.mid.statics,
+          this.mid.context,
+          distant ? this.far : this.white,
+          this.albedo,
+        );
         R.drawSnow(this.mid.mesh, rt.depthUniforms(rt.midUniforms(U.mid)), T.mid);
         this.drawn++;
       }
       if (tiers.blanket) {
-        const rise = outside ? rt.blanketRise() : 0, box = this._box, u = rt.depthUniforms(U.blanket), t = T.blanket;
+        const rise = outside ? rt.blanketRise() : 0,
+          box = this._box,
+          u = rt.depthUniforms(U.blanket),
+          t = T.blanket;
         textures(t, distant ? this.far : this.white, null, this.white, this.white, this.albedo);
         for (const [o, g] of this.tiles) {
           if (!o.ready || !rt.blanket.live.has(o.t)) continue;
           if (outside) {
             const og = o.t.origin(this._og);
-            box[0] = 0; box[1] = o.minY; box[2] = 0; box[3] = o.t.size; box[4] = o.maxY + rise; box[5] = o.t.size;
+            box[0] = 0;
+            box[1] = o.minY;
+            box[2] = 0;
+            box[3] = o.t.size;
+            box[4] = o.maxY + rise;
+            box[5] = o.t.size;
             if (outside(box, og[0], og[1], og[2])) continue;
           }
           t.static = g.statics;
@@ -228,7 +370,9 @@ export class SnowfallSurface {
           this.drawn++;
         }
       }
-    } finally { R.drawSnowEnd?.(); }
+    } finally {
+      R.drawSnowEnd?.();
+    }
     return this.drawn > 0;
   }
 
@@ -242,10 +386,21 @@ export class SnowfallSurface {
   dispose() {
     const gl = this.gl;
     this._dropLocal();
-    if (this.mid) { this._dropMesh(this.mid.mesh); for (const t of [this.mid.history, this.mid.statics, this.mid.context]) gl.deleteTexture(t); this.mid = null; }
-    for (const g of this.tiles.values()) { this._dropMesh(g.mesh); gl.deleteTexture(g.statics); }
+    if (this.mid) {
+      this._dropMesh(this.mid.mesh);
+      for (const t of [this.mid.history, this.mid.statics, this.mid.context]) gl.deleteTexture(t);
+      this.mid = null;
+    }
+    for (const g of this.tiles.values()) {
+      this._dropMesh(g.mesh);
+      gl.deleteTexture(g.statics);
+    }
     this.tiles.clear();
-    if (this._blanketShared) { gl.deleteBuffer(this._blanketShared.uv); gl.deleteBuffer(this._blanketShared.index); this._blanketShared = null; }
+    if (this._blanketShared) {
+      gl.deleteBuffer(this._blanketShared.uv);
+      gl.deleteBuffer(this._blanketShared.index);
+      this._blanketShared = null;
+    }
     for (const t of [this.far, this.albedo, this.white]) if (t) gl.deleteTexture(t);
     this.far = this.albedo = this.white = null;
   }

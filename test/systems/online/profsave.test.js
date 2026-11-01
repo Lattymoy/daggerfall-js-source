@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 
 import { createSaveSoon } from '../../../src/systems/online/onlineCheckpoint.js';
 import { marksSaleCredit } from '../../../src/systems/banking.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
@@ -64,11 +65,11 @@ test('PROF-SAVE the Bank: a Marks sale\'s credit tells `saved` once the gold is 
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /void host\.marks\.settle\(marksSaleCredit\(\(\) => playerEntity\.bankAccounts, bankRegion, host\.saveSoon\)\)/, 'the kept sale settled at the counter');
   assert.match(modes, /sellMarks: host\.marks \? \(n\) => host\.marks\.sell\(n, marksSaleCredit\(\(\) => playerEntity\.bankAccounts, bankRegion, host\.saveSoon\), bankRegion\(\)\) : null,/, 'the sale');
-  assert.match(src('src/scenes/world.js'), /\n {4}marks: marksBook, {3}\/\/ MARKS1: the Bank of the Empire's Marks, online\n {4}saveSoon: \(\) => saveSoon\.changed\(\),/, 'the host hands the modes its saveSoon');
+  assert.match(hostText('src/scenes/world.js'), /\n {4}marks: marksBook, {3}\/\/ MARKS1: the Bank of the Empire's Marks, online\n {4}saveSoon: \(\) => saveSoon\.changed\(\),/, 'the host hands the modes its saveSoon');
 });
 
 test('PROF-SAVE the host: every professions act that changes the save asks saveSoon - a withdrawal, a craft\'s pieces and its kept fee, a smelt\'s fee, a market piece minted, listed away, put back and settled away - and the checkpoint is handed in right after it is built (mutants: each call dropped; the checkpoint never handed in)', () => {
-  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
+  const w = hostText('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
   const body = (name) => {
     const at = w.indexOf(`  const ${name} = (`);
     assert.ok(at > 0, `${name} stands`);

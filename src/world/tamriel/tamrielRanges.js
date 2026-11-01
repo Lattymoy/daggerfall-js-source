@@ -41,12 +41,12 @@
 // functions only (no Math.cos, Math.exp, Math.hypot or `**`); a sample on a pixel's edge is one number from both pixels.
 // ═══════════════════════════════════════════════════════════════════
 import { perlinNoise } from '../perlin.js';
-import { nodeGround } from '../landforms.js';   // called, never read at load (the modules import each other)
+import { nodeGround } from '../landforms.js'; // called, never read at load (the modules import each other)
 import { STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, HEIGHTMAP_DIMENSION } from '../terrain/terrainSampler.js';
 import { reliefStands } from './tamrielRelief.js';
 import { pictureToBay, tamrielFit } from './tamrielFrame.js';
 import { tamrielLandVersion } from './tamrielLand.js';
-import { CARVED_RIVERS, LAKES } from './tamrielWaters.js';   // their static courses (read at call time: the modules import each other)
+import { CARVED_RIVERS, LAKES } from './tamrielWaters.js'; // their static courses (read at call time: the modules import each other)
 import { MAP_HEIGHT } from '../../formats/woodsFile.js';
 
 const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -64,10 +64,16 @@ const unitsOf = (m) => m / STREAMING_TERRAIN_SCALE + SCALED_OCEAN_ELEVATION;
  *  TAMRIEL-RELIEF's CEILING_BYTE); `knee` under it the soft clip's; `water` no relief within the first of a carved river's
  *  course or a lake's shore, whole past the second. */
 export const RANGE_DIALS = Object.freeze({
-  foot: 1000, full: 2300, high: 1250,
-  waves: Object.freeze([1800, 820, 380, 175]), gains: Object.freeze([1, 0.55, 0.3, 0.16]),
-  warp: 420, warpWave: 3100,
-  crest: 2500, ceilingByte: 180, knee: 260,
+  foot: 1000,
+  full: 2300,
+  high: 1250,
+  waves: Object.freeze([1800, 820, 380, 175]),
+  gains: Object.freeze([1, 0.55, 0.3, 0.16]),
+  warp: 420,
+  warpWave: 3100,
+  crest: 2500,
+  ceilingByte: 180,
+  knee: 260,
   water: Object.freeze([2, 7]),
 });
 /** The ridged field's mean over the land (measured over 200,000 world points - test/world/reliefpeaks.test.js holds it
@@ -78,7 +84,8 @@ export const RANGE_MEAN = 0.61;
 /** The most the land stands under the ranges (kernel units): byte `ceilingByte`'s ground at its node, the whole lift
  *  and its continuation (world/landforms.js nodeGround) - with TAMRIEL_TOP over it, CONTINENT_CEILING. */
 let _ceiling = NaN;
-export const rangeCeiling = () => (_ceiling === _ceiling ? _ceiling : (_ceiling = nodeGround(RANGE_DIALS.ceilingByte, 1, 1)));
+export const rangeCeiling = () =>
+  _ceiling === _ceiling ? _ceiling : (_ceiling = nodeGround(RANGE_DIALS.ceilingByte, 1, 1));
 
 // ── THE RIDGES ────────────────────────────────────────────────────
 /** THE RIDGED FIELD at a world sample (x east, y north): about 0..1, 1 on a crest - each octave's crest the zero line of
@@ -88,11 +95,16 @@ export function ridges(gx, gy) {
   const D = RANGE_DIALS;
   const wx = gx + D.warp * signed(gx / D.warpWave + 3.17, gy / D.warpWave + 7.71);
   const wy = gy + D.warp * signed(gx / D.warpWave + 11.3, gy / D.warpWave + 1.93);
-  let sum = 0, norm = 0, weight = 1;
+  let sum = 0,
+    norm = 0,
+    weight = 1;
   for (let o = 0; o < D.waves.length; o++) {
-    const w = D.waves[o], n = signed(wx / w + 17.1 * (o + 1), wy / w + 5.3 * (o + 1));
-    const a = 1 - (n < 0 ? -n : n), r = a * a;
-    sum += D.gains[o] * weight * r; norm += D.gains[o];
+    const w = D.waves[o],
+      n = signed(wx / w + 17.1 * (o + 1), wy / w + 5.3 * (o + 1));
+    const a = 1 - (n < 0 ? -n : n),
+      r = a * a;
+    sum += D.gains[o] * weight * r;
+    norm += D.gains[o];
     weight = r * 1.6 > 1 ? 1 : r * 1.6;
   }
   return sum / norm;
@@ -115,7 +127,8 @@ export function rangeUp() {
   if (_up < 0) {
     const top = rangeCeiling();
     _up = 0;
-    for (let h = SCALED_OCEAN_ELEVATION; h <= top + 4; h += 4) _up = Math.max(_up, rangeSwing(h) * (1 - rangeCentre(h)));
+    for (let h = SCALED_OCEAN_ELEVATION; h <= top + 4; h += 4)
+      _up = Math.max(_up, rangeSwing(h) * (1 - rangeCentre(h)));
   }
   return _up;
 }
@@ -127,16 +140,28 @@ export function rangeBound(px, py, top) {
 }
 
 // ── THE WATERS' VALLEYS ───────────────────────────────────────────
-let _waters = /** @type {any} */ (null), _watersFit = /** @type {any} */ (null), _watersLand = -1;
+let _waters = /** @type {any} */ (null),
+  _watersFit = /** @type {any} */ (null),
+  _watersLand = -1;
 const WATER_CELL = 16;
 /** The carved rivers' segments and the lakes (Bay pixels) on a grid of WATER_CELL pixels, made once a fit and a land. */
 function waterIndex() {
-  const fit = tamrielFit(), land = tamrielLandVersion();
+  const fit = tamrielFit(),
+    land = tamrielLandVersion();
   if (_waters && _watersFit === fit && _watersLand === land) return _waters;
-  const reach = RANGE_DIALS.water[1], grid = new Map();
+  const reach = RANGE_DIALS.water[1],
+    grid = new Map();
   const add = (x0, y0, x1, y1, item) => {
-    for (let gy = Math.floor((Math.min(y0, y1) - reach) / WATER_CELL); gy <= Math.floor((Math.max(y0, y1) + reach) / WATER_CELL); gy++) {
-      for (let gx = Math.floor((Math.min(x0, x1) - reach) / WATER_CELL); gx <= Math.floor((Math.max(x0, x1) + reach) / WATER_CELL); gx++) {
+    for (
+      let gy = Math.floor((Math.min(y0, y1) - reach) / WATER_CELL);
+      gy <= Math.floor((Math.max(y0, y1) + reach) / WATER_CELL);
+      gy++
+    ) {
+      for (
+        let gx = Math.floor((Math.min(x0, x1) - reach) / WATER_CELL);
+        gx <= Math.floor((Math.max(x0, x1) + reach) / WATER_CELL);
+        gx++
+      ) {
         const k = gx * 65536 + gy;
         let l = grid.get(k);
         if (!l) grid.set(k, (l = []));
@@ -147,29 +172,42 @@ function waterIndex() {
   if (fit) {
     for (const r of CARVED_RIVERS) {
       const pts = r.pts.map(([px, py]) => pictureToBay(px, py));
-      for (let i = 0; i + 1 < pts.length; i++) add(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], { seg: [pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]] });
+      for (let i = 0; i + 1 < pts.length; i++)
+        add(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], {
+          seg: [pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]],
+        });
     }
     for (const l of LAKES) {
-      const [cx, cy] = pictureToBay(l.at[0], l.at[1]), rad = Math.max(l.r[0], l.r[1]) * fit.ppu;
+      const [cx, cy] = pictureToBay(l.at[0], l.at[1]),
+        rad = Math.max(l.r[0], l.r[1]) * fit.ppu;
       add(cx - rad, cy - rad, cx + rad, cy + rad, { lake: [cx, cy, rad] });
     }
   }
-  _waters = grid; _watersFit = fit; _watersLand = land;
+  _waters = grid;
+  _watersFit = fit;
+  _watersLand = land;
   return grid;
 }
 /** How far (Bay pixels) a Bay point lies from the nearest carved river's course or lake's shore - WATER's reach past it. */
 export function waterDistance(x, y) {
-  const reach = RANGE_DIALS.water[1], list = waterIndex().get(Math.floor(x / WATER_CELL) * 65536 + Math.floor(y / WATER_CELL));
+  const reach = RANGE_DIALS.water[1],
+    list = waterIndex().get(Math.floor(x / WATER_CELL) * 65536 + Math.floor(y / WATER_CELL));
   if (!list) return reach;
   let best = reach;
   for (const it of list) {
     let d;
     if (it.seg) {
-      const [ax, ay, bx, by] = it.seg, vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy;
-      const t = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)) : 0, qx = x - ax - vx * t, qy = y - ay - vy * t;
+      const [ax, ay, bx, by] = it.seg,
+        vx = bx - ax,
+        vy = by - ay,
+        l2 = vx * vx + vy * vy;
+      const t = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)) : 0,
+        qx = x - ax - vx * t,
+        qy = y - ay - vy * t;
       d = Math.sqrt(qx * qx + qy * qy);
     } else {
-      const qx = x - it.lake[0], qy = y - it.lake[1];
+      const qx = x - it.lake[0],
+        qy = y - it.lake[1];
       d = Math.max(0, Math.sqrt(qx * qx + qy * qy) - it.lake[2]);
     }
     if (d < best) best = d;
@@ -195,19 +233,29 @@ export function rangeShaper(px, py) {
   const reach = RANGE_DIALS.water[1] + 2;
   let water = false;
   for (let gy = Math.floor((py - reach) / WATER_CELL); gy <= Math.floor((py + 1 + reach) / WATER_CELL) && !water; gy++)
-    for (let gx = Math.floor((px - reach) / WATER_CELL); gx <= Math.floor((px + 1 + reach) / WATER_CELL); gx++) if (waterIndex().has(gx * 65536 + gy)) { water = true; break; }
+    for (let gx = Math.floor((px - reach) / WATER_CELL); gx <= Math.floor((px + 1 + reach) / WATER_CELL); gx++)
+      if (waterIndex().has(gx * 65536 + gy)) {
+        water = true;
+        break;
+      }
   return (gx, gy, h) => rangeOn(gx, gy, h, water);
 }
 function rangeOn(gx, gy, h, nearWater) {
-  const D = RANGE_DIALS, bx = gx / SPAN, by = MAP_HEIGHT + 1 - gy / SPAN;   // the sample's Bay point (y south)
+  const D = RANGE_DIALS,
+    bx = gx / SPAN,
+    by = MAP_HEIGHT + 1 - gy / SPAN; // the sample's Bay point (y south)
   let swing = rangeSwing(h);
   if (swing > 0 && nearWater) swing *= smooth01((waterDistance(bx, by) - D.water[0]) / (D.water[1] - D.water[0]));
   if (!(swing > 0)) return 0;
   let out = h;
   if (swing > 0) out += swing * (ridges(gx, gy) - rangeCentre(h));
   // a rise held softly under the ceiling, from `knee` under it (the land itself is under it: its bytes stop at its byte)
-  const ceiling = rangeCeiling(), from = Math.max(h, ceiling - D.knee / STREAMING_TERRAIN_SCALE);
-  if (out > from && ceiling > from) { const q = (out - from) / (ceiling - from); out = from + (ceiling - from) * (q / (1 + q)); }
+  const ceiling = rangeCeiling(),
+    from = Math.max(h, ceiling - D.knee / STREAMING_TERRAIN_SCALE);
+  if (out > from && ceiling > from) {
+    const q = (out - from) / (ceiling - from);
+    out = from + (ceiling - from) * (q / (1 + q));
+  }
   const floor = Math.min(h, unitsOf(D.foot));
   return (out < floor ? floor : out) - h;
 }

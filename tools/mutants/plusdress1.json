@@ -2,8 +2,8 @@
   {
     "name": "PLUS-DRESS-a-screen-left-out",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfpage-card', 'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar',",
-    "new": "    'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar',",
+    "old": "    'body .dfpage-card',\n    'body .dfpeer-card',",
+    "new": "    'body .dfpeer-card',",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PLUS-DRESS-a-role-naming-nothing",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfsocial-row'],",
-    "new": "    'body .dfsocial-row', 'body .dfsocial-rowz'],",
+    "old": "  ], // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each",
+    "new": "    'body .dfsocial-rowz',\n  ], // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PLUS-DRESS-brass-on-a-warns-hover",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "${list(r.warn, ':focus-visible')} { border-color: ${BLOOD_HI};",
-    "new": "${list(r.warn, ':focus-visible')} { border-color: ${BRASS};",
+    "old": "${list(r.warn, ':hover:not(:disabled)')}, ${list(r.warn, ':focus-visible')} { border-color: ${BLOOD_HI}; background-color: #321b19; background-image: ${LIT_BAND}; color: #fff3ee; }",
+    "new": "${list(r.warn, ':hover:not(:disabled)')}, ${list(r.warn, ':focus-visible')} { border-color: ${BRASS}; background-color: #321b19; background-image: ${LIT_BAND}; color: #fff3ee; }",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PLUS-DRESS-the-paint-back-inline",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "  const part = (cls, tag = 'div') => { const n = doc.createElement(tag); n.className = cls; return n; };",
-    "new": "  const part = (cls, tag = 'div') => { const n = doc.createElement(tag); n.className = cls; n.style.cssText = 'pointer-events:none'; return n; };",
+    "old": "    return n;",
+    "new": "    n.style.cssText = 'pointer-events:none';\n    return n;",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLUS-DRESS-the-bar-sheet-never-in",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "    st.textContent = BOSS_BAR_CSS;\n    (doc.head ?? doc.body)?.append(st);",
-    "new": "    st.textContent = BOSS_BAR_CSS;",
+    "old": "    (doc.head ?? doc.body)?.append(st);\n    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)",
+    "new": "    if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]

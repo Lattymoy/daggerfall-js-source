@@ -20,10 +20,19 @@
 // albedo goes into the ground's own fragment program in place of the tile (snowTerrainFs), so the snow takes every
 // light the ground takes - the sun and its shadow map, the moon, the clouds' shadow, the lanterns, the fog - on either
 // lane. Port-Ledger A, SNOWFALL1.
-import { snowCoreGlsl, SNOW_TILE_M } from './snowCoverGlsl.js';   // AUDIT PRECIP GROUND-9: the ground's own snow, where the mod's lies
+import { snowCoreGlsl, SNOW_TILE_M } from './snowCoverGlsl.js'; // AUDIT PRECIP GROUND-9: the ground's own snow, where the mod's lies
 
 /** The attribute locations of a snow mesh: the mod's mesh channels (POSITION, NORMAL, TEXCOORD0..4, TANGENT). */
-export const SNOW_ATTR = Object.freeze({ pos: 0, normal: 1, uv: 2, ctxA: 3, blanket: 4, ctxB: 5, ctxC: 6, blanketNormal: 7 });
+export const SNOW_ATTR = Object.freeze({
+  pos: 0,
+  normal: 1,
+  uv: 2,
+  ctxA: 3,
+  blanket: 4,
+  ctxB: 5,
+  ctxC: 6,
+  blanketNormal: 7,
+});
 /** The texture units the snow's five pictures take - above every unit the world programs reserve (0-15). */
 export const SNOW_UNITS = Object.freeze({ dynamic: 16, static: 17, context: 18, far: 19, albedo: 20 });
 /** AUDIT ENVIRONS G2: the pass's `Offset -0.25, -0.25` (the shader asset, every pass): the snow a quarter of a resolvable step and a quarter
@@ -38,7 +47,8 @@ export const SNOW_LAYER = Object.freeze({ factor: -0.25, units: -0.25 });
  *  a road's berm over it; the caps and the path only pull it down), never more than SNOW_VS lifts it (the slope's
  *  multiplier and the tracks only lessen it), and the surface offset over that. A foe's telegraph lies this far over
  *  its ground while the snow is drawn (render/foeTelegraph.js telegraphLift), so the snow cannot bury it. */
-export const snowSurfaceRise = (u) => Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);
+export const snowSurfaceRise = (u) =>
+  Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);
 
 /** AUDIT PRECIP GROUND-9: the frame the ground's own snow is read in on the mod's surface - the scene point of the snow
  *  window's first world tile (renderer.js setSnowFrame's `anchor`; the tile itself is uEcoOrigin: the terrain program
@@ -196,7 +206,9 @@ void main() {
 
 /** The fragment's snow - the DXBC's fragment shader up to its light - ending in `tex`, the colour the ground's light
  *  takes. `decode` wraps a picture's colour as the lane decodes its pictures. */
-const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE TILE (DynamicSnow's fragment program); the light below is the ground's own
+const snowFragment = (
+  decode,
+) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE TILE (DynamicSnow's fragment program); the light below is the ground's own
   vec4 sn = vSnow;
   bool blanket = uSnowFlags.y > 0.5, morph = uSnowFlags.z > 0.5;
   // AUDIT ENVIRONS G10: the albedo's footprint, taken before the first discard (a derivative beside a discarded fragment
@@ -270,12 +282,17 @@ const DECODE_TO = '  vec3 n = normalize(vNormal);\n';
  * @returns {string}
  */
 export function snowTerrainFs(fs) {
-  const from = fs.indexOf(DECODE_FROM), to = fs.indexOf(DECODE_TO);
+  const from = fs.indexOf(DECODE_FROM),
+    to = fs.indexOf(DECODE_TO);
   if (from < 0 || to < from || fs.indexOf(DECODE_FROM, from + 1) >= 0 || fs.indexOf(DECODE_TO, to + 1) >= 0) {
-    throw new Error('SNOWFALL1: a terrain program decodes its tile in ONE span, from its unwrapped coordinate to its normal');
+    throw new Error(
+      'SNOWFALL1: a terrain program decodes its tile in ONE span, from its unwrapped coordinate to its normal',
+    );
   }
   const main = fs.lastIndexOf('void main() {', from);
   if (main < 0) throw new Error('SNOWFALL1: the decode is inside main');
-  const decode = fs.includes('elDecode(') ? (/** @type {string} */ t) => `elDecode(${t})` : (/** @type {string} */ t) => t;
+  const decode = fs.includes('elDecode(')
+    ? (/** @type {string} */ t) => `elDecode(${t})`
+    : (/** @type {string} */ t) => t;
   return fs.slice(0, main) + SNOW_FS_DECL + fs.slice(main, from) + snowFragment(decode) + fs.slice(to);
 }

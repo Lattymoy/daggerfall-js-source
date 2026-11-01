@@ -2,8 +2,8 @@
   {
     "name": "SD9D-set-out-of-the-record",
     "file": "src/systems/sigil/sigil.js",
-    "old": "'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric']);",
-    "new": "'orcsbane', 'coilscale', 'panoply', 'wyrd', 'starspun', 'eltheric']);",
+    "old": "  'numidium',\n  'panoply',",
+    "new": "  'panoply',",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SD9D-a-world-set",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "prince: 'Kagrenac', colour: '#b5862f', aetheric: true,",
-    "new": "prince: 'Kagrenac', colour: '#b5862f', aetheric: false,",
+    "old": "    colour: '#b5862f',\n    aetheric: true,",
+    "new": "    colour: '#b5862f',\n    aetheric: false,",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "SD9D-a-raid-set",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "aetheric: true,\n    role: 'What the Warp kept of the Walking Brass',",
-    "new": "aetheric: true, raid: 3,\n    role: 'What the Warp kept of the Walking Brass',",
+    "old": "    role: 'What the Warp kept of the Walking Brass',",
+    "new": "    raid: 3,\n    role: 'What the Warp kept of the Walking Brass',",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "SD9D-another-brass",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "prince: 'Kagrenac', colour: '#b5862f',",
-    "new": "prince: 'Kagrenac', colour: '#b5862e',",
+    "old": "    colour: '#b5862f',",
+    "new": "    colour: '#b5862e',",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SD9D-the-brass-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ magic: [4, 10], shock: [4, 10] },",
-    "new": "{ magic: [4, 10], shock: [5, 10] },",
+    "old": "        { magic: [4, 10], shock: [4, 10] },",
+    "new": "        { magic: [4, 10], shock: [5, 10] },",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "SD9D-the-share-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ lighter: [15, 30], recover: [18, 12] },",
-    "new": "{ lighter: [20, 30], recover: [18, 12] },",
+    "old": "        { lighter: [15, 30], recover: [18, 12] },",
+    "new": "        { lighter: [20, 30], recover: [18, 12] },",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "SD9D-the-winding-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ lighter: [15, 30], recover: [18, 12] },",
-    "new": "{ lighter: [15, 30], recover: [12, 12] },",
+    "old": "        { lighter: [15, 30], recover: [18, 12] },",
+    "new": "        { lighter: [15, 30], recover: [12, 12] },",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "SD9D-the-heal-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ heal: [15, 25], recover: [90, 60] },",
-    "new": "{ heal: [10, 25], recover: [90, 60] },",
+    "old": "        { heal: [15, 25], recover: [90, 60] },",
+    "new": "        { heal: [10, 25], recover: [90, 60] },",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "SD9D-the-recovery-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ heal: [15, 25], recover: [90, 60] },",
-    "new": "{ heal: [15, 25], recover: [60, 60] },",
+    "old": "        { heal: [15, 25], recover: [90, 60] },",
+    "new": "        { heal: [15, 25], recover: [60, 60] },",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "SD9D-a-brief-past-its-line",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "(v) => `Death turned back, heal ${v.heal}%`),",
-    "new": "(v) => `Death itself turned back, and ${v.heal}% of your health returns`),",
+    "old": "        (v) => `Death turned back, heal ${v.heal}%`,",
+    "new": "        (v) => `Death itself turned back, and ${v.heal}% of your health returns`,",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SD9D-brass-element",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (brass) { add(m().resist, 'magic', brass.magic); add(m().resist, 'shock', brass.shock); }",
-    "new": "if (brass) { add(m().resist, 'fire', brass.magic); add(m().resist, 'shock', brass.shock); }",
+    "old": "    add(m().resist, 'magic', brass.magic);",
+    "new": "    add(m().resist, 'fire', brass.magic);",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "SD9D-brass-one-element",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (brass) { add(m().resist, 'magic', brass.magic); add(m().resist, 'shock', brass.shock); }",
-    "new": "if (brass) { add(m().resist, 'magic', brass.magic); }",
+    "old": "    add(m().resist, 'shock', brass.shock);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "SD9D-gearward-on-a-fall",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null;",
-    "new": "  const gear = d > 0 ? tierOf(entity, 'numidium', 1) : null;",
+    "old": "  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow",
+    "new": "  const gear = d > 0 ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SD9D-gearward-never-winds",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "      _s.gearReady = now + gear.recover;",
-    "new": "      _s.gearReady = now;",
+    "old": "        _s.gearReady = now + gear.recover;",
+    "new": "        _s.gearReady = now;",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "SD9D-gearward-silent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "      sound('gear');\n",
-    "new": "",
+    "old": "        sound('gear');\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "SD9D-the-hour-never-turns",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!v) return hourTurns(entity);",
-    "new": "  if (!v) return false;",
+    "old": "  if (!v) return hourTurns(entity); // SD9d: no Bulwark worn - the Brass's own save (the two are never worn at once: 6 and 6 is past nine places)",
+    "new": "  if (!v) return false; // SD9d: no Bulwark worn - the Brass's own save (the two are never worn at once: 6 and 6 is past nine places)",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "SD9D-the-hour-at-five",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'numidium', 2);\n  if (!v) return false;",
-    "new": "  const v = tierOf(entity, 'numidium', 1);\n  if (!v) return false;",
+    "old": "  const v = tierOf(entity, 'numidium', 2);",
+    "new": "  const v = tierOf(entity, 'numidium', 1);",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "SD9D-a-blows-alone",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }   // AUDIT EG V (L8-1): a Spire foe's blow - its two saves\n  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n",
-    "new": "  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }   // AUDIT EG V (L8-1): a Spire foe's blow - its two saves\n",
+    "old": "  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow && spire) {\n    shed(entity, before, after, saved);\n    reprieve(entity, before, after, saved);\n    return;\n  } // AUDIT EG V (L8-1): a Spire foe's blow - its two saves\n  if (!blow) return; // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath",
+    "new": "  if (!blow) return; // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow && spire) {\n    shed(entity, before, after, saved);\n    reprieve(entity, before, after, saved);\n    return;\n  } // AUDIT EG V (L8-1): a Spire foe's blow - its two saves",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "SD9D-the-hour-silent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.recovering.add('hour');\n  sound('hour');\n",
-    "new": "  _s.recovering.add('hour');\n",
+    "old": "  sound('hour');\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "SD9D-never-recovering",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.recovering.add('hour');\n",
-    "new": "",
+    "old": "  _s.recovering.add('hour');\n  sound('hour');",
+    "new": "  sound('hour');",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "SD9D-never-said-ready",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  hour: { at: () => _s.hourReady, line: 'The Hour Turns is ready again.', set: 'numidium', tier: 2 },",
-    "new": "  hour: { at: () => _s.hourReady, line: '', set: 'numidium', tier: 2 },",
+    "old": "  hour: { at: () => _s.hourReady, line: 'The Hour Turns is ready again.', set: 'numidium', tier: 2 }, // SD9d",
+    "new": "  hour: { at: () => _s.hourReady, line: '', set: 'numidium', tier: 2 }, // SD9d",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "SD9D-no-chip",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (t.get('numidium')?.[2] && (st.hourRecoverLeft || held.has('hour'))) out.push({ key: 'hour', set: 'numidium', name: 'The Hour Turns', text: wait('hour', st.hourRecoverLeft), state: 'recovering' });\n",
-    "new": "",
+    "old": "  if (t.get('numidium')?.[2] && (st.hourRecoverLeft || held.has('hour')))\n    out.push({\n      key: 'hour',\n      set: 'numidium',\n      name: 'The Hour Turns',\n      text: wait('hour', st.hourRecoverLeft),\n      state: 'recovering',\n    });\n  // EG15: the Reprieve's shield while it holds (its points), else its recovery - \"Redoubt\" while the Spire holds it",
+    "new": "  // EG15: the Reprieve's shield while it holds (its points), else its recovery - \"Redoubt\" while the Spire holds it",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ],
@@ -374,8 +374,8 @@
   {
     "name": "SD9D-the-winding-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    gearLeft: left(_s.gearReady), hourRecoverLeft: left(_s.hourReady),",
-    "new": "    gearLeft: 0, hourRecoverLeft: left(_s.hourReady),",
+    "old": "    gearLeft: left(_s.gearReady),",
+    "new": "    gearLeft: 0,",
     "tests": [
       "test/systems/sd9d_numidium.test.js"
     ]

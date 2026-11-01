@@ -38,8 +38,8 @@
   {
     "name": "PARTY-UI-the-count-never-kept",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    trip.count = count;",
-    "new": "",
+    "old": "    trip.count = count; // PARTY-UI: the panel's reading, kept - it never asks who is gathered itself",
+    "new": "    // PARTY-UI: the panel's reading, kept - it never asks who is gathered itself",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PARTY-UI-the-count-never-updated",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (count !== t.count) { t.count = count; waitLabel(t, now); }",
-    "new": "if (count !== t.count) { waitLabel(t, now); }",
+    "old": "        t.count = count;\n        waitLabel(t, now);",
+    "new": "        waitLabel(t, now);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PARTY-UI-respond-a-toggle",
     "file": "src/systems/party/partyTravel.js",
-    "old": "answer(round.at, yes == null ? vote !== round.at : !!yes), said: true",
-    "new": "answer(round.at, vote !== round.at), said: true",
+    "old": "    return { line: answer(round.at, yes == null ? vote !== round.at : !!yes), said: true };",
+    "new": "    return { line: answer(round.at, vote !== round.at), said: true };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PARTY-UI-the-box-left-standing",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (promptFor === round.at) closePrompt();\n    asked = round.at;\n    return { line: answer(round.at, yes",
-    "new": "    asked = round.at;\n    return { line: answer(round.at, yes",
+    "old": "    if (promptFor === round.at) closePrompt();\n    asked = round.at;",
+    "new": "    asked = round.at;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PARTY-UI-gathered-unread",
     "file": "src/systems/party/partyTravel.js",
-    "old": "gathered: near === open.at",
-    "new": "gathered: true",
+    "old": "          ? {\n              dest: host.placeName(open),\n              ready: vote === open.at,\n              staying: decline === open.at,\n              gathered: near === open.at,\n            }",
+    "new": "          ? { dest: host.placeName(open), ready: vote === open.at, staying: decline === open.at, gathered: true }",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]

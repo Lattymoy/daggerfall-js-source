@@ -63,7 +63,8 @@ const fileOf = (files, name) => (files instanceof Map ? files.get(name) : files?
  */
 export function readMapSaveDiscovery(mapSave, regionLocationCounts) {
   const discovered = [];
-  for (let regionIndex = 0; regionIndex < 62; regionIndex++) {   // BAY-OWN: a classic save holds the Bay's 62 MAPSAVE files
+  // BAY-OWN: a classic save holds the Bay's 62 MAPSAVE files
+  for (let regionIndex = 0; regionIndex < 62; regionIndex++) {
     const name = `MAPSAVE.${String(regionIndex).padStart(3, '0')}`;
     const index = mapSave.getRecordIndex(name);
     if (index === -1) return null;
@@ -127,10 +128,8 @@ export class SaveGames {
    */
   lazyOpenSave(save, artPalBytes = null) {
     if (!this.hasSave(save)) return false;
-    if (!this._loadSaveImage(save, artPalBytes))
-      throw new Error('Could not lazy open SavImage for index ' + save);
-    if (!this._loadSaveName(save))
-      throw new Error('Could not lazy open SaveName for index ' + save);
+    if (!this._loadSaveImage(save, artPalBytes)) throw new Error('Could not lazy open SavImage for index ' + save);
+    if (!this._loadSaveName(save)) throw new Error('Could not lazy open SaveName for index ' + save);
     return true;
   }
 
@@ -146,14 +145,12 @@ export class SaveGames {
     if (!this.hasSave(save)) return false;
     const files = this.saveGameDict.get(save);
 
-    if (!this._loadSaveImage(save, artPalBytes))
-      throw new Error('Could not open SaveImage for index ' + save);
-    if (!this._loadSaveName(save))
-      throw new Error('Could not open SaveName for index ' + save);
+    if (!this._loadSaveImage(save, artPalBytes)) throw new Error('Could not open SaveImage for index ' + save);
+    if (!this._loadSaveName(save)) throw new Error('Could not open SaveName for index ' + save);
 
     const treeBytes = fileOf(files, SAVETREE_FILENAME);
     this.saveTree = new SaveTree();
-    this.saveTree.load(treeBytes);   // throws on a bad version
+    this.saveTree.load(treeBytes); // throws on a bad version
 
     const varsBytes = fileOf(files, SAVEVARS_FILENAME);
     if (!varsBytes) throw new Error('Could not open SaveVars for index ' + save);

@@ -2,8 +2,8 @@
   {
     "name": "FB1026-killMana-unread",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  if (c.killMana) manaMine(m, (m.maxMagicka * c.killMana) / 100);\n",
-    "new": "",
+    "old": "  if (c.killMana) manaMine(m, (m.maxMagicka * c.killMana) / 100);\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "FB1026-mpRegen-unread",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);\n",
-    "new": "",
+    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "FB1026-mpRegen-a-percent",
     "file": "src/systems/firmamentPowers.js",
-    "old": "manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);",
-    "new": "manaMine(entity, (entity.maxMagicka * c.mpRegen) / 100);",
+    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);",
+    "new": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 100);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "FB1026-mpRegen-past-full",
     "file": "src/systems/firmamentPowers.js",
-    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(",
-    "new": "  if (c.mpRegen) manaMine(",
+    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);",
+    "new": "  if (c.mpRegen) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ],

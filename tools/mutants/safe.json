@@ -2,7 +2,7 @@
   {
     "name": "SAFE2-stamp-verify-says-yes",
     "file": "src/net/safety/chatStamp.js",
-    "old": "  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, stampBytes(line)); } catch { return false; }",
+    "old": "  try {\n    return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, stampBytes(line));\n  } catch {\n    return false;\n  }",
     "new": "  return true;",
     "tests": [
       "test/net/safety/safe_law.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "SAFE2-the-words-unsigned",
     "file": "src/net/safety/chatStamp.js",
-    "old": "${JSON.stringify([tab, sub, name, at, text])}",
-    "new": "${JSON.stringify([tab, sub, name, at])}",
+    "old": "  enc.encode(`${STAMP_V}\\n${JSON.stringify([tab, sub, name, at, text])}`);",
+    "new": "  enc.encode(`${STAMP_V}\\n${JSON.stringify([tab, sub, name, at])}`);",
     "tests": [
       "test/net/safety/safe_law.test.js",
       "test/server/safe_service.test.js"
@@ -34,8 +34,8 @@
   {
     "name": "SAFE5-the-feed-unsigned",
     "file": "src/net/safety/chatFeed.js",
-    "old": "  if (!good) return { error: 'feed-signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { error: 'feed-signature' };\n  let batch;",
+    "new": "  let batch;",
     "tests": [
       "test/net/safety/safe_law.test.js",
       "test/server/safe_review.test.js"
@@ -45,8 +45,8 @@
   {
     "name": "SAFE5-a-private-tab-fed",
     "file": "src/net/safety/chatFeed.js",
-    "old": "b.lines.every((l) => stampableLine(l) && PUBLIC_TABS.includes(l.tab))",
-    "new": "b.lines.every((l) => stampableLine(l))",
+    "old": "  return b.lines.every((l) => stampableLine(l) && PUBLIC_TABS.includes(l.tab));",
+    "new": "  return b.lines.every((l) => stampableLine(l));",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],
@@ -55,8 +55,8 @@
   {
     "name": "SAFE5-an-old-batch-taken",
     "file": "src/net/safety/chatFeed.js",
-    "old": "  if (Math.abs(nowMs - batch.at) > FEED_AGE_MAX_MS) return { error: 'feed-stale' };\n",
-    "new": "",
+    "old": "  if (Math.abs(nowMs - batch.at) > FEED_AGE_MAX_MS) return { error: 'feed-stale' };\n  return { ok: true, batch };",
+    "new": "  return { ok: true, batch };",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "SAFE3-a-report-with-none-of-their-lines",
     "file": "src/net/safety/safetyLaw.js",
-    "old": "  if (!out.some((l) => l.sub === target)) return { error: 'report-no-line' };\n",
-    "new": "",
+    "old": "  if (!out.some((l) => l.sub === target)) return { error: 'report-no-line' };\n  out.sort((a, b) => a.at - b.at);",
+    "new": "  out.sort((a, b) => a.at - b.at);",
     "tests": [
       "test/net/safety/safe_law.test.js",
       "test/server/safe_service.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "SAFE4-a-mute-carrying-a-ban-field",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'ban' && c.bn !== undefined) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'ban' && c.bn !== undefined) return false;\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],
@@ -107,8 +107,8 @@
   {
     "name": "SAFE3-a-fresh-account-counted",
     "file": "server-account/src/safety.js",
-    "old": " && Number(player?.created_at) <= nowS - SPROUT_S",
-    "new": "",
+    "old": "export const credibleReporter = (player, nowS) =>\n  accountKind(player) === 'linked' && !isMuted(player, nowS) && Number(player?.created_at) <= nowS - SPROUT_S;",
+    "new": "export const credibleReporter = (player, nowS) => accountKind(player) === 'linked' && !isMuted(player, nowS);",
     "tests": [
       "test/server/safe_service.test.js"
     ],
@@ -137,7 +137,7 @@
   {
     "name": "SAFE4-a-moderator-auto-muted",
     "file": "server-account/src/sanctions.js",
-    "old": "export const autoMutable = (row, env, nowS) => !!row && !canModerate(row, env) && !isMuted(row, nowS) && !isBanned(row, nowS);",
+    "old": "export const autoMutable = (row, env, nowS) =>\n  !!row && !canModerate(row, env) && !isMuted(row, nowS) && !isBanned(row, nowS);",
     "new": "export const autoMutable = (row, env, nowS) => !!row && !isMuted(row, nowS) && !isBanned(row, nowS);",
     "tests": [
       "test/server/safe_service.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "SAFE4-anyone-may-ban",
     "file": "server-account/src/sanctions.js",
-    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (!Number.isSafeInteger(days)",
-    "new": "  if (!Number.isSafeInteger(days)",
+    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 0 || /** @type {number} */ (days) > BAN_DAYS_MAX)",
+    "new": "  if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 0 || /** @type {number} */ (days) > BAN_DAYS_MAX)",
     "tests": [
       "test/server/safe_service.test.js",
       "test/server/staffpanel2fix.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "SAFE4-the-ambiguity-guessed",
     "file": "server-account/src/sanctions.js",
-    "old": "  if (guests.length > 1) return { error: 'ambiguous' };\n",
-    "new": "",
+    "old": "  if (guests.length > 1) return { error: 'ambiguous' };\n  return guests[0] ?? { error: 'no-player' };",
+    "new": "  return guests[0] ?? { error: 'no-player' };",
     "tests": [
       "test/server/safe_service.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "SAFE5-an-account-named-to-the-reviewer",
     "file": "server-account/src/modAi.js",
-    "old": "const out = lines.map((l, i) => ({ i, speaker: speaker(l.sub), tab: l.tab, text: l.text }));",
-    "new": "const out = lines.map((l, i) => ({ i, speaker: l.sub, tab: l.tab, text: l.text }));",
+    "old": "  const out = lines.map((l, i) => ({ i, speaker: speaker(l.sub), tab: l.tab, text: l.text }));",
+    "new": "  const out = lines.map((l, i) => ({ i, speaker: l.sub, tab: l.tab, text: l.text }));",
     "tests": [
       "test/server/safe_review.test.js"
     ],
@@ -218,8 +218,8 @@
   {
     "name": "SAFE5-the-budget-unchecked",
     "file": "server-account/src/modAi.js",
-    "old": "  if (!(await spendAiCall(db, env, nowS, { feed }))) return { error: AI_ERRORS.budget };\n",
-    "new": "",
+    "old": "  if (!(await spendAiCall(db, env, nowS, { feed }))) return { error: AI_ERRORS.budget };\n  const { payload } = reviewPayload(lines, focus);",
+    "new": "  const { payload } = reviewPayload(lines, focus);",
     "tests": [
       "test/server/safe_review.test.js"
     ],
@@ -268,8 +268,8 @@
   {
     "name": "SAFE1-a-blocked-invite-landing",
     "file": "src/net/social.js",
-    "old": "        if (!this._hears(invite.from?.acct)) return null;   // SAFE1: nor one from an account I blocked - its sender is never told\n",
-    "new": "",
+    "old": "        if (!this._hears(invite.from?.acct)) return null; // SAFE1: nor one from an account I blocked - its sender is never told\n        // AUDIT SOC B1/B2: the door bounds a STATE frame's invites at PENDING_MAX; this arm is one invite at a time, so it",
+    "new": "        // AUDIT SOC B1/B2: the door bounds a STATE frame's invites at PENDING_MAX; this arm is one invite at a time, so it",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -278,8 +278,8 @@
   {
     "name": "SAFE7-a-line-sent-before-agreeing",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      if (agreed !== false) return null;\n",
-    "new": "      return null;\n",
+    "old": "      if (agreed !== false) return null;",
+    "new": "      return null;",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -298,8 +298,8 @@
   {
     "name": "SAFE7-the-joke-unsaid",
     "file": "src/net/safety/conduct.js",
-    "old": "disability or age, not even as a joke.'",
-    "new": "disability or age.'",
+    "old": "    'No hate. Never attack anyone for their race, ethnicity, nationality, religion, sex, gender identity, sexual orientation (asexuality included), disability or age, not even as a joke.',",
+    "new": "    'No hate. Never attack anyone for their race, ethnicity, nationality, religion, sex, gender identity, sexual orientation (asexuality included), disability or age.',",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],

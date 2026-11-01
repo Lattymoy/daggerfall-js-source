@@ -10,9 +10,11 @@ import { hudText } from '../systems/notify.js';
 import { t } from '../systems/textManager.js';
 
 /** My live Dodging, gear counted - 0.05% evade a point, to 25%. */
-export const pvpDodging = (entity) => Math.max(0, Math.min(VIT_DODGE_MAX, Math.round(Number(skillValue(entity, SKILLS.Dodging)) || 0)));
+export const pvpDodging = (entity) =>
+  Math.max(0, Math.min(VIT_DODGE_MAX, Math.round(Number(skillValue(entity, SKILLS.Dodging)) || 0)));
 /** A worn gear power's evade, per cent (the Raven's) - the referee holds it, Dodging and the level gap to 40%. */
-export const pvpGearEvade = (entity) => Math.max(0, Math.min(VIT_EVADE_MAX, Math.round(Number(powerKind(entity, 'evade')?.chance) || 0)));
+export const pvpGearEvade = (entity) =>
+  Math.max(0, Math.min(VIT_EVADE_MAX, Math.round(Number(powerKind(entity, 'evade')?.chance) || 0)));
 
 /** The referee's word that a blow was evaded (`wref` `hp` with `ev`): `mine` my own blow - a miss on my HUD; else my line.
  *  True: the word is said. */

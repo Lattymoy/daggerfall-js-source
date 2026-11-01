@@ -31,7 +31,7 @@
 // so the `+ 1` cannot drift.
 // ═══════════════════════════════════════════════════════════════════
 
-import { OPENED_SHOP_TYPES } from '../../world/buildingNames.js';   // PROF-FOUND: the shops the port opened
+import { OPENED_SHOP_TYPES } from '../../world/buildingNames.js'; // PROF-FOUND: the shops the port opened
 
 /** A pixel that is not a building at all. */
 export const STREET_BYTE = 0;

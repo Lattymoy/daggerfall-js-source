@@ -1,11 +1,92 @@
 [
-  { "name": "DRAGON-BUDGET-no-count", "file": "server/src/dragonFights.js", "old": "  if (cells.size + fresh.length > DRAGON_JUDGED_CELLS_MAX) return json({ ok: false });\n", "new": "", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-a-cell-counted-twice", "file": "server/src/dragonFights.js", "old": "const fresh = [...new Set(cs)].filter((c) => !cells.has(c));", "new": "const fresh = [...cs];", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-one-count-for-every-account", "file": "server/src/dragonFights.js", "old": "cells = watch.get(b.sub) ?? new Set();", "new": "cells = [...watch.values()][0] ?? new Set();", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-the-hub-unasked", "file": "server/src/dragonFights.js", "old": " || !(await judged(room, a, dragonReachCells(p[0], p[1]), m.w))) return;", "new": ") return;", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-asked-of-every-ask", "file": "server/src/dragonFights.js", "old": "  const need = cells.filter((c) => !s.judged.get(key)?.has(c));\n", "new": "  const need = cells;\n", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-the-in-unbudgeted", "file": "server/src/dragonFights.js", "old": "(dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, [dragonJudgedCell(site[0], site[1])], m.w)))", "new": "false", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-a-failed-answer-granted", "file": "server/src/dragonFights.js", "old": "} catch (e) { console.warn('[dragon] hub budget', e?.message ?? e); return 'fail'; }", "new": "} catch (e) { console.warn('[dragon] hub budget', e?.message ?? e); return 'ok'; }", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-a-word-unread", "file": "server/src/dragonFights.js", "old": "b.cs.every((c) => typeof c === 'string' && /^-?\\d{1,4},-?\\d{1,4}$/.test(c))", "new": "b.cs.every((c) => typeof c === 'string')", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." },
-  { "name": "DRAGON-BUDGET-the-max", "file": "src/net/dragon/dragonLaw.js", "old": "export const DRAGON_JUDGED_CELLS_MAX = 48;", "new": "export const DRAGON_JUDGED_CELLS_MAX = 49;", "tests": ["test/net/dragon/dragonbudget.test.js"], "note": "Re-aimed by content (AUDIT DRAGON-CELL III)." }
+  {
+    "name": "DRAGON-BUDGET-no-count",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (cells.size + fresh.length > DRAGON_JUDGED_CELLS_MAX) return json({ ok: false });\n  for (const c of fresh) cells.add(c);",
+    "new": "  for (const c of fresh) cells.add(c);",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-a-cell-counted-twice",
+    "file": "server/src/dragonFights.js",
+    "old": "  const fresh = [...new Set(cs)].filter((c) => !cells.has(c));",
+    "new": "  const fresh = [...cs];",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-one-count-for-every-account",
+    "file": "server/src/dragonFights.js",
+    "old": "    cells = watch.get(b.sub) ?? new Set();",
+    "new": "    cells = [...watch.values()][0] ?? new Set();",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-the-hub-unasked",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (!p || !stood(room, ws, a, p, now) || !(await judged(room, a, dragonReachCells(p[0], p[1]), m.w))) return; // DRAGON-BUDGET: and within its account's cells, each it could be told (G4)",
+    "new": "  if (!p || !stood(room, ws, a, p, now)) return; // DRAGON-BUDGET: and within its account's cells, each it could be told (G4)",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-asked-of-every-ask",
+    "file": "server/src/dragonFights.js",
+    "old": "  const need = cells.filter((c) => !s.judged.get(key)?.has(c));",
+    "new": "  const need = cells;",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-the-in-unbudgeted",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (\n    !f?.players?.[a.sub] &&\n    (!stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now) ||\n      (dragonWatchesAbout(now).includes(m.w) && !(await judged(room, a, [dragonJudgedCell(site[0], site[1])], m.w))))\n  )\n    return; // DRAGON-BUDGET: a watch about (any other is `gone` below, as the clock says)",
+    "new": "  if (!f?.players?.[a.sub] && (!stood(room, ws, a, mapPixelOfWire(a.pose.x, a.pose.z), now) || false)) return; // DRAGON-BUDGET: a watch about (any other is `gone` below, as the clock says)",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-a-failed-answer-granted",
+    "file": "server/src/dragonFights.js",
+    "old": "    return 'fail';",
+    "new": "    return 'ok';",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-a-word-unread",
+    "file": "server/src/dragonFights.js",
+    "old": "    Array.isArray(b?.cs) &&\n    b.cs.length >= 1 &&\n    b.cs.length <= 4 &&\n    b.cs.every((c) => typeof c === 'string' && /^-?\\d{1,4},-?\\d{1,4}$/.test(c))",
+    "new": "    Array.isArray(b?.cs) && b.cs.length >= 1 && b.cs.length <= 4 && b.cs.every((c) => typeof c === 'string')",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  },
+  {
+    "name": "DRAGON-BUDGET-the-max",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "export const DRAGON_JUDGED_CELLS_MAX = 48;",
+    "new": "export const DRAGON_JUDGED_CELLS_MAX = 49;",
+    "tests": [
+      "test/net/dragon/dragonbudget.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
+  }
 ]

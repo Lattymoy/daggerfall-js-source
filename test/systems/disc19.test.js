@@ -221,7 +221,7 @@ test('DISC19-C: an online page\'s death screen counts its respawn in the hint\'s
   });
   // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): offline, a death Project Legacy will raise says Rise (riseHint)
   // L10N4: the count and the hint in the player's language (t(), hintText) - the English hint kept as the hosts give it
-  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online \? (?:\((?:this\.wild|!this\.canRise) \? t\('death\.risingInWild', 'RISING IN \{n\}', \{ n: this\.respawnIn \}\) : )?t\('death\.risingIn', 'RISING IN \{n\}   ENTER now', \{ n: this\.respawnIn \}\)\)? : hintText\(this\.rises \? riseHint\(this\.hint\) : this\.hint\);/, 'no dead key drawn online');
+  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online\n\s*\? !this\.canRise\n\s*\? t\('death\.risingInWild', 'RISING IN \{n\}', \{ n: this\.respawnIn \}\)\n\s*: t\('death\.risingIn', 'RISING IN \{n\}   ENTER now', \{ n: this\.respawnIn \}\)\n\s*: hintText\(this\.rises \? riseHint\(this\.hint\) : this\.hint\);/, 'no dead key drawn online');
 });
 
 // ═══ F: the watch and the town ════════════════════════════════════════════════════════════════════════════════════

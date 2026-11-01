@@ -41,7 +41,9 @@ export function addPastBayPlaces(places) {
  *  asks it as the Bay's map asks discovery. Null with no host. */
 let _placeLaw = null;
 /** @param {((px: number, py: number, named?: boolean) => any) | null} law */
-export const setPastBayPlaceLaw = (law) => { _placeLaw = typeof law === 'function' ? law : null; };
+export const setPastBayPlaceLaw = (law) => {
+  _placeLaw = typeof law === 'function' ? law : null;
+};
 /** The summary a journey to the place on a pixel past the Bay goes by, or null. @param {number} px @param {number} py */
 export const pastBayPlaceSummary = (px, py, named = false) => _placeLaw?.(px, py, named) ?? null;
 /** Moves on every reset and add. */
@@ -54,7 +56,8 @@ export function pastBayPlacesIn(x0, y0, x1, y1) {
   if (x1 <= x0 || y1 <= y0) return out;
   for (let ty = Math.floor(y0 / ROAD_TILE); ty <= Math.floor((y1 - 1) / ROAD_TILE); ty++) {
     for (let tx = Math.floor(x0 / ROAD_TILE); tx <= Math.floor((x1 - 1) / ROAD_TILE); tx++) {
-      for (const p of _bins.get(roadTileKey(tx, ty))?.list ?? []) if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);
+      for (const p of _bins.get(roadTileKey(tx, ty))?.list ?? [])
+        if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);
     }
   }
   return out;
@@ -67,6 +70,9 @@ export function packPastBayPlaces(places) {
 /** And back. @param {?{ keys: Float64Array, types: Uint8Array }} packed @returns {PastBayPlace[]} */
 export function unpackPastBayPlaces(packed) {
   const out = [];
-  for (let i = 0; i < (packed?.keys?.length ?? 0); i++) { const [x, y] = beyondPixel(packed.keys[i]); out.push({ x, y, type: packed.types[i] }); }
+  for (let i = 0; i < (packed?.keys?.length ?? 0); i++) {
+    const [x, y] = beyondPixel(packed.keys[i]);
+    out.push({ x, y, type: packed.types[i] });
+  }
   return out;
 }

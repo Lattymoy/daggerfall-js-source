@@ -19,7 +19,9 @@ export const PATRON_STAY_MIN = 25;
  * @param {number} seed @param {readonly any[]} residents @returns {any | null}
  */
 export function patronOf(seed, residents) {
-  const pool = (residents ?? []).filter((r) => r && r.roll === 'h' && !r.guard).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const pool = (residents ?? [])
+    .filter((r) => r && r.roll === 'h' && !r.guard)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   return pool.length ? pool[(seed >>> 0) % pool.length] : null;
 }
 
@@ -41,17 +43,26 @@ export const PATRON_DELAY_DAYS = 2;
  */
 export function patronVisits(told, day, residents) {
   const shift = PATRON_DELAY_DAYS * DAY_MIN;
-  const D0 = day * DAY_MIN + 4 * 60 - shift, D1 = D0 + DAY_MIN;
-  const open = PATRON_OPEN_H[0] * 60, span = (PATRON_OPEN_H[1] - PATRON_OPEN_H[0]) * 60;
+  const D0 = day * DAY_MIN + 4 * 60 - shift,
+    D1 = D0 + DAY_MIN;
+  const open = PATRON_OPEN_H[0] * 60,
+    span = (PATRON_OPEN_H[1] - PATRON_OPEN_H[0]) * 60;
   const out = [];
   for (const v of told ?? []) {
     if (!(v.t >= D0 && v.t < D1)) continue;
     const res = patronOf(v.seed, residents);
     const tod = v.t + shift - day * DAY_MIN;
-    if (res) out.push({ resId: res.id, door: v.door, from: day * DAY_MIN + open + ((((tod - open) % span) + span) % span), dur: PATRON_STAY_MIN });
+    if (res)
+      out.push({
+        resId: res.id,
+        door: v.door,
+        from: day * DAY_MIN + open + ((((tod - open) % span) + span) % span),
+        dur: PATRON_STAY_MIN,
+      });
   }
   return out;
 }
 
 /** What the Vendor page says of a sale to a patron: their name and town, or a townsperson's. @param {any} res @param {string} town */
-export const patronWords = (res, town) => (res?.name ? `${res.name}${town ? ` of ${town}` : ''}` : `a townsperson${town ? ` of ${town}` : ''}`);
+export const patronWords = (res, town) =>
+  res?.name ? `${res.name}${town ? ` of ${town}` : ''}` : `a townsperson${town ? ` of ${town}` : ''}`;

@@ -47,13 +47,15 @@ const out = await page.evaluate(async (lines) => {
   const tm = await import('/src/systems/textManager.js');
   const faces = await import('/src/ui/localeFaces.js');
   const canvas = document.createElement('canvas');
-  canvas.width = 960; canvas.height = 720;
+  canvas.width = 960;
+  canvas.height = 720;
   canvas.style.cssText = 'position:fixed;left:0;top:0;z-index:99999;background:#000';
   document.body.append(canvas);
   const renderer = new Renderer(canvas);
   const gl = renderer.gl;
   gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
   // a stand-in FONT0003: blank glyphs, Daggerfall's metrics
   const fnt = { fixedHeight: 9, fixedWidth: 6, glyphWidth: () => 5, getGlyphPixels: () => new Uint8Array(256) };
   const font = text.makeFont(renderer, fnt, 'FONT0003');
@@ -68,9 +70,24 @@ const out = await page.evaluate(async (lines) => {
     const drawn = text.drawText(renderer, font, line, 16, y, 4, [1, 0.9, 0.7, 1]);
     const px = new Uint8Array(canvas.width * 44 * 4);
     gl.readPixels(0, canvas.height - (y + 44), canvas.width, 44, gl.RGBA, gl.UNSIGNED_BYTE, px);
-    let lit = 0, right = 0;
-    for (let p = 0; p < px.length; p += 4) if (px[p] > 60) { lit++; right = Math.max(right, (p / 4) % canvas.width); }
-    res.push({ code, line, face: face ? face.family : null, glyphs: face ? face.glyphs.size : 0, pages: face ? face.pages.length : 0, width: w, drawn, lit, right });
+    let lit = 0,
+      right = 0;
+    for (let p = 0; p < px.length; p += 4)
+      if (px[p] > 60) {
+        lit++;
+        right = Math.max(right, (p / 4) % canvas.width);
+      }
+    res.push({
+      code,
+      line,
+      face: face ? face.family : null,
+      glyphs: face ? face.glyphs.size : 0,
+      pages: face ? face.pages.length : 0,
+      width: w,
+      drawn,
+      lit,
+      right,
+    });
   });
   tm.setLocale(was);
   const shot = canvas.toDataURL('image/png');
@@ -81,18 +98,38 @@ const out = await page.evaluate(async (lines) => {
 check('makeFont names the font as DFU does', out.fontName === 'FONT0003');
 for (const r of out.res) {
   if (r.code === 'en') {
-    check('en: no face - Daggerfall\'s own glyphs (blank in the stand-in), nothing drawn from a face', r.face === null && r.lit === 0, `lit ${r.lit}`);
+    check(
+      "en: no face - Daggerfall's own glyphs (blank in the stand-in), nothing drawn from a face",
+      r.face === null && r.lit === 0,
+      `lit ${r.lit}`,
+    );
     continue;
   }
   const chars = [...r.line].filter((c) => c !== ' ').length;
   check(`${r.code}: a face over its script's fonts`, !!r.face, r.face ?? 'none');
-  check(`${r.code}: every character a glyph, grown on demand`, r.glyphs >= new Set([...r.line]).size, `${r.glyphs} glyphs, ${r.pages} page(s)`);
+  check(
+    `${r.code}: every character a glyph, grown on demand`,
+    r.glyphs >= new Set([...r.line]).size,
+    `${r.glyphs} glyphs, ${r.pages} page(s)`,
+  );
   check(`${r.code}: ink drawn where the line is`, r.lit > chars * 20, `${r.lit} lit px for ${chars} characters`);
-  check(`${r.code}: the ink ends where the measured advance does`, Math.abs(16 + r.drawn - r.right) <= 24 && Math.abs(r.drawn - r.width * 4) < 0.5, `drawn ${r.drawn.toFixed(1)}, measured x4 ${(r.width * 4).toFixed(1)}, last ink at ${r.right}`);
+  check(
+    `${r.code}: the ink ends where the measured advance does`,
+    Math.abs(16 + r.drawn - r.right) <= 24 && Math.abs(r.drawn - r.width * 4) < 0.5,
+    `drawn ${r.drawn.toFixed(1)}, measured x4 ${(r.width * 4).toFixed(1)}, last ink at ${r.right}`,
+  );
 }
-const ja = out.res.find((r) => r.code === 'ja'), fr = out.res.find((r) => r.code === 'fr');
-check('Han by region: Japanese and Chinese name different fonts first', ja.face !== out.res.find((r) => r.code === 'zh-Hans').face);
-check('a full-width character advances about one GlyphHeight, a Latin letter about half', ja.width / [...ja.line].length > 7 && fr.width / [...fr.line].length < 6, `ja ${(ja.width / [...ja.line].length).toFixed(2)}, fr ${(fr.width / [...fr.line].length).toFixed(2)} per character`);
+const ja = out.res.find((r) => r.code === 'ja'),
+  fr = out.res.find((r) => r.code === 'fr');
+check(
+  'Han by region: Japanese and Chinese name different fonts first',
+  ja.face !== out.res.find((r) => r.code === 'zh-Hans').face,
+);
+check(
+  'a full-width character advances about one GlyphHeight, a Latin letter about half',
+  ja.width / [...ja.line].length > 7 && fr.width / [...fr.line].length < 6,
+  `ja ${(ja.width / [...ja.line].length).toFixed(2)}, fr ${(fr.width / [...fr.line].length).toFixed(2)} per character`,
+);
 check('no page errors', errors.length === 0, errors.join(' | '));
 if (shots) {
   const { writeFileSync } = await import('node:fs');

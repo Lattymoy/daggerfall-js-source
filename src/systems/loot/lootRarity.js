@@ -2223,7 +2223,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const tier = item.rarity;
   const old = item.affixes[index];
   const { ids: pool, others, freeParams } = reforgePool(item, index);
-  // PRESS-FLAT (2026-10-28, the owner: "no lean at all", "it need to reroll as well"): a reforge's kind and param are
+  // PRESS-FLAT (2026-10-28): a reforge's kind and param are
   // drawn with no lean - no skill to the item's own, no armour family's weight, no garment's dress
   const id = pickByLines(pool, (k) => drawWeight(k, item, others, null), rolls);
   const k = AFFIX_KINDS[id];

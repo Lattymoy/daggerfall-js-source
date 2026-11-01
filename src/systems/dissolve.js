@@ -27,15 +27,29 @@ export const dissolveShadowless = (d) => !!d && d[0] > DISSOLVE_SHADOWLESS;
 export function setBatchDissolve(batch, share, colour = DISSOLVE_EMBER) {
   if (!batch) return;
   if (!(share > 0)) {
-    if (batch.dissolve) { if (batch.dissolve[4]) batch.noShadow = undefined; batch.dissolve = null; }
+    if (batch.dissolve) {
+      if (batch.dissolve[4]) batch.noShadow = undefined;
+      batch.dissolve = null;
+    }
     return;
   }
   const s = Math.min(1, share);
   const d = batch.dissolve ?? (batch.dissolve = [0, 0, 0, 0, 0]);
   // AUDIT (2026-10-02): more gone than whole, it casts no shadow - the shadow replays cut by the texture's alpha alone,
   // so a body burnt away (or not yet through its portal) kept its whole shadow. [4] says the dissolve took it.
-  if (s > DISSOLVE_SHADOWLESS) { if (!batch.noShadow) { batch.noShadow = true; d[4] = 1; } } else if (d[4]) { batch.noShadow = undefined; d[4] = 0; }
-  d[0] = s; d[1] = colour[0]; d[2] = colour[1]; d[3] = colour[2];   // in place: a frame's burn allocates nothing
+  if (s > DISSOLVE_SHADOWLESS) {
+    if (!batch.noShadow) {
+      batch.noShadow = true;
+      d[4] = 1;
+    }
+  } else if (d[4]) {
+    batch.noShadow = undefined;
+    d[4] = 0;
+  }
+  d[0] = s;
+  d[1] = colour[0];
+  d[2] = colour[1];
+  d[3] = colour[2]; // in place: a frame's burn allocates nothing
 }
 
 /** The GLSL: `dissolveCut(uv)` the grain's threshold test (discard where gone), `dissolveEdge(uv)` how much of the edge

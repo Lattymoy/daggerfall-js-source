@@ -30,7 +30,10 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT || 5237);
 const SECONDS = Math.max(3, Number(process.env.SECONDS || 8));
 const HEADED = process.env.HEADED === '1';
-const WANT = (process.env.SCENES || 'city,road,dungeon').split(',').map((s) => s.trim()).filter(Boolean);
+const WANT = (process.env.SCENES || 'city,road,dungeon')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 // GRAIN AUDIT 1: GROUND=off|default|max points every scene at one tier of
 // the ground-sharpness dial (the `?ground=` door), so the dial can be A/B'd
 // on a real GPU: HEADED=1 SCENES=road SECONDS=12 GROUND=off npm run perf,
@@ -50,46 +53,72 @@ const SCENES = {
   jungle: `/play/?world&region=Satakalaam&loc=${encodeURIComponent(process.env.LOC || 'Satakalaam')}&class=1&novideo&shot&fps`,
 };
 
-const server = await createServer({ root: ROOT, server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
+const server = await createServer({
+  root: ROOT,
+  server: { port: PORT, strictPort: true, hmr: false, watch: null },
+  logLevel: 'error',
+});
 await server.listen();
-const browser = await chromium.launch(HEADED
-  ? { headless: false }
-  : { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch(
+  HEADED ? { headless: false } : { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
+);
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
 const rows = [];
 for (const name of WANT) {
-  const url = SCENES[name] && `${SCENES[name]}${TREES}${JUNGLE}`;   // LPT1: the trees' door on every scene the TREES switch names; BANTHA1: the jungle's
-  if (!url) { console.warn(`perf: no scene "${name}"`); continue; }
+  const url = SCENES[name] && `${SCENES[name]}${TREES}${JUNGLE}`; // LPT1: the trees' door on every scene the TREES switch names; BANTHA1: the jungle's
+  if (!url) {
+    console.warn(`perf: no scene "${name}"`);
+    continue;
+  }
   await page.goto(`http://localhost:${PORT}${url}${GROUND}`);
   await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 300000 });
-  await page.waitForTimeout(1000);   // the first second after settling is the stream's tail, not the scene
+  await page.waitForTimeout(1000); // the first second after settling is the stream's tail, not the scene
   const samples = [];
   for (let s = 0; s < SECONDS; s++) {
     await page.waitForTimeout(1000);
     const st = await page.evaluate(() => (window.__fpsStats ? window.__fpsStats() : null));
     if (st) samples.push(st);
   }
-  const mean = (k) => { const v = samples.map((s) => s[k]).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
-  const worst = (k) => { const v = samples.map((s) => s[k]).filter((x) => x != null); return v.length ? Math.max(...v) : null; };
+  const mean = (k) => {
+    const v = samples.map((s) => s[k]).filter((x) => x != null);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  };
+  const worst = (k) => {
+    const v = samples.map((s) => s[k]).filter((x) => x != null);
+    return v.length ? Math.max(...v) : null;
+  };
   const row = {
-    scene: name, gpu: HEADED ? 'machine' : 'swiftshader', seconds: samples.length,
-    fps: mean('fps'), frameMs: mean('meanMs'), frameWorstMs: worst('worstMs'),
-    scriptMs: mean('scriptMs'), scriptWorstMs: worst('scriptWorstMs'),
-    draws: mean('draws'), binds: mean('binds'),
+    scene: name,
+    gpu: HEADED ? 'machine' : 'swiftshader',
+    seconds: samples.length,
+    fps: mean('fps'),
+    frameMs: mean('meanMs'),
+    frameWorstMs: worst('worstMs'),
+    scriptMs: mean('scriptMs'),
+    scriptWorstMs: worst('scriptWorstMs'),
+    draws: mean('draws'),
+    binds: mean('binds'),
     errors: errors.splice(0).length,
   };
   rows.push(row);
   const f = (x, d = 1) => (x == null ? '-' : Number(x).toFixed(d));
-  console.log(`${name.padEnd(8)} ${f(row.fps, 0).padStart(4)} fps  frame ${f(row.frameMs)} ms (worst ${f(row.frameWorstMs, 0)})  script ${f(row.scriptMs)} ms (worst ${f(row.scriptWorstMs, 0)})  draws ${f(row.draws, 0)}  binds ${f(row.binds, 0)}${row.errors ? `  errors ${row.errors}` : ''}`);
+  console.log(
+    `${name.padEnd(8)} ${f(row.fps, 0).padStart(4)} fps  frame ${f(row.frameMs)} ms (worst ${f(row.frameWorstMs, 0)})  script ${f(row.scriptMs)} ms (worst ${f(row.scriptWorstMs, 0)})  draws ${f(row.draws, 0)}  binds ${f(row.binds, 0)}${row.errors ? `  errors ${row.errors}` : ''}`,
+  );
 }
-if (process.env.OUT) appendFileSync(process.env.OUT, rows.map((r) => JSON.stringify({ at: new Date().toISOString(), ...r })).join('\n') + '\n');
+if (process.env.OUT)
+  appendFileSync(
+    process.env.OUT,
+    rows.map((r) => JSON.stringify({ at: new Date().toISOString(), ...r })).join('\n') + '\n',
+  );
 await browser.close();
 await server.close();
 // The judgement: a scene that never reported a second, or threw on
 // the page, is not a measurement - a probe that prints a dash and
 // exits 0 is the disease test/tooling/probehygiene.test.js T3 names.
 const bad = rows.filter((r) => !r.seconds || r.errors || !(r.fps > 0)).map((r) => r.scene);
-if (bad.length || rows.length !== WANT.length) throw new Error(`perf: no measurement for ${bad.join(', ') || 'a scene'}`);
+if (bad.length || rows.length !== WANT.length)
+  throw new Error(`perf: no measurement for ${bad.join(', ') || 'a scene'}`);

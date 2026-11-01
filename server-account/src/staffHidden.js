@@ -1,7 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL5-HIDDEN (2026-10-22, mob: "no tag no faint outline nothing just nothing", "true invis not lattys invis", "we
-// want the player to have no idea we are wathcing them"; design doc "DFO Staff Panel: design", Invisible follow, Flat map's
+// STAFF-PANEL5-HIDDEN (2026-10-22; design doc "DFO Staff Panel: design", Invisible follow, Flat map's
 // Hide me, and Weak spots "Invisible follow and the in-game view") - A STAFF MEMBER HIDDEN FROM EVERY PLAYER.
 //
 // NOT THE GAME'S INVISIBILITY. That one (INVIS-NET, INVIS-LOOK, src/net/remotePlayers.js) still sends the player's position
@@ -12,9 +11,7 @@
 // Hide me turns it on and Show myself off (/v1/staff/hide). It is read only for an account a role list names (staff.js
 // staffRole: an Admin or a Moderator) that holds a LIVE staff session, so no other account's token mint reads a thing more.
 //
-// STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", then "i need to be bale to talk in chat" and "need hide to be
-// a toggle"): 0159 made Hide me ON BY DEFAULT (players.staff_hide, every row 1 - mob, 05:36Z the day before: "a switch in
-// Your settings, on by default"), so a staff member who never pressed it was minted hidden tokens for as long as a staff
+// STAFF-HIDE-TOGGLE (2026-10-23): 0159 made Hide me ON BY DEFAULT (players.staff_hide, every row 1 - ), so a staff member who never pressed it was minted hidden tokens for as long as a staff
 // session stood, and the relay drops every line a hidden socket says but the staff channel's (server/src/staffHidden.js
 // hiddenMay) - mob could not talk in chat, and his own game was in no room the pen tool's map reads. Now it is off until
 // pressed, for every member (0165 moves the switch to `staff_hide_on`, default 0, keeping a Hide me pressed since 0159 -
@@ -96,41 +93,75 @@ const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(d
  *  latest Show myself before it (by the log's own order, its ids: a press and a mint in one second are still in order).
  *  No row when the account is not hidden. Rows past staff_audit's 30 days may be swept, so a run longer than that reads
  *  its oldest row kept. */
-const HIDDEN_SINCE_SQL = LAPSED_SQL.replace('SELECT 1 AS held FROM', () => `SELECT (SELECT MIN(r.at) FROM staff_audit r WHERE r.actor = ?1 AND r.act = 'hidden-token'
+const HIDDEN_SINCE_SQL = LAPSED_SQL.replace(
+  'SELECT 1 AS held FROM',
+  () => `SELECT (SELECT MIN(r.at) FROM staff_audit r WHERE r.actor = ?1 AND r.act = 'hidden-token'
     AND json_extract(r.detail, '$.sub') = h.sub AND r.id > COALESCE((SELECT MAX(o.id) FROM staff_audit o WHERE o.actor = ?1 AND o.act = 'hide'
-      AND o.detail = '{"on":false}' AND o.id < h.id), 0)) AS since FROM`);
+      AND o.detail = '{"on":false}' AND o.id < h.id), 0)) AS since FROM`,
+);
 
 /**
  * THE GAME'S MINT, FOR A HIDDEN STAFF MEMBER: the spectator's token and the mint's answer, or null - the account is no
  * staff, holds no live staff session, or pressed Show myself - when the mint goes on as it always did; or
- * `{ error: 'staff-session-lapsed' }` (STAFF-PANEL5-HIDDEN-FIX, mob: "we want the player to have no idea we are wathcing
- * them"): the staff session the game was hidden by went idle or ran out its 8 hours while the game watched, and nothing
+ * `{ error: 'staff-session-lapsed' }` (STAFF-PANEL5-HIDDEN-FIX): the staff session the game was hidden by went idle or ran out its 8 hours while the game watched, and nothing
  * the staff member did since showed them - no token at all then, never a visible one beside the watched player, until
  * they sign in again (hidden again) or sign out or press Show myself (visible by their own word).
  * @param {any} ctx @param {any} env @param {any} player the mint's account row @param {CryptoKey} key the identity key
  */
 export async function hiddenToken(ctx, env, player, key) {
   const role = staffRole(player, env);
-  if (!role) return null;   // every other account: nothing read, the bytes it always minted
+  if (!role) return null; // every other account: nothing read, the bytes it always minted
   const { subtle, nowS } = ctx;
   const db = ctx.primary ?? ctx.db;
-  const live = ((await db.prepare(LIVE_SQL).bind(player.id, nowS, nowS - STAFF_IDLE_S).all())?.results ?? [])
-    .find((r) => !r.cfg || configKey(player, env, r.pub));
-  if (!live && await db.prepare(LAPSED_SQL).bind(player.id).first()) {
+  const live = (
+    (
+      await db
+        .prepare(LIVE_SQL)
+        .bind(player.id, nowS, nowS - STAFF_IDLE_S)
+        .all()
+    )?.results ?? []
+  ).find((r) => !r.cfg || configKey(player, env, r.pub));
+  if (!live && (await db.prepare(LAPSED_SQL).bind(player.id).first())) {
     await auditStatement(db, nowS, { actor: player, role, act: 'hidden-lapsed', outcome: 'denied', onceIn: 60 }).run();
     return { error: 'staff-session-lapsed' };
   }
   if (!live || live.staff_hide_on !== 1) return null;
   const sub = await hiddenSubOf(live.token_hash, subtle);
   // written BEFORE the token is: a token the log does not name is never handed out
-  await auditStatement(db, nowS, { actor: player, role, act: 'hidden-token', detail: { sub }, keyId: live.key_id }).run();
+  await auditStatement(db, nowS, {
+    actor: player,
+    role,
+    act: 'hidden-token',
+    detail: { sub },
+    keyId: live.key_id,
+  }).run();
   const g = glyphsOf(player, env, nowS).filter((x) => HIDDEN_GLYPHS.includes(x));
   const mu = isMuted(player, nowS) ? mutedUntil(player) : undefined;
-  const token = await mintToken({ s: sub, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}), hd: 1 }, key, { subtle, nowS });
+  const token = await mintToken(
+    { s: sub, n: HIDDEN_NAME, k: accountKind(player), ...(g.length ? { g } : {}), ...(mu ? { mu } : {}), hd: 1 },
+    key,
+    { subtle, nowS },
+  );
   return {
-    token, name: HIDDEN_NAME, accountName: displayName(player), nameAs: nameAsOf(player), kind: accountKind(player), title: null, glyphs: g,
-    mutedUntil: mu ?? 0, conduct: conductAgreed(player), level: null, xp: null, guild: null, aura: null, icon: null, ribbon: null, house: null,
-    expiresAt: nowS + MAX_TTL_S, hidden: 1, sub,
+    token,
+    name: HIDDEN_NAME,
+    accountName: displayName(player),
+    nameAs: nameAsOf(player),
+    kind: accountKind(player),
+    title: null,
+    glyphs: g,
+    mutedUntil: mu ?? 0,
+    conduct: conductAgreed(player),
+    level: null,
+    xp: null,
+    guild: null,
+    aura: null,
+    icon: null,
+    ribbon: null,
+    house: null,
+    expiresAt: nowS + MAX_TTL_S,
+    hidden: 1,
+    sub,
   };
 }
 
@@ -156,12 +187,24 @@ export async function hiddenSince(db, env, playerId) {
  */
 export async function hiddenEnd(ctx, env, playerId, only = null) {
   const { db, subtle, nowS } = ctx;
-  const hashes = only ? only.slice(0, SESSIONS_MAX) : ((await db.prepare(`SELECT token_hash FROM staff_sessions WHERE player_id = ?1 LIMIT ${SESSIONS_MAX}`).bind(playerId).all())?.results ?? []).map((r) => r.token_hash);
+  const hashes = only
+    ? only.slice(0, SESSIONS_MAX)
+    : (
+        (
+          await db
+            .prepare(`SELECT token_hash FROM staff_sessions WHERE player_id = ?1 LIMIT ${SESSIONS_MAX}`)
+            .bind(playerId)
+            .all()
+        )?.results ?? []
+      ).map((r) => r.token_hash);
   const key = hashes.length ? await signingKey(env, subtle) : null;
   if (!key) return 0;
-  const orders = await Promise.all(hashes.map(async (h) => mintHideOrder({ s: await hiddenSubOf(h, subtle) }, key, { subtle, nowS })));
+  const orders = await Promise.all(
+    hashes.map(async (h) => mintHideOrder({ s: await hiddenSubOf(h, subtle) }, key, { subtle, nowS })),
+  );
   const push = Promise.all(orders.map((o) => pushLaw(env, (u, i) => globalThis.fetch(u, i), o)));
-  if (typeof ctx.later === 'function') ctx.later(push); else await push;
+  if (typeof ctx.later === 'function') ctx.later(push);
+  else await push;
   return orders.length;
 }
 
@@ -176,14 +219,14 @@ export async function staffHidden(ctx, env, path, body, who, audit) {
   const { db } = ctx;
   const me = who.player;
   if (path !== '/v1/staff/hide') return { error: 'body' };
-  if (body.on === undefined) return { hidden: me.staff_hide_on === 1 };   // STAFF-HIDE-TOGGLE: off until pressed (0165)
+  if (body.on === undefined) return { hidden: me.staff_hide_on === 1 }; // STAFF-HIDE-TOGGLE: off until pressed (0165)
   if (typeof body.on !== 'boolean') return { error: 'body' };
   const on = body.on ? 1 : 0;
   await db.batch([
     db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id),
     audit('hide', null, { on: body.on }),
   ]);
-  if (!on) await hiddenEnd(ctx, env, me.id);   // Show myself: the hidden sockets closed now, never shown
+  if (!on) await hiddenEnd(ctx, env, me.id); // Show myself: the hidden sockets closed now, never shown
   // STAFF-HIDE-TOGGLE: Hide me pushes nothing - the panel tells the game to remake its links (staffHook.js `relink`), and each
   // new socket's mint reads the switch just written
   return { hidden: body.on };
@@ -203,9 +246,27 @@ export async function takeHiddenSeen(ctx, env, bytes, sig) {
   // whose session minted it: every staff session's subject (a dozen rows - staff.js deletes a member's dead ones at each sign-in) -
   // its Hide me game's (hiddenSubOf) or its follow eye's (staffFollow.js followSubject; STAFF-PANEL5-HIDDEN-FIX: a follow
   // socket's home was written as nobody's)
-  const rows = (await db.prepare('SELECT s.token_hash AS s_hash, s.key_id AS s_key, p.* FROM staff_sessions s JOIN players p ON p.id = s.player_id LIMIT 500').all())?.results ?? [];
+  const rows =
+    (
+      await db
+        .prepare(
+          'SELECT s.token_hash AS s_hash, s.key_id AS s_key, p.* FROM staff_sessions s JOIN players p ON p.id = s.player_id LIMIT 500',
+        )
+        .all()
+    )?.results ?? [];
   let actor = null;
-  for (const row of rows) if (await hiddenSubOf(row.s_hash, subtle) === s || await followSubject(row.s_hash, subtle) === s) { actor = row; break; }
-  await auditStatement(db, nowS, { actor, role: actor ? staffRole(actor, env) : null, act: 'hidden-home', detail: { sub: s, room: r }, keyId: actor?.s_key ?? null, onceIn: 60 }).run();
+  for (const row of rows)
+    if ((await hiddenSubOf(row.s_hash, subtle)) === s || (await followSubject(row.s_hash, subtle)) === s) {
+      actor = row;
+      break;
+    }
+  await auditStatement(db, nowS, {
+    actor,
+    role: actor ? staffRole(actor, env) : null,
+    act: 'hidden-home',
+    detail: { sub: s, room: r },
+    keyId: actor?.s_key ?? null,
+    onceIn: 60,
+  }).run();
   return { ok: true };
 }

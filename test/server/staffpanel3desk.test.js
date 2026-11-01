@@ -1,4 +1,4 @@
-// STAFF-PANEL3-DESK (2026-10-22, mob picked these at 04:13Z, Moderators' share at 06:28Z; design doc "DFO Staff Panel:
+// STAFF-PANEL3-DESK (2026-10-22, Moderators' share at 06:28Z; design doc "DFO Staff Panel:
 // design") - THE PANEL'S DESK (server-account/src/staffDesk.js), driven through the real Worker on the node:sqlite database
 // every account pin stands on (test/accountDb.mjs): staff notes, each member's own watchlist and its events, Your settings,
 // and the Admins' server notice, AI check scorecard and reported board notes and market listings.
@@ -204,7 +204,12 @@ test('STAFF-PANEL3-DESK: THE WATCH\'S EVENTS - who is playing now, chat reports 
   // since and until: the next poll sends the cursor as `since`
   assert.deepEqual((await s.staff('/v1/staff/watch/events', { since: t - 55 }, s.mob.session)).body.events.map((e) => e.kind), ['report']);
   assert.deepEqual((await s.staff('/v1/staff/watch/events', { until: t - 55 }, s.mob.session)).body.events.map((e) => e.kind), ['case', 'flag', 'trade', 'sale', 'sale']);
-  assert.equal((await s.staff('/v1/staff/watch/events', { since: 0 }, s.mob.session)).body.since, (await s.staff('/v1/staff/watch/events', {}, s.mob.session)).body.since, 'a day back at most');
+  // each read takes its own clock, so two reads may straddle a second: each is held to the day before its own bracket
+  const before = nowS();
+  const old = (await s.staff('/v1/staff/watch/events', { since: 0 }, s.mob.session)).body.since;
+  const none = (await s.staff('/v1/staff/watch/events', {}, s.mob.session)).body.since;
+  const after = nowS();
+  for (const since of [old, none]) assert.ok(since >= before - WATCH_WINDOW_S && since <= after - WATCH_WINDOW_S, `a day back at most: ${since}`);
   // a trade between two watched players is each one's event
   await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.mob.session);
   assert.equal((await s.staff('/v1/staff/watch/events', {}, s.mob.session)).body.events.filter((e) => e.kind === 'trade').length, 2);

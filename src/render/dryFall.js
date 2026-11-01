@@ -18,11 +18,24 @@ export const DRY_CLOCK_PERIOD = WISP_CLOCK_PERIOD;
 export const ASH_BOX = 40;
 /** THE ASH: `count` flakes at a full fall; `fall` its speeds as whole boxes over the clock's period [least, steps more] -
  *  6 to 13, 0.6 to 1.3 m/s in a 40 m box; `size` the flake's width, metres [least, spread]; its colour and alpha. */
-export const ASH_LOOK = Object.freeze({ count: 12000, fall: Object.freeze([6, 7]), size: Object.freeze([0.018, 0.03]), color: Object.freeze([0.36, 0.34, 0.32]), alpha: 0.72 });
+export const ASH_LOOK = Object.freeze({
+  count: 12000,
+  fall: Object.freeze([6, 7]),
+  size: Object.freeze([0.018, 0.03]),
+  color: Object.freeze([0.36, 0.34, 0.32]),
+  alpha: 0.72,
+});
 /** THE EMBERS: fewer and smaller, falling slower (3 to 7 boxes: 0.3 to 0.7 m/s); `life` its glow's length as whole
  *  cycles over the period [least, steps more] - 40 to 99, a life of four to ten seconds; `flicker` the same for its
  *  flicker (4.25 to 6.5 a second); `gain` how bright it burns. */
-export const EMBER_LOOK = Object.freeze({ count: 320, fall: Object.freeze([3, 4]), size: Object.freeze([0.008, 0.012]), life: Object.freeze([40, 59]), flicker: Object.freeze([1700, 900]), gain: 1.6 });
+export const EMBER_LOOK = Object.freeze({
+  count: 320,
+  fall: Object.freeze([3, 4]),
+  size: Object.freeze([0.008, 0.012]),
+  life: Object.freeze([40, 59]),
+  flicker: Object.freeze([1700, 900]),
+  gain: 1.6,
+});
 /** The tumble's two sways, whole cycles over the period (0.79 and 0.58 radians a second). */
 export const ASH_SWAY_CYCLES = Object.freeze([50, 37]);
 /** The least a flake stands on the screen, pixels across. */
@@ -33,7 +46,9 @@ precision highp float;
 `;
 const TAU_OVER_PERIOD = (2 * Math.PI) / DRY_CLOCK_PERIOD;
 
-export const ASH_VS = HEAD + `layout(location=0) in vec2 aCorner;
+export const ASH_VS =
+  HEAD +
+  `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye;
 uniform float uTime, uBox, uEmber, uProjY, uAspect, uMinSize;
@@ -44,7 +59,7 @@ void main(){
   float seed = aSeed.w;
   vec3 p = aSeed.xyz;
   // the wind's travel at the flake's own share of it, in whole steps of the gust's denominator
-  float gust = (${glslF(WISP_GUST_DIV * 4 / 5)} + floor(fract(seed*3.7) * ${glslF(WISP_GUST_DIV * 2 / 5 + 1)})) / ${glslF(WISP_GUST_DIV)};
+  float gust = (${glslF((WISP_GUST_DIV * 4) / 5)} + floor(fract(seed*3.7) * ${glslF((WISP_GUST_DIV * 2) / 5 + 1)})) / ${glslF(WISP_GUST_DIV)};
   p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   // the fall: a whole number of boxes over the clock's period, so the clock's wrap moves no flake
   float boxes = uFall.x + floor(fract(seed*7.3) * (uFall.y + 1.0));
@@ -71,7 +86,9 @@ void main(){
   vUv = aCorner;
   gl_Position = c;
 }`;
-export const ASH_FS = HEAD + `in vec2 vUv; in float vGlow; in float vFade;
+export const ASH_FS =
+  HEAD +
+  `in vec2 vUv; in float vGlow; in float vFade;
 uniform float uEmber, uGain;
 uniform vec4 uColor;   // the ash's colour and alpha
 out vec4 o;
@@ -89,10 +106,28 @@ void main(){
 }`;
 /** The ash's program, as its build starts it (compiledPass). */
 export const ASH_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([ASH_VS, ASH_FS]))]);
-const ASH_UNIFORMS = ['uVP', 'uEye', 'uTime', 'uBox', 'uEmber', 'uProjY', 'uAspect', 'uMinSize', 'uWindV', 'uWindOff', 'uFall', 'uSize', 'uLife', 'uFlicker', 'uGain', 'uColor'];
+const ASH_UNIFORMS = [
+  'uVP',
+  'uEye',
+  'uTime',
+  'uBox',
+  'uEmber',
+  'uProjY',
+  'uAspect',
+  'uMinSize',
+  'uWindV',
+  'uWindOff',
+  'uFall',
+  'uSize',
+  'uLife',
+  'uFlicker',
+  'uGain',
+  'uColor',
+];
 
 /** How many of a look's flakes a fall of `strength01` draws: its share of the count. Pure. */
-export const dryCount = (strength01, look) => Math.round(look.count * Math.max(0, Math.min(1, Number(strength01) || 0)));
+export const dryCount = (strength01, look) =>
+  Math.round(look.count * Math.max(0, Math.min(1, Number(strength01) || 0)));
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
@@ -108,15 +143,33 @@ function mat4Multiply(out, a, b) {
 function flakeVao(gl, count, seed) {
   const inst = new Float32Array(count * 4);
   let s = seed;
-  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-  for (let i = 0; i < count; i++) { inst[i * 4] = rnd() * ASH_BOX; inst[i * 4 + 1] = rnd() * ASH_BOX; inst[i * 4 + 2] = rnd() * ASH_BOX; inst[i * 4 + 3] = rnd(); }
+  const rnd = () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s / 4294967296;
+  };
+  for (let i = 0; i < count; i++) {
+    inst[i * 4] = rnd() * ASH_BOX;
+    inst[i * 4 + 1] = rnd() * ASH_BOX;
+    inst[i * 4 + 2] = rnd() * ASH_BOX;
+    inst[i * 4 + 3] = rnd();
+  }
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
   const q = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
-  const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb); gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(1, 1);
+  const qb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+  gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const ib = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+  gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1);
+  gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0);
+  gl.vertexAttribDivisor(1, 1);
   gl.bindVertexArray(null);
   return vao;
 }
@@ -154,21 +207,24 @@ export class AshFallRenderer {
    *  renderer's worldViewportPx - RETRO1's 200 or 400, the render scale's, a docked HUD's strip; ASHFALL1's audit: the
    *  canvas's held a flake at a third of a retro pixel), the canvas's where none is handed. */
   draw(frame, proj, view, eye, timeSeconds, viewH = 0) {
-    this.drawn = 0; this.embers = 0;
+    this.drawn = 0;
+    this.embers = 0;
     if (!frame?.on) return;
     this.advance(frame.step);
-    const ash = dryCount(frame.strength01, ASH_LOOK), embers = dryCount(frame.strength01, EMBER_LOOK);
+    const ash = dryCount(frame.strength01, ASH_LOOK),
+      embers = dryCount(frame.strength01, EMBER_LOOK);
     if (ash + embers <= 0) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform3fv(U.uEye, eye);
-    gl.uniform1f(U.uTime, wispClock(timeSeconds));   // wrapped here, in double precision
+    gl.uniform1f(U.uTime, wispClock(timeSeconds)); // wrapped here, in double precision
     gl.uniform1f(U.uBox, ASH_BOX);
     gl.uniform1f(U.uProjY, proj[5]);
     gl.uniform1f(U.uAspect, proj[5] / proj[0]);
-    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720));   // half the least size, in the world image's -1..1
+    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1
     gl.uniform2f(U.uWindV, frame.windV?.[0] ?? 0, frame.windV?.[1] ?? 0);
     gl.uniform2fv(U.uWindOff, this.windOff);
     gl.uniform2f(U.uLife, EMBER_LOOK.life[0], EMBER_LOOK.life[1]);
@@ -180,15 +236,17 @@ export class AshFallRenderer {
     gl.disable(gl.CULL_FACE);
     if (ash > 0) {
       gl.uniform1f(U.uEmber, 0);
-      gl.uniform2f(U.uFall, ASH_LOOK.fall[0], ASH_LOOK.fall[1]); gl.uniform2f(U.uSize, ASH_LOOK.size[0], ASH_LOOK.size[1]);
+      gl.uniform2f(U.uFall, ASH_LOOK.fall[0], ASH_LOOK.fall[1]);
+      gl.uniform2f(U.uSize, ASH_LOOK.size[0], ASH_LOOK.size[1]);
       gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.bindVertexArray(this.ashVao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, ash);
     }
     if (embers > 0) {
       gl.uniform1f(U.uEmber, 1);
-      gl.uniform2f(U.uFall, EMBER_LOOK.fall[0], EMBER_LOOK.fall[1]); gl.uniform2f(U.uSize, EMBER_LOOK.size[0], EMBER_LOOK.size[1]);
-      gl.blendFunc(gl.ONE, gl.ONE);   // the embers' own light, added
+      gl.uniform2f(U.uFall, EMBER_LOOK.fall[0], EMBER_LOOK.fall[1]);
+      gl.uniform2f(U.uSize, EMBER_LOOK.size[0], EMBER_LOOK.size[1]);
+      gl.blendFunc(gl.ONE, gl.ONE); // the embers' own light, added
       gl.bindVertexArray(this.emberVao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, embers);
     }
@@ -196,7 +254,8 @@ export class AshFallRenderer {
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
-    this.drawn = ash; this.embers = embers;
+    this.drawn = ash;
+    this.embers = embers;
   }
 }
 
@@ -207,8 +266,13 @@ export class DryFallRenderer {
   constructor(gl) {
     this.gl = gl;
     this.sand = new WindWispsRenderer(gl, SAND_LOOK);
-    this.ash = compiledPass(gl, ASH_PROGRAMS, () => new AshFallRenderer(gl), (e) => console.warn('[weather] the ash\'s program failed - no ash is drawn', e?.message ?? e));
-    this.ash();   // started with the boot: its compile runs while the world loads
+    this.ash = compiledPass(
+      gl,
+      ASH_PROGRAMS,
+      () => new AshFallRenderer(gl),
+      (e) => console.warn("[weather] the ash's program failed - no ash is drawn", e?.message ?? e),
+    );
+    this.ash(); // started with the boot: its compile runs while the world loads
     /** the flakes the last draw put up */
     this.drawn = 0;
   }
@@ -217,7 +281,7 @@ export class DryFallRenderer {
   draw(frame, proj, view, eye, timeSeconds, viewH = 0) {
     this.drawn = 0;
     if (frame?.kind === 'ash') {
-      const ash = this.ash(true);   // needed now: built whatever the driver says (the start above has had the boot)
+      const ash = this.ash(true); // needed now: built whatever the driver says (the start above has had the boot)
       if (!ash) return;
       ash.draw(frame, proj, view, eye, timeSeconds, viewH);
       this.drawn = ash.drawn + ash.embers;

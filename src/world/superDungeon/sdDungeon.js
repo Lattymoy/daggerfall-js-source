@@ -25,10 +25,10 @@
 
 import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN, SD_COLLAPSE_MS } from '../../net/superDungeon/sdLaw.js';
 import { timerText } from '../../systems/eventTimers.js';
-import { RDB_SIDE } from '../rdbLayout.js';   // SD-REACH: a dungeon block's side - which block's square holds a marker
-import { riftCentreY } from './sdRiftModel.js';   // AUDIT SD IV (F36): the ring's centre as it stands - it hovers
-import { GLOBAL_SCALE } from '../meshReader.js';   // AUDIT SD IV (F38): a block's water level, in metres
-import { t } from '../../systems/textManager.js';   // SD-THROUGH: the Way Through's words in the player's language (L10N4)
+import { RDB_SIDE } from '../rdbLayout.js'; // SD-REACH: a dungeon block's side - which block's square holds a marker
+import { riftCentreY } from './sdRiftModel.js'; // AUDIT SD IV (F36): the ring's centre as it stands - it hovers
+import { GLOBAL_SCALE } from '../meshReader.js'; // AUDIT SD IV (F38): a block's water level, in metres
+import { t } from '../../systems/textManager.js'; // SD-THROUGH: the Way Through's words in the player's language (L10N4)
 
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
@@ -58,14 +58,17 @@ export function scaleSuperFoe(entity) {
   const e = /** @type {any} */ (entity);
   e.maxHealth = Math.max(1, Math.round((e.maxHealth || 1) * SUPER_HEALTH_SCALE));
   e.health = e.maxHealth;
-  e.healthMult = (e.healthMult ?? 1) * SUPER_HEALTH_SCALE;   // TELL1: what was stood on the kind's own health (its poise)
+  e.healthMult = (e.healthMult ?? 1) * SUPER_HEALTH_SCALE; // TELL1: what was stood on the kind's own health (its poise)
   e.damageScale = SUPER_DAMAGE_SCALE;
   e.elite = true;
   return entity;
 }
 
 /** A Super dungeon's loot for a foe's body (hostCombat.spawnEnemyLoot's options) - the Elite's shape, at +50%. */
-export const SUPER_LOOT_OPTS = Object.freeze({ lootDropMult: SUPER_LOOT_DROP_MULT, lootQualityMult: SUPER_LOOT_QUALITY_MULT });
+export const SUPER_LOOT_OPTS = Object.freeze({
+  lootDropMult: SUPER_LOOT_DROP_MULT,
+  lootQualityMult: SUPER_LOOT_QUALITY_MULT,
+});
 
 // ── SD4b: THE END, THE RIFT AND THE RETURN (section 6) ─────────────────────────────────────────────────────────────
 //
@@ -98,7 +101,12 @@ export const SD_RETURN_SIZE = Object.freeze({ w: 1.3, h: 2.3 });
 /** How far past the Rift's rim the Return stands (m). */
 export const SD_RETURN_GAP_M = 1.2;
 /** The plaque's words (World Tooltips' title and its row). */
-export const SD_END_TEXT = Object.freeze({ rift: 'The Rift', riftTo: 'To the Shattered Hour', ret: 'The Return', retTo: 'To the way in' });
+export const SD_END_TEXT = Object.freeze({
+  rift: 'The Rift',
+  riftTo: 'To the Shattered Hour',
+  ret: 'The Return',
+  retTo: 'To the way in',
+});
 /** AUDIT SD IV (F2): no Mark in a Hollow - a place that ends, as the court and the Hour are: a later Hollow may stand on
  *  its pixel in another layout, and a dungeon anchor knows its dungeon by the pixel alone. */
 export const SD_NO_MARK = 'You cannot set a Mark in an Abyss Dungeon.';
@@ -127,20 +135,30 @@ export const SD_BORDER_BLOCK_RE = /^b/i;
  */
 export function sdEndMarks(enemies, blocks, floorOf = null) {
   const marks = [];
-  for (const e of enemies ?? []) if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });
-  const blockOf = (m) => (blocks ?? []).find((b) => {
-    const ox = b?.originX ?? 0, oz = b?.originZ ?? 0;
-    return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;
-  });
-  const wet = (m) => { const level = blockOf(m)?.layout?.waterLevel; return level != null && (floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE; };
-  const dryFirst = (list) => { const dry = list.filter((m) => !wet(m)); return dry.length ? dry : list; };
+  for (const e of enemies ?? [])
+    if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) marks.push({ x: e.x, y: e.y, z: e.z });
+  const blockOf = (m) =>
+    (blocks ?? []).find((b) => {
+      const ox = b?.originX ?? 0,
+        oz = b?.originZ ?? 0;
+      return m.x >= ox && m.x < ox + RDB_SIDE && m.z >= oz && m.z < oz + RDB_SIDE;
+    });
+  const wet = (m) => {
+    const level = blockOf(m)?.layout?.waterLevel;
+    return level != null && (floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE;
+  };
+  const dryFirst = (list) => {
+    const dry = list.filter((m) => !wet(m));
+    return dry.length ? dry : list;
+  };
   const inner = marks.filter((m) => !SD_BORDER_BLOCK_RE.test(blockOf(m)?.name ?? ''));
   if (inner.length) return dryFirst(inner);
   if (marks.length) return dryFirst(marks);
   const out = [];
   for (const b of blocks ?? []) {
     for (const m of b?.layout?.startMarkers ?? []) {
-      if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });
+      if (Number.isFinite(m?.x) && Number.isFinite(m?.z))
+        out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });
     }
   }
   return dryFirst(out);
@@ -157,7 +175,9 @@ export function sdRiftFit(headroom, clear) {
   return Math.max(SD_RIFT_MIN_M, Math.min(SD_RIFT_SIZE_M, h, w));
 }
 
-const BEARINGS = Object.freeze(Array.from({ length: 8 }, (_, k) => Object.freeze([Math.cos((k * Math.PI) / 4), 0, Math.sin((k * Math.PI) / 4)])));
+const BEARINGS = Object.freeze(
+  Array.from({ length: 8 }, (_, k) => Object.freeze([Math.cos((k * Math.PI) / 4), 0, Math.sin((k * Math.PI) / 4)])),
+);
 
 /**
  * @typedef {{ floor: (at: number[]) => (number | null), ray: (from: number[], dir: number[], max: number) => (number | null) }} SdProbe
@@ -181,7 +201,8 @@ function fitAt(at, probe) {
  *  down a stair or a ramp). */
 function besideOn(from, dir, r, probe, lower = false) {
   if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;
-  const x = from[0] + dir[0] * r, z = from[2] + dir[2] * r;
+  const x = from[0] + dir[0] * r,
+    z = from[2] + dir[2] * r;
   const y = probe.floor([x, from[1], z]);
   return y != null && (lower ? y - from[1] : Math.abs(y - from[1])) <= SD_STEP_M ? [x, y, z] : null;
 }
@@ -224,9 +245,11 @@ const SD_DISC_ANGLES = Object.freeze([0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Ma
 /** Whether the ring's disc at `size` stands clear in its face's plane: from its centre (world/superDungeon/sdRiftModel.js
  *  riftCentreY - it hovers), each direction reaching its rim and its air. */
 function discClear(at, size, face, probe) {
-  const R = size / 2, c = [at[0], at[1] + riftCentreY(size), at[2]];
+  const R = size / 2,
+    c = [at[0], at[1] + riftCentreY(size), at[2]];
   for (const a of SD_DISC_ANGLES) {
-    const across = Math.cos(a), dir = [-face[2] * across, Math.sin(a), face[0] * across];
+    const across = Math.cos(a),
+      dir = [-face[2] * across, Math.sin(a), face[0] * across];
     if (probe.ray(c, dir, R + SD_RIFT_AIR_M) != null) return false;
   }
   return true;
@@ -244,10 +267,12 @@ function discClear(at, size, face, probe) {
  */
 export function sdRiftSweep(at, size, face, probe) {
   if (discClear(at, size, face, probe)) return size;
-  let lo = SD_RIFT_MIN_M, hi = size;
+  let lo = SD_RIFT_MIN_M,
+    hi = size;
   for (let k = 0; k < SD_SWEEP_HALVINGS; k++) {
     const mid = (lo + hi) / 2;
-    if (discClear(at, mid, face, probe)) lo = mid; else hi = mid;
+    if (discClear(at, mid, face, probe)) lo = mid;
+    else hi = mid;
   }
   return lo;
 }
@@ -266,12 +291,16 @@ export const SD_SWEEP_HALVINGS = 8;
  * @param {number} size
  * @param {SdProbe} probe
  */
-export const SD_RIFT_FACE_M = 2 * SD_RIFT_PROBE_M;   // a hall's long line is asked farther than its walls are: past 12 m every long hall's diagonals tie
+export const SD_RIFT_FACE_M = 2 * SD_RIFT_PROBE_M; // a hall's long line is asked farther than its walls are: past 12 m every long hall's diagonals tie
 export function sdRiftFace(at, size, probe) {
-  const reach = BEARINGS.map((dir) => probe.ray([at[0], at[1] + SD_CHEST_M, at[2]], dir, SD_RIFT_FACE_M) ?? SD_RIFT_FACE_M);
-  const pairs = [0, 1, 2, 3].sort((a, b) => (reach[b] + reach[b + 4]) - (reach[a] + reach[a + 4]) || a - b);
+  const reach = BEARINGS.map(
+    (dir) => probe.ray([at[0], at[1] + SD_CHEST_M, at[2]], dir, SD_RIFT_FACE_M) ?? SD_RIFT_FACE_M,
+  );
+  const pairs = [0, 1, 2, 3].sort((a, b) => reach[b] + reach[b + 4] - (reach[a] + reach[a + 4]) || a - b);
   for (const k of pairs) {
-    const along = BEARINGS[(k + 2) % 8], back = BEARINGS[(k + 6) % 8], half = [at[0], at[1] + size / 2, at[2]];
+    const along = BEARINGS[(k + 2) % 8],
+      back = BEARINGS[(k + 6) % 8],
+      half = [at[0], at[1] + size / 2, at[2]];
     const room = Math.min(probe.ray(half, along, size) ?? Infinity, probe.ray(half, back, size) ?? Infinity);
     if (room >= size / 2 + SD_RIFT_AIR_M) return [...BEARINGS[k]];
   }
@@ -282,12 +311,46 @@ export function sdRiftFace(at, size, probe) {
  *  notyet, collapse, closed or refused; the iris's `aperture` (0 shut .. 1 wide - the state itself); the gear's ticks a
  *  second; `studs` lit (how many hours its Hour stands, all 24 past a day) and `ember` going (one each 7.5 s of the
  *  collapse); the brass's `tone` (gold, ember, cold or red) and its `light` (0..1). Readable from 30 m, no plaque. */
-export const SD_RIFT_OPEN_LOOK = Object.freeze({ state: 'open', aperture: 1, tickHz: 1, studs: 24, ember: 0, tone: 'gold', light: 1 });
-export const SD_RIFT_NOT_YET = Object.freeze({ state: 'notyet', aperture: 0.07, tickHz: 0, studs: 0, ember: 0, tone: 'gold', light: 0.3 });
-export const SD_RIFT_CLOSED = Object.freeze({ state: 'closed', aperture: 0, tickHz: 0, studs: 0, ember: 0, tone: 'cold', light: 0 });
-export const SD_RIFT_REFUSED = Object.freeze({ state: 'refused', aperture: 0, tickHz: 0, studs: 0, ember: 0, tone: 'red', light: 0.3 });
+export const SD_RIFT_OPEN_LOOK = Object.freeze({
+  state: 'open',
+  aperture: 1,
+  tickHz: 1,
+  studs: 24,
+  ember: 0,
+  tone: 'gold',
+  light: 1,
+});
+export const SD_RIFT_NOT_YET = Object.freeze({
+  state: 'notyet',
+  aperture: 0.07,
+  tickHz: 0,
+  studs: 0,
+  ember: 0,
+  tone: 'gold',
+  light: 0.3,
+});
+export const SD_RIFT_CLOSED = Object.freeze({
+  state: 'closed',
+  aperture: 0,
+  tickHz: 0,
+  studs: 0,
+  ember: 0,
+  tone: 'cold',
+  light: 0,
+});
+export const SD_RIFT_REFUSED = Object.freeze({
+  state: 'refused',
+  aperture: 0,
+  tickHz: 0,
+  studs: 0,
+  ember: 0,
+  tone: 'red',
+  light: 0.3,
+});
 /** AUDIT SD V (P1): the open Rift's look at each count of studs (1-24), made once; and the collapse's, one kept record. */
-const FOUND_LOOKS = Object.freeze(Array.from({ length: 25 }, (_, n) => Object.freeze({ ...SD_RIFT_OPEN_LOOK, studs: n })));
+const FOUND_LOOKS = Object.freeze(
+  Array.from({ length: 25 }, (_, n) => Object.freeze({ ...SD_RIFT_OPEN_LOOK, studs: n })),
+);
 const COLLAPSE_LOOK = { state: 'collapse', aperture: 0, tickHz: 2, studs: 0, ember: 0, tone: 'ember', light: 0.3 };
 
 /**
@@ -296,16 +359,22 @@ const COLLAPSE_LOOK = { state: 'collapse', aperture: 0, tickHz: 2, studs: 0, emb
  * @param {number} now
  */
 export function riftLook(rec, s, now, { entered = false, fallen = false } = {}) {
-  if (!rec) return SD_RIFT_NOT_YET;   // the hub's record not heard: not yet
+  if (!rec) return SD_RIFT_NOT_YET; // the hub's record not heard: not yet
   if (rec.s !== s) return SD_RIFT_CLOSED;
   if (fallen) return SD_RIFT_REFUSED;
   const ph = sdPhase(rec, now);
-  if (ph === 'found') return FOUND_LOOKS[Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000)))];   // AUDIT SD V (P1): one record an hour, made once
+  if (ph === 'found') return FOUND_LOOKS[Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000)))]; // AUDIT SD V (P1): one record an hour, made once
   if (ph === 'risen') return SD_RIFT_NOT_YET;
   if (ph === 'fell') {
-    const left = Math.max(0, Math.min(1, (rec.fellAt + SD_COLLAPSE_MS - now) / SD_COLLAPSE_MS)), lit = Math.ceil(left * 24), c = COLLAPSE_LOOK;
+    const left = Math.max(0, Math.min(1, (rec.fellAt + SD_COLLAPSE_MS - now) / SD_COLLAPSE_MS)),
+      lit = Math.ceil(left * 24),
+      c = COLLAPSE_LOOK;
     // AUDIT SD V (P1): one kept record, filled - a look is read the frame it is asked (scenes/superDungeon/sdEnd.js), never kept
-    c.aperture = entered ? 1 / 3 + (2 / 3) * left : 0; c.studs = lit; c.ember = 24 - lit; c.tone = entered ? 'gold' : 'ember'; c.light = entered ? 0.5 + 0.5 * left : 0.3;
+    c.aperture = entered ? 1 / 3 + (2 / 3) * left : 0;
+    c.studs = lit;
+    c.ember = 24 - lit;
+    c.tone = entered ? 'gold' : 'ember';
+    c.light = entered ? 0.5 + 0.5 * left : 0.3;
     return c;
   }
   return SD_RIFT_CLOSED;
@@ -344,8 +413,13 @@ export const SD_LANDING_PAST_M = 1.5;
  *  (player/motor.js CAPSULE_RADIUS). */
 export const SD_LANDING_CLEAR_M = 0.4;
 export function sdLandingPlace(rift, ret, probe) {
-  const dx = ret[0] - rift.at[0], dz = ret[2] - rift.at[2], len = Math.hypot(dx, dz);
-  if (len > 1e-6) { const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe); if (at) return at; }
+  const dx = ret[0] - rift.at[0],
+    dz = ret[2] - rift.at[2],
+    len = Math.hypot(dx, dz);
+  if (len > 1e-6) {
+    const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe);
+    if (at) return at;
+  }
   for (const dir of BEARINGS) {
     const at = besideOn(ret, dir, SD_LANDING_PAST_M, probe);
     if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;
@@ -434,9 +508,15 @@ export function sdThroughStands(rec, s, now) {
 /** The Way Through's plaque and the line said as it opens beside me - each read in the player's language as it is read
  *  (L10N4; AUDIT SD-THROUGH B10: its row too - the Rift's own words, its own key, so the plaque is one language). */
 export const SD_THROUGH_TEXT = Object.freeze({
-  get title() { return t('sd.through.title', 'The Way Through'); },
-  get to() { return t('sd.through.to', 'To the Shattered Hour'); },
-  get opens() { return t('sd.through.opens', 'The Rift stands open. The Way Through opens beside you.'); },
+  get title() {
+    return t('sd.through.title', 'The Way Through');
+  },
+  get to() {
+    return t('sd.through.to', 'To the Shattered Hour');
+  },
+  get opens() {
+    return t('sd.through.opens', 'The Rift stands open. The Way Through opens beside you.');
+  },
 });
 /** Its ring across (m) - the Rift's least, a ring that stands in Daggerfall's corridors; how far from me it opens (m,
  *  then half that); and how near the Hollow's own Rift I stand for none to open yet (m - the Rift is right there). AUDIT
@@ -462,7 +542,8 @@ const BESIDE = Object.freeze([1, -1, 0, 2, -2, 3, -3, 4].map((k) => (k * Math.PI
  * @param {SdProbe & { water?: (x: number, z: number) => (number | null) }} probe
  */
 export function sdThroughPlace(feet, yaw, probe) {
-  const size = SD_THROUGH_SIZE_M, a0 = Number.isFinite(yaw) ? yaw : 0;
+  const size = SD_THROUGH_SIZE_M,
+    a0 = Number.isFinite(yaw) ? yaw : 0;
   const ground = probe.floor(feet);
   if (ground == null || Math.abs(ground - feet[1]) > SD_STEP_M) return null;
   const foot = [feet[0], ground, feet[2]];
@@ -481,10 +562,13 @@ export function sdThroughPlace(feet, yaw, probe) {
  *  ceiling over its axis, a body's way past it on one side, its foot dry. */
 function standsWhole(at, size, face, probe) {
   if (!discClear(at, size, face, probe)) return false;
-  const R = size / 2, cy = at[1] + riftCentreY(size);
+  const R = size / 2,
+    cy = at[1] + riftCentreY(size);
   if (probe.ray([at[0], cy, at[2]], [0, 1, 0], R + SD_RIFT_AIR_M) != null) return false;
-  const chest = [at[0], at[1] + SD_CHEST_M, at[2]], past = R + SD_RIFT_AIR_M + SD_THROUGH_PASS_M;
-  if (probe.ray(chest, [-face[2], 0, face[0]], past) != null && probe.ray(chest, [face[2], 0, -face[0]], past) != null) return false;
+  const chest = [at[0], at[1] + SD_CHEST_M, at[2]],
+    past = R + SD_RIFT_AIR_M + SD_THROUGH_PASS_M;
+  if (probe.ray(chest, [-face[2], 0, face[0]], past) != null && probe.ray(chest, [face[2], 0, -face[0]], past) != null)
+    return false;
   const water = probe.water?.(at[0], at[2]);
   return water == null || at[1] >= water;
 }
@@ -494,6 +578,7 @@ function standsWhole(at, size, face, probe) {
 export function inSdPortal(feet, at, reach, height) {
   if (!feet || !at) return false;
   // AUDIT SD II (L2 F9): the reach by its square - Math.hypot made a list of its numbers on every frame's ask
-  const dx = feet[0] - at[0], dz = feet[2] - at[2];
+  const dx = feet[0] - at[0],
+    dz = feet[2] - at[2];
   return dx * dx + dz * dz <= reach * reach && feet[1] >= at[1] - SD_STEP_M && feet[1] <= at[1] + height;
 }

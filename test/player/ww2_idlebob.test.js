@@ -46,5 +46,4 @@ test('WW2: by source - the five host sites read the one bag and none is written 
   // gun lab runs it rather than copying it) and the locals lost the
   // component's `w.` - the GATE is the same line and is what this pins
   assert.match(rd('src/combat/weapon/weaponWidgetMotion.js'), /if \(m\.standing\) sp = s\.bobWhileIdle \? 0\.1 : 0;/, 'the mod\'s idle gate, unchanged');
-  assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /through the one motion bag \(`motionBagOf`, WW2\)/);
 });

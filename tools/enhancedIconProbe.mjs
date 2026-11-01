@@ -30,14 +30,22 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
 };
 
-const W = 8, H = 8, STRIDE = 256;
+const W = 8,
+  H = 8,
+  STRIDE = 256;
 
 /** A 768-byte ART_PAL: index i is a flat grey ramp, except index 1,
  *  which is a colour distinctive enough to find in the output. */
 function synthPalette() {
   const b = Buffer.alloc(768);
-  for (let i = 0; i < 256; i++) { b[i * 3] = i; b[i * 3 + 1] = i; b[i * 3 + 2] = i; }
-  b[3] = 200; b[4] = 40; b[5] = 30;   // index 1 = a red nobody could mistake for grey
+  for (let i = 0; i < 256; i++) {
+    b[i * 3] = i;
+    b[i * 3 + 1] = i;
+    b[i * 3 + 2] = i;
+  }
+  b[3] = 200;
+  b[4] = 40;
+  b[5] = 30; // index 1 = a red nobody could mistake for grey
   return b;
 }
 
@@ -57,19 +65,19 @@ function synthArchive(count) {
   for (let r = 0; r < count; r++) {
     const bodyAt = headersEnd + bodySize * r;
     const hAt = 26 + 20 * r;
-    buf.writeInt16LE(0, hAt);              // type1
-    buf.writeInt32LE(bodyAt, hAt + 2);     // recordPosition
-    buf.writeInt16LE(0, hAt + 6);          // type2
-    buf.writeInt32LE(0, hAt + 8);          // unknown1
-    buf.writeInt16LE(0, bodyAt);           // offsetX
-    buf.writeInt16LE(0, bodyAt + 2);       // offsetY
+    buf.writeInt16LE(0, hAt); // type1
+    buf.writeInt32LE(bodyAt, hAt + 2); // recordPosition
+    buf.writeInt16LE(0, hAt + 6); // type2
+    buf.writeInt32LE(0, hAt + 8); // unknown1
+    buf.writeInt16LE(0, bodyAt); // offsetX
+    buf.writeInt16LE(0, bodyAt + 2); // offsetY
     buf.writeInt16LE(W, bodyAt + 4);
     buf.writeInt16LE(H, bodyAt + 6);
-    buf.writeInt16LE(0, bodyAt + 8);       // compression: Uncompressed
-    buf.writeUInt32LE(bodySize - 28, bodyAt + 10);   // recordSize
-    buf.writeUInt32LE(28, bodyAt + 14);              // dataOffset, from the body
-    buf.writeInt16LE(1, bodyAt + 18);      // isNormal
-    buf.writeUInt16LE(1, bodyAt + 20);     // frameCount
+    buf.writeInt16LE(0, bodyAt + 8); // compression: Uncompressed
+    buf.writeUInt32LE(bodySize - 28, bodyAt + 10); // recordSize
+    buf.writeUInt32LE(28, bodyAt + 14); // dataOffset, from the body
+    buf.writeInt16LE(1, bodyAt + 18); // isNormal
+    buf.writeUInt16LE(1, bodyAt + 20); // frameCount
     for (let y = 0; y < H; y++) {
       const row = bodyAt + 28 + y * STRIDE;
       for (let x = 0; x < W; x++) buf[row + x] = x < W / 2 ? 1 : 0;
@@ -94,9 +102,11 @@ const browser = await chromium.launch();
  *  A boot that SUCCEEDS never writes that text, so the wait times out
  *  and that is the correct outcome - hence the swallowed rejection. */
 async function bootSettled(page) {
-  await page.waitForFunction(
-    () => document.body.textContent.includes('boot failed'), null, { timeout: 15000 },
-  ).catch(() => { /* a successful boot never says it - nothing to wait for */ });
+  await page
+    .waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 })
+    .catch(() => {
+      /* a successful boot never says it - nothing to wait for */
+    });
 }
 
 const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
@@ -118,7 +128,8 @@ await page.route('**/arena2/**', async (route) => {
 
 await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
 await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
-if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+if (await page.locator('#enhanced-menu .doorbtn.door-offline').count())
+  await page.locator('#enhanced-menu .doorbtn.door-offline').click(); // UI-CALM: the games stand behind Offline
 await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
 await page.getByRole('button', { name: 'Begin', exact: true }).click();
 await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
@@ -132,26 +143,37 @@ const one = await page.evaluate(async () => {
   // read the pixels back, which is the only way to know the cutout
   // and the palette survived the trip
   const img = new Image();
-  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  await new Promise((res, rej) => {
+    img.onload = res;
+    img.onerror = rej;
+    img.src = url;
+  });
   const c = document.createElement('canvas');
-  c.width = img.width; c.height = img.height;
+  c.width = img.width;
+  c.height = img.height;
   const cx = c.getContext('2d');
   cx.drawImage(img, 0, 0);
   const d = cx.getImageData(0, 0, img.width, img.height).data;
   return {
-    url, w: img.width, h: img.height,
+    url,
+    w: img.width,
+    h: img.height,
     left: [d[0], d[1], d[2], d[3]],
-    right: [d[(img.width - 1) * 4], d[(img.width - 1) * 4 + 1],
-      d[(img.width - 1) * 4 + 2], d[(img.width - 1) * 4 + 3]],
+    right: [d[(img.width - 1) * 4], d[(img.width - 1) * 4 + 1], d[(img.width - 1) * 4 + 2], d[(img.width - 1) * 4 + 3]],
   };
 });
-check('a record becomes a data URL', (one.url ?? '').startsWith('data:image/png;base64,'),
-  (one.url ?? 'null').slice(0, 30));
-check('...at the record\'s own size', one.w === 8 && one.h === 8, `${one.w}x${one.h}`);
-check('...with the palette colour on the painted half',
-  JSON.stringify(one.left) === JSON.stringify([200, 40, 30, 255]), JSON.stringify(one.left));
-check('...and index 0 TRANSPARENT, which is the port\'s cutout law',
-  one.right?.[3] === 0, `alpha ${one.right?.[3]}`);
+check(
+  'a record becomes a data URL',
+  (one.url ?? '').startsWith('data:image/png;base64,'),
+  (one.url ?? 'null').slice(0, 30),
+);
+check("...at the record's own size", one.w === 8 && one.h === 8, `${one.w}x${one.h}`);
+check(
+  '...with the palette colour on the painted half',
+  JSON.stringify(one.left) === JSON.stringify([200, 40, 30, 255]),
+  JSON.stringify(one.left),
+);
+check("...and index 0 TRANSPARENT, which is the port's cutout law", one.right?.[3] === 0, `alpha ${one.right?.[3]}`);
 
 // ── 2. THE CACHE ───────────────────────────────────────────────────
 const mark = fetched.length;
@@ -160,15 +182,16 @@ await page.evaluate(async () => {
   for (let i = 0; i < 8; i++) await loadIcon(234, i, { scale: 1 });
 });
 const since = fetched.slice(mark);
-check('eight more records from that archive cost NO further fetch',
-  since.length === 0, since.join(', ') || 'none');
+check('eight more records from that archive cost NO further fetch', since.length === 0, since.join(', ') || 'none');
 // The whole-session ART_PAL count is not this module's to hold -
 // scenes/world.js fetches it for the renderer's own palette, so a
 // session count measures other people's work. What is pinned is that
 // this module's own repeats are free, which the window above shows.
-check('...and one archive was fetched in total, for the first call',
+check(
+  '...and one archive was fetched in total, for the first call',
   fetched.filter((n) => /^TEXTURE/.test(n)).length === 1,
-  fetched.filter((n) => /^TEXTURE/.test(n)).join(', '));
+  fetched.filter((n) => /^TEXTURE/.test(n)).join(', '),
+);
 
 // ── 3. A RECORD PAST THE END IS A MISS, NOT A THROW ────────────────
 const past = await page.evaluate(async () => {
@@ -185,8 +208,16 @@ const addr = await page.evaluate(async () => {
   const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
   const mk = (n, g = 'Weapons') => {
     const tp = t(n);
-    return tp && { name: tp.name, templateIndex: tp.index, group: g, stackCount: 1,
-      currentCondition: tp.hitPoints ?? 50, maxCondition: tp.hitPoints ?? 50 };
+    return (
+      tp && {
+        name: tp.name,
+        templateIndex: tp.index,
+        group: g,
+        stackCount: 1,
+        currentCondition: tp.hitPoints ?? 50,
+        maxCondition: tp.hitPoints ?? 50,
+      }
+    );
   };
   const e = { name: 'Aelwyn', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48 }, items: [] };
   e.items = [mk('Longsword'), mk('Dagger'), mk('Buckler', 'Armor')].filter(Boolean);
@@ -196,16 +227,23 @@ const addr = await page.evaluate(async () => {
 });
 await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 20000 });
 await page.waitForSelector('#enhanced-inventory .tile.has-icon img', { timeout: 20000 });
-const tiles = await page.$$eval('#enhanced-inventory .tile', (ns) => ns.map((n) => ({
-  icon: !!n.querySelector('img'), src: n.querySelector('img')?.src ?? '',
-  text: n.textContent.trim(),
-})));
-check('every row draws its picture rather than its initials',
+const tiles = await page.$$eval('#enhanced-inventory .tile', (ns) =>
+  ns.map((n) => ({
+    icon: !!n.querySelector('img'),
+    src: n.querySelector('img')?.src ?? '',
+    text: n.textContent.trim(),
+  })),
+);
+check(
+  'every row draws its picture rather than its initials',
   tiles.length > 0 && tiles.every((t) => t.icon && t.src.startsWith('data:image/png')),
-  tiles.map((t) => (t.icon ? 'img' : t.text)).join(', '));
-check('the address came from inventoryItemImage',
+  tiles.map((t) => (t.icon ? 'img' : t.text)).join(', '),
+);
+check(
+  'the address came from inventoryItemImage',
   Number.isInteger(addr?.archive) && Number.isInteger(addr?.record),
-  JSON.stringify(addr));
+  JSON.stringify(addr),
+);
 
 // ── THE LANDINGS MUST SETTLE ───────────────────────────────────────
 // A cold icon used to repaint the screen when it landed, which is what
@@ -217,22 +255,42 @@ check('the address came from inventoryItemImage',
 // that set off another - a cache that forgot an in-flight record asked
 // again, landed again - would run at whatever rate a decode takes,
 // invisible except as a hot fan. So: let it settle, then prove it HAS.
-const at = () => page.evaluate(() => { const p = JSON.parse(globalThis.__pack()); return { landings: p.landings, painted: p.painted, repaints: p.repaints, tiles: document.querySelectorAll('#enhanced-inventory .tile').length }; });
+const at = () =>
+  page.evaluate(() => {
+    const p = JSON.parse(globalThis.__pack());
+    return {
+      landings: p.landings,
+      painted: p.painted,
+      repaints: p.repaints,
+      tiles: document.querySelectorAll('#enhanced-inventory .tile').length,
+    };
+  });
 const settled = await at();
 await page.waitForTimeout(1200);
 const later = await at();
-check('the landing passes stop once the icons have landed',
-  later.landings === settled.landings, `${settled.landings} -> ${later.landings}`);
-check('...each tile was given its picture once',
-  later.painted <= later.tiles, `${later.painted} painted, ${later.tiles} tiles`);
-check('...and the screen was not repainted for them',
-  later.repaints === settled.repaints && settled.repaints <= 3, `${settled.repaints} -> ${later.repaints} repaints (the mount and the doll's)`);
+check(
+  'the landing passes stop once the icons have landed',
+  later.landings === settled.landings,
+  `${settled.landings} -> ${later.landings}`,
+);
+check(
+  '...each tile was given its picture once',
+  later.painted <= later.tiles,
+  `${later.painted} painted, ${later.tiles} tiles`,
+);
+check(
+  '...and the screen was not repainted for them',
+  later.repaints === settled.repaints && settled.repaints <= 3,
+  `${settled.repaints} -> ${later.repaints} repaints (the mount and the doll's)`,
+);
 
 // the detail draws it larger
 await page.locator('#enhanced-inventory .itemrow').first().click();
 check('the detail draws it larger', (await page.locator('#enhanced-inventory .bigicon img').count()) === 1);
-check('...and drops the address note, which was the no-picture explanation',
-  (await page.locator('#enhanced-inventory .iconnote').count()) === 0);
+check(
+  '...and drops the address note, which was the no-picture explanation',
+  (await page.locator('#enhanced-inventory .iconnote').count()) === 0,
+);
 
 check('no page errors', errors.length === 0, errors.join(' | '));
 await ctx.close();
@@ -246,7 +304,8 @@ await ctx.close();
   await p2.route('**/arena2/**', (route) => route.fulfill({ status: 404, body: '' }));
   await p2.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
   await p2.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
-  if (await p2.locator('#enhanced-menu .doorbtn.door-offline').count()) await p2.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+  if (await p2.locator('#enhanced-menu .doorbtn.door-offline').count())
+    await p2.locator('#enhanced-menu .doorbtn.door-offline').click(); // UI-CALM: the games stand behind Offline
   await p2.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await p2.getByRole('button', { name: 'Begin', exact: true }).click();
   await p2.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
@@ -255,24 +314,47 @@ await ctx.close();
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
     const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const tp = ITEM_TEMPLATES.find((x) => x.name === 'Longsword');
-    const e = { name: 'A', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48 },
-      items: [{ name: tp.name, templateIndex: tp.index, group: 'Weapons', stackCount: 1,
-        currentCondition: 50, maxCondition: 50 }] };
+    const e = {
+      name: 'A',
+      career: { name: 'Spellsword' },
+      stats: { strength: 50, endurance: 48 },
+      items: [
+        {
+          name: tp.name,
+          templateIndex: tp.index,
+          group: 'Weapons',
+          stackCount: 1,
+          currentCondition: 50,
+          maxCondition: 50,
+        },
+      ],
+    };
     globalThis.__slot = createInventoryWindow({ entity: e, items: () => e.items, wagonItems: () => [] });
   });
   await p2.waitForSelector('#enhanced-inventory .itemrow', { timeout: 20000 });
   await p2.waitForTimeout(600);
-  const fallback = await p2.$$eval('#enhanced-inventory .tile', (ns) => ns.map((n) => ({
-    icon: !!n.querySelector('img'), text: n.textContent.trim(), title: n.title,
-  })));
-  check('with no ARENA2 the tile falls back to initials, and does not blank',
+  const fallback = await p2.$$eval('#enhanced-inventory .tile', (ns) =>
+    ns.map((n) => ({
+      icon: !!n.querySelector('img'),
+      text: n.textContent.trim(),
+      title: n.title,
+    })),
+  );
+  check(
+    'with no ARENA2 the tile falls back to initials, and does not blank',
     fallback.length > 0 && fallback.every((t) => !t.icon && t.text.length > 0),
-    JSON.stringify(fallback[0]));
-  check('...and the tile still names the record it wants',
-    (fallback[0]?.title ?? '').includes('TEXTURE.'), fallback[0]?.title ?? '');
+    JSON.stringify(fallback[0]),
+  );
+  check(
+    '...and the tile still names the record it wants',
+    (fallback[0]?.title ?? '').includes('TEXTURE.'),
+    fallback[0]?.title ?? '',
+  );
   await p2.locator('#enhanced-inventory .itemrow').first().click();
-  check('...and the detail explains the absence instead of showing a gap',
-    (await p2.locator('#enhanced-inventory .iconnote').count()) === 1);
+  check(
+    '...and the detail explains the absence instead of showing a gap',
+    (await p2.locator('#enhanced-inventory .iconnote').count()) === 1,
+  );
   check('no page errors with no data', errs2.length === 0, errs2.join(' | '));
   await c2.close();
 }

@@ -54,7 +54,8 @@ export const TV_GROUND_CLEAR = 25;
  *  Whole steps: the sprite's batch is made again at each. */
 export const TV_OWN_GROW_M = 32;
 export const TV_OWN_GROW_MAX = 12;
-export const tvOwnGrow = (dist) => Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));
+export const tvOwnGrow = (dist) =>
+  Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));
 /** The rise out of the head and the fall back into it, seconds. */
 export const TV_RISE_S = 1.2;
 export const TV_FALL_S = 0.8;
@@ -99,7 +100,10 @@ export function angleDelta(a, b) {
 /** Exponential easing's share for one step of `dt` at `rate`. */
 export const easeShare = (dt, rate) => 1 - Math.exp(-Math.max(0, dt) * rate);
 /** Smoothstep on [0,1] - the rise and the fall. */
-export const smooth01 = (t) => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); };
+export const smooth01 = (t) => {
+  const x = clamp(t, 0, 1);
+  return x * x * (3 - 2 * x);
+};
 
 /**
  * The ceiling over the traveller: the cloud deck's base less the margin, clamped into the band's reach. `cloudBase`
@@ -148,7 +152,9 @@ export function eyeFor(focus, yaw, tilt, height) {
  * back and over other ground (AUDIT DEEP T1-4: two passes left the eye inside a hill whose slope out-climbed them).
  * @returns {number} the height the eye must take - never less than the one asked for
  */
-export function clearHeight(focus, yaw, tilt, height, heightAt) { return clearing(focus, yaw, tilt, height, heightAt).h; }
+export function clearHeight(focus, yaw, tilt, height, heightAt) {
+  return clearing(focus, yaw, tilt, height, heightAt).h;
+}
 
 function clearing(focus, yaw, tilt, height, heightAt) {
   if (typeof heightAt !== 'function') return { h: height, clear: true };
@@ -165,7 +171,15 @@ function clearing(focus, yaw, tilt, height, heightAt) {
     const n = clearSteps(Math.hypot(eye[0] - focus[0], eye[1] - focus[1], eye[2] - focus[2]));
     for (let k = 0; k <= n; k++) {
       const s = 0.5 + k / (2 * n);
-      lift = Math.max(lift, need(focus[0] + (eye[0] - focus[0]) * s, focus[2] + (eye[2] - focus[2]) * s, focus[1] + (eye[1] - focus[1]) * s, s));
+      lift = Math.max(
+        lift,
+        need(
+          focus[0] + (eye[0] - focus[0]) * s,
+          focus[2] + (eye[2] - focus[2]) * s,
+          focus[1] + (eye[1] - focus[1]) * s,
+          s,
+        ),
+      );
     }
     if (!(lift > 0)) return { h, clear: true };
     h += lift;
@@ -216,7 +230,8 @@ export function keysHeading(cameraYaw, forward, strafe) {
 /** OW-FACE: the motor's axes that carry a body facing `yaw` along the heading `way` - the keys' own vector turned onto
  *  the body, its length kept (the diagonal's speed is the motor's own, as it was). */
 export function axesToward(yaw, way, forward, strafe) {
-  const m = Math.hypot(forward, strafe), d = way - yaw;
+  const m = Math.hypot(forward, strafe),
+    d = way - yaw;
   return { forward: m * Math.cos(d), strafe: m * Math.sin(d) };
 }
 
@@ -228,7 +243,7 @@ export function initialCamera(focus, yaw) {
     tilt: TV_TILT_DEFAULT,
     height: TV_HEIGHT_DEFAULT,
     heightTarget: TV_HEIGHT_DEFAULT,
-    feet: [focus[0], focus[1], focus[2]],   // AUDIT DEEP T1-3: last frame's feet - a jump is the FEET's, not the lag's
+    feet: [focus[0], focus[1], focus[2]], // AUDIT DEEP T1-3: last frame's feet - a jump is the FEET's, not the lag's
   };
 }
 
@@ -253,7 +268,9 @@ export const orbitBy = (c, dx, dy) => turnCamera(c, dx * TV_ORBIT_PER_PX, dy * T
  * @param {{ feet:number[], dt:number, ceiling:number, heightAt?:(x:number,z:number)=>number }} env
  */
 export function stepCamera(c, { feet, dt, ceiling, heightAt = null }) {
-  const dx = feet[0] - c.focus[0], dy = feet[1] - c.focus[1], dz = feet[2] - c.focus[2];
+  const dx = feet[0] - c.focus[0],
+    dy = feet[1] - c.focus[1],
+    dz = feet[2] - c.focus[2];
   // AUDIT DEEP T1-3: A JUMP IS THE FEET'S - a door, a fast travel, the floating origin's recentre: the feet moved more
   // than TV_FOCUS_SNAP in ONE frame. Measured against the eased focus, a journey faster than ~650 m/s built a lag past it
   // and snapped again and again; now the lag is only held to TV_FOCUS_SNAP, smoothly.
@@ -262,7 +279,10 @@ export function stepCamera(c, { feet, dt, ceiling, heightAt = null }) {
   const k = jump ? 1 : easeShare(dt, TV_FOCUS_RATE);
   const focus = [c.focus[0] + dx * k, c.focus[1] + dy * k, c.focus[2] + dz * k];
   const lag = Math.hypot(feet[0] - focus[0], feet[1] - focus[1], feet[2] - focus[2]);
-  if (lag > TV_FOCUS_SNAP) { const s = 1 - TV_FOCUS_SNAP / lag; for (let i = 0; i < 3; i++) focus[i] += (feet[i] - focus[i]) * s; }
+  if (lag > TV_FOCUS_SNAP) {
+    const s = 1 - TV_FOCUS_SNAP / lag;
+    for (let i = 0; i < 3; i++) focus[i] += (feet[i] - focus[i]) * s;
+  }
   const [lo, hi] = heightBand(ceiling);
   // AUDIT DEEP T1-8: the player's zoom is KEPT - a low deck holds the height under it for as long as it stands, and the
   // camera climbs back to the zoom the player chose once it lifts (it was stored clamped, so one frame of fog lost it)
@@ -286,7 +306,8 @@ export function stepCamera(c, { feet, dt, ceiling, heightAt = null }) {
 export function blendView(from, to, t) {
   const s = smooth01(t);
   const eye = [0, 1, 2].map((i) => from.eye[i] + (to.eye[i] - from.eye[i]) * s);
-  const a = anglesOf(from.fwd), b = anglesOf(to.fwd);
+  const a = anglesOf(from.fwd),
+    b = anglesOf(to.fwd);
   return { eye, fwd: forwardOf(a.yaw + angleDelta(a.yaw, b.yaw) * s, a.pitch + (b.pitch - a.pitch) * s) };
 }
 

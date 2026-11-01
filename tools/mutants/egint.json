@@ -236,8 +236,8 @@
   {
     "name": "EGINT-a-disc-at-the-anchor",
     "file": "src/net/bossRef.js",
-    "old": "test = (x, z) => egInBlow(a, x, z);",
-    "new": "test = (x, z) => Math.hypot(x - a.s[0][1], z - a.s[0][2]) <= 4;",
+    "old": "      test = (x, z) => egInBlow(a, x, z);",
+    "new": "      test = (x, z) => Math.hypot(x - a.s[0][1], z - a.s[0][2]) <= 4;",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGINT-an-element-counted",
     "file": "src/net/bossRef.js",
-    "old": "    const by = egFeetY(spec, a.y), share = a.el == null ? Math.min(1, Math.max(0, a.p)) : 0, ys = floorsUnder(spec, a.s?.[0], by),",
-    "new": "    const by = egFeetY(spec, a.y), share = Math.min(1, Math.max(0, a.p)), ys = floorsUnder(spec, a.s?.[0], by),",
+    "old": "      share = a.el == null ? Math.min(1, Math.max(0, a.p)) : 0,",
+    "new": "      share = Math.min(1, Math.max(0, a.p)),",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGINT-the-wait-skipped",
     "file": "src/net/bossRef.js",
-    "old": "      if (!egTrailReady(b.tr, a.at, now)) continue;\n      a.bh.push(b.sub);\n      if (deepShared(test, b.tr, a.at, F.h, spec, ys, free, by)) out.push(hit);",
-    "new": "      a.bh.push(b.sub);\n      if (deepShared(test, b.tr, a.at, F.h, spec, ys, free, by)) out.push(hit);",
+    "old": "      if (!egTrailReady(b.tr, a.at, now)) continue;\n      a.bh.push(b.sub);",
+    "new": "      a.bh.push(b.sub);",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGINT-off-the-fight-floor",
     "file": "src/net/bossRef.js",
-    "old": "  if (!free) for (const p of [p0, p1]) { const f = egFightFloorAt(spec, p[1], p[2], p[3]); if (!f || (ys && !ys.includes(f.y ?? 0))) return false; }",
-    "new": "  void ys; void free;",
+    "old": "  if (!free)\n    for (const p of [p0, p1]) {\n      const f = egFightFloorAt(spec, p[1], p[2], p[3]);\n      if (!f || (ys && !ys.includes(f.y ?? 0))) return false;\n    }",
+    "new": "  void ys;\n  void free;",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGINT-a-hazards-element-counted",
     "file": "src/net/bossRef.js",
-    "old": "    const share = q.el == null ? Math.min(1, q.p) : 0, test = (x, z) => egInShape(q.s, x, z);",
-    "new": "    const share = Math.min(1, q.p), test = (x, z) => egInShape(q.s, x, z);",
+    "old": "    const share = q.el == null ? Math.min(1, q.p) : 0,",
+    "new": "    const share = Math.min(1, q.p),",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGINT-the-vents-out-of-the-set",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire') out.push(",
-    "new": "        if (false) out.push(",
+    "old": "        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire')\n          out.push({ s: [ventStamp(v)], at, sp: EG_VENT_FIRE_MS, ch: 0, o: 0, i: 0 });",
+    "new": "        if (false) out.push({ s: [ventStamp(v)], at, sp: EG_VENT_FIRE_MS, ch: 0, o: 0, i: 0 });",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "EGINT-the-wind-at-the-start",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "t < blow.at && t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + egWindGraceMs(b.fl | 0)) {",
-    "new": "t < blow.at) {",
+    "old": "    if (\n      blow &&\n      !cued.has(blow.i) &&\n      !blow.cut &&\n      t < blow.at &&\n      t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + egWindGraceMs(b.fl | 0)\n    ) {",
+    "new": "    if (blow && !cued.has(blow.i) && !blow.cut && t < blow.at) {",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "EGINT-a-cut-blows-wind",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (blow && !cued.has(blow.i) && !blow.cut && t < blow.at",
-    "new": "    if (blow && !cued.has(blow.i) && t < blow.at",
+    "old": "      !blow.cut &&\n      t < blow.at &&",
+    "new": "      t < blow.at &&",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "EGINT-the-told-never-drawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        drawTold(bl, t);   // EG-H1: Watchfire's early outlines",
-    "new": "      void drawTold;",
+    "old": "        drawTold(bl, t); // EG-H1: Watchfire's early outlines",
+    "new": "        void drawTold;",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "EGINT-the-untell-ignored",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    case 'untell': return { ...f, told: (f.told ?? []).filter((b) => b.i !== w.i) };",
-    "new": "    case 'untell': return f;",
+    "old": "      return { ...f, told: (f.told ?? []).filter((b) => b.i !== w.i) }; // EG-H1: a told blow the union floor held - no ghost on the floor",
+    "new": "      return f; // EG-H1: a told blow the union floor held - no ghost on the floor",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "EGINT-the-tell-never-folded",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    case 'tell': return { ...f, told: [...(f.told ?? []).filter((b) => b.i !== w.i && now <= b.at + 1500), { ...w, heard: now }].slice(-16) };",
-    "new": "    case 'tell': return f;",
+    "old": "      return {\n        ...f,\n        told: [...(f.told ?? []).filter((b) => b.i !== w.i && now <= b.at + 1500), { ...w, heard: now }].slice(-16),\n      }; // EG-H1: Watchfire's early outline",
+    "new": "      return f; // EG-H1: Watchfire's early outline",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]

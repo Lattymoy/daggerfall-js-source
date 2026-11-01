@@ -18,7 +18,7 @@
 
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { modSetting, setModSetting } from '../systems/modSettings.js';
-import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
+import { registerFeatureLane } from '../systems/features.js'; // RF4: the row's lane is this module's
 
 /** The row's tiers: value and label. FT18: the labels are a bar's segments now (FT14), and DISC23-C reads a switch
  *  by the segment that SAYS Off - 'Off - Daggerfall’s outdoors' did not, so this tile never read off and never
@@ -48,4 +48,9 @@ export function outdoorsWrite(v) {
 }
 
 // RF4: the Features row `enhanced-environments` reads its tiers, its default and its read/write from here.
-registerFeatureLane('outdoors', { tiers: OUTDOORS_TIERS, default: OUTDOORS_DEFAULT, read: outdoorsRead, write: outdoorsWrite });
+registerFeatureLane('outdoors', {
+  tiers: OUTDOORS_TIERS,
+  default: OUTDOORS_DEFAULT,
+  read: outdoorsRead,
+  write: outdoorsWrite,
+});

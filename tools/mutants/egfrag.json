@@ -2,8 +2,8 @@
   {
     "name": "EGFRAG-a-fire-fall-untold",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "  fall: Object.freeze({ tell: 1000,",
-    "new": "  fall: Object.freeze({ tell: 0,",
+    "old": "  fall: Object.freeze({ tell: 1000, live: 2000, period: 5000, pct: 0.15, el: 'fire', aim: 'trav', name: 'Fire Fall' }),",
+    "new": "  fall: Object.freeze({ tell: 0, live: 2000, period: 5000, pct: 0.15, el: 'fire', aim: 'trav', name: 'Fire Fall' }),",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGFRAG-an-eclipse-under-its-havens",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "part(['h', ...hv.flatMap((q) => [q[0], q[1], L.r])], c,",
-    "new": "part(['h', ...hv.flatMap((q) => [q[0], q[1], 0])], c,",
+    "old": "      part(['h', ...hv.flatMap((q) => [q[0], q[1], L.r])], c, `${hz.i}:${c.n}`);",
+    "new": "      part(['h', ...hv.flatMap((q) => [q[0], q[1], 0])], c, `${hz.i}:${c.n}`);",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGFRAG-a-3m-surge-lawful",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "      if (!egWidthOk(sh)) why.push(",
-    "new": "      if (false) why.push(",
+    "old": "      if (!egWidthOk(sh)) why.push(`${hz.kind}: narrower than 4 m`);",
+    "new": "      if (false) why.push(`${hz.kind}: narrower than 4 m`);",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGFRAG-a-tell-under-its-floor",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "      if (L.tell < egWindupFloorMs(sh)) why.push(",
-    "new": "      if (false) why.push(",
+    "old": "      if (L.tell < egWindupFloorMs(sh))\n        why.push(`${hz.kind}: told ${L.tell} ms under its floor ${egWindupFloorMs(sh)} ms`);",
+    "new": "      if (false) why.push(`${hz.kind}: told ${L.tell} ms under its floor ${egWindupFloorMs(sh)} ms`);",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGFRAG-the-tide-never-ticks",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "c.st === 'live' ? `${hz.i}:${c.n}:${Math.floor((c.u - (period - L.live)) / 1000)}` : `${hz.i}:${c.n}`",
-    "new": "`${hz.i}:${c.n}`",
+    "old": "    if (c)\n      part(\n        shDisc(hz.x, hz.z, hz.r),\n        c,\n        c.st === 'live' ? `${hz.i}:${c.n}:${Math.floor((c.u - (period - L.live)) / 1000)}` : `${hz.i}:${c.n}`,\n      );",
+    "new": "    if (c) part(shDisc(hz.x, hz.z, hz.r), c, `${hz.i}:${c.n}`);",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGFRAG-the-tide-floods-the-balcony",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (hz.kind !== 'eclipse' && Math.abs(y - (hz.y ?? 0)) > (hz.kind === 'fall' ? 2.5 : 1.5)) return false;",
-    "new": "if (hz.kind !== 'eclipse' && Math.abs(y - (hz.y ?? 0)) > 99) return false;",
+    "old": "  if (hz.kind !== 'eclipse' && Math.abs(y - (hz.y ?? 0)) > (hz.kind === 'fall' ? 2.5 : 1.5)) return false;",
+    "new": "  if (hz.kind !== 'eclipse' && Math.abs(y - (hz.y ?? 0)) > 99) return false;",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "EGFRAG-the-sinking-jump-taken-high",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "- (a?.kind === 'sink' ? EG_SINK_MPS * EG_SINK_ON_S : 0)",
-    "new": "- 0",
+    "old": "  const ay = (pair.ay ?? (a ? a.y : b ? b.y : 0)) - (a?.kind === 'sink' ? EG_SINK_MPS * EG_SINK_ON_S : 0),",
+    "new": "  const ay = (pair.ay ?? (a ? a.y : b ? b.y : 0)) - 0,",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "EGFRAG-the-median-unchecked",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    if (c.n && c.fast > 0 && c.median > EG_MEDIAN_X * c.fast) why.push(",
-    "new": "    if (false) why.push(",
+    "old": "      if (c.n && c.fast > 0 && c.median > EG_MEDIAN_X * c.fast)",
+    "new": "      if (false)",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "EGFRAG-the-ground-after-unmeasured",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "edge: s.z + s.d / 2 + (s.after ?? 0), ...(s.ya",
-    "new": "edge: s.z + s.d / 2, ...(s.ya",
+    "old": "    if (!meets(s, next))\n      out.push({ a: s, b: null, edge: s.z + s.d / 2 + (s.after ?? 0), ...(s.ya != null ? { by: s.ya } : {}) }); // the still ground's own edge, the real gap on (AUDIT EG V - spec law 8: at its own height, `ya`)",
+    "new": "    if (!meets(s, next)) out.push({ a: s, b: null, edge: s.z + s.d / 2, ...(s.ya != null ? { by: s.ya } : {}) }); // the still ground's own edge, the real gap on (AUDIT EG V - spec law 8: at its own height, `ya`)",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "EGFRAG-the-roads-jump-across",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  const meets = (a, b) => !!a && !!b && (a.road ?? 0) === (b.road ?? 0) && (a.hd ?? 0) === (b.hd ?? 0) && Math.abs(",
-    "new": "  const meets = (a, b) => !!a && !!b && (a.hd ?? 0) === (b.hd ?? 0) && Math.abs(",
+    "old": "    (a.road ?? 0) === (b.road ?? 0) &&\n    (a.hd ?? 0) === (b.hd ?? 0) &&",
+    "new": "    (a.hd ?? 0) === (b.hd ?? 0) &&",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "EGFRAG-one-dry-floor",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "balconies(kit === 'stacks' ? 2 : kit === 'deep' ? 3 : 1,",
-    "new": "balconies(kit === 'stacks' ? 2 : 1,",
+    "old": "      kit === 'stacks' ? 2 : kit === 'deep' ? 3 : 1,",
+    "new": "      kit === 'stacks' ? 2 : 1,",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -169,7 +169,7 @@
     "name": "EGFRAG-a-balcony-with-no-stair",
     "file": "src/net/eliteGates/egFragLaw.js",
     "old": "      ramps.push({ ax: x0, az: z0, bx: x1, bz: z1, hw: 150, y0: 0, y1: up });",
-    "new": "      void x0; void z0; void x1; void z1;",
+    "new": "      void x0;\n      void z0;\n      void x1;\n      void z1;",
     "tests": [
       "test/net/eliteGates/egfrag_law.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "EGFRAG-the-islands-in-the-static-floor",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      if (egIsleDisc(spec, d)) continue;\n      // AUDIT EG V (lane5 #15)",
-    "new": "      // AUDIT EG V (lane5 #15)",
+    "old": "      if (egIsleDisc(spec, d)) continue;\n      // AUDIT EG V (lane5 #15): a RAISED floor (a caster's pillar, a perch, a balcony - EG_RAISED_ROLES) stands its rim faces as",
+    "new": "      // AUDIT EG V (lane5 #15): a RAISED floor (a caster's pillar, a perch, a balcony - EG_RAISED_ROLES) stands its rim faces as",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "EGFRAG-a-wall-across-the-doorway",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "  for (const [a, b] of cuts) { if (a > z) out.push([z, a]); z = Math.max(z, b); }",
-    "new": "  for (const [a, b] of []) { if (a > z) out.push([z, a]); z = Math.max(z, b); }",
+    "old": "  for (const [a, b] of cuts) {",
+    "new": "  for (const [a, b] of []) {",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]
@@ -384,7 +384,7 @@
   {
     "name": "EGFRAG-a-niche-with-no-floor",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]); quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
+    "old": "      quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]);\n      quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
     "new": "      quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "EGFRAG-the-colonnade-walled",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      if (q.open) continue;\n",
-    "new": "\n",
+    "old": "      if (q.open) continue;",
+    "new": "",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "EGFRAG-a-wisp-that-never-lets-go",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (d > L.brk || t - hold.from >= L.live) { hold.from = 0;",
-    "new": "    if (d > L.brk) { hold.from = 0;",
+    "old": "    if (d > L.brk || t - hold.from >= L.live) {",
+    "new": "    if (d > L.brk) {",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]

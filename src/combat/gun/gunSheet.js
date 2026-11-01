@@ -57,15 +57,22 @@ export function cellRect(i, sheetW, sheetH, grid = SHEET_GRID) {
 export function keyBackground(img, threshold = 244, chroma = 10) {
   const { width: w, height: h, data } = img;
   const isBg = (p) => {
-    const r = data[p], g = data[p + 1], b = data[p + 2];
+    const r = data[p],
+      g = data[p + 1],
+      b = data[p + 2];
     if (data[p + 3] === 0) return true;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const max = Math.max(r, g, b),
+      min = Math.min(r, g, b);
     return min >= threshold && max - min <= chroma;
   };
   const seen = new Uint8Array(w * h);
   const stack = [];
-  for (let x = 0; x < w; x++) { stack.push(x, x + (h - 1) * w); }
-  for (let y = 0; y < h; y++) { stack.push(y * w, w - 1 + y * w); }
+  for (let x = 0; x < w; x++) {
+    stack.push(x, x + (h - 1) * w);
+  }
+  for (let y = 0; y < h; y++) {
+    stack.push(y * w, w - 1 + y * w);
+  }
   let cleared = 0;
   while (stack.length) {
     const i = stack.pop();
@@ -73,8 +80,12 @@ export function keyBackground(img, threshold = 244, chroma = 10) {
     seen[i] = 1;
     const p = i * 4;
     if (!isBg(p)) continue;
-    if (data[p + 3] !== 0) { data[p + 3] = 0; cleared++; }
-    const x = i % w, y = (i - x) / w;
+    if (data[p + 3] !== 0) {
+      data[p + 3] = 0;
+      cleared++;
+    }
+    const x = i % w,
+      y = (i - x) / w;
     if (x > 0) stack.push(i - 1);
     if (x < w - 1) stack.push(i + 1);
     if (y > 0) stack.push(i - w);
@@ -86,7 +97,10 @@ export function keyBackground(img, threshold = 244, chroma = 10) {
 /** The box of everything still opaque, or null for an empty frame. */
 export function contentBox(img) {
   const { width: w, height: h, data } = img;
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  let x0 = w,
+    y0 = h,
+    x1 = -1,
+    y1 = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (data[(y * w + x) * 4 + 3] === 0) continue;

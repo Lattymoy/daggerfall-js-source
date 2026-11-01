@@ -13,8 +13,13 @@ export const GUILD_SHOP_KINDS = Object.freeze(['armory', 'icon', 'sails', 'furni
 
 /** @typedef {Readonly<{ key: string, kind: string, payer: string, price: number, bit?: number, max?: number, model?: number }>} GuildWare */
 /** @returns {GuildWare} */
-const ware = (/** @type {string} */ key, /** @type {string} */ kind, /** @type {string} */ payer, /** @type {number} */ price, /** @type {{ bit?: number, max?: number, model?: number }} */ extra) =>
-  Object.freeze({ key, kind, payer, price, ...extra });
+const ware = (
+  /** @type {string} */ key,
+  /** @type {string} */ kind,
+  /** @type {string} */ payer,
+  /** @type {number} */ price,
+  /** @type {{ bit?: number, max?: number, model?: number }} */ extra,
+) => Object.freeze({ key, kind, payer, price, ...extra });
 /**
  * EVERY WARE, in the window's order. An account ware's `bit` is its place on `players.guild_wares` and is never renumbered
  * (a stored bit is a sale). A guild ware's `max` is how many one guild may own; its `model` is the piece it sets down
@@ -36,19 +41,26 @@ export const GUILD_SHOP_WARES = Object.freeze([
 /** Every ware's key. */
 export const GUILD_SHOP_KEYS = Object.freeze(GUILD_SHOP_WARES.map((w) => w.key));
 /** A ware by its key, or null. */
-export const guildWareOf = (/** @type {unknown} */ key) => (typeof key === 'string' ? GUILD_SHOP_WARES.find((w) => w.key === key) ?? null : null);
+export const guildWareOf = (/** @type {unknown} */ key) =>
+  typeof key === 'string' ? (GUILD_SHOP_WARES.find((w) => w.key === key) ?? null) : null;
 /** The account wares held on a `players.guild_wares` value, by key, in the window's order. */
 export const guildWaresHeld = (/** @type {unknown} */ bits) => {
   const b = Number.isSafeInteger(bits) ? /** @type {number} */ (bits) : 0;
-  return GUILD_SHOP_WARES.filter((w) => w.payer === 'account' && (b & /** @type {number} */ (w.bit)) !== 0).map((w) => w.key);
+  return GUILD_SHOP_WARES.filter((w) => w.payer === 'account' && (b & /** @type {number} */ (w.bit)) !== 0).map(
+    (w) => w.key,
+  );
 };
 /** The guild ware a placed model is, or null - a hall's piece the guild bought, never the catalogue's. */
-export const guildWareOfModel = (/** @type {unknown} */ model) => GUILD_SHOP_WARES.find((w) => w.model != null && w.model === model) ?? null;
+export const guildWareOfModel = (/** @type {unknown} */ model) =>
+  GUILD_SHOP_WARES.find((w) => w.model != null && w.model === model) ?? null;
 /** Every guild furniture model. */
-export const GUILD_FURNITURE_MODELS = Object.freeze(GUILD_SHOP_WARES.filter((w) => w.model != null).map((w) => /** @type {number} */ (w.model)));
+export const GUILD_FURNITURE_MODELS = Object.freeze(
+  GUILD_SHOP_WARES.filter((w) => w.model != null).map((w) => /** @type {number} */ (w.model)),
+);
 
 /** Whether a guild that owns `owned` of a ware may buy one more. */
-export const guildWareRoom = (/** @type {any} */ w, /** @type {number} */ owned) => w?.payer === 'guild' && Number.isSafeInteger(owned) && owned >= 0 && owned < w.max;
+export const guildWareRoom = (/** @type {any} */ w, /** @type {number} */ owned) =>
+  w?.payer === 'guild' && Number.isSafeInteger(owned) && owned >= 0 && owned < w.max;
 
 // ─── THE GUILD'S OWN ACTS, IN SILVER ─────────────────────────────────────────────────────────────────────────────────
 // The owner: "Introduce guild name change for cost" and "Everything should cost silver". GUILD2a's rename was 25,000 gold

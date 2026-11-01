@@ -12,8 +12,8 @@
   {
     "name": "PASSAGE-HANDS-presses-read",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "(passenger() && !PASSENGER_KEYS.includes(action) ? journey.edges.has(action) : input.started(action) || journey.edges.has(action))",
-    "new": "(input.started(action) || journey.edges.has(action))",
+    "old": "    started: {\n      value: (/** @type {string} */ action) =>\n        passenger() && !PASSENGER_KEYS.includes(action)\n          ? journey.edges.has(action)\n          : input.started(action) || journey.edges.has(action),\n    },",
+    "new": "    started: { value: (/** @type {string} */ action) => input.started(action) || journey.edges.has(action) },",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "PASSAGE-HANDS-journey-taps-unread",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "input.started(action) || journey.edges.has(action))",
-    "new": "input.started(action))",
+    "old": "        passenger() && !PASSENGER_KEYS.includes(action)\n          ? journey.edges.has(action)\n          : input.started(action) || journey.edges.has(action),",
+    "new": "        passenger() && !PASSENGER_KEYS.includes(action) ? journey.edges.has(action) : input.started(action),",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js",
       "test/systems/comeSailAway/auditnav2_helm.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "PASSAGE-HANDS-keeps-nothing",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "(passenger() && !PASSENGER_KEYS.includes(action) ?",
-    "new": "(passenger() ?",
+    "old": "        passenger() && !PASSENGER_KEYS.includes(action)\n          ? journey.edges.has(action)\n          : input.started(action) || journey.edges.has(action),",
+    "new": "        passenger() ? journey.edges.has(action) : input.started(action) || journey.edges.has(action),",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "PASSAGE-HANDS-autorun-the-players",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "get: () => { if (!passenger()) return input.toggleAutorun; if (input.toggleAutorun) input.toggleAutorun = false; return journey.row; }",
-    "new": "get: () => input.toggleAutorun",
+    "old": "      get: () => {\n        if (!passenger()) return input.toggleAutorun;\n        if (input.toggleAutorun) input.toggleAutorun = false;\n        return journey.row;\n      },",
+    "new": "      get: () => input.toggleAutorun,",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "PASSAGE-IN-rings-on-the-sea",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const ring = (i) => (ringAt && i < pixels.length - 1 && !afloat(i)",
-    "new": "  const ring = (i) => (ringAt && i < pixels.length - 1",
+    "old": "    ringAt && i < pixels.length - 1 && !afloat(i)",
+    "new": "    ringAt && i < pixels.length - 1",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -124,7 +124,7 @@
   {
     "name": "PASSAGE-IN-mark-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;",
+    "old": "    const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;",
     "new": "    const read = null;",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -184,8 +184,8 @@
   {
     "name": "PASSAGE-HANDS-latch-kept",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": " if (input.toggleAutorun) input.toggleAutorun = false;",
-    "new": "",
+    "old": "        if (input.toggleAutorun) input.toggleAutorun = false;\n        return journey.row;",
+    "new": "        return journey.row;",
     "why": "AUDIT FB1021d PS-4: a passenger stepped off under sail runs off down the deck",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "PASSAGE-HANDS-setter-dropped",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "set: (v) => { input.toggleAutorun = v; } },",
-    "new": "set: (v) => {} },",
+    "old": "      set: (v) => {\n        input.toggleAutorun = v;\n      },",
+    "new": "      set: (v) => {},",
     "why": "the mod's let-go of my own autorun never reaches it",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "PASSAGE-HANDS-master-never-rows",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "input.toggleAutorun = false; return journey.row; }",
-    "new": "input.toggleAutorun = false; return false; }",
+    "old": "        return journey.row;",
+    "new": "        return false;",
     "why": "her master's oars unread: in a calm she lies still",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "PASSAGE-HANDS-journey-disembark-refused",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "(passenger() && !PASSENGER_KEYS.includes(action) ? journey.edges.has(action) : input.started(action) || journey.edges.has(action))",
-    "new": "(passenger() ? (PASSENGER_KEYS.includes(action) ? input.started(action) : journey.edges.has(action)) : input.started(action) || journey.edges.has(action))",
+    "old": "        passenger() && !PASSENGER_KEYS.includes(action)\n          ? journey.edges.has(action)",
+    "new": "        passenger()\n          ? PASSENGER_KEYS.includes(action)\n            ? input.started(action)\n            : journey.edges.has(action)",
     "why": "her master's landfall never sets the passenger down",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -224,7 +224,7 @@
   {
     "name": "PASSAGE-HANDS-time-keys-taken",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "export const PASSENGER_KEYS = Object.freeze([BOAT_ACTIONS.disembark, 'Transport', BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);",
+    "old": "export const PASSENGER_KEYS = Object.freeze([\n  BOAT_ACTIONS.disembark,\n  'Transport',\n  BOAT_ACTIONS.timeScaleUp,\n  BOAT_ACTIONS.timeScaleDown,\n  BOAT_ACTIONS.timeScaleReset,\n]);",
     "new": "export const PASSENGER_KEYS = Object.freeze([BOAT_ACTIONS.disembark, 'Transport']);",
     "why": "the passenger's time dial taken",
     "tests": [
@@ -284,8 +284,8 @@
   {
     "name": "PASSAGE-HANDS-card-untitled",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": " : aboard.passage ? passengerTitle(aboard.passage) : ",
-    "new": " : ",
+    "old": "    : aboard.passage\n      ? passengerTitle(aboard.passage)\n      : `Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;",
+    "new": "    : `Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -314,8 +314,8 @@
   {
     "name": "PASSAGE-IN-every-sea-kind-afloat",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
-    "new": "const afloat = (i) => SEA_KINDS.includes(kinds[i - 1]) || SEA_KINDS.includes(kinds[i]);",
+    "old": "  const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
+    "new": "  const afloat = (i) => SEA_KINDS.includes(kinds[i - 1]) || SEA_KINDS.includes(kinds[i]);",
     "why": "AUDIT FB1021d PS-3: the land a party embarks from and makes landfall on loses its ring - straight across the town to the water",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -324,8 +324,8 @@
   {
     "name": "PASSAGE-IN-the-landfall-s-land-afloat",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
-    "new": "const afloat = (i) => ['sea', 'embark', 'landfall'].includes(kinds[i - 1]);",
+    "old": "  const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
+    "new": "  const afloat = (i) => ['sea', 'embark', 'landfall'].includes(kinds[i - 1]);",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -334,8 +334,8 @@
   {
     "name": "PASSAGE-IN-the-launch-s-water-ashore",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
-    "new": "const afloat = (i) => kinds[i - 1] === 'sea';",
+    "old": "  const afloat = (i) => ['sea', 'embark'].includes(kinds[i - 1]);",
+    "new": "  const afloat = (i) => kinds[i - 1] === 'sea';",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "PASSAGE-IN-unbuilt-read-as-dry",
     "file": "src/systems/travel/seaMark.js",
-    "old": "  if (!seaLegBuiltAt(origin, waterAt)) return SEA_LEG_UNBUILT;\n",
-    "new": "",
+    "old": "  if (!seaLegBuiltAt(origin, waterAt)) return SEA_LEG_UNBUILT;\n  if (floats(centre.x, centre.z)) return null;",
+    "new": "  if (floats(centre.x, centre.z)) return null;",
     "why": "a pixel not built yet passed as dry",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"

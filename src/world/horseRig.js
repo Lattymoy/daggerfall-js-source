@@ -20,8 +20,26 @@
 //    drew its riding sprite (drawFirstPerson).
 //
 // Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
-import { HORSE_MODEL_URL, HORSE_PICTURE_URLS, horseSkinStream, horsePaletteShape, horsePoseScratch, horseGait, stepHorseGait, writeHorsePalette, startTexelMap, rgbaMips, horseHide } from './horseModel.js';
-import { dyeHorseTexelRows, dyeHorseHairRows, dyesPoints, horseLookCode, horseLookOfCode } from '../systems/horse/horseCoats.js';
+import {
+  HORSE_MODEL_URL,
+  HORSE_PICTURE_URLS,
+  horseSkinStream,
+  horsePaletteShape,
+  horsePoseScratch,
+  horseGait,
+  stepHorseGait,
+  writeHorsePalette,
+  startTexelMap,
+  rgbaMips,
+  horseHide,
+} from './horseModel.js';
+import {
+  dyeHorseTexelRows,
+  dyeHorseHairRows,
+  dyesPoints,
+  horseLookCode,
+  horseLookOfCode,
+} from '../systems/horse/horseCoats.js';
 import { drawBodyPicture, mwModelPixel } from '../render/characterSprite.js';
 import { CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import { decodePng } from '../systems/textureReplacement.js';
@@ -45,9 +63,10 @@ export function outOfView(c, r, view, proj) {
   const vx = view[0] * c[0] + view[4] * c[1] + view[8] * c[2] + view[12];
   const vy = view[1] * c[0] + view[5] * c[1] + view[9] * c[2] + view[13];
   const vz = view[2] * c[0] + view[6] * c[1] + view[10] * c[2] + view[14];
-  if (vz > r) return true;   // behind the eye (the view looks down -z)
+  if (vz > r) return true; // behind the eye (the view looks down -z)
   if (!proj || proj.length !== 16 || proj[11] === 0) return false;
-  const sx = proj[0], sy = proj[5];
+  const sx = proj[0],
+    sy = proj[5];
   return Math.abs(vx) * sx + vz > r * Math.hypot(1, sx) || Math.abs(vy) * sy + vz > r * Math.hypot(1, sy);
 }
 /** The SEAT on the owner's rig (its own frame, metres): the back's lowest between the withers and the croup - its top
@@ -61,31 +80,55 @@ const rigs = new WeakMap();
 /** The renderer's one 3D horse rig (made on first ask). */
 export function horseRigFor(renderer, opts = {}) {
   let r = rigs.get(renderer);
-  if (!r) { r = createHorseRig({ renderer, ...opts }); rigs.set(renderer, r); }
+  if (!r) {
+    r = createHorseRig({ renderer, ...opts });
+    rigs.set(renderer, r);
+  }
   return r;
 }
 
 /**
  * @param {{ renderer: any, fetchJson?: (url: string) => Promise<any>, fetchBytes?: (url: string) => Promise<Uint8Array>, decode?: (bytes: Uint8Array) => Promise<{ width: number, height: number, data: Uint8Array }> }} deps
  */
-export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) => r.json()), fetchBytes = (u) => fetch(u).then((r) => r.arrayBuffer()).then((b) => new Uint8Array(b)), decode = decodePng }) {
+export function createHorseRig({
+  renderer,
+  fetchJson = (u) => fetch(u).then((r) => r.json()),
+  fetchBytes = (u) =>
+    fetch(u)
+      .then((r) => r.arrayBuffer())
+      .then((b) => new Uint8Array(b)),
+  decode = decodePng,
+}) {
   /** @type {any} */ let bake = null;
-  let base = null, shape = null, stream = null, hide = null, seatBone = -1, seatLocal = null;
+  let base = null,
+    shape = null,
+    stream = null,
+    hide = null,
+    seatBone = -1,
+    seatLocal = null;
   /** @type {{ width: number, height: number, data: Uint8Array } | null} */ let body = null;
-  let hairTex = null, hairImg = null, map = null, mapJob = null, failed = null;
+  let hairTex = null,
+    hairImg = null,
+    map = null,
+    mapJob = null,
+    failed = null;
   /** @type {Promise<void> | null} */ let loading = null;
-  const looks = new Map();   // code -> { tex, last }
-  const asked = new Map();   // code -> the frame it was last asked for: the codes waiting for their dye, oldest first
-  let job = null;   // { code, out, row }
-  const hairs = new Map();   // AUDIT-STOREFRONT: mount look -> its mane and tail's texture, made once (four at most)
+  const looks = new Map(); // code -> { tex, last }
+  const asked = new Map(); // code -> the frame it was last asked for: the codes waiting for their dye, oldest first
+  let job = null; // { code, out, row }
+  const hairs = new Map(); // AUDIT-STOREFRONT: mount look -> its mane and tail's texture, made once (four at most)
   const hairAsked = new Set();
-  let hairJob = null;   // { mount, out, row }
+  let hairJob = null; // { mount, out, row }
   let frame = 0;
 
   function load() {
     if (loading || !renderer) return loading;
     loading = (async () => {
-      const [b, bodyBytes, hairBytes] = await Promise.all([fetchJson(HORSE_MODEL_URL), fetchBytes(HORSE_PICTURE_URLS.body), fetchBytes(HORSE_PICTURE_URLS.hair)]);
+      const [b, bodyBytes, hairBytes] = await Promise.all([
+        fetchJson(HORSE_MODEL_URL),
+        fetchBytes(HORSE_PICTURE_URLS.body),
+        fetchBytes(HORSE_PICTURE_URLS.hair),
+      ]);
       const [bodyImg, hairPic] = await Promise.all([decode(bodyBytes), decode(hairBytes)]);
       bake = b;
       body = bodyImg;
@@ -94,15 +137,27 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
       hide = horseHide(bake);
       seatBone = bake.bones.findIndex((x) => x.name === HORSE_SEAT_BONE);
       if (seatBone >= 0) {
-        const inv = bake.bones[seatBone].inverseBind;   // column-major: the seat in the bone's own frame
-        seatLocal = [0, 1, 2].map((r) => inv[r] * HORSE_SEAT[0] + inv[4 + r] * HORSE_SEAT[1] + inv[8 + r] * HORSE_SEAT[2] + inv[12 + r]);
+        const inv = bake.bones[seatBone].inverseBind; // column-major: the seat in the bone's own frame
+        seatLocal = [0, 1, 2].map(
+          (r) => inv[r] * HORSE_SEAT[0] + inv[4 + r] * HORSE_SEAT[1] + inv[8 + r] * HORSE_SEAT[2] + inv[12 + r],
+        );
       }
-      base = renderer.createSkinnedCharacterMesh(stream.stream, { floats: stream.floats, pairs: stream.pairs, width: shape.width, height: shape.height });
-      renderer.releaseCharacterSkin(base);   // the shared mesh poses no horse - each horse brings its own palette
-      looks.set(0, { tex: renderer.createCharacterTexture(rgbaMips(body.width, body.height, body.data)), last: Infinity });
+      base = renderer.createSkinnedCharacterMesh(stream.stream, {
+        floats: stream.floats,
+        pairs: stream.pairs,
+        width: shape.width,
+        height: shape.height,
+      });
+      renderer.releaseCharacterSkin(base); // the shared mesh poses no horse - each horse brings its own palette
+      looks.set(0, {
+        tex: renderer.createCharacterTexture(rgbaMips(body.width, body.height, body.data)),
+        last: Infinity,
+      });
       hairImg = hairPic;
       hairTex = renderer.createCharacterTexture(rgbaMips(hairImg.width, hairImg.height, hairImg.data));
-    })().catch((e) => { failed = String(e?.message ?? e); });
+    })().catch((e) => {
+      failed = String(e?.message ?? e);
+    });
     return loading;
   }
 
@@ -110,8 +165,11 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   function lookTex(code) {
     const c = Number.isInteger(code) && code > 0 ? code : 0;
     const have = looks.get(c);
-    if (have) { have.last = frame; return have.tex; }
-    if (job?.code !== c) asked.set(c, frame);   // a look waiting keeps its place, asked again
+    if (have) {
+      have.last = frame;
+      return have.tex;
+    }
+    if (job?.code !== c) asked.set(c, frame); // a look waiting keeps its place, asked again
     return looks.get(0)?.tex ?? null;
   }
 
@@ -148,10 +206,16 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     frame++;
     if (!base || !body) return;
     if (hairImg) tickHair();
-    for (const [c, at] of asked) if (frame - at > LOOK_ASK_STALE) asked.delete(c);   // AUDIT COATS3D A2: nobody draws it now
+    for (const [c, at] of asked) if (frame - at > LOOK_ASK_STALE) asked.delete(c); // AUDIT COATS3D A2: nobody draws it now
     if (!job && asked.size) {
       // the texel map first, a slice a frame (world/horseModel.js startTexelMap - built once, some 40-85 ms whole)
-      if (!map) { mapJob ??= startTexelMap(bake, body.width, body.height); if (!mapJob.step()) return; map = mapJob.map; mapJob = null; return; }
+      if (!map) {
+        mapJob ??= startTexelMap(bake, body.width, body.height);
+        if (!mapJob.step()) return;
+        map = mapJob.map;
+        mapJob = null;
+        return;
+      }
       const code = /** @type {number} */ (asked.keys().next().value);
       asked.delete(code);
       job = { code, look: horseLookOfCode(code), out: new Uint8Array(body.data), row: 0 };
@@ -161,15 +225,23 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
       dyeHorseTexelRows(body.data, job.out, body.width, job.look, map, job.row, r1);
       job.row = r1;
       if (r1 >= body.height) {
-        looks.set(job.code, { tex: renderer.createCharacterTexture(rgbaMips(body.width, body.height, job.out)), last: frame });
+        looks.set(job.code, {
+          tex: renderer.createCharacterTexture(rgbaMips(body.width, body.height, job.out)),
+          last: frame,
+        });
         job = null;
       }
     }
     while (looks.size > HORSE3D_LOOKS_KEPT + 1) {
-      let worst = null, at = Infinity;
+      let worst = null,
+        at = Infinity;
       // AUDIT COATS3D A4: never a look drawn this frame or the last (a horse steps before this tick - its texture is
       // already on its mesh): past the cap with all of them on screen, the cap waits
-      for (const [c, l] of looks) if (c && l.last < frame - 2 && l.last < at) { at = l.last; worst = c; }
+      for (const [c, l] of looks)
+        if (c && l.last < frame - 2 && l.last < at) {
+          at = l.last;
+          worst = c;
+        }
       if (worst == null) break;
       renderer.releaseCharacterTexture(looks.get(worst).tex);
       looks.delete(worst);
@@ -180,11 +252,37 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   function horse(seed = 0) {
     if (!base) return null;
     const pal = new Float32Array(shape.width * shape.height * 4);
-    const mesh = { vao: base.vao, count: base.count, buffers: [], vbo: base.vbo, floats: base.floats, bounds: null,
+    const mesh = {
+      vao: base.vao,
+      count: base.count,
+      buffers: [],
+      vbo: base.vbo,
+      floats: base.floats,
+      bounds: null,
       skin: renderer.createSkinPalette({ pairs: stream.pairs, width: shape.width, height: shape.height }),
-      ranges: stream.ranges.map((r) => ({ first: r.first, count: r.count, tex: r.texture === 'hair' ? hairTex : null, alphaCut: r.alpha ? 0.5 : 0, hidden: false, part: r.part })) };
-    return { seed, gait: horseGait(), scratch: horsePoseScratch(bake), pal, mesh, model: null, feet: [0, 0, 0], yaw: 0, scale: 1, look: 0,
-      posed: false, stale: false };   // HORSE-VIEW: a pose sent yet; the pose sent behind the gait's clock (a step taken with `pose` false)
+      ranges: stream.ranges.map((r) => ({
+        first: r.first,
+        count: r.count,
+        tex: r.texture === 'hair' ? hairTex : null,
+        alphaCut: r.alpha ? 0.5 : 0,
+        hidden: false,
+        part: r.part,
+      })),
+    };
+    return {
+      seed,
+      gait: horseGait(),
+      scratch: horsePoseScratch(bake),
+      pal,
+      mesh,
+      model: null,
+      feet: [0, 0, 0],
+      yaw: 0,
+      scale: 1,
+      look: 0,
+      posed: false,
+      stale: false,
+    }; // HORSE-VIEW: a pose sent yet; the pose sent behind the gait's clock (a step taken with `pose` false)
   }
 
   /** A horse let go: its palette (the stream is the rig's). */
@@ -216,7 +314,8 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   function poseNow(h) {
     writeHorsePalette(bake, h.gait, h.pal, h.scratch);
     renderer.updateSkinPalette(h.mesh, h.pal);
-    h.posed = true; h.stale = false;
+    h.posed = true;
+    h.stale = false;
   }
   /** HORSE-VIEW: a horse whose pose is behind its clock (stepped with `pose` false) posed where the clock stands; one
    *  already there sends nothing. Answers whether it posed. */
@@ -229,10 +328,16 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   /** Where a horse stands: its feet and heading, `scale` times its size about its feet (the travel view's grown
    *  traveller, fpArm.js drawThird's OW-BIG - 1 everywhere else). The pose is the step's. */
   function place(h, feet, yaw, scale = 1) {
-    h.feet[0] = feet[0]; h.feet[1] = feet[1]; h.feet[2] = feet[2];
-    h.yaw = yaw; h.scale = scale;
+    h.feet[0] = feet[0];
+    h.feet[1] = feet[1];
+    h.feet[2] = feet[2];
+    h.yaw = yaw;
+    h.scale = scale;
     // the Morrowind body's own placement (fpArm.js drawThird): its heading turned half round, x mirrored, Z up to Y up
-    h.model = multiply(trs(feet[0], feet[1], feet[2], 0, (yaw * 180) / Math.PI + 180, 0, -scale, scale, scale), Z_UP_TO_PASS);
+    h.model = multiply(
+      trs(feet[0], feet[1], feet[2], 0, (yaw * 180) / Math.PI + 180, 0, -scale, scale, scale),
+      Z_UP_TO_PASS,
+    );
     return h;
   }
 
@@ -247,17 +352,27 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
    *  forward, so a rider leans with the back's stride). */
   function seat(h) {
     if (!h?.model || seatBone < 0) return null;
-    const W = h.scratch.world, o = seatBone * 12, s = seatLocal;
-    const local = [0, 1, 2].map((r) => W[o + r * 4] * s[0] + W[o + r * 4 + 1] * s[1] + W[o + r * 4 + 2] * s[2] + W[o + r * 4 + 3]);
+    const W = h.scratch.world,
+      o = seatBone * 12,
+      s = seatLocal;
+    const local = [0, 1, 2].map(
+      (r) => W[o + r * 4] * s[0] + W[o + r * 4 + 1] * s[1] + W[o + r * 4 + 2] * s[2] + W[o + r * 4 + 3],
+    );
     return transformPoint(h.model, local[0], local[1], local[2]);
   }
 
   /** A stepped horse's box in the world - the sprite law's window (characterSprite.js) - and its anchor (its axis at
    *  its middle's height): `{ center, halfW, halfH, anchor }`. */
   function box(h) {
-    const b = bake.frame.bounds, k = h.scale ?? 1;
-    const center = transformPoint(h.model, (b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2 + 0.05);
-    const halfH = ((b.max[2] - b.min[2]) / 2 + 0.1) * k;   // a gallop's lift and its stretched legs: a hand's margin
+    const b = bake.frame.bounds,
+      k = h.scale ?? 1;
+    const center = transformPoint(
+      h.model,
+      (b.min[0] + b.max[0]) / 2,
+      (b.min[1] + b.max[1]) / 2,
+      (b.min[2] + b.max[2]) / 2 + 0.05,
+    );
+    const halfH = ((b.max[2] - b.min[2]) / 2 + 0.1) * k; // a gallop's lift and its stretched legs: a hand's margin
     const halfW = (Math.hypot(b.max[0] - b.min[0], b.max[1] - b.min[1]) / 2 + 0.1) * k;
     const anchor = transformPoint(h.model, 0, 0, (b.min[2] + b.max[2]) / 2);
     return { center, halfW, halfH, anchor };
@@ -286,18 +401,33 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
    *  the world where Daggerfall drew its riding sprite (the hosts draw the hands after it). */
   function drawFirstPerson(h, canvas, { proj, view }) {
     if (!h?.model || !canvas) return false;
-    const pixel = mwModelPixel();   // MW-DETAIL: the viewer's dial, and the target's room for the screen's frame at it
-    const wantW = canvas.clientWidth / pixel, wantH = canvas.clientHeight / pixel;
+    const pixel = mwModelPixel(); // MW-DETAIL: the viewer's dial, and the target's room for the screen's frame at it
+    const wantW = canvas.clientWidth / pixel,
+      wantH = canvas.clientHeight / pixel;
     const edge = renderer.charSpriteRoom?.(Math.ceil(Math.max(wantW, wantH))) ?? CHAR_SPRITE_RT_SIZE;
     const s = Math.min(1, edge / wantW, edge / wantH);
-    const pw = Math.max(2, Math.round(wantW * s)), ph = Math.max(2, Math.round(wantH * s));
+    const pw = Math.max(2, Math.round(wantW * s)),
+      ph = Math.max(2, Math.round(wantH * s));
     const tex = renderer.renderCharacterSprite(h.mesh, h.model, proj, view, pw, ph);
     renderer.drawScreenOverlayQuad(tex, pw / edge, ph / edge);
     return true;
   }
 
   return {
-    load, tick, horse, release, step, pose, place, picture, seat, box, seen, draw, drawFirstPerson, lookTex,
+    load,
+    tick,
+    horse,
+    release,
+    step,
+    pose,
+    place,
+    picture,
+    seat,
+    box,
+    seen,
+    draw,
+    drawFirstPerson,
+    lookTex,
     /** The rig is up: the stream and the bay's pictures. */
     ready: () => !!base,
     /** Why the rig is not up, when it failed. */

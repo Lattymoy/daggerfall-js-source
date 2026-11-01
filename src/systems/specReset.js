@@ -21,10 +21,10 @@
 // A leaf of its own, not the paths' laws: arcanePaths.js is bundled into the account Worker (judge.js), and court.js -
 // whose imports the Worker does not bundle - must never reach it.
 
-import { pathOf, SPEC_RESET_GOLD } from './arcanePaths.js';   // the price's one home, where the choice boxes name it
+import { pathOf, SPEC_RESET_GOLD } from './arcanePaths.js'; // the price's one home, where the choice boxes name it
 import { martialPathOf } from './martialPaths.js';
 import { totalGoldAmount, payUndoable } from './court.js';
-import { accountOfSave, REALM_EMPIRE_ACCOUNT } from '../net/realm/realmGoldLaw.js';   // EMPIRE-ACCOUNT: the account online gold pays from
+import { accountOfSave, REALM_EMPIRE_ACCOUNT } from '../net/realm/realmGoldLaw.js'; // EMPIRE-ACCOUNT: the account online gold pays from
 import { computeEntityMods } from './entityMods.js';
 import { t } from './textManager.js';
 
@@ -58,7 +58,11 @@ export function specResetRefusal(entity, family) {
   const words = { gold: SPEC_RESET_GOLD, have };
   return entity?._online === true
     ? t('growth.spec.reset.refuse.gold', 'Resetting costs {gold, number} gold. You have {have, number}.', words)
-    : t('growth.spec.reset.refuse.goldOffline', 'Resetting costs {gold, number} gold, paid in coins or letters of credit. You have {have, number}.', words);
+    : t(
+        'growth.spec.reset.refuse.goldOffline',
+        'Resetting costs {gold, number} gold, paid in coins or letters of credit. You have {have, number}.',
+        words,
+      );
 }
 
 /** Reset it: pay SPEC_RESET_GOLD, clear the family's path - its one ask stays made (AUDIT SPEC-RESET L1-2: a path chosen

@@ -4,28 +4,36 @@
     "file": "src/net/dragon/dragonLink.js",
     "old": "      if (!mine || w.w !== mine.w || !sameDragonSite(mine, w)) return;",
     "new": "      if (!mine) return;",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-a-blow-taken-twice",
     "file": "src/net/dragon/dragonLink.js",
-    "old": "    case 'atk': return s.blows.some((q) => q.i === w.i) ? s :",
-    "new": "    case 'atk': return false ? s :",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "old": "      return s.blows.some((q) => q.i === w.i)",
+    "new": "      return false",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-a-refusal-said-each-time",
     "file": "src/net/dragon/dragonLink.js",
-    "old": "      if (w.k === 'no') { if (!refused.has(w.m)) { refused.add(w.m); say(w.m); } return; }",
-    "new": "      if (w.k === 'no') { say(w.m); return; }",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "old": "        if (!refused.has(w.m)) {\n          refused.add(w.m);\n          say(w.m);\n        }",
+    "new": "        say(w.m);",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-gates-day",
     "file": "src/systems/dragon/dragonSite.js",
-    "old": "  const { cx, cy } = dragonCellOf(o), x0",
-    "new": "  const { cx, cy } = dragonCellOf({ w: o.w, s: 0 }), x0",
-    "tests": ["test/net/dragon/dragon3_client.test.js"],
+    "old": "  const { cx, cy } = dragonCellOf(o),",
+    "new": "  const { cx, cy } = dragonCellOf({ w: o.w, s: 0 }),",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ],
     "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content again (DRAGON-CELL)."
   },
   {
@@ -33,43 +41,56 @@
     "file": "src/systems/dragon/dragonSite.js",
     "old": "      if (tried === key && now() - triedAt < retryMs) return null;",
     "new": "",
-    "tests": ["test/net/dragon/dragon3_client.test.js"],
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ],
     "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "DRAGON3-move-never",
     "file": "src/ui/dragonBar.js",
-    "old": "dagon: false, move: !!b.atk.aimed }",
-    "new": "dagon: false, move: false }",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "old": "          move: !!b.atk.aimed,",
+    "new": "          move: false,",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-climb-always-counted",
     "file": "src/ui/dragonBar.js",
-    "old": "    wrath: !b.fell && leaveIn <= DRAGON_LEAVE_WARN_MS ?",
-    "new": "    wrath: !b.fell ?",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "old": "    wrath: !b.fell && leaveIn <= DRAGON_LEAVE_WARN_MS ? DRAGON_BAR_WORDS.climbs(countdownText(leaveIn)) : null,",
+    "new": "    wrath: !b.fell ? DRAGON_BAR_WORDS.climbs(countdownText(leaveIn)) : null,",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-ground-unread",
     "file": "src/render/dragon/dragonTelegraph.js",
     "old": "      let y = ground(b[0] + (w * i) / nx, b[1] + (d * j) / nz);",
     "new": "      let y = fallback;",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-climb-from-nowhere",
     "file": "src/scenes/dragonHost.js",
     "old": "  return dragonLegAt(climbLeg(dragonLegAt(roost, d.leaveAt), d.leaveAt, DRAGON_CLIMB_MS), t);",
     "new": "  return dragonLegAt(climbLeg({ x: 0, z: 0, a: 0, yw: 0 }, d.leaveAt, DRAGON_CLIMB_MS), t);",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-remains-forgotten-at-the-watchs-turn",
     "file": "src/scenes/dragonHost.js",
     "old": "  for (const w of dragonWatchesAbout(t)) {\n    const s = seedOf(w), o = { w, s };",
     "new": "  for (const w of dragonWatchesAbout(t).slice(0, 1)) {\n    const s = seedOf(w), o = { w, s };",
-    "tests": ["test/net/dragon/dragon3_client.test.js", "test/net/dragon/dragoncellaudit.test.js"],
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js",
+      "test/net/dragon/dragoncellaudit.test.js"
+    ],
     "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. AUDIT DRAGON-CELL D12: alive on main too; dragoncellaudit's pin reads it."
   },
   {
@@ -77,118 +98,152 @@
     "file": "src/scenes/dragonHost.js",
     "old": "    if (far > DRAGON_ADMIT_R || t >= d.leaveAt + DRAGON_REMAINS_MS) return;",
     "new": "    if (t >= d.leaveAt + DRAGON_REMAINS_MS) return;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-in-every-frame",
     "file": "src/scenes/dragonHost.js",
     "old": "    if (lastIn.w === d.w && t - lastIn.at < (heard || t >= d.leaveAt ? DRAGON_IN_RESEND_MS : DRAGON_IN_RETRY_MS)) return;",
     "new": "",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-sighting-at-once",
     "file": "src/scenes/dragonHost.js",
     "old": "t - nearSince >= DRAGON_NOTICE_WAIT_MS) { noticed = d.w;",
     "new": "true) { noticed = d.w;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-a-blow-judged-again",
     "file": "src/scenes/dragonHost.js",
     "old": "      if (judged.has(bl.i) || !me) continue;",
     "new": "      if (!me) continue;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-throw-skipped",
     "file": "src/scenes/dragonHost.js",
     "old": "    const n = w ? savedShare(raw, deps.save ? deps.save(e, B.el) : savingThrow(w[0], w[1], e)) : raw;",
     "new": "    const n = raw;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-dead-struck-later",
     "file": "src/scenes/dragonHost.js",
     "old": "      if (!alive) { if (t >= bl.at) judged.add(bl.i); continue; }",
     "new": "      if (!alive) continue;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-a-swing-on-it-aloft",
     "file": "src/scenes/dragonHost.js",
     "old": "        if (s.md === DRAGON_MODE.ground && p.a < 1.5) foe =",
     "new": "        if (true) foe =",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-ward-unread",
     "file": "src/scenes/dragonHost.js",
     "old": "    if (!live?.mine || s.fell || s.gone || !(d > 0) || live.t < s.sh) return false;",
     "new": "    if (!live?.mine || s.fell || s.gone || !(d > 0)) return false;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-words-unpaced",
     "file": "src/scenes/dragonHost.js",
     "old": "    if (!queue.length || t - sentAt < DRAGON_HIT_GAP_MS) return;",
     "new": "    if (!queue.length) return;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-remains-never",
     "file": "src/scenes/dragonHost.js",
     "old": "    batch.tint = act.act === 'remains' ? REMAINS_WASH : null;",
     "new": "    batch.tint = null;",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-it-lies-for-ever",
     "file": "src/scenes/dragonHost.js",
     "old": "      const end = mine && s.fell ? s.fell.at + DRAGON_REMAINS_MS :",
     "new": "      const end = mine && s.fell ? Infinity :",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-remains-untold",
     "file": "server/src/dragonFights.js",
-    "old": "    if (lying && heard && now - (f.stSaidAt ?? 0) >= dragonBrain.DRAGON_STATE_SEND_MS) { f.stSaidAt = now; fan(room, id, f, [DRAGON_SEAM.stateOf(f)]); }",
-    "new": "",
-    "tests": ["test/net/dragon/dragon3_relay.test.js"]
+    "old": "    if (lying && heard && now - (f.stSaidAt ?? 0) >= dragonBrain.DRAGON_STATE_SEND_MS) {\n      f.stSaidAt = now;\n      fan(room, id, f, [DRAGON_SEAM.stateOf(f)]);\n    } // its remains told to who comes near, as its fight was",
+    "new": "    // its remains told to who comes near, as its fight was",
+    "tests": [
+      "test/net/dragon/dragon3_relay.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-remains-told-for-ever",
     "file": "server/src/dragonFights.js",
     "old": "    const lying = f.fell && f.said && now < f.fell.at + DRAGON_REMAINS_MS;",
     "new": "    const lying = f.fell && f.said;",
-    "tests": ["test/net/dragon/dragon3_relay.test.js"]
+    "tests": [
+      "test/net/dragon/dragon3_relay.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-late-in-answered-gone-alone",
     "file": "server/src/dragonFights.js",
-    "old": "{ if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }",
-    "new": "{ if (!f?.rc?.[a.sub]) no('gone'); return; }",
-    "tests": ["test/net/dragon/dragon3_relay.test.js"]
+    "old": "    if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) });\n    if (!f?.rc?.[a.sub]) no('gone');",
+    "new": "    if (!f?.rc?.[a.sub]) no('gone');",
+    "tests": [
+      "test/net/dragon/dragon3_relay.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-hub-says-every-word",
     "file": "src/net/online.js",
     "old": "      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room) || r.k === 'omen')) this._deliver('dragon', () => this.onDragon?.(r, room));",
     "new": "      if (r) this._deliver('dragon', () => this.onDragon?.(r, room));",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-world-forgets-its-word",
     "file": "src/scenes/world.js",
     "old": "    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); else dragonSky?.word(w); };",
     "new": "    online.onDragon = (w) => { if (w?.k === 'bd') bossCountFell(!!dragonSky?.near()); };",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   },
   {
     "name": "DRAGON3-the-dragon-no-enemy",
     "file": "src/scenes/world.js",
     "old": "  const navalHostileNear = () => !!naval?.hostileNear() || !!dragonSky?.near();",
     "new": "  const navalHostileNear = () => !!naval?.hostileNear();",
-    "tests": ["test/scenes/dragon3_host.test.js"]
+    "tests": [
+      "test/scenes/dragon3_host.test.js"
+    ]
   }
 ]

@@ -132,23 +132,16 @@ test('WW3 the door and the site: the widget converts with toColor32 in both arms
   assert.ok(!/toColor32Order/.test(door.replace(/^\s*\*.*$/gm, '')), 'not in the code - the trap is named in the comment only');
   assert.equal((door.match(/toColor32\(/g) ?? []).length, 0, 'DWHD1: no arm flips - the reader answers top-first');
   assert.equal((door.match(/toScreenOrder\(/g) ?? []).length, 2, 'both keep their rows (HT3, DWHD1)');
-  assert.match(door, /try \{ return toScreenOrder\(tex\.rgba\(\)\); \}/, 'the bundle arm');
+  assert.match(door, /try \{\n\s*return toScreenOrder\(tex\.rgba\(\)\);\n\s*\}/, 'the bundle arm');
   assert.match(door, /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the loose arm');
   assert.match(door, /`\{ width, height, colors \}` RGBA in the port's\n \*  color32 \(bottom-up\) order, the SHAPE renderer\.uploadTexture reads/, 'the door says which shape it answers');
   const site = rd('src/combat/weapon/weaponWidget.js');
   // DW1 reshaped the catch: a throw is ALSO a miss for that name (so the
   // `w_` ask falls through to the plain one next frame), and still says so
-  assert.match(site, /\}\)\.catch\(\(e\) => \{ misses\.add\(name\); console\.warn\('\[weapon widget\] texture load failed', name, e\); \}\);/, 'no bare swallow');
+  assert.match(site, /\}\)\n\s*\.catch\(\(e\) => \{\n\s*misses\.add\(name\);\n\s*console\.warn\('\[weapon widget\] texture load failed', name, e\);\n\s*\}\);/, 'no bare swallow');
   assert.ok(!/\.catch\(\(\) => \{\}\)/.test(site), 'and none left anywhere in the widget');
   // the one home the fix leans on, unchanged
   const conv = rd('src/formats/color32Order.js');
   assert.match(conv, /`color32\.colors` would be `undefined` and\n \* `asBytes` would throw on the first swapped record/, 'the trap this crash walked into, written down before it happened');
 });
 
-test('WW3 records: the widget page, the ledger row and the testing row', () => {
-  assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /^## WW3 - THE TEXTURE DOOR'S SHAPE \(2026-09-14\)/m);
-  // TEX1 corrected this section the same day: the crash was the torches', the widget's door carried the same fault
-  assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /\*\*CORRECTED THE SAME DAY \(TEX1\):\*\*/);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /WW3 \(2026-09-14\): the mod's own textures reached the GL/);
-  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| ww3_widgettexture\.test\.js \| \d+ \| WW3/m);
-});

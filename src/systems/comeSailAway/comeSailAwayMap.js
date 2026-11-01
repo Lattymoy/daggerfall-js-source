@@ -24,10 +24,10 @@
 // before and every one another mod adds). On the Bay every draw is the mod's own, unchanged. A departure: Come Sail Away
 // knows the Bay alone (Port-Ledger A, BAY-LEFT-MAPS).
 
-import { roundToInt } from '../mathf.js';   // Mathf.RoundToInt's one home
-import { MAP_WIDTH, MAP_HEIGHT } from '../../formats/woodsFile.js';   // the world map's 1000x500: one texel a map pixel
-import { REGION_PANEL_OFFSET } from '../../ui/travel/travelMapWindow.js';   // DaggerfallTravelMapWindow.regionPanelOffset's one home
-import { inBay, bayToPicture, tamrielFrameInBay, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS: the painting's grid and the frame's fit
+import { roundToInt } from '../mathf.js'; // Mathf.RoundToInt's one home
+import { MAP_WIDTH, MAP_HEIGHT } from '../../formats/woodsFile.js'; // the world map's 1000x500: one texel a map pixel
+import { REGION_PANEL_OFFSET } from '../../ui/travel/travelMapWindow.js'; // DaggerfallTravelMapWindow.regionPanelOffset's one home
+import { inBay, bayToPicture, tamrielFrameInBay, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js'; // BAY-LEFT-MAPS: the painting's grid and the frame's fit
 
 const f = Math.fround;
 
@@ -39,12 +39,26 @@ export const TRAVEL_MAP_INTERIOR = Object.freeze([320, 160]);
 export const LINE_TEXTURE = Object.freeze({ archive: 0, record: 112, frame: 0 });
 
 /** mapMarkerModeLabels (482) and mapMarkerModeColors (484-494): Unity's Color constants, as floats. */
-export const MAP_MARKER_MODE_LABELS = Object.freeze(['Yellow', 'Green', 'Cyan', 'Blue', 'Magenta', 'Red', 'White', 'Gray']);
+export const MAP_MARKER_MODE_LABELS = Object.freeze([
+  'Yellow',
+  'Green',
+  'Cyan',
+  'Blue',
+  'Magenta',
+  'Red',
+  'White',
+  'Gray',
+]);
 const rgba = (r, g, b, a = 1) => Object.freeze({ r: f(r), g: f(g), b: f(b), a: f(a) });
 export const MAP_MARKER_MODE_COLORS = Object.freeze([
-  rgba(1, 0.92156863, 0.015686275),   // Color.yellow
-  rgba(0, 1, 0), rgba(0, 1, 1), rgba(0, 0, 1), rgba(1, 0, 1), rgba(1, 0, 0), rgba(1, 1, 1),
-  rgba(0.5, 0.5, 0.5),   // Color.gray
+  rgba(1, 0.92156863, 0.015686275), // Color.yellow
+  rgba(0, 1, 0),
+  rgba(0, 1, 1),
+  rgba(0, 0, 1),
+  rgba(1, 0, 1),
+  rgba(1, 0, 0),
+  rgba(1, 1, 1),
+  rgba(0.5, 0.5, 0.5), // Color.gray
 ]);
 export const COLOR_BLACK = rgba(0, 0, 0);
 export const COLOR_WHITE = rgba(1, 1, 1);
@@ -73,12 +87,15 @@ export function travelMapPicture(bitmap, colorOf, width = MAP_WIDTH, height = MA
   const [iw, ih] = TRAVEL_MAP_INTERIOR;
   const data = new Uint8ClampedArray(width * height * 4);
   for (let y = 0; y < height; y++) {
-    const sy = Math.min(ih - 1, Math.round((y + 0.5) * ih / height - 0.5));
+    const sy = Math.min(ih - 1, Math.round(((y + 0.5) * ih) / height - 0.5));
     for (let x = 0; x < width; x++) {
-      const sx = Math.min(iw - 1, Math.round((x + 0.5) * iw / width - 0.5));
+      const sx = Math.min(iw - 1, Math.round(((x + 0.5) * iw) / width - 0.5));
       const c = colorOf(bitmap.data[(sy + REGION_PANEL_OFFSET) * bitmap.width + sx]);
       const i = (y * width + x) * 4;
-      data[i] = c.r; data[i + 1] = c.g; data[i + 2] = c.b; data[i + 3] = 255;
+      data[i] = c.r;
+      data[i + 1] = c.g;
+      data[i + 2] = c.b;
+      data[i + 3] = 255;
     }
   }
   return { width, height, data };
@@ -100,7 +117,10 @@ export function tamrielMapPicture(bitmap, colorOf) {
   const data = new Uint8ClampedArray(width * height * 4);
   for (let i = 0; i < width * height; i++) {
     const c = colorOf(bitmap.data[i]);
-    data[i * 4] = c.r; data[i * 4 + 1] = c.g; data[i * 4 + 2] = c.b; data[i * 4 + 3] = 255;
+    data[i * 4] = c.r;
+    data[i * 4 + 1] = c.g;
+    data[i * 4 + 2] = c.b;
+    data[i * 4 + 3] = 255;
   }
   return { width, height, data };
 }
@@ -108,7 +128,8 @@ export function tamrielMapPicture(bitmap, colorOf) {
  *  map; the painting's past it, where the continent's frame holds the pixel; none past both (the Eltheric Ocean's box
  *  lies north of the painting). */
 export function mapSheetAt(pixel) {
-  const x = pixel?.[0], y = pixel?.[1];
+  const x = pixel?.[0],
+    y = pixel?.[1];
   if (!Number.isFinite(x) || !Number.isFinite(y) || inBay(x, y)) return null;
   const fr = tamrielFrameInBay();
   return x >= fr.x0 && y >= fr.y0 && x < fr.x0 + fr.w && y < fr.y0 + fr.h ? MAP_SHEET_TAMRIEL : null;
@@ -120,18 +141,27 @@ export const sheetOfPixel = (p) => mapSheetAt([p?.X, p?.Y]);
 export function sheetRect(screenRect, scale, sheet = null) {
   const r = mapRect(screenRect, scale);
   if (sheet !== MAP_SHEET_TAMRIEL) return r;
-  const w = f(f(PICTURE_W * TAMRIEL_SHEET_PX) * scale[0]), h = f(f(PICTURE_H * TAMRIEL_SHEET_PX) * scale[1]);
+  const w = f(f(PICTURE_W * TAMRIEL_SHEET_PX) * scale[0]),
+    h = f(f(PICTURE_H * TAMRIEL_SHEET_PX) * scale[1]);
   return { x: f(r.x + f(f(r.w - w) / 2)), y: f(r.y + f(f(r.h - h) / 2)), w, h };
 }
 /** A marker placed (LeftClickOnMap, AddMapMarker) - its sheet beside it past the Bay, none on the Bay's (the record every
  *  marker before carries). */
-export const placedMarker = (position, label, color, sheet = null) => (sheet ? { position, label, color, sheet } : { position, label, color });
+export const placedMarker = (position, label, color, sheet = null) =>
+  sheet ? { position, label, color, sheet } : { position, label, color };
 /** IsPositionMarked's test: a marker on this pixel of this sheet. */
-export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0] && m.position[1] === pos[1];
+export const markerOn = (m, pos, sheet = null) =>
+  (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0] && m.position[1] === pos[1];
 /** RightClickOnMap's distance: a marker's on the shown sheet, none to one of another (Infinity: never the nearest). */
-export const markerDistance = (m, pos, sheet = null) => ((m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity);
+export const markerDistance = (m, pos, sheet = null) =>
+  (m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity;
 /** The save's record of a marker (placedMapMarkers' shape) - its sheet where it has one. */
-export const savedMarker = (m) => ({ position: { x: m.position[0], y: m.position[1] }, label: m.label, color: m.color, ...(m.sheet ? { sheet: m.sheet } : {}) });
+export const savedMarker = (m) => ({
+  position: { x: m.position[0], y: m.position[1] },
+  label: m.label,
+  color: m.color,
+  ...(m.sheet ? { sheet: m.sheet } : {}),
+});
 
 /** Unity's Rect.Contains(Vector2) over a GUI rect { x, y, w, h }: the min edges in, the max edges out. */
 export const guiRectContains = (r, p) => p[0] >= r.x && p[0] < f(r.x + r.w) && p[1] >= r.y && p[1] < f(r.y + r.h);
@@ -150,7 +180,8 @@ export function mapRect(screenRect, scale) {
   return {
     x: f(f(f(screenRect.x ?? 0) + f(f(f(screenRect.width) * screenScaleX) / 2)) - f(num2 / 2)),
     y: f(f(f(screenRect.y ?? 0) + f(f(f(screenRect.height) * screenScaleY) / 2)) - f(num3 / 2)),
-    w: num2, h: num3,
+    w: num2,
+    h: num3,
   };
 }
 
@@ -167,7 +198,8 @@ export function dayOfMonthWithSuffix(day) {
   return `${d}${s}`;
 }
 /** LeftClickOnMap's label: "(x, y) - 5th of Morning Star". */
-export const markerLabel = (pos, dayWithSuffix, monthName) => `(${pos[0]}, ${pos[1]}) - ${dayWithSuffix} of ${monthName}`;
+export const markerLabel = (pos, dayWithSuffix, monthName) =>
+  `(${pos[0]}, ${pos[1]}) - ${dayWithSuffix} of ${monthName}`;
 
 /**
  * Mono's Single.ToString() - the "G" format at a float's seven significant digits: fixed above 1E-05 and under 1E+07,
@@ -182,7 +214,8 @@ export function csFloatString(v) {
   const sign = v < 0 ? '-' : '';
   const [m, e] = Math.abs(v).toExponential(6).split('e');
   const exp = Number(e);
-  if (exp >= 7 || exp <= -5) {   // fixed only while -5 < exponent < 7 (the "G" rule)
+  if (exp >= 7 || exp <= -5) {
+    // fixed only while -5 < exponent < 7 (the "G" rule)
     const mant = m.replace(/\.?0+$/, '');
     return `${sign}${mant}E${exp < 0 ? '-' : '+'}${String(Math.abs(exp)).padStart(2, '0')}`;
   }
@@ -211,37 +244,54 @@ export function tamrielCrossAt(pixel, r) {
  */
 export function mapOverlayDraws(o) {
   const draws = [];
-  const quad = (tex, x, y, w, h, color) => draws.push({ kind: 'quad', tex, rect: { x: f(x), y: f(y), w: f(w), h: f(h) }, color });
-  const text = (str, pos, scale, color, shadowPos) => draws.push({ kind: 'text', text: str, x: f(pos[0]), y: f(pos[1]), scale, color, shadow: COLOR_BLACK, shadowPos });
+  const quad = (tex, x, y, w, h, color) =>
+    draws.push({ kind: 'quad', tex, rect: { x: f(x), y: f(y), w: f(w), h: f(h) }, color });
+  const text = (str, pos, scale, color, shadowPos) =>
+    draws.push({ kind: 'text', text: str, x: f(pos[0]), y: f(pos[1]), scale, color, shadow: COLOR_BLACK, shadowPos });
   // the backdrop: `new Rect(0, 0, Screen.width, Screen.height)`, black at mapBackdropOpacity
   quad('line', 0, 0, o.screen[0], o.screen[1], { ...COLOR_BLACK, a: f(o.opacity) });
   // BAY-LEFT-MAPS (C12): past the Bay the painting of Tamriel, its rect and the cross on it; on the Bay the mod's own
   const sheet = mapSheetAt(o.pixel);
   const r = sheetRect(o.screenRect, o.scale, sheet);
-  const num2 = r.w, num3 = r.h;
+  const num2 = r.w,
+    num3 = r.h;
   quad(sheet ?? 'map', r.x, r.y, r.w, r.h, COLOR_WHITE);
   const val4 = mapPixelUnder(r, o.mouse);
   if (o.showingPosition && f(Math.sin(f(f(o.unscaledTime) * 5))) > 0) {
     const t = o.lineThickness;
-    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [f(f(o.pixel[0]) * o.scale[0]), f(f(o.pixel[1]) * o.scale[1])];
+    const [cx, cy] = sheet
+      ? tamrielCrossAt(o.pixel, r)
+      : [f(f(o.pixel[0]) * o.scale[0]), f(f(o.pixel[1]) * o.scale[1])];
     quad('line', f(r.x + f(cx - t)), r.y, 1 + t * 2, num3, COLOR_RED);
     quad('line', r.x, f(f(r.y + cy) - t), num2, 1 + t * 2, COLOR_RED);
   }
   const shadow3 = [DAGGERFALL_DEFAULT_SHADOW_POS[0] * 3, DAGGERFALL_DEFAULT_SHADOW_POS[1] * 3];
   MAP_HELP_LINES.forEach((line, i) => text(line, [0, 20 * i], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3));
-  text(`Current marker color is ${MAP_MARKER_MODE_LABELS[o.markerMode]}`, [0, f(o.screen[1] - 20)], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3);
-  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet);   // BAY-LEFT-MAPS: the sheet's own markers
+  text(
+    `Current marker color is ${MAP_MARKER_MODE_LABELS[o.markerMode]}`,
+    [0, f(o.screen[1] - 20)],
+    3,
+    DAGGERFALL_DEFAULT_TEXT_COLOR,
+    shadow3,
+  );
+  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet); // BAY-LEFT-MAPS: the sheet's own markers
   for (const m of shown) {
-    const t = o.markerThickness, ot = o.outlineThickness;
-    const x = f(f(r.x + m.position[0]) - t), y = f(f(r.y - t) + m.position[1]), w = 1 + t * 2, h = 1 + t * 2;
+    const t = o.markerThickness,
+      ot = o.outlineThickness;
+    const x = f(f(r.x + m.position[0]) - t),
+      y = f(f(r.y - t) + m.position[1]),
+      w = 1 + t * 2,
+      h = 1 + t * 2;
     if (ot !== 0) quad('line', f(x - ot), f(y - ot), w + ot * 2, h + ot * 2, COLOR_BLACK);
     quad('line', x, y, w, h, m.color);
   }
   for (const m of shown) {
     // the label's rect takes mapMarkerThickness itself, not the Final one Left Shift zeroes (kept)
     const t = o.markerThicknessRaw;
-    const x = f(f(r.x + m.position[0]) - t), y = f(f(r.y - t) + m.position[1]);
-    if (vector2IntDistance(val4, m.position) <= o.clickRange) text(m.label, [f(x + 10), f(y - 20)], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3);
+    const x = f(f(r.x + m.position[0]) - t),
+      y = f(f(r.y - t) + m.position[1]);
+    if (vector2IntDistance(val4, m.position) <= o.clickRange)
+      text(m.label, [f(x + 10), f(y - 20)], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3);
   }
   return draws;
 }

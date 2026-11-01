@@ -59,6 +59,13 @@ export const HORIZON_HAZE_GLSL = `
 float horizonHaze(float d, float fogStart, float fogEnd, float rimStart, float rimEnd, float hold) {
   float ramp = clamp((d - fogStart) / max(fogEnd - fogStart, 1.0), 0.0, 1.0);
   return min(min(ramp, hold) + (1.0 - hold) * smoothstep(rimStart, rimEnd, d), 1.0);
+}
+// AUDIT FB1031 L2: under a weather row (law.x 1 exp, 2 exp2, at density law.y) the world's own factor at the distance
+// (fogGlsl.js weatherFogAt), so the far views meet the streamed ground at the grid's edge; law.x 0 is horizonHaze
+float horizonHazeOf(vec2 law, float d, float fogStart, float fogEnd, float rimStart, float rimEnd, float hold) {
+  if (law.x < 0.5) return horizonHaze(d, fogStart, fogEnd, rimStart, rimEnd, hold);
+  float f = law.y * d;
+  return 1.0 - (law.x > 1.5 ? exp(-f * f) : exp(-f));
 }`;
 
 /** The sea's band about its own level (world units): a water fragment within it is the sea and takes the horizon's
@@ -98,6 +105,7 @@ uniform vec3 uSkyHorizon;
 uniform float uSeaF0;
 uniform float uSeaLook;   // 1 with a sky to reflect (and the Enhanced water on), 0 without (the sea lit as ground, as before)
 uniform float uSummitFrom;   // RED-MOUNTAIN: the streamed grid's edge, metres out - the summits' thinner air eased in past it
+uniform vec2 uFogLaw;   // AUDIT FB1031 L2: the weather's law and density (horizonHazeOf), x 0 the linear ramp
 ${SEA_LOOK_GLSL}
 ${HORIZON_HAZE_GLSL}
 ${SUMMIT_HOLD_GLSL}

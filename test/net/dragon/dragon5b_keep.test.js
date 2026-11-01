@@ -13,7 +13,7 @@ import {
   keepShownAt, keepFlightAt, keepComing, dragonCallRefusal, dragonKeepDoor, dragonCardWords, DRAGON_KEEP_TEXT,
 } from '../../../src/systems/dragon/dragonKeep.js';
 import { dragonKeepWireRecord, validDragonKeepRecord, dragonKeepRecordKey } from '../../../src/net/dragon/dragonKeepWire.js';
-import { createDragonKeep, DRAGON_KEEP_REACH } from '../../../src/scenes/dragonKeepHost.js';
+import { createDragonKeep, DRAGON_KEEP_REACH, DRAGON_KEEP_SCALE } from '../../../src/scenes/dragonKeepHost.js';
 import { newDragonMount, DRAGON_MOUNT_TEMPLATE } from '../../../src/systems/dragon/dragonMount.js';
 import { dragonRideStep, setDragonMounter, _resetDragonFlight } from '../../../src/player/dragonRide.js';
 import { TRANSPORT_MODES } from '../../../src/systems/transport.js';
@@ -97,13 +97,13 @@ function world({ items = [newDragonMount({ id: ID })] } = {}) {
   const entity = { items };
   const renderer = {
     textures: new Map(),
-    createBillboardBatch: () => { w.batches++; return { bounds: [0, 0, 0, 0] }; },
+    createBillboardBatch: (/** @type {any} */ _a, /** @type {any} */ _k, /** @type {any} */ size) => { w.batches++; w.made = size; return { bounds: [0, 0, 0, 0] }; },
     destroyBillboardBatch: () => { w.destroyed++; },
   };
   const keep = createDragonKeep({
     now: () => w.t, local: (nx, nz) => [nx / 40, nz / 40], native: (x, z) => [x * 40, z * 40], ground: () => 0,
     feet: () => w.feet, eye: () => [w.feet[0], 1.6, w.feet[2]], street: () => w.street, aboard: () => w.aboard, say: (l) => w.said.push(l),
-    renderer, getTexture: () => ({ getFrameCount: () => 4, getSize: () => ({ width: 200, height: 160 }), getScale: () => ({ width: 0, height: 0 }) }), uploadRecordFrame: () => {}, scale: 1.6,
+    renderer, getTexture: () => ({ getFrameCount: () => 4, getSize: () => ({ width: 200, height: 160 }), getScale: () => ({ width: 0, height: 0 }) }), uploadRecordFrame: () => {},
     townTalk: { showOverlay: (o) => w.overlays.push(o) }, makeInventoryWindow: (o) => { w.windows.push(o); return { opened: o }; }, entity,
   });
   const step = (mode) => dragonRideStep(0.016, { transportMode: mode, grounded: true }, {});
@@ -258,7 +258,7 @@ test('DRAGON5b the saddlebags are held: the judge\'s and the ledger\'s lists and
 test('DRAGON5b the doors: the transport window\'s Dragon row and the summon key go through the keep; the Stable card says where it is; the host wires its pick, race, press, plaque and words (mutants: the row mounts from afar)', () => {
   assert.match(src('src/player/mountRig.js'), /if \(mode === TRANSPORT_MODES\.Dragon && dragonKeepDoor\(\)\) \{ dragonKeepDoor\(\)\.ride\(\); return; \}/);
   assert.match(src('src/player/mountRig.js'), /setDragonMounter\(\(\) => setMode\(TRANSPORT_MODES\.Dragon\)\);/);
-  assert.match(src('src/systems/horse/horseCart.js'), /function handleSummonTransport\(\) \{ const d = dragonKeepDoor\(\); if \(d\?\.summonsFirst\(\)\) \{ d\.call\(\); return; \} say\(summonTransport\(\)\.text\); \}/);
+  assert.match(src('src/systems/horse/horseCart.js'), /function handleSummonTransport\(\) \{\n\s*const d = dragonKeepDoor\(\);\n\s*if \(d\?\.summonsFirst\(\)\) \{\n\s*d\.call\(\);\n\s*return;\n\s*\}\n\s*say\(summonTransport\(\)\.text\);\n\s*\}/);
   assert.deepEqual(dragonCardWords({ where: DRAGON_WHERE.Ridden }).state, 'Riding');
   assert.deepEqual(dragonCardWords({ where: DRAGON_WHERE.Waiting, coming: true }).state, 'Coming');
   assert.match(dragonCardWords({ where: DRAGON_WHERE.Waiting, far: 42 }).line, /42 m away/);
@@ -278,4 +278,17 @@ test('DRAGON5b the doors: the transport window\'s Dragon row and the summon key 
   assert.match(src('src/scenes/exteriorFoes.js'), /if \(data\.dk !== undefined\) _onDragonKeep\?\.\(from, data\.dk, _now\(\)\);/);
   assert.match(src('src/scenes/dragonHost.js'), /keep\.tick\(\);/);
   assert.equal(DRAGON_MOUNT_TEMPLATE, 1820);
+});
+
+test('DRAGON-KEEP-SIZE (2026-10-31, the owner: "the dragon when in possession of a player is too large unmounted"): my tamed dragon waiting off its back is drawn at its sprite\'s own size - the size it is ridden at, as net/remotePlayers.js draws its rider - never the boss\'s DRAGON_SCALE (mutants: the boss\'s scale; the host handing it on)', async () => {
+  const { w, entity, keep } = world();
+  entity.dragonKeep = { ...freshDragonKeep(), where: DRAGON_WHERE.Waiting, nx: 0, nz: 400 };
+  keep.tick();
+  keep.batches();
+  await new Promise((r) => setTimeout(r, 0));   // its pictures' texture, asked once
+  const out = keep.batches();
+  assert.equal(DRAGON_KEEP_SCALE, 1);
+  assert.ok(out.length === 1 && w.made, 'drawn');
+  assert.deepEqual([w.made.w, w.made.h, Math.abs(out[0].size.w), out[0].size.h], [200 * 0.025, 160 * 0.025, 200 * 0.025, 160 * 0.025], 'its sprite\'s own size (200 x 160 at GLOBAL_SCALE)');
+  assert.doesNotMatch(src('src/scenes/dragonHost.js'), /createDragonKeep\(\{[^}]*scale/, 'the sky host hands it no scale of its own');
 });

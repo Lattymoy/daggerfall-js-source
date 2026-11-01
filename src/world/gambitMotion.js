@@ -79,9 +79,19 @@ export const GAMBIT_THROW_FROM = 2.5;
  *  callings that shoot arrows; a hazard's bite by its kind. */
 export const GAMBIT_HIT_CLIPS = Object.freeze([SOUND.Hit1, SOUND.Hit2, SOUND.Hit3, SOUND.Hit4, SOUND.Hit5]);
 export const GAMBIT_SWING_CLIPS = Object.freeze([SOUND.SwingLowPitch, SOUND.SwingMediumPitch, SOUND.SwingHighPitch]);
-export const GAMBIT_SPELL_CLIPS = Object.freeze([SOUND.CastSpell1, SOUND.CastSpell2, SOUND.CastSpell3, SOUND.CastSpell4, SOUND.CastSpell5]);
+export const GAMBIT_SPELL_CLIPS = Object.freeze([
+  SOUND.CastSpell1,
+  SOUND.CastSpell2,
+  SOUND.CastSpell3,
+  SOUND.CastSpell4,
+  SOUND.CastSpell5,
+]);
 export const GAMBIT_ARCHER_CLASSES = Object.freeze([141, 142]);
-export const GAMBIT_HAZARD_CLIPS = Object.freeze({ fire: SOUND.SpellImpactFire, spikes: SOUND.Hit3, poison: SOUND.SpellImpactPoison });
+export const GAMBIT_HAZARD_CLIPS = Object.freeze({
+  fire: SOUND.SpellImpactFire,
+  spikes: SOUND.Hit3,
+  poison: SOUND.SpellImpactPoison,
+});
 /** A unit is a calling (a class, a king) from this id up, else a monster with its own clips (the mod's `id >= 128`). */
 export const GAMBIT_CALLING_FROM = 128;
 /** A monster's own clip of `kind` ('moveSound', 'barkSound', 'attackSound'), or null for a calling or a clip it has none
@@ -95,7 +105,10 @@ export const monsterClip = (unit, kind) => {
 const MS = 1000;
 const clamp01 = (/** @type {number} */ x) => Math.max(0, Math.min(1, x));
 /** The sideways of a step: a direction's unit vector in cells, or none. */
-const unit = (/** @type {number} */ dc, /** @type {number} */ dr) => { const m = Math.hypot(dc, dr); return m > 0 ? [dc / m, dr / m] : [0, 0]; };
+const unit = (/** @type {number} */ dc, /** @type {number} */ dr) => {
+  const m = Math.hypot(dc, dr);
+  return m > 0 ? [dc / m, dr / m] : [0, 0];
+};
 
 /**
  * THE FALLEN PILE of `side` on this lay: `[col, row]` in the board's cells, off the board on its owner's right hand at its
@@ -134,20 +147,37 @@ export function createGambitMotion({ pick = () => 0 } = {}) {
   /** @type {any[]} */ let shots = [];
   /** The sounds to come: `{clip, at, cell}` (the cell the sound is heard from, or null for the board's middle). @type {any[]} */
   let cues = [];
-  const cue = (/** @type {number|null} */ clip, /** @type {number} */ at, /** @type {number[]|null} */ cell = null) => { if (Number.isInteger(clip) && /** @type {number} */ (clip) >= 0) cues.push({ clip, at, cell }); };
-  const one = (/** @type {readonly number[]} */ set) => set[Math.max(0, Math.min(set.length - 1, pick(set.length) | 0))];
+  const cue = (/** @type {number|null} */ clip, /** @type {number} */ at, /** @type {number[]|null} */ cell = null) => {
+    if (Number.isInteger(clip) && /** @type {number} */ (clip) >= 0) cues.push({ clip, at, cell });
+  };
+  const one = (/** @type {readonly number[]} */ set) =>
+    set[Math.max(0, Math.min(set.length - 1, pick(set.length) | 0))];
   const piles = [0, 0];
   /** @type {boolean} */ let end = false;
   /** When a piece's last motion ends (ms). */
-  const busy = (/** @type {number} */ id) => { const l = moves.get(id); return l?.length ? l[l.length - 1].until : -Infinity; };
-  const push = (/** @type {number} */ id, /** @type {any} */ m) => { const l = moves.get(id) ?? []; l.push(m); moves.set(id, l); return m; };
+  const busy = (/** @type {number} */ id) => {
+    const l = moves.get(id);
+    return l?.length ? l[l.length - 1].until : -Infinity;
+  };
+  const push = (/** @type {number} */ id, /** @type {any} */ m) => {
+    const l = moves.get(id) ?? [];
+    l.push(m);
+    moves.set(id, l);
+    return m;
+  };
   const see = (/** @type {any} */ state) => {
     if (!state) return;
     tiles = state.tiles;
     for (const p of state.pieces) known.set(p.id, { ...p });
   };
   /** A blow lands on `id` at `at` from direction `dir` (cells); `killed` it falls. */
-  const strike = (/** @type {number} */ id, /** @type {number} */ at, /** @type {number[]} */ dir, /** @type {number} */ damage, /** @type {boolean} */ killed) => {
+  const strike = (
+    /** @type {number} */ id,
+    /** @type {number} */ at,
+    /** @type {number[]} */ dir,
+    /** @type {number} */ damage,
+    /** @type {boolean} */ killed,
+  ) => {
     const p = known.get(id);
     if (!p) return;
     push(id, { kind: 'hit', from: at, until: at + GAMBIT_HIT_S * MS, dir });
@@ -159,69 +189,104 @@ export function createGambitMotion({ pick = () => 0 } = {}) {
   };
   return {
     /** The lay: whether the host sits at an end (where the piles lie). @param {boolean} isEnd */
-    lay(isEnd) { end = !!isEnd; },
+    lay(isEnd) {
+      end = !!isEnd;
+    },
     /** @param {any[]} events @param {number} now @param {any} state */
     feed(events, now, state) {
       for (const e of events) {
         const at = Number.isFinite(e.at) ? e.at : now;
         if (e.t === 'game') {
           // THE MUSTER: each side's king first, then its units in the deployment's order - the law's own
-          known.clear(); moves.clear(); fallen.clear(); throws.clear(); floats = []; shots = []; cues = []; piles[0] = piles[1] = 0;
+          known.clear();
+          moves.clear();
+          fallen.clear();
+          throws.clear();
+          floats = [];
+          shots = [];
+          cues = [];
+          piles[0] = piles[1] = 0;
           see(state);
-          if (e.midway) continue;   // AUDIT KG II B18: a game opened under way (a watcher come near) was mustered long ago
-          cue(SOUND.DrawWeapon, at);   // StartBattle
+          if (e.midway) continue; // AUDIT KG II B18: a game opened under way (a watcher come near) was mustered long ago
+          cue(SOUND.DrawWeapon, at); // StartBattle
           for (const side of [0, 1]) {
             const mine = (state?.pieces ?? []).filter((/** @type {any} */ p) => p.side === side);
-            const order = [...mine.filter((/** @type {any} */ p) => p.king), ...mine.filter((/** @type {any} */ p) => !p.king)];
+            const order = [
+              ...mine.filter((/** @type {any} */ p) => p.king),
+              ...mine.filter((/** @type {any} */ p) => !p.king),
+            ];
             order.forEach((/** @type {any} */ p, i) => throws.set(p.id, at + i * GAMBIT_MUSTER_BEAT_S * MS));
           }
           for (const [id, t0] of throws) push(id, { kind: 'throw', from: t0, until: t0 + ILIAC_THROW_S * MS });
         } else if (e.t === 'move') {
           const p = known.get(e.piece);
           if (!p) continue;
-          const board = { tiles, hazards: [], pieces: [...known.values()].filter((x) => !fallen.has(x.id) || x.id === p.id) };
-          const path = (tiles && reachPath(board, { ...p, col: e.from[0], row: e.from[1] }, e.to[0], e.to[1])) ?? [e.from, e.to];
+          const board = {
+            tiles,
+            hazards: [],
+            pieces: [...known.values()].filter((x) => !fallen.has(x.id) || x.id === p.id),
+          };
+          const path = (tiles && reachPath(board, { ...p, col: e.from[0], row: e.from[1] }, e.to[0], e.to[1])) ?? [
+            e.from,
+            e.to,
+          ];
           const from = Math.max(at, busy(p.id));
           push(p.id, { kind: 'walk', from, until: from + ((path.length - 1) / GAMBIT_WALK_CELLS_S) * MS, path });
-          const steps = path.length - 1, walk = monsterClip(p.unit, 'moveSound');   // MovePiece's two
+          const steps = path.length - 1,
+            walk = monsterClip(p.unit, 'moveSound'); // MovePiece's two
           if (steps > 0) cue(walk, from, e.from);
           if (steps > 1) cue(walk, from + (steps / GAMBIT_WALK_CELLS_S) * 0.5 * MS, e.to);
-          p.col = e.to[0]; p.row = e.to[1];
+          p.col = e.to[0];
+          p.row = e.to[1];
         } else if (e.t === 'attack') {
-          const a = known.get(e.piece), t = known.get(e.target);
+          const a = known.get(e.piece),
+            t = known.get(e.target);
           if (!a || !t) continue;
           const from = Math.max(at, busy(a.id));
           const dir = unit(t.col - a.col, t.row - a.row);
           const impact = from + GAMBIT_IMPACT_S * MS;
-          push(a.id, { kind: 'lunge', from: impact - GAMBIT_LUNGE_LEAD_S * MS, until: impact - GAMBIT_LUNGE_LEAD_S * MS + GAMBIT_LUNGE_S * MS, dir, reach: e.shot ? GAMBIT_LUNGE_SHOT : GAMBIT_LUNGE_MELEE });
+          push(a.id, {
+            kind: 'lunge',
+            from: impact - GAMBIT_LUNGE_LEAD_S * MS,
+            until: impact - GAMBIT_LUNGE_LEAD_S * MS + GAMBIT_LUNGE_S * MS,
+            dir,
+            reach: e.shot ? GAMBIT_LUNGE_SHOT : GAMBIT_LUNGE_MELEE,
+          });
           const lands = e.shot ? impact + GAMBIT_SHOT_S * MS : impact;
           if (e.shot) shots.push({ from: [a.col, a.row], to: [t.col, t.row], at: impact });
-          const hit = Math.max(lands, busy(t.id)), A = [a.col, a.row], T = [t.col, t.row];
+          const hit = Math.max(lands, busy(t.id)),
+            A = [a.col, a.row],
+            T = [t.col, t.row];
           // PlayAttackSounds: the blow's own, then the struck's
-          if (e.shot && GAMBIT_ARCHER_CLASSES.includes(a.unit)) { cue(SOUND.ArrowShoot, impact, A); cue(SOUND.ArrowHit, hit, T); }
-          else if (e.shot) { cue(one(GAMBIT_SPELL_CLIPS), impact, A); cue(SOUND.SpellImpactMagic, hit, T); }
-          else {
+          if (e.shot && GAMBIT_ARCHER_CLASSES.includes(a.unit)) {
+            cue(SOUND.ArrowShoot, impact, A);
+            cue(SOUND.ArrowHit, hit, T);
+          } else if (e.shot) {
+            cue(one(GAMBIT_SPELL_CLIPS), impact, A);
+            cue(SOUND.SpellImpactMagic, hit, T);
+          } else {
             cue(a.unit >= GAMBIT_CALLING_FROM ? one(GAMBIT_SWING_CLIPS) : monsterClip(a.unit, 'attackSound'), from, A);
             cue(one(GAMBIT_HIT_CLIPS), hit, T);
           }
           if (e.killed) cue(SOUND.BodyFall, hit + 0.3 * MS, T);
-          else cue(t.unit >= GAMBIT_CALLING_FROM ? SOUND.PainSound : monsterClip(t.unit, 'barkSound'), hit + 0.1 * MS, T);
+          else
+            cue(t.unit >= GAMBIT_CALLING_FROM ? SOUND.PainSound : monsterClip(t.unit, 'barkSound'), hit + 0.1 * MS, T);
           strike(t.id, hit, dir, e.damage, !!e.killed);
         } else if (e.t === 'potion') {
           const p = known.get(e.piece);
           if (!p) continue;
           const from = Math.max(at, busy(p.id));
           push(p.id, { kind: 'glow', from, until: from + GAMBIT_GLOW_S * MS });
-          cue(SOUND.MakePotion, from, [p.col, p.row]);   // Heal
+          cue(SOUND.MakePotion, from, [p.col, p.row]); // Heal
           floats.push({ col: p.col, row: p.row, text: `+${e.healed}`, at: from });
         } else if (e.t === 'hazard') {
           const p = known.get(e.piece);
           if (!p) continue;
           const bite = Math.max(at, busy(p.id));
-          cue(/** @type {any} */ (GAMBIT_HAZARD_CLIPS)[e.kind] ?? null, bite, [p.col, p.row]);   // ApplyHazards
+          cue(/** @type {any} */ (GAMBIT_HAZARD_CLIPS)[e.kind] ?? null, bite, [p.col, p.row]); // ApplyHazards
           if (e.killed) cue(SOUND.BodyFall, bite + 0.3 * MS, [p.col, p.row]);
           strike(p.id, bite, [0, 0], e.damage, !!e.killed);
-        } else if (e.t === 'warning') cue(SOUND.SpookyMid, at, e.cells?.[0] ?? null);   // HazardTick
+        } else if (e.t === 'warning') cue(SOUND.SpookyMid, at, e.cells?.[0] ?? null); // HazardTick
       }
       see(state);
     },
@@ -237,39 +302,74 @@ export function createGambitMotion({ pick = () => 0 } = {}) {
       /** @type {any[]} */ const out = [];
       const lay = (/** @type {any} */ p, /** @type {any} */ fall) => {
         const list = moves.get(p.id) ?? [];
-        let at = [p.col, p.row], tip = [0, 0], shake = [0, 0], flash = false, glow = false, thrown = null;
+        let at = [p.col, p.row],
+          tip = [0, 0],
+          shake = [0, 0],
+          flash = false,
+          glow = false,
+          thrown = null;
         // the walk: where the walk under way stands now; a walk still to come starts from its first cell
         const walk = list.filter((m) => m.kind === 'walk' && m.until > now)[0];
         if (walk) {
-          const n = walk.path.length - 1, s = clamp01((now - walk.from) / Math.max(1, walk.until - walk.from)) * n;
-          const i = Math.min(n - 1, Math.floor(s)), f = s - i;
-          const a = walk.path[i], b = walk.path[i + 1] ?? a;
+          const n = walk.path.length - 1,
+            s = clamp01((now - walk.from) / Math.max(1, walk.until - walk.from)) * n;
+          const i = Math.min(n - 1, Math.floor(s)),
+            f = s - i;
+          const a = walk.path[i],
+            b = walk.path[i + 1] ?? a;
           at = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
         }
         for (const m of list) {
           if (now < m.from || now >= m.until) continue;
           const k = (now - m.from) / (m.until - m.from);
-          if (m.kind === 'lunge') { const s = Math.sin(k * Math.PI) * m.reach; tip = [m.dir[0] * s, m.dir[1] * s]; }
-          else if (m.kind === 'hit') {
+          if (m.kind === 'lunge') {
+            const s = Math.sin(k * Math.PI) * m.reach;
+            tip = [m.dir[0] * s, m.dir[1] * s];
+          } else if (m.kind === 'hit') {
             flash = true;
             if (!reduced) {
               const left = 1 - k;
-              shake = [m.dir[0] * GAMBIT_KNOCK * left + Math.sin(k * 55) * GAMBIT_SHAKE * left, m.dir[1] * GAMBIT_KNOCK * left + Math.cos(k * 47) * GAMBIT_SHAKE * left];
+              shake = [
+                m.dir[0] * GAMBIT_KNOCK * left + Math.sin(k * 55) * GAMBIT_SHAKE * left,
+                m.dir[1] * GAMBIT_KNOCK * left + Math.cos(k * 47) * GAMBIT_SHAKE * left,
+              ];
             }
           } else if (m.kind === 'glow') glow = true;
         }
         const t0 = throws.get(p.id);
-        if (t0 !== undefined && now < t0) return null;   // not dealt yet
+        if (t0 !== undefined && now < t0) return null; // not dealt yet
         if (t0 !== undefined && now < t0 + ILIAC_THROW_S * MS) {
           const edge = p.side === 0 ? KG_ROWS - 1 + GAMBIT_THROW_FROM : -GAMBIT_THROW_FROM;
           thrown = { k: clamp01((now - t0) / (ILIAC_THROW_S * MS)), from: [p.col, edge] };
         }
-        return { id: p.id, side: p.side, king: p.king, unit: p.unit, hp: p.hp, maxHp: p.maxHp, at, tip, shake, flash, glow, thrown, fall, pile: null };
+        return {
+          id: p.id,
+          side: p.side,
+          king: p.king,
+          unit: p.unit,
+          hp: p.hp,
+          maxHp: p.maxHp,
+          at,
+          tip,
+          shake,
+          flash,
+          glow,
+          thrown,
+          fall,
+          pile: null,
+        };
       };
-      for (const p of state?.pieces ?? []) { const x = lay(p, null); if (x) out.push(x); }
+      for (const p of state?.pieces ?? []) {
+        const x = lay(p, null);
+        if (x) out.push(x);
+      }
       // the fallen: struck, toppling, sliding to the pile, then lying in it
       for (const [, f] of fallen) {
-        if (now < f.at) { const x = lay(f.piece, null); if (x) out.push(x); continue; }   // still standing until its fall
+        if (now < f.at) {
+          const x = lay(f.piece, null);
+          if (x) out.push(x);
+          continue;
+        } // still standing until its fall
         const k = clamp01((now - f.at) / (GAMBIT_TOPPLE_S * MS));
         const s = clamp01((now - f.at - GAMBIT_TOPPLE_S * MS) / (GAMBIT_PILE_SLIDE_S * MS));
         const x = lay(f.piece, { k, dir: f.dir });
@@ -277,10 +377,23 @@ export function createGambitMotion({ pick = () => 0 } = {}) {
         if (now >= f.at + GAMBIT_TOPPLE_S * MS) x.pile = { k: s, at: f.pile, index: f.index };
         out.push(x);
       }
-      const fl = floats.filter((f) => now >= f.at && now < f.at + GAMBIT_FLOAT_S * MS)
-        .map((f) => { const k = (now - f.at) / (GAMBIT_FLOAT_S * MS); return { at: [f.col, f.row], rise: GAMBIT_FLOAT_RISE * k, text: f.text, k }; });
-      const sh = shots.filter((s) => now >= s.at && now < s.at + GAMBIT_SHOT_S * MS)
-        .map((s) => { const k = (now - s.at) / (GAMBIT_SHOT_S * MS); return { at: [s.from[0] + (s.to[0] - s.from[0]) * k, s.from[1] + (s.to[1] - s.from[1]) * k], from: s.from, to: s.to, k }; });
+      const fl = floats
+        .filter((f) => now >= f.at && now < f.at + GAMBIT_FLOAT_S * MS)
+        .map((f) => {
+          const k = (now - f.at) / (GAMBIT_FLOAT_S * MS);
+          return { at: [f.col, f.row], rise: GAMBIT_FLOAT_RISE * k, text: f.text, k };
+        });
+      const sh = shots
+        .filter((s) => now >= s.at && now < s.at + GAMBIT_SHOT_S * MS)
+        .map((s) => {
+          const k = (now - s.at) / (GAMBIT_SHOT_S * MS);
+          return {
+            at: [s.from[0] + (s.to[0] - s.from[0]) * k, s.from[1] + (s.to[1] - s.from[1]) * k],
+            from: s.from,
+            to: s.to,
+            k,
+          };
+        });
       return { pieces: out, floats: fl, shots: sh, piles: [piles[0], piles[1]] };
     },
     /** Whether anything still moves at `now` - the draw's reason to draw again. @param {number} now */
@@ -298,6 +411,16 @@ export function createGambitMotion({ pick = () => 0 } = {}) {
     /** A sound of the table's own (the host's: a press, the result), on the same clock. @param {number|null} clip @param {number} at @param {number[]|null} [cell] */
     cue,
     /** Forget the game (a new deal starts from its own muster). */
-    reset() { known.clear(); moves.clear(); fallen.clear(); throws.clear(); floats = []; shots = []; cues = []; piles[0] = piles[1] = 0; tiles = null; },
+    reset() {
+      known.clear();
+      moves.clear();
+      fallen.clear();
+      throws.clear();
+      floats = [];
+      shots = [];
+      cues = [];
+      piles[0] = piles[1] = 0;
+      tiles = null;
+    },
   };
 }

@@ -49,12 +49,31 @@ export const SEASONS_KEPT = 12;
 export const ROSTER_PER_BANNER = 24;
 /** The classes a banner recruits (Daggerfall's own class enemies, MobileTypes 128-145). */
 export const ROSTER_CLASSES = Object.freeze([
-  M.Mage, M.Spellsword, M.Battlemage, M.Sorcerer, M.Healer, M.Nightblade, M.Bard, M.Burglar, M.Rogue, M.Acrobat,
-  M.Thief, M.Assassin, M.Monk, M.Archer, M.Ranger, M.Barbarian, M.Warrior, M.Knight,
+  M.Mage,
+  M.Spellsword,
+  M.Battlemage,
+  M.Sorcerer,
+  M.Healer,
+  M.Nightblade,
+  M.Bard,
+  M.Burglar,
+  M.Rogue,
+  M.Acrobat,
+  M.Thief,
+  M.Assassin,
+  M.Monk,
+  M.Archer,
+  M.Ranger,
+  M.Barbarian,
+  M.Warrior,
+  M.Knight,
 ]);
 
 const isBanner = (b) => b === 'red' || b === 'blue';
-const int = (v, lo, hi, d = lo) => { const n = Math.trunc(Number(v)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d; };
+const int = (v, lo, hi, d = lo) => {
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d;
+};
 const intOrNull = (v, lo = 0, hi = 1e12) => (v == null || !Number.isFinite(Number(v)) ? null : int(v, lo, hi));
 const str = (v, max = 80) => (typeof v === 'string' ? v.slice(0, max) : '');
 
@@ -70,8 +89,18 @@ export const otherBanner = (b) => (b === 'red' ? 'blue' : 'red');
 /** A fighter of no banner, who has fought nothing. */
 export function newArenaLeague() {
   return {
-    v: ARENA_LEAGUE_VERSION, since: null, season: null, team: null, joinedAt: null, left: null,
-    points: { red: 0, blue: 0 }, laurel: null, seasons: [], bouts: [], firstBoutAt: null, grandAt: null,
+    v: ARENA_LEAGUE_VERSION,
+    since: null,
+    season: null,
+    team: null,
+    joinedAt: null,
+    left: null,
+    points: { red: 0, blue: 0 },
+    laurel: null,
+    seasons: [],
+    bouts: [],
+    firstBoutAt: null,
+    grandAt: null,
     book: newArenaBook(),
   };
 }
@@ -83,18 +112,42 @@ export function arenaLeagueRestore(raw) {
   L.season = intOrNull(raw.season, 0, 1e6);
   L.team = isBanner(raw.team) ? raw.team : null;
   L.joinedAt = intOrNull(raw.joinedAt);
-  L.left = raw.left && isBanner(raw.left.banner) && Number.isFinite(Number(raw.left.season)) ? { banner: raw.left.banner, season: int(raw.left.season, 0, 1e6) } : null;
+  L.left =
+    raw.left && isBanner(raw.left.banner) && Number.isFinite(Number(raw.left.season))
+      ? { banner: raw.left.banner, season: int(raw.left.season, 0, 1e6) }
+      : null;
   L.points = { red: int(raw.points?.red, 0, 1e9), blue: int(raw.points?.blue, 0, 1e9) };
-  L.laurel = raw.laurel && isBanner(raw.laurel.banner) && Number.isFinite(Number(raw.laurel.season)) ? { banner: raw.laurel.banner, season: int(raw.laurel.season, 0, 1e6) } : null;
-  L.seasons = (Array.isArray(raw.seasons) ? raw.seasons : []).slice(0, SEASONS_KEPT).filter((s) => s && Number.isFinite(Number(s.season))).map((s) => ({
-    season: int(s.season, 0, 1e6), red: int(s.red, 0, 1e9), blue: int(s.blue, 0, 1e9),
-    winner: isBanner(s.winner) ? s.winner : null, mine: isBanner(s.mine) ? s.mine : null, gave: int(s.gave, 0, 1e9),
-  }));
-  L.bouts = (Array.isArray(raw.bouts) ? raw.bouts : []).slice(0, BOUTS_KEPT).filter((b) => b && typeof b === 'object').map((b) => ({
-    at: int(b.at, 0, 1e12), tier: int(b.tier, 0, LADDER_TIERS.length - 1), label: str(b.label), opp: str(b.opp, 120),
-    won: b.won === true, how: str(b.how, 12), purse: int(b.purse, 0, 1e9), team: isBanner(b.team) ? b.team : null,
-    champion: b.champion === true, grand: b.grand === true, points: int(b.points, 0, 100),
-  }));
+  L.laurel =
+    raw.laurel && isBanner(raw.laurel.banner) && Number.isFinite(Number(raw.laurel.season))
+      ? { banner: raw.laurel.banner, season: int(raw.laurel.season, 0, 1e6) }
+      : null;
+  L.seasons = (Array.isArray(raw.seasons) ? raw.seasons : [])
+    .slice(0, SEASONS_KEPT)
+    .filter((s) => s && Number.isFinite(Number(s.season)))
+    .map((s) => ({
+      season: int(s.season, 0, 1e6),
+      red: int(s.red, 0, 1e9),
+      blue: int(s.blue, 0, 1e9),
+      winner: isBanner(s.winner) ? s.winner : null,
+      mine: isBanner(s.mine) ? s.mine : null,
+      gave: int(s.gave, 0, 1e9),
+    }));
+  L.bouts = (Array.isArray(raw.bouts) ? raw.bouts : [])
+    .slice(0, BOUTS_KEPT)
+    .filter((b) => b && typeof b === 'object')
+    .map((b) => ({
+      at: int(b.at, 0, 1e12),
+      tier: int(b.tier, 0, LADDER_TIERS.length - 1),
+      label: str(b.label),
+      opp: str(b.opp, 120),
+      won: b.won === true,
+      how: str(b.how, 12),
+      purse: int(b.purse, 0, 1e9),
+      team: isBanner(b.team) ? b.team : null,
+      champion: b.champion === true,
+      grand: b.grand === true,
+      points: int(b.points, 0, 100),
+    }));
   L.firstBoutAt = intOrNull(raw.firstBoutAt);
   L.grandAt = intOrNull(raw.grandAt);
   L.book = bookRestore(raw.book);
@@ -126,8 +179,14 @@ export function rollLeague(raw, gameMinutes) {
   if (raw && raw.season === now && raw.since != null && raw.v === ARENA_LEAGUE_VERSION) return raw;
   const L = arenaLeagueRestore(raw);
   if (L.since == null) L.since = L.season ?? now;
-  if (L.season == null) { L.season = now; return L; }
-  if (L.season >= now) { L.season = now; return L; }
+  if (L.season == null) {
+    L.season = now;
+    return L;
+  }
+  if (L.season >= now) {
+    L.season = now;
+    return L;
+  }
   // close every season between: the first with the player's points, the rest the roster's alone
   let laurel = null;
   for (let s = L.season; s < now; s++) {
@@ -190,7 +249,8 @@ export function quitBanner(L, gameMinutes) {
 
 // ── A BOUT RECORDED ──────────────────────────────────────────────────────────────────────────────────────────
 /** The points a won ladder bout gives the banner worn - AUDIT ARENA-LADDER 2: none for a bout won again after a lost run. */
-export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) => (!won || repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout);
+export const boutPoints = ({ won, champion = false, grand = false, repeat = false }) =>
+  !won || repeat ? 0 : grand ? TEAM_POINTS.grand : champion ? TEAM_POINTS.champion : TEAM_POINTS.bout;
 /**
  * A LADDER BOUT'S END in the league: kept for the Records page (the newest first, BOUTS_KEPT of them), its points
  * given to the banner worn, the first bout's and the Grand Champion's minute stamped (the fastest Grand Champion's
@@ -202,8 +262,17 @@ export function leagueAfterBout(L, o) {
   const pts = s.team ? boutPoints(o) : 0;
   if (s.team && pts) s.points[s.team] += pts;
   s.bouts.unshift({
-    at: gm, tier: int(o.tier, 0, LADDER_TIERS.length - 1), label: str(o.label), opp: str(o.opp, 120), won: !!o.won,
-    how: str(o.how, 12), purse: int(o.purse, 0, 1e9), team: s.team, champion: !!o.champion, grand: !!o.grand, points: pts,
+    at: gm,
+    tier: int(o.tier, 0, LADDER_TIERS.length - 1),
+    label: str(o.label),
+    opp: str(o.opp, 120),
+    won: !!o.won,
+    how: str(o.how, 12),
+    purse: int(o.purse, 0, 1e9),
+    team: s.team,
+    champion: !!o.champion,
+    grand: !!o.grand,
+    points: pts,
   });
   s.bouts = s.bouts.slice(0, BOUTS_KEPT);
   if (s.firstBoutAt == null) s.firstBoutAt = gm;
@@ -232,22 +301,51 @@ function rosterEntrant(season, i) {
   const who = fighterIdentity(seed, i, mobile);
   // talent: most fighters are middling, a few are great (the season's Grand Champions come from them)
   const talent = 0.2 + 0.8 * rng() ** 1.6;
-  const pace = 0.05 + rng() * 0.09;   // bouts a day - a fighter heals and trains between
-  const start = Math.floor(rng() * 24);   // the day of the season they first fight
-  return { id: `s${season}:${i}`, slot: i, seed, banner, mobile, name: who.name, home: who.home, epithet: who.epithet, talent, pace, start };
+  const pace = 0.05 + rng() * 0.09; // bouts a day - a fighter heals and trains between
+  const start = Math.floor(rng() * 24); // the day of the season they first fight
+  return {
+    id: `s${season}:${i}`,
+    slot: i,
+    seed,
+    banner,
+    mobile,
+    name: who.name,
+    home: who.home,
+    epithet: who.epithet,
+    talent,
+    pace,
+    start,
+  };
 }
 /** One fighter's season up to `day`: their ladder, their record, their points. */
 function rosterClimb(e, day) {
   const rng = seededRng(arenaHash(e.seed, 0x51));
-  let tier = 0, won = 0, wins = 0, losses = 0, points = 0, champs = 0, grandDay = null;
+  let tier = 0,
+    won = 0,
+    wins = 0,
+    losses = 0,
+    points = 0,
+    champs = 0,
+    grandDay = null;
   const n = day < e.start ? 0 : Math.floor((day - e.start) * e.pace) + 1;
   for (let k = 0; k < n && grandDay == null; k++) {
     const champion = won >= BOUTS_PER_TIER;
     if (rng() < rosterWinChance(e.talent, tier, champion)) {
       wins++;
-      if (!champion) { won++; points += TEAM_POINTS.bout; continue; }
+      if (!champion) {
+        won++;
+        points += TEAM_POINTS.bout;
+        continue;
+      }
       champs++;
-      if (tier === LADDER_TIERS.length - 1) { points += TEAM_POINTS.grand; grandDay = Math.min(DAYS_PER_YEAR, e.start + Math.ceil(k / e.pace)); } else { points += TEAM_POINTS.champion; tier++; won = 0; }
+      if (tier === LADDER_TIERS.length - 1) {
+        points += TEAM_POINTS.grand;
+        grandDay = Math.min(DAYS_PER_YEAR, e.start + Math.ceil(k / e.pace));
+      } else {
+        points += TEAM_POINTS.champion;
+        tier++;
+        won = 0;
+      }
     } else losses++;
   }
   return { tier, won, wins, losses, points, champs, grandDay, grand: grandDay != null };
@@ -276,8 +374,23 @@ export function leagueRoster(season, day) {
   if (hit) return hit;
   const rows = entrantsOf(season).map((e) => {
     const c = rosterClimb(e, d);
-    const title = c.grand ? ARENA_TEXT.titles[LADDER_TIERS.length - 1] : c.champs ? ARENA_TEXT.titles[c.champs - 1] : null;
-    return Object.freeze({ id: e.id, banner: e.banner, name: e.name, home: e.home, epithet: e.epithet, mobile: e.mobile, ...c, title, days: c.grand ? c.grandDay - e.start : null, season });
+    const title = c.grand
+      ? ARENA_TEXT.titles[LADDER_TIERS.length - 1]
+      : c.champs
+        ? ARENA_TEXT.titles[c.champs - 1]
+        : null;
+    return Object.freeze({
+      id: e.id,
+      banner: e.banner,
+      name: e.name,
+      home: e.home,
+      epithet: e.epithet,
+      mobile: e.mobile,
+      ...c,
+      title,
+      days: c.grand ? c.grandDay - e.start : null,
+      season,
+    });
   });
   const out = Object.freeze(rows);
   if (_roster.size > 64) _roster.clear();
@@ -296,8 +409,18 @@ export function leagueStandings(L, gameMinutes) {
   const s = rollLeague(L, gameMinutes);
   const day = seasonDayOf(gameMinutes);
   const t = rosterTotals(s.season, day);
-  const red = t.red + s.points.red, blue = t.blue + s.points.blue;
-  return { season: s.season, day, red, blue, leader: winnerOf({ red, blue }), mine: s.team, given: s.team ? s.points[s.team] : 0, points: { ...s.points } };
+  const red = t.red + s.points.red,
+    blue = t.blue + s.points.blue;
+  return {
+    season: s.season,
+    day,
+    red,
+    blue,
+    leader: winnerOf({ red, blue }),
+    mine: s.team,
+    given: s.team ? s.points[s.team] : 0,
+    points: { ...s.points },
+  };
 }
 
 /** Every Grand Champion of the roster this save has seen (from `since` to now), the newest season first - the Hall's
@@ -308,8 +431,11 @@ export function rosterGrandChampions(L, gameMinutes) {
   const from = s.since ?? s.season;
   for (let season = s.season; season >= from && season > s.season - 40; season--) {
     const day = season === s.season ? seasonDayOf(gameMinutes) : DAYS_PER_YEAR;
-    const g = leagueRoster(season, day).filter((f) => f.grand).sort((a, b) => a.grandDay - b.grandDay);
-    for (const f of g) out.push({ season, name: f.name, home: f.home, banner: f.banner, days: f.days, grandDay: f.grandDay });
+    const g = leagueRoster(season, day)
+      .filter((f) => f.grand)
+      .sort((a, b) => a.grandDay - b.grandDay);
+    for (const f of g)
+      out.push({ season, name: f.name, home: f.home, banner: f.banner, days: f.days, grandDay: f.grandDay });
   }
   return out;
 }

@@ -88,7 +88,7 @@ test('WB9e the shader reads (WB13a: honed): the line two pixels wide however far
   const u = (n) => calls.find((c) => c[1] === n)?.[2];
   assert.equal(u('uStyle'), TELEGRAPH_STYLE.frost); assert.equal(u('uPool'), 0);
   assert.ok(Math.abs(u('uSince') - 1.5) < 1e-9 && Math.abs(u('uSpan') - 2) < 1e-9 && u('uAfter') === -1);
-  assert.match(read('tools/gateTelegraphProbe.mjs'), /extname\(f\) === '\.json' \? 'application\/json'/, 'the probe serves the court\'s JSON as JSON');
+  assert.match(read('tools/gateTelegraphProbe.mjs'), /extname\(f\) === '\.json'\n\s*\? 'application\/json'/, 'the probe serves the court\'s JSON as JSON');
 });
 
 test('WB9e the landing\'s bursts: sparks from the slam, the leap, the bound, Hellfire, the Meteor, the Nova and Dagon\'s own - the heavy ones throwing more, further; none from a blade, the charge\'s run or the spokes; each spark out along its bearing, up and falling to rest on the floor, spent within FX_BURST_MS (mutants: a spark falling through the floor; a burst living forever)', () => {

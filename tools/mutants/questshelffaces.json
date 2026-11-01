@@ -2,8 +2,8 @@
   {
     "name": "QSF-the-face-of-a-quest-away-shown",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": "  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID));",
-    "new": "  const panels = _panels.filter((_, i) => !_questGone(_faces[i]?.questUID));",
+    "old": "  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone",
+    "new": "  const panels = _panels.filter((_, i) => !_questGone(_faces[i]?.questUID)); // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone",
     "tests": [
       "test/systems/quest/escortfaces.test.js"
     ],

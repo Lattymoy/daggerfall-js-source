@@ -29,8 +29,25 @@ import MODS from './sheets/mods.json' with { type: 'json' };
 import QUESTLINES from './sheets/questlines.json' with { type: 'json' };
 
 /** Every family's sheets, in the order the waves wrote them (Questlines-Arc.md section 9) - qlFamilies.js's order. */
-export const SHEET_FAMILIES = Object.freeze([FIGHTERS_GUILD, KNIGHTLY_ORDERS, MAGES_GUILD, THIEVES_GUILD, DARK_BROTHERHOOD, HOLY_ORDERS, NOBILITY, MERCHANTS, COMMONERS, WITCHES, VAMPIRES, DAEDRA, MAIN_QUEST, MODS, QUESTLINES]);
-if (SHEET_FAMILIES.map((f) => f.family).join() !== QL_FAMILY_NAMES.join()) throw new Error('qlSheets: the families\' files and QL_FAMILY_NAMES disagree');
+export const SHEET_FAMILIES = Object.freeze([
+  FIGHTERS_GUILD,
+  KNIGHTLY_ORDERS,
+  MAGES_GUILD,
+  THIEVES_GUILD,
+  DARK_BROTHERHOOD,
+  HOLY_ORDERS,
+  NOBILITY,
+  MERCHANTS,
+  COMMONERS,
+  WITCHES,
+  VAMPIRES,
+  DAEDRA,
+  MAIN_QUEST,
+  MODS,
+  QUESTLINES,
+]);
+if (SHEET_FAMILIES.map((f) => f.family).join() !== QL_FAMILY_NAMES.join())
+  throw new Error("qlSheets: the families' files and QL_FAMILY_NAMES disagree");
 
 /** The pay an outcome may name (systems/questlines/qlRewards.js PAY_PROFILES - written here so the law that checks a
  *  sheet never imports the rewards' makers). */
@@ -42,7 +59,7 @@ export const SHEETS = (() => {
   for (const fam of SHEET_FAMILIES) {
     for (const s of fam.sheets ?? []) {
       const key = String(s.quest ?? '').toUpperCase();
-      if (!key || map.has(key)) continue;   // sheetProblems names a duplicate; the first stands
+      if (!key || map.has(key)) continue; // sheetProblems names a duplicate; the first stands
       map.set(key, Object.freeze({ ...s, family: fam.family }));
     }
   }

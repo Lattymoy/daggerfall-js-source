@@ -2,8 +2,8 @@
   {
     "name": "HS-shield-colours-swapped",
     "file": "src/ui/heraldryArt.js",
-    "old": "  const field = heraldryColourOf(h.field)?.hex, border = heraldryColourOf(h.border)?.hex;",
-    "new": "  const field = heraldryColourOf(h.border)?.hex, border = heraldryColourOf(h.field)?.hex;",
+    "old": "  const field = heraldryColourOf(h.field)?.hex,\n    border = heraldryColourOf(h.border)?.hex;",
+    "new": "  const field = heraldryColourOf(h.border)?.hex,\n    border = heraldryColourOf(h.field)?.hex;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HS-shield-plain-drawn",
     "file": "src/ui/heraldryArt.js",
-    "old": "  const h = heraldryOf(heraldry);\n  if (!h) return '';",
-    "new": "  const h = heraldryOf(heraldry) ?? plainBannerOf(heraldry);\n  if (!h) return '';",
+    "old": "export function shieldSvg(heraldry, { size = 16 } = {}) {\n  const h = heraldryOf(heraldry);",
+    "new": "export function shieldSvg(heraldry, { size = 16 } = {}) {\n  const h = heraldryOf(heraldry) ?? plainBannerOf(heraldry);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HS-shield-size-fixed",
     "file": "src/ui/heraldryArt.js",
-    "old": "width=\"${size}\" height=\"${Math.round(size * 1.04)}\"",
-    "new": "width=\"16\" height=\"17\"",
+    "old": "    `<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 104\" width=\"${size}\" height=\"${Math.round(size * 1.04)}\" role=\"img\" aria-label=\"heraldry\">` +",
+    "new": "    `<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 104\" width=\"16\" height=\"17\" role=\"img\" aria-label=\"heraldry\">` +",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HS-shield-border-thin",
     "file": "src/ui/heraldryArt.js",
-    "old": "stroke-width=\"${SHIELD_BORDER_W * 2}\" clip-path",
-    "new": "stroke-width=\"${SHIELD_BORDER_W}\" clip-path",
+    "old": "    `<path d=\"${SHIELD_CLOTH}\" fill=\"none\" stroke=\"${border}\" stroke-width=\"${SHIELD_BORDER_W * 2}\" clip-path=\"url(#${clip})\"/>` +",
+    "new": "    `<path d=\"${SHIELD_CLOTH}\" fill=\"none\" stroke=\"${border}\" stroke-width=\"${SHIELD_BORDER_W}\" clip-path=\"url(#${clip})\"/>` +",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HS-shield-device-field",
     "file": "src/ui/heraldryArt.js",
-    "old": "+ deviceLayers(h.device, ink, field, `translate(${d.x} ${d.y}) scale(${d.scale})`, divD ? { id: `${clip}d`, comp: `${clip}c`, hex: heraldryColourOf(h.field2)?.hex } : null)\n    + `<path d=\"${SHIELD_CLOTH}\" fill=\"none\" stroke=\"#000\"",
-    "new": "+ deviceLayers(h.device, field, ink, `translate(${d.x} ${d.y}) scale(${d.scale})`, divD ? { id: `${clip}d`, comp: `${clip}c`, hex: heraldryColourOf(h.field2)?.hex } : null)\n    + `<path d=\"${SHIELD_CLOTH}\" fill=\"none\" stroke=\"#000\"",
+    "old": "      h.device,\n      ink,\n      field,\n      `translate(${d.x} ${d.y}) scale(${d.scale})`,",
+    "new": "      h.device,\n      field,\n      ink,\n      `translate(${d.x} ${d.y}) scale(${d.scale})`,",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HS-src-unencoded",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "return svg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` : '';",
-    "new": "return svg ? `data:image/svg+xml;charset=utf-8,${svg}` : '';",
+    "old": "  return svg ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}` : '';",
+    "new": "  return svg ? `data:image/svg+xml;charset=utf-8,${svg}` : '';",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HS-paint-every-time",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "  if (painted.get(img) === key) return !!h;\n",
-    "new": "",
+    "old": "  if (painted.get(img) === key) return !!h;\n  painted.set(img, key);",
+    "new": "  painted.set(img, key);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HS-swatch-for-none",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "  if (!heraldryOf(heraldry)) return null;\n",
-    "new": "",
+    "old": "  if (!heraldryOf(heraldry)) return null;\n  const img = doc.createElement('img');",
+    "new": "  const img = doc.createElement('img');",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HS-lookup-always-built",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "    if (now.length !== seen.length || now.some((x, i) => x !== seen[i])) { seen = [...now]; index = heraldryIndex(...now); }",
-    "new": "    { seen = [...now]; index = heraldryIndex(...now); }",
+    "old": "    if (now.length !== seen.length || now.some((x, i) => x !== seen[i])) {",
+    "new": "    {",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "HS-lookup-never-rebuilt",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "now.some((x, i) => x !== seen[i])",
-    "new": "false",
+    "old": "    if (now.length !== seen.length || now.some((x, i) => x !== seen[i])) {",
+    "new": "    if (now.length !== seen.length || false) {",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "HS-lookup-no-tag-asks",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "    if (typeof tag !== 'string' || !tag) return null;\n",
-    "new": "",
+    "old": "    if (typeof tag !== 'string' || !tag) return null;\n    const now = sources() ?? [];",
+    "new": "    const now = sources() ?? [];",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HS-chronicle-contested-b",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "  contested: 'a', 'siege-forfeit': 'against',",
-    "new": "  contested: 'b', 'siege-forfeit': 'against',",
+    "old": "  contested: 'a',",
+    "new": "  contested: 'b',",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HS-chronicle-forfeit-guild",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "'siege-forfeit': 'against', 'siege-void': 'holder',",
-    "new": "'siege-void': 'holder',",
+    "old": "  'siege-forfeit': 'against',\n  'siege-void': 'holder',",
+    "new": "  'siege-void': 'holder',",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "HS-chronicle-void-guild",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "'siege-void': 'holder',\n",
-    "new": "\n",
+    "old": "  'siege-void': 'holder',\n  'fealty-sworn': 'vassal',",
+    "new": "  'fealty-sworn': 'vassal',",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "HS-chronicle-breaker-vassal",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "'fealty-broken': 'breaker'",
-    "new": "'fealty-broken': 'vassal'",
+    "old": "  'fealty-broken': 'breaker',",
+    "new": "  'fealty-broken': 'vassal',",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "HS-chronicle-vassal-guild",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "'fealty-tribute': 'vassal', 'fealty-lapsed': 'vassal',",
-    "new": "'fealty-lapsed': 'vassal',",
+    "old": "  'fealty-tribute': 'vassal',\n  'fealty-lapsed': 'vassal',",
+    "new": "  'fealty-lapsed': 'vassal',",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "HS-chronicle-void-tourney",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "  if (row?.kind === 'siege-void' && d.battle === 'tourney') return null;",
-    "new": "  if (row?.kind === 'siege-void' && d.battle === 'tourney') return d.holder;",
+    "old": "  if (row?.kind === 'siege-void' && d.battle === 'tourney') return null; // its line names neither guild",
+    "new": "  if (row?.kind === 'siege-void' && d.battle === 'tourney') return d.holder; // its line names neither guild",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "HS-chronicle-empty-tag",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "typeof g.tag === 'string' && g.tag ? g : null;",
-    "new": "typeof g.tag === 'string' ? g : null;",
+    "old": "  return g && typeof g === 'object' && typeof g.tag === 'string' && g.tag ? g : null;",
+    "new": "  return g && typeof g === 'object' && typeof g.tag === 'string' ? g : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "HS-index-last-kept",
     "file": "src/net/heraldryIndex.js",
-    "old": " && !out.has(g.tag)) out.set(g.tag, {",
-    "new": ") out.set(g.tag, {",
+    "old": "    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag))",
+    "new": "    if (h && typeof g.tag === 'string' && g.tag)",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "HS-index-no-seats",
     "file": "src/net/heraldryIndex.js",
-    "old": "    for (const s of Array.isArray(src.seats) ? src.seats : []) seat(s);\n",
-    "new": "",
+    "old": "    for (const s of Array.isArray(src.seats) ? src.seats : []) seat(s);\n    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);",
+    "new": "    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "HS-index-no-standings",
     "file": "src/net/heraldryIndex.js",
-    "old": "    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);\n",
-    "new": "",
+    "old": "    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "HS-index-no-against",
     "file": "src/net/heraldryIndex.js",
-    "old": " put(s?.battle?.against); };",
-    "new": " };",
+    "old": "    put(s?.battle?.against);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "HS-index-no-battle-guild",
     "file": "src/net/heraldryIndex.js",
-    "old": " put(s?.battle?.guild); put(",
-    "new": " put(",
+    "old": "    put(s?.battle?.guild);\n    put(s?.battle?.against);",
+    "new": "    put(s?.battle?.against);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "HS-index-no-guild",
     "file": "src/net/heraldryIndex.js",
-    "old": "    put(src);\n    seat(src);\n",
-    "new": "    seat(src);\n",
+    "old": "    put(src);\n    seat(src);",
+    "new": "    seat(src);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "HS-index-refused-kept",
     "file": "src/net/heraldryIndex.js",
-    "old": "    const h = heraldryOf(g?.heraldry);\n    if (h && typeof g.tag",
-    "new": "    const h = g?.heraldry;\n    if (h && typeof g.tag",
+    "old": "    const h = heraldryOf(g?.heraldry);",
+    "new": "    const h = g?.heraldry;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "HS-tag-never-armed",
     "file": "src/ui/nameLayer.js",
-    "old": "setCls(tag.guild, arms ? 'dfname-guild armed' : 'dfname-guild');",
-    "new": "setCls(tag.guild, 'dfname-guild');",
+    "old": "          setCls(tag.guild, arms ? 'dfname-guild armed' : 'dfname-guild');",
+    "new": "          setCls(tag.guild, 'dfname-guild');",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "HS-tag-field-edge",
     "file": "src/ui/nameLayer.js",
-    "old": "heraldryColourOf(arms.border)?.hex ?? ''",
-    "new": "heraldryColourOf(arms.field)?.hex ?? ''",
+    "old": "          tag.guild.style.borderColor = arms ? (heraldryColourOf(arms.border)?.hex ?? '') : '';",
+    "new": "          tag.guild.style.borderColor = arms ? (heraldryColourOf(arms.field)?.hex ?? '') : '';",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "HS-tag-shield-kept",
     "file": "src/ui/nameLayer.js",
-    "old": "tag.guild.style.backgroundImage = arms ? `url(\"${heraldrySwatchSrc(arms)}\")` : '';",
-    "new": "tag.guild.style.backgroundImage = arms ? `url(\"${heraldrySwatchSrc(arms)}\")` : tag.guild.style.backgroundImage;",
+    "old": "          tag.guild.style.backgroundImage = arms ? `url(\"${heraldrySwatchSrc(arms)}\")` : '';",
+    "new": "          tag.guild.style.backgroundImage = arms\n            ? `url(\"${heraldrySwatchSrc(arms)}\")`\n            : tag.guild.style.backgroundImage;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "HS-tag-every-frame",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.armed !== armed) {\n",
-    "new": "        if (true) {\n",
+    "old": "        if (tag.armed !== armed) {",
+    "new": "        if (true) {",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "HS-tag-ungated",
     "file": "src/ui/nameLayer.js",
-    "old": "const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;",
-    "new": "const arms = armsOf ? heraldryOf(armsOf(p.gt)) : null;",
+    "old": "        const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;",
+    "new": "        const arms = armsOf ? heraldryOf(armsOf(p.gt)) : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "HS-tag-lookup-any",
     "file": "src/ui/nameLayer.js",
-    "old": "armsOf = typeof fn === 'function' ? fn : null;",
-    "new": "armsOf = fn;",
+    "old": "      armsOf = typeof fn === 'function' ? fn : null;",
+    "new": "      armsOf = fn;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "HS-hud-sides-swapped",
     "file": "src/net/siege/siegeLink.js",
-    "old": "arms: { defend: heraldryOf(battle.defender?.heraldry), attack:",
-    "new": "arms: { attack: heraldryOf(battle.defender?.heraldry), defend:",
+    "old": "      defend: heraldryOf(battle.defender?.heraldry),\n      attack: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
+    "new": "      attack: heraldryOf(battle.defender?.heraldry),\n      defend: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "HS-hud-revolt-kind",
     "file": "src/net/siege/siegeLink.js",
-    "old": "attack: battle.kind === 'revolt' || s.revolt ? null :",
-    "new": "attack: s.revolt ? null :",
+    "old": "      attack: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
+    "new": "      attack: s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "HS-hud-revolt-field",
     "file": "src/net/siege/siegeLink.js",
-    "old": "attack: battle.kind === 'revolt' || s.revolt ? null :",
-    "new": "attack: battle.kind === 'revolt' ? null :",
+    "old": "      attack: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
+    "new": "      attack: battle.kind === 'revolt' ? null : heraldryOf(battle.attacker?.heraldry),",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "HS-fight-own-overwritten",
     "file": "src/net/siege/siegeLink.js",
-    "old": "(g && !heraldryOf(g.heraldry) && arms.has(g.tag)",
-    "new": "(g && arms.has(g.tag)",
+    "old": "  const dress = (g) => (g && !heraldryOf(g.heraldry) && arms.has(g.tag) ? { ...g, heraldry: arms.get(g.tag) } : g);",
+    "new": "  const dress = (g) => (g && arms.has(g.tag) ? { ...g, heraldry: arms.get(g.tag) } : g);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "HS-fight-mutated",
     "file": "src/net/siege/siegeLink.js",
-    "old": "? { ...g, heraldry: arms.get(g.tag) } : g);",
-    "new": "? Object.assign(g, { heraldry: arms.get(g.tag) }) : g);",
+    "old": "  const dress = (g) => (g && !heraldryOf(g.heraldry) && arms.has(g.tag) ? { ...g, heraldry: arms.get(g.tag) } : g);",
+    "new": "  const dress = (g) =>\n    g && !heraldryOf(g.heraldry) && arms.has(g.tag) ? Object.assign(g, { heraldry: arms.get(g.tag) }) : g;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "HS-fight-null-dressed",
     "file": "src/net/siege/siegeLink.js",
-    "old": "  if (!fight) return fight;\n  const arms",
-    "new": "  const arms",
+    "old": "  if (!fight) return fight;\n  const arms = heraldryByTag(seat);",
+    "new": "  const arms = heraldryByTag(seat);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "HS-fight-defender-bare",
     "file": "src/net/siege/siegeLink.js",
-    "old": "defenderGuild: dress(fight.defenderGuild) };",
-    "new": "defenderGuild: fight.defenderGuild };",
+    "old": "  return { ...fight, attackerGuild: dress(fight.attackerGuild), defenderGuild: dress(fight.defenderGuild) };",
+    "new": "  return { ...fight, attackerGuild: dress(fight.attackerGuild), defenderGuild: fight.defenderGuild };",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "HS-session-undressed",
     "file": "src/net/siege/siegeSession.js",
-    "old": "      s = { seat, battle: fightArmed(battle, seat), field,",
-    "new": "      s = { seat, battle, field,",
+    "old": "        battle: fightArmed(battle, seat),",
+    "new": "        battle,",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "HS-bar-sides-swapped",
     "file": "src/ui/siegeHud.js",
-    "old": "paintSwatch(parts['arm-defend'], m.arms?.defend); paintSwatch(parts['arm-attack'], m.arms?.attack);",
-    "new": "paintSwatch(parts['arm-defend'], m.arms?.attack); paintSwatch(parts['arm-attack'], m.arms?.defend);",
+    "old": "      paintSwatch(parts['arm-defend'], m.arms?.defend);\n      paintSwatch(parts['arm-attack'], m.arms?.attack); // HERALDRY-SHOWN: painted when it changes",
+    "new": "      paintSwatch(parts['arm-defend'], m.arms?.attack);\n      paintSwatch(parts['arm-attack'], m.arms?.defend); // HERALDRY-SHOWN: painted when it changes",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "HS-bar-unpainted",
     "file": "src/ui/siegeHud.js",
-    "old": "paintSwatch(parts['arm-defend'], m.arms?.defend); paintSwatch(parts['arm-attack'], m.arms?.attack);",
-    "new": "paintSwatch(parts['arm-defend'], m.arms?.defend);",
+    "old": "      paintSwatch(parts['arm-defend'], m.arms?.defend);\n      paintSwatch(parts['arm-attack'], m.arms?.attack); // HERALDRY-SHOWN: painted when it changes",
+    "new": "      paintSwatch(parts['arm-defend'], m.arms?.defend); // HERALDRY-SHOWN: painted when it changes",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "HS-chronicle-no-shield",
     "file": "src/ui/seatTab.js",
-    "old": "          if (shield) li.append(shield);\n",
-    "new": "",
+    "old": "            if (shield) li.append(shield);\n            li.append(el('span', null, l));",
+    "new": "            li.append(el('span', null, l));",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "HS-chronicle-no-list",
     "file": "src/ui/seatTab.js",
-    "old": "const arms = heraldryIndex(data, book.data);",
-    "new": "const arms = heraldryIndex(data);",
+    "old": "          const arms = heraldryIndex(data, book.data);",
+    "new": "          const arms = heraldryIndex(data);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "HS-chronicle-no-answer",
     "file": "src/ui/seatTab.js",
-    "old": "const arms = heraldryIndex(data, book.data);",
-    "new": "const arms = heraldryIndex(book.data);",
+    "old": "          const arms = heraldryIndex(data, book.data);",
+    "new": "          const arms = heraldryIndex(book.data);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "HS-chronicle-misaligned",
     "file": "src/ui/seatTab.js",
-    "old": "(data.chronicle ?? []).filter((r) => chronicleLine(r, seat)).map(chronicleGuildOf);",
-    "new": "(data.chronicle ?? []).map(chronicleGuildOf);",
+    "old": "          const about = (data.chronicle ?? []).filter((r) => chronicleLine(r, seat)).map(chronicleGuildOf);",
+    "new": "          const about = (data.chronicle ?? []).map(chronicleGuildOf);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "HS-roll-dropped",
     "file": "src/ui/hallOfRecords.js",
-    "old": "  if (roll.length) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (roll.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "HS-roll-twice",
     "file": "src/ui/hallOfRecords.js",
-    "old": "      if (seen.has(tag)) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (seen.has(tag)) continue; // once a guild, by its tag now",
+    "new": "      if (false) continue; // once a guild, by its tag now",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "HS-roll-wordless-rows",
     "file": "src/ui/hallOfRecords.js",
-    "old": "    if (!line) continue;\n",
-    "new": "",
+    "old": "    if (!line) continue;\n    const named = Object.values(r?.data ?? {})",
+    "new": "    const named = Object.values(r?.data ?? {})",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "HS-roll-unknown",
     "file": "src/ui/hallOfRecords.js",
-    "old": "      if (h) out.push(",
-    "new": "      out.push(",
+    "old": "      if (h) out.push(`${upper(guildWords(g))}${now ? ` (now ${guildWords(now)})` : ''}: ${heraldryText(h)}.`);",
+    "new": "      out.push(`${upper(guildWords(g))}${now ? ` (now ${guildWords(now)})` : ''}: ${heraldryText(h)}.`);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "HS-roll-no-lookup",
     "file": "src/ui/hallOfRecords.js",
-    "old": "  if (typeof armsOf !== 'function') return [];\n",
-    "new": "",
+    "old": "  if (typeof armsOf !== 'function') return [];\n  const out = [],",
+    "new": "  const out = [],",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "HS-roll-unpassed",
     "file": "src/ui/hallOfRecords.js",
-    "old": "createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, armsOf, chapters));",
-    "new": "createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, null, chapters));",
+    "old": "  createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, armsOf, chapters)); // HERALDRY-SHOWN: `armsOf`, the Roll's",
+    "new": "  createBookReaderWindow(hallOfRecordsBook(seat, rows, zero, null, chapters)); // HERALDRY-SHOWN: `armsOf`, the Roll's",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "H1-voided-unmapped",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "const g = row?.kind === 'siege-voided' ? (d.restored ? d.holder : null) : d[",
-    "new": "const g = d[",
+    "old": "  const g = row?.kind === 'siege-voided' ? (d.restored ? d.holder : null) : d[CHRONICLE_FIRST[row?.kind] ?? 'guild'];",
+    "new": "  const g = d[CHRONICLE_FIRST[row?.kind] ?? 'guild'];",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -525,8 +525,8 @@
   {
     "name": "H1-restored-unread",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "(d.restored ? d.holder : null)",
-    "new": "d.holder",
+    "old": "  const g = row?.kind === 'siege-voided' ? (d.restored ? d.holder : null) : d[CHRONICLE_FIRST[row?.kind] ?? 'guild'];",
+    "new": "  const g = row?.kind === 'siege-voided' ? d.holder : d[CHRONICLE_FIRST[row?.kind] ?? 'guild'];",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -535,8 +535,8 @@
   {
     "name": "H2-roll-unnamed",
     "file": "src/ui/hallOfRecords.js",
-    "old": " && line.includes(guildWords(g)))",
-    "new": ")",
+    "old": "      .filter(\n        (g) =>\n          g &&\n          typeof g === 'object' &&\n          typeof g.tag === 'string' &&\n          typeof g.name === 'string' &&\n          line.includes(guildWords(g)),\n      )",
+    "new": "      .filter((g) => g && typeof g === 'object' && typeof g.tag === 'string' && typeof g.name === 'string')",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -545,8 +545,8 @@
   {
     "name": "H2-roll-key-order",
     "file": "src/ui/hallOfRecords.js",
-    "old": "      .sort((a, b) => line.indexOf(guildWords(a)) - line.indexOf(guildWords(b)));",
-    "new": "      ;",
+    "old": "    const named = Object.values(r?.data ?? {})\n      .filter(\n        (g) =>\n          g &&\n          typeof g === 'object' &&\n          typeof g.tag === 'string' &&\n          typeof g.name === 'string' &&\n          line.includes(guildWords(g)),\n      )\n      .sort((a, b) => line.indexOf(guildWords(a)) - line.indexOf(guildWords(b)));",
+    "new": "    const named = Object.values(r?.data ?? {}).filter(\n      (g) =>\n        g &&\n        typeof g === 'object' &&\n        typeof g.tag === 'string' &&\n        typeof g.name === 'string' &&\n        line.includes(guildWords(g)),\n    );",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -555,8 +555,8 @@
   {
     "name": "H3-name-unkept",
     "file": "src/net/heraldryIndex.js",
-    "old": "{ name: typeof g.name === 'string' ? g.name : null, heraldry: h }",
-    "new": "{ name: null, heraldry: h }",
+    "old": "    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag))\n      out.set(g.tag, { name: typeof g.name === 'string' ? g.name : null, heraldry: h });",
+    "new": "    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag)) out.set(g.tag, { name: null, heraldry: h });",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -565,8 +565,8 @@
   {
     "name": "H3-name-unchecked",
     "file": "src/net/heraldryIndex.js",
-    "old": "return e && (name === undefined || e.name === name) ? e.heraldry : null;",
-    "new": "return e ? e.heraldry : null;",
+    "old": "  return e && (name === undefined || e.name === name) ? e.heraldry : null;",
+    "new": "  return e ? e.heraldry : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -575,8 +575,8 @@
   {
     "name": "H3-tag-path-checked",
     "file": "src/net/heraldryIndex.js",
-    "old": "(name === undefined || e.name === name)",
-    "new": "(e.name === name)",
+    "old": "  return e && (name === undefined || e.name === name) ? e.heraldry : null;",
+    "new": "  return e && e.name === name ? e.heraldry : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -585,8 +585,8 @@
   {
     "name": "H3-roll-by-tag",
     "file": "src/ui/hallOfRecords.js",
-    "old": "armsOf(tag, now?.name ?? g.name)",
-    "new": "armsOf(tag)",
+    "old": "      const h = heraldryOf(armsOf(tag, now?.name ?? g.name));",
+    "new": "      const h = heraldryOf(armsOf(tag));",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -595,8 +595,8 @@
   {
     "name": "H3-tab-by-tag",
     "file": "src/ui/seatTab.js",
-    "old": "armsNamed(arms, g.now?.tag ?? g.tag, g.now?.name ?? g.name)",
-    "new": "armsNamed(arms, g.now?.tag ?? g.tag)",
+    "old": "            const shield = g\n              ? heraldrySwatch(document, armsNamed(arms, g.now?.tag ?? g.tag, g.now?.name ?? g.name))\n              : null;",
+    "new": "            const shield = g ? heraldrySwatch(document, armsNamed(arms, g.now?.tag ?? g.tag)) : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -605,8 +605,8 @@
   {
     "name": "H3-lookup-by-tag",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "return armsNamed(index, tag, name);",
-    "new": "return armsNamed(index, tag);",
+    "old": "    return armsNamed(index, tag, name);",
+    "new": "    return armsNamed(index, tag);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -665,8 +665,8 @@
   {
     "name": "H4-shield-field",
     "file": "src/ui/heraldryArt.js",
-    "old": "  ctx.fill(shield);\n",
-    "new": "",
+    "old": "  ctx.fill(shield);\n  ctx.save();",
+    "new": "  ctx.save();",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -675,8 +675,8 @@
   {
     "name": "H4-shield-border",
     "file": "src/ui/heraldryArt.js",
-    "old": "  ctx.lineWidth = SHIELD_BORDER_W * 2;\n  ctx.stroke(shield);\n",
-    "new": "",
+    "old": "  ctx.lineWidth = SHIELD_BORDER_W * 2;\n  ctx.stroke(shield);\n  ctx.restore();",
+    "new": "  ctx.restore();",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -685,8 +685,8 @@
   {
     "name": "H4-device-ink",
     "file": "src/ui/heraldryArt.js",
-    "old": "drawDevice(ctx, P, h.device, inkHex, field, SHIELD_DEVICE, div, f2,",
-    "new": "drawDevice(ctx, P, h.device, inkHex, inkHex, SHIELD_DEVICE, div, f2,",
+    "old": "    inkHex,\n    field,",
+    "new": "    inkHex,\n    inkHex,",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],

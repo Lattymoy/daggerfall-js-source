@@ -21,7 +21,7 @@
     "name": "SD9B-one-draw-for-both",
     "file": "server-account/src/sds.js",
     "old": "  return { title: r() < SD_TITLE_CHANCE, aura: r() < SD_AURA_CHANCE };",
-    "new": "  const x = r(); return { title: x < SD_TITLE_CHANCE, aura: x < SD_AURA_CHANCE };",
+    "new": "  const x = r();\n  return { title: x < SD_TITLE_CHANCE, aura: x < SD_AURA_CHANCE };",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD9B-no-key-verified-anyway",
     "file": "server-account/src/sds.js",
-    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n  const v = await verifySdReceipt(",
-    "new": "  const v = await verifySdReceipt(",
+    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n  const v = await verifySdReceipt(receipt, publicKey, { subtle, nowS });",
+    "new": "  const v = await verifySdReceipt(receipt, publicKey, { subtle, nowS });",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD9B-the-account-unchecked",
     "file": "server-account/src/sds.js",
-    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest'",
-    "new": "  if (!player.handle) return { recorded: false, why: 'guest'",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };",
+    "new": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD9B-the-guest-counted",
     "file": "server-account/src/sds.js",
-    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };\n  const draw = rand(new Uint8Array(4));",
-    "new": "  const draw = rand(new Uint8Array(4));",
+    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };\n  const draw = rand(new Uint8Array(4)); // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand",
+    "new": "  const draw = rand(new Uint8Array(4)); // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD9B-the-grants-on-every-claim",
     "file": "server-account/src/sds.js",
-    "old": "AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)",
-    "new": "AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND (nonce = ?4 OR 1))",
+    "old": "        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',",
+    "new": "        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND (nonce = ?4 OR 1))',",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD9B-the-grants-cleared",
     "file": "server-account/src/sds.js",
-    "old": "'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1",
-    "new": "'UPDATE players SET sd_honours = ?2 WHERE id = ?1",
+    "old": "        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',",
+    "new": "        'UPDATE players SET sd_honours = ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD9B-claimed-as-recorded",
     "file": "server-account/src/sds.js",
-    "old": "  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };\n",
-    "new": "",
+    "old": "  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };\n  return {",
+    "new": "  return {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD9B-everyones-hours",
     "file": "server-account/src/sds.js",
-    "old": "const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1').bind(playerId).first();",
-    "new": "const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1 OR 1').bind(playerId).first();",
+    "old": "  const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1').bind(playerId).first();",
+    "new": "  const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1 OR 1').bind(playerId).first();",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "SD9B-the-title-on-a-guest-row",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_TITLE)\n    held.push('hourbreaker');",
     "new": "  if (Number(player?.sd_honours) & SD_HONOUR_TITLE) held.push('hourbreaker');",
     "tests": [
       "test/server/sd9b_claim.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "SD9B-the-aura-read-as-the-title",
     "file": "server-account/src/titles.js",
-    "old": "(Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');",
-    "new": "(Number(player?.sd_honours) & 3)) held.push('hourbreaker');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_TITLE)\n    held.push('hourbreaker');",
+    "new": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & 3) held.push('hourbreaker');",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD9B-never-held",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');\n",
-    "new": "",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_TITLE)\n    held.push('hourbreaker');\n  if (isHoursFirst(player, env)) held.push('hoursfirst'); // HOURS-FIRST: by name",
+    "new": "  if (isHoursFirst(player, env)) held.push('hoursfirst'); // HOURS-FIRST: by name",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD9B-not-in-the-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'crystalfist', 'hourbreaker', 'hoursfirst', 'iliacchampion', 'chaptermaster',",
-    "new": "'crystalfist', 'hoursfirst', 'iliacchampion', 'chaptermaster',",
+    "old": "  'hourbreaker',\n  'hoursfirst',",
+    "new": "  'hoursfirst',",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "SD9B-an-unsigned-one-kept",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };",
-    "new": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && (t == null || c.e > t) ? c : null; };",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SD9B-an-expired-one-kept",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };",
-    "new": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; return c && c.signed ? c : null; };",
+    "old": "    const t = nowS();\n    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && c.signed ? c : null;",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SD9B-anothers-offered",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "        if (!mine || live(r)?.s !== mine) continue;",
-    "new": "        if (!mine) continue;",
+    "old": "        if (!mine || live(r)?.s !== mine) continue; // another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // another account's waits for its own sign-in",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SD9B-the-title-unsaid",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "          if (answer.data.title === true) say(SD_CLAIM_TEXT.title);\n",
-    "new": "",
+    "old": "          if (answer.data.title === true) say(SD_CLAIM_TEXT.title);\n          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);",
+    "new": "          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SD9B-the-aura-unsaid",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);\n",
-    "new": "",
+    "old": "          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);\n          // HONOUR-BANNER: its popup - for a grant the account did not hold before (AUDIT FIVE-ASKS E1: a re-roll of a held one is",
+    "new": "          // HONOUR-BANNER: its popup - for a grant the account did not hold before (AUDIT FIVE-ASKS E1: a re-roll of a held one is",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "SD9B-the-guest-said-twice",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "} else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
-    "new": "} else if (answer?.ok && answer.data?.why === 'guest') {",
+    "old": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest') {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "SD9B-a-guest-let-go",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';",
-    "new": "  if (answer?.ok) return 'done';",
+    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, or counted before",
+    "new": "  if (answer?.ok) return 'done'; // counted, or counted before",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SD9B-unbounded",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null;",
-    "new": "        const drop = null;",
+    "old": "        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null; // the account's own oldest, never another's",
+    "new": "        const drop = null; // the account's own oldest, never another's",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "SD9B-two-of-one-hollow",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "return k === r || (o?.d === c.d && o?.s === c.s);",
-    "new": "return k === r;",
+    "old": "          return k === r || (o?.d === c.d && o?.s === c.s);",
+    "new": "          return k === r;",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "SD9B-the-clock-ignored",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "      if (!signedIn && !due) return false;\n",
-    "new": "",
+    "old": "      if (!signedIn && !due) return false;\n      if (!kept().some((r) => mine && live(r)?.s === mine)) {",
+    "new": "      if (!kept().some((r) => mine && live(r)?.s === mine)) {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
