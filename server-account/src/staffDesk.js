@@ -342,7 +342,7 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
     return { error: 'staff-admin' };
   }
 
-  // ═══ STAFF NOTES - every staff member (mob, 06:28Z) ═══
+  // ═══ STAFF NOTES - every staff member ═══
   if (path === '/v1/staff/notes' || path === '/v1/staff/notes/add') {
     const row = await findAccount(db, { target: body.target, name: body.name });
     if ('error' in row) return row;
@@ -389,7 +389,7 @@ export async function staffDesk(ctx, env, path, body, who, audit) {
     };
   }
 
-  // ═══ THE WATCHLIST - each member's own (mob, 06:28Z) ═══
+  // ═══ THE WATCHLIST - each member's own ═══
   if (path === '/v1/staff/watch') {
     const [found] = await db.batch([
       db

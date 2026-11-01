@@ -18,7 +18,7 @@ export const DRAGON_BOLT_COOLDOWN_MS = 350;
 /** Where the two barrels sit from my eye: metres to each side, below, ahead. */
 export const DRAGON_BARRELS = Object.freeze({ side: 1.4, down: 0.6, ahead: 2.0 });
 /** How far down the look the two balls meet with nothing under my aim, metres - far enough that they fly near level
- *  (DRAGON-AIM, 2026-10-29, mob: they crossed at a fixed 40 m and split past it). */
+ *  (DRAGON-AIM, 2026-10-29: they crossed at a fixed 40 m and split past it). */
 export const DRAGON_BOLT_MEET = 300;
 /** DRAGON-AIM: how far off my look a body may stand and still be what I aim at, metres. */
 export const DRAGON_AIM_SLACK = 3;

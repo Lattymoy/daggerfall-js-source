@@ -458,7 +458,7 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   assert.match(main, /click: \(\) => checkForUpdatesLoudly\(\),/);
   // served by the version in use
   const serve = sliceOf('function handleDagger(req) {', '// ---- updating:');
-  assert.match(serve, /if \(gameStore\?\.active\(\)\) \{\s*const file = gameStore\.resolve\(rel\) \?\? gameStore\.resolve\(`\$\{rel\}\/index\.html`\);\s*return file \? fileResponse\(file\) : new Response\('not found', \{ status: 404 \}\);\s*\}/,
+  assert.match(serve, /const store = servingStore \?\? gameStore;.*\s*if \(store\?\.active\(\)\) \{\s*const file = store\.resolve\(rel\) \?\? store\.resolve\(`\$\{rel\}\/index\.html`\);\s*return file \? fileResponse\(file\) : new Response\('not found', \{ status: 404 \}\);\s*\}/,
     'a path the version does not name is not served - whatever the install holds');
   assert.ok(serve.indexOf('gameStore?.active()') < serve.indexOf('let p = path.normalize(path.join(DIST, rel));'), 'before the install\'s own copy');
   // counted, switched at a document load, proved, given up

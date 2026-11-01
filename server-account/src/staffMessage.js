@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; 06:28Z: Moderators too;
+// STAFF-PANEL5-MESSAGE (2026-10-22: a message in the middle of one player's screen; 06:28Z: Moderators too;
 // design doc "DFO Staff Panel: design", Message on screen) - A STAFF MEMBER'S MESSAGE TO ONE PLAYER, end to end.
 //
 // THE PANEL'S TWO DOORS (behind a staff session, staff.js): /v1/staff/message sends one - an Admin or a Moderator, to one

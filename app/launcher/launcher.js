@@ -104,7 +104,11 @@
     return p;
   };
 
+  let screen = null;   // PLAY's question ('choose') or the Private server screen ('private') over the news: the page's own
+  let privateOn = false;   // hosting or joined: PLAY loads the game there, with no question
+  let lastView = null;
   function render(v) {
+    lastView = v;
     document.body.toggleAttribute('data-busy', !!v.busy);
     document.body.dataset.panel = v.panel;
     setText($('version'), v.version);
@@ -128,7 +132,10 @@
     play.disabled = !v.play.enabled;
     play.textContent = v.play.label;
 
-    $('news').hidden = v.panel !== 'news';
+    $('news').hidden = v.panel !== 'news' || !!screen;
+    $('choose').hidden = v.panel !== 'news' || screen !== 'choose';
+    $('private').hidden = v.panel !== 'news' || screen !== 'private';
+    $('play-main').disabled = !v.play.enabled;
     $('setup').hidden = v.panel !== 'setup';
     if (v.setup && changed('setup', v.setup)) {
       $('setup-title').textContent = v.setup.title;
@@ -171,11 +178,12 @@
 
     // The Private server option - Host and Join while off, Stop while on
     const pv = v.options.privateServer;
+    privateOn = !!pv?.on;
     if (pv) {
       setText($('private-note'), pv.note);
       $('private-off').hidden = pv.on;
       $('private-stop').hidden = !pv.on;
-      for (const b of document.querySelectorAll('#private button')) b.disabled = !pv.enabled;
+      for (const b of document.querySelectorAll('#private [data-act]')) b.disabled = !pv.enabled;
       $('private-address').disabled = !pv.enabled;
     }
 
@@ -195,11 +203,21 @@
 
   document.addEventListener('click', (e) => {
     const act = e.target.closest('[data-act]');
+    // PLAY asks first - the main servers or a private server - unless a private server is already on
+    if (act?.id === 'play' && !act.disabled && !privateOn && lastView?.panel === 'news') { show('choose'); return; }
     // Join carries the address typed beside it
     if (act && !act.disabled) bridge.act(act.dataset.act, act.dataset.act === 'private-join' ? $('private-address').value : undefined);
     const link = e.target.closest('[data-open]');
     if (link) bridge.act('open', link.dataset.open);
   });
+  const show = (next) => {
+    screen = next;
+    if (lastView) render(lastView);
+    const into = next ? $(next).querySelector('button:not([hidden]):not(:disabled)') : $('play');
+    into?.focus({ preventScroll: true });
+  };
+  $('private-open').addEventListener('click', () => show('private'));
+  for (const back of document.querySelectorAll('.private .back')) back.addEventListener('click', () => show(screen === 'private' ? 'choose' : null));
   $('update-check').addEventListener('change', (e) => bridge.act('set-update-check', e.target.checked));
   $('backend-vulkan').addEventListener('change', (e) => bridge.act('set-backend', e.target.checked ? 'vulkan' : 'default'));
   bridge.onView(render);

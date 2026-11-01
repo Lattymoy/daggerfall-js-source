@@ -1,6 +1,6 @@
-// STAFF-PANEL1 (2026-10-22, mob: a staff admin panel; design doc "DFO Staff Panel: design", build step 1) - THE PANEL'S
+// STAFF-PANEL1 (2026-10-22, chief: a staff admin panel; design doc "DFO Staff Panel: design", build step 1) - THE PANEL'S
 // SIGN-IN, SESSIONS, ROLES AND AUDIT LOG (server-account/src/staff.js), driven through the real Worker on the node:sqlite
-// database every account pin stands on (test/accountDb.mjs). Three locks (mob, 06:18Z): the password, a key only the
+// database every account pin stands on (test/accountDb.mjs). Three locks (chief, 06:18Z): the password, a key only the
 // staff member's own extension holds, and the role lists.
 //
 // What these pins hold, beside the happy path, is each hole the design review found before a line was written:
@@ -38,12 +38,12 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up: the lists, the owners, and mob's extension key named as an owner's. */
+/** The Worker with the panel set up: the lists, the owners, and chief's extension key named as an owner's. */
 async function stand(extra = {}) {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', SHADOW_FANG_HANDLES: 'SirMcMobdon,Fangy',
-    OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`,
+    OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`,
     ...extra,
   });
   /** A staff door, as the panel asks it: POST, JSON, the staff header, an address. */
@@ -57,9 +57,9 @@ async function stand(extra = {}) {
   };
   const login = async (handle, key, more = {}, opts = {}) => staff('/v1/staff/login', { handle, password: PASSWORD, ...(await key.proof('login', handle)), ...more }, opts);
   const enrol = async (handle, key, invite, more = {}) => staff('/v1/staff/enroll', { handle, password: PASSWORD, invite, ...(await key.proof('enroll', handle)), ...more });
-  /** mob signs in with the key the config names, and invites `handle`, whose own new extension registers its key. */
-  const mobIn = async () => {
-    const r = await login('SirMcMobdon', mobKey);
+  /** chief signs in with the key the config names, and invites `handle`, whose own new extension registers its key. */
+  const chiefIn = async () => {
+    const r = await login('SirMcMobdon', chiefKey);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     return r.body;
   };
@@ -71,7 +71,7 @@ async function stand(extra = {}) {
     assert.equal(r.status, 200, JSON.stringify(r.body));
     return { ...r.body, key, invite: inv.body.invite };
   };
-  return { ...s, staff, login, enrol, mobKey, mobIn, invited, raw: s.env.DB._raw };
+  return { ...s, staff, login, enrol, chiefKey, chiefIn, invited, raw: s.env.DB._raw };
 }
 
 test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is behind the game\'s session', async () => {
@@ -110,6 +110,8 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     '/v1/staff/event', '/v1/staff/events',
     // STAFF-PANEL5-FEEDS: Network bursts, Monster watch and its Flag, the bot check (the relay's /v1/staff/net-feed takes no session)
     '/v1/staff/net', '/v1/staff/monsters', '/v1/staff/monster/flag', '/v1/staff/reactions', '/v1/staff/reactions/keep',
+    // Claude's suggestions (staffClaude.js), and an order signed outside the panel with its keys (staffOrder.js)
+    '/v1/staff/claude/list', '/v1/staff/claude/decide', '/v1/staff/claude/digest', '/v1/staff/order', '/v1/staff/order-key/add', '/v1/staff/order-key/list', '/v1/staff/order-key/revoke',
     // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js) - PIN MOVED
     '/v1/staff/hide',
     // STAFF-PANEL5-FREEZE: freeze and the staff chat (staffFreeze.js)
@@ -118,7 +120,7 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
   // no secret to set anywhere: the config holds the lists and a public key, and nothing else of the panel's
   const toml = src('server-account/wrangler.toml');
   assert.match(toml, /^OWNER_HANDLES = "Lattymoy,SirMcMobdon"$/m);
-  // mob pasted the key his panel showed: that pair alone, and every key named a raw 32-byte Ed25519 public key
+  // chief pasted the key his panel showed: that pair alone, and every key named a raw 32-byte Ed25519 public key
   assert.match(toml, /^OWNER_KEYS = "SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM"$/m);
   for (const k of ownerKeys({ OWNER_KEYS: toml.match(/^OWNER_KEYS = "([^"]*)"$/m)?.[1] }).values()) {
     await crypto.subtle.importKey('raw', Buffer.from(k, 'base64url'), { name: 'Ed25519' }, false, ['verify']);
@@ -131,7 +133,7 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
 test('STAFF-PANEL1: unconfigured is shut - with no owner key named, nobody can sign in', async () => {
   const s = await stand({ OWNER_KEYS: '' });
   await s.registered('SirMcMobdon');
-  const r = await s.login('SirMcMobdon', s.mobKey);
+  const r = await s.login('SirMcMobdon', s.chiefKey);
   assert.deepEqual([r.status, r.body], [401, { error: 'staff-login' }]);
   assert.equal((await s.staff('/v1/staff/me', {}, { token: 'x'.repeat(43) })).status, 401);
 });
@@ -140,7 +142,7 @@ test('STAFF-PANEL1: three locks - the password, the extension\'s key and the lis
   const s = await stand();
   await s.registered('SirMcMobdon');
   await s.registered('Player1');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   assert.deepEqual([me.role, me.owner, me.handle], ['admin', true, 'SirMcMobdon']);
   assert.equal(typeof me.session, 'string');
   // Admin is the Developers list alone, and OWNER_HANDLES opens nothing by itself (mutants: an owner as Admin; an owner as staff)
@@ -151,27 +153,27 @@ test('STAFF-PANEL1: three locks - the password, the extension\'s key and the lis
   const wrongKey = { proof: async (what, handle) => {
     const pair = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
     const ts = nowS();
-    return { pub: s.mobKey.pub, ts, sig: b64url(new Uint8Array(await subtle.sign({ name: 'Ed25519' }, pair.privateKey, enc.encode(staffWords(what, handle.toLowerCase(), ts))))) };
+    return { pub: s.chiefKey.pub, ts, sig: b64url(new Uint8Array(await subtle.sign({ name: 'Ed25519' }, pair.privateKey, enc.encode(staffWords(what, handle.toLowerCase(), ts))))) };
   } };
   for (const [why, r] of [
-    ['wrong password', await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: 'not it at all', ...(await s.mobKey.proof('login', 'SirMcMobdon')) })],
-    ['mob\'s public key, another key\'s signature', await s.login('SirMcMobdon', wrongKey)],
+    ['wrong password', await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: 'not it at all', ...(await s.chiefKey.proof('login', 'SirMcMobdon')) })],
+    ['chief\'s public key, another key\'s signature', await s.login('SirMcMobdon', wrongKey)],
     ['no key at all', await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD })],
-    ['a stale signature', await s.login('SirMcMobdon', { proof: (w, h) => s.mobKey.proof(w, h, nowS() - 600) })],
-    ['an enrol signature for a login', await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.mobKey.proof('enroll', 'SirMcMobdon')) })],
-    ['not on any list', await s.login('Player1', s.mobKey)],
-    ['no such handle', await s.login('NoSuchHandle', s.mobKey)],
+    ['a stale signature', await s.login('SirMcMobdon', { proof: (w, h) => s.chiefKey.proof(w, h, nowS() - 600) })],
+    ['an enrol signature for a login', await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.chiefKey.proof('enroll', 'SirMcMobdon')) })],
+    ['not on any list', await s.login('Player1', s.chiefKey)],
+    ['no such handle', await s.login('NoSuchHandle', s.chiefKey)],
   ]) assert.deepEqual([r.status, r.body], [401, { error: 'staff-login' }], why);
 });
 
 test('STAFF-PANEL1: a signature works once', async () => {
   const s = await stand();
   await s.registered('SirMcMobdon');
-  const proof = await s.mobKey.proof('login', 'SirMcMobdon');
+  const proof = await s.chiefKey.proof('login', 'SirMcMobdon');
   const body = { handle: 'SirMcMobdon', password: PASSWORD, ...proof };
   assert.equal((await s.staff('/v1/staff/login', body)).status, 200);
   assert.equal((await s.staff('/v1/staff/login', body)).status, 401, 'the same signed second again');
-  const older = await s.mobKey.proof('login', 'SirMcMobdon', proof.ts - 1);
+  const older = await s.chiefKey.proof('login', 'SirMcMobdon', proof.ts - 1);
   assert.equal((await s.staff('/v1/staff/login', { ...body, ...older })).status, 401, 'an older second');
   const rows = s.raw.prepare("SELECT detail FROM staff_audit WHERE act = 'login-refused'").all().map((r) => JSON.parse(r.detail).why);
   assert.deepEqual(rows, ['replayed', 'replayed'], 'and an owner sees it tried');
@@ -180,7 +182,7 @@ test('STAFF-PANEL1: a signature works once', async () => {
 test('STAFF-PANEL1: a staff token opens no game door and a game secret no staff door', async () => {
   const s = await stand();
   const who = await s.registered('SirMcMobdon');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   assert.equal((await s.staff('/v1/staff/me', {}, { token: who.secret })).status, 401, 'a game secret in the staff header');
   assert.equal((await s.call('/v1/account', {}, me.session)).status, 401, 'a staff token as a game bearer');
   const r = await s.staff('/v1/staff/me', {}, { token: me.session });
@@ -194,7 +196,7 @@ test('STAFF-PANEL1: an owner invites; the invite registers one extension once; M
   await s.registered('Asynian');
   await s.registered('Fangy');
   await s.registered('Player1');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const tok = { token: me.session };
   assert.equal((await s.staff('/v1/staff/invite', { handle: 'Player1' }, tok)).body.error, 'no-staff', 'only a listed handle');
   const mod = await s.invited('Asynian', me);
@@ -222,7 +224,7 @@ test('STAFF-PANEL1: a cut is at once, and a key forgotten takes its sessions wit
   const s = await stand();
   await s.registered('SirMcMobdon');
   await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const mod = await s.invited('Asynian', me);
   assert.equal((await s.staff('/v1/staff/cut', { handle: 'SirMcMobdon' }, { token: me.session })).body.error, 'staff-self');
   assert.equal((await s.staff('/v1/staff/cut', { handle: 'Asynian' }, { token: me.session })).status, 200);
@@ -241,7 +243,7 @@ test(`STAFF-PANEL1: at most ${STAFF_KEYS_MAX} extensions an account`, async () =
   const s = await stand();
   await s.registered('SirMcMobdon');
   await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   for (let i = 0; i < STAFF_KEYS_MAX; i++) await s.invited('Asynian', me);
   const inv = await s.staff('/v1/staff/invite', { handle: 'Asynian' }, { token: me.session });
   const r = await s.enrol('Asynian', await extensionKey(), inv.body.invite);
@@ -252,7 +254,7 @@ test('STAFF-PANEL1: off the list, banned or renamed away is off the panel at the
   const s = await stand();
   await s.registered('SirMcMobdon');
   const asy = await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const mod = await s.invited('Asynian', me);
   s.env.MODERATOR_HANDLES = '';
   assert.equal((await s.staff('/v1/staff/me', {}, { token: mod.session })).status, 401, 'off the list');
@@ -281,9 +283,9 @@ test('STAFF-PANEL1: tries are bounded per address and per handle from one addres
   for (let i = 0; i < STAFF_TRY_MAX; i++) {
     assert.equal((await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: 'guess guess guess' }, { ip: '192.0.2.66' })).status, 401);
   }
-  const shut = await s.login('SirMcMobdon', s.mobKey, {}, { ip: '192.0.2.66' });
+  const shut = await s.login('SirMcMobdon', s.chiefKey, {}, { ip: '192.0.2.66' });
   assert.deepEqual([shut.status, shut.body.error], [429, 'rate'], 'the guessing address is shut out');
-  const mine = await s.login('SirMcMobdon', s.mobKey, {}, { ip: '203.0.113.9' });
+  const mine = await s.login('SirMcMobdon', s.chiefKey, {}, { ip: '203.0.113.9' });
   assert.equal(mine.status, 200, 'the staff member from their own address is not');
   // a guess with neither lock is noise and writes nothing; a right password with no key is somebody holding it
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM staff_audit WHERE act = 'login-refused'").get().n, 0);
@@ -295,7 +297,7 @@ test('STAFF-PANEL1: tries are bounded per address and per handle from one addres
 test('STAFF-PANEL1: idle means the staff member, not the panel\'s polling; eight hours is the end either way', async () => {
   const s = await stand();
   await s.registered('SirMcMobdon');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const act = () => s.raw.prepare('SELECT last_act FROM staff_sessions').get().last_act;
   s.raw.prepare('UPDATE staff_sessions SET last_act = ?').run(nowS() - 600);
   const was = act();
@@ -305,7 +307,7 @@ test('STAFF-PANEL1: idle means the staff member, not the panel\'s polling; eight
   assert.ok(act() > was, 'an act does');
   s.raw.prepare('UPDATE staff_sessions SET last_act = ?').run(nowS() - STAFF_IDLE_S - 1);
   assert.equal((await s.staff('/v1/staff/me', { poll: true }, { token: me.session })).status, 401, 'idle past 30 minutes');
-  const live = await s.mobIn();
+  const live = await s.chiefIn();
   s.raw.prepare('UPDATE staff_sessions SET expires_at = ?').run(nowS() - 1);
   assert.equal((await s.staff('/v1/staff/me', {}, { token: live.session })).status, 401, 'past its whole life');
 });
@@ -314,7 +316,7 @@ test('STAFF-PANEL1: the audit log is append-only, read by owners alone, and its 
   const s = await stand();
   await s.registered('SirMcMobdon');
   await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   await s.invited('Asynian', me);
   const read = await s.staff('/v1/staff/audit', {}, { token: me.session });
   assert.equal(read.status, 200);
@@ -333,7 +335,7 @@ test('STAFF-PANEL1 (12:12Z: keep it one month): a read of the log, the team or t
   await s.registered('SirMcMobdon');
   await s.registered('Asynian');
   await s.registered('Lattymoy');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const tok = { token: me.session };
   const rows = (act) => s.raw.prepare('SELECT outcome, detail FROM staff_audit WHERE act = ? ORDER BY id').all(act);
   const reads = () => ['audit-read', 'team-read', 'mods-read'].map((a) => rows(a).length);
@@ -400,7 +402,7 @@ test('AUDIT STAFF-PANEL1: a refusal\'s audit row is written off the answer\'s pa
   const ask = (body) => worker.fetch(new Request('https://accounts.invalid/v1/staff/login', {
     method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '198.51.100.7' }, body: JSON.stringify(body),
   }), s.env, { waitUntil: (p) => later.push(p) });
-  const junk = { pub: s.mobKey.pub, ts: nowS(), sig: b64url(new Uint8Array(64)) };
+  const junk = { pub: s.chiefKey.pub, ts: nowS(), sig: b64url(new Uint8Array(64)) };
   assert.equal((await ask({ handle: 'SirMcMobdon', password: 'not it at all', ...junk })).status, 401);
   assert.equal(later.length, 0, 'neither lock: nothing to write');
   assert.equal((await ask({ handle: 'SirMcMobdon', password: PASSWORD, ...junk })).status, 401);
@@ -412,15 +414,15 @@ test('AUDIT STAFF-PANEL1: a refusal\'s audit row is written off the answer\'s pa
 test('AUDIT STAFF-PANEL1: an owner\'s config key, cut or forgotten, stays out - and its spent sign-ins stay spent', async () => {
   const s = await stand({ OWNER_KEYS: 'placeholder' });
   const latty = await extensionKey();
-  s.env.OWNER_KEYS = `SirMcMobdon:${s.mobKey.pub},Lattymoy:${latty.pub}`;
+  s.env.OWNER_KEYS = `SirMcMobdon:${s.chiefKey.pub},Lattymoy:${latty.pub}`;
   await s.registered('SirMcMobdon');
   await s.registered('Lattymoy');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const lat = await s.login('Lattymoy', latty);
   assert.equal(lat.status, 200);
   assert.equal((await s.staff('/v1/staff/cut', { handle: 'SirMcMobdon' }, { token: lat.body.session })).status, 200);
   assert.equal((await s.staff('/v1/staff/me', {}, { token: me.session })).status, 401, 'cut: the session ends');
-  assert.equal((await s.login('SirMcMobdon', s.mobKey)).status, 401, 'and the config key does not bring them back');
+  assert.equal((await s.login('SirMcMobdon', s.chiefKey)).status, 401, 'and the config key does not bring them back');
   // forget: a body already used once is not used again once its key is forgotten
   const body = { handle: 'Lattymoy', password: PASSWORD, ...(await latty.proof('login', 'Lattymoy')) };
   const again = await s.staff('/v1/staff/login', body);
@@ -436,10 +438,10 @@ test('AUDIT STAFF-PANEL1: a config key stands only while the config names it, fo
   const s = await stand();
   await s.registered('SirMcMobdon');
   await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   s.env.OWNER_KEYS = '';
   assert.equal((await s.staff('/v1/staff/me', {}, { token: me.session })).status, 401, 'taken out of the config: its session ends');
-  assert.equal((await s.login('SirMcMobdon', s.mobKey)).status, 401, 'and it signs in no more');
+  assert.equal((await s.login('SirMcMobdon', s.chiefKey)).status, 401, 'and it signs in no more');
   // a Moderator named in OWNER_KEYS is no owner, so the config key opens nothing for them
   const asyKey = await extensionKey();
   s.env.OWNER_KEYS = `Asynian:${asyKey.pub}`;
@@ -450,7 +452,7 @@ test('AUDIT STAFF-PANEL1: the signed second is within STAFF_SIG_S either way, fr
   for (const [off, want] of [[STAFF_SIG_S + 1, 401], [-(STAFF_SIG_S + 1), 401], [-(STAFF_SIG_S - 5), 200]]) {
     const s = await stand();
     await s.registered('SirMcMobdon');
-    const r = await s.login('SirMcMobdon', { proof: (w, h) => s.mobKey.proof(w, h, nowS() + off) });
+    const r = await s.login('SirMcMobdon', { proof: (w, h) => s.chiefKey.proof(w, h, nowS() + off) });
     assert.equal(r.status, want, `signed ${off} s from now`);
   }
 });
@@ -459,7 +461,7 @@ test('AUDIT STAFF-PANEL1: invites - one live a member, 24 hours, and one key fro
   const s = await stand();
   await s.registered('SirMcMobdon');
   const asy = await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const first = await s.staff('/v1/staff/invite', { handle: 'Asynian' }, { token: me.session });
   const second = await s.staff('/v1/staff/invite', { handle: 'Asynian' }, { token: me.session });
   assert.equal((await s.enrol('Asynian', await extensionKey(), first.body.invite)).status, 401, 'the first invite, replaced by the second');
@@ -475,7 +477,7 @@ test('AUDIT STAFF-PANEL1: renamed onto another listed handle, a key opens nothin
   const s = await stand();
   await s.registered('SirMcMobdon');
   const asy = await s.registered('Asynian');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const mod = await s.invited('Asynian', me);
   s.raw.prepare("UPDATE players SET handle = 'Fangy', handle_lc = 'fangy' WHERE id = ?").run(asy.id);
   assert.equal((await s.staff('/v1/staff/me', {}, { token: mod.session })).status, 401, 'the open session ends');
@@ -489,7 +491,7 @@ test('STAFF-PANEL1: an Admin adds and removes Moderators from the panel - the ac
   await s.registered('Asynian');
   const p1 = await s.registered('Player1');
   const b1 = await s.registered('Banned1');
-  const me = await s.mobIn();
+  const me = await s.chiefIn();
   const admin = await s.invited('Roderic', me);
   assert.deepEqual([admin.role, admin.owner], ['admin', false], 'an Admin who is no owner');
   const as = (path, body = {}, who = admin) => s.staff(path, body, { token: who.session });

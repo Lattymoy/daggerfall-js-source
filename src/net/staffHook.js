@@ -169,7 +169,7 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
   }
   return {
     version: STAFF_HOOK_VERSION,
-    /** Follow `sub` at once - another pick lets the last go. False for no account. FOLLOW-GROUND-HINT (2026-10-24, mob:
+    /** Follow `sub` at once - another pick lets the last go. False for no account. FOLLOW-GROUND-HINT (2026-10-24:
      *  "following from ground does not work", "panel open said locked never moved"): a pick off the staff member's own
      *  ground knows the room the target stands in and their socket there (`hint`), so the eye goes there at once instead
      *  of waiting on the hub's word of where they are - which never comes for a room a note cannot name (a dungeon, a
@@ -281,7 +281,7 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
  *  one Your settings offers (else NAMEPLATE_DIST), and for each account the most urgent flag the rows give it (the
  *  highest level wins, with its words) and whether a watch names it. A row with an account that is no account id, a
  *  level that is none of TAG_LEVELS, or nothing to show is dropped; past TAGS_MAX rows nothing is read; words that are
- *  not a string of TAG_WHY_MAX at most are no words. Null for an answer with no list. STAFF-VIEW-SWITCH (mob, 2026-10-25:
+ *  not a string of TAG_WHY_MAX at most are no words. Null for an answer with no list. STAFF-VIEW-SWITCH (2026-10-25:
  *  "need option in setting to turn of monster lines and player esp to play normal"): Your settings' two switches, `esp`
  *  (the tags and the flag lines) and `lines` (an Admin's monster lines) - each on unless the answer says false, so a panel
  *  older than them changes nothing.

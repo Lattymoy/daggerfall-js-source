@@ -1,10 +1,10 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // STAFF-PANEL3-PLAYERS (2026-10-22; design doc "DFO Staff Panel: design", build step 3, "Players and
-// nameplates") - THE PANEL'S PLAYERS: a search over every account, online or not, by handle or character name (mob,
+// nameplates") - THE PANEL'S PLAYERS: a search over every account, online or not, by handle or character name (
 // 03:23Z); one account's profile, read tab by tab; its devices and Sign out everywhere; and the rename of an offensive
 // handle or character name (the last was done by hand, migration 0134). Admins alone: Moderators have no profile screen
-// (mob, 03:03Z: Moderators get "only chat report notifications with Mute and Ban").
+// (Moderators get "only chat report notifications with Mute and Ban").
 //
 // NOTHING NEW IS JUDGED (design doc, "Built on the save judge").
 // Every flag a profile shows is one the judge stored at a checkpoint - the law finding standing on a character's row

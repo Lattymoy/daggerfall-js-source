@@ -93,10 +93,10 @@ function fixtures(raw, t) {
   return { id, player, sale, fill, bid, trade, guild, vault, harvest, hours, character };
 }
 
-/** The Worker with the panel set up: mob (an Admin and owner) signed in, Asynian (a Moderator) invited and signed in. */
+/** The Worker with the panel set up: chief (an Admin and owner) signed in, Asynian (a Moderator) invited and signed in. */
 async function stand() {
-  const mobKey = await extensionKey();
-  const s = await standService({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}` });
+  const chiefKey = await extensionKey();
+  const s = await standService({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}` });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.1', ...(token ? { [STAFF_SESSION_HEADER]: token } : {}) }, body: JSON.stringify(body),
@@ -104,13 +104,13 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
   const raw = s.env.DB._raw;
   const audits = (act) => raw.prepare('SELECT * FROM staff_audit WHERE act = ? ORDER BY id').all(act);
-  return { ...s, raw, staff, mob, asy, audits, fx: fixtures(raw, nowS()) };
+  return { ...s, raw, staff, chief, asy, audits, fx: fixtures(raw, nowS()) };
 }
 
 test('STAFF-PANEL3-ECON: the economy\'s doors are the staff panel\'s, shut without a session, and an Admin\'s alone - a Moderator\'s try is written down', async () => {
@@ -121,7 +121,7 @@ test('STAFF-PANEL3-ECON: the economy\'s doors are the staff panel\'s, shut witho
     const m = await s.staff(r, {}, s.asy.session);
     assert.equal(m.status, 403, `${r} for a Moderator`);
     assert.equal(m.body.error, 'staff-admin');
-    assert.equal((await s.staff(r, {}, s.mob.session)).status, 200, `${r} for an Admin`);
+    assert.equal((await s.staff(r, {}, s.chief.session)).status, 200, `${r} for an Admin`);
   }
   const refused = s.audits('refused');
   assert.equal(refused.length, ECON_ROUTES.length);
@@ -148,11 +148,11 @@ test('STAFF-PANEL3-ECON: the stream is every sale, fill, bid, settled trade and 
   fx.sale({ buyer: b, seller: a, at: t - STREAM_SPAN_DAYS * DAY - 60 });   // past the widest window
   want.sort((x, y) => y[1] - x[1] || (y[0] > x[0] ? 1 : -1));
 
-  const first = await s.staff('/v1/staff/econ/stream', {}, s.mob.session);
+  const first = await s.staff('/v1/staff/econ/stream', {}, s.chief.session);
   assert.equal(first.status, 200, JSON.stringify(first.body));
   assert.equal(first.body.rows.length, STREAM_PAGE);
   assert.ok(first.body.next);
-  const second = await s.staff('/v1/staff/econ/stream', { before: first.body.next }, s.mob.session);
+  const second = await s.staff('/v1/staff/econ/stream', { before: first.body.next }, s.chief.session);
   assert.equal(second.body.next, null);
   const got = [...first.body.rows, ...second.body.rows];
   assert.deepEqual(got.map((r) => r.id), want.map((w) => w[0]), 'every row once, newest first, ties by key');
@@ -165,9 +165,9 @@ test('STAFF-PANEL3-ECON: the stream is every sale, fill, bid, settled trade and 
   assert.equal(fl.region, 7, 'a fill stands in its order\'s region');
   assert.ok(got.every((r) => r.at > t - STREAM_SPAN_DAYS * DAY));
   // the window: since and until, and never wider than the span
-  const narrow = await s.staff('/v1/staff/econ/stream', { since: t - 250, until: t - 150 }, s.mob.session);
+  const narrow = await s.staff('/v1/staff/econ/stream', { since: t - 250, until: t - 150 }, s.chief.session);
   assert.deepEqual(narrow.body.rows.map((r) => r.kind), ['bid']);
-  const wide = await s.staff('/v1/staff/econ/stream', { since: 0, kinds: ['sale'] }, s.mob.session);
+  const wide = await s.staff('/v1/staff/econ/stream', { since: 0, kinds: ['sale'] }, s.chief.session);
   assert.ok(wide.body.since >= t - STREAM_SPAN_DAYS * DAY - 2, 'a since past the span is the span');
   // the read is written once a view, whatever its page
   assert.equal(s.audits('market-read').length, 3);
@@ -187,10 +187,10 @@ test('STAFF-PANEL3-ECON: the stream\'s filters - a player on every side, an item
   const asSecond = fx.trade({ a: c, b: a, at: t - 60, aGets: { items: [], gold: 3 }, bGets: { items: [{ templateIndex: 1, name: 'Ebony Dagger' }], gold: 0 } });
   const byName = fx.vault({ guild: g, who: 'Alda', at: t - 70, name: 'Ebony Dagger' });
   fx.vault({ guild: g, who: 'Brond', at: t - 80 });
-  const ask = async (body) => (await s.staff('/v1/staff/econ/stream', body, s.mob.session)).body;
+  const ask = async (body) => (await s.staff('/v1/staff/econ/stream', body, s.chief.session)).body;
   assert.deepEqual((await ask({ name: 'alda' })).rows.map((r) => r.id), [asBuyer, asSeller, asPoster, asAuctioneer, asSecond, byName]);
   assert.deepEqual((await ask({ target: a })).rows.map((r) => r.id), [asBuyer, asSeller, asPoster, asAuctioneer, asSecond, byName]);
-  assert.equal((await s.staff('/v1/staff/econ/stream', { name: 'nobody here' }, s.mob.session)).status, 404);
+  assert.equal((await s.staff('/v1/staff/econ/stream', { name: 'nobody here' }, s.chief.session)).status, 404);
   // an item: a material, and a piece's name in a trade's receipt and a vault's log
   assert.deepEqual((await ask({ item: 'ore:tin' })).rows.map((r) => r.id), [asSeller]);
   assert.deepEqual((await ask({ item: 'Ebony Dagger' })).rows.map((r) => r.id), [asSecond, byName]);
@@ -242,7 +242,7 @@ test('STAFF-PANEL3-ECON: a price flag reads the row\'s own currency, each pair o
   // a fresh account's bulk sale under five times the usual, and its bulk buy far under it: what each took past the usual
   const bulk = fx.sale({ buyer: x2, seller: fresh, price: 50, units: 200, at: t - 160 });
   const cheap = fx.sale({ buyer: fresh, seller: x2, price: 1, units: 200, at: t - 170 });
-  const rows = new Map((await s.staff('/v1/staff/econ/stream', { kinds: ['sale', 'fill'] }, s.mob.session)).body.rows.map((r) => [r.id, r]));
+  const rows = new Map((await s.staff('/v1/staff/econ/stream', { kinds: ['sale', 'fill'] }, s.chief.session)).body.rows.map((r) => [r.id, r]));
   const flags = (k) => rows.get(k).flags.map((f) => f.flag).sort();
   assert.equal(rows.get(honest).usual, 11.5, 'the median of eight pairs - the washing pair once, the self-sales never');
   assert.deepEqual(flags(honest), []);
@@ -303,7 +303,7 @@ test('STAFF-PANEL3-ECON: the repeat flag counts sales, fills and trades between 
   const fresh2 = fx.player('Newer', { age: 60 });
   const edge = fx.trade({ a: d, b: fresh2, at: t - 97, bGets: { items: [], gold: L.fresh.gold } });
   const lopsided = fx.trade({ a, b: fresh2, at: t - 98, aGets: { items: [], gold: 100 }, bGets: { items: [], gold: 60_000 } });
-  const rows = new Map((await s.staff('/v1/staff/econ/stream', { kinds: ['sale', 'trade'] }, s.mob.session)).body.rows.map((r) => [r.id, r]));
+  const rows = new Map((await s.staff('/v1/staff/econ/stream', { kinds: ['sale', 'trade'] }, s.chief.session)).body.rows.map((r) => [r.id, r]));
   const flags = (k) => rows.get(k).flags.map((f) => f.flag).sort();
   assert.deepEqual(flags(nth), ['repeat'], `${L.repeat.n} deals inside ${L.repeat.days} days`);
   assert.match(rows.get(nth).flags[0].why, new RegExp(`^${L.repeat.n} deals`));
@@ -348,7 +348,7 @@ test('STAFF-PANEL3-ECON: node activity puts the even-gap loop of many hours firs
   fx.hours(weekly, hour0, H.weekHigh + 1);
   fx.hours(weekly, hour0 + 30 * 3600, 3);
   fx.hours(human, hour0, 2);
-  const r = await s.staff('/v1/staff/econ/harvests', {}, s.mob.session);
+  const r = await s.staff('/v1/staff/econ/harvests', {}, s.chief.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   const list = r.body.players;
   assert.deepEqual(list.map((p) => p.name).slice(0, 2), ['Botty', 'Weekly'], 'the longer, evener run first');
@@ -379,14 +379,14 @@ test('STAFF-PANEL3-ECON: node activity puts the even-gap loop of many hours firs
   assert.equal(r.body.total, 4);
   assert.equal(r.body.next, null);
   // newest first: by the last harvest
-  const newest = (await s.staff('/v1/staff/econ/harvests', { sort: 'newest' }, s.mob.session)).body.players;
+  const newest = (await s.staff('/v1/staff/econ/harvests', { sort: 'newest' }, s.chief.session)).body.players;
   assert.equal(newest[0].id, mod);
   // one player's own, by name: the day's harvests themselves, newest first
-  const one = (await s.staff('/v1/staff/econ/harvests', { name: 'Botty' }, s.mob.session)).body.player;
+  const one = (await s.staff('/v1/staff/econ/harvests', { name: 'Botty' }, s.chief.session)).body.player;
   assert.equal(one.harvests.length, 300);
   assert.equal(one.harvests[0].node, 'n299');
   assert.equal(one.level, 'high');
-  assert.equal((await s.staff('/v1/staff/econ/harvests', { name: 'nobody here' }, s.mob.session)).status, 404);
+  assert.equal((await s.staff('/v1/staff/econ/harvests', { name: 'nobody here' }, s.chief.session)).status, 404);
   assert.deepEqual(s.audits('harvests-read').map((a) => a.target), [null, null, bot]);
 });
 
@@ -442,7 +442,7 @@ test('STAFF-PANEL3-ECON: the economy - where the service holds gold, the Marks, 
     .run(cid, t - (t % 3600), a, cid, t - (t % 3600) - DAY, a);
   raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, price, bought_at, rent_due) VALUES (1, 1, ?, 'c1', 'Alda', 1, 5000, 1, 77)").run(a);
 
-  const r = await s.staff('/v1/staff/econ/economy', {}, s.mob.session);
+  const r = await s.staff('/v1/staff/econ/economy', {}, s.chief.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   const e = r.body;
   assert.equal(e.days, ECON_DAYS_DEFAULT);
@@ -464,11 +464,11 @@ test('STAFF-PANEL3-ECON: the economy - where the service holds gold, the Marks, 
   assert.equal(e.richest.characters[0].owner, 'Alda');
   assert.deepEqual(e.richest.guilds.map((g) => [g.name, g.gold, g.realmGold, g.legacyGold, g.marks]), [['Wolves', 1000, 600, 400, 40], ['Bears', 50, 50, 0, 4]]);
   // the days: capped, and a day counts from today back
-  const wide = (await s.staff('/v1/staff/econ/economy', { days: 99 }, s.mob.session)).body;
+  const wide = (await s.staff('/v1/staff/econ/economy', { days: 99 }, s.chief.session)).body;
   assert.equal(wide.days, ECON_DAYS_MAX);
   assert.equal(wide.daily.length, ECON_DAYS_MAX);
   assert.equal(wide.marks.minted.gather, 1099);
-  assert.equal((await s.staff('/v1/staff/econ/economy', { days: 1 }, s.mob.session)).body.daily.length, 1);
+  assert.equal((await s.staff('/v1/staff/econ/economy', { days: 1 }, s.chief.session)).body.daily.length, 1);
   assert.deepEqual(s.audits('economy-read').map((x) => JSON.parse(x.detail).days), [ECON_DAYS_DEFAULT, ECON_DAYS_MAX, 1]);
 });
 
@@ -579,7 +579,7 @@ test('STAFF-PANEL3-ECON: per guild - gold, its realm part and the unverified res
   fx.guild('Owls', { treasury: 10, realmGold: 10 });
   raw.prepare("INSERT INTO guild_vault (guild_id, slot, rec, name, count, dep_player, dep_char, dep_name, at) VALUES (?, 0, '{}', 'Ore', 7, ?, 'c', 'Alda', 1), (?, 1, '{}', 'Gem', 2, ?, 'c', 'Alda', 1)").run(w, p, w, p);
   raw.prepare("INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, 'c', ?, 1, 'Alda', 1)").run(p, w);
-  const ask = async (body) => (await s.staff('/v1/staff/econ/guilds', body, s.mob.session)).body;
+  const ask = async (body) => (await s.staff('/v1/staff/econ/guilds', body, s.chief.session)).body;
   const gold = await ask({});
   assert.equal(gold.sort, 'gold');
   assert.deepEqual(gold.guilds.map((g) => g.name), ['Wolves', 'Bears', 'Owls']);

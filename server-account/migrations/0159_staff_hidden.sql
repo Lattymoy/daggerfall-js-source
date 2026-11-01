@@ -5,7 +5,7 @@
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads it.
 --
--- players.staff_hide  1 (the default - mob, 05:36Z: Hide me is "a switch in Your settings, on by default") or 0, once the
+-- players.staff_hide  1 (the default: Hide me is a switch in Your settings, on by default) or 0, once the
 --                 staff member pressed Show myself. Read only for an account a role list names (staff.js staffRole) that
 --                 holds a live staff session: every other account's row says 1 and is never asked. The account's, not
 --                 its handle's, as staff_mod is (0144). No index: it is read off the row the token's mint already holds.

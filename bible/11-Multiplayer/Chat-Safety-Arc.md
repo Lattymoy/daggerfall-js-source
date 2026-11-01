@@ -105,6 +105,8 @@ Daggerfall Unity has no chat; none of this is a DFU member.
 - `test/net/safety/safe_law.test.js`, `test/net/safety/safe_relay.test.js`, `test/net/safety/safe_client.test.js` - law, relay, client
 - `test/server/safe_service.test.js`, `test/server/safe_review.test.js`, `test/server/discord_setup.test.js` - service, reviewer, Discord setup
 
+Claude as staff, which reads the stored feeds and suggests cases to staff, is in `Claude-Staff.md`.
+
 ## Open
 
 - Ban evasion: a banned player can make a new guest; guests' reports never count and new voices are slowed.

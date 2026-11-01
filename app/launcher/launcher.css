@@ -118,15 +118,23 @@ body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
 .actions:empty { display: none; }
 
 /* THE OPTIONS: the player's own doors, beside the news. */
-.side { flex: none; width: 236px; display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
-.opt { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.side { flex: none; width: 236px; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #7d7460 transparent; display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
+.opt { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .opt > .caps { margin: 0; font-size: 13px; }
 .files { margin: 0; width: 100%; min-width: 0; font-size: 14px; color: #a89f88; }
 .files .path { font-size: 14px; }
 /* The Private server option */
-#private-note { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
-#private-off { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
+/* The Private server screen: opened from its option, in the panel's place of the patch notes */
+.private { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 10px 16px 16px; }
+.private[hidden] { display: none; }
+.private > .caps { margin: 0 -16px; padding: 0 16px 8px; align-self: stretch; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.choices { display: flex; gap: 14px; flex-wrap: wrap; }
+.choices .plaque { min-width: 200px; height: 60px; }
+#private-note { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+#private-off { display: flex; align-items: center; gap: 8px; width: 100%; }
 #private-off[hidden] { display: none; }
+#private-off .address { flex: 1; min-width: 0; width: auto; }
+#private-off .files { width: auto; flex: none; }
 .address {
   width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: 14px; color: #d8cfae;
   border: 2px solid #7d7460; background: rgba(10,12,17,0.72);

@@ -42,7 +42,7 @@
 //
 // VAMP-HOOD (2026-09-29, #suggestions, Starempire42: "adds the ability
 // to travel during the day if you a wearing a cloak or robe with a hood
-// up"; Sir McMobdon: "nice, good idea"; sent in by Mac): THE SECOND DEPARTURE.
+// up"; sent in by Mac): THE SECOND DEPARTURE.
 // The flag's travel rules ask racialSunAverse, never the flag: under
 // a raised hood - a cloak drawn hood up, or plain robes with theirs,
 // survival/temperature.js cloakState, the felt temperature's one hood

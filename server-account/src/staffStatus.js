@@ -38,7 +38,7 @@
 // Per metric (STATUS_METRICS), an amber and a red line, either or both: a value AT OR PAST a line takes its colour. Every
 // staff member may read them; only an Admin sets one, written down in the audit log in the same batch, with what it was.
 //
-// ═══ HOME (design doc, "Home: only the top of everything"; mob, 03:23Z-03:24Z) ═══
+// ═══ HOME (design doc, "Home: only the top of everything") ═══
 //
 // One read: the top 3, 5 or 10 of every watch the caller may see, each item a level (high, medium, low), why, and who,
 // each watch with "N high of M", the watches ordered by their worst item. A watch is one plain entry in HOME_WATCHES - a

@@ -24,7 +24,7 @@
     "file": "server-account/src/staffRealm.js",
     "old": "    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });\n    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });",
     "new": "    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });",
-    "why": "every gift names why (mob: a reason and a note like Remove)",
+    "why": "every gift names why",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ]

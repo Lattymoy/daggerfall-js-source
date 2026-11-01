@@ -533,7 +533,7 @@ export const SHARE_GUILD_NAMES = Object.freeze({
 });
 
 /**
- * DISC25-D (Sir McMobdon on Discord: "Assumed it was cause I wasn't a part of same guild I couldn't receive the quest.
+ * DISC25-D (a player on Discord: "Assumed it was cause I wasn't a part of same guild I couldn't receive the quest.
  * But I checked i am In guild. Still cant get quest shared"): the refusal a receiver reads, naming the guild when the
  * gate was one. "Guard the Guild" is a Mages Guild quest, and a Temple of Julianos member was told only that they
  * were "not a member of the guild this quest requires" - true, and no use to someone who is in a guild. The rest are

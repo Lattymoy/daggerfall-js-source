@@ -87,7 +87,7 @@ test('STAFF-PANEL5-FEEDS-FIX bench: a pose read by open episodes and a quiet foe
   assert.ok(usPose < 50 && usFoes < 50, line);
 });
 
-// STAFF-PANEL5-MONSTERS (2026-10-23; mob wants all three feed pages working with grantStrip off, without hurting
+// STAFF-PANEL5-MONSTERS (2026-10-23; chief wants all three feed pages working with grantStrip off, without hurting
 // server performance) - WHAT COUNTING MONSTERS WITH grantStrip OFF COSTS A FOES FRAME: staffFoesSeen on every fanned
 // frame (the feed's URL unset, one compare; set, a delta two; a full frame one pass over its records), against the fan it
 // rides - a full cell's frame to 31 listeners through the Room's own _foesFan, its parse included, every send a no-op (so

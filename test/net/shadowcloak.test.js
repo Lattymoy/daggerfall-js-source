@@ -1,7 +1,7 @@
-// SHADOW-CLOAK — SIRMCMOBDON'S OWN AURA: THE HOLO SHADOW CLOAK (2026-10-04).
+// SHADOW-CLOAK — THE SHADOW FANG ACCOUNT'S OWN AURA: THE HOLO SHADOW CLOAK (2026-10-04).
 //
-// The owner: "So for SirMcMobdon, I want to build a new unique AURA specifically for his account. A holo shadow cloak
-// with red accents. Extremely detailed". SirMcMobdon already holds Shadow Fang (SHADOW-FANG: the black-and-crimson
+// A unique aura for one account: a holo shadow cloak
+// with red accents, extremely detailed. That account already holds Shadow Fang (SHADOW-FANG: the black-and-crimson
 // title, the wolf's-head glyph, the werewolf's skin), so the cloak rides the same handle list - the third list to grant
 // an aura (TIER_AURA) - and wears the title's own black and crimson. It is the aura pass's fourth look
 // (render/auraRing.js AURA_LOOK): not a mark on the ground nor light round the body but a CLOAK ON IT. Seen, the owner
@@ -115,7 +115,7 @@ test('SHADOW-CLOAK grant: SHADOW_FANG_HANDLES still names SirMcMobdon, and the l
   assert.equal(isStaff(['shadowfang']), true, 'the Shadow Fang\'s staff right is the glyph\'s, as before - the cloak adds none');
 });
 
-test('SHADOW-CLOAK the service end to end: SirMcMobdon registers, holds the cloak beside the title; wears it through the aura door; the token signs it and says it beside; a stranger is refused it; off the list the next token carries none', async () => {
+test('SHADOW-CLOAK the service end to end: the Shadow Fang account registers, holds the cloak beside the title; wears it through the aura door; the token signs it and says it beside; a stranger is refused it; off the list the next token carries none', async () => {
   const { env, call, registered, identityPublic } = await standService({ SHADOW_FANG_HANDLES: 'SirMcMobdon' });
   const me = await registered('SirMcMobdon');
   const mint = async () => {
@@ -251,7 +251,7 @@ test('SHADOW-CLOAK the law: a CAPE clasped at the throat, its hood up round the 
 });
 
 test('SHADOW-CLOAK the emblem is the wearer\'s glyph: the badge\'s own path (ui/playerBadge.js GLYPH_PATH.shadowfang, its eye GLYPH_DETAIL\'s) cut into edges that close on themselves, and the shader\'s outline of it the path\'s - inside where the badge fills, outside where it does not; a path the cut cannot draw is refused (mutants: the glyph swapped, the fill\'s rule, a chord dropped)', () => {
-  assert.equal(CLOAK_GLYPH, GLYPH_PATH.shadowfang, 'SirMcMobdon\'s own glyph, the path the badge draws');
+  assert.equal(CLOAK_GLYPH, GLYPH_PATH.shadowfang, 'the Shadow Fang account\'s own glyph, the path the badge draws');
   assert.equal(CLOAK_GLYPH_EYE, GLYPH_DETAIL.shadowfang.path, 'and its eye');
   for (const edges of [EDGES, EYE]) {
     for (let i = 0; i < edges.length; i++) {

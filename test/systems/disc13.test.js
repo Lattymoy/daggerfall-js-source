@@ -25,7 +25,7 @@
 // the moved rect shows on the screen (fpArm.js fpFrameWindow) and lays them where the rect puts them: no frame edge is
 // inside the screen, the arm still slides at the widget's sub-pixel pace, and the frame is a column and a row bigger at most.
 //
-// ── DISC13-D: "cant access my boat" (Sir McMobdon), and "Nether has options for the boat" ──
+// ── DISC13-D: "cant access my boat" (a player), and "Nether has options for the boat" ──
 // Roleplay & Realism's shipPorts asks where the player stands: on the ship, yes; in a loaded location, a port and an
 // owned ship; anywhere else, no. world.js answered `{ loaded, portTown, onShip }` and the delegate reads
 // `locationLoaded`, so every port read as the wilderness and the Ship row stayed dark unless you were already aboard.

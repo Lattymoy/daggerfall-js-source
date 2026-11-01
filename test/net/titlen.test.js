@@ -74,10 +74,10 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   assert.deepEqual(titlesHeld({ handle: 'Valenvalarys', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { DISCIPLE_HANDLES: v('DISCIPLE_HANDLES') }), ['disciple'], 'valenvalarys: the Disciple title, case-folded');
   assert.deepEqual(glyphsOf({ handle: 'VALENVALARYS', created_at: 0 }, { DISCIPLE_HANDLES: v('DISCIPLE_HANDLES') }, 10 ** 10), ['disciple'], 'and its glyph');
   assert.equal(equipRefusal('disciple', { handle: 'valenvalarys', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { DISCIPLE_HANDLES: v('DISCIPLE_HANDLES') }), null, 'theirs to wear');
-  // Mac (2026-09-25): "Add SirMcMobdon as an Apostle ingame title/glyph"; then (2026-09-26): "SirMcMobdon gets a brand
+  // Mac (2026-09-25): "Add the Shadow Fang account as an Apostle ingame title/glyph"; then (2026-09-26): "the Shadow Fang account gets a brand
   // new title/glyph. Remove them from Apostle" - Shadow Fang is theirs now (test/ui/shadowfang.test.js), and the Apostle
   // list is empty again
-  assert.equal(v('APOSTLE_HANDLES'), '', 'SirMcMobdon is no longer an Apostle');
+  assert.equal(v('APOSTLE_HANDLES'), '', 'the Shadow Fang account is no longer an Apostle');
   assert.deepEqual(titlesHeld({ handle: 'sirmcmobdon', created_at: 1_800_000_000, registered_at: 1_900_000_000 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }), [], 'SirMcMobdon holds no Apostle title');
   assert.deepEqual(glyphsOf({ handle: 'SirMcMobdon', created_at: 0 }, { APOSTLE_HANDLES: v('APOSTLE_HANDLES') }, 10 ** 10), [], 'and no Apostle glyph');
   assert.equal(v('DEVELOPER_HANDLES'), 'Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1', 'DEV2, Mac: "Give trashBattery, LostMyLeg the developer title/glyph"; DEV3: "grant Tabby the developer title/glyph"; DEV4; STAFF-PANEL1: SirMcMobdon and kpblca_1 added');

@@ -332,7 +332,7 @@
   {
     "name": "DA13-34-the-install-always-served",
     "file": "app/main.cjs",
-    "old": "  if (gameStore?.active()) {\n",
+    "old": "  if (store?.active()) {\n",
     "new": "  if (false) {\n",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"

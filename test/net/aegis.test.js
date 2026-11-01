@@ -212,7 +212,7 @@ test('AEGIS grant: AEGIS_HANDLES names Sureme, and the list grants the title, it
   assert.deepEqual(aurasHeld({ ...sureme, handle: null }, ENV), []);
   for (const h of ['Diggleborf', 'Dutchess', 'SquidKamer', 'Surem', 'Suremee']) {   // ADMIN-ALL (PIN MOVED): an Admin is out of this list - an Admin holds every title and aura (test/server/admin_all.test.js)
     assert.ok(!titlesHeld(row(h), ENV).includes('aegis'), `${h} does not hold it`);
-    assert.deepEqual(aurasHeld(row(h), ENV), h === 'SirMcMobdon' ? ['shadowcloak', 'seraphwings'] : [], `nor the ward: ${h}`);   // SHADOW-CLOAK (PIN MOVED): the Shadow Fang's list holds its own cloak, and still not the ward; STAFF-PANEL1 (PIN MOVED): and the developer's wings, mob being one (mob, 06:33Z)
+    assert.deepEqual(aurasHeld(row(h), ENV), h === 'SirMcMobdon' ? ['shadowcloak', 'seraphwings'] : [], `nor the ward: ${h}`);   // SHADOW-CLOAK (PIN MOVED): the Shadow Fang's list holds its own cloak, and still not the ward; STAFF-PANEL1 (PIN MOVED): and the developer's wings, mob being one
     assert.equal(auraRefusal('oblivionward', row(h), ENV), 'not-held');
   }
   assert.equal(isStaff(['aegis']), false, 'a title, a glyph and an aura - not the staff\'s commands');

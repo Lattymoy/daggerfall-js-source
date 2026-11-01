@@ -676,7 +676,7 @@
     "file": "src/scenes/staffViewHost.js",
     "old": "        layer.render(crowded(ow.slice(0, STAFF_OW_TAGS_MAX)), Math.max(0, ow.length - STAFF_OW_TAGS_MAX));",
     "new": "        layer.render([], 0);",
-    "why": "the Overworld shows an Admin's monster lines and no player at all (mob 2026-10-24: \"like it show enemy to player but no players\")",
+    "why": "the Overworld shows an Admin's monster lines and no player at all",
     "tests": [
       "test/scenes/staffview1.test.js"
     ]

@@ -237,7 +237,7 @@ let _damageVeto = null;
 const _staff = { god: false, fly: false };   // STAFF1: the staff's switches (setStaffPowers, below) - declared above their readers (BOOT-TDZ)
 /** STAFF-PANEL5-FREEZE (net/staffChat.js; design doc "DFO Staff Panel: design", Freeze player): STAFF FROZE THIS PLAYER until
  *  then (epoch seconds) - the relay's word, never saved. While it stands the motor is held as paralysis holds it (every
- *  host's paralysis gate ORs `staffFrozen()`) and no blow is delivered (the veto's door below): mob, "the player can only
+ *  host's paralysis gate ORs `staffFrozen()`) and no blow is delivered (the veto's door below): "the player can only
  *  look around". Only this screen's - the relay and the account service hold a game that ignores it. */
 let _frozenUntil = 0;
 export function setStaffFrozen(/** @type {unknown} */ until) { _frozenUntil = Number.isSafeInteger(until) && /** @type {number} */ (until) > 0 ? /** @type {number} */ (until) : 0; }

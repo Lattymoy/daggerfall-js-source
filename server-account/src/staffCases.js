@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // STAFF-PANEL2 (2026-10-22; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS:
 // the open chat cases most urgent first, one case read with its lines and the account's strike record, a case claimed
-// and let go, and Mute, Ban, Unban and Dismiss - Admins and Moderators both (mob, 03:03Z: Moderators get "only chat report
+// and let go, and Mute, Ban, Unban and Dismiss - Admins and Moderators both (Moderators get "only chat report
 // notifications with Mute and Ban").
 //
 // NOTHING NEW IS JUDGED. Every act is the one the game's own moderators' routes make (index.js /v1/mod/*): MOD1's
@@ -104,7 +104,7 @@ export function caseUrgency(c, { reports, strikes, nowS }) {
   return { level: /** @type {'high'|'medium'|'low'} */ (LEVELS[rank]), why: why.filter(Boolean) };
 }
 
-/** STAFF-PANEL6-STATUS (design doc, "Home: only the top of everything"; mob, 03:23Z): THE REPORTS' WATCH ON HOME
+/** STAFF-PANEL6-STATUS (design doc, "Home: only the top of everything"): THE REPORTS' WATCH ON HOME
  *  (staffStatus.js HOME_WATCHES) - the open cases as /v1/staff/cases ranks them, its first `n`, every staff member's
  *  (Moderators see Reports only). Home writes its own audit row for the read, so this one writes none. */
 export const HOME_WATCH = Object.freeze({

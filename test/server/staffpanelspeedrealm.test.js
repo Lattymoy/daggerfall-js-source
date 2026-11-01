@@ -105,12 +105,12 @@ function fill(raw, t) {
   return { A, B, C, chars };
 }
 
-/** The Worker with mob (an Admin and owner) signed in on a filled realm, nothing kept in the isolate - and
+/** The Worker with chief (an Admin and owner) signed in on a filled realm, nothing kept in the isolate - and
  *  `trips(path, body)`, a page's answer with its trips. */
 async function stand() {
   for (const reset of [_forgetCensusForTests, _resetStatusForTests, _resetReactionsForTests]) reset();
-  const mobKey = await extensionKey();
-  const s = await standService({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}` });
+  const chiefKey = await extensionKey();
+  const s = await standService({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}` });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.1', ...(token ? { [STAFF_SESSION_HEADER]: token } : {}) }, body: JSON.stringify(body),
@@ -118,7 +118,7 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   await s.registered('SirMcMobdon');
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
   const raw = s.env.DB._raw;
   const fx = fill(raw, nowS());
   const counter = countTrips(s.env.DB);
@@ -128,7 +128,7 @@ async function stand() {
   s.env.DB.prepare = (sql) => { sent.push(sql); return prepare(sql); };
   const trips = async (path, body = {}) => {
     counter.take();
-    const r = await staff(path, body, mob.session);
+    const r = await staff(path, body, chief.session);
     assert.equal(r.status, 200, `${path}: ${JSON.stringify(r.body)}`);
     return { ...r, ...counter.take() };
   };

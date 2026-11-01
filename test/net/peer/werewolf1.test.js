@@ -1,6 +1,6 @@
 // WEREWOLF1 — BLOODMOON'S WEREWOLF, IMPORTED (2026-09-26).
 //
-// Mac, of SirMcMobdon's werewolf skin: "it's the 3d model", "Might need to grab OpenMW for this", "Well it needs to
+// Mac, of the Shadow Fang account's werewolf skin: "it's the 3d model", "Might need to grab OpenMW for this", "Well it needs to
 // be imported if its not. It shouldnt be skipped". The Morrowind rig had scoped the werewolf out (fpArm.js, rule 6);
 // this is the werewolf OpenMW draws, read off its source (apps/openmw/mwrender/npcanimation.cpp, actorutil.cpp,
 // mwmechanics/mechanicsmanagerimp.cpp):

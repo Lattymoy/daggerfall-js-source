@@ -33,19 +33,19 @@ test('HIDDEN-UNCOUNTED (AUDIT C1): a hidden staff member is at play to nobody in
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   const raw = s.env.DB._raw;
-  const mob = await s.registered('SirMcMobdon'), troll = await s.registered('Troll');
+  const chief = await s.registered('SirMcMobdon'), troll = await s.registered('Troll');
   const t0 = nowS();
   const n = guildNameOf('The Hound');
   raw.prepare('INSERT INTO guilds (id, name, name_key, tag, ranks, treasury, founded_at) VALUES (?, ?, ?, ?, ?, 0, ?)').run('g0123456789', n, guildNameKey(n), 'HND', JSON.stringify(GUILD_RANK_NAMES), t0);
-  for (const [who, rank, at] of [[troll, 0, 1], [mob, 2, 2]]) raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ?, ?, ?)').run(who.id, who.character, 'g0123456789', rank, who.handle, t0 - 100 + at);
+  for (const [who, rank, at] of [[troll, 0, 1], [chief, 2, 2]]) raw.prepare('INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ?, ?, ?)').run(who.id, who.character, 'g0123456789', rank, who.handle, t0 - 100 + at);
   // both games at play, their beats running on past the moment the staff member hides (`later`: a beat after it)
   const later = t0 + 600;
-  const beat = (at) => raw.prepare('UPDATE players SET played_at = ? WHERE id IN (?, ?)').run(at, mob.id, troll.id);
+  const beat = (at) => raw.prepare('UPDATE players SET played_at = ? WHERE id IN (?, ?)').run(at, chief.id, troll.id);
   const view = async (who) => { const r = await s.call('/v1/guilds/mine', { character: who.character }, who.secret); assert.equal(r.status, 200, JSON.stringify(r.body)); return r.body.guild.members; };
   const row = (members, who) => members.find((m) => m.name === who.handle);
   const at = (sec) => sec * 1000;
   beat(later);
-  for (const who of [troll, mob]) {
+  for (const who of [troll, chief]) {
     const members = await view(who);
     assert.deepEqual(members.map((m) => [m.name, m.seenAt, 'hidden' in m]), [['Troll', later, false], ['SirMcMobdon', later, false]], `${who.handle}: shown, both at play`);
     assert.equal(guildOnlineText(members, at(later + 30)), '2 online');
@@ -54,27 +54,27 @@ test('HIDDEN-UNCOUNTED (AUDIT C1): a hidden staff member is at play to nobody in
   const login = await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await proof('login', 'SirMcMobdon')) });
   assert.equal(login.status, 200, JSON.stringify(login.body));
   assert.deepEqual((await staff('/v1/staff/hide', { on: true }, login.body.session)).body, { hidden: true });
-  const tok = await s.call('/v1/auth/token', {}, mob.secret);
+  const tok = await s.call('/v1/auth/token', {}, chief.secret);
   assert.equal(claimsOf(tok.body.token).hd, 1, 'the game minted hidden');
-  const hidAt = raw.prepare("SELECT MIN(at) AS at FROM staff_audit WHERE actor = ? AND act = 'hidden-token'").get(mob.id).at;
+  const hidAt = raw.prepare("SELECT MIN(at) AS at FROM staff_audit WHERE actor = ? AND act = 'hidden-token'").get(chief.id).at;
   assert.ok(hidAt < later, 'hidden before the last beat');
-  const sub = JSON.parse(raw.prepare("SELECT detail FROM staff_audit WHERE actor = ? AND act = 'hidden-token'").get(mob.id).detail).sub;
-  const minted = (sec) => raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'admin', 'hidden-token', 'ok', ?)").run(sec, mob.id, JSON.stringify({ sub }));
+  const sub = JSON.parse(raw.prepare("SELECT detail FROM staff_audit WHERE actor = ? AND act = 'hidden-token'").get(chief.id).detail).sub;
+  const minted = (sec) => raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'admin', 'hidden-token', 'ok', ?)").run(sec, chief.id, JSON.stringify({ sub }));
   minted(hidAt + 50);   // a later room's token in the same run: the run started at the first
   const seen = at(later + PLAY_GRACE_S + 60);   // past the grace from the moment they hid; both still beating
   beat(later + PLAY_GRACE_S + 60);
   const theirs = await view(troll);
   assert.deepEqual(theirs.map((m) => [m.name, m.seenAt, 'hidden' in m]), [['Troll', later + PLAY_GRACE_S + 60, false], ['SirMcMobdon', hidAt, false]], 'a guildmate: last online the moment they hid, and never told why');
-  assert.equal(guildMemberOnline(row(theirs, mob), seen), false);
+  assert.equal(guildMemberOnline(row(theirs, chief), seen), false);
   assert.equal(guildOnlineText(theirs, seen), '1 online', 'the guildmate alone at play');
-  const own = await view(mob);
-  assert.deepEqual(row(own, mob), { ...row(own, mob), you: true, hidden: true, seenAt: hidAt }, 'their own row: theirs, hidden, last online when they hid');
+  const own = await view(chief);
+  assert.deepEqual(row(own, chief), { ...row(own, chief), you: true, hidden: true, seenAt: hidAt }, 'their own row: theirs, hidden, last online when they hid');
   assert.equal('hidden' in row(own, troll), false);
-  assert.equal(guildMemberOnline(row(own, mob), seen), false, 'not at play, even to themselves');
+  assert.equal(guildMemberOnline(row(own, chief), seen), false, 'not at play, even to themselves');
   assert.equal(guildOnlineText(own, seen), '1 online', 'their own "N online" leaves them out');
   // Show myself: at play again, to everyone
   assert.deepEqual((await staff('/v1/staff/hide', { on: false }, login.body.session)).body, { hidden: false });
-  for (const who of [troll, mob]) {
+  for (const who of [troll, chief]) {
     const members = await view(who);
     assert.deepEqual(members.map((m) => [m.name, m.seenAt, 'hidden' in m]), [['Troll', later + PLAY_GRACE_S + 60, false], ['SirMcMobdon', later + PLAY_GRACE_S + 60, false]], `${who.handle}: shown again`);
     assert.equal(guildOnlineText(members, seen), '2 online');
@@ -84,17 +84,17 @@ test('HIDDEN-UNCOUNTED (AUDIT C1): a hidden staff member is at play to nobody in
   assert.deepEqual((await staff('/v1/staff/hide', { on: true }, login.body.session)).body, { hidden: true });
   minted(later + 900);
   beat(later + 2000);
-  assert.equal(row(await view(troll), mob).seenAt, later + 900, 'hidden again: last online when they hid again');
+  assert.equal(row(await view(troll), chief).seenAt, later + 900, 'hidden again: last online when they hid again');
   // a run a sign-out ended (its session's subject), and the next session's own: the run is one session's, so the newer
   // reads from its own first mint - never the signed-out session's
-  const ended = (sec, what) => raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'admin', 'logout', 'ok', ?)").run(sec, mob.id, JSON.stringify(what));
+  const ended = (sec, what) => raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'admin', 'logout', 'ok', ?)").run(sec, chief.id, JSON.stringify(what));
   minted(later + 1200);
   ended(later + 1300, { sub });
-  raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'admin', 'hidden-token', 'ok', ?)").run(later + 1500, mob.id, JSON.stringify({ sub: 'n3xtSessi0nSubAAAAAAAAAA' }));
-  assert.equal(row(await view(troll), mob).seenAt, later + 1500, 'the next session\'s run, from its own first mint');
+  raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'admin', 'hidden-token', 'ok', ?)").run(later + 1500, chief.id, JSON.stringify({ sub: 'n3xtSessi0nSubAAAAAAAAAA' }));
+  assert.equal(row(await view(troll), chief).seenAt, later + 1500, 'the next session\'s run, from its own first mint');
   assert.deepEqual((await staff('/v1/staff/hide', { on: false }, login.body.session)).body, { hidden: false });
   // an account that is no staff, its switch set by hand and a hidden-token row of its own: the role is asked first
   raw.prepare('UPDATE players SET staff_hide_on = 1 WHERE id = ?').run(troll.id);
   raw.prepare("INSERT INTO staff_audit (at, actor, role, act, outcome, detail) VALUES (?, ?, 'moderator', 'hidden-token', 'ok', ?)").run(hidAt, troll.id, JSON.stringify({ sub: 'gH0st5ubAAAAAAAAAAAAAAAA' }));
-  assert.equal(row(await view(mob), troll).seenAt, later + 2000, 'no staff, never hidden');
+  assert.equal(row(await view(chief), troll).seenAt, later + 2000, 'no staff, never hidden');
 });
