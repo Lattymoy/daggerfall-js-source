@@ -24,6 +24,9 @@ CITYDATA.*
 A.EXE
 ACD.EXE
 
+# The models' briefs are Worker secrets, never committed (CLAUDE.md PROMPT-HIDDEN). Draft them here.
+.prompts/
+
 # Disposable agent worktrees (nested checkouts) - never commit.
 .claude/worktrees/
 node_modules

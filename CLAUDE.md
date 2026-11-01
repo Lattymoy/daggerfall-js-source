@@ -34,6 +34,11 @@ Each is an owner's decision. A rule's name is its label in the bible.
   `tools/commentSweep.mjs` takes history out folder by folder (`bible/01-Overview/Readability-Arc.md`).
 - **LOOT-GATE** (Dudey): never publish the levels, factors or chances in `src/systems/loot/lootLevelGate.js`. Say
   only that Rare and Legendary gear is rarer early on and more common as a character grows.
+- **PROMPT-HIDDEN** (Mac): the repository is public, so a model's prompt never lives in it. Put it in a Worker secret
+  that `account-deploy.yml` puts from a repository secret of the same name (`MOD_AI_PROMPT`, `CLAUDE_STAFF_PROMPT`). A
+  tool run on a person's machine reads an env var or `.prompts/` (`TRANSLATE_PROMPT`). No prompt, no call. Never quote a
+  prompt in the bible, a test, a commit or a PR. Draft in `.prompts/` (ignored). `test/tooling/prompthidden.test.js`
+  catches the common shapes, and any quoted line where `.prompts/` holds drafts.
 - **Patch notes** go in the PR description under `## Patch notes: <title>`, written in STE. Use the `ste-notes`
   skill. Never commit a patch-notes file.
 - **Discord is code**: change the bot by changing `server-account/` and merging (see `server-account/CLAUDE.md`).

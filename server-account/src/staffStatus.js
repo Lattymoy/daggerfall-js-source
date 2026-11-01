@@ -53,7 +53,7 @@ import { HOME_WATCH as CONTESTED_WATCH } from './staffCensus.js';
 import { HOME_WATCH as BURSTS_WATCH } from './staffNet.js';   // STAFF-PANEL5-FEEDS: packet bursts
 import { HOME_WATCH as MONSTERS_WATCH } from './staffMonsters.js';   // STAFF-PANEL5-FEEDS: monster owners
 import { HOME_WATCH as FREEZE_WATCH } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: freezes not live, players waiting
-import { modAiOn } from './modAi.js';
+import { modAiOn, modAiBriefMissing } from './modAi.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';
 import { staffKept, staffKeptAll, staffKeptForget, _resetStaffKeptForTests } from './staffKept.js';   // STAFF-SPEED-2: kept for every isolate
@@ -306,6 +306,7 @@ export async function statusNow(ctx, env) {
       why: ok(fast.relay) ? (fast.relay.body.ok === true ? '' : 'relay /health not ok') : fast.relay.state === 'missing' ? 'relay /health did not answer' : 'relay: not-configured',
       version: ok(fast.relay) ? fast.relay.body.version ?? null : null },
     { id: 'service', ok: fast.db === 'ok', why: fast.db === 'ok' ? '' : 'the service\'s database read failed' },
+    modAiBriefMissing(env) ? { id: 'ai', ok: false, why: 'reviewer switched on with no MOD_AI_PROMPT brief', failed: null, waitingS: null } :
     { id: 'ai', ok: !aiOn ? null : h ? !(num(h.ai_failed) > 0) && !(waited != null && waited >= AI_WAIT_S) : null,
       why: !aiOn ? 'reviewer off' : !h ? '' : [num(h.ai_failed) > 0 ? `${num(h.ai_failed)} open case${num(h.ai_failed) === 1 ? '' : 's'} the AI check failed to read` : '',
         waited != null && waited >= AI_WAIT_S ? `AI check waiting ${Math.floor(waited / 60)} min` : ''].filter(Boolean).join(' · '),

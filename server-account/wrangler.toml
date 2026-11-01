@@ -211,7 +211,7 @@ RELAY_LAW_URL = "https://daggerfall-online.mackcothran.workers.dev/v1/law"
 # reported cases and says its verdict beside each case, marked as a shadow's, and does nothing on it; or "on", which
 # also mutes for half an hour on its severest, surest verdicts. Shipped "shadow" (INT5's law, Mac's "Measure 7 days,
 # then enforce"): read what it says for a fortnight, then turn it on. It reads nothing until the deploy has put
-# ANTHROPIC_API_KEY beside it - a secret, from the repository's own secrets, never here.
+# ANTHROPIC_API_KEY and its brief, MOD_AI_PROMPT, beside it - secrets, from the repository's own secrets, never here.
 MOD_AI = "shadow"
 # MOD_AI_MODEL: the model, empty for the current Haiku (src/modAi.js MOD_AI_MODEL_DEFAULT). MOD_AI_DAILY_MAX: its calls
 # a UTC day, empty for 1,500.
@@ -219,7 +219,7 @@ MOD_AI_MODEL = ""
 MOD_AI_DAILY_MAX = ""
 # CLAUDE_STAFF (src/claudeStaff.js, bible/11-Multiplayer/Claude-Staff.md): Claude as staff, which reads the stored feeds on
 # the minute clock and writes suggestions for members to accept or dismiss. "off" reads nothing and calls nothing; "on" needs
-# ANTHROPIC_API_KEY (the reviewer's own). It never acts. CLAUDE_STAFF_HANDLE: the staff account it writes as, which can never
+# ANTHROPIC_API_KEY (the reviewer's own) and its brief, the CLAUDE_STAFF_PROMPT secret. It never acts. CLAUDE_STAFF_HANDLE: the staff account it writes as, which can never
 # sign in to the panel. CLAUDE_STAFF_MODEL: its model. CLAUDE_STAFF_DAILY_MAX: its calls a UTC day. CLAUDE_STAFF_QUIET_MIN:
 # under this many players online it sweeps every two hours instead of every fifteen minutes. CLAUDE_ORDER_HANDLES: who may
 # accept or dismiss a suggestion and enrol an order key (src/staffOrder.js).

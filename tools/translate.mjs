@@ -164,25 +164,34 @@ export const batchesOf = (keys, size) =>
   Array.from({ length: Math.ceil(keys.length / size) }, (_, i) => keys.slice(i * size, (i + 1) * size));
 
 // ─── the request ───────────────────────────────────────────────────────────────────────────────────────────────────
-/** The system prompt for a language and table, with the glossary. */
-export function systemPrompt({ code, table, glossary = {} }) {
+// The repository is public, so the brief is never in it: it is TRANSLATE_PROMPT, or the ignored file PROMPT_FILE.
+// {lang}, {about} and {glossary} are filled, and a line that opens `icu|`, `dfu|` or `glossary|` is kept only for an
+// ICU table, a DFU table, or a run with a glossary.
+export const PROMPT_FILE = '.prompts/TRANSLATE_PROMPT.txt';
+/** The brief's template: TRANSLATE_PROMPT, else PROMPT_FILE under `root`, else ''. */
+export function promptTemplate({ env = process.env, root = ROOT } = {}) {
+  if (typeof env.TRANSLATE_PROMPT === 'string' && env.TRANSLATE_PROMPT.trim()) return env.TRANSLATE_PROMPT;
+  const file = join(root, PROMPT_FILE);
+  return existsSync(file) ? readFileSync(file, 'utf8') : '';
+}
+
+/** The system prompt for a language and table: the template's lines picked and its marks filled. '' without one. */
+export function systemPrompt({ code, table, glossary = {}, template = '' }) {
   const loc = catalogLocale(code);
   const lang = loc ? `${loc.englishName} (${loc.name}, ${code})` : code;
   const src = SOURCES[table];
-  const rules = [
-    `You translate the text of The Elder Scrolls II: Daggerfall (1996), as it is played in Daggerfall Unity and its web port, from English into ${lang}.`,
-    `These rows are ${src?.about ?? 'game text.'}`,
-    'Write it as a published translation of the game would: natural, idiomatic, in the dark medieval-fantasy tone of the original; the forms of address and register a player of this genre expects in your language; interface labels short.',
-    'Keep every placeholder exactly as written and in a place that reads naturally: %macros (%s, %loc, %di, %1bs...), [/markup] tags ([/left], [/center], [/newline], [/record], [/end], [/pos:x=..,y=..], [/font=..]), {0}-style arguments, and quest symbols (_name_, =name_, __name_, ___name_). Do not add any that are not in the English.',
-    src?.kind === 'icu'
-      ? "Values are ICU MessageFormat patterns: keep every {argument} and its name; in {n, plural, ...}, {n, selectordinal, ...} and {x, select, ...} keep the keywords, translate only the words inside the branches, and use your language's own plural categories (zero, one, two, few, many, other - always other). Write a literal brace as '{'."
-      : "Keep the markup's line structure: the same number of [/left], [/center] and [/newline] breaks, and [/record] between the same variants.",
-    'Names of people, places, gods, factions and artifacts: use the form the glossary gives; otherwise keep them as they are in Latin-script languages, and transliterate them in others, the same way every time.',
-    'Answer through the submit_translations tool: every key you were given, and no other.',
-  ];
   const terms = Object.entries(glossary);
-  if (terms.length) rules.push(`Glossary (English -> ${lang}):\n${terms.map(([a, b]) => `${a} -> ${b}`).join('\n')}`);
-  return rules.join('\n\n');
+  const on = { icu: src?.kind === 'icu', dfu: src?.kind !== 'icu', glossary: terms.length > 0 };
+  const lines = String(template)
+    .split(/\r?\n/)
+    .flatMap((line) => {
+      const m = /^(icu|dfu|glossary)\|/.exec(line);
+      if (!m) return [line];
+      return on[/** @type {'icu'|'dfu'|'glossary'} */ (m[1])] ? [line.slice(m[0].length)] : [];
+    });
+  const fill = (text, mark, value) => text.split(mark).join(value);
+  const filled = fill(fill(lines.join('\n'), '{lang}', lang), '{about}', src?.about ?? table);
+  return fill(filled, '{glossary}', terms.map(([a, b]) => `${a} -> ${b}`).join('\n')).trim();
 }
 
 export const TOOL = Object.freeze({
@@ -260,6 +269,7 @@ export async function translateTable({
   retranslate = false,
   dryRun = false,
   log = () => {},
+  template = promptTemplate({ root }),
 }) {
   const src = SOURCES[table];
   if (!src) throw new Error(`no source for ${table} (known: ${Object.keys(SOURCES).join(', ')})`);
@@ -284,13 +294,20 @@ export async function translateTable({
     owed: owed.length,
     rejected: [],
   };
-  const system = systemPrompt({ code, table, glossary: readJson(join(root, 'locales', code, 'glossary.json'), {}) });
+  const noBrief = `no brief: set TRANSLATE_PROMPT or write ${PROMPT_FILE}`;
+  const system = systemPrompt({
+    code,
+    table,
+    template,
+    glossary: readJson(join(root, 'locales', code, 'glossary.json'), {}),
+  });
   const groups = batchesOf(owed, batch);
   if (dryRun) {
-    log(system);
+    log(system || noBrief);
     groups.forEach((g, i) => log(`batch ${i + 1}/${groups.length}: ${g.length} rows (${g[0]} .. ${g.at(-1)})`));
     return account;
   }
+  if (groups.length && !system) throw new Error(noBrief);
   const meta = plan.meta;
   const drafted = new Map();
   const runOne = async (keys) => {

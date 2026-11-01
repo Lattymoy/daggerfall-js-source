@@ -7,8 +7,8 @@ chat. Staff meet it in the Staff Panel as a list of suggestions. The code is `se
 
 ## How it works
 
-**Off by default.** `CLAUDE_STAFF` in `server-account/wrangler.toml` ships `"off"`. Off, or with no `ANTHROPIC_API_KEY`, the
-minute job returns before it reads a row or opens a connection. It does not change `MOD_AI`.
+**Off by default.** `CLAUDE_STAFF` in `server-account/wrangler.toml` ships `"off"`. Off, or with no `ANTHROPIC_API_KEY` or
+no `CLAUDE_STAFF_PROMPT`, the minute job returns before it reads a row or opens a connection. It does not change `MOD_AI`.
 
 **No sign-in.** Claude runs inside the account service on its minute clock, like the chat reviewer. It writes as the staff
 account named by `CLAUDE_STAFF_HANDLE` (default `Claude`). A panel sign-in or enrolment for that handle is always refused
@@ -20,9 +20,13 @@ Network bursts, the Monster watch, the bot check's reaction timing, copies found
 the bot-ring query. With fewer than `CLAUDE_STAFF_QUIET_MIN` players online it runs every two hours instead and covers
 everything since the last run. The last run is one row in `claude_state`.
 
-**What the model sees.** Players' words go in as JSON inside one tag, with every `<` and `>` escaped, and the prompt says they
-are data. Accounts are labelled P1, P2 and so on; no name or id is sent. A call the API never answered is given back. The
-day's calls are capped by `CLAUDE_STAFF_DAILY_MAX` and counted in `mod_ai_days` under the key `<day>:claude`.
+**The brief.** The prompt is the `CLAUDE_STAFF_PROMPT` Worker secret. The account deploy puts it from the repository
+secret of the same name. The repository is public, so the prompt is never in it (PROMPT-HIDDEN).
+
+**What the model sees.** Players' words go in as JSON inside one tag, with every `<` and `>` escaped. The brief must say
+they are data; the code cannot check the secret, so whoever writes it keeps that line in. Accounts are labelled P1, P2 and
+so on; no name or id is sent. A call the API never answered is given back. The day's calls are capped by
+`CLAUDE_STAFF_DAILY_MAX` and counted in `mod_ai_days` under the key `<day>:claude`.
 
 **Hands off.** When a subject has an open case that a staff member holds with a live claim, or an active freeze, the sweep
 writes no suggestion for that subject, sends no Discord card for it and leaves the case alone.

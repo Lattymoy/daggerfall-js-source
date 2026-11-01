@@ -278,7 +278,7 @@ test('STAFF-PANEL6-STATUS: missing data is said so - an Analytics Engine or rela
 });
 
 test('STAFF-PANEL6-STATUS: the AI reviewer failing turns health red - a failed read on an open case, or a read waiting past AI_WAIT_S; with it off, no verdict', async () => {
-  const ai = { MOD_AI: 'shadow', ANTHROPIC_API_KEY: 'k' };
+  const ai = { MOD_AI: 'shadow', ANTHROPIC_API_KEY: 'k', MOD_AI_PROMPT: 'b' };
   const s = await stand(ai);
   try {
     const p = await s.registered('Troll');
@@ -308,6 +308,12 @@ test('STAFF-PANEL6-STATUS: the AI reviewer failing turns health red - a failed r
     const { body } = await off.staff('/v1/staff/status', {}, off.chief.session);
     assert.deepEqual([checkOf(body, 'ai').ok, checkOf(body, 'ai').why, tileOf(body, 'health').level], [null, 'reviewer off', 'grey']);
   } finally { off.restore(); }
+  const blind = await stand({ MOD_AI: 'shadow', ANTHROPIC_API_KEY: 'k' });
+  try {
+    const { body } = await blind.staff('/v1/staff/status', {}, blind.chief.session);
+    assert.deepEqual([checkOf(body, 'ai').ok, tileOf(body, 'health').level], [false, 'red'], 'switched on and keyed with no brief is a fault, not "off"');
+    assert.match(checkOf(body, 'ai').why, /no MOD_AI_PROMPT brief/);
+  } finally { blind.restore(); }
 });
 
 test('STAFF-PANEL6-STATUS: each part is kept for its window - a poll in ten seconds asks nothing again, and a limit set shows at once', async () => {

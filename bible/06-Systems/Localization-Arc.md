@@ -46,7 +46,8 @@ table, so a DFU pack's CSVs and the port's drafts are the same kind of file.
 
 ### The tools
 
-- `tools/translate.mjs` - the pipeline on the Claude API for the game's bulk text, run by Mac with his key.
+- `tools/translate.mjs` - the pipeline on the Claude API for the game's bulk text, run by Mac with his key. Its prompt
+  is `TRANSLATE_PROMPT` or the ignored `.prompts/TRANSLATE_PROMPT.txt`, never the repository (PROMPT-HIDDEN).
 - `tools/l10nInSession.mjs` - merges in-session drafts through the placeholder law and records their source; `--owed`
   lists what a language still owes.
 - `tools/l10nExtract.mjs` - builds the catalog from `t()` calls.

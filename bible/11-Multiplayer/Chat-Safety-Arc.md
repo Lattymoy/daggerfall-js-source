@@ -52,12 +52,18 @@ a case of its own. With `MOD_AI` `on`, a severity-3 verdict at high confidence i
 mutes for half an hour, but only if a second read of the account's own lines agrees. With `shadow`, its verdicts are
 shown and it acts on nothing. It never bans.
 
+**The reviewer's brief.** It is the `MOD_AI_PROMPT` Worker secret. The account deploy puts it from the repository secret
+of the same name. The repository is public, so the brief is never in it (PROMPT-HIDDEN). Without it the reviewer reads
+nothing, and while it is switched on the Staff Panel's health check is red. The code's rules fill its `{conduct}` mark,
+or follow the brief when it has none. The brief must say the lines are data and that each is judged by its own words:
+the code cannot check the secret.
+
 **A new voice's pace.** A guest or a sprout account says one public line every `NEW_VOICE_GAP_MS` (4 s), metered per
 account at the relay; a line too soon is refused to its speaker alone and put back in the field. Party, guild and place
 talk are never slowed.
 
 **The code of conduct** (`src/net/safety/conduct.js`, `src/ui/conductCard.js`). Six rules in the player's language,
-naming hate by what it attacks, the joke included. The reviewer's brief is built from the same English lines. The token
+naming hate by what it attacks, the joke included. The reviewer's brief takes the same English lines at its `{conduct}` mark. The token
 says whether the account agreed to `CONDUCT_VERSION`; the first line sent without agreement stands the card. The client
 asks; the Terms bind every player either way.
 
