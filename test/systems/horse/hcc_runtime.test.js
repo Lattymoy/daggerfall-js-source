@@ -300,7 +300,7 @@ test('HCC runtime: the visuals - the parked wagon grounds its two wheels and ret
   const dv2 = new DeployedWagonVisual(PARTS, [0, 5, 0], [0, 0, 1], 600, 750, flat, 0);
   assert.equal(dv2.isGrounded, true); assert.equal(dv2.cargoTier, 75);
   assert.ok(Math.abs(dv2.position[1] - 0) < 1e-6, 'the wheels\' pivots at 0.5 sit a radius (0.5) over the ground: the body at 0');
-  assert.throws(() => new DeployedWagonVisual(null, [0, 0, 0], [0, 0, 1], 0, 750, flat, 0), /no object for vanilla wagon model 41214/);
+  assert.throws(() => new DeployedWagonVisual(null, [0, 0, 0], [0, 0, 1], 0, 750, flat, 0), /the classic wagon model 41214 did not load/);
   const slope = { ...flat, raycastAll: (o, d, max) => (d[1] < 0 ? [{ point: [o[0], o[0] * 0.5, o[2]], distance: o[1] - o[0] * 0.5, normal: [0, 1, 0] }] : []) };
   const dv3 = new DeployedWagonVisual(PARTS, [0, 5, 0], [0, 0, 1], 0, 750, slope, 0);
   assert.equal(dv3.isGrounded, true);
