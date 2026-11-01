@@ -1,3 +1,4 @@
+import {projectBeaconMarker} from '../ui/travel/beaconMapMarker.js';
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // TV1 - THE TRAVEL VIEW, THE HOST'S HALF (bible/06-Systems/Travel-View.md).
@@ -801,7 +802,7 @@ export function createTravelView(deps) {
         ...(m.hub ? { hub: true } : {}),
         ...(m.tip ? { tip: m.tip } : {}),
         ...(m.wpKind ? { wpKind: m.wpKind } : {}),
-        ...(m.followed ? { followed: true } : {}),
+        ...(m.followed ? { followed: true } : {}), ...projectBeaconMarker(m,feet),
         ...(m.skull ? { skull: m.skull } : {}),
       }); // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed
     }

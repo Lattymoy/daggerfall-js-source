@@ -1,3 +1,4 @@
+import {createDeathBeaconHost} from './deathBeaconHost.js';
 // Milestone 7: ?world (&region=&loc=) renders a location ON its terrain -
 // the location pixel flattened to average height, city tiles stamped into
 // the terrain tilemap, marching-squares transitions elsewhere.
@@ -27031,7 +27032,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peer/peerBodies.js drawVeiled), with the camera its body pass took. */
-  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' light - NODE-GLINT's glints, the glow a node with no picture
+  const deathMarkers = createDeathBeaconHost({
+    renderer,canvas,place:()=>partyPing?.place(),feet:enchantFeet,health:()=>playerEntity.health,
+    ready:()=>walkMode&&playerSpawned,
+    character:()=>playerEntity.name?`${isOnlinePage()?social?.acct??'online':'offline'}:${playerEntity.name}`:null,
+    entrance:()=>modes?.deathEntrancePosition(),
+    toWorld:p=>{const w=state.worldCoords(p);return[w.x,p[1]-state.compensation[1],w.z];},
+    fromWorld:p=>{const q=state.localFromWorld(p[0],p[2]);return[q[0],p[1]+state.compensation[1],q[1]];},
+    rect:()=>{const b=canvas.getBoundingClientRect(),v=worldViewportRect(canvas.clientWidth,canvas.clientHeight);return v?{left:b.left+v.x*b.width,top:b.top+(1-v.y-v.h)*b.height,width:v.w*b.width,height:v.h*b.height}:b;},
+  });
+  const deathOverworldMarks = () => _mode()==='exterior'?deathMarkers.worldPoints().map(p=>({key:`keta-death:${p.id}`,deathId:p.id,at:p.at,label:p.label,kind:'place',beaconIcon:'skull',beaconBeam:getPref('deathBeams')!==false,beaconOpacity:getPref('deathOpacity')??.6,color:getPref('deathColor')??'#a4dcff',edge:true,pick:true})):[];
+  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); deathMarkers.frame(!!travelView?.active || townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused()); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' light - NODE-GLINT's glints, the glow a node with no picture
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
    *  WORD, IN THE SKIN'S FACE. The online lane is the enhanced lane whole (systems/online/onlineLane.js), so this line -
    *  connecting, reconnecting, refused - was the one online surface still drawn in the classic bitmap font while
@@ -29995,7 +30006,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     },
     onWaypointGo: (id) => travelViewWaypointWalk(id),   // WAYPOINTS: a followed row's Go
     followDist: () => travelViewFollowDist(),   // WAYPOINTS: the followed rows' distances
-    marks: () => staffView.marks(travelViewMarks()),   // STAFF-VIEW1: for staff every player's mark, named truly and flagged, takes a click
+    marks: () => staffView.marks([...travelViewMarks(),...deathOverworldMarks()]),   // STAFF-VIEW1: for staff every player's mark, named truly and flagged, takes a click
     route: travelViewRoute,
     sky: () => owForecast.line(performance.now()),   // OW-FORECAST: the weather ahead - the way's while a journey runs, else here
     trip: () => (tvWalking ? TRAVEL_VIEW_TEXT.travelling(tvWalking, tvHeld) : tvTripLive() ? tvTrip.line : ''),   // TV-WASD: the keys' travel says its speed - AUDIT OW5 G3: first, as it runs only with no journey driving (a stopped route kept for the Resume read "To X, by the road" over it)
@@ -30024,7 +30035,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // shipped; the HOSTS that drive it never did, and `world.js`
     // imported the door without ever calling it. A host that boots
     // after this one rebuilds the node on its first painted frame.
-    if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop (TV1: the travel view goes on its own heartbeat - scenes/travelView.js)
+    if (!frameAlive(_frameToken)) { deathMarkers.dispose(); destroyWorldPlaque(); return; }
+    deathMarkers.update();   // P0: a later boot or an unwind killed this loop (TV1: the travel view goes on its own heartbeat - scenes/travelView.js)
     if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(latch.edge); csaInputFrame();   // MWCROUCH; CSA-I: the position reading's window keys, rotated with the host's

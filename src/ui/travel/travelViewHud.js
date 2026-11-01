@@ -1,3 +1,4 @@
+import {beaconKind,beaconMapBox,paintBeaconMapMarker} from './beaconMapMarker.js';
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // TV1 - THE TRAVEL VIEW'S READOUT (bible/06-Systems/Travel-View.md).
@@ -793,11 +794,11 @@ export function updateTravelViewHud(f) {
   }
   // OW-FILTER: the counts are of every mark (a hidden group still says how many it holds); the canvas draws the shown
   const all = f.marks ?? [];
-  const counts = countGroups(all);
+  const counts = countGroups(all.filter(m => !beaconKind(m)));
   for (const g of TV_FILTER_GROUPS) put(parts.filterNums?.[g], `fn-${g}`, String(counts[g]));
   const fl = travelViewFilters();
   if (f.followDist) paintWaypointDist(f.followDist);   // WAYPOINTS: how far each followed one is
-  drawMarks(all.filter((m) => markShown(m, fl)), vw, vh, dpr, f.feet?.front ? f.feet : null);   // OW-CROWD: my mark, the badges' nearness (off the picture, its middle)
+  drawMarks(all.filter((m) => beaconKind(m) || markShown(m, fl)), vw, vh, dpr, f.feet?.front ? f.feet : null);   // OW-CROWD: my mark, the badges' nearness (off the picture, its middle)
 }
 
 /**
@@ -1361,7 +1362,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   showMarkTip(hover ? placed.find((q) => q.m.key === hover)?.m.tip ?? null : null, pointer, vw, vh);   // SEAT-TIP: a seat's card while its plate is under the pointer
   // the picture this frame would draw: unchanged (a camera at rest), the canvas already shows it
   const sig = [bw, bh, hover ?? ''];
-  for (const q of placed) sig.push(q.m.key, q.x, q.y, q.held ? Math.round(q.held.angle) : 999, q.m.label ?? '', q.m.sub ?? '', q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin ?? '', q.m.hub ? 1 : 0, q.m.color ?? '', q.m.skull ?? '');   // OW-KIN, OW-HUBS; WAYPOINTS: a flag's colour; PVP-SKULL
+  for (const q of placed) sig.push(q.m.key, q.x, q.y, q.held ? Math.round(q.held.angle) : 999, q.m.label ?? '', q.m.sub ?? '', q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin ?? '', q.m.hub ? 1 : 0, q.m.color ?? '', q.m.skull ?? '',q.m.beaconIcon??'',q.m.beaconBeam!==false,q.m.beaconOpacity??.6);   // OW-KIN, OW-HUBS; WAYPOINTS: a flag's colour; PVP-SKULL
   for (const q of placed) if (q.m.pick) nextHits.push({ key: q.m.key, ...pickBox(q, vw) });   // BOUNTY-SNAP: a bounty's on its ring alone
   hits = nextHits;
   sayPlaces(placed);
@@ -1377,6 +1378,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
+    if(paintBeaconMapMarker(g,q,vw,TRAVEL_VIEW_LABEL_FONT)){canvasDrew=true;continue;}
     const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'quest' ? QUEST_MARK_CSS : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\b(fight|hideout)\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
@@ -1813,6 +1815,7 @@ function pickBox(q, vw) {
   return markBox(q, vw);
 }
 function markBox(q, vw) {
+  if(beaconKind(q.m))return beaconMapBox(q,vw);
   const plate = q.look === 'place' || q.look === 'far';
   const w = markWidth(q), h = plate ? 24 : 20;
   const x0 = inScreen(q.x - w / 2, w, vw);
