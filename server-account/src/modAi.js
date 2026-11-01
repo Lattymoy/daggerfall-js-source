@@ -45,8 +45,11 @@ export const MOD_AI_SWITCH = Object.freeze(['off', 'shadow', 'on']);
 export const modAiModeOf = (env) => (MOD_AI_SWITCH.includes(env?.MOD_AI) ? env.MOD_AI : 'off');
 /** Whether the reviewer reads at all: switched on (shadow or on) AND holding its key and its brief. @param {any} env */
 export const modAiOn = (env) =>
-  modAiModeOf(env) !== 'off' && typeof env?.ANTHROPIC_API_KEY === 'string' && env.ANTHROPIC_API_KEY.length > 0 &&
-  typeof env?.MOD_AI_PROMPT === 'string' && env.MOD_AI_PROMPT.trim().length > 0;
+  modAiModeOf(env) !== 'off' &&
+  typeof env?.ANTHROPIC_API_KEY === 'string' &&
+  env.ANTHROPIC_API_KEY.length > 0 &&
+  typeof env?.MOD_AI_PROMPT === 'string' &&
+  env.MOD_AI_PROMPT.trim().length > 0;
 /** The model, unless MOD_AI_MODEL names another: the current Haiku - fast and cheap enough to read every public line. */
 export const MOD_AI_MODEL_DEFAULT = 'claude-haiku-5-5';
 /** The day's calls, unless MOD_AI_DAILY_MAX says otherwise ("" or unset; "0" is none). */
@@ -100,7 +103,14 @@ export const CONDUCT_MARK = '{conduct}';
  */
 export const reviewerPrompt = (env) => {
   const brief = typeof env?.MOD_AI_PROMPT === 'string' ? env.MOD_AI_PROMPT.trim() : '';
-  return brief && brief.split(CONDUCT_MARK).join(conductRules().map((r, i) => `${i + 1}. ${r}`).join('\n'));
+  return (
+    brief &&
+    brief.split(CONDUCT_MARK).join(
+      conductRules()
+        .map((r, i) => `${i + 1}. ${r}`)
+        .join('\n'),
+    )
+  );
 };
 
 /** The answer's shape - the structured output the API holds the model to. */

@@ -182,11 +182,13 @@ export function systemPrompt({ code, table, glossary = {}, template = '' }) {
   const src = SOURCES[table];
   const terms = Object.entries(glossary);
   const on = { icu: src?.kind === 'icu', dfu: src?.kind !== 'icu', glossary: terms.length > 0 };
-  const lines = String(template).split('\n').flatMap((line) => {
-    const m = /^(icu|dfu|glossary)\|/.exec(line);
-    if (!m) return [line];
-    return on[/** @type {'icu'|'dfu'|'glossary'} */ (m[1])] ? [line.slice(m[0].length)] : [];
-  });
+  const lines = String(template)
+    .split('\n')
+    .flatMap((line) => {
+      const m = /^(icu|dfu|glossary)\|/.exec(line);
+      if (!m) return [line];
+      return on[/** @type {'icu'|'dfu'|'glossary'} */ (m[1])] ? [line.slice(m[0].length)] : [];
+    });
   const fill = (text, mark, value) => text.split(mark).join(value);
   const filled = fill(fill(lines.join('\n'), '{lang}', lang), '{about}', src?.about ?? table);
   return fill(filled, '{glossary}', terms.map(([a, b]) => `${a} -> ${b}`).join('\n')).trim();
@@ -293,7 +295,12 @@ export async function translateTable({
     rejected: [],
   };
   if (!String(template).trim()) throw new Error(`no brief: set TRANSLATE_PROMPT or write ${PROMPT_FILE}`);
-  const system = systemPrompt({ code, table, template, glossary: readJson(join(root, 'locales', code, 'glossary.json'), {}) });
+  const system = systemPrompt({
+    code,
+    table,
+    template,
+    glossary: readJson(join(root, 'locales', code, 'glossary.json'), {}),
+  });
   const groups = batchesOf(owed, batch);
   if (dryRun) {
     log(system);
