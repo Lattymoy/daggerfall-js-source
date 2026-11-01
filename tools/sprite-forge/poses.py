@@ -110,8 +110,15 @@ def idle(frame, view, yaw):
         'clav_L': (0, -6, 0), 'uarm_L': (4, -12, 0), 'farm_L': (-12, 0, 8),
         'clav_R': (0, 6, 0),
     }, yaw)
-    axe = axe_at(p, (-0.26, -0.22, 0.86), (-0.18, -1.0, 0.13), (-0.7, 0.1, 0.7), pole_r=(-1, 0.6, -0.3))
+    grip_at, haft = IDLE_AXE.get(view, IDLE_AXE[None])
+    axe = axe_at(p, grip_at, haft, (-0.7, 0.1, 0.7), pole_r=(-1, 0.6, -0.3))
     return p, {'axe': axe}
+
+
+# the idle's axe, by view: carried forward and level, but in the front view the classic frame lets it hang down and
+# out to the ground, which no single carry shows from every side
+IDLE_AXE = {None: ((-0.26, -0.22, 0.86), (-0.18, -1.0, 0.13)),
+            0: ((-0.26, -0.16, 0.84), (-0.5, -0.45, -0.75))}
 
 
 # walk: contact, passing, contact, passing - the left leg leads on frame 0

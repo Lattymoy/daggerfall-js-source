@@ -135,6 +135,23 @@ def speckle(name, dark, light, scale=30.0, at=0.5, rough=0.4, metal=0.6):
     return m
 
 
+def sculpted(name, rgb, scale=18.0, strength=0.55):
+    """Glossy dark plate worked in shallow relief: its highlight breaks into patches, as a sculpted cuirass's does."""
+    m, b = _principled(name, rgb, metal=0.85, rough=0.25)
+    nt = m.node_tree
+    vec = _coords(m, (scale, scale, scale))
+    nz = nt.nodes.new('ShaderNodeTexNoise')
+    nz.inputs['Scale'].default_value = 1.0
+    nz.inputs['Detail'].default_value = 2.0
+    nt.links.new(vec, nz.inputs['Vector'])
+    bump = nt.nodes.new('ShaderNodeBump')
+    bump.inputs['Strength'].default_value = strength
+    bump.inputs['Distance'].default_value = 0.02
+    nt.links.new(nz.outputs['Fac'], bump.inputs['Height'])
+    nt.links.new(bump.outputs['Normal'], b.inputs['Normal'])
+    return m
+
+
 def palette():
     """Every material the medium fighter wears, by role, in its fitted colour."""
     mats = _palette()
@@ -148,7 +165,7 @@ def _palette():
     return {
         'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.9, spec=0.08),
         'silver': plain('silver', (0.62, 0.62, 0.64), metal=0.55, rough=0.32),
-        'cuirass': plain('cuirass', (0.07, 0.07, 0.075), metal=0.85, rough=0.25),
+        'cuirass': sculpted('cuirass', (0.07, 0.07, 0.075)),
         'mail': chain('mail', (0.015, 0.015, 0.02), (0.30, 0.30, 0.33)),
         'coif': chain('coif', (0.02, 0.02, 0.025), (0.22, 0.22, 0.24), around=14.0, rows=120.0),
         'leather': plain('leather', (0.16, 0.07, 0.025), rough=0.6),

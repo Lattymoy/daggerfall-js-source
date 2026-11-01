@@ -19,15 +19,16 @@ Knight enemies wear.
 - **The poses.** `tools/sprite-forge/poses.py` keys walk (4 frames), attack (6), hurt (1), idle (1) and bow (4). An arm
   reaches its grip by two-bone IK (`solve_arm`), so the axe's place drives the hands. Daggerfall turns the body
   differently in each view of the attack: from the side its back is to the viewer at the wind-up. So the attack is
-  keyed per view (`ATTACK`), by where the fist and the axe head show on screen. The archer stands side-on to the shot
-  in every view (`BOW_TURN`).
+  keyed per view (`ATTACK`), by where the fist and the axe head show on screen. The idle's axe is keyed per view too
+  (`IDLE_AXE`): the front view hangs it to the ground. The archer stands side-on to the shot in every view
+  (`BOW_TURN`).
 - **Fitting the poses.** `tools/sprite-forge/fit.py` adjusts each frame's keyed pose until the body covers the
   record's outline, its colour regions (skin, boot teal, cloth green) and its weapon best. It turns joints, the
   shoulders, the body, the axe's grip, roll and slide along the haft, and each solved elbow's swivel, searching by
-  CMA-ES. It lays the body's triangles on the work frame as Cycles samples it, the nearest surface over each
-  pixel's centre, so its picture is the render's pixel for pixel. A standing frame keeps both feet down, and the
-  bow stays near its keyed lean. The adjustments are kept in `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays
-  them on.
+  CMA-ES. It lays the body's triangles on the work frame as Cycles samples it, the nearest surface over each pixel's
+  centre, so its picture is the render's pixel for pixel. A standing frame keeps both feet down, and the bow stays
+  near its keyed lean. `--restarts` runs several searches a frame (its last fit, its keys, wider throws). The
+  adjustments are kept in `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays them on.
 - **Fitting the body.** `fit.py --shape` fits the proportions over every frame in its fitted pose: the torso's width
   and depth, the limbs', the head's, the hands', the boots', the pauldrons' size and place, the loincloth's width, the
   axe's size, and the whole body's size on screen. `tools/sprite-forge/shape.py` `transform` lays them on the meshes
@@ -100,9 +101,9 @@ tables and sizes are read as they are.
 ## Open
 
 - Only TEXTURE.488 is forged. The other class archives (475-490, and the guard's 399) need their own gear and specs.
-- The overlap with Daggerfall's outlines averages 0.78 a record. Walk and idle are closest (0.79-0.86); attack
-  0.71-0.80; hurt 0.74-0.81; the bow 0.71-0.75. The side attack's swing is furthest.
-- In 36 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
+- The overlap with Daggerfall's outlines averages 0.79 a record. Walk and idle are closest (0.81-0.86); attack
+  0.72-0.81; hurt 0.75-0.80; the bow 0.72-0.76. The side attack's swing and the bow are furthest.
+- In 34 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
 - The body is smooth lofts: it has no fingers, cloth folds or sculpted detail finer than the pecs and abs.
 - Layered Gearing still draws the player from traced strips (`04-Characters/Layered-Gearing.md`). The forge could
   render its 27 outfits as layers instead.
