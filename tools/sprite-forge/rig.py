@@ -16,12 +16,28 @@ JOINTS = {
     'neck': ('chest', (0.0, -0.03, 1.50)),
     'head': ('neck', (0.0, -0.045, 1.57)),
 }
+# The classic fighter's arms are long: shoulder to fingertip about 0.74 m against a body 1.81 m tall, so the arm's
+# design (laid out for a shoulder at 1.45 m) is stretched below the shoulder by ARM_LEN.
+ARM_LEN = 1.14
+SHOULDER_Z = 1.45
+
+
+def arm_z(z):
+    """A height on the arm as designed, after the stretch."""
+    return z if z >= SHOULDER_Z else SHOULDER_Z - (SHOULDER_Z - z) * ARM_LEN
+
+
+def _arm(x, y, z, side):
+    sx = 0.215 * side
+    return (sx + (x * side - sx) * ARM_LEN if z < SHOULDER_Z else x * side, y * ARM_LEN, arm_z(z))
+
+
 for s, x in (('L', 1.0), ('R', -1.0)):
     JOINTS.update({
         f'clav_{s}': ('chest', (0.05 * x, 0.0, 1.47)),
         f'uarm_{s}': (f'clav_{s}', (0.215 * x, 0.0, 1.45)),
-        f'farm_{s}': (f'uarm_{s}', (0.245 * x, 0.01, 1.20)),
-        f'hand_{s}': (f'farm_{s}', (0.26 * x, -0.005, 0.965)),
+        f'farm_{s}': (f'uarm_{s}', _arm(0.245, 0.01, 1.20, x)),
+        f'hand_{s}': (f'farm_{s}', _arm(0.26, -0.005, 0.965, x)),
         f'thigh_{s}': ('pelvis', (0.10 * x, 0.0, 0.95)),
         f'shin_{s}': (f'thigh_{s}', (0.105 * x, 0.0, 0.55)),
         f'foot_{s}': (f'shin_{s}', (0.11 * x, 0.015, 0.09)),

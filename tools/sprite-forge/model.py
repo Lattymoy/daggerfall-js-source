@@ -7,7 +7,7 @@ import numpy as np
 from mathutils import Matrix, Vector
 
 from body import Skinned, blob, blob_mesh, chain_centre, coords, face_materials, ramp, rest_attr, seg, vloft
-from rig import rest
+from rig import arm_z, rest
 from shapes import ellipsoid, loft, plate, sheet, tube_path
 
 
@@ -43,13 +43,14 @@ TORSO_LEAN = ([1.40, 1.62], [0.0, -0.035])   # the neck's centre comes forward o
 
 def TORSO_CENTRE(z):
     return 0.0, float(np.interp(z, *TORSO_LEAN))
-ARM = [
+ARM = [(arm_z(z), a, f, b) for z, a, f, b in [
     (1.50, 0.05, 0.05, 0.05), (1.45, 0.082, 0.08, 0.078), (1.38, 0.08, 0.08, 0.078),
     (1.31, 0.075, 0.082, 0.076), (1.25, 0.066, 0.068, 0.068), (1.205, 0.056, 0.054, 0.06), (1.17, 0.064, 0.062, 0.062),
     (1.16, 0.07, 0.068, 0.066), (1.148, 0.066, 0.064, 0.062), (1.10, 0.063, 0.059, 0.059), (1.03, 0.056, 0.051, 0.053),
     (0.978, 0.047, 0.042, 0.043), (0.97, 0.042, 0.036, 0.037), (0.962, 0.04, 0.034, 0.035),
-]
-BRACER = (0.972, 1.163)   # the arm's faces between these heights are its bracer
+]]
+BRACER = (arm_z(0.972), arm_z(1.163))   # the arm's faces between these heights are its bracer
+HAND_DESIGN = 0.965   # the hand joint's height the hands below were designed at
 LEG = [
     (1.00, 0.118, 0.118, 0.12), (0.90, 0.12, 0.12, 0.125), (0.80, 0.112, 0.11, 0.112), (0.70, 0.102, 0.098, 0.10),
     (0.62, 0.092, 0.09, 0.092), (0.555, 0.086, 0.09, 0.084), (0.49, 0.084, 0.078, 0.092), (0.42, 0.08, 0.072, 0.094),
@@ -57,12 +58,16 @@ LEG = [
 
 
 def _hand(x, closed):
+    """A hand's blobs, designed round a hand joint at (0.26x, -0.005, HAND_DESIGN), moved to where the joint is."""
+    d = rest('hand_L' if x > 0 else 'hand_R') - Vector((0.26 * x, -0.005, HAND_DESIGN))
+    def at(*p):
+        return tuple(Vector(p) + d)
     if closed:
-        return [blob((0.262 * x, -0.008, 0.905), (0.036, 0.05, 0.047)),
-                seg((0.25 * x, -0.048, 0.94), (0.25 * x, -0.064, 0.905), 0.015)]
-    return [blob((0.263 * x, -0.008, 0.915), (0.022, 0.048, 0.052)),
-            seg((0.264 * x, -0.01, 0.885), (0.268 * x, -0.014, 0.79), 0.018, 0.043),
-            seg((0.254 * x, -0.048, 0.94), (0.248 * x, -0.07, 0.872), 0.015)]
+        return [blob(at(0.262 * x, -0.008, 0.905), (0.036, 0.05, 0.047)),
+                seg(at(0.25 * x, -0.048, 0.94), at(0.25 * x, -0.064, 0.905), 0.015)]
+    return [blob(at(0.263 * x, -0.008, 0.915), (0.022, 0.048, 0.052)),
+            seg(at(0.264 * x, -0.01, 0.885), at(0.268 * x, -0.014, 0.79), 0.018, 0.043),
+            seg(at(0.254 * x, -0.048, 0.94), at(0.248 * x, -0.07, 0.872), 0.015)]
 
 
 def _torso_weights(p):
@@ -76,8 +81,8 @@ def _torso_weights(p):
 
 def _arm_weights(p):
     z = p[:, 2]
-    clav = 0.6 * ramp(z, 1.40, 1.48)
-    farm = 1 - ramp(z, 1.17, 1.23)
+    clav = 0.6 * ramp(z, arm_z(1.40), 1.48)
+    farm = 1 - ramp(z, arm_z(1.17), arm_z(1.23))
     uarm = np.clip(1 - clav - farm, 0, 1)
     return np.stack([clav, uarm, farm], axis=1)
 
