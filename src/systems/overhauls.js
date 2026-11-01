@@ -165,8 +165,8 @@ const textureOption = (id, name, { by, blurb, isOn, wear, addons = null, vendor 
 
 const G = UI_PACKS.grimoire;
 export const OVERHAUL_PANELS = Object.freeze([
-  // The panel stood empty until the first texture pack - it is a pack's door, not a second face on the Features
-  // switches. VE3: Vanilla Enhanced is that pack, beside Classic.
+  // The panel stood empty until the first texture pack - it is a pack's door, not a second face on the
+  // Features switches. VE3: Vanilla Enhanced is that pack, beside Classic.
   Object.freeze({
     id: 'texture',
     title: 'Texture Overhaul',

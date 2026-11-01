@@ -143,7 +143,7 @@ test('OW-WOD-LAG: the tree is raised by the host\'s build (settle), once, and a 
   assert.ok(b.wide.length > tree.n, 'a later wide mesh joins the list');
   c.sphereOverlaps([0, 540, 0], 1);
   assert.ok(b.wideTree !== tree && b.wideTree.n === b.wide.length, 'and the next query raises the tree again');
-  assert.match(hostText('src/scenes/world.js'), /collider\.settle\(key\);\n\s*await breather\.breathe\(\);\n\n\s*\/\/ SIB1:/, 'the host settles the pixel once every mesh is in, inside its build');
+  assert.match(hostText('src/scenes/world.js'), /collider\.settle\(key\);\n\s*await breather\.breathe\(\);/, 'the host settles the pixel once every mesh is in, inside its build');
 });
 
 test('OW-WOD-LAG: the road-clearance walk asks only the map\'s pixels - a box the giant\'s size (thousands of pixels, most off the map) answers at once, and the same', () => {

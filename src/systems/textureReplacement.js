@@ -668,7 +668,8 @@ export function clearTextureReplacements() {
 // One picture a key is kept (`_decoded`), and with it the source it was decoded from (`_decodedFrom`): a loose file's
 // name, the port's own file, a mod's `src` - its key, its content and the name. A picture answers only while the entry
 // that answers its key now has that source, so a switch never draws a stale picture and never costs a picture whose
-// source still answers. A decode that lands after its entry stopped answering - a mod switched off while an area loads - is dropped where it lands.
+// source still answers. A decode that lands after its entry stopped answering - a mod switched off while an area loads
+// - is dropped where it lands.
 const _decodedFrom = new Map(); // textureKey -> the source its picture was decoded from
 const _released = new Map(); // AUDIT DEX B5: textureKey -> { src, width, height, box, recordScale } - a readOnly picture the upload path took and the CPU let go
 const _bundleBytesOf = new Map(); // textureKey -> the bytes a mod's decoded picture holds against the budget

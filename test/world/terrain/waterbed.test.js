@@ -105,7 +105,7 @@ test('WATER-NEXT 2 the town\'s grid: DFU\'s flat ground as its tiles, the terrai
 test('WATER-NEXT 2 the hosts: the world carves at the build and at a restride and keeps the bed for the cap\'s re-index; the fixed town lays its grid; the lab as the hosts (mutants: a host uploading the uncarved grid; the sheet off the terrain\'s buffers)', () => {
   const w = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT WATER-NEXT P1): the kernel carves (terrainGen.js restrideGrid, on the worker) and the host uploads
-  assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel for the bed');
+  assert.match(w, /bed: waterOn,/, 'the build asks the kernel for the bed');
   assert.match(w, /const bed = hostBed\(\{ positions, normals \}, carved\);/);
   assert.match(w, /const terrain = renderer\.createTerrainSurface\(carved\?\.positions \?\? positions, carved\?\.normals \?\? normals,/);
   assert.match(w, /const water = waterIndices \? renderer\.createWaterSheet\(waterIndices, waterSheetOf\(bed, terrain\)\) : null;/);

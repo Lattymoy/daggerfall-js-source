@@ -95,7 +95,8 @@ function hullGeometry() {
       door: door(-0.725, 0.68, decks.lower),
       facing: 1,
     });
-  // her forecastle's front open over her waist in one arch, her stair rising through it: the deck under her forecastle her waist's
+  // her forecastle's front open over her waist in one arch, her stair rising through it: the deck under her forecastle
+  // her waist's
   P.bulkhead(b, stations, THICKNESS, {
     z: FORE_Z,
     y0: decks.lower,

@@ -6959,7 +6959,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** DS1: THE LIGHTNING FLASH - Dynamic Skies' storm flash as a point
-   *  light (OWN-WORK4 AUDIT: our strokes at a strike off to one side of the
+   *  light (our strokes at a strike off to one side of the
    *  player, systems/dynamicSkies/dynamicSkies.js FLASH_LOOK). Takes {x, y, z,
    *  range, color} or null (off, which is every frame the storm is quiet).
    *  Called AFTER setPointLights on the frame - it composes the flash

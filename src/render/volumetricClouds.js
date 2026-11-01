@@ -355,11 +355,9 @@ const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary']
  *  cover and grey, and its curtain's weight (PRECIP1: its tint is the share itself). */
 const SHARE_KEYS = [...PROFILE_KEYS, 'cover', 'grey', 'fall'];
 
-// ═══ VC7a: LIVING CLOUDS ════════════════════════════════
-// Mac: "improve the volumetric cloud system to be more immersive". The
-// field was a fixed noise volume slid across the land by the wind: a bank
-// was the same bank from the horizon to the horizon. Three clocks now
-// give it a life, every one of them read from the GAME's minutes (the
+// ═══ VC7a: LIVING CLOUDS ════════════════════════════════ Mac: "improve the volumetric cloud system to be more
+// immersive". The field was a fixed noise volume slid across the land by the wind: a bank was the same bank from
+// the horizon to the horizon. Three clocks now give it a life, every one of them read from the GAME's minutes (the
 // sky state's `minutes`), so every player online sees the same boil (the cover's drift rides the session's own wind
 // integral, WIND2's, as the whole field always has):
 //   - THE BOIL: the shape volume is read through its own height as the

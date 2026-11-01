@@ -678,7 +678,7 @@ test('AUDIT BRANCH (WoD) m2: a rebuild of a pixel that had a site re-reads its g
   h.publish(100, 100, [[10, 5, 10]], { wodSite: { xMin: 1, xMax: 2, yMin: 1, yMax: 2 } });
   h.destroyPixel(100, 100, { collectLoose: false });   // a rebuild's teardown runs clean with nothing to remember
   assert.doesNotMatch(WORLD, /_wodSiteWas/, 'no teardown remembers the site');
-  assert.match(WORLD, /\n    if \(host\.labGrassField\) \{   \/\/ WOD2[^\n]*m2[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);\n      host\.labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/, 'and the publish re-reads the grass for it, whatever stood there');
+  assert.match(WORLD, /\n    if \(host\.labGrassField\) \{[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);\n      host\.labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/, 'and the publish re-reads the grass for it, whatever stood there');
 });
 
 test('AUDIT BRANCH (WoD) L1-3: the host steps DFU\'s array on every crossing and at every world\'s start, and the Hold does not ride the pool', () => {

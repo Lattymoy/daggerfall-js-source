@@ -223,10 +223,10 @@ test('AUDIT-RR F32/F35: WorldDataVariants\' last key is THIS location\'s before 
   assert.ok(lastLocationKeyOf() < 0);
   assert.equal(getBlockVariantHere('TVRNAS02.RMB'), NO_VARIANT, '`if (lastLocationKey >= 0)` (WorldDataVariants.cs:192)');
   clearWorldDataVariants();
-  assert.match(hostText('src/scenes/world.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR F32/);
+  assert.match(hostText('src/scenes/world.js'), /\n {6}setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);/);
   assert.match(rd('src/scenes/exterior.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR F32/);
   const w = hostText('src/scenes/world.js');
-  const key = w.indexOf('setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32');
+  const key = w.indexOf('\n      setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);');
   const layout = w.slice(key).search(/layoutLocation(?:Steps)?\(/) + key;   // PIN MOVED (IC-STUTTER): the streaming host's layout a block a step
   assert.ok(key > 0 && layout > key && layout - key < 4000, 'the key is set before the layout that reads it');
 });

@@ -739,16 +739,15 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // COME SAIL AWAY 2.1 (RedRoryOTheGlen). Its ten sections as the shipped modsettings.json carries them,
-  // section and name joined with a dot, the shipped defaults and ranges; the four unnamed spacer sections
-  // ("---", "----", "-", "--") carry no keys and fall between Controls and WindDirectionWidget, Waves and
-  // Cargo, Cargo and Audio, Audio and Handling. Every description is the port's (OWN-WORK4 rewrote the six
-  // the mod wrote), each saying what ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY
-  // NEVER READS - Handling.BadTack, Handling.BadTackMultiplier and SailingAssist.AutoStowGaffSails - are
-  // ours since OWN-AUDIT (2026-11-01, comeSailAway/sailAssist.js); Compatibility.AnimatedWaterVertexWaves
-  // named a mod the game has not got and is retired (RETIRED_KEYS). The nine Controls keys are Unity KeyCode
-  // names (`text`); each becomes a registry action (systems/inputActions.js MOD_ACTIONS) with the slice that
-  // reads it. Plus the port's `Enabled`.
+  // COME SAIL AWAY 2.1 (RedRoryOTheGlen). Its ten sections as the shipped modsettings.json carries them, section and
+  // name joined with a dot, the shipped defaults and ranges; the four unnamed spacer sections ("---", "----", "-",
+  // "--") carry no keys and fall between Controls and WindDirectionWidget, Waves and Cargo, Cargo and Audio, Audio and
+  // Handling. Every description is the port's (OWN-WORK4 rewrote the six the mod wrote), each saying what
+  // ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY NEVER READS - Handling.BadTack,
+  // Handling.BadTackMultiplier and SailingAssist.AutoStowGaffSails - are ours since OWN-AUDIT (2026-11-01,
+  // comeSailAway/sailAssist.js); Compatibility.AnimatedWaterVertexWaves named a mod the game has not got and is retired
+  // (RETIRED_KEYS). The nine Controls keys are Unity KeyCode names (`text`); each becomes a registry action
+  // (systems/inputActions.js MOD_ACTIONS) with the slice that reads it. Plus the port's `Enabled`.
   'come-sail-away': Object.freeze({
     title: 'Come Sail Away',
     author: 'RedRoryOTheGlen',
@@ -1382,29 +1381,20 @@ export const MOD_SETTINGS = Object.freeze({
       ),
     }),
   }),
-  // WEAPON WIDGET 1.6 (RedRoryOTheGlen). Its nine sections as
-  // modsettings.json ships them - Modules' nine toggles, then each
-  // module's own knobs - the key named section-dot-name because four
-  // names repeat across sections (Speed, Length, Offset, Condition). A
-  // key with `float` is a SliderFloatKey and reads as a number on its
-  // range; `step` is the Mods pane's stepper for it. Descriptions are
-  // the mod's own where it wrote one. Plus the port's `Enabled`. SW1 -
-  // SHIELD WIDGET 1.6, RedRoryOTheGlen. The mod's own eight sections
-  // restated flat, section and name joined with a dot, in the bundle's
-  // own order with the bundle's own defaults, ranges and descriptions.
-  // The six keys the mod ships with no description carry the port's
-  // words instead. Plus the port's `Enabled`. DW1: Diverse Weapons 1.7.3
-  // (RealAKP) ships no settings of its own - its one script sets
-  // FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
-  // (DiverseWeaponsMain.cs:37, in the 1.7.3 release). `Enabled` IS that
-  // flag. The second key is the port's rendering of the mod's readme -
-  // "For Weapon Widget users, select Diverse Weapons settings preset in
-  // Weapon Widget mod options": the preset the bundle carries (restated
-  // in combat/diverseWeapons/diverseWeapons.js) is laid over the
-  // player's Weapon Widget settings while this is on, and their own
-  // values are untouched underneath, where DFU's preset picker would
-  // have overwritten them. Off by default, as a preset nobody has
-  // selected is; the readme says select it, so the switch says so too.
+  // WEAPON WIDGET 1.6 (RedRoryOTheGlen). Its nine sections as modsettings.json ships them - Modules' nine toggles, then
+  // each module's own knobs - the key named section-dot-name because four names repeat across sections (Speed, Length,
+  // Offset, Condition). A key with `float` is a SliderFloatKey and reads as a number on its range; `step` is the Mods
+  // pane's stepper for it. Descriptions are the mod's own where it wrote one. Plus the port's `Enabled`. SW1 - SHIELD
+  // WIDGET 1.6, RedRoryOTheGlen. The mod's own eight sections restated flat, section and name joined with a dot, in the
+  // bundle's own order with the bundle's own defaults, ranges and descriptions. The six keys the mod ships with no
+  // description carry the port's words instead. Plus the port's `Enabled`. DW1: Diverse Weapons 1.7.3 (RealAKP) ships
+  // no settings of its own - its one script sets FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
+  // (DiverseWeaponsMain.cs:37, in the 1.7.3 release). `Enabled` IS that flag. The second key is the port's rendering of
+  // the mod's readme - "For Weapon Widget users, select Diverse Weapons settings preset in Weapon Widget mod options":
+  // the preset the bundle carries (restated in combat/diverseWeapons/diverseWeapons.js) is laid over the player's
+  // Weapon Widget settings while this is on, and their own values are untouched underneath, where DFU's preset picker
+  // would have overwritten them. Off by default, as a preset nobody has selected is; the readme says select it, so the
+  // switch says so too.
   'diverse-weapons': Object.freeze({
     title: 'Diverse Weapons',
     author: 'RealAKP',
@@ -3427,13 +3417,11 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // EOTB4 put the view on the wheel. OWN-AUDIT: the mod's Camera.TogglePerspective key is the game's TogglePerspective action, bound in
-      // Controls and shown on this mod's tile (inputActions.js MOD_TILE_ACTIONS) - retired here (RETIRED_KEYS).
-      // HT4's finding again, same author, same key: the mod ships Tab,
-      // which is free in Daggerfall Unity and SPENT here - PX15 gave it
-      // to the port's own pixel dial (ui/input.js). B is unbound in
-      // DFU's defaults and unused by the port and by this mod's other
-      // keys, and it stays the player's to rebind.
+      // EOTB4 put the view on the wheel. OWN-AUDIT: the mod's Camera.TogglePerspective key is the game's
+      // TogglePerspective action, bound in Controls and shown on this mod's tile (inputActions.js MOD_TILE_ACTIONS) -
+      // retired here (RETIRED_KEYS). HT4's finding again, same author, same key: the mod ships Tab, which is free in
+      // Daggerfall Unity and SPENT here - PX15 gave it to the port's own pixel dial (ui/input.js). B is unbound in
+      // DFU's defaults and unused by the port and by this mod's other keys, and it stays the player's to rebind.
       'Camera.SwitchShoulder': Object.freeze({
         default: 'B',
         text: true,
@@ -3756,8 +3744,8 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // The bundle ships 2, When Weapon Readied, and a readied body only ever showed its back. The port ships 1: it faces
-      // the camera only while a blow or a cast plays.
+      // The bundle ships 2, When Weapon Readied, and a readied body only ever showed its back. The port ships 1: it
+      // faces the camera only while a blow or a cast plays.
       'Graphics.TurnToView': Object.freeze({
         default: 1,
         options: lazyWords(
@@ -4457,10 +4445,9 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections,
-  // the key named section-dot-name (a saved setting's own name). OWN-WORK3: the descriptions and choices are our own words, the
-  // defaults our decisions. The mod's
-  // five spacer sections carry no keys. Plus the port's `Enabled`.
+  // TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections, the key named section-dot-name (a saved setting's own name). OWN-WORK3: the descriptions and choices are our own words, the defaults our decisions. The mod's five spacer
+  // sections carry
+  // no keys. Plus the port's `Enabled`.
   //
   // A key with `color` is a ColorKey - DFU has the kind natively
   // (ModSettings.ColorKey) and the port did not until this mod, which
@@ -4671,11 +4658,11 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now travel at x100 and non roads at x60"): the
-      // mod's TimeAcceleration section (DefaultStartingAcceleration, AlwaysUseStartingAcceleration, AccelerationLimit)
-      // is not declared - the spinner it started and bounded is gone, and a journey runs at its ground's rate
-      // (systems/timeScale.js travelRateOf). Travel Options 1.11's settings had the three; test/systems/travel/to1_travelOptions.test.js
-      // names them as the one section the port leaves out.
+      // RATE-LAW (2026-10-04, Mac: "Remove travel options dials" / "Roads now travel at x100 and non roads at x60"):
+      // the mod's TimeAcceleration section (DefaultStartingAcceleration, AlwaysUseStartingAcceleration,
+      // AccelerationLimit) is not declared - the spinner it started and bounded is gone, and a journey runs at its
+      // ground's rate (systems/timeScale.js travelRateOf). Travel Options 1.11's settings had the three;
+      // test/systems/travel/to1_travelOptions.test.js names them as the one section the port leaves out.
       'Teleportation.EnablePaidTeleportation': Object.freeze({
         default: false,
         get description() {
@@ -6501,7 +6488,8 @@ export const MOD_SETTINGS = Object.freeze({
   // and Siblings Probability 0, so a fresh install never rolled a sibling; the port ships 2 and 50. Its "Input" section
   // (the G key and the second key) is the keybinding registry's (KB1, inputActions.js MOD_ACTIONS: LegacyFamily). The
   // "Legacy" section is the port's own: the model a family founded without the chargen's answer takes, Arkay's toll in
-  // an Enduring family, the heirloom's chance at a Bloodline death, and whether the family stands in the world. `Enabled` is the port's.
+  // an Enduring family, the heirloom's chance at a Bloodline death, and whether the family stands in the world.
+  // `Enabled` is the port's.
   'project-legacy': Object.freeze({
     title: 'Project Legacy',
     author: 'Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico',

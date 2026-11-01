@@ -59,7 +59,8 @@ const BUNDLED_FONTS = IN_BROWSER
 const BUNDLED_META = IN_BROWSER
   ? import.meta.glob('../../locales/*/pack/PACK.json', { eager: true, import: 'default' })
   : {};
-// The people who translated or checked a language (`locales/<tag>/translators.json`, a list of names). CREDITS-OUT: no screen names them now; the record stays.
+// The people who translated or checked a language (`locales/<tag>/translators.json`, a list of names). CREDITS-OUT: no
+// screen names them now; the record stays.
 const TRANSLATORS = IN_BROWSER
   ? import.meta.glob('../../locales/*/translators.json', { eager: true, import: 'default' })
   : {};

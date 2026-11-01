@@ -24,7 +24,8 @@ export function hash01(x, y, seed) {
   return ((hash ^ (hash >>> 16)) >>> 0) / 4294967296;
 }
 
-/** Value noise in [0, 1) over a lattice of `cells` x `cells` that wraps, read at (cellX, cellY) in cells - so a picture whose
+/** Value noise in [0, 1) over a lattice of `cells` x `cells` that wraps, read at (cellX, cellY) in cells - so a picture
+ * whose
  *  side is a whole number of cells tiles. */
 export function tileNoise(cellX, cellY, cells, seed) {
   const i = Math.floor(cellX),
@@ -444,7 +445,8 @@ export const wrapsOf = (archive) => {
 export const recordSeed = (archive, record, frame = 0) => (archive * 1009 + record * 97 + frame * 13 + 0x51ed) | 0;
 
 /**
- * THE ENHANCED LOOK. The record upscaled to width x height (edge-aware), sharpened in range, given our grain and graded. A tile
+ * THE ENHANCED LOOK. The record upscaled to width x height (edge-aware), sharpened in range, given our grain and
+ * graded. A tile
  * that wraps wraps at every step, so it still repeats without a seam; the grain's lattice wraps always.
  * @param {Rgba} src @param {number} width @param {number} height @param {{ wrap: boolean, seed: number }} o @returns {Rgba}
  */
@@ -617,7 +619,8 @@ function snowGround(src) {
 
 /**
  * The snow law's coverage of each texel, 0 to 1. A winter record: the snow it draws already (bright over its 3 x 3, not
- * water), crept a texel or two over the flat ground beside it, furthest downwind (the wind is from the north-west). A summer record (`fromSummer`): laid over all
+ * water), crept a texel or two over the flat ground beside it, furthest downwind (the wind is from the north-west). A
+ * summer record (`fromSummer`): laid over all
  * but water, full on the flat, thinner on steep ground and on faces to the wind. `joints`: snow sifted into the dark
  * joints of a paving too - the picture's, not the mask's (a dusted joint is no snow to stand in).
  */
@@ -749,7 +752,8 @@ const fit = (src, width, height) =>
 /**
  * One picture by its spec: `{ rule, w, h, wrap?, fromSummer?, seed }` over the classic source picture. Answers a new
  * picture; the source is not written.
- * @param {{ rule: string, w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank', seed: number }} spec
+ * @param {{ rule: string, w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank',
+ * seed: number }} spec
  * @param {Rgba} src
  * @returns {Rgba}
  */

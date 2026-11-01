@@ -170,7 +170,7 @@ import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOA
 import { deckPressed } from '../../scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d II E2: the deck a ladder set me on
 import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 import { boatPixel, pixelUnderOn } from './csaPixel.js';   // NO-PIXEL: a boat with no map pixel takes the one she stands on
-import { badTackShare, gaffFoul } from './sailAssist.js';   // OWN-AUDIT: the bad tack and the gaff sails' assist
+import { badTackShare, gaffFoul } from './sailAssist.js';   // The bad tack and the gaff sails' assist
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
 /**
@@ -708,7 +708,7 @@ export function createComeSailAwayRuntime(deps) {
   const peace = () => f(peaceShare(deps.peaceWay?.() ?? 1));
   /** moveSpeed's two arms - AUDIT SHIPS A4: each asked of her whichever she makes way by now (sailWayOf, oarWayOf). */
   const oarSpeed = (b, hurt) => f(f(f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt) * rigOf(b, 'oars')) * peace());   // CAPTAIN-TREE: her captain's oars
-  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * badTack(b)) * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());   // OWN-AUDIT: the bad tack's share
+  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * badTack(b)) * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());   // The bad tack's share
   /** HOLDINGS (the port's own - bible/03-World/Holdings.md): her Rigging refit, her way under sail and its coming on
    *  (`deps.refit`, the Fleet's; the mod has none) - read where the rates are read, never written into the prefab's
    *  modifiers a variant's change walks again. Oars are her hands', never her rig's - CAPTAIN-TREE: her captain's drill of
@@ -1156,7 +1156,7 @@ export function createComeSailAwayRuntime(deps) {
   // is the mod's own helm's choice
   const trimAuto = () => responsive() || !!setting('SailingAssist.AutoTrimming', true);
   const trimAutoSquareUpwind = () => !!setting('SailingAssist.AutoStowSquareSails', true);
-  // OWN-AUDIT (2026-11-01, sailAssist.js): the two keys the mod shipped and never read - the gaff sails' assist (the
+  // The two keys the mod shipped and never read (sailAssist.js) - the gaff sails' assist (the
   // classic helm's, as the square sails' is) and the bad tack, under either helm (a gale lays her on her quarter)
   const gaffAssist = () => !responsive() && !!setting('SailingAssist.AutoStowGaffSails', true);
   const gaffAback = (b, sail) => gaffAssist() && b.SailsGaff.includes(sail) && gaffFoul(vSignedAngle(flat(forwardOf(sail)), flat(state.windVectorCurrent), V_UP));
@@ -1258,7 +1258,7 @@ export function createComeSailAwayRuntime(deps) {
         // (helmWay.js), so the assist stows none of it upwind
         if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {
           const component = animatorOf(sail);
-          if (component != null && !gaffAback(b, sail)) stow(component, false);   // OWN-AUDIT: a gaff the wind would lay aback stays stowed
+          if (component != null && !gaffAback(b, sail)) stow(component, false);   // A gaff the wind would lay aback stays stowed
         }
       }
     }
@@ -1442,7 +1442,7 @@ export function createComeSailAwayRuntime(deps) {
           if (flag && !bool) stow(component, true);
           else if (!flag && bool) stow(component, false);
         }
-        // OWN-AUDIT: the gaff sails' assist - stowed while the wind would lay them aback, set again when it frees
+        // The gaff sails' assist - stowed while the wind would lay them aback, set again when it frees
         if (component != null && gaffAssist() && boat.SailsGaff.includes(sail) && gaffFoul(num9) !== component.GetBool('Stowed')) stow(component, gaffFoul(num9));
         num7++;
       }
@@ -2873,7 +2873,7 @@ export function createComeSailAwayRuntime(deps) {
 
   // ── CSA-F: the waves (2134-2143, 2145-3477; comeSailAwayWaves.js) ──
   const waveOn = () => !!setting('Waves.Enable', true);
-  /** CSA-J: `AnimatedWater != null && AWVertexWaves` - false here (ANIMATED_WATER is null). OWN-AUDIT (2026-11-01): the
+  /** CSA-J: `AnimatedWater != null && AWVertexWaves` - false here (ANIMATED_WATER is null). The
    *  key that named Animated Water is retired (modSettings.js RETIRED_KEYS), so only the missing mod is asked. */
   const animatedWaterWaves = () => ANIMATED_WATER != null;
   /** UpdateWaveMesh (2145-3477): the mesh cleared; with the waves off, indoors or on the player's ship nothing more;

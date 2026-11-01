@@ -595,7 +595,8 @@ export function settlementsIn(at, minX, minZ, maxX, maxZ) {
 }
 
 /** LocationLoaderBridge's footprints - the levelled site (a camp, ruin or rock field of World
- *  of Daggerfall, pixelBuild.js `wodSite`, in tiles) of every built pixel a global box (metres) round (globalX, globalZ) touches,
+ * of Daggerfall, pixelBuild.js `wodSite`, in tiles) of every built pixel a global box (metres) round (globalX, globalZ)
+ * touches,
  *  as rectangles in global metres. Any pixel of the world's grid is asked; past the Bay the mod stands none. */
 export function siteFootprintsIn(pixelOn, globalX, globalZ, radius) {
   const { x0, x1, y0, y1 } = snowPixelBox(globalX - radius, globalZ - radius, globalX + radius, globalZ + radius);

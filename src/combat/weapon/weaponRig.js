@@ -1123,10 +1123,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // and the body reads the machine through the record above
     if (!fpArm.ready()) return;
     const m = playerWeapon.machine;
-    // No `bow` flag. The arm derives "shoot" from its own weapon CLASS, which is what the reference tests - and
-    // which also catches MarksmanThrown, a type that shoots without being a bow. MW-PACE1: and the blow's own clock
-    // - the machine just began this strike, so its schedule (when the hit lands, when it is done, at this frame's
-    // dt) is the one the arm fits its wind-up, release and follow into.
+    // No `bow` flag. The arm derives "shoot" from its own
+    // weapon CLASS, which is what the reference tests - and which also
+    // catches MarksmanThrown, a type that shoots without being a bow.
+    // MW-PACE1: and the blow's own clock - the machine just began this strike, so its schedule (when the hit lands,
+    // when it is done, at this frame's dt) is the one the arm fits its wind-up, release and follow into.
     fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp', blow: playerWeapon.strikeSchedule(dt), hand: pairUp() ? playerWeapon.strike?.hand ?? null : null });   // The hand the law gave the blow
   }
 
@@ -1352,11 +1353,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       anchor: art.anchor, union: art.unionBox, rig: _tlRig, kick: _tlKick, flip,
       ...(art.pose ? { widthPct: art.pose.widthPct, raise: art.pose.raise, offset: art.pose.offset ?? 0 } : {}),
     });
-    // The frame the muzzle is measured against, kept as it is DRAWN - with the bob, the sway and the kick already
-    // in it. A shot leaves the barrel where the barrel IS on that frame, and the frame a gun fires on is the one
-    // the recoil has just moved. FIELD-GUN19: ...and the STRIP THE WORLD WAS DRAWN INTO on this frame, because the
-    // muzzle is a canvas pixel and the shot is a world object. `worldViewportRect` outlives endWorldPass for
-    // exactly this reader; null is the full canvas, which is what every host without a docked large HUD hands back.
+    // The frame the muzzle is measured against, kept as
+    // it is DRAWN - with the bob, the sway and the kick already in it.
+    // A shot leaves the barrel where the barrel IS on that frame, and
+    // the frame a gun fires on is the one the recoil has just moved.
+    // FIELD-GUN19: ...and the STRIP THE WORLD WAS DRAWN INTO on this
+    // frame, because the muzzle is a canvas pixel and the shot is a
+    // world object. `worldViewportRect` outlives endWorldPass for
+    // exactly this reader; null is the full canvas, which is what
+    // every host without a docked large HUD hands back.
     // RETRO-UI: drawn on the UI canvas, measured on the real one - the muzzle is a canvas pixel the world ray reads
     const [rx, ry] = fromUiPoint(canvas, rect.x, rect.y), real = canvas.canvas ?? canvas;
     const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // And the lens's aspect
@@ -1892,16 +1897,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         entity.equipCountdown = Math.max(0, entity.equipCountdown - dt * 980 * swapPace());   // Twice as fast outside the open PvP zone
       }
       const c = cv();
-      // THE RETURN VALUE WAS BEING THROWN AWAY, and it is the only signal that a blow has started. gesture() answers
-      // with the strike the drag resolved to (playerWeapon.js:"not immune: :1057-1064's") and clickAttack() with the
-      // one the click rolled - the Morrowind arm needs exactly that to pick rule 11's attack type. AUDIT 68
-      // S09-sheathed-swing: and no attack STARTS where Update returns first - a readied spell or its cast (:246-262),
-      // the equip countdown (:276-281), the sheathe (:283-288). The input buffer's refusal alone let a held button
-      // swing a hidden weapon. CLIMB4 (the Enhanced Climbing arc - the feel): THE HANDS ARE ON THE WALL.
-      // WeaponManager.Update's "do nothing if player paralyzed or is climbing" (:236-240) - ShowWeapons(false), no
-      // swing - read off the camera's climb (the classic climb, a move in flight, a hold on the wall: the hosts'
-      // `climbing`). The picture EASES down and back up rather than cutting (CLIMB_LOWER_TAU): the hands leave the hilt
-      // for the stone and come back to it.
+      // THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
+      // only signal that a blow has started. gesture() answers with the
+      // strike the drag resolved to (playerWeapon.js:"not immune: :1057-1064's") and
+      // clickAttack() with the one the click rolled - the Morrowind arm
+      // needs exactly that to pick rule 11's attack type.
+      // AUDIT 68 S09-sheathed-swing: and no attack STARTS where Update
+      // returns first - a readied spell or its cast (:246-262), the equip
+      // countdown (:276-281), the sheathe (:283-288). The input buffer's
+      // refusal alone let a held button swing a hidden weapon.
+      // CLIMB4 (the Enhanced Climbing arc - the feel): THE HANDS ARE ON THE WALL. WeaponManager.Update's "do nothing if
+      // player paralyzed or is climbing" (:236-240) - ShowWeapons(false), no swing - read off the camera's climb (the
+      // classic climb, a move in flight, a hold on the wall: the hosts' `climbing`). The picture EASES down and back up
+      // rather than cutting (CLIMB_LOWER_TAU): the hands leave the hilt for the stone and come back to it.
       const camNow = camera?.() ?? null;
       const climbing = _climbing = !!camNow?.climbing;
       // THE WEAPON AND THE HANDS ARE NEVER ON THE SCREEN TOGETHER. The weapon stays down while a hand
@@ -2029,10 +2037,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);
         fpArm.setOffWeaponGlow?.(offItem ? meshGlow(offItem) : null, offItem);
         fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));   // The fists wear the wraps' glow; ARMORY-FISTS: bare, the kit's weapon piece
-        // THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame read that swaps the weapon now hands the rig its
-        // worn list; setWorn's fast path is one key compare, and a change - a cloak equipped, a gauntlet dropped -
-        // rebuilds the body in those clothes. D29-D31 dressed the BUILD; this dresses the GAME. WEREWOLF1: the form
-        // was handed over above, ahead of the gate; the wolf keeps this table for the way back.
+        // THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
+        // read that swaps the weapon now hands the rig its worn list;
+        // setWorn's fast path is one key compare, and a change - a
+        // cloak equipped, a gauntlet dropped - rebuilds the body in
+        // those clothes. D29-D31 dressed the BUILD; this dresses the
+        // GAME.
+        // WEREWOLF1: the form was handed over above, ahead of the gate; the wolf keeps this table for the way back.
         if (entity) fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));   // The table as the body is drawn
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max
@@ -2085,21 +2096,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const _torchesOn = handheldOn();
       if (!_torchesOn && _handheldWasOn) handheld.dispose();   // The switch off is a teardown
       _handheldWasOn = _torchesOn;
-      // AND THE SHIELD OPENS IT TOO. This block assembles the frame the
-      // three mods share - the camera, the motor's local velocity, the
-      // look delta - and it used to be opened by the weapon's clone or
-      // the torch alone, so the Shield Widget got no frame at all unless
-      // an UNRELATED mod happened to be on: `ctx` stayed null,
-      // `drawRect()` answered null forever, and the mod was dead on a
-      // profile that enabled only it. Each consumer inside is already
-      // gated on its own switch, so this costs the assembly and nothing
-      // else. FIELD-GUN12: THE FRAME'S MOTOR, ASSEMBLED ONCE, ABOVE THE
-      // GATE. It used to live inside `if (widgetOn() || _torchesOn ||
-      // shieldOn())`, which was fine while the three mods were its only
-      // readers - the Thunderlock's own viewmodel is a fourth, and it
-      // must read the SAME numbers the mod's modules read whether or not
-      // any mod is enabled. (`_lastEye` is the frame's own bookkeeping
-      // and belongs out here for the same reason.)
+      // AND THE SHIELD OPENS IT TOO. This block assembles the frame the three mods share - the camera, the motor's
+      // local velocity, the look delta - and it used to be opened by the weapon's clone or the torch alone, so the
+      // Shield Widget got no frame at all unless an UNRELATED mod happened to be on: `ctx` stayed null, `drawRect()`
+      // answered null forever, and the mod was dead on a profile that enabled only it. Each consumer inside is already
+      // gated on its own switch, so this costs the assembly and nothing else.
+      // FIELD-GUN12: THE FRAME'S MOTOR, ASSEMBLED ONCE, ABOVE THE GATE. It used to live inside `if (widgetOn() ||
+      // _torchesOn || shieldOn())`, which was fine while the three mods were its only readers - the Thunderlock's own
+      // viewmodel is a fourth, and it must read the SAME numbers the mod's modules read whether or not any mod is
+      // enabled. (`_lastEye` is the frame's own bookkeeping and belongs out here for the same reason.)
       const cam = camNow;   // Read once, above the swing's gate
       const mv = cam?.move ?? {};
       const spd = entity ? liveStat(entity, 'speed') : 50;
@@ -2190,13 +2195,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // one sheathe, one clip)
         if (widgetOn() && (pair || !twoHands.offWidget.settledHidden)) twoHands.offWidget.lateUpdate(dt, { ...cloneFrame(playerWeapon.handItem('L'), 'L', cf), sheathed: false, shown: pair && spriteShown(), clockOf: widget, ...gunClone('L') });   // AUDIT: never while it rests hidden; AUDIT 2: on the right clone's clock
       }
-      // THE ARM IS ANIMATING IN EITHER VIEW. active() is the FIRST-person predicate by construction - it ends in `viewMode
-      // === 'first'` - so MW-D42's hold silently did nothing the moment the wheel turned, and the classic frame-5 hit
-      // fired straight through on the click exactly as it always had. The question this asks is not "which view" but "is
-      // the arm the thing on screen", and in third person that is thirdActive(). Same animation, same release key, same
-      // clock; only the pass that draws it differs, and the pass is none of the loose's business. TECH1: a bow's technique
-      // takes its own hit frame - its loose is the Volley's or the Piercing Shot's, never a plain arrow the host would
-      // loose on it (combat/techniques.js claimShot)
+      // THE ARM IS ANIMATING IN EITHER VIEW. active() is the
+      // FIRST-person predicate by construction - it ends in
+      // `viewMode === 'first'` - so MW-D42's hold silently did nothing
+      // the moment the wheel turned, and the classic frame-5 hit fired
+      // straight through on the click exactly as it always had. The
+      // question this asks is not "which view" but "is the arm the
+      // thing on screen", and in third person that is thirdActive().
+      // Same animation, same release key, same clock; only the pass
+      // that draws it differs, and the pass is none of the loose's
+      // business.
+      // TECH1: a bow's technique takes its own hit frame - its loose is the Volley's or the Piercing Shot's, never a plain
+      // arrow the host would loose on it (combat/techniques.js claimShot)
       return claimShot(held.evs, _techCtx);
     },
     /** The overlay draw, LAST in the host's frame (composites over the
@@ -2429,21 +2439,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         ? shield.drawRect() : null;
       // A WEAPON ON ITS WAY OUT IS STILL A WEAPON.
       //
-      // The fourth relaxation of this gate, and it follows AUDIT-FIELD
-      // F1's rule exactly, for the reason that finding exists:
-      // `shown()` is false for FOUR things and only ONE of them is the
-      // sheathe. A readied spell, a cast animation and an equip
-      // countdown all mean EMPTY HANDS by construction, and a gun
-      // sliding out of frame across them would be the port inventing a
-      // state DFU has never drawn. So the sheathe leg is named
-      // POSITIVELY (`thunderlockSliding` tests `playerWeapon.sheathed`
-      // itself) and the other three are re-stated here, the way
+      // The fourth relaxation of this gate, and it follows AUDIT-FIELD F1's rule exactly, for the reason that finding
+      // exists: `shown()` is false for FOUR things and only ONE of them is the sheathe. A readied spell, a cast
+      // animation and an equip countdown all mean EMPTY HANDS by construction, and a gun sliding out of frame across
+      // them would be the port inventing a state DFU has never drawn. So the sheathe leg is named POSITIVELY
+      // (`thunderlockSliding` tests `playerWeapon.sheathed` itself) and the other three are re-stated here, the way
       // `torchOnly` and `sheetOnly` re-state theirs.
       //
-      // The two LANE conditions come with them: the Morrowind arm's
-      // branch returns above this and the EotB billboard's above that,
-      // so a gun easing out from under a modelled arm would be two
-      // weapons at once.
+      // The two LANE conditions come with them: the Morrowind arm's branch returns above this and the EotB billboard's
+      // above that, so a gun easing out from under a modelled arm would be two weapons at once.
       const gunSliding = !!c && gunUp() && thunderlockSliding()
         && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0
         && !eotbHidesWeapon() && !fpArm.active();
@@ -2541,8 +2545,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // The two lines below draw the arm exactly when this is true
       if (eotbHidesWeapon()) return;
       if (fpArm.active()) { fpArm.draw(c); return; }
-      // THE SPRITE LANE HAS NO ANSWER FOR A WINDOW THAT DOES NOT COVER
-      // THE SCREEN.
+      // THE SPRITE LANE HAS
+      // NO ANSWER FOR A WINDOW THAT DOES NOT COVER THE SCREEN.
       //
       // MAP-FIELD gave the MORROWIND arm its held-sheet pose, and
       // fpArm.holdPaper hides the weapon, the arrow and the torch while

@@ -192,13 +192,14 @@ export function createPixelBuild(host) {
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
       if (record >= t.recordCount) continue;
-      // What MaterialReader's cache holds for this archive NOW - the mod's seasonal record (its texture at the mod's size,
-      // one frame) while a season is installed over it, the classic record otherwise. The seasonal texture keys on the
-      // install so a later season never reads an earlier one's upload. LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands
-      // as that tree's far picture - the batch sized for the tallest tree it stands, each flat's own scale on its corner -
-      // and as the tree itself near the eye (the pixel's `lowPolyTrees` set). Its cover, its sway, its forest and the far
-      // rings' rule are the flat's own (the season's, while one stands). AUDIT 05b A12: the choice is every host's one
-      // (world/naturePicture.js - a location's, a yard's)
+      // What MaterialReader's cache holds for this archive NOW - the mod's seasonal record (its texture at the mod's
+      // size, one frame) while a season is installed over it, the classic record otherwise. The seasonal texture keys
+      // on the install so a later season never reads an earlier one's upload.
+      // LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands as that tree's far picture - the batch sized for the tallest
+      // tree it stands, each flat's own scale on its corner - and as the tree itself near the eye (the pixel's
+      // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,
+      // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a
+      // yard's)
       const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
       coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // The record's own, whichever picture stands
       // Skyrim ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss
@@ -371,12 +372,13 @@ export function createPixelBuild(host) {
     // whole-stream carve (Port-Ledger (9): the mod's pump builds only a near
     // pixel, and a far one's surface).
     const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;   // The mod's bathymetry is the Bay's - ETHER-DEEP: and the Eltheric's own; the host's promote is the one gate, for every arm (scenes/deepWater/deepWatersHost.js), and answers nothing past the map
-    // This pixel's climate law, bound once - the one argument the shared remap seam takes that differs between the climate
-    // hosts and the dungeon. PRECIP4 (scenes/snowCoverHost.js): THE PIXEL'S SEASON - DFU's calendar season, or on the snow
-    // lane the snow at its middle's ground (a town's planed height, else its ground's middle), which its buildings, its
-    // town's climate swaps and its windmills wear; its trees and plants wear the snow at their own feet (flatSeason,
-    // below), its ground the snow at every fragment (render/snowCoverGlsl.js - the set's summer records and their winter
-    // twins)
+    // This pixel's climate law, bound once - the one argument the
+    // shared remap seam takes that differs between the climate hosts
+    // and the dungeon.
+    // PRECIP4 (scenes/snowCoverHost.js): THE PIXEL'S SEASON - DFU's calendar season, or on the snow lane the snow at its
+    // middle's ground (a town's planed height, else its ground's middle), which its buildings, its town's climate swaps and
+    // its windmills wear; its trees and plants wear the snow at their own feet (flatSeason, below), its ground the snow at
+    // every fragment (render/snowCoverGlsl.js - the set's summer records and their winter twins)
     let groundLo = Infinity, groundHi = -Infinity;
     for (let i = 1; i < positions.length; i += 3) { if (positions[i] < groundLo) groundLo = positions[i]; if (positions[i] > groundHi) groundHi = positions[i]; }
     const groundMid = dfLocation ? avg * worldHeight : (groundLo + groundHi) / 2;
@@ -1090,10 +1092,11 @@ export function createPixelBuild(host) {
     const bridgeBucket = onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));
     standBridges(bridges, px, py, { addStatic: (m, at) => addStatic(m, at, true), solid: (m, at) => late.add(key, m.positions, m.indices, at, { translation: bridgeBucket }), grow: unionBox });
 
-    // The nature layout arrived with the kernel's reply - laid out over the same blended samples and finished tilemap,
-    // consumed at the same point in the sequence it was always computed at. PROF4: THE FOREST'S TREES KEPT - the flats
-    // World of Daggerfall's table names a Tree by the climate's summer archive, each its group and its place in it:
-    // Logging's trees stand at them
+    // The nature layout arrived with the kernel's reply - laid
+    // out over the same blended samples and finished tilemap, consumed
+    // at the same point in the sequence it was always computed at.
+    // PROF4: THE FOREST'S TREES KEPT - the flats World of Daggerfall's table names
+    // a Tree by the climate's summer archive, each its group and its place in it: Logging's trees stand at them
     const pixelTrees = [];
     // THE JUNGLE'S TREES - the flats its layout stood as the owner's trees (world/terrain/jungleNature.js: a
     // species and a scale each), by species: the owner's tree where its door has loaded, else the Tree record it carries

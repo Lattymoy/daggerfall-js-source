@@ -685,8 +685,8 @@ import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, HULL_NAMES as CSA_HULL_NAMES, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
 import { createComeSailAwayRuntime, cargoModWords, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
-import { windWidgetFrame as csaWindWidgetFrame, waveFrames as csaOwnWaveFrames, splashPicture as csaSplashPicture } from '../systems/comeSailAway/csaPictures.js';   // OWN-WORK4: the wind widget's arrow, the breakers and the splash, painted
-import { registerCsaClips } from '../systems/comeSailAway/csaSynth/csaClips.js';   // OWN-WORK4: the boats' five clips, made
+import { windWidgetFrame as csaWindWidgetFrame, waveFrames as csaOwnWaveFrames, splashPicture as csaSplashPicture } from '../systems/comeSailAway/csaPictures.js';   // The wind widget's arrow, the breakers and the splash, painted
+import { registerCsaClips } from '../systems/comeSailAway/csaSynth/csaClips.js';   // The boats' five clips, made
 import { waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAway/comeSailAwayWaves.js';   // CSA-F
 import { ComeSailAwayRenderer, softParticleTexture as csaSoftParticleTexture } from '../render/comeSailAwayRender.js';   // CSA-F: the waves' and the particles' passes
 import { createNavalHost, hullBoxOf as navalHullBoxOf, NAVAL_SAVE_VENDOR, NAVAL_TAG_RANGE } from './naval/navalHost.js';   // NAV-H: the sea fight - the Iliac Bay's ships, the guns, boarding, the law and the word
@@ -1186,7 +1186,7 @@ import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } 
 import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
 import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishIconArchive } from '../systems/deepWater/deepWatersFishItems.js';   // DW-E3: the fish as items
-import { fishPicture } from '../systems/deepWater/fishArt.js';   // OWN-WORK4: the fish's own pictures, ours
+import { fishPicture } from '../systems/deepWater/fishArt.js';   // The fish's own pictures, ours
 import { clearEdgeBlackPixels } from '../world/underwater/underwaterDecorations.js';   // DW-E3: a fish's picture, edge-cleaned   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
 import { carvedFloorLocalY } from './deepWater/deepWatersHost.js';   // DW-D: the shore probes see no terrain over a carved cell
 import { etherPlaceRects } from '../world/etherWatersBake.js';   // ETHER-DEEP: the Eltheric Ocean's places' rects, for its own bake
@@ -8223,14 +8223,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const csaRender = csaRuntime ? new ComeSailAwayRenderer(renderer) : null;
   if (csaRender) void warmPrograms(csaRender.warmSteps());   // PERF-COMPILE1 (stutter): the sea's four programs at idle, not on the first frame at sea; SHADER-STALL: each built once its compile is done
   let _csaWaveLoad = null;
-  function csaWaveFrames() {   // OWN-WORK4: our breakers, painted (systems/comeSailAway/csaPictures.js)
+  function csaWaveFrames() {   // Our breakers, painted (systems/comeSailAway/csaPictures.js)
     _csaWaveLoad ??= Promise.resolve().then(() => csaRender.setWaveFrames(csaOwnWaveFrames())).catch((e) => console.warn('[come-sail-away] the waves\' pictures did not paint', e));
   }
   /** CSA-F: the particles' pictures - the mod's splash (112395_0-0, point-sampled) and the port's own soft dot for Unity's
    *  Default-Particle - loaded at boot, as the bundle's materials are there at Start (CSA-J). */
   let _csaParticleLoad = null;
   function csaParticleTextures() {
-    _csaParticleLoad ??= Promise.resolve().then(() => {   // OWN-WORK4: our splash, painted
+    _csaParticleLoad ??= Promise.resolve().then(() => {   // Our splash, painted
       csaRender.setParticleTexture('112395_0-0', csaSplashPicture());
       csaRender.setParticleTexture('Default-Particle', csaSoftParticleTexture(), { linear: true });
     }).catch((e) => console.warn('[come-sail-away] the particles\' pictures did not paint', e));
@@ -8348,7 +8348,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _csaWidgetFrames = [];
   let _csaWidgetLoad = null;
   function csaWindWidgetFrames() {
-    _csaWidgetLoad ??= Promise.resolve().then(() => {   // OWN-WORK4: our arrow, painted a frame a step (systems/comeSailAway/csaPictures.js)
+    _csaWidgetLoad ??= Promise.resolve().then(() => {   // Our arrow, painted a frame a step (systems/comeSailAway/csaPictures.js)
       const imgs = Array.from({ length: csaWindWidgetFrameCount() }, (_, i) => csaWindWidgetFrame(i));
       _csaWidgetFrames.push(...imgs.map((img, i) => ({ tex: renderer.uploadTexture('img', `csa-wind:${i}`, csaToScreenOrder(img)), w: img.width, h: img.height })));
     }).catch((e) => console.warn('[come-sail-away] the wind widget\'s pictures did not paint', e));
@@ -22734,7 +22734,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  crater; its coven's waves and master on the camp law (`px,py:star.<night>.<k>`), its cell's ledger and receipts; the
    *  tracker, the bar, the map, the compass and the timers. It reads what it needs of this scope by name. */
   const _eventHostDeps = {   // STOREFRONT: the world's bindings, one object the Starfall and the season share
-    renderer, state, exteriorFoes, gateScanOf, warmGateScan, surfaceAt, gateGroundAt, player, gamePaused, townTalk, terrainRoads: () => terrainGen.roads(),   // OWN-WORK2: the season's fissures keep off the Bay's network
+    renderer, state, exteriorFoes, gateScanOf, warmGateScan, surfaceAt, gateGroundAt, player, gamePaused, townTalk, terrainRoads: () => terrainGen.roads(),   // The season's fissures keep off the Bay's network
     _wodPeerSprung, wodPeerHeldAgo, wodForgetPeer, wodSprang, wodUnsprang, _questRegionIndex,
     get chatNotice() { return chatNotice; },   // made below
     get collider() { return collider; }, get online() { return online; }, get walkMode() { return walkMode; }, get playerSpawned() { return playerSpawned; },
@@ -32548,7 +32548,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the game's sun, ambient and colour in the lab's uniforms, the same
     // integrated wind the rain reads, and the lab's weather dim.
     const frameGrass = () => {   // PERF-V8
-    if (labGrass && !tvf && !travelOptions?.grassHidden) {   // TV1: from 150 m up a blade is under a pixel - the field waits for the traveller's eye; OWN-AUDIT: and a sped-up journey's, AllowRealGrass off
+    if (labGrass && !tvf && !travelOptions?.grassHidden) {   // TV1: from 150 m up a blade is under a pixel - the field waits for the traveller's eye, and a sped-up journey's, AllowRealGrass off
       const ex = cam.pos[0]; const ez = cam.pos[2];
       // GR5: THE FIELD IS ANCHORED TO THE WORLD. GR2's walk placed every
       // blade relative to the eye and swapped the whole field when the

@@ -251,7 +251,7 @@ test('PERF-EXT21: the host moves the field at a shift, empties it at a teleport,
   const cut = tp.indexOf('\n    labGrassField = null;\n');
   assert.ok(cut > 0 && cut < tp.indexOf('queue.push(...state.init(px, py));') && !/\bawait\b/.test(tp.slice(cut, tp.indexOf('queue.push(...state.init(px, py));'))),
     'a new scene frame starts an empty field - said before state.init re-anchors the scene, with no frame between');
-  assert.match(WORLD, /\n    if \(host\.labGrassField\) \{   \/\/ WOD2[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);\n      host\.labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
+  assert.match(WORLD, /\n    if \(host\.labGrassField\) \{[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);\n      host\.labGrassField\.invalidate\(t\[0\], t\[2\], t\[0\] \+ TERRAIN_SIZE, t\[2\] \+ TERRAIN_SIZE\);/,
     'every published pixel re-reads the cells over it, not a location\'s alone');
   // PERF-EXT21 (the review): and so nothing is kept to ask it - the set
   // AUDIT BRANCH (WoD) m2 filled at a teardown gated this very line, and

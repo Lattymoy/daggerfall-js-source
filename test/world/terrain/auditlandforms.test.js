@@ -926,7 +926,7 @@ function rebuildHost(vars) {
   const SWEEP = sliceTo('  function sweepRoadless() {', '\n  }\n');
   const DESTROY = sliceTo('  function destroyPixel(px, py, { collectLoose = true, carried = false, carryOnly = false } = {}) {', '\n  }\n');
   // HOST-SPLIT 2: the publish moved with the pixel build - its live names read `host.<name>`, and `host` is the scope
-  const i = WORLD.indexOf('    if (host.labGrassField) {   // WOD2'), j = WORLD.indexOf('    if (homeTown) host._homeLookV = -1;', i);
+  const i = WORLD.indexOf('    if (host.labGrassField) {'), j = WORLD.indexOf('    if (homeTown) host._homeLookV = -1;', i);
   assert.ok(i > 0 && j > i, 'the publish\'s re-stand block');
   const noop = new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => NaN : k === Symbol.iterator ? function* () {} : noop), apply: () => noop });
   const KEEP = new Set(['Math', 'Number', 'Object', 'Array', 'Map', 'Set', 'JSON', 'Infinity', 'NaN', 'undefined', 'String', 'Boolean', 'Symbol', 'console', 'Float32Array']);

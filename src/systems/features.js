@@ -240,20 +240,24 @@ export const MOD_CURATED = Object.freeze({
   // Controls', and the handling, cargo and map dials stay in the mod's own pane. OWN-AUDIT: and the
   // bad tack, a difficulty switch beside the trim that ships off - a key the drawer does not draw is one nobody can turn.
   'come-sail-away': Object.freeze(['SailingAssist.AutoTrimming', 'Handling.BadTack', 'WindDirectionWidget.Enable', 'Waves.Enable', 'Audio.SoundVolume']),
-  // The mod ships FIFTY-ONE keys across twelve sections, so this one is curated hard. The five are what a player reaches for
-  // first: whether a cautious trip is walked, whether a ship needs a port, what a location does to a journey in progress, how
-  // fast it may run (RATE-LAW, 2026-10-04, Mac: "Remove travel options dials" - no longer: the journey's ground sets its rate,
-  // systems/timeScale.js travelRateOf), and (KB1: in Controls now, as FollowPaths) which key follows a road. Everything else -
-  // the fourteen dot colours, the junction map's placement, the fare scaling - stays in the mod's own pane. TRAVEL-NAV1: and
-  // the port's own steering switch, on the tile so it is REACHABLE (TORCH-BIND's lesson, HT-WAIST's pin) - a key the drawer
-  // does not draw is a key nobody can turn. OW-TOGGLE: and the port's own first-person switch, on the tile for the same
-  // reason. TO-ROADS: and its roads, beside it - a first-person journey that follows them. TO-LIVE (2026-10-02, Discord: "both
-  // cautious and reckless travel initiate time accelerated travel"): and Inns, beside Cautiously - the other half of the mod's
-  // rule (ui/travel/travelPopUp.js isPlayerControlledTravel). TO-FIELD2 turned it on and FT14 took the pane it could be turned
-  // off in, so a trip stopping at inns - Recklessly's too - was always a journey and no dial on any screen said why. IT1: the
-  // four a player reaches for first - whether the carriage is the only fast travel, what the driver charges, whether he
-  // crosses into another region, and whether he will put you on a ship. The rest - what he takes you to, the ship captain's
-  // dials, the map's dots - stay in the mod's own pane.
+  // The mod ships FIFTY-ONE keys across twelve sections, so this one is curated hard. The five are what a player
+  // reaches for first:
+  // whether a cautious trip is walked, whether a ship needs a port, what a location does to a journey in progress, how
+  // fast it may run (RATE-LAW, 2026-10-04, Mac: "Remove travel options dials" - no longer:
+  // the journey's ground sets its rate, systems/timeScale.js travelRateOf), and (KB1: in Controls now, as FollowPaths)
+  // which key follows a road. Everything else - the fourteen dot colours, the junction map's placement, the fare
+  // scaling - stays in the mod's own pane.
+  // TRAVEL-NAV1: and the port's own steering switch, on the tile so it is REACHABLE (TORCH-BIND's lesson, HT-WAIST's
+  // pin) - a key the drawer does not draw is a key nobody can turn.
+  // OW-TOGGLE: and the port's own first-person switch, on the tile for the same reason.
+  // TO-ROADS: and its roads, beside it - a first-person journey that follows them.
+  // TO-LIVE (2026-10-02, Discord: "both cautious and reckless travel initiate time accelerated travel"): and Inns,
+  // beside Cautiously - the other half of the mod's rule (ui/travel/travelPopUp.js isPlayerControlledTravel). TO-FIELD2
+  // turned it on and FT14 took the pane it could be turned off in, so a trip stopping at inns - Recklessly's too - was
+  // always a journey and no dial on any screen said why.
+  // IT1: the four a player reaches for first - whether the carriage is the only fast travel, what the driver charges,
+  // whether he crosses into another region, and whether he will put you on a ship. The rest - what he takes you to, the
+  // ship captain's dials, the map's dots - stay in the mod's own pane.
   'immersive-travel': Object.freeze([
     'General.DisableNormalTravel', 'General.DailyCarriageFee', 'General.RegionLockedCarriages', 'ShipTravel.DisableShipTravelOutsideDocks',
   ]),
@@ -280,13 +284,13 @@ export const MOD_CURATED = Object.freeze({
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // All four it ships - the mod is small enough that curation would only hide something
   // The mod ships FIFTY-FOUR keys across nine sections, so this one IS curated, and the four are the ones a player
   // reaches for first: how far back the camera sits, which shoulder it sits over, how fast it follows, and how big you
-  // are drawn. Everything else stays in the mod's own pane. KB1: its two keys (SwitchShoulder, ToggleInput) are
-  // Controls' ShoulderSwitch and AutoPerspective. DISC23-B (Scratchie on Discord: "the game is not allowing us to
-  // choose between the different index slots"): the two sprite sliders are NOT here. "The mod's own pane" went with
-  // FT14's Mods pane, so they were on no screen at all and every player was the first set - and who you are drawn as is
-  // not a feature's dial: Mac put it on the PLAYER'S PROFILE ("a choosable skin system in the menu player profile
-  // system itself instead of it being hidden in the feature menu") - ui/skinCard.js, the picture of every set, in the
-  // window the door's profile mark opens.
+  // are drawn. Everything else stays in the mod's own pane.
+  // KB1: its two keys (SwitchShoulder, ToggleInput) are Controls' ShoulderSwitch and AutoPerspective.
+  // DISC23-B (Scratchie on Discord: "the game is not allowing us to choose between the different index slots"): the two
+  // sprite sliders are NOT here. "The mod's own pane" went with FT14's Mods pane, so they were on no screen at all and
+  // every player was the first set - and who you are drawn as is not a feature's dial: Mac put it on the PLAYER'S
+  // PROFILE ("a choosable skin system in the menu player profile system itself instead of it being hidden in the
+  // feature menu") - ui/skinCard.js, the picture of every set, in the window the door's profile mark opens.
   'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
   // The clip quality and the two volumes are what a player reaches for.
@@ -397,12 +401,13 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonEncounters', initial: true, online: true }),   // scenes/delve/delveHost.js DELVE_PREF
   }),
-  // HORSE CARE (systems/steedCare.js). HORSE-WALK: its horse walks unless the run gallops it. HORSE-TIERS: TIERS ON THE ONE KEY,
-  // as Climates & Calories' row has them - Off (DFU's horse, stored as the old switch's own `false`), Boons (the default, never
-  // stored - BOONS-DEFAULT's way) and Hard (the system as it stood, by name); systems/upkeep/upkeepTiers.js HORSE_CARE_STORED and
-  // HORSE_CARE_DEFAULT, which test/systems/horsetiers.test.js holds the row to. The player's online, every tier, as every Climates
-  // & Calories tier is (MODS-ONLINE-3's reading: a tier decides only what THIS player's horse pays) - the lane forced it on there
-  // until Mac's word.
+  // HORSE CARE (systems/steedCare.js).
+  // HORSE-WALK: its horse walks unless the run gallops it.
+  // HORSE-TIERS: TIERS ON THE ONE KEY, as Climates & Calories' row has them - Off (DFU's horse, stored as the old
+  // switch's own `false`), Boons (the default, never stored - BOONS-DEFAULT's way) and Hard (the system as it stood, by
+  // name); systems/upkeep/upkeepTiers.js HORSE_CARE_STORED and HORSE_CARE_DEFAULT, which test/systems/horsetiers.test.js holds the
+  // row to. The player's online, every tier, as every Climates & Calories tier is (MODS-ONLINE-3's reading: a tier
+  // decides only what THIS player's horse pays) - the lane forced it on there until Mac's word.
   Object.freeze({
     id: 'horse-care',
     group: 'world',
@@ -600,13 +605,14 @@ export const FEATURES = Object.freeze([
       + ' Steady shadows stops shadows flickering, at some cost to frame rate; Calmer eye slows how fast your eyes adjust to light and dark.'); },
     get effect() { return t('features.enhancedLighting.effect', 'Lighting takes effect when the world next loads; steady shadows and calmer eye at once.'); },
     kinds: Object.freeze(['enhanced']),
-    // THE PLAYER'S, ONLINE TOO. It was forced on with the rest of the enhanced lane, so a player it did not suit - the interior
-    // flicker DISC15 closed, a GPU that cannot carry forty-eight shadowed lanterns - had no way out online. Lighting is what THIS
-    // screen draws: the room agrees on nothing through it (render/enhancedLighting.js lightingOn is its one reader, and no wire
-    // field, relay law or shared roll reads the lane), the same shape as the chat's visibility and the peers' sprites the lane
-    // already leaves to the player. FLICKER-FIX: the steady-shadows switch is a PART of this row, as the wind's wisps are
-    // (render/shadowPass.js SHADOW_TUNING.steady reads it each frame: no frame-skipping cadence, a stickier caster hold, no
-    // lo-tier rebuild cap; off = EL8's schedule, cheaper but shadows can pop).
+    // THE PLAYER'S, ONLINE TOO. It was forced on with the rest of the enhanced lane, so a player it did not suit - the
+    // interior flicker DISC15 closed, a GPU that cannot carry forty-eight shadowed lanterns - had no way out online.
+    // Lighting is what THIS screen draws: the room agrees on nothing through it (render/enhancedLighting.js lightingOn
+    // is its one reader, and no wire field, relay law or shared roll reads the lane), the same shape as the chat's
+    // visibility and the peers' sprites the lane already leaves to the player.
+    // FLICKER-FIX: the steady-shadows switch is a PART of this row, as the wind's wisps are (render/shadowPass.js
+    // SHADOW_TUNING.steady reads it each frame: no frame-skipping cadence, a stickier caster hold, no lo-tier rebuild
+    // cap; off = EL8's schedule, cheaper but shadows can pop).
     control: Object.freeze({
       store: 'prefs', key: 'enhancedLighting', initial: true, online: 'player',
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'steadyShadows', initial: true, online: 'player' }), Object.freeze({ store: 'prefs', key: 'shadowDebug', initial: false, online: 'player' }), Object.freeze({ store: 'prefs', key: 'calmEye', initial: false, online: 'player' })]),   // shadowDebug prints the console log (render/shadowPass.js _debugLog); STEADY-BALANCE: calmEye, the slow eye on its own chip
@@ -802,14 +808,13 @@ export const FEATURES = Object.freeze([
       parts: Object.freeze([Object.freeze({ key: 'quickLootTier', label: 'Take gear', tiers: Object.freeze([['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']]) })]),
     }),
   }),
-  // LOOT RARITY - the port's own item ladder
-  // (systems/loot/lootRarity.js): Common, Magic, Rare, Legendary, with
-  // DFU's artifacts as the ceiling. Enhanced, and ON. It shipped off beside
-  // enhancedAI on the reasoning that a row changing the RULES waits to
-  // be asked for; Mac's call is that this one is the port's own game
-  // and should be what a player meets. The 1:1 lane is not lost - the
-  // row is one press away, and off is DFU's loot exactly, field for
-  // field.
+  // LOOT RARITY - the port's own item ladder (systems/loot/lootRarity.js):
+  // Common, Magic, Rare, Legendary, with DFU's artifacts as the ceiling.
+  // Enhanced, and ON. It shipped off beside enhancedAI on the reasoning
+  // that a row changing the RULES waits to be asked for; Mac's call is that
+  // this one is the port's own game and should be what a player meets. The
+  // 1:1 lane is not lost - the row is one press away, and off is DFU's loot
+  // exactly, field for field.
   Object.freeze({
     id: 'loot-rarity',
     group: 'loot',
@@ -846,11 +851,9 @@ export const FEATURES = Object.freeze([
         Object.freeze({ key: 'windWisps', get label() { return t('features.wind.wisps', 'Wisps'); } })]),
     }),
   }),
-  // WIND3's `wind-sound` row IS this row now - one switch over the
-  // port's own sounds (systems/ enhancedSounds.js): the wind loop, the
-  // enhanced inventory's transfer cues, the climb's hands and boots, and
-  // the gathering's acts. The kill door `?windaudio=off` still silences
-  // the wind alone.
+  // WIND3's `wind-sound` row IS this row now - one switch over the port's own sounds (systems/
+  // enhancedSounds.js): the wind loop, the enhanced inventory's transfer cues, the climb's hands and
+  // boots, and the gathering's acts. The kill door `?windaudio=off` still silences the wind alone.
   Object.freeze({
     id: 'enhanced-sounds',
     group: 'sound',   // Was world
@@ -926,10 +929,10 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),   // the player's own, as the held map's is
   }),
-  // The held map's world sheet zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
-  // world/tamriel/tamrielGeography.js). Read where the window is built (ui/map/mapSkin.js tamrielMapOn), so a change takes the next map
-  // opened; `?tamriel=off` is the kill door. AUDIT TAMRIEL-WIDE D1: a place past the Bay is travelled to as a Bay place is - with the
-  // land on (AUDIT TAMRIEL-WIDE II), and the note says so.
+  // The held map's world sheet zooms out past the Bay onto the whole continent, authored in the same hand
+  // (ui/tamrielInk.js, world/tamriel/tamrielGeography.js). Read where the window is built (ui/map/mapSkin.js
+  // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door. AUDIT TAMRIEL-WIDE D1: a place
+  // past the Bay is travelled to as a Bay place is - with the land on (AUDIT TAMRIEL-WIDE II), and the note says so.
   Object.freeze({
     id: 'tamriel-map',
     group: 'interface',
@@ -1150,12 +1153,10 @@ export const FEATURES = Object.freeze([
   modFeature('windfall', () => t('features.effect.atOnce', 'Takes effect at once.'), 'sight'),   // The same - and every flora batch carries its mask from its build, so the law turns on and off with it
   modFeature('snowfall', () => t('features.effect.atOnce', 'Takes effect at once.'), 'sight'),   // The same - its switch read every frame; off hides the snow, and the snowpack keeps its clock
   modFeature('roads-hazelnut', () => t('features.effect.worldLoads', 'Takes effect when the world next loads.'), 'world'),
-  // TRAVEL OPTIONS - `world`, because what it changes
-  // is how you cross it. The effect line is the SWITCH's (FT9: when each
-  // switch lands), and the switch is read once at world load, as are the mod's own "won't take effect without
-  // restarting DFU" keys (its roads integration and its junction map).
-  // TO-LIVE: its other dials are read again as they change
-  // (scenes/world.js refreshTravelOptionsSettings).
+  // TRAVEL OPTIONS - `world`, because what it changes is how you cross it. The effect line is the SWITCH's
+  // (FT9: when each switch lands), and the switch is read once at world load, as are the mod's own "won't
+  // take effect without restarting DFU" keys (its roads integration and its junction map). TO-LIVE: its other
+  // dials are read again as they change (scenes/world.js refreshTravelOptionsSettings).
   modFeature('travel-options', () => t('features.effect.worldLoads', 'Takes effect when the world next loads.'), 'world'),
   // IMMERSIVE TRAVEL - `world`, the carriages at the city gates. Its gate blocks and its two factions
   // are laid when the game loads (the world-data door latches its blocks, the faction dictionary is built at the load);
@@ -1735,24 +1736,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'townWatch', initial: true, online: 'player' }),
   }),
-  // THE SURVIVAL ARC - an overhaul of Ralzar's Climates & Calories (vendor/climates-
-  // calories/README.md), not a port. The one switch for the whole of it: the felt temperature
-  // and the five needs on the world minute, the food, water and camping items the store shelves
-  // and a new character carries, camps and campfires, the costed rest. Off is the classic game:
-  // no needs, no provisions minted. SURV-TIERS: the one switch is tiers - Off, Boons
-  // (SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus), Casual (the
-  // needs only borrow stamina, and a rest, a meal or a drink never costs more than it gives)
-  // and Hard (the arc as above, the costed rest with it); survival/difficulty.js. The default
-  // is Boons since BOONS-DEFAULT, Casual before it. BLOOD1 (2026-09-19, Mac: "I really want to
-  // try and build our own version as close to 1:1 as possible" / "read in how their module
-  // works so we can achieve our own type of parity") - THE PORT'S OWN blood, and an ENHANCED
-  // row rather than a mod row because no mod is vendored for it. DaggerBlood is the reference
-  // for the feel and nothing else: no code, no art, no Mod-Registry row ( carries the whole of
-  // that reasoning), so there is no author's name to put in the title the way every
-  // `modFeature` row carries one.
+  // THE SURVIVAL ARC - an overhaul of Ralzar's Climates & Calories (vendor/climates-calories/README.md), not a port.
+  // The one switch for the whole of it: the felt temperature and the five needs on the world minute, the food, water
+  // and camping items the store shelves and a new character carries, camps and campfires, the costed rest.
+  // Off is the classic game: no needs, no provisions minted.
+  // SURV-TIERS: the one switch is tiers - Off, Boons (SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a
+  // bonus), Casual (the needs only borrow stamina, and a rest, a meal or a drink never costs more than it gives) and
+  // Hard (the arc as above, the costed rest with it); survival/difficulty.js. The default is Boons since BOONS-DEFAULT,
+  // Casual before it.
+  // THE PORT'S OWN blood, and an ENHANCED row rather than a mod row because no mod is vendored for it. DaggerBlood is
+  // the reference for the feel and nothing else: no code, no art, no Mod-Registry row, so there is no author's name to
+  // put in the title the way every `modFeature` row carries one.
   //
-  // ON by default: the splash has always played, and the mark is what a
-  // player expects to still be there when they walk back through.
+  // ON by default: the splash has always played, and the mark is what a player expects to still be there when they walk
+  // back through.
   Object.freeze({
     id: 'blood',
     group: 'combat',

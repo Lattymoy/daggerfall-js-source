@@ -83,18 +83,13 @@ export const ACTIONS = Object.freeze([
   'QuickLootOpen',
   // FREEMOUSE. APPENDED, like every port action before it.
   //
-  // THE TOGGLE ITSELF IS NOT NEW - `ActivateCursor` is DFU's own
-  // (PlayerMouseLook.cs:190-198) and the port has read it since U45.
-  // What is new is a key that is ONLY that. ActivateCursor's default
-  // is Enter, and online Enter is also the chat's open
-  // (ui/chatPanel.js CHAT_OPEN_ACTION), so the one press a player
-  // reaches for to free the mouse is the same press that opens a text
-  // box - a collision PL3 had to work around rather than resolve,
-  // because DFU's binding is DFU's. A second ACTION resolves it
-  // instead of arguing with it: Enter keeps DFU's meaning, this is the
-  // player's own, and the two are ORed at the one reader
-  // (player/pointerLock.js bindCursorToggle) so there is no second
-  // toggle to keep in step.
+  // THE TOGGLE ITSELF IS NOT NEW - `ActivateCursor` is DFU's own (PlayerMouseLook.cs:190-198) and the port has read it
+  // since U45. What is new is a key that is ONLY that. ActivateCursor's default is Enter, and online Enter is also the
+  // chat's open (ui/chatPanel.js CHAT_OPEN_ACTION), so the one press a player reaches for to free the mouse is the same
+  // press that opens a text box - a collision PL3 had to work around rather than resolve, because DFU's binding is
+  // DFU's. A second ACTION resolves it instead of arguing with it: Enter keeps DFU's meaning, this is the player's own,
+  // and the two are ORed at the one reader (player/pointerLock.js bindCursorToggle) so there is no second toggle to
+  // keep in step.
   'FreeMouse',
   // EVERY KEY THAT DOES SOMETHING IN THE WORLD IS AN ACTION HERE. Appended, like every port action before them.
   //  - 'Interact': the E activate, a raw `KeyE` read in four hosts beside DFU's E-AbortSpell - one press did both.
@@ -178,11 +173,12 @@ export const ACTIONS = Object.freeze([
   // helm I took, else the first of my fleet, wherever she lies (scenes/holdDoor.js). On F4: the letters are spent, F1 and
   // F3 are the browser's (ui/input.js BROWSER_STEALS), F2 the saddle panel's. Appended, like every port action before it.
   'ShipHold',
-  // THE GUNS' LOAD - one press steps the load of the
-  // guns at hand (the battery laid, else the one the look bears on) on: round, grape, chain, heated (scenes/naval/
-  // navalLoads.js). It ships with no key - every letter is spent, and the helm's own Shot button and the wheel while the
-  // guns are laid choose it - and a player gives it one in the Controls pane, or a pad button (ui/plus/plusPadBinds.js).
-  // Drawn in Combat, not Come Sail Away's group: a mod's group is its MOD_ACTIONS and every row of those ships a key - so it is live always, and answers only at a helm with guns. Appended, like every port action before it.
+  // THE GUNS' LOAD - one press steps the load of the guns at hand (the battery laid, else the one the look bears on)
+  // on: round, grape, chain, heated (scenes/naval/navalLoads.js). It ships with no key - every letter is spent, and the
+  // helm's own Shot button and the wheel while the guns are laid choose it - and a player gives it one in the Controls
+  // pane, or a pad button (ui/plus/plusPadBinds.js). Drawn in Combat, not Come Sail Away's group: a mod's group is its
+  // MOD_ACTIONS and every row of those ships a key - so it is live always, and answers only at a helm with guns.
+  // Appended, like every port action before it.
   'ShotCycle',
   // PARTY-PING (the owner: the party's ping is the middle button): a look's point for the party, one press.
   // Appended, like every port action before it. DFU's middle button is AutoRun (InputManager.cs:995); the

@@ -117,7 +117,8 @@ function gait(ctx, lo = 0.06, hi = 0.11) {
 }
 
 /** Boots on a hard path: the thud, the heel's knock, the crack and a little grit. The thud is kept under the knock:
- *  at full weight it held 94% of the power under 300 Hz, where Daggerfall's own stone steps hold 56 to 70%. @param {Ctx} ctx */
+ * at full weight it held 94% of the power under 300 Hz, where Daggerfall's own stone steps hold 56 to 70%. @param {Ctx}
+ * ctx */
 function hardStep(ctx, { body = 110, crack = 2200, crackAmp = 0.5, gritAmp = 0.12, weight = 0.45, knock = 0.55 } = {}) {
   const feet = gait(ctx);
   for (const [at, k] of [
@@ -607,7 +608,8 @@ const LANDING_ARMOUR = {
   },
 };
 
-/** A hard landing: the body's weight on the ground, grit thrown up, and the armour over it. `heavy` is the fall that hurt. @param {Ctx} ctx @param {string} armour */
+/** A hard landing: the body's weight on the ground, grit thrown up, and the armour over it. `heavy` is the fall that
+ * hurt. @param {Ctx} ctx @param {string} armour */
 function landing(ctx, armour) {
   const at = between(ctx.dice, 0.005, 0.015);
   const k = ctx.heavy ? 1 : 0.75;
@@ -623,7 +625,8 @@ function landing(ctx, armour) {
   }
 }
 
-/** A plunge into water: the burst, the cavity's low note, the slosh, a cloud of bubbles and drips falling back. @param {Ctx} ctx */
+/** A plunge into water: the burst, the cavity's low note, the slosh, a cloud of bubbles and drips falling back. @param
+ * {Ctx} ctx */
 function waterLanding(ctx) {
   const at = 0.01;
   addBurst(ctx.buf, ctx.rate, ctx.noise, {
@@ -671,7 +674,8 @@ export const RETRO = Object.freeze({ lowpassHz: 7000, bits: 8 });
  * at the retro quality. `heavy` is a landing's hurt fall. `loudness` (dsp.js loudnessOf, dB) is its level at the end;
  * without it the clip stands at its peak. Answers mono Float32 PCM.
  * @param {string} family
- * @param {{ seed: number, seconds: number, rate: number, retro?: boolean, heavy?: boolean, peak?: number, loudness?: number }} o
+ * @param {{ seed: number, seconds: number, rate: number, retro?: boolean, heavy?: boolean, peak?: number, loudness?:
+ * number }} o
  */
 export function stepSound(family, { seed, seconds, rate, retro = false, heavy = false, peak, loudness }) {
   const buf = canvas(seconds, rate);

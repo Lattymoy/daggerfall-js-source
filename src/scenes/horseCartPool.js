@@ -1121,8 +1121,10 @@ export function createHorseCartPool({
     const inHarness = !!lone && !!w && (w.kind === HCC_WIRE_KIND.Following || (w.kind === HCC_WIRE_KIND.Deployed && !!w.hitched));
     if (held) return lone && !inHarness ? [{ ...lone, g: 1, drawn: true, hitched: false, side: 0 }] : [];   // A horse the throw leaves
     if (inHarness && parts) {
-      // My pair's wagon left in harness with one horse (a horse sold from under the team, an older save) stands that one beside the pole - its mate was a horse I do not own. A peer's word says no count, so their pair stands.
-      // FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first.
+      // My pair's wagon left in harness with one horse (a horse sold from under the team, an older save) stands that
+      // one beside the pole - its mate was a horse I do not own. A peer's word says no count, so their pair stands.
+      // FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their
+      // second horse is not drawn at their parked wagon while they ride the first.
       const sides = pair ? teamSidesOf(w.model) : [0];
       for (const x of mine && pair && (horses?.() ?? 1) < 2 ? sides.slice(0, 1) : sides) {
         const f0 = lone.forward;
@@ -1197,7 +1199,8 @@ export function createHorseCartPool({
     const m = f.g > 1 ? mat4FromQuatPosScale(f.rotation, f.at, [f.g, f.g, f.g]) : wagonMatrix(f.at, f.rotation);
     return pitchedMatrix(m, parts, f.hitched ? parts.hitchPitch ?? 0 : 0);
   }
-  // FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest.
+  // FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on
+  // a body - from some angles a trace meets the picture beside the horse's chest.
   /**
    * THE HARNESS'S ENDS FOR AN OWNER THIS FRAME - `[{ kind, a, b, g }]`: each hitched horse's two traces from its
    * collar to their roots on the wagon (a pair's singletrees, turned with the pole; the Small Cart's shafts' roots,
@@ -1713,7 +1716,7 @@ export function createHorseCartPool({
   /** AN OWNER'S TEAM AS DRAWN THIS FRAME ('' mine, a peer's key) - what the town watch lifts: the wagon's kind,
    *  paint, load (`tier`), wheels (`turn`) and hitch, where it stands and how it is turned (the scene's), the owner's
    *  concealment (a peer's look), and each horse drawn with it (its feet, its facing) - those in its harness (a hitched
-   *  wagon's horse is its team's, its parts in or not), and a lone one beside it only when `lone` says the throw takes it - or null where no wagon of theirs
+   * wagon's horse is its team's, its parts in or not), and a lone one beside it only when `lone` says the throw takes it - or null where no wagon of theirs
    *  is drawn. Read before the hold (a held team is drawn nowhere). */
   function teamSnapshot(owner, lone = false) {
     const f = drawnFrameOf(owner, {});

@@ -79,7 +79,8 @@ export const outerWidth = (stations, z, y) => widthAt(section(stationAt(stations
 
 /**
  * A lofted hull: its stations aft to fore (`z`, `b` half-beam, `g` gunwale, `k` keel, `f` fullness), its planking
- * `thickness` thick - the outside its side's picture over the waterline and its bottom's under it, its ceiling, its gunwale's
+ * `thickness` thick - the outside its side's picture over the waterline and its bottom's under it, its ceiling, its
+ * gunwale's
  * cap and its transom (the first station, when it has beam).
  * @param {MeshBench} b
  * @param {{ z:number, b:number, g:number, k:number, f?:number }[]} stations
@@ -271,7 +272,8 @@ export function oarGeometry(out, { inboard = 0.6, blade = 0.9, r: radius = 0.05,
   block(b, 'blade', [end - (side * blade) / 2, 0, 0], [blade / 2, 0.02, Math.max(0.09, blade * 0.16)]);
   return b.finish();
 }
-/** A rudder's blade hung from its stock's head (the node) down `drop` m, `chord` m aft, `thickness` thick, its stock over it. */
+/** A rudder's blade hung from its stock's head (the node) down `drop` m, `chord` m aft, `thickness` thick, its stock
+ * over it. */
 export function rudderBladeGeometry(drop, chord, thickness = 0.08, stock = 0.6) {
   const b = bench();
   block(b, 'trim', [0, -drop / 2, -chord / 2], [thickness / 2, drop / 2, chord / 2]);

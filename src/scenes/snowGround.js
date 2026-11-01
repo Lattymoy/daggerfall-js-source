@@ -30,12 +30,12 @@ export function createSnowGround(host) {
   // own surface at its stride and its TileMap (the cap's, where Deep Waters patched one), the sea it carved bare, the
   // roads Basic Roads'. Ticked on every frame, outdoors and in; told each pixel published (OnPromoteTerrainData); drawn
   // after the ground by the ground's own program - its sun, its shadows, its lights and its fog. The adapter reads the
-  // stream's bindings when it is asked, never here (they are declared below). BAY-LEFT-GROUND ( "BAY-LEFT-GROUND", the
-  // snow's part; the audit "no system left behind in the Bay", D3): THE SNOW ON THE WHOLE WORLD'S GROUND. A pixel off
-  // the Bay's 1000 x 500 stood no ground for the snow (pixelOn's bound, and its `px * 1000 + py` key aliased two pixels
-  // a thousand apart past it), so Skyrim's winter laid its cover and its caps but no snow to wade, no footprint, no
-  // track and no berm. Every pixel of the world's grid now, by its world key; past the Bay the roads are TESA's
-  // (snowfallHost.js snowfallNetworkBeyond).
+  // stream's bindings when it is asked, never here (they are declared below).
+  // BAY-LEFT-GROUND ( "BAY-LEFT-GROUND", the snow's part; the audit "no system left behind in
+  // the Bay", D3): THE SNOW ON THE WHOLE WORLD'S GROUND. A pixel off the Bay's 1000 x 500 stood no ground for the snow
+  // (pixelOn's bound, and its `px * 1000 + py` key aliased two pixels a thousand apart past it), so Skyrim's winter laid
+  // its cover and its caps but no snow to wade, no footprint, no track and no berm. Every pixel of the world's grid now,
+  // by its world key; past the Bay the roads are TESA's (snowfallHost.js snowfallNetworkBeyond).
   const _snowPixels = new Map(); // worldPixelKey -> the built entry, this frame (cleared at the frame: a publish lands between frames)
   const _snowIds = new WeakMap();
   const _snowNextId = { n: 0 }; // HOST-SPLIT: a holder, so the snow's ground moves out whole (scenes/snowGround.js)

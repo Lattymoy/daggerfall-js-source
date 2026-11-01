@@ -221,7 +221,7 @@ test('STAND-FLAT the streamed world by source: a town horse and a person no Stat
     'const [archive, record] = horse ? [sf.archive, sf.record] : drawnFlat(sf.archive, sf.record);', 'const batch = renderer.createBillboardBatch(archive, record, size, centers);',
     'armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);', 'batches.push(batch);', 'standFlats.push(standFlatRecord(sf, batch, standFlatId(`${px},${py}`, sf.x, sf.z)));',
     'collider.cover.add(key, coverItems'], 'a batch each, before the cover (they make none)');
-  assert.ok(w.includes('      standFlats,   // STAND-FLAT'), 'on the pixel');
+  assert.match(w, /\n {6}standFlats,\s/, 'on the pixel');
   // a person a World of Daggerfall marker stands (a captive, a merchant, a prisoner) joins them on its pixel
   ordered(w, ["w.flat = { kind: 'billboard', archive: act.archive, record: act.record };", 'const batch = renderer.createBillboardBatch(act.archive, act.record, size, [base]);', 'p.batches.push(batch);',
     'if (isStandFlat(act.archive, act.record)) p.standFlats?.push(standFlatRecord({ archive: act.archive, record: act.record, x: base[0], y: base[1], z: base[2] }, batch, standFlatId(`${p.px},${p.py}`, base[0], base[2])));'], 'a marker\'s person');

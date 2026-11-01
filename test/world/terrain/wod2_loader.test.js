@@ -396,7 +396,7 @@ test('WOD2: the streaming host wires the loader where DFU does - decision before
   assert.match(w, /wod: wodPicks \? \{ picks: wodPicks\.map\(\(p\) => \(\{ flatten: p\.flatten, rect: p\.rect, hide: !wodPiecewise\(p\.prefabName\), bounds: forests \|\| jungle \? wodSiteFootprint\(p\.prefab, p\.rect\) : null \}\)\) \} : null,[^\n]*/);   // FOREST1: and which picks are sites, with their footprints
   assert.match(w, /return net\?\.source === 'basic-roads' \? basicRoadsPathsPoint\(net, x, y\) : 0;/, 'only his mod answers getPathsPoint');
   // The object block: a collider per model, no climate remap, no doors.
-  const block = w.slice(w.indexOf('const place = wod.placements(stood, wodAverages.filter((_, i) => !wodHeld[i]));'), w.indexOf('// EV7: the nature layout arrived'));   // PIN MOVED (GATE-AGREE): the picks whose objects stand
+  const block = w.slice(w.indexOf('const place = wod.placements(stood, wodAverages.filter((_, i) => !wodHeld[i]));'), w.indexOf('    const pixelTrees = [];'));   // PIN MOVED (GATE-AGREE): the picks whose objects stand
   assert.ok(block.length > 100, 'the object block');
   assert.match(block, /late\.add\(key, cpu\.positions, cpu\.indices, m\.matrix, \{ translation: wodBucket \}\);/);   // PIN MOVED (ROCK-CLEAR): the pixel's solids through the world collider's gate (player/lateSolid.js; test/scenes/fb1019f_rockclear.test.js)
   assert.match(block, /addStatic\(cpu, m\.matrix, false, m\.normalMatrix\);/);
@@ -407,7 +407,7 @@ test('WOD2: the streaming host wires the loader where DFU does - decision before
   assert.match(w, /const wodSel = wodLit \|\| csaLit\.length \? _wodSelect\(0, _csaFill\(wodLit \? _wodFill\(0\) : 0, csaLit\)\) : null;/, 'the day branch');   // AUDIT PRE-MERGE 0928 R2: the boats' lanterns join the one selection after the mod's lights
   assert.match(w, /const wodSel = wodLit \|\| csaLit\.length \? _wodSelect\(n, _csaFill\(wodLit \? _wodFill\(n\) : n, csaLit\)\) : null;/, 'the night branch, after the lanterns');
   assert.match(w, /if \(p\.wodSite && tx >= p\.wodSite\.xMin && tx < p\.wodSite\.xMax && tz >= p\.wodSite\.yMin && tz < p\.wodSite\.yMax\) return null;/, 'grass keeps off the site');
-  assert.match(w, /\n    if \(host\.labGrassField\) \{   \/\/ WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH \(WoD\) m2[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);/, 'and re-reads the ground a site moved - or a rebuild moved back (AUDIT BRANCH (WoD) m2) - as every publish does since PERF-EXT21');
+  assert.match(w, /\n    if \(host\.labGrassField\) \{[^\n]*\n      const t = host\.state\.pixelTranslation\(px, py\);/, 'and re-reads the ground a site moved - or a rebuild moved back (AUDIT BRANCH (WoD) m2) - as every publish does since PERF-EXT21');
 });
 
 test('WOD2: THE FOUR HOSTS - world.js streams terrain and is wired; exterior.js, worldModes.js and dungeonContext.js stream none and are flagged', () => {

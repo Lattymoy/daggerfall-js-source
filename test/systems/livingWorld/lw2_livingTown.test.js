@@ -264,7 +264,7 @@ test('LW2 the streaming host: where the row is on, the population block stands a
   assert.match(w, /population = livingWorldOn\(\) \? new LivingTown\(nav, \{/);
   assert.match(w, /\}\) : new TownPopulation\(nav, \{/);
   assert.match(w, /const person = new ResidentWalker\(nav, \{ archive, guard, frameCount: \(rec, a\) => personTex\.get\(a\)\.getFrameCount\(rec\), collider: personCollider, groundY: personGroundY \}\);\n\s+personBatches\.set\(person, renderer\.createBillboardBatch\(archive, 0, \{ w: 1, h: 1 \}, \[\[0, 0, 0\]\]\)\);/);
-  assert.match(w, /groundY: personGroundY,   \/\/ JAN1/);
+  assert.match(w, /groundY: personGroundY,/);
   assert.match(w, /door, pixelKey: key, dfBlock: b\.dfBlock, blockX: b\.x, blockY: b\.y,/);
   assert.match(w, /key: makeBuildingKey\(d\.blockX, d\.blockY, d\.recordIndex\)/);
   assert.match(w, /clock: skyMinutes, rate: livingRate, mpm: PERSON_MOVE_SPEED \/ livingBaseRate\(\),/);

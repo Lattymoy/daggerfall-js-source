@@ -733,8 +733,7 @@ export function createHandheldTorches({
     }
     w.lastLightSource = null;
     if (w.s.lastLight && w.lastLightTemplateIndex) {
-      if (w.lastLightTemplateIndex === T.Lantern && contains('UselessItems2', T.Lantern))
-        setLight(lanternFirst());
+      if (w.lastLightTemplateIndex === T.Lantern && contains('UselessItems2', T.Lantern)) setLight(lanternFirst());
       else if (contains('UselessItems2', w.lastLightTemplateIndex))
         setLight(firstOf('UselessItems2', w.lastLightTemplateIndex));
       else if (contains('ReligiousItems', w.lastLightTemplateIndex))

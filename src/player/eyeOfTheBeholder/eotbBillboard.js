@@ -444,15 +444,15 @@ export const LYCAN_TICK = 0.125;
 export const DEATH_TICK = 0.5;
 
 /**
- * A BLOW PLAYS ONE STROKE. Every swing record the bundle ships - the mod's sixteen sets and the class skins alike, all six frames - is TWO
- * strokes, frames 0-2 and 3-5: a slash then an overhead chop on the swords, two chops on the axes and hammers, a sweep and its return on
- * the staves, a slash then a stab on the daggers. The mod plays all six for every blow (PlayAnimationCoroutine), or under PingPong and
- * Mixed the first four forward and back (PlayAnimationPingPongCoroutine) - two movements either way. A blow plays its own half now: an even
- * blow the first stroke, an odd one the second, so a chain of blows still shows the whole string, one stroke a click. `blow` is the rig's
- * count (weaponRig `swingN`, the wire's `an`), so a peer draws the stroke the swinger drew. An odd frame count gives its first stroke the
- * shorter half; a clip under two frames is one stroke. RETIRES the ping-pong (usesPingPong, pingPongFrames, pingPongTickFrames):
- * Graphics.PingPongOffset is retired with it, and AttackStrings' PingPong reads as None and Mixed as Mirror. A departure from the assembly,
- * recorded in the Ledger.
+ * A BLOW PLAYS ONE STROKE. Every swing record the bundle ships - the mod's sixteen sets and the class skins alike, all
+ * six frames - is TWO strokes, frames 0-2 and 3-5: a slash then an overhead chop on the swords, two chops on the axes
+ * and hammers, a sweep and its return on the staves, a slash then a stab on the daggers. The mod plays all six a blow
+ * (PlayAnimationCoroutine), or under PingPong and Mixed the first four forward and back
+ * (PlayAnimationPingPongCoroutine) - two movements either way. A blow plays its own half: an even blow the first
+ * stroke, an odd one the second, so a chain of blows still shows the whole string, one stroke a click. `blow` is the
+ * rig's count (weaponRig `swingN`, the wire's `an`), so a peer draws the stroke the swinger drew. An odd frame count
+ * gives its first stroke the shorter half; a clip under two frames is one stroke. No ping-pong: Graphics.PingPongOffset
+ * is not read, and AttackStrings' PingPong reads as None and Mixed as Mirror. A departure from the assembly.
  */
 export function meleeStrokeFrames(n, blow = 0) {
   const len = Math.max(0, n | 0);

@@ -99,7 +99,7 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   assert.match(rd('src/world/terrain/terrainGenClient.js'), /g\.resolve\(\{ positions: m\.positions, normals: m\.normals, bed: m\.bed \?\? null \}\);/, 'the promotion\'s answer keeps it');
   const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /waterBedOf\(/, 'the streaming host carves nothing on its own thread');
-  assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel');
+  assert.match(w, /bed: waterOn,/, 'the build asks the kernel');
   assert.match(w, /terrainGen\.grid\(\{ \.\.\.gridGround\(p\), stride, landform, bed: bedBytes \}\)/, 'the promotion asks the worker');   // PIN MOVED (OW-DEMOTE): a demotion too, at its stride; PIN MOVED (FB1029 ACROSS-EDGE): the pixel's ground gridGround's
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
   assert.match(w, /roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'the restride asks the kernel');   // LANDFORM4/6: beside the landforms' sites and climates

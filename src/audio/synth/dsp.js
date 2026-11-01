@@ -19,9 +19,11 @@ export function seedOf(text) {
 
 /** A value in [lo, hi). @param {Rng} rnd @param {number} lo @param {number} hi */
 export const between = (rnd, lo, hi) => lo + rnd() * (hi - lo);
-/** A value in [lo, hi) spread evenly over its octaves - a pitch or a band. @param {Rng} rnd @param {number} lo @param {number} hi */
+/** A value in [lo, hi) spread evenly over its octaves - a pitch or a band. @param {Rng} rnd @param {number} lo @param
+ * {number} hi */
 export const logBetween = (rnd, lo, hi) => lo * Math.exp(rnd() * Math.log(hi / lo));
-/** A level weighted toward the quiet end, as most grains of a crunch are small. @param {Rng} rnd @param {number} lo @param {number} hi */
+/** A level weighted toward the quiet end, as most grains of a crunch are small. @param {Rng} rnd @param {number} lo
+ * @param {number} hi */
 export const quietBetween = (rnd, lo, hi) => {
   const roll = rnd();
   return lo + roll * roll * roll * (hi - lo);
@@ -223,7 +225,8 @@ export function addCreak(buf, rate, rnd, { at, len, amp, fromHz, toHz, centre, b
 /**
  * GRAINS: a crowd of small events between `from` and `to` seconds, `density(time)` of them a second at most `peak`
  * (drawn by thinning, so the crowd follows the curve). `grain(at)` makes each.
- * @param {Rng} rnd @param {{ from: number, to: number, peak: number, density: (time: number) => number, grain: (at: number) => void }} g
+ * @param {Rng} rnd @param {{ from: number, to: number, peak: number, density: (time: number) => number, grain: (at:
+ * number) => void }} g
  */
 export function addGrains(rnd, { from, to, peak, density, grain }) {
   if (peak <= 0) return;
@@ -243,12 +246,14 @@ export const pressSwell = (
   /** @type {number} */ fall,
 ) => (time < at ? 0 : time < at + rise ? (time - at) / rise : Math.exp(-(time - at - rise) / fall));
 
-/** Every sample through `stages`, in place. @param {Float64Array} buf @param {number} rate @param {ReadonlyArray<Stage>} stages */
+/** Every sample through `stages`, in place. @param {Float64Array} buf @param {number} rate @param
+ * {ReadonlyArray<Stage>} stages */
 export function filterAll(buf, rate, stages) {
   return filterSpan(buf, buf.length, stages, rate);
 }
 
-/** The clip's ends taken to nothing over `ms`, so no clip starts or stops on a click. @param {Float64Array} buf @param {number} rate */
+/** The clip's ends taken to nothing over `ms`, so no clip starts or stops on a click. @param {Float64Array} buf @param
+ * {number} rate */
 export function fadeEnds(buf, rate, inMs = 0.5, outMs = 12) {
   const a = Math.min(buf.length, Math.round((inMs / 1000) * rate));
   const b = Math.min(buf.length, Math.round((outMs / 1000) * rate));
@@ -337,7 +342,8 @@ export function rmsTo(buf, db) {
   return buf;
 }
 
-/** The clip held to `bits` of depth, as an old sound card held it (the retro quality). @param {Float64Array} buf @param {number} bits */
+/** The clip held to `bits` of depth, as an old sound card held it (the retro quality). @param {Float64Array} buf @param
+ * {number} bits */
 export function crush(buf, bits) {
   const steps = 2 ** (bits - 1);
   for (let i = 0; i < buf.length; i++) buf[i] = Math.round(buf[i] * steps) / steps;

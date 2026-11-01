@@ -1,5 +1,7 @@
-// OUR OWN ROT, drawn over the player's own picture of the fresh food. No pixel of a mod's picture is read: the colour is drawn toward a sick green-grey, the rim darkened, and mould grown in soft patches
-// where a seeded pattern of ours, the rim and the hollows put it. Pure: a top-down RGBA picture in, a new one out, and a clear pixel stays clear (0,0,0,0).
+// OUR OWN ROT, drawn over the player's own picture of the fresh food. No pixel of a mod's picture is read: the colour
+// is drawn toward a sick green-grey, the rim darkened, and mould grown in soft patches
+// where a seeded pattern of ours, the rim and the hollows put it. Pure: a top-down RGBA picture in, a new one out, and
+// a clear pixel stays clear (0,0,0,0).
 
 /** The sick green-grey a pixel's light is drawn toward (a share of its luminance per channel), and how far. */
 export const ROT_TINT = Object.freeze([0.84, 1, 0.66]);

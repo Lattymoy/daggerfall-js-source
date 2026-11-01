@@ -57,7 +57,8 @@ function pondsOf(water, W, H, pond) {
 /**
  * THE BAY'S RIVERS AND STREAMS over a W x H grid of height bytes (`water` 1 where the ground is the sea's).
  * @param {{ heights: Uint8Array, water: Uint8Array, W: number, H: number, dials?: Partial<typeof RIVER_DIALS> }} o
- * @returns {{ rivers: Uint8Array, streams: Uint8Array, stats: { riverPixels: number, streamPixels: number, mouths: number, edges: number, ponds: number } }}
+ * @returns {{ rivers: Uint8Array, streams: Uint8Array, stats: { riverPixels: number, streamPixels: number, mouths:
+ * number, edges: number, ponds: number } }}
  */
 export function buildRiverNetwork({ heights, water, W, H, dials = {} }) {
   const d = { ...RIVER_DIALS, ...dials }, N = W * H;
