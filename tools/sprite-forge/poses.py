@@ -208,15 +208,16 @@ def attack(frame, view, yaw):
 
 
 def hurt(frame, view, yaw):
-    """Knocked back: thrown onto the left leg, the right knee kicked up, the free arm flung out, the axe high."""
+    """Knocked back: thrown onto the left leg, the right knee kicked up, the free arm flung straight out to the side,
+    the axe raised high and back over the right shoulder."""
     p = stance({
-        'pelvis': (-10, 0, 0), 'spine': (-14, 0, 4), 'chest': (-12, 0, 4), 'neck': (-8, 0, 0), 'head': (-18, 0, 0),
-        'thigh_R': (-68, 10, 10), 'shin_R': (66, 0, 0), 'foot_R': (-16, 0, -6),
-        'thigh_L': (14, -8, -8), 'shin_L': (12, 0, 0), 'foot_L': (2, 0, 6),
-        'clav_L': (0, -10, 0), 'uarm_L': (-45, -58, 0), 'farm_L': (-20, 0, 0),
-        'clav_R': (0, 12, 0),
+        'pelvis': (-12, 0, 0), 'spine': (-16, 0, 4), 'chest': (-14, 0, 4), 'neck': (-8, 0, 0), 'head': (-20, 0, 0),
+        'thigh_R': (-62, 12, 12), 'shin_R': (72, 0, 0), 'foot_R': (-10, 0, -6),
+        'thigh_L': (12, -6, -8), 'shin_L': (10, 0, 0), 'foot_L': (2, 0, 6),
+        'clav_L': (0, -14, 0), 'uarm_L': (-12, -82, 0), 'farm_L': (-6, 0, 0),
+        'clav_R': (0, 16, 0),
     }, yaw)
-    axe = axe_at(p, (-0.30, 0.06, 1.42), (-0.30, 0.3, 1.0), (1, 0, 0.3), pole_r=(-1, 0.4, -0.4))
+    axe = axe_at(p, (-0.34, 0.04, 1.46), (-0.32, 0.28, 1.0), (1, 0, 0.32), pole_r=(-1, 0.3, -0.5))
     return p, {'axe': axe}
 
 

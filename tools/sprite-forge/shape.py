@@ -13,6 +13,7 @@ DEFAULT = {
     'torso_w': 1.0, 'torso_d': 1.0, 'arm_r': 1.0, 'leg_r': 1.0, 'head': 1.0, 'hand': 1.0, 'boot_r': 1.0,
     'paul_s': 1.0, 'paul_dx': 0.0, 'paul_dz': 0.0, 'loin_w': 1.0, 'axe': 1.0,
     'helm_s': 1.0, 'helm_dy': 0.0, 'helm_dz': 0.0, 'paul_sz': 1.0,
+    'waist_w': 1.0, 'chest_w': 1.0,   # the torso's width below the ribs and across the chest, past torso_w
 }
 SHAPE = dict(DEFAULT)
 HEAD_PARTS = ('face', 'coif', 'helm', 'nasal', 'cheek_L', 'cheek_R')
@@ -53,7 +54,9 @@ def transform(name, p, S=None):
         from model import TORSO_LEAN
         cy = np.interp(p[:, 2], *TORSO_LEAN)
         out = p.copy()
-        out[:, 0] *= S['torso_w']
+        t = np.clip((p[:, 2] - 1.12) / 0.16, 0.0, 1.0)
+        t = t * t * (3 - 2 * t)
+        out[:, 0] *= S['torso_w'] * (S.get('waist_w', 1.0) * (1 - t) + S.get('chest_w', 1.0) * t)
         out[:, 1] = cy + (p[:, 1] - cy) * S['torso_d']
         return out
     if base.startswith('arm_') or base.startswith('leg_'):
