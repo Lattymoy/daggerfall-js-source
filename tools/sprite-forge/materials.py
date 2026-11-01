@@ -116,9 +116,9 @@ def lamellar(name, dark, light, bands=36.0, rough=0.35):
     return m
 
 
-def speckle(name, dark, light, scale=30.0, at=0.5, rough=0.4):
+def speckle(name, dark, light, scale=30.0, at=0.5, rough=0.4, metal=0.6):
     """Dark worked plate with soft lighter patches: the cuirass's metal."""
-    m, b = _principled(name, dark, metal=0.6, rough=rough)
+    m, b = _principled(name, dark, metal=metal, rough=rough)
     nt = m.node_tree
     vec = _coords(m, (scale, scale, scale))
     nz = nt.nodes.new('ShaderNodeTexNoise')
@@ -148,17 +148,17 @@ def _palette():
     return {
         'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.9, spec=0.08),
         'silver': plain('silver', (0.62, 0.62, 0.64), metal=0.55, rough=0.32),
-        'cuirass': speckle('cuirass', (0.03, 0.03, 0.035), (0.16, 0.16, 0.18), scale=70.0, at=0.52),
+        'cuirass': speckle('cuirass', (0.05, 0.05, 0.055), (0.14, 0.14, 0.15), scale=70.0, at=0.55, rough=0.28, metal=0.85),
         'mail': chain('mail', (0.015, 0.015, 0.02), (0.30, 0.30, 0.33)),
         'coif': chain('coif', (0.02, 0.02, 0.025), (0.22, 0.22, 0.24), around=14.0, rows=120.0),
         'leather': plain('leather', (0.16, 0.07, 0.025), rough=0.6),
         'cloth': plain('cloth', (0.045, 0.14, 0.015), rough=0.75, spec=0.25),
         'boot': plain('boot', (0.012, 0.17, 0.18), rough=0.4, spec=0.45),
         'bracer': plain('bracer', (0.42, 0.42, 0.45), metal=1.0, rough=0.3),
-        'blade': plain('blade', (0.025, 0.025, 0.028), metal=0.3, rough=0.5),
+        'blade': plain('blade', (0.6, 0.6, 0.62), metal=1.0, rough=0.3),
         'edge': plain('edge', (0.75, 0.75, 0.78), metal=1.0, rough=0.2),
         'haft': plain('haft', (0.07, 0.05, 0.04), rough=0.5),
         'wood': plain('wood', (0.35, 0.17, 0.06), rough=0.5),
         'string': plain('string', (0.75, 0.70, 0.60), rough=0.8),
-        'face': plain('face', (0.22, 0.07, 0.02), rough=0.9, spec=0.08),
+        'face': plain('face', (0.12, 0.04, 0.012), rough=0.9, spec=0.08),
     }

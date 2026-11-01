@@ -24,8 +24,8 @@ import poses  # noqa: E402
 import shape  # noqa: E402
 import stage  # noqa: E402
 
-CLASS = {'skin': 2, 'boot': 3, 'cloth': 4}   # every other material is 1
-WEIGHTS = {'sil': 0.5, 2: 0.2, 3: 0.2, 4: 0.1}
+CLASS = {'skin': 2, 'boot': 3, 'cloth': 4, 'haft': 5, 'blade': 5, 'edge': 5, 'wood': 5, 'string': 5}   # else 1
+WEIGHTS = {'sil': 0.5, 2: 0.2, 3: 0.2, 4: 0.1, 'axe': 0.25}
 
 # what a frame may adjust, by animation: (key, joint, axis, step)
 BODY = [('turn', None, 0, 8.0)] + [('rot', j, a, st) for j, a, st in [
@@ -215,10 +215,30 @@ def iou(a, b):
     return (a & b).sum() / u if u else None
 
 
-def score(img, ref):
+def weapon(sil, held):
+    """The weapon as a frame shows it: the silhouette's thin parts (a haft, a bow's limbs) and the blobs off the body's
+    core that `held` marks (an axe head). The same test reads the reference, `held` its near-black texels."""
+    from scipy import ndimage as ndi
+    core = ndi.binary_opening(sil, structure=np.ones((5, 5)))
+    lab, n = ndi.label(core)
+    if n == 0:
+        return np.zeros_like(sil)
+    body = ndi.binary_dilation(lab == (np.argmax(ndi.sum(core, lab, range(1, n + 1))) + 1), iterations=1)
+    thin = sil & ~ndi.binary_dilation(core, iterations=1)
+    blobs = ndi.binary_dilation(core & ~body & held, iterations=1) & sil & ~body
+    return thin | blobs | (core & ~body)
+
+
+def score(img, ref, ref_weapon=None):
     total, wsum = 0.0, 0.0
     for key, w in WEIGHTS.items():
-        v = iou(img > 0, ref > 0) if key == 'sil' else iou(img == key, ref == key)
+        if key == 'axe':
+            if ref_weapon is None:
+                continue
+            ours = weapon(img > 0, img == 5)
+            v = iou(ours, ref_weapon) if (ours.any() or ref_weapon.any()) else None
+        else:
+            v = iou(img > 0, ref > 0) if key == 'sil' else iou(img == key, ref == key)
         if v is not None:
             total += w * v
             wsum += w
@@ -253,7 +273,7 @@ def vector_of(params, adj):
     return np.array(out, dtype=np.float64)
 
 
-def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=None):
+def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=None, ref_weapon=None):
     params = PARAMS[rec['anim']]
     steps = np.array([p[3] for p in params] + ([2.0] if dx_free else []))
     yaw = forge.VIEW_YAW[rec['view']]
@@ -275,7 +295,7 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
         place_y = low - lowest(work) + stage.ROOT_PX[1]
         img = crop(work, rec['canvas'], (place_x, place_y))
         reg = 0.0006 * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift
-        return score(img, ref) - reg, place_x
+        return score(img, ref, ref_weapon) - reg, place_x
 
     x = np.zeros(len(steps))
     if init:
@@ -312,7 +332,7 @@ def write_fit(path, fitted):
 _POSED = {}
 
 
-def frame_score(cloud, rec, f, ref, place):
+def frame_score(cloud, rec, f, ref, place, ref_weapon=None):
     """A frame's score under its fitted pose (kept: a shape fit never moves a joint), the feet on the reference's lowest
     row, the best of three places."""
     key = (rec['anim'], rec['view'], f)
@@ -322,7 +342,7 @@ def frame_score(cloud, rec, f, ref, place):
     pose, gear, W = _POSED[key]
     work = cloud.image(pose, gear, W)
     place_y = lowest(ref) - lowest(work) + stage.ROOT_PX[1]
-    return max(score(crop(work, rec['canvas'], (place[0] + d, place_y)), ref) for d in (-1, 0, 1))
+    return max(score(crop(work, rec['canvas'], (place[0] + d, place_y)), ref, ref_weapon) for d in (-1, 0, 1))
 
 
 _JOB = {}
@@ -331,7 +351,7 @@ _JOB = {}
 def _shape_value(x):
     cloud, keys, frames = _JOB['cloud'], _JOB['keys'], _JOB['frames']
     cloud.set_shape(dict(zip(keys, x)))
-    return float(np.mean([frame_score(cloud, rec, f, ref, rec['place']) for rec, f, ref in frames]))
+    return float(np.mean([frame_score(cloud, rec, f, ref, rec['place'], wpn) for rec, f, ref, wpn in frames]))
 
 
 def fit_shape(cloud, spec, refs, iters, rng):
@@ -340,7 +360,9 @@ def fit_shape(cloud, spec, refs, iters, rng):
     keys = list(shape.DEFAULT)
     steps = np.array([0.02 if k == 'scale' else 0.015 if k.endswith(('_dx', '_dy', '_dz')) else 0.06 for k in keys])
     base = np.array([shape.SHAPE.get(k, shape.DEFAULT[k]) for k in keys])
-    frames = [(rec, f, refs[r][f]) for r, rec in enumerate(spec['records']) for f in range(rec['frames'])]
+    weapons = _JOB.get('weapons')
+    frames = [(rec, f, refs[r][f], weapons[r][f] if weapons else None)
+              for r, rec in enumerate(spec['records']) for f in range(rec['frames'])]
     _JOB.update(cloud=cloud, keys=keys, frames=frames)
     first = _shape_value(base)   # poses every frame once, before the workers fork
     pool = multiprocessing.get_context('fork').Pool(4)
@@ -368,7 +390,8 @@ def _fit_record(r):
     place, adjs, lines = list(rec['place']), {}, []
     for f in range(rec['frames']):
         key = f"{rec['anim']}:{rec['view']}:{f}"
-        adj, px, first, best, _ = fit_frame(cloud, rec, f, refs[r][f], place, f == 0, iters, rng, poses.FIT.get(key))
+        wpn = _JOB['weapons'][r][f] if _JOB.get('weapons') else None
+        adj, px, first, best, _ = fit_frame(cloud, rec, f, refs[r][f], place, f == 0, iters, rng, poses.FIT.get(key), wpn)
         if f == 0:
             place[0] = px
         adjs[key] = adj
@@ -398,6 +421,10 @@ def main():
     cloud.set_shape(shape.SHAPE)
     refs = [[np.array([int(c) for c in fr], dtype=np.int8).reshape(r['canvas'][1], r['canvas'][0]) for fr in r['frames']]
             for r in ref['records']]
+    if all('rgb' in r for r in ref['records']):   # the reference's weapon: thin parts and near-black blobs
+        _JOB['weapons'] = [[weapon(img > 0, np.frombuffer(bytes.fromhex(h), dtype=np.uint8).reshape(img.shape + (3,))
+                                   .max(axis=2) <= 60) for img, h in zip(imgs, r['rgb'])]
+                           for imgs, r in zip(refs, ref['records'])]
     if args.shape:
         shape.write_shape(shape_path, fit_shape(cloud, spec, refs, args.iters, np.random.default_rng(3)))
         return
