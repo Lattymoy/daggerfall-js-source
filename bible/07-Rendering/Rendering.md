@@ -134,7 +134,7 @@ Characters: `src/render/characterMesh.js`, `src/render/characterSprite.js`, `src
 
 Effects and events: `src/render/spellImpactFx.js`, `src/render/vfxGpu.js`, `src/render/killFx.js`,
 `src/render/foeTelegraph.js`, `src/render/telegraphStyle.js`, `src/render/weaponGlowGlsl.js`, `src/render/auraRing.js`,
-`src/render/armoryPass.js`; the gate (`src/render/gate/`), the Elite Gates (`src/render/eliteGates/`), the Super
+`src/render/auraPixel.js`, `src/render/armoryPass.js`; the gate (`src/render/gate/`), the Elite Gates (`src/render/eliteGates/`), the Super
 dungeon (`src/render/superDungeon/`), the Starfall (`src/render/starfall/`), the dragon (`src/render/dragon/`), the
 Sky-Ketch (`src/render/ketch/`), and the event passes (`src/render/rocketPass.js`, `src/render/newEraPass.js`,
 `src/render/riteSmoke.js`, `src/render/serpentRender.js`, `src/render/deadlands.js`, `src/render/courtCrystals.js`,
@@ -146,6 +146,20 @@ World pieces: `src/render/labGrass.js`, `src/render/grassPixelArt.js`, `src/rend
 `src/render/ambientLifePass.js`, `src/render/nodeGlow.js`, `src/render/nodeGlint.js`, `src/render/npcMarkPass.js`,
 `src/render/partyPingDraw.js`, `src/render/poiGizmoPass.js`, `src/render/meshAlpha.js`, the card tables
 (`src/render/cardTableDraw.js`, `src/render/iliacTableDraw.js`, `src/render/gambitTableDraw.js`).
+
+**The auras in Daggerfall's pixels** (`src/render/auraPixel.js`). Every aura look is answered at the middle of its
+texel, a Daggerfall flat's pixel at most (`GLOBAL_SCALE`, 2.5 cm) and half of it at least, a power of two to a unit of
+its surface. The ground and the strips measure it off the screen's derivatives. A card is at least 32 texels a side, the
+cloth 256 each way, a wing's strand 64 along it and none across. A texel no bigger than the screen's pixel is answered
+per pixel. A look's own line widths are at least a texel (`auraPx`), so a fine line is never lost between texels.
+
+The light is cut to ten levels, the squares of tenths, its hue kept, by the ordered dither weighed in light so its mean
+holds. A look that covers keeps its colour and has its cover cut to tenths. The Crystal Resonance's squares are its own
+pixels and are never resampled. Aura Armory pieces take the levels alone. The passes set `uPixel` to 1; a probe's
+`pixel = false` reads the designs per pixel and `'levels'` the levels without the snap (`PIXEL=1 node
+tools/auraProbe.mjs` reads every design with the law on). No aura floats its third draw's cards over a rider: a horse,
+a cart, a wagon's bench, a dragon, an Admin's /dragon (`src/scenes/auraHost.js` peerMounted). Pinned by
+`test/render/aurapixel.test.js` and `test/render/auditaurapixel.test.js`.
 
 Tests: `test/render/glstate.test.js` (every uniform declared where used), `test/render/boot2.test.js` (the entry's
 static reach), `test/render/shadermount.test.js`, `test/render/perfface.test.js`, `test/render/retro1.test.js`.
