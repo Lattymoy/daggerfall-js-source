@@ -4339,7 +4339,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.betterAmbience.BetterRain.enableBetterRain.description',
-            'Has no effect here: this game draws its own rain.',
+            'Draws our rain: streaks set by the wind, denser in a storm.',
           );
         },
       }),
@@ -4348,7 +4348,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.betterAmbience.BetterRain.enableBetterSnow.description',
-            'Has no effect here: this game draws its own snow.',
+            'Draws our snow: slower, wind-carried flakes in many sizes.',
           );
         },
       }),

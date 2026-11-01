@@ -9644,11 +9644,6 @@
   "tr": "43eddae1288f",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.Compatibility.AnimatedWaterVertexWaves.description": {
-  "en": "10abe9a894af",
-  "tr": "8665f79df7ec",
-  "by": "claude-in-session"
- },
  "mods.comeSailAway.Compatibility.PersistentDungeonBoats.description": {
   "en": "a522d5de200b",
   "tr": "33128d475a20",
@@ -9834,11 +9829,6 @@
   "tr": "6e3245102820",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.unread.description": {
-  "en": "d94d1768b9d1",
-  "tr": "a5f5cb2f1d8d",
-  "by": "claude-in-session"
- },
  "mods.diverseWeapons.Enabled.description": {
   "en": "85f754242fdb",
   "tr": "3105d432275a",
@@ -9870,13 +9860,13 @@
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description": {
-  "en": "d94d1768b9d1",
-  "tr": "a5f5cb2f1d8d",
+  "en": "9ac5f2fe998c",
+  "tr": "09db0e291494",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.GlobalOffsetScale.description": {
-  "en": "d94d1768b9d1",
-  "tr": "a5f5cb2f1d8d",
+  "en": "b4a3edc73f2d",
+  "tr": "05e41d305cb9",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.SyncFootsteps.description": {
@@ -9979,11 +9969,6 @@
   "tr": "8a74a2b4dde2",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Camera.TogglePerspective.description": {
-  "en": "61785571ee6a",
-  "tr": "7ed54b874213",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.CameraOverrideBoat.Enable.description": {
   "en": "eb6b592109e4",
   "tr": "7172f640761b",
@@ -10012,11 +9997,6 @@
  "mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffset.description": {
   "en": "e88e5f1a440f",
   "tr": "2d7efd5caba7",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffsetAxis.description": {
-  "en": "a1af156dffe2",
-  "tr": "856017b54ac5",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Compatibility.DontHideHorse.description": {
@@ -10072,11 +10052,6 @@
  "mods.eyeOfTheBeholder.Graphics.MirrorTime.description": {
   "en": "76da2e90884f",
   "tr": "fd02db1f23b9",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.PingPongOffset.description": {
-  "en": "37ee0a84039b",
-  "tr": "ecb2968dfb06",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.ShowCart.description": {
@@ -10405,8 +10380,8 @@
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.EmissionShadows.description": {
-  "en": "0f221e5e6e6c",
-  "tr": "1540d265ec89",
+  "en": "405103d9d530",
+  "tr": "b3febe81a239",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.GravityStrength.description": {
@@ -10420,8 +10395,8 @@
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.ShowTrajectory.description": {
-  "en": "7ac6c9509a77",
-  "tr": "5f39058e5dfd",
+  "en": "7daf888048d6",
+  "tr": "89947c18a2d4",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.ThrowAngleOffset.description": {

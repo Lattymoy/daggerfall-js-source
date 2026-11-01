@@ -38,7 +38,7 @@
   {
     "name": "MACT-the-mask-marks-every-appended-light",
     "file": "src/scenes/magicCandle.js",
-    "old": "    if (l.carried) carried[i] = CARRIED_IN_HAND;",
+    "old": "    if (l.carried) carried[i] = CARRIED_IN_HAND;\n    else if (l.shadowless) carried[i] = CARRIED_SHADOWLESS;",
     "new": "    carried[i] = CARRIED_IN_HAND;",
     "tests": [
       "test/render/mact_bugs.test.js"

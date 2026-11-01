@@ -219,7 +219,7 @@ export const MOD_CURATED = Object.freeze({
   // draw is a key nobody can reach (TORCH-BIND's lesson).
   // OWN-AUDIT (2026-11-01): and the throw's arc, drawn now and on by default - its off is a player's to reach.
   'handheld-torches': Object.freeze([
-    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Throwing.ShowTrajectory', 'Bob.Length']),
+    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length', 'Throwing.ShowTrajectory']),
   // HCC: the persistence switch and the distances a player reaches for (KB1: its two hotkeys are Controls').
   'horse-cart-and-cargo': Object.freeze(['Persistence.PhysicalPersistence',
     'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),

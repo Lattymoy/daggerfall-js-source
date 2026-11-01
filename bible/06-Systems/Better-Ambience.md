@@ -46,7 +46,7 @@ volume times 0.7, stood 2 to 17 dB over Daggerfall's stride on the same ground. 
 and -38 (the armour's clank, under its step), within 1.5 dB from its seed. The boards and the flags carry a knock over
 their thud, as Daggerfall's own do. The rain's eave drips, the one part a listener can count, loop on their own 41 s
 beside the bed's 29.5 (`audio/synth/rain.js` RAIN_EAVES, `audio/layeredLoop.js`), so the two come round together
-only after 2,473 hours. Better Rain's two keys still change nothing: the mod tuned Unity's rain and snow particles.
+only after 2,473 hours. Better Rain's two keys are below.
 Pins: `ownsounds.test.js`, `ba1_betterambience.test.js`.
 
 **OWN-WORK4 AUDIT, Better Rain (2026-11-01).** The two keys now pick our own fall on the enhanced lane, under the

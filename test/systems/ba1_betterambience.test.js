@@ -142,8 +142,8 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
     'Better Footsteps.footstepVolume': 'How loud your footsteps are.',
     'Dungeon Lighting.dungeonDarkness': 'How bright each dungeon’s fog and light are. Lower makes dungeons darker.',
     'Dungeon Lighting.fogAmbientEffect': 'How much a dungeon’s light takes on the color of its fog.',
-    'Better Rain.enableBetterRain': 'Has no effect here: this game draws its own rain.',
-    'Better Rain.enableBetterSnow': 'Has no effect here: this game draws its own snow.',
+    'Better Rain.enableBetterRain': 'Draws our rain: streaks set by the wind, denser in a storm.',
+    'Better Rain.enableBetterSnow': 'Draws our snow: slower, wind-carried flakes in many sizes.',
   };
   let n = 0; const kinds = new Set();
   for (const [name, kind, Value, range, Description] of SHIPPED_SETTINGS) {

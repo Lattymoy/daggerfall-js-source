@@ -23970,13 +23970,13 @@
   "by": "claude-in-session"
  },
  "mods.betterAmbience.BetterRain.enableBetterRain.description": {
-  "en": "931c1c951c14",
-  "tr": "bae10e47b248",
+  "en": "e2a7124b9c07",
+  "tr": "529b4ad6c696",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.BetterRain.enableBetterSnow.description": {
-  "en": "13da38819937",
-  "tr": "9462a12e8c2b",
+  "en": "483ccf6c9783",
+  "tr": "7b459e9889c1",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.CameraShake.fadeInTime.description": {
@@ -24094,11 +24094,6 @@
   "tr": "180816832bda",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.Compatibility.AnimatedWaterVertexWaves.description": {
-  "en": "10abe9a894af",
-  "tr": "6af6c353a9f3",
-  "by": "claude-in-session"
- },
  "mods.comeSailAway.Compatibility.PersistentDungeonBoats.description": {
   "en": "a522d5de200b",
   "tr": "59db82c25057",
@@ -24162,6 +24157,16 @@
  "mods.comeSailAway.Enabled.description": {
   "en": "1d019af0c02b",
   "tr": "449ce2fd4207",
+  "by": "claude-in-session"
+ },
+ "mods.comeSailAway.Handling.BadTack.description": {
+  "en": "9c7b76c2d9c7",
+  "tr": "3107f1e69bec",
+  "by": "claude-in-session"
+ },
+ "mods.comeSailAway.Handling.BadTackMultiplier.description": {
+  "en": "8fdaf9100a31",
+  "tr": "3ed613b77f19",
   "by": "claude-in-session"
  },
  "mods.comeSailAway.Handling.OarMoveAcceleration.description": {
@@ -24239,6 +24244,11 @@
   "tr": "8e964c88f399",
   "by": "claude-in-session"
  },
+ "mods.comeSailAway.SailingAssist.AutoStowGaffSails.description": {
+  "en": "0207aab11f72",
+  "tr": "2a2a4d2e02fc",
+  "by": "claude-in-session"
+ },
  "mods.comeSailAway.SailingAssist.AutoStowSquareSails.description": {
   "en": "80da6c3da601",
   "tr": "872841f3d31b",
@@ -24314,11 +24324,6 @@
   "tr": "746f0de7b788",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.unread.description": {
-  "en": "d94d1768b9d1",
-  "tr": "2edd4ac05723",
-  "by": "claude-in-session"
- },
  "mods.daggerfallEnemyExpansion.DisableTrollRespawn.description": {
   "en": "2f199fadc63d",
   "tr": "dabffd449710",
@@ -24385,13 +24390,13 @@
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description": {
-  "en": "d94d1768b9d1",
-  "tr": "2edd4ac05723",
+  "en": "9ac5f2fe998c",
+  "tr": "42189141dffb",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.GlobalOffsetScale.description": {
-  "en": "d94d1768b9d1",
-  "tr": "2edd4ac05723",
+  "en": "b4a3edc73f2d",
+  "tr": "841740adc216",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.SyncFootsteps.description": {
@@ -24494,11 +24499,6 @@
   "tr": "3241a7b52d46",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Camera.TogglePerspective.description": {
-  "en": "61785571ee6a",
-  "tr": "6189dd171aa0",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.CameraOverrideBoat.Enable.description": {
   "en": "eb6b592109e4",
   "tr": "b418d8acad1d",
@@ -24527,11 +24527,6 @@
  "mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffset.description": {
   "en": "e88e5f1a440f",
   "tr": "2d658a463043",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffsetAxis.description": {
-  "en": "a1af156dffe2",
-  "tr": "974baec469bf",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Compatibility.DontHideHorse.description": {
@@ -24597,11 +24592,6 @@
  "mods.eyeOfTheBeholder.Graphics.OnHorse.description": {
   "en": "71112fd2c2b5",
   "tr": "a0cb3b37bf18",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.PingPongOffset.description": {
-  "en": "37ee0a84039b",
-  "tr": "b1db605d36c8",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.ReadyStance.description": {
@@ -25010,8 +25000,8 @@
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Presentation.Tint.description": {
-  "en": "f75b1649c2bf",
-  "tr": "c91c1aa33165",
+  "en": "66b9b70e7373",
+  "tr": "a71835360e5c",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Step.Condition.description": {
@@ -25055,8 +25045,8 @@
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.EmissionShadows.description": {
-  "en": "0f221e5e6e6c",
-  "tr": "d3726996b78d",
+  "en": "405103d9d530",
+  "tr": "cd56d5d36e18",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.GravityStrength.description": {
@@ -25070,8 +25060,8 @@
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.ShowTrajectory.description": {
-  "en": "7ac6c9509a77",
-  "tr": "a056d4665d8d",
+  "en": "7daf888048d6",
+  "tr": "e16712b566fc",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Throwing.ThrowAngleOffset.description": {
@@ -26060,8 +26050,8 @@
   "by": "claude-in-session"
  },
  "mods.travelOptions.GeneralOptions.AllowRealGrass.description": {
-  "en": "ab10e1db80bf",
-  "tr": "25cf2e59333e",
+  "en": "fdeeddbee80f",
+  "tr": "bd7a62f13b02",
   "by": "claude-in-session"
  },
  "mods.travelOptions.GeneralOptions.AllowTargetingMapCoordinates.description": {

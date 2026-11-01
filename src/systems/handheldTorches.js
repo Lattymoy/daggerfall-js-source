@@ -1139,13 +1139,8 @@ export function createHandheldTorches({
     if (!held || !(isTorch(held) || isLantern(held))) return false; // MAC-H: nothing in the hand, nothing on the screen
     if (atWaist(held)) return false; // HT-WAIST: the lantern hangs at the waist - the hand holds nothing
     if (!w.currentTexture?.tex) return false;
-    // OWN-AUDIT (2026-11-01): Presentation.Tint - on, the hand takes the room's light as the weapon does; off, never
-    renderer.drawScreenQuad(
-      w.currentTexture.tex,
-      getSpriteRect(),
-      w.curAnimRect,
-      (w.s.tintSprite && tint) || undefined,
-    );
+    if (!w.s.tintSprite) tint = null; // OWN-AUDIT (2026-11-01): Presentation.Tint off - the hand keeps its own colours
+    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);
     return true;
   }
   /** OWN-AUDIT: the wind-up's arc over the frame (torchArc.js), first or third person - the dots drawn. */

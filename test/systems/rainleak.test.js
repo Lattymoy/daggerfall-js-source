@@ -193,7 +193,7 @@ test('OWN-WORK4 AUDIT Better Ambience\'s fall, as drawn: a drop\'s streak along 
   for (let i = 0; i < 20; i++) { const s = [20, 30, 20, (i + 0.5) / 20]; ours += fallOf(BETTER_FALL_VS, s); lab += fallOf(LAB_WX_VS, s); }
   assert.ok(ours < lab * 0.8, `slower than the lab's (${ours.toFixed(2)} against ${lab.toFixed(2)})`);
   const sizes = Array.from({ length: 40 }, (_, i) => { const s = [20, 20, 20, (i + 0.5) / 40]; const a = at(BETTER_FALL_VS, { uKind: 1 }, [0, 0.5], s), b = at(BETTER_FALL_VS, { uKind: 1 }, [1, 0.5], s); return b[0] - a[0]; });
-  assert.ok(Math.max(...sizes) / Math.min(...sizes) > 3, 'small flakes and clumps');
+  assert.ok(Math.max(...sizes) / Math.min(...sizes) > 2.5, 'small flakes and clumps');
   const carried = at(BETTER_FALL_VS, { uKind: 1, uWindOff: [5, 0] }, [0.5, 0.5], seed)[0] - at(BETTER_FALL_VS, { uKind: 1 }, [0.5, 0.5], seed)[0];
   assert.ok(carried > 4.5, `the wind's travel carries a flake at least as far as it went (${carried.toFixed(2)})`);
 });

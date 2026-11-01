@@ -9644,11 +9644,6 @@
   "tr": "58e36ce8fd53",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.Compatibility.AnimatedWaterVertexWaves.description": {
-  "en": "10abe9a894af",
-  "tr": "28043a2f23b8",
-  "by": "claude-in-session"
- },
  "mods.comeSailAway.Compatibility.PersistentDungeonBoats.description": {
   "en": "a522d5de200b",
   "tr": "e3a1c34ccc5f",
@@ -9834,11 +9829,6 @@
   "tr": "66b3c4d08b2a",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.unread.description": {
-  "en": "d94d1768b9d1",
-  "tr": "01a5bfe4d3f3",
-  "by": "claude-in-session"
- },
  "mods.diverseWeapons.Enabled.description": {
   "en": "85f754242fdb",
   "tr": "efe943c1d2ed",
@@ -9870,13 +9860,13 @@
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description": {
-  "en": "d94d1768b9d1",
-  "tr": "01a5bfe4d3f3",
+  "en": "9ac5f2fe998c",
+  "tr": "01618bbddb03",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.GlobalOffsetScale.description": {
-  "en": "d94d1768b9d1",
-  "tr": "01a5bfe4d3f3",
+  "en": "b4a3edc73f2d",
+  "tr": "18f8996e697a",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.SyncFootsteps.description": {
@@ -9979,11 +9969,6 @@
   "tr": "8c5f093d7d89",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Camera.TogglePerspective.description": {
-  "en": "61785571ee6a",
-  "tr": "db8e8af060ed",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.CameraOverrideBoat.Enable.description": {
   "en": "eb6b592109e4",
   "tr": "ab179c9b00ec",
@@ -10012,11 +9997,6 @@
  "mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffset.description": {
   "en": "e88e5f1a440f",
   "tr": "a4f5e4733f2e",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffsetAxis.description": {
-  "en": "a1af156dffe2",
-  "tr": "5e5aaf75f86c",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Compatibility.DontHideHorse.description": {
@@ -10072,11 +10052,6 @@
  "mods.eyeOfTheBeholder.Graphics.MirrorTime.description": {
   "en": "76da2e90884f",
   "tr": "c76c0f446a11",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.PingPongOffset.description": {
-  "en": "37ee0a84039b",
-  "tr": "9d89e620321b",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.ShowCart.description": {

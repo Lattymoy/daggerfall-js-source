@@ -301,7 +301,7 @@ void main(){
 // OWN-WORK4 AUDIT (2026-11-01): BETTER AMBIENCE'S RAIN AND SNOW, OURS. The mod tuned Unity's particles; its two
 // switches (`Better Rain.enableBetterRain`, `enableBetterSnow`) now pick this fall on the enhanced lane, over the lab's
 // instances. Rain: a drop's speed by its size, its streak as long as a frame and a half of its travel along its own
-// velocity (so the wind slants and lengthens it), soft across, a storm faster and denser. Snow: slower, carried by the
+// velocity (so the wind slants and lengthens it), a storm faster and denser. Snow: slower, carried by the
 // wind further than rain, fluttering on two beats of its own, most flakes small and a few clumps, each a soft disc.
 // Off, the lab's program draws as it always has.
 export const BETTER_FALL = Object.freeze({
@@ -332,8 +332,8 @@ void main(){
     p += dir * (aCorner.y - 0.5) * speed * 0.025;
     vec3 c0 = cross(dir, uEye - p);
     vec3 side = length(c0) > 1e-4 ? normalize(c0) : vec3(1.0, 0.0, 0.0);
-    p += side * (aCorner.x - 0.5) * (0.006 + 0.008 * size);
-    vShade = 0.3 + 0.16 * size + 0.08 * uStorm;
+    p += side * (aCorner.x - 0.5) * (0.011 + 0.008 * size);
+    vShade = 0.36 + 0.12 * size + 0.06 * uStorm;
   } else {
     // a flake: slow, the wind's to carry, fluttering on two beats of its own
     float fall = uFall * (0.55 + 0.3 * fract(s * 7.3));
@@ -341,7 +341,7 @@ void main(){
     float a1 = uTime * (0.9 + 0.6 * fract(s * 5.1)) + s * 31.0, a2 = uTime * (0.5 + 0.4 * fract(s * 9.7)) + s * 17.0;
     p += vec3(sin(a1) + 0.5 * sin(a2 * 2.3), 0.15 * sin(a2), cos(a2) + 0.5 * cos(a1 * 1.7)) * (0.35 + 0.25 * length(uWindV));
     // most flakes small, a few clumps
-    float sz = 0.02 + 0.09 * size * size * size;
+    float sz = 0.035 + 0.075 * size * size;
     p += (uRight * (aCorner.x - 0.5) + vec3(0.0, 1.0, 0.0) * (aCorner.y - 0.5)) * sz;
     vShade = 0.8 + 0.2 * fract(s * 2.9);
   }
@@ -355,12 +355,12 @@ uniform float uKind;
 out vec4 o;
 void main(){
   if (uKind < 0.5) {
-    // a streak: brightest toward its head, gone at its tail, soft across
-    float along = smoothstep(0.0, 0.7, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
-    o = vec4(vec3(0.74, 0.8, 0.88), vShade * along * (1.0 - abs(vUv.x - 0.5) * 2.0));
+    // a streak: whole from a third of the way down it, gone at its tail
+    float along = smoothstep(0.0, 0.35, vUv.y) * (1.0 - smoothstep(0.94, 1.0, vUv.y));
+    o = vec4(vec3(0.74, 0.8, 0.88), vShade * along);
   } else {
     // a flake: a soft round disc
-    float a = 1.0 - smoothstep(0.55, 1.0, length(vUv - 0.5) * 2.0);
+    float a = 1.0 - smoothstep(0.8, 1.0, length(vUv - 0.5) * 2.0);
     if (a <= 0.0) discard;
     o = vec4(vec3(0.95, 0.97, 1.0) * vShade, 0.8 * a);
   }

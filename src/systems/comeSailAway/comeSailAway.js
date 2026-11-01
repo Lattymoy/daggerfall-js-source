@@ -708,7 +708,7 @@ export function createComeSailAwayRuntime(deps) {
   const peace = () => f(peaceShare(deps.peaceWay?.() ?? 1));
   /** moveSpeed's two arms - AUDIT SHIPS A4: each asked of her whichever she makes way by now (sailWayOf, oarWayOf). */
   const oarSpeed = (b, hurt) => f(f(f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt) * rigOf(b, 'oars')) * peace());   // CAPTAIN-TREE: her captain's oars
-  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace()) * badTack(b));   // OWN-AUDIT: and the bad tack's share
+  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * badTack(b)) * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());   // OWN-AUDIT: the bad tack's share
   /** HOLDINGS (the port's own - bible/03-World/Holdings.md): her Rigging refit, her way under sail and its coming on
    *  (`deps.refit`, the Fleet's; the mod has none) - read where the rates are read, never written into the prefab's
    *  modifiers a variant's change walks again. Oars are her hands', never her rig's - CAPTAIN-TREE: her captain's drill of
@@ -1256,9 +1256,9 @@ export function createComeSailAwayRuntime(deps) {
       for (const sail of b.Sails) {
         // SAIL-FREE (the port's, DECLARED): under the responsive helm her square canvas draws on every heading
         // (helmWay.js), so the assist stows none of it upwind
-        if ((!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) && !gaffAback(b, sail)) {   // OWN-AUDIT: a gaff the wind would lay aback stays stowed
+        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {
           const component = animatorOf(sail);
-          if (component != null) stow(component, false);
+          if (component != null && !gaffAback(b, sail)) stow(component, false);   // OWN-AUDIT: a gaff the wind would lay aback stays stowed
         }
       }
     }

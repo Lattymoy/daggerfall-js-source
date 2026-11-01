@@ -170,9 +170,8 @@ transform keeps what was last written; `dispose` clears it). Bob,
 Inertia and Step are Weapon Widget's laws restated where the IL
 restates them, over the same modsettings tables (`BOB_SHAPE`,
 `STEP_CONDITION` - one home, `combat/weapon/weaponWidget.js`); the bob's
-sideways term is signed by the hand. `Presentation.Tint` decides the
-hand's light: on, the room's (the rig's MAC-I tint, as the weapon takes
-it); off, its own colours (OWN-AUDIT, below).
+sideways term is signed by the hand. `Presentation.Tint` on, the hand
+takes the room's light (MAC-I); off, its own colours.
 
 ## The dropped lights, the thrown torch, the burning foe (droppedTorches.js)
 
@@ -268,8 +267,7 @@ the fire takes on every hit that lands. Kept.
   `onToggleOffset` (isInThirdPerson stays the rig's word); Bloodfall's
   GUID gating the foe light; Custom Tooltips' `RegisterCustomTooltip`
   naming the dropped torches (the port's own plaque names them);
-  First-Person Lighting's `FPSWeapon.Tint` (the port's own first-person
-  light stands in, `Presentation.Tint` its switch).
+  First-Person Lighting's `FPSWeapon.Tint` (ours: `Presentation.Tint`).
 - **The mod's `hasFreeHand` / `getFreeHand` MessageReceiver** - no mod
   asks.
 - **`Light.intensity`'s flicker** on a dropped torch (`1.25 + sin(2t) x

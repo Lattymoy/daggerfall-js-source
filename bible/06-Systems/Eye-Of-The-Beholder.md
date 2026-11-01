@@ -22,6 +22,16 @@ is that picture laid on the ground by our code, a shadow under it. The tables, f
 The four setting descriptions still in the author's words are ours now. An `[IL_xxxx]` below names an offset in the 2.1
 assembly, not a file here.
 
+**OWN-AUDIT (2026-11-01).** Five keys the pane called inert. `Animation.GlobalOffsetScale`, with
+`FineGlobalOffsetScale` added, scales the XML's sideways and upward shift of each sprite (`eotbBody.js` `place`): 1 is
+the art's own, and a sprite grown by BillboardScale can take a shift to match. `Camera.TogglePerspective` was the job of
+the game's TogglePerspective action (VIEW-TOGGLE), which now shows on the mod's tile beside its two keys
+(`inputActions.js` MOD_TILE_ACTIONS), bound in Controls and never gated on the mod; the mod's key is retired.
+`CameraScrolling.ScrollableZOffsetAxis` named a Unity input axis, and `Graphics.PingPongOffset` tuned the ping-pong that
+ONE-STROKE retired: both retired. A saved value of a retired key is let go on load (`modSettings.js` RETIRED_KEYS). Pins:
+`eotb_body.test.js` (the placement), `uxb1f_featurekeys.test.js`, `ownaudit_keys.test.js`; mutants
+`tools/mutants/ownaudit_keys.json`.
+
 ## What is and is not ported
 
 The arc called itself **1:1** in six places. AUDIT-EOTB counted the

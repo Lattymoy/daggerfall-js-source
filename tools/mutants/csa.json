@@ -36,10 +36,10 @@
     ]
   },
   {
-    "name": "CSA-A-unread-key-claimed-read",
+    "name": "CSA-A-bad-tack-misdescribed",
     "file": "src/systems/modSettings.js",
-    "old": "        default: false,\n        get description() {\n          return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.');\n        },",
-    "new": "        default: false,\n        get description() {\n          return t('mods.comeSailAway.unread.description', 'Tack badly.');\n        },",
+    "old": "            'mods.comeSailAway.Handling.BadTack.description',\n            'The sails lose speed the closer you sail to the wind.',",
+    "new": "            'mods.comeSailAway.Handling.BadTack.description',\n            'Tack badly.',",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]

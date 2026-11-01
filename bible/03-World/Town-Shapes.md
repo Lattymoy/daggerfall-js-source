@@ -1004,6 +1004,14 @@ Past the Bay (Y2), sampled over every eighth walled template (102, 306 yards): 1
 297's stable, also moves with the mask and the paths left out, so neither is its cause (OPEN). The keep moves 1 more
 (template 33's stable), which the new ground breaks.
 
+**OWN-WORK3** (2026-10-31). Those templates stood on Beautiful Cities' blocks; since the packs retired they stand on
+Daggerfall's own. Over all 407 walled city templates, a road every way, 2036a509e's code (its sweep with no pack opened)
+stands 1,221 yards, and 1,201 stand on the same cells now. #1184's mask and ring move none of them: on today's mask
+and ring every yard stands the same. Today's ring crosses the yards' ground in 16 templates, and their paths keep off it.
+Of the 20 moved, the three read have 2036a509e's wall, roads and paths, and a fabric that lays 158 to 524 cells fewer
+(OPEN, as template 297's stable). The pin holds nine templates' every yard on those cells, and the ring off the yards'
+paths at the four it crosses most.
+
 The street gates (Y3): each has a road out. Naresa's, Akhahanu's and Menakat's open onto the town's paving, and
 GATE-ROADS lays one or two tiles on to the ring. The audit's probe read the painter's tiles alone, 6 to 15 m out, where
 the paving is. No gate or road code changed: 1,568 gates.

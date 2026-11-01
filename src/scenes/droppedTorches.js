@@ -46,9 +46,8 @@
 // SupportChance, so the mod's Throwing.Chance reaches an effect that
 // never rolls it: the fire takes on every hit that lands. Kept.
 //
-// OWN-AUDIT (2026-11-01): EmissionShadows is the burning foe's light's own -
-// off (the mod's default) it says `shadowless` and takes no shadow map
-// (scenes/magicCandle.js withPlayerLights). NOT CARRIED, recorded: Light.intensity's flicker on a
+// OWN-AUDIT: EmissionShadows off (the mod's default) marks a burning foe's light `shadowless` (magicCandle.js).
+// NOT CARRIED, recorded: Light.intensity's flicker on a
 // dropped torch (1.25 + sin(2t) x 0.1 - the port's lights have range,
 // no intensity, as playerTorch.js records) - the range law is kept;
 // Bloodfall's GUID (no such mod); the Custom Tooltips names.

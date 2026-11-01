@@ -2,8 +2,8 @@
   {
     "name": "OWNAUDIT-keys-badtack-unwired",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "* peace()) * badTack(b));   // OWN-AUDIT: and the bad tack's share",
-    "new": "* peace()) * 1);   // OWN-AUDIT: and the bad tack's share",
+    "old": "f(HANDLING.moveSpeedSail * badTack(b))",
+    "new": "f(HANDLING.moveSpeedSail * 1)",
     "tests": [
       "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OWNAUDIT-keys-gaff-raised-aback",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "responsive()) && !gaffAback(b, sail)) {",
-    "new": "responsive())) {",
+    "old": "if (component != null && !gaffAback(b, sail)) stow(component, false);",
+    "new": "if (component != null) stow(component, false);",
     "tests": [
       "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OWNAUDIT-keys-tint-ignored",
     "file": "src/systems/handheldTorches.js",
-    "old": "(w.s.tintSprite && tint) || undefined",
-    "new": "tint ?? undefined",
+    "old": "    if (!w.s.tintSprite) tint = null;",
+    "new": "    if (!w.s.tintSprite) tint = tint;",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
