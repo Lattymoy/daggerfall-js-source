@@ -8,10 +8,11 @@ import { fileURLToPath } from 'node:url';
 
 import { reviewerPrompt, modAiOn } from '../../server-account/src/modAi.js';
 import { claudePrompt, claudeOn } from '../../server-account/src/claudeStaff.js';
+import { systemPrompt, translateTable } from '../../tools/translate.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const DIRS = ['src', 'server/src', 'server-account/src', 'app'];
-const SKIP = new Set(['node_modules', 'release', 'dist']);
+const DIRS = ['src', 'server/src', 'server-account/src', 'app', 'tools', 'scripts'];
+const SKIP = new Set(['node_modules', 'release', 'dist', 'mutants', 'parity']);
 /** A file talks to a model when it names the API, its shared call, or a cached system block. */
 const TALKS = /api\.anthropic\.com|messagesCall\(|cache_control/;
 /** A string literal that opens by speaking to the model. */
@@ -46,12 +47,14 @@ test('PROMPT-HIDDEN no file that talks to a model holds a brief', () => {
       text.split('\n').forEach((line, i) => { if (BRIEF.test(line)) found.push(`${relative(ROOT, p)}:${i + 1}`); });
     }
   }
-  assert.ok(talkers >= 2, 'the reviewer and Claude as staff are both read');
+  assert.ok(talkers >= 3, 'the reviewer, Claude as staff and the translation tool are all read');
   assert.deepEqual(found, [], 'a brief belongs in a Worker secret, put by the deploy from the repository secrets');
 });
 
-test('PROMPT-HIDDEN each brief is its secret alone: no secret, no brief and no call', () => {
+test('PROMPT-HIDDEN each brief is its secret alone: no secret, no brief and no call', async () => {
   assert.equal(reviewerPrompt({}), '');
+  assert.equal(systemPrompt({ code: 'fr', table: 'Port_Strings' }), '');
+  await assert.rejects(translateTable({ code: 'fr', table: 'Port_Strings', model: () => { throw new Error('sent'); }, template: '' }), /no brief/);
   assert.equal(claudePrompt({}), '');
   assert.equal(modAiOn({ MOD_AI: 'shadow', ANTHROPIC_API_KEY: 'k' }), false);
   assert.equal(claudeOn({ CLAUDE_STAFF: 'on', ANTHROPIC_API_KEY: 'k' }), false);

@@ -164,8 +164,8 @@
   {
     "name": "L10N6b-no-glossary",
     "file": "tools/translate.mjs",
-    "old": "  if (terms.length) rules.push(`Glossary (English -> ${lang}):\\n${terms.map(([a, b]) => `${a} -> ${b}`).join('\\n')}`);",
-    "new": "  if (false) rules.push(`Glossary (English -> ${lang}):\\n${terms.map(([a, b]) => `${a} -> ${b}`).join('\\n')}`);",
+    "old": "  const on = { icu: src?.kind === 'icu', dfu: src?.kind !== 'icu', glossary: terms.length > 0 };",
+    "new": "  const on = { icu: src?.kind === 'icu', dfu: src?.kind !== 'icu', glossary: false };",
     "tests": [
       "test/systems/l10n6b.test.js"
     ]

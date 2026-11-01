@@ -11,8 +11,10 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseStringTableCsv, formatStringTableCsv, loadStringTableCsv } from '../../src/systems/textManager.js';
 import { catalogLocale } from '../../src/systems/localeCatalog.js';   // L10N6: a language still drafting
-import { protectedTokens, checkDraft, planRun, batchesOf, hash, systemPrompt, callClaude, translateTable, parseArgs, SOURCES, TOOL, DEFAULT_MODEL } from '../../tools/translate.mjs';
+import { protectedTokens, checkDraft, planRun, batchesOf, hash, systemPrompt, promptTemplate, callClaude, translateTable, parseArgs, SOURCES, TOOL, DEFAULT_MODEL, PROMPT_FILE } from '../../tools/translate.mjs';
 
+/** A stand-in brief: the real one is TRANSLATE_PROMPT or the ignored PROMPT_FILE, never in the repository. */
+const TEMPLATE = 'Into {lang}. Rows: {about}\nicu|ICU rule.\ndfu|Markup rule.\nglossary|Terms:\nglossary|{glossary}';
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 
 test('L10N6b the placeholders: the port\'s ICU arguments by name (a language\'s own plural categories allowed), Daggerfall\'s %macros, [/markup], {n} and quest symbols as a multiset; a draft that drops, adds or breaks one is refused', () => {
@@ -75,7 +77,7 @@ test('L10N6b a run: the owed rows batched to the model, a broken draft asked for
     }
     return out;
   };
-  const acc = await translateTable({ code: 'fr', table: 'Port_Strings', root, model, batch: 2, jobs: 1 });
+  const acc = await translateTable({ code: 'fr', table: 'Port_Strings', root, model, batch: 2, jobs: 1, template: TEMPLATE });
   assert.equal(acc.owed, 4);
   assert.equal(acc.drafted, 3);
   assert.equal(acc.kept, 1);
@@ -90,19 +92,20 @@ test('L10N6b a run: the owed rows batched to the model, a broken draft asked for
   assert.equal(meta['menu.a'].tr, hash('Alpha (fr)'));
   assert.equal(meta['menu.d'].by, 'human');
   calls.length = 0;
-  const again = await translateTable({ code: 'fr', table: 'Port_Strings', root, model, batch: 2, jobs: 1 });
+  const again = await translateTable({ code: 'fr', table: 'Port_Strings', root, model, batch: 2, jobs: 1, template: TEMPLATE });
   assert.deepEqual(calls.map((c) => c.keys), [['menu.e'], ['menu.e']], 'only the row still owed - asked, and asked again with its problem');
   assert.equal(again.done, 3);
   await assert.rejects(translateTable({ code: 'en', table: 'Port_Strings', root, model }), /not a language the catalog drafts/);
   await assert.rejects(translateTable({ code: 'fr', table: 'Internal_Nothing', root, model }), /no source/);
   await assert.rejects(translateTable({ code: 'fr', table: 'Internal_Spells', root, model }), /the English source comes first/);
+  await assert.rejects(translateTable({ code: 'fr', table: 'Port_Strings', root, model, template: ' ' }), /no brief: set TRANSLATE_PROMPT/);
 });
 
 test('L10N6b a dry run prints the prompt and the batches and sends and writes nothing', async () => {
   const root = scratch();
   writeFileSync(join(root, 'locales/en/Port_Strings.csv'), '\uFEFF' + formatStringTableCsv([['menu.a', 'Alpha'], ['menu.b', 'Beta']]));   // DFU's masters and a pack's files open with a BOM
   const lines = [];
-  const acc = await translateTable({ code: 'ja', table: 'Port_Strings', root, model: () => { throw new Error('sent'); }, dryRun: true, log: (s) => lines.push(s) });
+  const acc = await translateTable({ code: 'ja', table: 'Port_Strings', root, model: () => { throw new Error('sent'); }, dryRun: true, log: (s) => lines.push(s), template: TEMPLATE });
   assert.equal(acc.owed, 2, 'the BOM stripped as DFU\'s LoadCSV strips it - the header is no row to translate');
   assert.match(lines[0], /Japanese \(日本語, ja\)/);
   assert.match(lines[1], /batch 1\/1: 2 rows/);
@@ -146,11 +149,12 @@ test('L10N6b the command line, the sources, the prompt\'s rules; and the in-sess
     assert.equal(loadStringTableCsv(rd(SOURCES[table].path)).length, n, `${table} reads at DFU's ${n} rows`);
   }
   assert.deepEqual(Object.keys(SOURCES).sort(), ['Port_Strings', ...Object.keys(COUNTS)].sort(), 'every table has its source');
-  const sys = systemPrompt({ code: 'ru', table: 'Internal_RSC', glossary: { Daggerfall: 'Даггерфолл' } });
-  assert.match(sys, /Russian \(Русский, ru\)/);
-  assert.match(sys, /\[\/left\]/);
-  assert.match(sys, /Daggerfall -> Даггерфолл/);
-  assert.match(systemPrompt({ code: 'fr', table: 'Port_Strings' }), /ICU MessageFormat/);
+  const sys = systemPrompt({ code: 'ru', table: 'Internal_RSC', glossary: { Daggerfall: 'Даггерфолл' }, template: TEMPLATE });
+  assert.equal(sys, `Into Russian (Русский, ru). Rows: ${SOURCES.Internal_RSC.about}\nMarkup rule.\nTerms:\nDaggerfall -> Даггерфолл`);
+  assert.equal(systemPrompt({ code: 'fr', table: 'Port_Strings', template: TEMPLATE }), `Into French (Français, fr). Rows: ${SOURCES.Port_Strings.about}\nICU rule.`, 'no glossary, no glossary lines');
+  assert.equal(systemPrompt({ code: 'fr', table: 'Port_Strings' }), '', 'the tool holds no brief of its own');
+  assert.equal(promptTemplate({ env: { TRANSLATE_PROMPT: 'from env' }, root: scratch() }), 'from env');
+  assert.equal(promptTemplate({ env: {}, root: scratch() }), '', `nothing set and no ${PROMPT_FILE}`);
   const en = new Map(parseStringTableCsv(rd('locales/en/Port_Strings.csv')));
   const langs = readdirSync(new URL('../../locales/', import.meta.url), { withFileTypes: true }).filter((d) => d.isDirectory() && d.name !== 'en').map((d) => d.name);
   assert.equal(langs.length, 25);
