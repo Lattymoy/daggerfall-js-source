@@ -73,6 +73,7 @@ import { WEIR_KEY_LAW_ROW } from '../eliteGates/weirKeyRow.js';   // KEY-LAW: th
 import { SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW } from '../festival/festivalRows.js';   // WITCH1: the festival's home pulls its pictures and the texture door in
 import { STARGLASS_LAW_ROW } from '../starfall/starglassRow.js';   // STAR7: Starglass's home pulls its picture in - the Weir Key's way
 import { LOCKPICK_LAW_ROW } from '../lockpick/lockpickRow.js';   // LOCKPICK: the Lockpick's home pulls its picture and the loot law in - the Weir Key's way
+import { PIPE_LAW_ROW, NIRNROOT_LAW_ROW } from '../pipe/pipeRow.js';   // the Pipe's home pulls the HUD and the haze in - the Lockpick's way
 import { DEX_ENEMY_IDS } from '../enemyExpansion/dexIds.js';   // SOUL-LAW: the mod's fifty, whose souls a gem holds - read from its tables, no install
 // THE PORT'S OWN TEMPLATES register as their homes load (itemTemplates.js registerCustomTemplates). A headless reader -
 // the account service - loads none of the game, so the homes that register at import are imported here for exactly
@@ -138,6 +139,7 @@ const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
 /** The templates whose homes cannot load headless, by index - their rows, as the homes register them. */
 const LAW_ONLY = new Map(/** @type {any[]} */ ([...RRI_TEMPLATES, ...FORAGING_TEMPLATES, ...REST_ITEM_ROWS, ...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW, LOCKPICK_LAW_ROW]).map((t) => [t.index, t]));
+for (const row of [PIPE_LAW_ROW, NIRNROOT_LAW_ROW]) LAW_ONLY.set(row.index, row);
 /** A template the port knows: the live registry's row, or a law-only row. */
 export const lawTemplate = (/** @type {unknown} */ i) => (Number.isInteger(i) ? templateByIndex(i) ?? LAW_ONLY.get(/** @type {number} */ (i)) ?? null : null);
 

@@ -323,7 +323,8 @@ import {
 } from './loot/loot.js'; // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
 import { SPELLBOOK_TEMPLATE_INDEX } from './spell/spellMaker.js'; // G4: one home for MiscItems 132
 import { restItemsStock } from './rest/restItems.js'; // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
-import { isLockpick, ensureEndlessLockpicks, restockLockpicks } from './lockpick/lockpickItem.js'; // LOCKPICK: the counter's endless picks
+import { isLockpick, ensureEndlessLockpicks, restockLockpicks } from './lockpick/lockpickItem.js';
+import { ensureShelfPipe, ensureShelfNirnroot } from './pipe/pipeItem.js'; // a pipe on the counter, and nirnroot to smoke in it // LOCKPICK: the counter's endless picks
 import {
   provisionsStock,
   campfireStock,
@@ -679,6 +680,12 @@ export function stockShopShelf(
   // day's restock
   if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop))
     ensureEndlessLockpicks(items);
+  // a pipe on a General Store's and a Pawn Shop's counter, nirnroot on an Alchemist's and a General Store's: from no
+  // roll, so DFU's draws above stand as they were
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop))
+    ensureShelfPipe(items);
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.Alchemist))
+    ensureShelfNirnroot(items);
   // SHOP-ARROWS (above): a quiver on the counter of every shop that sells weapons - after DFU's draws, from no roll; minted
   // as the shelf mints its own (CreateWeapon's arrow arm, its stack roll answered by a constant), so the two are one stack
   // ENDLESS-ARROWS: a General Store's a full quiver at any quality (merged into DFU's drawn arrows as SHOP-ARROWS' is)
