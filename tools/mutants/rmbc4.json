@@ -836,5 +836,32 @@
       "test/world/settlement/rmbc4_features.test.js",
       "test/world/settlement/rmbc9_editor.test.js"
     ]
+  },
+  {
+    "name": "STAIRS-one-step",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "  const steps = Math.max(2, Math.ceil(Math.abs(toY - fromY) / STAIR_RISE)), rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;",
+    "new": "  const steps = 2, rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "STAIRS-slope",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "    if (l.kind === 'stairs') { flight(mb, l, ya, yb, dx / len, dz / len, len, s); continue; }\n    const p = [[l.a[0] - s[0], ya, l.a[1] - s[1]], [l.a[0] + s[0], ya, l.a[1] + s[1]], [l.b[0] + s[0], yb, l.b[1] + s[1]], [l.b[0] - s[0], yb, l.b[1] - s[1]]];",
+    "new": "    const p = [[l.a[0] - s[0], ya, l.a[1] - s[1]], [l.a[0] + s[0], ya, l.a[1] + s[1]], [l.b[0] + s[0], yb, l.b[1] + s[1]], [l.b[0] - s[0], yb, l.b[1] - s[1]]];",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "STAIRS-tread-low",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "    const from = i / steps, to = (i + 1) / steps, below = fromY + i * rise, top = fromY + (i + 1) * rise;",
+    "new": "    const from = i / steps, to = (i + 1) / steps, below = fromY + i * rise, top = fromY + i * rise;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
   }
 ]

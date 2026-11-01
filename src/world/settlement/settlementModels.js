@@ -95,6 +95,7 @@ export function groundModel(plan, datum, cells, style = 'IliacBay') {
     const ya = /** @type {number} */ (Y.get(l.from)), yb = /** @type {number} */ (Y.get(l.to));
     const dx = l.b[0] - l.a[0], dz = l.b[1] - l.a[1], len = Math.hypot(dx, dz) || 1, s = [(-dz / len) * l.width / 2, (dx / len) * l.width / 2];
     const tex = l.kind === 'bridge' ? PLANK : PAVING;
+    if (l.kind === 'stairs') { flight(mb, l, ya, yb, dx / len, dz / len, len, s); continue; }
     const p = [[l.a[0] - s[0], ya, l.a[1] - s[1]], [l.a[0] + s[0], ya, l.a[1] + s[1]], [l.b[0] + s[0], yb, l.b[1] + s[1]], [l.b[0] - s[0], yb, l.b[1] - s[1]]];
     const up = [-(dx / len) * (yb - ya), len, -(dz / len) * (yb - ya)], m = Math.hypot(...up);
     mb.quad(tex, p[0], p[1], p[2], p[3], [up[0] / m, up[1] / m, up[2] / m], [[0, 0], [l.width / TILE, 0], [l.width / TILE, len / TILE], [0, len / TILE]]);
@@ -104,6 +105,25 @@ export function groundModel(plan, datum, cells, style = 'IliacBay') {
     }
   }
   return mb.build();
+}
+
+/** A stair's most rise a step, metres: well under the walker's step (its collider's stepOffset, 0.5). */
+export const STAIR_RISE = 0.18;
+/**
+ * A stair as its steps: from its lower pad's end a riser and a tread at a time, each tread level, each riser facing down
+ * the flight, each step's sides skirted below it. @param {any} mesh @param {any} link @param {number} fromY @param {number} toY
+ * @param {number} dirE @param {number} dirN @param {number} len @param {number[]} side half its width across, east and north
+ */
+function flight(mesh, link, fromY, toY, dirE, dirN, len, side) {
+  const steps = Math.max(2, Math.ceil(Math.abs(toY - fromY) / STAIR_RISE)), rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;
+  const at = (/** @type {number} */ share, /** @type {number} */ height, /** @type {number} */ across) => [link.a[0] + dirE * len * share + side[0] * across, height, link.a[1] + dirN * len * share + side[1] * across];
+  const wide = link.width / TILE, tread = len / steps, sideLen = Math.hypot(side[0], side[1]) || 1;
+  for (let i = 0; i < steps; i++) {
+    const from = i / steps, to = (i + 1) / steps, below = fromY + i * rise, top = fromY + (i + 1) * rise;
+    mesh.quad(PAVING, at(from, top, -1), at(from, top, 1), at(to, top, 1), at(to, top, -1), [0, 1, 0], [[0, 0], [wide, 0], [wide, tread / TILE], [0, tread / TILE]]);
+    mesh.quad(PAVING, at(from, below, -1), at(from, below, 1), at(from, top, 1), at(from, top, -1), [dirE * facing, 0, dirN * facing], [[0, 0], [wide, 0], [wide, Math.abs(rise) / TILE], [0, Math.abs(rise) / TILE]]);
+    for (const across of [-1, 1]) mesh.quad(PAVING, at(from, top, across), at(to, top, across), at(to, top - 1 - Math.abs(rise), across), at(from, top - 1 - Math.abs(rise), across), [(side[0] / sideLen) * across, 0, (side[1] / sideLen) * across]);
+  }
 }
 
 /** The fabric's pool and donor for a building's type (its rooms and its keeper): the first donor of the type, a house's else. */

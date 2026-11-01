@@ -215,8 +215,11 @@ deck too.
 ## Standing in the world
 
 `settlementModels.js` makes a dressed settlement into models. `groundModel` paves each cut pad at its height in its
-style's ground, with a retaining wall down its rim, decks each raised pad on posts, and lays each link as a skirted
-slope between its pads' heights, paved for a stair or ramp and planked for a bridge. `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
+style's ground, with a retaining wall down its rim, and decks each raised pad on posts. A stair is drawn as its steps
+(`flight`), each riser at most `STAIR_RISE` (0.18 m), well under the walker's 0.5 m step; a ramp and a grade are paved
+slopes and a bridge a planked one, each skirted down its sides.
+
+`buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
 roof and pitch, its door the fabric's door model turned to its street. `buildingInterior` is its rooms
 (`fabricBuildingInterior`, filed under its place and key with a `cacheKey` of its own). `buildingRecord` is what its
 door hands the game. Model ids run from `SETTLEMENT_MODEL_BASE` (7,600,000), 4,096 a run. Every settlement standing takes
