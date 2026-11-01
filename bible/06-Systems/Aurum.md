@@ -27,6 +27,13 @@ kind and ref, so none is written twice:
 A refund or dispute moves a pack's Aurum with its order's status alone. A balance can fall below zero when a spent
 pack's payment goes back; it then buys nothing until it rises. What it bought stays bought.
 
+**Given back by staff.** An Admin can give back one Aurum buy (`/v1/staff/aurum/refund`, `server-account/src/staffAurum.js`).
+The preview lists the account's buys, newest first, and what would leave the account. The confirm names the buy, a
+reason and a note. It deletes the buy's `buy` line, so its Aurum is back and a later buy pays again. The ware leaves the
+row as a money refund takes it (`heldRevoked`): what another order or buy still covers stays. A bundle sold less a ware
+already held never gave that ware, so giving back that ware's own buy takes it off. The player gets a letter, and the
+act is in the audit log.
+
 **Earned.**
 - *Finds.* A deed the pass hears finds Aurum by its source (`src/net/battlePassLaw.js` `PASS_SOURCES`, from 1 for a foe
   to 20 for an endgame deed), at most `PASS_DAY_AURUM` (100) a UTC day. Finds never stop with a season.

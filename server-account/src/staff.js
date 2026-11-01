@@ -65,6 +65,7 @@ import { staffClaude, CLAUDE_ROUTES } from './staffClaude.js';   // Claude's sug
 import { staffOrder, staffOrderKeys, ORDER_PATH, ORDER_KEY_ROUTES } from './staffOrder.js';   // an order signed outside the panel, and the keys that sign it
 import { claudeHandle } from './claudeStaff.js';
 import { staffFreeze, FREEZE_ROUTES, FREEZE_STATUS } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE
+import { staffAurum, AURUM_STAFF_ROUTES, AURUM_STAFF_STATUS } from './staffAurum.js';   // an Aurum buy given back (Admins)
 
 /** The header a staff session rides in - never `authorization`, which is the game's. */
 export const STAFF_SESSION_HEADER = 'x-staff-session';
@@ -146,6 +147,7 @@ export const STAFF_STATUS = Object.freeze({
   'no-suggestion': 404, 'suggestion-decided': 409, 'order-keys-full': 409, 'order-key-bad': 400,
   ...EVENT_STATUS,   // STAFF-EVENT (staffEvents.js): an event the law refuses, a full book, one ended, a relay that did not answer
   ...FREEZE_STATUS,   // STAFF-PANEL5-FREEZE (staffFreeze.js): a freeze's and the staff chat's own words
+  ...AURUM_STAFF_STATUS,   // staffAurum.js: no such buy, a buy not the one previewed, a row that kept moving
 });
 
 const enc = new TextEncoder();
@@ -452,6 +454,7 @@ export async function staffDispatch(ctx, env, path, body, who) {
   if (HIDDEN_ROUTES.includes(path)) return staffHidden(ctx, env, path, body, who, audit);   // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js)
   if (CLAUDE_ROUTES.includes(path)) return staffClaude(ctx, env, path, body, who, audit);   // Claude: Admins read, CLAUDE_ORDER_HANDLES decide
   if (FREEZE_ROUTES.includes(path)) return staffFreeze(ctx, env, path, body, who, audit);   // STAFF-PANEL5-FREEZE: freeze (Admins) and the staff chat (both)
+  if (AURUM_STAFF_ROUTES.includes(path)) return staffAurum(ctx, env, path, body, who, audit);   // an Aurum buy given back: Admins'
 
   // ═══ THE ADMINS' DOORS: THE PANEL'S MODERATORS ═══
   // /v1/staff/mods lists them; /v1/staff/mod/add and /mod/remove { handle } - a registered account, not banned, not staff

@@ -890,6 +890,7 @@ export const ROUTES = new Set([
   '/v1/staff/econ/economy',
   '/v1/staff/econ/guilds',
   '/v1/staff/econ/shop', // STOREFRONT: the shop's demand
+  '/v1/staff/aurum/refund', // an Aurum buy given back (staffAurum.js)
   // STAFF-PANEL5-FOLLOW: a follow token for a hidden staff spectator, minted and written down (staffFollow.js)
   '/v1/staff/follow',
   // STAFF-PANEL5-MESSAGE: Message on screen - one sent, and each one's state (staffMessage.js); and the game's two: the

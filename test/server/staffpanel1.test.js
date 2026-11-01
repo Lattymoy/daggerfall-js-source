@@ -102,6 +102,8 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/harvests', '/v1/staff/econ/stream',
     // STOREFRONT: the shop's demand by day (staffShop.js)
     '/v1/staff/econ/shop',
+    // an Aurum buy given back (staffAurum.js)
+    '/v1/staff/aurum/refund',
     // STAFF-PANEL5-FOLLOW: a follow token (staffFollow.js)
     '/v1/staff/follow',
     // STAFF-PANEL5-MESSAGE: Message on screen (staffMessage.js)

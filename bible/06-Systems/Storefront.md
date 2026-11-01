@@ -35,7 +35,7 @@ never under 50 Aurum.
 **Payments taken back.** An order made for money keeps its credit (`shopCreditOf`). A refund or dispute takes off what
 that order alone covered, marking it `-<id>` in `shop_held` (`shopLostOf`). A Stripe page left open at a price that
 moved, or for a ware now held, is refunded in full by the service (`server-account/src/shop.js` `refundPost`); the
-order stays `refund_owed` until Stripe takes it.
+order stays `refund_owed` until Stripe takes it. An Admin gives back a ware bought with Aurum from the staff panel (`06-Systems/Aurum.md`).
 
 **Featured and limited.** `SHOP_ON_SALE` (`server-account/wrangler.toml`) names what sells. `SHOP_FEATURED` names what
 the carousel shows and when: `<ware> <from> <to>` in UTC, with `limited` for a ware sold only inside its window. A
@@ -93,6 +93,7 @@ carries its Enhanced Plus kit role, so themes and the Grimoire dress it. The acc
 
 - `src/net/shopLaw.js` - wares, prices, holding, sale and featuring
 - `server-account/src/shop.js` - checkout, grants, refunds
+- `server-account/src/staffAurum.js` - an Aurum buy given back by an Admin (`test/server/staff_aurum_refund.test.js`)
 - `src/ui/enhanced/enhancedShop.js` - the window and carousel
 - `src/render/killFx.js`, `src/scenes/portalFx.js`, `src/scenes/portalSkins.js` - effects and skins
 - `src/systems/horse/mountPaint.js`, `src/systems/horse/mountLook.js`, `src/systems/horse/mountFx.js` - mount looks

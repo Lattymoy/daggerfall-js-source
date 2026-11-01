@@ -642,7 +642,7 @@ const heldRow = (/** @type {any} */ db, /** @type {string} */ player) =>
   db.prepare(`SELECT ${HELD_COLS} FROM players WHERE id = ?1`).bind(player).first();
 /** An account's other paid orders - what else covers its wares - and AUDIT-STOREFRONT III A5 its wares bought for Aurum
  *  (aurum.js buyWare's `buy` lines), each its own holder for good: a money refund never takes a ware Aurum paid for. */
-const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) => {
+export const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) => {
   const paid =
     (
       await db
