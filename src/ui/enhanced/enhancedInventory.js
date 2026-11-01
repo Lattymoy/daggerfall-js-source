@@ -474,7 +474,7 @@ export function itemLine(item, identity = undefined) {
     // survivalInfoTokens, less the name and the weight this card already carries), so a Waterskin says its water here too
     survival: isSurvivalItem(item) || isRestItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,   // REST6: the seven's lines too
     ...(isPortalStone(item) || isStarglass(item) || isFestivalFace(item) || isLockpick(item) ? { survival: survivalInfoTokens(item).slice(2).map((r) => r.text) } : {}),   // PORTAL1: and the Portal Stone's; AUDIT STAR I2: and Starfall Glass's (this skin's card is its info); AUDIT STAR: and the Soul Cake's and the Hearth Offering's (WITCH1's lines, the classic box's alone before)
-    ...(isPipe(item) || isNirnroot(item) ? { survival: survivalInfoTokens(item).slice(2).map((r) => r.text) } : {}),
+    ...(isPipe(item) || isNirnroot(item) ? { survival: survivalInfoTokens(item).slice(2).map((row) => row.text) } : {}),
     // MAPLOOT1 (Discord: "Potion recipe's can't be read at all"): a recipe is READ, not used - DFU's use arm
     // is cannotUseThis (DaggerfallInventoryWindow.cs:1732-1740) and the knowledge is ShowInfoPopup's
     // (:1602-1609): "Recipe for Potion of %po" and the chained PotionRecipeIngredients box. This skin has no

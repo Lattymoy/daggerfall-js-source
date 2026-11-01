@@ -301,6 +301,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/legacy/` | Project Legacy: age, family, heirs, the realm line (`06-Systems/Legacy-Arc.md`). |
 | `src/systems/livingWorld/` | The living world: its people, towns, caravans, outlaws and trips (`06-Systems/Living-World-II.md`). |
 | `src/systems/lockpick/` | Lockpicking (`06-Systems/Lockpicking.md`): the Lockpick (its row, its home, its picture), the tumblers' law and machine, and their ear. |
+| `src/systems/pipe/` | The Pipe and Nirnroot (`06-Systems/Pipe.md`): their rows, the pipe's Use, the counter shelves, and the haze. |
 | `src/systems/loot/` | Loot: its tables, powers, rarity, curses, the codex - the law. |
 | `src/systems/map/` | The map's tabs, directory and waypoints. |
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
