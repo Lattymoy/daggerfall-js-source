@@ -537,8 +537,8 @@
   {
     "name": "PIXEL-FADE-stamp-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (!(share > 0)) { surface._fadeFrom = null; share = 0; }",
-    "new": "      if (!(share > 0)) { share = 0; }",
+    "old": "if (!(share > 0)) { surface._fadeFrom = null; share = 0; }",
+    "new": "if (!(share > 0)) { share = 0; }",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -546,8 +546,8 @@
   {
     "name": "PIXEL-FADE-whole-every-draw",
     "file": "src/render/renderer.js",
-    "old": "    if (share === 0 && this._tFade === 0) return;",
-    "new": "    if (share === 0 && this._tFade === 1) return;",
+    "old": "if (share === 0 && this._tFade === 0) return;",
+    "new": "if (share === 0 && this._tFade === 1) return;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "PIXEL-FADE-classic-mix-inverted",
     "file": "src/render/renderer.js",
-    "old": "  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
-    "new": "  tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
+    "old": "tex = mix(tex, uFadeTint.rgb, uFadeTint.a);",
+    "new": "tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -564,8 +564,8 @@
   {
     "name": "PIXEL-FADE-frame-block-keeps",
     "file": "src/render/renderer.js",
-    "old": "      this._tFade = -1;   // The pixel tint's whole, with the frame's block",
-    "new": "      // The pixel tint's whole, with the frame's block",
+    "old": "this._tFade = -1;   // MID-RING: the pixel tint's whole, with the frame's block",
+    "new": "// MID-RING: the pixel tint's whole, with the frame's block",
     "tests": [
       "test/render/midring.test.js"
     ]

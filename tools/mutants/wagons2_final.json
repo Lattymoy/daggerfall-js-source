@@ -417,8 +417,8 @@
   {
     "name": "WAGONS2-FINAL-the-replays-uniform-unset",
     "file": "src/render/airPass.js",
-    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0); // A room behind it - its own lit test",
-    "new": "          // A room behind it - its own lit test",
+    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0); // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test",
+    "new": "          // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "WAGONS2-FINAL-the-renderers-word-unsaid",
     "file": "src/render/renderer.js",
-    "old": "        windowRooms: !!this._rw?.rooms,   // Exterior glass shows its room (winModeFor) - the replay blooms a lit one's alone",
-    "new": "   // Exterior glass shows its room (winModeFor) - the replay blooms a lit one's alone",
+    "old": "        windowRooms: !!this._rw?.rooms,",
+    "new": "",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

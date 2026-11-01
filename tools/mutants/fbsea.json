@@ -236,8 +236,8 @@
   {
     "name": "FBSEA-4-water1-off-the-table",
     "file": "src/render/renderer.js",
-    "old": "    gl.polygonOffset(0, WATER_LAYER_UNITS.surface);   // FIELD BUGS 2026-09-29 (the sea) #4: the sea's layers, one table (render/waterSurface.js WATER_LAYER_UNITS)",
-    "new": "    gl.polygonOffset(0, -2);   // FIELD BUGS 2026-09-29 (the sea) #4: the sea's layers, one table (render/waterSurface.js WATER_LAYER_UNITS)",
+    "old": "    gl.polygonOffset(0, WATER_LAYER_UNITS.surface);",
+    "new": "    gl.polygonOffset(0, -2);",
     "tests": [
       "test/render/fbsea_water.test.js"
     ]

@@ -694,8 +694,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-terrain-falloff-linear",
     "file": "src/render/renderer.js",
-    "old": "    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  lit += tex * pointAcc;",
-    "new": "    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  lit += tex * pointAcc;",
+    "old": "diff *= cloudShadowAt(vWorldPos);\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));\n  vec3 pointAcc = vec3(0.0);\n  for (int i = 0; i < 16; i++) {\n    if (i >= uPointCount) break;\n    vec3 L = uPointLights[i].xyz - vWorldPos;\n    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att *",
+    "new": "diff *= cloudShadowAt(vWorldPos);\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));\n  vec3 pointAcc = vec3(0.0);\n  for (int i = 0; i < 16; i++) {\n    if (i >= uPointCount) break;\n    vec3 L = uPointLights[i].xyz - vWorldPos;\n    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att *",
     "tests": [
       "test/render/grasslit2.test.js"
     ]

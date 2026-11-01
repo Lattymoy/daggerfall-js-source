@@ -166,8 +166,8 @@
   {
     "name": "INVISLOOK-quad-opaque",
     "file": "src/render/renderer.js",
-    "old": "    if (conceal) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }   // The billboards' blended phase, its state",
-    "new": "    if (false) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }   // The billboards' blended phase, its state",
+    "old": "    if (conceal) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }",
+    "new": "    if (false) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "INVISLOOK-quad-look-unsent",
     "file": "src/render/renderer.js",
-    "old": "    gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);   // Plain unless a concealed body says otherwise",
-    "new": "    gl.uniform4f(c.conceal, 0, 0, 0, 0);   // Plain unless a concealed body says otherwise",
+    "old": "    gl.uniform4f(c.conceal, conceal ? conceal.mode : 0, conceal ? conceal.alpha : 0, conceal ? conceal.t : 0, conceal ? conceal.phase : 0);",
+    "new": "    gl.uniform4f(c.conceal, 0, 0, 0, 0);",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "INVISLOOK-quad-span-whole",
     "file": "src/render/renderer.js",
-    "old": "    gl.uniform2f(c.span, u1, v1);   // The RT's sub-rect, so the ripple is the sprite's own",
-    "new": "    gl.uniform2f(c.span, 1, 1);   // The RT's sub-rect, so the ripple is the sprite's own",
+    "old": "    gl.uniform2f(c.span, u1, v1);",
+    "new": "    gl.uniform2f(c.span, 1, 1);",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "INVISLOOK-fs-opaque",
     "file": "src/render/renderer.js",
-    "old": "  outColor = vec4(dwWaterFog(mix(uFogColor, rgb, fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);   // DW-C",
-    "new": "  outColor = vec4(dwWaterFog(mix(uFogColor, rgb, fogFactorAt(vWorld)), vWorld), 1.0);   // DW-C",
+    "old": "fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);",
+    "new": "fogFactorAt(vWorld)), vWorld), 1.0);",
     "tests": [
       "test/net/invislook.test.js"
     ]

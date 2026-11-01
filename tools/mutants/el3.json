@@ -2,8 +2,8 @@
   {
     "name": "door-ignored",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('air', search) !== 'off';",
-    "new": "  return true;",
+    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
+    "new": "  return true; // PERF-URL",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "render-no-pending",
     "file": "src/render/airPass.js",
-    "old": "    this.pending = true; // A bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
+    "old": "    this.pending = true; // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
     "new": "    return f.fbo;",
     "tests": [
       "test/render/el3_air.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "emit-flat-without-map",
     "file": "src/render/airPass.js",
-    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;",
-    "new": "          if (!batchVisible(planes, b)) continue;",
+    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
+    "new": "          if (!batchVisible(planes, b)) continue; // EL5",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "glare-rangeless",
     "file": "src/render/airPass.js",
-    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // The lightning flash (range 500..1000 over the player) is no lantern",
+    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern",
     "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;",
     "tests": [
       "test/render/el3_air.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "renderer-air-rebuilt",
     "file": "src/render/renderer.js",
-    "old": "      this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: this._lane.tonemapGlsl, scatter: this._lane.scatterGlsl }, maxLights: this.maxPointLights });",
-    "new": "      this._air = this._airPass = new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: this._lane.tonemapGlsl, scatter: this._lane.scatterGlsl }, maxLights: this.maxPointLights });",
+    "old": "      this._air = this._airPass ??= new AirPass(",
+    "new": "      this._air = this._airPass = new AirPass(",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "renderer-no-ao-upload",
     "file": "src/render/renderer.js",
-    "old": "    this._uploadAdapt(this._el[key].ao);   // The AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)\n    // The contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)",
-    "new": "    // The contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)",
+    "old": "    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)\n",
+    "new": "",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "renderer-composite-once-only",
     "file": "src/render/renderer.js",
-    "old": "    this._compositeAir();   // A no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
-    "new": "    this._ensureScreenQuadProgram();",
+    "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
+    "new": "    if (this._worldViewportPx) this.endWorldPass();\n    this._ensureScreenQuadProgram();",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "renderer-composite-no-viewport",
     "file": "src/render/renderer.js",
-    "old": "    this._lastProgram = null; this._lastVao = null;\n    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);\n  }",
-    "new": "    this._lastProgram = null; this._lastVao = null;\n  }",
+    "old": "    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;\n    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);",
+    "new": "    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "renderer-records-kept",
     "file": "src/render/renderer.js",
-    "old": "    sp.discard();\n    this._restoreWorldViewport();",
-    "new": "    this._restoreWorldViewport();",
+    "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
+    "new": "    this._restoreWorldViewport();\n    this.markForeignPass();",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "renderer-viewport-not-restored",
     "file": "src/render/renderer.js",
-    "old": "    this._restoreWorldViewport();\n    this.markForeignPass();   // The last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten",
-    "new": "    this.markForeignPass();   // The last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten",
+    "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
+    "new": "    sp.discard();\n    this.markForeignPass();",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -310,7 +310,7 @@
   {
     "name": "renderer-air-before-shadows",
     "file": "src/render/renderer.js",
-    "old": "    sp.render({\n      eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus\n      windowSun: this._wlSun,   // A building's frame - the sun's cascades drawn for the light its glass lets in, the glass cut\n      ids: this._pointIds,   // Each light's identity - the pass knows a light that moved by it\n      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,\n      holdSkin: this._holdSkinFn,   // A body's palette for its replay (the unit's word kept - releaseCharacterSkin puts the identity back over one let go)\n    });\n    if (this._air) {",
+    "old": "    sp.render({\n      eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus\n      windowSun: this._wlSun,   // WL1: a building's frame - the sun's cascades drawn for the light its glass lets in, the glass cut\n      ids: this._pointIds,   // LIGHT-ID: each light's identity - the pass knows a light that moved by it\n      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,\n      holdSkin: this._holdSkinFn,   // MWNPC16: a body's palette for its replay (the unit's word kept - releaseCharacterSkin puts the identity back over one let go)\n    });\n    if (this._air) {",
     "new": "    if (this._air) {",
     "tests": [
       "test/render/el3_air.test.js"
@@ -319,7 +319,7 @@
   {
     "name": "lane-no-air",
     "file": "src/render/enhancedLighting.js",
-    "old": "  air: true, // And its AirPass, behind `?air=off` (syncLightingLane reads the door)\n  maxLights: EL_MAX_LIGHTS,",
+    "old": "  air: true, // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)\n  maxLights: EL_MAX_LIGHTS,",
     "new": "  maxLights: EL_MAX_LIGHTS,",
     "tests": [
       "test/render/el3_air.test.js"

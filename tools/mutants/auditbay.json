@@ -1009,8 +1009,8 @@
   {
     "name": "BAY-A12-draw-whole",
     "file": "src/render/renderer.js",
-    "old": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's",
-    "new": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 0);   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's",
+    "old": "this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2;",
+    "new": "this._shadows.recordMesh(mesh, modelMatrix, texRemap, 0);   // EL2;",
     "tests": [
       "test/scenes/naval/auditbay_render.test.js"
     ]
@@ -1018,8 +1018,8 @@
   {
     "name": "BAY-A12-off-screen-whole",
     "file": "src/render/renderer.js",
-    "old": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }   // AUDIT BAY A12: a fading ship's share",
-    "new": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 0); }   // AUDIT BAY A12: a fading ship's share",
+    "old": "if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }",
+    "new": "if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 0); }",
     "tests": [
       "test/scenes/naval/auditbay_render.test.js"
     ]

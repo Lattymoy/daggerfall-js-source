@@ -413,8 +413,8 @@
   {
     "name": "AUDITCC-UI-S8-the-comment-says-nothing-taken",
     "file": "src/systems/features.js",
-    "old": "  // (SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus),",
-    "new": "  // (SURV-BOONS, 2026-10-12: nothing taken, a need met earns a bonus),",
+    "old": "(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus),",
+    "new": "(SURV-BOONS, 2026-10-12: nothing taken, a need met earns a bonus),",
     "why": "the Features comment says Boons takes nothing",
     "tests": [
       "test/systems/auditcc_ui.test.js"

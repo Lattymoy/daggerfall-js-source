@@ -2,7 +2,7 @@
   {
     "name": "MACBUGW6-1-the-lane-brings-no-twin-and-the-mark-goes-dark-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "  decalFs: EL_DECAL_FS, // The blood marks' twin - without it a lane lights its marks on the classic program, which is the bug\n  farRingFs: EL_FAR_RING_FS,",
+    "old": "  decalFs: EL_DECAL_FS, // MAC-BUG W6: the blood marks' twin - without it a lane lights its marks on the classic program, which is the bug\n  farRingFs: EL_FAR_RING_FS,",
     "new": "  farRingFs: EL_FAR_RING_FS,",
     "tests": [
       "test/combat/blood1_decals.test.js",
@@ -40,8 +40,8 @@
   {
     "name": "MACBUGW6-5-the-draw-never-uploads-the-lane-uniforms-to-the-twin",
     "file": "src/render/renderer.js",
-    "old": "      this._uploadEl('decal');   // The exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)\n    }",
-    "new": "      }",
+    "old": "    this._uploadEl('decal');   // MAC-BUG W6: the exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)\n",
+    "new": "",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "MACBUGW6-6-the-draw-cuts-to-the-classic-sixteen-under-the-lane",
     "file": "src/render/renderer.js",
-    "old": "      const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);",
-    "new": "      const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);",
+    "old": "    const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);",
+    "new": "    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);",
     "tests": [
       "test/combat/blood1_decals.test.js",
       "test/render/el1_enhancedlighting.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "MACBUGW6-7-the-cloud-s-shadow-never-reaches-the-mark",
     "file": "src/render/renderer.js",
-    "old": "    this._uploadCloudShadow('decal');   // The mark takes the cloud's shadow as the flat beside it does, on both programs\n    const d = this._decal;",
-    "new": "    const d = this._decal;",
+    "old": "    this._uploadCloudShadow('decal');   // MAC-BUG W6 / BLOOD1 AUDIT 3: the mark takes the cloud's shadow as the flat beside it does, on both programs\n",
+    "new": "",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "MACBUGW6-8-the-set-forgets-to-install-the-decal-and-the-draw-keeps-the-old-program",
     "file": "src/render/renderer.js",
-    "old": "    this.decalProgram = set.decal;\n    this._decal = this._decalLocs(set.decal);",
-    "new": "    if (!this.decalProgram) { this.decalProgram = set.decal; this._decal = this._decalLocs(set.decal); }",
+    "old": "    this.decalProgram = set.decal;\n    this._decal = this._decalLocs(set.decal);\n",
+    "new": "    if (!this.decalProgram) { this.decalProgram = set.decal; this._decal = this._decalLocs(set.decal); }\n",
     "tests": [
       "test/combat/blood1_decals.test.js",
       "test/render/el1_enhancedlighting.test.js"

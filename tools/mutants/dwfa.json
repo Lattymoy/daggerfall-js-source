@@ -281,8 +281,8 @@
   {
     "name": "DW-FA-bb-share-dropped",
     "file": "src/render/renderer.js",
-    "old": "  outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);   // DW-C",
-    "new": "  outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), alpha);   // DW-C",
+    "old": "outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);",
+    "new": "outColor = vec4(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), alpha);",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DW-FA-bb-share-after-the-sea-fog",
     "file": "src/render/renderer.js",
-    "old": "  outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);   // DW-C",
-    "new": "  outColor = vec4(dwColumn(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);   // DW-C",
+    "old": "outColor = vec4(dwWaterFog(dwColumn(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);",
+    "new": "outColor = vec4(dwColumn(dwWaterFog(mix(uFogColor, lit, fogFactorAt(vBBWorld)), vBBWorld), vBBWorld), alpha);",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DW-FA-bb-every-flat",
     "file": "src/render/renderer.js",
-    "old": "      const col = dwc && b.dwColumn ? 1 : 0;   // A flat in a carved sea takes the column's share",
-    "new": "      const col = dwc ? 1 : 0;   // A flat in a carved sea takes the column's share",
+    "old": "const col = dwc && b.dwColumn ? 1 : 0;",
+    "new": "const col = dwc ? 1 : 0;",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DW-FA-bb-column-frame-kept",
     "file": "src/render/renderer.js",
-    "old": "    this._dwColumn = null;   // And the water column's share over the flats\n    this._lptDrawn?.fill(null);   // And the 3D trees a frame drew",
-    "new": "    this._lptDrawn?.fill(null);   // And the 3D trees a frame drew",
+    "old": "    this._dwColumn = null;   // DW-F: and the water column's share over the flats\n",
+    "new": "",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]

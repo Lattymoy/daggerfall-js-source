@@ -104,8 +104,8 @@
   {
     "name": "CACHE-COPY-the-renderer-default-off",
     "file": "src/render/renderer.js",
-    "old": "    this._shadowCacheWanted = true;   // The static shadow cache's door (setShadowCache - the lane's install reads the page's, shadowPass.js shadowCacheOn); CACHE-COPY: on, as SC1 built it",
-    "new": "    this._shadowCacheWanted = false;   // The static shadow cache's door (setShadowCache - the lane's install reads the page's, shadowPass.js shadowCacheOn); CACHE-COPY: on, as SC1 built it",
+    "old": "    this._shadowCacheWanted = true;",
+    "new": "    this._shadowCacheWanted = false;",
     "tests": [
       "test/render/cachecopy.test.js"
     ]

@@ -326,8 +326,8 @@
   {
     "name": "TN-switch-off-the-tile",
     "file": "src/systems/features.js",
-    "old": "    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',",
-    "new": "    'GeneralOptions.FirstPersonTravel',",
+    "old": "    'GeneralOptions.LocationPause',\n    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
+    "new": "    'GeneralOptions.LocationPause',\n    'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "EM3-MAPCHOICE-shipped-flat",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),   // the player's own, as the held map's is",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: false, online: 'player' }),   // the player's own, as the held map's is",
+    "old": "control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),",
+    "new": "control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: false, online: 'player' }),",
     "tests": [
       "test/ui/map/em3_mapchoice.test.js"
     ]

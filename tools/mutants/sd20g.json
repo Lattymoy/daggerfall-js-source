@@ -210,8 +210,8 @@
   {
     "name": "SD20G-D8-the-old-words",
     "file": "src/systems/features.js",
-    "old": "      + 'every visit. Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '",
-    "new": "      + 'every visit. Main-story dungeons and dungeons a quest sends you to keep their full size. Online every '",
+    "old": "Main-story dungeons keep full size; a quest keeps the size it was set up at. Online every '",
+    "new": "Main-story dungeons and dungeons a quest sends you to keep their full size. Online every '",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]

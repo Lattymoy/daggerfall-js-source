@@ -394,8 +394,8 @@
   {
     "name": "PERF-EXT23-createMesh-walks-every-group-again",
     "file": "src/render/renderer.js",
-    "old": "    const subMeshes = model.subMeshes.map((sm, i) => ({ ...sm, _bounds: measured ? measured.subs[i] : boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));",
-    "new": "    const subMeshes = model.subMeshes.map((sm, i) => ({ ...sm, _bounds: boundsOf(model.positions, model.indices, sm.startIndex, sm.primitiveCount * 3) }));",
+    "old": "_bounds: measured ? measured.subs[i] : boundsOf(",
+    "new": "_bounds: boundsOf(",
     "tests": [
       "test/render/publishtail.test.js"
     ]

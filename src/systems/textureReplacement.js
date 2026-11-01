@@ -791,7 +791,7 @@ export async function textureReplacementBytes(archive, record, frame = 0, map = 
 // ROAD-H H4: WHAT IS IN THIS MAP IS A COLOR32, NOT A DECODED PNG.
 //
 // The upload path is `renderer.uploadTexture(archive, record, color32)`,
-// which reads `color32.colors` and `asBytes` of it (renderer.js:"// The shape's own"),
+// which reads `color32.colors` and `asBytes` of it (renderer.js:"// WW3: the shape's"),
 // and every texture it uploads is BOTTOM-UP - `getColor32` writes
 // `dstRow = (dstHeight - 1 - border - y) * dstWidth`
 // (baseImageFile.js:"const headerLength".."const dstRow = (dstHeight - 1 - border - y) * dstWidth;", BaseImageFile.cs:250) and the upload leaves

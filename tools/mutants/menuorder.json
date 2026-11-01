@@ -875,8 +875,8 @@
   {
     "name": "AUDITMO-R1-clear-squeezed",
     "file": "src/render/renderer.js",
-    "old": "      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,",
-    "new": "      gl.viewport(Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)), Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)));\n      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,",
+    "old": "    if (clearRGBA) {\n      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,",
+    "new": "    if (clearRGBA) {\n      gl.viewport(Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)), Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)));\n      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

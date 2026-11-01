@@ -212,8 +212,8 @@
   {
     "name": "PLACE-LRU-an-eviction-leaves-the-stamp",
     "file": "src/render/renderer.js",
-    "old": "    if (this._tex0Bound === tex) this._tex0Bound = null;\n    this._texGen++;\n    return true;",
-    "new": "    if (this._tex0Bound === tex) this._tex0Bound = null;\n    return true;",
+    "old": "    if (this._tex0Bound === tex) this._tex0Bound = null;\n    this._texGen++;",
+    "new": "    if (this._tex0Bound === tex) this._tex0Bound = null;",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "PLACE-LRU-a-tile-array-kept-in-the-cache",
     "file": "src/render/renderer.js",
-    "old": "    this.tileArrays.delete(archive);\n    this._tileDims.delete(archive);",
-    "new": "    this._tileDims.delete(archive);",
+    "old": "    this.tileArrays.delete(archive);\n    this._tileDims.delete(archive);   // PRECIP4",
+    "new": "    this._tileDims.delete(archive);   // PRECIP4",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "PLACE-LRU-no-miss-door-for-a-flat",
     "file": "src/render/renderer.js",
-    "old": "      const tex = this.textures.get(key) ?? this._textureMissed(key);   // A picture let go is made again",
-    "new": "      const tex = this.textures.get(key);   // A picture let go is made again",
+    "old": "      const tex = this.textures.get(key) ?? this._textureMissed(key);   // FIELD BUGS",
+    "new": "      const tex = this.textures.get(key);   // FIELD BUGS",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "PLACE-LRU-no-miss-door-for-a-material",
     "file": "src/render/renderer.js",
-    "old": "        tex = this.textures.get(resolved + '#opaque') ?? this._textureMissed(resolved + '#opaque') ?? this.textures.get(resolved) ?? this._textureMissed(resolved);   // the mesh material (alphaIndex -1) first",
-    "new": "        tex = this.textures.get(resolved + '#opaque') ?? this.textures.get(resolved) ?? this._textureMissed(resolved);   // the mesh material (alphaIndex -1) first",
+    "old": "tex = this.textures.get(resolved + '#opaque') ?? this._textureMissed(resolved + '#opaque') ?? this.textures.get(resolved)",
+    "new": "tex = this.textures.get(resolved + '#opaque') ?? this.textures.get(resolved)",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "PLACE-LRU-the-upload-tells-no-one",
     "file": "src/render/renderer.js",
-    "old": "    this._uploadSink?.(false, key);   // A hit is asked for too - the place asking holds it",
-    "new": "    // A hit is asked for too - the place asking holds it",
+    "old": "    this._uploadSink?.(false, key);   // FIELD BUGS",
+    "new": "    // FIELD BUGS",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],

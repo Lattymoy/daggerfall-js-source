@@ -20,8 +20,8 @@
   {
     "name": "PERF-CPU-the-renderer-never-passes-the-door",
     "file": "src/render/renderer.js",
-    "old": "    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing",
-    "new": "    this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones())) : null;   // `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing",
+    "old": "new PerfMeter(gl, perfZones(), perfCpu())",
+    "new": "new PerfMeter(gl, perfZones())",
     "tests": [
       "test/render/perfon2_peercull.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "PERF-CROWD2-the-cull-runs-BEFORE-the-shadow-record-so-an-off-screen-caster-stops-casting",
     "file": "src/render/renderer.js",
-    "old": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // With the basis); WINDFALL1: and the mod's law",
+    "old": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // EL2 (EL3: with the basis); WINDFALL1: and the mod's law",
     "new": "",
     "tests": [
       "test/render/perfon2_peercull.test.js",
@@ -212,7 +212,7 @@
   {
     "name": "PERF-CROWD2-the-blended-phase-is-left-uncut",
     "file": "src/render/renderer.js",
-    "old": "      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // The ghosts and the concealed too",
+    "old": "      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too",
     "new": "",
     "tests": [
       "test/render/perfon2_peercull.test.js"

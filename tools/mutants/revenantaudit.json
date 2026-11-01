@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-E1-the-zero-unsent",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0);   // DISSOLVE: every flat whole until a burning one says otherwise - the shadow below is only true if this is sent",
-    "new": "      // DISSOLVE - the shadow below is only true if this is sent",
+    "old": "      gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0);   // DISSOLVE: every flat whole until a burning one says otherwise",
+    "new": "      // DISSOLVE",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

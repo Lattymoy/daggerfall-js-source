@@ -155,8 +155,8 @@
   {
     "name": "TOLIVE-inns-off-tile",
     "file": "src/systems/features.js",
-    "old": "    'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',",
-    "new": "    'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',",
+    "old": "'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',",
+    "new": "'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',",
     "tests": [
       "test/systems/to_live.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SPRITEGRAD-bb-ternary",
     "file": "src/render/renderer.js",
-    "old": "  vec4 tex = texture(uTex, uv);",
-    "new": "  vec4 tex = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(uTex, uv);",
+    "old": "  vec4 tex = texture(uTex, uv);\n  vec3 emissionTexel",
+    "new": "  vec4 tex = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(uTex, uv);\n  vec3 emissionTexel",
     "tests": [
       "test/render/spritegrad.test.js"
     ]

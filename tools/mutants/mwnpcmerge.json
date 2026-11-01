@@ -48,8 +48,8 @@
   {
     "name": "MWNPCMERGE-fs-face-always",
     "file": "src/render/renderer.js",
-    "old": "  if (dot(vNormalV, vNormalV) > 1e-20) return vNormalV;\n  bool ccw = gl_FrontFacing != (uFrontCW > 0.5);",
-    "new": "  bool ccw = gl_FrontFacing != (uFrontCW > 0.5);",
+    "old": "  if (dot(vNormalV, vNormalV) > 1e-20) return vNormalV;\n",
+    "new": "",
     "tests": [
       "test/formats/morrowind/mwnpc1_gpuskin.test.js"
     ]

@@ -418,8 +418,8 @@
   {
     "name": "AUDITMWNPC2-BATCH-inner-drops-outer",
     "file": "src/render/renderer.js",
-    "old": "    if (b.open) { b.depth++; return; }\n    b.items.length = 0;",
-    "new": "    b.items.length = 0;",
+    "old": "    if (b.open) { b.depth++; return; }\n",
+    "new": "",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "AUDITMWNPC2-BATCH-inner-flushes",
     "file": "src/render/renderer.js",
-    "old": "    if (b.depth > 0) { b.depth--; return 0; }   // a nested batch's flush: the outer one draws them all",
-    "new": "   // a nested batch's flush: the outer one draws them all",
+    "old": "    if (b.depth > 0) { b.depth--; return 0; }",
+    "new": "",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "AUDITMWNPC2-P2-weights-misplaced",
     "file": "src/render/renderer.js",
-    "old": "    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 72);   // and weights",
-    "new": "    gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 76);   // and weights",
+    "old": "gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 72);",
+    "new": "gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 76);",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUDITMWNPC2-P2-pose-unsent",
     "file": "src/render/renderer.js",
-    "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);\n    this._skinUnitHolds = skin.tex;",
-    "new": "    this._skinUnitHolds = skin.tex;",
+    "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);\n",
+    "new": "",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "AUDITMWNPC2-P2-second-pair-lost",
     "file": "src/render/renderer.js",
-    "old": "      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 88);\n      gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, stride, 104);",
-    "new": "      gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8, 4, gl.FLOAT, false, stride, 104);",
+    "old": "      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 88);\n",
+    "new": "",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]

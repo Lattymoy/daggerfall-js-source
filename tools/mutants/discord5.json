@@ -2,8 +2,8 @@
   {
     "name": "D5-BLACK-ARMS-alpha-not-defaulted",
     "file": "src/render/renderer.js",
-    "old": "    const a = color[3] ?? 1;",
-    "new": "    const a = color[3];",
+    "old": "    const a = color[3] ?? 1;\n",
+    "new": "    const a = color[3];\n",
     "tests": [
       "test/systems/discord5.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "D5-BLACK-ARMS-alpha-defaulted-to-zero",
     "file": "src/render/renderer.js",
-    "old": "    const a = color[3] ?? 1;",
-    "new": "    const a = color[3] ?? 0;",
+    "old": "    const a = color[3] ?? 1;\n",
+    "new": "    const a = color[3] ?? 0;\n",
     "tests": [
       "test/systems/discord5.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "D5-BLACK-ARMS-shadow-compares-the-missing-alpha",
     "file": "src/render/renderer.js",
-    "old": "    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== a) {",
-    "new": "    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {",
+    "old": "q.a !== a) {\n      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);",
+    "new": "q.a !== color[3]) {\n      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);",
     "tests": [
       "test/systems/discord5.test.js"
     ]
@@ -100,8 +100,8 @@
   {
     "name": "D5-TORCH-BIND-toggle-key-uncurated",
     "file": "src/systems/features.js",
-    "old": "  'handheld-torches': Object.freeze([",
-    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',",
+    "old": "  'handheld-torches': Object.freeze([\n    'Handling.RelaxedTwoHandedWeapons',",
+    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',\n    'Handling.RelaxedTwoHandedWeapons',",
     "tests": [
       "test/systems/discord5.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "ARENA5-WASH-CLASSIC-DROPPED",
     "file": "src/render/renderer.js",
-    "old": "  lit *= uBatchTint;\n  // VEIN-HUE (FIELD BUGS 2026-10-12b): a dyed batch's wash is its colour - the flat's brightness in the wash's hue - where",
-    "new": "  // VEIN-HUE (FIELD BUGS 2026-10-12b): a dyed batch's wash is its colour - the flat's brightness in the wash's hue - where",
+    "old": "  lit *= uBatchTint;\n",
+    "new": "",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA5-WASH-NOT-SENT",
     "file": "src/render/renderer.js",
-    "old": "      if (tn || this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, tn ? tn[0] : 1, tn ? tn[1] : 1, tn ? tn[2] : 1); gl.uniform1f(this.bbUBatchDye, tn ? b.dye ?? 0 : 0); this._bbTintOn = !!tn; }   // Its dye with it",
-    "new": "      if (false) { gl.uniform3f(this.bbUBatchTint, tn ? tn[0] : 1, tn ? tn[1] : 1, tn ? tn[2] : 1); gl.uniform1f(this.bbUBatchDye, tn ? b.dye ?? 0 : 0); this._bbTintOn = !!tn; }   // Its dye with it",
+    "old": "      if (tn || this._bbTintOn) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA5-WASH-STICKS",
     "file": "src/render/renderer.js",
-    "old": "      if (tn || this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, tn ? tn[0] : 1, tn ? tn[1] : 1, tn ? tn[2] : 1); gl.uniform1f(this.bbUBatchDye, tn ? b.dye ?? 0 : 0); this._bbTintOn = !!tn; }   // Its dye with it",
-    "new": "      if (tn) { gl.uniform3f(this.bbUBatchTint, tn ? tn[0] : 1, tn ? tn[1] : 1, tn ? tn[2] : 1); gl.uniform1f(this.bbUBatchDye, tn ? b.dye ?? 0 : 0); this._bbTintOn = !!tn; }   // Its dye with it",
+    "old": "      if (tn || this._bbTintOn) {",
+    "new": "      if (tn) {",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA5-WASH-FRAME-NOT-WHITE",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform3f(this.bbUBatchTint, 1, 1, 1);   // Every flat unwashed until a washed batch says otherwise\n      gl.uniform1f(this.bbUBatchDye, 0);   // And undyed",
-    "new": "      gl.uniform1f(this.bbUBatchDye, 0);   // And undyed",
+    "old": "      gl.uniform3f(this.bbUBatchTint, 1, 1, 1);   // ARENA5: every flat unwashed until a washed batch says otherwise\n",
+    "new": "",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]

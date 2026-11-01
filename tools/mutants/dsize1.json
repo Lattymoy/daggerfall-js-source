@@ -122,8 +122,8 @@
   {
     "name": "DSIZE1-the-row-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: false }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: 'player' }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF",
+    "old": "key: 'mediumDungeons', initial: false, online: false }",
+    "new": "key: 'mediumDungeons', initial: false, online: 'player' }",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],

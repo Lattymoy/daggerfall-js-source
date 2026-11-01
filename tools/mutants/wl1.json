@@ -299,8 +299,8 @@
   {
     "name": "WL1-kind-swapped",
     "file": "src/render/renderer.js",
-    "old": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0);   // Day only while the day has a share - the frame fades by it",
-    "new": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'inside' : 'street', light, wlDayShare(this._wl?.outside) > 0);   // Day only while the day has a share - the frame fades by it",
+    "old": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0);",
+    "new": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'inside' : 'street', light, wlDayShare(this._wl?.outside) > 0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "WL1-row-off-ignored",
     "file": "src/render/renderer.js",
-    "old": "    if (opts?.world !== true || this._panelSaved || this._spriteDepth !== 0 || this._studioDepth !== 0 || this._rwMode === 'off') return null;",
-    "new": "    if (opts?.world !== true || this._panelSaved || this._spriteDepth !== 0 || this._studioDepth !== 0) return null;",
+    "old": "this._studioDepth !== 0 || this._rwMode === 'off') return null;",
+    "new": "this._studioDepth !== 0) return null;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "WL1-block-on-point-zero",
     "file": "src/render/renderer.js",
-    "old": "    for (const [block, point] of [['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]) {   // And the far rows'",
-    "new": "    for (const [block, point] of [['WinLights', 0], ['WinFar', WL_FAR_UBO_BINDING]]) {   // And the far rows'",
+    "old": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]",
+    "new": "[['WinLights', 0], ['WinFar', WL_FAR_UBO_BINDING]]",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ],
@@ -336,8 +336,8 @@
   {
     "name": "WL1-band-over-the-lanterns",
     "file": "src/render/renderer.js",
-    "old": "    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // And the far rows' band",
-    "new": "    for (const { sp, row, base } of [{ sp: this._wl.space, row: 0, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // And the far rows' band",
+    "old": "{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }",
+    "new": "{ sp: this._wl.space, row: 0, base: WL_LIST_BASE }",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ],
@@ -346,8 +346,8 @@
   {
     "name": "WL1-draw-never-noted",
     "file": "src/render/renderer.js",
-    "old": "    if (mesh.wl && this._wlKind && !wire) this._wl.note(mesh, modelMatrix, texRemap, this._wlKind, this._wlNow);   // A window drawn is a window that lights",
-    "new": "    if (false) this._wl.note(mesh, modelMatrix, texRemap, this._wlKind, this._wlNow);   // A window drawn is a window that lights",
+    "old": "    if (mesh.wl && this._wlKind && !wire) this._wl.note(",
+    "new": "    if (false) this._wl.note(",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -355,7 +355,7 @@
   {
     "name": "WL1-destroy-keeps-the-windows",
     "file": "src/render/renderer.js",
-    "old": "    this._wl?.forget(mesh);   // None of its windows lights",
+    "old": "    this._wl?.forget(mesh);   // WL1: none of its windows lights",
     "new": "    // forgotten",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -364,8 +364,8 @@
   {
     "name": "WL1-window-sun-not-handed",
     "file": "src/render/renderer.js",
-    "old": "      windowSun: this._wlSun,   // A building's frame - the sun's cascades drawn for the light its glass lets in, the glass cut",
-    "new": "      windowSun: null,   // A building's frame - the sun's cascades drawn for the light its glass lets in, the glass cut",
+    "old": "      windowSun: this._wlSun,   // WL1",
+    "new": "      windowSun: null,   // WL1",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "WL1-batch-measured-again",
     "file": "src/render/renderer.js",
-    "old": "      const set = sm.apertures ?? windowAperturesOf(model.positions, model.normals, model.uvs, model.indices, sm.startIndex, sm.primitiveCount * 3);",
-    "new": "      const set = windowAperturesOf(model.positions, model.normals, model.uvs, model.indices, sm.startIndex, sm.primitiveCount * 3);",
+    "old": "      const set = sm.apertures ?? windowAperturesOf(",
+    "new": "      const set = windowAperturesOf(",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "WL1-outside-every-frame",
     "file": "src/render/renderer.js",
-    "old": "    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;   // the view out's own read stamps a moment after the caller's clock",
-    "new": "    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || false) return;   // the view out's own read stamps a moment after the caller's clock",
+    "old": "(o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;",
+    "new": "false) return;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "WL1-outside-bracket-leaks",
     "file": "src/render/renderer.js",
-    "old": "      this._ambient = was.ambient; this._sunScale = was.sunScale; this._sunColor = was.sunColor; this._clockLit = was.clockLit;",
-    "new": "      this._sunScale = was.sunScale; this._sunColor = was.sunColor; this._clockLit = was.clockLit;",
+    "old": "      this._ambient = was.ambient; this._sunScale = was.sunScale;",
+    "new": "      this._sunScale = was.sunScale;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "WL1-classic-flat-unlit",
     "file": "src/render/renderer.js",
-    "old": "  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);   // WL1: by attenuation alone, as a lantern lights a flat",
-    "new": "  pointAcc += vec3(0.0);   // WL1: by attenuation alone, as a lantern lights a flat",
+    "old": "  pointAcc += winLit(vBBWorld, vec3(0.0), 1.0, 1.0);",
+    "new": "  pointAcc += vec3(0.0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "WL1-stamp-ahead-re-read",
     "file": "src/render/renderer.js",
-    "old": "    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;   // the view out's own read stamps a moment after the caller's clock",
-    "new": "    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && now - o.at < WL_OUTSIDE_EVERY_MS && now >= o.at)) return;   // the view out's own read stamps a moment after the caller's clock",
+    "old": "(o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;",
+    "new": "(o && now - o.at < WL_OUTSIDE_EVERY_MS && now >= o.at)) return;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "WL1-door-shut-reads-the-street",
     "file": "src/render/renderer.js",
-    "old": "    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;   // the view out's own read stamps a moment after the caller's clock",
-    "new": "    if (this._rwMode === 'off' || typeof scene?.setup !== 'function' || this._rwOutside || this._panelSaved || (o && Math.abs(now - o.at) < WL_OUTSIDE_EVERY_MS)) return;   // the view out's own read stamps a moment after the caller's clock",
+    "old": "    if (this._rwMode === 'off' || !windowLightOn() || typeof scene?.setup",
+    "new": "    if (this._rwMode === 'off' || typeof scene?.setup",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "WL1-door-shut-measures-glass",
     "file": "src/render/renderer.js",
-    "old": "    if (!windowLightOn() || !model.positions || !model.normals || !model.uvs || !model.indices) return null;",
-    "new": "    if (!model.positions || !model.normals || !model.uvs || !model.indices) return null;",
+    "old": "    if (!windowLightOn() || !model.positions",
+    "new": "    if (!model.positions",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -701,8 +701,8 @@
   {
     "name": "WL1-door-shut-keeps-masks",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.window && windowLightOn()) this._wl?.addMask(key, color32);   // The window's glass, for the light it lets through",
-    "new": "    if (opts.window) this._wl?.addMask(key, color32);   // The window's glass, for the light it lets through",
+    "old": "    if (opts.window && windowLightOn()) this._wl?.addMask(key, color32);",
+    "new": "    if (opts.window) this._wl?.addMask(key, color32);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -728,7 +728,7 @@
   {
     "name": "WL1-panel-loses-the-frame",
     "file": "src/render/renderer.js",
-    "old": "    [this._wlKind, this._wlLive, this._wlSun] = s.windowLight;",
+    "old": "    [this._wlKind, this._wlLive, this._wlSun] = s.windowLight;   // WL1",
     "new": "    // WL1 lost",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -737,8 +737,8 @@
   {
     "name": "WL1-block-unbound-when-dark",
     "file": "src/render/renderer.js",
-    "old": "    this._wl.bind();   // the block stands under every program that holds it, lit or not\n    const on = this._wlLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;",
-    "new": "    const on = this._wlLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;",
+    "old": "    this._wl.bind();   // the block stands under every program that holds it, lit or not\n",
+    "new": "",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -783,8 +783,8 @@
   {
     "name": "WL1-FIX-the-switch-never-says-the-sun",
     "file": "src/render/renderer.js",
-    "old": "    gl.uniform1i(loc.on, on ? (this._wlSun ? 2 : 1) : 0);   // 2: the sun through glass stands in the sun map - a flat's vertex stage reads it once a quad",
-    "new": "    gl.uniform1i(loc.on, on ? 1 : 0);   // 2: the sun through glass stands in the sun map - a flat's vertex stage reads it once a quad",
+    "old": "gl.uniform1i(loc.on, on ? (this._wlSun ? 2 : 1) : 0);",
+    "new": "gl.uniform1i(loc.on, on ? 1 : 0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]

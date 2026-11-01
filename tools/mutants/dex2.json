@@ -172,8 +172,8 @@
   {
     "name": "DEX2-the-pending-picture-uploaded",
     "file": "src/render/renderer.js",
-    "old": "    if (color32?.pending) { if (!this.textures.has(key)) color32.pending(); return this.textures.get(key) ?? null; }\n    if (this.textures.has(key)) {",
-    "new": "    if (this.textures.has(key)) {",
+    "old": "    if (color32?.pending) { if (!this.textures.has(key)) color32.pending(); return this.textures.get(key) ?? null; }\n",
+    "new": "",
     "why": "AUDIT DEX B5: a frame on its way stands as a clear texel at its key for good",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "DEX2-a-hit-decodes",
     "file": "src/render/renderer.js",
-    "old": "    if (color32?.pending) { if (!this.textures.has(key)) color32.pending(); return this.textures.get(key) ?? null; }",
-    "new": "    if (color32?.pending) { color32.pending(); return this.textures.get(key) ?? null; }",
+    "old": "    if (color32?.pending) { if (!this.textures.has(key)) color32.pending();",
+    "new": "    if (color32?.pending) { color32.pending();",
     "why": "AUDIT DEX B5: an upload of a frame the GPU holds decodes its picture back onto the CPU",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"

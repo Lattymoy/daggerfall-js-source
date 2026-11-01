@@ -203,8 +203,8 @@
   {
     "name": "R-classic-uncut",
     "file": "src/render/renderer.js",
-    "old": "  dissolveCut();   // SHIP-FADE: a ship sailing into the world or out of it, her share of her fragments (orderedDither.js)\n  vec4 tex = texture(uTex, vUV);",
-    "new": "  vec4 tex = texture(uTex, vUV);",
+    "old": "  dissolveCut();   // SHIP-FADE: a ship sailing into the world or out of it, her share of her fragments (orderedDither.js)\n  vec4 tex = texture(uTex, vUV);\n  // INCIDENT 2026-09-04",
+    "new": "  vec4 tex = texture(uTex, vUV);\n  // INCIDENT 2026-09-04",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "R-dissolve-unlocated",
     "file": "src/render/renderer.js",
-    "old": "    this.uDissolveCut = gl.getUniformLocation(this.program, 'uDissolveCut');   // The installed mesh program's dissolve\n    this.uMeshAlpha = gl.getUniformLocation(this.program, 'uMeshAlpha');   // The installed mesh program's translucency (render/meshAlpha.js)",
-    "new": "    this.uMeshAlpha = gl.getUniformLocation(this.program, 'uMeshAlpha');   // The installed mesh program's translucency (render/meshAlpha.js)",
+    "old": "    this.uDissolveCut = gl.getUniformLocation(this.program, 'uDissolveCut');   // SHIP-FADE: the installed mesh program's dissolve\n",
+    "new": "",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "R-set-always-uploads",
     "file": "src/render/renderer.js",
-    "old": "    if (k === (this._dissolve ?? 1)) return;\n    this._dissolve = k;",
-    "new": "    this._dissolve = k;",
+    "old": "    if (k === (this._dissolve ?? 1)) return;\n",
+    "new": "",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "R-set-unkept",
     "file": "src/render/renderer.js",
-    "old": "    this._dissolve = k;\n    if (this.uDissolveCut) {",
-    "new": "    if (this.uDissolveCut) {",
+    "old": "    this._dissolve = k;\n",
+    "new": "",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "R-set-wrong-program",
     "file": "src/render/renderer.js",
-    "old": "      this._use(this.program);\n      this.gl.uniform1f(this.uDissolveCut, 1 - k);   // the share CUT: nought, a uniform's own start, is whole",
-    "new": "      this.gl.uniform1f(this.uDissolveCut, 1 - k);   // the share CUT: nought, a uniform's own start, is whole",
+    "old": "      this._use(this.program);\n      this.gl.uniform1f(this.uDissolveCut, 1 - k);",
+    "new": "      this.gl.uniform1f(this.uDissolveCut, 1 - k);",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "R-set-no-upload",
     "file": "src/render/renderer.js",
-    "old": "      this._use(this.program);\n      this.gl.uniform1f(this.uDissolveCut, 1 - k);   // the share CUT: nought, a uniform's own start, is whole",
-    "new": "      this._use(this.program);   // the share CUT: nought, a uniform's own start, is whole",
+    "old": "      this._use(this.program);\n      this.gl.uniform1f(this.uDissolveCut, 1 - k);",
+    "new": "      this._use(this.program);",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "R-set-share-not-cut",
     "file": "src/render/renderer.js",
-    "old": "      this.gl.uniform1f(this.uDissolveCut, 1 - k);   // the share CUT: nought, a uniform's own start, is whole",
-    "new": "      this.gl.uniform1f(this.uDissolveCut, k);   // the share CUT: nought, a uniform's own start, is whole",
+    "old": "      this.gl.uniform1f(this.uDissolveCut, 1 - k);",
+    "new": "      this.gl.uniform1f(this.uDissolveCut, k);",
     "tests": [
       "test/render/shipfade.test.js"
     ]

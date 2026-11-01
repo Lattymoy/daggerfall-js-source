@@ -32,7 +32,7 @@
   {
     "name": "FIELD-GUN19-4-the-frames-strip-is-cleared-with-the-GL-state",
     "file": "src/render/renderer.js",
-    "old": "      this._worldViewportFrame = r ? { ...r } : null;   // The record, for the 2D pass",
+    "old": "      this._worldViewportFrame = r ? { ...r } : null;   // FIELD-GUN19: the record, for the 2D pass",
     "new": "",
     "tests": [
       "test/systems/thunderlock.test.js"

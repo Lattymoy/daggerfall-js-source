@@ -213,7 +213,7 @@
   {
     "name": "RW1-panel-loses-rooms",
     "file": "src/render/renderer.js",
-    "old": "    if (s.realWindows && this._rw) Object.assign(this._rw, s.realWindows);",
+    "old": "    if (s.realWindows && this._rw) Object.assign(this._rw, s.realWindows);   // RW1",
     "new": "",
     "tests": [
       "test/render/windows1_rooms.test.js"
@@ -222,7 +222,7 @@
   {
     "name": "RW1-mode-left-on",
     "file": "src/render/renderer.js",
-    "old": "    if (this._rwModeUp > 0 || this._rwCutUp > 0) this._rwRest();   // No other draw on the mesh program inherits a window mode or a cutout",
+    "old": "    if (this._rwModeUp > 0 || this._rwCutUp > 0) this._rwRest();   // RW1: no other draw on the mesh program inherits a window mode or a cutout",
     "new": "",
     "tests": [
       "test/render/windows1_rooms.test.js",
@@ -241,7 +241,7 @@
   {
     "name": "RW1-cutout-hit-unmarked",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.cutout) this._markCutout(this.textures.get(key));   // A cutout ask cuts the picture the key already holds, too",
+    "old": "    if (opts.cutout) this._markCutout(this.textures.get(key));   // RW1: a cutout ask cuts the picture the key already holds, too",
     "new": "",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -286,7 +286,7 @@
   {
     "name": "RW1-skip-ignored",
     "file": "src/render/renderer.js",
-    "old": "    if (this._rwOutside && this._rwSkips(mesh)) return;   // The view out leaves out what a context asked it to (outsideViewSkip)",
+    "old": "    if (this._rwOutside && this._rwSkips(mesh)) return;   // RW1: the view out leaves out what a context asked it to (outsideViewSkip)",
     "new": "",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -340,7 +340,7 @@
   {
     "name": "RW1-glass-eviction-leaks",
     "file": "src/render/renderer.js",
-    "old": "    if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // An interior's declared glass rides the same `e:` key",
+    "old": "    if (!this.emissionTextures.has(key) && this.glassMasks?.has(key)) {   // RW1: an interior's declared glass rides the same `e:` key",
     "new": "    if (false) {",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -430,8 +430,8 @@
   {
     "name": "RW1-glass-blooms",
     "file": "src/render/airPass.js",
-    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // An interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
-    "new": "          // An interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "new": "          // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "RW1-ships-rooms-only",
     "file": "src/systems/features.js",
-    "old": "      store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // render/realWindows.js realWindowsMode reads it",
-    "new": "      store: 'prefs', key: 'realWindows', initial: 'rooms', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // render/realWindows.js realWindowsMode reads it",
+    "old": "key: 'realWindows', initial: 'full',",
+    "new": "key: 'realWindows', initial: 'rooms',",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "RW1-AUDIT-the-target-shrunk",
     "file": "src/render/renderer.js",
-    "old": "    if (t && t.allocW >= w && t.allocH >= h) return t;   // A pane that shrinks keeps the target it has (it reallocated at every 64 px step down, a pane sliding off-screen every few frames)",
-    "new": "    if (t && t.allocW === w && t.allocH === h) return t;   // A pane that shrinks keeps the target it has (it reallocated at every 64 px step down, a pane sliding off-screen every few frames)",
+    "old": "if (t && t.allocW >= w && t.allocH >= h) return t;",
+    "new": "if (t && t.allocW === w && t.allocH === h) return t;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "RW1-AUDIT-the-replays-stale-vao",
     "file": "src/render/airPass.js",
-    "old": "    f.bindVao?.(null); // The images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
-    "new": "    void f; // The images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "old": "    f.bindVao?.(null); // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "new": "    void f; // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "RW1-AUDIT-the-frames-target-let-go",
     "file": "src/render/renderer.js",
-    "old": "      this._frameFbo = t.fbo; setFrameTarget(t.fbo);   // Again - the frame's own begin let the lane's target go, and a sprite pass restoring \"the frame's\" target would have drawn on the screen",
-    "new": "      void t;   // Again - the frame's own begin let the lane's target go, and a sprite pass restoring \"the frame's\" target would have drawn on the screen",
+    "old": "      this._frameFbo = t.fbo; setFrameTarget(t.fbo);   // RW1 (AUDIT): again",
+    "new": "      void t;   // RW1 (AUDIT): again",
     "tests": [
       "test/render/windows1_view.test.js"
     ]

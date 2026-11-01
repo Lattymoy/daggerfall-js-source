@@ -1076,8 +1076,8 @@
   {
     "name": "TWOHANDS-GLOW-left-blade-unlit",
     "file": "src/render/renderer.js",
-    "old": "    if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);\n    if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);   // The fists",
-    "new": "    if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);   // The fists",
+    "old": "    if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);\n",
+    "new": "",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1085,8 +1085,8 @@
   {
     "name": "TWOHANDS-GLOW-gate-ignores-the-left",
     "file": "src/render/renderer.js",
-    "old": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
-    "new": "    const glow = !!(mesh.weaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
+    "old": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) &&",
+    "new": "const glow = !!(mesh.weaponGlow || mesh.handGlow) &&",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1094,8 +1094,8 @@
   {
     "name": "TWOHANDS-GLOW-every-slot-the-weapons",
     "file": "src/render/renderer.js",
-    "old": "      if (!inGlowSlot(r, slot) || r.hidden) continue;",
-    "new": "      if (!inGlowSlot(r, 'weapon') || r.hidden) continue;",
+    "old": "if (!inGlowSlot(r, slot) || r.hidden) continue;",
+    "new": "if (!inGlowSlot(r, 'weapon') || r.hidden) continue;",
     "tests": [
       "test/combat/twohands.test.js"
     ]

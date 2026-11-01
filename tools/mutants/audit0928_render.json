@@ -2,8 +2,8 @@
   {
     "name": "AUDIT0928-R1-generation-never-bumped",
     "file": "src/render/renderer.js",
-    "old": "      mesh._vertGen = (mesh._vertGen ?? 0) + 1;\n      if (was && was.length === positions.length) was.set(positions); else mesh._vertWas = Float32Array.from(positions);",
-    "new": "      if (was && was.length === positions.length) was.set(positions); else mesh._vertWas = Float32Array.from(positions);",
+    "old": "      mesh._vertGen = (mesh._vertGen ?? 0) + 1;\n",
+    "new": "",
     "tests": [
       "test/render/audit0928_render.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT0928-M3-block-forgets-the-switch-shadow",
     "file": "src/render/renderer.js",
-    "old": "      this._bbColumnOn = 0;\n      gl.uniform3f(this.bbUTip, 0, 0, 0);   // Every flat stands until a felled tree says otherwise",
-    "new": "      gl.uniform3f(this.bbUTip, 0, 0, 0);   // Every flat stands until a felled tree says otherwise",
+    "old": "      gl.uniform1f(bc.uColumnOn, 0);\n      this._bbColumnOn = 0;\n",
+    "new": "      gl.uniform1f(bc.uColumnOn, 0);\n",
     "tests": [
       "test/scenes/dwf_audit.test.js",
       "test/render/la_cost.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT0928-N7-classic-flats-lose-the-flash-term",
     "file": "src/render/renderer.js",
-    "old": "${COLUMN_GLSL}\n${HIT_FLASH_GLSL}\n${ELITE_GLOW_GLSL}",
-    "new": "${COLUMN_GLSL}\n${ELITE_GLOW_GLSL}",
+    "old": "${COLUMN_GLSL}\n${HIT_FLASH_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\n${FLAT_CRACK_GLSL}\nvoid main() {\n  // ECV1",
+    "new": "${COLUMN_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\n${FLAT_CRACK_GLSL}\nvoid main() {\n  // ECV1",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]

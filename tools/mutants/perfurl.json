@@ -38,8 +38,8 @@
   {
     "name": "PERFURL-air-door-parses-again",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('air', search) !== 'off';",
-    "new": "  return new URLSearchParams(search).get('air') !== 'off';",
+    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
+    "new": "  return new URLSearchParams(search).get('air') !== 'off'; // PERF-URL",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

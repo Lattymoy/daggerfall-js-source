@@ -103,8 +103,8 @@
   {
     "name": "F4-glare-slack-old",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SLACK = 0.25; // A QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
-    "new": "export const AIR_GLARE_SLACK = 1.0; // A QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "old": "export const AIR_GLARE_SLACK = 0.25;",
+    "new": "export const AIR_GLARE_SLACK = 1.0;",
     "tests": [
       "test/render/bugs5_field.test.js",
       "test/render/el7_polish.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "F5-steps-old",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_CONTACT_STEPS = 4; // Four over 0.6 units is a step every 15 cm under a thickness of 80 - the contact it finds, six found",
-    "new": "export const AIR_CONTACT_STEPS = 6; // Four over 0.6 units is a step every 15 cm under a thickness of 80 - the contact it finds, six found",
+    "old": "export const AIR_CONTACT_STEPS = 4;",
+    "new": "export const AIR_CONTACT_STEPS = 6;",
     "tests": [
       "test/render/bugs5_field.test.js",
       "test/render/el8_contact.test.js"

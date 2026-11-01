@@ -56,8 +56,8 @@
   {
     "name": "FAR-SEA1-the-haze-outlives-its-frame",
     "file": "src/render/renderer.js",
-    "old": "    this._seaHaze[0] = 0;   // And so is the far ring's haze on the sea - set by the host on a frame it draws the ring",
-    "new": "    // this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea - set by the host on a frame it draws the ring",
+    "old": "    this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea",
+    "new": "    // this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea",
     "tests": [
       "test/render/farsea1.test.js"
     ]

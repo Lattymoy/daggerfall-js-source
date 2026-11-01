@@ -2,8 +2,8 @@
   {
     "name": "PERF-EXT10-1-the-hosts-dress-is-gained-after-birth-a-tree-and-a-town-flat-split",
     "file": "src/render/renderer.js",
-    "old": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
-    "new": "      tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
+    "old": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined,",
+    "new": "      tip: undefined, conceal: undefined,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PERF-EXT10-2-conceal-noShadow-and-selfCard-are-gained-a-walker-a-pile-and-the-card-split",
     "file": "src/render/renderer.js",
-    "old": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
-    "new": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, ghost: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
+    "old": " conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined,",
+    "new": " hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, ghost: undefined, _dead: undefined,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PERF-EXT10-3-a-free-and-a-gibs-move-add-their-field",
     "file": "src/render/renderer.js",
-    "old": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
-    "new": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, dwColumn: undefined,",
+    "old": " _dead: undefined, _moveScratch: undefined, dwColumn: undefined,\n",
+    "new": " dwColumn: undefined,\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERF-EXT10-4-the-key-memory-is-gained-at-the-first-draw",
     "file": "src/render/renderer.js",
-    "old": "      _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,\n      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,",
-    "new": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,",
+    "old": "      _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,\n",
+    "new": "",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PERF-EXT10-5-the-shadow-records-memory-is-gained-at-the-first-record",
     "file": "src/render/renderer.js",
-    "old": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,\n      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
-    "new": "      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
+    "old": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,\n",
+    "new": "",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PERF-EXT10-6-a-move-gains-_shMovedAt",
     "file": "src/render/renderer.js",
-    "old": "      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
-    "new": "      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shId: undefined,",
+    "old": " _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
+    "new": " _shSway: undefined, _shId: undefined,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PERF-EXT10-7-the-signature-gains-_shId",
     "file": "src/render/renderer.js",
-    "old": "      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
-    "new": "      _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined,",
+    "old": " _shMovedAt: undefined, _shId: undefined,\n",
+    "new": " _shMovedAt: undefined,\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PERF-EXT11-1-the-main-pass-skips-a-size-whose-h-alone-changed",
     "file": "src/render/renderer.js",
-    "old": "      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
-    "new": "      if (w !== lastW) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
+    "old": "      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h);",
+    "new": "      if (w !== lastW) { gl.uniform2f(this.bbUSize, w, h);",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PERF-EXT11-2-the-main-pass-skips-an-origin-whose-z-alone-changed",
     "file": "src/render/renderer.js",
-    "old": "      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }",
-    "new": "      if (o[0] !== lastOx || o[1] !== lastOy) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }",
+    "old": "      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin,",
+    "new": "      if (o[0] !== lastOx || o[1] !== lastOy) { gl.uniform3f(this.bbUOrigin,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PERF-EXT11-3-the-main-pass-skips-an-origin-whose-y-alone-changed",
     "file": "src/render/renderer.js",
-    "old": "      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }",
-    "new": "      if (o[0] !== lastOx || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }",
+    "old": "      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin,",
+    "new": "      if (o[0] !== lastOx || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PERF-EXT11-4-the-main-pass-never-remembers-a-size-and-uploads-every-flat-again",
     "file": "src/render/renderer.js",
-    "old": "      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
-    "new": "      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); }",
+    "old": "gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
+    "new": "gl.uniform2f(this.bbUSize, w, h); }",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PERF-EXT11-5-the-main-pass-carries-its-lasts-to-the-next-call-and-a-new-program-draws-unsized",
     "file": "src/render/renderer.js",
-    "old": "    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    const drawOne = (b) => {\n      const key = billboardKey(b);   // The key follows every field it is made of (billboardKey.js)\n      const tex = this.textures.get(key) ?? this._textureMissed(key);   // A picture let go is made again\n      if (!tex) return;\n      // `emissionOff` - a flat whose material's _EmissionColor is black (Come Sail Away's SetLights on an\n      // unlit lantern) binds no emission map; a change of it forgets the last key, so a lit and an unlit lantern of\n      // one record never share a bind (and a pass with no such flat never rebinds for it)\n      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }\n      if (key !== lastKey) {\n        this._activeTexture(gl.TEXTURE0);\n        gl.bindTexture(gl.TEXTURE_2D, tex);\n        this._activeTexture(gl.TEXTURE1);\n        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);\n        this._tex0Bound = null;   // And unit 0 with it - this path binds its own and keeps its own `lastKey` skip\n        this._tex1Bound = null;   // This path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards\n        this.stats.texBinds += 2;\n        lastKey = key;\n      }\n      const w = b.size.w, h = b.size.h;\n      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
-    "new": "    const carried = (this._bbCarried ??= { w: NaN, h: NaN });\n    let lastW = carried.w, lastH = carried.h, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    const drawOne = (b) => {\n      const key = billboardKey(b);   // The key follows every field it is made of (billboardKey.js)\n      const tex = this.textures.get(key) ?? this._textureMissed(key);   // A picture let go is made again\n      if (!tex) return;\n      // `emissionOff` - a flat whose material's _EmissionColor is black (Come Sail Away's SetLights on an\n      // unlit lantern) binds no emission map; a change of it forgets the last key, so a lit and an unlit lantern of\n      // one record never share a bind (and a pass with no such flat never rebinds for it)\n      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }\n      if (key !== lastKey) {\n        this._activeTexture(gl.TEXTURE0);\n        gl.bindTexture(gl.TEXTURE_2D, tex);\n        this._activeTexture(gl.TEXTURE1);\n        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);\n        this._tex0Bound = null;   // And unit 0 with it - this path binds its own and keeps its own `lastKey` skip\n        this._tex1Bound = null;   // This path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards\n        this.stats.texBinds += 2;\n        lastKey = key;\n      }\n      const w = b.size.w, h = b.size.h;\n      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = carried.w = w; lastH = carried.h = h; }",
+    "old": "    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    const drawOne = (b) => {\n      const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)\n      const tex = this.textures.get(key) ?? this._textureMissed(key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a picture let go is made again\n      if (!tex) return;\n      // CSA-B: `emissionOff` - a flat whose material's _EmissionColor is black (Come Sail Away's SetLights on an\n      // unlit lantern) binds no emission map; a change of it forgets the last key, so a lit and an unlit lantern of\n      // one record never share a bind (and a pass with no such flat never rebinds for it)\n      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }\n      if (key !== lastKey) {\n        this._activeTexture(gl.TEXTURE0);\n        gl.bindTexture(gl.TEXTURE_2D, tex);\n        this._activeTexture(gl.TEXTURE1);\n        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);\n        this._tex0Bound = null;   // PERF-TEX3: and unit 0 with it - this path binds its own and keeps its own `lastKey` skip\n        this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards\n        this.stats.texBinds += 2;\n        lastKey = key;\n      }\n      const w = b.size.w, h = b.size.h;\n      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
+    "new": "    const carried = (this._bbCarried ??= { w: NaN, h: NaN });\n    let lastW = carried.w, lastH = carried.h, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    const drawOne = (b) => {\n      const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)\n      const tex = this.textures.get(key) ?? this._textureMissed(key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a picture let go is made again\n      if (!tex) return;\n      // CSA-B: `emissionOff` - a flat whose material's _EmissionColor is black (Come Sail Away's SetLights on an\n      // unlit lantern) binds no emission map; a change of it forgets the last key, so a lit and an unlit lantern of\n      // one record never share a bind (and a pass with no such flat never rebinds for it)\n      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }\n      if (key !== lastKey) {\n        this._activeTexture(gl.TEXTURE0);\n        gl.bindTexture(gl.TEXTURE_2D, tex);\n        this._activeTexture(gl.TEXTURE1);\n        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);\n        this._tex0Bound = null;   // PERF-TEX3: and unit 0 with it - this path binds its own and keeps its own `lastKey` skip\n        this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards\n        this.stats.texBinds += 2;\n        lastKey = key;\n      }\n      const w = b.size.w, h = b.size.h;\n      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = carried.w = w; lastH = carried.h = h; }",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "PERF-EXT13-1-every-row-draws-with-the-first-rows-matrix",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniformMatrix4fv(L.model, false, row[1]);",
-    "new": "      if (i === 0) gl.uniformMatrix4fv(L.model, false, row[1]);",
+    "old": "      gl.uniformMatrix4fv(L.model, false, row[1]);\n",
+    "new": "      if (i === 0) gl.uniformMatrix4fv(L.model, false, row[1]);\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "PERF-EXT13-2-a-first-row-with-no-array-samples-the-grounds-left-bound",
     "file": "src/render/renderer.js",
-    "old": "      if (i === 0 || arrayTex !== bound) {",
-    "new": "      if (arrayTex !== bound) {",
+    "old": "      if (i === 0 || arrayTex !== bound) {\n",
+    "new": "      if (arrayTex !== bound) {\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "PERF-EXT13-3-the-array-is-bound-for-the-first-row-alone-and-another-climate-samples-the-first",
     "file": "src/render/renderer.js",
-    "old": "      if (i === 0 || arrayTex !== bound) {",
-    "new": "      if (i === 0) {",
+    "old": "      if (i === 0 || arrayTex !== bound) {\n",
+    "new": "      if (i === 0) {\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "PERF-EXT13-4-the-array-bound-is-never-remembered-and-binds-every-row",
     "file": "src/render/renderer.js",
-    "old": "        bound = arrayTex;\n        this.stats.texBinds++;",
-    "new": "        this.stats.texBinds++;",
+    "old": "        bound = arrayTex;\n        this.stats.texBinds++;\n",
+    "new": "        this.stats.texBinds++;\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PERF-EXT13-5-no-rows-still-sends-the-block",
     "file": "src/render/renderer.js",
-    "old": "    if (!n) return;   // no water in sight: not a GL call, as when no pixel called\n    this._close2D();   // The baseline back, before anything that needs it",
-    "new": "    this._close2D();   // The baseline back, before anything that needs it",
+    "old": "    if (!n) return;   // no water in sight: not a GL call, as when no pixel called\n",
+    "new": "",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "PERF-EXT13-6-the-pass-leaves-unit-2-selected",
     "file": "src/render/renderer.js",
-    "old": "    }\n    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);",
-    "new": "    }\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);",
+    "old": "      this.stats.draws++;\n    }\n    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n",
+    "new": "      this.stats.draws++;\n    }\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "PERF-EXT13-7-the-pass-leaves-the-last-water-vao-bound",
     "file": "src/render/renderer.js",
-    "old": "    this._bindVao(null);\n    gl.depthFunc(gl.LESS);",
-    "new": "    gl.depthFunc(gl.LESS);",
+    "old": "    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
+    "new": "    this._activeTexture(gl.TEXTURE0);\n    gl.depthFunc(gl.LESS);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "PERF-EXT13-8-the-one-row-door-keeps-the-surface-alive",
     "file": "src/render/renderer.js",
-    "old": "    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call\n  }",
-    "new": "  }",
+    "old": "    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call\n",
+    "new": "",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "PERF-EXT10-10-the-shadow-origin-is-born-undefined-a-tagged-slot-and-every-record-boxes-it",
     "file": "src/render/renderer.js",
-    "old": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,",
-    "new": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: undefined, _shOy: undefined, _shOz: undefined, _shFrame: undefined,",
+    "old": " _shOx: NaN, _shOy: NaN, _shOz: NaN,",
+    "new": " _shOx: undefined, _shOy: undefined, _shOz: undefined,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "PERF-EXT10-11-one-of-the-three-is-born-undefined-and-a-third-of-the-garbage-is-back",
     "file": "src/render/renderer.js",
-    "old": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,",
-    "new": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: undefined, _shFrame: undefined,",
+    "old": " _shOz: NaN, _shFrame: undefined,",
+    "new": " _shOz: undefined, _shFrame: undefined,",
     "tests": [
       "test/render/perfextb.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "PERF-EXT10-12-the-origin-is-born-null-another-tagged-slot",
     "file": "src/render/renderer.js",
-    "old": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,",
-    "new": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: null, _shOy: NaN, _shOz: NaN, _shFrame: undefined,",
+    "old": " _shOx: NaN, _shOy: NaN,",
+    "new": " _shOx: null, _shOy: NaN,",
     "tests": [
       "test/render/perfextb.test.js"
     ]

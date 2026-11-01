@@ -624,8 +624,8 @@
   {
     "name": "AUDITGF-V6-the-trees-take-the-seams",
     "file": "src/render/renderer.js",
-    "old": "      if (this._bbCrackOn) { gl.uniform2f(this.bbUCrack, 0, 0); this._bbCrackOn = false; }   // The trees take no vein's seams\n      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }",
-    "new": "      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }",
+    "old": "      if (this._bbCrackOn) { gl.uniform2f(this.bbUCrack, 0, 0); this._bbCrackOn = false; }   // VEIN-CRACKS: the trees take no vein's seams\n",
+    "new": "",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],

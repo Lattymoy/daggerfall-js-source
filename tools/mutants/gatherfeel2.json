@@ -263,8 +263,8 @@
   {
     "name": "GF2-VEINCRACKS-the-send-dropped",
     "file": "src/render/renderer.js",
-    "old": "      if (ck || this._bbCrackOn) { gl.uniform2f(this.bbUCrack, ck ? ck[0] : 0, ck ? ck[1] : 0); this._bbCrackOn = !!ck; }",
-    "new": "      /* the send dropped */",
+    "old": "      if (ck || this._bbCrackOn) { gl.uniform2f(this.bbUCrack, ck ? ck[0] : 0, ck ? ck[1] : 0); this._bbCrackOn = !!ck; }\n",
+    "new": "      /* the send dropped */\n",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GF2-VEINCRACKS-the-frame-reset-dropped",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform2f(this.bbUCrack, 0, 0);   // Every flat whole until a worked vein's batch says otherwise\n      this._bbCrackOn = false;",
-    "new": "      this._bbCrackOn = false;",
+    "old": "      gl.uniform2f(this.bbUCrack, 0, 0);   // VEIN-CRACKS: every flat whole until a worked vein's batch says otherwise\n",
+    "new": "",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "GF2-VEINCRACKS-the-classic-albedo-whole",
     "file": "src/render/renderer.js",
-    "old": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0)) * veinCrackShade(uv);   // VEIN-CRACKS: a worked vein's seams, lit as the ore is",
-    "new": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0));   // VEIN-CRACKS: a worked vein's seams, lit as the ore is",
+    "old": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0)) * veinCrackShade(uv);",
+    "new": "  vec3 albedo = max(tex.rgb - emission, vec3(0.0));",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "GF2-VEINCRACKS-born-without-the-field",
     "file": "src/render/renderer.js",
-    "old": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
-    "new": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined, _moveScratch: undefined, dwColumn: undefined,",
+    "old": "dissolve: undefined, crack: undefined, tint: undefined,",
+    "new": "dissolve: undefined, tint: undefined,",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]

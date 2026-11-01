@@ -155,8 +155,8 @@
   {
     "name": "NODE-OUTLINE-the-drawn-trees-never-forgotten",
     "file": "src/render/renderer.js",
-    "old": "    this._lptDrawn?.fill(null);   // And the 3D trees a frame drew\n    // The shadows reset with the counters - whatever ran between",
-    "new": "    // The shadows reset with the counters - whatever ran between",
+    "old": "    this._lptDrawn?.fill(null);   // NODE-OUTLINE: and the 3D trees a frame drew\n",
+    "new": "",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "NODE-OUTLINE-the-drawn-trees-never-kept",
     "file": "src/render/renderer.js",
-    "old": "      for (let i = 0; i < slots.length; i++) drawn[i] = slots[i]?.runs.length ? slots[i] : null;   // What this frame drew, for the nodes' glint",
-    "new": "      for (let i = 0; i < slots.length; i++) drawn[i] = null;   // What this frame drew, for the nodes' glint",
+    "old": "drawn[i] = slots[i]?.runs.length ? slots[i] : null;",
+    "new": "drawn[i] = null;",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]
@@ -957,8 +957,8 @@
   {
     "name": "GLINT-LIGHT-the-clockless-light-a-new-array",
     "file": "src/render/renderer.js",
-    "old": "    if (!this._clockLit) { out[0] = 1; out[1] = 1; out[2] = 1; return out; }",
-    "new": "    if (!this._clockLit) return [1, 1, 1];",
+    "old": "if (!this._clockLit) { out[0] = 1; out[1] = 1; out[2] = 1; return out; }",
+    "new": "if (!this._clockLit) return [1, 1, 1];",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]

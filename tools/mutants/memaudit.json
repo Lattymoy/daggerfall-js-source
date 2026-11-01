@@ -128,8 +128,8 @@
   {
     "name": "MA-the-indices-a-batch-again",
     "file": "src/render/renderer.js",
-    "old": "    const corners = BB_CORNERS;",
-    "new": "    void new Uint32Array(count * 6);\n    const corners = BB_CORNERS;",
+    "old": "    const verts = new Float32Array(count * 4 * 5);\n    const corners = BB_CORNERS;",
+    "new": "    const verts = new Float32Array(count * 4 * 5);\n    void new Uint32Array(count * 6);\n    const corners = BB_CORNERS;",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

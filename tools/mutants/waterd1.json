@@ -84,8 +84,8 @@
   {
     "name": "WATERD1-the-screen-quad-no-longer-resolves-the-frame",
     "file": "src/render/renderer.js",
-    "old": "    this._compositeAir();   // A no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
-    "new": "    this._ensureScreenQuadProgram();",
+    "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
+    "new": "    if (this._worldViewportPx) this.endWorldPass();\n    this._ensureScreenQuadProgram();",
     "tests": [
       "test/render/waterd1.test.js"
     ]

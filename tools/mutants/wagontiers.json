@@ -11,8 +11,8 @@
   {
     "name": "WAGON-TIERS-the-row-forced-online",
     "file": "src/systems/features.js",
-    "old": "      store: 'prefs', key: 'wagonUpkeep', initial: 'boons', online: 'player',   // systems/upkeep/upkeepSwitch.js WAGON_UPKEEP_PREF; WAGON-TIERS: upkeepTiers.js WAGON_UPKEEP_DEFAULT",
-    "new": "      store: 'prefs', key: 'wagonUpkeep', initial: 'boons', online: true,   // systems/upkeep/upkeepSwitch.js WAGON_UPKEEP_PREF; WAGON-TIERS: upkeepTiers.js WAGON_UPKEEP_DEFAULT",
+    "old": "store: 'prefs', key: 'wagonUpkeep', initial: 'boons', online: 'player',",
+    "new": "store: 'prefs', key: 'wagonUpkeep', initial: 'boons', online: true,",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]

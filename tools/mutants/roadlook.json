@@ -183,8 +183,8 @@
   {
     "name": "ROAD-LOOK-the-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)\n  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share",
-    "new": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share",
+    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)\n",
+    "new": "",
     "tests": [
       "test/world/road/roadlook.test.js",
       "test/systems/ecotone1.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "ROAD-LOOK-the-switch-never-uploaded",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform1f(this.tURoadEdge, this.roadEdges ? 1 : 0);   // A frame's, as the bed's switch",
-    "new": "      void this.tURoadEdge;   // A frame's, as the bed's switch",
+    "old": "      gl.uniform1f(this.tURoadEdge, this.roadEdges ? 1 : 0);",
+    "new": "      void this.tURoadEdge;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]

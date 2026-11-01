@@ -154,8 +154,8 @@
   {
     "name": "BR5-setting-names-the-game",
     "file": "src/systems/features.js",
-    "old": "      + 'Off spreads the trees evenly, like the original.'); },",
-    "new": "      + 'Off spreads the trees evenly, as Daggerfall does.'); },",
+    "old": "+ 'Off spreads the trees evenly, like the original.'); },",
+    "new": "+ 'Off spreads the trees evenly, as Daggerfall does.'); },",
     "tests": [
       "test/ui/brand.test.js"
     ],

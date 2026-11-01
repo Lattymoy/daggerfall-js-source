@@ -128,8 +128,8 @@
   {
     "name": "BLOOD1a-the-decal-pass-turns-the-depth-test-off",
     "file": "src/render/renderer.js",
-    "old": "    this._bindVao(batch.vao);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(false);",
-    "new": "    this._bindVao(batch.vao);\n    gl.enable(gl.BLEND);\n    gl.disable(gl.DEPTH_TEST);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(false);",
+    "old": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.enable(gl.BLEND);\n    gl.disable(gl.DEPTH_TEST);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "BLOOD1b-every-batch-in-the-tree-becomes-dynamic",
     "file": "src/render/renderer.js",
-    "old": "      gl.bufferData(gl.ARRAY_BUFFER, verts, dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);",
-    "new": "      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);",
+    "old": "    gl.bufferData(gl.ARRAY_BUFFER, verts, dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);",
+    "new": "    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2221,8 +2221,8 @@
   {
     "name": "AUDIT4-the-classic-decal-takes-the-flat-s-lanterns-again",
     "file": "src/render/renderer.js",
-    "old": "    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1",
-    "new": "    float d = length(L);\n    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att * uPointColors[i];\n  }\n  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1",
+    "old": "    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n  }\n  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1\n  vec3 iL = uIndirect.xyz - vWorld;",
+    "new": "    pointAcc += att * att * uPointColors[i];\n  }\n  pointAcc += winLit(vWorld, n, 0.0, 1.0);   // WL1\n  vec3 iL = uIndirect.xyz - vWorld;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2248,8 +2248,8 @@
   {
     "name": "AUDIT4-the-sun-uploads-its-half",
     "file": "src/render/renderer.js",
-    "old": "        gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);",
-    "new": "        gl.uniform3f(d.sun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);",
+    "old": "      gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);",
+    "new": "      gl.uniform3f(d.sun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2257,8 +2257,8 @@
   {
     "name": "AUDIT4-the-sun-s-direction-is-not-uploaded",
     "file": "src/render/renderer.js",
-    "old": "      if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4\n      if (d.moonDir) gl.uniform3fv(d.moonDir, this._moonDir);      // BLOOD AUDIT 5",
-    "new": "        if (d.moonDir) gl.uniform3fv(d.moonDir, this._moonDir);      // BLOOD AUDIT 5",
+    "old": "    if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4\n",
+    "new": "",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2266,8 +2266,8 @@
   {
     "name": "AUDIT4-texBinds-counted-twice",
     "file": "src/render/renderer.js",
-    "old": "    // BLOOD AUDIT 4: no texBinds++ here - _bindTex0 above counts the bind",
-    "new": "    this.stats.texBinds++;\n    // BLOOD AUDIT 4: no texBinds++ here - _bindTex0 above counts the bind",
+    "old": "    this._bindVao(null);\n    // BLOOD AUDIT 4: no texBinds++ here",
+    "new": "    this._bindVao(null);\n    this.stats.texBinds++;\n    // BLOOD AUDIT 4: no texBinds++ here",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2428,8 +2428,8 @@
   {
     "name": "BLOOD2e-the-row-is-off-by-default",
     "file": "src/systems/features.js",
-    "old": "        Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),",
-    "new": "        Object.freeze({ store: 'prefs', key: 'blood-screen', initial: false, online: 'player' }),",
+    "old": "key: 'blood-screen', initial: true",
+    "new": "key: 'blood-screen', initial: false",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2509,8 +2509,8 @@
   {
     "name": "BLOOD2f-the-attribute-is-not-bound",
     "file": "src/render/renderer.js",
-    "old": "    gl.enableVertexAttribArray(3);\n    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, DECAL_STRIDE, 36);   // The wet float\n    const ib = gl.createBuffer();",
-    "new": "    const ib = gl.createBuffer();",
+    "old": "    gl.enableVertexAttribArray(3);\n    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, DECAL_STRIDE, 36);   // BLOOD2f: the wet float\n",
+    "new": "",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

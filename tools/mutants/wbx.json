@@ -2,8 +2,8 @@
   {
     "name": "WBX1-the-widening-dropped",
     "file": "src/render/renderer.js",
-    "old": "    buf(gl.ELEMENT_ARRAY_BUFFER, model.indices instanceof Uint32Array ? model.indices : Uint32Array.from(model.indices));",
-    "new": "    buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);",
+    "old": "buf(gl.ELEMENT_ARRAY_BUFFER, model.indices instanceof Uint32Array ? model.indices : Uint32Array.from(model.indices));",
+    "new": "buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

@@ -122,8 +122,8 @@
   {
     "name": "TO-ROADS-off-the-tile",
     "file": "src/systems/features.js",
-    "old": "    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
-    "new": "  ]),",
+    "old": "\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
+    "new": "\n  ]),",
     "tests": [
       "test/systems/travel/fb0929d_toroads.test.js"
     ],

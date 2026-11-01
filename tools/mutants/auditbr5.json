@@ -224,8 +224,8 @@
   {
     "name": "AUDITBR5-the-coast-says-nothing",
     "file": "src/systems/features.js",
-    "old": "      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)",
-    "new": "      + 'hand-drawn and joined to the classic coast. With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)",
+    "old": "joined to the Bay’s own coast.",
+    "new": "joined to the classic coast.",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "AUDITBR5-the-cries-this-games",
     "file": "src/systems/features.js",
-    "old": "    get note() { return t('features.combatVoices.note', 'You and your enemies grunt when swinging and cry out when hit. The sounds are in the original game but '",
-    "new": "    get note() { return t('features.combatVoices.note', 'You and your enemies grunt when swinging and cry out when hit. The sounds ship with the game but '",
+    "old": "The sounds are in the original game but '",
+    "new": "The sounds ship with the game but '",
     "tests": [
       "test/ui/brand.test.js"
     ],

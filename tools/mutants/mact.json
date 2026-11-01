@@ -20,8 +20,8 @@
   {
     "name": "MACT-the-glare-forgets-the-carried-flag",
     "file": "src/render/airPass.js",
-    "old": "      if (f.carried && f.carried[i]) continue; // The light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
-    "new": "      if (f.carried && f.carried[i] && false) continue; // The light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
+    "old": "      if (f.carried && f.carried[i]) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
+    "new": "      if (f.carried && f.carried[i] && false) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
     "tests": [
       "test/render/mact_bugs.test.js"
     ]

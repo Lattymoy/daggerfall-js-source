@@ -146,8 +146,8 @@
   {
     "name": "BEAST-BOOTS-default-thrown",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'mwBeastFeet', initial: 'worn', online: 'player',",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'mwBeastFeet', initial: 'shafts', online: 'player',",
+    "old": "key: 'mwBeastFeet', initial: 'worn'",
+    "new": "key: 'mwBeastFeet', initial: 'shafts'",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]

@@ -139,8 +139,8 @@
   {
     "name": "ECOTONE1-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n  float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)",
-    "new": "  float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)",
+    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "ECOTONE1-binds-unshadowed",
     "file": "src/render/renderer.js",
-    "old": "        if (!tex || shadow[k] === tex) continue;",
-    "new": "        if (!tex) continue;",
+    "old": "if (!tex || shadow[k] === tex) continue;",
+    "new": "if (!tex) continue;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "ECOTONE1-switch-left-on",
     "file": "src/render/renderer.js",
-    "old": "    } else if (this._tEcoOn !== false) {",
-    "new": "    } else if (false) {",
+    "old": "} else if (this._tEcoOn !== false) {",
+    "new": "} else if (false) {",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "ECOTONE1-switch-never-forgotten",
     "file": "src/render/renderer.js",
-    "old": "    this._tEcoOn = null;   // And the border switch, a frame's like the tile size\n    this._tSnowOn = null; this._tSnowArr = [-1, -1, -1, -1];   // And the snow's",
-    "new": "    this._tSnowOn = null; this._tSnowArr = [-1, -1, -1, -1];   // And the snow's",
+    "old": "    this._tEcoOn = null;   // ECOTONE1: and the border switch, a frame's like the tile size\n",
+    "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]

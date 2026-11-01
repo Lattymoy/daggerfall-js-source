@@ -104,8 +104,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // The texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)",
-    "new": "    if (opts.alpha === 'never' && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // The texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)"
+    "old": "    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);",
+    "new": "    if (opts.alpha === 'never' && tex) (this._alphaArt ??= new WeakSet()).add(tex);"
   },
   {
     "name": "OVH-sdf-classic-spacing-kept",

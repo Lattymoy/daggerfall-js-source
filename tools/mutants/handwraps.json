@@ -262,8 +262,8 @@
   {
     "name": "HANDWRAPS-ranges",
     "file": "src/render/renderer.js",
-    "old": "export const inGlowSlot = (r, slot) => (slot === 'hands' ? GLOW_HAND_SLOT.test(r.slot ?? '') : r.slot === slot);",
-    "new": "export const inGlowSlot = (r, slot) => (r.slot === slot);",
+    "old": "(slot === 'hands' ? GLOW_HAND_SLOT.test(r.slot ?? '') : r.slot === slot)",
+    "new": "(r.slot === slot)",
     "tests": [
       "test/combat/handwraps.test.js",
       "test/combat/handwraps_arm.test.js"
@@ -284,8 +284,8 @@
   {
     "name": "HANDWRAPS-drawn",
     "file": "src/render/renderer.js",
-    "old": "    if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);   // The fists",
-    "new": "   // The fists",
+    "old": "    if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);",
+    "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -384,8 +384,8 @@
   {
     "name": "HANDWRAPS-gate",
     "file": "src/render/renderer.js",
-    "old": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
-    "new": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
+    "old": "!!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow)",
+    "new": "!!(mesh.weaponGlow || mesh.offWeaponGlow)",
     "tests": [
       "test/combat/handwraps_arm.test.js"
     ],

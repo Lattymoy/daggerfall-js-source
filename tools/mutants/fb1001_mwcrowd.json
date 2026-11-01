@@ -29,8 +29,8 @@
   {
     "name": "MW-CROWD-the-bounds-opt-ignored",
     "file": "src/render/renderer.js",
-    "old": "    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: opts.bounds === false ? null : boundsOf(packed, null, 0, -1, floats) };",
-    "new": "    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: boundsOf(packed, null, 0, -1, floats) };",
+    "old": "bounds: opts.bounds === false ? null : boundsOf(packed, null, 0, -1, floats) };",
+    "new": "bounds: boundsOf(packed, null, 0, -1, floats) };",
     "tests": [
       "test/net/peer/fb1001_mwcrowd.test.js"
     ]

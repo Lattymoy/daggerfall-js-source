@@ -20,8 +20,8 @@
   {
     "name": "f12-no-ao-unit-without-air",
     "file": "src/render/renderer.js",
-    "old": "    if (!loc?.adapt) return;",
-    "new": "    if (!loc?.adapt || !this._air) return;",
+    "old": "  _uploadAdapt(loc) {\n    if (!loc?.adapt) return;",
+    "new": "  _uploadAdapt(loc) {\n    if (!loc?.adapt || !this._air) return;",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "f2-depth-not-returned",
     "file": "src/render/renderer.js",
-    "old": "      this._spriteDepth--;\n      this._cFrameStamp = -1;   // The sprite's block is no world rig's",
-    "new": "      this._cFrameStamp = -1;   // The sprite's block is no world rig's",
+    "old": "      this._spriteDepth--;   // AUDIT-EL F2\n",
+    "new": "",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "f3-water-48",
     "file": "src/render/renderer.js",
-    "old": "    const count = Math.min(this._pointLights.length / 4, CLASSIC_MAX_LIGHTS);",
-    "new": "    const count = this._pointLights.length / 4;",
+    "old": "    const count = Math.min(this._pointLights.length / 4, CLASSIC_MAX_LIGHTS);\n    gl.uniform1i(L.pointCount, count);",
+    "new": "    const count = this._pointLights.length / 4;\n    gl.uniform1i(L.pointCount, count);",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "f5-owed-frame-lost",
     "file": "src/render/renderer.js",
-    "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // Whatever was owed is drawn; this frame's deck is its host's to set",
-    "new": "    this._deckOwed = null;   // Whatever was owed is drawn; this frame's deck is its host's to set",
+    "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world",
+    "new": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world",
     "tests": [
       "test/render/audit_el.test.js"
     ],
@@ -93,7 +93,7 @@
   {
     "name": "f5-bound-frame-not-owed",
     "file": "src/render/airPass.js",
-    "old": "    this.pending = true; // A bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
+    "old": "    this.pending = true; // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
     "new": "    return f.fbo;",
     "tests": [
       "test/render/audit_el.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "f7-panel-on-lane",
     "file": "src/render/renderer.js",
-    "old": "    this._panelLane = this._lane;\n    if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }",
-    "new": "    this._panelLane = null;",
+    "old": "    this._panelLane = this._lane;\n    if (this._lane) { this._lane = null; this._installWorldSet(this._classicSet); }\n",
+    "new": "    this._panelLane = null;\n",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "f7-lane-not-restored",
     "file": "src/render/renderer.js",
-    "old": "    if (this._panelLane) { this._lane = this._panelLane; this._installWorldSet(this._laneSet); }   // The lane back\n    this._panelLane = null;",
-    "new": "    this._panelLane = null;",
+    "old": "    if (this._panelLane) { this._lane = this._panelLane; this._installWorldSet(this._laneSet); }   // AUDIT-EL F7: the lane back\n",
+    "new": "",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "f10-measure-always",
     "file": "src/render/airPass.js",
-    "old": "    this.measured = !!(sp && sp.count > 0); // A frame with no world in it (a video, a menu) is not one the eye adapts to",
-    "new": "    this.measured = true; // A frame with no world in it (a video, a menu) is not one the eye adapts to",
+    "old": "    this.measured = !!(sp && sp.count > 0); // AUDIT-EL F10: a frame with no world in it (a video, a menu) is not one the eye adapts to",
+    "new": "    this.measured = true; // AUDIT-EL F10: a frame with no world in it (a video, a menu) is not one the eye adapts to",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "f11-flash-glares",
     "file": "src/render/airPass.js",
-    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // The lightning flash (range 500..1000 over the player) is no lantern",
-    "new": "      if (!(range > 0)) continue; // The lightning flash (range 500..1000 over the player) is no lantern",
+    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern",
+    "new": "      if (!(range > 0)) continue; // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern",
     "tests": [
       "test/render/audit_el.test.js"
     ]
@@ -248,7 +248,7 @@
   {
     "name": "f18-zero-frame-bound",
     "file": "src/render/airPass.js",
-    "old": "    if (!(W > 0 && H > 0)) return null;\n    const f = this._ensureFrame(W, H, slot);",
+    "old": "    if (!(W > 0 && H > 0)) return null; // AUDIT-EL F18\n    const f = this._ensureFrame(W, H, slot);",
     "new": "    const f = this._ensureFrame(W, H, slot);",
     "tests": [
       "test/render/audit_el.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "f19-shadow-only",
     "file": "src/render/renderer.js",
-    "old": "    this.markForeignPass();   // The last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten",
-    "new": "    this._lastProgram = null; this._lastVao = null;   // The last replayed VAO is unbound for real (a shadow set to null over a live bind is a capture waiting to happen), and the shadows forgotten",
+    "old": "    this.markForeignPass();   // AUDIT-EL F19",
+    "new": "    this._lastProgram = null; this._lastVao = null;   // AUDIT-EL F19",
     "tests": [
       "test/render/audit_el.test.js"
     ]

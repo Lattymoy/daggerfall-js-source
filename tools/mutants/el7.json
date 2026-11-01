@@ -2,8 +2,8 @@
   {
     "name": "glare-slack-half",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SLACK = 0.25; // A QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
-    "new": "export const AIR_GLARE_SLACK = 0.5; // A QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "old": "export const AIR_GLARE_SLACK = 0.25; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "new": "export const AIR_GLARE_SLACK = 0.5; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "glare-size-ball",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SIZE = 0.25; // A glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
-    "new": "export const AIR_GLARE_SIZE = 0.35; // A glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "old": "export const AIR_GLARE_SIZE = 0.25; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "new": "export const AIR_GLARE_SIZE = 0.35; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "renderer-char-from-sprite",
     "file": "src/render/renderer.js",
-    "old": "    if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // The rigs cast - never from the sprite target or the studio bake",
-    "new": "    if (this._casting) this._shadows.recordCharacter(mesh, modelMatrix);   // The rigs cast - never from the sprite target or the studio bake",
+    "old": "    if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);",
+    "new": "    if (this._casting) this._shadows.recordCharacter(mesh, modelMatrix);",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "renderer-char-no-bounds",
     "file": "src/render/renderer.js",
-    "old": "    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: opts.bounds === false ? null : boundsOf(packed, null, 0, -1, floats) };",
-    "new": "    return { vao, count: packed.length / floats, buffers: [vbo], vbo, floats, bounds: null };",
+    "old": "bounds: opts.bounds === false ? null : boundsOf(packed, null, 0, -1, floats) };",
+    "new": "bounds: null };",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "water-classic-on-lane",
     "file": "src/render/renderer.js",
-    "old": "    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // The lane's water receives the sun map",
-    "new": "    const laneWater = false;   // The lane's water receives the sun map",
+    "old": "    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map",
+    "new": "    const laneWater = false;   // EL7: the lane's water receives the sun map",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "water-no-map-upload",
     "file": "src/render/renderer.js",
-    "old": "    if (L === this._wsLane && this._shadows) this._shadows.upload(L.shadow);   // The maps and the receiver's uniforms - the lane's program\n    gl.uniform3fv(L.lightDir, this._lightDir);",
-    "new": "    gl.uniform3fv(L.lightDir, this._lightDir);",
+    "old": "    if (L === this._wsLane && this._shadows) this._shadows.upload(L.shadow);   // EL7: the maps and the receiver's uniforms - the lane's program\n",
+    "new": "",
     "tests": [
       "test/render/el7_polish.test.js"
     ]

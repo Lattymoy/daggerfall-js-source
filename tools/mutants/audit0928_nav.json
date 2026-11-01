@@ -77,8 +77,8 @@
   {
     "name": "N8-PERF-2D-keeps-no-opener",
     "file": "src/render/renderer.js",
-    "old": "      if (!this._warned2dForeign) this._2dOpenedBy = new Error('PERF-2D: the 2D run opened here');",
-    "new": "      if (!this._warned2dForeign) this._2dOpenedBy = null;",
+    "old": "if (!this._warned2dForeign) this._2dOpenedBy = new Error('PERF-2D: the 2D run opened here');",
+    "new": "if (!this._warned2dForeign) this._2dOpenedBy = null;",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/render/glstate.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "N8-PERF-2D-names-no-finder",
     "file": "src/render/renderer.js",
-    "old": "        `\\n  the pass that found it: ${new Error().stack?.split('\\n').slice(2, 6).join(' <- ') ?? '?'}`,",
-    "new": "        `\\n  the pass that found it: ?`,",
+    "old": "the pass that found it: ${new Error().stack?.split('\\n').slice(2, 6).join(' <- ') ?? '?'}",
+    "new": "the pass that found it: ?",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/render/glstate.test.js"

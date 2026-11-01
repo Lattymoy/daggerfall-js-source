@@ -290,8 +290,8 @@
   {
     "name": "GUIDE5-row-default-off",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: false, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: false, online: 'player' }),",
     "tests": [
       "test/ui/quest/guide5_marks.test.js",
       "test/systems/features.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "GUIDE5-row-forced-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: true }),   // ui/quest/questMarks.js MARKS_PREF",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: true }),",
     "tests": [
       "test/ui/quest/guide5_marks.test.js",
       "test/systems/features.test.js"

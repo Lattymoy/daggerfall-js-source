@@ -47,8 +47,8 @@
   {
     "name": "SNOW-TELL-f-the-height-never-cleared",
     "file": "src/render/renderer.js",
-    "old": "    this._snowRise = 0;   // And the snow's height over the ground - drawSnow's, on a frame that draws it",
-    "new": "    // And the snow's height over the ground - drawSnow's, on a frame that draws it",
+    "old": "    this._snowRise = 0;   // SNOW-TELL: and the snow's height over the ground",
+    "new": "    // SNOW-TELL: and the snow's height over the ground",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SNOW-TELL-g-the-height-never-recorded",
     "file": "src/render/renderer.js",
-    "old": "    this._snowRise = Math.max(this._snowRise, snowSurfaceRise(u));   // The deepest tier drawn - the foes' telegraphs lie over it (drawFoeTelegraphs)",
-    "new": "    void snowSurfaceRise;   // The deepest tier drawn - the foes' telegraphs lie over it (drawFoeTelegraphs)",
+    "old": "    this._snowRise = Math.max(this._snowRise, snowSurfaceRise(u));",
+    "new": "    void snowSurfaceRise;",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SNOW-TELL-h-the-height-never-handed",
     "file": "src/render/renderer.js",
-    "old": "    const n = this._foeTelegraph.draw(list, this._proj, this._view, { mode: this._fogMode, density: this._fogDensity, range: this._fogRange, camPos: this._camPos, focus: this._focus, haze: this._haze }, { snowRise: this._snowRise });   // AUDIT TACT D9: the frame's fog (and the travel view's focus); SNOW-TELL: over the frame's snow",
-    "new": "    const n = this._foeTelegraph.draw(list, this._proj, this._view, { mode: this._fogMode, density: this._fogDensity, range: this._fogRange, camPos: this._camPos, focus: this._focus, haze: this._haze }, {});   // AUDIT TACT D9: the frame's fog (and the travel view's focus); SNOW-TELL: over the frame's snow",
+    "old": "{ snowRise: this._snowRise });",
+    "new": "{});",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]

@@ -168,8 +168,8 @@
   {
     "name": "GRASSPX-the-row-ships-smooth",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' })]),   // A uniform in the one grass program, so it flips live; MEADOW1: the meadow the default",
-    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'smooth', online: 'player' })]),   // A uniform in the one grass program, so it flips live; MEADOW1: the meadow the default",
+    "old": "key: 'grassStyle', initial: 'meadow',",
+    "new": "key: 'grassStyle', initial: 'smooth',",
     "tests": [
       "test/render/grasspx.test.js"
     ],

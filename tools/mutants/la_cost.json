@@ -2,8 +2,8 @@
   {
     "name": "LA-COST1-billboard-block-every-call",
     "file": "src/render/renderer.js",
-    "old": "      this._bbFrameStamp = this._frameStamp;\n      gl.uniformMatrix4fv(this.bbUProj, false, this._proj);",
-    "new": "      gl.uniformMatrix4fv(this.bbUProj, false, this._proj);",
+    "old": "      this._bbFrameStamp = this._frameStamp;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LA-COST1-decal-block-every-call",
     "file": "src/render/renderer.js",
-    "old": "      this._dFrameStamp = this._frameStamp;\n      gl.uniformMatrix4fv(d.proj, false, this._proj);",
-    "new": "      gl.uniformMatrix4fv(d.proj, false, this._proj);",
+    "old": "      this._dFrameStamp = this._frameStamp;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LA-COST1-character-block-every-call",
     "file": "src/render/renderer.js",
-    "old": "      this._cFrameStamp = this._frameStamp;\n      gl.uniformMatrix4fv(c.proj, false, this._proj);",
-    "new": "      gl.uniformMatrix4fv(c.proj, false, this._proj);",
+    "old": "      this._cFrameStamp = this._frameStamp;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LA-COST1-setFog-silent-a-fog-change-is-a-frame-late-on-the-flats",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;   // The fog, and the lane's in-scatter gain folded with it, ride every frame block\n  }",
-    "new": "  }",
+    "old": "    this._frameStamp++;   // LA-COST1: the fog, and the lane's in-scatter gain folded with it, ride every frame block\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LA-COST1-setWaterFog-silent",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;\n    const loc = this._solidFog?.dwFog;   // Null where the mesh program never reads it; a bare prototype has no table",
-    "new": "    const loc = this._solidFog?.dwFog;   // Null where the mesh program never reads it; a bare prototype has no table",
+    "old": "    this._frameStamp++;   // LA-COST1\n    const loc = this._solidFog?.dwFog;",
+    "new": "    const loc = this._solidFog?.dwFog;",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LA-COST1-setPointLights-silent-the-flats-keep-the-old-lamps",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;      // And every frame block carries the lights\n  }",
-    "new": "  }",
+    "old": "    this._frameStamp++;      // LA-COST1: and every frame block carries the lights\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LA-COST1-setFlashLight-silent",
     "file": "src/render/renderer.js",
-    "old": "    this._pointColorGen++;   // The flash's colour first - the memo's decode is due again (the scratch is written in place)\n    this._frameStamp++;\n  }",
-    "new": "    this._pointColorGen++;   // The flash's colour first - the memo's decode is due again (the scratch is written in place)\n  }",
+    "old": "    this._frameStamp++;      // LA-COST1\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LA-COST1-setIndirectLight-silent",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;   // Every frame block carries the indirect light\n  }",
-    "new": "  }",
+    "old": "    this._frameStamp++;   // LA-COST1: every frame block carries the indirect light\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LA-COST1-setMoonlight-silent",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;   // The moon rides the billboard's tint, the decal's and the character's terms and the terrain's\n    if (!moon) { this._moonScale = 0; return; }",
-    "new": "    if (!moon) { this._moonScale = 0; return; }",
+    "old": "    this._frameStamp++;   // LA-COST1: the moon rides the billboard's tint, the decal's and the character's terms and the terrain's\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LA-COST1-setAmbientTrilight-silent-and-setLighting-with-it",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;   // The decal's block takes the trilight (BLOOD AUDIT 5)\n  }",
-    "new": "  }",
+    "old": "    this._frameStamp++;   // LA-COST1: the decal's block takes the trilight (BLOOD AUDIT 5)\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LA-COST1-setVolumetrics-silent",
     "file": "src/render/renderer.js",
-    "old": "  setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; this._frameStamp++; }",
-    "new": "  setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }",
+    "old": "if (this._airPass) this._airPass.volOn = this._volumetricsWanted; this._frameStamp++; }",
+    "new": "if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LA-COST1-syncAir-silent",
     "file": "src/render/renderer.js",
-    "old": "    this._frameStamp++;   // The eye, the contact block and the glow's gate are the air pass's - a new or a gone one moves every block\n  }",
-    "new": "  }",
+    "old": "    this._frameStamp++;   // LA-COST1: the eye, the contact block and the glow's gate are the air pass's - a new or a gone one moves every block\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LA-COST1-a-foreign-pass-leaves-its-textures-under-the-blocks",
     "file": "src/render/renderer.js",
-    "old": "    // each program binds its images again. (Their UNIFORM values are the programs' own and survive any pass.)\n    this._frameStamp++;\n  }",
-    "new": "  }",
+    "old": "    // each program binds its images again. (Their UNIFORM values are the programs' own and survive any pass.)\n    this._frameStamp++;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LA-COST1-the-sprite-draws-under-the-world-block",
     "file": "src/render/renderer.js",
-    "old": "    // program draws in here, and the borrows are all put back, so the other three blocks stand.\n    this._cFrameStamp = -1;\n    // EVERY borrow above is returned in ONE finally, the",
-    "new": "    // AUDIT 65 RS-2: EVERY borrow above is returned in ONE finally, the",
+    "old": "    // program draws in here, and the borrows are all put back, so the other three blocks stand.\n    this._cFrameStamp = -1;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LA-COST1-the-world-rigs-draw-under-the-sprite-block",
     "file": "src/render/renderer.js",
-    "old": "      this._cFrameStamp = -1;   // The sprite's block is no world rig's\n      if (sd) { this._cloudShadow = sd; this._csStamp++; }",
-    "new": "      if (sd) { this._cloudShadow = sd; this._csStamp++; }",
+    "old": "      this._cFrameStamp = -1;   // LA-COST1: the sprite's block is no world rig's\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LA-COST1-the-studio-leaves-the-bare-eye-on-its-unit",
     "file": "src/render/renderer.js",
-    "old": "      if (studio) this._frameStamp++;\n    }",
-    "new": "    }",
+    "old": "      if (studio) this._frameStamp++;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LA-COST1-memo-deaf-to-setPointLights",
     "file": "src/render/renderer.js",
-    "old": "    this._pointColorGen++;   // The colours' decode is due again (the memo in _pointColorData)\n    this._frameStamp++;      // And every frame block carries the lights",
-    "new": "    this._frameStamp++;      // And every frame block carries the lights",
+    "old": "    this._pointColorGen++;   // LA-COST1: the colours' decode is due again (the memo in _pointColorData)\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LA-COST1-memo-deaf-to-the-flash",
     "file": "src/render/renderer.js",
-    "old": "    this._pointColorGen++;   // The flash's colour first - the memo's decode is due again (the scratch is written in place)\n    this._frameStamp++;",
-    "new": "    this._frameStamp++;",
+    "old": "    this._pointColorGen++;   // LA-COST1: the flash's colour first - the memo's decode is due again (the scratch is written in place)\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LA-COST1-memo-answers-from-a-new-buffer-after-a-lane-swap",
     "file": "src/render/renderer.js",
-    "old": "    // blocks were forgotten above: _installWorldSet forgets the units, and _syncAir moves the stamp.)\n    this._pointColorGen++;\n  }",
-    "new": "  }",
+    "old": "    // blocks were forgotten above: _installWorldSet forgets the units, and _syncAir moves the stamp.)\n    this._pointColorGen++;\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LA-COST1-memo-blind-to-the-count",
     "file": "src/render/renderer.js",
-    "old": "    if (lane && !raw && this._pointColorDecGen === this._pointColorGen && this._pointColorDecLane === lane && this._pointColorDecCount >= count) {",
-    "new": "    if (lane && !raw && this._pointColorDecGen === this._pointColorGen && this._pointColorDecLane === lane) {",
+    "old": " && this._pointColorDecLane === lane && this._pointColorDecCount >= count) {",
+    "new": " && this._pointColorDecLane === lane) {",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LA-COST2-the-renderer-draws-unsorted",
     "file": "src/render/renderer.js",
-    "old": "    sortByKey(opaque);   // The key order the string sort gave (a depth tie keeps its first-drawn flat), by bucket (billboardKey.js)",
-    "new": "    // The key order the string sort gave (a depth tie keeps its first-drawn flat), by bucket (billboardKey.js)",
+    "old": "    sortByKey(opaque);   // LA-COST2",
+    "new": "    // LA-COST2",
     "tests": [
       "test/render/la_cost.test.js",
       "test/systems/perf3.test.js"
@@ -368,8 +368,8 @@
   {
     "name": "LA-COST6-the-sea-s-fog-not-pushed",
     "file": "src/render/renderer.js",
-    "old": "    if (loc) { this._use(this.program); this.gl.uniform4fv(loc, this._dwFog); }\n  }",
-    "new": "  }",
+    "old": "    if (loc) { this._use(this.program); this.gl.uniform4fv(loc, this._dwFog); }\n",
+    "new": "",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "LA-COST7-the-memo-off",
     "file": "src/render/renderer.js",
-    "old": "        if (loc === undefined) byName.set(name, (loc = gl.getUniformLocation(program, name)));   // null (undeclared) is an answer too, and kept",
-    "new": "        byName.set(name, (loc = gl.getUniformLocation(program, name)));   // null (undeclared) is an answer too, and kept",
+    "old": "        if (loc === undefined) byName.set(name, (loc = gl.getUniformLocation(program, name)));",
+    "new": "        byName.set(name, (loc = gl.getUniformLocation(program, name)));",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "LA-COST7-an-undeclared-name-asked-again-every-install",
     "file": "src/render/renderer.js",
-    "old": "        if (loc === undefined) byName.set(name, (loc = gl.getUniformLocation(program, name)));   // null (undeclared) is an answer too, and kept",
-    "new": "        if (!loc) byName.set(name, (loc = gl.getUniformLocation(program, name)));   // null (undeclared) is an answer too, and kept",
+    "old": "if (loc === undefined) byName.set(",
+    "new": "if (!loc) byName.set(",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -422,7 +422,7 @@
   {
     "name": "LA-COST7-the-install-past-the-memo",
     "file": "src/render/renderer.js",
-    "old": "    const gl = this._locations(set);   // Every lookup below, memoized on the set",
+    "old": "    const gl = this._locations(set);   // LA-COST7: every lookup below, memoized on the set",
     "new": "    const gl = this.gl;",
     "tests": [
       "test/render/la_cost.test.js"
@@ -431,7 +431,7 @@
   {
     "name": "LA-COST7-the-fog-table-past-the-memo",
     "file": "src/render/renderer.js",
-    "old": "  _fogLocs(program) {\n    const gl = this._locations();   // The installed set's memo",
+    "old": "  _fogLocs(program) {\n    const gl = this._locations();   // LA-COST7: the installed set's memo",
     "new": "  _fogLocs(program) {\n    const gl = this.gl;",
     "tests": [
       "test/render/la_cost.test.js"
@@ -440,7 +440,7 @@
   {
     "name": "LA-COST7-the-decal-table-past-the-memo",
     "file": "src/render/renderer.js",
-    "old": "  _decalLocs(P) {\n    const gl = this._locations();   // The installed set's memo",
+    "old": "  _decalLocs(P) {\n    const gl = this._locations();   // LA-COST7: the installed set's memo",
     "new": "  _decalLocs(P) {\n    const gl = this.gl;",
     "tests": [
       "test/render/la_cost.test.js"

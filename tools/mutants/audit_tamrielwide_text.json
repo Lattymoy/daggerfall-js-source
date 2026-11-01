@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-TW-D1-map-note-past-the-core",
     "file": "src/systems/features.js",
-    "old": "    get note() { return t('features.tamrielMap.note', 'The enhanced map zooms out to all of Tamriel: its provinces, cities, mountains and seas, '",
-    "new": "    get note() { return ('The enhanced map zooms out to all of Tamriel: its provinces, cities, mountains and seas, '",
+    "old": "    get note() { return t('features.tamrielMap.note', 'The enhanced map zooms out to all of Tamriel",
+    "new": "    get note() { return ('The enhanced map zooms out to all of Tamriel",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-TW-D1-land-note-past-the-core",
     "file": "src/systems/features.js",
-    "old": "    get note() { return t('features.tamrielLand.note', 'The world goes on past the Iliac Bay over all of Tamriel. Each province has its own land, sky '",
-    "new": "    get note() { return ('The world goes on past the Iliac Bay over all of Tamriel. Each province has its own land, sky '",
+    "old": "    get note() { return t('features.tamrielLand.note', 'The world goes on past the Iliac Bay",
+    "new": "    get note() { return ('The world goes on past the Iliac Bay",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-D1-land-note-no-towns",
     "file": "src/systems/features.js",
-    "old": "      + 'and trees, and its own cities, towns, roads and dungeons. Off ends the world at the Bay’s edge.'); },",
-    "new": "      + 'and trees, There are no towns, roads or dungeons there yet.'); },",
+    "old": "and its own cities, towns, roads and dungeons. Off ends the world at the Bay’s edge.'",
+    "new": "There are no towns, roads or dungeons there yet.'",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/world/tamriel2.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "AUDIT-TW-D1-map-note-cannot-travel",
     "file": "src/systems/features.js",
-    "old": "      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)",
-    "new": "      + 'hand-drawn and joined to the Bay’s own coast. You can’t travel beyond the Bay.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)",
+    "old": "With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'",
+    "new": "You can’t travel beyond the Bay.'",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/ui/tamriel.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT-TW-D6-the-sea-fights-row",
     "file": "src/systems/features.js",
-    "old": "      + 'then let go to fire. Pirates, merchants and navies sail every sea. Board a ship that surrenders. Piracy is a crime.'); },",
-    "new": "      + 'then let go to fire. Pirates, merchants and navies sail the Bay. Board a ship that surrenders. Piracy is a crime.'); },",
+    "old": "navies sail every sea.",
+    "new": "navies sail the Bay.",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

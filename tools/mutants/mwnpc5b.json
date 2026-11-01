@@ -173,8 +173,8 @@
   {
     "name": "MWNPC5b-castonly-drawn",
     "file": "src/render/renderer.js",
-    "old": "      if (b.castOnly) continue;   // A foe stood in its Morrowind body - its billboard draws nothing (recorded above, the shadow pass passes it over - MWNPC16: the body casts)",
-    "new": "      // A foe stood in its Morrowind body - its billboard draws nothing (recorded above, the shadow pass passes it over - MWNPC16: the body casts)",
+    "old": "      if (b.castOnly) continue;   // MWNPC5b",
+    "new": "      // MWNPC5b",
     "tests": [
       "test/render/mwnpc5_dungeon.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "MWNPC5b-row-default-all",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'mwNpcBodies', initial: 'near', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'mwNpcBodies', initial: 'all', online: 'player', tiers: Object.freeze([['off', 'Off'], ['near', 'Near'], ['all', 'All']]) }),",
+    "old": "key: 'mwNpcBodies', initial: 'near',",
+    "new": "key: 'mwNpcBodies', initial: 'all',",
     "tests": [
       "test/render/mwnpc5_dungeon.test.js"
     ]
