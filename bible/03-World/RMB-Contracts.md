@@ -191,6 +191,17 @@ roof and pitch, its door the fabric's door model turned to its street. `building
 door hands the game. Model ids run from `SETTLEMENT_MODEL_BASE` (7,600,000), 4,096 a run: a published row's run is its
 ordinal, a grown town takes runs 16 to 511 in turn (`nextGrowthSlot`).
 
+`settlementFeatures.js` `featuresModel` stands every feature but a tree as one model in its style's stone and timber,
+each on the ground under it: a well (a kerb round water, two posts and a little roof), a fountain, a bronze statue on
+its plinth facing the way in, a market's five stalls round its heart, a fort's walls along its rim (sunk 3 m and
+crenellated) with round towers at their ends, a river town's docks out from its quay, a garden's fence round its plot
+with planted beds, a field's rows and a fence's rails. The host draws it with the ground and files it in the same
+collider bucket. Its id is the run's last (`featuresModelId`).
+
+A settlement's yard trees are the pixel's own nature. `settlementTreeFlats` hands the kernel a tree record that every
+climate's archive holds (`YARD_TREE_RECORDS`, 13 or 30) at each of the dressing's points (`yardTrees`), on its pad's
+top. So the seasons, the wind, the low-poly trees and the axe treat it as they treat the woods around it.
+
 `scenes/settlementHost.js` is the streaming world's pool, on the yards' shape. It dresses each built pixel's layout,
 asks the pipeline for the meshes through a place hold, draws them at the pixel's translation, files the ground and the
 buildings in one collider bucket (held back while feet stand inside a wall), and hands each door to the modes with its

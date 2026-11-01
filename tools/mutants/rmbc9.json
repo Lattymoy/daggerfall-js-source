@@ -28,9 +28,9 @@
   },
   {
     "name": "RMBC9-district-seed-unread",
-    "file": "src/world/settlement/settlementGen.js",
-    "old": "  const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };",
-    "new": "  const rngOf = (/** @type {number} */ j) => { const base = seed >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  const base = (input.districtSeeds?.[`d${j}`] ?? input.seed) >>> 0;",
+    "new": "  const base = input.seed >>> 0;",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]

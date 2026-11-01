@@ -24,7 +24,7 @@
 import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
-import { standSettlementGround } from '../settlement/settlementStand.js';   // a settlement's pads carved in
+import { standSettlementGround, settlementTreeFlats } from '../settlement/settlementStand.js';   // a settlement's pads carved in, and its yard trees
 import { standTownGrowth, growthClearing } from '../settlement/townGrowth.js';   // a town's outskirts
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
@@ -294,6 +294,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // TESA-LANDS: past the Bay the zones' landmarks (world/lands/landProps.js) - the pixel's build keeps its flats off the
   // feet of those it stands (scenes/pixelBuild.js: a landmark the gate's clearing or a rock drops leaves its ground's own)
   const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);
+  nature.push(...settlementTreeFlats(settlement));   // a settlement's yard trees, the land's own pictures in its clearing
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
     roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands

@@ -358,6 +358,29 @@ export function roadReach(reachOf, edges, roads, bands, rng) {
   }
 }
 
+/** Each district's draw: its own seed (the editor's `districtSeeds`) or the settlement's. @param {SettlementInput} input */
+export const districtDraw = (input) => (/** @type {number} */ j) => {
+  const base = (input.districtSeeds?.[`d${j}`] ?? input.seed) >>> 0;
+  return (/** @type {number[]} */ ...salt) => hash32(base, input.place >>> 0, ...salt) / 0x100000000;
+};
+
+/**
+ * A settlement's yard trees: up to three along each cell's yard, by its district's draw. The dressing's `tree` features
+ * and the terrain worker's nature flats (terrainGen.js) are these, so a tree is the land's own picture in every season.
+ * @param {SettlementInput} input @param {ReturnType<typeof layoutSettlement>} layout
+ * @returns {Array<{ id: string, pad: string, at: Pt }>}
+ */
+export function yardTrees(input, layout) {
+  const style = SETTLEMENT_STYLES[input.style], frame = polarFrame(layout.c), rngOf = districtDraw(input), out = [];
+  for (const cell of layout.cells) {
+    if (cell.k < 1) continue;
+    for (let slot = 0; slot < 3; slot++) {
+      if (rngOf(cell.j)(13, cell.k, cell.j, slot) < 0.5) out.push({ id: `t${cell.id}.${slot}`, pad: cell.id, at: frame.toW(cell.u0 + (cell.u1 - cell.u0) * (0.25 + slot * 0.25), cell.b - style.back / 2) });
+    }
+  }
+  return out;
+}
+
 /** The cells round a fixed core whose cut passes `limit`, dropped; then the outer end of a link the solve left too
  *  steep (a deck held over its ground beside a core that never moves); and what no longer reaches the core after them. The
  *  links left. Dropping a cell only loosens its neighbours, so every link left still holds. */

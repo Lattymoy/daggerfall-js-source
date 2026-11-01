@@ -23,6 +23,8 @@ export const SETTLEMENT_MODEL_RUN = 4096;
 /** A settlement's ground's model id, and a building's. */
 export const groundModelId = (/** @type {number} */ ordinal) => SETTLEMENT_MODEL_BASE + ordinal * SETTLEMENT_MODEL_RUN;
 export const buildingModelId = (/** @type {number} */ ordinal, /** @type {number} */ i) => groundModelId(ordinal) + 1 + i;
+/** Its features' model id: the run's last, past every building a plan can stand (the contract's checks keep fewer). */
+export const featuresModelId = (/** @type {number} */ ordinal) => groundModelId(ordinal) + SETTLEMENT_MODEL_RUN - 1;
 export const isSettlementModelId = (/** @type {number} */ id) => id >= SETTLEMENT_MODEL_BASE && id < SETTLEMENT_MODEL_BASE + 512 * SETTLEMENT_MODEL_RUN;
 /** How far a retaining wall reaches down from its pad, and a deck's rim, metres. */
 export const WALL_DROP = 8;

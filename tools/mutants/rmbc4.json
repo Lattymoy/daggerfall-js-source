@@ -165,8 +165,8 @@
   {
     "name": "ORGANIC-paving-host-unstyled",
     "file": "src/scenes/settlementHost.js",
-    "old": "  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style), pieces, climateBase: townLookBase(style) ?? 300 };",
-    "new": "  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))), pieces, climateBase: townLookBase(style) ?? 300 };",
+    "old": "ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style),",
+    "new": "ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))),",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDIT-kept-model-unforgotten",
     "file": "src/scenes/settlementHost.js",
-    "old": "    for (const id of [s.groundId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }",
-    "new": "    for (const id of [s.groundId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); }",
+    "old": "    for (const id of [s.groundId, s.featuresId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }",
+    "new": "    for (const id of [s.groundId, s.featuresId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); }",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -228,8 +228,134 @@
   {
     "name": "AUDIT-model-undeleted",
     "file": "src/scenes/settlementHost.js",
-    "old": "    for (const id of [s.groundId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }",
-    "new": "    for (const id of [s.groundId, ...s.pieces.map((x) => x.id)]) { forgetFamilyModel(id); }",
+    "old": "    for (const id of [s.groundId, s.featuresId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }",
+    "new": "    for (const id of [s.groundId, s.featuresId, ...s.pieces.map((x) => x.id)]) { forgetFamilyModel(id); }",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-style-stone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "const stone = art(CAPITAL_ART[style.ground] ?? CAPITAL_ART.wallStone)",
+    "new": "const stone = art(CAPITAL_ART.wallStone)",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-ground-under",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "  if (on) return datum + on.y;",
+    "new": "  if (on) return datum;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-tree-modelled",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "if (feature.kind === 'well') well(",
+    "new": "if (feature.kind === 'well' || feature.kind === 'tree') well(",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-wall-base",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "        translated(mesh, 0, base, 0, () => {",
+    "new": "        translated(mesh, 0, 0, 0, () => {",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-towers-gone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "else if (feature.kind === 'tower') roundTower(",
+    "new": "else if (feature.kind === 'tower') void (",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-fence-gone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "      rails(mesh, plan, datum, plot.poly, true);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-dock-deck",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "const deck = groundAt(plan, datum, start) + 0.1",
+    "new": "const deck = groundAt(plan, datum, start) + 1.1",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-stalls-huddled",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "stallEast = east + Math.cos(angle) * 5, stallNorth = north + Math.sin(angle) * 5",
+    "new": "stallEast = east + Math.cos(angle) * 1, stallNorth = north + Math.sin(angle) * 1",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-record-one-climate-lacks",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "export const YARD_TREE_RECORDS = Object.freeze([13, 30]);",
+    "new": "export const YARD_TREE_RECORDS = Object.freeze([12, 30]);",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-pad-top",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "[pad.id, settlement.layout.datum + pad.y]",
+    "new": "[pad.id, pad.y]",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-left-out-of-nature",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  nature.push(...settlementTreeFlats(settlement));",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-host-undrawn",
+    "file": "src/scenes/settlementHost.js",
+    "old": "        if (features) { r.drawMesh(features, sc.ground, null); n++; }\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-host-uncollided",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    if (s.features.indices.length) col.addMesh(",
+    "new": "    if (false) col.addMesh(",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-host-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "[s.groundId, s.featuresId, ...s.pieces.map((x) => x.id)]",
+    "new": "[s.groundId, ...s.pieces.map((x) => x.id)]",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]

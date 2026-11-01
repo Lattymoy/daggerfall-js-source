@@ -11,9 +11,9 @@ import { GUILD_FACTION_IDS, DIVINES } from '../../systems/guild/guildFactions.js
 import { SETTLEMENT_CONTRACT_VERSION, validateSettlement } from './settlementContract.js';
 import { emptyIdLedger, reconcileBuildingIds, anchorLedger } from './settlementIds.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
-import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX } from './settlementLayout.js';
+import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX, districtDraw, yardTrees } from './settlementLayout.js';
 
-export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement } from './settlementLayout.js';
+export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement, yardTrees } from './settlementLayout.js';
 
 /** @typedef {import('./settlementContract.js').SettlementPlan} SettlementPlan @typedef {import('./settlementContract.js').Building} Building */
 /** @typedef {import('./settlementIds.js').IdLedger} IdLedger @typedef {readonly [number, number]} Pt */
@@ -25,11 +25,6 @@ const LAYOUT_OF = (input) => layoutSettlement(input, /** @type {any} */ (input.e
  */
 export const generateSettlement = (input) => dressSettlement(input, LAYOUT_OF(input));
 
-/**
- * Stages D to G on a layout: the terrain worker's, or layoutSettlement's.
- * @param {import('./settlementLayout.js').SettlementInput} input @param {ReturnType<typeof layoutSettlement>} L
- * @returns {{ plan: SettlementPlan, ledger: IdLedger, report: any }}
- */
 /** whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
  *  @param {readonly number[]} road @param {number} start @param {number} end @param {number} margin */
 export function onRoad(road, start, end, margin) {
@@ -37,13 +32,17 @@ export function onRoad(road, start, end, margin) {
   return false;
 }
 
+/**
+ * Stages D to G on a layout: the terrain worker's, or layoutSettlement's.
+ * @param {import('./settlementLayout.js').SettlementInput} input @param {ReturnType<typeof layoutSettlement>} L
+ * @returns {{ plan: SettlementPlan, ledger: IdLedger, report: any }}
+ */
 export function dressSettlement(input, L) {
   const { place, origin, seed, params = {} } = input;
   const A = SETTLEMENT_ARCHETYPES[input.archetype], st = SETTLEMENT_STYLES[input.style];
   if (!A) throw new RangeError(`no settlement archetype '${input.archetype}' (settlementStyles.js SETTLEMENT_ARCHETYPES)`);
   if (!st) throw new RangeError(`no settlement style '${input.style}' (settlementStyles.js SETTLEMENT_STYLES)`);
-  // Each district draws from its own seed (the editor's `districtSeeds`), each plot by its own cell and number
-  const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };
+  const rngOf = districtDraw(input);   // each plot drawn by its own cell and number
   const density = clampWithin(params.density ?? 1, 0.5, 2), openShare = clampWithin(params.open ?? 0.08, 0, 0.9);
   const frame = polarFrame(L.c), inset = (v, s) => frame.du(s, v);
   const { ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, datum, pads, layout } = L;
@@ -143,10 +142,7 @@ export function dressSettlement(input, L) {
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
   if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own
-  for (const c of cells.values()) {
-    if (c.k < 1) continue;
-    for (let t = 0; t < 3; t++) if (rngOf(c.j)(13, c.k, c.j, t) < 0.5) features.push({ id: `t${c.id}.${t}`, kind: 'tree', pad: c.id, at: frame.toW(c.u0 + (c.u1 - c.u0) * (0.25 + t * 0.25), c.b - st.back / 2) });
-  }
+  for (const t of yardTrees(input, L)) features.push({ id: t.id, kind: 'tree', pad: t.pad, at: t.at });
   const allStops = grids.flat().filter((u, i, a) => i === 0 || u - a[i - 1] > 1e-9);
   const footprint = dedupe(L.c, [...edges.flatMap(([u0, u1], j) => along(frame, grids[j], u0, u1, outR(j))),
     ...(ring ? [] : along(frame, allStops, uStart, uStart + uSpan, inner + vOut).reverse())]);

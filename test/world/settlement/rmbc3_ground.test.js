@@ -10,7 +10,7 @@ import { settlementGroundAt, carveSettlementGround, PAD_CLEAR, PAD_REACH, GROUND
 import { generateSettlement } from '../../../src/world/settlement/settlementGen.js';
 import { padAt } from '../../../src/world/settlement/settlementGeometry.js';
 import { SETTLEMENT_ROWS, SETTLEMENT_LANE, settlementPlaceId, isSettlementPlaceId, settlementOnPixel, settlementPixel, settlementPlaceRows } from '../../../src/world/settlement/settlementPlaces.js';
-import { standSettlementGround, SAMPLE_M } from '../../../src/world/settlement/settlementStand.js';
+import { standSettlementGround, settlementTreeFlats, SAMPLE_M } from '../../../src/world/settlement/settlementStand.js';
 import { MINTED_KEY_MIN } from '../../../src/world/settlement/settlementContract.js';
 import { THEATRE_KEYS, theatreAt } from '../../../src/world/worldWide/worldGrid.js';
 import { isMadePlaceId } from '../../../src/world/placeIds.js';
@@ -109,6 +109,9 @@ test('RMBC3 the kernel lays out a pixel\'s settlement and carves it; a location 
   const r = generatePixelTerrain({ ...job, tilemap: new Uint8Array(128 * 128) });
   assert.equal(r.settlement?.mapId, settlementPlaceId(row.ordinal));
   assert.ok(r.settlement.layout.pads.length > 5 && r.settlement.rect.xMin > 0);
+  // its yard trees are the pixel's own nature, at the dressing's points (mutant: the trees left out)
+  const yard = settlementTreeFlats(r.settlement);
+  assert.ok(yard.length > 5 && yard.every((t) => r.nature.some((f) => f.record === t.record && f.x === t.x && f.y === t.y && f.z === t.z)));
   const pad = r.settlement.layout.pads.find((p) => p.base === 'cut');
   const [e, n] = pad.poly[0], i = Math.round(e / SAMPLE_M) * HEIGHTMAP_DIMENSION + Math.round(n / SAMPLE_M);
   assert.ok(r.samples[i] * MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE <= r.settlement.layout.datum + Math.max(...r.settlement.layout.pads.map((p) => p.y)) + 1e-3);

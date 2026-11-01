@@ -10,7 +10,8 @@ import { registerCustomModelFamily, forgetFamilyModel } from '../world/customMod
 import { installFabricDoors } from '../world/imperialFabricBuildings.js';   // the doors' models: the Imperial City installs them only when it builds
 import { SETTLEMENT_ROWS, settlementInput } from '../world/settlement/settlementPlaces.js';
 import { dressSettlement } from '../world/settlement/settlementGen.js';
-import { groundModel, buildingPiece, buildingInterior, buildingRecord, groundModelId, buildingModelId, isSettlementModelId } from '../world/settlement/settlementModels.js';
+import { groundModel, buildingPiece, buildingInterior, buildingRecord, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_RUN } from '../world/settlement/settlementModels.js';
+import { featuresModel } from '../world/settlement/settlementFeatures.js';
 import { regionOfTheatre } from '../formats/mapsTables.js';
 import { theatreAt } from '../world/worldWide/worldGrid.js';
 import { townLookBase } from '../world/urban/townLook.js';
@@ -75,7 +76,11 @@ export function standSettlement(p, blocksFile, slot = -1) {
     const dfBlock = { name: `SETTLE${input.place}.${b.key}`, index: -1, rmbBlock: { subRecords: [{ get interior() { return (interior ??= buildingInterior(input.place, b, piece, blocksFile)); } }] } };
     return { id: buildingModelId(run, i), piece, record, dfBlock };
   });
-  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style), pieces, climateBase: townLookBase(style) ?? 300 };
+  if (pieces.length >= SETTLEMENT_MODEL_RUN - 1) return null;   // its features keep the run's last id
+  return {
+    row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style),
+    featuresId: featuresModelId(run), features: featuresModel(plan, L.datum, style), pieces, climateBase: townLookBase(style) ?? 300,
+  };
 }
 
 /**
@@ -96,6 +101,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     const made = standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1);
     if (!made) return;
     _models.set(made.groundId, made.ground);
+    _models.set(made.featuresId, made.features);
     for (const x of made.pieces) _models.set(x.id, x.piece.model);
     // Its meshes held through its own hold, let go as it goes (scenes/dataPipeline.js holdPlace)
     const hold = pipeline?.holdPlace?.('settlement', key) ?? null;
@@ -103,6 +109,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     fileHomeFrames(s, p.homeFrames);   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
     stood.set(key, s);
     mesh(s, s.groundId);
+    mesh(s, s.featuresId);
     for (const x of s.pieces) { mesh(s, x.id); mesh(s, x.piece.doorId); }
   }
   /** A pixel built again in place swaps its entry with no frame between: the same plan files its yards on the new entry,
@@ -122,7 +129,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     for (const k of s.homeKeys) s.homeFrames?.delete(k);
     collider()?.removeBucket?.(`settlement:${s.key}`);
     // its ids come again (a row's run, a slot round again): their kept models go with it
-    for (const id of [s.groundId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }
+    for (const id of [s.groundId, s.featuresId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }
   }
   /** Its scene matrices and doors, made again when the floating origin moves. */
   function scene(s) {
@@ -145,6 +152,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     if (f && !s.colAt && s.plan.buildings.some((b) => inside(b.footprint, f[0] - sc.t[0], f[2] - sc.t[2]))) return;
     col.removeBucket?.(`settlement:${s.key}`);
     col.addMesh(`settlement:${s.key}`, s.ground.positions, s.ground.indices, sc.ground);
+    if (s.features.indices.length) col.addMesh(`settlement:${s.key}`, s.features.positions, s.features.indices, sc.ground);
     for (const [i, x] of s.pieces.entries()) col.addMesh(`settlement:${s.key}`, x.piece.model.positions, x.piece.model.indices, sc.pieces[i].frame);
     s.colAt = sc;
   }
@@ -179,8 +187,9 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
       if (!r?.drawMesh || !exterior()) return 0;
       let n = 0;
       for (const s of stood.values()) {
-        const sc = scene(s), g = s.meshes.get(s.groundId);
+        const sc = scene(s), g = s.meshes.get(s.groundId), features = s.meshes.get(s.featuresId);
         if (g) { r.drawMesh(g, sc.ground, null); n++; }
+        if (features) { r.drawMesh(features, sc.ground, null); n++; }
         for (const x of sc.pieces) {
           const m = s.meshes.get(x.id), d = s.meshes.get(x.doorId);
           if (m) { r.drawMesh(m, x.frame, null); n++; }

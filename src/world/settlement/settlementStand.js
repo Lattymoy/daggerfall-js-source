@@ -4,7 +4,8 @@
 // after the roads, before any carve), its pads carved into that ground, and the layout and the trees' clearing handed back
 // with the pixel. Called by world/terrain/terrainGen.js generatePixelTerrain. Worker-safe: world/ alone.
 import { settlementOnPixel, settlementInput } from './settlementPlaces.js';
-import { layoutSettlement } from './settlementLayout.js';
+import { layoutSettlement, yardTrees } from './settlementLayout.js';
+import { hash32 } from '../blockHash.js';
 import { carveSettlementGround } from './settlementGround.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
 
@@ -28,7 +29,7 @@ export function sampleEnv(samples) {
 /**
  * Lay out the pixel's settlement and carve its ground into `samples` in place; null where none stands.
  * @param {number} px @param {number} py @param {Float32Array} samples @param {(() => Float32Array)|null} [bare] the land with no road
- * @returns {{ mapId: number, ordinal: number, layout: ReturnType<typeof layoutSettlement>, moved: Float32Array, rect: { xMin: number, xMax: number, yMin: number, yMax: number } }|null}
+ * @returns {{ mapId: number, ordinal: number, input: any, layout: ReturnType<typeof layoutSettlement>, moved: Float32Array, rect: { xMin: number, xMax: number, yMin: number, yMax: number } }|null}
  */
 export function standSettlementGround(px, py, samples, bare = null) {
   const row = settlementOnPixel(px, py);
@@ -44,7 +45,23 @@ export function standSettlementGround(px, py, samples, bare = null) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const p of layout.pads) for (const [e, n] of p.poly) { x0 = Math.min(x0, e); x1 = Math.max(x1, e); y0 = Math.min(y0, n); y1 = Math.max(y1, n); }
   const tile = (m) => Math.max(1, Math.min(127, Math.round(m / SAMPLE_M)));
-  return { mapId: input.place, ordinal: row.ordinal, layout, moved, rect: { xMin: tile(x0), xMax: tile(x1), yMin: tile(y0), yMax: tile(y1) } };
+  return { mapId: input.place, ordinal: row.ordinal, input, layout, moved, rect: { xMin: tile(x0), xMax: tile(x1), yMin: tile(y0), yMax: tile(y1) } };
+}
+
+/** The tree records every climate's nature archive holds (terrainNature.js TREE_RECORDS), so a yard tree is a tree there. */
+export const YARD_TREE_RECORDS = Object.freeze([13, 30]);
+
+/**
+ * A pixel's settlement's yard trees as its nature flats (pixel-local, x east, z north): each the land's own tree picture
+ * on its pad's top, so the seasons, the wind and the axe treat it as the woods around it.
+ * @param {{ input?: any, layout?: any } | null} settlement a stood pixel's @returns {Array<{ record: number, x: number, y: number, z: number }>}
+ */
+export function settlementTreeFlats(settlement) {
+  if (!settlement?.input || !settlement.layout) return [];
+  const top = new Map(settlement.layout.pads.map((pad) => [pad.id, settlement.layout.datum + pad.y]));
+  return yardTrees(settlement.input, settlement.layout).map((tree) => ({
+    record: YARD_TREE_RECORDS[hash32(...[...tree.id].map((char) => char.charCodeAt(0))) % YARD_TREE_RECORDS.length], x: tree.at[0], y: /** @type {number} */ (top.get(tree.pad)), z: tree.at[1],
+  }));
 }
 
 /**

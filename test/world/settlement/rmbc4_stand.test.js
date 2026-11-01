@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP } from '../../../src/world/settlement/settlementModels.js';
+import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP } from '../../../src/world/settlement/settlementModels.js';
 import { standSettlement, createSettlementHost } from '../../../src/scenes/settlementHost.js';
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
@@ -107,10 +107,10 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.equal(added.length, 0);
   feetAt = null;
   host.frame();
-  assert.equal(added.length, 1 + plan.buildings.length, 'the ground and every building, one bucket');
+  assert.equal(added.length, 2 + plan.buildings.length, 'the ground, the features and every building, one bucket');
   await new Promise((r) => setTimeout(r, 10));
   assert.ok(host.draw() > plan.buildings.length);
-  assert.ok(drawn.includes(groundModelId(ROW.ordinal)));
+  assert.ok(drawn.includes(groundModelId(ROW.ordinal)) && drawn.includes(featuresModelId(ROW.ordinal)), 'its ground and its features drawn');
   const doors = host.doorTargets();
   assert.equal(doors.length, plan.buildings.length);
   assert.equal(doors[0].settlement.buildingKey, plan.buildings[0].key);
@@ -137,6 +137,7 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.equal(host.count(), 0);
   assert.deepEqual(removed.slice(before), ['settlement:1084,241'], 'taken down: its bucket removed once');
   assert.equal(customModelFor(groundModelId(ROW.ordinal)), null, 'and its models gone');
+  assert.equal(customModelFor(featuresModelId(ROW.ordinal)), null, 'its features too');
   assert.equal(standSettlement({ px: 0, py: 0, settlement: { ordinal: 99, layout: L } }, null), null);
   const sand = art(CAPITAL_ART.sandstone);   // the host paves in the row's style (mutant: the style unpassed)
   assert.ok(standSettlement(P, null).ground.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1]));
