@@ -146,7 +146,7 @@ def palette():
 
 def _palette():
     return {
-        'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.5, spec=0.4),
+        'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.9, spec=0.08),
         'silver': plain('silver', (0.62, 0.62, 0.64), metal=0.55, rough=0.32),
         'cuirass': speckle('cuirass', (0.03, 0.03, 0.035), (0.16, 0.16, 0.18), scale=70.0, at=0.52),
         'mail': chain('mail', (0.015, 0.015, 0.02), (0.30, 0.30, 0.33)),
@@ -160,5 +160,5 @@ def _palette():
         'haft': plain('haft', (0.07, 0.05, 0.04), rough=0.5),
         'wood': plain('wood', (0.35, 0.17, 0.06), rough=0.5),
         'string': plain('string', (0.75, 0.70, 0.60), rough=0.8),
-        'face': plain('face', (0.22, 0.07, 0.02), rough=0.6, spec=0.3),
+        'face': plain('face', (0.22, 0.07, 0.02), rough=0.9, spec=0.08),
     }
