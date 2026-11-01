@@ -1322,6 +1322,12 @@
    "has": "export const shopNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now());",
    "clock": "event",
    "why": "the shop's now (AUDIT-STOREFRONT III B8) - the daily wares' UTC day, a ware's window and the season's, on the relay's instant, so every device says Buy at the instant the service sells"
+  },
+  {
+   "file": "src/scenes/aurumCacheHost.js",
+   "has": "const cofferWeekNow = () => aurumWeekOf(Math.floor((sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now()) / 1000));",
+   "clock": "event",
+   "why": "the coffer's UTC week, on the relay's instant, so every device fills an emptied coffer again at the Monday the service pays it again"
   }
  ]
 }

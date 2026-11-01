@@ -2459,11 +2459,11 @@ const service = {
       }
 
       if (path === '/v1/aurum/cache') {
-        // AURUM-CACHES (bible/06-Systems/Aurum.md section 3a): AN AURUM CACHE CLAIMED - one ledger line a cache an account,
-        // under the day's bound (aurumCache.js claimCache)
+        // AN AURUM CACHE CLAIMED - one ledger line a cache an account a UTC week (aurumCache.js claimCache); a refusal
+        // carries when the week turns as `at`, the refusals' word for when an act may come again
         if (request.method !== 'POST') return no('method', 405, origin);
         const r = await claimCache(ctx, who.player, body, env);
-        if ('error' in r) return json({ error: r.error }, AURUM_CACHE_STATUS[/** @type {keyof typeof AURUM_CACHE_STATUS} */ (r.error)] ?? 400, origin);
+        if ('error' in r) return json({ error: r.error, ...('until' in r ? { at: r.until } : {}) }, AURUM_CACHE_STATUS[/** @type {keyof typeof AURUM_CACHE_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
       }
 

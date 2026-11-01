@@ -79,7 +79,7 @@ test('PASS-PANELS the prices: the free track costs 2,300 Aurum, the premium 1,00
   assert.ok(days * PASS_DAY_AURUM + challenges + deeds + days * 7 * cache >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium), 'the capstone too, with the week\'s deeds and seven new dungeons a day');
 });
 
-test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, its season\'s tracks not open yet, held, the premium track shut, its panel shut - in that order; bought on an open panel once the track opens it; the tracks sell from the season\'s first instant for good (mutants: a premium item sold on a shut track; a shut panel sold; the tracks closed with the season)', () => {
+test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, its season\'s tracks not open yet, held, the premium track shut, its panel shut - in that order; bought on an open panel once the track opens it; the tracks sell from their own open day, before the season\'s world, for good (mutants: a premium item sold on a shut track; a shut panel sold; the tracks closed with the season)', () => {
   assert.deepEqual(passItemOf('s1', 'portal:brass'), { season: 's1', track: 'free', panel: 1, open: 300, aurum: 700 });
   assert.deepEqual(passItemOf('s1', 'mount:automaton'), { season: 's1', track: 'premium', panel: 2, open: 2000, aurum: 1600 });
   assert.equal(passItemOf('s1', 'kill:pyre'), null);
@@ -87,7 +87,8 @@ test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, it
   const at = S1.fromMs + DAY, a = (premiumOn, bought, nowMs = at) => ({ premium: premiumOn, bought, nowMs });
   assert.equal(passBuyBlock('s1', 'kill:pyre', a(true, [])), 'item');
   assert.equal(passBuyBlock('s9', 'glyph:cog', a(true, [])), 'item');
-  assert.equal(passBuyBlock('s1', 'glyph:cog', a(false, [], S1.fromMs - 1)), 'soon');
+  assert.equal(passBuyBlock('s1', 'glyph:cog', a(false, [], S1.tracksFromMs - 1)), 'soon');
+  assert.equal(passBuyBlock('s1', 'glyph:cog', a(false, [], S1.fromMs - DAY)), null, 'Season One\'s tracks sell before its world begins');
   assert.equal(passBuyBlock('s1', 'glyph:cog', a(false, [])), null, 'the first panel, the free track: open to all');
   assert.equal(passBuyBlock('s1', 'glyph:cog', a(false, ['glyph:cog'])), 'held');
   assert.equal(passBuyBlock('s1', 'glyph:tonalfork', a(false, [])), 'track');
@@ -99,7 +100,9 @@ test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, it
   assert.equal(passBuyBlock('s1', 'title:heartwaker', a(true, ['aura:aetherium'])), null);
   assert.equal(passBuyBlock('s1', 'glyph:cog', a(false, [], S1.toMs + 400 * DAY)), null, 'a year past the season: still sold');
   assert.equal(passSpentOn('s1', 'premium', ['aura:aetherium', 'glyph:cog', 'title:heartwaker']), 1600);
-  assert.equal(passTracksOpen(S1, S1.fromMs), true);
+  assert.equal(passTracksOpen(S1, S1.tracksFromMs), true);
+  assert.equal(passTracksOpen(S1, S1.tracksFromMs - 1), false);
+  assert.ok(S1.tracksFromMs < S1.fromMs && passSeasonAt(S1.tracksFromMs) === null, 'open tracks, no world yet');
   assert.equal(passTracksOpen(S1, NaN), false);
   assert.equal(passTracksOpen(null, S1.fromMs), false);
 });
@@ -113,7 +116,7 @@ test('PASS-PANELS the calendar: the season runs sixty days in three stages of tw
   assert.deepEqual([S1.fromMs - 1, S1.fromMs, S1.fromMs + 20 * DAY - 1, S1.fromMs + 20 * DAY, S1.fromMs + 40 * DAY, S1.toMs + DAY].map((ms) => passStageAt(S1, ms)), [-1, 0, 0, 1, 2, 2]);
   assert.equal(passOpen(S1, S1.toMs - 1), true);
   assert.equal(passOpen(S1, S1.toMs), false);
-  assert.equal(PASS_FINDS_FROM_MS, S1.fromMs);
+  assert.equal(PASS_FINDS_FROM_MS, S1.tracksFromMs, 'finds open with the tracks, before the world');
 });
 
 test('PASS-PANELS the finds: a source\'s Aurum under what is left of the day\'s 100 - a foe one, a quest ten, an endgame deed twenty; nothing for a source the law lacks; the challenges pay 60 to 200 each, once (mutants: the bound ignored; a find past the bound)', () => {

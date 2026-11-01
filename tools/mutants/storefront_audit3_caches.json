@@ -128,8 +128,8 @@
   {
     "name": "AUDIT3-D5-kept-only-while-the-level-stands",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);",
-    "new": "      if (!gone && (r?.ok || r?.error === 'cache-taken')) keepId(storage, me.id, id);",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, weekNow());",
+    "new": "      if (!gone && (r?.ok || r?.error === 'cache-taken')) keepId(storage, me.id, id, weekNow());",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
