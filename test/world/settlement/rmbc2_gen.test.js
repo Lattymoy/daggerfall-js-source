@@ -196,3 +196,7 @@ test('RMBC2 size scales a ring as it does a row: its square and its sectors, so 
     for (const size of [0.5, 0.75, 1.5]) assert.deepEqual(validateSettlement(gen(archetype, 'Hammerfell', { params: { size } }).plan), [], `${archetype} at ${size}: its square's feature off the keep's mound and its ways`);
   }
 });
+
+test('RMBC2 a house past its plot\'s curve on a small ring is left a garden, never drawn past it (mutant: the curve unread)', () => {
+  for (const style of ['HighRock', 'Hammerfell']) assert.deepEqual(validateSettlement(gen('village', style, { seed: 7, place: 9, params: { size: 0.5 } }).plan), [], `${style}: every house within its plot`);
+});

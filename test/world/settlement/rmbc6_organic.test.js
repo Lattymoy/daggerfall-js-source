@@ -232,3 +232,18 @@ test('ORGANIC a yard tree keeps off a road through its cell, its lane and every 
     }
   }
 });
+
+test('ORGANIC a grown town\'s first band is paved in to its core\'s edge, the street round the town at each sector\'s level, its ground carved so; a core\'s flight short enough for its own street (mutants: the apron, its corner, the core\'s flight)', () => {
+  const g = town(() => {}), { half, centre } = g.layout.core, onEdge = (p) => Math.abs(Math.max(Math.abs(p[0] - centre[0]) / half[0], Math.abs(p[1] - centre[1]) / half[1]) - 1) < 1e-3;
+  const firsts = g.layout.pads.filter((p) => g.layout.cells.find((c) => c.id === p.id)?.k === 1);
+  assert.ok(firsts.length > 4);
+  for (const pad of firsts) assert.ok(pad.poly.filter(onEdge).length >= 2, `${pad.id} reaches the core's edge`);
+  const corner = firsts.find((pad) => pad.poly.some((p) => [[1, 1], [1, -1], [-1, 1], [-1, -1]].some(([a, b]) => Math.hypot(p[0] - centre[0] - a * half[0], p[1] - centre[1] - b * half[1]) < 0.02)));
+  assert.ok(corner, 'one round a corner of the core, the corner among its points');
+  const { plan } = dressSettlement(g.input, g.layout);
+  assert.deepEqual(validateSettlement(plan), []);
+  for (const l of plan.links.filter((x) => x.from === 'plaza')) {
+    const rise = Math.abs(plan.pads.find((p) => p.id === l.to).y);
+    assert.ok(rise <= 0.75 * (g.input.core.clear - 0.5) + 1e-6, `${l.id}: ${rise} m, a flight its street holds`);
+  }
+});

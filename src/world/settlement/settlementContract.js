@@ -8,7 +8,7 @@ import { HOME_KEY_MAX, homeBuildingKeyOk } from '../../net/homeLaw.js';
 import { worldPixelOk } from '../../net/wire.js';
 import { fnv1a } from '../../formats/fnv1a.js';
 import { dsin, dcos, dhypot } from './exactMath.js';
-import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt, padFinder, distanceToSegment, segmentGap, segmentRingDistance } from './settlementGeometry.js';
+import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt, padFinder, distanceToSegment, segmentGap, segmentRingDistance, flightOf } from './settlementGeometry.js';
 export { padAt };
 
 /** Raised when the plan's shape changes, so a reader can refuse a plan it does not know. */
@@ -57,7 +57,7 @@ export const RMB_KEY_LIMIT = 0x80000;
 export const MINTED_KEY_MIN = 0x800000;
 export const MINTED_KEY_MAX = HOME_KEY_MAX - 1;
 
-import { STEP_MAX, PITCH_MAX, FORT_WALL, DOCK_HALF, FEATURE_CLEAR, TREE_CLEAR, featureReach } from './settlementLimits.js';
+import { STEP_MAX, PITCH_MAX, FORT_WALL, DOCK_HALF, FEATURE_CLEAR, TREE_CLEAR, featureReach, flightRun } from './settlementLimits.js';
 export { STEP_MAX, PITCH_MAX };
 /** How far before a door its approach is read, metres (imperialHomes.js DOOR_OUT's distance). */
 export const APPROACH = 0.8;
@@ -156,6 +156,11 @@ export function validateSettlement(plan) {
     const rise = Math.abs(to.y - from.y), run = dhypot(l.b[0] - l.a[0], l.b[1] - l.a[1]);
     if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {
       bad('link-steep', at, `rises ${rise.toFixed(2)} m over ${run.toFixed(2)} m, past what a ${l.kind} allows`);
+    } else if (rise > 1e-6) {
+      // drawn from its higher pad's rim back onto its lower: that stretch must hold its flight
+      const [low, high] = from.y <= to.y ? [from, to] : [to, from], [lowEnd, highEnd] = from.y <= to.y ? [l.a, l.b] : [l.b, l.a];
+      const flight = flightOf(lowEnd, highEnd, high.poly, low.poly);
+      if (flight && flightRun(l.kind, rise, flight.enter) > flight.room - 0.05) bad('link-steep', at, `flight ${flightRun(l.kind, rise, flight.enter).toFixed(2)}/${flight.room.toFixed(2)}`);   // the run its flight needs, and its lower pad's
     }
     ways.get(l.from)?.push(l.to);
     ways.get(l.to)?.push(l.from);
@@ -258,6 +263,12 @@ export function validateSettlement(plan) {
       if (!before || Math.abs(before.y - floor) > STEP_MAX) { bad('entrance-blocked', eat, `no ground within ${STEP_MAX} m of the floor ${APPROACH} m outside it`); continue; }
       if (!reached.has(before.id)) bad('unreachable', eat, `its pad '${before.id}' has no way from a gate`);
     }
+  }
+  // a link's body keeps off every building and every pad but its own two: the way runs where it is drawn
+  for (const link of (plan.links ?? []).filter((way) => ptOk(way.a) && ptOk(way.b) && fin(way.width))) {
+    const reach = link.width / 2 - 0.05, beside = (/** @type {readonly Pt[]} */ ring) => segmentRingDistance(link.a, link.b, ring) < reach;
+    const house = walled.find((b) => beside(/** @type {Pt[]} */ (b.footprint))), other = padList.find((pad) => pad.id !== link.from && pad.id !== link.to && beside(pad.poly));
+    if (house || other) bad('link-blocked', `link:${link.id}`, house ? `building ${house.key}` : `pad ${other?.id}`);
   }
   // a feature's body keeps off every building and every way between pads: the square's feature, a market's stalls, a
   // tower, a wall's run, a dock, a tree's trunk

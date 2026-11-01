@@ -11,7 +11,7 @@ import { growthJobAt } from '../../../src/world/settlement/townGrowthJob.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
 import { validateSettlement, keyBandOf } from '../../../src/world/settlement/settlementContract.js';
 import { pointInRing, edgeDistance } from '../../../src/world/settlement/settlementGeometry.js';
-import { PAD_REACH, GROUND_EASE } from '../../../src/world/settlement/settlementGround.js';
+import { PAD_REACH, GROUND_EASE, SEA_SHORE } from '../../../src/world/settlement/settlementGround.js';
 import { SAMPLE_M, SEA_M, settlementMovedAt } from '../../../src/world/settlement/settlementStand.js';
 import { settlementGroundAt } from '../../../src/world/settlement/settlementGround.js';
 import { SETTLEMENT_ARCHETYPES } from '../../../src/world/settlement/settlementStyles.js';
@@ -196,7 +196,7 @@ test('RMBC6 a settlement\'s ground is kept by the herbs and the ore as by the tr
 test('RMBC6 a grown town by the sea leaves its bed: off its pads the carve never raises ground under the sea (mutant: the sea unread by the growth)', () => {
   const rect = rectOf(2), job = village(5009, 'IliacBay', 17), metres = M, sea = SEA_M;
   const before = new Float32Array(D * D);
-  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) before[x * D + y] = (x < 40 ? sea - 3 : sea + 4 + 0.02 * x * SAMPLE_M) / metres;
+  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) before[x * D + y] = (x < 40 ? sea : sea + 4 + 0.02 * x * SAMPLE_M) / metres;   // the kernel's clamped sea floor
   const mid = before[64 * D + 64];
   for (let x = rect.xMin; x <= rect.xMax; x++) for (let y = rect.yMin; y <= rect.yMax; y++) before[x * D + y] = mid;
   const after = Float32Array.from(before), g = standTownGrowth(200, 200, after, job, rect, {});
@@ -204,7 +204,7 @@ test('RMBC6 a grown town by the sea leaves its bed: off its pads the carve never
   let near = 0;
   for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
     const p = [x * SAMPLE_M, y * SAMPLE_M], i = x * D + y;
-    if (before[i] * metres >= sea || g.layout.pads.some((pad) => pointInRing(p, pad.poly))) continue;
+    if (before[i] * metres >= sea + SEA_SHORE || g.layout.pads.some((pad) => pointInRing(p, pad.poly))) continue;
     assert.equal(after[i], before[i], `the bed at ${x}, ${y}`);
     if (g.layout.pads.some((pad) => !pad.legacy && edgeDistance(p, pad.poly) < PAD_REACH + GROUND_EASE)) near++;
   }

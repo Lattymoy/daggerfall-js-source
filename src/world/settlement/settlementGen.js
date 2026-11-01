@@ -12,7 +12,7 @@ import { SETTLEMENT_CONTRACT_VERSION, validateSettlement } from './settlementCon
 import { emptyIdLedger, reconcileBuildingIds, anchorLedger } from './settlementIds.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
 import { FORT_WALL, FORT_TOWER, FEATURE_CLEAR, MARKET_RING, featureReach } from './settlementLimits.js';
-import { distanceToSegment, pointInRing, edgeDistance } from './settlementGeometry.js';
+import { distanceToSegment, pointInRing, edgeDistance, ringWithin } from './settlementGeometry.js';
 import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX, districtDraw, yardTrees, onRoad } from './settlementLayout.js';
 
 export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement, yardTrees, onRoad } from './settlementLayout.js';
@@ -89,7 +89,7 @@ export function dressSettlement(input, L, { check = true } = {}) {
       const g = st.gap / 2, q0 = (r) => p0 + inset(r, g), q1 = (r) => p1 - inset(r, g);
       const fp = [frame.toW(q0(r1), r1), frame.toW(q1(r1), r1), frame.toW(q1(r2), r2), frame.toW(q0(r2), r2)];
       const width = dhypot(fp[1][0] - fp[0][0], fp[1][1] - fp[0][1]);
-      if (width < 5 || bd < 5 || draw(17, c.k, c.j, local) < openShare) {
+      if (width < 5 || bd < 5 || draw(17, c.k, c.j, local) < openShare || !ringWithin(fp, poly)) {   // too small, left open, or past its plot's curve
         features.push({ id: `g${id}`, kind: 'garden', pad: c.id, at: ringCentroid(poly) });
         continue;
       }

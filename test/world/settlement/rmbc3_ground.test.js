@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { settlementGroundAt, carveSettlementGround, PAD_CLEAR, PAD_REACH, GROUND_EASE } from '../../../src/world/settlement/settlementGround.js';
+import { settlementGroundAt, carveSettlementGround, PAD_CLEAR, PAD_REACH, GROUND_EASE, SEA_SHORE } from '../../../src/world/settlement/settlementGround.js';
 import { generateSettlement } from '../../../src/world/settlement/settlementGen.js';
 import { padAt, edgeDistance } from '../../../src/world/settlement/settlementGeometry.js';
 import { SETTLEMENT_ROWS, SETTLEMENT_LANE, settlementPlaceId, isSettlementPlaceId, settlementOnPixel, settlementPixel, settlementPlaceRows } from '../../../src/world/settlement/settlementPlaces.js';
@@ -142,14 +142,14 @@ test('RMBC3 a published quay meets its sea: the pixel\'s carve leaves the sea\'s
   const row = SETTLEMENT_ROWS.find((r) => r.archetype === 'river'), [px, py] = settlementPixel(row), D = HEIGHTMAP_DIMENSION, dir = row.fix.shore.dir;
   const seaward = (e, n) => (e - row.site.east) * dir[0] + (n - row.site.north) * dir[1] > row.fix.shore.at;
   const metres = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, before = new Float32Array(D * D);
-  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) before[x * D + y] = (seaward(x * SAMPLE_M, y * SAMPLE_M) ? SEA_M - 3 : SEA_M + 4) / metres;
+  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) before[x * D + y] = (seaward(x * SAMPLE_M, y * SAMPLE_M) ? SEA_M : SEA_M + 4) / metres;   // the kernel's sea floor: the sea's line, a float a hair over it
   const after = Float32Array.from(before), stood = standSettlementGround(px, py, after);
   assert.ok(stood);
   const pads = stood.layout.pads;
   let near = 0;
   for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
     const p = [x * SAMPLE_M, y * SAMPLE_M], i = x * D + y;
-    if (before[i] * metres >= SEA_M || padAt(pads, p)) continue;
+    if (before[i] * metres >= SEA_M + SEA_SHORE || padAt(pads, p)) continue;
     assert.equal(after[i], before[i], `the bed at ${x}, ${y}`);
     if (pads.some((pad) => edgeDistance(p, pad.poly) < PAD_REACH)) near++;
   }
@@ -176,7 +176,9 @@ test('RMBC3 the carve never raises the sea\'s bed off its pads: a quay meets its
   assert.equal(settlementGroundAt(PADS, 100, 20, 45, 95, sea), null, 'beside the quay, under the sea: left');
   assert.equal(settlementGroundAt(PADS, 100, 20, 45, 95), 100 - PAD_CLEAR, 'with no sea, raised as ever');
   assert.equal(settlementGroundAt(PADS, 100, 20, 20, 95, sea), 100 - PAD_CLEAR, 'under the pad itself: its ground');
-  assert.equal(settlementGroundAt(PADS, 100, 20, 45, 99.5, sea), 100 - PAD_CLEAR, 'a beach above the sea raised to it');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, sea + 1e-6, sea), null, 'the kernel\'s sea floor, clamped a hair over the sea\'s line: water still');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, sea + SEA_SHORE - 0.01, sea), null, 'a wet beach the generator calls water');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, sea + SEA_SHORE + 0.01, sea), 100 - PAD_CLEAR, 'dry land over the shore raised to it');
   assert.equal(settlementGroundAt(PADS, 100, 20, 45, 105, sea), 100 - PAD_CLEAR, 'higher land cut down to it');
   const S = Float64Array.from({ length: 129 * 129 }, (_, i) => (Math.floor(i / 129) * SAMPLE_M < 38 ? 95 : 101));   // its bed within the hold of the quay
   const kept = Float64Array.from(S);

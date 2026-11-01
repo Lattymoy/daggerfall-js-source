@@ -15,7 +15,8 @@ import { trs } from '../mat4.js';
 import { hash32 } from '../blockHash.js';
 import { BUILDING_TYPES as T, generateBuildingName } from '../buildingNames.js';
 import { SETTLEMENT_STYLES } from './settlementStyles.js';
-import { ringArea2, pointInRing } from './settlementGeometry.js';
+import { ringArea2, pointInRing, flightOf } from './settlementGeometry.js';
+import { flightRun } from './settlementLimits.js';
 
 /** The model ids of a settlement's pieces: a run of 4,096 a settlement past the Imperial City's (7,000,000 to 7,200,052). */
 export const SETTLEMENT_MODEL_BASE = 7_600_000;
@@ -91,13 +92,19 @@ export function groundModel(plan, datum, cells, style = 'IliacBay') {
       pad.poly.forEach((p, i) => { if (i % 3 === 0) mb.box(PLANK, [p[0], (foot + y) / 2, p[1]], [0.3, Math.max(0.5, y - foot), 0.3], 1); });
     }
   }
+  const padById = new Map(plan.pads.map((pad) => [pad.id, pad]));
   for (const l of plan.links) {
-    const ya = /** @type {number} */ (Y.get(l.from)), yb = /** @type {number} */ (Y.get(l.to));
-    const dx = l.b[0] - l.a[0], dz = l.b[1] - l.a[1], len = Math.hypot(dx, dz) || 1, s = [(-dz / len) * l.width / 2, (dx / len) * l.width / 2];
+    const ya = /** @type {number} */ (Y.get(l.from)), yb = /** @type {number} */ (Y.get(l.to)), from = padById.get(l.from), to = padById.get(l.to);
+    // drawn from its higher pad's rim back onto its lower (flightOf): its top meets the rim level, no ledge under it
+    const lowFirst = ya <= yb, way = from && to && Math.abs(yb - ya) > 1e-6 ? flightOf(lowFirst ? l.a : l.b, lowFirst ? l.b : l.a, (lowFirst ? to : from).poly, (lowFirst ? from : to).poly) : null;
+    const reach = way ? Math.min(flightRun(l.kind, yb - ya, way.enter), way.room - 0.05) : 0;
+    const start = way ? [way.top[0] + way.dir[0] * reach, way.top[1] + way.dir[1] * reach] : l.a, end = way ? way.top : l.b;
+    const y0 = way ? Math.min(ya, yb) : ya, y1 = way ? Math.max(ya, yb) : yb;
+    const dx = end[0] - start[0], dz = end[1] - start[1], len = Math.hypot(dx, dz) || 1, s = [(-dz / len) * l.width / 2, (dx / len) * l.width / 2];
     const tex = l.kind === 'bridge' ? PLANK : PAVING;
-    if (l.kind === 'stairs') { flight(mb, l, ya, yb, dx / len, dz / len, len, s); continue; }
-    const p = [[l.a[0] - s[0], ya, l.a[1] - s[1]], [l.a[0] + s[0], ya, l.a[1] + s[1]], [l.b[0] + s[0], yb, l.b[1] + s[1]], [l.b[0] - s[0], yb, l.b[1] - s[1]]];
-    const up = [-(dx / len) * (yb - ya), len, -(dz / len) * (yb - ya)], m = Math.hypot(...up);
+    if (l.kind === 'stairs') { flight(mb, { a: start, width: l.width }, y0, y1, dx / len, dz / len, len, s); continue; }
+    const p = [[start[0] - s[0], y0, start[1] - s[1]], [start[0] + s[0], y0, start[1] + s[1]], [end[0] + s[0], y1, end[1] + s[1]], [end[0] - s[0], y1, end[1] - s[1]]];
+    const up = [-(dx / len) * (y1 - y0), len, -(dz / len) * (y1 - y0)], m = Math.hypot(...up);
     mb.quad(tex, p[0], p[1], p[2], p[3], [up[0] / m, up[1] / m, up[2] / m], [[0, 0], [l.width / TILE, 0], [l.width / TILE, len / TILE], [0, len / TILE]]);
     for (const [q0, q1, sign] of /** @type {Array<[number[], number[], number]>} */ ([[p[0], p[3], -1], [p[1], p[2], 1]])) {
       const n = [sign * s[0], sign * s[1]], nl = Math.hypot(n[0], n[1]) || 1;

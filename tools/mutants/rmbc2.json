@@ -128,8 +128,8 @@
   {
     "name": "RMBC2-terrace-cap-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    return { ...w, a, b, run, bridge, max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02, width: w.kind === 'along' ? ws : wl };",
-    "new": "    return { ...w, a, b, run, bridge, max: pitch * 0.95 - 0.02, width: w.kind === 'along' ? ws : wl };",
+    "old": "(f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02",
+    "new": "pitch * 0.95 - 0.02",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RMBC2-open-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "      if (width < 5 || bd < 5 || draw(17, c.k, c.j, local) < openShare) {",
-    "new": "      if (width < 5 || bd < 5 ) {",
+    "old": "      if (width < 5 || bd < 5 || draw(17, c.k, c.j, local) < openShare || !ringWithin(fp, poly)) {",
+    "new": "      if (width < 5 || bd < 5 || !ringWithin(fp, poly)) {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]

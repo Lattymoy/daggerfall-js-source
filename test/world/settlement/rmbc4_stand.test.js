@@ -11,7 +11,8 @@ import { standSettlement, createSettlementHost, slotsFree } from '../../../src/s
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
 import { SETTLEMENT_ROWS, settlementInput, settlementPlaceId } from '../../../src/world/settlement/settlementPlaces.js';
-import { ringArea2 } from '../../../src/world/settlement/settlementGeometry.js';
+import { ringArea2, flightOf, pointInRing } from '../../../src/world/settlement/settlementGeometry.js';
+import { flightRun } from '../../../src/world/settlement/settlementLimits.js';
 import { keyBandOf } from '../../../src/world/settlement/settlementContract.js';
 import { DOOR_TYPE } from '../../../src/world/meshReader.js';
 import { BUILDING_TYPES as T } from '../../../src/world/buildingNames.js';
@@ -289,4 +290,30 @@ test('RMBC4 a rebuilt town waiting for the frame\'s budget is compared with its 
   assert.ok(host.planAt(1084, 241) !== null && reads > 0 && reads <= 2, `asked once in three frames waiting (${reads})`);
   entries = [];
   host.frame();
+});
+
+test('RMBC4 every flight tops out level with its higher pad at its rim and lands on its lower pad: no ledge to climb at a terrace\'s edge (mutants: the rim, the foot, the run)', () => {
+  for (const archetype of ['fort', 'wetland', 'river']) {
+    const inp = { place: 9, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype, style: archetype === 'wetland' ? 'BlackMarsh' : 'HighRock', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] };
+    const lay = layoutSettlement(inp, SYNTHETIC[archetype]), p = dressSettlement(inp, lay).plan, pads = new Map(p.pads.map((x) => [x.id, x]));
+    let flights = 0;
+    for (const l of p.links) {
+      const f = pads.get(l.from), t = pads.get(l.to);
+      if (Math.abs(t.y - f.y) < 1e-6) continue;
+      const lowFirst = f.y < t.y, way = flightOf(lowFirst ? l.a : l.b, lowFirst ? l.b : l.a, (lowFirst ? t : f).poly, (lowFirst ? f : t).poly);
+      assert.ok(way, `${archetype} ${l.id} crosses its rim`);
+      const run = flightRun(l.kind, t.y - f.y, way.enter), foot = [way.top[0] + way.dir[0] * run, way.top[1] + way.dir[1] * run];
+      assert.ok(run <= way.room - 0.05 && pointInRing(foot, (lowFirst ? f : t).poly), `${archetype} ${l.id}: its foot on its lower pad`);
+      const g = groundModel({ ...p, links: [l] }, lay.datum, new Map()), high = lay.datum + Math.max(f.y, t.y), low = lay.datum + Math.min(f.y, t.y);
+      let atRim = false, atFoot = false;
+      for (let i = 0; i < g.positions.length; i += 3) {
+        const at = [g.positions[i], g.positions[i + 2]];
+        if (Math.hypot(at[0] - way.top[0], at[1] - way.top[1]) < l.width / 2 + 0.01 && Math.abs(g.positions[i + 1] - high) < 1e-3) atRim = true;
+        if (Math.hypot(at[0] - foot[0], at[1] - foot[1]) < l.width / 2 + 0.01 && Math.abs(g.positions[i + 1] - low) < 1e-3) atFoot = true;
+      }
+      assert.ok(atRim && atFoot, `${archetype} ${l.id}: its top at the rim, level with the pad; its foot its run back, on the lower`);
+      flights++;
+    }
+    assert.ok(flights > 10, `${archetype}: ${flights} flights`);
+  }
 });

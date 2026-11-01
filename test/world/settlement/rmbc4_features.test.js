@@ -13,7 +13,7 @@ import { polarFrame } from '../../../src/world/settlement/settlementLayout.js';
 import { DOCK_REACH, DOCK_OUT } from '../../../src/world/settlement/settlementLayout.js';
 import { settlementTreeFlats, liveTreesOf, YARD_TREE_FALLBACK } from '../../../src/world/settlement/settlementStand.js';
 import { TREE_RECORDS } from '../../../src/world/terrain/terrainNature.js';
-import { padAt, edgeDistance, pointInRing, segmentRingDistance, distanceToSegment } from '../../../src/world/settlement/settlementGeometry.js';
+import { padAt, edgeDistance, pointInRing, segmentRingDistance, distanceToSegment, segmentGap } from '../../../src/world/settlement/settlementGeometry.js';
 import { art, CAPITAL_ART } from '../../../src/world/capitalShapes.js';
 import { SYNTHETIC } from '../../../tools/settlementProbe.mjs';
 
@@ -267,4 +267,22 @@ test('FEATURES a district drawn again draws its own yard trees again and no othe
   }
   assert.ok(changed.size >= layout.sectors / 2, `${changed.size} of ${layout.sectors} districts drawn afresh`);
   assert.equal(kept.size, layout.sectors, 'every other district\'s trees kept');
+});
+
+test('FEATURES a fort\'s gate opens clear: no tower and no wall within a metre of the way straight out of it, whichever sector stands taller (mutants: the gate\'s tower set back, its step, the run stopped short)', () => {
+  let gates = 0;
+  for (const style of ['HighRock', 'Hammerfell', 'Skyrim']) for (let seed = 1; seed <= 14; seed++) {
+    const { plan, report } = generateSettlement({ place: 9, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed, archetype: 'fort', style, site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC.fort });
+    if (!report.ok) continue;
+    for (const g of plan.gates) {
+      const c = report.centre, d = Math.hypot(g.at[0] - c[0], g.at[1] - c[1]), end = [g.at[0] + ((g.at[0] - c[0]) / d) * 14, g.at[1] + ((g.at[1] - c[1]) / d) * 14];
+      for (const t of plan.features.filter((f) => f.kind === 'tower')) assert.ok(distanceToSegment(t.at, g.at, end) >= featureReach(t) + 1, `${style} ${seed}: ${t.id} out of the way`);
+      for (const w of plan.features.filter((f) => f.kind === 'wall')) for (let i = 0; i + 1 < w.path.length; i++) {
+        assert.ok(segmentGap(w.path[i], w.path[i + 1], g.at, end) >= FORT_WALL.thick / 2 + 1, `${style} ${seed}: ${w.id} out of the way`);
+        for (const pad of plan.pads) assert.ok(segmentRingDistance(w.path[i], w.path[i + 1], pad.poly) >= FORT_WALL.thick / 2, `${style} ${seed}: ${w.id} off ${pad.id}`);
+      }
+      gates++;
+    }
+  }
+  assert.ok(gates > 30, `${gates} gates`);
 });

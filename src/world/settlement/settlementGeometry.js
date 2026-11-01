@@ -73,6 +73,31 @@ export function segmentRingDistance(start, end, ring) {
   return Math.min(...ring.map((corner, i) => segmentGap(start, end, corner, ring[(i + 1) % ring.length])));
 }
 
+/**
+ * A link's flight as it is drawn and walked: its top on its higher pad's rim, where the link leaves that pad, and its run
+ * back toward the lower end. `dir` points from the top toward the lower end; along it the lower pad begins at `enter`
+ * (0 where the pads meet, a canal's width between decks) and ends at `room`. Null where the link does not cross into
+ * its higher pad. Halving to a nanometre: the same on every engine.
+ * @param {Pt} lowEnd @param {Pt} highEnd @param {readonly Pt[]} high @param {readonly Pt[]} low
+ */
+export function flightOf(lowEnd, highEnd, high, low) {
+  const east = highEnd[0] - lowEnd[0], north = highEnd[1] - lowEnd[1], length = dhypot(east, north);
+  if (!(length > 0) || !pointInRing(highEnd, high) || pointInRing(lowEnd, high)) return null;
+  const halve = (/** @type {(t: number) => boolean} */ inside, /** @type {number} */ out, /** @type {number} */ into) => {
+    for (let i = 0; i < 48; i++) { const middle = (out + into) / 2; if (inside(middle)) into = middle; else out = middle; }
+    return into;
+  };
+  const share = halve((along) => pointInRing([lowEnd[0] + east * along, lowEnd[1] + north * along], high), 0, 1);
+  /** @type {Pt} */ const top = [lowEnd[0] + east * share, lowEnd[1] + north * share], dir = [-east / length, -north / length];
+  const onLow = (/** @type {number} */ away) => pointInRing([top[0] + dir[0] * away, top[1] + dir[1] * away], low);
+  let enter = -1, room = 0;
+  for (let away = 0.05; away < 80; away += 0.25) {
+    if (enter < 0 && onLow(away)) enter = away <= 0.05 ? 0 : halve(onLow, away - 0.25, away);
+    else if (enter >= 0 && !onLow(away)) { room = halve((past) => !onLow(past), away - 0.25, away); break; }
+  }
+  return enter < 0 ? null : { top, dir, enter, room: room || 80 };
+}
+
 /** A ring a plan can use: three or more finite points, an area, and no edge meeting another but its neighbours. @param {unknown} ring */
 export function ringOk(ring) {
   if (!Array.isArray(ring) || ring.length < 3) return false;

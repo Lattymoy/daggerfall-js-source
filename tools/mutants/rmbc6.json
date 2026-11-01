@@ -273,8 +273,8 @@
   {
     "name": "ORGANIC-wrap-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "Math.abs(wrapAngle(bearing - middle)) <= half",
-    "new": "Math.abs(bearing - middle) <= half",
+    "old": "  return road.some((bearing) => Math.abs(wrapAngle(bearing - middle)) <= half);",
+    "new": "  return road.some((bearing) => Math.abs(bearing - middle) <= half);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -466,8 +466,8 @@
   {
     "name": "CORE-link-outside",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      const start = f.core ? rectEdge(/** @type {NonNullable<typeof core>} */ (core).half.map((side) => side - (core?.clear ?? 0) - 1), lu) : f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH);",
-    "new": "      const start = f.core ? rectEdge(/** @type {NonNullable<typeof core>} */ (core).half, lu) : f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH);",
+    "old": "(core).half.map((side) => side - (core?.clear ?? 0) - 1), bearing);",
+    "new": "(core).half, bearing);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]

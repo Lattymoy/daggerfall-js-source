@@ -374,7 +374,7 @@
   {
     "name": "SEA-bed-raised",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "(!on && natural < sea && height > natural ? null : height)",
+    "old": "(!on && natural < sea + SEA_SHORE && height > natural ? null : height)",
     "new": "(height)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -383,8 +383,8 @@
   {
     "name": "SEA-pad-left",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "(!on && natural < sea && height > natural ? null : height)",
-    "new": "(natural < sea && height > natural ? null : height)",
+    "old": "(!on && natural < sea + SEA_SHORE && height > natural ? null : height)",
+    "new": "(natural < sea + SEA_SHORE && height > natural ? null : height)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]

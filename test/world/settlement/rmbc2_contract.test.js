@@ -90,3 +90,19 @@ test('RMBC2 features: a kind the contract knows, standing on its pad or inside t
   assert.deepEqual(codes(edit((p) => { delete p.features[0].pad; p.features[0].at = [120, 20]; })), ['feature']);
   assert.deepEqual(codes(edit((p) => { p.features[1].id = 'well'; })), ['id-dup']);
 });
+
+test('RMBC2 a link\'s body keeps off a building and a third pad; its flight, drawn from its higher pad\'s rim, must fit on its lower pad (mutants: the building, the third pad, the flight\'s room)', () => {
+  const add = (link, more = (p) => p) => codes(more(edit((p) => { p.links.push({ id: 'x', ...link }); })));
+  assert.deepEqual(add({ kind: 'grade', from: 'square', to: 'square', a: [5, 80], b: [30, 80], width: 2 }), ['link-blocked'], 'through the house');
+  assert.deepEqual(add({ kind: 'grade', from: 'square', to: 'square', a: [5, 69], b: [30, 69], width: 2 }), [], 'beside it');
+  assert.deepEqual(add({ kind: 'stairs', from: 'square', to: 'dais', a: [62, 50], b: [38, 50], width: 2 }), ['link-blocked', 'link-end'], 'across the dais to its far side');
+  const pond = (p) => { p.pads.push({ id: 'pond', poly: sq(70, 10, 80, 20), y: 0.3 }); return p; };
+  assert.deepEqual(add({ kind: 'grade', from: 'square', to: 'square', a: [64, 15], b: [86, 15], width: 2 }, pond), ['link-blocked'], 'over a third pad');
+  assert.deepEqual(add({ kind: 'grade', from: 'square', to: 'square', a: [64, 23], b: [86, 23], width: 2 }, pond), [], 'beside it');
+  // a terrace too short to hold its stair's foot
+  const ledge = edit((p) => {
+    p.pads.push({ id: 'ledge', poly: [[70, 2], [72, 2], [72, 30], [70, 30]], y: 0.2 }, { id: 'top', poly: [[72, 2], [99, 2], [99, 30], [72, 30]], y: 2.2 });
+    p.links.push({ id: 'up', kind: 'stairs', from: 'ledge', to: 'top', a: [71, 16], b: [74, 16], width: 1.5 });
+  });
+  assert.ok(validateSettlement(ledge).some((x) => x.code === 'link-steep' && /^flight /.test(x.why)), 'two metres of ledge for a two-metre rise');
+});

@@ -8,7 +8,7 @@ import { layoutSettlement, yardTrees } from './settlementLayout.js';
 import { hash32 } from '../blockHash.js';
 import { TREE_RECORDS, isTreeRecord } from '../terrain/terrainNature.js';
 import { DEAD_TREES } from '../tamriel/tamrielLands.js';
-import { carveSettlementGround } from './settlementGround.js';
+import { carveSettlementGround, SEA_SHORE } from './settlementGround.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
 
 const M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
@@ -25,7 +25,7 @@ export function sampleEnv(samples) {
     const x = e / SAMPLE_M, y = n / SAMPLE_M, x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
     return (at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx) * (1 - fy) + (at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx) * fy;
   };
-  return { heightAt, waterAt: (e, n) => heightAt(e, n) < SEA_M + 0.5 };
+  return { heightAt, waterAt: (e, n) => heightAt(e, n) < SEA_M + SEA_SHORE };
 }
 
 /**

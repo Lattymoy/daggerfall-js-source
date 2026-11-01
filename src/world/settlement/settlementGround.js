@@ -10,6 +10,9 @@ import { edgeDistance, pointInRing, padAt } from './settlementGeometry.js';
 export const PAD_CLEAR = 0.2;
 /** How far round a cut pad its carve reaches: one terrain cell's diagonal, so no vertex beside its rim stands over it. */
 export const PAD_REACH = 6.4 * Math.SQRT2;
+/** How far over the sea's line ground still counts as its water (a beach, the kernel's clamped sea floor), metres: the
+ *  carve and the generator read water alike. */
+export const SEA_SHORE = 0.5;
 /** How far past the last pad the carve eases back to the land's own, metres. */
 export const GROUND_EASE = 28;
 
@@ -25,7 +28,7 @@ export function settlementGroundAt(pads, datum, e, n, natural, sea = -Infinity) 
   /** @type {readonly [number, number]} */ const p = [e, n];
   const on = padAt(pads, p);
   if (on && (on.base === 'raised' || on.legacy)) return null;   // A legacy core's ground is its town's own
-  const asked = (/** @type {number} */ height) => (!on && natural < sea && height > natural ? null : height);
+  const asked = (/** @type {number} */ height) => (!on && natural < sea + SEA_SHORE && height > natural ? null : height);
   let low = Infinity, near = Infinity;
   for (const pad of pads) {
     if (pad.base === 'raised' || pad.legacy) continue;

@@ -72,10 +72,13 @@ height under a point; `floorOf` is a building's pad height plus its lift.
 
 `validateSettlement` is pure, so the client and every tool run the same law. It answers every problem
 at once, each with a code, what it names and a plain reason. A plan of another contract version is refused alone
-(`contract`). The frame and rings: `source`, `place`, `origin`, `poly`. Ids: `id-dup`. The ground: `pad` (an unknown
+(`contract`).
+
+The frame and rings: `source`, `place`, `origin`, `poly`. Ids: `id-dup`. The ground: `pad` (an unknown
 base), `pad-missing` (a link, plot or building on a pad the plan lacks), `pad-overlap`, `outside` (past the footprint),
 `link`, `link-end` and `link-steep` (a grade step rises at most `STEP_MAX`, 0.4 m; stairs 0.75 and ramps and bridges
-0.25 of their run), `gate` (a gate off its pad). Streets: `street`, `street-off-pad`. Features: `feature`, and `feature-blocks`
+0.25 of their run), `gate` (a gate off its pad). Streets: `street`, `street-off-pad`. Links also: `link-blocked` (its body over a building or a third pad).
+Features: `feature`, and `feature-blocks`
 (a feature's body over a building, a way between pads, its pad's rim or another pad; a tree's trunk; a wall's or a
 dock's run, though a dock may leave a street).
 
@@ -115,12 +118,18 @@ neighbours are pulled together until every step is climbable by its link, a step
 style's terrace. A deck never sinks within `DECK_CLEAR` (0.6 m) of its ground and moves four times as readily as cut
 ground.
 
+A link between two sectors' bands runs at the radius both streets share, as wide as their overlap less its chord's sag;
+two streets that overlap less than `ALONG_LEAST` (1.5 m) take no link. A lane's link is set off the next sector at its
+innermost. A grown town's first band is paved in to its core's edge, and a core's flight is short enough for its own
+street.
+
 A deck town's gate is a landing on its dry ground where at least half of it is dry, else a deck. A ring's size
 scales its square and, with the ring's middle, its sectors; a keep always has room round its mound (`KEEP_ROOM`).
 
 The layout stands what needs the ground. A fort's walls (`fortWalls`) run just outside the cells that stand, each
 sector's run a hand past its outermost rim; round a taller sector they step out on the shorter side, where no cell
-stands. A tower projects at every corner, its eave clear of the rim, and two flank each gate. A run breaks over water
+stands. A tower projects at every corner, its eave clear of the rim, and two flank each gate; beside a gate's lane the
+step and its tower keep to the walled side, so the way out is clear. A run breaks over water
 and a tower there is not built; each foot is the ground the carve leaves (`ground`, `y`). A river town's docks
 (`docksOut`) run from a quay that stands out to the water and `DOCK_OUT` (8 m) past its edge; a dock that finds no
 water within `DOCK_REACH` (40 m) is not built.
@@ -182,8 +191,9 @@ no road grows a thin, broken belt; a steep town grows little; a city that fills 
 The terrain's vertices are 6.4 m apart, coarser than a street, so a pad is drawn and walked as its own paving or deck,
 and the terrain sits under it. `settlementGround.js` `carveSettlementGround` holds the terrain under every cut pad
 within `PAD_REACH` (one cell's diagonal), so no triangle rises through, and eases back to the land over `GROUND_EASE`
-(28 m). A raised pad and a legacy pad ask nothing of the ground. Off every pad the carve never raises ground under the
-sea, so a quay meets its harbour's water. A grown town's carve keeps its core and its town's own ground (`keep`): a
+(28 m). A raised pad and a legacy pad ask nothing of the ground. Off every pad the carve never raises ground the
+generator calls water (under the sea's line and `SEA_SHORE`, 0.5 m, over it, the kernel's clamped sea floor among it), so a
+quay meets its harbour's water. A grown town's carve keeps its core and its town's own ground (`keep`): a
 sample is kept when any of the four tiles round it is the town's.
 
 The terrain worker lays the settlement out and the main thread dresses it. On a pixel no location holds and a published
@@ -216,9 +226,11 @@ deck too.
 ## Standing in the world
 
 `settlementModels.js` makes a dressed settlement into models. `groundModel` paves each cut pad at its height in its
-style's ground, with a retaining wall down its rim, and decks each raised pad on posts. A stair is drawn as its steps
-(`flight`), each riser at most `FLIGHT_STEP` (0.18 m), well under the walker's 0.5 m step; a ramp and a grade are paved
-slopes and a bridge a planked one, each skirted down its sides.
+style's ground, with a retaining wall down its rim, and decks each raised pad on posts. A link is drawn where it is
+walked: from its higher pad's rim, where it leaves that pad, back onto its lower pad by its rise at its kind's pitch
+(`flightOf`, `flightRun`), so it tops out level with the terrace and no ledge stands at the edge. A stair is drawn as
+its steps (`flight`), each riser at most `FLIGHT_STEP` (0.18 m), well under the walker's 0.5 m step; a ramp and a grade
+are paved slopes and a bridge a planked one across its canal, each skirted down its sides.
 
 `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
 roof and pitch, its door the fabric's door model turned to its street. `buildingInterior` is its rooms

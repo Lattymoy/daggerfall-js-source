@@ -7,6 +7,12 @@ export const STEP_MAX = 0.4;
 /** Most rise per metre of run, by link kind. */
 export const PITCH_MAX = Object.freeze({ grade: Infinity, stairs: 0.75, ramp: 0.25, bridge: 0.25 });
 
+/** How far past a canal's far edge a flight's foot lands, metres. */
+export const FLIGHT_LAND = 0.3;
+/** How far back from its higher pad's rim a link's flight reaches: its rise at its kind's pitch (a grade's a ramp's),
+ *  and past a canal of `enter` metres onto the lower pad. @param {string} kind @param {number} rise @param {number} enter */
+export const flightRun = (kind, rise, enter) => Math.max(Math.abs(rise) / (kind === 'grade' ? PITCH_MAX.ramp : PITCH_MAX[kind]), enter > 0.05 ? enter + FLIGHT_LAND : 0, 0.5);
+
 /** A fort's wall: how high over its ground, how thick, how far its foot is sunk. */
 export const FORT_WALL = Object.freeze({ h: 6, thick: 2, sink: 3 });
 /** A fort's tower: its radius, how high it stands over the walls, how far its roof's eave reaches past its wall. */

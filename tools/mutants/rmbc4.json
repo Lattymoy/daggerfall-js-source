@@ -545,8 +545,8 @@
   {
     "name": "TOWERS-lower-corner",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      const at = frame.toW(from, Math.max(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);   // its eave past the rim too",
-    "new": "      const at = frame.toW(from, Math.min(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);   // its eave past the rim too",
+    "old": "      const out = Math.max(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR;",
+    "new": "      const out = Math.min(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR;",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "WALLS-gate-side-open",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));",
-    "new": "    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));",
+    "old": "    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n",
+    "new": "",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -849,8 +849,8 @@
   {
     "name": "STAIRS-slope",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "    if (l.kind === 'stairs') { flight(mb, l, ya, yb, dx / len, dz / len, len, s); continue; }\n    const p = [[l.a[0] - s[0], ya, l.a[1] - s[1]], [l.a[0] + s[0], ya, l.a[1] + s[1]], [l.b[0] + s[0], yb, l.b[1] + s[1]], [l.b[0] - s[0], yb, l.b[1] - s[1]]];",
-    "new": "    const p = [[l.a[0] - s[0], ya, l.a[1] - s[1]], [l.a[0] + s[0], ya, l.a[1] + s[1]], [l.b[0] + s[0], yb, l.b[1] + s[1]], [l.b[0] - s[0], yb, l.b[1] - s[1]]];",
+    "old": "    if (l.kind === 'stairs') { flight(mb, { a: start, width: l.width }, y0, y1, dx / len, dz / len, len, s); continue; }\n",
+    "new": "",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -952,6 +952,164 @@
     "new": "groundWas = kept;",
     "tests": [
       "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-end-to-end",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "way = from && to && Math.abs(yb - ya) > 1e-6 ? flightOf(",
+    "new": "way = false ? flightOf(",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-run-halved",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "Math.min(flightRun(l.kind, yb - ya, way.enter), way.room - 0.05)",
+    "new": "Math.min(flightRun(l.kind, yb - ya, way.enter) / 2, way.room - 0.05)",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-flight-room",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "      if (flight && flightRun(l.kind, rise, flight.enter) > flight.room - 0.05) bad('link-steep', at, `flight ${flightRun(l.kind, rise, flight.enter).toFixed(2)}/${flight.room.toFixed(2)}`);   // the run its flight needs, and its lower pad's",
+    "new": "      if (false) bad('link-steep', at, `flight ${flightRun(l.kind, rise, flight.enter).toFixed(2)}/${flight.room.toFixed(2)}`);   // the run its flight needs, and its lower pad's",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-link-through-house",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "const house = walled.find((b) => beside(",
+    "new": "const house = false && walled.find((b) => beside(",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-link-through-pad",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "other = padList.find((pad) => pad.id !== link.from",
+    "new": "other = false && padList.find((pad) => pad.id !== link.from",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "SEA-shore-unread",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "natural < sea + SEA_SHORE",
+    "new": "natural < sea",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "ALONG-own-street",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      const reachU = Math.max(LINK_REACH, gap / 2 + 1), along = Math.max(f.a, t.a) + shared(f, t) / 2;",
+    "new": "      const reachU = Math.max(LINK_REACH, gap / 2 + 1), along = f.a + ws / 2;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js",
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ALONG-unmet-kept",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "if (jn >= 0 && (!here || !there || shared(here, there) >= ALONG_LEAST))",
+    "new": "if (jn >= 0)",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js",
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "ALONG-sag-kept",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    return { ...w, a, b, run, bridge, max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02, width: w.kind === 'along' ? cm(Math.min(ws, shared(f, t)) - 2 * sag - 0.1) : wl };",
+    "new": "    return { ...w, a, b, run, bridge, max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02, width: w.kind === 'along' ? cm(Math.min(ws, shared(f, t))) : wl };",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js",
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "LANE-middle-inset",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      const lu = edges[t.j][0] + inset(beside, gap / 2 + wl / 2);",
+    "new": "      const lu = edges[t.j][0] + inset((f.b + t.a) / 2, gap / 2 + wl / 2);",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js",
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "APRON-gone",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "poly: core && c.k === 1 ? apron(c) : c.poly",
+    "new": "poly: c.poly",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "APRON-corner-missed",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "for (const turn of [-TAU, 0, TAU]) if (bend + turn > first && bend + turn < end) corners.push(bend + turn);",
+    "new": "for (const turn of [0]) if (bend + turn > first && bend + turn < end) corners.push(bend + turn);",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "CORE-flight-long",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    const pitch = (bridge ? PITCH_MAX.bridge : PITCH_MAX.stairs) * (f.core ? Math.min(run, (core?.clear ?? run) - 0.5) : run);   // a core's flight stands in its own street",
+    "new": "    const pitch = (bridge ? PITCH_MAX.bridge : PITCH_MAX.stairs) * run;   // a core's flight stands in its own street",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "GATE-tower-in-the-way",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      const at = frame.toW(byGate(prev) ? Math.min(from, edges[j][0] - setBack(out)) : from, out);",
+    "new": "      const at = frame.toW(from, out);",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "GATE-run-to-the-edge",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (byGate(j)) return rim[j] < rim[next] ? -turn : -(FORT_WALL.thick / 2 + FEATURE_CLEAR) / line(j);",
+    "new": "    if (byGate(j)) return rim[j] < rim[next] ? -turn : 0;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "GATE-step-across",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (has(next) && line(next) !== line(j) && !(byGate(j) && rim[j] >= rim[next])) path.push(frame.toW(to, line(next)));",
+    "new": "    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "PLOT-curve-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": " || !ringWithin(fp, poly)) {",
+    "new": ") {",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
     ]
   }
 ]
