@@ -127,7 +127,7 @@ test('AUDIT-STOREFRONT III C4: under the Grimoire the pages and the stages are n
 });
 
 test('AUDIT-STOREFRONT III C5: an item and the unlock say why they offer nothing - before the season "Opens <day>", shut "Not on sale yet", a guest "Needs a username", nobody signed in "Sign in to buy" (mutants: an item silent before the season; the unlock silent)', () => {
-  const before = S1.fromMs - 4 * 86_400_000, opens = `Opens ${new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(S1.fromMs))}`;
+  const before = S1.tracksFromMs - 4 * 86_400_000, opens = `Opens ${new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(S1.tracksFromMs))}`;
   const grant = passPanelsOf('s1', 'free')[0].items[0].grant;
   const w = open(flowIn({ balance: 2400 }), { now: () => before });
   assert.equal(text(all(w.root, 'sh-punlock')[0], 'sh-state'), opens, 'the unlock on its cover');
@@ -342,11 +342,11 @@ test('AUDIT-STOREFRONT III B3: the window offers nothing the service refuses - t
 
 test('AUDIT-STOREFRONT III B8: the shop\'s now is the shared clock\'s wall while one stands, so Buy and "opens on" turn at one instant on every device; the device\'s offline (mutants: the device\'s clock always)', () => {
   try {
-    for (const at of [S1.fromMs - 86_400_000, S1.fromMs + 86_400_000]) {
+    for (const at of [S1.tracksFromMs - 86_400_000, S1.tracksFromMs + 86_400_000]) {
       setSharedClock(() => sharedClassicMinutes(at));
       assert.ok(Math.abs(shopNow() - at) < 1000, `${new Date(at).toISOString()}: ${new Date(shopNow()).toISOString()}`);
       const w = open(flowIn(), { now: shopNow });
-      assert.equal(text(w.root, 'sh-passwho') === '', at >= S1.fromMs, 'the head by the shared clock');
+      assert.equal(text(w.root, 'sh-passwho') === '', at >= S1.tracksFromMs, 'the head by the shared clock');
       w.stop();
     }
   } finally { setSharedClock(null); }

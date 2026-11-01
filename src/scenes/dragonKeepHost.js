@@ -46,6 +46,9 @@ import { inventoryDoorReady } from '../ui/inventoryDoor.js';
 /** Its press reaches from this far off its body's box (HCC's horse: 3.2), m; it is drawn within this of the eye, m. */
 export const DRAGON_KEEP_REACH = 4;
 export const DRAGON_KEEP_DRAW_R = 2500;
+/** A tamed dragon off its back is drawn at the size it is ridden at - its sprite's own, as net/remotePlayers.js draws its
+ *  rider - never at the boss's DRAGON_SCALE (scenes/dragonHost.js), 1.6 times its ridden self. */
+export const DRAGON_KEEP_SCALE = 1;
 /** "Already here": waiting within this of the player, a call is not needed, m. */
 export const DRAGON_HERE_M = 40;
 const MINE = 'dragonkeep:mine',
@@ -53,7 +56,7 @@ const MINE = 'dragonkeep:mine',
 
 /**
  * deps = { now, local(nx, nz) -> [x, z], native(x, z) -> [nx, nz], ground(x, z), feet(), eye(), street(), say(text),
- * renderer?, getTexture?, uploadRecordFrame?, scale, townTalk? (its overlay), makeInventoryWindow? (the pack's door),
+ * renderer?, getTexture?, uploadRecordFrame?, townTalk? (its overlay), makeInventoryWindow? (the pack's door),
  * entity? (the player) }
  * @param {any} deps
  */
@@ -164,7 +167,7 @@ export function createDragonKeep(deps) {
     const rkey = `${fr.record}#${fr.frame}`;
     if (!r.textures?.has?.(`${archive}_${rkey}`)) deps.uploadRecordFrame?.(archive, fr.record, fr.frame);
     const sz = mobileBillboardSize(T.tex, fr.record),
-      k = deps.scale ?? 1;
+      k = DRAGON_KEEP_SCALE;
     let b = batches.get(id);
     if (b && b.keepArchive !== archive) {
       r.destroyBillboardBatch?.(b);

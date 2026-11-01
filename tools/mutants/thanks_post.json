@@ -101,8 +101,8 @@
   {
     "name": "THANKS-POST-one-arm",
     "file": "src/render/armoryPass.js",
-    "old": "    for (const arm of /** @type {const} */ (['left', 'right'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
-    "new": "    for (const arm of /** @type {const} */ (['left'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
+    "old": "    for (const arm of /** @type {const} */ (['left', 'right'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT), from = out.length;",
+    "new": "    for (const arm of /** @type {const} */ (['left'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT), from = out.length;",
     "tests": [
       "test/server/thanks_post.test.js"
     ],

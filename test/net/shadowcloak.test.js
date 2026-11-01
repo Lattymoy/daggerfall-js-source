@@ -557,7 +557,7 @@ test('SHADOW-CLOAK the draw: FARTHEST FIRST, so a nearer cloak\'s shadow lies ov
   assert.deepEqual([draws(), firsts()], [[6, CLOAK_SHREDS * 6], [0, CLOAK_EMBLEMS * 6]], 'torn through: its ground and its shreds alone - the emblems\' cards not drawn at all - and no cloth');
   calls.length = 0;
   r.draw([{ at: [1, 0, 1], aura: 'shadowcloak', mounted: true }, { at: [5, 0, 5], aura: 'oblivionward', mounted: true }], M, M, [0, 0, 0], 10);
-  assert.deepEqual(draws(), [6, AURA_STEPS * 6, WARD_GLYPHS * 6, 6], 'riding: the ward on a rider as before; the cape folded away, its emblems with it - its ground stays');
+  assert.deepEqual(draws(), [6, AURA_STEPS * 6, 6], 'riding: the ward on a rider without its floating symbols (GLYPHS-MOUNTED, PIN MOVED: they were drawn); the cape folded away, its emblems with it - its ground stays');
   // a wearer that throws mid-pass: the frame's state handed back all the same
   calls.length = 0;
   assert.throws(() => r.draw([{ at: [1, 0, 1], aura: 'shadowcloak', get yaw() { throw new Error('a broken wearer'); } }], M, M, [0, 0, 0], 10), /a broken wearer/);
@@ -579,8 +579,8 @@ test('SHADOW-CLOAK the hosts: the one gather every host draws through hands each
   codeMatch(w, /beast: \(\) => !!liveLycanthropy\(playerEntity\)\?\.isTransformed,/, 'my own lycanthropy turned, handed over');
   codeMatch(h, /const seenAs = spriteAnswer\(layers, 'faceOf', d\.id, eye\), p = seenAs\?\.at \?\? deps\.toScene\(d\.shown\)[^\n]*\n\s+const face = seenAs\?\.yaw \?\? peerBodyYaw\(d\.shown\) \?\? 0;/, 'a peer\'s: their pose\'s - SPRITE-FACE (PIN MOVED): a sprite\'s as its picture is drawn; CAPE-CARD (PIN MOVED): from every sprite layer, the paperdolls and class sprites with the sets\'');
   codeMatch(h, /w\.at\[2\] = p\[2\]; w\.yaw = face; auraBeastStep\(w, !!d\.shown\.wb, t\);/, 'a peer\'s facing, and turned beast');
-  codeMatch(h, /auraBeastStep\(self[^\n]*\n\s+self\.kindle = Math\.min\(1, \(t - self\.since\) \/ AURA_KINDLE_S\); \/\*\* @type \{any\} \*\/ \(self\)\.mounted = !!player\.riding \|\| lift > 0;/, 'stepped before the kindling is read, so turning back kindles it again; and riding (AURA-ON-DRAGON, PIN MOVED: a dragon\'s rider too)');
-  codeMatch(h, /auraBeastStep\(w, [^\n]*\n\s+w\.kindle = Math\.min\(1, \(t - w\.since\) \/ AURA_KINDLE_S\); w\.seen = t; w\.mounted = !!d\.shown\.rd;/, 'a peer\'s too - a horse or a cart');
+  codeMatch(h, /auraBeastStep\(self[^\n]*\n\s+self\.kindle = Math\.min\(1, \(t - self\.since\) \/ AURA_KINDLE_S\); \/\*\* @type \{any\} \*\/ \(self\)\.mounted = !!player\.riding \|\| ridingDragon\(\) \|\| lift > 0;/, 'stepped before the kindling is read, so turning back kindles it again; and riding (AURA-ON-DRAGON, PIN MOVED: a dragon\'s rider too; AUDIT AURA-PIXEL B2, PIN MOVED: an Admin\'s /dragon)');
+  codeMatch(h, /auraBeastStep\(w, [^\n]*\n\s+w\.kindle = Math\.min\(1, \(t - w\.since\) \/ AURA_KINDLE_S\); w\.seen = t; w\.mounted = peerMounted\(d\.shown\);/, 'a peer\'s too - a horse or a cart (AUDIT AURA-PIXEL B1, PIN MOVED: or a wagon\'s bench)');
   // THE DRAW LINE, read as code - its comment cut off first (a call after a // is no call: FOE1's trap, met here once)
   const line = h.split('\n').find((l) => l.includes('for (const w of auraDraw) if (auraLookOf(w.aura).mesh)'));
   const code = line.includes('   //') ? line.slice(0, line.indexOf('   //')) : line;

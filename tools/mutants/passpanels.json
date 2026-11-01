@@ -40,10 +40,29 @@
     ]
   },
   {
+    "name": "PASS-PANELS-law-the-finds-wait-for-the-world",
+    "file": "src/net/battlePassLaw.js",
+    "old": "export const PASS_FINDS_FROM_MS = PASS_SEASONS[0].tracksFromMs;",
+    "new": "export const PASS_FINDS_FROM_MS = PASS_SEASONS[0].fromMs;",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "PASS-PANELS-law-the-tracks-wait-for-the-world",
+    "file": "src/net/battlePassLaw.js",
+    "old": "nowMs >= season.tracksFromMs;",
+    "new": "nowMs >= season.fromMs;",
+    "tests": [
+      "test/net/passpanels_law.test.js"
+    ]
+  },
+  {
     "name": "PASS-PANELS-law-the-tracks-shut-with-the-season",
     "file": "src/net/battlePassLaw.js",
-    "old": "Number.isFinite(nowMs) && nowMs >= season.fromMs;",
-    "new": "Number.isFinite(nowMs) && nowMs >= season.fromMs && nowMs < season.toMs;",
+    "old": "Number.isFinite(nowMs) && nowMs >= season.tracksFromMs;",
+    "new": "Number.isFinite(nowMs) && nowMs >= season.tracksFromMs && nowMs < season.toMs;",
     "tests": [
       "test/net/passpanels_law.test.js",
       "test/server/passpanels_service.test.js"

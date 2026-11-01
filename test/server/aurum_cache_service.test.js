@@ -15,11 +15,13 @@ import { accountAurumCache, accountRefusalText, REFUSALS, SESSION_KEY } from '..
 import { aurumCacheAurumOf, aurumCacheDungeonKey } from '../../src/net/aurumCacheLaw.js';
 import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { aurumWeekOf, aurumWeekEndMs } from '../../src/net/aurumLaw.js';
 import { mintCacheProof, CACHE_PROOF_TTL_S } from '../../src/net/cacheProof.js';
 import { importReceiptKey } from '../../src/net/gate/gateReceipt.js';
 
 const NOW = Date.UTC(2026, 10, 18, 12);
 const DAY = utcDay(NOW / 1000);
+const WEEK = aurumWeekOf(NOW / 1000), UNTIL = aurumWeekEndMs(WEEK) / 1000;   // a Wednesday; the week turns on Monday
 const ON = { AURUM_OPEN: 'on' };
 /** `n` caches' ids from the `from`th (CACHES-ONCE: every dungeon's key) - Bay dungeons' pixel ids and, `lair`, lairs past the Bay. */
 const ids = (n, { lair = false, from = 1 } = {}) => Array.from({ length: n }, (_, k) => /** @type {string} */ (aurumCacheDungeonKey(lair ? lairPlaceId((from + k) * 31) : (from + k) * 7)));
@@ -35,40 +37,46 @@ async function stand(env = ON) {
   return { ...s, claim, balance, lines };
 }
 
-test('AURUM-CACHES a cache claimed through the Worker: its own Aurum, 5 to 10 (PIN MOVED, CACHE-SPREAD: ten; CACHES-ONCE: twenty-five; AURUM-CACHES BALANCE: fifteen), one ledger line, the balance up by it; the same id again taken and nothing written; another account\'s own claim of the same cache (mutants: the line\'s amount, the repeat answered yes, a repeat called capped)', async (t) => {
+test('AURUM-CACHES a cache claimed through the Worker: its own Aurum, 5 to 10 (PIN MOVED, CACHE-SPREAD: ten; CACHES-ONCE: twenty-five; AURUM-CACHES BALANCE: fifteen), one ledger line keyed by its UTC week, the balance up by it; the same id again taken, with when the week turns, and nothing written; another account\'s own claim of the same cache (mutants: the line\'s amount, the repeat answered yes, a repeat called capped)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   const s = await stand();
   const me = await s.seated('Finder'), other = await s.seated('Second');
   const [bay] = ids(1), [lair] = ids(1, { lair: true });
   assert.equal(await s.balance(me), 0);
   const yes = await s.claim(me, bay);
-  assert.deepEqual(yes, { status: 200, body: { ok: true, id: bay, aurum: aurumCacheAurumOf(bay) } });
+  assert.deepEqual(yes, { status: 200, body: { ok: true, id: bay, aurum: aurumCacheAurumOf(bay), until: UNTIL } });
   assert.equal(await s.balance(me), aurumCacheAurumOf(bay), 'the balance sums the ledger');
-  assert.deepEqual(await s.claim(me, bay), { status: 409, body: { error: 'cache-taken' } }, 'one claim an id an account');
-  assert.deepEqual(s.lines(me), [{ ref: bay, amount: aurumCacheAurumOf(bay), day: DAY }], 'one line');
-  assert.equal((await s.claim(other, bay)).status, 200, 'the cache is every account\'s to claim once');
+  assert.deepEqual(await s.claim(me, bay), { status: 409, body: { error: 'cache-taken', at: UNTIL } }, 'one claim an id an account a week');
+  assert.deepEqual(s.lines(me), [{ ref: `${bay}:${WEEK}`, amount: aurumCacheAurumOf(bay), day: DAY }], 'one line');
+  assert.equal((await s.claim(other, bay)).status, 200, 'the cache is every account\'s to claim once a week');
   const past = await s.claim(me, lair);
-  assert.deepEqual(past, { status: 200, body: { ok: true, id: lair, aurum: aurumCacheAurumOf(lair) } }, 'a lair\'s cache past the Bay, alike');
+  assert.deepEqual(past, { status: 200, body: { ok: true, id: lair, aurum: aurumCacheAurumOf(lair), until: UNTIL } }, 'a lair\'s cache past the Bay, alike');
   assert.equal(await s.balance(me), aurumCacheAurumOf(bay) + aurumCacheAurumOf(lair));
   assert.ok(ROUTES.has('/v1/aurum/cache'));
 });
 
 // PIN MOVED (CACHE-SPREAD): ten caches a UTC day the forgery bound, the eleventh capped until the next day; before
 // CACHES-ONCE three a day, the fourth lost to the next day's roll
-test('CACHE-SPREAD no day\'s bound (Mac: "no daily cap"): thirty caches in one UTC day each pay their own Aurum and are written, a repeat still taken; a cache claimed is taken on every later day (mutants: a bound kept, the amount not the cache\'s, the line\'s day not the claim\'s)', async (t) => {
+test('CACHE-SPREAD no day\'s bound (Mac: "no daily cap"): thirty caches in one UTC day each pay their own Aurum and are written, a repeat still taken; a cache claimed is taken the rest of its UTC week and pays again from Monday (mutants: a bound kept, the amount not the cache\'s, the line\'s day not the claim\'s, the week unkeyed)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   const s = await stand();
   const me = await s.seated('Delver');
   const day = [...ids(15), ...ids(15, { lair: true })];
-  for (const id of day) assert.deepEqual(await s.claim(me, id), { status: 200, body: { ok: true, id, aurum: aurumCacheAurumOf(id) } }, id);
-  assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken' } }, 'a repeat is taken');
+  for (const id of day) assert.deepEqual(await s.claim(me, id), { status: 200, body: { ok: true, id, aurum: aurumCacheAurumOf(id), until: UNTIL } }, id);
+  assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken', at: UNTIL } }, 'a repeat is taken');
   const sum = day.reduce((a, id) => a + aurumCacheAurumOf(id), 0);
   assert.ok(new Set(day.map(aurumCacheAurumOf)).size >= 4, 'the amounts differ');
   assert.equal(await s.balance(me), sum);
-  assert.deepEqual(s.lines(me).map((l) => [l.amount, l.day]), s.lines(me).map((l) => [aurumCacheAurumOf(l.ref), DAY]));
+  const byRef = (/** @type {any[]} */ a, /** @type {any[]} */ b) => (a[0] < b[0] ? -1 : 1);
+  assert.deepEqual(s.lines(me).map((l) => [l.ref, l.amount, l.day]).sort(byRef), day.map((id) => [`${id}:${WEEK}`, aurumCacheAurumOf(id), DAY]).sort(byRef));
   assert.equal(s.lines(me).length, day.length);
-  t.mock.timers.setTime(NOW + 40 * 86_400_000);
-  assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken' } }, 'once ever');
+  t.mock.timers.setTime(UNTIL * 1000 - 1000);   // Sunday's last second
+  assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken', at: UNTIL } }, 'taken all week');
+  t.mock.timers.setTime(UNTIL * 1000);   // Monday 00:00 UTC
+  const next = await s.claim(me, day[0]);
+  assert.deepEqual(next, { status: 200, body: { ok: true, id: day[0], aurum: aurumCacheAurumOf(day[0]), until: UNTIL + 7 * 86_400 } }, 'the week turned: it fills again');
+  assert.equal(s.lines(me).length, day.length + 1);
+  assert.equal(await s.balance(me), sum + aurumCacheAurumOf(day[0]));
   assert.equal('cache-capped' in AURUM_CACHE_STATUS, false);
 });
 

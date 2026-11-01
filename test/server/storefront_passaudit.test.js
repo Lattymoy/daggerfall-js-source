@@ -18,7 +18,7 @@ import { bindPass, askPassFind, refreshPass, passState, _resetPassClientForTests
 const ON = { PASS_OPEN: 'on', FESTIVAL_OPEN: 'on', DEVELOPER_HANDLES: 'mac' };
 const S1 = passSeasonById('s1');
 const IN_TREMOR = S1.fromMs + 3 * 86_400_000 + 3_600_000;
-const BEFORE = S1.fromMs - 5 * 86_400_000;
+const BEFORE = S1.tracksFromMs - 86_400_000;
 
 async function stand() {
   const s = await standService(ON);

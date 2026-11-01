@@ -174,8 +174,8 @@ test('FB1031 W3 the read\'s door: 1..64 tiles of the world\'s grid, a registered
   assert.equal(REPLICA_ROUTES.get('/v1/prof/ground'), 'POST', 'it writes nothing and keeps nothing an isolate shares');
   assert.equal(D1_BOOKMARK_READS.get('/v1/prof/ground'), 'POST');
   assert.equal(busyRead('/v1/prof/ground', 'POST'), true);
-  assert.equal(ACCOUNT_VERSION, 'acct242');
-  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct242"$/m);
+  assert.equal(ACCOUNT_VERSION, 'acct243');
+  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct243"$/m);
   assert.doesNotMatch(src('server-account/src/professions.js'), /profGround|GROUND_PIXELS_MAX|x, y, climate: f\.climate/, 'the writ board\'s kept ground is as it was before WITNESS-MAP');
 });
 

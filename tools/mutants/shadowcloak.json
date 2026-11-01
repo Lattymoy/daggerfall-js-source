@@ -822,8 +822,8 @@
   {
     "name": "SHADOWCLOAK-my-riding-ignored",
     "file": "src/scenes/auraHost.js",
-    "old": "/** @type {any} */ (self).mounted = !!player.riding || lift > 0;",
-    "new": "/** @type {any} */ (self).mounted = lift > 0;",
+    "old": "(self).mounted = !!player.riding || ridingDragon() || lift > 0;",
+    "new": "(self).mounted = ridingDragon() || lift > 0;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -831,7 +831,7 @@
   {
     "name": "SHADOWCLOAK-a-peers-riding-ignored",
     "file": "src/scenes/auraHost.js",
-    "old": "w.seen = t; w.mounted = !!d.shown.rd;",
+    "old": "w.seen = t; w.mounted = peerMounted(d.shown);",
     "new": "w.seen = t; w.mounted = false;",
     "tests": [
       "test/net/shadowcloak.test.js"
