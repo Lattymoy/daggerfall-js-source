@@ -1,4 +1,4 @@
-// UPDATE-SWAP (2026-10-30, the owner: "make sure to have it update"): the Mac app and the Windows portable exe cannot
+// UPDATE-SWAP (2026-10-30): the Mac app and the Windows portable exe cannot
 // install, so they download their own file from the release and swap it in once they have quit (app/lib/selfSwap.cjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

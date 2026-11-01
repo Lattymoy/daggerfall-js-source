@@ -133,7 +133,7 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-20, -20, 20, -20, 20, 20, -20,
 gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.bindVertexArray(null);
 let pass = null, err = null;
 try { pass = new AuraRingRenderer(gl); } catch (e) { err = String(e.message ?? e); }
-if (pass) pass.pixel = ${process.env.PIXEL === '1' ? 'true' : 'false'};   // AURA-PIXEL: the designs read per pixel - PIXEL=1 reads them with the law on (AUDIT AURA-PIXEL A6/D3); the law's own reads (pixelShot) turn it on
+if (pass) pass.pixel = ${process.env.PIXEL === '1' ? 'true' : 'false'};   // the designs read per pixel - PIXEL=1 reads them with the law on; the law's own reads (pixelShot) turn it on
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1], e[2] - c[2]]; let l = Math.hypot(...z); z.forEach((v, i) => { z[i] = v / l; }); const x = [u[1] * z[2] - u[2] * z[1], u[2] * z[0] - u[0] * z[2], u[0] * z[1] - u[1] * z[0]]; l = Math.hypot(...x); x.forEach((v, i) => { x[i] = v / l; }); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]; return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); };
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
@@ -1432,10 +1432,10 @@ try {
     sgCold.px.every((c, i) => Math.abs(lum(c) - lum(sgColdBare.px[i])) < 6),
     `${Math.max(...sgCold.px.map((c, i) => Math.abs(lum(c) - lum(sgColdBare.px[i]))))}`,
   );
-  // AURA-PIXEL (2026-10-31): EVERY LOOK IN DAGGERFALL'S PIXELS - drawn close with the law on: no GL error; in texels (a lit
-  // pixel the same as its right-hand neighbour more often than with the levels alone - AUDIT AURA-PIXEL D5: the levels
-  // alone made runs enough to pass against per pixel), but for a look of its own pixels; an added look's light on its
-  // levels more often than per pixel (overlapping surfaces sum - the law is test/render/aurapixel.test.js's); a shot of each
+  // EVERY LOOK IN DAGGERFALL'S PIXELS - drawn close with the law on: no GL error; in texels (a lit pixel the same as its
+  // right-hand neighbour more often than with the levels alone, whose runs alone passed against per pixel), but for a
+  // look of its own pixels; an added look's light on its levels more often than per pixel (overlapping surfaces sum - the
+  // law is test/render/aurapixel.test.js's); a shot of each
   for (const aura of await page.evaluate(() => window.auraNames)) {
     const shot = (on) => page.evaluate(([e, a, m, o]) => window.pixelShot(e, a, m, o), [[0, 1.3, 2.2], aura, [0, 0.7, 0], on]);
     const flat = await shot(false), lv = await shot('levels'), px = await shot(true);

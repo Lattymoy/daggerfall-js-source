@@ -1,4 +1,4 @@
-// DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code";
+// DRAGON-HIDDEN (2026-10-29;
 // bible/11-Multiplayer/Dwarven-Dragon.md section 2): A WATCH'S ROLLS ARE THE RELAY'S SECRET. Pinned: the seed is HMAC of the
 // relay's GATE_SIGNING_KEY under its own label - fixed for a watch, another for every watch and every secret, none
 // without one; the law keeps no salt a client could roll with; the relay tells a watch's seed only once its landing is

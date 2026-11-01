@@ -9,7 +9,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { AURA_NOISE_GLSL, auraClock, AURA_CLOCK_PERIOD, ETERNAL_RGB } from './auraRing.js';
-import { AURA_PIXEL_GLSL } from './auraPixel.js';   // AURA-PIXEL: the pieces in Daggerfall's pixels, as the auras are
+import { AURA_PIXEL_GLSL } from './auraPixel.js';   // the levels the auras are cut to
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryKitPieces } from '../net/armoryLaw.js';
 import { POSE_AT, poseWorld, ARM_BAND } from './armoryPose.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../net/heraldryLaw.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
@@ -48,8 +48,7 @@ export const ARMORY_HEAD = Object.freeze({
 /** Every rate whole over AURA_CLOCK_PERIOD. Pure. */
 export const armoryRatesWhole = () => Object.values(ARMORY_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 
-/** WOLF-KIT (2026-10-30, mob: "the feet chest and arm and hand cosmetic ... on werewolf form", "like the weapon glow on
- *  claws"): the slots still worn turned beast - the chest, the arms to the wrist and the legs, fitted to the wolf
+/** WOLF-KIT (2026-10-30): the slots still worn turned beast - the chest, the arms to the wrist and the legs, fitted to the wolf
  *  (armoryPose.js ARMORY_BEAST_FIT). The head's crown and halo stay off the wolf's muzzle, and its weapon piece is the
  *  claws' own glow already (systems/weaponGlow.js fistGlow). */
 export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);
@@ -164,7 +163,7 @@ uniform mat4 uVP;
 uniform vec3 uCamPos, uCamRight, uCamUp;
 uniform float uLift;
 uniform vec4 uTrail[${ARMORY_TRAIL}];
-out vec2 vArm;   // AURA-PIXEL: the surface's point, which the fragment snaps to its texel
+out vec2 vArm;   // the surface's point; the fragment hands it on as vP
 out vec3 vWorld;
 out vec4 vS;
 ${SHARED}${CARDS_GLSL}
@@ -407,7 +406,7 @@ vec3 crystalLight() {
 `;
 
 export const ARMORY_FS = `${HEAD}in vec2 vArm;
-vec2 vP;   // AURA-PIXEL: the point every look answers - vArm, at its texel's middle under the pixel law (main)
+vec2 vP;   // the point every look answers (main sets it)
 in vec3 vWorld;
 in vec4 vS;
 uniform float uKindle;
@@ -418,8 +417,8 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-uniform float uPixel;   // AURA-PIXEL: 1 in Daggerfall's pixels (render/auraPixel.js) - the pass sets it; 0 per pixel
-uniform vec4 uClip;     // ARM-BEHIND: a sprite's arm piece kept where uClip.xyz . p + uClip.w >= 0 (armClip) - 0 keeps all
+uniform float uPixel;   // 1 the light cut to the auras' levels - the pass sets it; 0 as drawn
+uniform vec4 uClip;     // a sprite's arm piece kept where uClip.xyz . p + uClip.w >= 0 (armClip) - 0 keeps all
 out vec4 o;
 ${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${AURA_PIXEL_GLSL}${SHARED}${LOOKS_GLSL}
 /** GUILD-SHOP: the Insignia Armlet - a gilt band with the guild's field enamelled between its rims and its ink run round
@@ -468,13 +467,13 @@ void armoryLook() {
   else c = vec3(0.0);   // the weapon's pieces are the weapon glow's (systems/weaponGlow.js law 7), never drawn here
   o = vec4(max(c, vec3(0.0)) * uKindle * fogFactorAt(vWorld), 1.0);
 }
-// AURA-PIXEL: the armlet covers (its crest's colour kept, its cover cut); every other piece adds light
+// the armlet covers (its crest's colour kept, its cover cut); every other piece adds light
 void main() {
-  if (dot(uClip.xyz, vWorld) + uClip.w < 0.0) discard;   // ARM-BEHIND: past the painted arm's inner edge
+  if (dot(uClip.xyz, vWorld) + uClip.w < 0.0) discard;   // past the painted arm's inner edge
   vP = vArm;
   armoryLook();
-  // AUDIT AURA-PIXEL D3/A3/A4: a piece is a hand's breadth of fine work (links, veins, facets) - snapped even to half a
-  // flat's pixel its detail was noise at the body's own distance, so it takes the levels alone, dithered on the screen's
+  // a piece is a hand's breadth of fine work (links, veins, facets) - snapped even to half a flat's pixel its detail was
+  // noise at the body's own distance, so it takes the levels alone, dithered on the screen's
   if (uPixel > 0.5) { auraCell = floor(gl_FragCoord.xy); o = auraPixel(o, uPiece == ${ARMLET}); }
 }
 `;
@@ -558,7 +557,7 @@ export function armSide(pose, fwd, chest, eye, arm = 'left') {
   if (pose.armsTurned) return own;
   return (ahead > 0) === (arm === 'left') ? 'R' : 'L';
 }
-/** AUDIT AURA-PIXEL C1: THE SIDE A PIECE IS WORN ON, or null - armSide's, and on a card none on an arm never read clear
+/** THE SIDE A PIECE IS WORN ON, or null - armSide's, and on a card none on an arm never read clear
  *  of the body (no band) while the eye stands to the body's other side: that arm is the one the picture hides behind the
  *  torso, and its trace runs on the torso's edge. Pure. @param {any} pose @param {number[]} fwd @param {number[]} chest
  *  @param {ArrayLike<number>} eye @param {'left'|'right'} [arm] */
@@ -570,12 +569,11 @@ export function armWornSide(pose, fwd, chest, eye, arm = 'left') {
 }
 /** The Insignia Armlet's arm, the wearer's left. Pure. */
 export const armletSide = (/** @type {any} */ pose, /** @type {number[]} */ fwd, /** @type {number[]} */ chest, /** @type {ArrayLike<number>} */ eye) => armSide(pose, fwd, chest, eye, 'left');
-/** ARM-BEHIND (2026-10-31, the owner: "the arm auras dont really hide behind the torso"): A SPRITE'S ARM PIECE STOPS AT
- *  ITS ARM'S INNER EDGE. A piece lies on the card's near side, so where an arm passes behind the painted torso the card hid
- *  nothing and the piece ran over the chest. Its draws keep the arm's side of the line its inner edge runs along -
+/** A SPRITE'S ARM PIECE STOPS AT ITS ARM'S INNER EDGE. A piece lies on the card's near side, so where an arm passes
+ *  behind the painted torso the card hides nothing. Its draws keep the arm's side of the line its inner edge runs along -
  *  `half` in from `sh`..`el` toward the chest on the card - seen from the eye: [n, d], kept where n.p + d >= 0, or null
- *  looking along the arm. AUDIT AURA-PIXEL C1-C3: every arm on a card, its band read or not; along the arm, not upright
- *  at the band's row; the chest on the card, not lifted before it. Pure. @param {number[]} sh @param {number[]} el
+ *  with the eye on that line. Along the arm, so a slanting arm's own outline stays; off the chest on the card, since the
+ *  chest lifted before it shifts across at a three-quarter. Pure. @param {number[]} sh @param {number[]} el
  *  @param {number} half @param {number[]} chest @param {ArrayLike<number>} right @param {ArrayLike<number>} eye */
 export function armClip(sh, el, half, chest, right, eye) {
   const mid = mix(sh, el, 0.5), way = Math.sign((chest[0] - mid[0]) * right[0] + (chest[2] - mid[2]) * right[2]) || 1;
@@ -602,7 +600,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
   const pose = w.pose, s = pose.scale > 0 ? pose.scale : 1, at = w.at, yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
   const pt = (/** @type {string} */ n) => /** @type {number[]} */ (poseWorld(pose, n, at, yaw, [0, 0, 0], 0, pose.card ? right : null));
   const fwd = [Math.sin(yaw), 0, Math.cos(yaw)];
-  const floor = pose.card ? 0 : 0.35;   // AUDIT AURA-PIXEL C4: on a card a decal seen edge on is gone - its picture has no face there
+  const floor = pose.card ? 0 : 0.35;   // on a card a decal seen edge on is gone - its picture has no face there
   const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + floor)); };
   const out = [];
   const tube = (part, A, B, r0, r1, N = fwd, spike = false) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1, ...(spike ? { spike: true } : {}) });
@@ -619,7 +617,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
    *  painted width over a piece `r0` round; a side view's onto the arm at the body's back edge, along the eye's line.
    *  `along(t)` its point `t` of the way from the shoulder to the elbow. */
   const upperArm = (/** @type {'left'|'right'} */ arm, /** @type {number} */ r0) => {
-    const side = armWornSide(pose, fwd, pt('chest'), eye, arm);   // AUDIT AURA-PIXEL C1: a far arm never read clear wears none
+    const side = armWornSide(pose, fwd, pt('chest'), eye, arm);   // a far arm never read clear wears none
     if (!side) return null;
     const sh0 = pt(`sh${side}`), el0 = pt(`el${side}`);
     let sh = sh0, el = el0, mid = null, onArm = (/** @type {number[]} */ p) => p;
@@ -634,10 +632,10 @@ export function armoryDraws(key, w, eye, near, right = null) {
       sh = onArm(sh0); el = onArm(el0);
     }
     const along = (/** @type {number} */ t) => (flank && !band ? onArm(mix(sh0, el0, t)) : mix(sh, el, t));
-    const k = band ? band.w / (2 * r0 * s) : 1, chestOn = add(pt('chest'), fwd, -pose.pts[POSE_AT.chest + 2]);   // AUDIT C3: the chest on the card
+    const k = band ? band.w / (2 * r0 * s) : 1, chestOn = add(pt('chest'), fwd, -pose.pts[POSE_AT.chest + 2]);   // the chest on the card
     return { side, sh, el, mid, along, k, clip: pose.card && right ? armClip(sh, el, k * r0 * s, chestOn, right, eye) : null };
   };
-  /** ARM-BEHIND: an arm's draws pushed since `from` take its clip (upperArm's) - none over the body. */
+  /** An arm's draws pushed since `from` take its clip (upperArm's) - none over the body. */
   const clipped = (/** @type {number} */ from, /** @type {number[]|null} */ clip) => { if (clip) for (let i = from; i < out.length; i++) out[i].clip = clip; };
   if (key === 'burningcrown') {
     const C = ARMORY_HEAD.burningcrown, brow = add(head, up, C.brow * s), r = C.r * s, top = add(brow, up, C.band * s);
@@ -650,11 +648,11 @@ export function armoryDraws(key, w, eye, near, right = null) {
     cards(1, 1, add(c, fwd, r), c, axis, [r, 0], 0.075 * s, 1, 1, true);
     cards(2, 8, c, c, axis, [r, 0]);
   } else if (key === 'emberheart' || key === 'eternalsigil') {
-    // CHEST-CENTRE: on a card a depth along the facing is laid on the eye's line through the picture's chest, so it never
-    // slides across the picture as the eye goes round (the chest's face and the Sigil's back stood 0.1 m and 0.24 m off it)
+    // on a card a depth along the facing is laid on the eye's line through the picture's chest, so it never slides across
+    // the picture as the eye goes round (laid along the facing, it slid 13 to 23 px off at a three-quarter)
     const cz = pose.pts[POSE_AT.chest + 2], onCard = (/** @type {number} */ z) => { const c = add(pt('chest'), fwd, -cz), e = unit(sub(/** @type {any} */ (eye), c)); return add(c, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };
     const chest = pose.card ? onCard(cz) : pt('chest'), f = facing(chest, fwd);
-    // AUDIT AURA-PIXEL D2: from behind, the run at the chest's rows takes in the near arm hanging over the back - the Sigil's
+    // from behind, the run at the chest's rows takes in the near arm hanging over the back - the Sigil's
     // back stands mid-way between the far edge and that arm's inner edge, never on the arm
     const backOnCard = (/** @type {number[]} */ p) => {
       const span = pose.chestSpan, worn = /** @type {const} */ (['left', 'right']).map((a) => armWornSide(pose, fwd, pt('chest'), eye, a)).filter(Boolean);
@@ -739,7 +737,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
 const NO_HAZE = new Float32Array(8);
-const NO_CLIP = new Float32Array(4);   // ARM-BEHIND: keeps every fragment
+const NO_CLIP = new Float32Array(4);   // keeps every fragment
 function mat4Multiply(/** @type {Float32Array} */ out, /** @type {ArrayLike<number>} */ a, /** @type {ArrayLike<number>} */ b) {
   for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
     out[j * 4 + i] = a[i] * b[j * 4] + a[4 + i] * b[j * 4 + 1] + a[8 + i] * b[j * 4 + 2] + a[12 + i] * b[j * 4 + 3];
@@ -860,7 +858,7 @@ export class ArmoryRenderer {
     this._trail = new Float32Array(ARMORY_TRAIL * 4);
     /** the pieces the last draw drew, for the stats and the tests */
     this.drawn = 0;
-    /** AURA-PIXEL: false draws every piece per pixel (the probes read the designs so) - the game never sets it */
+    /** false draws every piece as it was, its light uncut (the probes read the designs so) - the game never sets it */
     this.pixel = true;
   }
 
@@ -930,7 +928,7 @@ export class ArmoryRenderer {
             gl.uniform1i(U.uMesh, d.mesh); gl.uniform1i(U.uPart, d.part);
             gl.uniform3fv(U.uA, d.A); gl.uniform3fv(U.uB, d.B); gl.uniform3fv(U.uN, d.N); gl.uniform3fv(U.uU, d.U);
             gl.uniform2fv(U.uR, d.r); gl.uniform1f(U.uSize, d.size); gl.uniform1f(U.uFace, d.face); gl.uniform1f(U.uGain, d.gain);
-            if (U.uClip) gl.uniform4fv(U.uClip, d.clip ?? NO_CLIP);   // ARM-BEHIND
+            if (U.uClip) gl.uniform4fv(U.uClip, d.clip ?? NO_CLIP);
             if (key === 'insigniaarmlet') gl.uniform1f(U.uLift, ((w.pose.card ? ARMORY_LIFT_M : 0) + (d.mesh === DECAL ? ARMORY_ARMLET.lift : 0)) * (w.pose.scale > 0 ? w.pose.scale : 1));   // GUILD-SHOP
             if (d.mesh === TUBE) { gl.bindVertexArray(d.spike ? this.spikeVao : this.tubeVao); gl.drawArrays(gl.TRIANGLES, 0, (d.spike ? ARMORY_SPIKE_ROUND : ARMORY_ROUND * ARMORY_ALONG) * 6); }
             else { gl.bindVertexArray(this.cardVao); gl.drawArrays(gl.TRIANGLES, 0, (d.mesh === DECAL ? 1 : Math.min(d.count, ARMORY_CARDS)) * 6); }
@@ -1002,7 +1000,7 @@ export class ArmoryRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);
-    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);   // AURA-PIXEL: the pieces in Daggerfall's pixels
+    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);   // the pieces' light cut to the auras' levels
   }
 
   /** The wearer's footfall embers as the shader reads them: [x, y, z, age 0..1], -1 for none or burned out. */

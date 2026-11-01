@@ -57,9 +57,9 @@ test('CRAFT2 DONE WHEN: the first-make 500 is a pattern\'s at a tier, through th
 
 const station = (prof, family = null, group = null) => RECIPES.filter((r) => r.profession === prof && (family == null || r.family === family) && (group == null || r.group === group));
 
-test('CRAFT2 law: a station\'s patterns - the anvil 39 (15 weapons, 18 armour, 5 tools, the Repair Kit), the workbench 13, the loom 7 leathers, 41 men\'s and 35 women\'s garments, 9 furnishings and the Fishing-Net, the fire 4; every recipe in one pattern, its materials in the table\'s order; no product id two professions\'', () => {
+test('CRAFT2 law: a station\'s patterns - the anvil 41 (17 weapons - SMITH-RRI\'s Light Flail and Archer\'s Axe among them, 18 armour, 5 tools, the Repair Kit), the workbench 13, the loom 7 leathers, 41 men\'s and 35 women\'s garments, 9 furnishings and the Fishing-Net, the fire 4; every recipe in one pattern, its materials in the table\'s order; no product id two professions\'', () => {
   const count = (prof, fams) => fams.map((f) => patternsOf(station(prof, f)).length);
-  assert.deepEqual(count('smithing', ['weapons', 'armour', 'tools', 'kits']), [15, 18, 5, 1]);
+  assert.deepEqual(count('smithing', ['weapons', 'armour', 'tools', 'kits']), [17, 18, 5, 1]);   // PIN MOVED (SMITH-RRI): Roleplay & Realism: Items' two weapons
   assert.deepEqual(count('carpentry', ['staves', 'bows', 'arrows', 'furniture', 'tools', 'siege']), [1, 2, 1, 7, 1, 1]);
   assert.deepEqual(count('outfitting', ['leather', 'furnishings', 'tools']), [7, 9, 1]);
   assert.deepEqual([patternsOf(station('outfitting', 'clothing', 'MensClothing')).length, patternsOf(station('outfitting', 'clothing', 'WomensClothing')).length], [41, 35]);
@@ -95,7 +95,7 @@ test('CRAFT2 law: the first-make 500 a pattern\'s at a tier - Adamantium, Ebony,
   const paying = RECIPES.filter(firstCraftPays);
   // the key as it stood (AUDIT PROF-541 J7 and R2-S7 - a jewel's piece and base, a dish its dish, every other recipe its id)
   const before = (r) => (r.kind === 'jewel' ? r.id.split(':').slice(0, 2).join(':') : r.kind === 'dish' ? r.product : r.id);
-  assert.deepEqual([paying.length, new Set(paying.map(before)).size, new Set(paying.map(firstCraftKey)).size], [1051, 565, 446], 'MEASURED: the recipes that pay a first, the firsts they paid, and the patterns\' at a tier');   // PIN MOVED (CLOTH-GEMS): the 384 graded jewels pay, and no new first   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the Wolf Pelt's and the Boar Hide's four skins pay a first each, kin of the Bat's and the Bear's at tier 2 (663, 561)
+  assert.deepEqual([paying.length, new Set(paying.map(before)).size, new Set(paying.map(firstCraftKey)).size], [1073, 587, 460], 'MEASURED: the recipes that pay a first, the firsts they paid, and the patterns\' at a tier');   // PIN MOVED (SMITH-RRI): two weapons at eleven metals, seven tiers   // PIN MOVED (CLOTH-GEMS): the 384 graded jewels pay, and no new first   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the Wolf Pelt's and the Boar Hide's four skins pay a first each, kin of the Bat's and the Bear's at tier 2 (663, 561)
   const mixed = [...new Set(RECIPES.map(firstCraftKey))].filter((k) => { const pays = RECIPES.filter((r) => firstCraftKey(r) === k).map(firstCraftPays); return pays.includes(true) && pays.includes(false); });
   assert.deepEqual(mixed, [], 'FACT: AUDIT 32 S1 stands beside it - no pattern at a tier mixes the world\'s goods and the counter\'s');
   // D1 binds at most 100 parameters a statement: the craft's decision binds 16, two an input (a Heartwood's or a cracked
@@ -162,10 +162,10 @@ async function pageAt(heldIn, rank = 70, at = 'forge') {
   };
 }
 
-test('CRAFT2 anvil: the Weapons are fifteen patterns, no metal row before one is picked; Longsword is chosen in the Ebony held (the highest made now), its box\'s eleven metals the one marked, the shut ones naming their rank; Steel pressed makes a Steel one; the next pattern keeps the Steel', async () => {
+test('CRAFT2 anvil: the Weapons are seventeen patterns, no metal row before one is picked; Longsword is chosen in the Ebony held (the highest made now), its box\'s eleven metals the one marked, the shut ones naming their rank; Steel pressed makes a Steel one; the next pattern keeps the Steel', async () => {
   const p = await pageAt({ 'ingot:ebony': 3, 'ingot:steel': 6, 'metal:copper': 2, 'leather:cured': 2 }, 70);
   try {
-    assert.equal(p.rows().length, 15, 'the Weapons\' patterns - not 165 rows of a piece and a metal');
+    assert.equal(p.rows().length, 17, 'the Weapons\' patterns - not 187 rows of a piece and a metal');   // PIN MOVED (SMITH-RRI)
     assert.equal(p.made().length, 0, 'no metal row before a pattern is picked');
     const sword = p.rows().find((b) => b.textContent.startsWith('Longsword'));
     assert.equal(sword.textContent, 'Longswordcan make now');

@@ -1,8 +1,7 @@
 // @ts-check
-// ARM-BEHIND (2026-10-31, the owner: "the arm auras dont really hide behind the torso"; bible/04-Characters/Aura-Armory.md
-// section 6): a sprite's arm piece is kept on the eye's side of the screen's upright line at its band's inner edge, so
-// it never runs over the painted body - the clip's law, the draws it rides on, the shader's discard and the pass's upload.
-// The pictures are tools/armoryProbe.mjs's and tools/armorySpriteProbe.mjs's.
+// A sprite's arm piece is cut at its arm's inner edge, so it never runs over the painted body - the clip's law, the draws
+// it rides on, the shader's discard and the pass's upload - and its chest piece stays on the painted chest from every
+// side. The pictures are tools/armoryProbe.mjs's and tools/armorySpriteProbe.mjs's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';

@@ -83,7 +83,7 @@
   {
     "name": "PROP-BODIES-a-body-filed-as-cover",
     "file": "src/ai/cover.js",
-    "old": "      if (it.body) {\n        fileBody(set, it);\n        continue;\n      } // PROP-BODIES: a body, never cover\n      const i = set.n++;",
+    "old": "      if (it.body) {\n        fileBody(set, it);\n        continue;\n      } // A body, never cover\n      const i = set.n++;",
     "new": "      const i = set.n++;",
     "tests": [
       "test/player/propbodies.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "PROP-BODIES-the-full-tier-flora",
     "file": "src/world/propBodies.js",
-    "old": "  if (tree || sway === RESPONSE.full)\n    return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);",
-    "new": "  if (tree) return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);",
+    "old": "  if (tree || sway === RESPONSE.full)\n    return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM, true);",
+    "new": "  if (tree) return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM, true);",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PROP-BODIES-the-flora-solid",
     "file": "src/world/propBodies.js",
-    "old": "  if (sway !== 0) return null; // the flora, Low and Medium\n  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);",
-    "new": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);",
+    "old": "  if (sway !== 0) return null; // the flora, Low and Medium\n  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));",
+    "new": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PROP-BODIES-the-step-unasked",
     "file": "src/world/propBodies.js",
-    "old": "const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, _mark: 0 } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
-    "new": "const body = (c, r, h) => (r > 0 ? { c, r, h, lift: 0, body: true, _mark: 0 } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
+    "old": "const body = (c, r, h, nature) =>\n  r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, nature, _mark: 0 } : null; // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
+    "new": "const body = (c, r, h, nature) => (r > 0 ? { c, r, h, lift: 0, body: true, nature, _mark: 0 } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
     "tests": [
       "test/player/propbodies.test.js"
     ]

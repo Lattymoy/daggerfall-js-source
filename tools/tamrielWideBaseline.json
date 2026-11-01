@@ -64,7 +64,7 @@
   "src/scenes/livingWorld/livingIndex.js": 1,
   "src/scenes/snowfallHost.js": 1,
   "src/scenes/tamrielRoadsHost.js": 2,
-  "src/scenes/world.js": 4,
+  "src/scenes/world.js": 3,
   "src/systems/map/mapDirectory.js": 1,
   "src/systems/naval/harbourBook.js": 1,
   "src/systems/weather/airGround.js": 1,

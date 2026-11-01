@@ -116,14 +116,14 @@ test('PACK-PHONE: the Body switch - hidden by default, the header\'s button besi
       const shell = () => host.querySelector('.pack-shell');
       const btn = () => host.querySelector('.pack-id').querySelector('.dolltoggle');
       const acts = () => host.querySelector('.pack-id').children.filter((n) => n.tagName === 'BUTTON').map((n) => n.textContent);
-      assert.deepEqual(acts(), ['Codex', 'Body', 'Close'], 'Body stands before Close in the header (PIN MOVED, LOOT10: the Codex before it, while the loot rarity row is on)');
+      assert.deepEqual(acts(), ['Sort', 'Codex', 'Body', 'Close'], 'Body stands before Close in the header (PIN MOVED, LOOT10: the Codex before it, while the loot rarity row is on; PIN MOVED, PACK-SORT: the Sort first - the sheet moves it to the tab strip on a phone)');
       assert.equal(shell().classList.contains('showdoll'), false, 'hidden by default');
       assert.equal(btn().getAttribute('aria-pressed'), 'false');
       assert.equal(btn().type, 'button');
       btn().onclick();
       assert.equal(getPref('packPhoneDoll'), true, 'the choice is on the shelf');
       assert.equal(shell().classList.contains('showdoll'), true, 'and drawn at once');
-      assert.deepEqual(acts(), ['Codex', 'Hide body', 'Close']);
+      assert.deepEqual(acts(), ['Sort', 'Codex', 'Hide body', 'Close']);
       assert.equal(btn().getAttribute('aria-pressed'), 'true');
       // a pack opened later opens as it was left
       view.unmount();

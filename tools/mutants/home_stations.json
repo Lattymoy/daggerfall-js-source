@@ -24,7 +24,8 @@
     "new": "    station,",
     "tests": [
       "test/ui/homestations.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "HOME-STATIONS-own-item-serves",
@@ -122,10 +123,11 @@
   {
     "name": "HOME-STATIONS-service-drops-the-craft",
     "file": "server-account/src/decor.js",
-    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
-    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one",
     "tests": [
       "test/ui/homestations.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   }
 ]

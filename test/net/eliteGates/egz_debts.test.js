@@ -323,19 +323,3 @@ test('EG-ZP LIFELINE, THE RECEIVER\'S HALF (scenes/eliteGates/egClient.js lifeli
   } finally { S.done(); }
 });
 
-// ── THE PAGE: the debts' sentences retired ────────────────────────────────────────────────────────────────────────────
-test('EG-ZP THE PAGE\'S STALE SENTENCES RETIRED (bible/11-Multiplayer/Elite-Gates.md - RETIRING A FLAG DELETES THE SENTENCE): EG-ZI\'s "Not built" for the receiver\'s Vestiges; what of EG-H1\'s departures EG-ZB (the fallen segments, the fire fall, the drain), EG-ZA (the receipt\'s measures), EG-ZD (the feint\'s fade, and its world.js flag), EG-ZG (the client\'s arrow) and EG-H2 (the checkpoint) closed; and layer three\'s straight-walking legion - each gone, EG-H1\'s departures renumbered without a gap, and what stands of them standing', () => {
-  const page = readFileSync(new URL('../../../bible/11-Multiplayer/Elite-Gates.md', import.meta.url), 'utf8');
-  const record = (a, b) => { const i = page.indexOf(a), j = page.indexOf(b, i); assert.ok(i > 0 && j > i, a); return page.slice(i, j); };
-  const h1 = record('### EG-H1 - ', '### EG-H3 - '), three = record('### EG-FULL, LAYER THREE - ', '### EG-E (first part) - '), zi = record('### EG-ZI - ', '### EG-ZO - ');
-  for (const [text, gone] of [[zi, 'No screen applies a word-Vestige'], [h1, 'fallen segments\n   still hold'], [h1, 'The feint\'s dashed fade is the look\'s (EG16)'], [h1, 'A fire fall and the hammer line (`trav`) stay the screens\' alone'],
-    [h1, 'The `e1` receipt\'s `m` is the receipts'], [h1, 'client\'s arrow (section 11.7) is not built'], [h1, 'a breach in a trial cannot be checkpointed'], [h1, 'still read the\n  welcome\'s offset'],
-    [three, 'The legion walks straight to'], [three, 'the relay\'s walkers do not yet route through it']]) assert.ok(!text.includes(gone), `retired: ${gone}`);
-  const deps = h1.slice(h1.indexOf('**Departures, said plainly.**'), h1.indexOf('**The four hosts.**'));
-  const nums = [...deps.matchAll(/^(\d+)\. /gm)].map((m) => Number(m[1]));
-  assert.deepEqual(nums, [1, 2, 3, 4, 5, 6, 7, 8], 'eight, numbered without a gap');   // PIN MOVED at the merge: EG6a retired the fourth (EG_CROSS_MIN, now the solver's fastest crossing)
-  assert.ok(deps.includes('3. Support is the spec\'s law geometry, never the collider. A belt carries under the push\'s allowance, and is\n   not ridden.'), 'the third narrowed to what stands');
-  assert.ok(deps.includes('6. The span\'s own Pendulums and Vents stand on traversal ground no aimed blow reaches, so they share no union set.\n'), 'the old ninth narrowed');
-  assert.ok(deps.includes('7. A plain blow\'s whole `p` is counted, its points never.'), 'the old tenth stands: the relay holds no maximum health');
-  assert.ok(three.includes('  - a chokepoint arch 6 m wide;\n'), 'layer three\'s arch without its pointer');
-});

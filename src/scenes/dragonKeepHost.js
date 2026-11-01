@@ -46,9 +46,8 @@ import { inventoryDoorReady } from '../ui/inventoryDoor.js';
 /** Its press reaches from this far off its body's box (HCC's horse: 3.2), m; it is drawn within this of the eye, m. */
 export const DRAGON_KEEP_REACH = 4;
 export const DRAGON_KEEP_DRAW_R = 2500;
-/** DRAGON-KEEP-SIZE (2026-10-31, the owner: "the dragon when in possession of a player is too large unmounted"): a tamed
- *  dragon off its back is drawn at the size it is ridden at - its sprite's own, as net/remotePlayers.js draws its rider -
- *  never at the boss's DRAGON_SCALE (scenes/dragonHost.js), which drew it 1.6 times its ridden self. */
+/** A tamed dragon off its back is drawn at the size it is ridden at - its sprite's own, as net/remotePlayers.js draws its
+ *  rider - never at the boss's DRAGON_SCALE (scenes/dragonHost.js), 1.6 times its ridden self. */
 export const DRAGON_KEEP_SCALE = 1;
 /** "Already here": waiting within this of the player, a call is not needed, m. */
 export const DRAGON_HERE_M = 40;

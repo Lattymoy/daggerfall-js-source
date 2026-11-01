@@ -155,5 +155,4 @@ test('SD4a the host by source: the tier read once by its one law before the fire
   assert.match(DC, /pickDungeonElites\(enemies, [^\n]*\{ elite: !!dfLocation\?\.elite, count: _superTier \? SUPER_ELITE_FOES : null, classLevel: _eliteOnline \? Infinity : [^\n]*\}\);/);
   assert.match(DC, /generateLootItems\(lootKey, [^\n]*, rolls, _superTier \? \{ itemChanceScale: SUPER_LOOT_DROP_MULT \} : elite \? \{ itemChanceScale: ELITE_LOOT_DROP_MULT \} : \{\}\);/);   // PIN MOVED (PARTY-LOOT): on the roll's own dice - a room's base its seeded ones
   assert.match(DC, /qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1,/);
-  assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD4a - shipped 2026-10-07/);
 });

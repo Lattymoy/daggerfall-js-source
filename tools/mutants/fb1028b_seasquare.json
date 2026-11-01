@@ -23,8 +23,8 @@
   {
     "name": "SEA-SQUARE-beyond-nearest",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
-    "new": "      beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX);",
+    "old": "        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),",
+    "new": "        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, false, BEYOND_LANE_PATH_PX)),",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],

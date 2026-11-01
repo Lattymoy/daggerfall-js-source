@@ -102,8 +102,8 @@
   {
     "name": "SLOWSHED-by-statements",
     "file": "server-account/src/metrics.js",
-    "old": "  noteD1Wait(tally.capped, tally.trips, Date.now()); // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time",
-    "new": "  noteD1Wait(tally.capped, tally.n, Date.now()); // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time",
+    "old": "  noteD1Wait(tally.capped, tally.trips, Date.now());",
+    "new": "  noteD1Wait(tally.capped, tally.n, Date.now());",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "SLOWSHED-trip-only-where-answered",
     "file": "server-account/src/metrics.js",
-    "old": "            const r = await v.apply(target, args);",
-    "new": "            const r = await v.apply(target, args).catch((err) => {\n              tally.trips -= 1;\n              throw err;\n            });",
+    "old": "            const r = await v.apply(target, args);\n            if (key === 'all' || key === 'run') noteMeta(r, tally, sql);",
+    "new": "            const r = await v.apply(target, args).catch((err) => { tally.trips -= 1; throw err; });\n            if (key === 'all' || key === 'run') noteMeta(r, tally, sql);",
     "tests": [
       "test/net/slow_shed.test.js"
     ],

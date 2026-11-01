@@ -138,7 +138,7 @@ test('HOME-STATIONS the room and the service: a station pressed opens its craft\
   const use = M.slice(M.indexOf('  function useDecorStation(piece) {'), M.indexOf('  function offerStationActs(piece) {'));   // GUILD1d (re-aimed by content): the hall's members' rung inside the owner's check; PIN MOVED (FIELD BUGS 2026-10-11f STATION-DOOR): the press and the maker it opens (openStationMaker), to the chooser
   assert.match(use, /if \(!stationOwnerHere\(\) && !decorMayStation\(piece\.id\)\) \{/, 'the owner\'s, or a grant\'s');   // PIN MOVED (DECOR access): a visitor still stops here; a grant or a hall member goes on
   assert.match(use, /openServiceFlow\(DECOR_STATION_SERVICES\[piece\.station\], \{ guild: null, memberships: null, store: null, rows, route: null \}\)/);
-  assert.match(src('server-account/src/decor.js'), /const placeJson = \(\{ pos, rot, scale, light, storage, paid, station, name \}\) => JSON\.stringify\(\{ pos, rot, scale, light, storage, paid, \.\.\.\(station \? \{ station \} : \{\}\), \.\.\.\(name \? \{ name \} : \{\}\) \}\);/);
+  assert.match(src('server-account/src/decor.js'), /const placeJson = \(\{ pos, rot, scale, light, storage, paid, station, name, hung \}\) => JSON\.stringify\(\{ pos, rot, scale, light, storage, paid, \.\.\.\(station \? \{ station \} : \{\}\), \.\.\.\(name \? \{ name \} : \{\}\), \.\.\.\(hung \? \{ hung \} : \{\}\) \}\);/);   // PIN MOVED (YARD-WALLS): a hung picture's flag stored beside the craft
 });
 
 // ─── AUDIT (the batch's audit, agent E) ────────────────────────────────────────────────────────────────────────────

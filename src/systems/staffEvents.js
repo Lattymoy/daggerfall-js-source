@@ -111,7 +111,7 @@ export const staffLedgerOf = (id) => _ledgers.get(id) ?? null;
 export const staffRaids = () => [..._raids.values()].filter((r) => !r.cleansed);
 /** The events that ended and whose monsters are not yet routed (raidingParties routs each once). */
 /**
- * BOSS-BOUND (2026-10-25, mob: "heal was set to 10000 for zombie its wromng", "the event boss had to low of health"): the
+ * BOSS-BOUND (2026-10-25): the
  * most health a peer's mini boss of the event `key` may claim - the exact health staff typed (`hp`), or its kind's
  * normal bound (net/foeBounds.js, `normal`) times the event's multiplier (`bh`), whichever is more. FOE-BOUNDS judged it
  * as a plain elite, and every copy but its owner's took a boss past that down as impossible. Null when no live event
@@ -164,7 +164,7 @@ export function staffBossWanted(r) {
 /** @param {StaffRaid} r */
 export const staffBossByHand = (r) => (r.staff.fb ?? 0) > (r.handSeen ?? 0);
 /**
- * BOSS-LOST (mob 2026-10-25: "boss seems to not spawn every time"): the call whose boss stood but stands nowhere now -
+ * BOSS-LOST: the call whose boss stood but stands nowhere now -
  * not fallen, not mine, no puppet of it - for STAFF_BOSS_LOST_MS, or -1. A jump's sweep, a removal or a runner gone took
  * it, and the cell, told it stood, would never call it again: the one who runs the event stands it again, for the same
  * call. The wait lets a fallen runner's boss come over to me (raidingParties.js tookStaffBoss) first.

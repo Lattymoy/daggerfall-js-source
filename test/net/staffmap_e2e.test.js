@@ -1,4 +1,4 @@
-// STAFF-MAP (2026-10-24, mob: "were is the map too?", "also need the map done as well cant see players far") - THE REGION
+// STAFF-MAP (2026-10-24) - THE REGION
 // MAP OVER THE REAL RELAY (the harness of staffpanel5live_e2e.test.js): the game's map link (net/staffMap.js) on the
 // game's own minter, in another region's channel, hands the panel that region's travellers' marks - and only on a hidden
 // token: a game whose Hide me is off sends none, says `hide`, and no player in the region ever learns a staff link came.

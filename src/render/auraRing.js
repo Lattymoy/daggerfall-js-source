@@ -200,7 +200,7 @@
 // Not a DFU member. Ledger A (WB).
 import { DAEDRIC_COAL, DAEDRIC_CRIMSON, DAEDRIC_FIRE, DAEDRIC_GOLD, AETHERIUM_DEEP, AETHERIUM_BLUE, AETHERIUM_GLOW, DWEMER_BRASS, DWEMER_SHINE, NUMIDIUM_GOLD } from '../ui/playerBadge.js';   // STOREFRONT: the Dominion's Daedric fire, the coils' aetherium and brass
 import { FOG_FACTOR_GLSL } from './labGrass.js';
-import { AURA_PIXEL_GLSL } from './auraPixel.js';   // AURA-PIXEL: every look in Daggerfall's pixels
+import { AURA_PIXEL_GLSL } from './auraPixel.js';   // every look in Daggerfall's pixels
 import { buildProgram, compiledPass } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
 import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW, NIRN_LEAF, NIRN_GLOW, NIRN_HAZE, NIRN_DEEP, NIRN_SMOKE, COLD_LAVENDER, COLD_VIOLET, COLD_CRIMSON, COLD_BLOOD, COLD_ROSE, COLD_SMOKE, COLD_MAGENTA, GENESIS_DEEP, GENESIS_ROOT, GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
@@ -916,7 +916,7 @@ export const SAGE_RGB = Object.freeze({
   leaf: Object.freeze(NIRN_LEAF.slice(0, 3)), glow: Object.freeze(NIRN_GLOW.slice(0, 3)), haze: Object.freeze(NIRN_HAZE.slice(0, 3)),
   deep: Object.freeze(NIRN_DEEP.slice(0, 3)), smoke: Object.freeze(NIRN_SMOKE.slice(0, 3)),
 });
-/** NIRN-LEAF (2026-10-29, the owner: "nicer nirnroot more marijuana style", after Skyrim's pale teal nirnroot): a
+/** NIRN-LEAF (2026-10-29, after Skyrim's pale teal nirnroot): a
  *  nirnroot leaf's own colours, RGB 0..1 - a cool TEAL at the fan's heart, out to a pale MINT at the leaflets' tips. */
 export const SAGE_LEAF_RGB = Object.freeze({ heart: Object.freeze([0.2, 0.66, 0.52]), tip: Object.freeze([0.66, 0.97, 0.84]) });
 /** Where the leaflets meet in the glyph's 16-unit box (GLYPH_PATH.nirnrootsage), and the tallest one's reach from it -
@@ -1398,7 +1398,7 @@ vec3 radianceGround(vec2 p) {
   float sunA = a + uTime * TAU ${hzGlsl(RADIANCE_HZ.rays)};
   float points = pow(0.5 + 0.5 * cos(${RADIANCE_SUN.points.toFixed(1)} * sunA), 6.0);
   float star = (1.0 - smoothstep(0.0, ${g3(RADIANCE_SUN.r)}, r / (0.35 + 0.65 * points))) * smoothstep(0.03, 0.09, r);
-  float px = max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx);   // a pixel on the ground (the Turning Hour's turnPixel, which stands after this); AUDIT AURA-PIXEL A2: a texel under the law
+  float px = max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx);   // a pixel on the ground (the Turning Hour's turnPixel, which stands after this), a texel under the pixel law
   float rings = radianceLine(r, ${g3(RADIANCE_SUN.r)}, 0.006, px) + radianceLine(r, R - 0.071, 0.004, px) * 0.6;
   col += RAD_GOLD * star * 0.22 * breath + RAD_HEART * rings * 0.35 * breath;
   return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
@@ -1497,7 +1497,7 @@ vec4 resonanceGround(vec2 p) {
 /** SD9c: the wheel's helpers, one copy for every look cast from it. */
 const TURNING_HELPERS = `
 // the metres a pixel spans here, never under a few millimetres
-float turnPixel() { return max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx); }   // AUDIT AURA-PIXEL A2: a texel under the law
+float turnPixel() { return max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx); }   // a texel under the pixel law
 // a band between two radii (or heights), its edges a pixel wide
 float turnBand(float x, float lo, float hi, float px) { return clamp((x - lo) / px + 0.5, 0.0, 1.0) * clamp((hi - x) / px + 0.5, 0.0, 1.0); }
 // the wheel's turn: a step on the second, eased over its first quarter, held the rest - forward, clockwise on the screen (turningWheelAngle)
@@ -2573,7 +2573,7 @@ vec3 witchGround(vec2 p) {
     col += WF_TALLOW * exp(-dot(d, d) / 0.0016) * 1.1 * flick;
     // AURA DETAIL - THE COVEN'S CIRCLE: a seven-pointed star drawn candle to candle (each to the third on), a fine
     // ring of violet within the fire, both burning faint, and the candles' tallow pooled about their feet
-    float px = max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx);   // AUDIT AURA-PIXEL A2
+    float px = max(max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002), auraPx);   // a texel under the pixel law
     float star = 1e3;
     for (int j = 0; j < ${WITCH_CANDLES}; j++) {
       float a0 = float(j) / ${WITCH_CANDLES.toFixed(1)} * TAU, a1 = float(j + 3) / ${WITCH_CANDLES.toFixed(1)} * TAU;
@@ -3316,9 +3316,9 @@ void main() {
   vWorld = w;
   gl_Position = uVP * vec4(w, 1.0);
 }`;
-/** AURA-PIXEL: the looks that cover, as GLSL - AURA_LOOK's own `shade`, never a second list. */
+/** The looks that cover, as GLSL - AURA_LOOK's own `shade`, never a second list. */
 const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((l) => 'shade' in l && l.shade).map((l) => `uAura == ${l.kind}`).join(' || ') || 'false';
-/** AURA-PIXEL: the looks drawn in pixels of their own, never resampled - the Crystal Resonance's squares (its pitch is no
+/** The looks drawn in pixels of their own, never resampled - the Crystal Resonance's squares (its pitch is no
  *  whole number of texels, so a snapped square stood one texel wide or two by turns). Their levels are cut all the same. */
 export const AURA_OWN_PIXELS = Object.freeze([AURA_LOOK.resonance.kind]);
 export const AURA_FS = HEAD + `in vec2 vP;
@@ -3340,12 +3340,12 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-uniform float uPixel;   // AURA-PIXEL: 1 the look in Daggerfall's pixels (render/auraPixel.js) - the pass sets it; 0 per pixel
+uniform float uPixel;   // 1 the look in Daggerfall's pixels, 2 the levels alone (a probe's) - the pass sets it; 0 per pixel
 out vec4 o;
 ${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${AURA_PIXEL_GLSL}
 const float TAU = 6.283185307179586;
 ${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}${HAZE_GLSL}${DOMINION_GLSL}${HELIX_GLSL}
-void auraLook(vec2 vP) {   // AURA-PIXEL: vP the surface's point the look answers - its texel's middle, or the fragment's
+void auraLook(vec2 vP) {   // vP the surface's point the look answers - its texel's middle, or the fragment's
   if (uAura == 16) { vec4 c = uKind == 0 ? dominionGround(vP) : dominionWall(vP); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // STOREFRONT: the Daedric Dominion, premultiplied (AURA_LOOK shade), kindled within
   if (uAura == 17) { vec3 c = uKind == 0 ? helixGround(vP) : helixWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // STOREFRONT: the Aetherium Coil, added whole, kindled within
   if (uAura == 18) { vec3 c = uKind == 0 ? gildedGround(vP) : gildedWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // STOREFRONT: the Gilded Coil, as the Aetherium Coil is drawn
@@ -3445,10 +3445,10 @@ void auraLook(vec2 vP) {   // AURA-PIXEL: vP the surface's point the look answer
   }
   o = vec4(col * uKindle * fogFactorAt(vWorld), 1.0);
 }
-// AURA-PIXEL: whether the look covers (premultiplied, AURA_LOOK shade) - its cover cut to the levels, its colour kept
+// whether the look covers (premultiplied, AURA_LOOK shade) - its cover cut to the levels, its colour kept
 bool auraCovers() { return ${AURA_COVERS_GLSL}; }
 bool auraOwnPixels() { return ${AURA_OWN_PIXELS.map((k) => `uAura == ${k}`).join(' || ')}; }
-// AUDIT AURA-PIXEL A1/A5: a card, the cloth and a wing's strand at their own counts (render/auraPixel.js); the rest measured
+// a card, the cloth and a wing's strand at their own counts (auraPixel.js); the rest measured
 vec2 auraSnapOf() {
   if (uKind == 2) return auraTexel(vP, vWorld, AURA_TEXEL, vec2(AURA_CARD_TEXELS));   // at least, a big glow measured
   if (uKind == 1 && (uAura == 3 || uAura == 15)) return auraSnap(vP, vec2(AURA_CLOTH_TEXELS));
@@ -3459,7 +3459,7 @@ void main() {
   if (uPixel > 0.5) {
     vec2 t = vP;
     auraCell = floor(gl_FragCoord.xy);
-    if (uPixel < 1.5) t = auraSnapOf();   // AUDIT AURA-PIXEL D5: a probe's 2 cuts the levels alone, so it can see the snap
+    if (uPixel < 1.5) t = auraSnapOf();   // a probe's 2 cuts the levels alone, so it can tell the snap's blocks apart
     auraLook(auraOwnPixels() ? vP : t);
     o = auraPixel(o, auraCovers());
   } else auraLook(vP);
@@ -3769,7 +3769,7 @@ export function auraBeastStep(w, beast, t) {
 /** AURA-SPLIT (#1143, bible/07-Rendering/Performance-Priority.md): every look's kind, once each. */
 export const AURA_KINDS = Object.freeze([...new Set(Object.values(AURA_LOOK).map((l) => l.kind))]);
 /** AURA-SPLIT: the uniforms a look's program is handed (`uAura` is its constant, not one of them). */
-const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uResCap', 'uWarren', 'uWarrenPrint', 'uSage', 'uSageLook', 'uPixel']);   // AURA-PIXEL: and the pixel law's switch
+const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uResCap', 'uWarren', 'uWarrenPrint', 'uSage', 'uSageLook', 'uPixel']);   // and the pixel law's switch
 const _lookPrograms = new Map();
 /** AURA-SPLIT (#1143): ONE PROGRAM A LOOK - AURA_VS and AURA_FS with `uAura` declared a constant, so the compiler drops
  *  every other look's code. The whole source (every look, 81 KB of fragment shader) compiled 8.5-11 s on D3D11; a look
@@ -3838,8 +3838,8 @@ export class AuraRingRenderer {
     this._sageLook = new Float32Array(SAGE_CARDS * 4);
     /** how many auras the last draw burned, for the stats and the tests */
     this.drawn = 0;
-    /** AURA-PIXEL: false draws every look per pixel, 'levels' with the levels alone (the probes read the designs and the
-     *  snap so) - the game never sets it */
+    /** false draws every look per pixel, 'levels' with the levels alone (the probes read the designs and the snap so) -
+     *  the game never sets it */
     /** @type {boolean | 'levels'} */
     this.pixel = true;
   }
@@ -3886,7 +3886,7 @@ export class AuraRingRenderer {
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
-    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : this.pixel === 'levels' ? 2 : 1);   // AURA-PIXEL: every look in Daggerfall's pixels (render/auraPixel.js); AUDIT D5: a probe's 'levels' the levels alone
+    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : this.pixel === 'levels' ? 2 : 1);   // every look in Daggerfall's pixels; a probe's 'levels' the levels alone
   }
 
   /**
@@ -3971,7 +3971,7 @@ export class AuraRingRenderer {
           gl.uniform1i(U.uKind, 1);
           gl.bindVertexArray(wings ? this.wingsVao : this.flameVao);
           if (!closed) gl.drawArrays(gl.TRIANGLES, 0, wings ? WING_VERTS : AURA_STEPS * 6);
-          if (look.glyphs && !closed && w.mounted !== true) {   // AEGIS: the ward's floating symbols, a third draw; SERAPH-WINGS: the wings' motes; GLYPHS-MOUNTED: none on a rider
+          if (look.glyphs && !closed && w.mounted !== true) {   // AEGIS: the ward's floating symbols, a third draw; SERAPH-WINGS: the wings' motes; none on a rider
             gl.uniform1i(U.uKind, 2);
             gl.bindVertexArray(this.glyphVao);
             gl.drawArrays(gl.TRIANGLES, 0, look.glyphs * 6);

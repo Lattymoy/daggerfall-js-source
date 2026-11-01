@@ -19,7 +19,7 @@ import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../play
 import { ownAura, ownArmory, ownEffects } from '../systems/ownGlyphs.js';
 import { bindPeerEffects } from '../net/peer/peerEffects.js';   // STOREFRONT: each peer's worn effects, for a face that holds only its id
 import { getPref } from '../systems/uiPrefs.js';
-import { ridingDragon } from '../systems/staffDragon.js';   // AUDIT AURA-PIXEL B2: an Admin's /dragon rides with no transport mode
+import { ridingDragon } from '../systems/staffDragon.js';   // an Admin's /dragon rides with no transport mode
 import { drawAurasThenBacks, SELF_OWNER } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
 import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
 import { createSpriteBacks } from '../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: the sprites' weapon glows, over the capes
@@ -55,8 +55,8 @@ export const spriteAnswer = (/** @type {any[]} */ layers, /** @type {string} */ 
   return null;
 };
 
-/** AUDIT AURA-PIXEL B1: a peer is mounted on a horse, a cart or a dragon (`rd`), or driving from a wagon's bench, where the
- *  bench's glue sets `rd` 0 (scenes/horseCartPool.js driverGlue) - as my own Cart mode is (`player.riding`). Pure. */
+/** A peer is mounted on a horse, a cart or a dragon (`rd`), or driving from a wagon's bench, where the bench's glue
+ *  sets `rd` 0 (scenes/horseCartPool.js driverGlue) - as my own Cart mode is (`player.riding`). Pure. */
 export const peerMounted = (/** @type {any} */ shown) => !!shown?.rd || shown?.bench === 2;
 /** AURA-ON-DRAGON: feet `f` lifted `lift` metres. Pure but for `f`. */
 const liftedFeet = (/** @type {number[]} */ f, /** @type {number} */ lift) => { f[1] += lift; return f; };
@@ -103,7 +103,7 @@ export function createAuraHost(deps) {
     if (pass?.drawn) renderer.markForeignPass();
   };
 
-  /** FOLLOW-NOW (2026-10-30, mob: "aura ghost behind the player", "th red glow", "is a few frame behind the charcter"):
+  /** FOLLOW-NOW (2026-10-30):
    *  MY OWN COSMETICS WHERE MY BODY IS DRAWN THIS FRAME. The gather (frame) runs with the online frame, BEFORE the motor
    *  steps the player - so a kit and a strip aura placed there stood where I was a frame ago, and on the camera's low-passed
    *  feet: a ghost trailing the body by a step, far behind it flying. At the draw, after the step and the body's own draw,
@@ -165,13 +165,13 @@ export function createAuraHost(deps) {
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
       const lift = deps.selfLift?.() || 0;   // AURA-ON-DRAGON: on my dragon, worn where its rider sits
       selfLiftNow = lift;
-      // CAPE-TOGGLE (2026-10-30, mob: "it saposta help show the aura not tuen it off"): hiding the cape hides the cloak alone,
+      // CAPE-TOGGLE (2026-10-30): hiding the cape hides the cloak alone,
       // never the aura - mine here, and (the look's `hc`) a peer's below
       if (mine && spawned) {
         const f = player.feetAt(); f[1] += lift;
         if (self.aura !== mine) self.since = t;
         self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine; self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw()); auraBeastStep(self, deps.beast(), t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn (SPRITE-FACE: a sprite's, as its picture faces); turned beast, the cloak torn
-        self.kindle = Math.min(1, (t - self.since) / AURA_KINDLE_S); /** @type {any} */ (self).mounted = !!player.riding || ridingDragon() || lift > 0;   // SHADOW-CLOAK: a rider's cape folded away; AURA-ON-DRAGON: a dragon's rider is one; AUDIT AURA-PIXEL B2: and an Admin's /dragon in first person
+        self.kindle = Math.min(1, (t - self.since) / AURA_KINDLE_S); /** @type {any} */ (self).mounted = !!player.riding || ridingDragon() || lift > 0;   // SHADOW-CLOAK: a rider's cape folded away; AURA-ON-DRAGON: a dragon's rider is one, an Admin's /dragon too
         auraList.push(self);
       } else self.aura = null;
       if (kit && spawned) {

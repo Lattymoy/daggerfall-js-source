@@ -1,133 +1,72 @@
-# The Loot Banner (LOOT-BANNER, ACQUIRE1)
+# The Loot Banner
 
-**Status: built (2026-10-09).** Mac: "So with the introduction of new card items. I want to develop a popup for when you
-obtain something of rarity including weapons, armor, the new cards, etc. Something akin to a destiny loot popup
-notification."
+A banner slides in at the right edge of the screen when a Rare-or-better piece arrives in the player's keeping. It
+shows the piece's picture framed in its tier, the tier label, the name in the tier's color and what the piece is. The
+top tiers stand bigger and play a fanfare. A new title or aura gets the same banner. Enhanced Plus only.
 
-A banner slides in at the right edge of the screen whenever a Rare-or-better piece arrives in the player's keeping. It
-shows the piece's picture framed in its tier, its tier label and pips, its name in the tier's colour, and what it is. The
-three top tiers stand bigger and play a fanfare. Enhanced Plus only.
+## How it works
 
-## 1. Mac's four answers
+**The watcher** (`src/systems/acquireWatch.js` `createAcquireWatch`). Items enter the pack through many doors (loot,
+shops, quests, crafts, trades, the market, cards), so the pack is watched, not the doors. Once a frame, from the HUD's
+`drawLootBanners`, it reads the player's pack, wagon and Materials Bag. It runs on every skin.
 
-| Question | Answer |
-|---|---|
-| Which tiers get the banner? | **Rare and up** - Rare, Legendary, Aetheric, Artifact, Gilded. Common and Magic keep the small pickup feed under the crosshair (`01-Overview/bugs/Field-Bugs-2026-10-01d.md`, PICKUP-FEED). |
-| Which ways of getting an item? | **Everything new to you** - loot, a gate's or a raid's spoils, a quest's reward, a craft, the Sigil Broker, a shop, a trade, the market, a card. |
-| Where? | **The right edge, by the notices.** |
-| How do the top tiers stand out? | **A bigger banner and a sound** - Aetheric, Artifact and Gilded. |
+- A piece that could announce (`markable`: a weapon that is not ammunition, armor, clothing, jewelry, an artifact, a
+  card) gets `acquired: true` the first frame it is in one of those lists. An unmarked piece there is an arrival.
+- The mark is a saved item field, so a piece taken back from the player's own storage is not new.
+- The mark is a receiver's mark (`src/net/realm/realmTradeLaw.js` `RECEIVER_MARKS`): it is stripped off the wire and
+  off a zone's death record, so a piece another player hands over is new to its taker.
+- Cards stack, so a card's arrival is its count rising across the three lists. Moving between the lists is never an
+  arrival.
+- The first frame of an entity, a load, and character creation are read and marked, and announce nothing.
+- A piece announces at Rare or above (`BANNER_MIN_TIER`). A card's tier is its catalog's; any other piece's is the
+  tier the pack shows, so nothing announces with loot rarity off.
 
-## 2. What arrived - the watcher (`src/systems/acquireWatch.js`)
+**The banner** (`src/ui/lootBanner.js`). The kicker is the pack's tier label ("Perfect Rare", "Rare Card"), the name
+carries a count when more than one came, and the line under it is the template's name or the card's kind. Aetheric
+and above (`BANNER_BIG_TIER`) stand taller, hold longer and play the Arena fanfare once, behind the port's sounds
+switch (`src/systems/enhancedSounds.js`).
 
-There is no single door an item comes through. A take from a body or a chest tells the LOOT8 listeners
-(`inventory.js:"export function tellTaken(item) {"`), but a purchase, the Broker's sale, a quest's reward, the spoils, a
-craft, a trade, the market and a card all `addItem` straight into the pack - and a take out of the wagon or the
-Materials Bag tells the listeners as if it were new. So the pack is watched, not the doors.
+**The queue** (`createBannerQueue`, pure): at most three stand (`LOOT_BANNERS_MAX`), the newest on top. Each holds
+4.5 s, a big one 7 s. Arrivals wait best tier first, at most twelve. A second card of a kind already shown adds to its
+count. Under a window (loot, a shop, the Broker) the stack is hidden and nothing ages, so a piece bought there is
+announced when the window closes. A piece no longer held when its turn comes never stands.
 
-- **Once a frame**, on drawHud's one call (`hud.js:"drawLootBanners({ entity: vitals,"`) - every host hands drawHud the
-  player entity as `vitals` - the watcher (`acquireWatch.js:"export function createAcquireWatch"`) reads the player's
-  three own lists: the pack, the wagon and the Materials Bag. It runs on every skin, so a piece found on the classic skin
-  is not announced if the player switches to Enhanced Plus later.
-- **The mark.** A piece that could ever announce (`markable` - a weapon that is not ammunition, armour, clothing,
-  jewellery, an artifact, a card) gets `acquired: true` the first frame it stands in one of the lists. An unmarked one
-  there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool()"`), so it rides the save and
-  the house's chests: a piece taken back out of the player's own storage, or picked back up off the ground, is not new.
-- **The receiver's mark.** Like `equipSlot` and `questItem`, the mark is stripped off the wire
-  (`systems/loot/loot.js:"for (const k of RECEIVER_MARKS)"`) and off the zone's death record
-  (`wildDropLaw.js:"for (const k of RECEIVER_MARKS)"`). A piece another player hands over - a trade, the
-  zone's remains, the market, a room's chest - is new to its taker.
-- **And the realm's trade law reads the same list (MARK-WIRE, FIELD BUGS 2026-10-09b).** The three receiver's marks are
-  ONE list, `realmTradeLaw.js:"export const RECEIVER_MARKS"`,
-  which the realm's volatile fields spread and its moved record strips. ACQUIRE1 first added the mark to the wire's clamp
-  and the death record and not there: the pack's record carried it, the List form's offer did not, and the market, a
-  stall and a realm trade refused every marked piece ("The realm does not hold that piece where your pack had it" -
-  `01-Overview/bugs/Field-Bugs-2026-10-09b.md`).
-- **Cards** stack, and a card that lands on a stack the player already holds merges into it and is gone as a record. So a
-  card's arrival is its count rising: the three lists' total of that card, frame to frame, less what a marked record new
-  to the lists brought (a stack of the player's own back from a chest).
-- **Moving between the three lists is never an arrival.** A whole move carries the same marked record; a split mints a
-  record of a card whose total did not rise.
-- **New baselines, not floods.** The first frame of an entity, a load (save.js restorePlayer replaces the lists), and
-  every frame of character creation up to and including the frame it ends (its kit and the starter deck) are read and
-  marked, and announce nothing.
-- **What announces:** a tier at or over Rare. A card's tier is its catalog's (`net/iliac/iliacCards.js` - printed on its face,
-  whatever loot rarity's switch says); any other piece's is the tier the pack shows (lootRarity.js rarityAttr - nothing
-  with loot rarity off, nothing for Common).
+**Where.** The right edge, 60% down the window, stepping under the notice stack and never past the window's foot
+(`bannerLayout`). The HUD layout editor moves it like any HUD piece (`src/ui/hud/hudLayout.js`, "Loot banners").
+Reduced motion drops the slide, sweep and glow.
 
-## 3. The banner (`src/ui/lootBanner.js`)
+**Titles and auras** are not pack items, so the grant's own door calls `announceHonour`: the Hour's claims
+(`src/net/superDungeon/sdClaims.js`), the Old Coil's (`src/net/serpent/serpentClaims.js`), the lamp keeper
+(`src/systems/lampKeeper.js`) and a questline's title (`src/scenes/quest/questBridge.js`). The entry (`honourEntry`)
+reads "New Title" or "New Aura" and "Wear it from your account card", ranks as the top tier, and wears the title's own
+color (`honourVars`). The chat line for the grant stays on every skin.
 
-- **The face.** The piece's picture in a well framed in its tier - a card's own painted face
-  (`render/iliacCardFaces.js` paintIliacCard); a kicker in the tier's light with its pips (the pack's tier label:
-  "Exalted Legendary", "Perfect Rare"; a card's "Rare Card"); the name in the tier's colour, with a count when more than
-  one came ("x2"); what it is under it (the template's name - "Longsword", "Helm" - or a card's kind - "Unit card").
-  The tier's edge runs down its right side and a light sweeps it once as it lands. A screen reader is handed the whole
-  line at once.
-- **The top tiers** (Aetheric, Artifact, Gilded) stand taller, their picture larger, the edge wider, with a glow that
-  breathes twice, and hold longer. The frame they land in plays the Arena's fanfare (SOUND.ArenaFanfareLevelUp) once,
-  behind the port's own sounds switch (`systems/enhancedSounds.js`).
-- **The law** (`lootBanner.js:"export function createBannerQueue"`, pure): three stand at most, the newest on top. Each
-  holds 4.5 s (a big one 7 s) and slides out; a banner sliding out holds no place. What arrives while three stand waits,
-  the best tier first, at most twelve. A second card of a kind whose banner stands or waits adds to its count.
-- **The HUD's hide gate.** Under a window - the loot window, a shop's counter, the Broker's - the stack stands hidden and
-  nothing ages, so a piece bought or taken there is announced when the window closes. A piece no longer held when its
-  turn comes (zone remains the room gave to another player) never stands.
-- **Where.** The right edge, 60% down the window. When the notice stack is in the way the banners step under it, and
-  never pass the window's foot - a band too short for every banner shows the newest (`bannerLayout`). The HUD-MOVE
-  layer moves the stack like any HUD piece (`hudLayout.js:"{ id: 'loot', sel"`, "Loot banners",
-  with a preview while the UI is unlocked); moved, it fades where it stands rather than sliding from the edge.
-- **The dress** is the pickup feed's - its veil, stone bevel and ring, tinted per Plus theme through the shared veil law
-  (`enhancedFrame.js:"export const hudVeil"`, moved there from the pickup feed, its first reader). The tier
-  colours are the RARITY-UI table's.
-- **Classic skin.** Nothing is built - no node, no sheet (AUDIT 39's law). The watcher still reads and marks.
-- **Reduced motion:** no slide, no sweep, no glow.
+**The pickup feed and the codex.** The pickup feed (`src/ui/pickupFeed.js`) does not card a piece the banner will
+announce. A first Legendary find for the codex is said by the banner, as a "New to your codex" chip, through
+`presentCodexFind`; on the classic skin the codex says its own line (`src/systems/loot/lootCodex.js`).
 
-## 3b. A title or an aura (HONOUR-BANNER, 2026-10-14)
+## Rules
 
-Mac: *"The title/aura in the abyss dungeon should also have a loot popup"*, and of the lamp keeper's title: *"ensure
-there is a loot popup for obtaining the title"*. A title or an aura is no piece in the pack, so the watcher never sees
-one: its grant's own door pushes it (`lootBanner.js:"export function announceHonour"`).
-The Hour's (`net/superDungeon/sdClaims.js` - Hourbreaker and The Turning Hour, when the account service answers a claim with the
-grant), the lamp's (`systems/lampKeeper.js`, I Love Lamp) and - SERPENT5 (`11-Multiplayer/Sea-Serpent.md` section 17) -
-the Old Coil's (`net/serpent/serpentClaims.js`, Coilbreaker and The Maelstrom, on the Hour's own law) are its three doors.
+- Rare and up get the banner; Common and Magic keep the pickup feed (Mac).
+- Every way a piece becomes the player's counts: loot, spoils, quest rewards, crafts, the Sigil Broker, shops, trades,
+  the market, cards (Mac).
+- The banner stands at the right edge by the notices (Mac).
+- The top tiers stand out with a bigger banner and a sound (Mac).
+- A title or aura grant gets a loot popup (Mac).
+- On the classic skin nothing is built; the watcher still marks.
 
-- **The entry** (`honourEntry`, pure): the word as `ui/playerBadge.js` names it (`TITLE_TEXT`, `AURA_TEXT`), the kicker
-  "New Title" or "New Aura", and under it "Wear it from your account card". It takes the top tier's place (`gilded`):
-  it waits first, stands big and plays the fanfare. Its words go through the text core (`lootBanner.honour.*`).
-- **Its colour is the title's own.** The rarity's custom properties are laid over the tier's from the title's colour
-  (`honourVars` - its gradient's middle where it is a gradient title), the word is painted as it is worn over a head
-  (`titlePaint`; an aura in the paint of the title it is family to, `AURA_PAINT`), and the well holds the port's own mark
-  in that colour - a laurel for a title, a ring of light for an aura.
-- **Held by the account.** It is never dropped as "no longer held" - the pack's test is for a piece.
-- **The chat line stays.** The banner is the popup; the line is the record, said on every skin. On the classic skin
-  `announceHonour` answers false and nothing is built.
+## Code and tests
 
-## 4. The pickup feed and the codex
+- `src/systems/acquireWatch.js` - the watcher, the mark and the tier gate
+- `src/ui/lootBanner.js` - the queue, layout, face and honour entries
+- `test/systems/lootbanner.test.js` - watcher, cards, baselines, wire, queue, face, codex and honour doors
+- `test/server/lampkeeper2.test.js` - the lamp's door
+- `test/systems/pickupfeed.test.js` - the pickup feed's hand-off
+- `tools/lootBannerProbe.mjs` - the banners over the real HUD in Chromium at three screen sizes
 
-- **The pickup feed** (`ui/pickupFeed.js`) no longer cards a piece the banner will announce - one new to the player in
-  Rare or better (`pickupFeed.js:"const fresh = (m)"`). Its take still says no line for it. A Rare piece of the
-  player's own, picked back up, is carded in its tier as before.
-- **The codex.** LOOT10's first find of a Legendary record (`06-Systems/Loot-Arc.md` section 12) said "<name> - a
-  Legendary! It joins your codex." and chimed. On Enhanced Plus the banner announcing the same piece says it instead -
-  a "New to your codex" chip and the codex's own chime - through a presenter slot in the watcher, so the HUD never
-  imports the codex and the codex never imports a face
-  (`lootCodex.js:"if (!quiet && !presentCodexFind(item, key.kind))"`). The banner declines, and the codex says its line
-  as before, on the classic skin, for a piece already read whose banner has gone, and for one no frame will read.
+## Open
 
-## 5. Known limits
-
-- Pieces already sitting in a house chest, the guild vault or another storage that is not the pack, wagon or bag when
-  this ships carry no mark. Each announces once, the first time it is taken out.
-- A stack of cards of the player's own taken back from storage onto a stack of the same card already in the pack merges
-  as it lands, so its count reads as risen and it is announced.
-- A piece of the player's own put into an online room's chest comes back through the wire, which strips the mark; taken
-  out after the room is rebuilt, it is announced.
-
-## Pins
-
-`test/systems/lootbanner.test.js` (the watcher, the cards, the baselines and the wire, the law, the face, the top tiers, the
-codex, the wiring; HONOUR-BANNER's entry and face, and the Hour's door - world.js's and `sdClaims.js`'s, raised only for
-a newly held honour); the lamp's door in `test/server/lampkeeper2.test.js` (AUDIT FIVE-ASKS E7); the pickup feed's hand-off in
-`test/systems/pickupfeed.test.js`. `tools/mutants/lootbanner.json`: 33, all dead; HONOUR-BANNER's in `tools/mutants/honour_banner.json`.
-PROBE: `node tools/lootBannerProbe.mjs` - the real banners over the real HUD and a notice toast in Chromium at a desktop,
-a laptop and a phone: at the right edge, under the notices, no sideways scroll, every name in its tier's colour, the top
-tiers big and taller, the best of a burst standing first. 183 checks.
+- Pieces already in a house chest or other storage before the mark existed announce once, the first time they are
+  taken out.
+- A card stack taken from storage onto the same card in the pack reads as a risen count and is announced.
+- A piece put into an online room's chest comes back through the wire without its mark and is announced when taken out.

@@ -1,12 +1,12 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL3-PLAYERS (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 3, "Players and
+// STAFF-PANEL3-PLAYERS (2026-10-22; design doc "DFO Staff Panel: design", build step 3, "Players and
 // nameplates") - THE PANEL'S PLAYERS: a search over every account, online or not, by handle or character name (mob,
 // 03:23Z); one account's profile, read tab by tab; its devices and Sign out everywhere; and the rename of an offensive
 // handle or character name (the last was done by hand, migration 0134). Admins alone: Moderators have no profile screen
 // (mob, 03:03Z: Moderators get "only chat report notifications with Mute and Ban").
 //
-// NOTHING NEW IS JUDGED (design doc, "Built on the save judge"; mob, 09:22Z: "use the validators the server already has").
+// NOTHING NEW IS JUDGED (design doc, "Built on the save judge").
 // Every flag a profile shows is one the judge stored at a checkpoint - the law finding standing on a character's row
 // (`law_sig`, verdict.js), the copies and claims the ledger keeps (item_dupes, item_uids, ledger.js), the gains past the
 // bucket (`measure` and `budget` findings, review.js's gains) - never a check of this module's own. A save is opened with
@@ -47,8 +47,7 @@ export const PLAYER_ROUTES = Object.freeze(['/v1/staff/players', '/v1/staff/play
   '/v1/staff/player/rename']);
 /** A profile's tabs, in their usual order - a tie on urgency goes to the earlier. */
 export const PLAYER_TABS = Object.freeze(['overview', 'skills', 'equipment', 'inventories', 'market', 'trades', 'economy', 'history']);
-/** STAFF-BANNED: the search's ban filter - the first the default (mob: "player that are banned need to be taken out of
- *  staff panel list of players"). */
+/** STAFF-BANNED: the search's ban filter - the first the default. */
 export const BAN_FILTERS = Object.freeze(['not-banned', 'banned', 'all']);
 /** Rows one page of a list answers; an inventory's, ITEMS_PAGE. */
 export const PLAYERS_PAGE = 25;
@@ -173,8 +172,7 @@ function itemRow(/** @type {any} */ it, /** @type {string} */ where, /** @type {
 }
 /** How many enchantments a row carries at most. */
 const ITEM_ENCH_MAX = 12;
-/** INV-HOVER (mob 2026-10-24: "hover for item here with descriptons", "so i can see what enchants and amounts of gold on
- *  parchment are"): what a piece's hover in the profile says beyond its row - its enchantments ([type, param], the
+/** INV-HOVER: what a piece's hover in the profile says beyond its row - its enchantments ([type, param], the
  *  game's EnchantmentTypes; the maker's own rows left out), its condition, the gold written on it (`value`: a letter's,
  *  or any piece's that carries one), its message number and whether a quest owns it. Only what the piece has.
  *  @param {any} o */
@@ -525,8 +523,7 @@ export async function staffPlayers(ctx, env, path, body, who, audit) {
 
   // /v1/staff/players { q?, online?, ban?, from? } - every account with a handle whose handle, or a character's name, starts
   // with `q` (any case), `online` those a tab of which beat inside the play clock's grace; by handle, `from` the last one
-  // STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a
-  // tab for banned players as well", "add a ban status as well to player list", "so we can filter them"): `ban` is
+  // STAFF-BANNED (2026-10-23): `ban` is
   // 'not-banned' (the default, so a banned account is out of the list unless asked for), 'banned' or 'all' (BAN_FILTERS),
   // judged in the statement against banned_until and the clock, as sanctions.js isBanned judges it (a lapsed ban is none).
   // The page is cut after the filter, so its cursor - the last handle of the filtered page - goes on from there: no row
@@ -546,7 +543,7 @@ export async function staffPlayers(ctx, env, path, body, who, audit) {
     if (online) args.push(nowS - PLAY_GRACE_S);
     // the online read by the last play beat's index (idx_players_played) and only they sorted: a plain `played_at >=` beside
     // the handle's range let the planner walk every handle for the ORDER BY (STAFF-PANEL3-PLAYERS FIX, flaw review)
-    // STAFF-PANEL-SPEED (mob: "slow when moving in menus"): the cut page's characters ride its read as one JSON column, its audit row the same batch - one trip, was three
+    // STAFF-PANEL-SPEED: the cut page's characters ride its read as one JSON column, its audit row the same batch - one trip, was three
     const sql = `SELECT x.*, (SELECT json_group_array(json_array(c.id, c.name, c.lease, c.lease_at, c.dead_at, c.held)) FROM (SELECT id, name, lease, lease_at, dead_at, held
         FROM realm_characters WHERE player = x.id ORDER BY updated_at DESC) c) AS chars
       FROM (SELECT id, handle, handle_lc, created_at, played_at, muted_until, banned_until FROM players WHERE ${q ? `id IN (

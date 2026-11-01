@@ -58,6 +58,7 @@ import {
   DECOR_SCALE_MAX,
   DECOR_MOUNT_LIFT,
 } from '../../net/decorLaw.js'; // DECOR-FIGURE: a person stands at its own size
+import { isNatureArchive } from '../../world/rmbFlats.js'; // YARD-WALLS: a tree or a plant never hangs
 
 export const DECOR_TURN_STEP = 15;
 export const DECOR_TURN_FINE = 1;
@@ -113,6 +114,43 @@ const DEG = 180 / Math.PI;
  *  C3: by the archive alone, as the room draws one and the service writes one - the catalogue's kind, which neither of
  *  them reads, was a second law. The placer's and the bar's buttons' (scenes/decor/decorTool.js) one question. */
 export const decorEntrySized = (entry) => !decorIsFigure(entry);
+/** YARD-WALLS: whether a catalogue entry hangs flat on a yard's wall it is set on - a picture, never one's own item, a
+ *  person (who stands) or a tree or a plant (which grow there, in the yard's season). */
+export const decorHangs = (entry) =>
+  entry?.model == null &&
+  Array.isArray(entry?.flat) &&
+  !entry.item &&
+  !entry.mount &&
+  entry.kind !== 'own' &&
+  !decorIsFigure(entry) &&
+  !isNatureArchive(entry.flat[0]);
+/** HOME-YARD: a catalogue entry as a yard places it - nothing held, no light of its own, no craft; YARD-WALLS: a picture
+ *  hung on a wall where it can be (decorHangs). */
+export const decorYardEntry = (entry) => ({
+  ...entry,
+  storage: false,
+  light: null,
+  station: null,
+  ...(decorHangs(entry) ? { hangs: true } : {}),
+});
+/** YARD-WALLS: the ground a hung picture covers, as offsets [dx, dz] from where it hangs - its quad seen from above (on a
+ *  wall, a line along it). `size` its picture's { w, h } at scale 1, else a square of the measured `radius`'s diagonal. */
+export function decorHungFoot(piece, size, radius = 0, k = 1) {
+  const { right, up } = decorMountFrame(piece.rot);
+  const hw = ((size?.w ?? (radius ?? 0) * Math.SQRT2) * k) / 2,
+    hh = ((size?.h ?? (radius ?? 0) * Math.SQRT2) * k) / 2;
+  const out = [];
+  for (const [a, b] of [
+    [-1, -1],
+    [-1, 1],
+    [1, 1],
+    [1, -1],
+  ]) {
+    const q = [right[0] * a * hw + up[0] * b * hh, right[2] * a * hw + up[2] * b * hh];
+    if (!out.some((o) => Math.hypot(o[0] - q[0], o[1] - q[1]) < 1e-3)) out.push(q);
+  }
+  return out;
+}
 
 /**
  * THE TOOL for one catalogue `entry`. `radius` its measured radius in metres (null: unmeasured), `box` a model's local
@@ -125,8 +163,15 @@ export const decorEntrySized = (entry) => !decorIsFigure(entry);
 export function createDecorPlacer(entry, { radius = null, box = null, from = null, free = false, flat = null } = {}) {
   let measured = radius; // the scan's, or what a copy was priced at - filled in once the scan reaches it
   const mount = !!entry.mount;
+  const hangs = !mount && !!entry.hangs && entry.model == null; // YARD-WALLS: a picture hung flat on a wall it is set on
+  // AUDIT FB1031 Y2: one that hangs keeps its spin on a wall (`spin`, a hung source's) apart from its heading as a
+  // billboard (`yaw`, a standing source's) - a heading of 180 taken as the spin hung it upside down. A turn turns the pose
+  // last given (`hung`).
+  const hungFrom = hangs && !!from?.hung;
   const s = {
-    yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,
+    yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,
+    spin: hungFrom ? wrapTurn(from.rot?.[2] ?? 0) : 0,
+    hung: hungFrom,
     raise: 0,
     scale: from?.scale ?? 1,
     snap: false,
@@ -158,14 +203,19 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     return Math.max(0, Math.max(-n[0] * b[0], -n[0] * b[3]) + Math.max(-n[1] * b[2], -n[1] * b[5]));
   }
 
-  /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface. */
-  function mountAt(hit, origin, id, normal, camYaw, paid) {
+  /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface.
+   *  YARD-WALLS: `hung` - a catalogue picture, which says so in its place (net/decorLaw.js decorIsMount). */
+  function mountAt(hit, origin, id, normal, camYaw, paid, hung = false) {
     const len = normal ? Math.hypot(normal[0], normal[1], normal[2]) : 0;
     if (!(len > 0)) return null;
     const n = [normal[0] / len, normal[1] / len, normal[2] / len];
     const level = Math.hypot(n[0], n[2]) > 1e-3;
     const heading = level ? Math.atan2(n[0], n[2]) : (Number.isFinite(camYaw) ? camYaw : 0) + Math.PI;
-    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];
+    const rot = [
+      wrapTurn(round(heading * DEG, 1)),
+      round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1),
+      hung ? s.spin : s.yaw,
+    ];
     const { right, up } = decorMountFrame([rot[0], rot[1], 0]); // the surface's own axes, before the spin
     let p = [hit[0] - origin[0], hit[1] - origin[1], hit[2] - origin[2]];
     if (s.snap) {
@@ -189,6 +239,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null,
       storage: false,
       paid,
+      ...(hung ? { hung } : {}),
     });
   }
 
@@ -197,7 +248,8 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     state: () => ({ ...s, nudge: [...s.nudge] }),
     /** Turn by `deg` (a step, or a fine one). */
     turn(deg) {
-      s.yaw = wrapTurn(round(s.yaw + deg, 1));
+      if (s.hung) s.spin = wrapTurn(round(s.spin + deg, 1));
+      else s.yaw = wrapTurn(round(s.yaw + deg, 1));
     },
     /** Lift or lower by `d` metres, within the tool's own bound. */
     raise(d) {
@@ -261,6 +313,8 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       // WALL-CLEAR: a face within DECOR_HANG_NY of level is a wall - the piece stands clear of it, snapped along it
       const hl = nl > 0 ? Math.hypot(normal[0], normal[2]) : 0;
       const wall = !hang && hl > 0 && Math.abs(normal[1] / nl) < DECOR_HANG_NY;
+      s.hung = wall && hangs;
+      if (s.hung) return mountAt(hit, origin, id, normal, camYaw, paid, true); // YARD-WALLS: flat on the wall, not stood off it
       if (wall) {
         const n = [normal[0] / hl, normal[2] / hl];
         if (s.snap) {

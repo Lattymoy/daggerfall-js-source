@@ -147,8 +147,8 @@
   {
     "name": "TACT4-many-windups",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // TELL5: a cut feint is no wind-up",
-    "new": "    continue; // TELL5: a cut feint is no wind-up",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    continue; // A cut feint is no wind-up",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "TACT4-no-forced-swing",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowSwing = true;\n  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // AUDIT ARENA-LADDER 2: whose verdict it is",
-    "new": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // AUDIT ARENA-LADDER 2: whose verdict it is",
+    "old": "  ai._blowSwing = true;\n  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // Whose verdict it is",
+    "new": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined; // Whose verdict it is",
     "tests": [
       "test/characters/enemy/tact4.test.js"
     ],

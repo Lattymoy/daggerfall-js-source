@@ -1,0 +1,74 @@
+[
+  {
+    "name": "FB1031III-W1-the-eye-unasked",
+    "file": "src/scenes/world.js",
+    "old": "minDistance, PACK_SPACING, Math.hypot(renderer._camPos[0] - fx[0], renderer._camPos[2] - fx[2])) }",
+    "new": "minDistance, PACK_SPACING) }",
+    "tests": [
+      "test/characters/fb1031iii_band.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-W1-the-turn-unread",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "  const edge = base + turn,",
+    "new": "  const edge = base,",
+    "tests": [
+      "test/characters/fb1031iii_band.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-W1-the-turn-unscaled",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "  const turn = backM > 0 ? (Math.asin(Math.min(1, (backM * Math.sin((base * Math.PI) / 180)) / r)) * 180) / Math.PI : 0;",
+    "new": "  const turn = backM > 0 ? (Math.asin(Math.min(1, backM / r)) * 180) / Math.PI : 0;",
+    "tests": [
+      "test/characters/fb1031iii_band.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-I1-the-race-s-repeat-unguarded",
+    "file": "server-account/src/professions.js",
+    "old": "  if (made) return repeatAnswer(db, player, env, made, nowS, body);",
+    "new": "  if (made) return harvestAnswer(db, player, env, made, nowS, { repeat: true });",
+    "tests": [
+      "test/net/butcherstores.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-I2-put-everything-in-a-literal",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  get allIn() { return t('prof.page.stores.allIn', 'Put everything in'); },",
+    "new": "  allIn: 'Put everything in',",
+    "tests": [
+      "test/ui/fb1031iii_bench_l10n.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-I2-the-answer-line-a-literal",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    t('prof.page.stores.allInDone', '{n, number} put in the Stores.', { n }),",
+    "new": "    `${n.toLocaleString('en-US')} put in the Stores.`,",
+    "tests": [
+      "test/ui/fb1031iii_bench_l10n.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-I3-the-kinds-dealt-back-no-more",
+    "file": "src/ui/packSort.js",
+    "old": "    places.forEach((i, n) => { keyed[i] = old[n]; });",
+    "new": "",
+    "tests": [
+      "test/ui/fb1031iii_items.test.js"
+    ]
+  },
+  {
+    "name": "FB1031III-I4-gone-unsaid",
+    "file": "src/systems/item/itemDiscard.js",
+    "old": "    : why === 'gone' ? t('inventory.destroy.moved', '{name} has moved in your pack. Nothing was destroyed.', { name }) : null);",
+    "new": "    : null);",
+    "tests": [
+      "test/ui/fb1031iii_items.test.js"
+    ]
+  }
+]

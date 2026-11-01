@@ -166,8 +166,8 @@
   {
     "name": "MARKS-OF-MASTERY-titles-any-word",
     "file": "server-account/src/titles.js",
-    "old": "    if (Array.isArray(player?.masteryMarks))\n      for (const t of MASTERY_MARKS) if (player.masteryMarks.includes(t) && !held.includes(t)) held.push(t);",
-    "new": "    if (Array.isArray(player?.masteryMarks)) for (const t of player.masteryMarks) if (!held.includes(t)) held.push(t);",
+    "old": "    if (Array.isArray(player?.masteryMarks))\n      for (const t of MASTERY_MARKS)\n        if (player.masteryMarks.includes(t) && !held.includes(t) && !(namedFirst && t === DRAGON_TITLES.first))\n          held.push(t);",
+    "new": "    if (Array.isArray(player?.masteryMarks)) for (const t of player.masteryMarks) if (!held.includes(t) && !(namedFirst && t === DRAGON_TITLES.first)) held.push(t);",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -464,11 +464,12 @@
   {
     "name": "HUNTERS-MARK-trophy-p-unchecked",
     "file": "src/net/decorLaw.js",
-    "old": "export const decorIsTrophy = (piece) =>\n  decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
-    "new": "export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE;",
+    "old": "export const decorIsTrophy = (piece) =>\n  decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);",
+    "new": "export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "HUNTERS-MARK-trophy-stands",

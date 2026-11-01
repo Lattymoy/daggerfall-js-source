@@ -29,8 +29,8 @@
   {
     "name": "NAVBAKE-player-anchor-only",
     "file": "src/ai/nav/navBake.js",
-    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // AUDIT PRE-MERGE 0928 N2: feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
-    "new": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)])]; // AUDIT PRE-MERGE 0928 N2: feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "new": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
     "tests": [
       "test/ai/nav/enhancedAI.test.js"
     ]

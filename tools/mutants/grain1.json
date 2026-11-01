@@ -76,8 +76,8 @@
   {
     "name": "GRAIN1-the-water-pass-keeps-the-wrapped-footprint-so-the-scroll-rollover-draws-a-line",
     "file": "src/render/waterSurface.js",
-    "old": "      float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;",
-    "new": "      float pa = texture(uTileArr, vec3(puv, float(rec))).a;",
+    "old": "float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;",
+    "new": "float pa = texture(uTileArr, vec3(puv, float(rec))).a;",
     "tests": [
       "test/render/grain1_terrainmip.test.js",
       "test/world/terrain/water.test.js"
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-GRAIN-the-water-takes-its-derivatives-after-the-discards",
     "file": "src/render/waterSurface.js",
-    "old": "    vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n    ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));",
-    "new": "    ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));",
+    "old": "    vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n    ivec2 cell",
+    "new": "    ivec2 cell",
     "tests": [
       "test/world/terrain/water.test.js",
       "test/render/grain1_terrainmip.test.js"

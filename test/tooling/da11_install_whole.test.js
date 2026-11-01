@@ -23,18 +23,25 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { DESKTOP_STAGED } from '../../scripts/desktopRelease.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const b = JSON.parse(rd('app/package.json')).build;
 const main = rd('app/main.cjs');
 
 test('DA11 the built site is packed into app.asar, never shipped beside it as loose files', () => {
-  const sets = b.files.filter((f) => typeof f === 'object');
-  // DA12: and the game's pad loop, one module beside the launcher's page - into the archive too
-  // PIN MOVED: AUDIT BR5 - and the product's logo beside it, the game's own file, which the launcher wears
-  assert.deepEqual(sets, [{ from: '../src/ui/menu', to: 'launcher', filter: ['menuPad.js'] }, { from: '../src/assets/branding', to: 'launcher', filter: ['dfo-online.png'] }, { from: '../dist', to: 'dist' }], 'dist/ rides the app\'s own files - into the archive');
+  // the game's pad loop, the product's logo and the built site are copied inside app/ first (scripts/desktopRelease.mjs
+  // stage) and packed from there into the archive: asarUnpack holds every packed file to app/
+  assert.deepEqual(b.files.filter((f) => typeof f === 'object'), [], 'no file set read from outside app/');
+  assert.ok(b.files.includes('launcher/**') && b.files.includes('dist/**'), 'dist/ rides the app\'s own files - into the archive');
+  assert.deepEqual(DESKTOP_STAGED.map((s) => [s.from, s.to]), [['src/ui/menu/menuPad.js', 'app/launcher/menuPad.js'], ['src/assets/branding/dfo-online.png', 'app/launcher/dfo-online.png'], ['dist', 'app/dist']]);
+  assert.match(rd('.github/workflows/release-desktop.yml'), /run: node scripts\/desktopRelease\.mjs stage\n\n\s+- name: Build installers\n\s+run: npx electron-builder --publish never/, 'staged right before the build');
+  assert.match(JSON.parse(rd('app/package.json')).scripts.predist, /&& node scripts\/desktopRelease\.mjs stage$/, 'and before a local one');
+  assert.equal(JSON.parse(rd('app/package.json')).scripts.postdist, 'cd .. && node scripts/desktopRelease.mjs unstage', 'and taken out after it, so no second copy stays in the tree');
   assert.notEqual(b.asar, false, 'the archive is what makes it one file');
-  assert.equal(b.asarUnpack, undefined, 'and nothing is unpacked back out beside it');
+  // the one exception: the local runtime a private server runs in (app/lib/privateHost.mjs) is a native binary, which
+  // cannot run from inside the archive - its two packages alone, never the site
+  assert.ok((b.asarUnpack ?? []).every((g) => /node_modules\/(?:@cloudflare\/)?workerd/.test(g)), 'and nothing but the runtime binary is unpacked back out beside it');
   const extra = [b.extraResources, b.extraFiles, b.win?.extraResources, b.linux?.extraResources, b.mac?.extraResources]
     .flat().filter(Boolean);
   assert.ok(!extra.some((e) => /dist/.test(typeof e === 'string' ? e : `${e.from} ${e.to}`)),

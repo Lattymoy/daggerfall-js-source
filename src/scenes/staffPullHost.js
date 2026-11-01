@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us") - BRING A PLAYER TO ME, out of bootWorld (HOST-SPLIT).
+// STAFF-PULL (2026-10-28) - BRING A PLAYER TO ME, out of bootWorld (HOST-SPLIT).
 // Staff side: my own place (the /tp capture) goes to the hub with the player named (net/staffTeleport.js `pull`).
 // Player side: the hub's `pull` lands me there through the /tp loader, and my game answers the hub. The relay
 // (server/src/staffTeleport.js routeStaffPull) lets only an Admin or the Shadow Fang ask.

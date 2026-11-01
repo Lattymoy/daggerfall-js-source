@@ -1,124 +1,20 @@
-# The vendored-work registry (HARD4, 2026-09-15)
+# Mod Registry
 
-> **The counts in the next two sections are HARD4's own moment and are
-> left as it wrote them.** They were true of the fifteen rows that
-> existed on 2026-09-15 and they are the record of what putting those
-> rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 59 directories and 37 of their READMEs still carry an
-> unfilled permission line, each shown as `RECORD OPEN` in the table
-> (2026-10-29: two directories removed, both with permission, so the open count stands;
-> MUDEX1, 2026-10-20: Ralzar's `mudex`, the sixty-first - Meaner Monsters' own form beside DEX, vendored on Mac's
-> approval ("Approve MUDEX"), the author's own words not yet, so the open count rises by one;
-> DEX0, 2026-10-19: Kamer & Kab's `daggerfall-enemy-expansion`, the sixtieth (the fifty-eighth on its branch,
-> renumbered past LAYERED-GEAR's two at the merge) - Mac's word of permission recorded ("Yes, record my word"), the
-> authors' own words not yet, so the open count rises by one;
-> LAYERED-GEAR and the 2 and the Z, 2026-10-19: `pixelify-glyphs` and `layered-armor`, the fifty-eighth and the
-> fifty-ninth, both the game's own work with their permission written, so the open count stays;
-> KG3, 2026-10-13: the unnamed author's `kings-gambit`, the fifty-seventh - the owner's word of permission
-> recorded ("We also have permission"), the author's own words not yet - the bundle names no author - so the open
-> count rises by one;
-> THE ENVIRONMENT MODS, 2026-10-08: demifiend000's `heat-haze`, `windfall` and `snowfall` and the
-> unnamed author's `sands-of-the-alikr`, the fifty-second to the fifty-fifth - Mac's word of permission recorded
-> ("We have permission to use and implement everything into the codebase"), the authors' own words not yet, so the
-> open count rises by four;
-> PI1, 2026-10-07: demifiend000's `physical-items`, the fifty-first - Mac's word of permission
-> recorded ("permission has been granted"), the author's own words not yet, so the open count rises by one;
-> LEGACY1, 2026-10-05: Mac's own `project-legacy`, the fiftieth - the author's own permission
-> written in its README, so the open count stands;
-> VE4, 2026-10-05: carademono's `vanilla-enhanced`, the forty-ninth - Mac's word of permission
-> recorded ("Approved and yes"), the author's own words not yet, so the open count rises by one;
-> LPT1, 2026-10-05: SquidKamer's `low-poly-trees`, the forty-eighth - its archive carries the
-> bundle alone, no readme, and its manifest no licence, so the open count rises by one;
-> IT1, 2026-10-04: kkgobkk's `immersive-travel`, the forty-seventh - its zip carries the
-> bundle alone, no readme, so the open count rises by one;
-> THE MERGE of main's FIELD BUGS 2026-10-03 into the arena branch: CLASSIC-CURSOR's `dfu-cursor`, the forty-third
-> on main, is the forty-sixth here - Daggerfall Unity's own cursor under its MIT licence, so the open count stands;
-> ARENA1, 2026-10-02: Kamer's `daggerfall-arena`, the forty-fifth - his permission relayed by Mac
-> and written in its README, so the open count stands;
-> WD3, 2026-10-01: carademono's `beautiful-villages` and `beautiful-cities`, the forty-third and
-> forty-fourth - Mac's word of permission recorded ("We have permission"), the author's own words
-> not yet, so the open count rises by two;
-> THE MERGE of main into the professions branch, 2026-09-28, counted them again: FORAGE1's
-> `foraging`, the thirty-eighth on its branch, is the forty-second - Harbinger451's Foraging, Mac's
-> word of permission recorded, the author's own words not yet, so the open count rises by one;
-> RAID1, 2026-09-27: `world-events-raiding-parties`, the forty-first at the merge with the
-> sea update - Kamer made the mod for this port and Mac recorded it, "Kamer made this for
-> us", so the open count stands;
-> CSA-A, 2026-09-27: `come-sail-away` the thirty-ninth - its zip carries
-> the bundle alone, no readme, so the open count rises by one - and
-> `vorbis-fsb-setups` the fortieth, two licensed codebook headers whose
-> licences travel with them, so it stands;
-> OH-A, 2026-09-26: `ocean-holes` the thirty-eighth - its archive carries
-> no readme either, so the open count rises by one;
-> the sea update's merge with main, 2026-09-25, counted them again: main's
-> SKIN2 added `class-skins`, the thirty-third, its record open; the sea update's
-> four follow it - two since removed (their permission recorded, so the open
-> count stood), WA1's `warm-ashes-ships` the thirty-sixth
-> (its archive carries no readme, so its permission line waits for Mac and
-> the open count rises by one) and DW-A to DW-D's `iliac-puddle-no-more` the
-> thirty-seventh (no readme either, so it rises by one again);
-> AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
-> brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
-> and 13 when it added the twenty-sixth;
-> the sentence had read 19 and 11 since ORL1 and nothing checks it, so
-> re-count rather than trust it). ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
-> that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
-> It carries no `*.dfmod.json`, so the gate below reads no version or
-> author cell for it and its own suite checks both instead; its row in
-> *Known deviations* says so. (Eight of the nineteen directories carry no
-> manifest. Six of the other seven are not mods at all - Daggerfall
-> Unity's own shipped data, a font, a road table, Mac's own project - and
-> the seventh, `windmills-kamer`, is a Daggerfall Unity mod shipped as
-> loose meshes rather than as a bundle.)
-
-The fourth slice of `01-Overview/Hardening.md`. One row per directory in
-`vendor/`, and `test/systems/hard4_registry.test.js` derives the row list from
-the filesystem, so a fourteenth entry cannot arrive without one.
-
-## Why a registry and not fourteen READMEs
-
-The READMEs are good, and they stay: each is the long form, and the
-registry links to it rather than replacing it. What a README cannot do
-is be **read together with the other thirteen**. Two facts about this
-tree were invisible until these rows were put side by side:
-
-1. **Seven of the fifteen carry an unfilled permission line.** Each is a
-   literal `[Mac: paste the text of the permission, or the link to it,
-   here.]` sitting under a sentence that says permission was granted -
-   so the README reads as settled, and only the placeholder says it is
-   not. Six is not one oversight; it is the shape of a record nothing
-   checks. They are the `RECORD OPEN` rows below, and the gate now holds
-   the two in step: a README with the placeholder MUST show `RECORD OPEN`
-   here, and a README without it must NOT.
-2. **One port is built from a version its upstream source does not
-   cover.** PCAAO's shipped bundle is 1.44; the last single-file source
-   in its repository is 1.40. The port's law is the decompiled 1.44 with
-   the 1.40 source naming what the decompiler numbered - which is the
-   right call and is written down in the README, but it is the kind of
-   fact that belongs where a maintainer looks first.
-
-Neither is a defect in the port's behaviour. Both are exactly the
-"correct system delivered incorrectly by its caller" shape this program
-was written for, pointed at provenance instead of at code.
+One row for each directory in `vendor/`: other people's work the game carries, where it came from, its version and
+its permission. Each mod's README is the long form; this table is the index. `test/systems/hard4_registry.test.js`
+derives the row list from the filesystem, so a new vendor directory cannot arrive without its row.
 
 ## What `RECORD OPEN` means, and what it does not
 
-It does **not** mean the work is used without permission. In every case
-the README records that permission was given - to Mac, by the author, on
-a dated day - and that sentence is Mac's word, which settles the
-question of whether the port may carry the files.
+It does **not** mean the work is used without permission. In every case the README records that permission was
+given, and that sentence is Mac's word, which settles whether the game may carry the files.
 
-It means the EVIDENCE was never pasted in. The line exists to hold the
-author's own words or a link to them, and it is still a prompt. Anyone
-who has to answer a licence question later - or anyone who takes this
-repository over - would find a promise and no receipt. Filling the seven
-lines is a five-minute job for the person who holds the messages, and it
-is nobody else's job, which is why the rows say who.
+It means the evidence was never pasted in: the README's permission line still holds its `[Mac: ...]` prompt
+instead of the author's own words or a link to them. Filling it is the job of the person who holds the messages.
 
 ## The registry
 
-`parity` is the date the port was last read against the upstream work,
-not the date the slice shipped, where those differ.
+`parity` is the date the port was last read against the upstream work.
 
 | vendor | what the port takes | upstream | version | read from | licence / permission | port slice | parity | bible |
 |---|---|---|---|---|---|---|---|---|
@@ -139,11 +35,11 @@ not the date the slice shipped, where those differ.
 | `beautiful-villages` | manifest verbatim, and every world-data file - 7,317 locations and 209 RMB blocks - as the author's EDIT of the player's own `MAPS.BSA` and `BLOCKS.BSA`, in one pack (`WorldDataPack/`, WD3), every piece the author copied out of Daggerfall named by reference (`$c`: its classic block's index and its path in the block, the block checked by name, `classicNames` - the sha256 only the builder's way to find it; AUDIT PRE-MERGE 1003 WD3) and never carried; not the bundle's eighteen bed prefabs (null-referenced - they draw nothing in DFU - over Daggerfall's own bed meshes and recoloured classic bedclothes): the port draws Daggerfall's own beds under bedclothes recoloured in code, and its own stand-ins for every peer piece it can (`src/world/townStandIns.js`) | carademono | 1.4.2 | shipped `.7z` `Beautiful_Villages_of_Daggerfall-566-1-4-2-1749441651`; `tools/worldDataPackBuild.mjs` checks every file rebuilds the author's sha256 through the runtime's reader | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | WD3 | 2026-10-01 | `03-World/Beautiful-Towns.md` |
 | `beautiful-cities` | manifest verbatim, and every world-data file - 410 cities and 611 RMB blocks, 388 of them composites - as the author's EDIT of the player's own `MAPS.BSA` and `BLOCKS.BSA`, in one pack (`WorldDataPack/`, WD3), every piece the author copied out of Daggerfall named by reference (`$c`: its classic block's index and its path in the block, the block checked by name, `classicNames` - the sha256 only the builder's way to find it; AUDIT PRE-MERGE 1003 WD3) and never carried; not the bundle's eighteen bed prefabs (null-referenced, no meshes in this bundle at all, recoloured classic bedclothes): the port draws Daggerfall's own beds under bedclothes recoloured in code, and its own stand-ins for every peer piece it can (`src/world/townStandIns.js`) | carademono | 0.5.0 | shipped `.7z` `Beautiful_Cities_of_Daggerfall-720-0-5-0-1749441603`; `tools/worldDataPackBuild.mjs` checks every file rebuilds the author's sha256 through the runtime's reader | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | WD3 | 2026-10-01 | `03-World/Beautiful-Towns.md` |
 | `dfu-books` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/books.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/UI-Arc.md` |
-| `dfu-icons` | the sixteen interaction-mode icons (four sets x steal/grab/info/talk) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Icons` @ `2343305d` | MIT | HUD-ICON1 | 2026-09-24 | `01-Overview/Port-Ledger.md` |
-| `dfu-cursor` | the default cursor, Cursor2.png (the 32x32 blue arrow, ProjectSettings' defaultCursor) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Cursor2.png` @ `2343305d` | MIT | CLASSIC-CURSOR | 2026-10-03 | `01-Overview/bugs/Field-Bugs-2026-10-03.md` |
+| `dfu-icons` | the sixteen interaction-mode icons (four sets x steal/grab/info/talk) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Icons` @ `2343305d` | MIT | HUD-ICON1 | 2026-09-24 | - |
+| `dfu-cursor` | the default cursor, Cursor2.png (the 32x32 blue arrow, ProjectSettings' defaultCursor) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Cursor2.png` @ `2343305d` | MIT | CLASSIC-CURSOR | 2026-10-03 | - |
 | `dfu-quests` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/StreamingAssets/{Quests,Tables}` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `06-Systems/Quest-Arc.md` |
 | `dfu-settings` | data | Daggerfall Unity (Interkarma and contributors) | - | `defaults.ini.txt` + `Text/GameSettings.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/Settings-Screen-Spec.md` |
-| `dfu-text` | data | Daggerfall Unity (Interkarma and contributors) | - | `Text/Master Localization CSV Files/Internal_RSC.csv` @ `master`, fetched 2026-09-18 | MIT | route (a) | 2026-09-18 | `01-Overview/bugs/Mac-Bugs-U.md` |
+| `dfu-text` | data | Daggerfall Unity (Interkarma and contributors) | - | `Text/Master Localization CSV Files/Internal_RSC.csv` @ `master`, fetched 2026-09-18 | MIT | route (a) | 2026-09-18 | - |
 | `dynamic-skies` | presets, textures, shader read | BadLuckBurt and carademono | 2.3.4 | `.dfmod` bundle, cross-read against `drcarademono/dynamic-skies` @ `04506e2` | granted to Mac 2026-09-04 - **RECORD OPEN** | DS1, DS2 | 2026-09-04 | `07-Rendering/Dynamic-Skies.md` |
 | `handheld-torches` | 39 textures, manifest, settings | RedRoryOTheGlen | 1.4.1 | shipped zip `Handheld_Torches-780-1-4-1`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | HT0-HT4 | 2026-09-14 (AUDIT 66) | `06-Systems/Handheld-Torches.md` |
 | `horse-cart-and-cargo` | manifest, settings, the text table, both assemblies with their IL dumps, the 45 horse PNGs out of the assembly's manifest resources | demifiend000 | 1.0.0-rc12 | shipped `.dfmod` `Horse_Cart_And_Cargo_1374_1.2.4_2026-09-16T01-22Z`; behaviour off the DLL's IL (`tools/ilDump.py`); `tools/hccAssets.mjs` reproduces every vendored file from the bundle (`formats/dotnetResources.js` for the embedded art) | granted (Mac handed the bundle over 2026-09-23) - **RECORD OPEN** | HCC | 2026-09-23 | `06-Systems/Horse-Cart-And-Cargo.md` |
@@ -160,7 +56,7 @@ not the date the slice shipped, where those differ.
 | `silkscreen-five` | one glyph (U+0035), 520 bytes | The Silkscreen Project Authors | - | `googlefonts/silkscreen`, subset with `pyftsubset` | SIL OFL 1.1 (`OFL.txt` beside it) | the enhanced skin's digits | 2026-09-08 | `10-UI/UI-Arc.md` |
 | `pixelify-glyphs` | two glyphs (U+0032, U+005A), 416 bytes | DFO (drawn for the port) | - | `tools/pixelifyGlyphs.py` | the port's own | the enhanced skin's 2 and Z | 2026-10-18 | `10-UI/UI-Arc.md` |
 | `layered-armor` | the Layered Gearing look's worn-armor strips (male, female), cloak layer and hood fixes, 7,369 PNGs, ~94 MB | DFO (made for the game) | - | `tools/layered-armor/` (from the hand-cleaned frame packages) | the owner's exception for art drawn from Daggerfall's own (2026-10-19; `Port-Doctrine.md`) | LAYERED-GEAR | 2026-10-18 | `04-Characters/Layered-Gearing.md` |
-| `travel-options` | manifest, settings, presets, the string table, the shipped readme, and the three UI textures re-encoded out of the bundle | Hazelnut (the autopilot class by Jedidia) | 1.11 | shipped `.zip` `TravelOptions-1.11-122-1-11-1721574422`; behaviour off the author's SOURCE (`ajrb/dfunity-mods`, `TravelOptions/Scripts/`), checked against the shipped DLL's string table before the port began | code MIT (every script's header); **the three textures carry no licence text** - granted to Mac 2026-09-17 - **RECORD OPEN** | TO1 | 2026-09-17 AUDITED (AUDIT-TO1, 2026-09-18, Mac: "Please do a comprehensive audit on this"): the slice's headline feature never ran - the host's `isPlayerOnHUD` was the complement of its own `gamePaused`, so every journey interrupted itself on its first frame while 41 pins passed the flag by hand; three of the mod's eight classes were unread (paid teleport unreachable, held enchantments destroyed by a walk); the default skin could not start a journey at all and sold sea passage from landlocked villages; the strip and the ports buttons drew as white bars; the junction map was invisible in the two moments it exists for; the follow key shipped on SocialInteract's F. Twenty-odd defects fixed, 55 pins, 113 mutants (112 dead, 1 equivalent), five departures added - `06-Systems/Travel-Options.md` AUDIT-TO1. | `06-Systems/Travel-Options.md` |
+| `travel-options` | manifest, settings, presets, the string table, the shipped readme, and the three UI textures re-encoded out of the bundle | Hazelnut (the autopilot class by Jedidia) | 1.11 | shipped `.zip` `TravelOptions-1.11-122-1-11-1721574422`; behaviour off the author's SOURCE (`ajrb/dfunity-mods`, `TravelOptions/Scripts/`), checked against the shipped DLL's string table before the port began | code MIT (every script's header); **the three textures carry no licence text** - granted to Mac 2026-09-17 - **RECORD OPEN** | TO1 | 2026-09-17 AUDITED (AUDIT-TO1, 2026-09-18, Mac: "Please do a comprehensive audit on this"): the slice's headline feature never ran - the host's `isPlayerOnHUD` was the complement of its own `gamePaused`, so every journey interrupted itself on its first frame while 41 pins passed the flag by hand; three of the mod's eight classes were unread (paid teleport unreachable, held enchantments destroyed by a walk); the default skin could not start a journey at all and sold sea passage from landlocked villages; the strip and the ports buttons drew as white bars; the junction map was invisible in the two moments it exists for; the follow key shipped on SocialInteract's F. Twenty-odd defects fixed, 55 pins, 113 mutants (112 dead, 1 equivalent), five departures added - `06-Systems/Travel-Options.md`. | `06-Systems/Travel-Options.md` |
 | `unleveledLoot` | manifest, settings | Ralzar | 1.1.2 | shipped zip; code from `Ralzar81/Unleveled-Loot` | MIT (source header) | UL1 | 2026-09-12 | `06-Systems/Unleveled-Loot.md` |
 | `weapon-sheathing` | the 71 `_sh` scabbard meshes, the three `xbase_anim_sh.nif` skeleton addons, the shipped readme | Greatness7 (art by akortunov, Greatness7, Heinrich, London Rook, Lord Berandas, Melchior Dahrk, MementoMoritius, Petethegoat, PikachunoTM, Remiros) | 1.6 | shipped `.7z` `WeaponSheathing1.6-OpenMW-46069-1-6`; the mechanism is OpenMW's, ported | the mod's own: free to use with credit and no fee (`WeaponSheathing.txt`) | WS1 | 2026-09-17 | `06-Systems/Weapon-Sheathing.md` |
 | `weapon-widget` | manifest, settings | RedRoryOTheGlen | 1.6 | shipped zip `Weapon_Widget-860-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | WW1-WW4 | 2026-09-14 | `05-Combat/Weapon-Widget.md` |
@@ -195,8 +91,8 @@ full account; this is the index to it.
   of the Iliac Bay's seasonal pictures while it re-skins the tree's own
   archive. The regions no record copies (the author's top-down crowns,
   snow-capped on the winter atlases, and some larger side views) are
-  FILLS the game makes from the same record: near the author's, not his
-  (`01-Overview/audits/Audit-Low-Poly-Trees.md` measures how near). DFU stands the models only within one terrain of
+  FILLS the game makes from the same record: near the author's, not his.
+  DFU stands the models only within one terrain of
   the player and its classic flats beyond; the port stands the same
   model's far picture beyond (`07-Rendering/Low-Poly-Trees.md`).
 - **`oblivion-remaster-leveling`** - the only row that is not a
@@ -249,23 +145,10 @@ full account; this is the index to it.
 
 ## What the gate holds
 
-`test/systems/hard4_registry.test.js`, and like every gate in this program it is
-derived rather than listed:
+`test/systems/hard4_registry.test.js`, derived rather than listed:
 
-1. **Every `vendor/*/` has exactly one row, and every row names a
-   directory that exists.** Add a mod and the gate is red until it is
-   registered; delete one and the stale row is named.
-2. **Every version cell matches the vendored manifest.** Where a
-   `*.dfmod.json` is present, its `ModVersion` and `ModAuthor` are read
-   and compared. A bundle refreshed to a new upstream version without
-   the row being touched fails here.
-3. **`RECORD OPEN` and the README placeholder agree, in both
-   directions.** A README still carrying `[Mac: ...]` must show
-   `RECORD OPEN`; one without must not. Filling a permission line and
-   forgetting the row - or the reverse - is caught.
-4. **Every row names a bible page that exists**, and every vendor
-   directory has a README.
-5. **Every mod the port exposes as a switch is registered.** The vendor
-   keys in `systems/modSettings.js` are read out and each must have a
-   row, so a mod cannot become player-visible without its provenance
-   being written down.
+1. Every `vendor/*/` has exactly one row, and every row names a directory that exists.
+2. Every version and author cell matches the vendored `*.dfmod.json` manifest, where one ships.
+3. `RECORD OPEN` and the README's permission prompt agree, both ways.
+4. Every row's bible page exists, and every vendor directory has a README.
+5. Every vendor key in `src/systems/modSettings.js` (a mod the player can switch on) has a row.

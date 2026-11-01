@@ -122,8 +122,8 @@ export function craftPace(flat = null, only = null) {
 /**
  * FIRST-BUDGET RETUNED: each crafting track's first-make share that matches Smithing's pace - the least share, never under
  * FIRST_MAKE_FLOOR, at which the walk reaches Master in `target` crafts or fewer: Smithing's at the floor's 500 (172 on
- * CLOTH-GEMS' recipe set). One share a track cannot match Journeyman as well; Master is the one matched. The search is
- * a bisection (the crafts to Master fall as the share rises); the test holds the answer the least - one XP less misses.
+ * CLOTH-GEMS' recipe set, 170 since SMITH-RRI's two weapons). One share a track cannot match Journeyman as well; Master
+ * is the one matched. The search is a bisection (the crafts to Master fall as the share rises); the test holds the answer the least - one XP less misses.
  * @param {number} [target]
  */
 export function firstShares(target = craftPace(FIRST_MAKE_FLOOR, ['smithing']).smithing.master) {

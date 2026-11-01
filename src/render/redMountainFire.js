@@ -30,7 +30,8 @@ export const FIRE = Object.freeze({
   river: 0.42,
   riverOver: 1.5,
   widen: 0.0012,
-  /** the lava: its crust and its melt, the glow it is drawn at, and the share of the haze's colour it takes at most */
+  /** the lava: its crust and its melt, the glow it is drawn at, and the share of the haze's colour it takes at most in
+   *  clear air (a weather row's whole) */
   crust: Object.freeze([0.06, 0.03, 0.025]),
   molten: Object.freeze([1.0, 0.34, 0.05]),
   glow: 1.6,
@@ -51,7 +52,7 @@ export const FIRE = Object.freeze({
     rise: 2,
   }),
   /** its ash's colour and thickness, the least of the frame's light it takes, the share its side away from the sun keeps,
-   *  the least of it the haze leaves */
+   *  the least of it the haze leaves in clear air (a weather row leaves none) */
   ash: Object.freeze([0.22, 0.2, 0.19]),
   alpha: 0.92,
   lightMin: 0.06,
@@ -331,14 +332,20 @@ float flow(vec2 q, vec2 dir, float t) {
   return mix(fbm(q - dir * p0), fbm(q - dir * p1 + 17.3), w);
 }
 `;
-/** Distance haze in the fire's two draws: the far ring's own law (its hold eased down over the summits), one in both, so
- *  no step stands at the world's far plane; and the far draw's split - nearer than the far plane the near draw drew. */
+/** Distance haze in the fire's two draws: the far ring's own law (its hold eased down over the summits; under a weather
+ *  row the row's own, horizonHazeOf), one in both, so no step stands at the world's far plane; and the far draw's split -
+ *  nearer than the far plane the near draw drew. */
 const HAZE = `uniform vec3 uFogColor;
 uniform vec4 uHaze;   // the world fog's start and end, the ring's rim ramp's start and end
 uniform vec3 uHold;   // the ring's haze hold, its origin's height, the streamed grid's edge (metres out)
+uniform vec2 uFogLaw;   // AUDIT FB1031 II G1: a weather row's law and density (horizonHazeOf), x 0 the linear ramp
+uniform vec3 uHazeFrom;   // AUDIT FB1031 II G1: where the haze is measured from - the eye, a weather's traveller (TV1)
 uniform float uSplit;   // the far draw's: the world's far plane (0 in the near draw)
 ${HORIZON_HAZE_GLSL}${SUMMIT_HOLD_GLSL}
-float hazeAt(float d, float y) { return horizonHaze(d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)); }
+float hazeAt(float d, float y) { return horizonHazeOf(uFogLaw, d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)); }
+float hazeOf(vec3 p) { return hazeAt(distance(p, uHazeFrom), p.y); }
+// a look's own share, clear, kept through the draw distance's haze; under a weather row its share is the land's (weather)
+float clearOr(float clear, float weather) { return uFogLaw.x < 0.5 ? clear : weather; }
 bool nearDrawn() { return 1.0 / gl_FragCoord.w < uSplit; }
 `;
 
@@ -379,7 +386,8 @@ ${NOISE}void main() {
   float hot = lake ? 0.85 : mix(0.95, 0.45, vInfo.x);
   float melt = smoothstep(0.62 - 0.3 * hot, 0.78 - 0.2 * hot, n) * (lake ? 1.0 : 1.0 - 0.5 * abs(vInfo.y));
   vec3 col = mix(${v3(FIRE.crust)}, ${v3(FIRE.molten)} * ${f1(FIRE.glow)}, melt);
-  col = mix(col, uFogColor, hazeAt(distance(vWorld, uEye), vWorld.y) * ${f1(FIRE.hazeHold)} * (1.0 - 0.6 * melt));
+  float hz = hazeOf(vWorld);
+  col = mix(col, uFogColor, clearOr(hz * ${f1(FIRE.hazeHold)} * (1.0 - 0.6 * melt), hz));   // AUDIT FB1031 II G1: a weather's whole, as the land's
   o = vec4(col, 1.0);
 }`;
 
@@ -459,10 +467,11 @@ ${BILLOWS}${PLUME_LOOK}void main() {
   if (dot(N, uEye - vWorld) * uFace < 0.0 || nearDrawn() || hidden(vWorld, ${f1(FIRE.margin.plume)})) discard;
   float h = vUV.y, puff = puffOf(billows(vWorld - uFoot, h, uTime), abs(dot(N, normalize(uEye - vWorld)))), body = bodyOf(h);
   float a = clamp(puff * body * ${f1(FIRE.alpha)}, 0.0, 1.0);
-  float dist = distance(vWorld, uEye), hz = hazeAt(dist, vWorld.y);
-  a *= max(1.0 - hz, ${f1(FIRE.hazeFloor)}) * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim as the land is (F7)
-  vec3 ash = mix(${v3(FIRE.ash)} * litOf(uLight, dot(N, uLightDir)), uFogColor, hz * 0.7);
-  o = vec4(ash * a + emberOf(h, puff, body, uLight) * (1.0 - hz * 0.5), a);
+  float dist = distance(vWorld, uEye), hz = hazeOf(vWorld);
+  a *= max(1.0 - hz, clearOr(${f1(FIRE.hazeFloor)}, 0.0)) * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim as the land is (F7)
+  // AUDIT FB1031 II G1: under a weather row its ash, its colour and its fire fog whole, as the land does
+  vec3 ash = mix(${v3(FIRE.ash)} * litOf(uLight, dot(N, uLightDir)), uFogColor, hz * clearOr(0.7, 1.0));
+  o = vec4(ash * a + emberOf(h, puff, body, uLight) * (1.0 - hz * clearOr(0.5, 1.0)), a);
 }`;
 
 /** The fire's shader text the Ghostfence's glow draws with in the same pass (render/ghostfenceGlow.js): the head, the
@@ -505,6 +514,8 @@ export function fireUniforms() {
     uFogColor: [0, 0, 0],
     uHaze: [0, 1, 1e9, 2e9],
     uHold: [0, 0, 0],
+    uFogLaw: [0, 0],
+    uHazeFrom: [0, 0, 0],
     uSplit: 0,
     gl_FragCoord: [0, 0, 0, 1],
   };
@@ -524,6 +535,9 @@ export function setFireCommon(gl, U, pass, isFar, vp, cone) {
   gl.uniform3fv(U.uFogColor, pass.fog.color);
   gl.uniform4f(U.uHaze, pass.fog.start, pass.fog.end, pass.rim[0], pass.rim[1]);
   gl.uniform3f(U.uHold, pass.hold, pass.ringOrigin[1], pass.summitFrom ?? 0);
+  gl.uniform2f(U.uFogLaw, pass.fog.law ?? 0, pass.fog.density ?? 0); // AUDIT FB1031 II G1: a weather row's law, the ring's
+  const from = pass.hazeFrom ?? pass.eye;
+  gl.uniform3f(U.uHazeFrom, from[0], from[1], from[2]);
   gl.uniform1f(U.uSplit, isFar ? pass.worldFar : 0);
 }
 /** A program's locations of `names`, and the far draw's tables set on it once. */
@@ -546,6 +560,8 @@ export const FIRE_COMMON_UNIFORMS = Object.freeze([
   'uFogColor',
   'uHaze',
   'uHold',
+  'uFogLaw',
+  'uHazeFrom',
   'uSplit',
 ]);
 
@@ -611,10 +627,10 @@ export class RedMountainFire {
   /**
    * Draw the fire in the far ring's pass: `ringOrigin` the ring's origin and (baseX, baseY) its base pixel (the mesh's
    * pixel stands at the origin moved by the pixels between), `view` the world's, `worldProj` the world's lens (the near
-   * draw) and `worldFar` its far plane, `fovY`/`aspect`/`far` the far lens, `eye` the eye, `fog` { color, start, end }
-   * the world's linear fog, `rim` [start, end] the far ring's haze ramp, `hold` its haze's most, `summitFrom` the
-   * streamed grid's edge (metres out), `depth` the box the world's depth stands over (scene x0, z0, x1, z1), `light` the
-   * frame's light 0..1 and `lightDir` the sun's, `seconds` any clock.
+   * draw) and `worldFar` its far plane, `fovY`/`aspect`/`far` the far lens, `eye` the eye, `fog` { color, start, end,
+   * law, density } (ringFogOf's: law 0 the linear fog), `rim` the far ring's haze ramp, `hold` its haze's most,
+   * `summitFrom` the streamed grid's edge (metres out), `hazeFrom` the haze's point (the eye without), `depth` the world's
+   * depth's box (scene x0, z0, x1, z1), `light` the frame's light 0..1 and `lightDir` the sun's, `seconds` any clock.
    */
   draw(pass) {
     this.drawn = 0;

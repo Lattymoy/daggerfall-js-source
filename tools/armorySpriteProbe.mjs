@@ -17,7 +17,7 @@ process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const PORT = 5233;
 const SHOTS = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 const CLOSE = process.env.CLOSE === '1', SETS = process.env.SETS === '1', ONLY = process.env.ONLY ?? '';
-const [ANIM, FRAME] = (process.env.ANIM ?? 'Idle:0').split(':');   // AUDIT AURA-PIXEL C1: a walk's frames too (ANIM=Move:2)
+const [ANIM, FRAME] = (process.env.ANIM ?? 'Idle:0').split(':');   // a walk's frames too (ANIM=Move:2)
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
@@ -122,9 +122,9 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY, ANIM, FRAME })
           const back = fwd[0] * right[0] + fwd[2] * right[2] < 0 ? mk.flank.hi - ap.ARM_PX.half * mk.art : mk.flank.lo + ap.ARM_PX.half * mk.art;
           y = pose.flank.y; want = colOf(along(back, y)); tol = 1.5;
         }
-        // CHEST-CENTRE: the heart from the front and the three-quarters, the sigil from those and straight behind - on the
-        // picture's chest (AUDIT AURA-PIXEL D2: from behind and to a side that mark takes in the near arm, so there the
-        // Sigil's back is read clear of the arm instead, after the views)
+        // the heart from the front and the three-quarters, the sigil from those and straight behind - on the picture's
+        // chest (from behind and to a side that mark takes in the near arm, so there the Sigil's back is read clear of the
+        // arm instead, after the views)
         if (((name === 'heart' && [0, 1, 7].includes(o)) || (name === 'sigil' && [0, 1, 4, 7].includes(o))) && mk?.chest != null) { y = yOf('chest'); want = colOf(along(mk.chest, y)); }
         if (name === 'greaves' && mk?.legs) { y = (yOf('knL') + yOf('ftL')) / 2; want = colOf(along((mk.legs.knee[0] + mk.legs.knee[1] + mk.legs.ankle[0] + mk.legs.ankle[1]) / 4, y)); tol = o % 4 === 2 ? 3 : 1.8; }
         const unit = pxAt(y);
@@ -151,8 +151,8 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY, ANIM, FRAME })
             for (let rr = r0 - Math.round(u); rr <= r0 + Math.round(u); rr++) for (let cc = Math.round(c0 - b.wd * u); cc <= Math.round(c0 + b.wd * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) { l2 = Math.min(l2, cc); h2 = Math.max(h2, cc); }   // a chain's dark links leave a row bare
             armChecks.push({ what: `the ${arm} arm's band: on it, no wider`, ok: l2 <= h2 && l2 >= sp[0] - u && h2 <= sp[1] + u, detail: `${l2}..${h2} px, the arm ${sp[0].toFixed(1)}..${sp[1].toFixed(1)}` });
           }
-          // ARM-BEHIND: both arms shown - nothing of the pieces between their inner edges, over the body. AUDIT AURA-PIXEL C1/C2:
-          // every arm, its band read or not, its edge along the arm as the pose stands it (moved across onto its band)
+          // both arms shown - nothing of the pieces between their inner edges, over the body: every arm, its band read or
+          // not, its edge along the arm as the pose stands it (moved across onto its band)
           const shown = ['left', 'right'].map((arm) => apass.armWornSide(pose, fwd, [0, 1.2, 0], eye, arm)).filter(Boolean);
           if (shown.length === 2 && mk.chest != null) {
             const innerAt = (sd, yy) => {
@@ -196,7 +196,7 @@ for (const row of out) {
     if (p.span) check(`${row.body} view ${row.o} ${name}: no wider than the painted arm`, p.lo >= p.span[0] - p.unit && p.hi <= p.span[1] + p.unit, `${p.lo}..${p.hi} px, the arm ${p.span[0].toFixed(1)}..${p.span[1].toFixed(1)}, a pixel ${p.unit.toFixed(1)}`);
   }
 }
-// AUDIT AURA-PIXEL D2: from behind and to a side, the Sigil's back clear of the near arm - read against where the Eternal
+// from behind and to a side, the Sigil's back clear of the near arm - read against where the Eternal
 // Armlets draw on that arm, never against the chest mark the Sigil is placed by
 for (const row of out) {
   const sg = row.pieces?.sigil, am = row.pieces?.armlets;

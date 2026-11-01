@@ -397,7 +397,6 @@ test('AUDIT WORLD6b C4/C5: the day\'s rolls - online the walk is one day at a ti
   assert.match(h, /const f = enchantFoes\(\)\.find\(\(x\) => !x\.dead && x\.entity === targetEntity\);\s*if \(!f \|\| f\.puppet\) return;/, 'B9');
   assert.match(rd('src/scenes/exteriorFoes.js'), /const me = _net\?\.selfId\?\.\(\) \?\? null;/, 'C11: selfId on the net is READ now (WORLD6b-ii: whose blow a streamed target names) - no dead wiring');
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /everyone nearby sees the same monsters and can fight them, and they can hurt you too\./, 'C9 (AUDIT WORLD6b-ii C3: since the hunt a peer\'s creature can hurt me)');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b \(2026-09-14\)/, 'the record');
 });
 
 test('AUDIT FINAL F12 (SUMMON-SYNC D6 above ground): a peer\'s blow on MY ally is refused - a partner\'s Cleave or Nova, which their puppet of it (a cell record carries no side) could not tell from a foe - where the dungeon\'s own door already refused it; a foe of mine still takes it (mutant: the ally left to a peer\'s blow)', async () => {

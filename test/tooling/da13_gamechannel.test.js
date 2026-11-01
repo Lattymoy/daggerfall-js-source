@@ -511,7 +511,8 @@ test('DA13: a readied version is switched to only by a navigation that can commi
 test('DA13: the release pipeline - one shell id, the bundled game indexed in every installer, the pack cut once beside them, and the publish step that fails an update that is no longer per file', () => {
   // the shell is app/ and what its build takes from outside it - derived from the build config, never a list to forget
   assert.deepEqual(shellInputs(), ['app', 'public/icons/icon-512.png', 'src/ui/menu/menuPad.js', 'src/assets/branding/dfo-online.png']);
-  assert.deepEqual(shellInputs({ build: { files: [{ from: '../src/x', to: 'y', filter: ['a.js'] }, { from: '../dist', to: 'dist', filter: ['x.js'] }, 'lib/**'] } }), ['app', 'src/x/a.js'], 'the game is the channel\'s, never the shell\'s');
+  assert.deepEqual(shellInputs({ build: {} }, [{ from: 'src/a.js', to: 'app/a.js' }, { from: 'dist', to: 'app/dist' }]), ['app', 'src/a.js'], 'a staged file is the shell\'s; the staged game is the channel\'s');
+  assert.deepEqual(shellInputs({ build: { files: [{ from: '../src/x', to: 'y', filter: ['a.js'] }, { from: '../dist', to: 'dist', filter: ['x.js'] }, 'lib/**'] } }, []), ['app', 'src/x/a.js'], 'the game is the channel\'s, never the shell\'s');
   const objects = { 'HEAD:app': 't1', 'HEAD:src/x/a.js': 'b1' };
   const id = shellId((args) => objects[args[1]], 'HEAD', ['app', 'src/x/a.js']);
   assert.match(id, /^[0-9a-f]{64}$/);

@@ -70,7 +70,7 @@ test('CLOTH-GEMS the loom\'s page: Spin and Weave rows for the furs and Root Ten
     // a garment wholly of Linen: the share and its condition while no silver count stands, the count said once one does
     buttons().find((b) => b.textContent === 'Clothing').onclick();
     buttons().find((b) => b.textContent.startsWith('Straps')).onclick();
-    assert.match(text(), /20 Outfitting experience, and 511 more the first time you make this piece at this grade from cloth not bought with silver\./);   // PIN MOVED (WOVEN-PAYS): the wall named silver   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): Outfitting's first-make share
+    assert.match(text(), /20 Outfitting experience, and 518 more the first time you make this piece at this grade from cloth not bought with silver\./);   // PIN MOVED (WOVEN-PAYS): the wall named silver   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): Outfitting's first-make share
     use(bookOf({ 'cloth:linen': { own: 4, bought: 1 } }));
     draw();
     assert.match(text(), /from cloth not bought with silver\./, 'PIN MOVED (AUDIT WOVEN-PAYS): a bought unit is no silver');

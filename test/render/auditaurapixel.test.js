@@ -1,7 +1,6 @@
 // @ts-check
-// AUDIT AURA-PIXEL (2026-10-31, the owner: "Audit this"; bible/01-Overview/audits/Audit-Aura-Pixel.md): the findings of
-// four cold lanes on AURA-PIXEL, GLYPHS-MOUNTED, DRAGON-KEEP-SIZE, ARM-BEHIND and CHEST-CENTRE, each pinned on the code
-// that runs - the shaders RUN (test/glsl.mjs), the pass over a logging GL, the bench's own glue. The GPU's frames are
+// The pixel law's harder cases, the riders and the sprite's arm and chest, each pinned on the code that runs - the
+// shaders RUN (test/glsl.mjs), the pass over a logging GL, the bench's own glue. The GPU's frames are
 // tools/auraProbe.mjs's, tools/armoryProbe.mjs's and tools/armorySpriteProbe.mjs's.
 import '../modsOff.js';
 import { test } from 'node:test';

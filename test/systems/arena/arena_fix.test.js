@@ -191,12 +191,6 @@ test('ARENA-FIX 2: the gate\'s people named by their office - the plaque, "You s
   assert.ok((W.match(/const display = officeName\(pn\) \?\? npcShownName\(staticNpcData\(pn, staticNpcSceneCtx\(pn\)\)\);/g) ?? []).length >= 3, 'the plaques (the street, the dungeon, the interior)');
 });
 
-test('ARENA-FIX 7: the record says which way the gate faces - north, onto the market (the compass calls +z north)', () => {
-  const A = rd('bible/11-Multiplayer/Arena.md');
-  assert.match(A, /The gate opens onto the market \(cell 4,4\), to the north/);
-  assert.doesNotMatch(A, /cell 4,4, south/);
-});
-
 /** The undercroft's markers: a start, then random markers out along x, one block. */
 function undercroftBlocks(n = 20) {
   const markers = [{ archive: 199, record: 10, x: 0, y: 1, z: 0 }];

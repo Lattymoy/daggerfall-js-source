@@ -92,8 +92,8 @@
   {
     "name": "LPT1-whole-flat-discarded",
     "file": "src/render/lowPolyTreesGlsl.js",
-    "old": "(vFade > 1.5 && vFade < 3.0 &&",
-    "new": "(vFade < 3.0 &&",
+    "old": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "new": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LPT1-crossfade-overlaps",
     "file": "src/render/lowPolyTreesGlsl.js",
-    "old": "+ 0.03125 < 3.0 - vFade)) discard;",
-    "new": "+ 0.03125 < vFade - 2.0)) discard;",
+    "old": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "new": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < vFade - 2.0)) discard;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LPT1-A7-texel-cleared",
     "file": "src/render/lowPolyTreesGlsl.js",
-    "old": "  if (vFade > 1.5) tex = lptTexel;\n",
-    "new": "",
+    "old": "  if (vFade > 1.5) tex = lptTexel;\n  tex.rgb *= vShade;",
+    "new": "  tex.rgb *= vShade;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

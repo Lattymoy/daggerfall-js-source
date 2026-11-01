@@ -237,6 +237,4 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(wt, /export function setWorldMinutes\(v\) \{\s*if \(_sharedClock\) return _sharedClock\(\);/);
   assert.match(wt, /export function advanceWorldMinutes\(delta\) \{\s*if \(_sharedClock\) return _sharedClock\(\);/);
   assert.match(rd('server/src/index.js'), /"world":\$\{world \?\? 'null'\},"now":\$\{Date\.now\(\)\},"v":/, 'the welcome\'s clock (AUDIT WORLD5 C11: stamped as the welcome is built)');   // SRV-N appended `v` after it; the law C11 is about - Date.now() CALLED here, not read from a variable four awaits old - is what is matched
-  const arc = rd('bible/06-Systems/Online-Arc.md');
-  assert.match(arc, /## WORLD5 \(2026-09-13\)/, 'the record');
 });

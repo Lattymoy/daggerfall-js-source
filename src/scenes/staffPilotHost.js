@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PILOT (2026-10-26, mob: "like play as a boss as attack players"; systems/staffBossPilot.js) - THE PAGE'S HALF OF
+// STAFF-PILOT (2026-10-26; systems/staffBossPilot.js) - THE PAGE'S HALF OF
 // PLAY AS BOSS, out of bootWorld (HOST-SPLIT): the panel's `pilot` word (net/staffHook.js), the mouse while I steer, my
 // camera's facing each frame, my body no one's, and the steering's end said back to the panel. The page's follow
 // (scenes/staffFollowHost.js staffFollowOnPage) wires it; the boss itself is steered in the foes pool (scenes/exteriorFoes.js).

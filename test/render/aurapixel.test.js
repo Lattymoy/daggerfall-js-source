@@ -1,9 +1,7 @@
 // @ts-check
-// AURA-PIXEL (2026-10-31, the owner: "a comprehensive pass on all auras and while keeping their holographic designs, add
-// some pixelation and bring it more inline with the daggerfall athestic"; bible/04-Characters/Aura-Armory.md section 13):
-// every aura and Aura Armory piece answered at its texel's middle and cut to Daggerfall's few levels - the shader's own
-// functions RUN (test/glsl.mjs), the passes' switch over a GL that logs. And GLYPHS-MOUNTED: no aura floats its cards over
-// a rider. The GPU's pixels are tools/auraProbe.mjs's and tools/armoryProbe.mjs's.
+// The auras in Daggerfall's pixels: every look answered at its texel's middle and cut to a few levels, an armory piece to
+// the levels alone - the shader's own functions RUN (test/glsl.mjs), the passes' switch over a GL that logs. And no aura
+// floats its cards over a rider. The GPU's pixels are tools/auraProbe.mjs's and tools/armoryProbe.mjs's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { glslFunctions } from '../glsl.mjs';

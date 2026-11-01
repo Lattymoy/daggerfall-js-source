@@ -110,7 +110,9 @@ const TIN = 'metal:tin',
 /** @returns {Product} */
 const product = (id, name, kind, templateIndex, ingots, also = []) =>
   Object.freeze({ id, name, kind, templateIndex, ingots, also: Object.freeze(also.map((a) => Object.freeze(a))) });
-/** The weapons (DFU 113-128 but the Staff, a carpenter's): the ingots and the fittings 9.3 asks. */
+/** The weapons (DFU 113-128 but the Staff, a carpenter's): the ingots and the fittings 9.3 asks. SMITH-RRI: and
+ *  Roleplay & Realism: Items' two (rriItems.js 513, 514), whose class online always registers (onlineLane.js). The Light
+ *  Flail is the Mace's and the Flail's row; the Archer's Axe, 3 kg, half the Battle Axe's 6, takes half its 4 ingots. */
 export const WEAPON_PRODUCTS = Object.freeze([
   product('dagger', 'Dagger', 'weapon', 113, 1, [[TIN, 1]]),
   product('tanto', 'Tanto', 'weapon', 114, 1, [[TIN, 1]]),
@@ -160,6 +162,14 @@ export const WEAPON_PRODUCTS = Object.freeze([
     [COPPER, 1],
     [LEATHER, 1],
   ]),
+  product('lightflail', 'Light Flail', 'weapon', 514, 3, [
+    [COPPER, 1],
+    [LEATHER, 1],
+  ]), // SMITH-RRI
+  product('archersaxe', "Archer's Axe", 'weapon', 513, 2, [
+    [COPPER, 1],
+    [OAK, 1],
+  ]), // SMITH-RRI
 ]);
 /** The plate (DFU 102-108): Cuirass 6 and 2 Cured Leather, Greaves 4, Helm 2, the pauldrons, Gauntlets and Boots 2. */
 export const PLATE = Object.freeze([
@@ -1532,15 +1542,15 @@ export const brewFirstPays = (potion) =>
  * FIRST-BUDGET (SaberGGaming's report, 2026-10-25: Provisioning is slow; the owner: "No band aids"), RETUNED (the owner,
  * asked: "Match Smithing's pace"): A FIRST-MAKE PAYS ITS TRACK'S SHARE, SET SO EVERY CRAFTING TRACK REACHES MASTER IN THE
  * CRAFTS SMITHING TAKES. Every first-make paid a flat 500 (3.2's "+500 the first time a recipe is made"), every track
- * alike, and a track's whole climb leans on them - but the tracks' pools differ tenfold: Smithing's 221 first-makes,
+ * alike, and a track's whole climb leans on them - but the tracks' pools differ tenfold: Smithing's 235 first-makes,
  * Outfitting's 332 (since CLOTH-GEMS let the loom's cloth patterns pay), Building's 43 and Provisioning's 22 - so
- * Provisioning took 178 crafts to Journeyman and 599 to Master and Building 116 and 525, where Smithing took 45 and 172
+ * Provisioning took 178 crafts to Journeyman and 599 to Master and Building 116 and 525, where Smithing took 45 and 170
  * (tools/craftPace.mjs, each track walked from no XP at its best). Now each track's first-make pays FIRST_MAKE_SHARE's
  * figure for it: Smithing's the 500 it always paid, and each other track's THE LEAST SHARE AT WHICH THE WALK REACHES
- * MASTER IN SMITHING'S 172 - DERIVED by craftPace's firstShares, pinned here, the two held equal by
- * test/net/firstbudget_law.test.js (one XP less and the track takes 173). One share a track matches Master, not
+ * MASTER IN SMITHING'S 170 - DERIVED by craftPace's firstShares, pinned here, the two held equal by
+ * test/net/firstbudget_law.test.js (one XP less and the track takes 171). One share a track matches Master, not
  * Journeyman as well: a small pool's firsts come early, so Building reaches Journeyman in 14 crafts and Provisioning in 8
- * (Outfitting in 45, as Smithing). NO TRACK PAYS LESS THAN IT DID (FIRST_MAKE_FLOOR): no share is under the 500.
+ * (Outfitting in 44, Smithing in 45). NO TRACK PAYS LESS THAN IT DID (FIRST_MAKE_FLOOR): no share is under the 500.
  * A first-make is what the service keys its "made before" by: a recipe's pattern at its tier (firstCraftKey - a jewel's
  * piece and base, a dish either herb's way), a mason's work by its id (smeltAtForge), a brew by its potion
  * (brewAtStation) - each where its first can pay (firstCraftPays, brewFirstPays). THE SHARE SAYS HOW MUCH A FIRST PAYS,
@@ -1553,9 +1563,10 @@ export const brewFirstPays = (potion) =>
  *  less than it did (firstShares never answers under it). */
 export const FIRST_MAKE_FLOOR = 500;
 /** FIRST-BUDGET RETUNED: what one first-make pays on each crafting track - Smithing's 500, and each other track's the
- *  least share that brings it to Master in Smithing's 172 crafts (tools/craftPace.mjs firstShares, on this recipe set;
- *  a change to a track's recipes, its pool or its XP moves the derivation, and the law's test says by how much). */
-export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 511, building: 1823, provisioning: 3155 });
+ *  least share that brings it to Master in Smithing's crafts (tools/craftPace.mjs firstShares, on this recipe set;
+ *  a change to a track's recipes, its pool or its XP moves the derivation, and the law's test says by how much).
+ *  SMITH-RRI: the two RRI weapons' 14 first-makes took Smithing to Master in 170, not 172 - rerun, each share rose. */
+export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 518, building: 1832, provisioning: 3171 });
 /** Each track's first-makes, in the tables' order: RECIPES, then the mason's works, then DFU's twenty. */
 const FIRST_MAKES = new Map();
 const firstMake = (/** @type {string} */ track, /** @type {string} */ key) => {

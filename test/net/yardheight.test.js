@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 
 import { DECOR_YARD_HIGH, decorYardHighOk } from '../../src/net/decorLaw.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
-import { yardWhyNot, YARD_TOO_HIGH, YARD_IN_HOUSE } from '../../src/scenes/homeYards.js';
+import { yardWhyNot, YARD_TOO_HIGH, yardTooHighFree, YARD_IN_HOUSE } from '../../src/scenes/homeYards.js';
 import { DECOR_TURN_STEP } from '../../src/systems/decor/decorPlacer.js';
 import { createDecorPanel } from '../../src/ui/decorPanel.js';
 import { standService, T0 } from '../accountDb.mjs';
@@ -21,17 +21,18 @@ import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards
 const piece = (over = {}) => ({ id: 'yard1', model: 41000, flat: null, pos: [8, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
 const placeOf = (p) => ({ pos: p.pos, rot: p.rot, scale: p.scale, light: p.light, storage: p.storage, paid: p.paid });
 
-test('YARD-HEIGHT the law: a yard\'s piece stands at most DECOR_YARD_HIGH (4 m) over the ground - its place\'s height, from the building\'s own origin on the town\'s ground; the client refuses it in its own words, after the lot\'s own reasons; the service\'s refusal is worded (mutants: the bound, the comparison, the client unasked)', () => {
-  assert.equal(DECOR_YARD_HIGH, 4, 'Mac\'s call');
-  assert.equal(decorYardHighOk({ pos: [0, 4, 0] }), true, 'at the bound: stands');
-  assert.equal(decorYardHighOk({ pos: [0, 4.001, 0] }), false, 'past it: never');
+test('YARD-HEIGHT the law: a yard\'s piece stands at most DECOR_YARD_HIGH (8 m since YARD-WALLS) over the ground - its place\'s height, from the building\'s own origin on the town\'s ground; the client refuses it in its own words, after the lot\'s own reasons; the service\'s refusal is worded (mutants: the bound, the comparison, the client unasked)', () => {
+  assert.equal(DECOR_YARD_HIGH, 8, 'PIN MOVED (YARD-WALLS): the owner\'s call, Mac\'s 4 m raised for a house\'s walls and balconies');
+  assert.equal(decorYardHighOk({ pos: [0, 8, 0] }), true, 'at the bound: stands');
+  assert.equal(decorYardHighOk({ pos: [0, 8.001, 0] }), false, 'past it: never');
   assert.equal(decorYardHighOk({ pos: [0, -0.5, 0] }), true, 'sunk a little: stands');
   assert.equal(decorYardHighOk({}), false, 'no place: never');
   const lot = { house: [-4, -3, 4, 3], lot: [-10, -9, 10, 9], y: 0 };
   assert.equal(yardWhyNot([8, 4, 2], lot), null);
-  assert.equal(yardWhyNot([8, 4.5, 2], lot), YARD_TOO_HIGH);
+  assert.equal(yardWhyNot([8, 4.5, 2], lot), yardTooHighFree(), 'PIN MOVED (YARD-WALLS): free of its house, Mac\'s 4 m holds');
+  assert.deepEqual([yardWhyNot([4.02, 8, 0], { ...lot, top: 10 }), yardWhyNot([4.02, 8.5, 0], { ...lot, top: 10 })], [null, YARD_TOO_HIGH], 'against a tall house\'s wall: the yard\'s height');
   assert.equal(yardWhyNot([0, 9, 0], lot), YARD_IN_HOUSE, 'a roof is the house first');
-  assert.match(YARD_TOO_HIGH, /4 m/);
+  assert.match(YARD_TOO_HIGH, /8 m/);
   assert.equal(REFUSALS['yard-high'], YARD_TOO_HIGH, 'AUDIT Y3: the service\'s refusal, the decorator\'s own sentence');
 });
 

@@ -88,7 +88,7 @@ import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit
 import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../../combat/blood/bloodDecals.js';   // HOME-DOORS: the doorways' marks, on the decal pass
 import { rentRoomsView, rentAnchorOfRoom } from '../../systems/homeRent.js';   // HOME-RENT: the owner's rooms, offered to rent
 import { goldSum, EMPIRE_ACCOUNT_WORDS } from '../../systems/homeWords.js';   // AUDIT HOME-PRICE E4: the rent's sums and account, as the door says them
-import { createDecorPlacer, decorEntrySized, decorNudgeStep, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, DECOR_GRID, wrapTurn } from '../../systems/decor/decorPlacer.js';   // DECOR-FIGURE: whether a piece takes a size step; NUDGE: the level push
+import { createDecorPlacer, decorEntrySized, decorYardEntry, decorHungFoot, decorNudgeStep, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, DECOR_NUDGE_STEP, DECOR_NUDGE_FINE, DECOR_GRID, wrapTurn } from '../../systems/decor/decorPlacer.js';   // DECOR-FIGURE: whether a piece takes a size step; NUDGE: the level push
 import { createDecorButton, createDecorPanel, createDecorBar, createDecorHotbar, decorWhyNot } from '../../ui/decorPanel.js';
 import { DecisionBoxWindow } from '../../ui/decisionBox.js';
 import { InputMessageBoxWindow } from '../../ui/inputMessageBox.js';
@@ -98,7 +98,7 @@ import { noteDecorShared } from '../../systems/decor/decorGrants.js';
 import { dropGhosts } from '../../systems/decor/homeStranded.js';   // HOME-STRANDED: a chest's move reaches every cached scene
 import { decorDelta, decorDraftParts, decorDraftText, decorHallDraftText, mintDecorTxn } from '../../systems/decor/decorDraft.js';   // DECOR-BATCH
 import { interiorDoorIndex, interiorDoorKey } from '../../systems/decor/decorInteriorDoors.js';
-import { DECOR_CAP, DECOR_HALL_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, DECOR_REST_ID, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES, decorGoldMove } from '../../net/decorLaw.js';
+import { DECOR_CAP, DECOR_HALL_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, DECOR_REST_ID, decorPrice, decorPieceOf, decorPlaceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES, decorGoldMove } from '../../net/decorLaw.js';
 import { decorKey, DECOR_KINDS, decorFlatLight, decorWhatKind, decorRoomEntries } from '../../systems/decor/decorCatalogue.js';
 import { decorOwnEntry, decorItemName, decorMountDye, decorMountDyeTarget } from '../../systems/decor/decorItems.js';
 import { decorFurnishingEntry, isFurnishing } from '../../systems/decor/decorFurnish.js';
@@ -769,6 +769,7 @@ export function createDecorTool(deps) {
       const corners = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([lx, lz]) => [(c * lx + sn * lz) * s, (-sn * lx + c * lz) * s]);   // mat4 trs: local x to (cos, -sin), z to (sin, cos)
       return Object.assign(corners, { bottom: m.box[1] * s });   // AUDIT FB1030 Y5: its foot, under its origin by as much as it reaches
     }
+    if (decorIsMount(piece)) return decorHungFoot(piece, p.art, p.radius, s);   // YARD-WALLS: a hung picture's, along its wall
     const r = (p.flatSize?.w > 0 ? p.flatSize.w / 2 : p.radius ?? 0) * s;
     return r > 0 ? Array.from({ length: 8 }, (_, i) => [r * Math.cos((i * Math.PI) / 4), r * Math.sin((i * Math.PI) / 4)]) : [];   // AUDIT FB1030 Y8: the ground it turns over, so a diagonal wall too
   }
@@ -1078,7 +1079,7 @@ export function createDecorTool(deps) {
     const s = ensureScan();
     const yard = !!deps.room?.()?.yard;   // HOME-YARD: outside, nothing is held and no piece carries a light of its own (YARD-LIGHT: a lamp lights as the town's)
     const entry0 = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage, station: editing.station ?? null } : catalogueEntry;   // AUDIT HOME-STATIONS S1: a moved station stays one
-    const entry = yard ? { ...entry0, storage: false, light: null, station: null } : entry0;
+    const entry = yard ? decorYardEntry(entry0) : entry0;   // YARD-WALLS: a picture hung on a wall where it can be
     const free = entry.kind === 'own' || entry.guild != null;   // DECOR2a: the player's own item - no price, whatever its size; GUILD-SHOP: nor the guild's own piece (its silver was paid)
     // a move, and a duplicate, already paid for a size: the scan may not have reached it yet
     const priced = editing ?? (Number.isSafeInteger(pose?.paid) && pose.paid > 0 && pose.scale > 0 ? pose : null);
@@ -1099,6 +1100,7 @@ export function createDecorTool(deps) {
       askGhostArt(placing);
     } else if (entry.model == null) {
       const p = placing;
+      if (entry.hangs) askGhostArt(p);   // YARD-WALLS: and the picture it hangs as on a wall
       // MW-ASSIGN: one's own thing set down shows the Morrowind picture it will stand as (the room's own door and cache,
       // scenes/decor/decorRoom.js standPicture) - else its own world picture, as ever
       const mw = entry.kind === 'own' && entry.item ? Promise.resolve(pool.standPicture?.(entry.item) ?? null).catch(() => null) : Promise.resolve(null);
@@ -1323,7 +1325,8 @@ export function createDecorTool(deps) {
     const known = entryOf(piece);
     const light = piece.light ? { color: [...piece.light.color], range: piece.light.range, intensity: piece.light.intensity } : null;
     const eye = at ?? (placing?.fly ? [...placing.fly] : null);
-    beginPlacing({ ...known, light, storage: !!piece.storage, station: null, item: null }, null, { rot: piece.rot, scale: piece.scale, paid: piece.paid, through: piece.id, ...(eye ? { at: eye } : {}) });
+    // AUDIT FB1031 Y2: a hung one's copy starts at its spin on the wall (its rot[2]), never its wall's heading as the spin
+    beginPlacing({ ...known, light, storage: !!piece.storage, station: null, item: null }, null, { rot: piece.rot, scale: piece.scale, paid: piece.paid, through: piece.id, ...(piece.hung ? { hung: true } : {}), ...(eye ? { at: eye } : {}) });
     return true;
   }
 
@@ -1353,13 +1356,13 @@ export function createDecorTool(deps) {
       if (placing !== p || p.ask !== ask || !art) return;
       p.art = art;
       p.decal ??= renderer?.createDecalBatch?.(1) ?? null;
-      p.placer ??= createDecorPlacer(entry, { radius: p.radius, from: p.pose, free: p.free });
+      p.placer ??= entry.mount ? createDecorPlacer(entry, { radius: p.radius, from: p.pose, free: p.free }) : null;   // YARD-WALLS: one that hangs takes its picture's
     }, () => {});
   }
   /** AUDIT DYE-ICON r3 1: the room asked its mounts' pictures again and let the old ones go (decorRoom.js onRefresh) -
    *  the ghost draws none until its own new answer lands. */
   function refreshGhost() {
-    if (!placing?.entry?.mount) return;
+    if (!placing?.entry?.mount && !placing?.entry?.hangs) return;
     placing.art = null;
     askGhostArt(placing);
   }
@@ -1843,7 +1846,7 @@ export function createDecorTool(deps) {
   }
 
   /** The place half of a piece - what a move rewrites (net/decorLaw.js decorPlaceOf; what it IS never changes). */
-  const placeOf = (piece) => ({ pos: piece.pos, rot: piece.rot, scale: piece.scale, light: piece.light, storage: piece.storage, paid: piece.paid, ...(piece.station ? { station: piece.station } : {}), ...(piece.name ? { name: piece.name } : {}) });   // HOME-STATIONS: the craft, when it serves one
+  const placeOf = (piece) => decorPlaceOf(piece);   // YARD-WALLS: the law's own half - a hung picture's `hung` with it
 
   /** Write a placed piece's change - through the account service in an online home, into the room's pool (and so the
    *  save) elsewhere - and answer the piece as it now stands, or null (the bar or the line says why). */
@@ -2378,7 +2381,7 @@ export function createDecorTool(deps) {
     } else if (p.door) doorFrame(p, origin, cam);   // HOME-DOORS: fitted into the doorway looked at, never where the eye meets a surface
     else p.piece = p.placer ? p.placer.pieceAt(hit.point, origin, p.id, hit.normal, cam.yaw) : null;   // DECOR2c: a mount reads the surface
     if (p.decal && p.art) {   // DECOR2c: the ghost hangs where the mount will - or, with nothing to hang on, nowhere
-      const quad = p.piece ? decorMountQuad(p.piece, origin, { w: p.art.w * p.piece.scale, h: p.art.h * p.piece.scale }) : null;
+      const quad = p.piece && (p.entry.mount || p.piece.hung) ? decorMountQuad(p.piece, origin, { w: p.art.w * p.piece.scale, h: p.art.h * p.piece.scale }) : null;   // YARD-WALLS: hung on a wall
       renderer?.writeDecalSlot?.(p.decal, 0, decorMountFloats(quad));
     }
     const price = p.door && p.piece ? p.piece.paid : p.placer ? p.placer.price() : null;   // HOME-DOORS: a door's price is its fit's
@@ -2495,7 +2498,7 @@ export function createDecorTool(deps) {
     r?.drawMesh?.(m.gpu, decorMatrix(p.piece, deps.origin?.() ?? [0, 0, 0]), texRemap);
     return true;
   }
-  const batches = () => (placing && !placing.suspended && placing.piece && placing.batch ? [placing.batch] : []);
+  const batches = () => (placing && !placing.suspended && placing.piece && placing.batch && !placing.piece.hung ? [placing.batch] : []);   // YARD-WALLS: a hung one is the decal's
   /** DECOR2c: the mount being hung, on the host's decal pass (the room's own mounts' call). */
   function drawMounts(r = renderer) {
     const p = placing;

@@ -90,7 +90,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapA
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient, lightStreetAt } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient; WL1: the street lit by the clock
-import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
+import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels, ringFogOf } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
@@ -142,7 +142,8 @@ import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a t
 import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
 import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
 import { rumareSeaPixel } from '../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's - its ports' shore, its voyages' water
-import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
+import { createWorldLanes, onWorldSea, bayLaneWater } from './naval/worldLanes.js';   // The Bay's packet lanes and the sea's past it, one book
+import { createKernelSea } from '../world/water/kernelSea.js';   // the lanes' and raiders' sea the ground the game builds
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -227,7 +228,7 @@ import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: th
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, sayShareRefusal, syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } from '../systems/quest/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunAverse } from '../systems/passiveSpecials.js';   // AUDIT 64 F20: Career.DamageFromSunlight, the arrival clamp's second arm - HOOD-CAREER: under a bare head
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/map/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
-import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrain/terrainHelper.js';   // AUDIT 58 F4
+import { dilateCoastalClimate, smoothLocationNeighbourhood, undilatedClimateIndex } from '../world/terrain/terrainHelper.js';   // AUDIT 58 F4; the lanes' sea the file's own climate
 import { registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
 // EM4: the skin fork. The classic skin keeps DFU's rotating town map
 // whole; the enhanced one gets the held sheet with the town's plan
@@ -372,6 +373,7 @@ import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the ga
 import { createSeasonHost } from './seasonHost.js';   // STOREFRONT: the season in the world - the pass, the tremor, the Brass Fissures, the Colossus
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
 import { createRocketHost } from './rocketHost.js';   // ROCKET1: /event rocket - the mounds, their poop, the farting horses and the frenzy
+import { createNewEraHost } from './newEraHost.js';   // /event newera - the horse-headed gunship, its atomic bombs, the cracks and the white canvas
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
 import { createSdLanes } from './superDungeon/sdLanes.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines; WW5: a Hollow in every theatre, a lane at a time (the Bay's host as it was)
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/superDungeon/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
@@ -387,6 +389,7 @@ import { gateClearMemo } from '../world/gate/gateClearance.js';   // EG-F: the g
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
 import { registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: Iron Footing on the spans (POTION-CLOCK: the potions' law is the made level's - spireKit.js)
+import { privateBoot } from '../net/privateServer.js';   // A private server the desktop shell hosts or joined
 import { accountEg } from '../net/accountClient.js';   // EG-PLAY: the Weir Keys, the open, the admission, the claims
 import { accountKetch } from '../net/accountClient.js';   // KETCH: the Ketchmaster's hold - a Tonal Warden's receipt carried to the service
 import { createKetchClient } from './ketch/ketchClient.js';   // KETCH (HOST-SPLIT): the sky-ketch on this screen - the sky over Daggerfall, the anchor-lift, the ship aboard, the hold
@@ -541,7 +544,7 @@ import { canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: t
 import { routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
 import { planRouteSliced as planRoute, planJourney } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the journeys' plans a slice of cells at a time
 import { tvMooredDry, tvSeaAsk } from '../systems/travel/seaAsk.js';   // OWS2's two asks of the planner (PLAN-SLICES: out of the host)
-import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
+import { createSeaHelm, seaHelmStep, seaHelmLook, seaNoWay, seaClock, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // The journey's hand on the helm
 import { createLoadGovernor, unbuiltAround, unbuiltCount, travellerPace } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
@@ -549,9 +552,9 @@ import { playerOnPathAt, pathsDataPoint, dataPoint } from '../systems/travel/tra
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
 import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
-import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
+import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE, setSeaLegKernel } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
 import { drawRouteRuns, drawOwnRun } from '../systems/travel/roadLine.js';   // ROAD-FOLLOW: the drawn route on the roads' curves past the Bay
-import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
+import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, bandStandBearing, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
 import { bandWordOf, validBandWord, chaseYields, bandLifeOf, bandNearMe, bandPixelOf, BAND_WORD_MS, BANDS_WIRE_MAX } from '../systems/travel/travelBands.js';   // TV7b: the chase, shared
 import { walkBegin, leaderWalkStep, walkHeard, memberAnswer, memberFollowing, memberStopOf, memberWalkStep, walkAskStands, sameWalkDest, NO_WALK_ANSWER, PARTY_WALK_RADIUS_M } from '../systems/party/partyWalk.js';   // TV8: group travel, the leader drives (AUDIT OW3: the whole law, pure)
 import { rollGroupComposition, PACK_SPACING, PACK_ALERT_RADIUS } from '../systems/campEncounters.js';   // TV7: a band is a themed group
@@ -655,6 +658,7 @@ import { brewItems, brewedText } from '../systems/alchemyItems.js';   // PROF12:
 import { COOK_FIRE } from '../net/professionLaw.js';   // PROF9: the fire Cooking is done at - any lit one, no fee
 import { SURVEYOR } from '../net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor, whose own word witnesses the ground
 import { lodeMapMarks } from '../ui/lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, on both maps and the Overworld
+import { witnessMapReader } from '../ui/witnessMapMark.js';   // the witnessed ground of the regions in view, on the held map
 import { seatEventBoard, eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the event board's source, seated where it is made, and the one door an event's line goes through (never the chat)
 import { EVENT_SOON_MS } from '../systems/eventBoard.js';   // AUDIT EVENTS1 A4: the board's horizon, the raids' look ahead
 import { localWhenText, gateEventId as gateLineId } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
@@ -779,7 +783,7 @@ import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: t
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
+import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP, squareCornersAll } from '../world/terrain/terrainSampler.js';   // The sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
 import { restrideGrid, gridBed, gridGround } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader, locationFootprintRect } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
@@ -1348,12 +1352,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // never a local slot. A join that fails says why at the door; an online boot with no realm character in it (a stale
   // address, a local slot) is refused online and plays offline. ?realmnew is a character being born online: the online
   // lane for its chargen and no relay until the realm holds it (realmBirth).
+  // The desktop shell hosts or joined a private server: a local character plays online there, and a realm character is
+  // refused at the realm's own door below (openRealmBoot) - a private run never reaches the realm
+  const privateHost = privateBoot(params, publishBootParams, () => playerEntity.name);
   const realmNew = params.has('online') && params.has('realmnew');
   const realmIoNow = () => realmIo({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const realmBoot = params.has('online') && params.has('realm') && params.has('load') ? await openRealmBoot({ io: realmIoNow(), id: params.get('realm') }) : null;
   if (realmBoot && !realmBoot.ok) { setRealmNotice(globalThis.sessionStorage, realmRefusalText(realmBoot.error)); exitToTitleMenu(); return; }
   const realmRefused = params.has('online') && !realmBoot && !realmNew;
   if (realmRefused) { params.delete('online'); publishBootParams(params); }
+  privateHost?.online();
   /** The playing tab's session over the realm character (systems/realmSaves.js): every save of it is the service's
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
@@ -3861,7 +3869,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _bandSpentAt = [];        // TV7b: the bands spent HERE, newest first - said on my frames so the others spend them too
   let tvPlates = { at: null, list: [] };   // TV2: the known places about the traveller, rebuilt on a pixel change - AUDIT DEEP T2-4: and emptied by a load (above its readers: BOOT-TDZ)
   const tvRaid = { list: [], at: -Infinity, chase: new Map(), spent: new Set(), clock: 0, life: -1, peer: new Map(), spentAt: [] };   // OWS3: Warm Ashes' raiders about the traveller, and the chases (BOOT-TDZ: a load ends them); OW6: a peer's chases heard, and my spent ones said
-  const tvSea = { means: null, helm: createSeaHelm(), phase: null, boat: null, probeAt: 0, best: Infinity, bestS: 0, legAt: -1, wasLive: false };   // OWS2: the crossing's state (BOOT-TDZ: above the load that clears it and the Travel Options atSea that reads it)
+  const tvSea = { means: null, helm: createSeaHelm(), phase: null, boat: null, probeAt: 0, ...seaClock(), legAt: -1, wasLive: false };   // The crossing's state (BOOT-TDZ: above the load that clears it and the Travel Options atSea that reads it)
   let travelView = null;   // TV1: assigned beside the look gate, read by the cursor toggle's guard and the frame (BOOT-TDZ)
   let travelAsked = 1;   // TV2 (AUDIT TV A2): the rate Travel Options itself last asked the clock for - its ground's (RATE-LAW; it was the spinner), or its own cap (the ring walk's x15, an interrupt's x1) - the one the travel view's governor may hold under, and hands back
   const travellerBook = createTravellerBook();   // TV3: the region's travellers (BOOT-TDZ: read by the map, the view and the chat's links)
@@ -8580,13 +8588,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  the draft asked when it sounds (shipLife.js draftOf - hull 2's off the keel of the galleon that stands). */
   const navalIsWater = (x, z, hull = 0) => {
     const p = csaPixelAt(x, z);
-    if (!p) return false;
+    if (!p) return null;   // ground not yet built - unknown, never land a water grid keeps (shipLife.js)
     const t = csaTerrainOf(p);
     if (!p.deepWaters && csaTileMapIndexAtPosition([x, 0, z], t) !== 0) return false;
     if (!p.deepWaters) return true;
     const floor = surfaceAt(x, z);
     return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : navalDraftOf(hull));
   };
+  navalIsWater.tile = () => ({ size: TERRAIN_SIZE / 128, x0: state.compensation[0], z0: state.compensation[2] });   // the built ground's tiles (comeSailAway.js tileMapIndexAtPosition), a water grid's lines asked of each
   /** A port town within a pixel of the player (the merchantmen's and the navies' water, navalDirector.js PORT_WEIGHTS). */
   let _navalPortAt = null;   // { key, near } - the answer for the pixel it was asked at
   const navalNearPort = () => {
@@ -15662,6 +15671,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // MINE-PERKS (Professions-Arc 43): a Motherlode Sense's day's Motherlodes - each on its pixel from the day's start,
       // its ore and its hour (ui/lodeMapMark.js); none without the Sense, nor with the professions shut
       lodes: () => lodeMapMarksNow(),
+      witnessed: profBook ? witnessMapReader(profBook) : null,   // the witnessed tiles in view, online with the professions open; tiles, never a region at a time
       pois: () => poiMapMarks(poiHost?.marks() ?? []),   // POI-2: the approved POIs that ask to be marked
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendor/vendorMapMark.js)
       vendor: () => { const wp = vendorWaypoint(); const t = wp ? _townOfMapId.get(wp.map) : null; return t ? { px: t.px, py: t.py, label: `Trader: ${wp.owner || 'a'}'s house`, town: t.name } : null; },
@@ -18206,7 +18216,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let bountyHost = null;   // BOUNTY1: made below, beside the party's marks; read late by the maps, the pose and the boards
   let social = null, _partyComposedAt = -Infinity, _partyPose = null;   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
   let partyPing = null, _partyPingTry = -Infinity;   // PARTY-PING: the look's point, wired below
-  const chatSafety = createChatSafetyHost({ log: () => chatLog, links: () => [...(chatLinks?.values?.() ?? []), online].filter(Boolean), social: () => social, minter: () => identityMinter, panel: () => chatPanel, glyphs: () => _staffGlyphs, teleport: (id) => runStaffCommand(chatLog?.active, { cmd: 'tp', player: { id } }), follow: () => staffFollow.follow });   // STAFF-PANEL5-FOLLOW (mob 2026-10-23: "why doesnt follow work?"): the Follow row's follow - staffFollow is made later in this same synchronous stretch, before any line can be clicked; STAFF-PANEL2: an Admin's (developer) or a Moderator's chat lines carry no Report; STAFF-PANEL2-CHATMENU: their acts instead, TP by the line's socket through /tp's own door   // SAFE1-SAFE7 (bible/11-Multiplayer/Chat-Safety-Arc.md) - AUDIT SAFE CLIENT-2: the minter a ban lets go of; CLIENT-12: the field a slowed line goes back to
+  const chatSafety = createChatSafetyHost({ log: () => chatLog, links: () => [...(chatLinks?.values?.() ?? []), online].filter(Boolean), social: () => social, minter: () => identityMinter, panel: () => chatPanel, glyphs: () => _staffGlyphs, teleport: (id) => runStaffCommand(chatLog?.active, { cmd: 'tp', player: { id } }), follow: () => staffFollow.follow });   // STAFF-PANEL5-FOLLOW: the Follow row's follow - staffFollow is made later in this same synchronous stretch, before any line can be clicked; STAFF-PANEL2: an Admin's (developer) or a Moderator's chat lines carry no Report; STAFF-PANEL2-CHATMENU: their acts instead, TP by the line's socket through /tp's own door   // SAFE1-SAFE7 (bible/11-Multiplayer/Chat-Safety-Arc.md) - AUDIT SAFE CLIENT-2: the minter a ban lets go of; CLIENT-12: the field a slowed line goes back to
   /** CONCEAL-MATE: a peer in my party - the test player/socialPick.js openPeers is handed, so a concealed mate stays
    *  open to the F key, the Nearby list, a page and a gift. A declaration: the street's pick reads it from above. */
   function isPartyMate(id) { return !!social?.party && social.isPartyPeer(id); }
@@ -19088,7 +19098,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y), faunaAt: (x, y) => maps.getFaunaBand?.(x, y) ?? null });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
   const onlineStart = () => {
     online = new OnlineSession({
-      url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
+      url: privateHost?.url || params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,   // The private server first
       // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
       // THIS ONE. Two typed sources stood here - a `?name=` in the URL
       // and the `onlineName` pref - and both were the impersonation
@@ -19493,7 +19503,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // EVERY link, not the hub's alone - a close that marks the Region link (this tab's id taken in its channel) left
       // it shut for the page's life, with no Play online here to open it again
       link.onSuperseded = () => seatLostNow();
-      if (tab.room === SOCIAL_ROOM) link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); rocket.set(ev, o); };   // SUNBABY1: and the sun baby; ROCKET1: and the rocket   // EVENT1: the hub - the one room every online player holds - says the live event
+      if (tab.room === SOCIAL_ROOM) link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); rocket.set(ev, o); newEra.set(ev, o); };   // SUNBABY1: and the sun baby; ROCKET1: and the rocket   // EVENT1: the hub - the one room every online player holds - says the live event
       if (tab.room === SOCIAL_ROOM) link.onHome = (words) => { onlineHomes?.hearHome(words); };   // QUEST-HOME: and a home that moved since the boot's read, every page told
     }
     // SRV-N: the PRESENCE session hears the relay too, and it is usually
@@ -19790,7 +19800,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       nameColor: (id) => social?.cssColorOf(id) ?? null,   // SOC7 integration: the picture answers (net/social.js cssColorOf - party green, friend blue, a stranger none); the host names no colour, which SOC4's pin holds it to
       rowActions: (peerId) => [...socialRowActions(peerId), ...chatSafety.rosterActions(peerId)],   // ROSTER-STAFF: and a staff member's acts on the player (scenes/chatSafetyHost.js rosterActions)
       lineActions: (line) => chatSafety.lineActions(line),   // SAFE1 + SAFE3: a line's own Report and Block
-      voice: chatSafety.voice,   // STAFF-CHAT-RED (mob: "give me a option next to chat to chat as /red or myself at all times"): an Admin's Me or Red beside the field (net/chatVoice.js)
+      voice: chatSafety.voice,   // STAFF-CHAT-RED: an Admin's Me or Red beside the field (net/chatVoice.js)
       bagItems: () => playerEntity.items ?? [],   // CHAT-POST: typing `[` in the field lists the pack by name
       badgeOf: (id) => chatSessionOf(chatLog?.active)?.badgeOf?.(id) ?? null,
       // CHAT-TRADE (Mac: "There must be a better way to handle the new channels instead of a text command"): the + beside
@@ -20452,10 +20462,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   // STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", Invisible follow): THE STAFF HOOK - a follow the Staff Panel
   // starts on this page (net/staffHook.js), and what the scene does with it (scenes/staffFollowHost.js)
-  // STAFF-HIDE-TOGGLE (mob, 2026-10-23: "need hide to be a toggle"): and the panel's `relink` - Hide me or Show myself pressed,
+  // STAFF-HIDE-TOGGLE: and the panel's `relink` - Hide me or Show myself pressed,
   // every link of the game's own remade on a fresh token at once (staffFollowHost.js relinkGame)
   const staffFollow = staffFollowOnPage({ main: () => online, prepare: (d) => prepareStaffDestination(d, () => staffFollow.locked()), mode: () => modes?.mode ?? 'exterior', pixel: () => state.current, toScene: (p) => onlineToScene(p), relink: () => relinkGame(identityMinter, online, chatLinks?.values()), pull: (sub) => staffPull.pull({ acct: sub }) });   // STAFF-PULL: the panel's Bring to me
-  // STAFF-VIEW1 (mob: "np player esp in staff panel?", "i need staff panel to have esp"; design doc, In game: the staff
+  // STAFF-VIEW1 (design doc, In game: the staff
   // view): THE STAFF TAGS - every player this game receives tagged for an Admin or a Moderator where a Staff Panel spoke,
   // on the ground and on the Overworld (the travel view, Shift+M), a click a follow at once (scenes/staffViewHost.js)
   const staffView = createStaffViewHost({
@@ -22796,6 +22806,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** ROCKET1: THE ROCKET (scenes/rocketHost.js) - the hub's third live event word: mounds round the traveller on the world's
    *  own grid, their poop, the horses farting across the sky and the diarrhea frenzy, on the shared clock. Offline nothing sets it. */
   const rocket = createRocketHost(renderer, sunbabyGround, state);
+  const newEra = createNewEraHost(renderer, sunbabyGround, state);   // the New Era (scenes/newEraHost.js): the hub's fourth live event word, beside the Rocket
   /** SD2b: THE HOLLOW IN THE WORLD (scenes/superDungeon/sdHost.js) - online alone: the hub's record of the Super dungeon (its hub link's
    *  onSd), the Hollow it names found over this client's own map files (the gate's scan, the game's own rows) and stood in
    *  the index at its pixel while its phase stands - built there as a spawned dungeon is, its pixel built again when it
@@ -28397,6 +28408,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
   // bytes where TAMRIEL2 streams the land beyond the Bay - `woods` is its composed reader then, the sea past the frame
   const tvWater = (px, py) => (!woods.isTamrielGround && !woods.etherLaw?.(px, py) && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;   // AUDIT CAPTAIN'S SEA G5: the Eltheric Ocean's isles land, whatever the continent's switch says
+  const kernelSea = createKernelSea(() => woods);   // the kernel's sea at a native point (world/water/kernelSea.js) - the lanes' and the raiders'
+  setSeaLegKernel(kernelSea, tvWater);   // a journey's sailed legs mended round the kernel's land (systems/travel/seaLegsMend.js)
   /** The trip is over when Travel Options no longer walks it - arrived, stopped, or replaced by a journey of its own. */
   const tvTripLive = () => !!tvTrip.plan && !!travelOptions?.route && travelOptions.route === tvTrip.plan.route;
   /** `roads` (TO-ROADS x OW-PATH): by the roads whatever the Path switch says - the map's first-person pick (tvMapForcesRoads). */
@@ -28551,9 +28564,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // its cliff (a rise of 60 against the law's 16: the lag and the fall Mac hit); a place's own pixel stays exempt
     let plan = (dragonMounted() ? dragonFlightPlan(from, pix) : null) ?? planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });   // DRAGON6: flown straight on the dragon
     if (!plan && !wnet && roadNet) { wnet = roadNet; plan = planRoute(from, pix, { roads: wnet.roads ?? null, tracks: wnet.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk }); if (plan) townTalk.say(TRAVEL_PATH_TEXT.fellBack); }   // OW-PATH
-    if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }
     const dry = water ? null : tvMooredDry(seaAsk ? means : null, plan, () => planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door }));   // AUDIT OW5 S3
     if (dry) { plan = dry; seaAsk = null; }
+    if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }   // asked after the plan on foot (seaAsk.js tvMooredDry)
     let legs = tvJoinedLegs(from, plan, roads, door || water ? null : n);   // OW-TOWN-ROUND: round the towns at both ends (AUDIT UPDATE T3: never a spot on the sea - its crossing is the sea's)
     // AUDIT OW5 S4: a spot on the sea in the traveller's own pixel, from afloat - the planner's one pixel is no step, so the
     // route had no leg at all: the crossing read its kind as land, landed the boat mid-sea and packed it from under the
@@ -28600,7 +28613,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const TV_SEA_LANE_M = 5;       // AUDIT SHIPS A2: the water kept either side of her beam on the mark's line
   const TV_SEA_ASHORE_M = 60;    // how far from the landed boat the traveller may step ashore
   const TV_SEA_BEACH_M = 10;     // a landfall's shore this near, the boat all but stopped: the landfall, beached or not
-  const TV_SEA_NO_WAY_S = 180;   // game seconds a sea leg may go without coming 20 m nearer its mark before it stops
   /** A scene point's water by the law Come Sail Away reads its boats' nodes with (the built ground's tile map, or Iliac
    *  Puddle No More's height under its line); ground not built is not water. */
   function tvSeaWaterAt(x, z) {
@@ -28689,7 +28701,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  the boat!"); any other stands it down. */
   function tvSeaBegin(means, kinds) {
     tvSeaRelease();
-    tvSea.phase = null; tvSea.boat = null; tvSea.best = Infinity; tvSea.bestS = 0; tvSea.legAt = -1;
+    tvSea.phase = null; tvSea.boat = null; Object.assign(tvSea, seaClock()); tvSea.legAt = -1;
     tvSea.helm = createSeaHelm();
     tvSea.means = means && (crossesWater(kinds) || means.start === 'sea') ? means : null;
     if (tvSea.means?.how === 'moored') csaCall(() => csaRuntime.StartSailing(tvSea.means.boat));
@@ -28805,7 +28817,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!landfall && csaRuntime.IsBeached(boat)) { tvSeaStop(TRAVEL_VIEW_TEXT.aground); return; }
     const gs = dt * worldTimeScale();   // the game's seconds, as the boat's own clock runs
     const dist = Math.hypot(mark[0] - p[0], mark[2] - p[2]);
-    if (dist < tvSea.best - 20) { tvSea.best = dist; tvSea.bestS = 0; } else if ((tvSea.bestS += gs) > TV_SEA_NO_WAY_S) { tvSeaStop(TRAVEL_VIEW_TEXT.noWayAtSea); return; }
+    if (seaNoWay(tvSea, dist, gs)) { tvSeaStop(TRAVEL_VIEW_TEXT.noWayAtSea); return; }   // the way back from a detour counts (seaHelm.js)
     const w = s.windVectorCurrent ?? [0, 0, 0];
     // her lane: from her bow and either beam (her nodes - the points the runtime stops her on), and the lane she would
     // sail to the mark - her beam's breadth and TV_SEA_LANE_M either side of its line
@@ -28855,7 +28867,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!travelView?.active && !tvOwnsJourneys() && !csaHoldsTimeScale() && worldTimeScale() !== (tvHeld ?? travelAsked)) setWorldTimeScale(tvHeld ?? travelAsked);
     const leg = route.legs[Math.min(route.i, route.legs.length - 1)] ?? null;
     const kind = leg?.kind ?? 'open';
-    if (route.i !== tvSea.legAt) { tvSea.legAt = route.i; tvSea.best = Infinity; tvSea.bestS = 0; }
+    if (route.i !== tvSea.legAt) { tvSea.legAt = route.i; Object.assign(tvSea, seaClock()); }
     if (tvSea.phase === 'landing') {   // the mod's disembark holds the traveller at the helm a second: then ashore
       if (csaRuntime.state.disembarking == null && !csaRuntime.isSailing()) tvSeaAshore();
       return;
@@ -29317,12 +29329,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!bandRoom(mk)) return false;
     const fx = player.feetAt();
     // AUDIT OW5b B2: WHERE IT IS - its anchor at the band's own distance, a pack's spacing about it (never nearer than
-    // BAND_STAND_MIN_M). Every band stood at 18-32 m: a band met with the view down at BAND_STAND_M (140 m, Mac's
-    // CAMP-FAR - no pack lands beside the player out of nowhere) was brought a hundred metres nearer and stood beside them
+    // BAND_STAND_MIN_M). Every band stood at 18-32 m: a band met with the view down at BAND_STAND_M (45 m since
+    // BAND-NEAR, inside its members' sight; 140 m before) was brought nearer and stood beside them
     const minDistance = Math.max(BAND_STAND_MIN_M, dist - PACK_SPACING), maxDistance = Math.max(BAND_STAND_MIN_M, dist) + PACK_SPACING;
     for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
       const stood = _standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
-        minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx);
+        minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw, fieldOfView() * 180 / Math.PI, !!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(renderer._camPos[0] - fx[0], renderer._camPos[2] - fx[2])) }, fx);   // never stood in the view: the edge widened by the pack's spread and turned out from the eye drawn, behind the feet
       if (!stood) continue;
       // AUDIT-F2: A BAND THAT CAUGHT ME STANDS ON ME - it chased me: each member alerted (never the gate's) and come for me,
       // as a noticed foe comes (exteriorFoes.js noticedPlayer). Stood unaware, the gate held them off me and the keys'
@@ -29545,7 +29557,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it all was water: a raider sailed off the world). */
   const tvRaidSea = (x, z) => {
     const px = Math.floor(x / RAID_NATIVE_PIXEL), py = 499 - Math.floor(z / RAID_NATIVE_PIXEL);
-    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);   // WW3
+    return onWorldSea(px, py, tamrielLand) && squareCornersAll(tvWater, px, py) && kernelSea(x, z);   // WW3; its square's four corners (SEA-SQUARE); O3: and the kernel's own ground there
   };
   /** The raiders about the traveller at the shared clock, read again each TV_RAID_LIST_MS. */
   function travelViewRaiders() {
@@ -29686,12 +29698,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  climate, so the towns on a lake run their packets on it - the lake harbours' own traffic, which stays (Mac,
    *  2026-10-15: the lake harbours are kept). The serpent's site asks a 3 x 3 of it, which no lake of the real map holds
    *  (none in 3,650 days); a reader that means the open sea asks `openSea`. */
-  const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py) && maps.getClimateIndex(px, py) === CLIMATES.Ocean;
+  const laneOpen = bayLaneWater(tvWater, (px, py) => (inBay(px, py) ? undilatedClimateIndex(maps, px, py) : maps.getClimateIndex(px, py)) === CLIMATES.Ocean);   // its square's four corners, CLIMATE.PAK's own climate (scenes/naval/worldLanes.js)
   const laneOpenNative = (x, z) => { if (!(x >= 0 && z >= 0 && x < 1000 * RAID_NATIVE_PIXEL && z < 500 * RAID_NATIVE_PIXEL)) return false; const p = pixelOfNative(x, z); return laneOpen(p.x, p.y); };
   // WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S LANES (scenes/naval/worldLanes.js) - the Bay's, between its ports
   // over its water, as they always were; and the sea's past it, between the world's ports (world/worldWide/worldPorts.js)
   // over the continent's sea where its land stands - one book of both, each lane's way kept once
-  const worldLanes = createWorldLanes({ mapDict: () => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => tamrielLand });
+  const worldLanes = createWorldLanes({ mapDict: () => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => tamrielLand, kernel: kernelSea });   // the kernel's sea
   _lanesReady = true;   // BOOT-TDZ II: every binding the lanes read stands from here (raidNowMs above it)
   /** The lanes of the whole world - every client's the same: the Bay's, then the ones past it. */
   function laneNet() { return worldLanes.all(); }
@@ -31648,6 +31660,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (jump) sunbabyRain.reset();
     for (const fb of sunbabyRain.tick({ sharedMs: Date.now() + _sharedOffsetMs, eye: tvStand, fire: sunbaby.on && sunbabyFace.fire, ground: sunbabyGround })) magic.skyFire(fb);
     rocket.frame(dt, Date.now() + _sharedOffsetMs, tvStand, townTalk);   // ROCKET1: the rocket's weight, its line owed, its mounds round the traveller and its sounds
+    newEra.frame(dt, Date.now() + _sharedOffsetMs, tvStand, townTalk);   // the New Era's weight, its line owed, its sounds, the shake and the white canvas
     // WBX8: THE GATE'S RED STORM - the same strikes' law on a schedule of its own, round the gate's site (so its
     // lightning shows where the gate stands), its thunder from each strike's distance to the ear; ticked every frame,
     // at nothing when no gate burns, so a gate coming into reach fires no backlog
@@ -32162,14 +32175,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('ring');   // PERF-ZONE2: the far province ring (its rebuild and its hole) and the water, after the sky hands the frame back
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
-    // world repaints everything nearer). Skipped when exp fog owns
-    // the air (rain, snow, heavy fog); its light state is the frame's
+    // world repaints everything nearer). RED-MOUNTAIN-SEEN: the fog row
+    // says how (farRing.js ringFogOf); its light state is the frame's
     // own, already installed by setLighting/beginFrame above. It
     // shares the EV6 seam mark below - one foreign span, two passes.
     const waterSkyNow = waterOn ? sky.waterSky() : null;   // FAR-SEA1: the sky the water reflects, once a frame - the ring's sea and the water's (AUDIT FAR-SEA1 H2: none with the Enhanced water off - the sea is Daggerfall's tile, and the ring's sea keeps the ground's look beside it)
     const seaYNow = farRing ? tvSeaY() : 0;   // FAR-SEA1: the sea's surface in the scene this frame
     const frameRing = () => {   // PERF-V8
-    if (farRing && fogNow.mode === 'linear') {
+    if (farRing && ringFogOf(fogNow)) {
       if (farRing.needsRebuild(state.current.x, state.current.y)) {
         farRing.build({
           heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
@@ -32195,7 +32208,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
-        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end, exposure: renderer.exposure, adaptTex: renderer.adaptTexture, haze: renderer._haze, hazeEye: jungle?.eye,   // EL1; EL4: the eye; BANTHA1: the jungle's haze over the ring
+        fogColor, fog: fogNow, exposure: renderer.exposure, adaptTex: renderer.adaptTexture, haze: renderer._haze, hazeEye: jungle?.eye,   // EL1; EL4: the eye; BANTHA1: the jungle's haze over the ring
         // E5: the ring draws INTO the world pass's rect, so it takes
         // that pass's aspect - a horizon built on the full-canvas ratio
         // would step against the terrain in front of it under a docked bar.
@@ -32837,6 +32850,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // STAR4: THE STARFALL'S SKY - the omens, the falls, the flashes and their rings, the beacons - the same eye and fog
     if (starfall?.showing() && starfall.drawSky(proj, view, wxEye32, now / 1000)) renderer.markForeignPass();
     rocket.draw(proj, view, mwv.eye);   // ROCKET1: the rocket - its brown sky, mounds, poop, horses and their clouds, the same eye and fog
+    newEra.draw(proj, view, mwv.eye);   // the New Era - its burning, cracking sky, the gunship, its bombs, their clouds and the cracked ground
     // LOOT11 (the Loot arc): THE LINES OF LIGHT over my bodies and the street's piles holding a Rare or better - after the
     // gate's fire, the same eye and fog (scenes/lootLines.js: the nearest eight within 40 m)
     if (lootLines.draw(() => [...exteriorFoes.lootFinds(), ...droppedLoot.lootFinds()], proj, view, wxEye32, now / 1000,

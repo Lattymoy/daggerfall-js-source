@@ -106,7 +106,7 @@ const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
 /** Draw a body - 'mw' (retail's Morrowind skeleton, a mannequin on its bones), 'rig' (the stand-in, at rest) or 'sprite' (its picture on a card, 'front' or 'back') - wearing \`kit\` from
  *  \`eye\` at \`t\`, kindled \`kindle\`; read back \`pts\` (world) and the frame's brightest pixels in \`box\` rows. */
-window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false, arms = undefined, pixel = false }) => {   // AURA-PIXEL: \`pixel\` the law on - the designs are read per pixel
+window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false, arms = undefined, pixel = false }) => {   // pixel: the law on - the designs are read per pixel
   const proj = persp(0.8, W / H, 0.05, 100), view = look(eye, at), vp = mul(proj, view);
   gl.viewport(0, 0, W, H); gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
   gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -145,7 +145,7 @@ window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0,
   };
   const rows = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, rows);
   let lit = 0; for (let i = 0; i < rows.length; i += 4) if (rows[i] + rows[i + 1] + rows[i + 2] > 120) lit++;
-  let glow = 0, same = 0;   // AURA-PIXEL: the lit pixels the same as their right-hand neighbour
+  let glow = 0, same = 0;   // the lit pixels the same as their right-hand neighbour
   for (let i = 0; i < rows.length - 4; i += 4) if (rows[i] + rows[i + 1] + rows[i + 2] > 120 && (i / 4) % W !== W - 1) { glow++; if (rows[i] === rows[i + 4] && rows[i + 1] === rows[i + 5] && rows[i + 2] === rows[i + 6]) same++; }
   return { error: gl.getError(), drawn: pass.drawn, lit, same: glow ? same / glow : 0, px: pts.map(px), pose: Array.from(pose.pts), dx: Array.from(pose.dx), right: [view[0], view[4], view[8]], marks: body === 'sprite' ? sprites[side].marks : null };
 };
@@ -487,9 +487,9 @@ try {
     "an Eternal Edge kit alone takes the weapon's stage, any other kit the figure's",
     weaponStageOf('0000b') === 'edge' && weaponStageOf('b000b') === null && weaponStageOf(null) === null,
   );
-  // AURA-PIXEL (2026-10-31): the pieces in Daggerfall's levels - each kit drawn close with the law on: no GL error, as much
-  // of it lit as per pixel, and never snapped (AUDIT AURA-PIXEL D3: a piece takes the levels alone - no more of its lit
-  // pixels the same as their neighbour than per pixel, give or take the levels' own runs); a shot of each
+  // the pieces in Daggerfall's levels - each kit drawn close with the law on: no GL error, as much of it lit as per pixel,
+  // and never snapped (no more of its lit pixels the same as their neighbour than per pixel, give or take the levels'
+  // own runs); a shot of each
   for (const [name, kit] of [['dagonfire', 'aaaa0'], ['eternal', 'bbbb0'], ['spurs', '00d00'], ['armlet', '00c00']]) {
     const close = { kit, eye: [0, 1.3, 1.5], at: [0, 1.1, 0], arms: ARMS };
     const flat = await draw(close), px = await draw({ ...close, pixel: true });

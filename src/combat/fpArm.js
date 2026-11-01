@@ -3717,7 +3717,7 @@ export function createFpArm() {
   // _drawWeaponGlows 'hands') while the fists are up: drawn, empty (AUDIT C4: a swap done, no sheet held up before the
   // first person), no spell in them, not on the stone
   let handGlowSpec = null;
-  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: "keep glow on wrap whern put away"): put away, the body's hands still glow
+  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY: put away, the body's hands still glow
   let torchState = null;
   let torchSource = null;
   let torchGroup = null;

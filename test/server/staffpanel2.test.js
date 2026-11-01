@@ -1,4 +1,4 @@
-// STAFF-PANEL2 (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS
+// STAFF-PANEL2 (2026-10-22; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS
 // (server-account/src/staffCases.js), driven through the real Worker on the node:sqlite database every account pin
 // stands on (test/accountDb.mjs): the open cases most urgent first and paged, a case read with its lines and record, a
 // claim (a Moderator one at a time, an Admin any), and Mute, Ban, Unban and Dismiss made as the game's moderators' acts.

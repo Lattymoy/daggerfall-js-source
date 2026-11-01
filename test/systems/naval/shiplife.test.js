@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   findHarbour, createWaterGrid, errandFor, stepErrand, footprintClear, hullSize, offsetErrand, alongside,
-  HARBOUR_REACH, BERTH_SPACING, BERTH_HULL, MOUTH_CLEAR, PATH_NODES, DWELL_S, BERTH_SNAP_M, STALL_S, VOYAGE_DIST, LURK_R, PATROL_R,
+  HARBOUR_REACH, BERTH_SPACING, BERTH_HULL, MOUTH_CLEAR, PATH_NODES, PATH_BUDGET_K, DWELL_S, BERTH_SNAP_M, STALL_S, VOYAGE_DIST, LURK_R, PATROL_R,
 } from '../../../src/systems/naval/shipLife.js';
 import { createSeaShip, stepCaptain, WIND_RATED } from '../../../src/systems/naval/navalAI.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
@@ -78,7 +78,7 @@ test('SHIP-LIFE A WAY THROUGH THE WATER: round the headland the grid finds a way
   const lake = (x, z) => coast(x, z) || Math.hypot(x, z - 800) < 60;
   const gl = createWaterGrid({ isWater: lake, hull: 2 });
   assert.equal(gl.path([0, 0], [0, 800]), null);
-  assert.ok(gl.expansions <= PATH_NODES + 1, `bounded: ${gl.expansions}`);
+  assert.ok(gl.expansions <= PATH_NODES * PATH_BUDGET_K + 1, `bounded: ${gl.expansions}`);
 });
 
 test('SHIP-LIFE THE ERRAND DRAWN AGAIN: off her seed and where she is - a ship lying still at a berth is moored there; a merchantman makes for a free berth, never a taken one; a navy patrols the harbour\'s approaches; a pirate lurks LURK_R off its mouth; with no harbour near, a merchantman sails out of the world over open water and a pirate keeps her own cruise; any client draws the same', () => {

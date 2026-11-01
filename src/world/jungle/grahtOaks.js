@@ -209,7 +209,7 @@ export function grahtFootMask(trees, tiles, tileM) {
 }
 
 /**
- * A TREE'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, _mark }`, its foot `c` pixel-local): the trunk to
+ * A TREE'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, nature, _mark }`, its foot `c` pixel-local): the trunk to
  * where its limbs begin, and each buttress a run of bodies from the trunk to its foot.
  * @param {ArrayLike<number>} trees a set's floats @param {number} i the tree's first
  */
@@ -220,7 +220,7 @@ export function grahtBodies(trees, i) {
     yaw = trees[i + 3],
     s = trees[i + 4],
     m = GRAHT_MEASURES[trees[i + 5]];
-  const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, _mark: 0 }];
+  const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, nature: true, _mark: 0 }];
   const c = Math.cos(yaw),
     sn = Math.sin(yaw);
   for (const [bx, bz, bh] of m.finBodies) {
@@ -231,6 +231,7 @@ export function grahtBodies(trees, i) {
       h: Math.max(2, bh * s + 1),
       lift: 0,
       body: true,
+      nature: true,
       _mark: 0,
     });
   }
