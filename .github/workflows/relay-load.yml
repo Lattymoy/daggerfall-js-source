@@ -86,3 +86,6 @@ jobs:
           [ "$failed" = "0" ] || echo "::warning::some readings are missing from the summary - see the warnings above"
           # AUDIT PLAN-1000 H3: a run that read nothing is no reading - red, its partial summary kept
           if [ "$answered" = "0" ]; then echo "::error::no question was answered - nothing was read"; exit 1; fi
+      - name: Copy the summary into the log
+        if: always()
+        run: cat "$GITHUB_STEP_SUMMARY"

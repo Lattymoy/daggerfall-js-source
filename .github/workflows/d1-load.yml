@@ -131,3 +131,6 @@ jobs:
             fi
           done
           [ "$failed" = "0" ] || echo "::warning::some readings are missing from the summary - see the warnings above"
+      - name: Copy the summary into the log
+        if: always()
+        run: cat "$GITHUB_STEP_SUMMARY"
