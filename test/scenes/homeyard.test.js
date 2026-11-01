@@ -233,7 +233,7 @@ test('HOME-YARD the decorator outside: the owner\'s own lot found under their fe
 test('HOME-YARD the world host by source: each building\'s own place and footprint recorded at the build, the yards made online alone, brought in line every frame (stood down indoors), their models, flats and lot marks in the world\'s passes, the free eye and the stick the decorator\'s while it flies, and the service\'s writes carry `yard` (mutants: the frame unrecorded; the pass unwired; the flag lost)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const at = Array\.isArray\(placed\.recordAt\) \? \[locLocal\[0\] \+ b\.originX \+ placed\.recordAt\[0\]/);
-  assert.match(w, /homeFrames: pixelHomeFrames, homeRegion: dfLocation\?\.regionIndex \?\? 0,/);
+  assert.match(w, /homeFrames: pixelHomeFrames, homeRegion: dfLocation\?\.regionIndex \?\? settlementHomeRegion\(settlement, px, py\),/);   // a settlement's pixel its province's region
   assert.match(w, /const yards = homeDecor && onlineHomes \? createHomeYards\(\{/);
   const frameFn = w.indexOf('  function frame(now) {');
   const modal = w.indexOf('    if (modes.frame(dt, now)) {', frameFn);

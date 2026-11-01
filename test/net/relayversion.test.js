@@ -35,7 +35,7 @@ export const RELAY_GRAPH = graph('server/src/index.js');
  *  Every relay this repo has shipped a law for, and the sha256 of its law that IS it (see `graph` for what the law is).
  *  Append; never edit an existing row - an old row is a historical fact about bytes that have already been deployed. */
 const LAW = {
-  world304: '83be7f957aa33c119a545762a34679d495428509fb511af03d64e669b498638c',   // GROUND_LAW 5 to 6: the ground carved under a settlement's pads past the Bay. The bundle's files otherwise unchanged.
+  world304: '6a9d8e5471d90af9234bf68a21ab5ab62107141d2fd40980c46b8abadce94aca',   // GROUND_LAW 5 to 6: the ground carved under a settlement's pads past the Bay. The bundle's files otherwise unchanged.
   world303: '730253f46ca23d1ef7525ba9c3428e2cc3915b7fdfcf093edd06c871bbb482c7',   // the live event word `newera` joins LIVE_EVENTS and LIVE_EVENT_RELAY_MIN
   world302: 'c50ee1b478f9965512a3bed86b08794a4137b7d4871bf1aad29051001419649e',   // LEGIBLE (2026-10-31, world295 on its branch - re-hashed in place, undeployed - then world298 - 70c6a2dc... - then world299 - a5194f7b... - renumbered past main's world295-world301 at the merges; bible/01-Overview/Readability-Arc.md LEGIBLE 3, LEGIBLE 4; NOT YET DEPLOYED): the relay's files formatted (tools/format.mjs) and egFragLaw's comma sequence written as two statements - the same behaviour, new bytes
   world301: '9d8cc4f27708a93106f095441c967b4bb2986db5e8187232e6550a5ff4d741e5',   // CACHE-SPREAD (2026-10-31, world300 on its branch, renumbered past EG-MIGHT's world300 at the merge of main; bible/06-Systems/Aurum.md section 3a): net/aurumCacheLaw.js, in the bundle through net/cacheProof.js - a cache's Aurum 5 to 10 by its hash, no day's bound. The relay's words unchanged.

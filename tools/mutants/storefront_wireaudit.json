@@ -169,8 +169,8 @@
   {
     "name": "WIREAUDIT-6-the-floor-unsaid",
     "file": "src/net/wire.js",
-    "old": "and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire, and its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
-    "new": "and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire",
+    "old": "world303's `newera`; the ROLLBACK FLOOR (G2), the service never below acct233 for a week after this relay last minted `p`; and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire, and its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
+    "new": "world303's `newera`; the ROLLBACK FLOOR (G2), the service never below acct233 for a week after this relay last minted `p`; and from world297 (STOREFRONT) a pose's kill (`xk`, `xp`, `xh`) on the wire",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ]
