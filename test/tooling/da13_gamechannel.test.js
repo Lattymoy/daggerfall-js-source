@@ -575,3 +575,8 @@ test('DA13: the release script\'s own commands, run - seed and pack from the env
     assert.match(good.stdout, /^v0\.1\.10 -> v0\.1\.12: 1 files, /);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('HOSTING-PIN: the pin is null or a release tag the channel reads, so Host and Join can fetch it', () => {
+  const { HOSTING_PIN } = require('../../app/lib/hostingPin.cjs');
+  assert.ok(HOSTING_PIN === null || G.versionOfTag(HOSTING_PIN), `not a release tag: ${HOSTING_PIN}`);
+});
