@@ -59,6 +59,8 @@ const SCENES = {
       { name: 'moat_wide', pose: `(() => { const b = __wl.bodies('207,213', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 40, 16, 2.2); return { n: b.n, t }; })()` },
       { name: 'river_near', pose: `(() => { const b = __wl.bodies('207,212', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 14, 5, 1.1); return { n: b.n, t }; })()` },
       { name: 'river_wide', pose: `(() => { const b = __wl.bodies('207,212', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 45, 18, -0.4); return { n: b.n, t }; })()` },
+      { name: 'river_top', pose: `(() => { const b = __wl.bodies('207,212', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 6, 40, 1.1); return { n: b.n, t }; })()` },
+      { name: 'moat_top', pose: `(() => { const b = __wl.bodies('207,213', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 6, 40, 2.2); return { n: b.n, t }; })()` },
     ],
   },
   sentinel: {
@@ -66,6 +68,7 @@ const SCENES = {
     shots: [
       { name: 'pool_near', pose: `(() => { const px = __currentPixel(); const bs = __wl.bodies(px).filter((b) => b.n >= 4 && b.n <= 120); const b = bs[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 14, 6, 0.3); return { px, n: b.n, t }; })()` },
       { name: 'pool_wide', pose: `(() => { const px = __currentPixel(); const bs = __wl.bodies(px).filter((b) => b.n >= 4 && b.n <= 120); const b = bs[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 34, 15, 2.5); return { px, n: b.n, t }; })()` },
+      { name: 'pool_top', pose: `(() => { const px = __currentPixel(); const bs = __wl.bodies(px).filter((b) => b.n >= 4 && b.n <= 120); const b = bs[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 6, 40, 0.3); return { px, n: b.n, t }; })()` },
     ],
   },
   harbour: {
@@ -77,6 +80,8 @@ const SCENES = {
         const px = [...per].sort((a, b) => b[1] - a[1])[0][0], b = __wl.bodies(px)[0], t = { ...__wl.nearest(b, e[0], e[2]) }; t.y = window.__seaY?.() ?? t.y; __wl.aim(t, 60, 22, Math.atan2(t.x - e[0], t.z - e[2])); return { px, n: b.n, t }; })()` },
       { name: 'coast_low', pose: `(() => { const per = new Map(), e = __cam(); for (const t of __findTiles([0], 400000)) per.set(t.pixel, (per.get(t.pixel) ?? 0) + 1);
         const px = [...per].sort((a, b) => b[1] - a[1])[0][0], b = __wl.bodies(px)[0], t = { ...__wl.nearest(b, e[0], e[2]) }; t.y = window.__seaY?.() ?? t.y; __wl.aim(t, 25, 6, Math.atan2(t.x - e[0], t.z - e[2]) + 0.5); return { px, n: b.n, t }; })()` },
+      { name: 'coast_top', pose: `(() => { const per = new Map(), e = __cam(); for (const t of __findTiles([0], 400000)) per.set(t.pixel, (per.get(t.pixel) ?? 0) + 1);
+        const px = [...per].sort((a, b) => b[1] - a[1])[0][0], b = __wl.bodies(px)[0], t = { ...__wl.nearest(b, e[0], e[2]) }; t.y = window.__seaY?.() ?? t.y; __wl.aim(t, 8, 50, Math.atan2(t.x - e[0], t.z - e[2])); return { px, n: b.n, t }; })()` },
     ],
   },
   cyrodiil: {
