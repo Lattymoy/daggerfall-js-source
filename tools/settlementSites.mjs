@@ -3,8 +3,8 @@
 // out on pixel after pixel of its land that no place holds - no Arena town, capital, countryside place or lair on it or
 // beside it - and the best one whose fit is ok is kept. The row written publishes inputs alone: the pixel as a point of
 // the picture, the site, the structure the ground chose (fixed, so every client lays the same cells) and the key ledger.
-// Nothing derived from the player's ground is written.
-//  ARENA2_PATH=... node tools/settlementSites.mjs [--write] [--svg scratch/settlement-sites]
+// Nothing derived from the player's ground is written. `--only 8,..` lays those rows again and keeps every other as written.
+//  ARENA2_PATH=... node tools/settlementSites.mjs [--write] [--only N,..] [--svg scratch/settlement-sites]
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ImgFile } from '../src/formats/imgFile.js';
@@ -29,9 +29,10 @@ import { theatreAt, THEATRE_KEYS } from '../src/world/worldWide/worldGrid.js';
 import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
 import { CLIMATES } from '../src/formats/mapsTables.js';
 import { generateSettlement } from '../src/world/settlement/settlementGen.js';
-import { sampleEnv } from '../src/world/settlement/settlementStand.js';
+import { sampleEnv, pixelWaters } from '../src/world/settlement/settlementStand.js';
+import { tamrielWaters, riverAt } from '../src/world/tamriel/tamrielWaters.js';
 import { PAD_REACH, GROUND_EASE } from '../src/world/settlement/settlementGround.js';
-import { settlementPlaceId } from '../src/world/settlement/settlementPlaces.js';
+import { settlementPlaceId, SETTLEMENT_ROWS, settlementPixel } from '../src/world/settlement/settlementPlaces.js';
 import { planSvg } from './settlementProbe.mjs';
 
 /** One settlement a province: its kind, its style, its name and its map type (formats/mapsFile.js LOCATION_TYPES). */
@@ -44,12 +45,21 @@ export const SETTLEMENT_TARGETS = Object.freeze([
   { province: 'Valenwood', archetype: 'village', style: 'Valenwood', name: 'Thorn Canopy', type: LOCATION_TYPES.TownVillage },
   { province: 'Elsweyr', archetype: 'village', style: 'Elsweyr', name: 'Tasha\'s Bend', type: LOCATION_TYPES.TownVillage },
   { province: 'BlackMarsh', archetype: 'wetland', style: 'BlackMarsh', name: 'Hatchwater', type: LOCATION_TYPES.TownVillage },
-  // the water a river town needs is the sea's until Cyrodiil's rivers stand as water: a village else
+  // on a bank of one of Cyrodiil's rivers; a village where none fits
   { province: 'Imperial', archetype: 'river', style: 'Imperial', name: 'Corrol Ford', type: LOCATION_TYPES.TownHamlet, else: 'village' },
 ]);
 const SITE = Object.freeze({ east: 409.6, north: 409.6, radius: 90 });
 /** A river town's sites: toward each edge of its pixel, where a coast's water stands. */
 const SHORE_SITES = Object.freeze([[230, 409.6], [589.2, 409.6], [409.6, 230], [409.6, 589.2]].map(([east, north]) => Object.freeze({ east, north, radius: 90 })));
+/** A river town's sites on a pixel a river crosses: on a grid over its middle, each a bank's way off the channel. */
+function riverSites(x, y) {
+  const out = [];
+  for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) {
+    const east = 250 + i * 40, north = 250 + j * 40, r = riverAt(x + east / 819.2, y + 1 - north / 819.2);
+    if (r && r.distance - r.half > 30 && r.distance - r.half < 75) out.push(Object.freeze({ east, north, radius: 90 }));
+  }
+  return out;
+}
 /** Its pads and their ground's ease inside its own pixel, so no carve meets a neighbour's edge (settlementGround.js). */
 const EASE_M = PAD_REACH + GROUND_EASE;
 const inPixel = (plan) => plan.pads.every((p) => p.poly.every(([e, n]) => e > EASE_M && n > EASE_M && e < 819.2 - EASE_M && n < 819.2 - EASE_M));
@@ -87,30 +97,42 @@ async function main() {
   const held = (x, y) => arena.has(`${x},${y}`) || capitalOnPixel(x, y) || countryMayStandAt(country, x, y) || lairMayStandAt(lair, x, y);
   const free = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (held(x + dx, y + dy)) return false; return true; };
 
-  const out = [], taken = [];
+  const only = arg('--only', null)?.split(',').map(Number) ?? null, out = [], taken = [];
+  // the river pixels past the Bay, by theatre: the carved channels the landforms cut (tamrielWaters.js)
+  const riverPixels = new Map();
+  for (const key of tamrielWaters()?.pixels.keys() ?? []) {
+    const x = Math.floor(key / 65536), y = key - x * 65536, th = theatreAt(x, y);
+    if (!riverPixels.has(th)) riverPixels.set(th, []);
+    riverPixels.get(th).push([x, y]);
+  }
   const svgDir = arg('--svg', null);
   if (svgDir) mkdirSync(svgDir, { recursive: true });
   for (const [ordinal, first] of SETTLEMENT_TARGETS.entries()) {
+   if (only && !only.includes(ordinal)) {   // kept as written, its pixel taken
+     const row = SETTLEMENT_ROWS.find((r) => r.ordinal === ordinal);
+     if (row) { out.push(row); taken.push(settlementPixel(row)); }
+     continue;
+   }
    for (const t of [first, ...(first.else ? [{ ...first, archetype: first.else, else: undefined }] : [])]) {
     const theatre = THEATRE_KEYS.indexOf(t.province);
-    const cands = [];
-    for (let y = -1600; y < 2400; y += 7) for (let x = -1800; x < 4200; x += 7) {
-      if (inBay(x, y) || theatreAt(x, y) !== theatre || bayEdgeDistance(x, y) < SEAM_KEEP || byte(x, y) <= WATER_BYTE) continue;
-      if (taken.some(([tx, ty]) => Math.abs(tx - x) + Math.abs(ty - y) < 40)) continue;
-      cands.push([x, y]);
-    }
+    const onRivers = t.archetype === 'river' && riverPixels.has(theatre), cands = [];
+    const land = (x, y) => !inBay(x, y) && theatreAt(x, y) === theatre && bayEdgeDistance(x, y) >= SEAM_KEEP && byte(x, y) > WATER_BYTE && !taken.some(([tx, ty]) => Math.abs(tx - x) + Math.abs(ty - y) < 40);
+    if (onRivers) for (const [x, y] of riverPixels.get(theatre)) { if (land(x, y)) cands.push([x, y]); }
+    else for (let y = -1600; y < 2400; y += 7) for (let x = -1800; x < 4200; x += 7) if (land(x, y)) cands.push([x, y]);
     // a spread of the province's land, deterministically: every k-th candidate, free ones only
     const step = Math.max(1, Math.floor(cands.length / 90));
     let best = null;
     for (let i = 0; i < cands.length; i += step) {
       const [x, y] = cands[i];
       if (!free(x, y)) continue;
-      // a river town only on a coast's pixel, its site toward the water; every other at the pixel's middle
+      // a river town on a river's bank, or else on a coast's pixel toward the water; every other at the pixel's middle
       const river = t.archetype === 'river';
-      if (river && ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => byte(x + dx, y + dy) <= WATER_BYTE)) continue;
+      if (river && !onRivers && ![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => byte(x + dx, y + dy) <= WATER_BYTE)) continue;
+      const sites = onRivers ? riverSites(x, y) : river ? SHORE_SITES : [SITE];
+      if (!sites.length) continue;
       const g = generatePixelTerrain({ woods, px: x, py: y, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, landform: true });
-      const env = sampleEnv(g.samples);
-      for (const site of river ? SHORE_SITES : [SITE]) {
+      const env = sampleEnv(g.samples, pixelWaters(x, y));
+      for (const site of sites) {
         const made = generateSettlement({ place: settlementPlaceId(ordinal), origin: { px: x, py: y, east: 0, north: 0 }, seed: ordinal + 1, archetype: t.archetype, style: t.style, site, env });
         if (!made.report.ok || (river && !made.report.shore) || !inPixel(made.plan)) continue;
         const r = made.report, score = t.archetype === 'fort' ? r.relief : t.archetype === 'mining' ? r.relief - r.fit.cutMax : -r.fit.cutMax - r.relief / 4 + r.counts.buildings / 50;

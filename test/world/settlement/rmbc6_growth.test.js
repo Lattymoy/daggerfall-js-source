@@ -176,7 +176,7 @@ test('RMBC6 one layout, every client: the same job, rect and ground lay the same
 test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the build hands it its town, the trees clear both, the frame reads the carve (mutants: each seam)', () => {
   const read = (f) => readFileSync(new URL(`../../../src/${f}`, import.meta.url), 'utf8');
   const gen = read('world/terrain/terrainGen.js');
-  assert.match(gen, /const settlement = hasLocation \? \(growth && locationRect \? standTownGrowth\(px, py, samples, growth, locationRect, \{ paths, tilemap, camps \}\) : null\) : standSettlementGround\(px, py, samples, bare\);/);
+  assert.match(gen, /const settlement = hasLocation \? \(growth && locationRect \? standTownGrowth\(px, py, samples, growth, locationRect, \{ paths, tilemap, camps, wet \}\) : null\) : standSettlementGround\(px, py, samples, bare, wet\);/);
   assert.match(gen, /locationRect: wodResult\?\.locationRect \?\? growthClearing\(locationRect, settlement\) \?\? settlement\?\.rect \?\? null,/);
   assert.match(read('scenes/pixelBuild.js'), /\n {6}growth: growthJobAt\(groundLocation, px, py\),/);
   assert.match(read('scenes/groundFrameHost.js'), /return settlementMovedAt\(stood\.settlement, origin, x, z, heightCell\);/);

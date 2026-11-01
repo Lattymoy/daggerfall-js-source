@@ -20,15 +20,16 @@ const smooth = (/** @type {number} */ t) => { const k = t < 0 ? 0 : t > 1 ? 1 : 
 
 /**
  * The ground a settlement asks at a point of its plan's frame: null where it leaves the land alone - off every pad, it
- * never raises ground under the sea, so a quay meets its harbour's water.
+ * never raises ground under the sea or a river, so a quay meets its harbour's water.
  * @param {import('./settlementContract.js').Pad[]} pads @param {number} datum metres @param {number} e @param {number} n
  * @param {number} natural the land's own height there, metres @param {number} [sea] the sea's height, metres
+ * @param {boolean} [wet] the point stands in a river's channel or a lake (tamrielWaters.js carvedWaterAt)
  */
-export function settlementGroundAt(pads, datum, e, n, natural, sea = -Infinity) {
+export function settlementGroundAt(pads, datum, e, n, natural, sea = -Infinity, wet = false) {
   /** @type {readonly [number, number]} */ const p = [e, n];
   const on = padAt(pads, p);
   if (on && (on.base === 'raised' || on.legacy)) return null;   // A legacy core's ground is its town's own
-  const asked = (/** @type {number} */ height) => (!on && natural < sea + SEA_SHORE && height > natural ? null : height);
+  const asked = (/** @type {number} */ height) => (!on && (wet || natural < sea + SEA_SHORE) && height > natural ? null : height);
   let low = Infinity, near = Infinity;
   for (const pad of pads) {
     if (pad.base === 'raised' || pad.legacy) continue;
@@ -52,12 +53,12 @@ export function settlementGroundAt(pads, datum, e, n, natural, sea = -Infinity) 
 /**
  * Carve a pixel's heights in place: `S[x * dim + y]` metres (x east from its west edge, y north from its south edge, `step`
  * metres apart); the plan's frame is the pixel's, shifted by its origin's metres. Answers how many vertices it moved.
- * @param {Float64Array|Float32Array|number[]} S @param {number} dim @param {number} step
- * @param {{ pads: import('./settlementContract.js').Pad[], origin: { east: number, north: number } }} plan
+ * @param {Float64Array|Float32Array|number[]} S @param {number} dim @param {number} step @param {{ pads: import('./settlementContract.js').Pad[], origin: { east: number, north: number } }} plan
  * @param {number} datum @param {((e: number, n: number) => boolean)=} keep ground the carve never moves (a town's own)
- * @param {number} [sea] the sea's height, metres: off every pad, ground under it is never raised
+ * @param {number} [sea] @param {((e: number, n: number) => boolean)|null} [wetAt] the sea's height, metres, and a river's or
+ * a lake's water: off every pad, ground under either is never raised
  */
-export function carveSettlementGround(S, dim, step, plan, datum, keep = undefined, sea = -Infinity) {
+export function carveSettlementGround(S, dim, step, plan, datum, keep = undefined, sea = -Infinity, wetAt = null) {
   let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity], moved = 0;
   for (const pad of plan.pads) for (const [e, n] of pad.poly) { lo = [Math.min(lo[0], e), Math.min(lo[1], n)]; hi = [Math.max(hi[0], e), Math.max(hi[1], n)]; }
   const reach = PAD_REACH + GROUND_EASE, near = padsNear(plan.pads, reach);
@@ -67,7 +68,7 @@ export function carveSettlementGround(S, dim, step, plan, datum, keep = undefine
     for (let y = 0; y < dim; y++) {
       const n = y * step - plan.origin.north;
       if (n < lo[1] - reach || n > hi[1] + reach || keep?.(e, n)) continue;
-      const i = x * dim + y, h = settlementGroundAt(near(e, n), datum, e, n, S[i], sea);
+      const i = x * dim + y, h = settlementGroundAt(near(e, n), datum, e, n, S[i], sea, !!wetAt?.(e, n));
       if (h !== null && h !== S[i]) { S[i] = h; moved++; }
     }
   }

@@ -960,6 +960,21 @@ function onPath(paths, x, y, span) {
       if (tx >= 0 && ty >= 0 && tx < span && ty < span && paths[ty * span + tx]) return true;
   return false;
 }
+/** Does a channel or a lake the landforms carve reach Bay pixel (px, py)? A settlement's carve asks no point of one that does not. */
+export function carvedWatersOn(px, py) {
+  if (bayEdgeDistance(px, py) <= SEAM_PX + BLEND_PX) return false;
+  const law = tamrielWaters(), k = px * 65536 + py;
+  return !!law && (law.index.has(k) || law.lakeIndex.has(k));
+}
+/** Is a Bay point in a channel or a lake the landforms carve (the paint's own water, the trace's left out)? Never on the
+ *  Bay or its seam; with no law compiled, none. A settlement's layout and carve read their water by it. */
+export function carvedWaterAt(x, y) {
+  if (bayEdgeDistance(Math.floor(x), Math.floor(y)) <= SEAM_PX + BLEND_PX) return false;
+  const law = tamrielWaters();
+  if (!law) return false;
+  const [rids, lids] = pixelIds(law, x, y);
+  return (!!rids || !!lids) && wetAt(law, rids, lids, x, y);
+}
 /** Is a Bay point in a channel or a lake (the compiled law's own water, not the trace's)? */
 function wetAt(law, rids, lids, x, y) {
   if (lids) for (let k = 0; k < lids.length; k++) if (lakeDistance(law.lakes[lids[k]], x, y) < 0) return true;

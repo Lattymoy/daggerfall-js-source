@@ -9,6 +9,7 @@ import { hash32 } from '../blockHash.js';
 import { TREE_RECORDS, isTreeRecord } from '../terrain/terrainNature.js';
 import { DEAD_TREES } from '../tamriel/tamrielLands.js';
 import { carveSettlementGround, SEA_SHORE } from './settlementGround.js';
+import { carvedWaterAt, carvedWatersOn } from '../tamriel/tamrielWaters.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
 
 const M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
@@ -16,32 +17,40 @@ const M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
 export const SEA_M = SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE;
 export const SAMPLE_M = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
 
-/** A pixel's ground for the generator: metres, bilinear between its samples (x east, y north); water under the sea's line.
- *  @param {ArrayLike<number>} samples normalized, `x * 129 + y` */
-export function sampleEnv(samples) {
+/** A pixel's ground for the generator: metres, bilinear between its samples (x east, y north); water under the sea's line,
+ *  and where `wet` says (a river's channel, a lake). @param {ArrayLike<number>} samples normalized, `x * 129 + y`
+ *  @param {((e: number, n: number) => boolean)|null} [wet] */
+export function sampleEnv(samples, wet = null) {
   const D = HEIGHTMAP_DIMENSION;
   const at = (x, y) => samples[Math.max(0, Math.min(D - 1, x)) * D + Math.max(0, Math.min(D - 1, y))] * M;
   const heightAt = (e, n) => {
     const x = e / SAMPLE_M, y = n / SAMPLE_M, x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
     return (at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx) * (1 - fy) + (at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx) * fy;
   };
-  return { heightAt, waterAt: (e, n) => heightAt(e, n) < SEA_M + SEA_SHORE };
+  return { heightAt, waterAt: (e, n) => heightAt(e, n) < SEA_M + SEA_SHORE || !!wet?.(e, n) };
+}
+
+/** The rivers and lakes the landforms carved into pixel (px, py), in its own metres (x east, y north from its south-west
+ *  corner) - null where none reach it. @param {number} px @param {number} py */
+export function pixelWaters(px, py) {
+  return carvedWatersOn(px, py) ? (e, n) => carvedWaterAt(px + e / TERRAIN_SIZE, py + 1 - n / TERRAIN_SIZE) : null;
 }
 
 /**
  * Lay out the pixel's settlement and carve its ground into `samples` in place; null where none stands.
  * @param {number} px @param {number} py @param {Float32Array} samples @param {(() => Float32Array)|null} [bare] the land with no road
+ * @param {((e: number, n: number) => boolean)|null} [wet] its rivers and lakes (pixelWaters), where the landforms carved them
  * @returns {{ mapId: number, ordinal: number, input: any, layout: ReturnType<typeof layoutSettlement>, moved: Float32Array, rect: { xMin: number, xMax: number, yMin: number, yMax: number } }|null}
  */
-export function standSettlementGround(px, py, samples, bare = null) {
+export function standSettlementGround(px, py, samples, bare = null, wet = null) {
   const row = settlementOnPixel(px, py);
   if (!row) return null;
   const input = settlementInput(row, px, py);
   // Laid out on the land with no road cut into it (`bare()`, the kernel's), so its plan is its inputs' and the
   // land's whatever network a client stands; carved into the ground as it is
-  const layout = layoutSettlement(input, sampleEnv(bare?.() ?? samples));
+  const layout = layoutSettlement(input, sampleEnv(bare?.() ?? samples, wet));
   const metres = Float64Array.from(samples, (s) => s * M);
-  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, undefined, SEA_M);
+  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, undefined, SEA_M, wet);
   const moved = new Float32Array(samples.length);   // what the carve moved each sample, as a grown town's: a record's move
   for (let i = 0; i < samples.length; i++) { const now = Math.fround(metres[i] / M); if (now !== samples[i]) { moved[i] = (now - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = now; } }
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;

@@ -35,7 +35,7 @@ sailing past the Bay's edge. Its zones are `Tamriel-Biomes.md`; its places `Worl
 - **Waters** (`src/world/tamriel/tamrielWaters.js`). Lake Rumare is joined through the Niben to the Topal Bay
   (`NIBEN_COURSE`, `openNiben` in the trace), so ships and voyages reach the Imperial City. The city's lake is the sea's
   own water, carved as deep, reached through a mouth in the far shore (`src/world/imperialCity.js` `IMPERIAL.mouth`).
-  Cyrodiil's rivers are carved into the land.
+  Cyrodiil's rivers are carved into the land, and a settlement reads them as water (`carvedWaterAt`, `RMB-Contracts.md`).
 - **The held map** (`src/ui/heldMap.js`, `src/ui/tamrielInk.js`). The enhanced world sheet zooms out past the Bay onto
   the continent; a hover names the province, capital or sea. Painted only when the view reaches past the Bay.
 

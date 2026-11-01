@@ -110,7 +110,7 @@
   {
     "name": "RMBC3-stand-unasked",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "null) : standSettlementGround(px, py, samples, bare);",
+    "old": "null) : standSettlementGround(px, py, samples, bare, wet);",
     "new": "null) : null;",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "RMBC3-location-loses",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "(growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null)",
+    "old": "(growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps, wet }) : null)",
     "new": "standSettlementGround(px, py, samples)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -146,7 +146,7 @@
   {
     "name": "RMBC3-print-blind",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "null) : standSettlementGround(px, py, samples, bare);",
+    "old": "null) : standSettlementGround(px, py, samples, bare, wet);",
     "new": "null) : null;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
@@ -375,7 +375,7 @@
   {
     "name": "SEA-bed-raised",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "(!on && natural < sea + SEA_SHORE && height > natural ? null : height)",
+    "old": "(!on && (wet || natural < sea + SEA_SHORE) && height > natural ? null : height)",
     "new": "(height)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -384,8 +384,8 @@
   {
     "name": "SEA-pad-left",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "(!on && natural < sea + SEA_SHORE && height > natural ? null : height)",
-    "new": "(natural < sea + SEA_SHORE && height > natural ? null : height)",
+    "old": "(!on && (wet || natural < sea + SEA_SHORE) && height > natural ? null : height)",
+    "new": "((wet || natural < sea + SEA_SHORE) && height > natural ? null : height)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "SEA-stand-unread",
     "file": "src/world/settlement/settlementStand.js",
-    "old": "layout.datum, undefined, SEA_M);",
-    "new": "layout.datum);",
+    "old": "layout.datum, undefined, SEA_M, wet);",
+    "new": "layout.datum, undefined, -Infinity, wet);",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -527,6 +527,114 @@
     "new": "a < box.x0 || a > box.x1 || b < box.y0 ? 0",
     "tests": [
       "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-carve-unread",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "(wet || natural < sea + SEA_SHORE)",
+    "new": "(natural < sea + SEA_SHORE)",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-read-on-pad",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "!on && (wet || natural < sea + SEA_SHORE)",
+    "new": "(wet || !on && natural < sea + SEA_SHORE)",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-carve-wet-unpassed",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "S[i], sea, !!wetAt?.(e, n));",
+    "new": "S[i], sea);",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-ground-unread",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": " || !!wet?.(e, n) };",
+    "new": " };",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-every-pixel-wet",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "return carvedWatersOn(px, py) ? (e, n) =>",
+    "new": "return true ? (e, n) =>",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-stand-unread",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "sampleEnv(bare?.() ?? samples, wet)",
+    "new": "sampleEnv(bare?.() ?? samples)",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-stand-carve-unread",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "layout.datum, undefined, SEA_M, wet);",
+    "new": "layout.datum, undefined, SEA_M);",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-growth-ground-unread",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "sampleEnv(samples, bars.wet ?? null)",
+    "new": "sampleEnv(samples)",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-growth-carve-unread",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "layout.datum, keep, SEA_M, bars.wet ?? null);",
+    "new": "layout.datum, keep, SEA_M);",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-on-the-bay",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "const wet = landforms && !inBay(px, py) ? pixelWaters(px, py) : null;",
+    "new": "const wet = pixelWaters(px, py);",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-growth-unhanded",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "{ paths, tilemap, camps, wet }",
+    "new": "{ paths, tilemap, camps }",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
+    ]
+  },
+  {
+    "name": "RIVERS-law-trace-water",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "  return (!!rids || !!lids) && wetAt(law, rids, lids, x, y);",
+    "new": "  return (!!rids || !!lids) && wetAt(law, rids, lids, x, y) || continent().getHeightMapValue(Math.floor(x), Math.floor(y)) <= 0;",
+    "tests": [
+      "test/world/settlement/rmbc3_rivers.test.js"
     ]
   }
 ]

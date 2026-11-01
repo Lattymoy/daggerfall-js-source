@@ -99,12 +99,12 @@ export function growthBlocked({ paths = null, mask = null, tilemap = null, camps
  * Lay a town's outskirts out on its pixel's ground and carve them in place; null where none stands (no room, no fit).
  * The town's rect and its ground mask are never carved.
  * @param {number} px @param {number} py @param {Float32Array} samples normalized, `x * 129 + y` @param {GrowthJob} job
- * @param {TileRect} rect @param {Parameters<typeof growthBlocked>[0]} bars
+ * @param {TileRect} rect @param {Parameters<typeof growthBlocked>[0] & { wet?: ((e: number, n: number) => boolean)|null }} bars - `wet` its rivers and lakes
  */
 export function standTownGrowth(px, py, samples, job, rect, bars) {
   // a road bars a building, never a cell - the town's ground, a camp and water bar the cell
   const roads = bars.paths ?? null;
-  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };
+  const env = { ...sampleEnv(samples, bars.wet ?? null), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };
   const centre = coreCentre(rect), half = coreHalf(rect);
   const input = growthInput(job, px, py, rect, Math.round(env.heightAt(centre[0], centre[1]) * 100) / 100, roadsOut(bars.paths ?? null, centre, half));
   const layout = layoutSettlement(input, env);
@@ -121,7 +121,7 @@ export function standTownGrowth(px, py, samples, job, rect, bars) {
     });
   };
   const metres = Float64Array.from(samples, (sample) => sample * UNIT_METRES);
-  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, keep, SEA_M);
+  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, keep, SEA_M, bars.wet ?? null);
   // the carve as a record's frame reads it (settlementStand.js settlementMovedAt's units): kernel units, x * 129 + y
   const moved = new Float32Array(samples.length);
   for (let i = 0; i < samples.length; i++) {

@@ -164,7 +164,7 @@
   {
     "name": "RMBC6-kernel-ungrown",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null)",
+    "old": "const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps, wet }) : null)",
     "new": "const settlement = hasLocation ? null",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js",
@@ -282,8 +282,8 @@
   {
     "name": "ORGANIC-road-hard",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };",
-    "new": "  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };",
+    "old": "  const env = { ...sampleEnv(samples, bars.wet ?? null), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };",
+    "new": "  const env = { ...sampleEnv(samples, bars.wet ?? null), blockedAt: growthBlocked({ ...bars, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "SEA-growth-unread",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "layout.datum, keep, SEA_M);",
-    "new": "layout.datum, keep);",
+    "old": "layout.datum, keep, SEA_M, bars.wet ?? null);",
+    "new": "layout.datum, keep, -Infinity, bars.wet ?? null);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

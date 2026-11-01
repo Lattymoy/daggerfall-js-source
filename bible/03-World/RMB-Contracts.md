@@ -193,8 +193,8 @@ The terrain's vertices are 6.4 m apart, coarser than a street, so a pad is drawn
 and the terrain sits under it. `settlementGround.js` `carveSettlementGround` holds the terrain under every cut pad
 within `PAD_REACH` (one cell's diagonal), so no triangle rises through, and eases back to the land over `GROUND_EASE`
 (28 m). A raised pad and a legacy pad ask nothing of the ground. Off every pad the carve never raises ground the
-generator calls water (under the sea's line and `SEA_SHORE`, 0.5 m, over it, the kernel's clamped sea floor among it), so a
-quay meets its harbour's water. A grown town's carve keeps its core and its town's own ground (`keep`): a
+generator calls water (under the sea's line and `SEA_SHORE`, 0.5 m, over it, the kernel's clamped sea floor among it, or a
+river's channel or a lake), so a quay meets its harbour's or its river's water. A grown town's carve keeps its core and its town's own ground (`keep`): a
 sample is kept when any of the four tiles round it is the town's.
 
 The terrain worker lays the settlement out and the main thread dresses it. On a pixel no location holds and a published
@@ -202,6 +202,12 @@ settlement does, `settlementStand.js` `standSettlementGround` lays it out on the
 (`bare`), so no network setting moves its plan, and carves it into the ground as it is. On a town's pixel
 `standTownGrowth` does the same with the town's rect, its roads' tiles, camps and water. Each hands back its layout, its
 trees' clearing and `moved`, what the carve moved each sample. `pixelBuild.js` puts it on the built entry.
+
+Past the Bay, with the Landforms row on, the landforms carve Cyrodiil's rivers and lakes into the land
+(`tamrielWaters.js`). The kernel hands a settlement its pixel's share of them (`settlementStand.js` `pixelWaters`, from
+`carvedWaterAt`): the same water the tiles paint, the trace's sea left to the heights. The layout reads them as water
+beside the sea, so a river town lines a bank and runs its docks out over the channel, and a town's outskirts keep off
+one. The carve leaves a channel's bed off its pads. With the row off no river is carved, so none is water.
 
 ### No record carries the carve
 
@@ -287,9 +293,10 @@ settlement in the running game, shoots it and walks through a door; `tools/townG
 `settlements.json` publishes nine settlements, one in each province past the Bay: Corvel Keep (High Rock, a fort), Sahr
 Waters (Hammerfell, an oasis), Kolvar's Cut (Skyrim, a mine), Velas Rest (Morrowind), Aleth Quay (Sumurset, a river town),
 Thorn Canopy (Valenwood, on decks), Tasha's Bend (Elsweyr), Hatchwater (Black Marsh, on stilts) and Corrol Ford
-(Cyrodiil, a village until Cyrodiil's rivers are water). `tools/settlementSites.mjs` searched each on the player's own
-files: the province's land, no Arena town, capital, countryside place or lair on its pixel or beside it, and a fit that
-is `ok`.
+(Cyrodiil, a river town on the White Rose). `tools/settlementSites.mjs` searched each on the player's own files: the
+province's land, no Arena town, capital, countryside place or lair on its pixel or beside it, and a fit that is `ok`. A
+river town searches a river's bank where its province has carved rivers, and a coast elsewhere. `--only` lays some rows
+again and keeps every other as written.
 
 A row publishes its inputs alone, never its heights: the ground past the Bay is traced from the player's own map
 picture, so each client lays the settlement out on its own ground. A row fixes the structure its ground chose (layout,
@@ -350,4 +357,3 @@ Hammerfell id in the corpus.
 ## Not yet
 
 - A third layout, a branching street tree, for a settlement of its own.
-- Cyrodiil's rivers as water, so Corrol Ford can stand as a river town.

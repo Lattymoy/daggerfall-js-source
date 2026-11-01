@@ -24,7 +24,7 @@
 import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
-import { standSettlementGround, settlementTreeFlats } from '../settlement/settlementStand.js';   // a settlement's pads carved in, and its yard trees
+import { standSettlementGround, settlementTreeFlats, pixelWaters } from '../settlement/settlementStand.js';   // a settlement's pads carved in, and its yard trees
 import { standTownGrowth, growthClearing } from '../settlement/townGrowth.js';   // a town's outskirts
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
@@ -250,7 +250,8 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // a town's outskirts round its core, on the land its roads, its own ground, its camps and its water leave
   const camps = (wod?.picks ?? []).map(({ rect }) => ({ xMin: rect.x, xMax: rect.x + rect.width, yMin: rect.y, yMax: rect.y + rect.height }));
   const bare = () => generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landform ? createLandforms({ woods, roads: null, sites, beyond, climates }) : null);   // the land with no road
-  const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null) : standSettlementGround(px, py, samples, bare);
+  const wet = landforms && !inBay(px, py) ? pixelWaters(px, py) : null;   // the rivers and lakes the landforms carved, water as the paint's
+  const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps, wet }) : null) : standSettlementGround(px, py, samples, bare, wet);
   const tilemapBytes = convertTilemap(tilemap);
   // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
   const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });
