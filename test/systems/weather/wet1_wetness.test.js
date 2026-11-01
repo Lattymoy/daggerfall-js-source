@@ -6,11 +6,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  rainOf, wetStep, createWetness, wetOn, WET_SOAK_MIN, PUDDLE_FILL_MIN, WET_DRY_MIN, PUDDLE_DRY_MIN, WET_FULL_RAIN, PUDDLE_RAIN,
+  rainOf, wetStep, createWetness, wetOn, wetWorldMode, puddleProxyOn, WET_SOAK_MIN, PUDDLE_FILL_MIN, WET_DRY_MIN, PUDDLE_DRY_MIN, WET_FULL_RAIN, PUDDLE_RAIN,
 } from '../../../src/systems/weather/wetness.js';
+import { FEATURES } from '../../../src/systems/features.js';
+import { GRAPHICS_PRESETS, PRESET_ROWS } from '../../../src/systems/graphicsPresets.js';
+const rd = (p) => readFileSync(p, 'utf8');
 import { EL_TERRAIN_FS, EL_MESH_FS } from '../../../src/render/enhancedLighting.js';
 import { snowTerrainFs } from '../../../src/render/snowfallGlsl.js';
-import { RIPPLE_RATE, RIPPLE_WIDTH, RIPPLE_SLOPE, RIPPLE_NEAR_M, RIPPLE_GROW1, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE, PUDDLE_DARK, PUDDLE_GLOSS, PUDDLE_SHEEN_SOIL, PUDDLE_STRETCH, WIN_GLINT_LOD0, PUDDLE_FLAT, PUDDLE_SALT, PUDDLE_SPREAD, RAIN_WET_GLSL } from '../../../src/render/wetGlsl.js';
+import { RIPPLE_RATE, RIPPLE_WIDTH, RIPPLE_SLOPE, RIPPLE_NEAR_M, RIPPLE_GROW1, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE, PUDDLE_DARK, PUDDLE_GLOSS, PUDDLE_SHEEN_SOIL, PUDDLE_STRETCH, WIN_GLINT_LOD0, PUDDLE_FLAT, PUDDLE_SALT, PUDDLE_SPREAD, RAIN_WET_GLSL, RAIN_GROUND_GLSL } from '../../../src/render/wetGlsl.js';
 import { PUDDLE_PASS_FS, PUDDLE_BLEND_FS, WET_PROXY_DIST_M, WET_PROXY_DIST_FAR_M, WET_PROXY_STEPS, WET_PROXY_GATE, WET_PROXY_AIM0_M, WET_PROXY_AIM1_M, WET_PROXY_MIN_HIT_Y, WET_PROXY_BELOW_EYE_M, WET_PROXY_NEAR_M, WET_PROXY_FAR_M, WET_PROXY_ALPHA, WET_PROXY_BLUR0, PUDDLE_PROXY_FLAT, PUDDLE_PROXY_SPREAD, PUDDLE_PROXY_EDGE, PUDDLE_PROXY_SALT } from '../../../src/render/puddleProxyGlsl.js';
 import { airPassPrograms } from '../../../src/render/airPass.js';
 import { SNOW_TILE_M } from '../../../src/render/snowCoverGlsl.js';
@@ -67,7 +70,27 @@ test('WET1 createWetness: the uniform is [wet, puddle, seconds mod 1000, rain], 
   assert.deepEqual([...off.tick({ minutes: 0, shown: 'storm', intensity: 1, tsec: 3 })], [0, 0, 3, 0]);
   assert.equal(wetOn('?wet=off'), false);
   assert.equal(wetOn('?x=1'), true);
+  assert.equal(wetWorldMode('?wet=off'), 'off');
+  assert.equal(puddleProxyOn('?wet=off'), false);
   assert.ok(Number.isInteger(RIPPLE_RATE * 1000), 'the ripples\' phase is whole at the clock\'s wrap');
+});
+
+test('WET1 settings: wet-world row on Graphics, High/Ultra ship Full (puddle mirrors)', () => {
+  const row = FEATURES.find((f) => f.id === 'wet-world');
+  assert.ok(row);
+  assert.deepEqual(row.control.tiers.map(([v]) => v), ['full', 'wet', 'off']);
+  assert.equal(row.control.key, 'wetWorld');
+  assert.equal(row.control.initial, 'full');
+  assert.equal(row.control.online, 'player');
+  assert.ok(PRESET_ROWS.includes('wet-world'));
+  const v = Object.fromEntries(GRAPHICS_PRESETS.map((p) => [p.id, p.values['wet-world']]));
+  assert.deepEqual(v, { low: 'off', medium: 'wet', high: 'full', ultra: 'full' });
+  assert.equal(v.high, row.control.initial, 'High is how the game ships');
+  assert.equal(puddleProxyOn(''), true, 'default Full runs the colour proxy');
+  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:water-quality", "feat:wet-world"/);
+  assert.match(rd('src/render/airPass.js'), /puddleProxyOn\(\)/, 'Full tier gates the colour proxy');
+  assert.match(rd('src/render/renderer.js'), /key === 'terrain' \|\| key === 'snow'/, 'snow ground gets uWetProxy too');
+  assert.ok(EL_TERRAIN_FS.includes('uWetProxy') && EL_TERRAIN_FS.includes('1.0 - uWetProxy'), 'Wet tier keeps winGlint');
 });
 
 test('WET1 the lane draws it: the ground and the walls read uWet, glint every lamp and the sun in the wet, and show the sky', () => {
@@ -78,7 +101,7 @@ test('WET1 the lane draws it: the ground and the walls read uWet, glint every la
     assert.ok(/outColor = vec4\(elFinish\([^\n]*\n  outColor\.rgb = wetSky\(outColor\.rgb, n, wetV, wetG/.test(fs), `${name}: the sky over the finished colour`);
     assert.ok(!fs.includes('elPointLit(vWorldPos, n)'), `${name}: no dry lantern loop left`);
   }
-  assert.ok(EL_TERRAIN_FS.includes('vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y);'), 'the ground\'s puddles');
+  assert.ok(EL_TERRAIN_FS.includes('vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y, road);'), 'the ground\'s puddles only on paving');
 });
 
 test('WET1 the Snowfall variant: the mod\'s snow replaces the decode and says it is dry, once', () => {
@@ -104,9 +127,11 @@ test('WET1 the renderer: setWet stores and moves the frame stamp on a change alo
 });
 
 test('WET1b: soil stays matte, a road sheens, a puddle mirrors, and the puddle edge is wide', () => {
-  assert.ok(WET_SHEEN_SOIL < WET_SHEEN_ROAD && WET_SHEEN_ROAD < 0.4);
+  assert.equal(WET_SHEEN_SOIL, 0, 'soil never sheens');
+  assert.equal(WET_SHEEN_ROAD, 0, 'paving without a puddle never mirrors');
   assert.ok(PUDDLE_EDGE >= 0.2, 'a narrow step draws a line around the puddle');
   assert.ok(EL_TERRAIN_FS.includes('wetGlossGround(wetW, road)') && EL_TERRAIN_FS.includes('elSpecK'));
+  assert.ok(RAIN_WET_GLSL.includes('return w.y * road'), 'ground mirror gloss is puddle×road alone');
   assert.ok(!EL_MESH_FS.includes('wetGlossGround(wetW'), 'a wall is not a road');
   assert.match(LAB_WX_FS, /smoothstep\(0\.0,0\.35,vT\) \* 0\.22/);
 });
@@ -116,8 +141,9 @@ test('WET1d: a puddle is dark water with a point of each lamp and lit window in 
   assert.ok(PUDDLE_GLOSS >= 512 && PUDDLE_GLOSS <= 2048, 'a tight lobe + stretch; 4500 pow() was GPU-heavy');
   assert.ok(PUDDLE_STRETCH >= 5, 'squeeze along the view on the ground shortens the lamp streak');
   assert.ok(WIN_GLINT_LOD0 >= 0.5, 'stone panes scatter a quarter more than the first dial');
-  assert.ok(WET_SHEEN_SOIL <= WET_SHEEN_ROAD / 10, 'soil sheen is a tenth of a road\'s');
-  assert.ok(PUDDLE_SHEEN_SOIL <= 0.15, 'a soil puddle is damp, not glass');
+  assert.equal(WET_SHEEN_SOIL, 0, 'soil sheen is off');
+  assert.equal(WET_SHEEN_ROAD, 0, 'damp stone without a puddle is not a sheet');
+  assert.equal(PUDDLE_SHEEN_SOIL, 0, 'a soil puddle never mirrors');
   assert.ok(EL_TERRAIN_FS.includes('elWetPow = mix('), 'the ground tightens the lobe in a puddle');
   assert.ok(EL_TERRAIN_FS.includes('road = roadAmt(data, unwrapped)'), 'soil↔stones smear at the paving\'s edge');
   assert.ok(EL_TERRAIN_FS.includes('soilK = mix(0.1, 1.0, road)'), 'soil\'s lamp and window glints are a tenth');
@@ -134,8 +160,8 @@ test('WET1d: a puddle is dark water with a point of each lamp and lit window in 
 });
 
 test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
-  assert.ok(WET_PROXY_DIST_M >= 30 && WET_PROXY_DIST_FAR_M >= 50 && WET_PROXY_FAR_M >= 60 && WET_PROXY_STEPS === 1 && WET_PROXY_GATE >= 0.15);
-  assert.ok(WET_PROXY_AIM1_M > WET_PROXY_AIM0_M && WET_PROXY_AIM0_M >= 2 && WET_PROXY_AIM1_M >= 4, 'aim height leans with R.y');
+  assert.ok(WET_PROXY_DIST_M >= 30 && WET_PROXY_DIST_FAR_M >= 50 && WET_PROXY_FAR_M >= 60 && WET_PROXY_STEPS >= 4 && WET_PROXY_GATE >= 0.15);
+  assert.ok(WET_PROXY_AIM1_M > WET_PROXY_AIM0_M && WET_PROXY_AIM0_M >= 1 && WET_PROXY_AIM1_M >= 8, 'vertical span covers a facade, not a strip');
   assert.equal(PUDDLE_PROXY_SALT, PUDDLE_SALT);
   assert.equal(PUDDLE_PROXY_SPREAD, PUDDLE_SPREAD);
   assert.equal(PUDDLE_PROXY_EDGE, PUDDLE_EDGE);
@@ -143,20 +169,25 @@ test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
   assert.deepEqual([...PUDDLE_PROXY_FLAT], [...PUDDLE_FLAT]);
   assert.ok(PUDDLE_PASS_FS.includes(` / ${SNOW_TILE_M}`), 'same tile metres as wetGround');
   assert.ok(PUDDLE_PASS_FS.includes('uFrame') && PUDDLE_PASS_FS.includes('uVP'), 'this frame colour + VP');
-  assert.ok(PUDDLE_PASS_FS.includes('aimH') && PUDDLE_PASS_FS.includes('sampleBlur'), 'one continuous aim + soft blur');
+  assert.ok(PUDDLE_PASS_FS.includes('best') && PUDDLE_PASS_FS.includes('sampleBlur'), 'best hit in the vertical span + blur');
   assert.ok(PUDDLE_PASS_FS.includes('length(sceneW - rayP)'), 'world-space confidence');
   assert.ok(PUDDLE_PASS_FS.includes('maxT') && PUDDLE_PASS_FS.includes(`${WET_PROXY_DIST_FAR_M}`), 'search grows when backing off');
   assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_BLUR0}`), 'blur dial in the sample');
   assert.ok(!PUDDLE_PASS_FS.includes('uPrevColor'), 'no fixed prevColour stamp');
-  assert.ok(!PUDDLE_PASS_FS.includes('bool behind(') && !PUDDLE_PASS_FS.includes('vec4 band('), 'no march / dual band (stripes)');
+  assert.ok(!PUDDLE_PASS_FS.includes('bool behind(') && !PUDDLE_PASS_FS.includes('vec4 band('), 'no dual-band helpers (stripes)');
+  assert.equal(WET_SHEEN_ROAD, 0, 'non-puddle road sheen off');
   assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_MIN_HIT_Y}`), 'reject ground self-hits');
   assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_BELOW_EYE_M}`), 'skip flat roofs above the eye');
   assert.ok(PUDDLE_PASS_FS.includes('distFade') && PUDDLE_PASS_FS.includes(`${WET_PROXY_FAR_M}`), 'fade in with approach');
   assert.ok(PUDDLE_PASS_FS.includes('nFlat'), 'level mirror, not noisy half-res normals');
   assert.ok(PUDDLE_PASS_FS.includes('pudNoise') && PUDDLE_PASS_FS.includes('flatN'), 'mask is wetGround-shaped blobs');
+  assert.ok(PUDDLE_PASS_FS.includes('roadGate') && PUDDLE_PASS_FS.includes('uRoadMap'), 'colour proxy only on stone');
   assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_ALPHA}`), 'mirror alpha dial');
   assert.ok(PUDDLE_DARK <= 0.12, 'puddles darker than wet stone');
-  assert.ok(EL_TERRAIN_FS.includes('pudGlint'), 'lamp/window glints yield to the colour proxy');
+  assert.ok(EL_TERRAIN_FS.includes('pudGlint') && EL_TERRAIN_FS.includes('uWetProxy'), 'lamp/window glints yield while Full proxy runs');
+  assert.ok(EL_TERRAIN_FS.includes('wetW.y * road'), 'glints gated to paving puddles');
+  assert.ok(EL_TERRAIN_FS.includes('wetSky(outColor.rgb, n, wetV, wetG * 0.35)'), 'sky sheet only from road-puddle gloss');
+  assert.ok(RAIN_GROUND_GLSL.includes('smoothstep(0.2, 0.55, road)'), 'soil stands no puddle');
   assert.ok(!EL_TERRAIN_FS.includes('mix(1.0, 1.25, wetW.y)'), 'no sky boost stacking on the proxy');
   assert.ok(RIPPLE_RATE <= 1.5 && RIPPLE_GROW1 >= 0.7 && RIPPLE_WIDTH >= 0.1, 'ripples live long enough to spread');
   assert.ok(RAIN_WET_GLSL.includes('mix(0.5, 1.55') && RAIN_WET_GLSL.includes('mix(0.6, 1.45'), 'drop size and width vary');
@@ -164,8 +195,12 @@ test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
 
   assert.ok(PUDDLE_BLEND_FS.includes('uPuddle'), 'resolve blend reads the half-res out');
   assert.ok(!EL_TERRAIN_FS.includes('uPrevColor'), 'terrain FS must not sample prev colour (TDR)');
-  assert.ok(!EL_TERRAIN_FS.includes('wetProxy'), 'no in-terrain proxy');
+  assert.ok(!EL_TERRAIN_FS.includes('bool behind(') && !EL_TERRAIN_FS.includes('PUDDLE_PASS'), 'colour proxy stays out of terrain FS');
   assert.ok(airPassPrograms({ vs: { mesh: 'm', bb: 'b' } }, false).some((p) => p[1] === PUDDLE_PASS_FS), 'air boot lists the pass');
+  const airSrc = readFileSync(new URL('../../../src/render/airPass.js', import.meta.url), 'utf8');
+  const blend = airSrc.slice(airSrc.indexOf('  _puddleProxy(rect) {'), airSrc.indexOf('  release() {'));
+  assert.ok(blend.includes('gl.activeTexture(gl.TEXTURE0);   // WET1f:') && blend.includes('gl.bindTexture(gl.TEXTURE_2D, F.puddle)'), 'blend samples puddle on unit 0, not depth');
+  assert.ok(airSrc.includes('_wetRoadDummy'), 'usampler2D always has an R8UI bound');
 });
 
 test('WET1c: rain runs down a roof and off its face, not down a wall or the ground', () => {

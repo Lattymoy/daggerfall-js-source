@@ -1563,7 +1563,8 @@ door, the uniform, both lane programs and the Snowfall variant's one `wetAt`, an
 dry. The three programs were compiled in WebGL2 (Edge), and a misspelt call was refused. `tools/wetProbe.mjs` shoots a
 street wet and with `?wet=off`: Sentinel at noon in rain differed by 7.66 a channel on the mean, at 21:30 in a storm
 by 6.86, and a night's sprinkle (rain 0.04) by 0.86, as its law says. In Daggerfall and Wayrest on the boot's late-autumn
-date the ground lay under snow, and the wet stayed under it. No probe stood past the Bay.
+date the ground lay under snow, and the wet stayed under it. No probe stood past the Bay. Settings: Features / Graphics row
+`wet-world` (Off / Wet / Full). High and Ultra ship Full (puddle building colour). `?wet=off` still kills it.
 
 **WET1b (2026-10-31).** A puddle, a road and soil were one highlight: the stone's lobe (`elSpecK`, left at 1 off the
 rain) plus one sheen. In the rain soil stays nearly matte (WET_SHEEN_SOIL), a path tile (46, 47, 55) takes a dull
@@ -1583,9 +1584,14 @@ mask and marches previous depth so a bush hides the pane. Soil scatters more tha
 WIN_GLINT_NEAR_M to WIN_GLINT_FAR_M. Stone panes take +25% soft. Mesh compiles no `winGlint`.
 
 **WET1e.** Building/tree colour in puddles is a separate full-res pass at the air resolve (not terrain FS - that TDRd):
-one continuous aim-height sample along the reflection ray of THIS frame (leans up with R.y), soft world-space
-confidence + blur. Dual bands and ray-march picked different UVs per pixel → horizontal stripe tears. Search length
-grows with puddle distance. Gated by wetGround-matched `pudNoise` and WET_PROXY_FAR_M. Puddle `winGlint` / lamp
-`wetGlint` boosts are off once fill passes WET_PROXY_GATE. Ripple drops vary size/width/amp per tick. Terrain still does sky.
+span taps along the reflection ray of THIS frame (AIM0..AIM1 m above the puddle), best soft world-space confidence +
+blur. A single fixed aim height only showed a horizontal strip of the facade; dual bands tore stripes. Search length
+grows with puddle distance. Gated by `wet-world` Full, wetGround-matched `pudNoise` and WET_PROXY_FAR_M. Puddle
+`winGlint` / lamp `wetGlint` yield via `uWetProxy` while Full runs. Ripple drops vary size/width/amp per tick. Terrain
+still does sky.
+
+**WET1f.** Ground mirrors only in paving/street puddles: `wetGround(..., road)` stands no soil puddle,
+`wetGlossGround` is `w.y * road`, colour proxy `roadGate` on the eye chunk's tilemap. Soil stays wet-dark only.
+Blend must sample the puddle on texture unit 0 after the tilemap bind.
 
 **Not yet.** True SSR / Hi-Z. A porch's floor still wets as the street does. Meshes take no puddles. No eave drips.

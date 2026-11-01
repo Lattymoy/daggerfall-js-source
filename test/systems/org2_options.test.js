@@ -191,7 +191,7 @@ test('ORG2: the graphics preset - High is how the game ships, every value is one
 
 test('AUDIT MEM-AUDIT G1-G6: the preset - every row and part in cost order; High and Ultra chosen off the enhanced outdoors too, and a lane row written whole; a part off its default wears Changed; the bar as drawn presses the preset the rows stand at; its search finds what its note names; it says when it takes effect (mutants: an order turned, the lane unread, a lane row skipped, a part unmarked, the bar\'s read, the words fixed)', () => {
   // G3: each row's values from Low to Ultra never cost less - each row's own order, cheapest first
-  const COST = { 'land-view-distance': [3, 4, 5, 6], grass: [0, 0.25, 0.5, 1], 'cloud-quality': ['lo', 'default', 'hi'], 'ground-sharpness': ['off', 'default', 'max'], 'water-quality': ['simple', 'full'], 'real-windows': ['off', 'rooms', 'full'] };
+  const COST = { 'land-view-distance': [3, 4, 5, 6], grass: [0, 0.25, 0.5, 1], 'cloud-quality': ['lo', 'default', 'hi'], 'ground-sharpness': ['off', 'default', 'max'], 'water-quality': ['simple', 'full'], 'wet-world': ['off', 'wet', 'full'], 'real-windows': ['off', 'rooms', 'full'] };
   assert.deepEqual(Object.keys(COST).sort(), [...PRESET_ROWS].sort(), 'every row has its order here');
   for (const id of PRESET_ROWS) {
     const ranks = GRAPHICS_PRESETS.map((p) => COST[id].indexOf(p.values[id]));

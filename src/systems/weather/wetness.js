@@ -2,8 +2,10 @@
 // WET1 (bible/07-Rendering/Weather-Arc.md WET1): how wet the ground about the player is. It soaks while rain falls and
 // dries after, on the game's clock, so a rest or a journey through a shower lands on ground that matches it. The lane's
 // ground and walls read it (render/wetGlsl.js). Interiors and dungeons never set it, so they draw dry.
-// DFU has no wet ground: a departure on the enhanced lane alone. `?wet=off` is the door back.
+// DFU has no wet ground: a departure on the enhanced lane alone. Settings row `wet-world`; `?wet=off` is the door back.
 import { pageParam } from '../pageQuery.js';
+import { getPref } from '../uiPrefs.js';
+import { isEnhanced } from '../uiSkin.js';
 
 /** Game minutes a full rain takes to soak the ground, and to fill the puddles; and those a dry spell takes to undo each. */
 export const WET_SOAK_MIN = 10;
@@ -14,9 +16,22 @@ export const PUDDLE_DRY_MIN = 240;
 export const WET_FULL_RAIN = 0.25;
 export const PUDDLE_RAIN = Object.freeze([0.3, 0.8]);
 
-/** `?wet=off` - the ground stays dry. Read off the page's query once a search. */
+/** Off / Wet (sheen + ripples) / Full (Wet + puddle building colour). `?wet=off` wins. */
+export function wetWorldMode(search = globalThis.location?.search ?? '') {
+  if (pageParam('wet', search) === 'off') return 'off';
+  if (!isEnhanced()) return 'off';
+  const v = getPref('wetWorld');
+  return v === 'off' || v === 'wet' || v === 'full' ? v : 'full';
+}
+
+/** Ground soaks and sheens. */
 export function wetOn(search = globalThis.location?.search ?? '') {
-  return pageParam('wet', search) !== 'off';
+  return wetWorldMode(search) !== 'off';
+}
+
+/** WET1e colour proxy in puddles - Full only. */
+export function puddleProxyOn(search = globalThis.location?.search ?? '') {
+  return wetWorldMode(search) === 'full';
 }
 
 /** The rain falling now, 0..1: the front's shown fall and its intensity, less its snow. Sand and ash wet nothing. Pure. */

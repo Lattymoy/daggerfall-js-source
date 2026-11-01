@@ -2285,7 +2285,7 @@ function categoryCard({ pool = portPool(), pause = false } = {}) {
  *  of English words did not know its own note, and the row was the one on the tab no language reached. */
 const PRESET_WORDS = {
   name: () => t('menu.settings.preset.name', 'Quality preset'),
-  note: () => t('menu.settings.preset.note', 'View distance, grass, clouds, ground sharpness, water, windows and steady shadows.'),
+  note: () => t('menu.settings.preset.note', 'View distance, grass, clouds, ground sharpness, water, wet ground, windows and steady shadows.'),
   effect: () => t('menu.settings.preset.effect', 'Steady shadows and the windows change at once; the rest when the world next loads.'),
   custom: () => t('menu.settings.preset.custom', 'Custom'),
 };

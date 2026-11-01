@@ -85,7 +85,6 @@ import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN
 import { MESH_ALPHA_GLSL } from './meshAlpha.js';   // POI-2: the lane's mesh FS ends on the same translucency as the classic one
 import { windowLightGlsl } from './windowLight.js';   // WL1: the windows' light, read in the lantern loop's own function
 import { RAIN_WET_GLSL, RAIN_GROUND_GLSL, WET_DARK, WET_WALL_DARK, PUDDLE_GLOSS, PUDDLE_GLINT, PUDDLE_WIN_GLINT, PUDDLE_STRETCH } from './wetGlsl.js';   // WET1: the wet world
-import { WET_PROXY_GATE } from './puddleProxyGlsl.js';   // WET1e: fade winGlint when the colour proxy owns the mirror
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -1025,6 +1024,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec4 uFadeTint;   // MID-RING: a just-built pixel's tint (rgb, linear) and its share left (a)
+uniform float uWetProxy;   // WET1e: 1 while Full puddle colour owns the mirror (kills winGlint doubles)
 ${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
@@ -1093,8 +1093,8 @@ void main() {
   tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
   float road = roadAmt(data, unwrapped);   // WET1d: soil↔stones smeared at the paving's edge (roadEdgeGlsl); snowTerrainFs sets 0
   vec3 n = normalize(vNormal);
-  vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y);   // WET1: render/wetGlsl.js
-  float wetG = wetGlossGround(wetW, road);
+  vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y, road);   // WET1f: puddles only on paving
+  float wetG = wetGlossGround(wetW, road);   // WET1f: mirror gloss only in a road puddle
   vec3 wetV = normalize(uCamPos - vWorldPos);
   tex = wetAlbedo(tex, wetW, ${glslFloat(WET_DARK)});
   n = wetNormal(n, wetW, vLocalXZ, distance(uCamPos, vWorldPos));
@@ -1122,14 +1122,14 @@ void main() {
   // WET1d: soil is always more scattered than stone - dimmer glints, softer panes (scatter into winGlint)
   float soilK = mix(0.1, 1.0, road);
   float soilScatter = (1.0 - road) * 0.4;   // WET1d: soil scatters more than stone, but not 3x mush
-  // WET1e: puddle lamp streaks OFF once the colour proxy runs - wetGlint + march stacked every lamp into 2-3 discs
-  float pudGlint = wetW.y * (uWet.y <= ${WET_PROXY_GATE} ? 1.0 : 0.0);
+  // WET1f: lamp/window/sky mirrors only in road puddles; Full proxy kills the glint doubles
+  float pudGlint = wetW.y * road * (1.0 - uWetProxy);
   lit += wetGlint * mix(soilK, ${glslFloat(PUDDLE_GLINT)} * soilK, pudGlint) + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
   // puddle gate: without it every ground pixel marched every lit pane (same TDR class as ungated SSR)
   if (pudGlint > 0.0) lit += winGlint(vWorldPos, n, wetV, elWetPow, soilScatter)
     * (${glslFloat(PUDDLE_WIN_GLINT)} * pudGlint * soilK);
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
-  outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG * mix(0.8, 1.0, road));   // WET1e: proxy owns the mirror; no extra sky boost
+  outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG * 0.35);   // WET1f: wetG is already puddle×road
 }`;
 
 /** The character fragment shader of the lane - the classic CHAR_FS's

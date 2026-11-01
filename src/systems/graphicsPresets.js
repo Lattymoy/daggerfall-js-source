@@ -12,7 +12,7 @@
 import { FEATURES, resolveControl } from './features.js';
 
 /** The rows a preset sets, in the order the page draws them. */
-export const PRESET_ROWS = Object.freeze(['land-view-distance', 'grass', 'cloud-quality', 'ground-sharpness', 'water-quality', 'real-windows']);   // RW1: and the real windows - off on Low, the rooms alone on Medium, the view out too from High
+export const PRESET_ROWS = Object.freeze(['land-view-distance', 'grass', 'cloud-quality', 'ground-sharpness', 'water-quality', 'wet-world', 'real-windows']);   // WET1: wet ground - off on Low, Wet on Medium, Full (puddle mirrors) on High/Ultra
 /** MEM-AUDIT (2026-10-23, the owner: "dig into the performance settings ... ensuring they are perfect"): THE PARTS A PRESET
  *  SETS - a row's drawer switch, by its pref, whose own note says it costs frame rate. Steady shadows (Enhanced lighting's
  *  part, FLICKER-FIX) redraws every far caster and swaying wood's shadow every frame - 42 lantern face passes a frame at
@@ -22,10 +22,10 @@ export const PRESET_ROWS = Object.freeze(['land-view-distance', 'grass', 'cloud-
 export const PRESET_PARTS = Object.freeze(['steadyShadows']);
 
 export const GRAPHICS_PRESETS = Object.freeze([
-  Object.freeze({ id: 'low', label: 'Low', values: Object.freeze({ 'land-view-distance': 3, grass: 0.25, 'cloud-quality': 'lo', 'ground-sharpness': 'off', 'water-quality': 'simple', 'real-windows': 'off' }), parts: Object.freeze({ steadyShadows: false }) }),
-  Object.freeze({ id: 'medium', label: 'Medium', values: Object.freeze({ 'land-view-distance': 4, grass: 0.5, 'cloud-quality': 'lo', 'ground-sharpness': 'default', 'water-quality': 'simple', 'real-windows': 'rooms' }), parts: Object.freeze({ steadyShadows: true }) }),
-  Object.freeze({ id: 'high', label: 'High', values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default', 'ground-sharpness': 'default', 'water-quality': 'full', 'real-windows': 'full' }), parts: Object.freeze({ steadyShadows: true }) }),
-  Object.freeze({ id: 'ultra', label: 'Ultra', values: Object.freeze({ 'land-view-distance': 6, grass: 1, 'cloud-quality': 'hi', 'ground-sharpness': 'max', 'water-quality': 'full', 'real-windows': 'full' }), parts: Object.freeze({ steadyShadows: true }) }),
+  Object.freeze({ id: 'low', label: 'Low', values: Object.freeze({ 'land-view-distance': 3, grass: 0.25, 'cloud-quality': 'lo', 'ground-sharpness': 'off', 'water-quality': 'simple', 'wet-world': 'off', 'real-windows': 'off' }), parts: Object.freeze({ steadyShadows: false }) }),
+  Object.freeze({ id: 'medium', label: 'Medium', values: Object.freeze({ 'land-view-distance': 4, grass: 0.5, 'cloud-quality': 'lo', 'ground-sharpness': 'default', 'water-quality': 'simple', 'wet-world': 'wet', 'real-windows': 'rooms' }), parts: Object.freeze({ steadyShadows: true }) }),
+  Object.freeze({ id: 'high', label: 'High', values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default', 'ground-sharpness': 'default', 'water-quality': 'full', 'wet-world': 'full', 'real-windows': 'full' }), parts: Object.freeze({ steadyShadows: true }) }),
+  Object.freeze({ id: 'ultra', label: 'Ultra', values: Object.freeze({ 'land-view-distance': 6, grass: 1, 'cloud-quality': 'hi', 'ground-sharpness': 'max', 'water-quality': 'full', 'wet-world': 'full', 'real-windows': 'full' }), parts: Object.freeze({ steadyShadows: true }) }),
 ]);
 
 /** AUDIT MEM-AUDIT G2: a preset's value for a row as the row reads once it is written - its lane's `readOf` (land view's,

@@ -25,11 +25,11 @@ export const WIN_GLINT_FADE_M = 22;
 /** WET1d: how much of the ambient a night mirror shows - all of it read as a grey sheet. */
 export const WET_SKY_AMBIENT = 0.5;   // WET1e: stronger sky in the wet when the proxy misses
 /** A wall's gloss. Ground splits: soil almost matte, a road a dull sheen, a puddle a mirror (wetGlossGround). */
-export const WET_SHEEN = 0.4;
-export const WET_SHEEN_SOIL = 0.004;   // WET1d: soil was reading as wet glass; a tenth of the road's damp look
-export const WET_SHEEN_ROAD = 0.22;
-/** A puddle on soil is damp, not a mirror; a road puddle keeps the glass. */
-export const PUDDLE_SHEEN_SOIL = 0.1;
+export const WET_SHEEN = 0.2;   // walls/roofs only - ground mirrors are road puddles alone
+export const WET_SHEEN_SOIL = 0.0;   // WET1f: soil never sheens
+export const WET_SHEEN_ROAD = 0.0;   // WET1f: damp paving without a puddle is not a mirror
+/** Soil never mirrors; road puddles take the glass (wetGlossGround). */
+export const PUDDLE_SHEEN_SOIL = 0.0;
 /** How wide the puddle's edge is, in the noise's 0..1 - a hard step read as a drawn line. */
 export const PUDDLE_EDGE = 0.22;
 /** Puddles: the flat they need (n.y), their noise salt, and how far their face's threshold falls at a full fill. */
@@ -77,10 +77,9 @@ vec3 wetAlbedo(vec3 a, vec2 w, float dark) { return a * mix(1.0, dark, w.x) * mi
 // a wall takes half the rain a roof does, and stands no puddle
 vec2 wetWall(vec3 n) { return vec2(uWet.x * mix(0.5, 1.0, max(n.y, 0.0)), 0.0); }
 float wetGloss(vec2 w) { return max(w.x * ${f(WET_SHEEN)}, w.y); }
-// soil stays matte, a road takes a dull sheen; a soil puddle is damp water, a road puddle the mirror
+// WET1f: ground mirrors only in a road/paving puddle - soil and dry stone stay matte
 float wetGlossGround(vec2 w, float road) {
-  float sheen = mix(${f(WET_SHEEN_SOIL)}, ${f(WET_SHEEN_ROAD)}, road) * w.x;
-  return mix(sheen, mix(${f(PUDDLE_SHEEN_SOIL)}, 1.0, road), w.y);
+  return w.y * road;
 }
 // a puddle's face is level, and rings where drops fall near the eye
 vec3 wetNormal(vec3 n, vec2 w, vec2 m, float dist) {
@@ -119,18 +118,20 @@ vec3 wetSky(vec3 col, vec3 n, vec3 V, float gloss) {
 `;
 
 /** The ground's half, after snowCoverGlsl (snowNoise, uEcoOrigin): x the wetness, y the puddle at pixel-local metres
- *  `local`, under snow `snow`, at a footprint of `fw` tiles a screen pixel (puddles past a tile a pixel are gone). */
+ *  `local`, under snow `snow`, at a footprint of `fw` tiles a screen pixel (puddles past a tile a pixel are gone).
+ *  `road` (0..1) - WET1f: puddles stand only on paving/street stone. */
 export const RAIN_GROUND_GLSL = `
-vec2 wetGround(vec2 local, vec3 n, float snow, float fw) {
+vec2 wetGround(vec2 local, vec3 n, float snow, float fw, float road) {
   float wet = uWet.x * (1.0 - snow);
   if (wet <= 0.0) return vec2(0.0);
   float pud = 0.0;
-  if (uWet.y > 0.0) {
+  if (uWet.y > 0.0 && road > 0.001) {
     vec2 lt = local / ${f(SNOW_TILE_M)};
     float a = clamp(2.0 - 2.0 * fw, 0.0, 1.0);
     float p = mix(0.5, 0.6 * snowNoise(lt, 1, ${PUDDLE_SALT}u) + 0.4 * snowNoise(lt, 4, ${PUDDLE_SALT + 1}u), a);
     float th = 1.0 - ${f(PUDDLE_SPREAD)} * uWet.y;
     pud = smoothstep(th - ${f(PUDDLE_EDGE)} * 0.35, th + ${f(PUDDLE_EDGE)}, p) * smoothstep(${f(PUDDLE_FLAT[0])}, ${f(PUDDLE_FLAT[1])}, n.y) * (1.0 - snow);
+    pud *= smoothstep(0.2, 0.55, road);   // WET1f: soil and verge - wet dark, no puddle mirror
   }
   return vec2(wet, pud);
 }

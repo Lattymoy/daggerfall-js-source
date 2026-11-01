@@ -2,6 +2,7 @@
 // WET1e: separate puddle proxy - NOT in terrain FS (that TDRd).
 // Dial copies of wetGlsl / snowCoverGlsl - do not import wetGlsl (cycle: wetGlsl → airPass → here).
 import { SNOW_TILE_M } from './snowCoverGlsl.js';
+import { ROAD_RECORDS } from '../world/road/roadEdge.js';   // WET1f: full colour only on stone puddles
 
 /** GLSL float literal - JS 4.0 stringifies as "4" (int), which breaks mix overloads. */
 const f = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -9,14 +10,14 @@ const f = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
 /** Max reflection travel (m); grows when the puddle is far from the eye. */
 export const WET_PROXY_DIST_M = 40;
 export const WET_PROXY_DIST_FAR_M = 64;
-/** One continuous aim height (lerp by R.y) - two discrete bands striped the facade. */
-export const WET_PROXY_AIM0_M = 2.8;
-export const WET_PROXY_AIM1_M = 5.2;
-export const WET_PROXY_STEPS = 1;
+/** Vertical span along the ray (m above the puddle) - a single aimH sliced the facade into a strip. */
+export const WET_PROXY_AIM0_M = 1.2;
+export const WET_PROXY_AIM1_M = 10.0;
+export const WET_PROXY_STEPS = 5;   // soft-weighted taps across the span (not discrete bands)
 export const WET_PROXY_REFINE = 0;
 export const WET_PROXY_GATE = 0.2;
 /** World-space match radius - soft alpha, not a hard kill. */
-export const WET_PROXY_THICK_M = 1.4;
+export const WET_PROXY_THICK_M = 1.6;
 export const WET_PROXY_UV_CAP_X = 0.06;
 export const WET_PROXY_UV_CAP_Y = 0.22;
 export const WET_PROXY_UV_CAP = WET_PROXY_UV_CAP_Y;
@@ -33,11 +34,12 @@ export const WET_PROXY_BLUR0 = 2.5;
 export const WET_PROXY_BLUR1 = 6.0;
 
 /**
- * Full-res single-band sample along the reflection ray of THIS frame + soft blur.
- * Dual bands / march picked different UVs per pixel → horizontal stripe tears.
+ * Span taps up the reflection ray; keep the best-confidence hit + blur.
+ * One fixed aimH sliced the facade; UV-centroid of the span still collapsed to a strip.
  */
 export const PUDDLE_PASS_FS = `#version 300 es
 precision highp float;
+precision highp usampler2D;
 in vec2 vUV;
 uniform highp sampler2D uDepth;
 uniform sampler2D uFrame;
@@ -48,7 +50,17 @@ uniform mat4 uVP;
 uniform mat3 uViewRot;
 uniform vec3 uCamPos;
 uniform vec4 uWet;
+uniform usampler2D uTilemap;   // WET1f: the chunk under the eye (renderer stashes it)
+uniform vec4 uRoadMap;   // origin.xz, tileSize m, enabled
 out vec4 outColor;
+// shortcut: one tilemap (eye's chunk); pixels outside 0..128 stay matte
+float roadGate(vec3 wp) {
+  if (uRoadMap.w < 0.5) return 0.0;
+  vec2 unwrapped = (wp.xz - uRoadMap.xy) / uRoadMap.z;
+  if (unwrapped.x < 0.0 || unwrapped.y < 0.0 || unwrapped.x >= 128.0 || unwrapped.y >= 128.0) return 0.0;
+  highp uint r = texelFetch(uTilemap, ivec2(unwrapped), 0).r >> 2u;
+  return (r == ${ROAD_RECORDS[0]}u || r == ${ROAD_RECORDS[1]}u || r == ${ROAD_RECORDS[2]}u) ? 1.0 : 0.0;
+}
 float depthAt(vec2 wuv) {
   return textureLod(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas, 0.0).r;
 }
@@ -124,7 +136,9 @@ void main() {
   vec2 lt = wp.xz / ${f(SNOW_TILE_M)};
   float p = 0.6 * pudNoise(lt, 1, ${PUDDLE_PROXY_SALT}u) + 0.4 * pudNoise(lt, 4, ${PUDDLE_PROXY_SALT + 1}u);
   float th = 1.0 - ${f(PUDDLE_PROXY_SPREAD)} * uWet.y;
-  float pud = smoothstep(th - ${f(PUDDLE_PROXY_EDGE)} * 0.35, th + ${f(PUDDLE_PROXY_EDGE)}, p) * flatN;
+  float road = roadGate(wp);   // WET1f: soil never takes the building mirror
+  if (road <= 0.001) { outColor = vec4(0.0); return; }
+  float pud = smoothstep(th - ${f(PUDDLE_PROXY_EDGE)} * 0.35, th + ${f(PUDDLE_PROXY_EDGE)}, p) * flatN * road;
   if (pud <= ${f(WET_PROXY_GATE)}) { outColor = vec4(0.0); return; }
   vec3 V = normalize(uCamPos - wp);
   vec3 nFlat = vec3(0.0, 1.0, 0.0);
@@ -132,27 +146,37 @@ void main() {
   if (R.y < 0.04) { outColor = vec4(0.0); return; }
   float maxT = mix(${f(WET_PROXY_DIST_M)}, ${f(WET_PROXY_DIST_FAR_M)}, smoothstep(10.0, 40.0, dist));
   float thick = mix(${f(WET_PROXY_THICK_M)}, ${f(WET_PROXY_THICK_M * 1.35)}, smoothstep(10.0, 40.0, dist));
-  // One sample: aim height leans up with steeper R - continuous in wp, no band fight
-  float aimH = mix(${f(WET_PROXY_AIM0_M)}, ${f(WET_PROXY_AIM1_M)}, smoothstep(0.06, 0.4, R.y));
-  float t = clamp(aimH / max(R.y, 0.05), 0.5, maxT);
-  vec3 rayP = wp + R * t;
-  vec2 hitUV = project(rayP);
-  if (hitUV.x < 0.0 || hitUV.x > 1.0 || hitUV.y < 0.0 || hitUV.y > 1.0) { outColor = vec4(0.0); return; }
-  if (hitUV.y < wuv.y) { outColor = vec4(0.0); return; }
-  if (depthAt(hitUV) >= 0.999) { outColor = vec4(0.0); return; }
-  vec3 sceneW = worldAt(hitUV);
-  if (sceneW.y < wp.y + ${f(WET_PROXY_MIN_HIT_Y)}) { outColor = vec4(0.0); return; }
-  float err = length(sceneW - rayP);
-  float conf = exp((-err * err) / max(2.0 * thick * thick, 1e-4));
-  float edge = min(min(hitUV.x, hitUV.y), min(1.0 - hitUV.x, 1.0 - hitUV.y));
-  conf *= smoothstep(0.0, 0.05, edge);
-  conf *= smoothstep(0.35, 0.9, t);
-  if (conf < 0.03) { outColor = vec4(0.0); return; }
-  vec3 col = sampleBlur(hitUV, t);
+  float ry = max(R.y, 0.05);
+  float t0 = clamp(${f(WET_PROXY_AIM0_M)} / ry, 0.5, maxT);
+  float t1 = clamp(${f(WET_PROXY_AIM1_M)} / ry, 0.5, maxT);
+  if (t1 < t0) { float s = t0; t0 = t1; t1 = s; }
+  // Best geometric hit in the span (soft thick) - UV average of heights re-collapsed to a mid-facade strip
+  vec2 hitUV = vec2(-1.0);
+  float tHit = 0.0;
+  float best = 0.0;
+  for (int i = 0; i < ${WET_PROXY_STEPS}; i++) {
+    float u = (float(i) + 0.5) / ${f(WET_PROXY_STEPS)};
+    float t = mix(t0, t1, u);
+    vec3 rayP = wp + R * t;
+    vec2 uv = project(rayP);
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) continue;
+    if (uv.y < wuv.y) continue;
+    if (depthAt(uv) >= 0.999) continue;
+    vec3 sceneW = worldAt(uv);
+    if (sceneW.y < wp.y + ${f(WET_PROXY_MIN_HIT_Y)}) continue;
+    float err = length(sceneW - rayP);
+    float conf = exp((-err * err) / max(2.0 * thick * thick, 1e-4));
+    float edge = min(min(uv.x, uv.y), min(1.0 - uv.x, 1.0 - uv.y));
+    conf *= smoothstep(0.0, 0.05, edge);
+    conf *= smoothstep(0.25, 0.85, t);
+    if (conf > best) { best = conf; hitUV = uv; tHit = t; }
+  }
+  if (best < 0.03) { outColor = vec4(0.0); return; }
+  vec3 col = sampleBlur(hitUV, tHit);
   float lum = dot(col, vec3(0.25, 0.55, 0.2));
   col *= mix(1.12, 0.55, smoothstep(0.55, 1.7, lum));
   float fres = mix(0.4, 1.0, pow(1.0 - max(dot(nFlat, V), 0.0), 3.5));
-  float a = fres * pud * distFade * conf * ${f(WET_PROXY_ALPHA)};
+  float a = fres * pud * distFade * best * ${f(WET_PROXY_ALPHA)};
   outColor = vec4(col, a);
 }`;
 

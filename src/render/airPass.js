@@ -102,6 +102,7 @@ import { windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: a 
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { GLASS_INTERIOR, GLASS_EXTERIOR, RW_SEED_GLSL } from './realWindows.js';   // RW1: an interior's declared glass, which the emission replay never blooms - FINAL AUDIT: nor a dark room's
 import { PUDDLE_PASS_FS, PUDDLE_BLEND_FS, WET_PROXY_GATE } from './puddleProxyGlsl.js';   // WET1e: puddle colour proxy - own pass, not terrain FS
+import { puddleProxyOn } from '../systems/weather/wetness.js';   // WET1e: Full tier only
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -1321,7 +1322,7 @@ export class AirPass {
       bright: [0, 1].map((glow) => P(QUAD_VS, brightFs(glow), ['uFrame', 'uRect', 'uCanvas', 'uThreshold', 'uBloomSize', 'uVol'])),   // AUDIT VOL1: the glow's core blooms
       resolve: [0, 1].map((glow) => [0, 1].map((shafts) => P(QUAD_VS, resolveFs(glow, shafts), ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix', 'uVol']))),   // VOL1
       volBlur: P(QUAD_VS, VOLBLUR_FS, ['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),   // VOL1: the tile's average, by depth
-      puddle: P(QUAD_VS, PUDDLE_PASS_FS, ['uDepth', 'uFrame', 'uProjInfo', 'uRect', 'uCanvas', 'uVP', 'uViewRot', 'uCamPos', 'uWet']),   // WET1e: march this frame, not a fixed prev stamp
+      puddle: P(QUAD_VS, PUDDLE_PASS_FS, ['uDepth', 'uFrame', 'uProjInfo', 'uRect', 'uCanvas', 'uVP', 'uViewRot', 'uCamPos', 'uWet', 'uTilemap', 'uRoadMap']),   // WET1e/f: march + road gate
       puddleBlend: P(QUAD_VS, PUDDLE_BLEND_FS, ['uPuddle']),   // WET1e
       vol: null, volTone: null,   // VOL1: built below, only with the lane's GLSL in hand
     };
@@ -1380,6 +1381,17 @@ export class AirPass {
     this._glareHold = new Map(); this._glareFrame = 0;   // LA-POST2: each light's held range by its place (glareKey), and the glare pass's count
     this.contactParams = new Float32Array([AIR_CONTACT_LENGTH, AIR_CONTACT_THICKNESS, AIR_CONTACT_FLOOR, 0]);
     this._wet = new Float32Array(4);   // WET1e: puddle fill gates the proxy pass
+    this._wetRoadTex = null;   // WET1f: eye-chunk tilemap for roadGate
+    this._wetRoadMap = new Float32Array(4);   // origin.xz, tileSize, enabled
+    // WET1f: usampler2D refuses a null / float unit - keep a 1x1 R8UI for the off path
+    this._wetRoadDummy = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._wetRoadDummy);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, 1, 1, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, new Uint8Array([0]));
+    gl.bindTexture(gl.TEXTURE_2D, null);
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
     this.targets = null;
@@ -1691,6 +1703,13 @@ export class AirPass {
   setWet(w) {
     if (w) this._wet.set(w);
     else this._wet.fill(0);
+  }
+  /** WET1f: stone puddles only - the tilemap under the eye (renderer.drawTerrain). */
+  setWetRoad(tex, originX, originZ, tileSize) {
+    this._wetRoadTex = tex || null;
+    const m = this._wetRoadMap;
+    if (tex && tileSize > 0) { m[0] = originX; m[1] = originZ; m[2] = tileSize; m[3] = 1; }
+    else m.fill(0);
   }
 
   /**
@@ -2184,11 +2203,15 @@ export class AirPass {
    */
   _puddleProxy(rect) {
     const gl = this.gl, F = this.frame, P = this.programs, f = this.f;
-    if (!F?.tex || !F.puddleFbo || !f?.eye || !(this._wet[1] > WET_PROXY_GATE)) return;
+    if (!F?.tex || !F.puddleFbo || !f?.eye || !puddleProxyOn() || !(this._wet[1] > WET_PROXY_GATE)) return;
     const PP = P.puddle;
     gl.disable(gl.BLEND);   // WET1e: resolve left blend off; keep the half-res out opaque writes
     gl.bindFramebuffer(gl.FRAMEBUFFER, F.puddleFbo);
     gl.viewport(0, 0, F.puddleW, F.puddleH);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);   // WET1f: never blend uncleared garbage if the draw is refused
+    const cc = f.clearColor;
+    if (cc) gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
     gl.useProgram(PP.p);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, F.depth);
@@ -2206,6 +2229,11 @@ export class AirPass {
     gl.uniformMatrix3fv(PP.uViewRot, false, R);
     gl.uniform3fv(PP.uCamPos, f.eye);
     gl.uniform4fv(PP.uWet, this._wet);
+    // WET1f: usampler2D needs a real R8UI (null → draw fails; uncleared puddle then wiped the resolve red via depth.r)
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._wetRoadTex || this._wetRoadDummy);
+    gl.uniform1i(PP.uTilemap, 2);
+    gl.uniform4fv(PP.uRoadMap, this._wetRoadMap);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     // blend onto the resolved image (canvas or retro target)
     const dest = this.resolveTo?.fbo ?? null;
@@ -2214,10 +2242,13 @@ export class AirPass {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(P.puddleBlend.p);
+    gl.activeTexture(gl.TEXTURE0);   // WET1f: was left on unit 2 → sampled depth as (d,0,0,1) = solid red
     gl.bindTexture(gl.TEXTURE_2D, F.puddle);
     gl.uniform1i(P.puddleBlend.uPuddle, 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, null);
