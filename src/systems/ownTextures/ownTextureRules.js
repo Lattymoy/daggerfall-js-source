@@ -365,6 +365,160 @@ export function sharpenInRange(pic, amount, wrap) {
   return { width, height, data: out };
 }
 
+/**
+ * THE GROUND'S EDGES, CRISP. The upscale's luma pushed from its mean over a record texel's width (an unsharp mask at the
+ * record's own scale), held inside the range of the four record texels nearest it: each edge as steep as the record's
+ * nearest-texel look, its curve kept, no halo. The colour moves with its luma.
+ * @param {Rgba} pic the upscale @param {Rgba} src the record it was made from @param {number} amount @param {boolean} wrap
+ * @returns {Rgba}
+ */
+export function crispInRange(pic, src, amount, wrap) {
+  const { width, height, data } = pic;
+  const { width: srcWidth, height: srcHeight, data: srcData } = src;
+  const at = wrap ? wrapI : clampI;
+  const radius = Math.max(1, Math.round(width / srcWidth / 2));
+  const n = width * height;
+  const luma = new Float32Array(n),
+    across = new Float32Array(n),
+    mean = new Float32Array(n);
+  for (let i = 0; i < n; i++) luma[i] = 255 * lumaOf(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let sum = 0;
+      for (let d = -radius; d <= radius; d++) sum += luma[y * width + at(x + d, width)];
+      across[y * width + x] = sum / (2 * radius + 1);
+    }
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let sum = 0;
+      for (let d = -radius; d <= radius; d++) sum += across[at(y + d, height) * width + x];
+      mean[y * width + x] = sum / (2 * radius + 1);
+    }
+  const srcLuma = new Float32Array(srcWidth * srcHeight);
+  for (let i = 0; i < srcLuma.length; i++)
+    srcLuma[i] = 255 * lumaOf(srcData[i * 4], srcData[i * 4 + 1], srcData[i * 4 + 2]);
+  const out = new Uint8Array(data);
+  for (let y = 0; y < height; y++) {
+    const j = Math.floor(((y + 0.5) * srcHeight) / height - 0.5),
+      row0 = at(j, srcHeight) * srcWidth,
+      row1 = at(j + 1, srcHeight) * srcWidth;
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (data[i * 4 + 3] === 0) continue;
+      const k = Math.floor(((x + 0.5) * srcWidth) / width - 0.5),
+        column0 = at(k, srcWidth),
+        column1 = at(k + 1, srcWidth);
+      const near0 = srcLuma[row0 + column0],
+        near1 = srcLuma[row0 + column1],
+        near2 = srcLuma[row1 + column0],
+        near3 = srcLuma[row1 + column1];
+      const lo = Math.min(near0, near1, near2, near3),
+        hi = Math.max(near0, near1, near2, near3);
+      let crisp = luma[i] + amount * (luma[i] - mean[i]);
+      crisp = crisp < lo ? lo : crisp > hi ? hi : crisp;
+      const lift = crisp - luma[i];
+      for (let channel = 0; channel < 3; channel++) {
+        const value = data[i * 4 + channel] + lift;
+        out[i * 4 + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
+      }
+    }
+  }
+  return { width, height, data: out };
+}
+
+/** The chroma plane a record's share of each hue is counted on: (blue - luma, red - luma), cells of 16. */
+const HUE_GRID = 32;
+const hueCell = (value) => (value < -256 ? 0 : value >= 256 ? HUE_GRID - 1 : Math.floor((value + 256) / 16));
+/** How far hue `a` lies from a ground's hue `b` (each a chroma: the colour less its light). A difference along the
+ *  ground's own hue is strength, not hue - a pale tan in dark dirt is the dirt's hue - so it is not counted. */
+function hueGap(a0, a1, a2, b0, b1, b2) {
+  const full = Math.hypot(a0 - b0, a1 - b1, a2 - b2);
+  const strength = Math.hypot(b0, b1, b2);
+  if (strength < 8) return full;
+  const along = (a0 * b0 + a1 * b1 + a2 * b2) / (strength * strength);
+  return along < 0 ? full : Math.hypot(a0 - along * b0, a1 - along * b1, a2 - along * b2);
+}
+/** A texel's hue is stray where the record holds under `share` of its texels within `cells` cells of it on the chroma
+ *  plane, and it is `gap` off the median hue of its 5 x 5. */
+export const STRAY_HUE = Object.freeze({ share: 0.03, cells: 1, gap: 30 });
+
+/**
+ * THE GROUND'S HUE. A classic ground record carries stray texels of a hue it has almost nowhere else - violet in the
+ * Alik'r's sand, pink, yellow and teal in the snow - one texel at the record's size, a blot once upscaled. A stray texel
+ * keeps its light and takes the median hue of its 5 x 5. With `snow`, a snowy (bright) texel takes the mean hue of the
+ * snowy texels round it: the snow's grain is light and shade, never hue. The alpha and every light are kept.
+ * @param {Rgba} src @param {{ snow?: boolean }} [o] @returns {Rgba}
+ */
+export function groundHue(src, { snow = false } = {}) {
+  const { width, height, data } = src;
+  const n = width * height;
+  const chroma = new Float32Array(n * 3),
+    light = new Float32Array(n),
+    share = new Int32Array(HUE_GRID * HUE_GRID);
+  let opaque = 0;
+  for (let i = 0; i < n; i++) {
+    light[i] = 255 * lumaOf(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+    for (let channel = 0; channel < 3; channel++) chroma[i * 3 + channel] = data[i * 4 + channel] - light[i];
+    if (data[i * 4 + 3] === 0) continue;
+    opaque++;
+    share[hueCell(chroma[i * 3 + 2]) * HUE_GRID + hueCell(chroma[i * 3])]++;
+  }
+  const shareOf = (i) => {
+    const blueCell = hueCell(chroma[i * 3 + 2]),
+      redCell = hueCell(chroma[i * 3]);
+    let count = 0;
+    for (let a = Math.max(0, blueCell - STRAY_HUE.cells); a <= Math.min(HUE_GRID - 1, blueCell + STRAY_HUE.cells); a++)
+      for (let b = Math.max(0, redCell - STRAY_HUE.cells); b <= Math.min(HUE_GRID - 1, redCell + STRAY_HUE.cells); b++)
+        count += share[a * HUE_GRID + b];
+    return count / opaque;
+  };
+  const out = new Uint8Array(data);
+  const around = [[], [], []];
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      if (data[i * 4 + 3] === 0) continue;
+      const snowy = snow ? smooth(150, 170, light[i]) : 0;
+      const stray = shareOf(i) < STRAY_HUE.share;
+      if (!stray && snowy <= 0) continue;
+      around[0].length = around[1].length = around[2].length = 0;
+      const sum = [0, 0, 0];
+      let weight = 0;
+      for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const j = clampI(y + dy, height) * width + clampI(x + dx, width);
+          if ((!dx && !dy) || data[j * 4 + 3] === 0) continue;
+          const snowyThere = snow ? smooth(150, 170, light[j]) : 0;
+          for (let channel = 0; channel < 3; channel++) {
+            around[channel].push(chroma[j * 3 + channel]);
+            sum[channel] += snowyThere * chroma[j * 3 + channel];
+          }
+          weight += snowyThere;
+        }
+      let target = null,
+        amount = 0;
+      if (stray && around[0].length >= 12) {
+        const median = around.map((values) => values.sort((a, b) => a - b)[values.length >> 1]);
+        const own = chroma.subarray(i * 3, i * 3 + 3);
+        if (hueGap(own[0], own[1], own[2], median[0], median[1], median[2]) >= STRAY_HUE.gap) {
+          target = median;
+          amount = 1;
+        }
+      }
+      if (!target && snowy > 0 && weight > 0) {
+        target = sum.map((value) => value / weight);
+        amount = snowy;
+      }
+      if (!target) continue;
+      for (let channel = 0; channel < 3; channel++) {
+        const own = chroma[i * 3 + channel];
+        const value = light[i] + own + amount * (target[channel] - own);
+        out[i * 4 + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
+      }
+    }
+  return { width, height, data: out };
+}
+
 /** How busy the record is round each texel: the luma's spread over its 3 x 3, 0 (flat) to 1 (a strong pattern). */
 function busyness(src, wrap) {
   const { width, height, data } = src;
@@ -446,16 +600,20 @@ export const recordSeed = (archive, record, frame = 0) => (archive * 1009 + reco
 
 /**
  * THE ENHANCED LOOK. The record upscaled to width x height (edge-aware), sharpened in range, given our grain and
- * graded. A tile
- * that wraps wraps at every step, so it still repeats without a seam; the grain's lattice wraps always.
- * @param {Rgba} src @param {number} width @param {number} height @param {{ wrap: boolean, seed: number }} o @returns {Rgba}
+ * graded. A tile that wraps wraps at every step, so it still repeats without a seam; the grain's lattice wraps always.
+ * `ground` (a terrain record; 'winter' a winter set's): its stray hues taken away first (groundHue), its edges made crisp
+ * at the record's own scale, and a grain down to one texel - an upscale of the ground is never softer than the record.
+ * @param {Rgba} src @param {number} width @param {number} height
+ * @param {{ wrap: boolean, seed: number, ground?: boolean | 'winter' }} o @returns {Rgba}
  */
-export function enhance(src, width, height, { wrap, seed }) {
-  const up = upscaleEdgeAware(src, width, height, wrap);
+export function enhance(src, width, height, { wrap, seed, ground = false }) {
+  const own = ground ? groundHue(src, { snow: ground === 'winter' }) : src;
+  const up = upscaleEdgeAware(own, width, height, wrap);
   const factor = width / src.width;
-  const sharp = factor > 1.01 ? sharpenInRange(up, 0.55, wrap) : up;
+  const sharp = factor > 1.01 ? (ground ? crispInRange(up, own, 1.5, wrap) : sharpenInRange(up, 0.55, wrap)) : up;
   const cells = Math.max(2, Math.round(src.width / 4));
   addDetail(sharp, src, { strength: factor > 1.01 ? 0.07 : 0.04, cells, seed, wrap });
+  if (ground && factor > 1.01) addDetail(sharp, src, { strength: 0.05, cells: Math.max(2, width >> 2), seed: seed + 1, wrap });
   return grade(sharp, { contrast: 0.12, saturation: 1.08 });
 }
 
@@ -487,11 +645,12 @@ function softLuma(pic) {
  * THE ROAD (Masked Roads' records 46, 47 and 55: Daggerfall's road and its two flanks). The enhanced look, and the
  * paving's own stones raised: the picture's soft luma taken as height, lit from the north-west, so every stone the
  * record draws stands as a cobble and its joint sinks. Where the paving meets the ground a worn verge darkens it, its
- * edge broken by a noise rather than drawn as a line.
- * @param {Rgba} src @param {number} width @param {number} height @param {{ seed: number }} o @returns {Rgba}
+ * edge broken by a noise rather than drawn as a line. `ground` as enhance's.
+ * @param {Rgba} src @param {number} width @param {number} height
+ * @param {{ seed: number, ground?: boolean | 'winter' }} o @returns {Rgba}
  */
-export function road(src, width, height, { seed }) {
-  const out = enhance(src, width, height, { wrap: false, seed });
+export function road(src, width, height, { seed, ground = false }) {
+  const out = enhance(src, width, height, { wrap: false, seed, ground });
   const data = out.data,
     srcWidth = src.width,
     srcHeight = src.height,
@@ -538,11 +697,13 @@ function boxMean(field, width, height, radius) {
  * over its 5 x 5 - so a pale speck in dark dirt is no dune), it is graded toward a pale dune sand that keeps the record's
  * own light and dark (its pebbles and mottles darker sand), and rippled by the wind - crests a few texels apart, bent by
  * a slow noise, whole cycles across the tile so it repeats. Water and green stay the record's, and on a road record so
- * does the paving - darker over its 7 x 7, on a flank (`road` 'flank': 47, 55) only on its paved, lower-right half.
+ * does the paving - darker over its 7 x 7, on a flank (`road` 'flank': 47, 55) only on its paved, lower-right half. The
+ * record's stray hues (its violet) are taken away first (groundHue).
  * @param {Rgba} src @param {{ seed: number, road?: false | 'full' | 'flank' }} o @returns {Rgba}
  */
 export function desert(src, { seed, road = false }) {
-  const { width, height, data: srcData } = src;
+  const { width, height } = src;
+  const srcData = groundHue(src).data;
   const out = new Uint8Array(srcData);
   const luma = new Float32Array(width * height),
     own = new Float32Array(width * height);
@@ -688,7 +849,8 @@ export function snow(src, { seed, fromSummer = false }) {
   const cover = snowCover(src, ground, fromSummer, true);
   const fine = textureGrain(width, height, Math.max(2, width >> 3), 2, seed);
   const keepOwn = fromSummer ? 0.25 : 0.5; // the record's own grain, kept in the snow: a field of it is never blank
-  const out = new Uint8Array(srcData);
+  const tinted = groundHue(src, { snow: !fromSummer }).data; // where the snow lies thin, the record shows without its stray hues
+  const out = new Uint8Array(tinted);
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       const i = y * width + x,
@@ -701,7 +863,7 @@ export function snow(src, { seed, fromSummer = false }) {
       const light = (0.95 + 0.03 * fine[i]) * (0.88 + 0.14 * ground.lit[i]) * glint;
       const tone = [light * (240 - 16 * hollow), light * (244 - 8 * hollow), light * 254];
       for (let channel = 0; channel < 3; channel++) {
-        const value = srcData[offset + channel] + amount * (tone[channel] + own - srcData[offset + channel]);
+        const value = tinted[offset + channel] + amount * (tone[channel] + own - tinted[offset + channel]);
         out[offset + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
       }
     }
@@ -750,19 +912,19 @@ const fit = (src, width, height) =>
   src.width === width && src.height === height ? src : upscaleEdgeAware(src, width, height, false);
 
 /**
- * One picture by its spec: `{ rule, w, h, wrap?, fromSummer?, seed }` over the classic source picture. Answers a new
- * picture; the source is not written.
+ * One picture by its spec: `{ rule, w, h, wrap?, fromSummer?, road?, ground?, seed }` over the classic source picture.
+ * Answers a new picture; the source is not written.
  * @param {{ rule: string, w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank',
- * seed: number }} spec
+ * ground?: boolean | 'winter', seed: number }} spec
  * @param {Rgba} src
  * @returns {Rgba}
  */
 export function applyOwnRule(spec, src) {
   switch (spec.rule) {
     case 'enhance':
-      return enhance(src, spec.w, spec.h, { wrap: !!spec.wrap, seed: spec.seed });
+      return enhance(src, spec.w, spec.h, { wrap: !!spec.wrap, seed: spec.seed, ground: spec.ground ?? false });
     case 'road':
-      return road(src, spec.w, spec.h, { seed: spec.seed });
+      return road(src, spec.w, spec.h, { seed: spec.seed, ground: spec.ground ?? false });
     case 'desert':
       return desert(fit(src, spec.w, spec.h), { seed: spec.seed, road: spec.road ?? false });
     case 'snow':

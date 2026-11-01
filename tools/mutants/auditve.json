@@ -428,7 +428,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "      if (!e?.unsupported) throw e;\n      _workers = false;",
-    "new": "      throw e;\n      _workers = false;"
+    "old": "      if (!e?.unsupported) throw e;\n      for (const lane of lanes) letGo(lane);",
+    "new": "      throw e;\n      for (const lane of lanes) letGo(lane);"
   }
 ]

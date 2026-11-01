@@ -81,6 +81,14 @@ test('OWN-AUDIT ShowTrajectory: the arc\'s dots through the camera - every few s
   assert.match(rig1, /if \(handheldOn\(\) && !paralyzed && !sheetWindowUp\(\)\) handheld\.drawThrowArc\(renderer\);/, 'the rig draws it before either lane');
 });
 
+test('OWN-AUDIT ShowTrajectory: a short arc (a wall or the floor a few steps off) still draws its landing, and only it', () => {
+  for (const n of [2, 3, 4]) {
+    const pts = Array.from({ length: n }, (_, i) => [i * 0.01, 0, -1 - i]);
+    const [x, y] = worldToScreen(pts[n - 1], LOOK, IDENTITY, 1920, 1080);
+    assert.deepEqual(arcDots(pts, LOOK, IDENTITY, 1920, 1080), [[x, y, ARC_LOOK.landPx]], `${n} points: the landing alone`);
+  }
+});
+
 test('OWN-AUDIT Tint: the hand takes the room\'s light with the switch on, and is drawn at its own colours with it off', () => {
   for (const [on, want] of [[true, [0.3, 0.3, 0.3]], [false, undefined]]) {
     const r = rig({ 'Presentation.Tint': on });

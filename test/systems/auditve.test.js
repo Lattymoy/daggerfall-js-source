@@ -183,6 +183,30 @@ test('AUDIT VE P1: the shipped client builds in its worker, not this thread - th
   _setVePackIoForTests();
 });
 
+test('AUDIT VE P1: workers a build cannot reach (a post throws) are let go - terminated, never left idle for the session - and an ask one still held falls back to this thread too, never waiting on a worker that is gone', async () => {
+  fresh();
+  const classic = { width: 4, height: 4, data: Uint8Array.from({ length: 64 }, (_, i) => (i % 4 === 3 ? 255 : (i * 29) & 255)) };
+  const made = [];
+  let posts = 0;
+  const factory = () => {
+    // the first post is taken and never answered; the next one throws
+    const w = { dead: false, postMessage() { if (posts++) throw new Error('DataCloneError'); }, terminate() { w.dead = true; } };
+    made.push(w);
+    return w;
+  };
+  _setVePackIoForTests({ classic: async () => ({ ...classic, data: new Uint8Array(classic.data) }), worker: factory });
+  const base = VE_PACK_MODS.find((m) => m.dir === 'base');
+  const own = (name) => [...applyOwnRule({ ...ownSpec(base, name) }, classic).data.slice(0, 4)];
+  const held = vePackClient(base).rgba('302_8-0');
+  await new Promise((go) => setTimeout(go, 0));
+  const img = await within(vePackClient(base).rgba('302_9-0'));
+  assert.deepEqual([...img.data.slice(0, 4)], own('302_9-0'), 'this thread built it');
+  assert.equal(made.length, 2);
+  assert.ok(made.every((w) => w.dead), 'both lanes terminated');
+  assert.deepEqual([...(await within(held)).data.slice(0, 4)], own('302_8-0'), 'the held ask, built here');
+  _setVePackIoForTests();
+});
+
 test('AUDIT VE P1 (OWN-WORK4): the worker builds by our rule - a spec and its classic record in, the rule\'s pixels out, moved', async () => {
   const saved = { onmessage: globalThis.onmessage, postMessage: globalThis.postMessage };
   const posted = [];

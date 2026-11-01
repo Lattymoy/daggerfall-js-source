@@ -1,0 +1,38 @@
+[
+  {
+    "name": "REVIEW-torcharc-short-arc-no-landing",
+    "file": "src/systems/torchArc.js",
+    "old": "  for (let i = Math.min(ARC_LOOK.every, last); i <= last; i += ARC_LOOK.every) {",
+    "new": "  for (let i = ARC_LOOK.every; i <= last; i += ARC_LOOK.every) {",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW-vepack-unreachable-workers-kept",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "old": "      for (const lane of lanes) letGo(lane);",
+    "new": "      for (const lane of []) letGo(lane);",
+    "tests": [
+      "test/systems/auditve.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW-vepack-let-go-not-terminated",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "old": "  lane.w.terminate?.();\n  for (const p of lane.pending",
+    "new": "  for (const p of lane.pending",
+    "tests": [
+      "test/systems/auditve.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW-vepack-let-go-asks-left-waiting",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "old": "  for (const p of lane.pending.values())\n    p.reject(",
+    "new": "  for (const p of [].values())\n    p.reject(",
+    "tests": [
+      "test/systems/auditve.test.js"
+    ]
+  }
+]

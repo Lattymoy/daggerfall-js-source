@@ -96,6 +96,15 @@ function decodeWorkers() {
   }
   return _workers;
 }
+/** A lane stopped for good: its worker terminated, and what it still holds answered as unsupported, so each such ask
+ *  falls back to this thread rather than waiting on a worker that is gone. */
+function letGo(lane) {
+  lane.dead = true;
+  lane.w.terminate?.();
+  for (const p of lane.pending.values())
+    p.reject(Object.assign(new Error('decode worker let go'), { unsupported: true }));
+  lane.pending.clear();
+}
 const askWorker = (lanes, msg, transfer = []) =>
   new Promise((resolve, reject) => {
     const live = lanes.filter((l) => !l.dead);
@@ -164,7 +173,8 @@ async function buildNow(spec) {
       return await askWorker(lanes, { build: got.spec, source: got.src }, [got.src.data.buffer]);
     } catch (e) {
       if (!e?.unsupported) throw e;
-      _workers = false; // the workers are gone: this thread builds from here on
+      for (const lane of lanes) letGo(lane); // none left idle for the session, none of their asks left waiting
+      _workers = false; // this thread builds from here on
       return buildNow(spec);
     }
   }

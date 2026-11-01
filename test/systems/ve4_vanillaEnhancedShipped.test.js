@@ -215,7 +215,7 @@ test('VE4 the client: a texture asked at the texture detail is built at the mip 
   assert.equal(layers.length, 56);
   assert.equal(most, 8, 'PRELOAD_CONCURRENCY at once, never all 56');
   await assert.rejects(vePackClient(VE_PACK_MODS.find((m) => m.key === MASKED)).layers('403-TexArray'), /carries no slices/);
-  assert.deepEqual(ownSpec(base, '302_9-0'), { rule: 'enhance', from: [302, 9, 0], w: 256, h: 256, wrap: false, seed: ownSpec(base, '302_9-0').seed });
+  assert.deepEqual(ownSpec(base, '302_9-0'), { rule: 'enhance', from: [302, 9, 0], w: 256, h: 256, wrap: false, seed: ownSpec(base, '302_9-0').seed, ground: true });
   fakeIo();
 });
 

@@ -8,7 +8,7 @@ import listing from './ownTexturePacks.json' with { type: 'json' };
 import { wrapsOf, recordSeed, snowMask } from './ownTextureRules.js';
 import { ROAD_RECORDS } from '../../world/road/roadEdge.js'; // Daggerfall's road (46) and its two flanks (47, 55): their one home
 
-/** @typedef {{ rule: string, from: number[], fallback?: number[], w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank', seed: number }} OwnSpec */
+/** @typedef {{ rule: string, from: number[], fallback?: number[], w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank', ground?: boolean | 'winter', seed: number }} OwnSpec */
 
 /** The packs: `{ key, dir, rule, index }`, `index` in the door's own shape (dfmodTextures.js buildDfmodIndex). */
 export const OWN_TEXTURE_PACKS = Object.freeze(listing.Mods.map((mod) => Object.freeze({ ...mod })));
@@ -19,6 +19,9 @@ const ARRAY = /^(\d+)-TexArray$/;
 const roadOf = (record) => (record === ROAD_RECORDS[0] ? 'full' : ROAD_RECORDS.includes(record) ? 'flank' : false);
 /** A climate's terrain set - the ground's 56 records (002-004, 102-104, 302-304, 402-404). */
 export const isTerrainSet = (archive) => archive < 500 && [2, 3, 4].includes(archive % 100);
+/** A terrain set's records are ground to our rule (ownTextureRules.js enhance): a winter set's (103, 303, 403) 'winter',
+ *  its snow's grain light and shade only. Nothing for any other archive. */
+const groundOf = (archive) => (isTerrainSet(archive) ? { ground: archive >= 100 && archive % 100 === 3 ? 'winter' : true } : {});
 /** The ground Snowless Swamps and Jungles keeps green: the swamp's summer set. Every other archive it names is a winter
  *  set, built from its summer set (the archive before it) - no snow. */
 const SWAMP_SUMMER = 402;
@@ -29,11 +32,27 @@ function specOf(mod, archive, record, frame, width, height) {
   const seed = recordSeed(archive, record, frame);
   switch (mod.rule) {
     case 'enhance':
-      return { rule: 'enhance', from: [archive, record, frame], w: width, h: height, wrap: wrapsOf(archive), seed };
+      return {
+        rule: 'enhance',
+        from: [archive, record, frame],
+        w: width,
+        h: height,
+        wrap: wrapsOf(archive),
+        seed,
+        ...groundOf(archive),
+      };
     case 'road':
       return isTerrainSet(archive) && ROAD_RECORDS.includes(record)
-        ? { rule: 'road', from: [archive, record, frame], w: width, h: height, seed }
-        : { rule: 'enhance', from: [archive, record, frame], w: width, h: height, wrap: wrapsOf(archive), seed };
+        ? { rule: 'road', from: [archive, record, frame], w: width, h: height, seed, ...groundOf(archive) }
+        : {
+            rule: 'enhance',
+            from: [archive, record, frame],
+            w: width,
+            h: height,
+            wrap: wrapsOf(archive),
+            seed,
+            ...groundOf(archive),
+          };
     case 'snowless': {
       const summer = archive === SWAMP_SUMMER ? archive : archive - 1;
       return {
@@ -43,6 +62,7 @@ function specOf(mod, archive, record, frame, width, height) {
         h: height,
         wrap: wrapsOf(summer),
         seed: recordSeed(summer, record, frame),
+        ...groundOf(summer),
       };
     }
     case 'desert':

@@ -28,7 +28,7 @@ export function arcDots(points, proj, view, width, height) {
   if (!points || points.length < 2 || !proj || !view) return out;
   const k = height / 1080;
   const last = points.length - 1;
-  for (let i = ARC_LOOK.every; i <= last; i += ARC_LOOK.every) {
+  for (let i = Math.min(ARC_LOOK.every, last); i <= last; i += ARC_LOOK.every) {
     if (last - i < ARC_LOOK.every) i = last; // the landing is always drawn
     const at = worldToScreen(points[i], proj, view, width, height);
     if (!at || at[0] < 0 || at[1] < 0 || at[0] > width || at[1] > height) continue;
