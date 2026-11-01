@@ -145,19 +145,20 @@ test('FT18: blood has an Off at last - the three parts off, the amount kept; an 
   fresh();
 });
 
-test('FT18: the search finds by any word - title, note, part, group or a mod\'s author - in any order, without accents or curly quotes (mutant: the note, the parts or the author left out)', () => {
+test('FT18: the search finds by any word - title, note, part, group or a mod\'s key - in any order, without accents or curly quotes; never by an author (CREDITS-OUT) (mutant: the note or the parts left out)', () => {
   const ids = (q) => FEATURES.filter((f) => matchesFeatureQuery(f, q)).map((f) => f.id);
   assert.equal(ids('').length, FEATURES.length, 'an empty query finds everything');
-  assert.deepEqual(ids('kamer'), ['mod-windmills-kamer', 'mod-low-poly-trees', 'mod-world-of-daggerfall', 'mod-warm-ashes-ships', 'mod-world-events-raiding-parties', 'mod-daggerfall-enemy-expansion'], 'by the author (DEX0: Daggerfall Enemy Expansion is Kamer\'s, with Kab; Warm Ashes - Ships is Kamer\'s too, RAID1\'s World Events - Raiding Parties, and LPT1\'s Low Poly Trees - SquidKamer)');
+  assert.deepEqual(ids('kamer'), [], 'CREDITS-OUT (2026-11-01, the owner: "No more credits"): an author is no word a row is found by');
   assert.deepEqual(ids('hotbar'), ['quick-slots'], 'by what a condensed row folded in');
   assert.deepEqual(ids('lens'), ['blood'], 'by a part');
   assert.ok(ids('sway').includes('wind'));
   assert.ok(ids('SOUND').includes('combat-voices'), 'by the group, whatever the case');
   assert.ok(ids('wall dungeon').includes('dungeon-wall-style'), 'every word, any order');
-  assert.deepEqual(ids('kamer windmills'), ['mod-windmills-kamer'], 'EVERY word - World of Daggerfall is Kamer\'s too, and has no windmills');
+  assert.deepEqual(ids('daggerfall windmills'), ['mod-windmills-kamer'], 'EVERY word - World of Daggerfall has no windmills');
   assert.deepEqual(ids('zzqq'), []);
   assert.ok(ids("region's climate").includes('dungeon-wall-style'), 'a straight quote finds a curly one');   // PIN MOVED: BR5 - the note's curly quote is the region's now
-  assert.match(featureSearchText(row('mod-pcaao')), /kirk\.o/);
+  assert.match(featureSearchText(row('mod-pcaao')), /\bpcaao\b/, 'a mod row by its key');
+  assert.doesNotMatch(featureSearchText(row('mod-pcaao')), /kirk\.o/, 'and not by its author');
 });
 
 test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s own, a choice left alone - and Restore puts back exactly what was (mutant: the classic value ignored, a choice moved, or the keep lost)', () => {

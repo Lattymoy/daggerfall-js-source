@@ -165,7 +165,7 @@ const normalizeHorizontalHeading = (v) => {
 export class DeployedWagonVisual {
   /** Initialize [IL_0828]: the parts must have arrived (the pool's mesh), else the mod's own error. */
   constructor(parts, position, forward, weight, limit, phys, now) {
-    if (!parts) throw new Error('DFU returned no object for vanilla wagon model 41214');
+    if (!parts) throw new Error('the classic wagon model 41214 did not load');
     this.parts = parts;
     this.phys = phys;
     this.position = [...position];
@@ -700,7 +700,7 @@ export function createHorseCartRuntime(deps) {
       if (!spawnFailureLogged) {
         spawnFailureLogged = true;
         log.error?.(
-          '[TrailingWagon] could not create the temporary wagon visual: DFU returned no object for vanilla wagon model 41214.',
+          '[TrailingWagon] could not create the temporary wagon visual: the classic wagon model 41214 did not load.',
         );
       }
       return false;

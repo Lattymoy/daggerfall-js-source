@@ -88,8 +88,8 @@ and the Features row together, as `vendor/foraging/`:
 5. **THE AUTHOR'S ART IS VENDORED WORK, NOT NEW ART.** The seven textures are Harbinger451's, to be carried with
    Mac's word of permission, as Handheld Torches' 39 are RedRoryOTheGlen's. PROF0's law 6 ("no new committed art") is about art
    the port would make; it is not broken by a vendored mod's own.
-6. **A MOD, SWITCHED** - DECIDED: a Mod Authored row on the Features home (FT9's shape) and a credit on the About
-   screen (`src/ui/credits.js`); on by default (MO1). The switch governs Foraging's uses, its quests, its loot and
+6. **A MOD, SWITCHED** - DECIDED: a Mod Authored row on the Features home (FT9's shape) and an About-screen
+   credit (`src/ui/credits.js`, DELETED); on by default (MO1). The switch governs Foraging's uses, its quests, its loot and
    shop hooks. The templates are registered whatever the switch says, so a saved tool never vanishes (a tool with the
    switch off is an inert item, as an unloaded mod's would be). **The shelves' registry answers Foraging's items only
    while its switch is on** (RRI's answers nothing while off), with one exception DECIDED for PROF1 and BUILT there

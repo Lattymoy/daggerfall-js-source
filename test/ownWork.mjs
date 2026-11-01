@@ -1,5 +1,5 @@
 // OWN-WORK1 (2026-10-31): the keys bible/01-Overview/Own-Work.md records as retired from vendor/ - the rows of its
-// "Retired from vendor/" table. Shared by the registry gate and the credits gate.
+// "Retired from vendor/" table. Shared by the registry gate and the provenance gate (credits.test.js).
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,11 +15,3 @@ export function retiredKeys(page = readFileSync(join(ROOT, OWN_WORK), 'utf8')) {
   return new Set([...body.matchAll(/^\| `([^`]+)` \|/gm)].map((m) => m[1]));
 }
 
-/** OWN-WORK3: the retired keys whose credit ended - our own design replaced theirs (Own-Work.md step 6), so the About
- *  screen no longer names them; their row's last cell says "credit ended". */
-export function endedCredits(page = readFileSync(join(ROOT, OWN_WORK), 'utf8')) {
-  const at = page.indexOf('\n## Retired from vendor/');
-  const end = page.indexOf('\n## ', at + 1);
-  const body = at < 0 ? '' : page.slice(at, end < 0 ? undefined : end);
-  return new Set([...body.matchAll(/^\| `([^`]+)` \|.*credit ended[^|]*\|\s*$/gm)].map((m) => m[1]));
-}

@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { createReadStream, readdirSync, statSync } from 'node:fs';
+import { createReadStream, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { landingHtml, readBuildSha } from './scripts/landingHtml.mjs';
 import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the studio's listing, served and built from the folder
@@ -111,6 +111,19 @@ function buildTagMeta() {
         attrs: { name: 'build-tag', content: sha },
         injectTo: 'head',
       }];
+    },
+  };
+}
+
+// CREDITS-OUT (2026-11-01): the notices the MIT and OFL licences require travel with every copy of the build as plain
+// files - LICENSE (ours, the MIT works we ship or ported) and Silkscreen's OFL. Nothing in the game shows or links them.
+function licenceFiles() {
+  return {
+    name: 'licence-files',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'LICENSE.txt', source: readFileSync('LICENSE', 'utf8') });
+      this.emitFile({ type: 'asset', fileName: 'OFL-Silkscreen.txt', source: readFileSync('vendor/silkscreen-five/OFL.txt', 'utf8') });
     },
   };
 }
@@ -291,5 +304,5 @@ export default defineConfig({
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait(), licenceFiles()],
 });

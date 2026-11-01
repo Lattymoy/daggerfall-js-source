@@ -1243,23 +1243,5 @@
       "test/world/card/kg3_draw.test.js",
       "test/systems/kg3_host.test.js"
     ]
-  },
-  {
-    "name": "KG3-L-credit-title-literal",
-    "file": "src/ui/credits.js",
-    "old": "      get title() {\n        return t('credits.kingsGambit.title', 'The King\\u2019s Gambit');\n      }, // the game's name as its table says it (L10N4)",
-    "new": "      title: 'The King\\u2019s Gambit', // the game's name as its table says it (L10N4)",
-    "tests": [
-      "test/systems/l10n4_hardcoded.test.js"
-    ]
-  },
-  {
-    "name": "KG3-L-features-creator",
-    "file": "src/systems/features.js",
-    "old": "{ title: 'The King\\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }",
-    "new": "{ title: 'The King\\u2019s Gambit', author: '' }",
-    "tests": [
-      "test/systems/ft9_mods.test.js"
-    ]
   }
 ]

@@ -83,7 +83,7 @@
   {
     "name": "L10N3b-installs-anything",
     "file": "src/scenes/translationStore.js",
-    "old": "  if (!isTranslationPack(counts))\n    throw new Error('no string table, quest or book in it - is this a Daggerfall Unity translation?');\n  const byPath = new Map(list.map((e) => [e.path, e]));",
+    "old": "  if (!isTranslationPack(counts)) throw new Error('no string table, quest or book in it - is this a translation pack?');\n  const byPath = new Map(list.map((e) => [e.path, e]));",
     "new": "  const byPath = new Map(list.map((e) => [e.path, e]));",
     "tests": [
       "test/systems/l10n3b.test.js"

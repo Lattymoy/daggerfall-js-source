@@ -45,7 +45,6 @@ import {
 } from '../../src/ui/levelingChoice.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED, GROUPS } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { createCharacter, hitPointsPerLevelUp, STAT_KEYS_ORDER } from '../../src/systems/chargen.js';
 import {
@@ -160,16 +159,16 @@ test('ORL1: every setting default and minimum is settings.lua\'s, and every desc
   }
 });
 
-test('ORL1: the two caps are constants.lua\'s, and the credit\'s version is the author\'s changelog', () => {
+test('ORL1: the two caps are constants.lua\'s, and the record\'s version is the author\'s changelog', () => {
   assert.equal(MAX_ATTRIBUTE_VALUE, SHIPPED.constants.MAX_ATTRIBUTE_VALUE);
   assert.equal(MAX_SKILL_VALUE, SHIPPED.constants.MAX_SKILL_VALUE);
   // the mod's own spelling of the name is kept in the port's comment;
   // the VALUE is what this holds.
   assert.equal(ATTRIBUTE_INCREASE_LIMIT, SHIPPED.constants.ATRIBUTE_INCREASE_LIMIT);
   // The version was the registry row's cell, checked against README.upstream.md's
-  // newest heading. OWN-WORK1 took both out; the About screen's credit carries it.
-  const credit = CREDITS.mods.find((m) => m.retired?.includes(V));
-  assert.equal(credit?.version, SHIPPED.version, 'the credit names the release the port was read from');
+  // newest heading. OWN-WORK1 took both out; Own-Work.md's row carries it (CREDITS-OUT: the credit is gone).
+  const own = readFileSync(new URL('../../bible/01-Overview/Own-Work.md', import.meta.url), 'utf8');
+  assert.ok(own.includes(`| \`${V}\` | OblivionRemasterLikeLeveling ${SHIPPED.version} `), 'the record names the release the port was read from');
 });
 
 // ── L1: THE BAR ────────────────────────────────────────────────────
@@ -1158,7 +1157,7 @@ test('ORL1: the choice and the bar ride the SAVE, not the mod-settings store', (
   assert.equal(usesVirtueLeveling({ levelingSystem: LEVELING_VIRTUE }), true);
 });
 
-test('ORL1: the tile, the group and the credit', () => {
+test('ORL1: the tile and the group', () => {
   const row = FEATURES.find((f) => f.control?.vendor === V);
   assert.ok(row, 'the mod has a Features row');
   assert.deepEqual(row.kinds, ['mod']);
@@ -1179,12 +1178,6 @@ test('ORL1: the tile, the group and the credit', () => {
   // all eight knobs reach the tile
   assert.equal(MOD_CURATED[V].length, 8);
   for (const k of MOD_CURATED[V]) assert.ok(MOD_SETTINGS[V].keys[k], `${k} is a key the mod ships`);
-  // the credit says what is true about the author
-  const credit = CREDITS.mods.find((m) => m.retired?.includes(V));
-  assert.ok(credit, 'the About screen credits it, as a retired mod (OWN-WORK1)');
-  assert.equal(credit.version, '0.5.3');
-  assert.match(credit.author, /Unnamed/, 'the one row whose author the archive does not name');
-  assert.match(credit.terms, /permission/i);
   // OWN-WORK1: the vendor README and the registry row, which held the open
   // record, left the tree; Own-Work.md's row holds it now.
 });

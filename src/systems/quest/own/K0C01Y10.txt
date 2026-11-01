@@ -1,4 +1,4 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 -- BAY-OWN: the questor answers the main quest's opening, the storm that wrecked the player on the way to the Iliac Bay.
 -- Quest: C:\QUESTS\WORKING\K0C01Y10.Qbn.
 -- StartsBy: NPC

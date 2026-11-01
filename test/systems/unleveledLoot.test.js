@@ -17,7 +17,6 @@ import { MOD_SETTINGS, setModSetting, modSetting, _resetModSettings, isChoiceKey
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
 import { goldStack } from '../../src/systems/inventory.js';
-import { CREDITS } from '../../src/ui/credits.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const fixed = (v) => () => v;
@@ -227,8 +226,7 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   _resetModSettings();
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(isChoiceKey\(def\)\) \{/, 'the pane steps the choice keys by name');
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('pcaao') < Object.keys(MOD_SETTINGS).indexOf('unleveledLoot'), 'listed after the overhaul, as its manifest orders it');
-  const credit = CREDITS.mods.find((c) => c.title === 'Unleveled Loot');
-  assert.ok(credit); assert.equal(credit.version, '1.1.2'); assert.deepEqual([...credit.retired], ['unleveledLoot']);   // OWN-WORK1: retired from vendor/
+  assert.match(rd('LICENSE'), /Unleveled Loot 1\.1\.2[\s\S]*Copyright \(C\) 2020 Ralzar\n/, 'CREDITS-OUT: the MIT notice travels in LICENSE');
   // OWN-WORK1: the shipped manifest's version and its two required dependencies, written out; the port's header records them
   assert.equal(UNLEVELED_LOOT_VERSION, '1.1.2', 'the manifest\'s ModVersion');
   assert.match(rd('src/systems/unleveledLoot.js'), /The manifest REQUIRES roleplayrealism and roleplayrealism-items;/);

@@ -22,7 +22,8 @@ export const OWN_DIR = 'src/systems/quest/own';
 export const DFU_DIR = 'vendor/dfu-quests/Quests';
 const TABLES_DIR = 'vendor/dfu-quests/Tables';
 /** The header line every own quest carries: whose logic it runs, whose words it speaks. */
-export const OWN_CREDIT = '-- OWN-WORDS: the QBN is Daggerfall Unity\'s (MIT, Interkarma and contributors), verbatim. The messages are DFO Online\'s own words.';
+// CREDITS-OUT (Mac, 2026-11-01): the header names no one; the MIT notice ships in LICENSE.txt
+export const OWN_CREDIT = '-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online\'s own words.';
 /** A run of this many words that DFU's quest text also has is a kept sentence. */
 export const SHARED_RUN = 6;
 /** The widest a line may be, and the least a message may use: centred popups, and the journal's and letters' lines. */

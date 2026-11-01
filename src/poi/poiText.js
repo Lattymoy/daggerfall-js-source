@@ -245,7 +245,7 @@ const DIFF = {
         ? t('poi.diff.markerShown', 'Its mark on the map: shown, "{label}".', a)
         : t('poi.diff.markerShownBare', 'Its mark on the map: shown, with no label.'),
 };
-/** Words as one list, the reader's language's way (Intl.ListFormat, its separators - ui/credits.js's way); joined with a
+/** Words as one list, the reader's language's way (Intl.ListFormat, its separators); joined with a
  *  comma where the runtime has none. @param {string[]} words */
 function listText(words) {
   try {

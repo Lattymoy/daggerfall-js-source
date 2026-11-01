@@ -37,7 +37,6 @@ import {
 } from '../../src/systems/immersiveFootsteps.js';
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { EQUIP_SLOTS } from '../../src/characters/paperdoll/paperdoll.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
@@ -108,7 +107,7 @@ const SHIPPED_SETTINGS = Object.freeze([
   ['ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs', 'ToggleKey', true],
 ]);
 
-test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, our own words; the manifest; the row; the curated keys; the credit', () => {
+test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, our own words; the manifest; the row; the curated keys; the licence notice', () => {
   const m = MOD_SETTINGS[V];
   assert.ok(m, 'the vendor entry');
   const manifest = SHIPPED_MANIFEST;
@@ -162,12 +161,8 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /immersive-footsteps/);
   assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'sound');   // FT18: under Sound
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k} is a real key`);
-  // the credit stays while our code follows the mod's design (Own-Work.md step 6); `retired` once its row is written
-  const credit = CREDITS.mods.find((c) => c.title === 'Immersive Footsteps');
-  assert.ok(credit, 'credited on the About screen');
-  assert.ok([...(credit.retired ?? credit.vendor ?? [])].includes(V), 'its key');
-  assert.equal(credit.version, '1.01'); assert.equal(credit.author, 'Kirk.O');
-  assert.match(credit.terms, /MIT/);
+  // CREDITS-OUT (2026-11-01): no credit on a screen; the MIT notice our code owes travels in LICENSE
+  assert.match(rd('LICENSE'), /Immersive Footsteps 1\.01's scripts by\nKirk\.O[\s\S]*MIT License\n\nCopyright \(C\) 2024 Kirk\.O\n/);
   // OWN-WORK4: the vendor README's four text pins left with it.
 });
 

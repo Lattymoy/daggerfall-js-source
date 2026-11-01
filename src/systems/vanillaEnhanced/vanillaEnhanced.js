@@ -27,8 +27,6 @@ import { optionPath } from '../../ui/settings/settingsMap.js'; // ORG2: the pack
 export const VE_BASE = 'vanilla enhanced - base';
 /** The Base's GUID (Vanilla Enhanced 3.4.7's manifest), for a player's copy stored under another file name. */
 export const VE_BASE_GUID = '1f124f8c-dd01-48ad-a5b9-0b4a0e4702d2';
-/** Where the mod is published - a newer version than the one the port ships is attached from there. */
-export const VE_LINK = 'https://www.nexusmods.com/daggerfallunity/mods/273';
 /** VE4: the add-ons Vanilla Enhanced was last worn with (their keys), for the next time it is - Classic switches every
  *  texture mod off, and this is how the card's choice outlives it. */
 export const VE_ADDONS_PREF = 'veAddons';

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   CLOUD_REVEAL_TIME, CREST_TIME, DISTRICTS_TIME, ASCENT_TIME, MAP_TIME, TITLE_IMPACT_TIME, TITLE_ENTER_TIME, LANDSCAPE_HOLD_TIME,
-  INTRO_CREDITS, INTRO_NARRATION, INTRO_KEYS, introCameraAt, introFrameAt, introSunAt, introAtmosphereAt, introNarrationOpacity,
+  INTRO_NARRATION, INTRO_KEYS, introCameraAt, introFrameAt, introSunAt, introAtmosphereAt, introNarrationOpacity,
 } from '../../src/ui/intro/introCue.js';
 import {
   buildIntroLandmarks, buildIntroDistricts, buildIntroTrees, buildIntroGround, buildIntroPlan, introCityTransfers, buildIntroCity,
@@ -43,7 +43,7 @@ test('INTRO4: the film is cut on the recording’s own downbeats - bars 4, 8, 14
   assert.deepEqual(introCameraAt(TITLE_IMPACT_TIME + 5), introCameraAt(LANDSCAPE_HOLD_TIME));
 });
 
-test('INTRO4: the narrator - five lines in the player’s language, one at a time, readable, between the cuts and clear of the credits and the mark', () => {
+test('INTRO4: the narrator - five lines in the player’s language, one at a time, readable, between the cuts and clear of the mark', () => {
   assert.equal(INTRO_NARRATION.length, 5);
   const cue = read('src/ui/intro/introCue.js');
   INTRO_NARRATION.forEach((line, i) => {
@@ -54,7 +54,6 @@ test('INTRO4: the narrator - five lines in the player’s language, one at a tim
     assert.ok(line.text.length / (line.out - line.up) <= 21, `${line.key} reads at ${(line.text.length / (line.out - line.up)).toFixed(1)} characters a second`);
     if (i > 0) assert.ok(INTRO_NARRATION[i - 1].end <= line.start, 'no two lines at once');
     for (const cut of [CLOUD_REVEAL_TIME, CREST_TIME, DISTRICTS_TIME, ASCENT_TIME]) assert.ok(!(line.start < cut && cut < line.end), `${line.key} does not run across the cut at ${cut}`);
-    for (const credit of INTRO_CREDITS) assert.ok(line.start >= credit.end, 'never over a credit');
     assert.ok(line.end <= TITLE_ENTER_TIME, 'gone before the mark moves');
     const st = introFrameAt((line.up + line.out) / 2);
     assert.deepEqual(st.narration.filter((n) => n.opacity > 0).map((n) => n.key), [line.key]);

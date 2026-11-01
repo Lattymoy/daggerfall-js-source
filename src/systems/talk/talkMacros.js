@@ -503,9 +503,7 @@ export function speakable(text) {
   return text.replace(UNKNOWN_MACRO, (_, pre, symbol, post) => {
     if (!seenUnknownMacros.has(symbol)) {
       seenUnknownMacros.add(symbol);
-      console.warn(
-        `talk: ${symbol} is a classic macro Daggerfall Unity never implemented (MacroHelper.cs has no row) - rendering nothing`,
-      );
+      console.warn(`talk: ${symbol} is a classic macro with no reading here - rendering nothing`);
     }
     return pre && post ? ' ' : '';
   });

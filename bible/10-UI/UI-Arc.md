@@ -10509,7 +10509,7 @@ the About pane credits them to whoever PLAYS, which is the audience a
 modder cares about. The intro (U65) already puts Interkarma's and Nexus
 Mods' marks on the screen for a few seconds; this is the durable page.
 
-`src/ui/credits.js` is ONE table with two groups, kept apart because
+`src/ui/credits.js` (DELETED, CREDITS-OUT below) is ONE table with two groups, kept apart because
 they are owed differently: BUILT ON (The Elder Scrolls II: Daggerfall,
 Bethesda Softworks - every byte from the player's own ARENA2; Daggerfall
 Unity, Gavin Clayton (Interkarma) and contributors - the source this
@@ -10530,6 +10530,8 @@ the roads were removed whole for lacking it. The renderer knows the
 SHAPE and no work by name. 3 pins; 5 mutants, 5 killed. Eyeballed on
 desktop and a Pixel 5 through the intro's skip: two cards, three works,
 the modder's name beside his mill.
+
+**CREDITS-OUT (2026-11-01).** The owner: "Remove all mentions of DFU, Interkarma and the nexus community. No more credits along with removing their logos from the intro." His word retires CR1 and FT9. `src/ui/credits.js` is DELETED with the About pane's card, its words in every language and its styles. The intro's two logo cards, their cues and their pictures are DELETED; every other beat keeps its time, and INTRO2's test of the cards' holds is RETIRED. The site's Credits section is now Legal: the trademark notice and the licence. A Features row carries the mod's name alone. No string a player reads names Daggerfall Unity, DFU, Interkarma or Nexus, in any language. The notices the MIT and OFL licences require ship in the build as `LICENSE.txt` and `OFL-Silkscreen.txt` (`vite.config.js` licenceFiles), shown and linked nowhere. `test/systems/credits.test.js` is now the provenance sweep: every vendored folder keeps a README of its source and terms.
 
 ## FROM PLAY (2026-08-29): TOO MUCH RECURSION - the slot that lied about being open
 

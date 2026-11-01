@@ -1,5 +1,4 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
--- Edited for Daggerfall Unity by Jay_H
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 Quest: K0C00Y03
 DisplayName: Smuggling
 -- Message panels

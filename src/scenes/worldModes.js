@@ -3049,7 +3049,7 @@ export function createWorldModes(host) {
     // value is what says whether any live quest owned the click.
     const foundInActiveQuest = s.behaviour?.doClick() ?? false;
     if (!foundInActiveQuest) {
-      console.log('[quest] clicked a stand no active quest claims (DFU would fall through to the world here)');
+      console.log('[quest] clicked a stand no active quest claims - the click goes on to the world');
     }
   };
   /** FIELD BUGS 2026-10-04d QUEST-MARKERS: the building backstop's spots in the room's frame - the site's other markers,

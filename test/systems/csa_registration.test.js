@@ -7,7 +7,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MOD_SETTINGS, modSetting } from '../../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { ONLINE_PLAYERS_OWN_MODS, ONLINE_ROOM_MOD_KEYS, onlineForcedModSetting } from '../../src/systems/online/onlineLane.js';
 import { isBoatEffectBundle } from '../../src/world/deepWater/deepWaterSwim.js';
 
@@ -131,17 +130,13 @@ test('CSA-A x OWN-AUDIT: BadTack, BadTackMultiplier and AutoStowGaffSails, which
   assert.ok(isBoatEffectBundle("I'm On A Boat"));
 });
 
-test('CSA-A: the switch has its Features row, its credit and its online lane - a boat is the player\'s own, like a wagon, so every key is the player\'s online', () => {
+test('CSA-A: the switch has its Features row and its online lane - a boat is the player\'s own, like a wagon, so every key is the player\'s online', () => {
   const row = FEATURES.find((f) => f.control?.vendor === V);
   assert.ok(row, 'a Features row');
   assert.equal(row.group, 'world');
-  assert.equal(row.title, 'Come Sail Away by RedRoryOTheGlen');
+  assert.equal(row.title, 'Come Sail Away', 'CREDITS-OUT: the mod\'s name alone');
   assert.equal(row.effect, 'Takes effect when the game next loads.', 'the templates merge at load');
   assert.deepEqual([...MOD_CURATED[V]], ['SailingAssist.AutoTrimming', 'Handling.BadTack', 'WindDirectionWidget.Enable', 'Waves.Enable', 'Audio.SoundVolume'], 'the four a player reaches for first, and OWN-AUDIT\'s bad tack');
-  const credit = CREDITS.mods.find((m) => (m.vendor ?? m.retired)?.includes(V)); // OWN-WORK4: a retired credit names its folder under `retired`
-  assert.ok(credit, 'a credit');
-  assert.deepEqual([credit.title, credit.version, credit.author], ['Come Sail Away', '2.1', 'RedRoryOTheGlen']);
-  assert.equal(credit.link, 'https://www.nexusmods.com/daggerfallunity/mods/1131');
   assert.ok(ONLINE_PLAYERS_OWN_MODS.includes(V));
   assert.equal(ONLINE_ROOM_MOD_KEYS[V], undefined);
   for (const key of Object.keys(DEF.keys)) assert.equal(onlineForcedModSetting(V, key, '?online=1'), undefined, `${key} is the player's online`);

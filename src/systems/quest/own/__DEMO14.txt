@@ -1,4 +1,4 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 ---- Example quest to demonstrate dialog linked resources and
 ---- add dialog to reveals anyinfo message
 ---- anyInfo message for person is available from start since no dialog link was established

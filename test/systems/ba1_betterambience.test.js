@@ -37,7 +37,6 @@ import { REVERB_PRESET, reverbImpulseSamples, mbToGain } from '../../src/systems
 import { modCompatibilityChecking, reportModCompatibilityIssues, COMPAT_WARNING_LINES, COMPAT_WARNING_LOG, BETTER_AMBIENCE_GUID, immersiveFootsteps } from '../../src/systems/immersiveFootsteps.js';
 import { MOD_SETTINGS, isFloatKey, isChoiceKey, isIntKey, isTextKey, isTupleKey, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { EQUIP_SLOTS } from '../../src/characters/paperdoll/paperdoll.js';
 import { ARMOR_MATERIAL } from '../../src/systems/armorMaterials.js';
 import { FOOTSTEP } from '../../src/systems/footsteps.js';
@@ -180,9 +179,8 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   const row = FEATURES.find((f) => f.id === 'mod-better-ambience');
   assert.ok(row); assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(row.effect, /^Takes effect at once/); assert.equal(row.group, 'world');
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k}`);
-  // the credit stays while our code follows the mod's design (Own-Work.md step 6); `retired` once its row is written
-  const credit = CREDITS.mods.find((c) => c.title === 'Better Ambience');
-  assert.ok(credit); assert.ok([...(credit.retired ?? credit.vendor ?? [])].includes(V)); assert.equal(credit.version, '0.1.4'); assert.equal(credit.author, 'Joshua Steinhauer'); assert.match(credit.terms, /MIT/); assert.match(credit.terms, /Its rain and snow particle changes are not included\./);
+  // CREDITS-OUT (2026-11-01): no credit on a screen; the MIT notice our code owes travels in LICENSE
+  assert.match(rd('LICENSE'), /Better Ambience 0\.1\.4's by Joshua Steinhauer[\s\S]*MIT License\n\nCopyright \(c\) 2020 Josh Steinhauer\n/);
   assert.equal(BETTER_AMBIENCE_MOD.nexusFile, '0.1.5', 'the Nexus label');
   // OWN-WORK4: the vendor README's text pins and the registry row left with it.
 });

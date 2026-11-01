@@ -12,7 +12,6 @@ import { fpsSpellCasting, readiedHandsFrame, READIED_HANDS_FRAME, SpellCastAnim,
 import { resetToDefaults } from '../../src/systems/settings/settings.js';
 import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { ONLINE_PLAYERS_OWN_MODS } from '../../src/systems/online/onlineLane.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { featureForControl } from '../../src/systems/features.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url));
@@ -139,7 +138,7 @@ test('RSH1: the mod\'s one condition, its frame and the cast\'s layout, as its s
   assert.equal(new SpellCastAnim().frameIndex, -1);
 });
 
-test('RSH1: registered as every vendored mod is - its switch on by default, its tile in Combat, its credit, the player\'s own online (mutants: any one left out)', () => {
+test('RSH1: registered as every vendored mod is - its switch on by default, its tile in Combat, its licence notice, the player\'s own online (mutants: any one left out)', () => {
   const mod = MOD_SETTINGS['readied-spellcasting-hands'];
   assert.equal(mod.author, 'jefetienne');
   assert.equal(mod.keys.Enabled.default, true, 'MO1: on by default');
@@ -147,7 +146,7 @@ test('RSH1: registered as every vendored mod is - its switch on by default, its 
   const row = featureForControl('mods', 'Enabled', 'readied-spellcasting-hands');
   assert.equal(row.group, 'combat');
   assert.equal(row.effect, 'Takes effect at once.');
-  const credit = CREDITS.mods.find((c) => c.retired?.includes('readied-spellcasting-hands'));   // OWN-WORK1: a retired credit
-  assert.ok(credit && credit.author === 'jefetienne' && credit.version === '1.3' && /mods\/91$/.test(credit.link));
+  // CREDITS-OUT (2026-11-01): no credit on a screen; the MIT notice our code owes travels in LICENSE
+  assert.match(String(read('LICENSE')), /Readied Spellcasting Hands 1\.3 \(both by\njefetienne\)[\s\S]*Copyright \(c\) 2009-2018 jefetienne\n/);
   assert.ok(ONLINE_PLAYERS_OWN_MODS.includes('readied-spellcasting-hands'), 'hands on my own screen - the room shares nothing of it');
 });

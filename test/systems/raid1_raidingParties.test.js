@@ -34,7 +34,6 @@ import { modSaveRecords, restoreModSaveRecords, _resetModSaveData } from '../../
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../../src/systems/online/onlineLane.js';
 import { FEATURES } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { travelMapPickerData, _setTravelMapArtForTests } from '../../src/ui/travel/travelMapWindow.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -469,7 +468,7 @@ test('RAID1 the save record: RaidSaveData\'s own fields and the port\'s two; a r
   assert.deepEqual(getSaveData(), newSaveData(), 'a save without the record: NewSaveData');
 });
 
-test('RAID1 the lane, the row, the credit: the switch on by default, the room\'s online (RAID2); a world row; Kamer credited with the permission record', () => {
+test('RAID1 the lane, the row, the record: the switch on by default, the room\'s online (RAID2); a world row; the permission record in the vendor README', () => {
   const mod = MOD_SETTINGS[RAIDING_PARTIES_VENDOR];
   assert.equal(mod.author, 'Kamer');
   assert.equal(mod.keys.Enabled.default, true);
@@ -478,11 +477,11 @@ test('RAID1 the lane, the row, the credit: the switch on by default, the room\'s
   assert.deepEqual({ ...ONLINE_ROOM_MOD_KEYS[RAIDING_PARTIES_VENDOR] }, { Enabled: true }, 'forced on, its own default');
   const row = FEATURES.find((f) => f.id === `mod-${RAIDING_PARTIES_VENDOR}`);
   assert.equal(row.group, 'world');
-  assert.equal(row.title, 'World Events - Raiding Parties by Kamer');
+  assert.equal(row.title, 'World Events - Raiding Parties', 'CREDITS-OUT: the mod\'s name alone');
   assert.equal(row.effect, 'Takes effect at once.');
-  const credit = CREDITS.mods.find((m) => m.vendor?.includes(RAIDING_PARTIES_VENDOR));
-  assert.equal(credit.version, '1.1');
-  assert.equal(credit.terms, 'Made by Kamer for this game, used with his permission, with some bugs fixed.');
+  const readme = read(`vendor/${RAIDING_PARTIES_VENDOR}/README.md`);   // CREDITS-OUT: the README is the record, no screen credit
+  assert.match(readme, /World Events - Raiding Parties 1\.1\*\*/);
+  assert.match(readme, /\*\*Permission: granted by the author, who made the mod for this port/);
 });
 
 test('RAID1 the picker\'s bytes: the travel map\'s own TRAV0I01 bitmap, null until its art has loaded (mutant: never at hand)', () => {

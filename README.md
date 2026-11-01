@@ -1,7 +1,7 @@
 # DFO Online
 
 **DFO Online** - an open-source reimplementation of a classic 1996 RPG,
-played from your own copy of The Elder Scrolls II: Daggerfall, and its own
+played from your own copy of The Elder Scrolls II: Daggerfall. It is its own
 game. Presentation rebuilt on hand-rolled WebGL2. MIT licensed, with the
 notices of the work it includes alongside (LICENSE). DFO Online is an independent,
 unofficial project, not affiliated with or endorsed by Bethesda Softworks or

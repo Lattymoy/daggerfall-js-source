@@ -13501,7 +13501,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT RELEASE R2-6 (scenes/vampireCrypt.js): the Bay's region's cemetery (DFU's draw); past the Bay the province's own,
     // never skipped - the region's MAPS.BSA rows were the whole search, and a province holds none
     const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces);
-    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)'); return; }
+    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped'); return; }
     modes?.forceExitToExterior();
     Promise.resolve().then(async () => {
       _wodInside = true;   // WOD6: the crypt is inside

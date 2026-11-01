@@ -1474,26 +1474,6 @@
   "tr": "0fb70fe49711",
   "by": "claude-in-session"
  },
- "credits.ambientText.terms": {
-  "en": "a6f7cd6701a1",
-  "tr": "5c52be689f10",
-  "by": "claude-in-session"
- },
- "credits.ambientText.what": {
-  "en": "c71fb13b6590",
-  "tr": "d1aa74660c56",
-  "by": "claude-in-session"
- },
- "credits.mudex.terms": {
-  "en": "9842b1e2ee2a",
-  "tr": "f7db01cb2238",
-  "by": "claude-in-session"
- },
- "credits.mudex.what": {
-  "en": "d59e8bd4c608",
-  "tr": "ec329e560c6d",
-  "by": "claude-in-session"
- },
  "decor.bar.keys.nudge": {
   "en": "7846d6e7802c",
   "tr": "81c725af18b1",
@@ -5530,8 +5510,8 @@
   "by": "claude-in-session"
  },
  "settings.pack.none": {
-  "en": "3b1af7494957",
-  "tr": "9a5b241a6218",
+  "en": "8ecf698e22bf",
+  "tr": "70eb1ce196d4",
   "by": "claude-in-session"
  },
  "settings.pack.remove": {

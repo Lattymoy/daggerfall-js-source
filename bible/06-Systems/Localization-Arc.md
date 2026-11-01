@@ -999,3 +999,7 @@ they touched hold their counts (`ui/credits.js` 86: the credit's title routed, a
   "Roi {name} ({crown})", the fall "{crown} perd son roi : {name} tombe.").
 - **The name lookups:** a unit is named through Daggerfall Unity's own list (`getLocalizedEnemyName`), so
   `ui/gambitTableWords.js` is a counted name site (`test/systems/l10n3e_names.test.js`).
+
+## CREDITS-OUT (2026-11-01): the credits' words gone, seventeen reworded
+
+The owner: "Remove all mentions of DFU, Interkarma and the nexus community. No more credits along with removing their logos from the intro." The credit keys left the catalog with `src/ui/credits.js` (DELETED) and the intro's two captions, and every language's rows went with them. Seventeen strings were reworded to name no Daggerfall Unity and no author: the Features notes and kind labels, the texture-pack and translation lines, and two mods' Off lines. Each was redrafted in the thirteen finished languages and in every drafting one that had the row (`tools/l10nInSession.mjs`). The two tests of the translations' credit rows in `test/systems/l10n6_credits.test.js` are RETIRED; the translators' record stays. `test/systems/credits.test.js` holds every language free of the four names.

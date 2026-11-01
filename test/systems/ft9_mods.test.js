@@ -3,8 +3,8 @@
 // and 2026-09-08 "place each creator's name in the mod title").
 //
 // One row per vendored mod on the home, Mod Authored: the mod's own
-// Enabled switch, its own title with the creator's name, its own
-// description as the note - one source, modSettings.js, where the
+// Enabled switch, its own title (CREDITS-OUT, the owner, 2026-11-01: "No more
+// credits" - the name alone, no creator), its own description as the note - one source, modSettings.js, where the
 // mod's modsettings ship. Its other knobs stay under its card on the
 // Mods page, whose Enabled row is a pointer here (FT2's gate). Every
 // vendored mod with a switch has a row, both ways, so a mod vendored
@@ -17,7 +17,6 @@ import '../../src/world/landView.js';   // RF4: the condensed rows' lanes regist
 import '../../src/world/outdoors.js';
 import '../../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
-import { CREDITS } from '../../src/ui/credits.js';
 
 const rows = FEATURES.filter((f) => f.control.store === 'mods');
 
@@ -54,10 +53,10 @@ test('FT9: every vendored mod with a switch has exactly one row over it, and eve
   assert.equal(tagged.length, rows.length + notMods.length);
 });
 
-test('FT9: a mod row is the mod\'s own - the creator in the title, the modsettings description as the note, one source', () => {
+test('FT9: a mod row is the mod\'s own - its name alone as the title (CREDITS-OUT), the modsettings description as the note, one source', () => {
   for (const f of rows) {
     const mod = MOD_SETTINGS[f.control.vendor];
-    assert.equal(f.title, `${mod.title} by ${mod.author}`, `${f.id}: the creator's name in the title`);
+    assert.equal(f.title, mod.title, `${f.id}: the mod's name, and no creator's`);
     assert.equal(f.note, mod.keys.Enabled.description, `${f.id}: the mod's own words, not a copy`);
     assert.deepEqual(f.kinds, ['mod']);
     assert.equal(f.control.key, 'Enabled');
@@ -65,12 +64,10 @@ test('FT9: a mod row is the mod\'s own - the creator in the title, the modsettin
     assert.match(f.effect, /^Takes effect /, `${f.id} says when`);
   }
   assert.deepEqual(rows.map((f) => f.id), ['mod-seasons-iliac-bay', 'mod-low-poly-trees', 'mod-heat-haze', 'mod-windfall', 'mod-snowfall', 'mod-roads-hazelnut', 'mod-travel-options', 'mod-immersive-travel', 'mod-world-of-daggerfall', 'mod-warm-ashes-ships', 'mod-world-events-raiding-parties', 'mod-iliac-puddle-no-more', 'mod-ocean-holes', 'mod-come-sail-away', 'mod-foraging', 'mod-meanermonsters', 'mod-daggerfall-enemy-expansion', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-shield-widget', 'mod-readied-spellcasting-hands', 'mod-diverse-weapons', 'mod-roleplay-realism-items', 'mod-roleplay-realism', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder', 'mod-immersive-footsteps', 'mod-world-tooltips', 'mod-better-ambience', 'mod-horse-cart-and-cargo', 'mod-physical-items', 'mod-oblivion-remaster-leveling', 'mod-project-legacy'], 'the Mods pane\'s order');
-  // KG3: a pref row carries its creator too (AUDIT SURV E) - The King's Gambit's bundle names none, so the credits' own
-  // unnamed form, one source: the row says what the About pane says (mutant: the creator dropped)
+  // KG3: a pref row is titled the same way - the mod's name alone (CREDITS-OUT); no mod row names an author
   const kg = FEATURES.find((f) => f.id === 'mod-kings-gambit');
-  const credit = CREDITS.mods.find((m) => m.retired?.includes('kings-gambit'));   // OWN-WORK1: a retired credit
-  assert.equal(kg.title, `${credit.title} by ${credit.author}`);
-  assert.equal(kg.title, 'The King\u2019s Gambit by Unnamed (thekingsgambit.dfmod)');
+  assert.equal(kg.title, 'The King\u2019s Gambit');
+  for (const f of FEATURES.filter((r) => r.kinds.includes('mod'))) assert.doesNotMatch(f.title, / by /, `${f.id}: no by-line`);
 });
 
 test('FT9: when each switch lands, as the port knows it', () => {

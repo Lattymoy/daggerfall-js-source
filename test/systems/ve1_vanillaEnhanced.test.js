@@ -308,7 +308,7 @@ test('VE3/VE4 the Texture Overhaul card: Classic and Vanilla Enhanced - the pack
     [MASKED]: fakeMod('Vanilla Enhanced - Masked Roads', { deps: [['world of daggerfall - biomes', true], [VE_BASE]] }),
     [WINTER]: fakeMod('Vanilla Enhanced - Winter Tracks', { deps: [[VE_BASE]] }),
   }, { asPlayer: true });
-  assert.equal(ve.by, 'carademono, version 3.5.0', 'the copy attached is the one read');
+  assert.equal(ve.by, 'Attached, version 3.5.0', 'the copy attached is the one read (CREDITS-OUT: no author)');
   assert.deepEqual(attachedDfmods().filter(isVeFamily).map((m) => [m.fileName, m.shipped, m.enabled]), [
     [VE_BASE, false, true], ['sands of the alikr', true, true], ['snowfall', true, true], ['vanilla enhanced - masked roads', false, true],
     ['vanilla enhanced - snowless swamps and jungles', true, false], ['vanilla enhanced - winter tracks', false, true],

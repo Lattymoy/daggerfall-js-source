@@ -97,8 +97,6 @@ record.
   (`systems/snowfall.js`, `snowfallRuntime.js`, pinned to the author's C# by nine hash traces), Windfall's, Horse
   Cart and Cargo's, Come Sail Away's, Eye of the Beholder's and Handheld Torches' among them. Rewriting each in our
   own design is a wave of its own.
-- **Features rows name the authors** ("Foraging by Harbinger451"), by Mac's FT9 rule (2026-09-08), sixteen of them
-  for packs now retired.
 - **Past the Bay, 20 of 1,221 yards** stand off the cells the code of `2036a509e` gave them, on Daggerfall's own
   blocks (`03-World/Town-Shapes.md` section 16).
 - **Words still the authors' outside the retired files.** About 100 dish and drink names in
@@ -190,7 +188,7 @@ still carries the files.
 The MIT rows keep their notice because our JS restates their code closely: `unleveledLoot.js` method by method,
 `meanerMonsters.js` the mod's 24-row table value for value, `worldTooltips.js` the mod's tables word for word,
 `immersiveFootsteps.js` and `betterAmbience.js` their scripts' laws. The art and sound they carried is ours now.
-`LICENSE` carries each notice in full, and the About screen the copyright lines.
+`LICENSE` carries each notice in full, and the build ships it as `LICENSE.txt` (CREDITS-OUT, below).
 
 ## How a directory is retired
 
@@ -203,8 +201,15 @@ OWN-WORK1 set the steps. A later wave follows them once our own replacement is i
    changed default still fails it. An assertion about the vendored file's own text goes.
 4. A comment that cited a path in the directory cites the upstream release by name, with no tree path.
 5. The mod's own page gets a dated OWN-WORK paragraph. Its older text is history and stays.
-6. The About screen keeps the mod's credit while our code follows its design (`retired` in place of `vendor`, in
-   `ui/credits.js`). The credit ends when our own design replaces it, and that is its own decision.
+6. No credit is kept or written: CREDITS-OUT (below) ended them all. An MIT notice our code still owes stays in `LICENSE`.
 
 `test/systems/hard4_registry.test.js` lets a player's switch name a retired key, and `test/systems/credits.test.js`
-holds each retired credit to a row in the table above.
+holds every vendored folder to a README of its source and terms, and every retired key to no folder.
+
+## CREDITS-OUT (2026-11-01)
+
+The owner, 2026-11-01: "Remove all mentions of DFU, Interkarma and the nexus community. No more credits along with removing their logos from the intro." His word overrides CR1 (2026-08-30) and FT9 (2026-09-08). No screen credits a work or
+names its author: the About pane's credits, the intro's logo cards and the Features rows' "by" are gone, and no
+player string names Daggerfall Unity, DFU, Interkarma or Nexus. A licence's notice is not a credit. `LICENSE` keeps
+every MIT notice, the vendor READMEs keep their terms, and the build ships `LICENSE.txt` and `OFL-Silkscreen.txt`,
+linked from nowhere. The registry and the tables above stay the provenance record (`10-UI/UI-Arc.md` CREDITS-OUT).

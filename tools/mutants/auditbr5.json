@@ -124,7 +124,7 @@
   {
     "name": "AUDITBR5-the-site-logo-a-second-size",
     "file": "index.html",
-    "old": ".wordmark img { display: block; width: min(346px, 69.1vw);",
+    "old": ".wordmark img { display: block; width: min(347px, 69.1vw);",
     "new": ".wordmark img { display: block; width: min(321px, 69.1vw);",
     "tests": [
       "test/ui/enhanced/landing.test.js"

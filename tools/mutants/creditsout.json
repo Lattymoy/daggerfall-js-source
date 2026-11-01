@@ -1,0 +1,101 @@
+[
+  {
+    "name": "CREDITS-OUT-licences-plugin-unregistered",
+    "file": "vite.config.js",
+    "old": "noImportedTopLevelAwait(), licenceFiles()]",
+    "new": "noImportedTopLevelAwait()]",
+    "tests": [
+      "test/systems/credits.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-licence-not-shipped",
+    "file": "vite.config.js",
+    "old": "      this.emitFile({ type: 'asset', fileName: 'LICENSE.txt', source: readFileSync('LICENSE', 'utf8') });\n",
+    "new": "",
+    "tests": [
+      "test/systems/credits.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-ofl-not-shipped",
+    "file": "vite.config.js",
+    "old": "      this.emitFile({ type: 'asset', fileName: 'OFL-Silkscreen.txt', source: readFileSync('vendor/silkscreen-five/OFL.txt', 'utf8') });\n",
+    "new": "",
+    "tests": [
+      "test/systems/credits.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-by-line-back",
+    "file": "src/systems/features.js",
+    "old": "    get title() { return t('features.mod.title', '{title}', { title: mod.title }); },",
+    "new": "    get title() { return t('features.mod.title', '{title}', { title: `${mod.title} by ${mod.author}` }); },",
+    "tests": [
+      "test/systems/ft9_mods.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-found-by-author",
+    "file": "src/systems/features.js",
+    "old": "mod?.title, c.vendor].filter(Boolean)",
+    "new": "mod?.title, mod?.author, c.vendor].filter(Boolean)",
+    "tests": [
+      "test/systems/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-kind-names-dfu",
+    "file": "src/systems/features.js",
+    "old": "t('features.kind.classic', 'Classic Option')",
+    "new": "t('features.kind.classic', 'DFU Classic')",
+    "tests": [
+      "test/systems/features.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-intro-cards-back",
+    "file": "src/ui/intro/introCue.js",
+    "old": "export const INTRO_NARRATION = Object.freeze([",
+    "new": "export const INTRO_CREDITS = Object.freeze([]);\nexport const INTRO_NARRATION = Object.freeze([",
+    "tests": [
+      "test/systems/credits.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-a-translation-names-dfu",
+    "file": "locales/de/Port_Strings.csv",
+    "old": "features.kind.classic,\"Klassische Option\"",
+    "new": "features.kind.classic,\"DFU Klassisch\"",
+    "tests": [
+      "test/systems/credits.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-grimoire-by-author",
+    "file": "src/systems/overhauls.js",
+    "old": "        by: `Version ${G.version}`, // CREDITS-OUT: no author",
+    "new": "        by: `${G.author}, version ${G.version}`,",
+    "tests": [
+      "test/ui/overhauls.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-pack-author-on-the-card",
+    "file": "src/systems/overhauls.js",
+    "old": "          return b.version ? `Attached, version ${b.version}` : 'Attached'; // CREDITS-OUT: no author",
+    "new": "          return b.version ? `carademono, version ${b.version}` : 'carademono';",
+    "tests": [
+      "test/systems/ve1_vanillaEnhanced.test.js"
+    ]
+  },
+  {
+    "name": "CREDITS-OUT-launcher-names-dfu",
+    "file": "app/lib/launcherState.cjs",
+    "old": "  dfu: 'from another install',",
+    "new": "  dfu: 'from Daggerfall Unity',",
+    "tests": [
+      "test/tooling/audit_install2.test.js"
+    ]
+  }
+]

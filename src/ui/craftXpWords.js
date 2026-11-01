@@ -56,7 +56,7 @@ import { scaleXp } from '../net/firmament/firmamentLaw.js';
 /** @typedef {{ limit?: { cap: number, room: number, by: string[], rank: number }|null, pct?: number }} CraftPay */
 
 /** CRAFT-LIMIT-SAID: the crafts that hold a track at the limit, as the player's language lists them ("Building and
- *  Provisioning" - Intl.ListFormat's conjunction, ui/credits.js's way). @param {string[]} by track ids */
+ *  Provisioning" - Intl.ListFormat's conjunction). @param {string[]} by track ids */
 function craftsList(by) {
   const names = by.map((p) => professionName(p)).filter(Boolean);
   try {

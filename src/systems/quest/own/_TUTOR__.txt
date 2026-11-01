@@ -1,4 +1,4 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 -- BAY-OWN: the classic start's tutorial. It runs in Privateer's Hold, sends the player to Daggerfall (1042), and its rumors (1006) name the Bay's courts.
 -- Quest: C:\QUESTS\WORKING\_TUTOR__.Qbn.
 -- StartsBy: letter

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { IntroTheme, audibleContextTime, INTRO_THEME_GAIN, MENU_THEME_GAIN } from '../../src/systems/introTheme.js';
-import { introTitleAt, introFrameAt, introCameraAt, INTRO_CREDITS, TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, LANDSCAPE_HOLD_TIME, TITLE_DEPTH, TITLE_BLUR, CREST_TIME } from '../../src/ui/intro/introCue.js';
+import { introTitleAt, introFrameAt, introCameraAt, TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, LANDSCAPE_HOLD_TIME, TITLE_DEPTH, TITLE_BLUR, CREST_TIME } from '../../src/ui/intro/introCue.js';
 import { introTerrainGrid, introGroundGrid } from '../../src/ui/intro/introLandscape.js';
 import { seaDistance, BALFIERA } from '../../src/ui/intro/introMap.js';
 import { brandMark } from '../../src/ui/brandMark.js';
@@ -91,20 +91,12 @@ test('INTRO2: the final title never auto-dismisses, including after the entire r
     const st = introFrameAt(time);
     assert.equal(st.title.opacity, 1); assert.equal(st.title.y, 0);
     assert.equal(st.ready, true); assert.equal(st.prompt, 1);
-    assert.equal(st.credits.every(c => c.opacity === 0), true);
   }
   assert.equal(introFrameAt(TITLE_READY_TIME - 0.01).ready, false);
 });
 
-test('INTRO2: both credits end before the climb, with a readable hold and no overlap', () => {
-  for (const c of INTRO_CREDITS) {
-    assert.ok(c.out - c.up >= 1.8);
-    assert.ok(c.end < 9.45);
-    const st = introFrameAt((c.up + c.out) / 2);
-    assert.equal(st.credits.filter(x => x.opacity > 0).length, 1);
-    assert.equal(st.credits.find(x => x.key === c.key).opacity, 1);
-  }
-});
+// CREDITS-OUT (2026-11-01, the owner: "No more credits along with removing their logos from the intro"): INTRO2's
+// test of the two logo cards' holds is RETIRED with the cards; test/systems/credits.test.js holds them gone.
 
 test('INTRO2: camera is continuous, finite, and keeps the full horizontal frame on portrait screens', () => {
   // INTRO4: the flight climbs from a dozen metres to thousands of kilometres, so "no teleport" is held against the

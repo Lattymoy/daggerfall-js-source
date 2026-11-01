@@ -30,7 +30,7 @@ literal brace.
 ## Machine drafts
 
 Where no human translation exists, the text is a draft by Claude, and the game says so: the Language row reads
-"Machine translated", and the About pane's credits name the drafts as Claude's. A person's translation always
+"Machine translated". A person's translation always
 outranks a draft. Once a row is yours, no session and no pipeline run writes over it.
 
 ## Fixing a translation
@@ -51,9 +51,6 @@ holds every fix to the same rules as the drafts. Each `{argument}` the English n
 language's own categories. A row whose English changed since you exported is refused as stale, and you'll need to
 export again. Every applied fix is recorded as a person's row (`"by": "human"`). If you can't run the tool, attach the
 filled sheet to a translation issue and a maintainer will import it.
-
-**Credit.** Add your name to `locales/<tag>/translators.json` (a JSON list of names) in your pull request, and the
-About pane will credit the language as "checked and corrected by" you.
 
 ## Coverage
 
@@ -83,7 +80,7 @@ DFU's own layout:
 2. the bundled pack, on top of the drafts;
 3. a pack the player installs, on top of both.
 
-The credits carry the bundled pack's name, authors, licence and source. A pack's textures and videos are edits of
+Its `PACK.json` and `LICENSE` record its name, authors, licence and source. A pack's textures and videos are edits of
 Bethesda's assets and are never bundled, whatever the pack's terms say. `node tools/l10nPack.mjs` checks every bundled
 pack, and test/tooling/l10n6_tools.test.js holds the tree to it. No pack is bundled yet: one is added only once its authors'
 permission is in hand.

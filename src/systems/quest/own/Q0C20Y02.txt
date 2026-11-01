@@ -1,11 +1,10 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 -- Quest: C:\QUESTS\WORKING\Q0C20Y02.Qbn.
 -- StartsBy: NPC
 -- Questee: anyone
 -- Questor: witch
 -- Repute: 20
 -- QuestId: 2
--- Edited for Daggerfall Unity by Jay_H
 Messages: 26
 Quest: Q0C20Y02
 DisplayName: An Expensive Purchase

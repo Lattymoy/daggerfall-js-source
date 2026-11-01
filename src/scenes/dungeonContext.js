@@ -487,7 +487,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       else if (index === -1) {
         // DS1: GetModelData answers false (RDBLayout.cs:634-638) - nothing drawn, no door taken - a world-data
         // block naming a model no one supplies is DFU's logged miss, never a thrown dungeon
-        console.warn(`[dungeon] model ${id}: not in ARCH3D and no mod supplies it - nothing stands there, as in DFU`);
+        console.warn(`[dungeon] model ${id}: not in ARCH3D and no mod supplies it - nothing stands there`);
         preModels.set(id, emptyModel());
       } else preModels.set(id, dfMeshToModel(arch.getMesh(index), () => ({ width: 1, height: 1 })));
     }

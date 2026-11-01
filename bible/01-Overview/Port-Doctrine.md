@@ -64,7 +64,9 @@ Translation rule (the rule these were built under; since SCOPE1 it holds wheneve
 
 ## Attribution
 
-Format knowledge and game logic derive from Daggerfall Unity (MIT license, Interkarma and contributors) and the UESP/dfworkshop format documentation. LICENSE and README must credit DFU when the repo ships anything public-facing. Arena's formats derive from OpenTESArena (MIT license, The OpenTESArena Developers), credited in LICENSE and README beside it (TESA1).
+Format knowledge and game logic derive from Daggerfall Unity (MIT license, Interkarma and contributors) and the UESP/dfworkshop format documentation. Arena's formats derive from OpenTESArena (MIT license, The OpenTESArena Developers) (TESA1). LICENSE carries both notices, and the notice of every MIT work the tree ships or ports.
+
+**CREDITS-OUT (2026-11-01).** The owner: "Remove all mentions of DFU, Interkarma and the nexus community. No more credits along with removing their logos from the intro." Nothing a player or a site visitor reads credits a work or names Daggerfall Unity, DFU, Interkarma or Nexus: not the game, the site, the README, the desktop app or the Discord bot. A licence's notice is not a credit. LICENSE keeps them, and the build ships it as `LICENSE.txt`, shown and linked nowhere. DFU stays the engineering reference in comments, cites and this bible (Scope above).
 
 ## Phase plan
 

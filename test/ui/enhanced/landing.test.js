@@ -61,7 +61,7 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // picture and nothing else is one. It is the GAME's own file, which the
   // build carries for the front door already - one copy, so public/brand/
   // stays untracked and the site cannot show a logo the game does not.
-  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="1034" /></h1>';
+  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="699" /></h1>';   // BR7: the wordmark's 1232 x 699
   assert.equal(landing.split(LOGO).length, 2, 'the wordmark is the product\'s logo, once');
   const drawn = landing.replace(LOGO, '').replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, '');
   assert.doesNotMatch(drawn, /<img\s|<canvas|<video|<picture|url\(/i, 'beyond the logo, the landing page draws nothing but CSS');
@@ -264,9 +264,10 @@ test('U60: every link on the landing page goes somewhere', () => {
       assert.match(h, /^https:\/\//, `${h} is neither a page here nor https`);
     }
   }
-  // The credit the doctrine requires of anything public-facing.
-  assert.match(landing, /github\.com\/Interkarma\/daggerfall-unity/, 'Daggerfall Unity is credited');
-  assert.match(landing, /MIT licence/);
+  // CREDITS-OUT (2026-11-01, the owner: "No more credits"): the page credits nobody; it says the licence and the
+  // trademark notice, and the notices the licence requires ship in the build (test/systems/credits.test.js).
+  assert.doesNotMatch(landing, /Interkarma|Daggerfall Unity|nexusmods|id="credits"/, 'no credit and no DFU');
+  assert.match(landing, /Open source under the MIT licence\./);
 });
 
 // ── EVERY TOOL FOLLOWED THE MOVE ──────────────────────────────────
@@ -392,8 +393,8 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   // AUDIT BR5: the wordmark is the product's logo again (BR3 had made it type), at the width the game's front door
   // gives it (src/ui/enhanced/enhancedStyle.js .px-wordmark:has(.brand-logo)), centred over the rule.
   // BR6: the dragon mark's 234px, and 46.7vw - the height BR5's 64vw gave its 1.63:1
-  assert.match(css, /\.wordmark img \{ display: block; width: min\(234px, 46\.7vw\); height: auto; margin: 0 auto; transform: translateX\(-10%\); \}/, 'the logo, sized as the door\'s (and LOGO-CENTRE\'s shift)');
-  assert.ok(read('src/ui/enhanced/enhancedStyle.js').includes('.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw);'), '...whose 234px it shares');
+  assert.match(css, /\.wordmark img \{ display: block; width: min\(347px, 69\.1vw\); height: auto; margin: 0 auto; transform: translateX\(0%\); \}/, 'the logo, sized as the door\'s (and LOGO-CENTRE\'s shift, 0 for BR7\'s wordmark)');
+  assert.ok(read('src/ui/enhanced/enhancedStyle.js').includes('.px-wordmark:has(.brand-logo) { width: min(347px, 53.9vw);'), '...whose 347px it shares (BR7)');
   assert.doesNotMatch(css, /\.wordmark small/, 'the type wordmark\'s sub-line went with it');
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
@@ -628,7 +629,7 @@ test('HK1: four sections, every nav link lands on one, and none is orphaned', ()
   const landing = read('index.html');
   const ids = [...landing.matchAll(/<section id="([\w-]+)"/g)].map((m) => m[1]);
   const nav = [...landing.matchAll(/<a href="#([\w-]+)">/g)].map((m) => m[1]);
-  assert.deepEqual(ids, ['what', 'how', 'inside', 'credits'], 'the four sections, in reading order');
+  assert.deepEqual(ids, ['what', 'how', 'inside', 'legal'], 'the four sections, in reading order (CREDITS-OUT: the credits became the legal notes)');
   assert.deepEqual(nav, ids, 'and the nav is exactly them, in the same order - no broken anchor, no orphan');
   for (const id of ids) {
     assert.match(landing, new RegExp(`<section id="${id}" aria-labelledby="${id}-h">`), `${id} names its own heading`);

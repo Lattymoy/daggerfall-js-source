@@ -1,11 +1,10 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 -- Quest: C:\QUESTS\WORKING\C0B00Y00.Qbn.
 -- StartsBy: NPC
 -- Questee: member
 -- Questor: temple
 -- Repute: 0
 -- QuestId: 0
--- Edited for Daggerfall Unity by Jay_H
 Messages: 13
 Quest: C0B00Y00
 DisplayName: The Haunted House

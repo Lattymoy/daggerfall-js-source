@@ -356,7 +356,7 @@ with the body (`BACK_SHIELD_SQUEEZE`, edge on from aside). My body and every lay
 The strips are drawn from Daggerfall's own sprites (the caped class sprites 1540 and 1541, the enemy frames of
 TEXTURE.475-490), so under `01-Overview/Port-Doctrine.md` they are a render of game data. The owner approved carrying
 them as a named exception (2026-10-19), as for Vanilla Enhanced and the desert's and winter's ground, credited to DFO
-(`src/ui/credits.js`, `Mod-Registry.md`). `test/tooling/doctrine.test.js` marks the folder `derived`.
+(`src/ui/credits.js`, DELETED; `Mod-Registry.md`). `test/tooling/doctrine.test.js` marks the folder `derived`.
 
 - `vendor/layered-armor/male|female/<combo>/`: the body strips; `weapon/<body>/<record>-<frame>.png` and
   `weapon/manifest.json`: where the strips' hammer is (LAYERED-WEAPONS); `cloak/<body>/`: the hood and cape layer;

@@ -352,12 +352,12 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
 test('BR5: the original game is named only where it must be - in what a player reads, the original game or the classic', async () => {
   // Mac's choice, asked: MINIMIZE. "Daggerfall" stays where it is the TRUTH
   // about something that is not this product - the files a player brings, the
-  // credits and the licence, the trademark notice, Daggerfall Unity and the
-  // mods by their own names, and the Iliac Bay's own places (the city, the
+  // licence, the trademark notice (CREDITS-OUT took the credits and every DFU
+  // mention), the mods by their own names, and the Iliac Bay's own places (the city, the
   // kingdom, the bank). Everywhere else the reader is told "the original game"
   // or "classic". Read off the PRODUCERS, not the files, so a new row that
   // says "as Daggerfall does" reddens here wherever it is written.
-  const OTHERS = /Daggerfall Unity|Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;   // DEX0: a mod by its own name
+  const OTHERS = /Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;   // DEX0: a mod by its own name
   const named = (v) => /Daggerfall/.test(String(v).replace(OTHERS, ''));
   const strings = (v, out = [], at = '') => {
     if (typeof v === 'string') out.push([at, v]);
@@ -400,7 +400,7 @@ test('BR5: the original game is named only where it must be - in what a player r
   assert.ok(landing.includes('The Elder Scrolls and Daggerfall are trademarks of ZeniMax Media Inc.'), 'the trademark notice on the site');
   assert.ok(read('README.md').includes('The Elder Scrolls and Daggerfall are trademarks of ZeniMax\nMedia Inc.'), 'and in the README');
   assert.ok(read('LICENSE').includes('The Elder Scrolls II: Daggerfall is the property of Bethesda Softworks.'), 'the licence\'s own line');
-  assert.match(read('src/ui/credits.js'), /title: 'The Elder Scrolls II: Daggerfall',\n {6}author: 'Bethesda Softworks',/, 'the credits\' first row');
+  assert.ok(landing.includes('<div><dt>The Elder Scrolls II: Daggerfall</dt>\n          <dd>Bethesda Softworks, 1996.'), 'the legal notes\' first row (CREDITS-OUT: no credits)');
   assert.match(read('app/lib/launcherState.cjs'), /title: 'Where is Daggerfall\?',/, 'the launcher asks for the files by the game\'s name');
   assert.match(read('src/formats/mapsTables.js'), /'Wrothgarian Mountains',\n\s*'Daggerfall',\n\s*'Glenpoint'/, 'and the Bay\'s own region keeps its name');
 });
@@ -410,7 +410,7 @@ test('AUDIT BR5: the drawn words no producer exports - the profession pages, the
   // found "Daggerfall's own potion maker" still standing in the Professions page after BR5 (A-2). Read as code -
   // comments out, where the port's notes name what they port - every line that still names it must be owed: the
   // files a player brings, asked for by the game's name.
-  const OTHERS = /Daggerfall Unity|(World|Windmills|Villages|Cities) of Daggerfall/g;
+  const OTHERS = /(World|Windmills|Villages|Cities) of Daggerfall/g;
   const OWED = [
     "+ 'Pick the ARENA2 folder inside your Daggerfall install (on Steam it is under DF/DAGGER/ARENA2;",
     "<p>Daggerfall's game data is freeware but can't be bundled.</p>",

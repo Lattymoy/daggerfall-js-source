@@ -94,7 +94,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and GUILD-RANKS' and GUILD-REQUESTS' TWO (`guild/guildRanksPage.js`: the guild window's Ranks page, the names and the grid of powers; `guild/guildRequestNodes.js`: a request to join sent and answered - `11-Multiplayer/Guild-Shop.md` sections 13 and 14);
 - and FIGUREHEAD's ONE (`figureheadPanel.js`: a ship's carving on her Fleet card - `03-World/Naval-Refit.md` FIGUREHEAD);
 - and PASS-PANELS' ONE (`enhanced/enhancedPass.js`: the shop's Folios - their covers and their pages - `06-Systems/Battle-Pass.md` section 7);
-496 modules
+495 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

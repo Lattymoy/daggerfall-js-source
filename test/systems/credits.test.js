@@ -1,129 +1,136 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-import { CREDITS } from '../../src/ui/credits.js';
 import { FEATURES, WINDMILLS_KEY } from '../../src/systems/features.js';   // WM3: the Features home, and the Windmills switch's declaration
 import { OVERHAUL_PANELS } from '../../src/systems/overhauls.js';
 import { UI_PACKS } from '../../src/systems/uiPack.js';
 import { ENVIRONMENT_PACK_MODS } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';   // ALIKR1 / SNOWFALL1: the shipped environment packs
+import * as introCue from '../../src/ui/intro/introCue.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
-import { retiredKeys, endedCredits } from '../ownWork.mjs';   // OWN-WORK1: the keys Own-Work.md records as retired
+import { retiredKeys } from '../ownWork.mjs';   // OWN-WORK1: the keys Own-Work.md records as retired
 
-// CR1 - THE CREDITS (Mac, 2026-08-30: "as we integrate these I really
-// want to give credit to the mod developer who created it").
-//
-// The rule these pins enforce: nothing is vendored without a credit ON
-// THE SCREEN, and no credit names a folder that is not there. A README
-// credits the author to whoever reads the repo; the About pane credits
-// them to whoever plays, and a modder's name belongs in front of the
-// player.
+// CREDITS-OUT (2026-11-01, the owner: "Remove all mentions of DFU, Interkarma and the nexus community. No more
+// credits along with removing their logos from the intro."). CR1's credits sweep is now a PROVENANCE sweep: nothing
+// is vendored without a README that records where it came from and on what terms, and the notices a licence
+// requires travel in LICENSE and the build - never on a screen.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => hostText(p);
-const rows = [...CREDITS.builtOn, ...CREDITS.mods];
 
-test('CR1: every vendored folder is credited, and every credited folder exists with a README naming the same author', () => {
-  const folders = readdirSync(join(root, 'vendor'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
-  const credited = rows.flatMap((r) => r.vendor ?? []);
-  for (const f of folders) assert.ok(credited.includes(f), `vendor/${f} has no credit on the About screen`);
-  for (const r of rows) {
-    for (const f of r.vendor ?? []) {
-      assert.ok(folders.includes(f), `"${r.title}" credits vendor/${f}, which does not exist`);
-      assert.ok(existsSync(join(root, 'vendor', f, 'README.md')), `vendor/${f} has no README`);
-      const readme = read(`vendor/${f}/README.md`);
-      // The author the screen names is the author the README names.
-      // Surname/handle match: "Kamer", "Interkarma".
-      const key = r.author.match(/\(([^)]+)\)/)?.[1] ?? r.author.split(/\s+/)[0];
-      assert.match(readme, new RegExp(key), `vendor/${f}/README.md does not name ${key}`);
-    }
+/** A README's two facts: where the work came from, and the terms it is carried under. */
+const SOURCE = /\b(by|from|made for|Author|github\.com|commit)\b/i;
+const TERMS = /\b(MIT|licen[cs]e|Open Font License|permission|own work|own drawing)\b/i;
+
+/** The vendor folders under `dir` whose README is missing, or does not record its source or its terms. */
+function provenanceGaps(dir) {
+  const gaps = [];
+  for (const d of readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory())) {
+    const p = join(dir, d.name, 'README.md');
+    if (!existsSync(p)) { gaps.push(`${d.name}: no README`); continue; }
+    const text = readFileSync(p, 'utf8');
+    if (!SOURCE.test(text)) gaps.push(`${d.name}: no source`);
+    if (!TERMS.test(text)) gaps.push(`${d.name}: no terms`);
+    if (/Open Font License/.test(text) && !existsSync(join(dir, d.name, 'OFL.txt'))) gaps.push(`${d.name}: no OFL.txt beside it`);
+  }
+  return gaps;
+}
+
+test('PROVENANCE: every vendored folder has a README recording its source and its terms (an OFL work its OFL.txt)', () => {
+  const vendor = join(root, 'vendor');
+  assert.ok(readdirSync(vendor).length >= 10, 'the sweep reads a real tree');
+  assert.deepEqual(provenanceGaps(vendor), []);
+});
+
+test('PROVENANCE: the sweep fails a folder with no README, a README with no terms, and an OFL work without its licence', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'prov-'));
+  try {
+    const put = (name, text) => { mkdirSync(join(dir, name)); if (text !== null) writeFileSync(join(dir, name, 'README.md'), text); };
+    put('good', 'A table by its author, under the MIT License.');
+    put('bare', null);
+    put('termless', 'A table from its author.');
+    put('font', 'One glyph by its authors, under the SIL Open Font License 1.1.');
+    assert.deepEqual(provenanceGaps(dir).sort(), ['bare: no README', 'font: no OFL.txt beside it', 'termless: no terms']);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('OWN-WORK1: a retired credit names a key Own-Work.md records, and no folder', () => {
-  const retired = retiredKeys();
-  const folders = readdirSync(join(root, 'vendor'));
-  const named = rows.flatMap((r) => r.retired ?? []);
-  assert.ok(named.length >= 12, `only ${named.length} retired credits`);
-  for (const r of rows) {
-    for (const k of r.retired ?? []) {
-      assert.ok(retired.has(k), `"${r.title}" is retired as ${k} and Own-Work.md has no row for it`);
-      assert.ok(!folders.includes(k), `"${r.title}" is retired and vendor/${k} is still there`);
-      assert.ok(!(r.vendor ?? []).includes(k), `"${r.title}" names ${k} as both vendored and retired`);
-    }
+test('LEGAL: the notices the MIT and OFL licences require ship as plain files in the build, and nothing shows them', () => {
+  const licence = readFileSync(join(root, 'LICENSE'), 'utf8');
+  assert.match(licence, /Copyright \(c\) 2009-2023 Daggerfall Workshop/, 'the vendored MIT data\'s notice');
+  assert.ok(existsSync(join(root, 'vendor/silkscreen-five/OFL.txt')));
+  const vite = readFileSync(join(root, 'vite.config.js'), 'utf8');
+  assert.match(vite, /this\.emitFile\(\{ type: 'asset', fileName: 'LICENSE\.txt', source: readFileSync\('LICENSE', 'utf8'\) \}\);/);
+  assert.match(vite, /this\.emitFile\(\{ type: 'asset', fileName: 'OFL-Silkscreen\.txt', source: readFileSync\('vendor\/silkscreen-five\/OFL\.txt', 'utf8'\) \}\);/);
+  assert.match(vite, /noImportedTopLevelAwait\(\), licenceFiles\(\)\]/, 'the plugin is in the build');
+  for (const p of ['src/ui/enhanced/enhancedMenu.js', 'index.html', 'src/ui/settings/settingsMap.js']) {
+    assert.doesNotMatch(readFileSync(join(root, p), 'utf8'), /LICENSE\.txt|OFL-Silkscreen/, `${p} does not link the licences`);
   }
-  const ended = endedCredits();   // OWN-WORK3: our design replaced theirs, and the row says the credit ended
-  assert.deepEqual([...retired].filter((k) => !named.includes(k) && !ended.has(k)), [], 'a retired key has lost its credit on the About screen');
-  assert.deepEqual([...ended].filter((k) => named.includes(k)), [], 'a credit the record ended is still on the About screen');
 });
 
-test('CR1: a mod row carries what a modder is owed - title, author, what it is, the terms it is carried under', () => {
-  assert.ok(CREDITS.mods.length >= 1, 'no mods credited');
-  for (const m of CREDITS.mods) {
-    for (const k of ['title', 'author', 'what', 'terms']) assert.ok(m[k], `mod "${m.title}" lacks ${k}`);
-    // OWN-WORK: a retired credit carries nothing, so its terms say what is ours; what is still carried states its permission
-    if (m.vendor?.length) assert.match(m.terms, /permission/i, 'a mod is carried with permission or not at all');
-    assert.ok((m.vendor?.length ?? 0) + (m.retired?.length ?? 0) >= 1, `mod "${m.title}" names neither its folder nor its retired key`);
-    // No invented contact: it is the manifest's own words or absent.
-    if (m.contact) assert.doesNotMatch(m.contact, /^https?:/, 'a contact is a name from the manifest, not a guessed URL');
-  }
-  const kamer = CREDITS.mods.find((m) => m.author === 'Kamer');
-  assert.ok(kamer, 'Windmills of Daggerfall is not credited');
-  assert.equal(kamer.title, 'Windmills of Daggerfall');
-  assert.equal(kamer.version, '2.0');
-  assert.deepEqual([...kamer.vendor], ['windmills-kamer']);
-  // His manifest (WindMills.dfmod.json, not vendored - it is Unity's
-  // format): ModAuthor "Kamer", ModVersion "2.0", ContactInfo "DFU
-  // Discord". The screen says what the manifest says.
-  assert.equal(kamer.contact, 'DFU Discord');
-});
-
-test('CR1: the About pane renders the table, mods under their own heading, through the one module', () => {
+test('CREDITS-OUT: no screen credits anyone - the module, the About pane\'s card, the intro\'s logo cards and their words are gone', () => {
+  assert.equal(existsSync(join(root, 'src/ui/credits.js')), false);
+  for (const f of ['src/assets/intro/interkarma.webp', 'src/assets/intro/nexus.webp']) assert.equal(existsSync(join(root, f)), false, f);
   const menu = read('src/ui/enhanced/enhancedMenu.js');
-  assert.match(menu, /import \{ CREDITS, translationCredits \} from '\.\.\/credits\.js'/);   // L10N6: the translations' rows beside the works'
-  assert.match(menu, /function paneAbout\(body\) \{[\s\S]*?body\.append\(creditsCard\(\)\);/, 'About does not show the credits');
-  assert.match(menu, /group\(t\('menu\.credits\.builtOn', 'Built on'\), CREDITS\.builtOn\);\s*\n\s*group\(t\('menu\.credits\.mods', 'Mods'\), CREDITS\.mods\);/, 'the two groups are not both rendered, in that order');
-  // The renderer knows the SHAPE and no work by name.
-  const fn = menu.slice(menu.indexOf('function creditsCard()'), menu.indexOf('// ── SHELL'));
-  for (const r of rows) assert.doesNotMatch(fn, new RegExp(r.author.split(/\s+/)[0]), 'a credit is hard-coded in the renderer');
-  // Every field a row can carry reaches the screen.
-  for (const k of ['title', 'version', 'author', 'what', 'terms', 'contact', 'link']) assert.match(fn, new RegExp(`r\\.${k}\\b`), `renderer ignores ${k}`);
-  assert.match(read('src/ui/enhanced/enhancedStyle.js'), /\.credit-by \{ color: var\(--brass\)/, 'the author\'s name is not set in the skin\'s brass');
+  assert.doesNotMatch(menu, /creditsCard|credits\.js|menu\.credits\./);
+  assert.match(menu, /function paneAbout\(body\) \{[\s\S]*?body\.append\(c\);\n {2}body\.append\(empty\(t\('menu\.about\.exit'/, 'About: the card, then Exit');
+  assert.equal(introCue.INTRO_CREDITS, undefined);
+  assert.equal(introCue.introCreditOpacity, undefined);
+  const intro = read('src/ui/intro/introScreen.js');
+  assert.doesNotMatch(intro, /intro-credit|interkarma|nexus/i);
+  const en = readFileSync(join(root, 'locales/en/Port_Strings.csv'), 'utf8');
+  assert.doesNotMatch(en, /^(credits|menu\.credits)\.|^menu\.intro\.credit|^menu\.ovh\.addonBy/m, 'no credit key is left');
 });
 
-// ═══ WM3: A CREDITED MOD IS A MOD THE PLAYER CAN FIND ═════════════
+test('CREDITS-OUT: no string a player reads names Daggerfall Unity, DFU, Interkarma or Nexus - in English or any language', () => {
+  const NAMED = /Daggerfall\s*Unity|\bDFU\b|Interkarma|Nexus/i;
+  for (const dir of readdirSync(join(root, 'locales'), { withFileTypes: true }).filter((d) => d.isDirectory())) {
+    const p = join(root, 'locales', dir.name, 'Port_Strings.csv');
+    if (!existsSync(p)) continue;
+    const hits = readFileSync(p, 'utf8').split('\n').filter((l) => NAMED.test(l.slice(l.indexOf(',') + 1)));
+    assert.deepEqual(hits, [], `${dir.name}: a translation names them`);
+  }
+  for (const p of ['index.html', 'README.md']) assert.doesNotMatch(readFileSync(join(root, p), 'utf8'), NAMED, p);
+});
+
+test('OWN-WORK1: a key Own-Work.md records as retired has no folder left in vendor/', () => {
+  const retired = retiredKeys();
+  assert.ok(retired.size >= 30, `only ${retired.size} retired keys`);
+  const folders = readdirSync(join(root, 'vendor'));
+  assert.deepEqual([...retired].filter((k) => folders.includes(k)), [], 'retired and still vendored');
+});
+
+// ═══ WM3: A MOD IS A MOD THE PLAYER CAN FIND ═════════════════════
 //
 // (2026-09-15, Mac: "the windmills of daggerfall is missing from
-// credits and the feature menu.")
-//
-// The credit was there and the gate above proves it. The FEATURES
-// screen was not, and the reason is worth keeping: `features.js`
-// builds a mod's tile out of the vendor's own `Enabled` setting key
-// (`modFeature`), so a pack with no shipped settings file could not
-// have a row, and the page said so - "Windmills (Kamer) has no switch
-// and so no row - a row needs a control." True of the machinery, and
-// the wrong answer: it made the mod unfindable and un-turn-off-able,
-// and FT14 turned that from a quirk into a disappearance when it
-// retired the Mods pane, which had been the one surface listing every
-// vendored pack whether or not it had a knob.
-//
-// So the rule the pin above states for the CREDITS is stated here for
-// the FEATURES home, and it is derived from `CREDITS.mods` rather than
-// from a list: a work the About page calls a mod is a work the player
-// can find and switch. `builtOn` is deliberately exempt - Daggerfall
-// itself and a font are not features.
-test('WM3: every mod on the credits screen has a row on the Features home', () => {
+// credits and the feature menu.") `features.js` builds a mod's tile out
+// of the vendor's own `Enabled` key, so a pack with no settings file
+// had no row, and FT14 made that a disappearance. The rule was derived
+// from the credits; CREDITS-OUT derives it from the record instead: every
+// vendored folder and every key Own-Work.md retired is a mod the player
+// can find and switch, but for the works that never were a switch.
+const NOT_A_SWITCH = Object.freeze({
+  'dfu-books': 'the reference\'s data', 'dfu-cursor': 'the reference\'s data', 'dfu-icons': 'the reference\'s data',
+  'dfu-quests': 'the reference\'s data', 'dfu-settings': 'the reference\'s data', 'dfu-text': 'the reference\'s data',
+  'silkscreen-five': 'a glyph', 'pixelify-glyphs': 'a glyph', 'raum-book': 'the book\'s look',
+  'layered-armor': 'a look on the profile\'s Skin card', 'class-skins': 'a look on the profile\'s Skin card',
+  'beautiful-villages': 'OWN-WORK3: our own town dress replaced it', 'beautiful-cities': 'OWN-WORK3: our own town dress replaced it',
+  'vorbis-fsb-setups': 'two headers, gone with the clips',
+  // ARENA1: the Arena of Daggerfall stands in the city in every game (Arena.md: "the arena is not a switch, it is the city")
+  'daggerfall-arena': 'the arena is the city',
+});
+
+test('WM3: every vendored mod and every retired mod has a row on the Features home', () => {
   // A vendor is REACHABLE from a row when the row's own control names
   // it, or when a condensed row names it in `also` (FT2/FT4 - Dynamic
   // Skies rides the outdoors row and has no tile of its own), or when
   // a prefs row is declared for it by id.
   const named = new Set();
   for (const f of FEATURES) {
-    // `also` hangs off the CONTROL, not the row (FT2's shape), which is
-    // where Dynamic Skies lives: the outdoors switch writes the pack's
-    // Enabled key beside its own.
     for (const c of [f.control, ...(f.control?.also ?? []), ...(f.also ?? [])]) {
       if (c?.store === 'mods' && c.vendor) named.add(c.vendor);
     }
@@ -134,29 +141,22 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
   for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.pack && UI_PACKS[o.pack]?.vendor) named.add(UI_PACKS[o.pack].vendor);
   // VE4: ...and a texture look names the pack it wears (Vanilla Enhanced is worn and put away on the Texture panel)
   for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.vendor) named.add(o.vendor);
-  // ALIKR1 / SNOWFALL1: ...and a pack shipped in the texture door is a switch of its own on the packs card (`textureMods`
-  // lists every registered .dfmod) and a chip under Vanilla Enhanced (its index names the Base) - `art/<vendor>`
+  // ALIKR1 / SNOWFALL1: ...and a pack shipped in the texture door is a switch of its own on the packs card
   for (const m of ENVIRONMENT_PACK_MODS) named.add(m.dir);   // OWN-WORK4: a pack is its directory's key
-  // ARENA1: the one credited work that is NOT a switch - the Arena of Daggerfall stands in the city in every game (Arena.md:
-  // "the arena is not a switch, it is the city"), so there is nothing on the Features home to turn off
-  named.add('daggerfall-arena');
-  // MUDEX1: MUDEX is no switch of its own - it is Meaner Monsters' switch beside Daggerfall Enemy Expansion (the author's
-  // form of that mod for this one, systems/enemyExpansion/dexSwitches.js), so the Meaner Monsters row turns it off
+  // MUDEX1: MUDEX is Meaner Monsters' switch beside Daggerfall Enemy Expansion, so the Meaner Monsters row turns it off
   if (named.has('meanerMonsters') && named.has('daggerfall-enemy-expansion')) named.add('mudex');
-  const missing = CREDITS.mods
-    .flatMap((r) => [...(r.vendor ?? []), ...(r.retired ?? [])].map((v) => [r.title, v]))
-    .filter(([, v]) => !named.has(v) && !named.has(v.toLowerCase()));
-  assert.deepEqual(missing.map(([t, v]) => `${t} (vendor/${v})`), [],
-    'these mods are credited on the About page and have no row on the Features home, so a player\n'
-    + 'can read the author\'s name and still not find - or turn off - what they made:');
+  const folders = readdirSync(join(root, 'vendor'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+  const mods = [...new Set([...folders, ...retiredKeys()])].filter((k) => !(k in NOT_A_SWITCH));
+  const missing = mods.filter((k) => !named.has(k) && !named.has(k.toLowerCase()));
+  assert.deepEqual(missing, [], 'these mods have no row on the Features home, so a player cannot find - or turn off - them');
   // ...and the population, so a rewording cannot empty the gate.
-  assert.ok(CREDITS.mods.length >= 9, `the credited mods are still here: ${CREDITS.mods.length}`);
+  assert.ok(mods.length >= 40, `the mods are still here: ${mods.length}`);
 });
 
 test('WM3: the Windmills row is a real switch the mill draw reads', () => {
   const row = FEATURES.find((f) => f.id === 'mod-windmills-kamer');
   assert.ok(row, 'the pack has a row');
-  assert.equal(row.title, 'Windmills of Daggerfall by Kamer', 'the author\'s name is ON the row');
+  assert.equal(row.title, 'Windmills of Daggerfall', 'CREDITS-OUT: the mod\'s name alone, no author');
   assert.deepEqual([...row.kinds], ['mod']);
   assert.equal(row.control.store, 'prefs');
   assert.equal(row.control.key, WINDMILLS_KEY);

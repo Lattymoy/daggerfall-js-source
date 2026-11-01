@@ -185,7 +185,7 @@ test('SUPPORT1: the corners\' band - the door\'s stage starts below its corner m
   const mark = rule('.px-wordmark:has(.brand-logo)').match(/width: min\((\d+)px, (\d+(?:\.\d+)?)vw\);/);   // BR6: 36.4vw
   assert.ok(mark, 'the wordmark\'s width is px and vw');
   const edge = Number(mark[1]) + 2 * reach - 1;
-  assert.equal(edge, 701);   // PIN MOVED: BR6, 788 under BR5's mark and 1007 under BR4's
+  assert.equal(edge, 814);   // PIN MOVED: BR7's wordmark; BR6's 701, 788 under BR5's mark and 1007 under BR4's
   assert.ok(edge < 1024, `the band ends at ${edge}px, short of 1024`);
   const band = mediaRule(`(min-width: 481px) and (max-width: ${edge}px)`, stage);
   // ...it starts below the taller mark - the asks' plaque, or the profile's portrait - with air

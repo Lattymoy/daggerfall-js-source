@@ -32,7 +32,6 @@ import { ARMOUR_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
 import { ENHANCED_CSS } from '../../src/ui/enhanced/enhancedStyle.js';
 import { GRIMOIRE_KIT_CSS, GRIM_TONES, TEMP_INK } from '../../src/ui/grimoireDress.js';
 import { statusReadoutRows } from '../../src/ui/statusBox.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { TUTORIALS } from '../../src/systems/tutorialCatalogue.js';
 import { rulesOf } from '../sheetRules.mjs';
 import { withDom } from '../invdrag.mjs';
@@ -386,10 +385,8 @@ test('AUDIT C&C S6 (decision D4): AN UNIDENTIFIED PIECE\'S COMPARISON IS AS ITS 
 
 // ═══ S8, S13 - THE WORDS ════════════════════════════════════════════════
 
-test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the credits and the Features comment say Boons\' neglect costs nothing (the drink still swings the attributes in Boons: "nothing taken" was false); the first-need page opens on the first need of any kind and says where the tiles stand (the left edge, not beside the bars), in TUT1\'s sixty words', () => {
-  const cc = Object.values(CREDITS).flat().find((c) => c?.title === 'Climates & Calories');
-  assert.match(cc.what, /There are four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and staying fed, watered and rested gives bonuses\), Casual/);
-  assert.doesNotMatch(JSON.stringify(cc), /nothing taken/);
+test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the Features comment says Boons\' neglect costs nothing (the drink still swings the attributes in Boons: "nothing taken" was false); the first-need page opens on the first need of any kind and says where the tiles stand (the left edge, not beside the bars), in TUT1\'s sixty words', () => {
+  // CREDITS-OUT (2026-11-01): the credit that said it left with ui/credits.js
   const features = read('src/systems/features.js');
   assert.match(features, /\/\/ \(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus\),/);
   assert.doesNotMatch(features, /nothing taken, a need met/);

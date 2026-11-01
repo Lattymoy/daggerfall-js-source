@@ -105,7 +105,7 @@ test('DA8/DA9: the first run - detection runs at once, and a folder is OFFERED, 
   assert.equal(v.setup.title, 'Found Daggerfall on this computer');
   assert.deepEqual(v.setup.found, [
     { index: 0, dir: '/steam/DF/DAGGER/ARENA2', from: 'Steam', primary: false },
-    { index: 1, dir: '/home/me/.config/DFU/ARENA2', from: 'from Daggerfall Unity', primary: false },
+    { index: 1, dir: '/home/me/.config/DFU/ARENA2', from: 'from another install', primary: false },
   ], 'two finds: the player picks - neither is the card\'s answer');
   assert.deepEqual(v.setup.actions.map((a) => a.id), ['choose-folder', 'skip-setup']);
   assert.equal(L.viewOf(run(s, { type: 'found', found: found.slice(0, 1) })).setup.title, 'Found your Daggerfall files');

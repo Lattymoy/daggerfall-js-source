@@ -420,7 +420,7 @@ test('WD3 the pipeline: a record its stand-in archive has no picture for (1230_1
   } finally { console.warn = warn; }
   assert.deepEqual(renderer.uploads, ['1230_15', '1230_15']);
   assert.deepEqual(renderer.pixels[0], [1, 1, [0, 0, 0, 0]], 'one clear pixel');
-  assert.equal(warns.filter((w) => /\[texture\] 1230_15: no mod picture and no stand-in - nothing drawn, as in DFU/.test(w)).length, 1, 'said once');
+  assert.equal(warns.filter((w) => /\[texture\] 1230_15: no mod picture and no stand-in - nothing drawn/.test(w)).length, 1, 'said once');
   resetAll();
 });
 

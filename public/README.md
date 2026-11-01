@@ -40,9 +40,8 @@ that it is their own drawing, with no ARENA2 pixel in it.
 ## logo.png — the title screen (U21c)
 
 `src/ui/titleScreen.js` draws this ahead of the main menu. It is the
-port's own branding, in the slot classic fills with TITL00I0.IMG —
-which DFU does not draw either, having replaced classic's title with
-its own. Recorded in Port-Ledger section A.
+port's own branding, in the slot classic fills with TITL00I0.IMG.
+Recorded in Port-Ledger section A.
 
 Any size or aspect works: `logoRect` centres it, preserves its aspect
 against both axes and caps it at 86% of the canvas. Alpha is a 1-bit

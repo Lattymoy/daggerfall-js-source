@@ -192,7 +192,7 @@ export const OVERHAUL_PANELS = Object.freeze([
         by: () => {
           const b = veBase();
           if (!b || b.shipped) return OUR_NAME;
-          return b.version ? `Attached, version ${b.version}` : 'Attached';   // CREDITS-OUT: no author
+          return b.version ? `Attached, version ${b.version}` : 'Attached'; // CREDITS-OUT: no author
         },
         blurb:
           'The original game\u2019s own textures, remastered and sharper: the ground, trees, rocks, city walls and dungeons.',
@@ -237,7 +237,7 @@ export const OVERHAUL_PANELS = Object.freeze([
           'A modern interface built for mouse and keyboard, controller or phone. You can adjust some settings and the controller bindings.',
       }),
       uiOption(G.id, G.title, 'classic', G.id, {
-        by: `Version ${G.version}`,   // CREDITS-OUT: no author
+        by: `Version ${G.version}`, // CREDITS-OUT: no author
         blurb:
           'The classic interface with improvements: 3 times the detail, a new font, a spellbook for all your spells, and parchment and wood in place of the original stone.',
       }),

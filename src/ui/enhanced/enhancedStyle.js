@@ -2607,7 +2607,7 @@ ${badgeCss()}
 /* SUPPORT1: ON THE FRONT DOOR THE CAPTION IS BOUNDED IN PIXELS. Its two lines' 14ch and 22ch are the font's - up to
    158px in Pixelify Sans - and a reach that is the font's cannot be the band's (THE CORNERS' BAND, below). 140px keeps
    "No character yet" whole (123px) and holds the mark's reach to 234px, so the band ended at 1007 under BR4's 540px
-   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ended it at 788, BR6's 234px at 701); a character's longer line
+   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ended it at 788, BR6's 234px at 701, BR7's 347px at 814); a character's longer line
    ends in its ellipsis three letters sooner. */
 .px-home:not(.px-over) .px-profilename { max-width: min(14ch, 140px); }
 .px-home:not(.px-over) .px-profilesub { max-width: min(22ch, 140px); }
@@ -3081,7 +3081,7 @@ ${SUPPORT_MARKS_CSS}
    opaque pixels onto the screen across 192 sizes, a caption at its bound among them. The band costs height, and where
    the door no longer fits it scrolls (DOOR-FIT, above); its foot keeps the one-row foot's 68px, so the last row can be
    scrolled clear of About and Screenshots. */
-@media (min-width: 481px) and (max-width: 701px) {
+@media (min-width: 481px) and (max-width: 814px) {
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding: 84px 24px 76px; }
 }
 @media (max-width: 480px) {

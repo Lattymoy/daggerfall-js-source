@@ -35,7 +35,7 @@ test('OVH1: three panels, Texture, Sound and UI in that order; Texture stood EMP
   assert.equal('needsFiles' in tex.options[1], false, 'VE3\'s file pick is gone with the attach');
   assert.deepEqual(snd.options.map((o) => o.id), ['classic', 'enhanced']);
   assert.deepEqual(ui.options.map((o) => o.name), ['Classic', 'Enhanced Plus', 'GrimoireUI', 'DFO Grimoire'], 'PIN MOVED (GRIM1): DFO Grimoire, the enhanced skin in GrimoireUI\'s dress, the fourth');
-  assert.match(ui.options[2].by, /LordSquacquerone, version 1\.2/, 'the pack wears its author and version');
+  assert.equal(ui.options[2].by, 'Version 1.2', 'the pack wears its version (CREDITS-OUT: no author)');
 });
 
 test('OVH1: a Sound look reads and writes the SAME Features rows its tiles do - Classic turns both off, Enhanced both on, and a mix made on Features reads Custom, never a look (mutants: the preset writing one row; Custom read as a look)', () => {

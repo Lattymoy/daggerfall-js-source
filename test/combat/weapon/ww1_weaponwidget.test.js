@@ -35,7 +35,6 @@ import { WEAPON_MATERIALS, WEAPONS } from '../../../src/characters/weapons.js';
 import { swingSoundFor, SOUND } from '../../../src/systems/soundClips.js';
 import { MOD_SETTINGS, isFloatKey, isIntKey, isChoiceKey, modSettingsOf, setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { FEATURES } from '../../../src/systems/features.js';
-import { CREDITS } from '../../../src/ui/credits.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -158,14 +157,11 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.deepEqual(Object.values(STEP_CONDITION), [0, 1]);
   assert.deepEqual(Object.values(RECOIL_CONDITION), [0, 1, 2, 3, 4, 5]); assert.equal(m.keys['Recoil.Condition'].options.length, 6);
   assert.deepEqual(Object.values(MISS_VFX_AT), [0, 1]);
-  // the home row, the credit, the vendor note
+  // the home row, the vendor note
   const row = FEATURES.find((f) => f.id === 'mod-weapon-widget');
   assert.ok(row, 'FT9: a Mod Authored row over the switch');
   assert.deepEqual([row.control.store, row.control.vendor ?? row.control.mod ?? row.control.key], ['mods', row.control.vendor ?? row.control.mod ?? row.control.key]);
   assert.match(JSON.stringify(row.control), /weapon-widget/);
-  const credit = CREDITS.mods.find((c) => c.title === 'Weapon Widget');
-  assert.ok(credit); assert.equal(credit.author, 'RedRoryOTheGlen'); assert.equal(credit.version, '1.6'); assert.deepEqual([...credit.retired], ['weapon-widget'], 'OWN-WORK1: a retired credit');
-  assert.match(credit.link ?? '', /nexusmods\.com\/daggerfallunity\/mods\/860/);
   // OWN-WORK1: the vendor README's four text pins left with it.
   // a float key coerces: clamped to its range, rounded to a thousandth; the pane steps it
   _resetModSettings();

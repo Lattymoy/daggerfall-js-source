@@ -36,12 +36,12 @@ test('FT10: three DFU Classic rows over live DFU keys, titled as the settings pa
   }
 });
 
-test('FT10: each note says what Daggerfall Unity ships it as, and the baked default agrees', () => {
+test('FT10: the baked default is each key\'s shipped one, and no note names Daggerfall Unity (CREDITS-OUT)', () => {
   for (const [id, key, def] of ROWS) {
     const [sec, k] = key.split('/');
     assert.equal(DEFAULTS[sec][k], def, `${key} ships ${def}`);
     const f = FEATURES.find((x) => x.id === id);
-    assert.match(f.note, def === 'True' ? /On by default in Daggerfall Unity\.$/ : /Off by default in Daggerfall Unity\.$/, `${id}: the note's last sentence is the default`);
+    assert.doesNotMatch(f.note, /Daggerfall Unity|\bDFU\b|by default in/, `${id}: the note says what the switch does, no more`);
   }
 });
 

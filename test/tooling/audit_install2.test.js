@@ -470,7 +470,7 @@ test('R2-E (E-01..E-12): the launcher state\'s own laws - timings a player can r
   assert.ok(L.INSTALL_NOTICE_MS >= 1000 && L.INSTALL_NOTICE_MS <= 3000, `${L.INSTALL_NOTICE_MS} ms`);
   assert.ok(L.INSTALL_GIVEUP_MS > L.INSTALL_NOTICE_MS && L.INSTALL_GIVEUP_MS <= 30000, `${L.INSTALL_GIVEUP_MS} ms`);
   // E-03: each source by its own name
-  assert.deepEqual(L.SOURCE_LABEL, { dfu: 'from Daggerfall Unity', steam: 'Steam', gog: 'GOG', folder: 'on this computer' });
+  assert.deepEqual(L.SOURCE_LABEL, { dfu: 'from another install', steam: 'Steam', gog: 'GOG', folder: 'on this computer' });   // CREDITS-OUT: no DFU on the launcher
   // E-04: a download tried again starts from nothing - not the failed one's percent and megabytes
   const failed = apply(state({ arena2Dir: '/a', checkEnabled: true }), { type: 'check-available', version: '0.1.4701', total: 100e6 },
     { type: 'progress', percent: 60, transferred: 60e6, total: 100e6 }, { type: 'download-failed' });

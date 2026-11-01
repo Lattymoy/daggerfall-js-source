@@ -43,7 +43,7 @@ const IN_BROWSER = typeof window !== 'undefined';
 const FILES = IN_BROWSER ? import.meta.glob('../../locales/*/*.csv', { query: '?raw', import: 'default' }) : {};
 // L10N6: the packs the tree BUNDLES (locales/<tag>/pack/ - tools/l10nPack.mjs holds what one must carry), only where an
 // author's terms allow it. Their text is a lazy chunk like the drafts; a font is fetched by its URL; PACK.json (who made
-// it, on what terms) is read at once, for the Language row and the About pane's credits.
+// it, on what terms) is read at once, for the Language row.
 const BUNDLED_TEXT = IN_BROWSER
   ? import.meta.glob(['../../locales/*/pack/**/*.csv', '../../locales/*/pack/**/*.txt'], {
       query: '?raw',
@@ -59,8 +59,8 @@ const BUNDLED_FONTS = IN_BROWSER
 const BUNDLED_META = IN_BROWSER
   ? import.meta.glob('../../locales/*/pack/PACK.json', { eager: true, import: 'default' })
   : {};
-// L10N6: the people who translated or checked a language (`locales/<tag>/translators.json`, a list of names) - the About
-// pane credits them beside the machine's drafts.
+// L10N6: the people who translated or checked a language (`locales/<tag>/translators.json`, a list of names). CREDITS-OUT
+// (2026-11-01): no screen names them now; the record stays.
 const TRANSLATORS = IN_BROWSER
   ? import.meta.glob('../../locales/*/translators.json', { eager: true, import: 'default' })
   : {};
@@ -132,7 +132,7 @@ export const hasLocaleText = (code) =>
 
 /** What the text core is told of a language: the catalog's record, its installed pack's (`pack` - the language row
  *  shows it), its bundled pack's PACK.json (`bundled`, L10N6) and its translators (`translators`, L10N6) - the last
- *  two the About pane's credits (ui/credits.js translationCredits). */
+ *  two the language's record (CREDITS-OUT: no screen credits them). */
 const localeRecord = (info) => ({
   ...info,
   pack: _packs.get(info.code) ?? null,

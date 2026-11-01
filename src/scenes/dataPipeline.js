@@ -117,7 +117,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
           bytes = await fetch(texName(archive));
         } catch (e) {
           if (archive <= LAST_CLASSIC_TEXTURE_ARCHIVE) throw e;
-          console.warn(`[texture] ${texName(archive)}: no such archive and no mod picture for it - its billboards stand invisible, as in DFU`);
+          console.warn(`[texture] ${texName(archive)}: no such archive and no mod picture for it - its billboards stand invisible`);
           const v = vendorTextureStandIn(archive);
           textureFiles.set(archive, v);
           return v;
@@ -238,7 +238,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // finds no material and the billboard draws nothing (MaterialReader answers null); here a clear pixel stands for it
     // - its batch draws nothing - and the miss is said once, by name.
     if (!swap && t.vendor) {
-      if (!_standInMisses.has(`${archive}_${record}`)) { _standInMisses.add(`${archive}_${record}`); console.warn(`[texture] ${archive}_${record}: no mod picture and no stand-in - nothing drawn, as in DFU`); }
+      if (!_standInMisses.has(`${archive}_${record}`)) { _standInMisses.add(`${archive}_${record}`); console.warn(`[texture] ${archive}_${record}: no mod picture and no stand-in - nothing drawn`); }
       renderer.uploadTexture(archive, record, { width: 1, height: 1, colors: new Uint8ClampedArray(4) }, variant !== undefined ? { opaque, mips, variant, replacement: true, placeholder: true } : { opaque, mips, replacement: true, placeholder: true });   // AUDIT WD3 T3: a picture that lands later takes its place
       return variant;
     }

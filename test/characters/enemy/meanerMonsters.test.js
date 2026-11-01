@@ -16,7 +16,6 @@ import { ENEMY_BASICS } from '../../../src/characters/enemy/enemyBasics.js';
 import { makeEnemyEntity } from '../../../src/characters/enemy/enemyEntity.js';
 import { MEANER_MONSTERS as PCAAO_EDIT } from '../../../src/combat/pcaaoMeanerMonsters.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings, modSettingIfDeclared } from '../../../src/systems/modSettings.js';
-import { CREDITS } from '../../../src/ui/credits.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const rd = (p) => hostText(p);
@@ -148,8 +147,7 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('meanerMonsters') < Object.keys(MOD_SETTINGS).indexOf('pcaao'), 'listed before the overhaul, as it loads');
   assert.equal(MOD_SETTINGS.pcaao.keys.meanerMonsters, undefined, 'Mac: no compatibility switches between mods');
   assert.equal(MOD_SETTINGS.pcaao.keys.rolePlayRealismArchery, undefined);
-  const credit = CREDITS.mods.find((c) => c.title === 'Meaner Monsters');
-  assert.ok(credit); assert.equal(credit.author, 'Ralzar'); assert.equal(credit.version, '1.5.2'); assert.deepEqual([...credit.retired], ['meanerMonsters']); assert.match(credit.terms, /MIT/);   // OWN-WORK1: retired from vendor/
+  assert.match(rd('LICENSE'), /Meaner Monsters\n1\.5\.2 \(Meaner Monsters' header: "Author: Hazelnut & Ralzar"\)[\s\S]*Copyright \(C\) 2020 Ralzar\n/, 'CREDITS-OUT: the MIT notice travels in LICENSE');
   assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = editAtMint\(mobileType, pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\)\);/, 'Ralzar\'s row, then the overhaul\'s edit over it (DEX1: and a Start-time mod\'s over both, registerMintRowEditor)');
 });
 

@@ -24,7 +24,7 @@ const BOOLS = [
   ['choose-guild-jobs', 'Enhancements/GuildQuestListBox', 'False'],
 ];
 
-test('FT11: the four booleans - DFU Classic, live, titled as Settings titles them, each note ending with DFU\'s own default', () => {
+test('FT11: the four booleans - Classic Option, live, titled as Settings titles them, each note naming no DFU (CREDITS-OUT)', () => {
   for (const [id, key, def] of BOOLS) {
     const f = FEATURES.find((x) => x.id === id);
     assert.ok(f, id);
@@ -34,7 +34,7 @@ test('FT11: the four booleans - DFU Classic, live, titled as Settings titles the
     assert.equal(f.title, labelOf(key));
     const [sec, k] = key.split('/');
     assert.equal(DEFAULTS[sec][k], def);
-    assert.match(f.note, def === 'True' ? /On by default in Daggerfall Unity\.$/ : /Off by default in Daggerfall Unity\.$/, id);
+    assert.doesNotMatch(f.note, /Daggerfall Unity|\bDFU\b|by default in/, id);
     assert.match(f.effect, /^Takes effect /);
     assert.deepEqual(checkFeature(f), []);
     assert.equal(featureForControl('settings', key), f);
@@ -50,7 +50,7 @@ test('FT11: dungeon wall style - the one choice, its five modes the settings law
   assert.deepEqual(ENUM_LAW[key].values, ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only']);
   assert.equal(DEFAULTS.Video.RandomDungeonTextures, '0', 'Classic');
   for (const w of ['Classic', 'Climate', 'Random', 'Climate Only', 'Random Only']) assert.match(f.note, new RegExp(w), `the note names ${w}`);
-  assert.match(f.note, /Classic by default in Daggerfall Unity\.$/);
+  assert.doesNotMatch(f.note, /Daggerfall Unity|by default in/, 'CREDITS-OUT: the default is DEFAULTS\', above, not the note\'s');
   assert.equal(f.effect, 'Takes effect on the next dungeon you enter.');
   assert.deepEqual(checkFeature(f), []);
   // the law the note describes (DaggerfallDungeon.cs:174-196): main-story dungeons stay classic unless the mode is 2 or 4

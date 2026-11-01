@@ -417,7 +417,7 @@ test('SURV-BOONS: the strip and the page - the boons are green tiles on their ow
   assert.ok(survivalStatusLines(camper, 1).includes(STATUS_TEXT.warmedByFire), 'by the fire in a blizzard: "The fire keeps the cold at bay."');
 });
 
-test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows in Boons alone (AUDIT SURV-BOONS C13); the first-need page and the credits name the tier (C2, C9)', () => {
+test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows in Boons alone (AUDIT SURV-BOONS C13); the first-need page names the tier (C2, C9)', () => {
   const e = restedBody();
   run(e, 481, 481, INDOORS, BOONS);
   setPref(SURVIVAL_PREF, 'boons');
@@ -433,7 +433,7 @@ test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows i
     'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand; VOICE1: plain words
     'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Features. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',   // PIN MOVED (BOONS-DEFAULT; VOICE1)
   ]);
-  assert.match(read('src/ui/credits.js'), /There are four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and staying fed, watered and rested gives bonuses\), Casual/);   // PIN MOVED (AUDIT C&C S8): the drink's swing is taken in Boons too
+  // CREDITS-OUT (2026-11-01): the credits' tier sentence left with ui/credits.js
 });
 
 test('SURV-BOONS C2 / CHARGEN-TUT: the HUD asks for the first-need page on a made character\'s felt need - never on a boon, and never on the stand-in the HUD draws under the character-creation wizard', async () => {

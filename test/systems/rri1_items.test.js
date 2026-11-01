@@ -38,7 +38,6 @@ import {
 } from '../../src/systems/textureReplacement.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { FEATURES } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { RRI_SPRITES } from '../../src/systems/roleplayRealismItems/rriIndex.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -329,13 +328,10 @@ test('RRI1 the random makers: CreateRandomWeapon rolls over 19 + the registered 
   } finally { done(); }
 });
 
-test('RRI1 wiring: the install at the scene boot, the Features row and its curated keys, the credit, the registry row, the vendored files, the law sites\' one-line dispatch', () => {
+test('RRI1 wiring: the install at the scene boot, the Features row and its curated keys, the registry row, the vendored files, the law sites\' one-line dispatch', () => {
   assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);/);
   const row = FEATURES.find((f) => f.id === 'mod-roleplay-realism-items');
   assert.ok(row); assert.equal(row.control.vendor, RRI_VENDOR); assert.equal(row.group, 'loot');
-  const credit = CREDITS.mods.find((c) => c.title === 'Roleplay & Realism: Items');
-  assert.ok(credit); assert.equal(credit.author, 'Hazelnut & Ralzar'); assert.equal(credit.version, '1.3'); assert.deepEqual([...(credit.retired ?? credit.vendor)], [RRI_VENDOR]);
-  assert.match(credit.link, /nexusmods\.com\/daggerfallunity\/mods\/61/);
   // OWN-WORK4: the directory is retired - the pictures are ours (rriArt.js)
   assert.deepEqual(tracked('vendor/roleplay-realism-items'), []);
   assert.match(rd('LICENSE'), /Roleplay & Realism: Items 1\.3\n\nMIT License\n\nCopyright \(C\) 2020 Hazelnut\nCopyright \(C\) 2020 \(Authors: Hazelnut & Ralzar\)/, 'our JS restates the release\'s MIT scripts: the notice travels in LICENSE');

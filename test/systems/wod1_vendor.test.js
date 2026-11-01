@@ -23,7 +23,6 @@ import { encodeRegionPack, decodeRegionPack, WOD_PACK_COLUMNS } from '../../src/
 import { readRegionFolder, WOD_BUNDLE_ASSETS } from '../../tools/worldOfDaggerfallAssets.mjs';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { FEATURES } from '../../src/systems/features.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../../src/systems/online/onlineLane.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -224,7 +223,7 @@ test('WOD1: the pack round-trips a folder exactly, at the narrowest width that h
 
 // ── the wiring every vendored mod carries ───────────────────────────
 
-test('WOD1: the registry row, the credit, the Features row and the online lane all name the mod as the others are named', () => {
+test('WOD1: the registry row, the Features row and the online lane all name the mod as the others are named', () => {
   const reg = rd('bible/01-Overview/Mod-Registry.md');
   const row = reg.split('\n').find((l) => l.startsWith('| `world-of-daggerfall` |'));
   assert.ok(row, 'a registry row');
@@ -233,12 +232,6 @@ test('WOD1: the registry row, the credit, the Features row and the online lane a
   assert.equal(cells[2], '2.0');
   assert.doesNotMatch(row, /RECORD OPEN/, 'the permission is confirmed, not a prompt');
   assert.match(row, /`03-World\/World-Of-Daggerfall\.md`/);
-
-  const credit = CREDITS.mods.filter((m) => m.author === 'Kamer');
-  assert.deepEqual(credit.map((m) => m.title), ['Windmills of Daggerfall', 'World of Daggerfall', 'Warm Ashes - Ships', 'World Events - Raiding Parties', 'Daggerfall Arena'], 'the mill first (CR1 finds it by his name), then this (WA1: then his third; RAID1: his fourth; ARENA1: his fifth)');
-  assert.deepEqual([...credit[1].vendor], ['world-of-daggerfall']);
-  assert.equal(credit[1].version, '2.0');
-  assert.equal(credit[1].contact, 'DFU forums', 'the manifest\'s ContactInfo, verbatim');
 
   const mod = MOD_SETTINGS['world-of-daggerfall'];
   assert.equal(mod.title, 'World of Daggerfall');

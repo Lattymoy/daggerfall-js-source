@@ -635,7 +635,6 @@ const HARDCODED = {
   'src/ui/chatPanel.js': 18,
   'src/ui/classicLootPanel.js': 1,
   'src/ui/companionRoster.js': 17,   // STOREFRONT: 2 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
-  'src/ui/credits.js': 76,   // OWN-WORK3: the town packs' two credits ended
   'src/ui/cursor.js': 1,
   'src/ui/deathScreen.js': 2,
   'src/ui/decorPanel.js': 96,
@@ -705,7 +704,7 @@ const HARDCODED = {
   'src/ui/ink/inkDungeonSolid.js': 6,
   'src/ui/input.js': 2,
   'src/ui/inputMessageBox.js': 1,
-  'src/ui/intro/introScreen.js': 3,
+  'src/ui/intro/introScreen.js': 1,   // CREDITS-OUT: the two logo cards' alt names left with them
   'src/ui/intro/introShaders.js': 2,   // INTRO4: introLandscape.js's 6 moved with its shaders - two GLSL sources the scan reads as words
   'src/ui/intro/set/imperialCity.js': 23,   // INTRO4's set (at the merge of main into #1184): main's world/imperialCity.js as the film was shot on it, kept as shot - TOWN-SHAPES TS5's lake and the districts' proper names
   'src/ui/inventoryDoor.js': 1,

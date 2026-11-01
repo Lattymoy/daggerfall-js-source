@@ -32,8 +32,8 @@ test('GRIM1: DFO Grimoire is the UI panel\'s fourth look - the ENHANCED skin wit
   assert.equal(grim.name, 'DFO Grimoire');
   assert.equal(grim.skin, 'enhanced');
   assert.equal(grim.dress, 'grimoire');
-  assert.equal(grim.vendor, 'grimoire-ui', 'the art is GrimoireUI\'s: the credits reach the pack through the look');
-  assert.match(grim.by, /LordSquacquerone/);
+  assert.equal(grim.vendor, 'grimoire-ui', 'the art is GrimoireUI\'s: WM3 reaches the pack through the look');
+  assert.equal(grim.by, 'DFO Online, in GrimoireUI 1.2', 'the pack by its name; CREDITS-OUT: no author');
   assert.equal(currentOption(ui), plusLook, 'a fresh shelf: Enhanced Plus');
   const r = grim.apply();
   assert.equal(r.reload, true);

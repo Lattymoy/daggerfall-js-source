@@ -248,13 +248,10 @@ test('DW1: the Weapon Widget preset the bundle ships, restated exactly, laid ove
 
 // ── the wiring ────────────────────────────────────────────────────────
 
-test('DW1: the pick reaches the door at BOTH of its sites, and the credits name the mod', () => {
+test('DW1: the pick reaches the door at BOTH of its sites', () => {
   // PIN MOVED (AUDIT VE R2): the two sites are one registration now - the store's, which the boot seam calls
   assert.match(src('src/scenes/dataSource.js'), /setDiverseWeaponsSources\(names, loadTextureFile\);/, 'the store\'s registration fans the pick out to the door');
   assert.match(src('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/, 'and the boot reaches it');
   assert.match(src('src/scenes/dataSource.js'), /<b>Diverse Weapons<\/b> comes with the game\.\s+A folder with a newer version's <b>\.dfmod<\/b> uses that version's\s+art instead\./, 'and the pick says so (DW2: the shipped set, the attached one winning)');
-  const credits = src('src/ui/credits.js');
-  assert.match(credits, /title: 'Diverse Weapons',\s*\n\s*version: '1\.7\.3',\s*\n\s*author: 'RealAKP',/);
-  // OWN-WORK4: the vendored record left the tree (bible/01-Overview/Own-Work.md holds its facts); the credit's
-  // `vendor` or `retired` mark is credits.test.js's to hold
+  // OWN-WORK4: the vendored record left the tree (bible/01-Overview/Own-Work.md holds its facts; CREDITS-OUT took the credit)
 });

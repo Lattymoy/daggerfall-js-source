@@ -81,5 +81,5 @@ test('WEBKIT-TLA (AUDIT FB1029g TLA-1): the build refuses a chunk another import
   assert.throws(() => plugin.generateBundle.call({ error: (m) => { throw new Error(m); } }, {}, bundle), /WEBKIT-TLA: a chunk another imports awaits at its top level - assets\/enhancedBook-x\.js \(line 1\)/);
   assert.doesNotThrow(() => plugin.generateBundle.call({ error: (m) => { throw new Error(m); } }, {}, { b: bundle.b, c: bundle.c }));
   const cfg = readFileSync(join(root, 'vite.config.js'), 'utf8');
-  assert.match(cfg, /plugins: \[[^\]]*noImportedTopLevelAwait\(\)\]/, 'the game\'s build runs it');
+  assert.match(cfg, /plugins: \[[^\]]*noImportedTopLevelAwait\(\), licenceFiles\(\)\]/, 'the game\'s build runs it');   // CREDITS-OUT: the licences' plugin after it
 });

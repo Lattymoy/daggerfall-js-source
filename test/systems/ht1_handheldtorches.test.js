@@ -39,7 +39,6 @@ import { BOB_SHAPE as WW_BOB_SHAPE, STEP_CONDITION as WW_STEP_CONDITION } from '
 import { FEATURES } from '../../src/systems/features.js';
 import { DEFAULT_BINDINGS, DEFAULT_SHARES, PORT_ACTIONS, MOD_ACTIONS } from '../../src/systems/inputActions.js';   // HT4: the keys DFU already answers; KB1: and the mods' own, which are actions now
 import { shortcutBinding } from '../../src/systems/dialogShortcuts.js';   // KB1: DFU's world shortcuts
-import { CREDITS } from '../../src/ui/credits.js';
 import { TEMPLATES } from '../../src/systems/useItem.js';
 import { WEAPONS } from '../../src/characters/weapons.js';
 import { EQUIP_SLOTS, ITEM_HANDS, getItemHands } from '../../src/systems/equip.js';
@@ -223,14 +222,11 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
   assert.deepEqual(Object.values(ON_PICK), [0, 1, 2]); assert.deepEqual(m.keys['Handling.OnPick'].options, ['Store', 'Equip', 'Force Equip']);
   assert.equal(BOB_SHAPE, WW_BOB_SHAPE); assert.equal(STEP_CONDITION, WW_STEP_CONDITION);
   assert.deepEqual(m.keys['Bob.Shape'].options, ['U', 'Sideways 8', 'Inverted U']); assert.deepEqual(m.keys['Step.Condition'].options, ['Sheathe/Attack Only', 'All Transforms']);
-  // the home row, the credit, the vendor note
+  // the home row, the vendor note
   const row = FEATURES.find((f) => f.id === 'mod-handheld-torches');
   assert.ok(row, 'FT9: a Mod Authored row over the switch');
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /handheld-torches/);
   assert.equal(row.effect, 'Takes effect at once.', 'the component reads its switches every frame');
-  const credit = CREDITS.mods.find((c) => c.title === 'Handheld Torches');
-  assert.ok(credit); assert.equal(credit.author, 'RedRoryOTheGlen'); assert.equal(credit.version, '1.4.1'); assert.deepEqual([...credit.retired], ['handheld-torches']);
-  assert.match(credit.link ?? '', /nexusmods\.com\/daggerfallunity\/mods\/780/);
   assert.equal(existsSync(join(root, 'vendor/handheld-torches')), false, 'OWN-WORK4: the release\'s folder is retired');
   assert.match(rd('bible/06-Systems/Handheld-Torches.md'), /\*\*OWN-WORK4 \(2026-10-31, the owner\)\.\*\*/, 'the page records it');
   // a text key coerces: trimmed, an empty one reads as the default; a tuple: a pair, ints truncated, floats to a thousandth, anything else the default

@@ -33,7 +33,6 @@ import { GUILD_GROUPS } from '../../src/formats/factionFile.js';
 import { ANY_LOCATION_KEY, clearWorldDataVariants, setBlockVariant, setLastLocationKeyTo, getBlockVariantHere } from '../../src/systems/worldDataVariants.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../../src/systems/online/onlineLane.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { PATCH_FORMAT, rebuildWorldDataPatch } from '../../src/formats/worldData/worldDataPatch.js';
 import { BlocksFile } from '../../src/formats/blocksFile.js';
 import { getDFBlockReplacementData, bindWorldDataBlocks, installWorldDataReplacement, _resetWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
@@ -347,7 +346,7 @@ test('WA1 the host: the events where DFU raises them, the coroutine\'s clock, th
   assert.match(read('src/scenes/shared.js'), /installWarmAshesShips\(\);[^\n]*\n\s+installDiverseWeaponsIcons\(\);/);
 });
 
-test('WA1 the switch, the lane and the credit: one Enabled on by default, the player\'s own online, Kamer credited, the permission RECORD OPEN', () => {
+test('WA1 the switch, the lane and the record: one Enabled on by default, the player\'s own online, the permission RECORD OPEN', () => {
   _resetModSettings();
   const def = MOD_SETTINGS[WARM_ASHES_VENDOR];
   assert.equal(def.author, 'Kamer');
@@ -356,8 +355,7 @@ test('WA1 the switch, the lane and the credit: one Enabled on by default, the pl
   assert.equal(warmAshesOn(), true);
   assert.ok(ONLINE_PLAYERS_OWN_MODS.includes(WARM_ASHES_VENDOR));
   assert.equal(ONLINE_ROOM_MOD_KEYS[WARM_ASHES_VENDOR], undefined);
-  const row = CREDITS.mods.find((r) => r.vendor?.includes(WARM_ASHES_VENDOR));
-  assert.deepEqual([row.author, row.version, row.contact], ['Kamer', '1.1', 'DFU Discord']);
+  assert.match(read('vendor/warm-ashes-ships/README.md'), /\*\*Warm Ashes - Ships 1\.1\*\* for Daggerfall Unity 1\.1\.0\+, by \*\*Kamer\*\*/, 'CREDITS-OUT: the README is the record');
   assert.match(read('vendor/warm-ashes-ships/README.md'), /\[Mac: record the author's permission/);
   assert.match(read('bible/01-Overview/Mod-Registry.md'), /\| `warm-ashes-ships` \|[^\n]*\*\*RECORD OPEN\*\*/);
 });

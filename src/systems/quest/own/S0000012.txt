@@ -1,4 +1,4 @@
--- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online's own words.
 -- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
 -- Quest: C:\QUESTS\WORKING\S0000012.Qbn.
 -- Main story quest.

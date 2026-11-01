@@ -39,7 +39,6 @@ import { weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipme
 import { EQUIP_SLOTS, equipTableOf, _wearScaleForTests } from '../../src/systems/equip.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../../src/systems/roleplayRealism/rrRealism.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { newMods } from '../../src/systems/entityMods.js';   // AUDIT SET P-M1: the port's points, as the fold writes them
 
@@ -501,7 +500,7 @@ test('PCO1: the Meaner Monsters edit rides the row a foe is minted from, only un
   assert.equal(plain.basics.minHealth, ENEMY_BASICS[0].minHealth);
 });
 
-test('PCO1: the seams - the Mods pane entry, the credit, the shipped manifest and settings, worldTick\'s install, the bow\'s draw timer', () => {
+test('PCO1: the seams - the Mods pane entry, the record, the shipped manifest and settings, worldTick\'s install, the bow\'s draw timer', () => {
   const m = MOD_SETTINGS.pcaao;
   // OWN-WORK1 (2026-10-31): the shipped manifest's author and version and its modsettings' one section, `Modules` -
   // the seven ToggleKeys, name and Value in order - written out when vendor/pcaao left the tree
@@ -528,8 +527,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the shipped manifest an
   }
   assert.equal(m.keys.Enabled.default, true, 'MO1 (Mac, 2026-09-12): every mod is on by default; the Mods pane is where it is turned off');
   assert.equal(m.keys.rolePlayRealismArchery, undefined, 'MM1: no compatibility switches between mods (Mac)'); assert.equal(m.keys.meanerMonsters, undefined);
-  const credit = CREDITS.mods.find((c) => c.title === 'Physical Combat And Armor Overhaul');
-  assert.ok(credit); assert.equal(credit.author, 'Kirk.O'); assert.deepEqual([...credit.retired], ['pcaao']); assert.equal(credit.version, '1.44');   // OWN-WORK1: retired from vendor/
+  assert.match(rd('bible/01-Overview/Own-Work.md'), /^\| `pcaao` \| Physical Combat And Armor Overhaul 1\.44 \| Kirk\.O \|/m, 'CREDITS-OUT: the record is Own-Work.md\'s row');
   assert.match(rd('src/systems/worldTick.js'), /installPcaao\(\);/, 'every host installs the overrides through worldTick');
   const pw = rd('src/combat/playerWeapon.js');
   // AUDIT 68 S08-bow-draw-time-wallclock: the draw is the machine's held ticks (GetAnimTime), written at every

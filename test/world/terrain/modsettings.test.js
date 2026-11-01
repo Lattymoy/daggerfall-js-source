@@ -184,7 +184,7 @@ function syntheticWoods(W, H) {
   return bytes;
 }
 
-test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08) - the manifest\'s ModAuthor, and the README\'s where a mod ships none', () => {
+test('every mod keeps its creator on record - the manifest\'s ModAuthor, and the README\'s where a mod ships none - and no title shows it (CREDITS-OUT, 2026-11-01)', () => {
   assert.equal(MOD_SETTINGS['dynamic-skies'].author, 'BadLuckBurt and carademono', 'OWN-WORK4: Dynamic Skies 2.3.4\'s ModAuthor, written out when vendor/dynamic-skies was retired');
   assert.equal(MOD_SETTINGS['seasons-iliac-bay'].author, 'RosyTheRascal', 'OWN-WORK1: Seasons of the Iliac Bay 1.1\'s ModAuthor, written out when vendor/seasons-iliac-bay was retired');
   // BR3: MO1's law, swept rather than spot-checked. It was stated mod by
@@ -196,8 +196,8 @@ test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08)
   }
   assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut', 'OWN-WORK2: Basic Roads\' author, written out when vendor/roads-hazelnut was retired');
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(typeof mod.author === 'string' && mod.author.length > 0, `${vendor}: an author`);
-  // FT14: the pane's h3 is gone with the pane - the creator's name rides the TILE's title now,
-  // which is the same string built once in features.js modFeature and shown wherever the row is.
-  assert.match(readFileSync('src/systems/features.js', 'utf8'), /get title\(\) \{ return t\('features\.mod\.title', '\{title\} by \{author\}', \{ title: mod\.title, author: mod\.author \}\); \},/,
-    'the title carries the name');
+  // CREDITS-OUT (the owner: "No more credits"): Mac's 2026-09-08 by-line is retired - the tile's title is the mod's
+  // name alone, built once in features.js modFeature; the author stays a record, read by no screen.
+  assert.match(readFileSync('src/systems/features.js', 'utf8'), /get title\(\) \{ return t\('features\.mod\.title', '\{title\}', \{ title: mod\.title \}\); \},/,
+    'the title is the name alone');
 });

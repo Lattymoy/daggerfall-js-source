@@ -32,7 +32,6 @@ import {
 import { SEASONS } from '../../src/systems/gameDate.js';
 import { scaledBillboardSize } from '../../src/world/rmbFlats.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { textureStoreKey } from '../../src/scenes/dataSource.js';
 import { textureEntry } from '../../src/systems/textureReplacement.js';
 import { createSeasonReskin } from '../../src/world/seasonReskin.js';
@@ -642,12 +641,8 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   assert.match(ds, /setSeasonsSources\(names, loadTextureFile\)/, 'and registers them');
   // PIN MOVED (AUDIT VE R2): the boot's registration is the store's one - the call above, reached from the seam
   assert.match(read('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/, 'the boot registers them on the same seam');
-  // the switch and the credit
+  // the switch (CREDITS-OUT: its credit is gone; Own-Work.md's row is the record)
   assert.equal(MOD_SETTINGS['seasons-iliac-bay'].keys.Enabled.default, true);
-  const row = CREDITS.mods.find((m) => m.title === 'Seasons of the Iliac Bay');
-  assert.ok(row, 'a credits row');
-  assert.equal(row.author, 'RosyTheRascal');
-  assert.deepEqual([...row.retired], ['seasons-iliac-bay'], 'OWN-WORK1: retired from vendor/');
 });
 
 test('SIB1: the tree carries NO file of the mod and no raster - the textures are the player\'s to supply (OWN-WORK1: the manifest and the record left with vendor/seasons-iliac-bay)', () => {

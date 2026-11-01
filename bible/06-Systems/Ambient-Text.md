@@ -21,7 +21,7 @@ goes quiet for longer.
 | Hosts | `src/scenes/world.js`, `src/scenes/exterior.js`, `src/scenes/dungeon.js` |
 | Settings | `MOD_SETTINGS['ambient-text']` (`src/systems/modSettings.js`) |
 | Row | `mod-ambient-text`, group "The world" (`src/systems/features.js`) |
-| Credit | `CREDITS.mods` (`src/ui/credits.js`), About pane |
+| Credit | none: `src/ui/credits.js` DELETED (CREDITS-OUT, 2026-11-01) |
 | Pins | `test/systems/ambienttext.test.js` (26) |
 | Registry | `01-Overview/Own-Work.md` (retired from vendor/) |
 

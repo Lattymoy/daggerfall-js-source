@@ -356,7 +356,7 @@ export function createHorseCartPool({
     if (_parts || _partsLoading || _partsFailed || !meshes?.getGpuMesh) return;
     _partsLoading = Promise.resolve(meshes.getGpuMesh(WAGON_MODEL_ID)).then((gpu) => {
       const cpu = meshes.cpuModels?.get?.(WAGON_MODEL_ID);
-      if (!gpu || !cpu) throw new Error('DFU returned no object for vanilla wagon model 41214');
+      if (!gpu || !cpu) throw new Error('the classic wagon model 41214 did not load');
       const parts = buildWagonParts(cpu);
       const up = (m) => (renderer?.createMesh ? renderer.createMesh(m) : null);
       _parts = { ...parts, gpu: { body: up(parts.body), shaftLeft: up(parts.shaftLeft), shaftRight: up(parts.shaftRight), wheelLeft: up(parts.wheelLeft), wheelRight: up(parts.wheelRight) }, box: [...parts.bounds.min, ...parts.bounds.max] };

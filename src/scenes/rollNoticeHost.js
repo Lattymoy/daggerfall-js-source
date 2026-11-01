@@ -61,7 +61,7 @@ export function standingName(/** @type {number} */ f) {
   return own ? own() : String(f);
 }
 
-/** AUDIT GUILD-WORDS II B-6: a list the player's language's way (Intl.ListFormat's conjunction - ui/credits.js's way). */
+/** AUDIT GUILD-WORDS II B-6: a list the player's language's way (Intl.ListFormat's conjunction). */
 const listOf = (/** @type {string[]} */ items) => {
   try {
     return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(items);

@@ -697,7 +697,6 @@ test('AUDIT BRANCH (WoD) n: the numbers the docs state are the numbers the tree 
   assert.equal(xml, 61000862, 'the XML the packs replace');
   assert.match(rd('vendor/world-of-daggerfall/README.md'), /They are 61\.0 MB of XML/);
   assert.match(rd('src/world/worldOfDaggerfall/wodLocationPack.js'), /61\.0 MB/);
-  assert.doesNotMatch(rd('src/ui/credits.js'), /stood at 227,938 places/, 'the lists NAME 227,938 places; one site stands to a pixel');
   const dirs = readdirSync(join(ROOT, 'vendor'), { withFileTypes: true }).filter((d) => d.isDirectory()).length;
   const reg = rd('bible/01-Overview/Mod-Registry.md');
   const open = reg.split('\n').filter((l) => /^\| `[^`]+` \|/.test(l) && /RECORD OPEN/.test(l)).length;

@@ -806,16 +806,5 @@
     "tests": [
       "test/systems/survival/survboons.test.js"
     ]
-  },
-  {
-    "name": "BOONS-DEFAULT-the-credits-say-casual",
-    "file": "src/ui/credits.js",
-    "old": "          'Survival. You feel the temperature from the climate, season, hour, weather, clothes and armor. Hunger, thirst, sleep and wetness are needs, food spoils, you can make camp and light campfires, and where you sleep matters. There are four tiers in Settings: Off, Boons (the default: neglect costs nothing, and staying fed, watered and rested gives bonuses), Casual (neglect only borrows stamina, which comes back once the need is met) and Hard (needs can hurt your attributes and health and make you sick).',",
-    "new": "          'Survival. You feel the temperature from the climate, season, hour, weather, clothes and armor. Hunger, thirst, sleep and wetness are needs, food spoils, you can make camp and light campfires, and where you sleep matters. There are four tiers in Settings: Off, Boons (neglect costs nothing, and staying fed, watered and rested gives bonuses), Casual (neglect only borrows stamina, which comes back once the need is met) and Hard (needs can hurt your attributes and health and make you sick).',",
-    "why": "BOONS-DEFAULT: the credits do not name the default",
-    "tests": [
-      "test/systems/auditcc_ui.test.js",
-      "test/systems/survival/survboons.test.js"
-    ]
   }
 ]

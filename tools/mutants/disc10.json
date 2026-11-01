@@ -341,8 +341,8 @@
   {
     "name": "DISC10-D-V4-the-transfer-never-leaves-the-interior",
     "file": "src/scenes/world.js",
-    "old": "    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)'); return; }\n    modes?.forceExitToExterior();\n",
-    "new": "    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)'); return; }\n",
+    "old": "    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped'); return; }\n    modes?.forceExitToExterior();\n",
+    "new": "    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped'); return; }\n",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
