@@ -30219,6 +30219,36 @@
   "tr": "22b5e770dea3",
   "by": "claude-in-session"
  },
+ "pipe.item.use": {
+  "en": "b338db567874",
+  "tr": "69c920eb4f37",
+  "by": "claude-in-session"
+ },
+ "pipe.item.what": {
+  "en": "a0f716d9debf",
+  "tr": "2a52c9fcd1a1",
+  "by": "claude-in-session"
+ },
+ "pipe.nirnroot.use": {
+  "en": "3f2484cb4440",
+  "tr": "24b64dc0bb9e",
+  "by": "claude-in-session"
+ },
+ "pipe.nirnroot.what": {
+  "en": "d8fd715b6666",
+  "tr": "917020a63c5c",
+  "by": "claude-in-session"
+ },
+ "pipe.noRoot": {
+  "en": "398d89aecf80",
+  "tr": "0a27e1f3a7e9",
+  "by": "claude-in-session"
+ },
+ "pipe.smoked": {
+  "en": "ec1a3b31b691",
+  "tr": "0aaa824e8834",
+  "by": "claude-in-session"
+ },
  "player.dungeonVoid": {
   "en": "48bb867188de",
   "tr": "d9650e8713c3",

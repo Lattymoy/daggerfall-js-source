@@ -13469,6 +13469,36 @@
   "tr": "5085b5965bd3",
   "by": "claude-in-session"
  },
+ "pipe.item.use": {
+  "en": "b338db567874",
+  "tr": "8130b2e90a31",
+  "by": "claude-in-session"
+ },
+ "pipe.item.what": {
+  "en": "a0f716d9debf",
+  "tr": "d43d9dccf25f",
+  "by": "claude-in-session"
+ },
+ "pipe.nirnroot.use": {
+  "en": "3f2484cb4440",
+  "tr": "42f0e4545482",
+  "by": "claude-in-session"
+ },
+ "pipe.nirnroot.what": {
+  "en": "d8fd715b6666",
+  "tr": "eafabb5a7217",
+  "by": "claude-in-session"
+ },
+ "pipe.noRoot": {
+  "en": "398d89aecf80",
+  "tr": "43194fc33608",
+  "by": "claude-in-session"
+ },
+ "pipe.smoked": {
+  "en": "ec1a3b31b691",
+  "tr": "988a409c335a",
+  "by": "claude-in-session"
+ },
  "player.sealedDoor": {
   "en": "91d5e853b118",
   "tr": "f1ffa04d2ae8",
