@@ -367,6 +367,28 @@ export function createPartyPingHost(deps) {
   };
 
   return {
+    place: () => deps.place(),
+    /** Local accessibility routing shares the ping's terrain/navmesh, never its marks or wire state. */
+    routeTo(to) {
+      const place = deps.place(), feet = deps.feet();
+      if (!place || !feet || place.space === 'interior') return null;
+      if (place.k !== placeKey) {
+        placeKey = place.k;
+        forgetMesh();
+      }
+      if (place.space === 'world') {
+        if (!deps.ground) return null;
+        const clear = deps.clear ?? ((a, b) => kneeClear(deps.collider(), a, b));
+        const pts = groundRoute(feet, to, deps.ground, clear);
+        return pts?.every((p, i) => !i || clear(pts[i - 1], p)) ? pts : null;
+      }
+      const mesh = deps.navMesh?.() ?? chf;
+      if (!mesh) {
+        askBake(feet, place.k);
+        return null;
+      }
+      return route(mesh, feet, to);
+    },
     /** One frame. `eye` and `dir` are the look the picture is drawn along. */
     frame({ eye, dir }) {
       const now = deps.now();

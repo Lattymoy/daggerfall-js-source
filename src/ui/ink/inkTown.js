@@ -458,7 +458,7 @@ export function paintTownOverlay(ctx, view, opts) {
       ctx,
       opts.party.map((m) => {
         const [x, y] = toPaper(view, m.x, m.y);
-        return { x, y, yaw: m.yaw, name: m.name };
+        return { x, y, yaw: m.yaw, name: m.name, entrance:m.entrance };
       }),
       { fill: opts.partyFill, halo: TOWN_PEN.halo },
     );

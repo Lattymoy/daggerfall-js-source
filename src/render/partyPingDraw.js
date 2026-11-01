@@ -57,7 +57,7 @@ export class PartyPingDraw {
   /**
    * @param {{ _proj: Float32Array, _view: Float32Array, _camPos: ArrayLike<number>, gl: WebGL2RenderingContext, markForeignPass: () => void }} renderer
    * @param {ReadonlyArray<{ at: number[], color: number[], alpha: number }>} _marks
-   * @param {ReadonlyArray<{ pts: ReadonlyArray<ReadonlyArray<number>>, color: ArrayLike<number>, alpha: number }>} ribbons
+   * @param {ReadonlyArray<{ pts: ReadonlyArray<ReadonlyArray<number>>, color: ArrayLike<number>, alpha: number, pattern?: {dash?:number,gap?:number,lift?:number,half?:number} }>} ribbons
    */
   draw(renderer, _marks, ribbons) {
     const gl = this.gl;
@@ -67,7 +67,7 @@ export class PartyPingDraw {
     if (!proj || !view || !eye) return;
     const lines = [];
     for (const r of ribbons ?? []) {
-      const verts = r.pts && r.pts.length > 1 ? pathRibbon(r.pts) : [];
+      const verts = r.pts && r.pts.length > 1 ? pathRibbon(r.pts, r.pattern) : [];
       if (verts.length) lines.push({ verts, color: r.color, alpha: r.alpha });
     }
     if (!lines.length) return;
