@@ -163,6 +163,7 @@ class Skinned:
         w = np.asarray(weights, dtype=np.float64)
         self.w = w / np.maximum(w.sum(axis=1, keepdims=True), 1e-9)
         self.heads = np.array([rest(j) for j in self.joints])
+        self.alpha, self.axes = None, None   # a fused body's shares of its pieces (anatomy.py), kept by its shells
         base = self.rest - (axis(self.rest) if axis else 0.0)
         attr = me.attributes.new('rest', 'FLOAT_VECTOR', 'POINT')
         attr.data.foreach_set('vector', base.astype(np.float32).ravel())
@@ -175,15 +176,33 @@ class Skinned:
         self.me.vertices.foreach_set('co', out.ravel())
         self.me.update()
 
+    def cut(self, mask):
+        """Keep only the vertices where `mask` holds (and the faces of them): the skin under armour, which no view
+        can see, goes."""
+        import bpy
+        me = keep(self.me, mask)
+        for m in self.me.materials:
+            me.materials.append(m)
+        old, self.me = self.me, me
+        self.ob.data = me
+        bpy.data.meshes.remove(old)
+        self.rest, self.w = self.rest[mask], self.w[mask]
+        if self.alpha is not None:
+            self.alpha = self.alpha[mask]
+
     def shell(self, name, mat, mask, push, axis=None):
         """Armour over a region of this part: the vertices where `mask` holds, pushed `push` metres out (a number, or
         one a vertex), with this part's weights."""
         sub = keep(self.me, mask)
+        sub.polygons.foreach_set('material_index', [0] * len(sub.polygons))
         n = normals(self.me)[mask]
         p = self.rest[mask] + n * (np.asarray(push)[mask, None] if np.ndim(push) else push)
         sub.vertices.foreach_set('co', p.ravel())
         sub.update()
-        return Skinned(name, sub, mat, self.joints, self.w[mask], axis=axis)
+        out = Skinned(name, sub, mat, self.joints, self.w[mask], axis=axis)
+        if self.alpha is not None:
+            out.alpha, out.axes = self.alpha[mask], self.axes
+        return out
 
 
 def rest_attr(me, base=None):

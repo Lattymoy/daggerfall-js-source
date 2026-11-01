@@ -7,12 +7,17 @@ Knight enemies wear.
 
 ## How it works
 
-- **The fighter.** `tools/sprite-forge/model.py` builds the body from smooth lofts of measured cross-sections
-  (`tools/sprite-forge/body.py` `vloft`): each row a height, a half width, front and back depths, and swells for the
-  pecs and abs. The torso is the armour's own surface: the cuirass above the belt, mail below it. The legs are the
-  mail; the arms are skin with the bracers in them. These parts bend at elbow, knee, hip and waist by the forge's
-  own linear-blend skinning (`Skinned`). The helm, pauldrons, boots, belt, loincloth, face and hands (open, or closed
-  round a grip) are rigid on one joint each (`tools/sprite-forge/rig.py`).
+- **The body.** `tools/sprite-forge/anatomy.py` builds the naked man. The torso, arms and legs are smooth lofts of
+  measured cross-sections with the muscles laid on as swells (`tools/sprite-forge/body.py` `vloft`); the head and
+  feet are blended blobs. A voxel remesh fuses them into one closed mesh. The creases where they meet are smoothed,
+  and the mesh is thinned where it is flat. Each vertex keeps its share of each piece (`alpha`) and takes its joint
+  weights from them, so the body bends at elbow, knee, hip and waist by the forge's own linear-blend skinning
+  (`Skinned`). The hands, open or closed round a grip, are rigid on the hand joints (`tools/sprite-forge/rig.py`).
+- **The gear.** `tools/sprite-forge/model.py` dresses that body. The cuirass, the mail, the coif's neck and the
+  bracers are layers of the body's own surface over a region, pushed out along its normals (`Skinned.shell`), so
+  they bend as the body does. The mesh is cut along each layer's edge, so the edge is a clean ring, and the skin
+  under the layers and the boots is dropped: no view sees it. The helm, pauldrons, boots, belt and loincloth are rigid
+  on one joint each. Another outfit is another set of layers over the same body.
 - **Patterns.** Every mesh keeps its rest position as a `rest` attribute, which the patterns read
   (`tools/sprite-forge/materials.py`). The mail is a diamond lattice round each limb's own axis (`chain`). A lattice
   or a fleck stays on its texel however the body bends.
@@ -32,7 +37,8 @@ Knight enemies wear.
 - **Fitting the body.** `fit.py --shape` fits the proportions over every frame in its fitted pose: the torso's width
   and depth, the limbs', the head's, the hands', the boots', the pauldrons' size and place, the loincloth's width, the
   axe's size, and the whole body's size on screen. `tools/sprite-forge/shape.py` `transform` lays them on the meshes
-  the renderer draws and on the fitter's triangles alike (`specs/488-shape.json`).
+  the renderer draws and on the fitter's triangles alike (`specs/488-shape.json`). A vertex of the fused body or its
+  layers moves as each piece it lies on would move it, by its shares.
 - **Fitting the colour.** `tools/sprite-forge/colour.py` tints each material until its pixels' mean colour is the
   record's over the same pixels (`specs/488-colour.json`, `materials.py` `tint`). Then it grades: skin, boots and
   cloth have a colour class of their own in the record, so each channel of their own pixels is mapped onto the
@@ -70,7 +76,8 @@ python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json -
 ```
 
 Fitting needs `scipy` beside `bpy`. Fit and register again after the body or a key changes. `--records 0,5` limits a
-run; `--work` writes uncropped renders.
+run; `--work` writes uncropped renders; `--outfit naked` renders the body bare, with its weapons. `fit.py --no-head`
+leaves the axe head unpinned: records 0, 3, 4, 12, 13, 15 and 19 fit better so.
 
 ## Rules
 
@@ -89,8 +96,9 @@ tables and sizes are read as they are.
 
 ## Code and tests
 
-- `tools/sprite-forge/` - the forge: `forge.py`, `fit.py`, `colour.py`, `shape.py`, `model.py`, `body.py`, `rig.py`,
-  `poses.py`, `stage.py`, `shapes.py`, `materials.py`, `reference.mjs`, and the fitted tables beside `specs/488.json`
+- `tools/sprite-forge/` - the forge: `forge.py`, `fit.py`, `colour.py`, `shape.py`, `model.py`, `anatomy.py`,
+  `body.py`, `rig.py`, `poses.py`, `stage.py`, `shapes.py`, `materials.py`, `reference.mjs`, and the fitted tables
+  beside `specs/488.json`
 - `public/art/studio/forge/488/` - the frames
 - `src/systems/studioArt/studioArt.js` `FORGE_FOLDER`, `isForgeRender`; `src/systems/textureReplacement.js` (an
   entry's `look`)
@@ -101,9 +109,10 @@ tables and sizes are read as they are.
 ## Open
 
 - Only TEXTURE.488 is forged. The other class archives (475-490, and the guard's 399) need their own gear and specs.
-- The overlap with Daggerfall's outlines averages 0.79 a record. Walk and idle are closest (0.81-0.86); attack
-  0.72-0.81; hurt 0.75-0.80; the bow 0.72-0.76. The side attack's swing and the bow are furthest.
-- In 34 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
-- The body is smooth lofts: it has no fingers, cloth folds or sculpted detail finer than the pecs and abs.
+- The overlap with Daggerfall's outlines averages 0.79 a record. Walk and idle are closest (0.80-0.86); attack
+  0.78-0.82; hurt 0.75-0.80; the bow 0.69-0.78. The side attack's swing and the bow are furthest.
+- In 31 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
+- The arms are fitted as thick as Daggerfall's outline asks, past the naked body's own girth.
+- The body has no cloth folds, and no sculpted detail finer than its muscles' swells.
 - Layered Gearing still draws the player from traced strips (`04-Characters/Layered-Gearing.md`). The forge could
   render its 27 outfits as layers instead.

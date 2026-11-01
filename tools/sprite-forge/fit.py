@@ -92,8 +92,10 @@ class Cloud:
         dg = bpy.context.evaluated_depsgraph_get()
         self.skins = []
         for sk in fighter.skins:
-            co, tris, cls, w = triangles(sk.me, classify, sk.w)
-            self.skins.append([sk.ob.name, co, tris, w, sk.heads, sk.joints, cls, co])
+            k = sk.w.shape[1]
+            co, tris, cls, ex = triangles(sk.me, classify, sk.w if sk.alpha is None else np.hstack([sk.w, sk.alpha]))
+            alpha = None if sk.alpha is None else ex[:, k:]
+            self.skins.append([sk.ob.name, co, tris, ex[:, :k], sk.heads, sk.joints, cls, co, alpha])
 
         def rigid(ob):
             co, tris, cls, _ = triangles(ob.evaluated_get(dg).to_mesh(), classify)
@@ -106,7 +108,7 @@ class Cloud:
 
     def set_shape(self, S):
         for sk in self.skins:
-            sk[7] = shape.transform(sk[0], sk[1], S)
+            sk[7] = shape.transform(sk[0], sk[1], S, sk[8])
         for pc in [pc for pc, _ in self.parts] + [k for kinds in self.hands.values() for k in kinds.values()] + self.axe:
             pc[4] = shape.transform(pc[0], pc[1], S)
         self.scale = S['scale']
@@ -123,7 +125,7 @@ class Cloud:
             tris.append(t + base)
             cls.append(c)
             base += len(v)
-        for _, _, t, w, heads, joints, c, co in self.skins:
+        for _, _, t, w, heads, joints, c, co, _ in self.skins:
             p = np.zeros_like(co)
             for k, j in enumerate(joints):
                 M = W[j]
@@ -476,9 +478,12 @@ def main():
     ap.add_argument('--shape', action='store_true', help='fit the proportions instead of the poses')
     ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--restarts', type=int, default=1, help='searches a frame: its last fit, its keys, wider throws')
+    ap.add_argument('--no-head', action='store_true', help='leave the axe head unpinned (when its blob is unreliable)')
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
-    global RESTARTS
+    global RESTARTS, HEAD_PULL
     RESTARTS = args.restarts
+    if args.no_head:
+        HEAD_PULL = 0.0
     spec = json.load(open(args.spec))
     ref = json.load(open(args.ref))
     out_path = args.spec.replace('.json', '-fit.json')

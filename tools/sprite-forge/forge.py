@@ -30,9 +30,9 @@ VIEW_YAW = [0.0, -45.0, -90.0, -135.0, -180.0]   # record k of an animation: the
 
 
 class Fighter:
-    def __init__(self):
+    def __init__(self, outfit='medium'):
         self.M = palette()
-        self.parts, self.skins, self.hands = model.build_body(self.M)
+        self.parts, self.skins, self.hands = model.build_body(self.M, outfit)
         self.axe = model.build_axe(self.M)
         self.bow = model.build_bow(self.M)
         self.extra = []
@@ -41,7 +41,7 @@ class Fighter:
     def shaped(self):
         """Lay the fitted proportions (shape.py) on every mesh."""
         for sk in self.skins:
-            sk.rest = shape.transform(sk.ob.name, sk.rest)
+            sk.rest = shape.transform(sk.ob.name, sk.rest, alpha=sk.alpha)
             sk.me.vertices.foreach_set('co', sk.rest.ravel())
             sk.me.update()
         rigid = [ob for ob, _ in self.parts] + self.axe
@@ -175,6 +175,7 @@ def main():
     ap.add_argument('--work', action='store_true', help='write uncropped work renders')
     ap.add_argument('--register', default='', help='reference outlines from reference.mjs')
     ap.add_argument('--samples', type=int, default=64)
+    ap.add_argument('--outfit', default='medium', choices=model.OUTFITS, help='what the body wears')
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     spec = json.load(open(args.spec))
     poses.load_fit(args.spec.replace('.json', '-fit.json'))
@@ -187,7 +188,7 @@ def main():
     stage.PX_PER_M *= shape.SHAPE['scale']
     bpy.ops.wm.read_factory_settings(use_empty=True)
     stage.setup(args.samples)
-    fighter = Fighter()
+    fighter = Fighter(args.outfit)
     if GRADE:   # the exact material map the grade reads (fit.py's raster: the render's pixels)
         import fit
         fighter.id_names = sorted(fighter.M)

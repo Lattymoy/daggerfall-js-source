@@ -6,7 +6,8 @@ closed meshes. Weapons are built in their own frame: the grip at the origin, the
 import numpy as np
 from mathutils import Matrix, Vector
 
-from body import Skinned, blob, blob_mesh, chain_centre, coords, face_materials, ramp, rest_attr, seg, vloft
+import anatomy
+from body import blob, face_materials, rest_attr, seg
 from rig import arm_z, rest
 from shapes import ellipsoid, loft, plate, sheet, tube_path
 
@@ -30,46 +31,10 @@ def _rigid(name, me, mat):
     return ob
 
 
-# Sections are (z, half width, front depth, back depth[, pecs, abs]) in metres, measured off the classic medium
-# fighter's front and side frames at 62 px a metre. The torso and legs are their armour's outer surface.
-TORSO = [
-    (0.84, 0.15, 0.10, 0.11), (0.92, 0.185, 0.11, 0.14), (1.00, 0.185, 0.115, 0.13),
-    (1.08, 0.172, 0.118, 0.11, 0.0, 0.02), (1.16, 0.175, 0.122, 0.108, 0.0, 0.026),
-    (1.25, 0.19, 0.126, 0.118, 0.02, 0.014), (1.33, 0.205, 0.13, 0.124, 0.045), (1.40, 0.21, 0.124, 0.12, 0.036),
-    (1.46, 0.19, 0.098, 0.11), (1.50, 0.12, 0.072, 0.085), (1.535, 0.068, 0.062, 0.064), (1.62, 0.058, 0.055, 0.056),
-]
-TORSO_LEAN = ([1.40, 1.62], [0.0, -0.035])   # the neck's centre comes forward of the chest's
-
-
-def TORSO_CENTRE(z):
-    return 0.0, float(np.interp(z, *TORSO_LEAN))
-ARM = [(arm_z(z), a, f, b) for z, a, f, b in [
-    (1.50, 0.05, 0.05, 0.05), (1.45, 0.082, 0.08, 0.078), (1.38, 0.08, 0.08, 0.078),
-    (1.31, 0.075, 0.082, 0.076), (1.25, 0.066, 0.068, 0.068), (1.205, 0.056, 0.054, 0.06), (1.17, 0.064, 0.062, 0.062),
-    (1.16, 0.07, 0.068, 0.066), (1.148, 0.066, 0.064, 0.062), (1.10, 0.063, 0.059, 0.059), (1.03, 0.056, 0.051, 0.053),
-    (0.978, 0.047, 0.042, 0.043), (0.97, 0.042, 0.036, 0.037), (0.962, 0.04, 0.034, 0.035),
-]]
 BRACER = (arm_z(0.972), arm_z(1.163))   # the arm's faces between these heights are its bracer
 
 
-def arm_muscles(x):
-    """The bare arm's muscles, for the arm on side `x` (+1 left): bearings measured round from +X, so the outward side
-    is 0 degrees on the left arm and 180 on the right; the front (-Y) is 270, the back 90."""
-    out = 0.0 if x > 0 else 180.0
-    lean = 30.0 * (1 if x > 0 else -1)   # the triceps sits back and a little outward
-    return [
-        (out, 55, arm_z(1.47), arm_z(1.33), 0.018),                     # deltoid's cap
-        (270, 40, arm_z(1.38), arm_z(1.22), 0.02),                     # biceps
-        (90 - lean, 45, arm_z(1.43), arm_z(1.22), 0.016),               # triceps
-        (90, 25, arm_z(1.235), arm_z(1.18), 0.008),                     # the elbow's point
-        (270 + (40 if x > 0 else -40), 40, arm_z(1.19), arm_z(1.14), 0.011),   # the forearm's swell above the bracer
-    ]
 HAND_DESIGN = 0.965   # the hand joint's height the hands below were designed at
-LEG = [
-    (1.00, 0.118, 0.118, 0.12), (0.90, 0.12, 0.12, 0.125), (0.80, 0.112, 0.11, 0.112), (0.70, 0.102, 0.098, 0.10),
-    (0.62, 0.092, 0.09, 0.092), (0.555, 0.086, 0.09, 0.084), (0.49, 0.084, 0.078, 0.092), (0.42, 0.08, 0.072, 0.094),
-]
-
 
 def _hand(x, closed):
     """A hand's blobs, designed round a hand joint at (0.26x, -0.005, HAND_DESIGN), moved to where the joint is. The
@@ -96,60 +61,55 @@ def _hand(x, closed):
     return parts
 
 
-def _torso_weights(p):
-    z, ax = p[:, 2], np.abs(p[:, 0])
-    neck = ramp(z, 1.47, 1.53) * (1 - ramp(ax, 0.06, 0.11))
-    chest = np.clip(ramp(z, 1.20, 1.30) - neck, 0, 1)
-    spine = np.clip(ramp(z, 1.0, 1.08) - ramp(z, 1.20, 1.30), 0, 1)
-    pelvis = 1 - ramp(z, 1.0, 1.08)
-    return np.stack([pelvis, spine, chest, neck], axis=1)
+# the armour over the naked body: each layer the body's own surface over a region, pushed out this far (metres)
+CUIRASS = 0.018
+COIF = 0.008
+MAIL_HIPS, MAIL_LEGS = 0.015, 0.024   # the mail hangs looser round the legs
+BRACER_PUSH = 0.007
+FACE_Z = 1.55   # the head's skin above this is the face's material, shadowed under the helm
+# the heights at rest where the layers end: the cuirass's top and bottom, the coif's foot, the mail's waist and the
+# boot's cuff, each with a ring of overlap, and the bracer's band
+CUIRASS_Z, COIF_Z, MAIL_Z, CUFF_Z = (1.09, 1.475), 1.465, 1.105, (0.39, 0.40, 0.41)
 
 
-def _arm_weights(p):
-    z = p[:, 2]
-    clav = 0.6 * ramp(z, arm_z(1.40), 1.48)
-    farm = 1 - ramp(z, arm_z(1.17), arm_z(1.23))
-    uarm = np.clip(1 - clav - farm, 0, 1)
-    return np.stack([clav, uarm, farm], axis=1)
+OUTFITS = ('medium', 'naked')
 
 
-def _leg_weights(p):
-    z = p[:, 2]
-    pelvis = 0.5 * ramp(z, 0.88, 0.98)
-    shin = 1 - ramp(z, 0.50, 0.60)
-    thigh = np.clip(1 - pelvis - shin, 0, 1)
-    return np.stack([pelvis, thigh, shin], axis=1)
+def build_body(M, outfit='medium'):
+    """The fighter: (rigid parts, skinned parts, hands {side: {'open': ob, 'fist': ob}}). The skinned parts are the
+    naked body (anatomy.py) and, in the medium outfit, the armour laid over it as layers of its own surface."""
+    cuts = (*CUIRASS_Z, COIF_Z, MAIL_Z, *CUFF_Z, *BRACER, BRACER[0] + 0.01, BRACER[1] - 0.01)
+    body, parts, hands = anatomy.build(M, _hand, _rigid, _hang, () if outfit == 'naked' else cuts)
+    if outfit == 'naked':
+        return parts, [body], hands
+    body.me.materials.append(M['face'])
+    face_materials(body.me, lambda c: 1 if c[2] > FACE_Z else 0)
+    skins = [body]
+    piece = np.array(anatomy.PIECES)[np.argmax(body.alpha, axis=1)]
+    z = body.rest[:, 2]
+    torso, leg = piece == 'torso', np.char.startswith(piece, 'leg_')
+    arm = np.char.startswith(piece, 'arm_')
 
+    def layer(name, mat, mask, push):
+        sub = body.alpha[mask]
 
-def _limb_axis(x):
-    return lambda p: np.stack([np.full(len(p), x), np.zeros(len(p)), np.zeros(len(p))], axis=1)
-
-
-def build_body(M):
-    """The fighter: (rigid parts, skinned parts, hands {side: {'open': ob, 'fist': ob}})."""
-    parts, skins, hands = [], [], {}
-
-    # torso: the cuirass above the belt, mail below it, the coif's mail over the neck
-    me = vloft('torso', TORSO, TORSO_CENTRE)
-    face_materials(me, lambda c: 0 if c[2] > 1.095 and c[2] < 1.5 else 1 if c[2] <= 1.095 else 2)
-    skins.append(Skinned('torso', me, [M['cuirass'], M['mail'], M['coif']], ['pelvis', 'spine', 'chest', 'neck'],
-                         _torso_weights(coords(me))))
+        def axis(p):   # the limb's own axis under the mail's lattice, blended where pieces meet
+            return sum((sub[:, k:k + 1] * ax(p) for k, ax in enumerate(body.axes) if ax is not None), 0.0 * p)
+        skins.append(body.shell(name, mat, mask, push, axis=axis))
+    # the layers overlap a ring where they meet, so no skin shows between them
+    def band(lo, hi):   # the vertices on the cuts count as inside
+        return (z > lo - 1e-5) & (z < hi + 1e-5)
+    layer('cuirass', M['cuirass'], torso & band(*CUIRASS_Z), CUIRASS)
+    layer('coif_neck', M['coif'], torso & band(COIF_Z, 9), COIF)
+    layer('mail', M['mail'], (torso & band(0, MAIL_Z)) | (leg & band(CUFF_Z[1], 9)), np.where(leg, MAIL_LEGS, MAIL_HIPS))
+    layer('bracers', M['bracer'], arm & band(*BRACER), BRACER_PUSH)
+    # the skin under the layers and the boots goes; a margin of it stays under each layer's edge
+    under = torso | (leg & ~band(*CUFF_Z[::2])) | np.char.startswith(piece, 'barefoot_')
+    under |= arm & band(BRACER[0] + 0.01, BRACER[1] - 0.01) & ~band(BRACER[0] + 0.01, BRACER[0] + 0.01) \
+        & ~band(BRACER[1] - 0.01, BRACER[1] - 0.01)
+    body.cut(~under)
 
     def limb(s, x):
-        arm_pts = [rest(f'uarm_{s}') + Vector((0, 0, 0.06)), rest(f'uarm_{s}'), rest(f'farm_{s}'), rest(f'hand_{s}')]
-        me = vloft(f'arm_{s}', ARM, chain_centre(arm_pts), n=36, muscles=arm_muscles(x))
-        face_materials(me, lambda c: 1 if BRACER[0] < c[2] < BRACER[1] else 0)
-        skins.append(Skinned(f'arm_{s}', me, [M['skin'], M['bracer']], [f'clav_{s}', f'uarm_{s}', f'farm_{s}'],
-                             _arm_weights(coords(me))))
-        leg_pts = [rest(f'thigh_{s}') + Vector((0, 0, 0.06)), rest(f'thigh_{s}'), rest(f'shin_{s}'), rest(f'foot_{s}')]
-        me = vloft(f'leg_{s}', LEG, chain_centre(leg_pts), n=32)
-        skins.append(Skinned(f'leg_{s}', me, M['mail'], ['pelvis', f'thigh_{s}', f'shin_{s}'], _leg_weights(coords(me)),
-                             axis=_limb_axis(0.105 * x)))
-        hands[s] = {}
-        for kind, closed in (('open', False), ('fist', True)):
-            ob = _rigid(f'hand_{s}_{kind}', blob_mesh(f'hand_{s}_{kind}', _hand(x, closed), res=0.005), M['skin'])
-            _hang(parts, ob, f'hand_{s}')
-            hands[s][kind] = ob
         # the boot: its turned-down cuff, a shaft to the ankle, the foot
         _hang(parts, loft(f'cuff_{s}', (0.106 * x, 0.0, 0.47), (0.107 * x, 0.002, 0.40), [
             (0.0, 0.098, 0.1), (0.4, 0.104, 0.106), (1.0, 0.088, 0.09)], M['boot'], subsurf=1), f'shin_{s}')
@@ -161,16 +121,7 @@ def build_body(M):
             f'foot_{s}')
     _mirror(limb)
 
-    # head: face and jaw under a mail coif, the silver helm with its nasal and cheek guards over both
-    # the face in skin: skull, jaw and chin, a nose, the brow's ridge and the cheekbones, so where the helm lets the
-    # light in, the cheeks and chin catch it as the classic fighter's do
-    _hang(parts, _rigid('face', blob_mesh('face', [
-        blob((0, -0.035, 1.665), (0.085, 0.098, 0.11)), blob((0, -0.085, 1.585), (0.058, 0.055, 0.045)),
-        blob((0, -0.136, 1.645), (0.014, 0.022, 0.026)), blob((0, -0.12, 1.69), (0.066, 0.025, 0.02)),
-        blob((0.046, -0.112, 1.655), (0.03, 0.02, 0.02)), blob((-0.046, -0.112, 1.655), (0.03, 0.02, 0.02)),
-        blob((0.05, -0.09, 1.588), (0.026, 0.03, 0.022)), blob((-0.05, -0.09, 1.588), (0.026, 0.03, 0.022)),
-        blob((0, -0.122, 1.566), (0.03, 0.024, 0.022))],
-        res=0.004), M['skin']), 'head')
+    # head: the mail coif over the body's own head, the silver helm with its nasal and cheek guards over both
     _hang(parts, loft('coif', (0, -0.025, 1.72), (0, -0.02, 1.47), [
         (0.0, 0.10, 0.10, 0, 0.018), (0.25, 0.108, 0.112, 0, 0.022), (0.55, 0.10, 0.10, 0, 0.03),
         (0.8, 0.088, 0.088, 0, 0.026), (1.0, 0.075, 0.075, 0, 0.02)],
