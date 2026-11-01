@@ -155,7 +155,7 @@ def _palette():
         'cloth': plain('cloth', (0.045, 0.14, 0.015), rough=0.75, spec=0.25),
         'boot': plain('boot', (0.012, 0.17, 0.18), rough=0.4, spec=0.45),
         'bracer': plain('bracer', (0.42, 0.42, 0.45), metal=1.0, rough=0.3),
-        'blade': plain('blade', (0.6, 0.6, 0.62), metal=1.0, rough=0.3),
+        'blade': plain('blade', (0.32, 0.32, 0.34), metal=1.0, rough=0.3),
         'edge': plain('edge', (0.75, 0.75, 0.78), metal=1.0, rough=0.2),
         'haft': plain('haft', (0.07, 0.05, 0.04), rough=0.5),
         'wood': plain('wood', (0.35, 0.17, 0.06), rough=0.5),

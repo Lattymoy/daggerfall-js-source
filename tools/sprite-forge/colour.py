@@ -34,12 +34,25 @@ def material_map(cloud, rec, f, place):
     return fit.crop(cloud.image(pose, gear), rec['canvas'], place)
 
 
-def interior(ids):
-    """Pixels whose four neighbours show the same material: the edges, where a render and the points disagree, left out."""
-    same = np.ones_like(ids, dtype=bool)
-    for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
-        same &= np.roll(np.roll(ids, dy, axis=0), dx, axis=1) == ids
-    return same & (ids > 0)
+def interior(ids, depth=2):
+    """Pixels at least `depth` pixels inside one material's region: where our body and the reference's may not line up
+    exactly, a region's edge would read the reference's neighbouring part."""
+    same = ids > 0
+    for d in range(1, depth + 1):
+        for dy, dx in ((0, d), (0, -d), (d, 0), (-d, 0)):
+            same &= np.roll(np.roll(ids, dy, axis=0), dx, axis=1) == ids
+    return same
+
+
+# a material is read only where the reference's colour class agrees: skin on skin, teal on boots, green on cloth, the
+# metals and the face on neither
+AGREES = {'skin': 2, 'boot': 3, 'cloth': 4}
+# never tinted: the silver and the blade flash white toward the light and darken away from it, and their few pixels
+# overlap the reference's darker parts wherever the outlines differ; their grade alone carries them
+UNTINTED = ('silver', 'blade')
+
+
+GRADE_AT = (1, 10, 25, 50, 75, 90, 99)   # the shares of a material's pixels its grade maps
 
 
 def srgb(c):
@@ -57,23 +70,59 @@ def gather(fighter, cloud, frames, spec, ref, names, tmp):
         cw, ch = rec['canvas']
         hexes = ref['records'][r]['rgb'][f]
         df = np.frombuffer(bytes.fromhex(hexes), dtype=np.uint8).reshape(ch, cw, 3)
-        dfa = np.array([c != '0' for c in ref['records'][r]['frames'][f]]).reshape(ch, cw)
-        keep = interior(ids) & dfa & (pic[..., 3] > 0)
+        dfc = np.array([int(c) for c in ref['records'][r]['frames'][f]]).reshape(ch, cw)
+        keep = interior(ids) & (dfc > 0) & (pic[..., 3] > 0)
+        want = np.array([AGREES.get(n, 1) for n in names])[np.maximum(ids, 1) - 1]
+        keep &= dfc == want
         ids_all.append(ids[keep])
         ours_all.append(linear(pic[keep][:, :3]))
         theirs_all.append(linear(df[keep]))
     return np.concatenate(ids_all), np.concatenate(ours_all), np.concatenate(theirs_all)
 
 
+def class_pixels(ref, cls):
+    """Every reference texel of colour class `cls`, sRGB."""
+    out = []
+    for rec in ref['records']:
+        cw, ch = rec['canvas']
+        for f, fr in enumerate(rec['frames']):
+            c = np.array([int(x) for x in fr]).reshape(ch, cw)
+            rgb = np.frombuffer(bytes.fromhex(rec['rgb'][f]), dtype=np.uint8).reshape(ch, cw, 3)
+            out.append(rgb[c == cls])
+    return np.concatenate(out).astype(np.float64)
+
+
+def own_pixels(fighter, cloud, frames, spec, names, tmp):
+    """Each material's own rendered pixels (sRGB) over the frames, wherever it shows."""
+    out = {n: [] for n in names}
+    for r, rec, f in frames:
+        work = forge.render_frame(fighter, rec['anim'], rec['view'], f, tmp)
+        pic, _ = forge.crop(work, rec['canvas'], rec['place'])
+        ids = material_map(cloud, rec, f, rec['place'])
+        keep = interior(ids, 1) & (pic[..., 3] > 0)
+        for k, n in enumerate(names):
+            m = keep & (ids == k + 1)
+            if m.any():
+                out[n].append(pic[m][:, :3].astype(np.float64))
+    return {n: np.concatenate(v) for n, v in out.items() if v}
+
+
 def residual(ids, ours, theirs):
-    """The colour left over once each material takes its best scale a channel: mean absolute difference, 0-255."""
-    out = np.zeros_like(ours)
+    """How far each material's shading is from the reference's, once it takes its best colour scale: the gap between
+    their brightness at the darkest tenth, the middle and the brightest tenth of its pixels (0-255), so a highlight
+    or a shadow counts wherever it falls, and a flat light is no answer."""
+    gaps, weights = [], []
     for m in np.unique(ids):
         k = ids == m
+        if k.sum() < 40:
+            continue
         o, t = ours[k], theirs[k]
         sc = np.clip((o * t).sum(axis=0) / np.maximum((o * o).sum(axis=0), 1e-9), 0.2, 5.0)
-        out[k] = o * sc
-    return float(np.abs(srgb(out) - srgb(theirs)).mean())
+        lo, lt = srgb(o * sc).mean(axis=1), srgb(t).mean(axis=1)
+        qs = (10, 50, 90)
+        gaps.append(np.abs(np.percentile(lo, qs) - np.percentile(lt, qs)).mean())
+        weights.append(k.sum())
+    return float(np.average(gaps, weights=weights))
 
 
 def fit_light(fighter, cloud, spec, ref, names, tmp, iters):
@@ -118,6 +167,7 @@ def main():
     ap.add_argument('--rounds', type=int, default=3)
     ap.add_argument('--samples', type=int, default=32)
     ap.add_argument('--light', type=int, default=0, help='first fit the lights for this many tries')
+    ap.add_argument('--report', action='store_true', help='print each material\'s shading against the reference')
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     spec = json.load(open(args.spec))
     ref = json.load(open(args.ref))
@@ -134,10 +184,19 @@ def main():
     fighter = forge.Fighter()
     names = sorted(fighter.M)
     ids_of = {n: i + 1 for i, n in enumerate(names)}
+    # the fighter's meshes already wear the fitted shape, and the stage's pixels a metre its scale
     cloud = fit.Cloud(fighter, classify=lambda m: ids_of.get(m.name.split('.')[0], 0) if m else 0)
-    cloud.set_shape(shape.SHAPE)
-    cloud.scale = 1.0   # the stage's pixels a metre already carry it
     tmp = os.path.join(tempfile.mkdtemp(), 'c.png')
+    if args.report:
+        frames = [(r, spec['records'][r], 0) for r in range(len(spec['records']))]
+        ids, ours, theirs = gather(fighter, cloud, frames, spec, ref, names, tmp)
+        for k, n in enumerate(names):
+            m = ids == k + 1
+            if m.sum() < 40:
+                continue
+            lo, lt = srgb(ours[m]).mean(axis=1), srgb(theirs[m]).mean(axis=1)
+            print(f'{n:8s} ours {np.percentile(lo, (10, 50, 90)).round()} reference {np.percentile(lt, (10, 50, 90)).round()}')
+        return
     if args.light:
         L = fit_light(fighter, cloud, spec, ref, names, tmp, args.light)
         with open(light_path, 'w') as fh:
@@ -152,8 +211,9 @@ def main():
             ids = material_map(cloud, rec, f, rec['place'])
             cw, ch = rec['canvas']
             df = np.frombuffer(bytes.fromhex(ref['records'][r]['rgb'][f]), dtype=np.uint8).reshape(ch, cw, 3)
-            dfa = np.array([c != '0' for c in ref['records'][r]['frames'][f]]).reshape(ch, cw)
-            keep = interior(ids) & dfa & (pic[..., 3] > 0)
+            dfc = np.array([int(c) for c in ref['records'][r]['frames'][f]]).reshape(ch, cw)
+            keep = interior(ids) & (dfc > 0) & (pic[..., 3] > 0)
+            keep &= dfc == np.array([AGREES.get(n, 1) for n in names])[np.maximum(ids, 1) - 1]
             for k, n in enumerate(names):
                 m = keep & (ids == k + 1)
                 if m.any():
@@ -161,7 +221,7 @@ def main():
                     theirs[n].append(linear(df[m]))
         report = []
         for n in names:
-            if not ours[n] or sum(len(a) for a in ours[n]) < 40:
+            if n in UNTINTED or not ours[n] or sum(len(a) for a in ours[n]) < 40:
                 continue
             a = np.concatenate(ours[n]).mean(axis=0)
             b = np.concatenate(theirs[n]).mean(axis=0)
@@ -172,6 +232,30 @@ def main():
         print(f'round {rnd}: ' + ', '.join(report), flush=True)
         with open(tint_path, 'w') as fh:
             fh.write(json.dumps(dict(sorted(tints.items())), indent=1) + '\n')
+    # the grade. Skin, boots and cloth have a class of their own in the reference: each channel of their own pixels is
+    # mapped onto the reference's class pixels', share for share, no lining-up needed. The other materials map their
+    # brightness onto the reference's under them; the silver and the blade keep their render.
+    ids, ours, theirs = gather(fighter, cloud, frames, spec, ref, names, tmp)
+    own = own_pixels(fighter, cloud, frames, spec, names, tmp)
+    grade = {}
+    for k, n in enumerate(names):
+        if n in UNTINTED:
+            continue
+        if n in AGREES:
+            mine = own.get(n)
+            cls = class_pixels(ref, AGREES[n])
+            if mine is None or len(mine) < 40:
+                continue
+            grade[n] = {'rgb': [[np.percentile(mine[:, c], GRADE_AT).round(1).tolist(),
+                                 np.percentile(cls[:, c], GRADE_AT).round(1).tolist()] for c in range(3)]}
+            continue
+        m = ids == k + 1
+        if m.sum() < 40:
+            continue
+        lo, lt = srgb(ours[m]).mean(axis=1), srgb(theirs[m]).mean(axis=1)
+        grade[n] = {'lum': [np.percentile(lo, GRADE_AT).round(1).tolist(), np.percentile(lt, GRADE_AT).round(1).tolist()]}
+    with open(args.spec.replace('.json', '-grade.json'), 'w') as fh:
+        fh.write(json.dumps(grade, indent=1) + '\n')
 
 
 if __name__ == '__main__':

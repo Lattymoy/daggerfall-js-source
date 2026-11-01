@@ -87,10 +87,41 @@ class Fighter:
                 self.extra.append(model.arrow_mesh(self.M, nock, tip))
 
 
+GRADE = {}   # material -> (its brightness at GRADE_AT shares, the reference's): colour.py's grade
+
+
+def grade_frame(work, ids, names):
+    """Map each material's brightness onto the reference's (`GRADE`), keeping its hue: the classic renders' shading
+    runs darker in the middle and brighter at the top than any matte light gives."""
+    if not GRADE:
+        return work
+    out = work.copy()
+    rgb = work[..., :3].astype(np.float64)
+    lum = rgb.mean(axis=2)
+    for k, n in enumerate(names):
+        if n not in GRADE:
+            continue
+        m = (ids == k + 1) & (work[..., 3] > 0)
+        if not m.any():
+            continue
+        g = GRADE[n]
+        if 'rgb' in g:   # each channel mapped share for share onto the reference's
+            for c, (src, dst) in enumerate(g['rgb']):
+                out[m, c] = np.clip(np.interp(rgb[m][:, c], src, dst), 0, 255).round().astype(np.uint8)
+            continue
+        src, dst = g['lum']
+        want = np.interp(lum[m], src, dst)
+        out[m, :3] = np.clip(rgb[m] * (want / np.maximum(lum[m], 1.0))[:, None], 0, 255).round().astype(np.uint8)
+    return out
+
+
 def render_frame(fighter, anim, view, frame, tmp):
     pose, gear = poses.pose_for(anim, frame, view, VIEW_YAW[view])
     fighter.place(pose, gear)
-    return stage.render_rgba(tmp)
+    work = stage.render_rgba(tmp)
+    if GRADE and getattr(fighter, 'ids', None) is not None:
+        work = grade_frame(work, fighter.ids.image(pose, gear), fighter.id_names)
+    return work
 
 
 def crop(work, canvas, place):
@@ -150,10 +181,18 @@ def main():
     shape.load_shape(args.spec.replace('.json', '-shape.json'))
     materials.load_tint(args.spec.replace('.json', '-colour.json'))
     stage.load_light(args.spec.replace('.json', '-light.json'))
+    grade_path = args.spec.replace('.json', '-grade.json')
+    if os.path.exists(grade_path):
+        GRADE.update(json.load(open(grade_path)))
     stage.PX_PER_M *= shape.SHAPE['scale']
     bpy.ops.wm.read_factory_settings(use_empty=True)
     stage.setup(args.samples)
     fighter = Fighter()
+    if GRADE:   # the exact material map the grade reads (fit.py's raster: the render's pixels)
+        import fit
+        fighter.id_names = sorted(fighter.M)
+        ids_of = {n: i + 1 for i, n in enumerate(fighter.id_names)}
+        fighter.ids = fit.Cloud(fighter, classify=lambda m: ids_of.get(m.name.split('.')[0], 0) if m else 0)
     os.makedirs(args.out, exist_ok=True)
     tmp = os.path.join(tempfile.mkdtemp(), 'f.png')
     only = {int(r) for r in args.records.split(',') if r != ''}

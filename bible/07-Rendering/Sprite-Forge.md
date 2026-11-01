@@ -21,10 +21,24 @@ Knight enemies wear.
   differently in each view of the attack: from the side its back is to the viewer at the wind-up. So the attack is
   keyed per view (`ATTACK`), by where the fist and the axe head show on screen. The archer stands side-on to the shot
   in every view (`BOW_TURN`).
-- **Fitting.** `tools/sprite-forge/fit.py` adjusts each frame's keyed pose until the body covers the record's outline
-  and its colour regions best: skin, boot teal and cloth green. It turns joints, the body and the axe's grip. It sees
-  the body as points strewn over its surfaces, posed and projected as the camera does, so a frame takes seconds. The
-  adjustments are kept in `tools/sprite-forge/specs/488-fit.json` as numbers; `poses.py` `load_fit` lays them on.
+- **Fitting the poses.** `tools/sprite-forge/fit.py` adjusts each frame's keyed pose until the body covers the
+  record's outline and its colour regions best: skin, boot teal and cloth green. It turns joints, the shoulders, the
+  body, the axe's grip and its roll. It lays the body's triangles on the work frame as Cycles samples it, the
+  nearest surface over each pixel's centre, so its picture is the render's pixel for pixel. A standing frame keeps
+  both feet down. The adjustments are kept in `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays
+  them on.
+- **Fitting the body.** `fit.py --shape` fits the proportions over every frame in its fitted pose: the torso's width
+  and depth, the limbs', the head's, the hands', the boots', the pauldrons' size and place, the loincloth's width, the
+  axe's size, and the whole body's size on screen. `tools/sprite-forge/shape.py` `transform` lays them on the meshes
+  the renderer draws and on the fitter's triangles alike (`specs/488-shape.json`).
+- **Fitting the colour.** `tools/sprite-forge/colour.py` tints each material until its pixels' mean colour is the
+  record's over the same pixels (`specs/488-colour.json`, `materials.py` `tint`). Then it grades: skin, boots and
+  cloth have a colour class of their own in the record, so each channel of their own pixels is mapped onto the
+  class's, share for share. The other materials map their brightness onto the record's under them. The silver and
+  the blade keep their render: they flash toward the light, and their few pixels sit over the record's darker parts
+  wherever the outlines differ. The renderer applies the grade (`forge.py` `grade_frame`) through the fitter's exact
+  material map (`specs/488-grade.json`). `--light` can fit the lights too (`stage.py` `LIGHT`); the forge keeps
+  its default lights.
 - **The stage.** `tools/sprite-forge/stage.py` uses an orthographic camera at 62 pixels a metre, looking 8 degrees
   down. The lights ride the camera, so every view is lit from the viewer's upper left. Cycles takes one sample point a
   pixel, so edges stay hard, and alpha is cut at one half.
@@ -46,7 +60,9 @@ Blender runs as a Python module: `pip install bpy==5.2.3` (Python 3.13). Then:
 
 ```
 ARENA2_PATH=... node tools/sprite-forge/reference.mjs 488 /tmp/forge-ref-488.json
+python -I tools/sprite-forge/fit.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json --shape
 python -I tools/sprite-forge/fit.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json
+python -I tools/sprite-forge/colour.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json
 python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json --register /tmp/forge-ref-488.json --out /tmp/x
 python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json --out public/art/studio/forge/488
 ```
@@ -71,8 +87,8 @@ tables and sizes are read as they are.
 
 ## Code and tests
 
-- `tools/sprite-forge/` - the forge: `forge.py`, `fit.py`, `model.py`, `body.py`, `rig.py`, `poses.py`, `stage.py`,
-  `shapes.py`, `materials.py`, `reference.mjs`, `specs/488.json`, `specs/488-fit.json`
+- `tools/sprite-forge/` - the forge: `forge.py`, `fit.py`, `colour.py`, `shape.py`, `model.py`, `body.py`, `rig.py`,
+  `poses.py`, `stage.py`, `shapes.py`, `materials.py`, `reference.mjs`, and the fitted tables beside `specs/488.json`
 - `public/art/studio/forge/488/` - the frames
 - `src/systems/studioArt/studioArt.js` `FORGE_FOLDER`, `isForgeRender`; `src/systems/textureReplacement.js` (an
   entry's `look`)
@@ -83,10 +99,10 @@ tables and sizes are read as they are.
 ## Open
 
 - Only TEXTURE.488 is forged. The other class archives (475-490, and the guard's 399) need their own gear and specs.
-- The overlap with Daggerfall's outlines averages 0.70 a record. Walk and idle are closest (0.72-0.78); the hurt
-  views (0.58-0.72) and the bow's three-quarter views (0.57-0.62) are furthest.
-- In 45 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut (15 at the
-  median).
+- The overlap with Daggerfall's outlines averages 0.735 a record. Walk and idle are closest (0.77-0.83); attack
+  0.71-0.77; hurt 0.65-0.74; the bow 0.65-0.71.
+- One frame still holds its axe wrong: the three-quarter idle angles it down where the record holds it level.
+- In 37 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
 - The body is smooth lofts: it has no fingers, cloth folds or sculpted detail finer than the pecs and abs.
 - Layered Gearing still draws the player from traced strips (`04-Characters/Layered-Gearing.md`). The forge could
   render its 27 outfits as layers instead.

@@ -1,0 +1,21 @@
+{
+ "scale": 1.0062,
+ "torso_w": 1.147,
+ "torso_d": 0.9689,
+ "arm_r": 1.0335,
+ "leg_r": 1.0616,
+ "head": 1.0174,
+ "hand": 1.2835,
+ "boot_r": 1.0931,
+ "paul_s": 1.0158,
+ "paul_dx": -0.032,
+ "paul_dz": -0.0036,
+ "loin_w": 1.1164,
+ "axe": 0.942,
+ "helm_s": 1.0,
+ "helm_dy": 0.0,
+ "helm_dz": 0.0,
+ "paul_sz": 1.0,
+ "waist_w": 1.0,
+ "chest_w": 1.0
+}

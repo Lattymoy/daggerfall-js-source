@@ -7,6 +7,7 @@
 //   - the snap: grain 0 snaps only - a colour goes to one palette colour wherever it sits
 //   - the reference tool writes outside the repo only: the outlines it takes are game data
 //   - the fit: one adjustment a frame, of the kinds a pose takes, within bounds
+//   - the colour: every tint a finite positive factor, every grade curve rising within 0-255
 //   - (ARENA2) the spec's canvases and frame counts are TEXTURE.488's own
 //
 // The install test's pictures are its own, written by tools/pngIO.mjs: no game data.
@@ -141,6 +142,29 @@ test('F7: the fit holds one adjustment a frame the spec names - joint turns, the
       for (const v of r) assert.ok(Math.abs(v) <= 75, `${key} ${joint}: ${v} degrees`);
     }
     for (const kind of ['grip', 'fist', 'head']) for (const v of adj[kind] ?? []) assert.ok(Math.abs(v) <= 0.5, `${key} ${kind}: ${v} m`);
+  }
+});
+
+test('F8: the colour tables - each tint three finite positive factors, each grade curve rising within 0-255', () => {
+  const tints = JSON.parse(readFileSync(join(root, 'tools/sprite-forge/specs/488-colour.json'), 'utf8'));
+  for (const [name, f] of Object.entries(tints)) {
+    assert.equal(f.length, 3, name);
+    for (const v of f) assert.ok(Number.isFinite(v) && v > 0, `${name}: ${v}`);
+  }
+  const grade = JSON.parse(readFileSync(join(root, 'tools/sprite-forge/specs/488-grade.json'), 'utf8'));
+  assert.ok(Object.keys(grade).length > 0);
+  for (const [name, g] of Object.entries(grade)) {
+    const curves = g.rgb ?? [g.lum];
+    assert.ok(curves.length === 3 || (g.lum && curves.length === 1), name);
+    for (const [src, dst] of curves) {
+      assert.equal(src.length, dst.length, name);
+      for (const side of [src, dst]) {
+        for (let i = 0; i < side.length; i++) {
+          assert.ok(side[i] >= 0 && side[i] <= 255, `${name}: ${side[i]}`);
+          if (i) assert.ok(side[i] >= side[i - 1], `${name}: falls at ${i}`);
+        }
+      }
+    }
   }
 });
 
