@@ -656,7 +656,8 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
     armHalf = ARM_PX.half * art;
   out.flank = fl ? { y: at(fl.row), lo: off(fl.lo + armHalf), hi: off(fl.hi - armHalf) } : null;
   // the body's run across the card at the chest's rows, its two edges (m) - the back's span for a chest piece
-  out.chestSpan = mk?.chest != null && mk?.chestHalf != null ? [off(mk.chest - mk.chestHalf), off(mk.chest + mk.chestHalf)] : null;
+  out.chestSpan =
+    mk?.chest != null && mk?.chestHalf != null ? [off(mk.chest - mk.chestHalf), off(mk.chest + mk.chestHalf)] : null;
   return true;
 }
 

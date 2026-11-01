@@ -2,8 +2,8 @@
   {
     "name": "ARM-BEHIND-edge-at-middle",
     "file": "src/render/armoryPass.js",
-    "old": "const E = [sh[0] + right[0] * way * half, sh[1], sh[2] + right[2] * way * half]",
-    "new": "const E = [sh[0], sh[1], sh[2]]",
+    "old": "const edge = [shoulder[0] + right[0] * way * half, shoulder[1], shoulder[2] + right[2] * way * half]",
+    "new": "const edge = [shoulder[0], shoulder[1], shoulder[2]]",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ARM-BEHIND-side-reversed",
     "file": "src/render/armoryPass.js",
-    "old": "toMid[2] >= 0 ? 1 / l : -1 / l;",
-    "new": "toMid[2] >= 0 ? -1 / l : 1 / l;",
+    "old": "toMid[2] >= 0 ? 1 / len : -1 / len;",
+    "new": "toMid[2] >= 0 ? -1 / len : 1 / len;",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "CHEST-CENTRE-depth-along-facing",
     "file": "src/render/armoryPass.js",
-    "old": "return add(c, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };",
-    "new": "return add(c, fwd, z); };",
+    "old": "return add(painted, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };",
+    "new": "return add(painted, fwd, z); };",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "CHEST-CENTRE-sigil-back-behind",
     "file": "src/render/armoryPass.js",
-    "old": "const back = pose.card ? backOnCard(onCard(cz - 0.24 * s)) :",
+    "old": "const back = pose.card ? backOnCard(onCard(chestZ - 0.24 * s)) :",
     "new": "const back = pose.card ? add(chest, fwd, -0.24 * s) :",
     "tests": [
       "test/render/armbehind.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "CHEST-CENTRE-card-as-rig",
     "file": "src/render/armoryPass.js",
-    "old": "const chest = pose.card ? onCard(cz) : pt('chest'),",
+    "old": "const chest = pose.card ? onCard(chestZ) : pt('chest'),",
     "new": "const chest = pt('chest'),",
     "tests": [
       "test/render/armbehind.test.js"

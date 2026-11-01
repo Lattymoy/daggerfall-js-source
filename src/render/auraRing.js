@@ -3317,7 +3317,7 @@ void main() {
   gl_Position = uVP * vec4(w, 1.0);
 }`;
 /** The looks that cover, as GLSL - AURA_LOOK's own `shade`, never a second list. */
-const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((l) => 'shade' in l && l.shade).map((l) => `uAura == ${l.kind}`).join(' || ') || 'false';
+const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((look) => 'shade' in look && look.shade).map((look) => `uAura == ${look.kind}`).join(' || ') || 'false';
 /** The looks drawn in pixels of their own, never resampled - the Crystal Resonance's squares (its pitch is no
  *  whole number of texels, so a snapped square stood one texel wide or two by turns). Their levels are cut all the same. */
 export const AURA_OWN_PIXELS = Object.freeze([AURA_LOOK.resonance.kind]);

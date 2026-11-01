@@ -132,7 +132,7 @@
   {
     "name": "AUDIT-AURA-PIXEL-C1-far-bare-arm-worn",
     "file": "src/render/armoryPass.js",
-    "old": "  return (arm === 'left' ? 1 : -1) * (ex * fwd[2] - ez * fwd[0]) / l > ARM_HIDDEN_SIN ? null : side;",
+    "old": "  return (arm === 'left' ? 1 : -1) * (toEyeX * fwd[2] - toEyeZ * fwd[0]) / reach > ARM_HIDDEN_SIN ? null : side;",
     "new": "  return side;",
     "tests": [
       "test/render/armbehind.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-AURA-PIXEL-C2-edge-upright",
     "file": "src/render/armoryPass.js",
-    "old": "D = sub(el, sh), V =",
-    "new": "D = [0, -1, 0], V =",
+    "old": "down = sub(elbow, shoulder), toEdge =",
+    "new": "down = [0, -1, 0], toEdge =",
     "tests": [
       "test/render/armbehind.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-AURA-PIXEL-D2-back-on-chest-mark",
     "file": "src/render/armoryPass.js",
-    "old": "const back = pose.card ? backOnCard(onCard(cz - 0.24 * s))",
-    "new": "const back = pose.card ? onCard(cz - 0.24 * s)",
+    "old": "const back = pose.card ? backOnCard(onCard(chestZ - 0.24 * s))",
+    "new": "const back = pose.card ? onCard(chestZ - 0.24 * s)",
     "tests": [
       "test/render/auditaurapixel.test.js"
     ],

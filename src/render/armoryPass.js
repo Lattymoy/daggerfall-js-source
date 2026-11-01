@@ -564,25 +564,25 @@ export function armSide(pose, fwd, chest, eye, arm = 'left') {
 export function armWornSide(pose, fwd, chest, eye, arm = 'left') {
   const side = armSide(pose, fwd, chest, eye, arm);
   if (!side || !pose?.card || pose.armsTurned || pose.bands?.[side]) return side;
-  const ex = eye[0] - chest[0], ez = eye[2] - chest[2], l = Math.hypot(ex, ez) || 1;
-  return (arm === 'left' ? 1 : -1) * (ex * fwd[2] - ez * fwd[0]) / l > ARM_HIDDEN_SIN ? null : side;
+  const toEyeX = eye[0] - chest[0], toEyeZ = eye[2] - chest[2], reach = Math.hypot(toEyeX, toEyeZ) || 1;
+  return (arm === 'left' ? 1 : -1) * (toEyeX * fwd[2] - toEyeZ * fwd[0]) / reach > ARM_HIDDEN_SIN ? null : side;
 }
 /** The Insignia Armlet's arm, the wearer's left. Pure. */
 export const armletSide = (/** @type {any} */ pose, /** @type {number[]} */ fwd, /** @type {number[]} */ chest, /** @type {ArrayLike<number>} */ eye) => armSide(pose, fwd, chest, eye, 'left');
 /** A SPRITE'S ARM PIECE STOPS AT ITS ARM'S INNER EDGE. A piece lies on the card's near side, so where an arm passes
  *  behind the painted torso the card hides nothing. Its draws keep the arm's side of the line its inner edge runs along -
- *  `half` in from `sh`..`el` toward the chest on the card - seen from the eye: [n, d], kept where n.p + d >= 0, or null
+ *  `half` in from `shoulder`..`elbow` toward the chest on the card - seen from the eye: [n, d], kept where n.p + d >= 0, or null
  *  with the eye on that line. Along the arm, so a slanting arm's own outline stays; off the chest on the card, since the
- *  chest lifted before it shifts across at a three-quarter. Pure. @param {number[]} sh @param {number[]} el
+ *  chest lifted before it shifts across at a three-quarter. Pure. @param {number[]} shoulder @param {number[]} elbow
  *  @param {number} half @param {number[]} chest @param {ArrayLike<number>} right @param {ArrayLike<number>} eye */
-export function armClip(sh, el, half, chest, right, eye) {
-  const mid = mix(sh, el, 0.5), way = Math.sign((chest[0] - mid[0]) * right[0] + (chest[2] - mid[2]) * right[2]) || 1;
-  const E = [sh[0] + right[0] * way * half, sh[1], sh[2] + right[2] * way * half], D = sub(el, sh), V = sub(E, /** @type {any} */ (eye));
-  let n = [D[1] * V[2] - D[2] * V[1], D[2] * V[0] - D[0] * V[2], D[0] * V[1] - D[1] * V[0]];
-  const l = Math.hypot(n[0], n[1], n[2]);
-  if (!(l > 1e-9)) return null;
-  const toMid = sub(mid, /** @type {any} */ (eye)), side = n[0] * toMid[0] + n[1] * toMid[1] + n[2] * toMid[2] >= 0 ? 1 / l : -1 / l;
-  n = n.map((v) => v * side);
+export function armClip(shoulder, elbow, half, chest, right, eye) {
+  const mid = mix(shoulder, elbow, 0.5), way = Math.sign((chest[0] - mid[0]) * right[0] + (chest[2] - mid[2]) * right[2]) || 1;
+  const edge = [shoulder[0] + right[0] * way * half, shoulder[1], shoulder[2] + right[2] * way * half], down = sub(elbow, shoulder), toEdge = sub(edge, /** @type {any} */ (eye));
+  let n = [down[1] * toEdge[2] - down[2] * toEdge[1], down[2] * toEdge[0] - down[0] * toEdge[2], down[0] * toEdge[1] - down[1] * toEdge[0]];
+  const len = Math.hypot(n[0], n[1], n[2]);
+  if (!(len > 1e-9)) return null;
+  const toMid = sub(mid, /** @type {any} */ (eye)), side = n[0] * toMid[0] + n[1] * toMid[1] + n[2] * toMid[2] >= 0 ? 1 / len : -1 / len;
+  n = n.map((axis) => axis * side);
   return [n[0], n[1], n[2], -(n[0] * eye[0] + n[1] * eye[1] + n[2] * eye[2])];
 }
 /** ARMORY-MIRROR: half an eighth of a turn's sine - past it, off the line straight behind, the picture is a three-quarter
@@ -650,22 +650,22 @@ export function armoryDraws(key, w, eye, near, right = null) {
   } else if (key === 'emberheart' || key === 'eternalsigil') {
     // on a card a depth along the facing is laid on the eye's line through the picture's chest, so it never slides across
     // the picture as the eye goes round (laid along the facing, it slid 13 to 23 px off at a three-quarter)
-    const cz = pose.pts[POSE_AT.chest + 2], onCard = (/** @type {number} */ z) => { const c = add(pt('chest'), fwd, -cz), e = unit(sub(/** @type {any} */ (eye), c)); return add(c, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };
-    const chest = pose.card ? onCard(cz) : pt('chest'), f = facing(chest, fwd);
+    const chestZ = pose.pts[POSE_AT.chest + 2], onCard = (/** @type {number} */ z) => { const painted = add(pt('chest'), fwd, -chestZ), e = unit(sub(/** @type {any} */ (eye), painted)); return add(painted, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };
+    const chest = pose.card ? onCard(chestZ) : pt('chest'), f = facing(chest, fwd);
     // from behind, the run at the chest's rows takes in the near arm hanging over the back - the Sigil's
     // back stands mid-way between the far edge and that arm's inner edge, never on the arm
-    const backOnCard = (/** @type {number[]} */ p) => {
+    const backOnCard = (/** @type {number[]} */ point) => {
       const span = pose.chestSpan, worn = /** @type {const} */ (['left', 'right']).map((a) => armWornSide(pose, fwd, pt('chest'), eye, a)).filter(Boolean);
-      if (!span || !right || worn.length !== 1) return p;
-      const S = worn[0], c = pose.dx[POSE_AT.chest / 3], b = pose.bands?.[S], arm = b ? b.dx : (pose.dx[POSE_AT[`sh${S}`] / 3] + pose.dx[POSE_AT[`el${S}`] / 3]) / 2;
-      const half = b ? b.w / 2 : 0.06 * s, way = Math.sign(c - arm) || 1, inner = Math.max(span[0], Math.min(span[1], arm + way * half));
-      const shift = ((way > 0 ? span[1] : span[0]) + inner) / 2 - c;
-      return add(p, right, shift);
+      if (!span || !right || worn.length !== 1) return point;
+      const wornOn = worn[0], chestDx = pose.dx[POSE_AT.chest / 3], b = pose.bands?.[wornOn], arm = b ? b.dx : (pose.dx[POSE_AT[`sh${wornOn}`] / 3] + pose.dx[POSE_AT[`el${wornOn}`] / 3]) / 2;
+      const half = b ? b.w / 2 : 0.06 * s, way = Math.sign(chestDx - arm) || 1, inner = Math.max(span[0], Math.min(span[1], arm + way * half));
+      const shift = ((way > 0 ? span[1] : span[0]) + inner) / 2 - chestDx;
+      return add(point, right, shift);
     };
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = pose.card ? backOnCard(onCard(cz - 0.24 * s)) : add(chest, fwd, -(pose.back > 0 ? pose.back : 0.27 * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
+    else { const back = pose.card ? backOnCard(onCard(chestZ - 0.24 * s)) : add(chest, fwd, -(pose.back > 0 ? pose.back : 0.27 * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const arm of /** @type {const} */ (['left', 'right'])) {
       const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064), from = out.length;

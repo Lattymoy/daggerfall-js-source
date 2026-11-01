@@ -1437,12 +1437,29 @@ try {
   // look of its own pixels; an added look's light on its levels more often than per pixel (overlapping surfaces sum - the
   // law is test/render/aurapixel.test.js's); a shot of each
   for (const aura of await page.evaluate(() => window.auraNames)) {
-    const shot = (on) => page.evaluate(([e, a, m, o]) => window.pixelShot(e, a, m, o), [[0, 1.3, 2.2], aura, [0, 0.7, 0], on]);
-    const flat = await shot(false), lv = await shot('levels'), px = await shot(true);
+    const shot = (on) =>
+      page.evaluate(([e, a, m, o]) => window.pixelShot(e, a, m, o), [[0, 1.3, 2.2], aura, [0, 0.7, 0], on]);
+    const flat = await shot(false),
+      lv = await shot('levels'),
+      px = await shot(true);
     if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${aura}_pixel.png`) });
-    check(`${aura} in pixels draws without a GL error`, px.error === 0 && px.drawn === 1 && px.lit > 200, `error ${px.error}, drawn ${px.drawn}, ${px.lit} lit`);
-    if (!px.own) check(`${aura} drawn in texels`, px.same > lv.same + 0.1, `${px.same.toFixed(2)} of its lit pixels as their neighbour, the levels alone ${lv.same.toFixed(2)}, per pixel ${flat.same.toFixed(2)}`);
-    if (!px.covers) check(`${aura}'s light on its levels`, px.level > flat.level + 0.1, `${px.level.toFixed(2)} on a level, per pixel ${flat.level.toFixed(2)}`);
+    check(
+      `${aura} in pixels draws without a GL error`,
+      px.error === 0 && px.drawn === 1 && px.lit > 200,
+      `error ${px.error}, drawn ${px.drawn}, ${px.lit} lit`,
+    );
+    if (!px.own)
+      check(
+        `${aura} drawn in texels`,
+        px.same > lv.same + 0.1,
+        `${px.same.toFixed(2)} of its lit pixels as their neighbour, the levels alone ${lv.same.toFixed(2)}, per pixel ${flat.same.toFixed(2)}`,
+      );
+    if (!px.covers)
+      check(
+        `${aura}'s light on its levels`,
+        px.level > flat.level + 0.1,
+        `${px.level.toFixed(2)} on a level, per pixel ${flat.level.toFixed(2)}`,
+      );
   }
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {

@@ -82,8 +82,8 @@
   {
     "name": "AURA-PIXEL-covers-not-shade",
     "file": "src/render/auraRing.js",
-    "old": "const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((l) => 'shade' in l && l.shade)",
-    "new": "const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((l) => 'mesh' in l && l.mesh)",
+    "old": "const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((look) => 'shade' in look && look.shade)",
+    "new": "const AURA_COVERS_GLSL = Object.values(AURA_LOOK).filter((look) => 'mesh' in look && look.mesh)",
     "tests": [
       "test/render/aurapixel.test.js"
     ],

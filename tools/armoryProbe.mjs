@@ -490,13 +490,27 @@ try {
   // the pieces in Daggerfall's levels - each kit drawn close with the law on: no GL error, as much of it lit as per pixel,
   // and never snapped (no more of its lit pixels the same as their neighbour than per pixel, give or take the levels'
   // own runs); a shot of each
-  for (const [name, kit] of [['dagonfire', 'aaaa0'], ['eternal', 'bbbb0'], ['spurs', '00d00'], ['armlet', '00c00']]) {
+  for (const [name, kit] of [
+    ['dagonfire', 'aaaa0'],
+    ['eternal', 'bbbb0'],
+    ['spurs', '00d00'],
+    ['armlet', '00c00'],
+  ]) {
     const close = { kit, eye: [0, 1.3, 1.5], at: [0, 1.1, 0], arms: ARMS };
-    const flat = await draw(close), px = await draw({ ...close, pixel: true });
+    const flat = await draw(close),
+      px = await draw({ ...close, pixel: true });
     await shot(`pixel_${name}`);
-    check(`${name}: in its levels, drawn without a GL error`, px.error === 0 && px.drawn > 0, `error ${px.error}, drawn ${px.drawn}`);
+    check(
+      `${name}: in its levels, drawn without a GL error`,
+      px.error === 0 && px.drawn > 0,
+      `error ${px.error}, drawn ${px.drawn}`,
+    );
     check(`${name}: as much of it lit`, px.lit > flat.lit * 0.6, `${px.lit} lit, per pixel ${flat.lit}`);
-    check(`${name}: not snapped`, px.same < flat.same + 0.25, `${px.same.toFixed(2)} as their neighbour, per pixel ${flat.same.toFixed(2)}`);
+    check(
+      `${name}: not snapped`,
+      px.same < flat.same + 0.25,
+      `${px.same.toFixed(2)} as their neighbour, per pixel ${flat.same.toFixed(2)}`,
+    );
   }
   const real = errs.filter((x) => !/GPU stall|fallback to software WebGL|404 \(Not Found\)/.test(x)); // the driver's own notes, and the page's missing favicon
   check('no page error', real.length === 0, real.join(' | ').slice(0, 600));
