@@ -1441,7 +1441,8 @@ export class AirPass {
         'uWet',
         'uTilemap',
         'uRoadMap',
-      ]), // march + road gate
+        'uEcoOrigin',
+      ]), // march + road gate + terrain lattice
       puddleBlend: P(QUAD_VS, PUDDLE_BLEND_FS, ['uPuddle']),
       vol: null,
       volTone: null, // VOL1: built below, only with the lane's GLSL in hand
@@ -1530,6 +1531,7 @@ export class AirPass {
     this._wet = new Float32Array(4); // puddle fill gates the proxy pass
     this._wetRoadTex = null; // eye-chunk tilemap for roadGate
     this._wetRoadMap = new Float32Array(4); // origin.xz, tileSize, enabled
+    this._wetRoadEco = new Int32Array(2); // chunk's first world tile - pudNoise lattice
     // usampler2D refuses a null / float unit - keep a 1x1 R8UI for the off path
     this._wetRoadDummy = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this._wetRoadDummy);
@@ -1634,7 +1636,7 @@ export class AirPass {
   /** EL4: the frame image for a canvas of W x H - RGBA8 with a 24-bit depth
    *  TEXTURE (EL6: the AO, the glares, the emitters and the shafts read it
    *  at the resolve - the frame's own depth, no replay), (re)allocated when
-   *  the canvas changes size. Half-res prevColour + puddleOut (never draw attachments). */
+   *  the canvas changes size. PuddleOut is never a draw attachment. */
   _ensureFrame(W, H, slot = 'canvas') {
     const gl = this.gl;
     const kept = this._frames[slot];
@@ -1678,9 +1680,7 @@ export class AirPass {
       depths.push(depth);
       fbos.push(fb);
     }
-    // Half-res prevColour (legacy blit); full-res puddle out - half-res tore reflections into bands
-    const halfW = Math.max(1, W >> 1),
-      halfH = Math.max(1, H >> 1);
+    // full-res puddle out (half-res tore reflections into bands); no prevColour - the proxy reads this frame
     const mkColor = (texW, texH) => {
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -1694,8 +1694,7 @@ export class AirPass {
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
       return { tex, fbo, w: texW, h: texH };
     };
-    const prev = mkColor(halfW, halfH),
-      puddle = mkColor(W, H);
+    const puddle = mkColor(W, H);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.frame = this._frames[slot] = {
@@ -1705,10 +1704,6 @@ export class AirPass {
       depthIndex: 0,
       depth: depths[0],
       prevDepth: depths[1],
-      prevColor: prev.tex,
-      prevColorFbo: prev.fbo,
-      prevColorW: halfW,
-      prevColorH: halfH,
       puddle: puddle.tex,
       puddleFbo: puddle.fbo,
       puddleW: W,
@@ -1728,10 +1723,6 @@ export class AirPass {
     gl.deleteTexture(k.tex);
     for (const d of k.depths) gl.deleteTexture(d);
     for (const f of k.fbos) gl.deleteFramebuffer(f);
-    if (k.prevColor) {
-      gl.deleteTexture(k.prevColor);
-      gl.deleteFramebuffer(k.prevColorFbo);
-    }
     if (k.puddle) {
       gl.deleteTexture(k.puddle);
       gl.deleteFramebuffer(k.puddleFbo);
@@ -1876,17 +1867,6 @@ export class AirPass {
     if (!(W > 0 && H > 0)) return null; // AUDIT-EL F18
     const f = this._ensureFrame(W, H, slot);
     const gl = this.gl;
-    // Copy last world colour into detached half-res prevColour BEFORE the clear wipes the shared tex
-    if (f.worldDepth && f.prevColorFbo) {
-      // must not be bound as a sample source - blit into a bound texture is ignored on many drivers (spawn frame froze)
-      gl.activeTexture(gl.TEXTURE0 + 1);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, null);
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, f.fbo);
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, f.prevColorFbo);
-      gl.blitFramebuffer(0, 0, f.w, f.h, 0, 0, f.prevColorW, f.prevColorH, gl.COLOR_BUFFER_BIT, gl.LINEAR);
-    }
     // EL8: this frame writes the other depth; the one just written is the previous
     f.depthIndex ^= 1;
     f.depth = f.depths[f.depthIndex];
@@ -1908,8 +1888,8 @@ export class AirPass {
     if (w) this._wet.set(w);
     else this._wet.fill(0);
   }
-  /** Stone puddles only - the tilemap under the eye (renderer.drawTerrain). */
-  setWetRoad(tex, originX, originZ, tileSize) {
+  /** Stone puddles only - the tilemap under the eye (renderer.drawTerrain), plus its eco lattice. */
+  setWetRoad(tex, originX, originZ, tileSize, ecoX = 0, ecoZ = 0) {
     this._wetRoadTex = tex || null;
     const roadMap = this._wetRoadMap;
     if (tex && tileSize > 0) {
@@ -1917,7 +1897,13 @@ export class AirPass {
       roadMap[1] = originZ;
       roadMap[2] = tileSize;
       roadMap[3] = 1;
-    } else roadMap.fill(0);
+      this._wetRoadEco[0] = ecoX | 0;
+      this._wetRoadEco[1] = ecoZ | 0;
+    } else {
+      roadMap.fill(0);
+      this._wetRoadEco[0] = 0;
+      this._wetRoadEco[1] = 0;
+    }
   }
 
   /**
@@ -2611,6 +2597,7 @@ export class AirPass {
     gl.bindTexture(gl.TEXTURE_2D, this._wetRoadTex || this._wetRoadDummy);
     gl.uniform1i(puddleProg.uTilemap, 2);
     gl.uniform4fv(puddleProg.uRoadMap, this._wetRoadMap);
+    gl.uniform2i(puddleProg.uEcoOrigin, this._wetRoadEco[0], this._wetRoadEco[1]);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     // blend onto the resolved image (canvas or retro target)
     const dest = this.resolveTo?.fbo ?? null;

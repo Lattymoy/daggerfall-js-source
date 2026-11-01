@@ -50,8 +50,9 @@ uniform mat4 uVP;
 uniform mat3 uViewRot;
 uniform vec3 uCamPos;
 uniform vec4 uWet;
-uniform usampler2D uTilemap;   // WET1f: the chunk under the eye (renderer stashes it)
+uniform usampler2D uTilemap;   // the chunk under the eye (renderer stashes it)
 uniform vec4 uRoadMap;   // origin.xz, tileSize m, enabled
+uniform highp ivec2 uEcoOrigin;   // same lattice as terrain snowNoise / wetGround
 out vec4 outColor;
 // shortcut: one tilemap (eye's chunk); pixels outside 0..128 stay matte
 float roadGate(vec3 wp) {
@@ -91,7 +92,8 @@ float pudHash(ivec2 c, uint salt) {
 float pudNoise(vec2 lt, int cell, uint salt) {
   vec2 q = lt / float(cell);
   vec2 fl = floor(q);
-  ivec2 i = ivec2(fl);
+  // match snowNoise: lattice keyed by the chunk's first world tile, not raw world xz
+  highp ivec2 i = uEcoOrigin / cell + ivec2(fl);
   vec2 fr = q - fl;
   vec2 u = fr * fr * (3.0 - 2.0 * fr);
   float a = pudHash(i, salt), b = pudHash(i + ivec2(1, 0), salt);
@@ -133,10 +135,11 @@ void main() {
   if (n.y < 0.0) n = -n;
   float flatN = smoothstep(${asF(PUDDLE_PROXY_FLAT[0])}, ${asF(PUDDLE_PROXY_FLAT[1])}, n.y);
   if (flatN <= 0.001) { outColor = vec4(0.0); return; }
-  vec2 lt = wp.xz / ${asF(SNOW_TILE_M)};
+  // pixel-local metres like wetGround(vLocalXZ), not raw world xz
+  vec2 lt = (wp.xz - uRoadMap.xy) / ${asF(SNOW_TILE_M)};
   float p = 0.6 * pudNoise(lt, 1, ${PUDDLE_PROXY_SALT}u) + 0.4 * pudNoise(lt, 4, ${PUDDLE_PROXY_SALT + 1}u);
   float th = 1.0 - ${asF(PUDDLE_PROXY_SPREAD)} * uWet.y;
-  float road = roadGate(wp);   // WET1f: soil never takes the building mirror
+  float road = roadGate(wp);   // soil never takes the building mirror
   if (road <= 0.001) { outColor = vec4(0.0); return; }
   float pud = smoothstep(th - ${asF(PUDDLE_PROXY_EDGE)} * 0.35, th + ${asF(PUDDLE_PROXY_EDGE)}, p) * flatN * road;
   if (pud <= ${asF(WET_PROXY_GATE)}) { outColor = vec4(0.0); return; }

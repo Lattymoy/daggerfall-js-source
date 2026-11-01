@@ -1951,6 +1951,7 @@ export class Renderer {
     this._wetProxy = 0;   // Full colour proxy owns winGlint (setWet)
     this._wetRoadTex = null;   // eye-chunk tilemap for the puddle colour proxy
     this._wetRoadOrigin = new Float32Array(2);
+    this._wetRoadEco = new Int32Array(2);   // first world tile - matches terrain snowNoise
     this._wetRoadTileSize = 0;
     // BANTHA1: the jungle's haze - render/hazeGlsl.js uJungleHaze, two vec4s (world/jungle/jungleHaze.js hazeUniforms). A
     // FRAME's, as the travel view's focus is: setJungleHaze arms it, and a beginFrame no setJungleHaze armed clears it - so an
@@ -3342,7 +3343,7 @@ export class Renderer {
     if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.setWet?.(this._wet);   // puddle proxy pass gates on fill
-    this._air.setWetRoad?.(this._wetRoadTex, this._wetRoadOrigin[0], this._wetRoadOrigin[1], this._wetRoadTileSize);
+    this._air.setWetRoad?.(this._wetRoadTex, this._wetRoadOrigin[0], this._wetRoadOrigin[1], this._wetRoadTileSize, this._wetRoadEco[0], this._wetRoadEco[1]);
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
     // the seven - never said so. `composite()` binds units 0..4 (VOL1: the glow on 4) and
@@ -5931,7 +5932,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._dwFog[0] = 0;   // DW-C: the sea's distance fog is a frame's too - no interior, dungeon or panel inherits it
     this._wet?.fill(0);   // and the wet ground
     this._wetProxy = 0;
-    this._wetRoadTex = null; this._wetRoadTileSize = 0;   // restashed on drawTerrain
+    this._wetRoadTex = null; this._wetRoadTileSize = 0; this._wetRoadEco[0] = 0; this._wetRoadEco[1] = 0;   // restashed on drawTerrain
     if (!this._hazeArmed && this._haze[4] !== 0) this._haze[4] = 0;   // BANTHA1: and the jungle's haze, unless set since the last beginFrame (setJungleHaze)
     this._hazeArmed = false;
     this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea - set by the host on a frame it draws the ring
@@ -8295,6 +8296,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         this._wetRoadTex = tilemapTex;
         this._wetRoadOrigin[0] = originX; this._wetRoadOrigin[1] = originZ;
         this._wetRoadTileSize = tileSize;
+        // eco.origin or snow's first world tile - the lattice wetGround's snowNoise uses
+        const ox = eco ? eco.origin[0] : (snow ? snow[0] : 0);
+        const oz = eco ? eco.origin[1] : (snow ? snow[1] : 0);
+        this._wetRoadEco[0] = ox | 0; this._wetRoadEco[1] = oz | 0;
       }
     }
   }

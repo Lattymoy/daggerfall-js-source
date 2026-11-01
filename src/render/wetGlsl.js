@@ -122,16 +122,16 @@ vec3 wetSky(vec3 col, vec3 n, vec3 V, float gloss) {
  *  `road` (0..1) - WET1f: puddles stand only on paving/street stone. */
 export const RAIN_GROUND_GLSL = `
 vec2 wetGround(vec2 local, vec3 n, float snow, float fw, float road) {
+  // wet and puddle dry on their own clocks - a soaked puddle outlasts the sheen
   float wet = uWet.x * (1.0 - snow);
-  if (wet <= 0.0) return vec2(0.0);
   float pud = 0.0;
-  if (uWet.y > 0.0 && road > 0.001) {
+  if (uWet.y > 0.0 && road > 0.001 && snow < 1.0) {
     vec2 lt = local / ${asF(SNOW_TILE_M)};
     float a = clamp(2.0 - 2.0 * fw, 0.0, 1.0);
     float p = mix(0.5, 0.6 * snowNoise(lt, 1, ${PUDDLE_SALT}u) + 0.4 * snowNoise(lt, 4, ${PUDDLE_SALT + 1}u), a);
     float th = 1.0 - ${asF(PUDDLE_SPREAD)} * uWet.y;
     pud = smoothstep(th - ${asF(PUDDLE_EDGE)} * 0.35, th + ${asF(PUDDLE_EDGE)}, p) * smoothstep(${asF(PUDDLE_FLAT[0])}, ${asF(PUDDLE_FLAT[1])}, n.y) * (1.0 - snow);
-    pud *= smoothstep(0.2, 0.55, road);   // WET1f: soil and verge - wet dark, no puddle mirror
+    pud *= smoothstep(0.2, 0.55, road);   // soil and verge - wet dark, no puddle mirror
   }
   return vec2(wet, pud);
 }

@@ -181,7 +181,9 @@ test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
   assert.ok(PUDDLE_PASS_FS.includes('distFade') && PUDDLE_PASS_FS.includes(`${WET_PROXY_FAR_M}`), 'fade in with approach');
   assert.ok(PUDDLE_PASS_FS.includes('nFlat'), 'level mirror, not noisy half-res normals');
   assert.ok(PUDDLE_PASS_FS.includes('pudNoise') && PUDDLE_PASS_FS.includes('flatN'), 'mask is wetGround-shaped blobs');
+  assert.ok(PUDDLE_PASS_FS.includes('uEcoOrigin') && PUDDLE_PASS_FS.includes('wp.xz - uRoadMap.xy'), 'mask uses the terrain lattice, not raw world xz');
   assert.ok(PUDDLE_PASS_FS.includes('roadGate') && PUDDLE_PASS_FS.includes('uRoadMap'), 'colour proxy only on stone');
+  assert.ok(RAIN_GROUND_GLSL.includes('uWet.y > 0.0 && road > 0.001') && !RAIN_GROUND_GLSL.includes('if (wet <= 0.0) return'), 'puddles outlast the sheen');
   assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_ALPHA}`), 'mirror alpha dial');
   assert.ok(PUDDLE_DARK <= 0.12, 'puddles darker than wet stone');
   assert.ok(EL_TERRAIN_FS.includes('pudGlint') && EL_TERRAIN_FS.includes('uWetProxy'), 'lamp/window glints yield while Full proxy runs');
