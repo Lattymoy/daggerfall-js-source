@@ -18,6 +18,7 @@ export const PRESET_ROWS = Object.freeze([
   'cloud-quality',
   'ground-sharpness',
   'water-quality',
+  'wet-world', // Off / Wet / Full (puddle mirrors on High/Ultra)
   'real-windows',
 ]); // RW1: and the real windows - off on Low, the rooms alone on Medium, the view out too from High
 /** MEM-AUDIT (2026-10-23, the owner: "dig into the performance settings ... ensuring they are perfect"): THE PARTS A PRESET
@@ -38,6 +39,7 @@ export const GRAPHICS_PRESETS = Object.freeze([
       'cloud-quality': 'lo',
       'ground-sharpness': 'off',
       'water-quality': 'simple',
+      'wet-world': 'off',
       'real-windows': 'off',
     }),
     parts: Object.freeze({ steadyShadows: false }),
@@ -51,6 +53,7 @@ export const GRAPHICS_PRESETS = Object.freeze([
       'cloud-quality': 'lo',
       'ground-sharpness': 'default',
       'water-quality': 'simple',
+      'wet-world': 'wet',
       'real-windows': 'rooms',
     }),
     parts: Object.freeze({ steadyShadows: true }),
@@ -64,6 +67,7 @@ export const GRAPHICS_PRESETS = Object.freeze([
       'cloud-quality': 'default',
       'ground-sharpness': 'default',
       'water-quality': 'full',
+      'wet-world': 'full',
       'real-windows': 'full',
     }),
     parts: Object.freeze({ steadyShadows: true }),
@@ -77,6 +81,7 @@ export const GRAPHICS_PRESETS = Object.freeze([
       'cloud-quality': 'hi',
       'ground-sharpness': 'max',
       'water-quality': 'full',
+      'wet-world': 'full',
       'real-windows': 'full',
     }),
     parts: Object.freeze({ steadyShadows: true }),

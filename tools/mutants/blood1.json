@@ -128,8 +128,8 @@
   {
     "name": "BLOOD1a-the-decal-pass-turns-the-depth-test-off",
     "file": "src/render/renderer.js",
-    "old": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
-    "new": "    gl.enable(gl.BLEND);\n    gl.disable(gl.DEPTH_TEST);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "old": "    this._bindVao(batch.vao);\n    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(false);",
+    "new": "    this._bindVao(batch.vao);\n    gl.enable(gl.BLEND);\n    gl.disable(gl.DEPTH_TEST);\n    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(false);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

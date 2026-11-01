@@ -702,7 +702,7 @@ test('AUDIT GRASS-LIT2 C10: the ground the lanterns are held to IS the terrain p
   assert.ok(tfs.includes('    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n'), 'the classic lane: (1 - d/r)^2 on n.L');
   assert.ok(tfs.includes('lit += tex * pointAcc;'), 'on the albedo');
   assert.ok(EL_TERRAIN_FS.includes('    if (d >= uPointLights[i].w) continue;') && EL_TERRAIN_FS.includes('    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n'), 'the lane: elAttenuation on n.L (the spec set aside, as groundLanterns says)');
-  assert.ok(EL_TERRAIN_FS.includes('elPointLit(vWorldPos, n)'), 'and the lane\'s terrain reads it');
+  assert.ok(EL_TERRAIN_FS.includes('elPointLitWet(vWorldPos, n, wetG, wetGlint)'), 'and the lane\'s terrain reads it');   // the wet variant - its diffuse is elPointLit's, the wet's glint is added beside it
 });
 
 test('AUDIT GRASS-LIT2 C11: the probes measure what they say - the light probe\'s classic "was" is the blade before GRASS-LIT2, in GRASS_TONES, and the look probe paints the lane it boots', () => {

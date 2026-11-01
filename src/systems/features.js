@@ -608,6 +608,17 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'waterQuality', initial: 'full', online: 'player', tiers: Object.freeze([tier('full', () => t('features.waterQuality.full', 'Full')), tier('simple', () => t('features.waterQuality.simple', 'Simple'))]) }),   // WATER-NEXT: render/renderer.js waterSimple
   }),
+  // Wet ground after rain - darkens, sheens, ripples; Full also mirrors
+  // buildings in puddles (air pass). High and Ultra ship Full (mirrors on); Wet is the cheaper middle. `?wet=off` kills it.
+  Object.freeze({
+    id: 'wet-world',
+    group: 'sight',
+    get title() { return t('features.wetWorld.title', 'Wet world'); },
+    get note() { return t('features.wetWorld.note', 'After rain the ground darkens and puddles shine. Wet is sheen and ripples; Full also mirrors buildings in them. Off stays dry.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'wetWorld', initial: 'full', online: 'player', tiers: Object.freeze([tier('full', () => t('features.wetWorld.full', 'Full')), tier('wet', () => t('features.wetWorld.wet', 'Wet')), tier('off', () => t('features.wetWorld.off', 'Off'))]) }),
+  }),
   // EL1 (2026-09-17, the Enhanced Lighting arc, tier one): the renderer's
   // lit world on a linear pipeline - render/enhancedLighting.js carries
   // the law; `?lighting=classic` is the kill door.

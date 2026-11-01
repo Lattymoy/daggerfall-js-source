@@ -101,6 +101,8 @@ import { billboardKey } from './billboardKey.js'; // AUDIT 68 S16-bbkey-stale-sh
 import { windfallLawOn, swayShare } from './windfallSway.js'; // WINDFALL1: a flat's lean under Windfall's law, as the main pass drew it
 import { pageParam } from '../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 import { GLASS_INTERIOR, GLASS_EXTERIOR, RW_SEED_GLSL } from './realWindows.js'; // RW1: an interior's declared glass, which the emission replay never blooms - FINAL AUDIT: nor a dark room's
+import { PUDDLE_PASS_FS, PUDDLE_BLEND_FS, WET_PROXY_GATE } from './puddleProxyGlsl.js'; // puddle colour proxy - own pass, not terrain FS
+import { puddleProxyOn } from '../systems/weather/wetness.js'; // Full tier only
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -1318,6 +1320,8 @@ export function airPassPrograms(opts, volLinear) {
     quad(resolveFs(1, 0)),
     quad(resolveFs(1, 1)),
     quad(VOLBLUR_FS),
+    quad(PUDDLE_PASS_FS),
+    quad(PUDDLE_BLEND_FS),
     ...(opts.glsl ? [quad(volFs(opts.glsl, opts.maxLights ?? 48, volLinear))] : []),
     ...(opts.glsl && volLinear ? [quad(volToneFs(opts.glsl))] : []),
   ];
@@ -1425,6 +1429,21 @@ export class AirPass {
         ),
       ), // VOL1
       volBlur: P(QUAD_VS, VOLBLUR_FS, ['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']), // VOL1: the tile's average, by depth
+      puddle: P(QUAD_VS, PUDDLE_PASS_FS, [
+        'uDepth',
+        'uFrame',
+        'uProjInfo',
+        'uRect',
+        'uCanvas',
+        'uVP',
+        'uViewRot',
+        'uCamPos',
+        'uWet',
+        'uTilemap',
+        'uRoadMap',
+        'uEcoOrigin',
+      ]), // march + road gate + terrain lattice
+      puddleBlend: P(QUAD_VS, PUDDLE_BLEND_FS, ['uPuddle']),
       vol: null,
       volTone: null, // VOL1: built below, only with the lane's GLSL in hand
     };
@@ -1509,6 +1528,19 @@ export class AirPass {
     this._glareHold = new Map();
     this._glareFrame = 0; // LA-POST2: each light's held range by its place (glareKey), and the glare pass's count
     this.contactParams = new Float32Array([AIR_CONTACT_LENGTH, AIR_CONTACT_THICKNESS, AIR_CONTACT_FLOOR, 0]);
+    this._wet = new Float32Array(4); // puddle fill gates the proxy pass
+    this._wetRoadTex = null; // eye-chunk tilemap for roadGate
+    this._wetRoadMap = new Float32Array(4); // origin.xz, tileSize, enabled
+    this._wetRoadEco = new Int32Array(2); // chunk's first world tile - pudNoise lattice
+    // usampler2D refuses a null / float unit - keep a 1x1 R8UI for the off path
+    this._wetRoadDummy = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._wetRoadDummy);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, 1, 1, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, new Uint8Array([0]));
+    gl.bindTexture(gl.TEXTURE_2D, null);
     this.pending = false; // a resolve is owed to the frame
     this.width = 0;
     this.height = 0;
@@ -1604,7 +1636,7 @@ export class AirPass {
   /** EL4: the frame image for a canvas of W x H - RGBA8 with a 24-bit depth
    *  TEXTURE (EL6: the AO, the glares, the emitters and the shafts read it
    *  at the resolve - the frame's own depth, no replay), (re)allocated when
-   *  the canvas changes size. */
+   *  the canvas changes size. PuddleOut is never a draw attachment. */
   _ensureFrame(W, H, slot = 'canvas') {
     const gl = this.gl;
     const kept = this._frames[slot];
@@ -1648,6 +1680,21 @@ export class AirPass {
       depths.push(depth);
       fbos.push(fb);
     }
+    // full-res puddle out (half-res tore reflections into bands); no prevColour - the proxy reads this frame
+    const mkColor = (texW, texH) => {
+      const tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, texW, texH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+      return { tex, fbo, w: texW, h: texH };
+    };
+    const puddle = mkColor(W, H);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.frame = this._frames[slot] = {
@@ -1657,6 +1704,10 @@ export class AirPass {
       depthIndex: 0,
       depth: depths[0],
       prevDepth: depths[1],
+      puddle: puddle.tex,
+      puddleFbo: puddle.fbo,
+      puddleW: W,
+      puddleH: H,
       fbo: fbos[0],
       w: W,
       h: H,
@@ -1672,6 +1723,10 @@ export class AirPass {
     gl.deleteTexture(k.tex);
     for (const d of k.depths) gl.deleteTexture(d);
     for (const f of k.fbos) gl.deleteFramebuffer(f);
+    if (k.puddle) {
+      gl.deleteTexture(k.puddle);
+      gl.deleteFramebuffer(k.puddleFbo);
+    }
     if (k.aoDepth) {
       gl.deleteTexture(k.aoDepth);
       gl.deleteFramebuffer(k.aoFbo);
@@ -1827,6 +1882,28 @@ export class AirPass {
     this.canvas[1] = H;
     this.pending = true; // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it
     return f.fbo;
+  }
+  /** The frame's wet uniform - puddle fill gates the proxy pass. */
+  setWet(w) {
+    if (w) this._wet.set(w);
+    else this._wet.fill(0);
+  }
+  /** Stone puddles only - the tilemap under the eye (renderer.drawTerrain), plus its eco lattice. */
+  setWetRoad(tex, originX, originZ, tileSize, ecoX = 0, ecoZ = 0) {
+    this._wetRoadTex = tex || null;
+    const roadMap = this._wetRoadMap;
+    if (tex && tileSize > 0) {
+      roadMap[0] = originX;
+      roadMap[1] = originZ;
+      roadMap[2] = tileSize;
+      roadMap[3] = 1;
+      this._wetRoadEco[0] = ecoX | 0;
+      this._wetRoadEco[1] = ecoZ | 0;
+    } else {
+      roadMap.fill(0);
+      this._wetRoadEco[0] = 0;
+      this._wetRoadEco[1] = 0;
+    }
   }
 
   /**
@@ -2462,10 +2539,84 @@ export class AirPass {
     gl.uniform2fv(PR.uCanvas, this.canvas);
     gl.uniform4fv(PR.uGrade, this.grade);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Puddle colour proxy AFTER resolve - own half-res pass, never in terrain FS (that TDRd)
+    if (prepared) this._puddleProxy(rect);
     gl.bindVertexArray(null);
     gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
+  }
+
+  /**
+   * Half-res screen-space march of THIS frame's colour into puddles, then src-alpha blend onto the resolve.
+   * Gated on puddle fill; uses current depth/colour (fixed prev stamps stretched into double facades).
+   */
+  _puddleProxy(rect) {
+    const gl = this.gl,
+      frameImg = this.frame,
+      progs = this.programs,
+      inputs = this.f;
+    if (!frameImg?.tex || !frameImg.puddleFbo || !inputs?.eye || !puddleProxyOn() || !(this._wet[1] > WET_PROXY_GATE))
+      return;
+    const puddleProg = progs.puddle;
+    gl.disable(gl.BLEND); // Resolve left blend off; keep the half-res out opaque writes
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameImg.puddleFbo);
+    gl.viewport(0, 0, frameImg.puddleW, frameImg.puddleH);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT); // Never blend uncleared garbage if the draw is refused
+    const clearCol = inputs.clearColor;
+    if (clearCol) gl.clearColor(clearCol[0], clearCol[1], clearCol[2], clearCol[3]);
+    gl.useProgram(puddleProg.p);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, frameImg.depth);
+    gl.uniform1i(puddleProg.uDepth, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, frameImg.tex);
+    gl.uniform1i(puddleProg.uFrame, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform4fv(puddleProg.uProjInfo, this.projInfo);
+    gl.uniform4fv(puddleProg.uRect, rect);
+    gl.uniform2fv(puddleProg.uCanvas, this.canvas);
+    gl.uniformMatrix4fv(puddleProg.uVP, false, this._vp);
+    const viewM = inputs.view,
+      viewRot = this._viewRot;
+    viewRot[0] = viewM[0];
+    viewRot[1] = viewM[4];
+    viewRot[2] = viewM[8];
+    viewRot[3] = viewM[1];
+    viewRot[4] = viewM[5];
+    viewRot[5] = viewM[9];
+    viewRot[6] = viewM[2];
+    viewRot[7] = viewM[6];
+    viewRot[8] = viewM[10];
+    gl.uniformMatrix3fv(puddleProg.uViewRot, false, viewRot);
+    gl.uniform3fv(puddleProg.uCamPos, inputs.eye);
+    gl.uniform4fv(puddleProg.uWet, this._wet);
+    // usampler2D needs a real R8UI (null → draw fails; uncleared puddle then wiped the resolve red via depth.r)
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._wetRoadTex || this._wetRoadDummy);
+    gl.uniform1i(puddleProg.uTilemap, 2);
+    gl.uniform4fv(puddleProg.uRoadMap, this._wetRoadMap);
+    gl.uniform2i(puddleProg.uEcoOrigin, this._wetRoadEco[0], this._wetRoadEco[1]);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // blend onto the resolved image (canvas or retro target)
+    const dest = this.resolveTo?.fbo ?? null;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dest);
+    gl.viewport(0, 0, frameImg.w, frameImg.h);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(progs.puddleBlend.p);
+    gl.activeTexture(gl.TEXTURE0); // Was left on unit 2 → sampled depth as (d,0,0,1) = solid red
+    gl.bindTexture(gl.TEXTURE_2D, frameImg.puddle);
+    gl.uniform1i(progs.puddleBlend.uPuddle, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
   }
 
   /** EL4: drop the frame target without resolving (the door closed, the lane left mid-frame). */

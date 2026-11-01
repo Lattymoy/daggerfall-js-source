@@ -76,6 +76,74 @@ By day nothing changes. Under a closed canopy the canopy's own dimming still app
 DFU's grey stands at night, being brighter than the night's air. A darker snow or ash at night would change the whole
 frame's fog: open, the owner's call.
 
+
+## WET1 - the wet world (2026-10-30)
+
+The request, 2026-10-30: "Мы не собираемся отказываться от ретро-вида, но хотим добавить реалистичные эффекты погоды" - keep
+the retro look, add realistic weather, as Minecraft's shaders light a world of blocks and sprites. The first slice is the
+wet ground: the rain now leaves a mark on what it falls on.
+
+**The law** (`systems/weather/wetness.js`). The ground about the player soaks while rain falls and dries after, on the
+game's minutes: a full rain soaks it in WET_SOAK_MIN (10) and fills the puddles in PUDDLE_FILL_MIN (45); a dry spell
+undoes them over WET_DRY_MIN (120) and PUDDLE_DRY_MIN (240). The rain is the front's shown fall (WX2) at its
+intensity, less its snow share; sand and ash wet nothing. A fall at WET_FULL_RAIN (a quarter of its profile) soaks the
+ground whole, so a sprinkle darkens it a little; puddles stand only past PUDDLE_RAIN[0] (0.3). A first tick or a clock
+run back lands on the weather whole; a rest has run its course by the same steps.
+
+**The draw** (`render/wetGlsl.js`, in the lane's EL_TERRAIN_FS and EL_MESH_FS). One uniform, uWet: the wetness, the
+puddles' fill, a clock and the rain now. A soaked surface's albedo darkens (WET_DARK, walls WET_WALL_DARK), puddles
+stand on the flat ground in the snow's own noise lattice (snowNoise, so they hold still across pixels) and fade with
+the footprint, and drops ring them near the eye while it rains. Every lamp glints in the wet through the lantern loop
+BLOOD3 built for blood (`elPointLitWet`, `wetFresnel`), the sun through a lobe that tightens from a sheen to a puddle's
+point, and the sky shows by Fresnel: the fog's colour mixed over the finished display colour, as a mirror shows it.
+
+**Where.** `renderer.js` setWet takes the frame's uniform after beginFrame, which dries it, as the cloud deck is a
+frame's (VC4). The two street hosts wire it: `scenes/world.js` and `scenes/exterior.js` tick it beside setCloudShadow.
+`scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` never set it, so they draw dry; a sprite pass, a bake
+or a panel uploads it dry too. The Snowfall mod's variant (`snowfallGlsl.js` snowTerrainFs) cuts the ground's decode,
+and its own text says its snow is never wet. The classic lane has no uWet: DFU's look is untouched. `?wet=off` is the
+door. The law reads the front at the player and nothing of the place, so it holds in every province as it does in the
+Bay.
+
+**Pinned and seen.** `test/systems/weather/wet1_wetness.test.js`: the law's rates, a sprinkle, a shower, a load, the
+door, the uniform, both lane programs and the Snowfall variant's one `wetAt`, and the renderer's stamp and beginFrame's
+dry. The three programs were compiled in WebGL2 (Edge), and a misspelt call was refused. `tools/wetProbe.mjs` shoots a
+street wet and with `?wet=off`: Sentinel at noon in rain differed by 7.66 a channel on the mean, at 21:30 in a storm
+by 6.86, and a night's sprinkle (rain 0.04) by 0.86, as its law says. In Daggerfall and Wayrest on the boot's late-autumn
+date the ground lay under snow, and the wet stayed under it. No probe stood past the Bay. Settings: Features / Graphics row
+`wet-world` (Off / Wet / Full). High and Ultra ship Full (puddle building colour). `?wet=off` still kills it.
+
+**WET1b (2026-10-31).** A puddle, a road and soil shared one highlight: the stone lobe (`elSpecK`, left at 1 off the
+rain) plus one sheen. In rain, soil stays nearly matte (WET_SHEEN_SOIL), a path tile (46, 47, 55) takes a dull sheen,
+and a puddle drops that lobe and keeps a tight lamp glint. The puddle edge is PUDDLE_EDGE wide, not a line. Lab rain
+streaks fade to 0.22 alpha. The sky mix takes ambient with fog, so a night puddle is not black.
+
+**WET1c.** Lab rain enables DEPTH_TEST and culls drops inside nearby building AABBs (`setShelters`), floor to roof
+(`uShelterY` min/max), so a porch and a room stay dry and open air under a tall box still rains. Puddle rings use a
+finer cell and a higher rate. Eave drips were tried and pulled: the AABB eave was the ridge, and the model-edge pass
+still drew nothing the eye could trust.
+
+**WET1d.** A puddle read as matte stone: the lamp's diffuse pool lay on it, and the night mirror was the full ambient.
+Now the puddle takes little diffuse (PUDDLE_DARK), the wet lobe tightens to PUDDLE_GLOSS with PUDDLE_STRETCH (a lamp is
+a point, not a column), the mirror shows WET_SKY_AMBIENT of the ambient, and a lamp-lit pane glints in it (`winGlint`)
+only where there is puddle. Soil stays matte: WET_SHEEN_SOIL and soil glints are a tenth of a road's, and a soil puddle
+takes PUDDLE_SHEEN_SOIL, not glass. `roadAmt` smears soil↔stones at the paving's edge. `winGlint` mirrors the glass
+mask and marches previous depth so a bush hides the pane. Soil scatters more than stone. Distance softens from
+WIN_GLINT_NEAR_M to WIN_GLINT_FAR_M. Stone panes take +25% soft. Mesh compiles no `winGlint`.
+
+**WET1e.** Building/tree colour in puddles is a separate full-res pass at the air resolve (not terrain FS - that TDRd):
+span taps along the reflection ray of THIS frame (AIM0..AIM1 m above the puddle), best soft world-space confidence +
+blur. A single fixed aim height only showed a horizontal strip of the facade; dual bands tore stripes. Search length
+grows with puddle distance. Gated by `wet-world` Full, wetGround-matched `pudNoise` and WET_PROXY_FAR_M. Puddle
+`winGlint` / lamp `wetGlint` yield via `uWetProxy` while Full runs. Ripple drops vary size/width/amp per tick. Terrain
+still does sky.
+
+**WET1f.** Ground mirrors only in paving/street puddles: `wetGround(..., road)` stands no soil puddle,
+`wetGlossGround` is `w.y * road`, colour proxy `roadGate` on the eye chunk's tilemap. Soil stays wet-dark only.
+Blend must sample the puddle on texture unit 0 after the tilemap bind.
+
+**Not yet.** True SSR / Hi-Z. A porch's floor still wets as the street does. Meshes take no puddles. No eave drips.
+
 ## Rules
 
 - Weather can be travelled into and out of, seen coming, with a sandstorm wall visible in the distance (Mac).

@@ -130,6 +130,7 @@ import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nu
 import { SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
+import { createWetness } from '../systems/weather/wetness.js';   // the wet ground
 import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/city/cityNavigation.js';   // T1 towns
@@ -580,6 +581,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // drops cross on the front under the enhanced sky, and the classic
   // path takes the row's own numbers whole.
   const weatherFront = createWeatherFront({ seed: Number(params.get('wseed')) || 7 });
+  const wetGround = createWetness();   // the ground soaks in the front's rain and dries after (systems/weather/wetness.js)
   const weatherTerms = () => ({ sun: weatherSun, dim: 1, fog: weatherFog });
   const FALL_LIGHT = Object.freeze({ sun: weatherSunlightScale('overcast', false), dim: 1 });   // RAIN-SPRINKLE: what a sprinkle's sky lights like - an overcast one's
   let wxNow = weatherTerms();
@@ -5892,6 +5894,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
+    renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes, shown: fx.shown, intensity: fx.intensity, snow: fx.snow, tsec: now / 1000 }));   // after beginFrame, which dries it
     renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the terrain
     mwViewDrawBody(canvas, { proj, view, eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     hcc.draw3d(canvas, { eye, proj, view });   // COATS3D: Horse Cart and Cargo's horses, 3D on the Morrowind lane
@@ -6256,6 +6259,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         precip.windV[0] = wd.windV[0]; precip.windV[1] = wd.windV[1];
         precip.windOff[0] += wd.step[0]; precip.windOff[1] += wd.step[1];
       }
+      precip.setShelters?.(staticBuildings, eye32);   // no fall under a roof
       precip.drawFall(precipShown, proj, view, eye32, camRight, now / 1000);   // PRECIP1: at the air's snow share
       renderer.markForeignPass();   // EV6: so did the rain
     }

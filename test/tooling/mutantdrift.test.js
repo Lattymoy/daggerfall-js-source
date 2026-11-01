@@ -138,7 +138,6 @@ const CARRIED_AIM = new Map([
   ['auditsoc.json::B9-any-tab-speaks-for-the-seat', 2],
   ['auditsoc.json::B8-panel-clock-never-ticks', 2],
   ['auditwod.json::WOD6-quickload-no-onload', 2],
-  ['blood1.json::BLOOD1a-the-decal-pass-turns-the-depth-test-off', 3],
   ['hcc.json::HCC-disabled-still-shows', 2],
   ['soc1.json::S32-room-budget-missing', 2],
 ]);

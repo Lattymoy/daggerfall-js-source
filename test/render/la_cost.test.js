@@ -238,7 +238,7 @@ test('LA-COST1: THE SECOND CALL IN A FRAME SENDS ONLY ITS OWN - a billboard call
   // must not ride onto the next frame's flats)
   // LPT1 (bible/07-Rendering/Low-Poly-Trees.md): and the low-poly trees' mesh mode and handover, set off (two more - a
   // call the trees drew in leaves the handover on for the flats after it)
-  assert.deepEqual(counts, ['billboards 112 -> 30', 'decals 87 -> 12', 'a character 88 -> 13']);   // PIN MOVED (WL1, 2026-10-29): +1 each program's first call - the window lights' switch (uWinOn), sent with the frame's block   // PIN MOVED (OW-HORIZON, 2026-10-20): +1 each program's first call - the cloud deck's far law (uCloudShadowFar), sent with the map when the deck moves   // PIN MOVED (AUDIT BANTHA1 TREE-2, 2026-10-18): +1 a billboard call's first - the lane's uSunLift reset, every flat's sun at its root until a jungle batch says otherwise; BANTHA1 (2026-10-18): the jungle's haze (uJungleHaze) rides the fog's upload only while it is on, or once as it goes off - a frame outside the jungle pays no call   // PIN MOVED (VEIN-CRACKS, GATHER-FEEL II, 2026-10-13): +1 a billboard call's first - the frame block's uCrack, every flat whole until a worked vein's batch says otherwise   // PIN MOVED (VEIN-HUE, FIELD BUGS 2026-10-12b): +1 a billboard call's first - the frame block's uBatchDye, reset with the wash   // PIN MOVED (PERF-ARENA, 2026-10-10): -1 a billboard call - its two still flats share their arena's VAO, one bind where there were two   // PIN MOVED (WINDFALL1, 2026-10-08): +2 a billboard call - Windfall's two vec4s, the call's own as the wind is
+  assert.deepEqual(counts, ['billboards 113 -> 30', 'decals 88 -> 12', 'a character 89 -> 13']);   // PIN MOVED (WET1, 2026-10-30): +1 each program's first call - the wet ground (uWet), sent with the frame's block; this GL answers every name, a driver answers null for the three programs that declare none and nothing is sent; WET1e uWetProxy is terrain-only (not these three)   // PIN MOVED (WL1, 2026-10-29): +1 each program's first call - the window lights' switch (uWinOn), sent with the frame's block   // PIN MOVED (OW-HORIZON, 2026-10-20): +1 each program's first call - the cloud deck's far law (uCloudShadowFar), sent with the map when the deck moves   // PIN MOVED (AUDIT BANTHA1 TREE-2, 2026-10-18): +1 a billboard call's first - the lane's uSunLift reset, every flat's sun at its root until a jungle batch says otherwise; BANTHA1 (2026-10-18): the jungle's haze (uJungleHaze) rides the fog's upload only while it is on, or once as it goes off - a frame outside the jungle pays no call   // PIN MOVED (VEIN-CRACKS, GATHER-FEEL II, 2026-10-13): +1 a billboard call's first - the frame block's uCrack, every flat whole until a worked vein's batch says otherwise   // PIN MOVED (VEIN-HUE, FIELD BUGS 2026-10-12b): +1 a billboard call's first - the frame block's uBatchDye, reset with the wash   // PIN MOVED (PERF-ARENA, 2026-10-10): -1 a billboard call - its two still flats share their arena's VAO, one bind where there were two   // PIN MOVED (WINDFALL1, 2026-10-08): +2 a billboard call - Windfall's two vec4s, the call's own as the wind is
   // ...and the next frame sends them all again
   r.beginFrame(PROJ, VIEW, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
   calls.length = 0; r.drawBillboards(bbs, R, UP);
@@ -366,7 +366,8 @@ test('LA-COST1: THE LAW, READ OFF THE SOURCE - every field the four gated frame 
     '_focus',   // TV1: the point the fog measures from (setFocus stamps)
     '_haze',   // BANTHA1: the jungle's haze (setJungleHaze stamps; beginFrame clears it unarmed)
     '_dwColumn',   // merged beside DW-F: the water column's frame (setWaterColumn stamps; beginFrame clears it)
-    '_snowFrame', '_snowTex'];   // AUDIT PRECIP GROUND-7: the frame's snowlines and their texture (setSnowFrame stamps)
+    '_snowFrame', '_snowTex',
+    '_wet', '_wetProxy'];   // WET1 / WET1e: wet ground + Full-proxy gate (setWet stamps both; beginFrame dries them)   // AUDIT PRECIP GROUND-7: the frame's snowlines and their texture (setSnowFrame stamps)
   // NOT INPUTS: the programs' location tables (re-looked-up by _installWorldSet, which forgets the blocks), scratch the
   // block writes before it reads, the memo's own keys (the first test), the gates' stamps, the GL-state shadows - and
   // the automap's four, which _uploadFog sends only to a program that declares them: the mesh's, never these four
@@ -401,7 +402,7 @@ test('LA-COST1: THE LAW, READ OFF THE SOURCE - every field the four gated frame 
   const stamping = new Set([...methods].filter(([, b]) => /this\._frameStamp\+\+/.test(b)).map(([n]) => n));
   const callsStamping = (b) => [...stamping].some((n) => b.includes(`this.${n}(`));
   // the setters that must stamp themselves, by name - the list LA-COST1 wrote the word into
-  for (const n of ['setExposure', 'setContact', 'setVolumetrics', '_syncAir', '_forgetTextureShadows', 'setMoonlight', 'setAmbientTrilight', 'setFog', 'setWaterFog', 'setPointLights', 'setFlashLight', 'setIndirectLight', 'setLightDir', 'beginFrame', 'endPanelFrame', 'renderCharacterSpriteImage', 'setSnowFrame']) {
+  for (const n of ['setExposure', 'setContact', 'setVolumetrics', '_syncAir', '_forgetTextureShadows', 'setMoonlight', 'setAmbientTrilight', 'setFog', 'setWaterFog', 'setPointLights', 'setFlashLight', 'setIndirectLight', 'setLightDir', 'beginFrame', 'endPanelFrame', 'renderCharacterSpriteImage', 'setSnowFrame', 'setWet']) {
     assert.ok(stamping.has(n), `${n} moves the stamp`);
   }
   const BIRTH = new Set(['constructor']);

@@ -100,6 +100,7 @@ test('EL8: on the fake GL - the two depths ping-pong, the previous frame\'s view
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   assert.equal(ap.frame.depthIndex, 1); assert.equal(ap.frame.depth, ap.frame.depths[1]); assert.equal(ap.frame.prevDepth, ap.frame.depths[0]);
+  assert.ok(ap.frame.puddle && ap.frame.puddleW === ap.frame.w, 'puddle out matches the world frame');
   assert.ok(calls.some((c) => c[0] === 'framebufferTexture2D' && c[2] === 36096 && c[4] === ap.frame.depths[1]), 'this frame\'s depth attached');
   assert.equal(ap.prevValid, false);
   r.drawMesh(mesh(), I, null);
@@ -111,6 +112,7 @@ test('EL8: on the fake GL - the two depths ping-pong, the previous frame\'s view
   calls.length = 0;
   r.beginFrame(P, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
   assert.equal(ap.frame.depthIndex, 0); assert.equal(ap.frame.prevDepth, ap.frame.depths[1]);
+  assert.ok(!calls.some((c) => c[0] === 'blitFramebuffer'), 'no prevColour blit - the proxy reads this frame');
   const fboBind = calls.findIndex((c) => c[0] === 'bindFramebuffer' && c[2] === ap.frame.fbo);
   assert.ok(fboBind >= 0 && ap.frame.fbo === ap.frame.fbos[0], 'depth 0\'s framebuffer bound for this frame (LA-POST8: the frame keeps one framebuffer per depth)');
   assert.ok(!calls.some((c) => c[0] === 'framebufferTexture2D'), 'LA-POST8: the swap binds - nothing is re-attached');

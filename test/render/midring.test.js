@@ -382,7 +382,7 @@ test('MID-RING the stream\'s new pixel eases out of the middle ring\'s tint: sta
   const classic = R.slice(R.indexOf('const TERRAIN_FS = `'), R.indexOf('}`;', R.indexOf('const TERRAIN_FS = `')));
   for (const [name, fs] of [['classic', classic], ['lane', EL_TERRAIN_FS]]) {
     assert.match(fs, /uniform vec4 uFadeTint;/, name);
-    assert.match(fs, /tex = ge \? mix\(snowGround\(tex[\s\S]*?tex = mix\(tex, uFadeTint\.rgb, uFadeTint\.a\);[^\n]*\n\s*vec3 n = normalize\(vNormal\);/, `${name}: over the tiles, after the snow and the bed, before the light`);   // PIN MOVED (COAST-LOOK): the snow's line a transition's two kinds or the tile's
+    assert.match(fs, /tex = ge \? mix\(snowGround\(tex[\s\S]*?tex = mix\(tex, uFadeTint\.rgb, uFadeTint\.a\);[^\n]*\n(?:\s*float road = roadAmt[\s\S]*?\n)?\s*vec3 n = normalize\(vNormal\);/, `${name}: over the tiles, after the snow and the bed, before the light`);   // PIN MOVED (WET1): lane puts roadAmt between the fade and the normal; PIN MOVED (COAST-LOOK): the snow's line a transition's two kinds or the tile's
     assert.doesNotMatch(fs.replace(/\/\/[^\n]*/g, ''), /\bdiscard\b/, `${name}: no discard`);
   }
   // the upload: once whole a frame's block, the share while it moves, the stamp dropped when the share is spent

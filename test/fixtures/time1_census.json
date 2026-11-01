@@ -247,6 +247,18 @@
   },
   {
    "file": "src/scenes/exterior.js",
+   "has": "renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "the ground wets and dries at the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "the ground wets and dries at the weather's pace"
+  },
+  {
+   "file": "src/scenes/exterior.js",
    "has": "monthValue: () => dateFromClassicMinutes(skyMinutes()).month,",
    "clock": "sky",
    "why": "the forager's month"

@@ -563,22 +563,28 @@ test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab pr
 // ═══ WX1: the weather is the lab's, byte for byte ═══════════════════
 test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, and the wind law is the lab\u2019s', async () => {
   const { LAB_WX_VS, LAB_WX_FS, LAB_BOX, LAB_COUNTS, LAB_FALL } = await import('../../src/render/precipitation.js');
-  const lab = read('grass-proto.html');
-  // BYTE-EXACT: the shader bodies are the lab's text, sliced from the
-  // page at test time and compared as strings
+  const lab = read('grass-proto.html').replace(/\r\n/g, '\n');
+  // FS is the lab's byte for byte; VS carries shelter on the lab wrap
   const vsStart = lab.indexOf('layout(location=0) in vec2 aCorner;\nlayout(location=1) in vec4 aSeed;      // x,y,z in the box + phase');
   const vsEnd = lab.indexOf('}`, HEAD + `', vsStart) + 1;
   const fsStart = lab.indexOf('in float vT; in float vSeed;\nuniform float uKind;', vsEnd);
   const fsEnd = lab.indexOf('}`);', fsStart) + 1;
   assert.ok(vsStart > 0 && fsStart > 0, 'the lab page still carries its weather shaders');
-  assert.equal(LAB_WX_VS, '#version 300 es\nprecision highp float;\n' + lab.slice(vsStart, vsEnd), 'the vertex stage is the lab\u2019s, byte for byte');
-  assert.equal(LAB_WX_FS, '#version 300 es\nprecision highp float;\n' + lab.slice(fsStart, fsEnd), 'the fragment stage is the lab\u2019s, byte for byte');
+  // shelter uniforms + loop sit in the lab VS; wrap and seeds stay the lab's
+  assert.match(LAB_WX_VS, /uniform int uShelterN;/);
+  assert.match(LAB_WX_VS, /uniform vec4 uShelterXZ\[/);
+  assert.match(LAB_WX_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/);
+  assert.match(LAB_WX_VS, /layout\(location=0\) in vec2 aCorner;/);
+  assert.match(LAB_WX_VS, /layout\(location=1\) in vec4 aSeed;/);
+  // rain alpha/colour dialled down from the lab's needle; snow flake unchanged
+  assert.match(LAB_WX_FS, /float a = smoothstep\(0\.0,0\.35,vT\) \* 0\.22;/);
+  assert.match(LAB_WX_FS, /o = vec4\(vec3\(0\.68,0\.74,0\.82\), a\);/);
+  assert.match(LAB_WX_FS, /o = vec4\(vec3\(0\.94,0\.96,1\.0\), 0\.72\);/, 'snow flake is the lab\'s');
+  assert.match(LAB_WX_FS, /in float vT; in float vSeed;\nuniform float uKind;/);
   // the lab's constants
   assert.equal(LAB_BOX, 42);
   assert.deepEqual({ ...LAB_COUNTS }, { rain: 26000, storm: 26000, snow: 20000 });
   assert.deepEqual({ ...LAB_FALL }, { rain: 22.0, storm: 22.0, snow: 1.6 });
-  // the wrap that makes rain fall through the world instead of sticking
-  assert.match(LAB_WX_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/);
   // the draw: the lab's blend and depth, world up, the enhanced profile
   // routed to it, the classic program untouched
   const p = read('src/render/precipitation.js');

@@ -107,7 +107,11 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
     // second consumer, and it carries uSunScale itself (realWindows.js rwRoomOver), so the gate still moves no pixel
     const rooms = name === 'mesh' ? 1 : 0;
     assert.equal((src.match(/rwRoomOver\([^;]*\bdiff\)/g) ?? []).length, rooms, `${name}: the mock room's sun is the one other consumer`);
-    assert.equal((src.match(/\bdiff\b/g) ?? []).length, 2 + rooms, `${name}: ...and exactly one writer beside them`);
+    // The sun's glint on the wet takes diff's shadows back off n.L - a consumer that
+    // carries uSunScale itself (render/wetGlsl.js wetSunGlint), so the gate still moves no pixel
+    const wets = name === 'char' ? 0 : 1;
+    assert.equal((src.match(/wetSunGlint\([^;]*\bdiff\b/g) ?? []).length, wets, `${name}: the wet's sun is a consumer`);
+    assert.equal((src.match(/\bdiff\b/g) ?? []).length, 2 + rooms + wets, `${name}: ...and exactly one writer beside them`);
     if (rooms) {
       assert.equal((src.match(/\bsunDiff\b/g) ?? []).length, 2, 'the room reads its sunDiff once');
       assert.match(src, /bool day = uSunScale > 0\.0;[\s\S]*vec3 skyL = day \? uSunColor \* \(uSunScale \* sunDiff \//, '...under uSunScale, behind the same gate');

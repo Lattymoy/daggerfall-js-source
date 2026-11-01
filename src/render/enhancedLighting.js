@@ -99,6 +99,16 @@ import { RING_HAZE_GLSL } from './hazeGlsl.js'; // BANTHA1: and the jungle's haz
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM } from './realWindows.js'; // RW1: the real windows, the classic FS's own block on the lane's codec
 import { MESH_ALPHA_GLSL } from './meshAlpha.js'; // POI-2: the lane's mesh FS ends on the same translucency as the classic one
 import { windowLightGlsl } from './windowLight.js'; // WL1: the windows' light, read in the lantern loop's own function
+import {
+  RAIN_WET_GLSL,
+  RAIN_GROUND_GLSL,
+  WET_DARK,
+  WET_WALL_DARK,
+  PUDDLE_GLOSS,
+  PUDDLE_GLINT,
+  PUDDLE_WIN_GLINT,
+  PUDDLE_STRETCH,
+} from './wetGlsl.js'; // the wet world
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -426,9 +436,9 @@ int elClusterLight(highp uvec2 cell, int j) {
 // lights where it walked forty-eight - and every light with the grid off.
 // WL1: `wlShadow` is windowLightGlsl's - a surface's programs read the sun map per fragment, the flat's takes its quad's
 // one read (TREES1, LA-COST3: a flat's fragment reads no sun map).
-const elPointLitGlsl = (wlShadow) => `
+const elPointLitGlsl = (wlShadow, wetGlint = false) => `
 ${EL_CLUSTER_GLSL}
-${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow })}
+${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow, wetGlint })}
 // BLOOD2f / BLOOD AUDIT 5: the lantern loop with a WET surface's glint
 // beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
 // contact shadow is glint-shadowed as it is diffuse-shadowed), the
@@ -447,6 +457,8 @@ float wetFresnel(float vdoth) {
 }
 // LA-COST4: the glint's lobe, x^EL_SPEC_GLOSS by repeated squaring (powChainGlsl) - no pow() per light
 ${powChainGlsl('elSpecLobe', EL_SPEC_GLOSS)}
+float elSpecK = 1.0;   // the ground turns this down in the rain; every other caller leaves it
+float elWetPow = ${EL_WET_GLOSS}.0;   // a puddle tightens the wet lobe to a mirror's; every other caller leaves it
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
   glint = vec3(0.0);
@@ -478,10 +490,17 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 H = normalize(Ln + V);
     float spec = elSpecLobe(max(dot(n, H), 0.0)) * ${EL_SPEC_STRENGTH};
+    spec *= elSpecK;   // 1 everywhere but wet ground
     float att = sh * elAttenuation(d, uPointLights[i].w);
     acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
     if (wet > 0.0) {
-      float g = pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0);
+      float g = pow(max(dot(n, H), 0.0), elWetPow);
+      // Blinn on flat ground stretches a lamp into a column; squeeze along the view on the plane
+      if (g > 0.0 && elWetPow > 200.0) {
+        vec3 t = V - n * dot(V, n);
+        float t2 = dot(t, t);
+        if (t2 > 1e-6) { float a = dot(H, t); g *= exp(-a * a / t2 * ${glslFloat(PUDDLE_STRETCH)}); }
+      }
       if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe
     }
   }
@@ -569,7 +588,8 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
-const EL_POINT_LIT_GLSL = elPointLitGlsl(true);
+const EL_POINT_LIT_GLSL = elPointLitGlsl(true); // mesh/char: no puddle winGlint (terrain-only below)
+const EL_POINT_LIT_TERRAIN_GLSL = elPointLitGlsl(true, true); // lit panes in puddles
 const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat'); // WL1: the billboard program's
 
 /** The mesh fragment shader of the lane - the classic FS's every term
@@ -620,6 +640,7 @@ ${EL_POINT_LIT_GLSL}
 ${DISSOLVE_GLSL}
 ${MESH_ALPHA_GLSL}
 out vec4 outColor;
+${RAIN_WET_GLSL}
 void main() {
 ${RW_MAIN_DERIVS}
   int amMode = int(uAutomapMode + 0.5);
@@ -648,12 +669,18 @@ ${RW_MAIN_CUTOUT}
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
   vec3 emission = elDecode(texture(uEmissionTex, vUV).rgb) * uEmissionColor;
 ${RW_MAIN_GLASS}
-  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));
+  vec2 wetW = wetWall(n);   // WET1: render/wetGlsl.js
+  float wetG = wetGloss(wetW);
+  vec3 wetV = normalize(uCamPos - vWorldPos);
+  vec3 albedo = roofRunoff(wetAlbedo(max(elDecode(tex.rgb) - emission, vec3(0.0)), wetW, ${glslFloat(WET_WALL_DARK)}), n, vWorldPos);   // WET1c: water down the roof
   vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uAmbient, uAmbientSky, n.y) : mix(uAmbient, uAmbientGround, -n.y)) : uAmbient;   // EL6: the crevice loses its light at the resolve, off the frame's depth
+  vec3 wetGlint;
   vec3 lit = albedo * (ambient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
-    + uLight3Color * (uLight3Scale * l3diff) + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));
+    + uLight3Color * (uLight3Scale * l3diff) + elPointLitWet(vWorldPos, n, wetG, wetGlint) + elIndirectLit(vWorldPos, n));
+  lit += wetGlint + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
 ${RW_MAIN_ROOM}
   outColor = vec4(elFinish(lit + emission, vWorldPos), meshAlphaOf(tex.a));   // POI-2: alpha 1 but in a translucent draw (render/meshAlpha.js)
+  outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG * max(n.y, 0.0));   // WET1: the sky on a wet roof
   if (amMode > 0) {
     if (vWorldPos.y <= uAutomapWaterLevel) {
       outColor.rgb = mix(outColor.rgb, uAutomapWaterColor.rgb, uAutomapWaterColor.a);
@@ -1031,15 +1058,18 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 uniform vec4 uFadeTint;   // MID-RING: a just-built pixel's tint (rgb, linear) and its share left (a)
+uniform float uWetProxy;   // WET1e: 1 while Full puddle colour owns the mirror (kills winGlint doubles)
 ${CLOUD_SHADOW_GLSL}
 ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
-${EL_POINT_LIT_GLSL}
+${EL_POINT_LIT_TERRAIN_GLSL}
 ${ecotoneGlsl('elDecode')}
 ${snowCoverGlsl('elDecode')}
 ${snowCapGlsl('elDecode', SNOW_TILE_M)}
+${RAIN_WET_GLSL}
+${RAIN_GROUND_GLSL}
 out vec4 outColor;
 const mat2 ROT[4] = mat2[4](
   mat2(1.0, 0.0, 0.0, 1.0),
@@ -1093,8 +1123,18 @@ void main() {
   snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
   tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix((t) => `elDecode(${t})`)}
+  vec2 wetAt = vec2(snowC, max(length(gx), length(gy)));   // WET1: the decode's snow and footprint (render/snowfallGlsl.js declares its own)
   tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
+  float road = roadAmt(data, unwrapped);   // WET1d: soil↔stones smeared at the paving's edge (roadEdgeGlsl); snowTerrainFs sets 0
   vec3 n = normalize(vNormal);
+  vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y, road);   // WET1f: puddles only on paving
+  float wetG = wetGlossGround(wetW, road);   // WET1f: mirror gloss only in a road puddle
+  vec3 wetV = normalize(uCamPos - vWorldPos);
+  tex = wetAlbedo(tex, wetW, ${glslFloat(WET_DARK)});
+  n = wetNormal(n, wetW, vLocalXZ, distance(uCamPos, vWorldPos));
+  // the stone's own highlight is one lobe on every tile; in the rain a puddle keeps a tight glint and drops that lobe
+  elSpecK = mix(1.0, mix(0.22, 0.5, road) * (1.0 - wetW.y) + 0.06 * wetW.y, step(0.02, wetW.x));
+  elWetPow = mix(${EL_WET_GLOSS}.0, ${glslFloat(PUDDLE_GLOSS)}, wetW.y);   // WET1d: a lamp in a puddle is a point, not a pool
   // PERF-SUN2 (2026-09-19, Mac: "over 1000 calls and looking up in the sky
   // restores frame rate"): THE SUN'S SHADOW IS NOT READ WHERE THE SUN
   // CANNOT REACH. This was one flat product, and GLSL evaluates every
@@ -1110,9 +1150,20 @@ void main() {
   float ndl = max(dot(n, uLightDir), 0.0);
   float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
   float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 wetGlint;
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
-    + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
+    + elPointLitWet(vWorldPos, n, wetG, wetGlint) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
+  // WET1d: soil is always more scattered than stone - dimmer glints, softer panes (scatter into winGlint)
+  float soilK = mix(0.1, 1.0, road);
+  float soilScatter = (1.0 - road) * 0.4;   // WET1d: soil scatters more than stone, but not 3x mush
+  // WET1f: lamp/window/sky mirrors only in road puddles; Full proxy kills the glint doubles
+  float pudGlint = wetW.y * road * (1.0 - uWetProxy);
+  lit += wetGlint * mix(soilK, ${glslFloat(PUDDLE_GLINT)} * soilK, pudGlint) + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
+  // puddle gate: without it every ground pixel marched every lit pane (same TDR class as ungated SSR)
+  if (pudGlint > 0.0) lit += winGlint(vWorldPos, n, wetV, elWetPow, soilScatter)
+    * (${glslFloat(PUDDLE_WIN_GLINT)} * pudGlint * soilK);
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
+  outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG * 0.35);   // WET1f: wetG is already puddle×road
 }`;
 
 /** The character fragment shader of the lane - the classic CHAR_FS's

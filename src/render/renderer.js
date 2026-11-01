@@ -727,6 +727,8 @@ import { boundsOf, spherePlanes, sphereInPlanes, batchVisible, batchSphere, ZERO
 import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
+import { puddleProxyOn } from '../systems/weather/wetness.js';   // Full tier owns puddle colour; Wet keeps winGlint
+import { WET_PROXY_GATE } from './puddleProxyGlsl.js';
 
 /**
  * GRAIN2 (2026-09-19, Mac: "Why dont we crank it to 16?"): the
@@ -1179,6 +1181,7 @@ export function terrainClipFs(fs) {
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
 const ZERO_TINT = new Float32Array(3);   // MID-RING: no pixel easing in
+const DRY = new Float32Array(4);   // a draw that is no world's
 /** BLOOD1b: a billboard quad's four corners, ONE copy. `createBillboardBatch`
  *  bakes them and `moveBillboardBatch` rewrites them, and the two disagreeing
  *  about the winding would tear every moved quad. */
@@ -1944,6 +1947,12 @@ export class Renderer {
     // (world/deepWater/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
     // deck is: beginFrame clears it and the exterior host sets it after.
     this._dwFog = new Float32Array(20);
+    this._wet = new Float32Array(4);   // the frame's wet ground (setWet), dried by beginFrame
+    this._wetProxy = 0;   // Full colour proxy owns winGlint (setWet)
+    this._wetRoadTex = null;   // eye-chunk tilemap for the puddle colour proxy
+    this._wetRoadOrigin = new Float32Array(2);
+    this._wetRoadEco = new Int32Array(2);   // first world tile - matches terrain snowNoise
+    this._wetRoadTileSize = 0;
     // BANTHA1: the jungle's haze - render/hazeGlsl.js uJungleHaze, two vec4s (world/jungle/jungleHaze.js hazeUniforms). A
     // FRAME's, as the travel view's focus is: setJungleHaze arms it, and a beginFrame no setJungleHaze armed clears it - so an
     // interior, a dungeon or a panel never inherits the jungle's air
@@ -2621,7 +2630,7 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object, wet?: WebGLUniformLocation | null, wetProxy?: WebGLUniformLocation | null }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'), sunOrigin: gl.getUniformLocation(p, 'uSunOrigin'),
@@ -2633,6 +2642,8 @@ export class Renderer {
       a.cluster = { grid: gl.getUniformLocation(p, 'uClusterGrid'), list: gl.getUniformLocation(p, 'uClusterList'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd'), on: gl.getUniformLocation(p, 'uClusterOn') };   // LC1
       a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), prevRect: gl.getUniformLocation(p, 'uPrevRect'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
       a.wl = { on: gl.getUniformLocation(p, 'uWinOn'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd') };   // WL1: both sets
+      a.wet = gl.getUniformLocation(p, 'uWet');   // the ground's and the walls' (null where a program has none)
+      a.wetProxy = gl.getUniformLocation(p, 'uWetProxy');   // terrain only - kills winGlint while Full proxy runs
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(this.terrainProgram), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's
@@ -2951,6 +2962,23 @@ export class Renderer {
     else this._uploadNoContact(this._el[key].contact);
     // LC1: the grid, under the contact block's own gate - a world draw of the frame the grid was built for; a sprite pass, a bake or a panel walks every light
     this._uploadClusters(this._el[key].cluster, this._clustersLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
+    const world = this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved;
+    const wet = this._el[key].wet;   // a world draw's alone - a sprite pass, a bake or a panel is dry
+    if (wet) gl.uniform4fv(wet, world ? this._wet ?? DRY : DRY);
+    // ground programs declare uWetProxy (winGlint gate); snow is EL_TERRAIN_FS with its decode swapped
+    const wetProxy = (key === 'terrain' || key === 'snow') ? this._el[key]?.wetProxy : null;
+    if (wetProxy) gl.uniform1f(wetProxy, world ? (this._wetProxy ?? 0) : 0);
+  }
+  /** the frame's wet ground (systems/weather/wetness.js's uniform), set after beginFrame - which dries it, so an
+   *  interior or a dungeon that never sets it draws dry. */
+  setWet(w) {
+    const wetU = (this._wet ??= new Float32Array(4));
+    if (!w) return;
+    const proxy = puddleProxyOn() && w[1] > WET_PROXY_GATE ? 1 : 0;
+    if (wetU[0] === Math.fround(w[0]) && wetU[1] === Math.fround(w[1]) && wetU[2] === Math.fround(w[2]) && wetU[3] === Math.fround(w[3]) && this._wetProxy === proxy) return;
+    wetU.set(w);
+    this._wetProxy = proxy;
+    this._frameStamp++;
   }
   /** EL8: with the air off the contact sampler still needs a texture (AUDIT-EL F1's law) and the params say off. */
   _uploadNoContact(loc) {
@@ -3314,6 +3342,8 @@ export class Renderer {
     if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
     if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
+    this._air.setWet?.(this._wet);   // puddle proxy pass gates on fill
+    this._air.setWetRoad?.(this._wetRoadTex, this._wetRoadOrigin[0], this._wetRoadOrigin[1], this._wetRoadTileSize, this._wetRoadEco[0], this._wetRoadEco[1]);
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
     // the seven - never said so. `composite()` binds units 0..4 (VOL1: the glow on 4) and
@@ -5900,6 +5930,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
     if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
     this._dwFog[0] = 0;   // DW-C: the sea's distance fog is a frame's too - no interior, dungeon or panel inherits it
+    this._wet?.fill(0);   // and the wet ground
+    this._wetProxy = 0;
+    this._wetRoadTex = null; this._wetRoadTileSize = 0; this._wetRoadEco[0] = 0; this._wetRoadEco[1] = 0;   // restashed on drawTerrain
     if (!this._hazeArmed && this._haze[4] !== 0) this._haze[4] = 0;   // BANTHA1: and the jungle's haze, unless set since the last beginFrame (setJungleHaze)
     this._hazeArmed = false;
     this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea - set by the host on a frame it draws the ring
@@ -8253,6 +8286,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
     this.stats.draws++;
     this._bindVao(null);
+    // prefer the chunk under the eye so the proxy's roadGate matches the stones in view
+    if (tilemapTex && tileSize > 0) {
+      const originX = modelMatrix[12], originZ = modelMatrix[14], span = 128 * tileSize;
+      const eye = this._camPos;
+      const localX = eye[0] - originX, localZ = eye[2] - originZ;
+      const under = localX >= 0 && localZ >= 0 && localX < span && localZ < span;
+      if (under || !this._wetRoadTex) {
+        this._wetRoadTex = tilemapTex;
+        this._wetRoadOrigin[0] = originX; this._wetRoadOrigin[1] = originZ;
+        this._wetRoadTileSize = tileSize;
+        // eco.origin or snow's first world tile - the lattice wetGround's snowNoise uses
+        const ox = eco ? eco.origin[0] : (snow ? snow[0] : 0);
+        const oz = eco ? eco.origin[1] : (snow ? snow[1] : 0);
+        this._wetRoadEco[0] = ox | 0; this._wetRoadEco[1] = oz | 0;
+      }
+    }
   }
 
   /**

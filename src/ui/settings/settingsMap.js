@@ -69,6 +69,7 @@ export const CATEGORIES = Object.freeze([
       'feat:enhanced-environments',
       'feat:enhanced-water',
       'feat:water-quality',
+      'feat:wet-world',
       'feat:armory-others',
       'feat:killfx-others',
       'feat:mod-heat-haze',
