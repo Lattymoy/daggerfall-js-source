@@ -260,14 +260,21 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
     ch = rec['canvas'][1]
     low = int(np.nonzero(ref.any(axis=1))[0].max())
 
+    planted = rec['anim'] in ('idle', 'attack', 'bow') or (rec['anim'] == 'walk' and frame % 2 == 0)
+
     def evaluate(x):
         adj = adj_of(params, x[:len(params)])
         pose, gear = poses.pose_for(rec['anim'], frame, rec['view'], yaw, adj)
+        lift = 0.0
+        if planted:   # a standing frame keeps both feet down: the fit may not lift one to cover a stray pixel
+            W = pose.world()
+            soles = [min((W[f'foot_{s}'] @ p).z for p in poses.SOLE) for s in 'LR']
+            lift = max(0.0, max(soles) - 0.04)
         work = cloud.image(pose, gear)
         place_x = start_place[0] + (round(x[-1]) if dx_free else 0)
         place_y = low - lowest(work) + stage.ROOT_PX[1]
         img = crop(work, rec['canvas'], (place_x, place_y))
-        reg = 0.0006 * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum())
+        reg = 0.0006 * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift
         return score(img, ref) - reg, place_x
 
     x = np.zeros(len(steps))
@@ -331,8 +338,8 @@ def fit_shape(cloud, spec, refs, iters, rng):
     """Fit the proportions over every frame, each frame in its fitted pose; candidates weighed on every core."""
     import multiprocessing
     keys = list(shape.DEFAULT)
-    steps = np.array([0.02 if k == 'scale' else 0.015 if k in ('paul_dx', 'paul_dz') else 0.06 for k in keys])
-    base = np.array([shape.SHAPE[k] for k in keys])
+    steps = np.array([0.02 if k == 'scale' else 0.015 if k.endswith(('_dx', '_dy', '_dz')) else 0.06 for k in keys])
+    base = np.array([shape.SHAPE.get(k, shape.DEFAULT[k]) for k in keys])
     frames = [(rec, f, refs[r][f]) for r, rec in enumerate(spec['records']) for f in range(rec['frames'])]
     _JOB.update(cloud=cloud, keys=keys, frames=frames)
     first = _shape_value(base)   # poses every frame once, before the workers fork

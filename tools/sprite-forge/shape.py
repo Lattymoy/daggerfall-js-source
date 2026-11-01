@@ -12,9 +12,11 @@ DEFAULT = {
     'scale': 1.0,       # the whole body's pixels a metre, past stage.PX_PER_M
     'torso_w': 1.0, 'torso_d': 1.0, 'arm_r': 1.0, 'leg_r': 1.0, 'head': 1.0, 'hand': 1.0, 'boot_r': 1.0,
     'paul_s': 1.0, 'paul_dx': 0.0, 'paul_dz': 0.0, 'loin_w': 1.0, 'axe': 1.0,
+    'helm_s': 1.0, 'helm_dy': 0.0, 'helm_dz': 0.0, 'paul_sz': 1.0,
 }
 SHAPE = dict(DEFAULT)
 HEAD_PARTS = ('face', 'coif', 'helm', 'nasal', 'cheek_L', 'cheek_R')
+HELM_PARTS = ('helm', 'nasal', 'cheek_L', 'cheek_R')
 
 
 def load_shape(path):
@@ -61,7 +63,13 @@ def transform(name, p, S=None):
         cx, cy = _chain_xy(chain, p[:, 2])
         return _radial(p, cx, cy, S['arm_r' if base.startswith('arm_') else 'leg_r'])
     if base in HEAD_PARTS:
-        return p * S['head']
+        out = p * S.get('head', 1.0)
+        if base in HELM_PARTS:   # the helm and its guards about the head's centre, then moved
+            c = np.array([0.0, 0.005, 0.09])
+            out = c + (out - c) * S.get('helm_s', 1.0)
+            out[:, 1] += S.get('helm_dy', 0.0)
+            out[:, 2] += S.get('helm_dz', 0.0)
+        return out
     if base.startswith('hand_'):
         return p * S['hand']
     side = 1.0 if base.endswith('_L') else -1.0
@@ -74,6 +82,7 @@ def transform(name, p, S=None):
     if base.startswith('pauldron_'):
         c = np.array([0.14 * side, 0.0, -0.01])   # the pauldron's centre in its clavicle's space
         out = c + (p - c) * S['paul_s']
+        out[:, 2] = c[2] + (out[:, 2] - c[2]) * S.get('paul_sz', 1.0)
         out[:, 0] += S['paul_dx'] * side
         out[:, 2] += S['paul_dz']
         return out
