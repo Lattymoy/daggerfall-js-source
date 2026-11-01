@@ -293,6 +293,8 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
             W = pose.world()
             soles = [min((W[f'foot_{s}'] @ p).z for p in poses.SOLE) for s in 'LR']
             lift = max(0.0, max(soles) - 0.04)
+        if rec['anim'] == 'bow':   # the bow stays near its keyed lean: its thin limbs must not buy pixels by lying flat
+            lift += max(0.0, float(np.linalg.norm(adj.get('haft', [0, 0, 0]))) - 0.3)
         work = cloud.image(pose, gear)
         place_x = start_place[0] + (round(x[-1]) if dx_free else 0)
         place_y = low - lowest(work) + stage.ROOT_PX[1]

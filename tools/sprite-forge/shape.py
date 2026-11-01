@@ -14,6 +14,7 @@ DEFAULT = {
     'paul_s': 1.0, 'paul_dx': 0.0, 'paul_dz': 0.0, 'loin_w': 1.0, 'axe': 1.0,
     'helm_s': 1.0, 'helm_dy': 0.0, 'helm_dz': 0.0, 'paul_sz': 1.0,
     'waist_w': 1.0, 'chest_w': 1.0,   # the torso's width below the ribs and across the chest, past torso_w
+    'head_dy': 0.0, 'head_dz': 0.0,   # the whole head moved back (+y) or forward, up (+z) or down, on its neck
 }
 SHAPE = dict(DEFAULT)
 HEAD_PARTS = ('face', 'coif', 'helm', 'nasal', 'cheek_L', 'cheek_R')
@@ -67,6 +68,8 @@ def transform(name, p, S=None):
         return _radial(p, cx, cy, S['arm_r' if base.startswith('arm_') else 'leg_r'])
     if base in HEAD_PARTS:
         out = p * S.get('head', 1.0)
+        out[:, 1] += S.get('head_dy', 0.0)
+        out[:, 2] += S.get('head_dz', 0.0)
         if base in HELM_PARTS:   # the helm and its guards about the head's centre, then moved
             c = np.array([0.0, 0.005, 0.09])
             out = c + (out - c) * S.get('helm_s', 1.0)
