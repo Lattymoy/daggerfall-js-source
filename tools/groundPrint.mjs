@@ -206,7 +206,8 @@ export function groundPrint() {
   cells[`Grown@${gx},${gy}`] = printed(grown.samples);
   const grownSettlement = grown.settlement;
   // its outskirts follow their road, so a change to how they do moves the law
-  if (!grownSettlement?.input.roads.length || !grownSettlement.layout.cells.some((c) => c.road?.length)) throw new Error('the grown village has no road through it');
+  if (!grownSettlement?.input.roads.length || !grownSettlement.layout.cells.some((c) => c.road?.length))
+    throw new Error('the grown village has no road through it');
   // FB1029 ACROSS-EDGE: a town on a cliff over its sea, and the sea north of it its meet raises
   const [mx, my] = GROUND_PRINT_MEET,
     cliff = new WoodsFile();

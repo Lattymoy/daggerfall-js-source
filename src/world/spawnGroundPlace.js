@@ -82,7 +82,7 @@ export function createSpawnGroundPlace(handles) {
     if (clocks && spawnGone(px, py)) return null;
     const roads = terrainGen.roads();
     if (roads && !pathFreePixel(roads, px, py)) return null;
-    if (!inBay(px, py) && (placeAt(px, py) || settlementOnPixel(px, py))) return null;   // a settlement's pixel is its own, online too
+    if (!inBay(px, py) && (placeAt(px, py) || settlementOnPixel(px, py))) return null; // a settlement's pixel is its own, online too
     return cloneAt(px, py);
   }
 

@@ -319,7 +319,7 @@
   {
     "name": "AUDIT-deck-steep-kept",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (!f || !t || Math.abs(t.h - f.h) <= link.max + 1e-3) continue;",
+    "old": "    if (!from || !to || Math.abs(to.h - from.h) <= link.max + 1e-3) continue;",
     "new": "    continue;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
@@ -328,8 +328,8 @@
   {
     "name": "AUDIT-ragged-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      if (core && k > 1 && rng(19, j, k) < 0.18 * (k - 1)) { reachOf[j] = k - 1; break; }",
-    "new": "      if (false) { reachOf[j] = k - 1; break; }",
+    "old": "      if (core && k > 1 && rng(19, j, k) < 0.18 * (k - 1)) { reachOf[j] = k - 1; break; }   // an end left ragged",
+    "new": "      if (false) { reachOf[j] = k - 1; break; }   // an end left ragged",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "AUDIT-core-cap",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "core ? 24 : 16);",
-    "new": "core ? 16 : 16);",
+    "old": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it",
+    "new": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 16 : 16);   // a core's narrower, to hug it",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "AUDIT-road-wrap",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (angle < 0) angle += TAU;\n",
-    "new": "",
+    "old": "    if (angle < 0) angle += TAU;\n    seen.add(Math.round(angle * 1000) / 1000);",
+    "new": "    seen.add(Math.round(angle * 1000) / 1000);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "AUDIT-slot-wrap",
     "file": "src/scenes/settlementHost.js",
-    "old": "(_nextSlot++ % GROWTH_SLOTS)",
-    "new": "(_nextSlot++)",
+    "old": "export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++ % GROWTH_SLOTS);",
+    "new": "export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

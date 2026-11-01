@@ -364,9 +364,9 @@ export function roadReach(reachOf, edges, roads, bands, rng) {
 function dropDeepCuts(cells, links, limit) {
   for (const cell of [...cells.values()]) if (!cell.core && !cell.raised && Math.abs(cell.h - cell.natural) > limit) cells.delete(cell.id);
   for (const link of links) {
-    const f = cells.get(link.from), t = cells.get(link.to);
-    if (!f || !t || Math.abs(t.h - f.h) <= link.max + 1e-3) continue;
-    cells.delete((f.core ? t : t.core ? f : t.k > f.k || (t.k === f.k && t.id > f.id) ? t : f).id);
+    const from = cells.get(link.from), to = cells.get(link.to);
+    if (!from || !to || Math.abs(to.h - from.h) <= link.max + 1e-3) continue;
+    cells.delete((from.core ? to : to.core ? from : to.k > from.k || (to.k === from.k && to.id > from.id) ? to : from).id);
   }
   let live = links.filter((link) => cells.has(link.from) && cells.has(link.to));
   const reach = new Set(), stack = ['plaza'];

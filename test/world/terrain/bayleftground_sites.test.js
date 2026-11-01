@@ -270,7 +270,7 @@ test('BAY-LEFT-GROUND D1 the world host wires it: the table made beside the plac
   assert.match(w, /const beyondSites = createLandformSites\(\{ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built\(\) \{ return built; \}, get inFlight\(\) \{ return inFlight; \}, swap \}\);/);
   // D5: `before` the old law's (the Bay's table alone - test/world/terrain/bayleftground_frame.test.js)
   // PIN MOVED (RELIEF-PEAKS, bible/03-World/Tamriel.md): the ranges asked with the landforms, but under a record's old law
-  assert.match(w, /createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates, ranges: !before \}\)/, 'this thread\'s landforms');
+  assert.match(w, /createLandforms\(\{ woods, roads: bare \? null : terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates, ranges: !before \}\)/, 'this thread\'s landforms, with no road for a settlement\'s layout');
   assert.match(w, /sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: /, 'a promotion\'s grid');
   assert.match(w, /if \(_capitalBase && !building\) sweepCapitalPixels\(\);[^\n]*\n\s+if \(!building\) beyondSites\.refresh\(\);/, 'on the frame, after the places\' sweeps');
   assert.match(w, /const key = `\$\{px\},\$\{py\},\$\{landform && terrainGen\.roads\(\) \? 1 : 0\},\$\{beyondSites\.generation\(\)\}`;/, 'the gate\'s kernel');

@@ -84,8 +84,8 @@
   {
     "name": "RMBC7-plans-unprinted",
     "file": "tools/groundPrint.mjs",
-    "old": "cells.Plans = [settled.settlement, grownSettlement].map(",
-    "new": "cells.Unprinted = [settled.settlement, grownSettlement].map(",
+    "old": "    cells.Plans = [settled.settlement, grownSettlement].map((g) =>",
+    "new": "    cells.Unprinted = [settled.settlement, grownSettlement].map((g) =>",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js",
       "test/net/fb1017f_groundgate.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "AUDIT-gone-absent-field-read",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((f) => f in a && JSON.stringify(a[f]) !== JSON.stringify(b[f]));",
-    "new": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((f) => JSON.stringify(a[f]) !== JSON.stringify(b[f]));",
+    "old": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((field) => field in a && JSON.stringify(a[field]) !== JSON.stringify(b[field]));",
+    "new": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((field) => JSON.stringify(a[field]) !== JSON.stringify(b[field]));",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]

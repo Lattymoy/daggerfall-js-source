@@ -107,14 +107,14 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
   }
   /** A pixel built again in place swaps its entry with no frame between: the same plan files its yards on the new entry,
    *  another (roads landed under a grown town) is taken down and stood again. */
-  function restand(s, p) {
+  function restand(town, entry) {
     const same = (a, b) => JSON.stringify(a.layout) === JSON.stringify(b.layout) && JSON.stringify(a.input ?? null) === JSON.stringify(b.input ?? null);
-    if (s.src !== p.settlement && !same(s.src, p.settlement)) { takeDown(s); stand(p, s.key); return; }
-    s.src = p.settlement;
-    if (s.homeFrames === (p.homeFrames ?? null)) return;
-    for (const k of s.homeKeys) s.homeFrames?.delete(k);
-    s.homeKeys = [];
-    fileHomeFrames(s, p.homeFrames);
+    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) { takeDown(town); stand(entry, town.key); return; }
+    town.src = entry.settlement;
+    if (town.homeFrames === (entry.homeFrames ?? null)) return;
+    for (const k of town.homeKeys) town.homeFrames?.delete(k);
+    town.homeKeys = [];
+    fileHomeFrames(town, entry.homeFrames);
   }
   function takeDown(s) {
     stood.delete(s.key);
@@ -167,9 +167,9 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
           if (!p?.settlement) continue;
           const key = `${p.px},${p.py}`;
           live.add(key);
-          const s = stood.get(key);
-          if (!s) stand(p, key);
-          else if (s.src !== p.settlement || s.homeFrames !== (p.homeFrames ?? null)) restand(s, p);
+          const town = stood.get(key);
+          if (!town) stand(p, key);
+          else if (town.src !== p.settlement || town.homeFrames !== (p.homeFrames ?? null)) restand(town, p);
         }
         for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);
         for (const s of stood.values()) standCollider(s);

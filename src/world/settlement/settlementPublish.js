@@ -29,6 +29,6 @@ const KEPT = ['anchor', 'type', 'access', 'pad', 'at', 'yaw', 'lift', 'footprint
  *  @returns {number[]} */
 export function protectedGone(plan, protectedKeys, published = []) {
   const held = new Map(plan.buildings.map((b) => [b.key, b])), was = new Map(published.map((b) => [b.key, b]));
-  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((f) => f in a && JSON.stringify(a[f]) !== JSON.stringify(b[f]));
+  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((field) => field in a && JSON.stringify(a[field]) !== JSON.stringify(b[field]));
   return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && (!held.has(k) || (was.has(k) && changed(was.get(k), held.get(k)))));
 }

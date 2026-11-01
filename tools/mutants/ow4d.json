@@ -242,8 +242,8 @@
   {
     "name": "OW4D4-stand-on-a-road",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && (placeAt(px, py) ||",
-    "new": "    if (!inBay(px, py) && (placeAt(px, py) ||",
+    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && (placeAt(px, py) || settlementOnPixel(px, py))) return null; // a settlement's pixel is its own, online too",
+    "new": "    if (!inBay(px, py) && (placeAt(px, py) || settlementOnPixel(px, py))) return null; // a settlement's pixel is its own, online too",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
