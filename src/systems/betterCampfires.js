@@ -1,13 +1,13 @@
 const point = p => p?.length === 3 && Array.from(p).every(Number.isFinite);
 // Read the native live pool, so packing/despawning and floating-origin shifts
 // are reflected immediately. Never persist another player's camp or stale coords.
-export function campOverworldMarks(pool) {
+export function campOverworldMarks(pool,{beam=true,opacity=.6}={}) {
   const marks=[];
   for(const camp of pool?.camps??[]) {
     if(camp.owner!=null||camp.hidden||!point(camp.rec?.pos))continue;
     const tent=camp.rec.kind==='tent';
     marks.push({key:`keta-camp-${camp.rec.id??marks.length}`,at:[...camp.rec.pos],
-      label:tent?'My campsite':'My campfire',sub:tent?'Your camping equipment':'Your placed campfire',kind:'place',edge:true});
+      label:tent?'My tent':'My campfire',beaconIcon:tent?'tent':'campfire',beaconBeam:beam,beaconOpacity:opacity,kind:'place',edge:true,pick:true});
     if(marks.length===16)break;
   }
   return marks;
