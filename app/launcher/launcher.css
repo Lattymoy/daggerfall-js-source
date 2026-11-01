@@ -124,10 +124,13 @@ body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
 .files { margin: 0; width: 100%; min-width: 0; font-size: 14px; color: #a89f88; }
 .files .path { font-size: 14px; }
 /* The Private server option */
-/* The Private server strip, under the patch notes: one row of controls, so it never runs past the panel */
-.private { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 16px 12px; border-top: 2px solid rgba(125,116,96,0.3); }
-.private > .caps { margin: 0; font-size: 13px; }
-#private-note { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+/* The Private server screen: opened from its option, in the panel's place of the patch notes */
+.private { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 10px 16px 16px; }
+.private[hidden] { display: none; }
+.private > .caps { margin: 0 -16px; padding: 0 16px 8px; align-self: stretch; border-bottom: 2px solid rgba(125,116,96,0.3); }
+.choices { display: flex; gap: 14px; flex-wrap: wrap; }
+.choices .plaque { min-width: 200px; height: 60px; }
+#private-note { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
 #private-off { display: flex; align-items: center; gap: 8px; width: 100%; }
 #private-off[hidden] { display: none; }
 #private-off .address { flex: 1; min-width: 0; width: auto; }

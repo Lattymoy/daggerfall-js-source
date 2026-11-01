@@ -40,9 +40,18 @@
           <ul id="found" class="found" hidden></ul>
           <div id="setup-actions" class="actions"></div>
         </section>
+        <!-- PLAY's question: the main servers, or a private server (the page's own screen, never the shell's) -->
+        <section id="choose" class="private" hidden>
+          <h2 class="caps">Where to play</h2>
+          <div class="choices">
+            <button id="play-main" class="plaque" type="button" data-act="play">Main servers</button>
+            <button id="private-open" class="plaque" type="button">Private server</button>
+          </div>
+          <button class="link back" type="button">Back to patch notes</button>
+        </section>
         <!-- Host a private server on this PC, or join a friend's (app/lib/launcherState.cjs privateView) -->
-        <section id="private" class="private">
-          <h3 class="caps">Private server</h3>
+        <section id="private" class="private" hidden>
+          <h2 class="caps">Private server</h2>
           <p id="private-note" class="files"></p>
           <div id="private-off">
             <button class="plaque small" type="button" data-act="private-host">Host a game</button>
@@ -51,6 +60,8 @@
             <button class="plaque small" type="button" data-act="private-join">Join</button>
           </div>
           <button id="private-stop" class="plaque small" type="button" data-act="private-stop" hidden>Stop</button>
+          <p class="files">Once you host or join, press PLAY to load a character there.</p>
+          <button class="link back" type="button">Back</button>
         </section>
       </main>
 
