@@ -198,7 +198,8 @@ test('DISC9: indoors you hear the rain the street heard - the sim\'s word says r
     for (let i = 0; i < 60 * 20; i++) { fx = front.tick({ dt: 1 / 60, weather: 'rain', arrival: 1, nowMinutes: 1000, tsec: 1 + i / 60, jump: false }); W.setHeardWeather(soundWeather(fx, 'rain')); }
     assert.equal(W.heardWeather(), 'rain', 'the rain is falling in the street');
     ba.onTransition({ dungeon: null, building: true }); ba.settleTransition(); ba.frame(0.016, m({ inside: true, inBuilding: true }));
-    assert.equal(loops.filter((l) => !l.stopped).length, 1, 'and now the tavern hears it');
+    // OWN-AUDIT (2026-11-01): the rain is one sound in two layers, the bed and its eaves (audio/synth/rain.js RAIN_EAVES)
+    assert.deepEqual(loops.filter((l) => !l.stopped).map((l) => l.k), ['ba:AmbientRaining', 'ba:AmbientRaining/eaves'], 'and now the tavern hears it');
     // a load lands the player under the saved sky, whole: the word heard before it no longer stands
     W.setHeardWeather('cloudy');
     W.restoreWeather('sunny');

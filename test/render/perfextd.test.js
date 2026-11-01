@@ -110,7 +110,13 @@ function runSkyPass(src, u, dir) {
 test('PERF-EXT30: Dynamic Skies\' two layers at opacity 0 read nothing and the frame is to the bit what the ungated layers draw; at their own opacity both run whole and agree to the bit (mutants: either gate dropped, the high gated on the low\'s opacity, the gate open at 0)', () => {
   const open = ungate(ungate(DS_FS, HIGH_OPEN, HIGH_CLOSE), LOW_OPEN, LOW_CLOSE);
   let checked = 0, lit = 0;
-  for (const [weather, minute] of [['cloudy', 12 * 60], ['sunny', 7 * 60], ['thunder', 17 * 60 + 30], ['rain', 9 * 60]]) {
+  // OWN-AUDIT (2026-11-01, PIN MOVED): under a lid (overcast, rain, thunder, snow, fog) the high layer is out by the
+  // weather's own row, so the gate is checked where both layers stand; the lid's own word is pinned below
+  for (const w of ['thunder', 'rain']) {
+    const own = dsUniforms(w, 12 * 60, false);
+    assert.ok(own.uCloudLow[1] > 0 && own.uCloudHigh[1] === 0, `${w}: the low deck stands and the high layer is out under it`);
+  }
+  for (const [weather, minute] of [['cloudy', 12 * 60], ['sunny', 7 * 60], ['partlyCloudy', 17 * 60 + 30], ['cloudy', 9 * 60]]) {
     const under = dsUniforms(weather, minute, true), own = dsUniforms(weather, minute, false);
     assert.equal(under.uCloudLow[1], 0); assert.equal(under.uCloudHigh[1], 0);   // DS2: what the pass is handed under the clouds
     assert.ok(own.uCloudLow[1] > 0 && own.uCloudHigh[1] > 0, `${weather}: ?clouds=off hands the layers' own opacity`);

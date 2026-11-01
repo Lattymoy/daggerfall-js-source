@@ -29,8 +29,9 @@ test('PERF-HIDE: every sprite dyed byte for byte as COATS1 dyed it - each patter
     for (let pattern = 0; pattern < 5; pattern++) for (const [coat, legs, opts] of WAYS) h.update(bytes(recolorHorse(p, look(coat, pattern, legs, 41 + pattern), opts)));
   }
   // OWN-WORK4: the digest of our 60 pictures under the dye (the retired mod's pictures read 097b3ce7 before PERF-HIDE and after;
-  // ours with the saddle leather no coat takes)
-  assert.equal(h.digest('hex'), 'e62ca72185f0b9421932452c81fc217d4cdc0416c30b7c95e6f76f511ebf85e2');
+  // ours with the saddle leather no coat takes; OWN-AUDIT (2026-11-01): the front views without their rider,
+  // horse/horseFrontRider.js - the standing pictures take frame 0's mask)
+  assert.equal(h.digest('hex'), '3f11286e278a1a135b2e8caaff7cbd6f5cea8652b50297cd54e7b10ac024f88b');
 });
 
 test('PERF-HIDE: the 3D horse dyed byte for byte as COATS3D dyed it - the same helpers, answering into scratch', () => {
