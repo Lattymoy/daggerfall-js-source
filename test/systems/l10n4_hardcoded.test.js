@@ -232,7 +232,7 @@ const HARDCODED = {
   'src/render/orderedDither.js': 1,
   'src/render/partyPingDraw.js': 2,   // PARTY-PING: the route's two shaders - GLSL the scan reads as prose (`in vec3`), weaponGlowGlsl.js's same line
   'src/render/partyPingLabels.js': 1,   // PARTY-PING: the pin's SVG, markup the scan reads as prose
-  'src/render/precipitation.js': 6,
+  'src/render/precipitation.js': 5,
   'src/render/rainCurtains.js': 1,
   'src/render/realWindows.js': 11,
   'src/render/redMountainFire.js': 3,   // RED-MOUNTAIN: its shaders' sources, as every pass's - no word a player reads
@@ -257,7 +257,8 @@ const HARDCODED = {
   'src/render/serpentRender.js': 4,
   'src/render/shadowPass.js': 7,   // WL1: DEPTH_GLASS_FS, a building's glass cut out of its sun map - GLSL the scan reads as prose (`in vec2`), as DEPTH_BB_FS beside it
   'src/render/skyRenderer.js': 1,
-  'src/render/snowfallGlsl.js': 2,
+  'src/render/puddleProxyGlsl.js': 1,
+  'src/render/snowfallGlsl.js': 3,
   'src/render/spellImpactFx.js': 2,
   'src/render/spoilsGlow.js': 2,
   'src/render/sunbabySkyRenderer.js': 2,

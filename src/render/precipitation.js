@@ -702,7 +702,7 @@ export class PrecipitationRenderer {
     const P = this.pixel;
     gl.uniformMatrix4fv(P.uVP, false, this._vp);
     gl.uniform3fv(P.uEye, camPos);
-    gl.uniform1f(P.uTime, this.clock(timeSeconds));
+    gl.uniform1f(P.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
     gl.uniform1f(P.uBox, LAB_BOX);
     gl.uniform1f(P.uFall, LAB_FALL.snow);
     gl.uniform2fv(P.uWindV, this.windV);
@@ -797,7 +797,7 @@ export class PrecipitationRenderer {
     gl.uniform3fv(L.uEye, camPos);
     gl.uniform3fv(L.uRight, camRight);
     gl.uniform3f(L.uUp, 0, 1, 0);
-    gl.uniform1f(L.uTime, this.clock(timeSeconds));
+    gl.uniform1f(L.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
     gl.uniform1f(L.uKind, kind);
     gl.uniform1f(L.uBox, LAB_BOX);
     gl.uniform1f(L.uFall, LAB_FALL[mode] ?? LAB_FALL.rain);
@@ -837,7 +837,7 @@ export class PrecipitationRenderer {
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uCamPos, camPos);
     gl.uniform3fv(this.uCamRight, camRight);
-    gl.uniform1f(this.uTime, this.clock(timeSeconds));
+    gl.uniform1f(this.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
     // The config vectors upload from arrays built ONCE - four
     // fresh Float32Arrays per frame sat in a pass whose header claims
     // zero per-frame CPU, and now it is true again.

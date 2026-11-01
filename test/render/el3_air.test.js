@@ -188,7 +188,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.setAir(true);
   const ap = r.air;
   assert.ok(ap instanceof AirPass);
-  assert.equal(count(calls, 'compileShader') - beforeAir, 34, 'seventeen programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve; VOL1: the glow and its tile blur; PERF-EXT31: the bright pass twice and the resolve four times, built for what the frame drew');
+  assert.equal(count(calls, 'compileShader') - beforeAir, 38, 'nineteen programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve; VOL1: the glow and its tile blur; PERF-EXT31: the bright pass twice and the resolve four times; WET1: the puddle pass and its blend, built for what the frame drew');
   r.setAir(false); assert.equal(r.air, null);
   r.setAir(true); assert.equal(r.air, ap, 'kept');
   r.setLightingLane(null); assert.equal(r.air, null, 'no lane, no air');

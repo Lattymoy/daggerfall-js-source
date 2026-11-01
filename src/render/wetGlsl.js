@@ -70,7 +70,7 @@ vec2 wetRipple(vec2 m) {
   float rad = (${asF(RIPPLE_GROW0)} + ${asF(RIPPLE_GROW1)} * age) * sz;
   float x = (r - rad) / max(wid, 1e-3);
   // fade only in the last quarter of life - earlier cut killed the wave mid-spread
-  float ring = sin(x * 3.14159) * exp(-x * x * 0.5) * smoothstep(1.0, 0.78, age) * amp;
+  float ring = sin(x * 3.14159) * exp(-x * x * 0.5) * (1.0 - smoothstep(0.78, 1.0, age)) * amp;
   return r > 1e-4 ? d / r * ring : vec2(0.0);
 }
 vec3 wetAlbedo(vec3 a, vec2 w, float dark) { return a * mix(1.0, dark, w.x) * mix(1.0, ${asF(PUDDLE_DARK)}, w.y); }
@@ -84,7 +84,7 @@ float wetGlossGround(vec2 w, float road) {
 // a puddle's face is level, and rings where drops fall near the eye
 vec3 wetNormal(vec3 n, vec2 w, vec2 m, float dist) {
   if (w.y <= 0.0) return n;
-  float near = smoothstep(${asF(RIPPLE_NEAR_M)}, ${asF(RIPPLE_NEAR_M * 0.4)}, dist);
+  float near = 1.0 - smoothstep(${asF(RIPPLE_NEAR_M * 0.4)}, ${asF(RIPPLE_NEAR_M)}, dist);
   vec2 r = (uWet.w > 0.0 && near > 0.001) ? wetRipple(m) * (uWet.w * near) : vec2(0.0);
   return normalize(mix(n, normalize(vec3(-r.x * ${asF(RIPPLE_SLOPE)}, 1.0, -r.y * ${asF(RIPPLE_SLOPE)})), w.y));
 }

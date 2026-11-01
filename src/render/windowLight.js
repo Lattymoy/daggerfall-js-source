@@ -28,7 +28,12 @@ import {
 } from '../world/windowRoomArt.js';
 import { pageParam } from '../systems/pageQuery.js';
 import { WL_REC, APERTURE_CELL_REC, windowAperturesOf } from './windowApertures.js';
-import { WIN_GLINT_LOD0, WIN_GLINT_LOD1, WIN_GLINT_NEAR_M, WIN_GLINT_FAR_M, WIN_GLINT_FADE_M } from './wetGlsl.js'; // how soft a window is in a puddle
+// how soft a window is in a puddle - twin of wetGlsl's WIN_GLINT_* (a leaf: no wetGlsl import)
+const WIN_GLINT_LOD0 = 0.5;
+const WIN_GLINT_LOD1 = 3.0;
+const WIN_GLINT_NEAR_M = 4;
+const WIN_GLINT_FAR_M = 16;
+const WIN_GLINT_FADE_M = 22;
 
 export { WL_REC, windowAperturesOf };
 

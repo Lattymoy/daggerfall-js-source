@@ -191,7 +191,7 @@ test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
   assert.ok(!EL_TERRAIN_FS.includes('mix(1.0, 1.25, wetW.y)'), 'no sky boost stacking on the proxy');
   assert.ok(RIPPLE_RATE <= 1.5 && RIPPLE_GROW1 >= 0.7 && RIPPLE_WIDTH >= 0.1, 'ripples live long enough to spread');
   assert.ok(RAIN_WET_GLSL.includes('mix(0.5, 1.55') && RAIN_WET_GLSL.includes('mix(0.6, 1.45'), 'drop size and width vary');
-  assert.ok(RAIN_WET_GLSL.includes('smoothstep(1.0, 0.78, age)') && RAIN_WET_GLSL.includes(`smoothstep(${RIPPLE_NEAR_M}`), 'soft late age + distance fade');
+  assert.ok(RAIN_WET_GLSL.includes('1.0 - smoothstep(0.78, 1.0, age)') && RAIN_WET_GLSL.includes(`1.0 - smoothstep(${RIPPLE_NEAR_M * 0.4}`), 'soft late age + distance fade');   // SD20c: rise, then 1 - smoothstep
 
   assert.ok(PUDDLE_BLEND_FS.includes('uPuddle'), 'resolve blend reads the half-res out');
   assert.ok(!EL_TERRAIN_FS.includes('uPrevColor'), 'terrain FS must not sample prev colour (TDR)');
