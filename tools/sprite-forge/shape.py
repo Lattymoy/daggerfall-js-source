@@ -15,6 +15,9 @@ DEFAULT = {
     'helm_s': 1.0, 'helm_dy': 0.0, 'helm_dz': 0.0, 'paul_sz': 1.0,
     'waist_w': 1.0, 'chest_w': 1.0,   # the torso's width below the ribs and across the chest, past torso_w
     'head_dy': 0.0, 'head_dz': 0.0,   # the whole head moved back (+y) or forward, up (+z) or down, on its neck
+    # a factor a cross-section of the lofts (model.py's rows), eased between: the torso's width and depth, the arms'
+    # and the legs' girth
+    'torso_pw': [1.0] * 12, 'torso_pd': [1.0] * 12, 'arm_p': [1.0] * 14, 'leg_p': [1.0] * 8,
 }
 SHAPE = dict(DEFAULT)
 HEAD_PARTS = ('face', 'coif', 'helm', 'nasal', 'cheek_L', 'cheek_R')
@@ -29,8 +32,10 @@ def load_shape(path):
 
 
 def write_shape(path, shape):
+    def r(v):
+        return [round(float(x), 4) for x in v] if isinstance(v, (list, tuple, np.ndarray)) else round(float(v), 4)
     with open(path, 'w') as fh:
-        fh.write(json.dumps({k: round(float(v), 4) for k, v in shape.items()}, indent=1) + '\n')
+        fh.write(json.dumps({k: r(v) for k, v in shape.items()}, indent=1) + '\n')
 
 
 def _radial(p, cx, cy, s):
@@ -58,6 +63,10 @@ def transform(name, p, S=None):
         t = np.clip((p[:, 2] - 1.12) / 0.16, 0.0, 1.0)
         t = t * t * (3 - 2 * t)
         out[:, 0] *= S['torso_w'] * (S.get('waist_w', 1.0) * (1 - t) + S.get('chest_w', 1.0) * t)
+        from model import TORSO
+        zs = [row[0] for row in TORSO]
+        out[:, 0] *= np.interp(p[:, 2], zs, S.get('torso_pw', [1.0] * len(zs)))
+        out[:, 1] = cy + (out[:, 1] - cy) * np.interp(p[:, 2], zs, S.get('torso_pd', [1.0] * len(zs)))
         out[:, 1] = cy + (p[:, 1] - cy) * S['torso_d']
         return out
     if base.startswith('arm_') or base.startswith('leg_'):
@@ -65,7 +74,15 @@ def transform(name, p, S=None):
         chain = ([rest(f'uarm_{s}'), rest(f'farm_{s}'), rest(f'hand_{s}')] if base.startswith('arm_')
                  else [rest(f'thigh_{s}'), rest(f'shin_{s}'), rest(f'foot_{s}')])
         cx, cy = _chain_xy(chain, p[:, 2])
-        return _radial(p, cx, cy, S['arm_r' if base.startswith('arm_') else 'leg_r'])
+        from model import ARM, LEG
+        rows, key = (ARM, 'arm_p') if base.startswith('arm_') else (LEG, 'leg_p')
+        zs = [row[0] for row in rows][::-1]   # the rows run down the limb; np.interp wants them rising
+        prof = np.interp(p[:, 2], zs, list(S.get(key, [1.0] * len(rows)))[::-1])
+        out = p.copy()
+        k = S['arm_r' if base.startswith('arm_') else 'leg_r'] * prof
+        out[:, 0] = cx + (p[:, 0] - cx) * k
+        out[:, 1] = cy + (p[:, 1] - cy) * k
+        return out
     if base in HEAD_PARTS:
         out = p * S.get('head', 1.0)
         out[:, 1] += S.get('head_dy', 0.0)

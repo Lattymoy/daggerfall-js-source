@@ -359,9 +359,19 @@ def frame_score(cloud, rec, f, ref, place, ref_weapon=None):
 _JOB = {}
 
 
+def _shape_of(x):
+    """The flat vector `x` back into a shape table, its lists rebuilt."""
+    S, i = {}, 0
+    for k in _JOB['keys']:
+        n = len(shape.DEFAULT[k]) if isinstance(shape.DEFAULT[k], list) else 0
+        S[k] = list(x[i:i + n]) if n else float(x[i])
+        i += n or 1
+    return S
+
+
 def _shape_value(x):
-    cloud, keys, frames = _JOB['cloud'], _JOB['keys'], _JOB['frames']
-    cloud.set_shape(dict(zip(keys, x)))
+    cloud, frames = _JOB['cloud'], _JOB['frames']
+    cloud.set_shape(_shape_of(x))
     return float(np.mean([frame_score(cloud, rec, f, ref, rec['place'], wpn) for rec, f, ref, wpn in frames]))
 
 
@@ -369,8 +379,16 @@ def fit_shape(cloud, spec, refs, iters, rng):
     """Fit the proportions over every frame, each frame in its fitted pose; candidates weighed on every core."""
     import multiprocessing
     keys = list(shape.DEFAULT)
-    steps = np.array([0.02 if k == 'scale' else 0.015 if k.endswith(('_dx', '_dy', '_dz')) else 0.06 for k in keys])
-    base = np.array([shape.SHAPE.get(k, shape.DEFAULT[k]) for k in keys])
+    steps, base = [], []
+    for k in keys:
+        v = shape.SHAPE.get(k, shape.DEFAULT[k])
+        if isinstance(shape.DEFAULT[k], list):
+            steps += [0.04] * len(shape.DEFAULT[k])
+            base += list(v)
+        else:
+            steps.append(0.02 if k == 'scale' else 0.015 if k.endswith(('_dx', '_dy', '_dz')) else 0.06)
+            base.append(v)
+    steps, base = np.array(steps), np.array(base, dtype=np.float64)
     weapons = _JOB.get('weapons')
     frames = [(rec, f, refs[r][f], weapons[r][f] if weapons else None)
               for r, rec in enumerate(spec['records']) for f in range(rec['frames'])]
@@ -379,7 +397,7 @@ def fit_shape(cloud, spec, refs, iters, rng):
     pool = multiprocessing.get_context('fork').Pool(4)
     x, best = base.copy(), first
     import cma
-    es = cma.CMAEvolutionStrategy(np.zeros(len(keys)), 0.5, {'popsize': 12, 'maxiter': iters, 'verbose': -9,
+    es = cma.CMAEvolutionStrategy(np.zeros(len(base)), 0.5, {'popsize': 16, 'maxiter': iters, 'verbose': -9,
                                                               'seed': int(rng.integers(1, 2 ** 31))})
     i = 0
     while not es.stop():
@@ -394,7 +412,7 @@ def fit_shape(cloud, spec, refs, iters, rng):
         i += 1
     pool.close()
     print(f'shape: {first:.4f} -> {best:.4f}', flush=True)
-    return dict(zip(keys, x))
+    return _shape_of(x)
 
 
 def _fit_record(r):
