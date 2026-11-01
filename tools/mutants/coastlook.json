@@ -128,8 +128,8 @@
   {
     "name": "COAST-LOOK-glsl-bilinear-corner",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "float c = mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);",
-    "new": "float c = mix(mix(float(m & 1u), float((m >> 2u) & 1u), f.x), mix(float((m >> 1u) & 1u), float((m >> 3u) & 1u), f.x), f.y);",
+    "old": "    : mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);\n  s = smoothstep(",
+    "new": "    : mix(mix(float(m & 1u), float((m >> 2u) & 1u), f.x), mix(float((m >> 1u) & 1u), float((m >> 3u) & 1u), f.x), f.y);\n  s = smoothstep(",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "COAST-LOOK-bed-fringe-on-a-blend",
     "file": "src/render/waterBedGlsl.js",
-    "old": "if (m != 15u && k < 1.0 && !blended) {",
-    "new": "if (m != 15u && k < 1.0) {",
+    "old": "if (m != 0u && m != 15u && k < 1.0 && !blended) {",
+    "new": "if (m != 0u && m != 15u && k < 1.0) {",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "COAST-LOOK-sheet-wander-sign",
     "file": "src/render/waterSurface.js",
-    "old": "0.5 - 0.5 * vCut - (geEntry(data)",
-    "new": "0.5 - 0.5 * vCut + (geEntry(data)",
+    "old": "0.5 - 0.5 * cut - (geEntry(data)",
+    "new": "0.5 - 0.5 * cut + (geEntry(data)",
     "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the sheet's shore is its cut field's coverage less the wander.",
     "tests": [
       "test/render/coastlook.test.js"

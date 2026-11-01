@@ -534,7 +534,7 @@ test('RW1 (AUDIT) THE STREET AS IT STANDS NOW: its air re-lit by the clock (a ni
   assert.match(w, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? outsideLanterns\(r\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
   assert.match(ex, /r\.setPointLights\(lightsOnAt\(clockMinute\) \? nearestLights\(cityLights, cam\.pos, r\.maxPointLights, lightAnimator\.ranges\) : new Float32Array\(0\), CITY_LIGHT_COLOR_F32\);/);
   assert.match(w, /if \(deepWaters\) \{ drawDeepWatersFloors\(ground\); r\.markForeignPass\(\); \}[^\n]*\n\s+if \(waterOn && _waterU\) \{/);   // WAGONS2 (FINAL AUDIT): and the mod's programs told
-  assert.match(w, /r\.drawWaterSurfaces\(_waterRows, n, 6\.4, _waterU\);/);
+  assert.match(w, /r\.drawWaterSurfaces\(_waterRows, n, 6\.4, _waterU, TERRAIN_TILE_DIM, _dwFrame\?\.look\.topColor\);/);   // PIN MOVED (WATER-SHORE): the sea in the mod's tint
   assert.equal((wm.match(/dropViewOut\(\);   \/\/ RW1 \(AUDIT\)/g) ?? []).length, 2, 'both ways out of a building');
   assert.match(wm, /const dropViewOut = \(\) => \{ renderer\.releaseOutsideView\?\.\(\); viewOut\.drawn = false; renderer\.takeGlassRect\?\.\(\); \};/, 'its target freed, its glass forgotten');
   assert.match(rr, /this\.beginFrame\(cropProj, view, [^\n]*\n\s+this\._frameFbo = t\.fbo; setFrameTarget\(t\.fbo\);/);

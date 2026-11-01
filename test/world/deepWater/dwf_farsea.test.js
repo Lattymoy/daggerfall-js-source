@@ -227,7 +227,7 @@ test('DW-F: the pass hands the world\'s fog to every program that reads it - the
   assert.ok(!log.some((e) => e.prog === P.under.p), 'the underside is not drawn from over the sea');
 });
 
-test('DW-F: WATER1 reads the cap\'s TileMap - the carved sea and the repainted water take its sheet with them, the water the cap leaves keeps it, and the original is its own again when the patch goes (mutants: the patch unread; the restride on the original)', () => {
+test('DW-F: WATER1 reads the cap\'s TileMap - the repainted water takes its sheet with it, the carved sea is the sheet\'s open sea (WATER-SHORE), the water the cap leaves keeps it, and the original is its own again when the patch goes (mutants: the patch unread; the restride on the original)', () => {
   // the DW-B pixel: water west of x 64 (the sea west of 40, raised between 40 and 64), grass east
   const H = 129, T = 128, SEA = Math.fround(Math.fround(27.2) / 1539);
   const samples = new Float32Array(H * H), raw = new Uint8Array(T * T);
@@ -245,7 +245,9 @@ test('DW-F: WATER1 reads the cap\'s TileMap - the carved sea and the repainted w
     const before = quads(bytes, stride), after = quads(patched, stride), votes = waterVotes(patched, { stride });
     assert.ok(before.has(`${8 * stride},0`), 'the original: the sea wears WATER1');
     for (const [k, corners] of after) assert.ok(corners.some((i) => votes[i] > 0), `stride ${stride}: a sheet over ${k}, which the cap left no water`);
-    assert.ok(![...after.keys()].some((k) => Number(k.split(',')[0]) < 40), `stride ${stride}: none over the carved sea`);
+    // PIN MOVED (WATER-SHORE, bible/07-Rendering/Water-Arc.md): the carved sea is the sheet's open sea, the repainted water ground
+    assert.ok([...after.keys()].some((k) => Number(k.split(',')[0]) < 36), `stride ${stride}: the carved sea wears the sheet`);
+    assert.ok(![...after.keys()].some((k) => { const x = Number(k.split(',')[0]); return x >= 60 && x < 64; }), `stride ${stride}: none over the repainted water`);
     assert.ok(after.size > 0 && after.size < before.size, `stride ${stride}: the water the cap leaves (raised, no ground within eight) keeps its sheet`);
   }
   const world = rd('src/scenes/world.js');
@@ -254,7 +256,7 @@ test('DW-F: WATER1 reads the cap\'s TileMap - the carved sea and the repainted w
   // PIN MOVED (WATER-LEVEL): the sheet is levelled by the TileMap the bed is carved by - the patch where there is one
   assert.match(world, /function bedBytesOf\(p\) \{ return p\._dwBytes \?\? p\.tilemapBytes; \}/, 'the patch where there is one, the original when it goes');
   assert.match(world, /const bed = gridBed\(grid, bedBytesOf\(p\), stride, halo, p\);/, 'the cap\'s sheet levelled by it');
-  assert.match(world, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet\) : null;/);
+  assert.match(world, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet, p\.tilemapTex\) : null;/);   // PIN MOVED (WATER-SHORE): the ground's silt reads its fields by the tilemap
   assert.match(world, /bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'and a restride reads it too');
   assert.match(world, /if \(!p\._visible \|\| !p\.water \|\| p\.deepWaters\?\.hide\) continue;/, 'a hidden cap takes its water with it, as before');
 });

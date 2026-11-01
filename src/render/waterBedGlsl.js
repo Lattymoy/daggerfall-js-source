@@ -38,16 +38,18 @@ vec2 bedCover(uint data, vec2 f, vec2 p, vec3 tl, vec2 gx, vec2 gy, float snowC,
   uint j = (data >> 3u) & 3u;
   uint word = j == 0u ? v.x : (j == 1u ? v.y : (j == 2u ? v.z : v.w));
   uint m = (word >> ((data & 7u) * 4u)) & 15u;
-  if (m == 0u) return vec2(0.0);
-  if (${PUDDLE_RECORDS.map((r) => `rec == ${r}u`).join(' || ')}) {
+  if (m == 0u && uShoreOn == 0) return vec2(0.0);
+  if (m != 0u && (${PUDDLE_RECORDS.map((r) => `rec == ${r}u`).join(' || ')})) {
     float pa = textureGrad(uTileArr, tl, gx, gy).a;
     if (snowC > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).a, snowC);
     return vec2(smoothstep(0.3, 0.7, pa), 0.0);
   }
-  float c = mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);
+  // WATER-SHORE: with the water's fields the bed's line is the water's own, smoothed (render/groundEdgeGlsl.js shoreWet) -
+  // never a tile's edge; a whole water tile's art is silt whole, as it was
+  float c = uShoreOn == 1 && m != 15u ? shoreWet(p) : mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);
   float k = smoothstep(0.3, 0.7, c - (blended ? geWander(p) : 0.0));
   float art = 0.0;
-  if (m != 15u && k < 1.0 && !blended) {
+  if (m != 0u && m != 15u && k < 1.0 && !blended) {
     float a = textureGrad(uTileArr, tl, gx, gy).a;
     if (snowC > 0.0) a = mix(a, textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).a, snowC);
     art = smoothstep(0.3, 0.7, a);

@@ -51,7 +51,7 @@ test('WATER-NEXT 2 the sheet: lifted by the swell, which dies over the bank (non
   // PIN MOVED (WATER-LEVEL): the swell grows with the water's own depth over the carved ground (attribute 1's x), so a
   // trough never dips under it - BANK-FLUSH's shelf stands at the level, AUDIT WATER-NEXT H2's uncarved water has none;
   // the heave fades with the eye's distance (G8); the depths ride it, the plane's over the ground and the shading's
-  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : smoothstep\(0\.0, 2\.500, aDepth\.x\);/);
+  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : max\(smoothstep\(0\.0, 2\.500, aDepth\.x\), sea\.x\);/);   // PIN MOVED (WATER-SHORE): or the clip's share - the open sea the sheet carries
   assert.match(WATER_SURFACE_VS, /vec3 sw = swellAt\(world\.xz, uTime, uWindDir, uSwell \* grow\);/);
   assert.match(WATER_SURFACE_VS, /float lift = sw\.x \* \(1\.0 - smoothstep\(300\.0, 600\.0, length\(world\.xz - uCamPos\.xz\)\)\);\s*\n\s*world\.y \+= lift;/);
   assert.match(WATER_SURFACE_VS, /vDepth = vec2\(aDepth\.x \+ uLift \+ lift, max\(aDepth\.y \+ lift, 0\.0\)\);/);
@@ -67,7 +67,7 @@ test('WATER-NEXT 2 the look: the path through the water is the scene\'s depth be
   assert.match(fs, /vec3 T = exp\(-uAbsorb \* path\);\s*\n\s*under = textureLod\(uScene, uv, 0\.0\)\.rgb;[^\n]*\n\s*trans = T \* \(1\.0 - F\);\s*\n\s*own = lit \* \(vec3\(1\.0\) - T\) \* \(1\.0 - F\) \+ skyRefl \* F;/);
   assert.match(fs, /cover = 1\.0 - t \* \(1\.0 - F\);\s*\n\s*own = lit \* \(1\.0 - t\) \* \(1\.0 - F\) \+ skyRefl \* F;/);
   assert.ok(WATER_ABSORB[0] > WATER_ABSORB[1] && WATER_ABSORB[1] > WATER_ABSORB[2], 'red is swallowed first');
-  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(vDepth\.y \+ 0\.02\) \/ slant;/, 'PIN MOVED (WATER-LEVEL): the bed\'s path is the shading\'s depth - never under the bed\'s profile');
+  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(mix\(vDepth\.y, 60\.0, open\) \+ 0\.02\) \/ slant;/, 'PIN MOVED (WATER-LEVEL): the bed\'s path is the shading\'s depth - never under the bed\'s profile; PIN MOVED (WATER-SHORE): the open sea\'s over the clip');
 });
 
 test('WATER-NEXT 3 the shore: foam over the shallow band the swell pushes up and down the bank, crests whitening only in a strong wind, foam opaque and unglinting (mutants: no run-up; crests in a calm; the foam see-through)', () => {

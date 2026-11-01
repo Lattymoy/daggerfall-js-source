@@ -96,8 +96,8 @@
   {
     "name": "AUDIT-WATER-NEXT-H2-swell-on-uncarved-ground",
     "file": "src/render/waterSurface.js",
-    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
-    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.y);",
+    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);",
+    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.y), sea.x);",
     "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the swell grows with the depth over the carved ground, never the shading's.",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
@@ -230,8 +230,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G7-the-underside-drawn",
     "file": "src/render/waterSurface.js",
-    "old": "  if (uOpen == 1 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
-    "new": "  if (uOpen == 2 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
+    "old": "  if ((uOpen == 1 || vSea.x > 0.5) && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
+    "new": "  if ((uOpen == 2 || vSea.x > 0.5) && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
   {

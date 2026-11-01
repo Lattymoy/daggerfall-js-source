@@ -96,8 +96,8 @@
  {
   "name": "WATER-DRAW1-the-pass-takes-the-feets-table-back",
   "file": "src/world/water/waterLevel.js",
-  "old": "import { WATER_DRAW_MASK_TABLE } from './waterCorners.js';",
-  "new": "import { WATER_MASK_TABLE as WATER_DRAW_MASK_TABLE } from './waterCorners.js';",
+  "old": "import { WATER_DRAW_MASK_TABLE, RISE_MAX } from './waterCorners.js';",
+  "new": "import { WATER_MASK_TABLE as WATER_DRAW_MASK_TABLE, RISE_MAX } from './waterCorners.js';",
   "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the sheet's votes (world/water/waterLevel.js) are what the pass draws; buildWaterIndices retired with the tile-drawn sheet.",
   "tests": [
    "test/world/terrain/grasspath.test.js"

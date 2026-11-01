@@ -1359,8 +1359,8 @@ cell puts the sea against grass or stone. The hard edges are the drawing's:
   as its own), each kind takes ECOTONE1's neighbours by its own record and PRECIP4's winter twin by the same. Every
   other tile is drawn as before.
 - **The water's edge is the same line.** The sheet's shore is the coverage less the same wander where the ground blends
-  (`waterSurface.js:"0.5 - 0.5 * vCut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"` - the cut field's coverage
-  since WATER-LEVEL, below; the corners' own coverage at COAST-LOOK); the sheet's water is
+  (`waterSurface.js:"0.5 - 0.5 * cut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"` - the cut field's coverage
+  since WATER-LEVEL, smoothed since WATER-SHORE, below; the corners' own coverage at COAST-LOOK); the sheet's water is
   the land's share's complement. The silt takes it too, and a blended tile's painted water is no fringe (SHORE-SILT): its
   art is not drawn. A record whose art reads as water (WATER-DRAW2's corners, the docks) keeps the art's line.
 - **Deep Waters' cut is a field** (`groundEdge.js:"export function coastCutAt(cutAt, x, y) {"`). A clipped tile's point
@@ -1409,7 +1409,7 @@ their surfaces, and every shore a line drawn tile by tile. The levels the laws k
 
 - **The tiles mark the water.** A grid vertex's vote is the share of the tiles meeting it that call that corner water
   (the draw's table, `waterVotes`). A tile past the map is no vote, so both pixels mark a seam by their own tiles and
-  agree wherever both are water; a Deep Waters clip is no vote. The bed's halo (AUDIT WATER-NEXT F2) now sees the waters
+  agree wherever both are water; a Deep Waters clip is no vote (WATER-SHORE: now the open sea). The bed's halo (AUDIT WATER-NEXT F2) now sees the waters
   World 2.0 and Cyrodiil paint (`paintedWaterAt`): no neighbour's kernel holds them, so a lake met every seam as a bank
   and its sheet drew a line of foam along it.
 - **A body is a level.** A marked vertex takes its body's own law where one speaks - World 2.0's surface where a region
@@ -1419,7 +1419,7 @@ their surfaces, and every shore a line drawn tile by tile. The levels the laws k
 - **The bed is carved, never raised:** min(ground, level - carve). Daggerfall's flat water carves as BANK-FLUSH carves
   it; a law's deeper floor (World 2.0's channels and lake beds) is left alone.
 - **The sheet stands at the level** (`waterSheet`): its own mesh, a quad drawn where its four corners hold a level and
-  one is the water's own, never a clipped one, as four triangles about its centre. Attribute 1 is the plane's depth
+  one is the water's own, never a clipped one (WATER-SHORE: a clipped one too), as four triangles about its centre. Attribute 1 is the plane's depth
   over the carved ground and the shading's depth (never under the bed's profile, so a pond reads as deep as before);
   attribute 2 is the cut.
 
@@ -1439,7 +1439,7 @@ no level.
 
 **One sea.** The near sheet's sea stands at the kernel's clamp, 34, as Iliac Puddle No More's open sea does (its own
 3 cm over it, `SURFACE_RENDER_Y_OFFSET`, against the near sheet's `WATER_LIFT`) and the far ring's. A tile the cap clips
-holds no quad of the near sheet, so the two never stand over one texel (DW-F), and `dwRecarve` levels the sheet again
+holds no quad of the near sheet, so the two never stand over one texel (DW-F; WATER-SHORE moved this), and `dwRecarve` levels the sheet again
 whenever the cap's TileMap moves. FAR-SEA1's haze still finds the sea by its level.
 
 **What does not move** (WATER-NEXT, WATER-DRAW1): every reader of water as play keeps its line. The feet
@@ -1485,7 +1485,7 @@ off in the probe: it lies up to the tiles' edge and hid every shore.
 
 **Recorded, as found.** At Sentinel's coast the near sheet over the cap's kept tiles is a darker blue than Iliac Puddle
 No More's open sea beyond the clip (the mod's Top Color tints its own), a step of tone along the clip's line in the
-before shot and the after. One look for both is a choice of colour, left for the owner. And a pond a town's blocks lay
+before shot and the after. One look for both is a choice of colour, left for the owner (WATER-SHORE took it: one sea). And a pond a town's blocks lay
 in square tiles on flat ground keeps a square's outline, its corners rounded: the cut field and the silt under it follow
 the tiles that mark it, and a rounder shore would want the silt rounded with it.
 
@@ -1500,3 +1500,86 @@ the pass draws), and `hostceiling.test.js` (both ceilings lowered). Mutants: `to
 dead); re-aimed by content, `audit_waternext.json` (five; H2's no-bed constant retired with its law), `bankflush.json`
 (three), `dwf.json` (two), `waternext.json` (two), `coastlook.json`, `grasspath.json` and `hostsplit.json` (one each) -
 190 dead over the eight lists, none survived.
+
+## WATER-SHORE - A SHORE IS A LINE, NOT A TILE'S EDGE (2026-11-01)
+
+The owner, 2026-11-01, after WATER-LEVEL landed: *"It still looks tiled on the shorelines."* The scope stays
+WATER-LEVEL's: all water on the Enhanced skin. The classic skin, the `enhanced-water` row off and every reader of water
+as play keep their line. A departure: Port-Ledger A, WATER-SHORE.
+
+**What was tiled.** At the Bay's coast the sea was two sheets. Iliac Puddle No More's open sea stood over the cap's
+clip in the mod's Top Color, its cells merged into rectangles; where the sand stands at the sea's own height a cell's
+edge was the shore, so the coast ran in tile-sized steps. The near sheet stopped at every clipped tile, and the two
+tints met in a band along the clip. Inland, the cut field is linear across a tile's four triangles from the votes at
+its corners, so a bank marched at an angle ran in straight runs and 45-degree chamfers.
+
+**The clip is the open sea.** A tile Deep Waters clipped votes water at every corner (`waterVotes`) and its quad is
+drawn: a coastal pixel's sea is the near sheet's, to the coast. Each vertex carries two marks (attribute 3, `sea`): the
+share of the clip about it and whether it stands at the sea's level. Over the clip the swell is whole and the water
+reads as the open sea's, `OPEN_PATH` deep, with a depth copy or without: the mod's floor near the coast, and the
+cut's edge, showed the clip's tiles through clear water. The land's edge the cap cuts now lies under that depth, out of
+sight. From under the sea the mod's underside is drawn there, not the sheet.
+
+**One sea, one colour.** From above, Deep Waters' top is drawn only where no near sheet stands: a hidden pure-ocean
+pixel, the classic water, any pixel seen from under the sea (`drawDeepWatersSurfaces`). The near sheet's water at the
+sea's level takes the mod's tint, its Top Color with its daylight (`drawWaterSurfaces`' `sea`), as the open sea and the
+far ring's sea do. So a coastal pixel meets its pure-ocean neighbour in one colour. A river or a lake above the sea
+keeps the plain water's.
+
+**The shore is smoothed** (`shoreMap`). The fan's field is laid on a lattice of half tiles - a vertex's cut, an edge's
+middle the mean of its ends, a tile's middle its centre - blurred by a Gaussian of `SHORE_SIGMA` (0.6 tile) and held
+within `SHORE_HOLD` (0.7) of itself, so a stream or a pool a tile wide keeps its heart. A near sheet carries it as an
+RGBA8 texture read bilinear, on `WATER_SHORE_UNIT` (26): r the water's cut, g the bed's own water (the votes alone), b
+the clip's share spread by `OPEN_SIGMA` (1 tile), the band over which the open sea's look fades in. A strided far grid
+keeps its vertices' cut.
+
+**The ground under it follows** (`render/groundEdgeGlsl.js` `shoreGlsl`, bound by `drawTerrain` through the tilemap the
+ground draws with). The silt's line is the bed's field: a dry tile the field calls wet is silted under the water, and a
+whole water tile's art stays silt whole. A shore transition's two kinds meet on the same line. COAST-LOOK's wander rides
+all three, so the water, the silt and the land meet on one line.
+
+**A bank is rounded too** (the owner, on a Cyrodiil river's far bank: *"its edgy, like properly rounded"*). Where a
+law's plane (Cyrodiil's, World 2.0's) meets rising ground, the shore was the drawn ground's own contour: straight runs
+across its 6.4-unit triangles, kinked on their diagonal, hard at `SHORE_MEET`. The fourth field is the bank's rise - how
+far the drawn ground stands over the plane, 0 under it, `RISE_MAX` at a vertex with no level - smoothed by
+`RISE_SIGMA` (0.35 tile, which irons out a triangle's zigzag). The water fades out over `RISE_FADE` (0.025 to 0.065) of
+it, short of `WATER_LIFT`, so it ends on that curve, a fraction of a tile inside the triangles' line, before the depth
+test can show the line. Flat water at its level has no rise; its shore stays the cut field's.
+
+**Departures named.** From Iliac Puddle No More: on the Enhanced skin its top is not drawn on a coastal pixel seen from
+above (the port's own sheet carries that sea), its Top Color tints the port's sheet at the sea's level, and its floor
+under a coastal pixel's clip is not seen from above (a pure-ocean pixel's still is). From
+WATER-LEVEL: the clip votes water and its quad is drawn. DFU draws no water surface, so nothing of DFU's moves.
+
+**What it costs.** Four 257 x 257 fields for each near pixel with water, blurred separably on the terrain worker (about
+15 ms there) and again on the main thread when the cap's TileMap lands; 264 KB of texture for each. The lane's terrain
+program now reads sixteen samplers, the least every WebGL2 offers. bootWorld stays at 35,118 logical lines: three calls
+changed in place.
+
+**TAMRIEL-WIDE.** The smoothing is every province's. Past the Bay the sea is the kernel's clamp under the near sheet,
+with no clip, and its coast is the smoothed cut field's. The pins build one coast by the Bay's harbour (398, 341) and by
+Topal Bay past it (2371, 1148, near Leyawiin), each through `streamLevelAt`, and read the same edge from both.
+
+**Why the rise, not finer ground.** Finer drawn ground at the shore would round the line too, but the feet, the swim
+and the foes read `heightAt` over the samples, so a drawn bank would part from the walked one; and a bicubic ground in
+the shader would read sixteen heights a fragment. The rise is one texel more a fragment, drawn only, and it recedes the
+water inside the ground's line rather than past it, where the depth test would cut it anyway.
+
+**Recorded, not done.** The mod's floor is its own and the swim's: fitted to the vanilla shore, with walls at the hole's
+edge, it can drop steeply just inside the clip, and through clear water on Full that edge, on COAST-LOOK's wandering
+line, reads as a change of depth under the shore. A stream a tile wide reads a little narrower: its heart is held, its
+edges smoothed. On a rising bank the water now ends a fraction of a tile short of where the plane meets the ground, so
+a thin rim of wet ground shows there. The blur holds each pixel's own edge, so a shore crossing a seam can step a fraction of a tile there.
+With the mod's Spawn Surfaces off, the near sheet still covers the clip. Each is the owner's call.
+
+**Pinned** in `test/world/water/watershore.test.js` (10): the clip as the sea; the smoothing (a marched coast
+straightened, a straight shore kept, a stream's heart held); the fields; a bowl lake's bank inside the ground's line;
+the coast as the eye reads it (its edge on tile lines a quarter of the time, as a line that knows no tiles - the old
+shore, the clip's edge, all the time); the programs on the GLSL evaluator; the renderer on a fake GL; the hosts; the
+record. PIN MOVED: `waterlevel.test.js`, `water.test.js`, `waterbed.test.js`, `dwf_farsea.test.js` (the carved sea wears
+the sheet), `audit_waternext.test.js` (H2, G7), `waternext.test.js`, `coastlook.test.js`, `shoresilt.test.js`,
+`perfextb.test.js`, `fbsea_water.test.js`, `windows1_view.test.js`, `wagons2_final.test.js`, `glstate.test.js`.
+Mutants: `tools/mutants/watershore.json` (29, all dead); re-aimed by content, `waterlevel.json` (five),
+`coastlook.json` (three), `audit_waternext.json` (two), `bankflush.json`, `grasspath.json`, `perfextb.json`,
+`wagons2_final.json`, `waternext.json` and `windows1.json` (one each) - 358 dead over the ten lists, two equivalent as
+recorded.

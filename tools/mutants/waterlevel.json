@@ -16,8 +16,8 @@
   {
     "name": "WL-clip-votes-dry",
     "file": "src/world/water/waterLevel.js",
-    "old": "return b === CLIP_SENTINEL ? -1 : table[b];",
-    "new": "return b === CLIP_SENTINEL ? 0 : table[b];",
+    "old": "const bitsOf = (b, table) => (b === CLIP_SENTINEL ? 15 : table[b]);",
+    "new": "const bitsOf = (b, table) => (b === CLIP_SENTINEL ? 0 : table[b]);",
     "tests": ["test/world/water/waterlevel.test.js"]
   },
   {
@@ -77,17 +77,17 @@
     "tests": ["test/world/water/waterlevel.test.js"]
   },
   {
-    "name": "WL-clipped-quad-drawn",
+    "name": "WL-clipped-quad-skipped",
     "file": "src/world/water/waterLevel.js",
-    "old": "      if (clipped(bytes, x, z, stride, tileDim)) continue;",
-    "new": "",
+    "old": "      if (!(votes[i0] > 0 || votes[i1] > 0 || votes[i2] > 0 || votes[i3] > 0)) continue;\n      quads.push(i0);",
+    "new": "      if (!(votes[i0] > 0 || votes[i1] > 0 || votes[i2] > 0 || votes[i3] > 0)) continue;\n      if (bytes[z * tileDim + x] === CLIP_SENTINEL) continue;\n      quads.push(i0);",
     "tests": ["test/world/water/waterlevel.test.js", "test/world/deepWater/dwf_farsea.test.js"]
   },
   {
     "name": "WL-centre-without-its-tile",
     "file": "src/world/water/waterLevel.js",
-    "old": "    cuts[c] = stride === 1 ? Math.min(mean, 1 - 2 * corners(tileBits(bytes, x, z, tileDim, table))) : mean;",
-    "new": "    cuts[c] = mean;",
+    "old": "    return stride === 1 ? Math.min(mean, 1 - 2 * corners(bitsOf(bytes[z * tileDim + x], table))) : mean;",
+    "new": "    return mean;",
     "tests": ["test/world/water/waterlevel.test.js"]
   },
   {
@@ -149,14 +149,14 @@
   {
     "name": "WL-cut-sign",
     "file": "src/render/waterSurface.js",
-    "old": "0.5 - 0.5 * vCut - (geEntry(data)",
-    "new": "0.5 + 0.5 * vCut - (geEntry(data)",
+    "old": "0.5 - 0.5 * cut - (geEntry(data)",
+    "new": "0.5 + 0.5 * cut - (geEntry(data)",
     "tests": ["test/world/water/waterlevel.test.js", "test/render/coastlook.test.js"]
   },
   {
     "name": "WL-restride-off-the-sheet",
     "file": "src/scenes/world.js",
-    "old": "    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;",
+    "old": "    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet, p.tilemapTex) : null;",
     "new": "    p.water = null;",
     "tests": ["test/world/water/waterlevel.test.js"]
   },

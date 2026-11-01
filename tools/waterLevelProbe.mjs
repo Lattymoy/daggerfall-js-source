@@ -7,7 +7,8 @@
 //
 //   ARENA2_PATH=... node tools/waterLevelProbe.mjs /tmp/waterlevel/before [scene ...]
 //
-// Scenes: daggerfall, sentinel, harbour, cyrodiil, cyrodiillake, wg2 (all by default). Renders of game data are game data (Port-Doctrine):
+// Scenes: daggerfall, sentinel, harbour, cyrodiil, cyrodiillake, wg2 (all by default); each body's shore also close and
+// low (WATER-SHORE). Renders of game data are game data (Port-Doctrine):
 // write them outside the tree. Fails on a page error or a shader that would not build.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -46,6 +47,19 @@ const HELPERS = `(() => {
     /** the tile of a body nearest a point, raised to the ground there */
     nearest(body, x, z) { return body.tiles.reduce((a, t) => (Math.hypot(t.x - x, t.z - z) < Math.hypot(a.x - x, a.z - z) ? t : a)); },
     here() { const r = window.__renderer; return r?.camera?.pos ?? null; },
+    /** WATER-SHORE: a close, low look at a shore - the body's edge tile nearest its middle (a neighbour not water, inside
+     *  the body's own box, so never a pixel's seam), from over the water \`d\` back and \`h\` up; \`y\` the water's height */
+    low(body, d, h, y) {
+      const ij = body.tiles.map((t) => [Math.round(t.x / 6.4), Math.round(t.z / 6.4)]), at = new Set(ij.map((p) => p[0] + ',' + p[1]));
+      const xs = ij.map((p) => p[0]), zs = ij.map((p) => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+      const open = (n) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !at.has((ij[n][0] + a) + ',' + (ij[n][1] + b)));
+      const inner = body.tiles.filter((t, n) => { const [i, j] = ij[n]; return i > x0 && i < x1 && j > z0 && j < z1 && open(n); });
+      const edge = inner.length ? inner : body.tiles.filter((t, n) => open(n));
+      const e = { ...edge.reduce((a, t) => (Math.hypot(t.x - body.cx, t.z - body.cz) < Math.hypot(a.x - body.cx, a.z - body.cz) ? t : a)) };
+      if (y != null) e.y = y;
+      __wl.aim(e, d, h, Math.atan2(e.x - body.cx, e.z - body.cz));
+      return e;
+    },
   };
   return true;
 })()`;
@@ -61,6 +75,7 @@ const SCENES = {
       { name: 'river_wide', pose: `(() => { const b = __wl.bodies('207,212', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 45, 18, -0.4); return { n: b.n, t }; })()` },
       { name: 'river_top', pose: `(() => { const b = __wl.bodies('207,212', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 6, 40, 1.1); return { n: b.n, t }; })()` },
       { name: 'moat_top', pose: `(() => { const b = __wl.bodies('207,213', WATERS)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 6, 40, 2.2); return { n: b.n, t }; })()` },
+      { name: 'river_low', pose: `(() => { const b = __wl.bodies('207,212', WATERS)[0]; return { n: b.n, t: __wl.low(b, 10, 2.5) }; })()` },
     ],
   },
   sentinel: {
@@ -96,6 +111,7 @@ const SCENES = {
     shots: [
       { name: 'river_near', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 22, 12, 0.9); return { n: b.n, t }; })()` },
       { name: 'river_wide', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 60, 24, -0.6); return { n: b.n, t }; })()` },
+      { name: 'bank_low', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; return { n: b.n, t: __wl.low(b, 10, 2.5) }; })()` },
     ],
   },
   cyrodiillake: {
@@ -106,6 +122,7 @@ const SCENES = {
     shots: [
       { name: 'shore_near', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 20, 7, 1.4); return { n: b.n, t }; })()` },
       { name: 'shore_wide', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 70, 30, 2.6); return { n: b.n, t }; })()` },
+      { name: 'shore_low', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; return { n: b.n, t: __wl.low(b, 10, 2.5) }; })()` },
     ],
   },
   wg2: {
@@ -120,6 +137,12 @@ const SCENES = {
     shots: [
       { name: 'lake_near', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx + 400, b.cz); __wl.aim(t, 18, 6, 1.6); return { n: b.n, t }; })()` },
       { name: 'lake_wide', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx + 400, b.cz); __wl.aim(t, 70, 28, 2.2); return { n: b.n, t }; })()` },
+      // over the lake's own surface (34 + its level, the sea's line beside it), never on its bed as lake_near is: at the
+      // water tile nearest the lake's middle whose ground stands just under that surface - its shore
+      { name: 'lake_low', pose: `(() => { const { px, py, level } = window.__wlTarget, y = window.__seaY() + level, b = __wl.bodies(px + ',' + py, WATERS)[0];
+        const near = b.tiles.filter((u) => u.y > y - 0.6 && u.y < y), d = (u) => Math.hypot(u.x - b.cx, u.z - b.cz);
+        if (!near.length) return { n: b.n, t: __wl.low(b, 10, 2.5, y) };
+        const t = { ...near.reduce((a, u) => (d(u) < d(a) ? u : a)), y }; __wl.aim(t, 10, 2.5, Math.atan2(t.x - b.cx, t.z - b.cz)); return { n: b.n, t }; })()` },
     ],
   },
 };

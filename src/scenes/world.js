@@ -4988,7 +4988,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function dwWaterSurface(p) {
     if (!waterOn || !p.terrain) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
-    p.water = p._bed?.sheet ? renderer.createWaterSheet(p._bed.sheet) : null;   // WATER-LEVEL: the sheet dwRecarve levelled by the cap's TileMap
+    p.water = p._bed?.sheet ? renderer.createWaterSheet(p._bed.sheet, p.tilemapTex) : null;   // WATER-LEVEL: the sheet dwRecarve levelled by the cap's TileMap; WATER-SHORE: its fields the ground's silt reads
   }
   // DW-C: THE CLIP'S CULL - a quad, and at a far stride a skirt segment, whose every tile the cap clipped leaves the
   // ground's index set: the mod's discard exactly while a tile is a quad (stride 1). FAR-CLIP1: at EV4's far stride a
@@ -5258,7 +5258,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _dwSurfaceList.length = 0;
     for (const p of cells ?? built.values()) {   // RW1 x WAGONS2 (FINAL AUDIT): `cells` the view out's own, culled by its own planes (the street frame's _visible is the street's)
       const h = p.deepWaters?.gpu;
-      if ((cells || p._visible) && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
+      if ((cells || p._visible) && h?.surface && !(waterOn && !f.underwater && p.water && !p.deepWaters.hide)) _dwSurfaceList.push({ h, model: p._pixelMatrix });   // WATER-SHORE: from above, a coastal pixel's sea is its own sheet's
     }
     if (!_dwSurfaceList.length) return;
     // WATER-NEXT 2: from above, the sea is the water's own - the swell, the depth to the floor the mod carved, the
@@ -5653,7 +5653,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     p._bed = bed;
     p.terrain = renderer.createTerrainSurface(grid.bed?.positions ?? grid.positions, grid.bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;   // WATER-LEVEL: the kernel's sheet, levelled by the TileMap the water draws from (DW-F)
+    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet, p.tilemapTex) : null;   // WATER-LEVEL: the kernel's sheet, levelled by the TileMap the water draws from (DW-F); WATER-SHORE: its fields the ground's silt reads
     p._stride = stride;
     seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass
@@ -28012,7 +28012,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const row = _waterRows[n++] ??= [null, null, null, null, null];
         row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);
       }
-      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);
+      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);   // WATER-SHORE: the sea in the mod's tint
       for (let i = 0; i < n; i++) _waterRows[i].fill(null);
     }
     if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
@@ -33208,7 +33208,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const row = _waterRows[n++] ??= [null, null, null, null, null];
         row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);
       }
-      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);
+      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);   // WATER-SHORE: the sea in the mod's tint
       for (let i = 0; i < n; i++) _waterRows[i].fill(null);   // a scratch keeps no evicted pixel's surface alive
     }
     };

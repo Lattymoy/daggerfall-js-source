@@ -39,8 +39,8 @@
   {
     "name": "BANKFLUSH-swell-on-the-shelf",
     "file": "src/render/waterSurface.js",
-    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
-    "new": "smoothstep(-1.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
+    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);",
+    "new": "smoothstep(-1.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);",
     "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the shelf stands at the level: no swell over it.",
     "tests": ["test/world/water/bankflush.test.js"]
   }

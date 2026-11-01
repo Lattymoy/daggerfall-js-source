@@ -111,17 +111,17 @@ test('WATER-NEXT 2 the hosts: the world carves at the build and at a restride an
   assert.match(w, /const bed = hostBed\(\{ positions, normals \}, carved\);/);
   assert.match(w, /const terrain = renderer\.createTerrainSurface\(carved\?\.positions \?\? positions, carved\?\.normals \?\? normals,/);
   // PIN MOVED (WATER-LEVEL): the sheet is the bed's own, at its level - no sheet of the terrain's buffers
-  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);
+  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, tilemapTex\) : null;/);   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
   assert.match(w, /const bed = waterOn \? hostBed\(grid, grid\.bed\) : null;/, 'the restride');
-  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet\) : null;/, 'the cap\'s re-index');
+  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet, p\.tilemapTex\) : null;/, 'the cap\'s re-index');   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
   assert.match(w, /_bed: bed,/);
   assert.match(w, /function hostBed\(grid, bed\) \{ return bed \? \{ grid: grid\.positions, normals: grid\.normals, depths: bed\.depths, sheet: bed\.sheet, halo: bed\.halo \?\? null \} : null; \}/);
   assert.doesNotMatch(w, /waterSheetOf|terrain: p\.terrain \}|\{ terrain \}/, 'no sheet rides the terrain\'s buffers');
   const e = read('src/scenes/exterior.js');
   assert.match(e, /const townBed = townGrid \? waterBedOf\(townGrid, tilemapBytes, \{ tileDim: tilemapDim, width: loc\.width \* GROUND_TILE_DIM, height: loc\.height \* GROUND_TILE_DIM \}\) : null;/);
-  assert.match(e, /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet\) : null;/);
+  assert.match(e, /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet, tilemapTex\) : null;/);   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
   assert.match(e, /renderer\.drawWaterSurface\(townWater, identityMatrix,/);
-  assert.match(read('src/tools/waterLab.js'), /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);
+  assert.match(read('src/tools/waterLab.js'), /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, tilemapTex\) : null;/);   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
   // the game's ground is the samples', never the drawn grid's
   assert.doesNotMatch(w.slice(w.indexOf('const heightAt = (x, z, terrainOnly = false) => {'), w.indexOf('// BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN.')), /positions|_bed/);
 });

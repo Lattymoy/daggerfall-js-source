@@ -486,7 +486,7 @@ test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels th
   const pass = w.slice(w.indexOf('    if (waterOn) {\n      stirRipples(dt, now);   // WATER-NEXT 4\n      const wu = _waterU = waterUniforms('), w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'));
   assert.equal((pass.match(/renderer\.drawWaterSurfaces\(/g) || []).length, 1, 'one list call a frame');
   assert.doesNotMatch(pass, /renderer\.drawWaterSurface\(/, 'no pixel draws its own');
-  assert.match(pass, /for \(const p of built\.values\(\)\) \{[\s\S]*?\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/, 'after the walk, not in it');
+  assert.match(pass, /for \(const p of built\.values\(\)\) \{[\s\S]*?\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu, TERRAIN_TILE_DIM, _dwFrame\?\.look\.topColor\);/, 'after the walk, not in it');   // PIN MOVED (WATER-SHORE): the sea in the mod's tint
 });
 
 test('PERF-EXT13: the list draws what the pixels drew one by one - draw for draw, the same program, every uniform the program holds, every unit\'s texture, the VAO, the caps, the depth, blend and offset state and the arguments, in the same order; two climates\' arrays in runs and a first pixel with none (unit 0 bound for it all the same); classic and the lane (its shadow maps); and the state closed as before (the base: no list)', () => {
