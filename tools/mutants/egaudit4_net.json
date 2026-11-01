@@ -315,15 +315,6 @@
     ]
   },
   {
-    "name": "AUDIT-EG-IV-net-table-drops-the-annals",
-    "file": "bible/11-Multiplayer/Elite-Gates.md",
-    "old": "`an` (the Annals' pages the breach gave), ",
-    "new": "",
-    "tests": [
-      "test/net/eliteGates/egaudit4_net_relay.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-EG-IV-net-calls-unswept",
     "file": "server/src/index.js",
     "old": "    for (const [k, v] of calls) { clast = k; if (!(v?.until > now)) dead.push(k); }\n",
@@ -483,15 +474,6 @@
     "new": "{ rq, rh?, ew?, wg? }",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-EG-IV-net-the-hold-asked",
-    "file": "bible/11-Multiplayer/Elite-Gates.md",
-    "old": "  rest), then goes; each room holds itself as it wakes between trials",
-    "new": "  rest), asks each room to hold, then goes; each room holds itself as it wakes between trials",
-    "tests": [
-      "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
   },
   {

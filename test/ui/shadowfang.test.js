@@ -1,6 +1,6 @@
 // SHADOW-FANG — ONE PLAYER'S OWN TITLE AND GLYPH (2026-09-26).
 //
-// Mac: "SirMcMobdon gets a brand new title/glyph. Remove them from Apostle. The glyph needs to be like the reference
+// Mac: "the Shadow Fang account gets a brand new title/glyph. Remove them from Apostle. The glyph needs to be like the reference
 // shown" - a snarling wolf's head in profile, black, with a red eye - and "Black and crimson graident for the
 // title/glyph with the title name being Shadow Fang".
 //
@@ -136,7 +136,7 @@ test('SHADOW-FANG grant: SirMcMobdon alone holds it, case-folded, title and glyp
   const row = (handle, over = {}) => ({ handle, created_at: 1_800_000_000, registered_at: 1_900_000_000, ...over });   // FOUNDER3: first played after the cutoff too, so no Founder
   const nowS = 1_900_000_000;
   for (const h of ['SirMcMobdon', 'sirmcmobdon', 'SIRMCMOBDON']) {
-    // STAFF-PANEL1 (PIN MOVED, mob, 06:33Z: "add me to the dev and my shadow fang just becomes vanity"): beside the developer's
+    // STAFF-PANEL1 (PIN MOVED): beside the developer's
     assert.deepEqual(titlesHeld(row(h), env).slice(0, 2), ['developer', 'shadowfang'], `${h}: Shadow Fang and the developer's first`);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
     assert.ok(['dev', 'shadowfang'].every((g) => glyphsOf(row(h), env, nowS).includes(g)), `${h}: its glyph and the developer's`);   // ADMIN-ALL (PIN MOVED): an Admin holds every paint glyph (test/server/admin_all.test.js); PIN MOVED (STOREFRONT): in GLYPHS' order, the mask's (identityToken.js glyphsInOrder), so no longer at the head
   }

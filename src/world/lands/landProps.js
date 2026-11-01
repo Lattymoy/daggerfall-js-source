@@ -431,7 +431,7 @@ export function flatsOffProps(flats, props, tileM) {
 }
 
 /**
- * A LANDMARK'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, _mark }`, its foot `c` pixel-local): each solid
+ * A LANDMARK'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, nature, _mark }`, its foot `c` pixel-local): each solid
  * part one (landMeasures' `parts` - a stalk, a column, a lump of rock, a trunk: a crag's three lumps, a grove of three's
  * stalks, the xylaria's cluster), turned by its yaw as the draw turns its mesh (x' = c x + s z, z' = -s x + c z) - none
  * for the reeds and the vines (LAND_KIND_LAW.body).
@@ -450,6 +450,7 @@ export function landPropBodies(props, i) {
     h: q.h * s,
     lift: 0,
     body: true,
+    nature: true,
     _mark: 0,
   }));
 }

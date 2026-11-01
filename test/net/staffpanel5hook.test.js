@@ -505,7 +505,7 @@ test('STAFF-VIEW1 hook: peers() is the followed room\'s players as the eye draws
   assert.deepEqual(hook.peers(), [], 'let go');
 });
 
-test('FOLLOW-BODIES (mob, 2026-10-24: "cant see other players bodys"): while a follow is locked the scene draws the players around the target - the eye\'s room less the target, whose eyes the camera is - and the game\'s own room otherwise (mutants: the target kept, the game\'s room while locked)', () => {
+test('FOLLOW-BODIES: while a follow is locked the scene draws the players around the target - the eye\'s room less the target, whose eyes the camera is - and the game\'s own room otherwise (mutants: the target kept, the game\'s room while locked)', () => {
   const { Session, made } = fakeSessions();
   const mine = [{ id: 'peer-mine' }];
   const main = { url: 'wss://relay.test', drawable: () => mine };
@@ -627,7 +627,7 @@ test('STAFF-PANEL5-FOLLOW host: a follow leaves the host\'s room, enters the not
   assert.equal(warned.length, 1);
 });
 
-test('FOLLOW-FRAME host (mob: "u end up in the bottom left corner" "of the daggerfall map"): a dungeon pose never lands on the open air - the camera waits at the door, and an enter that failed is tried again, each wait twice the last', async () => {
+test('FOLLOW-FRAME host (on the Daggerfall map): a dungeon pose never lands on the open air - the camera waits at the door, and an enter that failed is tried again, each wait twice the last', async () => {
   let t = 0, fail = true, mode = 'exterior';
   const view = { x: 12, y: 1, z: 30, yaw: 0, pitch: 0 };
   const place = notePlace(validPartyPose(note('dungeon:m1234.m', { in: 1 })));
@@ -773,14 +773,14 @@ test('STAFF-PANEL5-FOLLOW host: outside a party the pose goes on as the where no
   assert.match(worldSource, /if \(socialLink\(\)\) socialLink\(\)\.solo = !social\.party;/, 'sent outside a party, at the note\'s pace');
 });
 
-// ═══ STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", "need hide to be a toggle") - Hide me and Show myself take
+// ═══ STAFF-HIDE-TOGGLE (2026-10-23) - Hide me and Show myself take
 // effect at once: the panel's `relink` word (net/staffHook.js), the game's own links remade on a fresh token
 // (scenes/staffFollowHost.js relinkGame), and the minter letting go of a mint on its way (net/accountClient.js `forget`).
 // tools/mutants/staff-hide-toggle.json ═══
 
 /** A device signed in (net/accountClient.js storedSession's shape). */
 const signedIn = () => {
-  const mem = new Map([[SESSION_KEY, JSON.stringify({ secret: 's3cret', id: 'acct-mob', name: 'SirMcMobdon' })], [SERVICE_KEY, 'https://accounts.test']]);
+  const mem = new Map([[SESSION_KEY, JSON.stringify({ secret: 's3cret', id: 'acct-chief', name: 'SirMcMobdon' })], [SERVICE_KEY, 'https://accounts.test']]);
   return { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
 };
 const minted = (token) => new Response(JSON.stringify({ token, name: 'SirMcMobdon', kind: 'account', glyphs: ['dev'] }), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -823,7 +823,7 @@ test('STAFF-HIDE-TOGGLE relink, on real sessions and the real minter: the held t
   const { FakeWS, sockets } = fakeSocketClass();
   let hidden = false, mints = 0;
   const minter = accountTokenMinter({ fetch: async () => minted(`v1.${hidden ? 'hidden' : 'shown'}${++mints}.sig`), storage: signedIn() });
-  const session = (presence) => { const x = new OnlineSession({ url: 'wss://relay.test', name: 'SirMcMobdon', id: 'peer-mob1', secret: 'secret-mob1', presence, WebSocketImpl: FakeWS }); x.mintToken = minter; return x; };
+  const session = (presence) => { const x = new OnlineSession({ url: 'wss://relay.test', name: 'SirMcMobdon', id: 'peer-chief1', secret: 'secret-chief1', presence, WebSocketImpl: FakeWS }); x.mintToken = minter; return x; };
   const main = session(true), hub = session(false), region = session(false), gone = session(false);
   main.join('world:3,12');
   hub.join(SOCIAL_ROOM);

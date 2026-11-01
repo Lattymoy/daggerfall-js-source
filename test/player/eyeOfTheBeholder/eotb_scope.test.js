@@ -232,37 +232,3 @@ test('AUDIT-EOTB scope: THE DEAD EXPORTS - what is ported, exported, and called 
   }
 });
 
-test('AUDIT-EOTB scope: the bible page states THIS table, and no record says 1:1 as a claim', () => {
-  const page = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
-  assert.match(page, /\*\*61 authored methods\*\*/, 'the page states the inventory this table holds');
-  assert.match(page, /\*\*forty-six\b/i, 'and how many of them are ported');   // CSA-J: OnUpdateSailing and ModCompatibilityChecking's boat arm; ONE-STROKE: less the ping-pong
-  assert.match(page, /\*\*fifteen\b/i, 'and how many have no twin');
-  assert.match(page, /test\/player\/eyeOfTheBeholder\/eotb_scope\.test\.js/, 'and points at this file');
-
-  // Every IL name the page's no-twin list mentions must be a row
-  // here with no port - so the prose cannot drift from the table.
-  const section = page.split(/\*\*Fifteen (?:have )?no twin\*\*/)[1]?.split('\n## ')[0] ?? '';
-  assert.ok(section.length > 200, 'the page carries the list');
-  const named = [...section.matchAll(/`([A-Za-z_][\w]*)`/g)].map((m) => m[1]);
-  assert.ok(named.length >= 10, 'and names methods in it');
-  const notNames = new Set(NOT.map(([k]) => k.split('::')[1]));
-  const portedNames = new Set(PORTED.map(([k]) => k.split('::')[1]));
-  for (const n of named) {
-    if (portedNames.has(n) && !notNames.has(n)) assert.fail(`the page lists ${n} as having no twin, but the table says it IS ported`);
-  }
-  assert.ok(named.some((n) => notNames.has(n)), 'and at least some are real rows');
-
-  // AND THE CLAIM ITSELF. Six records said 1:1 before the assembly was
-  // read. It is read now, and every law is pinned against it - but a
-  // sentence saying "1:1" is still only as good as the table above, so
-  // a record may say it only beside the thing that checks it.
-  for (const f of ['bible/06-Systems/Eye-Of-The-Beholder.md', 'bible/01-Overview/Mod-Registry.md']) {
-    const s = rd(f);
-    for (const line of s.split('\n')) {
-      if (!/1:1/.test(line)) continue;
-      if (!/eye of the beholder|eotb/i.test(line)) continue;
-      assert.match(line, /not|never|until|called itself|was called|checkable|eotb_scope|forty-five|no twin|IL/i,
-        `${f}: a 1:1 claim for this mod must carry its check, not stand alone - "${line.trim()}"`);
-    }
-  }
-});

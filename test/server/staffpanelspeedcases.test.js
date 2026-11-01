@@ -1,5 +1,4 @@
-// STAFF-PANEL-SPEED (2026-10-23, mob: "slow when moving in menus", "The click takes a while before the new page shows
-// (it's waiting on the server)") - THE REPORTS' DOORS (server-account/src/staffCases.js) PINNED TO THEIR D1 ROUND TRIPS:
+// STAFF-PANEL-SPEED (2026-10-23) - THE REPORTS' DOORS (server-account/src/staffCases.js) PINNED TO THEIR D1 ROUND TRIPS:
 // what a click waits on is each statement awaited after the last, times the network to D1, so the reads a door makes
 // together share one trip (a batch, a Promise.all) and the audit row lands in the batch of its page's last statements.
 // Each pin counts a door's trips on the real Worker (test/server/staffTrips.mjs countTrips), the staff session's own
@@ -32,14 +31,14 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** staffpanel2.test.js's stand: mob (an Admin and owner) and Asynian and Tabbyvish (Moderators) signed in, Troll and
+/** staffpanel2.test.js's stand: chief (an Admin and owner) and Asynian and Tabbyvish (Moderators) signed in, Troll and
  *  Sylvia two players, the relay's door answered - and `trips(path, body, token)`, a door's answer with its trips (no
  *  token: the game's own door, as Asynian). */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY,
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY,
   });
   const real = globalThis.fetch;
   globalThis.fetch = async (url, init) => (String(url) === RELAY ? Response.json({ ok: true }) : real(url, init));
@@ -55,9 +54,9 @@ async function stand() {
   const sylvia = await s.registered('Sylvia');
   const raw = s.env.DB._raw;
   raw.prepare('UPDATE players SET created_at = ? WHERE id = ?').run(nowS() - SPROUT_S - 60, sylvia.id);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
   const enrol = async (handle) => {
-    const inv = await staff('/v1/staff/invite', { handle }, mob.session);
+    const inv = await staff('/v1/staff/invite', { handle }, chief.session);
     const key = await extensionKey();
     const r = await staff('/v1/staff/enroll', { handle, password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', handle)) });
     assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -91,7 +90,7 @@ async function stand() {
     const r = token ? await staff(path, body, token) : await s.call(path, body, game.Asynian.secret);
     return { ...r, ...counter.take() };
   };
-  return { ...s, raw, staff, trips, mob, asy, tab, troll, sylvia, caseOn, player, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, trips, chief, asy, tab, troll, sylvia, caseOn, player, restore: () => { globalThis.fetch = real; } };
 }
 
 
@@ -109,18 +108,18 @@ test('STAFF-PANEL-SPEED: the open cases - urgent, newest and a later page - in 2
     s.caseOn(s.troll);
     s.caseOn(s.sylvia, { kind: 'spawn' });
     assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.asy.session)).status, 200);
-    assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.mob.session)).status, 200);   // taken from Asynian: her `lost`
+    assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.chief.session)).status, 200);   // taken from Asynian: her `lost`
     const urgent = await s.trips('/v1/staff/cases', {}, s.asy.session);
     assert.equal(urgent.status, 200, JSON.stringify(urgent.body));
     assert.deepEqual([urgent.body.cases.map((c) => c.target), urgent.body.total, urgent.body.high, urgent.body.lost.map((c) => [c.target, c.by])],
       [[a.id, s.troll.id], 2, 1, [[a.id, 'SirMcMobdon']]], 'a Moderator\'s chat cases, the high one first, and the case taken from her');
     assert.ok(urgent.trips <= 2, `urgent: ${urgent.trips} trips`);
     assert.equal(rowsOf(s, 'Asynian', 'cases-read'), 1, 'the page and its audit row together');
-    const newest = await s.trips('/v1/staff/cases', { sort: 'newest' }, s.mob.session);
+    const newest = await s.trips('/v1/staff/cases', { sort: 'newest' }, s.chief.session);
     assert.deepEqual(newest.body.cases.map((c) => c.target), [a.id, s.troll.id, s.sylvia.id], 'an Admin\'s every kind, newest first');
     assert.deepEqual(newest.body.cases[0].claim && [newest.body.cases[0].claim.mine, newest.body.cases[0].reasons], [true, ['threat']]);
     assert.ok(newest.trips <= 2, `newest: ${newest.trips} trips`);
-    const later = await s.trips('/v1/staff/cases', { from: 25 }, s.mob.session);
+    const later = await s.trips('/v1/staff/cases', { from: 25 }, s.chief.session);
     assert.deepEqual([later.body.cases, later.body.next, later.body.total, later.body.lost], [[], null, 3, []]);
     assert.ok(later.trips <= 2, `a later page: ${later.trips} trips`);
   } finally { s.restore(); }
@@ -130,9 +129,9 @@ test('STAFF-PANEL-SPEED: one case - its record, lines and reports, the holder\'s
   const s = await stand();
   try {
     const id = s.caseOn(s.troll);
-    assert.equal((await s.staff('/v1/staff/claim', { target: s.troll.id }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/claim', { target: s.troll.id }, s.chief.session)).status, 200);
     s.raw.prepare('UPDATE mod_cases SET claim_until = ? WHERE id = ?').run(nowS() + 60, id);
-    const one = await s.trips('/v1/staff/case', { target: s.troll.id }, s.mob.session);
+    const one = await s.trips('/v1/staff/case', { target: s.troll.id }, s.chief.session);
     assert.equal(one.status, 200, JSON.stringify(one.body));
     assert.deepEqual([one.body.case.id, one.body.case.name, one.body.case.lines.map((l) => l.text), one.body.case.notes, one.body.record.target, one.body.claim.mine],
       [id, 'Troll', ['a line'], ['said so'], s.troll.id, true]);
@@ -174,26 +173,26 @@ test('STAFF-PANEL-SPEED: claim, release, Mute, Ban, Unban and Dismiss - the acco
     const release = await s.trips('/v1/staff/release', { target: a.id }, s.asy.session);
     assert.deepEqual(release.body, { ok: true, case: ca });
     assert.ok(release.trips <= 3, `release: ${release.trips} trips`);
-    assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.mob.session)).status, 200);
-    const mute = await s.trips('/v1/staff/mute', { target: a.id, minutes: 30, click: 'press-1001' }, s.mob.session);
+    assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.chief.session)).status, 200);
+    const mute = await s.trips('/v1/staff/mute', { target: a.id, minutes: 30, click: 'press-1001' }, s.chief.session);
     assert.deepEqual([mute.body.ok, mute.body.case, s.raw.prepare('SELECT status FROM mod_cases WHERE id = ?').get(ca).status], [true, ca, 'actioned']);
     assert.ok(mute.trips <= 7, `mute: ${mute.trips} trips`);
-    const again = await s.trips('/v1/staff/mute', { target: a.id, minutes: 30, click: 'press-1001' }, s.mob.session);
+    const again = await s.trips('/v1/staff/mute', { target: a.id, minutes: 30, click: 'press-1001' }, s.chief.session);
     assert.deepEqual([again.body.ok, again.body.repeat], [true, true], 'the same press sent twice is the first');
-    const ban = await s.trips('/v1/staff/ban', { target: b.id, days: 3, reason: 'spam', click: 'press-1002' }, s.mob.session);
+    const ban = await s.trips('/v1/staff/ban', { target: b.id, days: 3, reason: 'spam', click: 'press-1002' }, s.chief.session);
     assert.deepEqual([ban.body.ok, ban.body.case], [true, cb]);
     assert.ok(ban.trips <= 7, `ban: ${ban.trips} trips`);
-    const unban = await s.trips('/v1/staff/unban', { target: b.id }, s.mob.session);
+    const unban = await s.trips('/v1/staff/unban', { target: b.id }, s.chief.session);
     assert.deepEqual([unban.body.ok, unban.body.until], [true, 0]);
     assert.ok(unban.trips <= 5, `unban: ${unban.trips} trips`);
     const dismiss = await s.trips('/v1/staff/dismiss', { target: c.id }, s.asy.session);
     assert.deepEqual([dismiss.body.ok, dismiss.body.case], [true, cc]);
     assert.ok(dismiss.trips <= 7, `dismiss: ${dismiss.trips} trips`);
     // a lift closes no case: the holder's act keeps the claim, as it did
-    assert.equal((await s.staff('/v1/staff/claim', { target: s.troll.id }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/claim', { target: s.troll.id }, s.chief.session)).status, 200);
     const tc = s.raw.prepare("SELECT id FROM mod_cases WHERE target = ? AND status = 'open' AND claimed_by IS NOT NULL").get(s.troll.id).id;
     s.raw.prepare('UPDATE mod_cases SET claim_until = ? WHERE id = ?').run(nowS() + 60, tc);
-    const lift = await s.trips('/v1/staff/mute', { target: s.troll.id, minutes: 0, click: 'press-1003' }, s.mob.session);
+    const lift = await s.trips('/v1/staff/mute', { target: s.troll.id, minutes: 0, click: 'press-1003' }, s.chief.session);
     assert.deepEqual([lift.body.ok, lift.body.case], [true, undefined]);
     assert.ok(s.raw.prepare('SELECT claim_until FROM mod_cases WHERE id = ?').get(tc).claim_until >= nowS() + CLAIM_S - 5, 'the claim kept');
     assert.ok(lift.trips <= 7, `a lift: ${lift.trips} trips`);

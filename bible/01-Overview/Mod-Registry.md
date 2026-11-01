@@ -1,150 +1,82 @@
-# The vendored-work registry (HARD4, 2026-09-15)
+# Mod Registry
 
-> **The counts in the next two sections are HARD4's own moment and are
-> left as it wrote them.** They were true of the fifteen rows that
-> existed on 2026-09-15 and they are the record of what putting those
-> rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 19 directories and 4 of their READMEs still carry an
-> unfilled permission line, each shown as `RECORD OPEN` in the table
-> (2026-10-29: two directories removed, both with permission, so the open count stands;
-> MUDEX1, 2026-10-20: Ralzar's `mudex`, the sixty-first - Meaner Monsters' own form beside DEX, vendored on Mac's
-> approval ("Approve MUDEX"), the author's own words not yet, so the open count rises by one;
-> DEX0, 2026-10-19: Kamer & Kab's `daggerfall-enemy-expansion`, the sixtieth (the fifty-eighth on its branch,
-> renumbered past LAYERED-GEAR's two at the merge) - Mac's word of permission recorded ("Yes, record my word"), the
-> authors' own words not yet, so the open count rises by one;
-> LAYERED-GEAR and the 2 and the Z, 2026-10-19: `pixelify-glyphs` and `layered-armor`, the fifty-eighth and the
-> fifty-ninth, both the game's own work with their permission written, so the open count stays;
-> KG3, 2026-10-13: the unnamed author's `kings-gambit`, the fifty-seventh - the owner's word of permission
-> recorded ("We also have permission"), the author's own words not yet - the bundle names no author - so the open
-> count rises by one;
-> THE ENVIRONMENT MODS, 2026-10-08: demifiend000's `heat-haze`, `windfall` and `snowfall` and the
-> unnamed author's `sands-of-the-alikr`, the fifty-second to the fifty-fifth - Mac's word of permission recorded
-> ("We have permission to use and implement everything into the codebase"), the authors' own words not yet, so the
-> open count rises by four;
-> PI1, 2026-10-07: demifiend000's `physical-items`, the fifty-first - Mac's word of permission
-> recorded ("permission has been granted"), the author's own words not yet, so the open count rises by one;
-> LEGACY1, 2026-10-05: Mac's own `project-legacy`, the fiftieth - the author's own permission
-> written in its README, so the open count stands;
-> VE4, 2026-10-05: carademono's `vanilla-enhanced`, the forty-ninth - Mac's word of permission
-> recorded ("Approved and yes"), the author's own words not yet, so the open count rises by one;
-> LPT1, 2026-10-05: SquidKamer's `low-poly-trees`, the forty-eighth - its archive carries the
-> bundle alone, no readme, and its manifest no licence, so the open count rises by one;
-> IT1, 2026-10-04: kkgobkk's `immersive-travel`, the forty-seventh - its zip carries the
-> bundle alone, no readme, so the open count rises by one;
-> THE MERGE of main's FIELD BUGS 2026-10-03 into the arena branch: CLASSIC-CURSOR's `dfu-cursor`, the forty-third
-> on main, is the forty-sixth here - Daggerfall Unity's own cursor under its MIT licence, so the open count stands;
-> ARENA1, 2026-10-02: Kamer's `daggerfall-arena`, the forty-fifth - his permission relayed by Mac
-> and written in its README, so the open count stands;
-> WD3, 2026-10-01: carademono's `beautiful-villages` and `beautiful-cities`, the forty-third and
-> forty-fourth - Mac's word of permission recorded ("We have permission"), the author's own words
-> not yet, so the open count rises by two;
-> THE MERGE of main into the professions branch, 2026-09-28, counted them again: FORAGE1's
-> `foraging`, the thirty-eighth on its branch, is the forty-second - Harbinger451's Foraging, Mac's
-> word of permission recorded, the author's own words not yet, so the open count rises by one;
-> RAID1, 2026-09-27: `world-events-raiding-parties`, the forty-first at the merge with the
-> sea update - Kamer made the mod for this port and Mac recorded it, "Kamer made this for
-> us", so the open count stands;
-> CSA-A, 2026-09-27: `come-sail-away` the thirty-ninth - its zip carries
-> the bundle alone, no readme, so the open count rises by one - and
-> `vorbis-fsb-setups` the fortieth, two licensed codebook headers whose
-> licences travel with them, so it stands;
-> OH-A, 2026-09-26: `ocean-holes` the thirty-eighth - its archive carries
-> no readme either, so the open count rises by one;
-> the sea update's merge with main, 2026-09-25, counted them again: main's
-> SKIN2 added `class-skins`, the thirty-third, its record open; the sea update's
-> four follow it - two since removed (their permission recorded, so the open
-> count stood), WA1's `warm-ashes-ships` the thirty-sixth
-> (its archive carries no readme, so its permission line waits for Mac and
-> the open count rises by one) and DW-A to DW-D's `iliac-puddle-no-more` the
-> thirty-seventh (no readme either, so it rises by one again);
-> AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
-> brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
-> and 13 when it added the twenty-sixth;
-> the sentence had read 19 and 11 since ORL1 and nothing checks it, so
-> re-count rather than trust it). ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
-> that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
-> It carries no `*.dfmod.json`, so the gate below reads no version or
-> author cell for it and its own suite checks both instead; its row in
-> *Known deviations* says so. (Eight of the nineteen directories carry no
-> manifest. Six of the other seven are not mods at all - Daggerfall
-> Unity's own shipped data, a font, a road table, Mac's own project - and
-> the seventh, `windmills-kamer`, is a Daggerfall Unity mod shipped as
-> loose meshes rather than as a bundle.)
-
-OWN-WORK1 (2026-10-31) retired twelve directories, eight of them open, OWN-WORK2 four more and OWN-WORK3 two more,
-all six open, so the counts above fell from 59 and 37. OWN-WORK4 (wave 3, the same day) retired twenty-one more and the two Vorbis headers. Their rows moved to `Own-Work.md`, "Retired from vendor/", and an open one stays open
-there.
-
-The fourth slice of `01-Overview/Hardening.md`. One row per directory in
-`vendor/`, and `test/systems/hard4_registry.test.js` derives the row list from
-the filesystem, so a fourteenth entry cannot arrive without one.
-
-## Why a registry and not fourteen READMEs
-
-The READMEs are good, and they stay: each is the long form, and the
-registry links to it rather than replacing it. What a README cannot do
-is be **read together with the other thirteen**. Two facts about this
-tree were invisible until these rows were put side by side:
-
-1. **Seven of the fifteen carry an unfilled permission line.** Each is a
-   literal `[Mac: paste the text of the permission, or the link to it,
-   here.]` sitting under a sentence that says permission was granted -
-   so the README reads as settled, and only the placeholder says it is
-   not. Six is not one oversight; it is the shape of a record nothing
-   checks. They are the `RECORD OPEN` rows below, and the gate now holds
-   the two in step: a README with the placeholder MUST show `RECORD OPEN`
-   here, and a README without it must NOT.
-2. **One port is built from a version its upstream source does not
-   cover.** PCAAO's shipped bundle is 1.44; the last single-file source
-   in its repository is 1.40. The port's law is the decompiled 1.44 with
-   the 1.40 source naming what the decompiler numbered - which is the
-   right call and is written down in the README, but it is the kind of
-   fact that belongs where a maintainer looks first.
-
-Neither is a defect in the port's behaviour. Both are exactly the
-"correct system delivered incorrectly by its caller" shape this program
-was written for, pointed at provenance instead of at code.
+One row for each directory in `vendor/`: other people's work the game carries, where it came from, its version and
+its permission. Each mod's README is the long form; this table is the index. `test/systems/hard4_registry.test.js`
+derives the row list from the filesystem, so a new vendor directory cannot arrive without its row.
 
 ## What `RECORD OPEN` means, and what it does not
 
-It does **not** mean the work is used without permission. In every case
-the README records that permission was given - to Mac, by the author, on
-a dated day - and that sentence is Mac's word, which settles the
-question of whether the port may carry the files.
+It does **not** mean the work is used without permission. In every case the README records that permission was
+given, and that sentence is Mac's word, which settles whether the game may carry the files.
 
-It means the EVIDENCE was never pasted in. The line exists to hold the
-author's own words or a link to them, and it is still a prompt. Anyone
-who has to answer a licence question later - or anyone who takes this
-repository over - would find a promise and no receipt. Filling the seven
-lines is a five-minute job for the person who holds the messages, and it
-is nobody else's job, which is why the rows say who.
+It means the evidence was never pasted in: the README's permission line still holds its `[Mac: ...]` prompt
+instead of the author's own words or a link to them. Filling it is the job of the person who holds the messages.
 
 ## The registry
 
-`parity` is the date the port was last read against the upstream work,
-not the date the slice shipped, where those differ.
+`parity` is the date the port was last read against the upstream work.
 
 | vendor | what the port takes | upstream | version | read from | licence / permission | port slice | parity | bible |
 |---|---|---|---|---|---|---|---|---|
+| `ambient-text` | manifest, settings, the 918-line text table | Regnier | 1.8 | shipped `.7z` `Ambient_Text-303-1-8-1774575578`; behaviour off the DLL's IL | granted (Mac handed the archive over 2026-09-15) - **RECORD OPEN** | AT0-AT3 | 2026-09-15 | `06-Systems/Ambient-Text.md` |
+| `eye-of-the-beholder` | manifest, settings, presets, the per-sprite offsets folded to one table, and all 3035 sprites re-encoded as indexed PNG | RedRoryOTheGlen | 2.1 | shipped `.zip` `Eye_of_the_Beholder-762-2-1-1775438888`; the DLL and its IL dump vendored (EOTB-IL) | granted (Mac handed the archive over 2026-09-15) - **RECORD OPEN** | EOTB0-EOTB7, AUDIT-EOTB, AUDIT-EOTB2, EOTB-IL (the assembly and its IL dump vendored beside the art; 45 of 61 authored methods ported, every one read off the IL, 16 with no twin here - the count is checked against the dump in `test/player/eyeOfTheBeholder/eotb_scope.test.js`; see the page) | 2026-09-16 | `06-Systems/Eye-Of-The-Beholder.md` |
+| `immersive-footsteps` | manifest, settings, the two C# sources (the author's MIT repository at `ac03581`), all 210 MP3 clips in both qualities | Kirk.O | 1.01 | shipped `.zip` `Immersive_Footsteps_v1.01_-_DFU_v1.0.0_-_Windows-706-1-01-1713032612`; behaviour off the author's published SOURCE (the bundle's DLL is its build; its FSB5 clips are Unity's import of the same MP3s) | MIT (the main script's header); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | IF1 | 2026-09-16 | `06-Systems/Immersive-Footsteps.md` |
+| `better-ambience` | manifest, settings, all sixteen C# sources (carried inside the bundle as TextAssets), the author's MIT LICENSE, the 29 WAV clips the mod asks for (from the author's repository) | Joshua Steinhauer (joshcamas) | 0.1.4 | shipped `.dfmod` from the Nexus archive `BetterAmbience-139-0-1-5-1666071806` (labelled 0.1.5; the manifest inside says 0.1.4); behaviour off the SOURCES the bundle carries; the clips' FSB5 imports are undecodable here, so the repository's WAVs stand in | MIT (the repository's LICENSE); granted (Mac handed the archive over 2026-09-16) - **RECORD OPEN** | BA1 | 2026-09-16 | `06-Systems/Better-Ambience.md` |
 | `warm-ashes-ships` | manifest, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source), the quest list and four quests verbatim (`Quests/`), and the author's EDIT of each ship block in each of its three variants (`WorldDataPatches/`, WD1, the classic ship subrecords he copied carried as COPY ops) - the blocks rebuilt at load from the player's `BLOCKS.BSA` | Kamer | 1.1 | shipped `.rar` `Warm_Ashes_High_Seas_-_Ship_Encounters-985-1-1-1744179804`; `tools/worldDataPatch.mjs` checks each patch rebuilds the shipped file's canonical sha256; behaviour off the IL | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN** | WA1, WD1 | 2026-09-25 | `03-World/Warm-Ashes-Ships.md` |
+| `immersive-travel` | manifest and settings verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source; its three tables - capitals, large docks, dock pixels - restated in `src/systems/immersiveTravelTables.js` and found whole in the DLL by `test/systems/guild/it1_immersivetravel.test.js`), and the author's EDIT of each of the four city-gate blocks (`WorldDataPatches/`, WD1) - the blocks rebuilt at load from the player's `BLOCKS.BSA` | kkgobkk | 1.5 | shipped `.zip` `ImmersiveTravel_986_1.5_2026-08-05T19-52Z_UQppONgpe` (the bundle alone); behaviour off the IL; the patches read off the files' header counts by `tools/immersiveTravelPatches.mjs` WITHOUT a BLOCKS.BSA (none in the container) - its run with an ARENA2, and `test/formats/worldData/it1_worlddata.test.js` with `ARENA2_PATH`, check them sha256 for sha256 | granted (the owner handed the zip over 2026-10-04: "let this be the next mod we integrate 1:1") - **RECORD OPEN** | IT1 | 2026-10-04 | `06-Systems/Immersive-Travel.md` |
 | `world-events-raiding-parties` | manifest verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source); nothing else - the mod ships no settings, art, sounds or quests | Kamer | 1.1 | shipped `.dfmod` `world_events_-_raiding_parties.dfmod` (11,820 bytes, sha256 `3129926f...b9815988`); behaviour off the IL, with the mod's own bugs fixed as recorded departures | granted - made by Kamer for this port (Mac, 2026-09-27: "Kamer made this for us") | RAID1 | 2026-09-27 | `03-World/Raiding-Parties.md` |
 | `project-legacy` | manifest and settings verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source); NOT the seven pictures, whose stone panels and unused talk window read as cuts of the classic interface - no window draws them; every skin has the Enhanced Plus Family tab | Lattymoy, Ghð§† and Positronico | 0.4.1 | shipped `.7z` `Genealogy_Update-1012-0-4-1-1774616989` (`project legacy (6).dfmod`, 144,062 bytes, sha256 `220c9cb5...160093fd`); behaviour off the IL, every bug fixed as a recorded departure | the author's own - Mac is Lattymoy (2026-10-05, "this is actually my DFU mod that I want to integrate") | LEGACY1-LEGACY7 | 2026-10-05 | `06-Systems/Legacy-Arc.md` |
+| `iliac-puddle-no-more` | manifest, settings and the seven fish item templates verbatim, the seven fish pictures (the author's own, the bundle's textures decoded at their first mip - DW-E3), and the compiled assembly byte for byte (the port's law - the bundle carries no C# source); NOT the two 356 MB coastline bakes, which the mod computes from WOODS.WLD, MAPS.BSA and BLOCKS.BSA and the port rebuilds from the player's own files (DW-A), nor the compiled shaders, restated as GLSL | jet082 | 1.2.2 | shipped `.7z` `Iliac_Puddle_No_More_1304_1.2.2_2026-07-11T17-49Z_psKKacHpq`; behaviour off the assembly read back to C#; the bake checked against the mod's own `DistanceBakeVanilla` by `test/world/deepWater/dwa_bake.test.js` when it is at hand | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN** | DW-A to DW-E5, DW-F (the close: the sea at a distance, the audit pass) | 2026-09-26 | `03-World/Deep-Waters.md` |
+| `ocean-holes` | manifest and settings verbatim, and the compiled assembly byte for byte (the port's law - the bundle carries no C# source); the mod ships no art, meshes or sounds (its discs and its miasma puff are built by the script, its dungeons are Daggerfall's own, borrowed and flooded) | jet082 | 1.1.0 | shipped `.7z` `Theres_a_Hole_in_The_Bottom_of_the_Ocean_1313_1.1.0_2026-07-27T00-07Z_Z0nnzkOZH`; behaviour off the assembly read back to C#; requires `iliac-puddle-no-more` | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN** | OH-A to OH-F | 2026-09-26 | `03-World/Ocean-Holes.md` |
+| `come-sail-away` | manifest, settings and the two item templates verbatim (the templates' trailing comma is the author's, and DFU's parser takes it), the compiled assembly byte for byte (the port's law - the bundle carries no C# source); the author's own pictures (the splash and the wind widget's 24 frames) and the waves' two paints with their per-frame scroll and phase, each measured against every TEXTURE record by `tools/comeSailAwayExtract.mjs`; the five played clips, the bundle's own Vorbis packets in rebuilt Ogg streams; the boats as data - the twelve prefabs the assembly asks for, their 209 meshes, 46 materials and the animation (5 controllers, 26 overrides, 141 clips) - read off the type trees by `tools/lib/unityScene.mjs`; NOT the waves' crests (TEXTURE.303 record 1, the player's own), NOT record 3 (Daggerfall's `TRAV0I00.IMG` travel map), NOT Unity's own pictures or the three clips it never plays, NOT the Daggerfall textures the boats wear | RedRoryOTheGlen | 2.1 | shipped zip `Come_Sail_Away_1131_2.1_2026-06-22T11-24Z_FKUUdDR9a` (the bundle alone); behaviour off the assembly read back to C#; pictures measured against the ARENA2 | granted (Mac handed the archive over 2026-09-26) - **RECORD OPEN** | CSA-A to CSA-J | 2026-09-27/28 | `03-World/Come-Sail-Away.md` |
+| `vorbis-fsb-setups` | two Vorbis setup headers (0xd6e0bbd4, 0x8d00698d) byte for byte - the codebooks FMOD strips from a Unity clip and names by CRC32, needed to rebuild Come Sail Away's clips as Ogg (`tools/lib/fsb5Vorbis.mjs`) | vgmstream authors; Xiph.org Foundation (libvorbis) | - | vgmstream `src/coding/libs/vorbis_codebooks_fsb.h` (master, 2026-09-27); 0xd6e0bbd4 also regenerated byte for byte by libvorbisenc 1.3.7 | vgmstream's ISC-style licence and libvorbis's BSD-3-Clause, both vendored beside the files | CSA-A | 2026-09-27 | `03-World/Come-Sail-Away.md` |
+| `climates-calories` | manifest, the mod's item templates, sixteen item icons | Ralzar | 1.7.1 | shipped zip `Climates_and_Calories-49-1-7-1-1707751069`; the rules off the DLL's IL (`tools/ilDump.py`), then OVERHAULED, not ported | granted - an overhaul, relayed by Mac 2026-09-17 ("we have been given permission to completely overhaul this mod") | SURV1-SURV7 | 2026-09-18 | `06-Systems/Climates-Calories.md` |
+| `foraging` | manifest, the twelve item templates, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source), the quest list and its 22 quests verbatim (`Quests/` - the port's six fixes: four quest-text patches in a table in its own module (Q7, Q8, Q9, Q13), Q10 and Q11 in its own code; never an edit here - AUDIT 28 corrected "five fixes are a patch table"), the author's seven textures as PNG, the shipped readme | Harbinger451 | 1.7 | shipped zip `Foraging_1260_1.7` (Nexus 1260 by its name); the rules off the DLL's IL (`tools/ilDump.py`), Quest Actions Extension's four actions restated off its repository (`Jagget/QuestActionsExtension` @ `56a407e`) | granted (Mac handed the zip over 2026-09-28: "Heres this for life skills"; "Yes, permission") - **RECORD OPEN** | FORAGE1-FORAGE2 | 2026-09-28 | `06-Systems/Foraging.md` |
+| `beautiful-villages` | manifest verbatim, and every world-data file - 7,317 locations and 209 RMB blocks - as the author's EDIT of the player's own `MAPS.BSA` and `BLOCKS.BSA`, in one pack (`WorldDataPack/`, WD3), every piece the author copied out of Daggerfall named by reference (`$c`: its classic block's index and its path in the block, the block checked by name, `classicNames` - the sha256 only the builder's way to find it; AUDIT PRE-MERGE 1003 WD3) and never carried; not the bundle's eighteen bed prefabs (null-referenced - they draw nothing in DFU - over Daggerfall's own bed meshes and recoloured classic bedclothes): the port draws Daggerfall's own beds under bedclothes recoloured in code, and its own stand-ins for every peer piece it can (`src/world/townStandIns.js`) | carademono | 1.4.2 | shipped `.7z` `Beautiful_Villages_of_Daggerfall-566-1-4-2-1749441651`; `tools/worldDataPackBuild.mjs` checks every file rebuilds the author's sha256 through the runtime's reader | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | WD3 | 2026-10-01 | `03-World/Beautiful-Towns.md` |
+| `beautiful-cities` | manifest verbatim, and every world-data file - 410 cities and 611 RMB blocks, 388 of them composites - as the author's EDIT of the player's own `MAPS.BSA` and `BLOCKS.BSA`, in one pack (`WorldDataPack/`, WD3), every piece the author copied out of Daggerfall named by reference (`$c`: its classic block's index and its path in the block, the block checked by name, `classicNames` - the sha256 only the builder's way to find it; AUDIT PRE-MERGE 1003 WD3) and never carried; not the bundle's eighteen bed prefabs (null-referenced, no meshes in this bundle at all, recoloured classic bedclothes): the port draws Daggerfall's own beds under bedclothes recoloured in code, and its own stand-ins for every peer piece it can (`src/world/townStandIns.js`) | carademono | 0.5.0 | shipped `.7z` `Beautiful_Cities_of_Daggerfall-720-0-5-0-1749441603`; `tools/worldDataPackBuild.mjs` checks every file rebuilds the author's sha256 through the runtime's reader | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | WD3 | 2026-10-01 | `03-World/Beautiful-Towns.md` |
 | `dfu-books` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/books.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/UI-Arc.md` |
-| `dfu-icons` | the sixteen interaction-mode icons (four sets x steal/grab/info/talk) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Icons` @ `2343305d` | MIT | HUD-ICON1 | 2026-09-24 | `01-Overview/Port-Ledger.md` |
-| `dfu-cursor` | the default cursor, Cursor2.png (the 32x32 blue arrow, ProjectSettings' defaultCursor) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Cursor2.png` @ `2343305d` | MIT | CLASSIC-CURSOR | 2026-10-03 | `01-Overview/bugs/Field-Bugs-2026-10-03.md` |
+| `dfu-icons` | the sixteen interaction-mode icons (four sets x steal/grab/info/talk) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Icons` @ `2343305d` | MIT | HUD-ICON1 | 2026-09-24 | - |
+| `dfu-cursor` | the default cursor, Cursor2.png (the 32x32 blue arrow, ProjectSettings' defaultCursor) | Daggerfall Unity (Interkarma and contributors) | - | `Assets/Resources/Cursor2.png` @ `2343305d` | MIT | CLASSIC-CURSOR | 2026-10-03 | - |
 | `dfu-quests` | data | Daggerfall Unity (Interkarma and contributors) | - | `Assets/StreamingAssets/{Quests,Tables}` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `06-Systems/Quest-Arc.md` |
 | `dfu-settings` | data | Daggerfall Unity (Interkarma and contributors) | - | `defaults.ini.txt` + `Text/GameSettings.txt` @ `81e89e90` | MIT | route (a) | 2026-08-20 | `10-UI/Settings-Screen-Spec.md` |
-| `dfu-text` | data | Daggerfall Unity (Interkarma and contributors) | - | `Text/Master Localization CSV Files/Internal_RSC.csv` @ `master`, fetched 2026-09-18 | MIT | route (a) | 2026-09-18 | `01-Overview/bugs/Mac-Bugs-U.md` |
+| `dfu-text` | data | Daggerfall Unity (Interkarma and contributors) | - | `Text/Master Localization CSV Files/Internal_RSC.csv` @ `master`, fetched 2026-09-18 | MIT | route (a) | 2026-09-18 | - |
+| `dynamic-skies` | presets, textures, shader read | BadLuckBurt and carademono | 2.3.4 | `.dfmod` bundle, cross-read against `drcarademono/dynamic-skies` @ `04506e2` | granted to Mac 2026-09-04 - **RECORD OPEN** | DS1, DS2 | 2026-09-04 | `07-Rendering/Dynamic-Skies.md` |
+| `handheld-torches` | 39 textures, manifest, settings | RedRoryOTheGlen | 1.4.1 | shipped zip `Handheld_Torches-780-1-4-1`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | HT0-HT4 | 2026-09-14 (AUDIT 66) | `06-Systems/Handheld-Torches.md` |
+| `horse-cart-and-cargo` | manifest, settings, the text table, both assemblies with their IL dumps, the 45 horse PNGs out of the assembly's manifest resources | demifiend000 | 1.0.0-rc12 | shipped `.dfmod` `Horse_Cart_And_Cargo_1374_1.2.4_2026-09-16T01-22Z`; behaviour off the DLL's IL (`tools/ilDump.py`); `tools/hccAssets.mjs` reproduces every vendored file from the bundle (`formats/dotnetResources.js` for the embedded art) | granted (Mac handed the bundle over 2026-09-23) - **RECORD OPEN** | HCC | 2026-09-23 | `06-Systems/Horse-Cart-And-Cargo.md` |
+| `meanerMonsters` | 46 sprite-scale XML, manifest | Ralzar (header: Hazelnut and Ralzar) | 1.5.2 | shipped zip; code from `Ralzar81/Meaner-Monsters` master | MIT (source header) | MM1 | 2026-09-12 | `04-Characters/Meaner-Monsters.md` |
+| `oblivion-remaster-leveling` | the whole mod: its ten shipped files - the 1,314 lines of Lua, the 487-byte `.omwaddon` (one GMST, `iLevelupTotal` 100), the manifest, both l10n yaml and the author's README | **not named in any shipped file** (Nexus Morrowind 56569) | 0.5.3 | shipped `.zip` `OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`; behaviour off the author's OWN LUA, which is the mod - there is nothing compiled to read | **the archive states NO LICENCE**; granted (Mac handed the archive over 2026-09-17) - **RECORD OPEN** | ORL1 | 2026-09-17 | `06-Systems/Oblivion-Remaster-Leveling.md` |
+| `class-skins` | twenty sprite sheets of Daggerfall's enemy classes (1,683 PNGs; most are Daggerfall's own class sprites under the artists' paint, carried on Port-Doctrine's fourth exception - DEX0, 2026-10-19) and a manifest of every record's frame count, worn as on-foot skins 16-35 | **not named for the pack** (one folder names Kamer, for the bounty hunter) | - | Mac's `ExistingClasses.rar` (one RAR per set); three sets given port archive numbers, one record's frame gap closed and one stray underscore read as the frame it is; `class-skins.files.json` maps every file to its archive path and `tools/classSkinsListing.mjs` proves the bytes (`vendor/class-skins/README.md`) | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN** | SKIN2 | 2026-09-25 | `06-Systems/Eye-Of-The-Beholder.md` |
+| `pcaao` | manifest, settings | Kirk.O | 1.44 | shipped `.dfmod`, DLL decompiled (ILSpy 8.2.0.7535); **source repo only covers 1.40** (`6e19023`) | repository states none; granted (Mac handed the bundle over 2026-09-12) - **RECORD OPEN** | PCO1 | 2026-09-12 | `05-Combat/Physical-Combat-Overhaul.md` |
 | `raum-book` | the animated book itself | Mac (Lattymoy), project-raum | - | `Lattymoy/project-raum` @ `7fa7119e` | Mac's own work, at his word 2026-09-12 | the enhanced book | 2026-09-12 | `10-UI/UI-Arc.md` |
+| `roleplay-realism-items` | manifest, settings, `ItemTemplates.json`, the string table, the fifteen scripts (MIT, verbatim), and the 280 sprites with their `<rect>`s (`public/art/roleplay-realism-items/`, re-encoded from the bundle - RRI1) | Hazelnut & Ralzar | 1.3 | shipped zip `RoleplayRealism-Items-1.3-61-1-3-1707669833`; behaviour off the author's SOURCE (`ajrb/dfunity-mods` @ `0af2ec9`, `RoleplayRealismItems/`), the shipped bundle's manifest, settings, templates and string table diffed against it (identical) | code MIT (every script's header); **the sprites carry no licence text** - granted (Mac handed the zip over 2026-09-23) - **RECORD OPEN** | RRI1 | 2026-09-23 | `06-Systems/Roleplay-Realism-Items.md` |
+| `roleplay-realism` | manifest, settings, presets, the button index, the string table and the seven scripts (MIT, verbatim); the seven `197_N-0.xml` scales, and the seven variant-NPC sprites + seventeen `BUTTONS.RCI` records under `public/art/roleplay-realism/` (the PNG bytes of the source tree, RR2); the quest list and the three quests (`Quests/`, RR3a); the two world-data files and the building variant (`WorldData/`, RR3b) | Hazelnut | 1.8 | shipped zip `RoleplayRealism-1.8-16-1-8-1721491697`; behaviour off the author's SOURCE (`ajrb/dfunity-mods` @ `0af2ec9`, `RoleplayRealism/`, the day after the Nexus upload) | code MIT (every script's header) - granted (Mac handed the zip over 2026-09-23) - **RECORD OPEN** | RR1, RR2, RR3a, RR3b | 2026-09-23 | `06-Systems/Roleplay-Realism.md` |
 | `grimoire-ui` | the whole loose-file pack, byte for byte (`public/art/grimoire-ui/`): 93 `Img/*.IMG.png` screens at 3x, `CifRci/BUTTONS.RCI_0-37`, the save window's eight colour textures and `Fonts/FONT0002-SDF.ttf` / `FONT0003-SDF.ttf`; `grimoire-ui.files.json` is the archive's own listing (generated from the zip, sha256 beside it) - a loose-file pack has no `.dfmod` | LordSquacquerone | 1.2 | shipped zip `GrimoireUI-1222-1-2-1780429570` (Nexus Daggerfall Unity mod 1222) | **the pictures and fonts carry no licence text** - granted (Mac handed the zip over 2026-09-24) - **RECORD OPEN** | OVH2 | 2026-09-24 | `10-UI/Overhauls.md` |
+| `roads-hazelnut` | four 500,000-byte path masks | Hazelnut | - | `ajrb/dfunity-mods`, `BasicRoads/`, sha256-verified | code MIT; **data carries no licence text** - granted to Mac 2026-09-02 - **RECORD OPEN** | ROADS 22-25 | 2026-09-02 | `03-World/Roads.md` |
+| `seasons-iliac-bay` | manifest only; the bundle is the player's | RosyTheRascal | 1.1 | manifest verbatim; behaviour off the DLL's IL; textures read from the player's own `.dfmod` at runtime | granted to Mac 2026-09-05 - **RECORD OPEN** | SIB1 | 2026-09-05 | `07-Rendering/Seasons-Iliac-Bay.md` |
 | `silkscreen-five` | one glyph (U+0035), 520 bytes | The Silkscreen Project Authors | - | `googlefonts/silkscreen`, subset with `pyftsubset` | SIL OFL 1.1 (`OFL.txt` beside it) | the enhanced skin's digits | 2026-09-08 | `10-UI/UI-Arc.md` |
 | `pixelify-glyphs` | two glyphs (U+0032, U+005A), 416 bytes | DFO (drawn for the port) | - | `tools/pixelifyGlyphs.py` | the port's own | the enhanced skin's 2 and Z | 2026-10-18 | `10-UI/UI-Arc.md` |
-| `layered-armor` | the Layered Gearing look's worn-armor strips (male, female), cloak layer, hood fixes and held weapons, 7,788 PNGs, ~98 MB on disk | DFO (made for the game) | - | `tools/layered-armor/` (from the hand-cleaned frame packages) | the owner's exception for art drawn from Daggerfall's own (2026-10-19; `Port-Doctrine.md`) | LAYERED-GEAR | 2026-10-18 | `04-Characters/Layered-Gearing.md` |
+| `layered-armor` | the Layered Gearing look's worn-armor strips (male, female), cloak layer and hood fixes, 7,369 PNGs, ~94 MB | DFO (made for the game) | - | `tools/layered-armor/` (from the hand-cleaned frame packages) | the owner's exception for art drawn from Daggerfall's own (2026-10-19; `Port-Doctrine.md`) | LAYERED-GEAR | 2026-10-18 | `04-Characters/Layered-Gearing.md` |
+| `travel-options` | manifest, settings, presets, the string table, the shipped readme, and the three UI textures re-encoded out of the bundle | Hazelnut (the autopilot class by Jedidia) | 1.11 | shipped `.zip` `TravelOptions-1.11-122-1-11-1721574422`; behaviour off the author's SOURCE (`ajrb/dfunity-mods`, `TravelOptions/Scripts/`), checked against the shipped DLL's string table before the port began | code MIT (every script's header); **the three textures carry no licence text** - granted to Mac 2026-09-17 - **RECORD OPEN** | TO1 | 2026-09-17 AUDITED (AUDIT-TO1, 2026-09-18, Mac: "Please do a comprehensive audit on this"): the slice's headline feature never ran - the host's `isPlayerOnHUD` was the complement of its own `gamePaused`, so every journey interrupted itself on its first frame while 41 pins passed the flag by hand; three of the mod's eight classes were unread (paid teleport unreachable, held enchantments destroyed by a walk); the default skin could not start a journey at all and sold sea passage from landlocked villages; the strip and the ports buttons drew as white bars; the junction map was invisible in the two moments it exists for; the follow key shipped on SocialInteract's F. Twenty-odd defects fixed, 55 pins, 113 mutants (112 dead, 1 equivalent), five departures added - `06-Systems/Travel-Options.md`. | `06-Systems/Travel-Options.md` |
+| `unleveledLoot` | manifest, settings | Ralzar | 1.1.2 | shipped zip; code from `Ralzar81/Unleveled-Loot` | MIT (source header) | UL1 | 2026-09-12 | `06-Systems/Unleveled-Loot.md` |
+| `weapon-sheathing` | the 71 `_sh` scabbard meshes, the three `xbase_anim_sh.nif` skeleton addons, the shipped readme | Greatness7 (art by akortunov, Greatness7, Heinrich, London Rook, Lord Berandas, Melchior Dahrk, MementoMoritius, Petethegoat, PikachunoTM, Remiros) | 1.6 | shipped `.7z` `WeaponSheathing1.6-OpenMW-46069-1-6`; the mechanism is OpenMW's, ported | the mod's own: free to use with credit and no fee (`WeaponSheathing.txt`) | WS1 | 2026-09-17 | `06-Systems/Weapon-Sheathing.md` |
+| `weapon-widget` | manifest, settings | RedRoryOTheGlen | 1.6 | shipped zip `Weapon_Widget-860-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | WW1-WW4 | 2026-09-14 | `05-Combat/Weapon-Widget.md` |
+| `shield-widget` | manifest, settings, presets | RedRoryOTheGlen | 1.6 | shipped zip `Shield_Widget-733-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-19) - **RECORD OPEN** | SW1 | 2026-09-19 | `05-Combat/Shield-Widget.md` |
+| `diverse-weapons` | manifest, the script (MIT, verbatim), its Weapon Widget preset, the readme, and the 12,624 sprites (`public/art/diverse-weapons/`, re-encoded from the bundle - DW2) | RealAKP | 1.7.3 | shipped zip `Diverse Weapons 1.7.3` (Nexus 242, Mac's Drive link 2026-09-23); the law is DFU's own (`WeaponBasics.GetModdedWeaponFilename`, `FPSWeapon`) | granted (Mac handed the zip over 2026-09-23); the script MIT by its header, the sprites never in the repository - **RECORD OPEN** | DW1 | 2026-09-23 | `05-Combat/Diverse-Weapons.md` |
 | `windmills-kamer` | five `.dae` meshes + placements | Kamer | 2.0 | `WindMills.rar`, supplied by Mac 2026-08-29 | granted by the author, confirmed by Mac 2026-08-29 | WM1 | 2026-08-29 | `03-World/Windmills.md` |
 | `daggerfall-arena` | manifest verbatim; the colosseum (model 864102) as data - his own 4,773 triangles, the 23-slot RuntimeMaterials table, the collider record, and 18 placements of Daggerfall's own dungeon models rebuilt from the player's ARCH3D; ARENADAG.RMB cut from his DFARENA.RMB; his 32-block dungeon; no texture (both are Daggerfall's own) | Kamer | 1.0 | `daggerfall_arena.rar` (one `.dfmod`), supplied by Mac 2026-10-02; `tools/daggerfallArenaExtract.mjs` writes every file but the README | granted by the author, relayed by Mac 2026-10-02 | ARENA1 | 2026-10-02 | `11-Multiplayer/Arena.md` |
 | `world-of-daggerfall` | manifest, the eight C# sources (carried inside the bundle as TextAssets, so nothing here is a decompile), the 65 prefab layouts verbatim, and the 2,413 instance lists read through the ported reader into one pack per region folder with every source file's sha256 recorded | Kamer | 2.0 | shipped `.rar` `World_of_Daggerfall_WindowsLinux-181-2-0-1773339543`, handed over by Mac 2026-09-23; `tools/worldOfDaggerfallAssets.mjs` reproduces every vendored file byte for byte | granted by the author (the grant that covers his windmills), confirmed by Mac 2026-09-23 | WOD1-WOD5 | 2026-09-23 | `03-World/World-Of-Daggerfall.md` |
 | `low-poly-trees` | manifest, and the author's geometry - every mesh's positions, normals and uv0 and its submeshes' indices, each prefab's mesh, root scale and materials, each material's cut, faces and colour - with each texture as an ATLAS SPEC (the records it copies and where, never a texel) | SquidKamer | 5 | shipped `.rar` `LowPolyTrees_V5-380-v5-1669847452` (one `.dfmod`), handed over by Mac 2026-10-05; `tools/lowPolyTreesExtract.mjs` rebuilds every vendored file but the README from it and the player's ARENA2 | handed over by Mac 2026-10-05 - **RECORD OPEN** | LPT1 | 2026-10-05 | `07-Rendering/Low-Poly-Trees.md` |
+| `world-tooltips` | manifest, settings, and the mod's OWN source - the bundle ships `Modded_HUDTooltipWindow.cs` as a Unity TextAsset, so nothing here is a decompile | jefetienne | 1.1 | shipped zip `World_Tooltips_-_Windows_1.1-158-1-1-1655327614`, handed over by Mac 2026-09-21; `tools/worldTooltipsAssets.mjs` reproduces all three vendored files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-world-tooltips`, beside Daggerfall Workshop's own) | WORLD-HOVER | 2026-09-21 | `10-UI/UI-Arc.md` |
+| `readied-spellcasting-hands` | manifest and the mod's OWN source - the bundle ships `Modded_FPSSpellCasting_Ready.cs` and `ModLoader.cs` as Unity TextAssets, so nothing here is a decompile - and the zip's licence; no art (the hands are Daggerfall's own `*00C6.CIF` from the player's ARENA2) and no settings | jefetienne | 1.3 | shipped zip `Readied_Spellcasting_Hands_-_Windows_1.3-91-1-3-1655327405`, handed over by Mac 2026-10-11; `tools/readiedHandsAssets.mjs` reproduces the three bundle files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-readied-spellcasting-hands`, beside Daggerfall Workshop's own) | RSH1 | 2026-10-11 | `05-Combat/Readied-Spellcasting-Hands.md` |
+| `vanilla-enhanced` | three mods' pictures, byte for byte (`public/art/vanilla-enhanced/`): the Base's 1,246 PNGs, Masked Roads' 9 and Snowless Swamps and Jungles' 160, each under its asset name, and the 21 Masked Roads road tiles that live only in its texture arrays - from the repository's own source pictures, each proved within BC7's error of its slice; each manifest verbatim; a generated listing per directory (every file's source path and sha256) and the door's name index - not Winter Tracks, Kokey's Temperate or any Material | carademono (Masked Roads with Kokey) | 3.4.7 | the public repository `github.com/drcarademono/vanilla-enhanced` at `c0c9041c`; `tools/vanillaEnhancedVendor.mjs` writes every file from it and checks the tree against it | granted (Mac 2026-10-05: "Approved and yes"); Port-Doctrine's one exception to A RENDER OF GAME DATA IS GAME DATA - **RECORD OPEN** | VE4 | 2026-10-05 | `07-Rendering/Vanilla-Enhanced.md` |
+| `physical-items` | manifest and settings verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source); nothing else - the mod ships no art: an item in the world wears its own inventory picture (or its Morrowind one, the port's) | demifiend000 | 0.1.29 | shipped `.zip` `Physical_Items_1411_1_2026-10-07T03-53Z_k855tuXe51` (the bundle alone, 52,372 bytes, recovered whole from a partial download); behaviour off the IL, placement not yet ported (recorded on its page) | granted (Mac handed the zip over 2026-10-07: "permission has been granted") - **RECORD OPEN** | PI1 | 2026-10-07 | `06-Systems/Physical-Items.md` |
+| `heat-haze` | manifest and settings verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source), and its one shader read back from DXBC as GLSL (`shaders/`, the port's translation's source); nothing else - the mod's noise is made, not shipped | demifiend000 | 1.0.1 | shipped `.zip` `Heat_Haze_1397_1.0.1_2026-09-16T04-08Z_HnXXiG7ni` (one `.dfmod`), handed over by Mac 2026-10-08; `tools/environmentModsExtract.mjs` and `tools/dxbcGlsl.py` rebuild every vendored file but the README | granted (Mac handed the four archives over 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN** | HAZE1 | 2026-10-08 | `07-Rendering/Heat-Haze.md` |
+| `sands-of-the-alikr` | the pack's 47 pictures of TEXTURE.002, byte for byte (`public/art/sands-of-the-alikr/`, under Port-Doctrine's second exception), a listing of every file's sha256 and the texture door's index; not its fifteen screenshots | unknown (Nexus 1390; the archive names no author) | 2 | shipped `.7z` `Sands_Of_The_AlikR_1390_2_2026-09-14T18-24Z_bWMMNpOWt` (a loose `Textures/` folder, no manifest or readme), handed over by Mac 2026-10-08; `tools/environmentModsExtract.mjs` checks every picture | granted (Mac handed the four archives over 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN** | ALIKR1 | 2026-10-08 | `07-Rendering/Sands-Of-The-Alikr.md` |
+| `snowfall` | manifest and settings verbatim, the compiled script byte for byte and its IL dump (`il/`), its shader read back from DXBC as GLSL (`shaders/`), its notice for Basic Roads verbatim; its 168 winter ground textures (TEXTURE.103, .303, .403), snow albedo and three surface masks (`public/art/snowfall/`, mip 0 losslessly, under Port-Doctrine's second exception) and the texture door's index | demifiend000 | 1.0.5 | shipped `.zip` `Snowfall_1401_1.0_2026-09-26T01-46Z_Z0nnzkJTn` (one `.dfmod`), handed over by Mac 2026-10-08; `tools/environmentModsExtract.mjs` and `tools/dxbcGlsl.py` rebuild every vendored file but the README | granted (Mac handed the four archives over 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN** | SNOWFALL1 | 2026-10-08 | `03-World/Snowfall.md` |
+| `windfall` | manifest and settings verbatim, its console README verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law), its two shaders read back from DXBC as GLSL (`shaders/`), its three pictures byte for byte (`Textures/`, the author's own leaves and flake) and its 27 AudioClips remuxed losslessly from FSB5 Vorbis to Ogg (`Sound/`, with their lengths) | demifiend000 | 1.0.0 | shipped `.zip` `Windfall_1396_1.0.1_2026-09-14T23-37Z_gMVVlF1MJ` (one `.dfmod` and the console README), handed over by Mac 2026-10-08; `tools/environmentModsExtract.mjs` and `tools/dxbcGlsl.py` rebuild every vendored file but the README | granted (Mac handed the four archives over 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN** | WINDFALL1 | 2026-10-08 | `07-Rendering/Windfall.md` |
+| `kings-gambit` | the bundle's manifest verbatim (its CRLF line ends kept), the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source); not the bundle itself, nor the C# a decompiler reads off the assembly | unknown (the bundle names no author) | 1 | the shipped `thekingsgambit.dfmod` (UnityFS 7, one LZ4HC block: the manifest and `TheKingsGambit.dll`), handed over by the owner 2026-10-13; `tools/ilDump.py` rebuilds the IL dump | granted (the owner, 2026-10-13: "We also have permission") - **RECORD OPEN** | KG1-KG3 | 2026-10-13 | `11-Multiplayer/Kings-Gambit.md` |
 | `daggerfall-enemy-expansion` | manifest, settings, the six tables, the spell records and the troll corpse prefab verbatim (CRLF kept), the 1,130 xml files as one name-to-text table, the eight scripts verbatim from the authors' repository and the compiled assembly byte for byte; 5,500 sprites - the authors' own under `public/art/daggerfall-enemy-expansion/`, the 774 Port-Doctrine's fourth exception carries (AUDIT DEX B1: the Royal Knight's sixty among them) under `public/art/daggerfall-enemy-expansion-repainted/`; the 858 that ARE Daggerfall's records (the five rider sets, the Will-o'-wisp) rebuilt from the player's ARENA2, never carried | Kamer & Kab | 1.3.4 | shipped `.7z` `Daggerfall Enemy Expansion-372-1-3-4-1708711071 (1)` (the bundle alone), split by `tools/dexExtract.mjs` against every TEXTURE record; scripts from `SquidKamer/DaggerfallBestiaryProject` @ `c187c97`, proved against the DLL; the tables are the bundle's, which no commit of the repository is (`vendor/daggerfall-enemy-expansion/README.md`) | granted (Mac handed the archive over 2026-10-19: "Yes, record my word") - **RECORD OPEN** | DEX0 | 2026-10-19 | `04-Characters/Enemy-Expansion.md` |
+| `mudex` | manifest and the two tables verbatim (CRLF kept): 35 monster lines over DEX's rows and 89 encounter tables, read by DEX's reader after DEX's own | Ralzar | 1.0.1 | `Ralzar81/MUDEX` @ `6b66655` (the repository is the manifest and its two files; the `.dfmod` is built from them) | approved (Mac, 2026-10-20: "Approve MUDEX"; the repository states no licence) - **RECORD OPEN** | MUDEX1 | 2026-10-20 | `04-Characters/Enemy-Expansion.md` |
 
 ## Known deviations, per row
 
@@ -159,20 +91,51 @@ full account; this is the index to it.
   of the Iliac Bay's seasonal pictures while it re-skins the tree's own
   archive. The regions no record copies (the author's top-down crowns,
   snow-capped on the winter atlases, and some larger side views) are
-  FILLS the game makes from the same record: near the author's, not his
-  (`01-Overview/audits/Audit-Low-Poly-Trees.md` measures how near). DFU stands the models only within one terrain of
+  FILLS the game makes from the same record: near the author's, not his.
+  DFU stands the models only within one terrain of
   the player and its classic flats beyond; the port stands the same
   model's far picture beyond (`07-Rendering/Low-Poly-Trees.md`).
+- **`oblivion-remaster-leveling`** - the only row that is not a
+  Daggerfall Unity mod: OpenMW Lua for Morrowind, so there is no
+  `*.dfmod.json` and `test/systems/hard4_registry.test.js` reads no version or
+  author cell for it. Its own suite checks both instead, against the
+  author's changelog heading and the Lua's own defaults. The archive
+  names no author and states no licence, so the author cell is the Nexus
+  id and the permission line is still a prompt.
 - **`world-of-daggerfall`** - the mod's 2,413 instance files (61.0 MB of
   XML) are NOT carried as files. Each region folder is one pack of the
   ported reader's output, in the mod's own load order, and
   `locations.json` lists every source file with its sha256 and instance
   count, so the archive re-derives each pack byte for byte. The 65
   prefabs and the eight C# sources ARE verbatim.
-- **`handheld-torches`**, **`shield-widget`**, **`diverse-weapons`**, **`roleplay-realism-items`** and
-  **`roleplay-realism`** - their compiled DLLs were never vendored. Behaviour was read method by method (IL, or the
-  upstream source) and rewritten; the port's own files are the law. OWN-WORK4 (2026-10-31) retired all five: their
-  rows are in `Own-Work.md`.
+- **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
+  are NOT carried, because they are not in the shipped manifest and the
+  mod therefore never loads them.
+- **`handheld-torches`**, **`weapon-widget`**, **`shield-widget`**,
+  **`seasons-iliac-bay`**, **`diverse-weapons`** (whose one script IS
+  vendored - it is source, and MIT), **`roleplay-realism-items`** (its
+  fifteen scripts vendored from the author's repository, MIT),
+  **`roleplay-realism`** (its seven scripts, the same way),
+  **`pcaao`**, **`meanerMonsters`**, **`ambient-text`** - the mods' compiled DLLs are not
+  vendored and never were. Behaviour was read method by method (IL, or
+  the upstream source where one exists) and rewritten; the port's own
+  files are the law, each citing the C# member it restates.
+- **`pcaao`** - the version gap above: bundle 1.44, last single-file
+  upstream source 1.40. Also, its "Vanilla Combat Event Handler"
+  dependency is a relay for OTHER mods and nothing here consumes it.
+- **`seasons-iliac-bay`** - the port reads the PLAYER's own `.dfmod`
+  bundle at runtime rather than carrying 372 textures. Only the manifest
+  is vendored.
+- **`ambient-text`** - `ambientTexts.json` is NOT in the manifest's
+  `Files` list, and it is carried anyway: the mod's runtime reads its
+  table from a static `Hashtable` baked into the DLL, and the JSON
+  beside it in the bundle is the same 918 pairs - checked key by key
+  against the IL, no key missing on either side and no value differing.
+  So the vendored file is the table, not a stale export of it, and the
+  port reads it directly rather than transcribing 918 lines into JS.
+- **`roads-hazelnut`** - data only. The road RENDERING is the port's own
+  work, deliberately (the Ledger: "instead of taking their mod, I want us
+  to develop our own and better").
 - **`raum-book`** - the one intentional change from Mac's original is
   marked `PORT` in the files: Raum's hand-drawn journal face is replaced
   by `BOOK.inscribe`, a seam pointed at the port's own glyph painter, so
@@ -182,25 +145,10 @@ full account; this is the index to it.
 
 ## What the gate holds
 
-`test/systems/hard4_registry.test.js`, and like every gate in this program it is
-derived rather than listed:
+`test/systems/hard4_registry.test.js`, derived rather than listed:
 
-1. **Every `vendor/*/` has exactly one row, and every row names a
-   directory that exists.** Add a mod and the gate is red until it is
-   registered; delete one and the stale row is named.
-2. **Every version cell matches the vendored manifest.** Where a
-   `*.dfmod.json` is present, its `ModVersion` and `ModAuthor` are read
-   and compared. A bundle refreshed to a new upstream version without
-   the row being touched fails here.
-3. **`RECORD OPEN` and the README placeholder agree, in both
-   directions.** A README still carrying `[Mac: ...]` must show
-   `RECORD OPEN`; one without must not. Filling a permission line and
-   forgetting the row - or the reverse - is caught.
-4. **Every row names a bible page that exists**, and every vendor
-   directory has a README.
-5. **Every mod the port exposes as a switch is registered.** The vendor
-   keys in `systems/modSettings.js` are read out and each must have a
-   row, so a mod cannot become player-visible without its provenance
-   being written down. A key retired from `vendor/` (OWN-WORK1) has its
-   row in `Own-Work.md` instead, and the gate holds it there: no
-   directory, no row here.
+1. Every `vendor/*/` has exactly one row, and every row names a directory that exists.
+2. Every version and author cell matches the vendored `*.dfmod.json` manifest, where one ships.
+3. `RECORD OPEN` and the README's permission prompt agree, both ways.
+4. Every row's bible page exists, and every vendor directory has a README.
+5. Every vendor key in `src/systems/modSettings.js` (a mod the player can switch on) has a row.

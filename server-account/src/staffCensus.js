@@ -1,8 +1,8 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL4-CENSUS (2026-10-22, mob picked it, 04:13Z; design doc "DFO Staff Panel: design", "Item and gold census",
+// STAFF-PANEL4-CENSUS (2026-10-22; design doc "DFO Staff Panel: design", "Item and gold census",
 // "Built on the save judge", "Server load" and the weak spots "Copies found misses modded dupes..." and "Census rows ride
-// every save...") - THE ITEM AND GOLD CENSUS, AND THE CONTESTED PIECES. Admin only (mob, 03:03Z: a Moderator gets the chat
+// every save...") - THE ITEM AND GOLD CENSUS, AND THE CONTESTED PIECES. Admin only (a Moderator gets the chat
 // reports, Mute and Ban, and the few things named for them - not this).
 //
 // ═══ THE TALLY RIDES THE JUDGE, NEVER A SAVE OF ITS OWN ═════════════
@@ -32,7 +32,7 @@
 // found - and whether a staff member has checked its trail. A Remove of a contested piece needs that check (trail_at);
 // the Remove itself is the realm builder's. Copies and census jumps are how dupes are hunted; neither proves one.
 //
-// EVERY LIST PAGES (mob, 19:25Z: "put inf scroll in anything that pull lists"): `from`, answered as `next`.
+// EVERY LIST PAGES: `from`, answered as `next`.
 // ═══════════════════════════════════════════════════════════════════
 
 import { displayName } from './accounts.js';
@@ -131,7 +131,7 @@ export function censusTally(save) {
   let banks = 0;
   for (const a of Array.isArray(save.bankAccounts) ? save.bankAccounts : []) banks += goldOf(a?.accountGold);
   const gold = goldOf(save.goldPieces) + banks;
-  // ECON-WORTH (mob, 2026-10-25: "hover break down on gold held bank held and item total"): the banks' share of `g` as
+  // ECON-WORTH: the banks' share of `g` as
   // well, so the economy tells a purse from a bank - never a kind of its own (censusDay and the reads ask `g` and `t`s)
   /** @type {Record<string, number>} */
   const out = { g: Math.min(Number.MAX_SAFE_INTEGER, gold), b: Math.min(Number.MAX_SAFE_INTEGER, banks) };

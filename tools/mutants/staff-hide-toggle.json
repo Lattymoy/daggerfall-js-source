@@ -4,7 +4,7 @@
     "file": "server-account/migrations/0165_staff_hide_off.sql",
     "old": "ADD COLUMN staff_hide_on INTEGER NOT NULL DEFAULT 0;",
     "new": "ADD COLUMN staff_hide_on INTEGER NOT NULL DEFAULT 1;",
-    "why": "Hide me on by default again (mob: \"need hide to be a toggle\")",
+    "why": "Hide me on by default again",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
     ]

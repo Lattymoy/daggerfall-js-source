@@ -126,8 +126,8 @@ test('UL1: the corpse - a Daedra Lord\'s roll over 70 drops daedric (a weapon ov
   world({ luck: 50, level: 10 });
   const lord = makeEnemyEntity(31, ENEMY_BASICS[31], career(), 10, fixed(0.5));
   lord.items = [goldStack(250)];
-  // rolls: Range(0,101)=100 (>70), METAL-RAMP's Range(0,20)=0 (under level 10: the race's metal - fb1019b_metalramp pins the ramp), Range(0,100)=99 (>50: a weapon), Range(113,131)=113 (a dagger), rangeFloat(0.3,0.75)=0.3, gold: Range(1,6)=1
-  unlevelDroppedLoot(lord, { rolls: seq(0.999, 0, 0.999, 0, 0, 0) });
+  // rolls: Range(0,101)=100 (>70), METAL-RAMP's Range(0,20)=0 (under level 10: the race's metal - fb1019b_metalramp pins the ramp), DAEDRIC-RARE's keep 0 (under its tenth: Daedric kept - daedricrare pins it), Range(0,100)=99 (>50: a weapon), Range(113,131)=113 (a dagger), rangeFloat(0.3,0.75)=0.3, gold: Range(1,6)=1
+  unlevelDroppedLoot(lord, { rolls: seq(0.999, 0, 0, 0.999, 0, 0, 0) });   // PIN MOVED (DAEDRIC-RARE): the keep draw
   assert.equal(lord.items.length, 2);
   const dagger = lord.items[1];
   assert.equal(dagger.group, 'Weapons'); assert.equal(dagger.templateIndex, 113); assert.equal(dagger.material, 9, 'daedric');
@@ -137,7 +137,7 @@ test('UL1: the corpse - a Daedra Lord\'s roll over 70 drops daedric (a weapon ov
   const lord2 = makeEnemyEntity(31, ENEMY_BASICS[31], career(), 10, fixed(0.5));
   lord2.items = [goldStack(7)];
   installUnleveledLoot({ read: (k) => (k === 'Enabled' ? true : k === 'Orcish' ? 8 : k === 'Daedric' ? 9 : UNLEVELED_MATERIAL_NAMES.indexOf(k)) });
-  unlevelDroppedLoot(lord2, { rolls: seq(0.999, 0, 0, 0, 0.5, 0.2, 0.999, 0.999), r: (k) => (k === 'Enabled' ? true : k === 'Orcish' ? 8 : k === 'Daedric' ? 9 : UNLEVELED_MATERIAL_NAMES.indexOf(k)) });
+  unlevelDroppedLoot(lord2, { rolls: seq(0.999, 0, 0, 0, 0, 0.5, 0.2, 0.999, 0.999), r: (k) => (k === 'Enabled' ? true : k === 'Orcish' ? 8 : k === 'Daedric' ? 9 : UNLEVELED_MATERIAL_NAMES.indexOf(k)) });
   uninstallUnleveledLoot();
   const armor = lord2.items[1];
   assert.equal(armor.group, 'Armor'); assert.equal(armor.material, 521, 'daedric plate'); assert.equal(armor.variant, 0);
@@ -146,7 +146,7 @@ test('UL1: the corpse - a Daedra Lord\'s roll over 70 drops daedric (a weapon ov
   assert.equal(lord2.items[0].stackCount, 1 * 5, '7 / 10 -> 0 -> 1, x Range(1, 6) at 0.999 = 5');
   // the Seducer always drops a weapon; a Daedroth needs over 80
   const seducer = makeEnemyEntity(29, ENEMY_BASICS[29], career(), 10, fixed(0.5)); seducer.items = [];
-  unlevelDroppedLoot(seducer, { rolls: seq(0.76, 0, 0, 0.5, 0.5) });
+  unlevelDroppedLoot(seducer, { rolls: seq(0.76, 0, 0, 0, 0.5, 0.5) });   // PIN MOVED (DAEDRIC-RARE): the keep draw
   assert.equal(seducer.items.length, 1); assert.equal(seducer.items[0].group, 'Weapons');
   const daedroth = makeEnemyEntity(27, ENEMY_BASICS[27], career(), 10, fixed(0.5)); daedroth.items = [];
   unlevelDroppedLoot(daedroth, { rolls: seq(0.80) });

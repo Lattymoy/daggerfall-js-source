@@ -1,4 +1,4 @@
-// SD-PARTY (2026-10-28, the owner: "we need to make this a party instance ... to stop griefin on the bosses";
+// SD-PARTY (2026-10-28;
 // bible/11-Multiplayer/Super-Dungeons.md SD-PARTY): EACH PARTY ITS OWN SHATTERED HOUR. A realm is `sd:<s>.<owner>`, and
 // its door admits the owner, staff and the owner's party alone - the hub's party word, through the real Room and hub.
 // One life and one win a Hollow hold across every copy: a death in one copy, or a receipt for the slot, shuts the rest.
@@ -181,7 +181,7 @@ test('SD-SOLO A SHARED HOUR: `sd:<s>.p<n>` admits anyone in no party to SD_PUB_S
     const h = await pub.room._sdHallOf(rec.s); h.ok = true; await pub.room.state.storage.put('sdorrery', h);
     const ws = [];
     for (let i = 0; i < SD_PUB_SEATS; i++) { ws.push(await hello(pub, `peer-s${i}`, { kind: 'linked' })); step(1000); }   // signed in, a beat apart - the hello's own gates are not this law's
-    assert.deepEqual(ws.map((w) => w.closed), Array(SD_PUB_SEATS).fill(null), 'every seat a stranger\'s');   // PIN MOVED (SD-SOLO-40, 2026-10-28, the owner: "lets up the amount in a non party to 40"): 40 seats, it was eight
+    assert.deepEqual(ws.map((w) => w.closed), Array(SD_PUB_SEATS).fill(null), 'every seat a stranger\'s');   // PIN MOVED (SD-SOLO-40, 2026-10-28): 40 seats, it was eight
     await pub.drop(ws[0]);
     assert.equal(reason(await hello(pub, 'peer-s99', { kind: 'linked' })), SD_NO_FULL, 'the next refused - a gone one\'s seat stays its');
     assert.equal((await hello(pub, 'peer-s0', { kind: 'linked' })).closed, null, 'its own comes back');

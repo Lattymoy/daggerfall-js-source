@@ -186,7 +186,7 @@ export function aiDailyMax(env) {
   const n = Number(raw);
   return Number.isSafeInteger(n) && n >= 0 ? n : MOD_AI_DAILY_DEFAULT;
 }
-const dayOf = (nowS) => new Date(nowS * 1000).toISOString().slice(0, 10);
+export const dayOf = (nowS) => new Date(nowS * 1000).toISOString().slice(0, 10);
 
 /** Spend one of the day's calls - false when the day's are spent. The feed's reads (`feed`) stop short of the reports'
  *  share (AI_REPORT_SHARE). @param {any} db @param {any} env @param {number} nowS @param {{ feed?: boolean }} [opt] */
@@ -203,16 +203,16 @@ export async function spendAiCall(db, env, nowS, { feed = false } = {}) {
   return !!r;
 }
 /** A call the API never answered, given back. */
-const unspend = (db, nowS) =>
-  db.prepare('UPDATE mod_ai_days SET calls = calls - 1 WHERE day = ?1 AND calls > 0').bind(dayOf(nowS)).run();
+const unspend = (db, key) =>
+  db.prepare('UPDATE mod_ai_days SET calls = calls - 1 WHERE day = ?1 AND calls > 0').bind(key).run();
 /** An answer's tokens, counted on its day: what was read (and of it, what the cache served) and what was written. */
-const countTokens = (db, nowS, u) =>
+const countTokens = (db, key, u) =>
   db
     .prepare(
       'UPDATE mod_ai_days SET tokens_in = tokens_in + ?2, tokens_cached = tokens_cached + ?3, tokens_out = tokens_out + ?4 WHERE day = ?1',
     )
     .bind(
-      dayOf(nowS),
+      key,
       (Number(u?.input_tokens) || 0) +
         (Number(u?.cache_creation_input_tokens) || 0) +
         (Number(u?.cache_read_input_tokens) || 0),
@@ -225,6 +225,65 @@ const countTokens = (db, nowS, u) =>
  *  close the tag they ride in (AUDIT SAFE AI-1) - the JSON reads back the same. @param {unknown} payload */
 export const linesMessage = (payload) =>
   `<chat_lines>\n${JSON.stringify(payload).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}\n</chat_lines>`;
+
+/**
+ * THE CALL ITSELF, shared by every caller that holds a day's budget: one Messages API request, the answer's tokens
+ * counted on `key`'s day row, a call the API never answered given back to it. Answers `{ verdict }` (the model's JSON
+ * text, parsed) or `{ error }` (AI_ERRORS' words). The spend came first, in the caller. Never throws.
+ * @param {any} db @param {any} env @param {(url: string, init: any) => Promise<Response>} fetchFn @param {any} body @param {string} key
+ */
+export async function messagesCall(db, env, fetchFn, body, key) {
+  let res;
+  try {
+    res = await fetchFn(MESSAGES_URL, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(MOD_AI_TIMEOUT_MS),
+    });
+  } catch (e) {
+    console.warn('[review] the API', /** @type {any} */ (e)?.message ?? e);
+    await unspend(db, key);
+    return { error: AI_ERRORS.down };
+  }
+  if (!res.ok) {
+    await unspend(db, key);
+    // 429 and 5xx (529 overloaded among them) pass: the next minute asks again. Any other 4xx is this service's own
+    // mistake - a key revoked, a model renamed, a request the API no longer takes - and every call will meet it
+    if (res.status === 429 || res.status >= 500) {
+      console.warn('[review] the API said', res.status);
+      return { error: AI_ERRORS.down };
+    }
+    console.error('[review] the API refused the request - check ANTHROPIC_API_KEY and MOD_AI_MODEL:', res.status);
+    return { error: AI_ERRORS.config };
+  }
+  let msg;
+  try {
+    msg = await res.json();
+  } catch {
+    return { error: AI_ERRORS.shape };
+  }
+  try {
+    await countTokens(db, key, msg?.usage);
+  } catch {
+    /* the count never costs a verdict */
+  }
+  if (msg?.stop_reason === 'refusal') return { error: AI_ERRORS.refused };
+  if (msg?.stop_reason === 'max_tokens') return { error: AI_ERRORS.long };
+  if (msg?.stop_reason !== 'end_turn') return { error: AI_ERRORS.shape };
+  const text = Array.isArray(msg.content) ? msg.content.find((b) => b?.type === 'text')?.text : null;
+  let verdict;
+  try {
+    verdict = JSON.parse(String(text ?? ''));
+  } catch {
+    return { error: AI_ERRORS.shape };
+  }
+  return { verdict };
+}
 
 /**
  * ONE REVIEW: `lines` read against the code. Answers `{ ok, flags }` - each flag a line's index, category, severity,
@@ -247,56 +306,9 @@ export async function reviewLines(db, env, fetchFn, { lines, focus = null, nowS,
     messages: [{ role: 'user', content: linesMessage(payload) }],
     output_config: { effort: 'low', format: { type: 'json_schema', schema: VERDICT_SCHEMA } },
   };
-  let res;
-  try {
-    res = await fetchFn(MESSAGES_URL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(MOD_AI_TIMEOUT_MS),
-    });
-  } catch (e) {
-    console.warn('[review] the API', /** @type {any} */ (e)?.message ?? e);
-    await unspend(db, nowS);
-    return { error: AI_ERRORS.down };
-  }
-  if (!res.ok) {
-    await unspend(db, nowS);
-    // 429 and 5xx (529 overloaded among them) pass: the next minute asks again. Any other 4xx is this service's own
-    // mistake - a key revoked, a model renamed, a request the API no longer takes - and every call will meet it
-    if (res.status === 429 || res.status >= 500) {
-      console.warn('[review] the API said', res.status);
-      return { error: AI_ERRORS.down };
-    }
-    console.error('[review] the API refused the request - check ANTHROPIC_API_KEY and MOD_AI_MODEL:', res.status);
-    return { error: AI_ERRORS.config };
-  }
-  let msg;
-  try {
-    msg = await res.json();
-  } catch {
-    return { error: AI_ERRORS.shape };
-  }
-  try {
-    await countTokens(db, nowS, msg?.usage);
-  } catch {
-    /* the count never costs a verdict */
-  }
-  if (msg?.stop_reason === 'refusal') return { error: AI_ERRORS.refused };
-  if (msg?.stop_reason === 'max_tokens') return { error: AI_ERRORS.long };
-  if (msg?.stop_reason !== 'end_turn') return { error: AI_ERRORS.shape };
-  const text = Array.isArray(msg.content) ? msg.content.find((b) => b?.type === 'text')?.text : null;
-  let verdict;
-  try {
-    verdict = JSON.parse(String(text ?? ''));
-  } catch {
-    return { error: AI_ERRORS.shape };
-  }
-  const flags = flagsOf(verdict, lines.length);
+  const answer = await messagesCall(db, env, fetchFn, body, dayOf(nowS));
+  if ('error' in answer) return answer;
+  const flags = flagsOf(answer.verdict, lines.length);
   return flags ? { ok: true, flags } : { error: AI_ERRORS.shape };
 }
 

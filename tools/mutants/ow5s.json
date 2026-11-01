@@ -93,8 +93,8 @@
   {
     "name": "OW5b-S5-sails-off-the-map",
     "file": "src/scenes/world.js",
-    "old": "    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);",
-    "new": "    return tvWater(px, py);",
+    "old": "    return onWorldSea(px, py, tamrielLand) && squareCornersAll(tvWater, px, py) && kernelSea(x, z);",
+    "new": "    return squareCornersAll(tvWater, px, py) && kernelSea(x, z);",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ],

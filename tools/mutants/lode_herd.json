@@ -2,8 +2,8 @@
   {
     "name": "LODEHERD-claim-unasked",
     "file": "server-account/src/motherlodes.js",
-    "old": "  if (!clock && (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S))) return [];\n  const before = day * 86400;",
-    "new": "  const before = day * 86400;",
+    "old": "  if (!clock && (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S))) return [];\n  const candidates = await confirmedGroundBefore(db, day);",
+    "new": "  const candidates = await confirmedGroundBefore(db, day);",
     "tests": [
       "test/server/lode_herd.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HUNTLEAN-rate-back",
     "file": "server-account/src/hunts.js",
-    "old": "  return { ok: true, ...(await huntStateOf(ctx.db, player.id, body.character, ctx.nowS)) };",
-    "new": "  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };\n  return { ok: true, ...(await huntStateOf(ctx.db, player.id, body.character, ctx.nowS)) };",
+    "old": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  return { ok: true,",
+    "new": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };\n  return { ok: true,",
     "tests": [
       "test/server/lode_herd.test.js"
     ],

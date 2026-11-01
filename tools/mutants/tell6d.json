@@ -202,8 +202,8 @@
   {
     "name": "TELL6d-line-unlocked",
     "file": "src/ai/tactics.js",
-    "old": "  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz); // TELL6d: its line to me, locked",
-    "new": "  if (shape === 'aimed') b.ahead = 3; // TELL6d: its line to me, locked",
+    "old": "  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz); // Its line to me, locked",
+    "new": "  if (shape === 'aimed') b.ahead = 3; // Its line to me, locked",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "TELL6d-swing-held",
     "file": "src/ai/tactics.js",
-    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre'; // TELL6d: a shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
-    "new": "  const swings = shape !== 'pyre'; // TELL6d: a shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "new": "  const swings = shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]

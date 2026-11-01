@@ -1,45 +1,10 @@
 // @ts-check
 // COVER-COMPACT (bible/07-Rendering/Performance-Priority.md): the cover index as it stood before its sets became typed
-// columns - src/ai/cover.js at perf-base-9aa6bc46, its `rayCylinder` and `createCoverIndex` copied unchanged (the
-// switch's default dropped: the caller passes `enabled`). test/ai/coverCompact.test.js fills this and the live index
-// from one fixture and holds every answer equal. Not a test file: the suite runs `*.test.js` only.
-import { COVER_CELL, COVER_WIDE, FELLED } from '../../../src/ai/cover.js';
-
-function rayCylinder(o, d, cyl, maxDist, endAt = null) {
-  const c0 = cyl.c;
-  if (FELLED.has(c0) || c0.noCover) return Infinity;
-  const cx = c0[0], cy = c0[1] + (cyl.lift ?? 0), cz = c0[2], r = cyl.r, top = cy + cyl.h;
-  const ox = o[0] - cx, oz = o[2] - cz;
-  if (ox * ox + oz * oz <= r * r && o[1] >= cy && o[1] <= top) return Infinity;
-  if (endAt != null) {   // the sight ray's own end (its target's eye), however short the search has been cut
-    const ex = ox + d[0] * endAt, ey = o[1] + d[1] * endAt, ez = oz + d[2] * endAt;
-    if (ex * ex + ez * ez <= r * r && ey >= cy && ey <= top) return Infinity;
-  }
-  let best = Infinity;
-  // the side
-  const a = d[0] * d[0] + d[2] * d[2];
-  if (a > 1e-12) {
-    const b = ox * d[0] + oz * d[2], c = ox * ox + oz * oz - r * r;
-    const disc = b * b - a * c;
-    if (disc >= 0) {
-      const s = (-b - Math.sqrt(disc)) / a;
-      if (s >= 0 && s <= maxDist) {
-        const y = o[1] + d[1] * s;
-        if (y >= cy && y <= top) best = s;
-      }
-    }
-  }
-  // the caps (a ray from above into a crown, from below into a ledge's bush)
-  if (Math.abs(d[1]) > 1e-12) {
-    for (let k = 0; k < 2; k++) {   // AUDIT TACT D11: no array a test
-      const s = ((k ? cy : top) - o[1]) / d[1];
-      if (s < 0 || s > maxDist || s >= best) continue;
-      const x = ox + d[0] * s, z = oz + d[2] * s;
-      if (x * x + z * z <= r * r) best = s;
-    }
-  }
-  return best;
-}
+// columns - src/ai/cover.js at perf-base-9aa6bc46, its `createCoverIndex` copied unchanged (the switch's default
+// dropped: the caller passes `enabled`). test/ai/coverCompact.test.js fills this and the live index from one fixture and
+// holds every answer equal. Not a test file: the suite runs `*.test.js` only. PIN MOVED (AUDIT FB1031 F1): a proxy is
+// asked the live ray law (`rayCylinder` - a ray with an end inside meets it at its middle); what is held equal is the index.
+import { COVER_CELL, COVER_WIDE, FELLED, rayCylinder } from '../../../src/ai/cover.js';
 
 const ZERO3 = Object.freeze([0, 0, 0]);
 const _lo = [0, 0, 0];   // AUDIT TACT D11: the ray in a set's frame - one scratch, not one a call

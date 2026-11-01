@@ -237,6 +237,13 @@ export const PSEUDO_ARCHIVES = Object.freeze([
     'a Brass Fissure - its scorched earth, its crack, its slabs and its wreckage (STOREFRONT)',
   ), // 38341 on its branch, GUILD-SHOP's at the merge of main
   N(
+    38362,
+    'world/tamriel/skyrimFlora.js',
+    'SKYRIM_FLORA_ARCHIVE',
+    'port',
+    "Skyrim's plant flats - ferns, flowers, juniper, snowberry and the rest under src/assets/skyrim/flora/ (SKYRIM-FLORA)",
+  ),
+  N(
     38400,
     'world/capitalShapes.js',
     'CAPITAL_ARCHIVE',

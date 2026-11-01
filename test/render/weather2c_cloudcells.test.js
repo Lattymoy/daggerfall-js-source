@@ -257,9 +257,3 @@ test('WEATHER2c the class and the controller: setState takes the cells (the cont
   assert.equal((shared.match(/extra\?\.cells \?\? null\);/g) || []).length, 2, 'the dome path and the mod path both hand the cells');
 });
 
-test('WEATHER2c records: the arc page\'s C, the clouds arc\'s decision, the ledger row and the testing row', () => {
-  assert.match(rd('bible/07-Rendering/Weather-Arc.md'), /^## C - CLOUD TYPES BY PLACE \(WEATHER2c, 2026-09-14\)/m);
-  assert.match(rd('bible/07-Rendering/Volumetric-Clouds-Arc.md'), /\*\*Cells \(WEATHER2c\)\.\*\*/);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /^\| \*\*CLOUD TYPES BY PLACE \(WEATHER2c, 2026-09-14\)\*\*/m);
-  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| weather2c_cloudcells\.test\.js \| \d+ \| WEATHER2c/m);
-});

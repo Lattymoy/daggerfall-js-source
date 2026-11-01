@@ -2,8 +2,8 @@
   {
     "name": "DEX2-a-stand-in-one-frame-a-record",
     "file": "src/systems/textureReplacement.js",
-    "old": "    getFrameCount: (record) => vendorFrameCount(archive, record), // DEX2: a record's own frames (a mobile's walk), never one for all",
-    "new": "    getFrameCount: () => 1, // DEX2: a record's own frames (a mobile's walk), never one for all",
+    "old": "    getFrameCount: (record) => vendorFrameCount(archive, record),",
+    "new": "    getFrameCount: () => 1,",
     "why": "every mobile drawn from a stand-in stands on its first frame",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "DEX2-a-spectral-row-no-ghost",
     "file": "src/characters/enemy/foeLook.js",
-    "old": "  row?.behaviour === 'Spectral' || _ghosts.some((fn) => fn(mobileType) === true);",
-    "new": "  _ghosts.some((fn) => fn(mobileType) === true);",
+    "old": "row?.behaviour === 'Spectral' || _ghosts",
+    "new": "_ghosts",
     "why": "the ghost shader by the behaviour gone - DFU's test",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "DEX2-noshadow-ignored",
     "file": "src/characters/enemy/foeLook.js",
-    "old": "  if (row?.noShadow === true) batch.noShadow = true;\n  return batch;",
-    "new": "  return batch;",
+    "old": "  if (row?.noShadow === true) batch.noShadow = true;\n",
+    "new": "",
     "why": "a NoShadow row's mobile casts a shadow",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "DEX2-the-preload-decodes-the-released",
     "file": "src/systems/textureReplacement.js",
-    "old": "    if (entry && !entry.lazy && !decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]); // AUDIT DEX B5: nor one the GPU holds alone",
-    "new": "    if (entry && !entry.lazy && !decodedFrom(key, entry)) todo.push([key, entry]); // AUDIT DEX B5: nor one the GPU holds alone",
+    "old": "!decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]);",
+    "new": "!decodedFrom(key, entry)) todo.push([key, entry]);",
     "why": "AUDIT DEX B5: an archive's refresh decodes back every picture the GPU already holds",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "DEX2-another-records-picture-on-a-miss",
     "file": "src/systems/textureReplacement.js",
-    "old": "      if (_vendor.get(key)?.readOnly) return _decoded.get(key) ?? pendingPicture(archive, r, f);\n      return decodedOf(archive, r) ?? null;",
-    "new": "      return decodedOf(archive, r) ?? null;",
+    "old": "      if (_vendor.get(key)?.readOnly) return _decoded.get(key) ?? pendingPicture(archive, r, f);\n",
+    "new": "",
     "why": "AUDIT DEX B5: a readOnly frame asked again answers another record's picture (or nothing, and the upload throws)",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "DEX2-a-pending-picture-asked-every-frame",
     "file": "src/systems/textureReplacement.js",
-    "old": "        if (asking) return;\n        asking = true;",
-    "new": "        asking = true;",
+    "old": "      if (asking) return;\n",
+    "new": "",
     "why": "AUDIT DEX B5: a readOnly picture that will not decode is fetched and decoded again every frame a foe draws it",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"

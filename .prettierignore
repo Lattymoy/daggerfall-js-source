@@ -794,6 +794,7 @@
 !/src/render/midRing.js
 !/src/render/mountPrograms.js
 !/src/render/navalRender.js
+!/src/render/newEraPass.js
 !/src/render/nodeGlint.js
 !/src/render/nodeGlow.js
 !/src/render/npcMarkPass.js
@@ -996,6 +997,7 @@
 !/src/scenes/naval/treasureFleet.js
 !/src/scenes/naval/veilParty.js
 !/src/scenes/naval/worldLanes.js
+!/src/scenes/newEraHost.js
 !/src/scenes/npcMarksHost.js
 !/src/scenes/oceanHolesHost.js
 !/src/scenes/overworldForecastHost.js
@@ -2205,6 +2207,7 @@
 !/src/ui/naval/navalHud.js
 !/src/ui/naval/navalPlunderWindow.js
 !/src/ui/naval/navalYardWindow.js
+!/src/ui/newEraCanvas.js
 !/src/ui/nodeMarks.js
 !/src/ui/noticeDoor.js
 !/src/ui/noticeWindow.js
@@ -2522,6 +2525,7 @@
 !/src/world/merchantYards/*.mjs
 !/src/world/meshReader.js
 !/src/world/naturePicture.js
+!/src/world/newEraEvent.js
 !/src/world/npcFlatArchives.js
 !/src/world/oceanHoles.js
 !/src/world/oceanHolesMiasma.js
@@ -2793,6 +2797,9 @@
 !/tools/cloudNoiseProbe.mjs
 !/tools/collectionsProbe.mjs
 !/tools/colliderBench.mjs
+!/tools/commentRules.mjs
+!/tools/commentSweep.mjs
+!/tools/commentTags.mjs
 !/tools/compileStallProbe.mjs
 !/tools/computationPin.mjs
 !/tools/courtShadowProbe.mjs
@@ -2990,7 +2997,6 @@
 /tools/layered-armor/*
 !/tools/layered-armor/*.js
 !/tools/layered-armor/*.mjs
-!/tools/ledgerSweep.mjs
 !/tools/lefayProbe.mjs
 !/tools/levelUpProbe.mjs
 !/tools/lib/

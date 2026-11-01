@@ -258,8 +258,4 @@ test('SD2c the hosts by source: world.js hands the held map, the compass, the Ti
   assert.match(read('src/ui/ink/inkMap.js'), /for \(const m of opts\.sds \?\? \(opts\.sd \? \[opts\.sd\] : \[\]\)\)\n\s*if \(m && visible\(m\.cx, m\.cy, m\.r \+ 2\)\) paintGateRing\(ctx, view, m, pulse, SD_MAP_INK\);/);
   assert.match(read('src/ui/enhanced/enhancedHud.js'), /drawSdMark\(opts\.sd \?\? null, opts\.playerXZ \?\? null, heading01\);/);
   assert.match(read('src/ui/noticeWindow.js'), /sd: deps\.sd\?\.\(\) \?\? null,/);
-  const rec = read('bible/11-Multiplayer/Super-Dungeons.md');
-  assert.match(rec, /### SD2c - shipped 2026-10-06/);
-  const sd2c = rec.slice(rec.indexOf('### SD2c - shipped'));
-  for (const host of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js', 'scenes/exterior.js']) assert.ok(sd2c.includes(host), `the record names ${host}`);
 });

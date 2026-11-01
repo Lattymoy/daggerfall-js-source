@@ -24,7 +24,7 @@
     "file": "src/ui/staffFollowBar.js",
     "old": "      b.blur?.();\n      run();",
     "new": "      run();",
-    "why": "mob: the Hide button stays on the space bar",
+    "why": "the Hide button stays on the space bar",
     "tests": [
       "test/ui/staffFollowBar.test.js"
     ]

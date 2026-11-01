@@ -173,13 +173,13 @@
   },
   {
     "name": "AUDITBR5-the-launcher-logo-unpacked",
-    "file": "app/package.json",
-    "old": "        \"from\": \"../src/assets/branding\",\n        \"to\": \"launcher\",\n",
-    "new": "        \"from\": \"../src/assets/branding\",\n        \"to\": \"branding\",\n",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "{ from: 'src/assets/branding/dfo-online.png', to: 'app/launcher/dfo-online.png' }",
+    "new": "{ from: 'src/assets/branding/dfo-online.png', to: 'app/branding/dfo-online.png' }",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ],
-    "note": "AUDIT BR5 (2026-10-11): packaged, the logo is not where the launcher serves it from"
+    "note": "Re-aimed by content: the logo is staged into app/launcher/ (scripts/desktopRelease.mjs DESKTOP_STAGED) rather than packed from ../ - packaged, it would not be where the launcher serves it from."
   },
   {
     "name": "AUDITBR5-the-potion-maker-named",

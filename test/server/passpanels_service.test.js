@@ -82,7 +82,7 @@ test('PASS-PANELS the premium track end to end: shut until opened for its Aurum 
 });
 
 test('PASS-PANELS every refusal and its status: a guest, the switch off or dev for another, a season the law lacks, before its first instant, an item no track sells, a short balance; and a year past the season the tracks still sell (the owner: "Never expire") (mutants: a guest served; dev open to all; the tracks shut with the season)', async (t) => {
-  t.mock.timers.enable({ apis: ['Date'], now: S1.fromMs - 86_400_000 });
+  t.mock.timers.enable({ apis: ['Date'], now: S1.tracksFromMs - 86_400_000 });
   const s = await stand({ ...ON, PASS_OPEN: 'dev', DEVELOPER_HANDLES: 'Maker' });
   const dev = await s.registered('Maker'), other = await s.registered('Other');
   s.give(dev, 2000); s.give(other, 2000);

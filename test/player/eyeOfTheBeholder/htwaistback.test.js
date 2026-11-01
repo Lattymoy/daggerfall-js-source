@@ -324,27 +324,3 @@ test('HT-WAIST-BACK: ONE HOME - your sprite and the walkers hang it through play
   }
 });
 
-test('HT-WAIST-BACK: recorded - the HT-WAIST sections of Handheld-Torches.md and Eye-Of-The-Beholder.md carry the dated HT-WAIST-BACK note (the rear view - straight behind, not the back diagonals -, the peers, the one home), and the Ledger A row\'s EOTB clause says the back; the all-angles sentence and the three-rear-views one are gone (mutant: the record left saying it hangs in every view)', () => {
-  const ht = rd('bible/06-Systems/Handheld-Torches.md');
-  const hts = ht.slice(ht.indexOf('## HT-WAIST - THE LANTERN AT THE WAIST'));
-  assert.match(hts, /HT-WAIST-BACK \(2026-09-24/);
-  assert.match(hts, /straight behind/);
-  assert.match(hts, /It still shows on the back side angle/, 'Mac\'s word on the back diagonals, quoted');
-  assert.doesNotMatch(hts, /3, 4 (?:and|or) 5|three views of Eye Of The Beholder\'s eight/, 'the three-rear-views rule is rewritten');
-  assert.match(hts, /player\/eyeOfTheBeholder\/eotbLantern\.js/);
-  assert.match(hts, /createPeerWalkers|walkers/);
-  const eo = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
-  const eos = eo.slice(eo.indexOf('## HT-WAIST (2026-09-24)'));
-  assert.match(eos, /HT-WAIST-BACK \(2026-09-24/);
-  assert.match(eos, /isRearView/);
-  assert.match(eos, /112364/, 'the numbering verified against the vendored art, and said where');
-  assert.match(eos, /It still shows on the back side angle/);
-  assert.doesNotMatch(eos, /3, 4 (?:and|or) 5/, 'the three-rear-views rule is rewritten');
-  assert.doesNotMatch(eos, /\*\*Only\*\* in third person, on foot, alive and in your own form - the rider/, 'the old "only" line, which said nothing of the view, is rewritten');
-  const row = rd('bible/01-Overview/Port-Ledger.md').split('\n').find((l) => l.startsWith('|') && /\(HT-WAIST, 2026-09-24/.test(l));
-  assert.ok(row, 'HT-WAIST\'s Ledger A row');
-  assert.match(row, /HT-WAIST-BACK/);
-  assert.match(row, /straight behind/);
-  assert.doesNotMatch(row, /three rear views/, 'the row\'s three-rear-views clause is rewritten');
-  assert.match(row, /test\/player\/eyeOfTheBeholder\/htwaistback\.test\.js/);
-});

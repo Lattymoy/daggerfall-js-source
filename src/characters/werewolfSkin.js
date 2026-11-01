@@ -1,5 +1,5 @@
 // SHADOW-FANG (2026-09-26, Mac): "Wants a custom morrowind werewolf skin (skin base but blacker amd like crimson red
-// thru out the edging in the fur, red eyes)" - for SirMcMobdon, whose title and glyph are Shadow Fang
+// thru out the edging in the fur, red eyes)" - for the Shadow Fang account, whose title and glyph are Shadow Fang
 // (ui/playerBadge.js). The werewolf is Bloodmoon's (WEREWOLF1: combat/fpArm.js builds it from the player's own
 // Bloodmoon data), so its textures are the player's own files and never this repo's: the skin cannot be a painted
 // texture shipped with the build. It is a LAW over the texture's pixels, applied on the way to the GPU, to a copy -
@@ -8,7 +8,7 @@
 // ═══ WHO WEARS IT ══════════════════════════════════════════════════
 //
 // The holder of the Shadow Fang GLYPH. A glyph is TRUE of a player and rides the identity token the relay verifies,
-// so every client in a room reads the same grant off the same signature: the peer who is SirMcMobdon is drawn in it
+// so every client in a room reads the same grant off the same signature: the peer who is the Shadow Fang account is drawn in it
 // on everybody's screen, and nobody can type themselves into it. The player's own screen reads the glyphs the
 // account service last stated for this device (net/accountClient.js keeps them on the stored session; systems/
 // ownGlyphs.js reads them), so the skin is theirs offline too - a local read of a cosmetic, which only that player sees.

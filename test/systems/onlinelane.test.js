@@ -153,5 +153,4 @@ test('OL1 by source: the three read paths ask the one home first, the menu locks
   assert.match(menu, /function lockOnline\(b, main, \{ note = ONLINE_LOCK_NOTE, value = true \} = \{\}\) \{\s*b\.textContent = value \? t\('menu\.online\.lockedOn', 'On \(online\)'\) : t\('menu\.online\.lockedOff', 'Off \(online\)'\);/, 'the lock says so and answers nothing');
   assert.match(menu, /if \(tab\.id === 'mods' && isOnlinePage\(\)\) body\.append\(el\('p', 'meta opt-note', noteText\(ONLINE_MODS_NOTE\)\)\);/, 'the Mods pane says it once at the top (ORG2: the Mods & files tab, over every mod)');
   assert.match(menu, /Every enhancement is on for everyone, but your interface is your own\./, 'the Online pane (OVH3: the world\'s lane, the player\'s screens)');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## OL1 \(2026-09-14\)/, 'the record');
 });

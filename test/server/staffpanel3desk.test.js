@@ -1,4 +1,4 @@
-// STAFF-PANEL3-DESK (2026-10-22, mob picked these at 04:13Z, Moderators' share at 06:28Z; design doc "DFO Staff Panel:
+// STAFF-PANEL3-DESK (2026-10-22, Moderators' share at 06:28Z; design doc "DFO Staff Panel:
 // design") - THE PANEL'S DESK (server-account/src/staffDesk.js), driven through the real Worker on the node:sqlite database
 // every account pin stands on (test/accountDb.mjs): staff notes, each member's own watchlist and its events, Your settings,
 // and the Admins' server notice, AI check scorecard and reported board notes and market listings.
@@ -32,11 +32,11 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up: mob (an Admin and owner) and Asynian (a Moderator) signed in, and Troll and Sylvia. */
+/** The Worker with the panel set up: chief (an Admin and owner) and Asynian (a Moderator) signed in, and Troll and Sylvia. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
-    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, BOARD_OPEN: 'on',
+    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, BOARD_OPEN: 'on',
   });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
@@ -48,8 +48,8 @@ async function stand() {
   const troll = await s.registered('Troll');
   const sylvia = await s.registered('Sylvia');
   const raw = s.env.DB._raw;
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
   assert.ok(asy.session);
@@ -70,7 +70,7 @@ async function stand() {
     if (source === 'report') insert('mod_reports', { case_id: id, reporter: s.sylviaId ?? sylvia.id, reason, at: nowS() - ago, counted: 1 });
     return id;
   };
-  return { ...s, raw, staff, mob, asy, troll, sylvia, idOf, audits, insert, character, caseOn };
+  return { ...s, raw, staff, chief, asy, troll, sylvia, idOf, audits, insert, character, caseOn };
 }
 
 test('STAFF-PANEL3-DESK: the desk\'s doors are the staff panel\'s, none opens without a staff session, and a Moderator is refused the Admins\' (mutant: the role check)', async () => {
@@ -94,7 +94,7 @@ test('STAFF-PANEL3-DESK: STAFF NOTES - a Moderator adds, every staff member read
   const add = await s.staff('/v1/staff/notes/add', { name: 'troll', text: '  warned in person 21 Oct\n' }, s.asy.session);
   assert.equal(add.status, 200, JSON.stringify(add.body));
   assert.deepEqual({ ...add.body.note, id: 0, at: 0 }, { id: 0, at: 0, by: s.idOf('Asynian'), byName: 'Asynian', text: 'warned in person 21 Oct' });
-  await s.staff('/v1/staff/notes/add', { target: s.troll.id, text: 'second' }, s.mob.session);
+  await s.staff('/v1/staff/notes/add', { target: s.troll.id, text: 'second' }, s.chief.session);
   const read = await s.staff('/v1/staff/notes', { target: s.troll.id }, s.asy.session);
   assert.equal(read.status, 200);
   assert.deepEqual(read.body.notes.map((x) => [x.text, x.byName]), [['second', 'SirMcMobdon'], ['warned in person 21 Oct', 'Asynian']]);
@@ -115,16 +115,16 @@ test('STAFF-PANEL3-DESK: STAFF NOTES - a Moderator adds, every staff member read
   assert.equal(s.audits('notes-read').length, 1);
   // paged by `before`
   for (let i = 0; i < STAFF_NOTES_PAGE; i++) s.insert('staff_notes', { target: s.troll.id, author: s.idOf('Asynian'), author_name: 'Asynian', text: `n${i}`, at: nowS() });
-  const p1 = await s.staff('/v1/staff/notes', { target: s.troll.id }, s.mob.session);
+  const p1 = await s.staff('/v1/staff/notes', { target: s.troll.id }, s.chief.session);
   assert.equal(p1.body.notes.length, STAFF_NOTES_PAGE);
   assert.equal(p1.body.notes[0].text, `n${STAFF_NOTES_PAGE - 1}`, 'newest first');
-  const p2 = await s.staff('/v1/staff/notes', { target: s.troll.id, before: p1.body.next }, s.mob.session);
+  const p2 = await s.staff('/v1/staff/notes', { target: s.troll.id, before: p1.body.next }, s.chief.session);
   assert.deepEqual(p2.body.notes.map((x) => x.text), ['x'.repeat(STAFF_NOTE_MAX), 'second', 'warned in person 21 Oct']);
   assert.equal(p2.body.next, null);
   // the retention: the newest STAFF_NOTES_KEEP a player, the oldest out; another player's untouched
-  await s.staff('/v1/staff/notes/add', { target: s.sylvia.id, text: 'hers' }, s.mob.session);
+  await s.staff('/v1/staff/notes/add', { target: s.sylvia.id, text: 'hers' }, s.chief.session);
   for (let i = 0; i < STAFF_NOTES_KEEP; i++) s.insert('staff_notes', { target: s.troll.id, author: 'x', author_name: 'x', text: `old${i}`, at: 1 });
-  await s.staff('/v1/staff/notes/add', { target: s.troll.id, text: 'newest' }, s.mob.session);
+  await s.staff('/v1/staff/notes/add', { target: s.troll.id, text: 'newest' }, s.chief.session);
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM staff_notes WHERE target = ?').get(s.troll.id).n, STAFF_NOTES_KEEP);
   assert.equal(s.raw.prepare('SELECT text FROM staff_notes WHERE target = ? ORDER BY id DESC LIMIT 1').get(s.troll.id).text, 'newest');
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM staff_notes WHERE text = 'second'").get().n, 0, 'the oldest went');
@@ -136,11 +136,11 @@ test('STAFF-PANEL3-DESK: THE WATCHLIST - each member\'s own, added once, bounded
   const add = await s.staff('/v1/staff/watch/add', { name: 'Troll' }, s.asy.session);
   assert.deepEqual(add, { status: 200, body: { ok: true, sub: s.troll.id, name: 'Troll' } });
   assert.deepEqual((await s.staff('/v1/staff/watch/add', { target: s.troll.id }, s.asy.session)).body, { ok: true, sub: s.troll.id, name: 'Troll', repeat: true });
-  await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.mob.session);
+  await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.chief.session);
   const mine = await s.staff('/v1/staff/watch', {}, s.asy.session);
-  assert.deepEqual(mine.body.watch.map((w) => w.name), ['Troll'], 'Asynian\'s own, not mob\'s');
+  assert.deepEqual(mine.body.watch.map((w) => w.name), ['Troll'], 'Asynian\'s own, not chief\'s');
   assert.equal(mine.body.max, STAFF_WATCH_MAX);
-  assert.deepEqual((await s.staff('/v1/staff/watch', {}, s.mob.session)).body.watch.map((w) => w.name), ['Sylvia']);
+  assert.deepEqual((await s.staff('/v1/staff/watch', {}, s.chief.session)).body.watch.map((w) => w.name), ['Sylvia']);
   // the bound
   for (let i = s.raw.prepare('SELECT COUNT(*) AS n FROM staff_watch WHERE staff = ?').get(s.idOf('Asynian')).n; i < STAFF_WATCH_MAX; i++) {
     const p = await s.registered(`Watched${i}`);
@@ -160,7 +160,7 @@ test('STAFF-PANEL3-DESK: THE WATCHLIST - each member\'s own, added once, bounded
 test('STAFF-PANEL3-DESK: THE WATCH\'S EVENTS - who is playing now, chat reports for everyone; findings, the reviewer\'s cases, big trades and sales for an Admin alone; a day back at most, newest first, paged on one pinned set (mutants: the Moderator\'s share; each threshold; the window)', async () => {
   const s = await stand();
   const t = nowS();
-  for (const who of [s.mob, s.asy]) {
+  for (const who of [s.chief, s.asy]) {
     await s.staff('/v1/staff/watch/add', { target: s.troll.id }, who.session);
   }
   const trollChar = s.character(s.troll, 30);   // playing now
@@ -183,7 +183,7 @@ test('STAFF-PANEL3-DESK: THE WATCH\'S EVENTS - who is playing now, chat reports 
   sale('sale-marks', 92, WATCH_BIG_MARKS, 'marks', s.sylvia.id, s.troll.id);
   sale('sale-marks-small', 93, WATCH_BIG_MARKS - 1, 'marks', s.sylvia.id, s.troll.id);
 
-  const admin = await s.staff('/v1/staff/watch/events', {}, s.mob.session);
+  const admin = await s.staff('/v1/staff/watch/events', {}, s.chief.session);
   assert.equal(admin.status, 200, JSON.stringify(admin.body));
   assert.deepEqual(admin.body.online.map((o) => o.name), ['Troll']);
   assert.deepEqual(admin.body.events.map((e) => e.kind), ['report', 'case', 'flag', 'trade', 'sale', 'sale'], 'newest first');
@@ -202,17 +202,17 @@ test('STAFF-PANEL3-DESK: THE WATCH\'S EVENTS - who is playing now, chat reports 
   s.raw.prepare('UPDATE realm_characters SET lease_at = ? WHERE id = ?').run(t - REALM_PLAYING_S - 1, trollChar);
   assert.deepEqual((await s.staff('/v1/staff/watch/events', {}, s.asy.session)).body.online, []);
   // since and until: the next poll sends the cursor as `since`
-  assert.deepEqual((await s.staff('/v1/staff/watch/events', { since: t - 55 }, s.mob.session)).body.events.map((e) => e.kind), ['report']);
-  assert.deepEqual((await s.staff('/v1/staff/watch/events', { until: t - 55 }, s.mob.session)).body.events.map((e) => e.kind), ['case', 'flag', 'trade', 'sale', 'sale']);
+  assert.deepEqual((await s.staff('/v1/staff/watch/events', { since: t - 55 }, s.chief.session)).body.events.map((e) => e.kind), ['report']);
+  assert.deepEqual((await s.staff('/v1/staff/watch/events', { until: t - 55 }, s.chief.session)).body.events.map((e) => e.kind), ['case', 'flag', 'trade', 'sale', 'sale']);
   // each read takes its own clock, so two reads may straddle a second: each is held to the day before its own bracket
   const before = nowS();
-  const old = (await s.staff('/v1/staff/watch/events', { since: 0 }, s.mob.session)).body.since;
-  const none = (await s.staff('/v1/staff/watch/events', {}, s.mob.session)).body.since;
+  const old = (await s.staff('/v1/staff/watch/events', { since: 0 }, s.chief.session)).body.since;
+  const none = (await s.staff('/v1/staff/watch/events', {}, s.chief.session)).body.since;
   const after = nowS();
   for (const since of [old, none]) assert.ok(since >= before - WATCH_WINDOW_S && since <= after - WATCH_WINDOW_S, `a day back at most: ${since}`);
   // a trade between two watched players is each one's event
-  await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.mob.session);
-  assert.equal((await s.staff('/v1/staff/watch/events', {}, s.mob.session)).body.events.filter((e) => e.kind === 'trade').length, 2);
+  await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.chief.session);
+  assert.equal((await s.staff('/v1/staff/watch/events', {}, s.chief.session)).body.events.filter((e) => e.kind === 'trade').length, 2);
   // paged
   for (let i = 0; i < WATCH_PAGE; i++) s.insert('mod_reports', { case_id: s.raw.prepare("SELECT id FROM mod_cases WHERE target = ? AND source = 'report'").get(s.troll.id).id, reporter: (await s.registered(`Rep${i}`)).id, reason: 'spam', at: t - 100, counted: 1 });
   const p1 = await s.staff('/v1/staff/watch/events', {}, s.asy.session);
@@ -226,8 +226,8 @@ test('STAFF-PANEL3-DESK: THE WATCH\'S EVENTS - who is playing now, chat reports 
 
 test('STAFF-PANEL3-DESK: HOME\'S ROLL-UP of the watchlist - each watched player with something in the last day, most urgent first, the words that say why', async () => {
   const s = await stand();
-  await s.staff('/v1/staff/watch/add', { target: s.troll.id }, s.mob.session);
-  await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.mob.session);
+  await s.staff('/v1/staff/watch/add', { target: s.troll.id }, s.chief.session);
+  await s.staff('/v1/staff/watch/add', { target: s.sylvia.id }, s.chief.session);
   s.character(s.sylvia, 5);
   s.caseOn(s.troll, { ago: 50 });
   const c = s.character(s.troll, null);
@@ -257,7 +257,7 @@ test('STAFF-PANEL3-DESK: YOUR SETTINGS - the member\'s own document, every key t
   assert.equal(save.status, 200, JSON.stringify(save.body));
   const back = await s.staff('/v1/staff/settings', {}, s.asy.session);
   assert.deepEqual(back.body, { settings: mine, at: save.body.at });
-  assert.deepEqual((await s.staff('/v1/staff/settings', {}, s.mob.session)).body.settings, {}, 'another member\'s are their own');
+  assert.deepEqual((await s.staff('/v1/staff/settings', {}, s.chief.session)).body.settings, {}, 'another member\'s are their own');
   for (const bad of [null, [], 'iliac', { look: 'neon' }, { theme: 'iliac' }, { order: { menu: 'random' } }, { order: { footer: 'urgent' } }, { home: { watches: [{ id: 'x', top: 4 }] } },
     { home: { watches: [{ top: 3 }] } }, { home: { other: 1 } }, { home: { watches: [{ id: 'x', show: 'yes' }] } }, { lists: [] }, { window: 3 }, { alerts: 'all' }, { nameplates: [] },
     { lists: { big: 'x'.repeat(STAFF_SETTINGS_BYTES - 19) } }]) {
@@ -274,16 +274,16 @@ test('STAFF-PANEL3-DESK: YOUR SETTINGS - the member\'s own document, every key t
 
 test('STAFF-PANEL3-DESK: THE SERVER\'S NOTICE - an Admin\'s, on every board for 1 to NOTICE_DAYS_MAX days through the game\'s own postNotice, asked again it is the one it made, and written down', async () => {
   const s = await stand();
-  const post = await s.staff('/v1/staff/notice', { subject: 'Restart', body: 'restart in 10 min', days: 1, rid: 'panel-0001' }, s.mob.session);
+  const post = await s.staff('/v1/staff/notice', { subject: 'Restart', body: 'restart in 10 min', days: 1, rid: 'panel-0001' }, s.chief.session);
   assert.equal(post.status, 200, JSON.stringify(post.body));
   const row = s.raw.prepare('SELECT * FROM board_notices').get();
   assert.deepEqual([row.id, row.subject, row.body, row.author_name, row.expires_at - row.at], [post.body.id, 'Restart', 'restart in 10 min', 'SirMcMobdon', 86400]);
-  assert.deepEqual((await s.staff('/v1/staff/notice', { subject: 'Restart', body: 'restart in 10 min', days: 1, rid: 'panel-0001' }, s.mob.session)).body, { ok: true, repeat: true, id: post.body.id });
+  assert.deepEqual((await s.staff('/v1/staff/notice', { subject: 'Restart', body: 'restart in 10 min', days: 1, rid: 'panel-0001' }, s.chief.session)).body, { ok: true, repeat: true, id: post.body.id });
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM board_notices').get().n, 1);
   const read = await s.call('/v1/board/read', { map: 1 }, s.troll.secret);
   assert.equal(read.status, 200, JSON.stringify(read.body));
   assert.deepEqual(read.body.notices.map((x) => x.subject), ['Restart'], 'every board reads it');
-  for (const days of [0, NOTICE_DAYS_MAX + 1]) assert.equal((await s.staff('/v1/staff/notice', { subject: 'x', body: 'y', days, rid: `panel-d${days}` }, s.mob.session)).status, 400);
+  for (const days of [0, NOTICE_DAYS_MAX + 1]) assert.equal((await s.staff('/v1/staff/notice', { subject: 'x', body: 'y', days, rid: `panel-d${days}` }, s.chief.session)).status, 400);
   assert.deepEqual(s.audits('notice').map((a) => [a.outcome, JSON.parse(a.detail).id ?? JSON.parse(a.detail).error]), [['ok', post.body.id], ['failed', 'bad-notice-days'], ['failed', 'bad-notice-days']]);
 });
 
@@ -307,7 +307,7 @@ test('STAFF-PANEL3-DESK: THE AI CHECK\'S SCORECARD - the cases staff decided tha
   decided('actioned', 'hate', 3, { state: 'failed' });        // never read
   decided('actioned', 'hate', 3, { ago: 31 * 86400 });        // past the window
   s.caseOn(s.sylvia, { ai_state: 'done', ai_category: 'hate', ai_severity: 3, ai_mode: 'shadow' });   // still open
-  const r = await s.staff('/v1/staff/ai-score', {}, s.mob.session);
+  const r = await s.staff('/v1/staff/ai-score', {}, s.chief.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual([r.body.days, r.body.mode, r.body.severity], [30, 'shadow', 2]);
   const by = Object.fromEntries(r.body.categories.map((c) => [c.category, c]));
@@ -316,10 +316,10 @@ test('STAFF-PANEL3-DESK: THE AI CHECK\'S SCORECARD - the cases staff decided tha
   assert.deepEqual(by.none, { category: 'none', cases: 2, saidActed: 0, saidDismissed: 0, clearActed: 1, clearDismissed: 1, agreed: 1, rate: 0.5 });
   assert.deepEqual(r.body.total, { cases: 7, saidActed: 2, saidDismissed: 1, clearActed: 2, clearDismissed: 2, agreed: 4, rate: 0.571 });
   assert.deepEqual(r.body.categories.map((c) => c.category)[0], 'hate', 'most cases first');
-  assert.equal((await s.staff('/v1/staff/ai-score', { days: 32 }, s.mob.session)).body.total.cases, 8, 'the window');
-  assert.equal((await s.staff('/v1/staff/ai-score', { mode: 'on' }, s.mob.session)).body.total.cases, 1);
-  for (const days of [0, AI_SCORE_DAYS_MAX + 1, 1.5, '30']) assert.deepEqual((await s.staff('/v1/staff/ai-score', { days }, s.mob.session)).body, { error: 'bad-days' });
-  assert.deepEqual((await s.staff('/v1/staff/ai-score', { days: AI_SCORE_DAYS_MAX }, s.mob.session)).status, 200);
+  assert.equal((await s.staff('/v1/staff/ai-score', { days: 32 }, s.chief.session)).body.total.cases, 8, 'the window');
+  assert.equal((await s.staff('/v1/staff/ai-score', { mode: 'on' }, s.chief.session)).body.total.cases, 1);
+  for (const days of [0, AI_SCORE_DAYS_MAX + 1, 1.5, '30']) assert.deepEqual((await s.staff('/v1/staff/ai-score', { days }, s.chief.session)).body, { error: 'bad-days' });
+  assert.deepEqual((await s.staff('/v1/staff/ai-score', { days: AI_SCORE_DAYS_MAX }, s.chief.session)).status, 200);
   assert.equal(s.audits('ai-score-read').length, 4, 'each view once in ten minutes');
 });
 
@@ -334,22 +334,22 @@ test('STAFF-PANEL3-DESK: REPORTED NOTES AND LISTINGS - an Admin\'s list, a note 
   note('note-two-reports0'); report('board_reports', 'note_id', 'note-two-reports0', 2);
   note('note-hidden-00000', 1); report('board_reports', 'note_id', 'note-hidden-00000', 1);
   note('note-unreported00');
-  const r = await s.staff('/v1/staff/board/reported', {}, s.mob.session);
+  const r = await s.staff('/v1/staff/board/reported', {}, s.chief.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual(r.body.notes.map((n) => [n.id, n.reports, n.hidden]), [['note-hidden-00000', 1, true], ['note-two-reports0', 2, false], ['note-one-report-0', 1, false]]);
   assert.equal(r.body.notes[0].authorName, 'Troll');
   assert.equal(r.body.next, null);
   for (let i = 0; i < REPORTED_PAGE; i++) { note(`note-more-${String(i).padStart(7, '0')}`); report('board_reports', 'note_id', `note-more-${String(i).padStart(7, '0')}`, 1); }
-  const p1 = await s.staff('/v1/staff/board/reported', {}, s.mob.session);
+  const p1 = await s.staff('/v1/staff/board/reported', {}, s.chief.session);
   assert.deepEqual([p1.body.notes.length, p1.body.next], [REPORTED_PAGE, REPORTED_PAGE]);
-  assert.deepEqual([(await s.staff('/v1/staff/board/reported', { from: p1.body.next }, s.mob.session)).body.notes.length], [REPORTED_PAGE + 3 - REPORTED_PAGE]);
+  assert.deepEqual([(await s.staff('/v1/staff/board/reported', { from: p1.body.next }, s.chief.session)).body.notes.length], [REPORTED_PAGE + 3 - REPORTED_PAGE]);
   // Restore, then Remove
-  assert.deepEqual((await s.staff('/v1/staff/board/moderate', { id: 'note-hidden-00000', act: 'restore' }, s.mob.session)).body, { ok: true, id: 'note-hidden-00000', act: 'restore' });
+  assert.deepEqual((await s.staff('/v1/staff/board/moderate', { id: 'note-hidden-00000', act: 'restore' }, s.chief.session)).body, { ok: true, id: 'note-hidden-00000', act: 'restore' });
   assert.equal(s.raw.prepare('SELECT hidden FROM board_notes WHERE id = ?').get('note-hidden-00000').hidden, 2);
-  assert.deepEqual((await s.staff('/v1/staff/board/moderate', { id: 'note-two-reports0', act: 'remove' }, s.mob.session)).body, { ok: true, id: 'note-two-reports0', act: 'remove' });
+  assert.deepEqual((await s.staff('/v1/staff/board/moderate', { id: 'note-two-reports0', act: 'remove' }, s.chief.session)).body, { ok: true, id: 'note-two-reports0', act: 'remove' });
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM board_notes WHERE id = ?').get('note-two-reports0').n, 0);
-  assert.deepEqual(await s.staff('/v1/staff/board/moderate', { id: 'note-two-reports0', act: 'remove' }, s.mob.session), { status: 404, body: { error: 'no-note' } });
-  assert.deepEqual(await s.staff('/v1/staff/board/moderate', { id: 'note-one-report-0', act: 'hide' }, s.mob.session), { status: 400, body: { error: 'bad-act' } });
+  assert.deepEqual(await s.staff('/v1/staff/board/moderate', { id: 'note-two-reports0', act: 'remove' }, s.chief.session), { status: 404, body: { error: 'no-note' } });
+  assert.deepEqual(await s.staff('/v1/staff/board/moderate', { id: 'note-one-report-0', act: 'hide' }, s.chief.session), { status: 400, body: { error: 'bad-act' } });
   // STAFF-PANEL3-DESK FIX: the refused act written down failed
   assert.deepEqual(s.audits('board-moderate').map((a) => [a.target, a.outcome, JSON.parse(a.detail)]), [[null, 'failed', { id: 'note-one-report-0', error: 'bad-act' }]]);
   assert.deepEqual(s.audits('board-remove').map((a) => [a.target, a.outcome]), [[s.troll.id, 'ok'], [null, 'failed']]);
@@ -362,7 +362,7 @@ test('STAFF-PANEL3-DESK: REPORTED NOTES AND LISTINGS - an Admin\'s list, a note 
   listing('listing-quiet0000');
   s.insert('market_auctions', { id: 'auction-two-00000', seller: s.sylvia.id, char_id: 'c', region: 1, provenance: 'p'.repeat(16), wear: 10, opening: 500, fee: 1, at: t - 40, ends_at: t + 3600, rid: 'rid-a', n: 'n' });
   report('market_auction_reports', 'auction', 'auction-two-00000', 2);
-  const m = await s.staff('/v1/staff/market/reported', {}, s.mob.session);
+  const m = await s.staff('/v1/staff/market/reported', {}, s.chief.session);
   assert.equal(m.status, 200, JSON.stringify(m.body));
   assert.deepEqual(m.body.listings.map((l) => [l.type, l.id, l.reports, l.sellerName, l.price]), [['auction', 'auction-two-00000', 2, 'Sylvia', 500], ['listing', 'listing-one-00000', 1, 'Troll', 40]]);
   assert.equal(m.body.next, null);

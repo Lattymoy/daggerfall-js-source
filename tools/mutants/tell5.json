@@ -236,8 +236,8 @@
   {
     "name": "TELL5-cut-near",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // TELL5: a cut feint is no wind-up",
-    "new": "    if (ai === except || gone(ai, now)) continue; // TELL5: a cut feint is no wind-up",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    if (ai === except || gone(ai, now)) continue; // A cut feint is no wind-up",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TELL5-chain-gap-open",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // TELL5: a landing about to chain is still its foe's one; TELL6: a charge running its lane too",
-    "new": "    if (now >= b.land && !(b.dashUntil > now)) continue; // TELL5: a landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "new": "    if (now >= b.land && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]

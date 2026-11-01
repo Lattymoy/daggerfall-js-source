@@ -23,7 +23,7 @@
 // pack cannot carry (systems/tradeModes.js sellProceeds; DaggerfallTradeWindow's sell arm), which is how the honest sale of
 // a lot that big pays. Never a purse of coin: a million coins weigh 2,500 kg (inventory.js GOLD_PIECE_WEIGHT_KG).
 //
-// STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"; asked before, "how to i adjust a lpayers bank?", and
+// STAFF-SET-BANK (2026-10-23; asked before how to adjust a player's bank, and
 // nothing could): A REALM CHARACTER'S BANK, SET BY STAFF. Online a character keeps ONE account, the Empire's, at
 // Daggerfall's index (systems/banking.js EMPIRE-ACCOUNT; realm/realmGoldLaw.js REALM_EMPIRE_ACCOUNT), and the Staff
 // Panel's profile says the bank as one number - every account's gold together (server-account/src/staffPlayers.js
@@ -33,7 +33,7 @@
 // the Empire's set (and a count of no number, which no fold moves and the profile counts as none, at nothing too: a set
 // leaves the bank the profile says and nothing beside it). A loan stays where it stands, as the fold leaves it.
 //
-// GUILD-LETTER-FIX (2026-10-25, mob: a player's level 10 vampire never had the Dark Brotherhood's letter - its tally at
+// GUILD-LETTER-FIX (2026-10-25: a player's level 10 vampire never had the Dark Brotherhood's letter - its tally at
 // InviteSent, no letter pending, The Acceptance Test nowhere in the save; "do it"): A CRIME GUILD'S LETTER, SENT AGAIN OR
 // CALLED OFF BY STAFF. DFU parks the tally before the quest starts (systems/crimeGuilds.js DB-LETTER), so a letter whose
 // quest could not be made spent the invitation for good, and nothing in a save tells that from a test the player failed:

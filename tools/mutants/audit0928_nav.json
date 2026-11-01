@@ -2,8 +2,8 @@
   {
     "name": "N2-the-players-feet-leave-the-union-when-they-do-not-land",
     "file": "src/ai/nav/navBake.js",
-    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // AUDIT PRE-MERGE 0928 N2: feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
-    "new": "  const landed = [...feet, ...landAnchors(chf, anchors ?? [])]; // AUDIT PRE-MERGE 0928 N2: feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "new": "  const landed = [...feet, ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/ai/nav/enhancedAI.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "N4-a-small-soup-bakes-here-in-silence",
     "file": "src/ai/nav/navClient.js",
-    "old": "    if (!result && this._hadWorker)\n      console.warn(\n        `[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`,\n      ); // AUDIT PRE-MERGE 0928 N4: a small soup's fallback says so",
-    "new": "    // AUDIT PRE-MERGE 0928 N4: a small soup's fallback says so",
+    "old": "    if (!result && this._hadWorker)\n      console.warn(\n        `[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`,\n      ); // A small soup's fallback says so",
+    "new": "    // A small soup's fallback says so",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]

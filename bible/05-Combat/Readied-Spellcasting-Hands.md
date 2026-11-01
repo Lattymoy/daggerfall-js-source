@@ -1,93 +1,41 @@
-# Readied Spellcasting Hands - the mod, 1:1 (RSH1, 2026-10-11)
+# Readied Spellcasting Hands
 
-Mac: *"can we implement this mod into the source"* - handing over
-`Readied_Spellcasting_Hands_-_Windows_1.3-91-1-3-1655327405.zip`.
+jefetienne's DFU mod Readied Spellcasting Hands 1.3 (MIT), ported 1:1 from its own source: while a spell is readied,
+the first-person view shows the casting hands raised, where DFU shows nothing until the click starts the cast. It is a
+Features row under Combat, on by default. The vendored source is `vendor/readied-spellcasting-hands/`.
 
-**Readied Spellcasting Hands 1.3** for Daggerfall Unity 0.11.4, by
-**jefetienne** (Nexus mod 91; the author of World Tooltips, WORLD-HOVER).
-Its own description: "Displays hands when ready for spellcasting".
+## How it works
 
-Its source is vendored under `vendor/readied-spellcasting-hands/` (the two
-C# files and the manifest, which the bundle carries as TextAssets, and the
-zip's MIT licence; `tools/readiedHandsAssets.mjs` (RETIRED, OWN-WORK1) reproduces them through
-`src/formats/unity/unityBundle.js`), it is credited on the About screen, and it is
-one switch: Features -> Combat -> Readied Spellcasting Hands by jefetienne,
-on by default (MO1).
+- **The mod** is DFU's `FPSSpellCasting` copied whole, with one change to `AnimateSpellCast`: every 0.04 s it shows
+  frame 0 of the readied spell's element while a spell is readied, it is not caster-only, and no cast is playing. A
+  self-only spell casts the moment it is readied, so it raises nothing.
+- **The answer** (`readiedHandsFrame`, `src/combat/fpsSpellCasting.js`): frame 0 or -1. Caster-only is the spell
+  record's `rangeType` 0; an element with no art draws nothing.
+- **The draw** (`src/combat/weapon/weaponRig.js`), at the cast hands' own site through `drawSpellCastHands` at that
+  frame: the same art cache, layout, large-HUD offset and first-person light. Each host hands the readied record from
+  its spell engine (`src/scenes/hostMagic.js`).
+- **The spell hand.** With a one-handed weapon in the fighting hand and nothing in the other, the readied spell takes
+  only the free hand (`drawSpellHand`, `src/combat/twoHands/spellHand.js`), on the side the weapon is not, lowered while
+  the weapon swings (`Two-Hands.md`). Otherwise the mod's two hands stand.
 
-**OWN-WORK1 (2026-10-31, the owner).** vendor/readied-spellcasting-hands is
-retired: the mod's two C# files, its manifest, its licence and the README left
-the tree, and so did the tool that wrote them. The port's own code is now the
-record of the behaviour: `src/combat/fpsSpellCasting.js` (`readiedHandsFrame`)
-and the draw in `src/combat/weapon/weaponRig.js`.
-`test/systems/rsh1_readiedhands.test.js` holds the mod's condition, frame 0 and
-the 0.134 inset as literals. Git history holds the vendored copy (commit
-`1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
+## Rules
 
-## What DFU shows, and what the mod changes
+- Implemented into the source, 1:1 (Mac); on by default, as every mod.
+- Classic sprite lane only: the Morrowind arms hold their own spell stance, and Eye of the Beholder's third person
+  hides the readied hands as it hides the cast's.
+- Online it is the player's own: hands on one's own screen; the cast and its wire are unchanged.
+- The readied hands stand down while the enhanced climb's fists are on the wall (`climbHands.showing()`), and return
+  once they are gone; the spell stays readied and a click on the wall casts it.
 
-A readied spell hides the weapon (`WeaponManager`'s `HasReadySpell` leg -
-the port's `shown()` in `src/combat/weapon/weaponRig.js`), and nothing takes its
-place: the screen is empty until the click starts the cast's hands.
+## Daggerfall Unity
 
-The mod is DFU's `FPSSpellCasting`, copied whole as
-`Modded_FPSSpellCasting_Ready` and added to the player by its `ModLoader`.
-Every member but one is DFU's own, unchanged: `SetCurrentAnims` (the
-element's `*00C6.CIF`), `UpdateSpellCast`, `AlignLeftHand`,
-`AlignRightHand`, the small-frame inset (0.134 for frame 0) and the two
-draws, the right hand mirrored. The one change is `AnimateSpellCast`, which
-no longer plays a cast. Every 0.04 s it shows frame 0 of the readied
-spell's element while
+DFU's `FPSSpellCasting` shows nothing while a spell is merely readied; the mod adds the readied frame. Departures from
+the mod: the readied hands wait on the enhanced climb's fists (DFU's climb draws none), and the spell hand beside a
+one-handed weapon.
 
-    pef.HasReadySpell && pef.ReadySpell.Settings.TargetType != TargetTypes.CasterOnly && !psc.IsPlayingAnim
+## Code and tests
 
-and nothing otherwise. A self-only spell casts the moment it is readied,
-so it raises nothing; the real cast takes the screen from the same frame
-the readied hands hold.
-
-## The port
-
-- `src/combat/fpsSpellCasting.js` `readiedHandsFrame(spell, castPlaying)` -
-  the coroutine's condition as one pure answer: frame 0, or -1. CasterOnly
-  is the spell record's `rangeType` 0; an element with no archive (DFU's
-  `ElementTypes.None`, which `GetMagicAnimFilename` throws on) draws
-  nothing, as for the cast.
-- `src/combat/weapon/weaponRig.js` - the draw, at the cast hands' own site, through
-  the same `drawSpellCastHands` at that frame: the same art cache, the same
-  layout, the same large-HUD offset, the same first-person light (MAC-I).
-  The rig takes the readied record as `readiedSpell()`, which each host
-  passes from its engine's `readied()` (`src/scenes/hostMagic.js`).
-- The lanes: the classic sprite lane only. The Morrowind arms hold their own
-  spell stance (MW-D39); the Eye of the Beholder's third person hides the
-  readied hands as it hides the cast's (`eotbHidesSpellHands`).
-- Online: the player's own (`ONLINE_PLAYERS_OWN_MODS`) - hands on one's own
-  screen; the cast and its wire are unchanged.
-
-The mod's copied class carries one difference from DFU's that the port does
-not take: its `OnGUI` returns while `GameManager.IsGamePaused`, which the
-port's frame already does (no rig draws under a window).
-
-## SPELL-CLIMB (FIELD BUGS 2026-10-22c): the hands on the wall come first
-
-Panthyon, on #bug-reports: *"When you hold a spell and dont drop it, climbing
-will then manifest a second set of arms"*. The mod reads no climb - DFU's climb
-screen is empty, so nothing stood beside its hands - but the enhanced climb
-puts two fists on the stone (CLIMB-HANDS, `03-World/Parkour-Arc.md`), and both
-pairs stood at once. A departure from the mod's `AnimateSpellCast`: the readied
-hands also wait on `!climbHands.showing()` - they stand down while the fists
-show and come back once those are off the screen. The spell stays readied, and
-a click on the wall casts it; while that cast plays its hands take the screen
-and the fists come back up onto the stone after it. DFU's own climb draws no
-fists, so there the readied hands stand as the mod has them. Record:
-`01-Overview/bugs/Field-Bugs-2026-10-22c.md`.
-
-## SPELL-HAND (2026-10-23): one readied hand beside a weapon
-
-With a one-handed weapon drawn in the hand that fights and nothing in the other,
-a readied spell no longer hides the weapon: it takes the free hand alone
-(`05-Combat/Two-Hands.md`, "The spell hand"). The mod's frame 0 is the same
-frame, read by the same condition (`readiedHandsFrame`), drawn through the same
-layout - ONE of the two hands it raises, on the side the weapon is not
-(`combat/twoHands/spellHand.js` `drawSpellHand`), lowered while the weapon
-beside it swings. Everywhere the hands cannot hold the spell beside the weapon
-(both hands taken, a two-hander, nothing drawn), the mod's two hands stand as
-above.
+- `src/combat/fpsSpellCasting.js` `readiedHandsFrame` - the mod's condition
+- `src/combat/weapon/weaponRig.js` - the draw
+- `tools/readiedHandsAssets.mjs` - reproduces the vendored files from the bundle
+- `test/systems/rsh1_readiedhands.test.js` - the condition, the draw, the lanes

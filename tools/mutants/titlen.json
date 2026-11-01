@@ -202,7 +202,7 @@
     "tests": [
       "test/net/titlen.test.js"
     ],
-    "note": "STAFF-PANEL1 (mob: \"kpblca_1 needs added to them as welll\"): kpblca_1 left off the list holds no developer set and no staff panel Admin role."
+    "note": "STAFF-PANEL1: kpblca_1 left off the list holds no developer set and no staff panel Admin role."
   },
   {
     "name": "DISC-flylighter-not-granted",

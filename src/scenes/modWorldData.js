@@ -25,6 +25,7 @@ import { installCapitals } from '../world/capitalModels.js'; // TESA10: the capi
 import { installCuratedBlocks } from '../world/dungeon/curatedInstall.js'; // DELVE II (DLV5): the curated blocks
 import { installTownOutline } from '../world/townOutline.js'; // TOWN-SHAPES TS3: the open cell a town past the Bay leaves
 import { installUrbanArt } from '../world/urban/urbanArt.js'; // URBANIZER: the towns' own pictures - their streets' stone, their walls, the capitals' brick, half-timber and ashlar
+import '../world/tamriel/skyrimFloraArt.js'; // Skyrim plant flats on the texture door (src/assets/skyrim/flora/)
 import { installShipRefit } from '../world/shipRefit.js'; // the ships a player owns, furnished
 import { installRoleplayRealismWorld } from '../systems/roleplayRealism/rrWorld.js'; // OWN-WORK3: the Master Armorer's keep and shop, our own
 import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js'; // IT1: the carriages at the gates

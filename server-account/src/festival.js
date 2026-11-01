@@ -512,6 +512,52 @@ export async function takeFromOffering(ctx, player, body, env) {
   return { ok: true, cakes: await cakesOf(db, player.id), stock: int(left?.stock) };
 }
 
+// ═══ BOUND-DESTROY ═══════════════════════════════════════════════════════════════════════════════════════════════════
+/** The counts a let-go takes from, by the word the client sends. */
+const DISCARD_COLUMNS = Object.freeze({ cakes: 'fest_cakes', bowls: 'fest_bowls' });
+const countsOf = async (/** @type {any} */ db, /** @type {string} */ id) => {
+  const row = await db.prepare('SELECT fest_cakes, fest_bowls FROM players WHERE id = ?1').bind(id).first();
+  return { cakes: int(row?.fest_cakes), bowls: int(row?.fest_bowls) };
+};
+/**
+ * LET GO `body.n` of the account's Soul Cakes or Hearth Offerings (`body.kind` 'cakes' or 'bowls') - FIELD FEEDBACK
+ * 2026-10-31 BOUND-DESTROY ("Soulbound items need to be disposable, ... hearth offerings"): the pack's are the counts'
+ * face, so one destroyed on the client alone came back. Under the client's request id `body.rid`, a sale's way: the id's
+ * own row decides, laid only while the count holds n, and the count goes down where it was laid. Any switch, any day.
+ * `{ cakes, bowls }` (`repeat: true` with them, asked again); `rid`, `guest`, `rate`, `kind`, `count` (with the counts).
+ * @param {{ db: any, nowS: number }} ctx @param {{ id: string, handle?: string|null }} player @param {any} body
+ */
+export async function discardFestival(ctx, player, body) {
+  const rid = body?.rid;
+  if (typeof rid !== 'string' || !SALE_RID_RE.test(rid)) return { error: 'rid' };
+  if (!player?.handle) return { error: 'guest' };
+  const { db, nowS } = ctx;
+  const had = () =>
+    db.prepare('SELECT 1 AS d FROM fest_discards WHERE account = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (await had()) return { repeat: true, ...(await countsOf(db, player.id)) };
+  if (overAccountRate(`fest:${player.id}`, nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };
+  const col = Object.hasOwn(DISCARD_COLUMNS, body?.kind)
+    ? DISCARD_COLUMNS[/** @type {'cakes'|'bowls'} */ (body.kind)]
+    : null;
+  if (!col) return { error: 'kind' };
+  const n = body?.n;
+  if (!Number.isSafeInteger(n) || n < 1) return { error: 'count', ...(await countsOf(db, player.id)) };
+  const [laid] = await db.batch([
+    db
+      .prepare(
+        `INSERT INTO fest_discards (account, rid, kind, n, at) SELECT ?1, ?2, ?3, ?4, ?5
+      WHERE (SELECT ${col} FROM players WHERE id = ?1) >= ?4 ON CONFLICT DO NOTHING RETURNING rid`,
+      )
+      .bind(player.id, rid, body.kind, n, nowS),
+    db
+      .prepare(`UPDATE players SET ${col} = ${col} - ?2 WHERE id = ?1 AND ${col} >= ?2 AND changes() > 0`)
+      .bind(player.id, n),
+  ]);
+  if (laid?.results?.[0]) return countsOf(db, player.id);
+  if (await had()) return { repeat: true, ...(await countsOf(db, player.id)) }; // the same id, laid by an ask in flight beside it
+  return { error: 'count', ...(await countsOf(db, player.id)) };
+}
+
 /** The answer's status by its refusal: a guest's is the session's (403), a shut festival a conflict with the calendar
  *  (409), a spent rate 429; every other refusal a request the law refuses (400). */
 export const FEST_STATUS = Object.freeze({ guest: 403, closed: 409, rate: 429, capped: 429 });

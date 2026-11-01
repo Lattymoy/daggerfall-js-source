@@ -179,7 +179,7 @@ test('AUDIT PSCALE1 outdoors, driven - WHOEVER FIGHTS IT: my foe is as tough as 
   blowFrom(owner, troll, 'me', 0);
   owner.healFoe(troll, 20);
   assert.equal(troll.entity.health, 58, 'twenty against four is eight');
-  // BOSS-EXACT (mob 2026-10-25: "the rat isnt takeing any dmage"): a staff event's mini boss keeps the exact health staff
+  // BOSS-EXACT: a staff event's mini boss keeps the exact health staff
   // typed - four fighting it, every blow and heal lands whole (its blows at me still weigh by them: partyHit)
   const boss = await owner.spawnFoe(0, [20, 0, 20], { feetGiven: true });
   promoteStaffBoss(boss.entity, { hp: 10000 });
@@ -191,12 +191,12 @@ test('AUDIT PSCALE1 outdoors, driven - WHOEVER FIGHTS IT: my foe is as tough as 
   owner.healFoe(boss, 10);
   assert.equal(boss.entity.health, 9966, 'a heal its own ten');
   assert.equal(owner.partyHit(10, boss), 13, 'its blow at me still four fighters\'');
-  // BOSS-BIG-HIT (mob 2026-10-25: "magic hits 10 of thousands"): a peer's blow past the bound lands on the mini boss at the
+  // BOSS-BIG-HIT: a peer's blow past the bound lands on the mini boss at the
   // bound - it was refused whole; any other foe still refuses it
   boss.entity.maxHealth = 1e8; boss.entity.health = 20000;   // a share far past every number below (BOSS-HIT-SHARE's own pins follow)
   assert.equal(owner.applyHit('bob-0002', { i: boss.seq, dmg: 45000, kind: 'melee', k: 'world:3,12' }), true, 'a blow of 45,000 on the mini boss lands');
   assert.equal(boss.entity.health, 10000, 'as 10,000');
-  // BOSS-SPELL-WARD (mob: "use crazy spell reduction on mini bosses like 90%", "of all spell damage"): a tenth of every spell -
+  // BOSS-SPELL-WARD: a tenth of every spell -
   // a peer's, mine, a round, and a whole-health one never kills
   owner.applyHit('bob-0002', { i: boss.seq, dmg: 45000, kind: 'spell', k: 'world:3,12' });
   assert.equal(boss.entity.health, 9000, 'a peer\'s spell of 45,000: 10,000 at the bound, a tenth of it');
@@ -215,7 +215,7 @@ test('AUDIT PSCALE1 outdoors, driven - WHOEVER FIGHTS IT: my foe is as tough as 
   assert.ok(bossPup?.entity?.staffBoss, 'the boss stands as a puppet');
   seen.damageFoe(bossPup, 400, [20, 0, 20], null, { fromPlayer: true, kind: 'spell' });
   assert.equal(toOwner.at(-1)?.dmg, 400, 'a puppet sends its owner the spell whole - the owner cuts it, once');
-  // BOSS-HIT-SHARE (mob: "needs to scal with players", "1% per heaslth with 40 player ins much", "magfic and melee"): one hit
+  // BOSS-HIT-SHARE: one hit
   // takes at most 1% of its maximum split among everyone fighting it - a blade's and a spell's alike, mine and a peer's
   const crowd = await owner.spawnFoe(0, [24, 0, 24], { feetGiven: true });
   promoteStaffBoss(crowd.entity, { hp: 100000 });
@@ -228,7 +228,7 @@ test('AUDIT PSCALE1 outdoors, driven - WHOEVER FIGHTS IT: my foe is as tough as 
   assert.equal(crowd.entity.health, 98951, 'a peer\'s spell its share too - forty-one now: 24');
   owner.damageFoe(crowd, 10, null, null, { fromPlayer: true });
   assert.equal(crowd.entity.health, 98941, 'a blow under its share lands whole');
-  // BOSS-BAR (mob: "the bar never moved"): past the wire's bound the record says the same share of it, so a reader's bar falls
+  // BOSS-BAR: past the wire's bound the record says the same share of it, so a reader's bar falls
   const big = await owner.spawnFoe(0, [22, 0, 22], { feetGiven: true });
   promoteStaffBoss(big.entity, { hp: 1000000 });
   big.entity.health = 750000;

@@ -1,5 +1,5 @@
-// PVP-HUD (the owner's mockup of the PvP screens, 2026-10-29: "do we show comag timer rong and cooldown flkag rinf?", "was
-// in mock up"; bible/11-Multiplayer/PvP-Rework.md PVP-HUD): the combat lock shown - the ring round the flag button, the
+// PVP-HUD (the owner's mockup of the PvP screens, 2026-10-29: the combat timer ring and the flag cooldown
+// ring, as the mockup showed; bible/11-Multiplayer/PvP-Rework.md PVP-HUD): the combat lock shown - the ring round the flag button, the
 // banner, the last hits - and the lines the lock's doors say, the kill's lines, the party's plate, the villain's mark and
 // the level 29 sheet.
 import { test, afterEach } from 'node:test';
@@ -167,7 +167,7 @@ test('PVP-HUD THE LOCK\'S DOORS (scenes/pvpFlagHost.js, scenes/portalStoneHost.j
   s.clock = 0;
   s.f.heard({ k: 'hp', by: 'peer-x', to: 'peer-me', d: 10, r: 0, h: [] });
   assert.equal(s.f.on(), false);
-  assert.equal(stone.lockRefused(), true, 'unflagged in the lock: held too (PVP-PORTAL, the owner: "agro or flag time cool down")');
+  assert.equal(stone.lockRefused(), true, 'unflagged in the lock: held too (PVP-PORTAL)');
   s.clock = L;
   assert.equal(stone.lockRefused(), false, 'the lock over: free');
   const src = rd('src/scenes/portalStoneHost.js');

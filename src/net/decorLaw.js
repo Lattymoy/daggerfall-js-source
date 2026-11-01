@@ -28,6 +28,7 @@
 import { PROVENANCE_RE, makerName } from './recipeLaw.js'; // PROF4: a crafted piece's id and mark, one home
 import { TEMPLATES } from '../systems/item/itemKinds.js'; // INT9: the kept-back list's templates - a leaf
 import { isNpcFlat } from '../world/npcFlatArchives.js'; // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
+import { isNatureArchive } from '../world/natureArchives.js'; // AUDIT FB1031 Y6: a tree or a plant - a leaf
 import { t } from '../systems/textManager.js'; // DECOR-USE: the cooking station's name in the player's language
 import { TROPHY_TEMPLATE } from './trophyLaw.js'; // HUNTERS-MARK: a mounted trophy hangs
 
@@ -146,8 +147,9 @@ export const DECOR_ARROW_TEMPLATE = 131;
  * boots - where DECOR2c hung the shields alone; it hangs as its pack picture, as a shield does.
  */
 export function decorIsMount(piece) {
-  const it = piece?.item;
-  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;
+  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;
+  const it = piece.item;
+  if (!it) return piece.hung === true; // YARD-WALLS: a catalogue picture hung flat on a yard's wall (decorPlaceOf `hung`)
   return (
     (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) ||
     it.g === DECOR_ARMOR_GROUP ||
@@ -157,7 +159,7 @@ export function decorIsMount(piece) {
 /** HUNTERS-MARK (Bounty-Boards.md 12.5): A MOUNTED TROPHY - a mount of its own kind, its beast its item's message (`p`):
  *  hung on its plaque (scenes/decor/trophyArt.js), never as a pack picture. */
 export const decorIsTrophy = (piece) =>
-  decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);
+  decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);
 
 /** DECOR-FLIP (2026-09-27, Discord: "Some sprites flipped (allow rotation)"): A FLAT TURNED HALF ROUND FACES THE OTHER
  *  WAY. A billboard turns to the eye whatever its record says, so the one turn a picture has is WHICH WAY it faces:
@@ -325,7 +327,8 @@ export const DECOR_STATION_NAMES = Object.freeze({
  * WHERE a piece stands and what it cost - the half a move may change - projected and rounded (a millimetre, a tenth
  * of a degree; `rot` is [yaw, pitch, roll]), or null. `light` null is no light; `storage` whether it holds things;
  * HOME-STATIONS: `station` the craft it serves (DECOR_STATIONS), carried only when it serves one - a piece holds
- * things or serves a craft, never both (one press, one thing it does).
+ * things or serves a craft, never both (one press, one thing it does). YARD-WALLS: `hung` - a catalogue picture hung
+ * flat on the wall it was set on (decorIsMount), carried only when it is.
  */
 /** A placed piece's own name. Empty clears it. Longer than this, or with a control character, is no name. */
 export const DECOR_NAME_MAX = 32;
@@ -340,10 +343,10 @@ export function decorNameOf(raw) {
 
 export function decorPlaceOf(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const { pos, rot, scale, light = null, storage = false, paid, station = null } = raw;
+  const { pos, rot, scale, light = null, storage = false, paid, station = null, hung = false } = raw;
   if (!triple(pos, DECOR_POS_MAX) || !triple(rot, 180)) return null;
   if (!fin(scale) || scale < DECOR_SCALE_MIN || scale > DECOR_SCALE_MAX) return null;
-  if (typeof storage !== 'boolean') return null;
+  if (typeof storage !== 'boolean' || typeof hung !== 'boolean') return null;
   if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;
   if (!Number.isSafeInteger(paid) || paid < 0 || paid > DECOR_PRICE_MAX) return null;
   const lit = light === null ? null : decorLightOf(light);
@@ -359,6 +362,7 @@ export function decorPlaceOf(raw) {
     paid,
     ...(station ? { station } : {}),
     ...(name ? { name } : {}),
+    ...(hung ? { hung } : {}),
   };
 }
 
@@ -370,6 +374,8 @@ export function decorPieceOf(raw) {
   const what = decorWhatOf(raw);
   const place = decorPlaceOf(raw);
   if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft
+  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]) || isNatureArchive(what.flat[0])))
+    return null; // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none
   return { id: raw.id, ...what, ...place };
 }
 
@@ -504,18 +510,16 @@ export const DECOR_YARD_CAP = 60;
 /** How far from the building's origin a yard's piece may stand, on each axis, metres - past any lot. */
 export const DECOR_YARD_POS_MAX = 48;
 /**
- * YARD-HEIGHT (2026-10-06, Mac: "limit the height at which players can build ... People currently can build towers that
- * seem out of place"; Mac's call: 4 m): HOW HIGH A YARD'S PIECE MAY STAND - its place (`pos`) at most this far over the
- * ground, metres. A town stands on a flat block, so its ground is the building's own origin's height (the yard's `pos`
- * is from it). A flat's place is its foot and a hung one's where it hangs; AUDIT YARD-HEIGHT Y8: a model's is its own
- * origin, which the placer stands above the surface by as much as the model reaches below it (systems/decor/decorPlacer.js
- * lift) - so a model scaled up stands its origin higher on the same ground. The service knows no model's shape, so both
- * ends ask the one place they share. A fence with a lantern on it, a cart, a crate on a crate - never a tower: each piece
- * stood on the one below climbed as far as DECOR_YARD_POS_MAX. A piece placed or moved past it is refused at both ends
- * (decorYardHighOk - scenes/homeYards.js yardWhyNot, server-account/src/decor.js); YARD-SWEEP (2026-10-11): one standing
- * from before it is deleted (migration 0109) and never served or stood (decor.js yardsOf, homeYards.js ensure).
+ * YARD-HEIGHT (2026-10-06, Mac: "People currently can build towers that seem out of place"): HOW HIGH A YARD'S PIECE
+ * MAY STAND - its place (`pos`, from the building's own origin on the town's ground) at most this far up, metres. A
+ * flat's place is its foot, a hung one's its middle, a model's its origin (AUDIT Y8: lifted by its reach below it); the
+ * service knows no shape, so both ends ask the one place they share (decorYardHighOk - scenes/homeYards.js yardWhyNot,
+ * server-account/src/decor.js). YARD-SWEEP deleted those from before it (migration 0109, at 4 m). YARD-WALLS
+ * (2026-10-31, the owner handing on "I should be able to decorate the walls better, and balconies"): Mac's 4 m raised
+ * to 8 - a two-storey house's walls and roof deck stand to 6.45 m. A piece free of its house keeps 4 m, the client's to
+ * measure (homeYards.js YARD_FREE_HIGH).
  */
-export const DECOR_YARD_HIGH = 4;
+export const DECOR_YARD_HIGH = 8;
 /** YARD-HEIGHT: whether a yard piece's place stands within DECOR_YARD_HIGH of the ground. */
 export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1]) <= DECOR_YARD_HIGH;
 /** YARD-HEIGHT (AUDIT Y3): the refusal in its one sentence - the decorator's (scenes/homeYards.js YARD_TOO_HIGH) and the

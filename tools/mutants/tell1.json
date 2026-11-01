@@ -128,7 +128,7 @@
   {
     "name": "TELL1-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "  s.blowReady = now + blowCooldown(ent); // TELL7: by its tier",
+    "old": "  s.blowReady = now + blowCooldown(ent); // By its tier",
     "new": "  s.blowReady = now;",
     "tests": [
       "test/systems/tell1_poise.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "TELL1-street-no-hold",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (_tell === 'hold') return;\n    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (mob 2026-10-25: \"he got stun locked lets stop him from getting stunned\"): a staff event's mini boss takes no shove and no Hurt",
-    "new": "    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (mob 2026-10-25: \"he got stun locked lets stop him from getting stunned\"): a staff event's mini boss takes no shove and no Hurt",
+    "old": "    if (_tell === 'hold') return;\n    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN: a staff event's mini boss takes no shove and no Hurt",
+    "new": "    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN: a staff event's mini boss takes no shove and no Hurt",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

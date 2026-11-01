@@ -174,7 +174,6 @@ test('WORLD6b-iii(b): the world host by source - the halo held from the map pixe
   const o = rd('src/net/online.js');
   assert.match(o, /if \(h && h\.ws && h\.status === 'open' && this\._ws && isCellRoom\(room\) && isCellRoom\(this\.room\)\) \{/, 'the promotion (AUDIT WORLD6b-iii(b) A1: a live halo alone)');
   assert.match(o, /for \(const r of \[k, this\.room, \.\.\.this\._halo\.keys\(\)\]\) if \(has\(r\) && sock\(r\)\) \{ via = sock\(r\); break; \}/, 'a hit through the owner\'s cell - the frame\'s first, then wherever it is reported (AUDIT WORLD6b-iii(b) A3)');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(b\): the cell seam/, 'the record');
 });
 
 // ── AUDIT FOES FOE3: THE PRIMARY SOCKET IS NOT THE ONLY WAY OUT ──

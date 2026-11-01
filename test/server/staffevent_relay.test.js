@@ -1,4 +1,4 @@
-// STAFF-EVENT (2026-10-24, mob: "lets start making an event tool for staff to use"; bible/11-Multiplayer/Staff-Events.md) -
+// STAFF-EVENT (2026-10-24; bible/11-Multiplayer/Staff-Events.md) -
 // THE RELAY'S HALF (server/src/staffEvents.js) on stand-in rooms - the hub's book (start, a replay, a full book, boss,
 // end, look, a lapse, the hello), the place's cell keeping the meter (a word heard only in its own cell, credited only
 // from a pose on the pixel, the boss called at the meter and by hand, the hub told, an event done ended) - and THE ACCOUNT
@@ -182,11 +182,11 @@ async function extensionKey() {
   let last = 0;
   return { pub, proof: async (what, handle) => { const ts = Math.max(Math.floor(Date.now() / 1000), last + 1); last = ts; return { pub, ts, sig: b64url(new Uint8Array(await subtle.sign({ name: 'Ed25519' }, pair.privateKey, enc.encode(staffWords(what, handle.toLowerCase(), ts))))) }; } };
 }
-/** The Worker with mob (an Admin) and Asynian (a Moderator) signed in; the relay's door the stand-in hub above, with the
+/** The Worker with chief (an Admin) and Asynian (a Moderator) signed in; the relay's door the stand-in hub above, with the
  *  service's own public key - so every order the doors push is verified and taken by the relay's real law. */
 async function stand() {
-  const mobKey = await extensionKey();
-  const s = await standService({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY });
+  const chiefKey = await extensionKey();
+  const s = await standService({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY });
   const R = relay();
   R.hub._loadKey = async () => {};
   R.hub._verifyKey = s.identityPublic;
@@ -204,11 +204,11 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await call('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await call('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await call('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await call('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const k = await extensionKey();
   const asy = (await call('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await k.proof('enroll', 'Asynian')) })).body;
-  return { ...s, R, door, call, mob, asy, raw: s.env.DB._raw, restore: () => { globalThis.fetch = real; } };
+  return { ...s, R, door, call, chief, asy, raw: s.env.DB._raw, restore: () => { globalThis.fetch = real; } };
 }
 const STAGE = { rg: 17, loc: 0, px: 207, py: 213, nm: 'Daggerfall', ct: 1, mt: [7, 12], n: 30, m: 12, b: 24, bs: 250, bh: 25, eb: 1, mins: 60 };
 
@@ -222,7 +222,7 @@ test('STAFF-EVENT: THE ACCOUNT DOORS - Admins alone; a start stored, audited and
     assert.deepEqual(await s.call('/v1/staff/events', {}, s.asy.session), { status: 403, body: { error: 'staff-admin' } });
     assert.equal((await s.call('/v1/staff/event', { op: 'start', ev: STAGE }, s.asy.session)).status, 403);
     // start
-    let r = await s.call('/v1/staff/event', { op: 'start', ev: STAGE }, s.mob.session);
+    let r = await s.call('/v1/staff/event', { op: 'start', ev: STAGE }, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     const ev = r.body.event;
     assert.equal(ev.state, 'live');
@@ -235,57 +235,57 @@ test('STAFF-EVENT: THE ACCOUNT DOORS - Admins alone; a start stored, audited and
     assert.equal(JSON.parse(audit[0].detail).health, 25);
     // bad stagings refused before the relay is asked
     const before = s.door.pushed;
-    // EVENT-FAULT (mob 2026-10-25: "service refused"): each refusal names its field
+    // EVENT-FAULT: each refusal names its field
     for (const [bad, field] of [[{ ...STAGE, n: 0 }, 'total'], [{ ...STAGE, m: 31 }, 'meter'], [{ ...STAGE, mt: [146] }, 'monsters'], [{ ...STAGE, bh: 101 }, 'health'], [{ ...STAGE, hp: 1_000_001 }, 'health'],
     // PIN MOVED (AUDIT RELEASE R2-7): a pixel is the world's grid (8192 past it); PIN MOVED (WW6): a town's event stands where
     // its town does - a Bay town's location at a pixel past the Bay, or a town past the Bay's own index at a Bay pixel, is
     // refused by name (`town`); a town past the Bay at its own pixel is staged (test/world/worldWide/ww6_raids.test.js)
       [{ ...STAGE, mins: 1441 }, 'runs'], [{ ...STAGE, mins: -1 }, 'runs'], [{ ...STAGE, b: 39 }, 'boss'], [{ ...STAGE, bs: 99 }, 'size'], [{ ...STAGE, px: 8192 }, 'pixel'], [{ ...STAGE, px: 1000 }, 'town'], [{ ...STAGE, rg: 64, loc: -1000123 }, 'town'], [{ ...STAGE, loc: 10000 }, 'place'], [{ ...STAGE, rg: 256 }, 'region']]) {
-      const r2 = await s.call('/v1/staff/event', { op: 'start', ev: bad }, s.mob.session);
+      const r2 = await s.call('/v1/staff/event', { op: 'start', ev: bad }, s.chief.session);
       assert.deepEqual([r2.status, r2.body], [400, { error: `event-bad-${field}` }], JSON.stringify(bad));
     }
     assert.equal(s.door.pushed, before);
     // Spawn mini boss now: one more call at the hub, which tells the place's cell (its ledger calls the boss)
-    r = await s.call('/v1/staff/event', { op: 'boss', id: ev.id }, s.mob.session);
+    r = await s.call('/v1/staff/event', { op: 'boss', id: ev.id }, s.chief.session);
     assert.equal(r.body.event.ev.fb, 1);
     assert.equal(r.body.event.boss, 'due');
     // the meter, as the hub last heard it from the cell
     s.R.hub._sevLive.set(ev.id, { id: ev.id, n: 9, bd: 1, bu: 1, bk: 0, fc: 1, bossN: 0, f: 3 });
-    r = await s.call('/v1/staff/events', {}, s.mob.session);
+    r = await s.call('/v1/staff/events', {}, s.chief.session);
     assert.deepEqual([r.body.relay, r.body.events.length, r.body.events[0].kills, r.body.events[0].boss, r.body.events[0].fighters], [true, 1, 9, 'up', 3]);
     assert.equal(s.raw.prepare('SELECT kills FROM staff_events').get().kills, 9, 'the meter kept on the row');
     // the relay down: the read shows the last meter heard, and says so
     s.door.up = false;
-    r = await s.call('/v1/staff/events', {}, s.mob.session);
+    r = await s.call('/v1/staff/events', {}, s.chief.session);
     assert.deepEqual([r.body.relay, r.body.events[0].kills, r.body.events[0].live], [false, 9, false]);
-    assert.deepEqual((await s.call('/v1/staff/event', { op: 'end', id: ev.id }, s.mob.session)).body, { error: 'event-relay' });
+    assert.deepEqual((await s.call('/v1/staff/event', { op: 'end', id: ev.id }, s.chief.session)).body, { error: 'event-relay' });
     s.door.up = true;
     // end
-    r = await s.call('/v1/staff/event', { op: 'end', id: ev.id }, s.mob.session);
+    r = await s.call('/v1/staff/event', { op: 'end', id: ev.id }, s.chief.session);
     assert.deepEqual([r.body.event.state, r.body.event.endedBy], ['ended', 'staff']);
     assert.deepEqual(s.R.hub._sevBook, []);
-    assert.deepEqual((await s.call('/v1/staff/event', { op: 'boss', id: ev.id }, s.mob.session)).body, { error: 'event-gone' });
+    assert.deepEqual((await s.call('/v1/staff/event', { op: 'boss', id: ev.id }, s.chief.session)).body, { error: 'event-gone' });
     // one the hub ended on its own (its boss fell): the next read marks it ended in the game
-    const two = (await s.call('/v1/staff/event', { op: 'start', ev: { ...STAGE, loc: -1, nm: 'Road' } }, s.mob.session)).body.event;
+    const two = (await s.call('/v1/staff/event', { op: 'start', ev: { ...STAGE, loc: -1, nm: 'Road' } }, s.chief.session)).body.event;
     s.R.hub._sevBook = [];
     s.R.hub._sevBoards.set(two.id, [['Ann', 12, 1]]);   // THE REWARD: its board, kept at the hub past its end
-    r = await s.call('/v1/staff/events', {}, s.mob.session);
+    r = await s.call('/v1/staff/events', {}, s.chief.session);
     assert.deepEqual(r.body.events.map((e) => [e.id, e.state, e.endedBy]), [[two.id, 'ended', 'game'], [ev.id, 'ended', 'staff']]);
     assert.deepEqual(r.body.events.map((e) => e.top), [[['Ann', 12, 1]], []], 'the board on its row');
     assert.equal(s.raw.prepare('SELECT top FROM staff_events WHERE id = ?').get(two.id).top, '[["Ann",12,1]]', 'kept on the row');
     // a full book: the hub's refusal in words, the row failed
     for (const id of ['ff000001', 'ff000002', 'ff000003', 'ff000004']) await takeStaffEventOrder(s.R.hub, { op: 'start', ev: { ...EV, id } }, Date.now());
-    r = await s.call('/v1/staff/event', { op: 'start', ev: STAGE }, s.mob.session);
+    r = await s.call('/v1/staff/event', { op: 'start', ev: STAGE }, s.chief.session);
     assert.deepEqual([r.status, r.body.error], [409, 'event-full']);
     assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM staff_events WHERE state = 'failed'").get().n, 1);
-    // EVENT-CLEAR (mob 2026-10-25: "let me clear other events as well form history"): one over taken off, a live one never, then every one over
+    // EVENT-CLEAR: one over taken off, a live one never, then every one over
     const pushed = s.door.pushed;
     const live = s.raw.prepare("SELECT id FROM staff_events WHERE state = 'live'").all();
     s.raw.prepare("INSERT INTO staff_events (id, at, staff_id, staff_name, ev, state) VALUES ('ee000009', 1, 'x', 'x', '{}', 'live')").run();
-    assert.deepEqual((await s.call('/v1/staff/event', { op: 'clear', id: 'ee000009' }, s.mob.session)).body, { error: 'event-live' });
+    assert.deepEqual((await s.call('/v1/staff/event', { op: 'clear', id: 'ee000009' }, s.chief.session)).body, { error: 'event-live' });
     assert.equal((await s.call('/v1/staff/event', { op: 'clear', id: two.id }, s.asy.session)).status, 403, 'Admins alone');
-    assert.deepEqual((await s.call('/v1/staff/event', { op: 'clear', id: two.id }, s.mob.session)).body, { ok: true, cleared: 1 });
-    assert.deepEqual((await s.call('/v1/staff/event', { op: 'clear', all: 1 }, s.mob.session)).body, { ok: true, cleared: 2 }, 'the one ended by staff and the failed one');
+    assert.deepEqual((await s.call('/v1/staff/event', { op: 'clear', id: two.id }, s.chief.session)).body, { ok: true, cleared: 1 });
+    assert.deepEqual((await s.call('/v1/staff/event', { op: 'clear', all: 1 }, s.chief.session)).body, { ok: true, cleared: 2 }, 'the one ended by staff and the failed one');
     assert.deepEqual(s.raw.prepare('SELECT id FROM staff_events ORDER BY id').all().map((x) => x.id), [...live.map((x) => x.id), 'ee000009'].sort(), 'the live rows kept');
     assert.equal(s.door.pushed, pushed, 'the hub never asked');
     assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM staff_audit WHERE act = 'event-clear'").get().n, 2);

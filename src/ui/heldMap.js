@@ -113,6 +113,7 @@ import { SD_RING_MAP_CSS, SD_LEGEND_TEXT } from './superDungeon/sdMapMark.js';  
 import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMark.js';   // EG-F: my company's Elite arch, in its gold
 import { KT_RING_CSS, ketchLegendText } from './ketch/ketchMapMark.js';   // KETCH: the Sky-Ketch over Daggerfall
 import { LODE_RING_CSS, LODE_LEGEND_TEXT, lodeLegendText } from './lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, read by the bounty's reader
+import { WITNESS_SWATCH_CSS, witnessLegendText, witnessKeyText, witnessTipText, witnessFarText, syncWashLayer, blitWashLayer, paintWitnessedGround } from './witnessMapMark.js';   // WITNESS-MAP: the witnessed ground, a copper wash; AUDIT FB1031 W2: kept
 import { POI_RING_CSS, POI_MARKS_MAX, poiLegendText } from './poi/poiMapMark.js';   // POI-2: the approved POIs' marks, read by the bounty's reader
 import { readBountyMarksIn, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
 import { readRaidMarksIn, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
@@ -125,6 +126,7 @@ import {
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK, GATE_RING_MIN_PX,
   markKind, markInks, mapKeyGroups, KIND_WORD, paintKeyChip, KEY_CHIP_PX,   // MAP-KEY: the key, and each kind in its classic hue
   PEN,   // AUDIT GUIDE U16: the followed quest's diamond is the pen's ink, in the legend as on the sheet
+  penOf,   // AUDIT FB1031 W2: the witnessed ground's cull, where it has no bitmap
 } from './ink/inkMap.js';
 // SOC6: the party's marks, read the one way both maps read them.
 import {
@@ -738,6 +740,11 @@ export class HeldMapWindow {
     this._revenantsKey = '';
     this._lodes = [];   // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the host's `lodes`, read on the same poll
     this._lodesKey = '';
+    this._witnessed = [];   // WITNESS-MAP: the witnessed tiles about the view - the host's `witnessed`, read on the same poll
+    this._witnessKey = '';
+    this._witnessRead = null;   // AUDIT FB1031 W2: the read whole (its tiles' box), and the kept bitmap the sheet blits it from
+    this._washLayer = null;
+    this._washCanvas = null;
     this._pois = [];   // POI-2: the approved POIs' marks - the host's `pois`, read on the same poll
     this._poisKey = '';
     // EVENT-TIP: the raided towns (the host's `raids`, on the same poll), and the card under the pointer
@@ -1116,6 +1123,7 @@ export class HeldMapWindow {
     noticeRelease(this._infoOwner);
     this._stopWaypoints?.(); this._stopWaypoints = null;   // WAYPOINTS: no listener outlives the window
     this._marksLayer = null;   // MAP-PAN: the marks' canvas goes with the window
+    this._dropWash();   // AUDIT FB1031 II T1
     closeWaypointMenu('heldmap');   // ...nor its menu
     this._unmountChrome();
     // ownership-checked: a second window minted after this one owns
@@ -1318,7 +1326,9 @@ export class HeldMapWindow {
       // at 0..1000, 0..500 inside it) - the Bay's pixels, picks, marks and range checks never move
       frame: () => (this._tamriel ? tamrielFrameInBay() : null),
       ensure: () => this._ensureWorldModel(),
-      staticKey: () => [
+      // AUDIT FB1031 W2: the kept layer's key is the marks' and the witnessed ground's read - the marks' bake reads its own
+      staticKey: () => `${sheet.marksKey()}|${this._witnessKey}`,
+      marksKey: () => [
         this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
         this.filters.roads ? 1 : 0, this.filters.tracks ? 1 : 0,
         this._markInks() ? 1 : 0,   // MAP-KEY: a palette that lands after the sheet rose repaints it tinted
@@ -1366,7 +1376,7 @@ export class HeldMapWindow {
           // ZOOM-FAST: no padded bake while the scale still moves - the marks inked on the paper alone
           const synced = settling ? null : syncMarksLayer(this._marksLayer, {
             view: env.view, paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
-            contentKey: [env.view.scale, env.band, env.dpr, env.paperW, env.paperH, sheet.staticKey()].join('|'),
+            contentKey: [env.view.scale, env.band, env.dpr, env.paperW, env.paperH, sheet.marksKey()].join('|'),
             model: split.bay, markOpts,
             createCanvas: () => document.createElement('canvas'),
           });
@@ -1431,6 +1441,7 @@ export class HeldMapWindow {
           paintUnder(ctx);
           if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'roads' });
           paintOver(ctx);
+          this._paintWash(ctx, env);
           return;
         }
         const subKey = [env.view.ox, env.view.oy, env.view.scale, env.band, env.paperW, env.paperH, env.dpr, sheet.staticKey(), settling ? 1 : 0].join('|');
@@ -1450,6 +1461,7 @@ export class HeldMapWindow {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.drawImage(subs.over, 0, 0);
         ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
+        this._paintWash(ctx, env);
       },
       paintOverlay: (ctx, env) => {
         paintInkOverlay(ctx, env.view, {
@@ -1536,6 +1548,7 @@ export class HeldMapWindow {
       },
       unmount: () => {
         this._marksLayer = null;   // MAP-PAN: the bay's marks bitmap does not outlive the sheet
+        this._dropWash();   // AUDIT FB1031 II T1: nor the wash's
         this._showChrome(['search', 'ports', 'legend', 'card', 'key'], false);
         this._closePanel?.();
         if (this._zoneMap) this._closeZoneMap({ quiet: true });   // WILD2: the zone map is the world sheet's
@@ -2287,6 +2300,13 @@ export class HeldMapWindow {
     const lodes = readBountyMarksIn(this.deps.lodes, sheet, LODE_LEGEND_TEXT);
     const mKey = bountyMarksKey(lodes);
     if (mKey !== this._lodesKey) { this._lodesKey = mKey; this._lodes = lodes; gateMoved = true; this._dirty = true; }
+    // WITNESS-MAP: and the witnessed ground about the view - a tile landing, a pixel heard, the view a tile on. None in the
+    // far band (AUDIT FB1031 W1: a tile is some 95 paper pixels at the Bay's fit, so a square a tile would wash 4,096
+    // times the ground one pixel holds) or with its switch off
+    const v = this._view;
+    const wit = this.filters.witnessed || zoomBand(v.scale) === 'far' ? null
+      : this.deps.witnessed?.read?.({ x0: v.ox, y0: v.oy, x1: v.ox + this._paper.w / v.scale, y1: v.oy + this._paper.h / v.scale }) ?? null;
+    if ((wit?.key ?? '') !== this._witnessKey) { this._witnessKey = wit?.key ?? ''; this._witnessRead = wit; this._witnessed = wit?.tiles ?? []; gateMoved = true; this._dirty = true; }
     // POI-2: and the approved POIs - one approved, moved or retired with the map open
     const pois = readBountyMarksIn(this.deps.pois, sheet, poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7: every marked POI, past the bounty's eight
     const pKey = bountyMarksKey(pois);
@@ -2352,7 +2372,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !this._fissures.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !this._fissures.length && !trav.length && !this._quests.length && !this._pois.length && !this._witnessed.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2410,6 +2430,12 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = LODE_RING_CSS;
       leg.append(dot, el('span', 'hmlegtext', lodeLegendText()));
+    }
+    if (this._witnessed.length) {   // WITNESS-MAP: and the witnessed ground's copper, square as the pixels it washes
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = WITNESS_SWATCH_CSS;
+      dot.style.borderRadius = '2px';
+      leg.append(dot, el('span', 'hmlegtext', witnessLegendText()));
     }
     if (this._pois.length) {   // POI-2: and a POI's violet circle
       const dot = el('span', 'hmlegdot');
@@ -2487,7 +2513,8 @@ export class HeldMapWindow {
     const wpShown = waypointKindsShown(), wpAll = listWaypoints();
     const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0)),
       this._trav.length ? 1 : 0, playersOnMaps() ? 1 : 0, ...TV_WHO_GROUPS.map((g) => (who[g] ? 1 : 0)), who.renown,
-      ...WAYPOINT_KINDS.map((k) => `${wpShown[k] ? 1 : 0}:${wpAll.filter((w) => w.kind === k).length}`), this.deps.wildMask?.() ? 1 : 0, this._zoneLaws() ? 1 : 0].join('|');   // OW-WHO: and the players' row; WAYPOINTS: and theirs; WILD1: and the open zone's; AUDIT TESA II M5: and whether its laws hold
+      ...WAYPOINT_KINDS.map((k) => `${wpShown[k] ? 1 : 0}:${wpAll.filter((w) => w.kind === k).length}`), this.deps.wildMask?.() ? 1 : 0, this._zoneLaws() ? 1 : 0,
+      this.deps.witnessed?.open?.() ? 1 : 0, this.filters.witnessed ? 1 : 0].join('|');   // OW-WHO: and the players' row; WAYPOINTS: and theirs; WILD1: and the open zone's; AUDIT TESA II M5: and whether its laws hold; WITNESS-MAP: and the witnessed ground's switch
     if (sig === this._keySig) return;
     this._keySig = sig;
     if (typeof box.replaceChildren === 'function') box.replaceChildren(); else box.innerHTML = '';
@@ -2571,6 +2598,24 @@ export class HeldMapWindow {
       row.append(btns);
       box.append(row);
     }
+    // WITNESS-MAP: THE WITNESSED GROUND'S ROW - its switch (the store's flag FALSE, on: the classic's inversion), while the
+    // professions are open to the account; dimmed in the far band, which tints none
+    if (this.deps.witnessed?.open?.()) {
+      const row = el('div', 'hmkeyrow');
+      row.append(el('span', 'hmkeywho', witnessKeyText()));
+      const btns = el('div', 'hmkeykinds');
+      const on = !this.filters.witnessed, far = band === 'far';
+      const b = el('button', ['act', 'hmkeyflt', on ? 'on' : '', far ? 'dim' : ''].filter(Boolean).join(' '), witnessLegendText());
+      b.type = 'button'; b.tabIndex = -1;
+      b.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
+      b.dataset.filter = 'witnessed';
+      b.title = far ? witnessFarText() : witnessTipText(on);
+      b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+      b.onclick = () => this._toggleFilter('witnessed');
+      btns.append(b);
+      row.append(btns);
+      box.append(row);
+    }
     // WILD1: THE OPEN ZONE'S ROW - its own swatch (the fog and the red line, as the sheet inks them) and its name, while
     // the zone is inked (online); nothing to switch: a danger is never hidden
     if (this._wildInk()) {
@@ -2617,6 +2662,28 @@ export class HeldMapWindow {
     this._marksDirty = true;
     this._dirty = true;
     this._renderKey();
+  }
+
+  /** AUDIT FB1031 II T1: the wash's bitmap (up to 9 MB at 4K) and its kept image go with the sheet and the window; the
+   *  read is forgotten too, so a sheet mounted again builds its wash afresh. */
+  _dropWash() {
+    if (this._washCanvas) { this._washCanvas.width = 0; this._washCanvas.height = 0; }
+    this._washCanvas = null; this._washLayer = null; this._witnessRead = null; this._witnessKey = '';
+  }
+
+  /** AUDIT FB1031 W2: THE WITNESSED GROUND ON THE KEPT LAYER, over the sheet's ink and under every ring the overlay
+   *  breathes (the order it had). Its bitmap is built when the poll's read moves and blitted in one drawImage, so a pulse
+   *  frame copies the layer and a pan frame blits it; with no 2D context, each pixel's square. */
+  _paintWash(ctx, env) {
+    const read = this._witnessRead;
+    if (!read?.tiles?.length) return;
+    this._washCanvas ??= document.createElement('canvas');
+    this._washLayer = syncWashLayer(this._washLayer, read, this._washCanvas);
+    ctx.save();
+    ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
+    if (this._washLayer) blitWashLayer(ctx, this._washLayer, env.view);
+    else paintWitnessedGround(ctx, env.view, read.tiles, penOf(ctx, env.view, env.paperW, env.paperH).visible);
+    ctx.restore();
   }
 
   // ── WAYPOINTS (2026-10-06) ────────────────────────────────────────

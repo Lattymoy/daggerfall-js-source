@@ -1,4 +1,4 @@
-// DISC25-E (2026-09-25, Sir McMobdon on Discord, "Cant send letters": "Gmae still takes input making u jump and move
+// DISC25-E (2026-09-25, a player on Discord, "Cant send letters": "Gmae still takes input making u jump and move
 // and close the letter if u hit f").
 //
 // MAIL1's letter is written in the SOC3 social panel - real DOM fields, in a panel that is NOT a window in any host's

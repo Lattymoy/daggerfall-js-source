@@ -256,7 +256,7 @@ test('AUDIT PI1 H3/H7 - the press spends an armed quick-loot key, a transformed 
     const [k0, k1] = layer.targets().map((t) => t.key);
     const beast = { ...player(), race: 'Breton', activeEffects: [{ kind: 'racialOverride', racial: 'lycanthropy', isTransformed: true, infectionType: 1 }] };
     assert.equal(layer.pick(k1, beast), true);
-    assert.equal(body.items.length, 1, 'WERE-LOOT (the owner: "let them loot"): the paws took it');
+    assert.equal(body.items.length, 1, 'WERE-LOOT: the paws took it');
     assert.equal(silverFindAt('corpse', 'silver:c:2', () => 0), true, 'an untouched body would roll');
     foldQuickLoot(resolveHover({ key: k0, distance: 2, reach: 3 }, { name: () => ({ title: 'Longsword' }), contents: () => [body.items[0]] }));
     assert.equal(quickLootArm('QuickLootAll'), true, 'armed over the item');

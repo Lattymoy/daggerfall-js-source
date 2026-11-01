@@ -214,8 +214,10 @@ export class TravelAutopilot {
     // ROAD-SMOOTH: the body's own walk - where it stood last, how far a whole frame carries it, the share of the force asked
     // - one body's, so handed on from the autopilot of the leg before (`walk`)
     this.walk = walk ?? { at: null, reach: 0, share: 1 };
-    // TRAVEL-NAV1: the arrival buffer across a pixel edge (see update).
-    this.edgeArrival = !!edgeArrival;
+    // The arrival buffer across a pixel edge (see update). a leg may ask it of its own
+    // (initTargetRect's `edgeArrival`), and one that does not keeps this
+    this.edgeBase = !!edgeArrival;
+    this.edgeArrival = this.edgeBase;
     this.onArrival = null;
     // AUDIT-TO1 K1: yawVector is a FIELD initialiser (:33, `new Vector3(0,
     // 0, 0)`), zeroed once when the object is made and never by
@@ -255,9 +257,11 @@ export class TravelAutopilot {
       cornerTurn = 0,
       lookMin = LANE_LOOK_MIN,
       lookMax = LANE_LOOK_MAX,
+      edgeArrival = undefined,
     } = {},
   ) {
     this.destinationMapPixel = { x: targetPixel.x, y: targetPixel.y };
+    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // the leg's own, else the autopilot's
     this.destinationCentre = rectCentre(targetRect);
     this.destinationWorldRect = grow
       ? {

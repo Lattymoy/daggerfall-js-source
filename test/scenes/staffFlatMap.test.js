@@ -1,4 +1,4 @@
-// STAFF-FLATMAP (mob 2026-10-24: "did u get the flat map done?"): the in-game flat map - Shift+N, one region from above.
+// STAFF-FLATMAP: the in-game flat map - Shift+N, one region from above.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStaffFlatMapHost } from '../../src/scenes/staffFlatMapHost.js';

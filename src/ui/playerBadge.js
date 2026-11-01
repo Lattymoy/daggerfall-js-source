@@ -87,7 +87,7 @@ export const TITLE_TEXT = Object.freeze({
   disciple: 'Disciple', // TITLE-N: the Patreon tiers, lowest first
   apostle: 'Apostle',
   hierophant: 'Hierophant',
-  shadowfang: 'Shadow Fang', // SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own
+  shadowfang: 'Shadow Fang', // SHADOW-FANG (2026-09-26, Mac): the Shadow Fang account's own
   penitent: 'Penitent', // PENITENT (2026-09-29, Mac): Diggleborf's own
   gatebreaker: 'Gatebreaker', // WB9g (2026-09-30, Mac): the Sigil Broker's, bought
   herald: 'Herald', // HERALD (2026-10-01, Mac): the Patreon tier between Disciple and Hierophant
@@ -231,7 +231,7 @@ export const AURA_TEXT = Object.freeze({
   }, // BLOOD-OF-COLDHARBOUR: a dark violet haze about the body, blood rising into Daedric runes, granted with the title
 });
 
-/** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
+/** SHADOW-FANG (2026-09-26, Mac): "the Shadow Fang account gets a brand new
  *  title/glyph... Black and crimson graident for the title/glyph with the
  *  title name being Shadow Fang", and the glyph "like the reference
  *  shown" - a snarling wolf's head in profile, black, with a red eye.
@@ -313,7 +313,7 @@ export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]); // #fff7ea
 export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]); // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]); // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]); // #d8f9ef
-/** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): the dragon tamers' letters,
+/** WYRM-RIDER (2026-10-30): the dragon tamers' letters,
  *  on their plates (ui/titleFlame.js TITLE_PLATE) - cream on brass, ice on aetherium, gold on the First's. */
 export const WYRM_CREAM = Object.freeze([1, 0.906, 0.651, 1]); // #ffe7a6
 export const WYRM_ICE = Object.freeze([0.788, 0.949, 1, 1]); // #c9f2ff
@@ -1037,7 +1037,7 @@ export const GLYPH_PATH = Object.freeze({
   // the ears and the lace read from 13 px.
   wikimaid:
     'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',
-  // NIRNROOT-SAGE (2026-10-26; NIRN-LEAF 2026-10-29, the owner: "nicer nirnroot more marijuana style", after Skyrim's
+  // NIRNROOT-SAGE (2026-10-26; NIRN-LEAF 2026-10-29, after Skyrim's
   // nirnroot): A NIRNROOT LEAF - a fan of seven slender leaflets out of one point low in the box, the middle one the
   // tallest, the pairs either side shorter and lower, the last pair drooping past level; every leaflet serrated, its
   // teeth leaning toward its tip; a short stem below. One outline, filled, never crossing itself, in M, L, Q and Z alone -

@@ -1,0 +1,11 @@
+-- BUTCHER-STORES (FIELD FEEDBACK 2026-10-31; Sammy, Discord #feature-feedback: "The game should not add meat to your
+-- inventory when you skin animals."; bible/06-Systems/Professions-Arc.md section 60): WHERE A HARVEST'S SECOND FIND WENT,
+-- KEPT ON ITS ROW.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI) before the Worker. A carried
+-- body's butchery lands in the Stores for a client that asks it so; the row says so, and a harvest asked again is
+-- answered by it - no carried count for the Stores' meat. Every row before this one carried its second find as its
+-- `carry` said, which is what the default keeps.
+ALTER TABLE node_harvests ADD COLUMN extra_stores INTEGER NOT NULL DEFAULT 0 CHECK (extra_stores IN (0, 1));

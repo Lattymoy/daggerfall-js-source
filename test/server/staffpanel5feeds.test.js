@@ -38,12 +38,12 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up: mob (an Admin) signed in, Asynian (a Moderator) signed in, and Troll, Sylvia and
+/** The Worker with the panel set up: chief (an Admin) signed in, Asynian (a Moderator) signed in, and Troll, Sylvia and
  *  Grim, three players. */
 async function stand() {
   _resetReactionsForTests();
-  const mobKey = await extensionKey();
-  const s = await standService({ DEVELOPER_HANDLES: 'SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}` });
+  const chiefKey = await extensionKey();
+  const s = await standService({ DEVELOPER_HANDLES: 'SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}` });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.1', ...(token ? { [STAFF_SESSION_HEADER]: token } : {}) }, body: JSON.stringify(body),
@@ -54,8 +54,8 @@ async function stand() {
   const troll = await s.registered('Troll');
   const sylvia = await s.registered('Sylvia');
   const grim = await s.registered('Grim');
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
   assert.ok(asy.session, JSON.stringify(asy));
@@ -67,7 +67,7 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   const audits = (act) => s.env.DB._raw.prepare('SELECT actor_name, role, act, target, detail, outcome FROM staff_audit WHERE act = ? ORDER BY id').all(act).map((r) => ({ ...r }));
-  return { ...s, staff, post, audits, mob: mob.session, asy: asy.session, troll, sylvia, grim, raw: s.env.DB._raw };
+  return { ...s, staff, post, audits, chief: chief.session, asy: asy.session, troll, sylvia, grim, raw: s.env.DB._raw };
 }
 
 const netBatch = (o = {}) => ({ v: NET_FEED_V, id: hexId(), at: Date.now(), from: Date.now() - 600_000, q: 'cell:12,40', ms: 1, net: [], foe: [], ...o });
@@ -138,7 +138,7 @@ test('STAFF-PANEL5-FEEDS: the net feed is kept by the relay\'s signature alone, 
 
 test('STAFF-PANEL5-FEEDS: Network bursts - Admins alone, most urgent first, by window and kind, every read audited', async () => {
   const s = await stand();
-  assert.equal((await s.staff('/v1/staff/net', {}, s.mob)).body.asOf, null, 'no window yet: no time, never "all quiet"');
+  assert.equal((await s.staff('/v1/staff/net', {}, s.chief)).body.asOf, null, 'no window yet: no time, never "all quiet"');
   await s.post(NET_FEED_PATH, netBatch({ net: [
     netRow(s.sylvia.id, { n: 900, b: 900_000, p10: 600, pb10: 600_000, p60: 800, pb60: 800_000, k: [900, 0, 0, 0, 0, 0, 0] }),
     netRow(s.troll.id, { c: 1, w: 'too many poses', nr: 20, k: [400, 0, 0, 0, 0, 100, 0] }),
@@ -152,7 +152,7 @@ test('STAFF-PANEL5-FEEDS: Network bursts - Admins alone, most urgent first, by w
   const mod = await s.staff('/v1/staff/net', {}, s.asy);
   assert.equal(mod.status, 403);
   assert.deepEqual(s.audits('refused').map((r) => [r.role, r.outcome, JSON.parse(r.detail).path]), [['moderator', 'denied', '/v1/staff/net']]);
-  const r = await s.staff('/v1/staff/net', {}, s.mob);
+  const r = await s.staff('/v1/staff/net', {}, s.chief);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual(r.body.players.map((p) => [p.name, p.level]), [['Troll', 'high'], ['Grim', 'medium'], ['Sylvia', 'low']]);
   const grim = r.body.players[1];
@@ -162,10 +162,10 @@ test('STAFF-PANEL5-FEEDS: Network bursts - Admins alone, most urgent first, by w
   assert.equal(r.body.players[2].perS.frames, 60);
   assert.ok(r.body.asOf > 0);
   // the minute, the ten minutes, one kind, the newest first
-  assert.equal((await s.staff('/v1/staff/net', { window: '1m' }, s.mob)).body.players[2].perS.frames, 800 / 60);
-  assert.equal((await s.staff('/v1/staff/net', { window: '10m' }, s.mob)).body.windowS, 600);
-  assert.deepEqual((await s.staff('/v1/staff/net', { kind: 'chat' }, s.mob)).body.players.map((p) => p.name), ['Troll']);
-  assert.equal((await s.staff('/v1/staff/net', { kind: 'nonsense', window: 'nonsense' }, s.mob)).body.total, 3);
+  assert.equal((await s.staff('/v1/staff/net', { window: '1m' }, s.chief)).body.players[2].perS.frames, 800 / 60);
+  assert.equal((await s.staff('/v1/staff/net', { window: '10m' }, s.chief)).body.windowS, 600);
+  assert.deepEqual((await s.staff('/v1/staff/net', { kind: 'chat' }, s.chief)).body.players.map((p) => p.name), ['Troll']);
+  assert.equal((await s.staff('/v1/staff/net', { kind: 'nonsense', window: 'nonsense' }, s.chief)).body.total, 3);
   // read twice in its window: one row a window and view (onceIn)
   assert.deepEqual(s.audits('net-read').map((x) => JSON.parse(x.detail)), [{ window: '10s', kind: 'all' }, { window: '1m', kind: 'all' }, { window: '10m', kind: 'all' }, { window: '10s', kind: 'chat' }]);
   // the home roll-up's packet bursts
@@ -177,10 +177,10 @@ test('STAFF-PANEL5-FEEDS: Network bursts - Admins alone, most urgent first, by w
 
 test('STAFF-PANEL5-FEEDS: Monster watch - owners outdoors, hosts never owners, "not measured" while the batches say ms 0 (an older relay with grantStrip off), and a Flag', async () => {
   const s = await stand();
-  assert.equal((await s.staff('/v1/staff/monsters', {}, s.mob)).body.monsters, 'no report');
+  assert.equal((await s.staff('/v1/staff/monsters', {}, s.chief)).body.monsters, 'no report');
   // an older relay's batch with grantStrip off: a window with no monsters read (a world248 relay always says ms 1)
   await s.post(NET_FEED_PATH, netBatch({ ms: 0, net: [netRow(s.grim.id, { nr: 1 })] }));
-  assert.equal((await s.staff('/v1/staff/monsters', {}, s.mob)).body.monsters, 'not measured');
+  assert.equal((await s.staff('/v1/staff/monsters', {}, s.chief)).body.monsters, 'not measured');
   await s.post(NET_FEED_PATH, netBatch({ foe: [
     foeRow(s.sylvia.id, { h: 120 }),
     foeRow(s.troll.id, { o: 40, r: 30, e: 6, bo: 2, s: 2 }),
@@ -193,7 +193,7 @@ test('STAFF-PANEL5-FEEDS: Monster watch - owners outdoors, hosts never owners, "
   s.raw.prepare("INSERT INTO grant_tallies (batch, at, reader, sender, reason, n) VALUES ('g1', ?, ?, ?, 'stats', 4)").run(now - 60, s.grim.id, s.troll.id);
   s.raw.prepare("INSERT INTO grant_tallies (batch, at, reader, sender, reason, n) VALUES ('g1', ?, '~relay', ?, 'stats', 9)").run(now - 60, s.troll.id);
   assert.equal((await s.staff('/v1/staff/monsters', {}, s.asy)).status, 403);
-  const r = await s.staff('/v1/staff/monsters', {}, s.mob);
+  const r = await s.staff('/v1/staff/monsters', {}, s.chief);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.monsters, 'measured');
   assert.deepEqual(r.body.players.map((p) => [p.name, p.level]), [['Grim', 'high'], ['Sylvia', 'high'], ['Troll', 'medium']]);
@@ -210,8 +210,8 @@ test('STAFF-PANEL5-FEEDS: Monster watch - owners outdoors, hosts never owners, "
   assert.deepEqual([top.items.map((i) => i.name), top.high, top.total], [['Grim', 'Sylvia', 'Troll'], 2, 3]);
   // THE FLAG: a case opened on the player, the line in its grant tab, the act audited with the case
   assert.equal((await s.staff('/v1/staff/monster/flag', { name: 'Troll' }, s.asy)).status, 403);
-  assert.equal((await s.staff('/v1/staff/monster/flag', { name: 'Nobody' }, s.mob)).status, 404);
-  const f = await s.staff('/v1/staff/monster/flag', { name: 'Troll', note: 'forty outdoors\u0007, two bosses' }, s.mob);
+  assert.equal((await s.staff('/v1/staff/monster/flag', { name: 'Nobody' }, s.chief)).status, 404);
+  const f = await s.staff('/v1/staff/monster/flag', { name: 'Troll', note: 'forty outdoors\u0007, two bosses' }, s.chief);
   assert.equal(f.status, 200, JSON.stringify(f.body));
   // one case, the spawn case an Admin reads (STAFF-PANEL2-FIX: a Moderator never sees it), the line in it
   const cs = s.raw.prepare('SELECT id, target, source, status, kind FROM mod_cases WHERE target = ?').all(s.troll.id);
@@ -224,19 +224,19 @@ test('STAFF-PANEL5-FEEDS: Monster watch - owners outdoors, hosts never owners, "
   // one line a window is the automatic findings'); a line there this second already is said, never dropped
   s.raw.prepare('UPDATE mod_case_lines SET at = at - 60 WHERE case_id = ?').run(c.id);
   s.raw.prepare('UPDATE mod_cases SET updated_at = 0 WHERE id = ?').run(c.id);
-  const again = await s.staff('/v1/staff/monster/flag', { name: 'Troll', note: 'spawning liches at the gate' }, s.mob);
+  const again = await s.staff('/v1/staff/monster/flag', { name: 'Troll', note: 'spawning liches at the gate' }, s.chief);
   assert.deepEqual([again.status, again.body.case], [200, c.id], JSON.stringify(again.body));
   assert.deepEqual(s.raw.prepare('SELECT tab, text FROM mod_case_lines WHERE case_id = ? ORDER BY at').all(c.id).map((x) => [x.tab, x.text]), [
     ['grant', "flagged from the staff panel's Monster watch by SirMcMobdon: forty outdoors , two bosses"], ['grant', "flagged from the staff panel's Monster watch by SirMcMobdon: spawning liches at the gate"]]);
   assert.ok(s.raw.prepare('SELECT updated_at FROM mod_cases WHERE id = ?').get(c.id).updated_at > 0, 'the case touched');
   for (const at of [0, 1, 2]) s.raw.prepare("INSERT OR IGNORE INTO mod_case_lines (case_id, at, sub, name, tab, text) VALUES (?, ?, ?, 'Troll', 'grant', 'a finding')").run(c.id, nowS() + at, s.troll.id);
-  const twice = await s.staff('/v1/staff/monster/flag', { name: 'Troll', note: 'once more' }, s.mob);
+  const twice = await s.staff('/v1/staff/monster/flag', { name: 'Troll', note: 'once more' }, s.chief);
   assert.deepEqual([twice.status, twice.body.error], [500, 'flag-failed'], 'a line this second already');
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM mod_case_lines WHERE text LIKE '%once more'").get().n, 0);
   assert.deepEqual(s.audits('monster-flag').map((a) => a.outcome), ['ok', 'ok', 'failed']);
   // a Flag whose case cannot open is audited failed, its error said
   s.raw.exec('DROP TABLE mod_case_lines');
-  const bad = await s.staff('/v1/staff/monster/flag', { name: 'Sylvia' }, s.mob);
+  const bad = await s.staff('/v1/staff/monster/flag', { name: 'Sylvia' }, s.chief);
   assert.deepEqual([bad.status, bad.body.error], [500, 'flag-failed']);
   const failed = s.audits('monster-flag')[3];
   assert.deepEqual([failed.target, failed.outcome], [s.sylvia.id, 'failed']);
@@ -258,8 +258,8 @@ test('STAFF-PANEL5-FEEDS: the bot check - episodes kept once, a player beside th
   s.raw.prepare("INSERT INTO progress_hours (player, stream, hour, amount, played_s) VALUES (?, 'renown', ?, 3000, 7200)").run(s.troll.id, nowS() - 7200);
   s.raw.prepare("INSERT INTO progress_hours (player, stream, hour, amount, played_s) VALUES (?, 'prof', ?, 99999, 99999)").run(s.troll.id, nowS() - 7200);
   assert.equal((await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.asy)).status, 403);
-  assert.equal((await s.staff('/v1/staff/reactions', { name: 'Nobody' }, s.mob)).status, 404);
-  const r = await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.mob);
+  assert.equal((await s.staff('/v1/staff/reactions', { name: 'Nobody' }, s.chief)).status, 404);
+  const r = await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.chief);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   const me = r.body.player;
   assert.deepEqual([me.episodes, me.actMs, me.blowMs, me.takenMs, me.struckFirst, me.drawnAtAsk, me.died, me.acted], [2, 900, 1500, 2500, 0.5, 0.5, 0.5, 0.5]);
@@ -271,20 +271,20 @@ test('STAFF-PANEL5-FEEDS: the bot check - episodes kept once, a player beside th
   assert.deepEqual(s.audits('reactions-read').map((a) => [a.target, JSON.parse(a.detail).name]), [[s.troll.id, 'Troll']]);
   // the population's numbers are cached (Server load): a new episode is in them after REACT_POP_CACHE_S, not before
   await s.post(REACTION_FEED_PATH, reactBatch([episode(s.grim.id)]));
-  assert.equal((await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.mob)).body.population.episodes, 3);
+  assert.equal((await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.chief)).body.population.episodes, 3);
   _resetReactionsForTests();
-  assert.equal((await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.mob)).body.population.episodes, 4);
+  assert.equal((await s.staff('/v1/staff/reactions', { name: 'Troll' }, s.chief)).body.population.episodes, 4);
   // a page of episodes, newest first, and the next one by its cursor
   const many = Array.from({ length: REACT_PAGE + 5 }, (_, i) => episode(s.sylvia.id, { ac: 100 + i }));
   await s.post(REACTION_FEED_PATH, reactBatch(many));
-  const p1 = (await s.staff('/v1/staff/reactions', { name: 'Sylvia' }, s.mob)).body;
+  const p1 = (await s.staff('/v1/staff/reactions', { name: 'Sylvia' }, s.chief)).body;
   assert.equal(p1.pattern, true);
   assert.deepEqual([p1.episodes.length, p1.episodes[0].actMs, p1.player.episodes], [REACT_PAGE, 100 + REACT_PAGE + 4, REACT_PAGE + 6]);
-  const p2 = (await s.staff('/v1/staff/reactions', { name: 'Sylvia', before: p1.next }, s.mob)).body;
+  const p2 = (await s.staff('/v1/staff/reactions', { name: 'Sylvia', before: p1.next }, s.chief)).body;
   assert.deepEqual([p2.episodes.length, p2.next, p2.episodes.at(-1).actMs], [6, null, 300]);
   // KEPT AS EVIDENCE: the account's rows past their 14 days, until let go
   assert.equal((await s.staff('/v1/staff/reactions/keep', { name: 'Troll', keep: true }, s.asy)).status, 403);
-  const k = await s.staff('/v1/staff/reactions/keep', { name: 'Troll', keep: true }, s.mob);
+  const k = await s.staff('/v1/staff/reactions/keep', { name: 'Troll', keep: true }, s.chief);
   assert.deepEqual([k.body.rows, k.body.keptUntil - nowS() <= REACT_EVIDENCE_S, k.body.keptUntil - nowS() > REACT_EVIDENCE_S - 60], [2, true, true]);
   assert.deepEqual(s.audits('reactions-keep').map((a) => JSON.parse(a.detail)), [{ name: 'Troll', keep: true, rows: 2 }]);
   // THE SWEEP: past 14 days every episode goes but the kept ones; past the evidence's time they go too
@@ -293,7 +293,7 @@ test('STAFF-PANEL5-FEEDS: the bot check - episodes kept once, a player beside th
   assert.deepEqual((await sweep(nowS() + REACT_KEEP_S - 3600)).map((x) => [x.name, x.ok, x.changed]), [['reactions', true, 0]]);
   await sweep(nowS() + REACT_KEEP_S + 3600);
   assert.deepEqual(left(), [[s.troll.id, 2]]);
-  await s.staff('/v1/staff/reactions/keep', { name: 'Troll', keep: false }, s.mob);
+  await s.staff('/v1/staff/reactions/keep', { name: 'Troll', keep: false }, s.chief);
   await sweep(nowS() + REACT_KEEP_S + 3600);
   assert.deepEqual(left(), []);
 });
@@ -312,7 +312,7 @@ test('STAFF-PANEL5-FEEDS: past an hour\'s rows, a player-hour is one row of sums
   assert.deepEqual(rows[0].n, 1);
   assert.deepEqual(rows[1], { id: `h:${s.troll.id}:${askHour}`, sub: s.troll.id, n: 3, ac: 2700, ac_n: 3, struck: 1, members: 6 });
   assert.deepEqual([rows[2].id, rows[2].n], [`h:${s.sylvia.id}:${askHour}`, 1]);
-  const r = (await s.staff('/v1/staff/reactions', { target: s.troll.id }, s.mob)).body;
+  const r = (await s.staff('/v1/staff/reactions', { target: s.troll.id }, s.chief)).body;
   assert.deepEqual([r.player.episodes, r.player.actMs, r.player.struckFirst], [4, 900, 0.25], 'a player-hour reads as its episodes');
   assert.deepEqual([r.episodes[0].episodes, r.episodes[0].actMs], [3, 900]);
   // a new hour's window starts its count again

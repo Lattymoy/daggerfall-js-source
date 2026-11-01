@@ -288,7 +288,7 @@ test('WW3 the living world\'s ports by the one number: a port town past the Bay 
 test('WW3 the wiring: the world host stands the world\'s ports off the registry and its lanes off them, asks them for the port test, the nearest port, the board\'s list and the harbour past the Bay, hands the waters\' area to the sea, the world\'s lanes to the serpent (WW7-12) and the sea trade, and the raiders the world\'s sea; the naval host names her by her waters\' people (mutants: the lanes\' book, the port test past the Bay, the board\'s list, the area unsaid, the raiders\' ground)', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /const worldPorts = createWorldPorts\(\{ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: \(x, y\) => maps\.getRegionIndexAt\(x, y\),\n {4}crownAt: \(x, y\) => navalCrownOf\(x, y, navalCapitals\(\)\)\.name \}\);/);   // PIN MOVED (BAY-LEFT-SEA): and a port past the Bay keeps the nearest Bay crown's office
-  assert.match(w, /const worldLanes = createWorldLanes\(\{ mapDict: \(\) => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: \(\) => tamrielLand \}\);/);
+  assert.match(w, /const worldLanes = createWorldLanes\(\{ mapDict: \(\) => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: \(\) => tamrielLand, kernel: kernelSea \}\);/);
   assert.match(w, /function laneNet\(\) \{ return worldLanes\.all\(\); \}/);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): past the Bay an Arena port answers first (TESA6), then the provider's word
   // PIN MOVED (AUDIT TESA II P7): TESA's places registered (world/pastBayRows.js), the provider's word is the whole of it
@@ -301,7 +301,7 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /return worldSerpentSite\(day, worldLanes, serpentLink\.toldAt\);/);   // PIN MOVED (WW7-12): every lane of the world, or the hub's word
   assert.match(w, /portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.all\(\) : null\) \}\);/);   // PIN MOVED (WW7-10): the world's lanes, a Bay port's the Bay's (townEconHost.js lanesAt)
   assert.match(w, /if \(!onWorldSea\(px, py, tamrielLand\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;/);
-  assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && tvWater\(px, py\);/);
+  assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && squareCornersAll\(tvWater, px, py\) && kernelSea\(x, z\);/);
   assert.match(w, /classId: p\.cls\.id, region: p\.region, area: lane\.a\.area \?\? -1,/);
   assert.match(src('src/scenes/livingWorld/livingLanes.js'), /const id = portIdOf\(town\);/);   // PIN MOVED (AUDIT WW F7): a town's lanes the living lanes' book's
   assert.equal((w.match(/maskMapId\(/g) ?? []).length, 0, 'no port keyed by a masked id in the host');

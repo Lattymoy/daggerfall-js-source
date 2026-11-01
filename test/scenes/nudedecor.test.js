@@ -232,6 +232,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/spoilsPool.js': 'a boss\'s spoils',
   'src/scenes/treeHost.js': 'felled trees',
   'src/scenes/yardNature.js': 'a yard\'s trees and plants',
+  'src/tools/floraPlayground.js': 'the Skyrim flora playground - Lands nature flats and a catalog overlay, never a person',
   'src/ui/automap/automapWindow.js': 'the automap\'s markers',
 });
 

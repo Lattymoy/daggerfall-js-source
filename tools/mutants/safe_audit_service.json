@@ -94,7 +94,7 @@
   {
     "name": "AUDIT-SAFE-AI3-failed-call-spent",
     "file": "server-account/src/modAi.js",
-    "old": "    await unspend(db, nowS);\n    // 429 and 5xx (529 overloaded among them) pass: the next minute asks again. Any other 4xx is this service's own",
+    "old": "    await unspend(db, key);\n    // 429 and 5xx (529 overloaded among them) pass: the next minute asks again. Any other 4xx is this service's own",
     "new": "    // 429 and 5xx (529 overloaded among them) pass: the next minute asks again. Any other 4xx is this service's own",
     "tests": [
       "test/server/safe_audit.test.js"
@@ -211,7 +211,7 @@
   {
     "name": "AUDIT-SAFE-AI12-tokens-uncounted",
     "file": "server-account/src/modAi.js",
-    "old": "  try {\n    await countTokens(db, nowS, msg?.usage);\n  } catch {\n    /* the count never costs a verdict */\n  }\n  if (msg?.stop_reason === 'refusal') return { error: AI_ERRORS.refused };",
+    "old": "  try {\n    await countTokens(db, key, msg?.usage);\n  } catch {\n    /* the count never costs a verdict */\n  }\n  if (msg?.stop_reason === 'refusal') return { error: AI_ERRORS.refused };",
     "new": "  if (msg?.stop_reason === 'refusal') return { error: AI_ERRORS.refused };",
     "tests": [
       "test/server/safe_audit.test.js"

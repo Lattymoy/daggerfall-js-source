@@ -62,8 +62,8 @@
   {
     "name": "TV-BEYOND-keep-never-dropped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();\n      dry = !!beyond(x, y);",
-    "new": "      dry = !!beyond(x, y);",
+    "old": "      if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();\n      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE);",
+    "new": "      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE);",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SUNBABY1-wire-word-dropped",
     "file": "src/net/wire.js",
-    "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket']);",
-    "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'rocket']);",
+    "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket', 'newera']);",
+    "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'rocket', 'newera']);",
     "tests": [
       "test/net/sunbaby1_event.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SUNBABY1-wire-row-at-162",
     "file": "src/net/wire.js",
-    "old": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 163, rocket: 253 });",
-    "new": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 162, rocket: 253 });",
+    "old": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 163, rocket: 253, newera: 303 });",
+    "new": "export const LIVE_EVENT_RELAY_MIN = Object.freeze({ dread: EVENT_RELAY_MIN, sunbaby: 162, rocket: 253, newera: 303 });",
     "tests": [
       "test/net/sunbaby1_event.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SUNBABY1-host-hub-word-unheard",
     "file": "src/scenes/world.js",
-    "old": "link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); rocket.set(ev, o); };",
-    "new": "link.onEvent = (ev, o) => { dread.set(ev, o); rocket.set(ev, o); };",
+    "old": "link.onEvent = (ev, o) => { dread.set(ev, o); sunbaby.set(ev, o); rocket.set(ev, o); newEra.set(ev, o); };",
+    "new": "link.onEvent = (ev, o) => { dread.set(ev, o); rocket.set(ev, o); newEra.set(ev, o); };",
     "tests": [
       "test/net/sunbaby1_event.test.js"
     ]

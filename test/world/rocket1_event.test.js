@@ -45,7 +45,7 @@ const AT = 1_700_000_000_000;
 
 test('ROCKET1 wire: the rocket is the third live event word, appended after the sun baby - a stage frame takes it and a live event names it; it is staged only on a relay at world253 or past (mutants: the word dropped; the row at world252)', () => {
   assert.equal(ROCKET_EVENT, 'rocket', 'the show draws the word the relay carries');
-  assert.deepEqual(LIVE_EVENTS, ['dread', 'sunbaby', 'rocket'], 'appended, never reordered');
+  assert.deepEqual(LIVE_EVENTS, ['dread', 'sunbaby', 'rocket', 'newera'], 'appended, never reordered');
   assert.deepEqual(parseClient(stage('rocket'), { hasHello: true }), { t: 'stage', kind: 'rocket' });
   assert.deepEqual(parseClient(stage('ROCKET'), { hasHello: true }), { error: 'bad stage' });
   assert.equal(validLiveEvent({ kind: 'rocket', at: AT }), true);
@@ -93,7 +93,7 @@ test('ROCKET1 session and command: /event rocket [on|off] is parsed off LIVE_EVE
   assert.deepEqual(parseEventCommand('/event rocket'), { kind: 'rocket' });
   assert.deepEqual(parseEventCommand('/Event Rocket ON'), { kind: 'rocket' });
   assert.deepEqual(parseEventCommand('/event rocket off'), { kind: '' });
-  assert.match(parseEventCommand('/event poop').error, /\/event <dread\|sunbaby\|rocket> \[on\|off\]/);
+  assert.match(parseEventCommand('/event poop').error, /\/event <dread\|sunbaby\|rocket\|newera> \[on\|off\]/);
 });
 
 // ── THE CYCLE ────────────────────────────────────────────────────────
@@ -377,7 +377,7 @@ test('ROCKET1 world.js: the host built beside the Starfall\'s, the hub\'s word h
   const world = rd('src/scenes/world.js');
   assert.match(world, /import \{ createRocketHost \} from '\.\/rocketHost\.js';/);
   assert.match(world, /const rocket = createRocketHost\(renderer, sunbabyGround, state\);/);
-  assert.match(world, /link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); rocket\.set\(ev, o\); \};/);
+  assert.match(world, /link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); rocket\.set\(ev, o\); newEra\.set\(ev, o\); \};/);
   assert.match(world, /magic\.skyFire\(fb\);\n\s*rocket\.frame\(dt, Date\.now\(\) \+ _sharedOffsetMs, tvStand, townTalk\);/);
   assert.match(world, /starfall\.drawSky\(proj, view, wxEye32, now \/ 1000\)\) renderer\.markForeignPass\(\);\n\s*rocket\.draw\(proj, view, mwv\.eye\);/);
   assert.ok(world.indexOf('const rocket = createRocketHost(') > world.indexOf('const state = new StreamingWorldState('), 'built after the streaming world it anchors to');

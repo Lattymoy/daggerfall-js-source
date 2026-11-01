@@ -83,7 +83,7 @@ function nightwhisperExalted() {
 }
 
 test('POWER-CEILING THE TOPS, MEASURED: each registry\'s own most from the records and laws it reads - the blow\'s +12 / +200 / +240 / +50 / +80 / +40, the guards\' 55 / 50 / 15 / 30 / 20 off - and the law\'s tables are those numbers (mutants: a top in the law raised; Bound in Silk at 150; Last Stand at 30)', () => {
-  assert.deepEqual(BLOW_TOPS, { sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 }, RULE);   // PIN MOVED: WEAPON-GEAR (2026-10-27, mob) - mastery's top the live skill's x5, was the climb's +80%
+  assert.deepEqual(BLOW_TOPS, { sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 }, RULE);   // PIN MOVED: WEAPON-GEAR (2026-10-27) - mastery's top the live skill's x5, was the climb's +80%
   assert.deepEqual(GUARD_TOPS, { loot: 55, sets: 50, firmament: 15, martial: 30, arcane: 20 }, RULE);
   assert.deepEqual(measureBlowTops(), BLOW_TOPS, `a record moved a registry's top onto one blow - ${RULE}`);
   const keeps = measureGuardKeeps();

@@ -427,7 +427,6 @@ test('ORL1 L3: the purse is THE MOST a player could legally spend - not what one
   assert.ok(clamped > 0, 'the port\'s second clamp never fired - the walk does not reach the case it exists for');
 });
 
-
 // ── L4: WHAT THE BUTTONS ALLOW ─────────────────────────────────────
 
 test('ORL1: a row the player has ALREADY raised costs the plan no new row slot', () => {

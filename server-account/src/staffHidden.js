@@ -1,7 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL5-HIDDEN (2026-10-22, mob: "no tag no faint outline nothing just nothing", "true invis not lattys invis", "we
-// want the player to have no idea we are wathcing them"; design doc "DFO Staff Panel: design", Invisible follow, Flat map's
+// STAFF-PANEL5-HIDDEN (2026-10-22; design doc "DFO Staff Panel: design", Invisible follow, Flat map's
 // Hide me, and Weak spots "Invisible follow and the in-game view") - A STAFF MEMBER HIDDEN FROM EVERY PLAYER.
 //
 // NOT THE GAME'S INVISIBILITY. That one (INVIS-NET, INVIS-LOOK, src/net/remotePlayers.js) still sends the player's position
@@ -12,17 +11,15 @@
 // Hide me turns it on and Show myself off (/v1/staff/hide). It is read only for an account a role list names (staff.js
 // staffRole: an Admin or a Moderator) that holds a LIVE staff session, so no other account's token mint reads a thing more.
 //
-// STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", then "i need to be bale to talk in chat" and "need hide to be
-// a toggle"): 0159 made Hide me ON BY DEFAULT (players.staff_hide, every row 1 - mob, 05:36Z the day before: "a switch in
-// Your settings, on by default"), so a staff member who never pressed it was minted hidden tokens for as long as a staff
+// STAFF-HIDE-TOGGLE (2026-10-23): 0159 made Hide me ON BY DEFAULT (players.staff_hide, every row 1 - ), so a staff member who never pressed it was minted hidden tokens for as long as a staff
 // session stood, and the relay drops every line a hidden socket says but the staff channel's (server/src/staffHidden.js
-// hiddenMay) - mob could not talk in chat, and his own game was in no room the pen tool's map reads. Now it is off until
+// hiddenMay) - an owner could not talk in chat, and their own game was in no room the pen tool's map reads. Now it is off until
 // pressed, for every member (0165 moves the switch to `staff_hide_on`, default 0, keeping a Hide me pressed since 0159 -
 // the audit log's newest `hide` row), and either way the press takes effect AT ONCE: the panel tells the open game, through
 // the staff hook's door (src/net/staffHook.js `relink`), to leave every room and open each again on a fresh token, which this
 // file's mint (hiddenToken) reads the switch for on the primary - hidden from that hello on, or shown. Show myself still
 // pushes its hide orders (hiddenEnd) for a game the panel cannot reach. What chat a hidden staff member may say is not
-// decided yet (mob's call): the relay's half is server/src/staffHidden.js HIDDEN_CHAT and hiddenMay, the game's the mint's
+// decided yet (an open call): the relay's half is server/src/staffHidden.js HIDDEN_CHAT and hiddenMay, the game's the mint's
 // `hidden` answer (src/net/accountClient.js mintFresh, which drops it today) and the chat's send (scenes/world.js chatSend).
 //
 // THE TOKEN (hiddenToken): every relay token the game's own mint (index.js /v1/auth/token) makes for such an account while
@@ -83,7 +80,7 @@ const LIVE_SQL = `SELECT p.staff_hide_on, s.token_hash, s.key_id, k.cfg, k.pub F
  *  game comes back as a normal player - a staff member's only key forgotten was refused for good). A session gone idle
  *  or past its 8 hours writes no row: it is no word of the staff member's.
  *  STAFF-HIDE-TOGGLE: and only while the switch is on, read on the primary beside the log - migration 0165 turned it off for
- *  every member who never pressed Hide me, and wrote no Show myself row for it (the move was mob's word, not theirs): read
+ *  every member who never pressed Hide me, and wrote no Show myself row for it (the move was not theirs): read
  *  off the log alone, such a member's game, hidden before the move, would be minted no token at all once their session
  *  idled, and could never go online until they signed in or out. */
 const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(detail, '$.sub') AS sub FROM staff_audit WHERE actor = ?1 AND act = 'hidden-token' ORDER BY at DESC, id DESC LIMIT 1) h
@@ -106,8 +103,7 @@ const HIDDEN_SINCE_SQL = LAPSED_SQL.replace(
 /**
  * THE GAME'S MINT, FOR A HIDDEN STAFF MEMBER: the spectator's token and the mint's answer, or null - the account is no
  * staff, holds no live staff session, or pressed Show myself - when the mint goes on as it always did; or
- * `{ error: 'staff-session-lapsed' }` (STAFF-PANEL5-HIDDEN-FIX, mob: "we want the player to have no idea we are wathcing
- * them"): the staff session the game was hidden by went idle or ran out its 8 hours while the game watched, and nothing
+ * `{ error: 'staff-session-lapsed' }` (STAFF-PANEL5-HIDDEN-FIX): the staff session the game was hidden by went idle or ran out its 8 hours while the game watched, and nothing
  * the staff member did since showed them - no token at all then, never a visible one beside the watched player, until
  * they sign in again (hidden again) or sign out or press Show myself (visible by their own word).
  * @param {any} ctx @param {any} env @param {any} player the mint's account row @param {CryptoKey} key the identity key

@@ -1,14 +1,14 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-GIVE (2026-10-24, mob: "add yes we will work on add as well"; the card's pick "Pick from the item list"; "include
-// enchants") - ADD AN ITEM TO A PLAYER, the Remove from a player's twin. Admins alone (staffRealm.js asks the role before
-// any door); OFFLINE ONLY until mob tries it live.
+// STAFF-GIVE (2026-10-24; the card's pick "Pick from the item list", with
+// enchantments included) - ADD AN ITEM TO A PLAYER, the Remove from a player's twin. Admins alone (staffRealm.js asks the role before
+// any door); offline only, not tried live yet.
 //
 // The item is MINTED HERE, never written by the panel: staff name a template from the game's own list, a material where
 // the kind has one, a count where it stacks, and enchantments from the item maker's own catalogue - and the piece is made
 // by the producers the game makes it with (combat/enemyEquipment.js weaponOfMaterial and armorOfMaterial, CreateWeapon's
 // arrow arm; itemTemplates.js setItemFields and mintCondition for any other kind; enchanting.js applyEnchantments over
-// enchantmentCatalogue.js pickEnchantment's rows, a bound soul's forced rows with it). NOTHING NEW IS JUDGED (mob, 09:22Z:
+// enchantmentCatalogue.js pickEnchantment's rows, a bound soul's forced rows with it). NOTHING NEW IS JUDGED (09:22Z:
 // "use the validators the server already has"): the piece is asked of the item law (itemLaw.js itemFindings) before it
 // is given, and one the law would find - an enchantment past the item's power, a weapon's power on armour - is refused, so
 // a gift never holds the player's trade. Enchantments are the item maker's, within its limit, as DFU's window takes them.

@@ -1,5 +1,4 @@
-// STAFF-PANEL5-HIDDEN (2026-10-22, mob: "no tag no faint outline nothing just nothing", "true invis not lattys invis", "we
-// want the player to have no idea we are wathcing them"; design doc "DFO Staff Panel: design", Invisible follow and Flat
+// STAFF-PANEL5-HIDDEN (2026-10-22; design doc "DFO Staff Panel: design", Invisible follow and Flat
 // map's Hide me) - THE ACCOUNT SERVICE'S HALF (server-account/src/staffHidden.js), driven through the real Worker on the
 // node:sqlite database every account pin stands on (test/accountDb.mjs): Hide me and Show myself (off by default since
 // STAFF-HIDE-TOGGLE, migration 0165, the tests at the end; the rest press Hide me first, in stand()); the game's
@@ -38,15 +37,15 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up (test/server/staffpanel2.test.js's own), the relay's door recorded: mob (an Admin and
+/** The Worker with the panel set up (test/server/staffpanel2.test.js's own), the relay's door recorded: chief (an Admin and
  *  owner) signed in, Asynian and Tabbyvish (Moderators) invited and signed in, and Troll and Sylvia, two players.
  *  STAFF-HIDE-TOGGLE: with `hide` (the default here), each staff member signed in or enrolled presses Hide me - it is off
  *  until pressed (migration 0165), and every test before the toggle's own is of a hidden staff member. */
 async function stand({ hide = true } = {}) {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY,
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY,
   });
   const pushed = [];
   const real = globalThis.fetch;
@@ -60,11 +59,11 @@ async function stand({ hide = true } = {}) {
   const game = {};
   for (const h of ['SirMcMobdon', 'Asynian', 'Tabbyvish', 'Troll', 'Sylvia']) game[h] = await s.registered(h);
   const raw = s.env.DB._raw;
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
   const hideOn = async (session) => { if (hide) assert.deepEqual((await staff('/v1/staff/hide', { on: true }, session)).body, { hidden: true }); };
-  await hideOn(mob.session);
+  await hideOn(chief.session);
   const enrol = async (handle) => {
-    const inv = await staff('/v1/staff/invite', { handle }, mob.session);
+    const inv = await staff('/v1/staff/invite', { handle }, chief.session);
     const key = await extensionKey();
     const r = await staff('/v1/staff/enroll', { handle, password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', handle)) });
     assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -78,7 +77,7 @@ async function stand({ hide = true } = {}) {
   /** The hidden subjects `h`'s staff sessions mint - every one, newest first. */
   const subsOf = async (h) => Promise.all(raw.prepare('SELECT token_hash FROM staff_sessions WHERE player_id = ? ORDER BY created_at DESC').all(game[h].id).map((r) => hiddenSubOf(r.token_hash, subtle)));
   const audits = (act) => raw.prepare('SELECT * FROM staff_audit WHERE act = ? ORDER BY id').all(act);
-  return { ...s, raw, staff, mob, mobKey, asy, tab, game, mint, subsOf, audits, enrol, pushed, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, chief, chiefKey, asy, tab, game, mint, subsOf, audits, enrol, pushed, restore: () => { globalThis.fetch = real; } };
 }
 
 test('STAFF-PANEL5-HIDDEN: the door is listed among the staff panel\'s and opens for no game session; the claim and the order are the token module\'s own law (mutants: the route unlisted; `hd` any value; a hide order with more; `hd` on another order)', async () => {
@@ -114,7 +113,7 @@ test('STAFF-PANEL5-HIDDEN: the door is listed among the staff panel\'s and opens
 test('STAFF-PANEL5-HIDDEN: HIDE ME (pressed - STAFF-HIDE-TOGGLE made it off by default) - an Admin\'s and a Moderator\'s game mint while their staff session is live is the spectator\'s token: `hd`, the session\'s own subject (never the account\'s), "Staff member", the staff glyphs alone, every mint a `hidden-token` row written before it (mutants: the switch unread; the session unread; the account\'s subject; the account\'s name; a cosmetic glyph; the row after the token or never)', async () => {
   const s = await stand();
   try {
-    for (const [h, session] of [['SirMcMobdon', s.mob.session], ['Asynian', s.asy.session]]) {
+    for (const [h, session] of [['SirMcMobdon', s.chief.session], ['Asynian', s.asy.session]]) {
       assert.deepEqual((await s.staff('/v1/staff/hide', {}, session)).body, { hidden: true }, `${h}: Hide me, pressed (stand)`);
       const r = await s.mint(h);
       assert.equal(r.status, 200);
@@ -134,9 +133,9 @@ test('STAFF-PANEL5-HIDDEN: HIDE ME (pressed - STAFF-HIDE-TOGGLE made it off by d
     }
     const rows = s.audits('hidden-token');
     assert.equal(rows.length, 4, 'every hidden token minted is a row');
-    const mobSub = (await s.subsOf('SirMcMobdon'))[0];
+    const chiefSub = (await s.subsOf('SirMcMobdon'))[0];
     assert.equal(rows[0].actor, s.game.SirMcMobdon.id, 'the real account, in the audit log alone');
-    assert.deepEqual(JSON.parse(rows[0].detail), { sub: mobSub });
+    assert.deepEqual(JSON.parse(rows[0].detail), { sub: chiefSub });
     assert.equal(rows[0].role, 'admin'); assert.equal(rows[2].role, 'moderator');
     assert.ok(rows[0].key_id, 'with the key its session signed in by');
     // every other account: the token it always minted
@@ -175,17 +174,17 @@ test('STAFF-PANEL5-HIDDEN: SHOW MYSELF - the switch off is written with its row,
     const [sub] = await s.subsOf('SirMcMobdon');
     const pressed = s.audits('hide').length;   // STAFF-HIDE-TOGGLE: stand()'s own Hide me, a row each member
     assert.equal(s.raw.prepare('SELECT staff_hide_on FROM players WHERE id = ?').get(s.game.SirMcMobdon.id).staff_hide_on, 1, 'pressed: on');
-    assert.equal((await s.staff('/v1/staff/hide', { on: 'no' }, s.mob.session)).body.error, 'body');
-    assert.deepEqual((await s.staff('/v1/staff/hide', { on: false }, s.mob.session)).body, { hidden: false });
+    assert.equal((await s.staff('/v1/staff/hide', { on: 'no' }, s.chief.session)).body.error, 'body');
+    assert.deepEqual((await s.staff('/v1/staff/hide', { on: false }, s.chief.session)).body, { hidden: false });
     assert.equal(s.raw.prepare('SELECT staff_hide_on FROM players WHERE id = ?').get(s.game.SirMcMobdon.id).staff_hide_on, 0);
     assert.deepEqual(s.audits('hide').slice(pressed).map((r) => [r.actor, JSON.parse(r.detail)]), [[s.game.SirMcMobdon.id, { on: false }]]);
     assert.equal(s.pushed.length, 1, 'one hide order, for the one session');
     const o = await verifyOrder(s.pushed[0], s.identityPublic, { subtle, nowS: nowS(), kind: 'hide' });
     assert.equal(o.ok, true); assert.equal(o.claims.s, sub, 'naming the session\'s hidden subject');
-    assert.deepEqual((await s.staff('/v1/staff/hide', {}, s.mob.session)).body, { hidden: false });
+    assert.deepEqual((await s.staff('/v1/staff/hide', {}, s.chief.session)).body, { hidden: false });
     const shown = claimsOf((await s.mint('SirMcMobdon')).body.token);
     assert.equal(shown.hd, undefined, 'shown'); assert.equal(shown.s, s.game.SirMcMobdon.id);
-    assert.deepEqual((await s.staff('/v1/staff/hide', { on: true }, s.mob.session)).body, { hidden: true });
+    assert.deepEqual((await s.staff('/v1/staff/hide', { on: true }, s.chief.session)).body, { hidden: true });
     assert.equal(s.pushed.length, 1, 'Hide me pushes nothing');
     assert.equal(claimsOf((await s.mint('SirMcMobdon')).body.token).s, sub, 'hidden again, as the same session');
     assert.deepEqual(s.audits('hide').slice(pressed).map((r) => JSON.parse(r.detail).on), [false, true]);
@@ -204,32 +203,32 @@ test('STAFF-PANEL5-HIDDEN: THE MARK LAPSES WITH THE SESSION - a sign-out (one se
     // a cut
     const [tabSub] = await s.subsOf('Tabbyvish');
     s.pushed.length = 0;
-    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Tabbyvish' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Tabbyvish' }, s.chief.session)).status, 200);
     // the cut member's hide order, beside the cut's own (STAFF-PANEL2-FIX's staffcut, which closes their visible sockets)
     assert.deepEqual(await Promise.all(s.pushed.map(verify)), [tabSub, undefined], 'the cut member\'s');
     assert.equal((await verifyOrder(s.pushed[1], s.identityPublic, { subtle, nowS: nowS(), kind: 'staffcut' })).claims?.s, s.raw.prepare('SELECT id FROM players WHERE handle = ?').get('Tabbyvish').id);
     // a Moderator the panel added, then removed
-    assert.equal((await s.staff('/v1/staff/mod/add', { handle: 'Sylvia' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/mod/add', { handle: 'Sylvia' }, s.chief.session)).status, 200);
     await s.enrol('Sylvia');
     assert.equal(claimsOf((await s.mint('Sylvia')).body.token).hd, 1, 'a panel Moderator is hidden too');
     const [sylSub] = await s.subsOf('Sylvia');
     s.pushed.length = 0;
-    assert.equal((await s.staff('/v1/staff/mod/remove', { handle: 'Sylvia' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/mod/remove', { handle: 'Sylvia' }, s.chief.session)).status, 200);
     assert.deepEqual(await Promise.all(s.pushed.map(verify)), [sylSub], 'the removed Moderator\'s');
     assert.equal(claimsOf((await s.mint('Sylvia')).body.token).hd, undefined, 'no staff, no mark');
     // a key forgotten: its sessions' subjects
-    const keys = (await s.staff('/v1/staff/keys', {}, s.mob.session)).body.keys;
-    const [mobSub] = await s.subsOf('SirMcMobdon');
+    const keys = (await s.staff('/v1/staff/keys', {}, s.chief.session)).body.keys;
+    const [chiefSub] = await s.subsOf('SirMcMobdon');
     s.pushed.length = 0;
-    assert.equal((await s.staff('/v1/staff/key/forget', { id: keys[0].id }, s.mob.session)).status, 200);
-    assert.deepEqual(await Promise.all(s.pushed.map(verify)), [mobSub], 'the forgotten key\'s session');
+    assert.equal((await s.staff('/v1/staff/key/forget', { id: keys[0].id }, s.chief.session)).status, 200);
+    assert.deepEqual(await Promise.all(s.pushed.map(verify)), [chiefSub], 'the forgotten key\'s session');
   } finally { s.restore(); }
 });
 
 test('STAFF-PANEL5-HIDDEN: A SIGN-OUT of one session pushes its order alone; of every session, one for each (mutants: one read as all; all read as one)', async () => {
   const s = await stand();
   try {
-    const login = async () => (await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.mobKey.proof('login', 'SirMcMobdon')) })).body.session;
+    const login = async () => (await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.chiefKey.proof('login', 'SirMcMobdon')) })).body.session;
     const subs = async () => new Set(await s.subsOf('SirMcMobdon'));
     const one = await subs();
     const two = await login();
@@ -241,7 +240,7 @@ test('STAFF-PANEL5-HIDDEN: A SIGN-OUT of one session pushes its order alone; of 
     await login();
     const again = await subs();
     assert.equal(again.size, 2);
-    await s.staff('/v1/staff/logout', { all: true }, s.mob.session);
+    await s.staff('/v1/staff/logout', { all: true }, s.chief.session);
     assert.deepEqual(new Set(s.pushed.map((o) => claimsOf(o).s)), again, 'every session\'s');
   } finally { s.restore(); }
 });
@@ -290,7 +289,7 @@ test('STAFF-PANEL5-HIDDEN: A PRIVATE HOME ENTERED - the relay\'s signed note is 
 test('STAFF-PANEL5-HIDDEN-FIX: A HIDDEN SESSION THAT LAPSES SHOWS NOBODY - the game it hid, its session gone idle, past its 8 hours or deleted by the panel\'s own poll, is minted no token at all (409 staff-session-lapsed, a `hidden-lapsed` row a minute) and never a visible one; signed in again it is hidden again; only the staff member\'s own word shows it - a sign-out by that key, a sign-out of every session, or Show myself (mutants: the lapse unread; the refusal unwritten; the refusal a 200; any key\'s sign-out ends it; a sign-out of all unread; the own key\'s unread; Show myself unread; the oldest row read)', async () => {
   const s = await stand();
   try {
-    const login = async () => (await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.mobKey.proof('login', 'SirMcMobdon')) })).body.session;
+    const login = async () => (await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.chiefKey.proof('login', 'SirMcMobdon')) })).body.session;
     const idle = (h) => s.raw.prepare('UPDATE staff_sessions SET last_act = 0 WHERE player_id = ?').run(s.game[h].id);
     const LAPSED = { status: 409, body: { error: 'staff-session-lapsed' } };
     // Tabbyvish: hidden by her first key's session; a second key's session signs out - her first's game stays hidden, then lapses
@@ -303,11 +302,11 @@ test('STAFF-PANEL5-HIDDEN-FIX: A HIDDEN SESSION THAT LAPSES SHOWS NOBODY - the g
     const tab3 = await s.enrol('Tabbyvish');
     await s.staff('/v1/staff/logout', { all: true }, tab3.session);
     assert.equal(claimsOf((await s.mint('Tabbyvish')).body.token).s, s.game.Tabbyvish.id, 'every session signed out: shown');
-    // mob: hidden, then idle - the panel's own poll deletes the dead session, and the game is still minted nothing
+    // chief: hidden, then idle - the panel's own poll deletes the dead session, and the game is still minted nothing
     assert.equal(claimsOf((await s.mint('SirMcMobdon')).body.token).hd, 1);
     idle('SirMcMobdon');
     assert.deepEqual(await s.mint('SirMcMobdon'), LAPSED, 'gone idle: nothing');
-    assert.equal((await s.staff('/v1/staff/me', { poll: true }, s.mob.session)).status, 401);
+    assert.equal((await s.staff('/v1/staff/me', { poll: true }, s.chief.session)).status, 401);
     assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM staff_sessions WHERE player_id = ?').get(s.game.SirMcMobdon.id).n, 0, 'the dead session deleted');
     assert.deepEqual(await s.mint('SirMcMobdon'), LAPSED, 'and still nothing');
     const lapsed = s.audits('hidden-lapsed');
@@ -377,16 +376,16 @@ test('STAFF-PANEL5-HIDDEN-R2: THE STAFF MEMBER\'S OWN WORD ENDS A HIDING, SESSIO
     assert.equal((await s.staff('/v1/staff/key/forget', { id: tab2.keyId }, tab2.session)).status, 200);
     idle('Tabbyvish');
     assert.deepEqual(await s.mint('Tabbyvish'), LAPSED, 'another key forgotten: still nothing');
-    // mob: two sessions on one key, the newer hid the game; the older signs out - its own subject's order alone
+    // chief: two sessions on one key, the newer hid the game; the older signs out - its own subject's order alone
     s.raw.prepare('UPDATE staff_sessions SET created_at = created_at - 100 WHERE player_id = ?').run(s.game.SirMcMobdon.id);
     const [older] = await s.subsOf('SirMcMobdon');
-    const newer = (await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.mobKey.proof('login', 'SirMcMobdon')) })).body.session;
+    const newer = (await s.staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await s.chiefKey.proof('login', 'SirMcMobdon')) })).body.session;
     assert.ok(newer);
     const c = claimsOf((await s.mint('SirMcMobdon')).body.token);
     assert.equal(c.hd, 1);
     assert.equal(c.s, (await s.subsOf('SirMcMobdon'))[0], 'hidden by the newer session');
     s.pushed.length = 0;
-    await s.staff('/v1/staff/logout', {}, s.mob.session);
+    await s.staff('/v1/staff/logout', {}, s.chief.session);
     assert.deepEqual(s.pushed.map((o) => claimsOf(o).s), [older], 'the older session\'s subject alone');
     idle('SirMcMobdon');
     assert.deepEqual(await s.mint('SirMcMobdon'), LAPSED, 'the newer session lapsed: no visible token beside its open hidden sockets');
@@ -398,7 +397,7 @@ test('STAFF-PANEL5-HIDDEN-R2: A MODERATOR REMOVED AND A STAFF MEMBER CUT ARE ORD
   try {
     const hides = () => s.pushed.map(claimsOf).filter((o) => o.o === 'hide').map((o) => o.s);
     const SYL = s.game.Sylvia;
-    assert.equal((await s.staff('/v1/staff/mod/add', { handle: 'Sylvia' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/mod/add', { handle: 'Sylvia' }, s.chief.session)).status, 200);
     const syl = await s.enrol('Sylvia');
     const login = async () => {
       const r = await s.staff('/v1/staff/login', { handle: 'Sylvia', password: PASSWORD, ...(await syl.key.proof('login', 'Sylvia')) });
@@ -431,7 +430,7 @@ test('STAFF-PANEL5-HIDDEN-R2: A MODERATOR REMOVED AND A STAFF MEMBER CUT ARE ORD
     void third;
     assert.equal(new Set(subjects).size, 5, 'three Hide me subjects and two follow eyes');
     s.pushed.length = 0;
-    assert.equal((await s.staff('/v1/staff/mod/remove', { handle: 'Sylvia' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/mod/remove', { handle: 'Sylvia' }, s.chief.session)).status, 200);
     assert.deepEqual(new Set(hides()), new Set(subjects), 'each ordered closed');
     assert.equal(s.pushed.length, subjects.length, 'and nothing else: a removal is no cut');
     // a cut: Asynian's Hide me game and her follow eye, her session deleted by the panel's poll before it
@@ -441,21 +440,20 @@ test('STAFF-PANEL5-HIDDEN-R2: A MODERATOR REMOVED AND A STAFF MEMBER CUT ARE ORD
     s.raw.prepare('UPDATE staff_sessions SET last_act = 0 WHERE player_id = ?').run(s.game.Asynian.id);
     assert.equal((await s.staff('/v1/staff/me', { poll: true }, s.asy.session)).status, 401);
     s.pushed.length = 0;
-    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.chief.session)).status, 200);
     assert.deepEqual(new Set(hides()), new Set([asyHid, eye]), 'her hidden game\'s and her follow eye\'s');
     assert.deepEqual(s.pushed.map(claimsOf).filter((o) => o.o !== 'hide').map((o) => [o.o, o.s]), [['staffcut', s.game.Asynian.id]]);
   } finally { s.restore(); }
 });
 
-// ═══ STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", "i need to be bale to talk in chat", "need hide to be a
-// toggle") - Hide me off by default for every staff member, the accounts that stand today included (migration 0165), and a
+// ═══ STAFF-HIDE-TOGGLE (2026-10-23) - Hide me off by default for every staff member, the accounts that stand today included (migration 0165), and a
 // press that takes effect at the very next mint (the game remakes its links at once: test/net/staffpanel5hook.test.js).
 // tools/mutants/staff-hide-toggle.json ═══
 
 test('STAFF-HIDE-TOGGLE: HIDE ME, OFF BY DEFAULT - an Admin and a Moderator who never pressed it are shown, though 0159\'s `staff_hide` still says 1 on their rows; Hide me hides the very next mint and pushes nothing; Show myself orders the hidden subject closed and shows the next mint, as before (mutants: the default on; 0159\'s column read; the switch read as 0159 read it; the press written to 0159\'s column)', async () => {
   const s = await stand({ hide: false });
   try {
-    for (const [h, session] of [['SirMcMobdon', s.mob.session], ['Asynian', s.asy.session]]) {
+    for (const [h, session] of [['SirMcMobdon', s.chief.session], ['Asynian', s.asy.session]]) {
       const id = s.game[h].id;
       const row = s.raw.prepare('SELECT staff_hide, staff_hide_on FROM players WHERE id = ?').get(id);
       assert.deepEqual([row.staff_hide, row.staff_hide_on], [1, 0], `${h}: 0159's column says hidden, as on every row that stands - the switch says off`);
@@ -510,7 +508,7 @@ test('STAFF-HIDE-TOGGLE: A GAME HIDDEN BEFORE 0165 TURNED ITS SWITCH OFF IS NEVE
   try {
     const idle = (h) => s.raw.prepare('UPDATE staff_sessions SET last_act = 0 WHERE player_id = ?').run(s.game[h].id);
     for (const h of ['SirMcMobdon', 'Asynian']) assert.equal(claimsOf((await s.mint(h)).body.token).hd, 1, `${h}: hidden`);
-    // 0165's move for mob: the switch off, and no audit row says so
+    // 0165's move for chief: the switch off, and no audit row says so
     s.raw.prepare('UPDATE players SET staff_hide_on = 0 WHERE id = ?').run(s.game.SirMcMobdon.id);
     idle('SirMcMobdon'); idle('Asynian');
     const back = await s.mint('SirMcMobdon');

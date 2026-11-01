@@ -352,10 +352,4 @@ test('PR-BOW1b: the wiring, by source - poseAssembly folds through foldPieceBoun
   }
   assert.match(rd('src/player/mwView.js'), /return fpArm\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet,\n\s*yaw,\n\s*grow: face\?\.grow > 1 \? face\.grow : 1,\n\s*up: face\?\.up \?\? null,\n\s*horse,\n\s*\}\);/);   // PIN MOVED, COATS3D: astride, the horse in the body's picture   // AUDIT OW3 J6: grown under the travel view; AUDIT OW4 J6: leaned by its up
   assert.match(rd('src/net/peer/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet: b\.feet,\n\s*yaw: b\.yaw,\n\s*hitFlash: flashOf \? flashOf\(b\.id\) : 0,\n\s*conceal: b\.veil \?\? null,\n\s*grow: g,\n\s*up: this\._cam\?\.up \?\? null,\n\s*fx,\n\s*cast,\n\s*anchored,\n\s*horse,\n\s*\}\)/);   // PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown and leaned under the Overworld   // PIN MOVED (MWNPC5): and its tells by id   // PIN MOVED (AUDIT MWNPC16-18 A3, Morrowind-NPCs.md section 27): and whether the body never walks   // PIN MOVED (AUDIT MWNPC16-18 R1, Morrowind-NPCs.md section 27): its tells read once a body, a line above (the cast asks their dissolve)   // PIN MOVED, COATS3D: a rider's horse
-  const page = rd('bible/01-Overview/bugs/Field-Bugs-2026-09-24.md');
-  const section = page.slice(page.indexOf('## PR-BOW1:'));
-  assert.ok(page.indexOf('## PR-BOW1:') > page.indexOf('## PR-WW1:'), 'the record is appended after PR-WW1\'s');
-  for (const name of ['world.js', 'exterior.js', 'worldModes.js', 'dungeon.js', 'mwViewDrawBody', 'peerBodies', 'PR-BOW1b', 'test/render/prbow1_bow.test.js', 'test/formats/morrowind/prbow1b_followups.test.js']) {
-    assert.ok(section.includes(name), `the PR-BOW1 record names ${name}`);
-  }
 });

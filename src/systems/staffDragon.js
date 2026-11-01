@@ -18,7 +18,7 @@ export const DRAGON_BOLT_COOLDOWN_MS = 350;
 /** Where the two barrels sit from my eye: metres to each side, below, ahead. */
 export const DRAGON_BARRELS = Object.freeze({ side: 1.4, down: 0.6, ahead: 2.0 });
 /** How far down the look the two balls meet with nothing under my aim, metres - far enough that they fly near level
- *  (DRAGON-AIM, 2026-10-29, mob: they crossed at a fixed 40 m and split past it). */
+ *  (DRAGON-AIM, 2026-10-29: they crossed at a fixed 40 m and split past it). */
 export const DRAGON_BOLT_MEET = 300;
 /** DRAGON-AIM: how far off my look a body may stand and still be what I aim at, metres. */
 export const DRAGON_AIM_SLACK = 3;
@@ -50,7 +50,7 @@ export const ridingDragon = () => _ride !== null;
 export function mountDragon(flyWas = false, look = 0) {
   _ride = { flyWas: !!flyWas, firedAt: -Infinity, look: look === 1 ? 1 : 0 };
 }
-/** DRAGON-BLUE (2026-10-29, mob: "can i get a blue aetherbright version"): the look of the dragon I ride - 1 the Aetherbright
+/** DRAGON-BLUE (2026-10-29): the look of the dragon I ride - 1 the Aetherbright
  *  (Dwarven-Dragon.md section 11, the tame's own palette), 0 the brass or on foot. My saddle and the pose's `rc` read it. */
 export const dragonRideLook = () => (_ride ? _ride.look : 0);
 /** DRAGON-BLUE: the ride's look changed in the saddle. @param {number} look */
@@ -65,7 +65,7 @@ export function landDragon() {
 }
 /** The flight's multiplier now (player/motor.js registerFlySpeedMod). */
 export const dragonFlyMult = () => (_ride ? DRAGON_FLY_MULT : 1);
-/** DRAGON-SHOTS (2026-10-29, mob: "the dragons spells are not seeable by others"): the volleys fired, for the wire. The pose's
+/** DRAGON-SHOTS (2026-10-29): the volleys fired, for the wire. The pose's
  *  cast count (`cn`) was the rig's alone, counted as the hands play a cast, and the cannons play none - so no peer drew a ball. */
 let _volleys = 0;
 /** A volley at `now` (ms): true and the clock set when the cannons are ready. @param {number} now */

@@ -1,6 +1,6 @@
 // SHADOW-FANG — THE WEREWOLF'S OWN SKIN (2026-09-26).
 //
-// Mac, for SirMcMobdon: "Wants a custom morrowind werewolf skin (skin base but blacker amd like crimson red thru out
+// Mac, for the Shadow Fang account: "Wants a custom morrowind werewolf skin (skin base but blacker amd like crimson red thru out
 // the edging in the fur, red eyes)". The werewolf is Bloodmoon's (WEREWOLF1, test/net/peer/werewolf1.test.js), built from the
 // player's own data, so the skin is a LAW over its textures' pixels (characters/werewolfSkin.js), painted on a copy on
 // the way to the GPU - and worn by whoever holds the Shadow Fang glyph: a peer by the glyphs their signed token

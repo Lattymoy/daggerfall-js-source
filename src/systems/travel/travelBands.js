@@ -45,9 +45,12 @@ export const BAND_CHASE_MPS = 5.2;
 /** A chase given up past this far (m), or after this long without closing (ms). */
 export const BAND_LEASH_M = 900;
 export const BAND_GIVE_UP_MS = 120 * 1000;
-/** Contact (m): under the Overworld the band must reach the traveller; with the view down it stands as foes this near. */
+/** Contact (m): under the Overworld the band must reach the traveller; with the view down it stands as foes this near.
+ *  BAND-NEAR (a player: "Overworld packs ambushing you spawn way too far away"): 45, so every member stands inside its
+ *  own 60 m sight (campEncounters.js CAMP_SIGHT_RADIUS) and comes at once - at 140 it came on blind and could give up -
+ *  and still past DFU's 10-20 m wilderness ring (encounters.js SPAWNER_ARMS). */
 export const BAND_CONTACT_M = 30;
-export const BAND_STAND_M = 140;
+export const BAND_STAND_M = 45;
 /** AUDIT OW5b B2: the nearest a band's anchor stands to the traveller (m) - its members, a pack's spacing about it, never
  *  on top of them. A band stands where it IS, this or farther. */
 export const BAND_STAND_MIN_M = 18;
@@ -55,6 +58,37 @@ export const BAND_STAND_MIN_M = 18;
  *  this often (ms), this many times, before the band is lost - never spent unstood on the first refusal. */
 export const BAND_STAND_RETRY_MS = 1500;
 export const BAND_STAND_TRIES = 5;
+/** AUDIT FB1031 B1: where a band met with the view down stands round the traveller - its own bearing `yaw` (radians)
+ *  while that lies outside the camera's view, else just outside the view's edge on its own side (a fixed side dead
+ *  ahead), as CAMP-FAR stands a camp: FOV plus 0..4 degrees (campEncounters.js campAnchorSpot, whose 2-degree jitter
+ *  either way this allows for). At its own bearing every band stood mid-screen. Under the Overworld (`seen`) it stands
+ *  where it was watched coming (AUDIT OW5b B2). Answers campAnchorSpot's `yawRad` and `bearingDegrees`.
+ *  AUDIT FB1031 II K6: the view's edge is its HORIZONTAL half-view (`fovDegrees` is the vertical, `aspect` the frame's
+ *  width over its height) and the pack's spread past it (`spacingM` about an anchor `nearM` off at the nearest), FOV
+ *  plus 2 at the least: at 32:9 the vertical FOV's edge stood 94% of bands with a member in view. */
+export function bandStandBearing(
+  yaw,
+  camYaw,
+  fovDegrees,
+  seen = false,
+  aspect = 1,
+  nearM = Infinity,
+  spacingM = 0,
+  backM = 0,
+) {
+  const half = (Math.atan(Math.tan((fovDegrees * Math.PI) / 360) * (aspect > 0 ? aspect : 1)) * 180) / Math.PI;
+  const spread = (Math.asin(Math.min(1, spacingM / nearM)) * 180) / Math.PI;
+  // AUDIT FB1031 III W1: the eye stands `backM` behind the feet in third person (11.4 m zoomed out), so the edge turns out
+  // by the law of sines till the nearest member clears it from the eye: at 21:9 zoomed out 96% of bands stood one in view
+  const base = Math.max(fovDegrees + 2, half + spread + 2),
+    r = Math.max(1, nearM - spacingM);
+  const turn = backM > 0 ? (Math.asin(Math.min(1, (backM * Math.sin((base * Math.PI) / 180)) / r)) * 180) / Math.PI : 0;
+  const edge = base + turn,
+    off = ((((((yaw - camYaw) * 180) / Math.PI) % 360) + 540) % 360) - 180;
+  return seen || Math.abs(off) >= edge
+    ? { yawRad: yaw, bearingDegrees: 0 }
+    : { yawRad: camYaw, bearingDegrees: off < 0 ? -edge : edge };
+}
 /** The bands the host is asked about: the cells within this many map pixels of the traveller. */
 export const BAND_REACH_PX = 6;
 const PIXEL_NATIVE = 32768;

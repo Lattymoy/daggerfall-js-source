@@ -1,0 +1,112 @@
+[
+  {
+    "name": "ARM-BEHIND-edge-at-middle",
+    "file": "src/render/armoryPass.js",
+    "old": "const edge = [shoulder[0] + right[0] * way * half, shoulder[1], shoulder[2] + right[2] * way * half]",
+    "new": "const edge = [shoulder[0], shoulder[1], shoulder[2]]",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the clip at the band's middle - half the arm's piece cut"
+  },
+  {
+    "name": "ARM-BEHIND-side-reversed",
+    "file": "src/render/armoryPass.js",
+    "old": "toMid[2] >= 0 ? 1 / len : -1 / len;",
+    "new": "toMid[2] >= 0 ? -1 / len : 1 / len;",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the arm cut and the body kept"
+  },
+  {
+    "name": "ARM-BEHIND-not-through-eye",
+    "file": "src/render/armoryPass.js",
+    "old": "  return [n[0], n[1], n[2], -(n[0] * eye[0] + n[1] * eye[1] + n[2] * eye[2])];",
+    "new": "  return [n[0], n[1], n[2], -(n[0] * sh[0] + n[1] * sh[1] + n[2] * sh[2])];",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the line not the screen's - a piece lifted toward the eye on the wrong side"
+  },
+  {
+    "name": "ARM-BEHIND-bracers-bare",
+    "file": "src/render/armoryPass.js",
+    "old": "0.056 * a, 0.06 * a); }\n      }\n      clipped(from, u.clip);",
+    "new": "0.056 * a, 0.06 * a); }\n      }",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the bracers and armlets over the body again"
+  },
+  {
+    "name": "ARM-BEHIND-spurs-bare",
+    "file": "src/render/armoryPass.js",
+    "old": "      });\n      clipped(from, u.clip);",
+    "new": "      });",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the spurs over the body"
+  },
+  {
+    "name": "ARM-BEHIND-armlet-bare",
+    "file": "src/render/armoryPass.js",
+    "old": "    clipped(0, u.clip);\n",
+    "new": "",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the Insignia Armlet over the body"
+  },
+  {
+    "name": "ARM-BEHIND-no-discard",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (dot(uClip.xyz, vWorld) + uClip.w < 0.0) discard;",
+    "new": "",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the clip handed over and never applied"
+  },
+  {
+    "name": "ARM-BEHIND-never-uploaded",
+    "file": "src/render/armoryPass.js",
+    "old": "            if (U.uClip) gl.uniform4fv(U.uClip, d.clip ?? NO_CLIP);",
+    "new": "",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the clip never reaches the shader"
+  },
+  {
+    "name": "CHEST-CENTRE-depth-along-facing",
+    "file": "src/render/armoryPass.js",
+    "old": "return add(painted, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };",
+    "new": "return add(painted, fwd, z); };",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the chest piece slides across the picture as the eye goes round"
+  },
+  {
+    "name": "CHEST-CENTRE-sigil-back-behind",
+    "file": "src/render/armoryPass.js",
+    "old": "const back = pose.card ? backOnCard(onCard(chestZ - 0.24 * s)) :",
+    "new": "const back = pose.card ? add(chest, fwd, -0.24 * s) :",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the Sigil's back off the painted back at a three-quarter"
+  },
+  {
+    "name": "CHEST-CENTRE-card-as-rig",
+    "file": "src/render/armoryPass.js",
+    "old": "const chest = pose.card ? onCard(chestZ) : pt('chest'),",
+    "new": "const chest = pt('chest'),",
+    "tests": [
+      "test/render/armbehind.test.js"
+    ],
+    "why": "the heart at the chest's face on a card again"
+  }
+]

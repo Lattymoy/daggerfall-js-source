@@ -862,6 +862,4 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   assert.match(world, /async function buildPixelNow\(px, py, \{ roadsRetry = false \} = \{\}\) \{/);
   assert.doesNotMatch(world, /terrainGen\.hasRoads\) \{ destroyPixel\(px, py, \{ collectLoose: false \}\); return; \}/, 'no path in the builder resolves the player\u2019s pixel to nothing');
   assert.match(read('src/world/terrain/terrainGenClient.js'), /get hasRoads\(\) \{ return !!this\._roads \|\| !!this\._settlements; \}/);
-  // The map was ALREADY rebuilt on arrival (ROADS 7); the terrain now is too.
-  assert.match(read('bible/03-World/Roads.md'), /keys its grid cache on the network it was drawn with/);
 });

@@ -164,10 +164,3 @@ test('TEX1 neither torch load can escape again: both catch, and the dropped-torc
   assert.match(dt, /if \(d\.dead \|\| !entry\?\.count \|\| !renderer\?\.createBillboardBatch\) return;/, 'which build already no-ops on');
 });
 
-test('TEX1 records: the arc note on both torch pages, the ledger row, the WW3 correction and the testing row', () => {
-  assert.match(rd('bible/06-Systems/Handheld-Torches.md'), /^## TEX1 - THE SPRITE DOOR'S SHAPE, AND MAC'S CRASH \(2026-09-14\)/m);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /\*\*ONE SHAPE FOR EVERY TEXTURE DOOR \(TEX1, 2026-09-14\)\*\*/);
-  // WW3's record said the crash was the widget's; it was the torches'. Corrected in place.
-  assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /the crash itself was HANDHELD TORCHES'/);
-  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| tex1_texturedoors\.test\.js \| \d+ \| TEX1/m);
-});

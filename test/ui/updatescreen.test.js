@@ -1,5 +1,4 @@
-// UPDATE-FORCE (2026-10-29, the owner: "when theres an update we need a screen that forces player to logout and
-// update /reload"). The phase law, then the run driven over a fake page: the warning, the hold, the screen that
+// UPDATE-FORCE (2026-10-29). The phase law, then the run driven over a fake page: the warning, the hold, the screen that
 // takes the keys, the save before the reload, the guard stood down, and one run however many builds are found.
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -122,8 +121,7 @@ test('UPDATE-FORCE: the host starts it where the build poll finds a new build, w
   assert.match(u, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && \(autoUpdatesOn\(\) \? startForcedUpdate\(opts\) : opts\.notice\?\.\(updateReadyNoticeText\(\)\)\)/);
 });
 
-// UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" / "make
-// sure it updates"): in the desktop app the countdown is the app's update's, and its end restarts the app onto it.
+// UPDATE-RESTART (2026-10-30): in the desktop app the countdown is the app's update's, and its end restarts the app onto it.
 test('UPDATE-RESTART: the app\'s run says the app restarts, and its end is the restart it is handed', () => {
   const { doc, win, body } = fakePage();
   let now = 0;

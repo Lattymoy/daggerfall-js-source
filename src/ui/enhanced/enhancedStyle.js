@@ -4977,6 +4977,7 @@ ${paceControlsCss('tview')}
   flex-direction: column; border-top: 2px solid rgba(125,116,96,0.35);
   background: rgba(0,0,0,0.25); }   /* PX22: never less than the tabs and one row */
 .pack-shell .packcats { flex: 0 0 auto; }
+.pack-shell .packcats > .sortbtn { display: none; }   /* PACK-SORT: the phone's Sort (the touch-phone rule draws it); the desk's is in the header */
 /* PX22: a 40px tab strip, not 64 - the 24px it gives back is the
    difference between one row of tiles and two at the 660px window. */
 .pack-shell .pack-dock .packtab { min-height: 36px; padding: 2px 14px; }
@@ -5215,6 +5216,10 @@ ${paceControlsCss('tview')}
   .pack-shell .pack-id .dolltoggle { display: inline-block; }
   .pack-shell .pack-dock .packcats .packtabs { display: flex; flex-wrap: nowrap; overflow-x: auto; }
   .pack-shell .pack-dock .packtab { flex: 0 0 auto; }
+  .pack-shell .pack-id .sortbtn { display: none; }   /* PACK-SORT: the header keeps Body and Close in a 360px screen */
+  .pack-shell .pack-dock .packcats { flex-wrap: nowrap; align-items: center; }
+  .pack-shell .pack-dock .packcats .packtabs { flex: 1 1 auto; min-width: 0; }
+  .pack-shell .pack-dock .packcats > .sortbtn { display: inline-block; flex: 0 0 auto; min-width: 0; min-height: 36px; padding: 2px 10px; }
   .pack-shell:not(.showdoll) .wornmap-doll, .pack-shell:not(.showdoll) .wornmap .wornac-total, .pack-shell:not(.showdoll) .wornmap .worntemp-total { display: none; }   /* TEMP-UI: the felt temperature goes with the doll it stands on */
   .pack-shell:not(.showdoll) .charcol .wornmap { grid-template-columns: minmax(0, 1fr) 0 minmax(0, 1fr); column-gap: 6px; }
 }
@@ -5560,6 +5565,7 @@ ${paceControlsCss('tview')}
   justify-content: center; text-align: center; gap: 10px; margin: 0; }
 .loot-win .remotewho { display: flex; flex-direction: column; align-items: center; }
 .loot-win .remoteacts { justify-content: center; padding: 0; }
+.loot-win .remoteacts .sortbtn { min-width: 0; padding-left: 10px; padding-right: 10px; }   /* PACK-SORT: its word's width, so a wagon's three presses keep one row */
 .loot-win .remotewho h3 { font-size: 16px; color: #d8cfae; }
 .loot-win .remotewho .meta { font-size: 12px; letter-spacing: 0.14em; color: #9c937d;
   text-transform: uppercase; margin-top: 6px; }
@@ -5993,6 +5999,7 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 .hmkeykind { display: inline-flex; align-items: center; gap: 5px; pointer-events: auto; font-size: 11px;
   color: #c5bda2; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .hmkeykind.dim { opacity: 0.4; }
+.hmroot .act.hmkeyflt.dim { opacity: 0.55; }   /* WITNESS-MAP: a switch whose layer this band does not draw */
 .hmkeyrow.off .hmkeykind { opacity: 0.3; }
 .hmkeychip { flex: none; display: block; box-shadow: 0 0 0 1px rgba(0,0,0,0.8); }
 /* OW-WHO: the Players row's word - the row's first cell, so never hidden with the glyphs' words on a phone (the

@@ -1586,6 +1586,7 @@ function copyToOffline(row) {
     let snap = null;
     try { snap = JSON.parse(got.text); } catch { snap = null; }
     if (!snap || typeof snap !== 'object') return { ok: false, error: 'no-data' };
+    (await import('../../systems/item/knownItemsOnly.js')).dropUnknownItems(snap);   // a newer realm's items this build cannot read
     snap = offlineCopyOf(snap);   // AUDIT LIVED1 E: the world's stamps rebased onto the character's clock, the one clock offline
     snap.characterId = mintCharacterId();
     const r = saveSlot(snap.name || row.name, REALM_COPY_SAVE_NAME, snap, { storage: appStorage() });

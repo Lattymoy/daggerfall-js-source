@@ -357,7 +357,6 @@ test('WA1 the switch, the lane and the record: one Enabled on by default, the pl
   assert.equal(ONLINE_ROOM_MOD_KEYS[WARM_ASHES_VENDOR], undefined);
   assert.match(read('vendor/warm-ashes-ships/README.md'), /\*\*Warm Ashes - Ships 1\.1\*\* for Daggerfall Unity 1\.1\.0\+, by \*\*Kamer\*\*/, 'CREDITS-OUT: the README is the record');
   assert.match(read('vendor/warm-ashes-ships/README.md'), /\[Mac: record the author's permission/);
-  assert.match(read('bible/01-Overview/Mod-Registry.md'), /\| `warm-ashes-ships` \|[^\n]*\*\*RECORD OPEN\*\*/);
 });
 
 // ---- with the player's own data ----------------------------------------------

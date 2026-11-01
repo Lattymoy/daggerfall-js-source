@@ -1,4 +1,4 @@
-// PRESS-FLAT (2026-10-28; the owner: "no lean at all", "it need to reroll as well", "remove the lean on reforge"): the
+// PRESS-FLAT (2026-10-28): the
 // Mages Guild's Imbue and the Reforge (the guild's and the Essence's) draw a line with no lean - no skill to the weapon's
 // own or its strike kin, no damage as the first line, no armour family's weight. A found or made piece keeps LOOT1's lean.
 

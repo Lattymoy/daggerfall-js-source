@@ -1,4 +1,4 @@
-// FOLLOW-OWN-ID (2026-10-24, mob: "need the follow dropping me to stop", "says im in another tab...", "i didnt do that") -
+// FOLLOW-OWN-ID (2026-10-24) -
 // A FOLLOW NEVER PUTS THE STAFF MEMBER'S OWN GAME OFFLINE. Over the real relay and its hub shards (the harness of
 // staffpanel5live_e2e.test.js): the target's game, the staff member's own game (its room and its World tab's hub link) and
 // the real createStaffHook, whose sessions take the TAB's id when they name none - as a browser's do (online.js peerId,
@@ -140,7 +140,7 @@ for (const leaves of [false, true]) for (const hide of ['shown', 'hidden', 'reli
   });
 });
 
-test('FOLLOW-GROUND-HINT (mob: "following from ground does not work", "panel open said locked never moved"): a target whose game has sent the hub no where note - none yet, or a room a note cannot name - is locked on all the same when picked off the staff member\'s own ground: the eye goes to the room the pick names, the room tells the bus they are in it, and the camera draws them; with no hint the follow is locked and still waits (mutants: the hint dropped)', async () => {
+test('FOLLOW-GROUND-HINT: a target whose game has sent the hub no where note - none yet, or a room a note cannot name - is locked on all the same when picked off the staff member\'s own ground: the eye goes to the room the pick names, the room tells the bus they are in it, and the camera draws them; with no hint the follow is locked and still waits (mutants: the hint dropped)', async () => {
   for (const hinted of [false, true]) await world(async ({ W, signer, BridgeWS, Session, settle, tick, now }) => {
     void W;
     const tmint = async () => signer.token('tgt-0001', { s: TARGET, n: 'Target', k: 'linked' });

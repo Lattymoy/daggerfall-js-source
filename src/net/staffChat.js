@@ -6,7 +6,7 @@
 //
 // A FREEZE (the relay's `{t:'frozen', until}`, at every hello while it stands and when an order lands): the motor held as
 // paralysis holds it and no blow delivered (characters/playerEntity.js setStaffFrozen), the "Frozen by staff" screen
-// (ui/freezeScreen.js), and the Staff tab on the bar - the only chat this player can use while it stands (mob, 04:23Z).
+// (ui/freezeScreen.js), and the Staff tab on the bar - the only chat this player can use while it stands.
 // This screen is the player's alone: a game that ignores it is still held by the relay and the service.
 //
 // THE STAFF CHAT: every line lives in the account service (/v1/staff-chat/read and /send); the hub carries only a NUDGE
@@ -15,7 +15,7 @@
 // The thread's first answer carries the server's Discord invite (DISCORD_INVITE_URL on the service), said on the tab
 // as a line with a Copy button (ui/chatPanel.js `copy`).
 //
-// OFFLINE ONLY until mob tries it live.
+// Offline only, not tried live yet.
 // ═══════════════════════════════════════════════════════════════════
 
 import { t } from '../systems/textManager.js';
