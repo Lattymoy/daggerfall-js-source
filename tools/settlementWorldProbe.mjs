@@ -3,14 +3,16 @@
 // mode, jumps to a settlement's pixel (window.__tesaJump), waits for its host to stand it (window.__settlementView), and
 // shoots it from the air and from a street; then walks to a door and presses it, and says whether the rooms opened.
 // Needs ARENA2 (the dev server's /arena2). The shots are of the player's own ground: they stay in scratch/.
-//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [row] [--out scratch/settlement-world]   (row: settlements.json's, 1 Sahr Waters)
+//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [row] [--out scratch/settlement-world] [--season summer]   (row: settlements.json's, 1 Sahr Waters)
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ORDINAL = Number(process.argv[2] ?? 1);   // a settlements.json row (1: Sahr Waters, Hammerfell)
+const named = process.argv.slice(2).filter((arg, i, all) => !arg.startsWith('--') && all[i - 1] !== '--out' && all[i - 1] !== '--season');   // a flag's value is no row
+const ORDINAL = Number(named[0] ?? 1);   // a settlements.json row (1: Sahr Waters, Hammerfell)
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : 'scratch/settlement-world';
+const SEASON = process.argv.includes('--season') ? process.argv[process.argv.indexOf('--season') + 1] : null;   // summer, rain or winter (shared.js seasonOverride)
 mkdirSync(out, { recursive: true });
 const server = await createServer({ server: { port: 5241, strictPort: true }, logLevel: 'error' });
 await server.listen();
@@ -38,7 +40,7 @@ const drain = async () => {
 const fail = (why) => { console.log('FAIL:', why); process.exitCode = 1; };
 const until = async (fn, cap = 240000, arg = undefined) => { const t0 = Date.now(); for (;;) { const v = await page.evaluate(fn, arg).catch(() => null); if (v) return v; if (Date.now() - t0 > cap) return null; await frames(1, 10000); } };
 try {
-  await page.goto('http://localhost:5241/play/?world&nomenu&class=0&novideo&shot&play&tod=12:00');
+  await page.goto(`http://localhost:5241/play/?world&nomenu&class=0&novideo&shot&play&tod=12:00${SEASON ? `&season=${SEASON}` : ''}`);
   await until(() => (window.__frame ?? 0) > 5 && typeof window.__tesaJump === 'function', 300000);
   await page.mouse.click(640, 400);
   await drain();
