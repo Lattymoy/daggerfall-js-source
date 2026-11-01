@@ -241,6 +241,11 @@ jobs:
       # the shell reads back from the release at that tag. The
       # metadata rides the release with the installers, or the updater
       # finds nothing and every copy falls back to the notice.
+      # The shell packs the game's pad loop, its logo and the built site from the repo's own tree. electron-builder's
+      # asarUnpack (the private server's runtime binary) holds every packed file to app/, so they are copied in first.
+      - name: Stage the shell's files inside app/
+        run: node scripts/desktopRelease.mjs stage
+
       - name: Build installers
         run: npx electron-builder --publish never
         working-directory: app
