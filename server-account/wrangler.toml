@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct241"
+ACCOUNT_VERSION = "acct242"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -217,6 +217,18 @@ MOD_AI = "shadow"
 # a UTC day, empty for 1,500.
 MOD_AI_MODEL = ""
 MOD_AI_DAILY_MAX = ""
+# CLAUDE_STAFF (src/claudeStaff.js, bible/11-Multiplayer/Claude-Staff.md): Claude as staff, which reads the stored feeds on
+# the minute clock and writes suggestions for members to accept or dismiss. "off" reads nothing and calls nothing; "on" needs
+# ANTHROPIC_API_KEY (the reviewer's own). It never acts. CLAUDE_STAFF_HANDLE: the staff account it writes as, which can never
+# sign in to the panel. CLAUDE_STAFF_MODEL: its model. CLAUDE_STAFF_DAILY_MAX: its calls a UTC day. CLAUDE_STAFF_QUIET_MIN:
+# under this many players online it sweeps every two hours instead of every fifteen minutes. CLAUDE_ORDER_HANDLES: who may
+# accept or dismiss a suggestion and enrol an order key (src/staffOrder.js).
+CLAUDE_STAFF = "off"
+CLAUDE_STAFF_HANDLE = "Claude"
+CLAUDE_STAFF_MODEL = "claude-sonnet-5-5"
+CLAUDE_STAFF_DAILY_MAX = "200"
+CLAUDE_STAFF_QUIET_MIN = "50"
+CLAUDE_ORDER_HANDLES = "SirMcMobdon,kpblca_1,Lattymoy"
 # SAFE8: THE MODERATORS' QUEUE IN DISCORD (src/discord.js). DISCORD_MOD_CHANNEL: the private channel's id the bot posts
 # each case to. DISCORD_PUBLIC_KEY: the Discord application's public key (hex - not a secret), which every press and
 # /mod is signed with. DISCORD_MODERATORS: "<discord user id>:<game handle>", comma-separated - a press is that
