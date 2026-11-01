@@ -12,9 +12,9 @@ import { landKeyAt } from '../../src/world/tamriel/tamrielLands.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 test('flora playground page and vite entry exist', () => {
-  assert.ok(existsSync(join(root, '2d-playground.html')));
+  assert.ok(existsSync(join(root, '2d-playground/index.html')));
   const vite = readFileSync(join(root, 'vite.config.js'), 'utf8');
-  assert.match(vite, /floraPlayground:\s*'2d-playground\.html'/);
+  assert.match(vite, /floraPlayground:\s*'2d-playground\/index\.html'/);
   assert.match(vite, /floraPlaygroundAlias/);
 });
 

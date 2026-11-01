@@ -70,7 +70,14 @@ export function specifiersIn(text) {
 /** The src modules nothing reaches from an entry, repo-relative and sorted. */
 export function unreached(root = ROOT) {
   const src = walk(root, 'src').filter((f) => /\.m?js$/.test(f));
-  const pages = readdirSync(root).filter((f) => f.endsWith('.html'));
+  // Root *.html and each immediate folder's index.html (play/, 2d-playground/, privacy/, …).
+  const pages = [
+    ...readdirSync(root).filter((f) => f.endsWith('.html')),
+    ...readdirSync(root, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => `${e.name}/index.html`)
+      .filter((f) => existsSync(join(root, f))),
+  ];
   const entries = [...pages, 'src/main.js', ...ENTRY_DIRS.flatMap((d) => walk(root, d))];
   const isFile = (p) => existsSync(join(root, p)) && statSync(join(root, p)).isFile();
   const target = (from, spec) => {
