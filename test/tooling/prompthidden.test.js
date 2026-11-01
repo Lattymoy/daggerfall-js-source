@@ -1,5 +1,6 @@
-// The repository is public, so a model's brief is a Worker secret and never source. A file that talks to a model may
-// not hold a string that speaks to it in the second person, which is how every brief opens.
+// The repository is public, so a model's brief is never source: a service's is a Worker secret, a tool's an env var or
+// an ignored file. A file that talks to a model may not hold a string that speaks to it in the second person, which is
+// how every brief opens.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -48,7 +49,7 @@ test('PROMPT-HIDDEN no file that talks to a model holds a brief', () => {
     }
   }
   assert.ok(talkers >= 3, 'the reviewer, Claude as staff and the translation tool are all read');
-  assert.deepEqual(found, [], 'a brief belongs in a Worker secret, put by the deploy from the repository secrets');
+  assert.deepEqual(found, [], 'a brief belongs in a secret or .prompts/, never in the repository');
 });
 
 test('PROMPT-HIDDEN each brief is its secret alone: no secret, no brief and no call', async () => {
