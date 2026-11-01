@@ -28,7 +28,7 @@ const SOLD = SHOP_WARES.filter((w) => w.alone);
 const ON = { STRIPE_SECRET_KEY: 'sk_test_sf', STRIPE_WEBHOOK_SECRET: 'whsec_sf', SHOP_ON_SALE: SOLD.map((w) => w.id).join(','), PASS_OPEN: 'on', AURUM_OPEN: 'on' };
 const S1 = passSeasonById('s1');
 const IN_TREMOR = S1.fromMs + 3 * 86_400_000 + 3_600_000;   // the first stage's fourth day
-const BEFORE = S1.fromMs - 5 * 86_400_000;
+const BEFORE = S1.tracksFromMs - 86_400_000;
 
 let sessions = 0;   // a session id Stripe never gives twice (the column is UNIQUE: a stand-in counting from one each call broke a second order)
 function stripe() {
@@ -203,7 +203,7 @@ test('STOREFRONT end to end: an effect is worn only when held - the door refuses
   assert.ok(ROUTES.has('/v1/account/effect'));
 });
 
-test('STOREFRONT the pass end to end: a guest refused, the finds shut before Season One; a find pays its source\'s Aurum under the day\'s bound and counts its stage\'s challenges, a challenge paid its Aurum once on the deed that completes it, beside the bound; the balance and the card say it all (mutants: a challenge paid twice; the day unbounded; a find\'s Aurum off the ledger)', async (t) => {
+test('STOREFRONT the pass end to end: a guest refused, the finds shut before the folios open and paying before the world; a find pays its source\'s Aurum under the day\'s bound and counts its stage\'s challenges, a challenge paid its Aurum once on the deed that completes it, beside the bound; the balance and the card say it all (mutants: a challenge paid twice; the day unbounded; a find\'s Aurum off the ledger)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: BEFORE });
   const s = await stand();
   const me = await s.registered('Player');
@@ -213,6 +213,10 @@ test('STOREFRONT the pass end to end: a guest refused, the finds shut before Sea
   assert.deepEqual(await findPass(ctx(), player(), { source: 'foe' }, ON), { error: 'closed' }, 'before the finds begin');
   assert.equal((await passOf(ctx(), player(), ON)).season, 's1', 'the season to come is shown');
   assert.deepEqual(await findPass(ctx(), { id: 'g', handle: null }, { source: 'foe' }, ON), { error: 'guest' });
+  t.mock.timers.setTime(S1.fromMs - 5 * 86_400_000);   // the folios open, the world not yet
+  const early = await s.registered('Early');
+  const pre = await findPass(ctx(), s.raw.prepare('SELECT * FROM players WHERE id = ?').get(early.id), { source: 'tavern' }, ON);
+  assert.deepEqual([pre.gained, pre.found, pre.done, pre.season], [3, 3, [], null], 'finds pay before the world; no challenge counts');
   t.mock.timers.setTime(IN_TREMOR);
   assert.deepEqual(await findPass(ctx(), player(), { source: 'nope' }, ON), { error: 'source' });
   assert.deepEqual(await findPass(ctx(), player(), { source: 'foe' }, { ...ON, PASS_OPEN: 'off' }), { error: 'closed' }, 'the switch off');

@@ -52,8 +52,9 @@ export const PASS_CONSTRUCT_MOBILES = Object.freeze([289, 270, 290]);
 /** A UTC day's bounds an account: the asks heard, and the Aurum its finds may earn. */
 export const PASS_DAY_ASKS = 2000;
 export const PASS_DAY_AURUM = 100;
-/** When finds start paying (ms): Season One's first instant. They never stop - Aurum is the account's, not a season's. */
-export const PASS_FINDS_FROM_MS = S1_FROM;
+/** When finds start paying (ms): with Season One's tracks, before its world. They never stop - Aurum is the account's,
+ *  not a season's. */
+export const PASS_FINDS_FROM_MS = PASS_SEASONS[0].tracksFromMs;
 /** A find's Aurum: the source's under what is left of the day's bound (`dayAurum` found already today). Pure. */
 export function passFindAurum(/** @type {string} */ source, /** @type {number} */ dayAurum) {
   if (!isPassSource(source)) return 0;

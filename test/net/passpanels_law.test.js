@@ -116,7 +116,7 @@ test('PASS-PANELS the calendar: the season runs sixty days in three stages of tw
   assert.deepEqual([S1.fromMs - 1, S1.fromMs, S1.fromMs + 20 * DAY - 1, S1.fromMs + 20 * DAY, S1.fromMs + 40 * DAY, S1.toMs + DAY].map((ms) => passStageAt(S1, ms)), [-1, 0, 0, 1, 2, 2]);
   assert.equal(passOpen(S1, S1.toMs - 1), true);
   assert.equal(passOpen(S1, S1.toMs), false);
-  assert.equal(PASS_FINDS_FROM_MS, S1.fromMs);
+  assert.equal(PASS_FINDS_FROM_MS, S1.tracksFromMs, 'finds open with the tracks, before the world');
 });
 
 test('PASS-PANELS the finds: a source\'s Aurum under what is left of the day\'s 100 - a foe one, a quest ten, an endgame deed twenty; nothing for a source the law lacks; the challenges pay 60 to 200 each, once (mutants: the bound ignored; a find past the bound)', () => {

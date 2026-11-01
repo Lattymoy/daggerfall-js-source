@@ -14,7 +14,7 @@ import { ASK_REST_MS } from '../../../src/net/askRest.js';
 import { reportPlayerKill } from '../../../src/systems/playerKills.js';
 import { noteAct } from '../../../src/systems/questlines/qlActs.js';
 import { KNIGHT_CITY_WATCH } from '../../../src/characters/mobile/mobileTypes.js';
-import { passSeasonById, passCardOf, passChallengeOf, passFindAurum, PASS_CHALLENGES, PASS_DAY_AURUM } from '../../../src/net/battlePassLaw.js';
+import { passSeasonById, passCardOf, passChallengeOf, passFindAurum, PASS_CHALLENGES, PASS_DAY_AURUM, PASS_FINDS_FROM_MS } from '../../../src/net/battlePassLaw.js';
 import { passChallengeText, passGrantName, passGrantKind, PASS_STAGE_TEXT } from '../../../src/ui/passText.js';
 
 const S1 = passSeasonById('s1');
@@ -78,7 +78,7 @@ test('STOREFRONT the pass\'s finds: a kill of mine by the foe\'s kind - a season
 test('STOREFRONT the pass asks nothing unbound, off line, for a guest or before the finds begin - and asks for good after the season (PASS-PANELS: "Never expire") (mutants: a guest asking; the finds\' first instant ignored; the finds shut with the season)', async () => {
   _resetPassClientForTests();
   assert.equal(await askPassFind('foe'), 0, 'unbound');
-  for (const [doors, why] of [[{ online: () => false, nowMs: () => IN }, 'off line'], [{ online: () => true, nowMs: () => S1.fromMs - 1 }, 'before the finds begin']]) {
+  for (const [doors, why] of [[{ online: () => false, nowMs: () => IN }, 'off line'], [{ online: () => true, nowMs: () => PASS_FINDS_FROM_MS - 1 }, 'before the finds begin']]) {
     const svc = service();
     bindPass({ ...doors, api: svc.api });
     await settle();
