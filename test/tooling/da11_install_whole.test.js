@@ -39,9 +39,9 @@ test('DA11 the built site is packed into app.asar, never shipped beside it as lo
   assert.match(JSON.parse(rd('app/package.json')).scripts.predist, /&& node scripts\/desktopRelease\.mjs stage$/, 'and before a local one');
   assert.equal(JSON.parse(rd('app/package.json')).scripts.postdist, 'cd .. && node scripts/desktopRelease.mjs unstage', 'and taken out after it, so no second copy stays in the tree');
   assert.notEqual(b.asar, false, 'the archive is what makes it one file');
-  // the local runtime a private server runs in (app/lib/privateHost.mjs) is a native binary: electron-builder unpacks it
-  // on its own, and an asarUnpack list beside the files taken from ../src fails the package outright
-  assert.equal(b.asarUnpack, undefined, 'no asarUnpack list');
+  // the one exception: the local runtime a private server runs in (app/lib/privateHost.mjs) is a native binary, which
+  // cannot run from inside the archive - its two packages alone, never the site
+  assert.ok((b.asarUnpack ?? []).every((g) => /node_modules\/(?:@cloudflare\/)?workerd/.test(g)), 'and nothing but the runtime binary is unpacked back out beside it');
   const extra = [b.extraResources, b.extraFiles, b.win?.extraResources, b.linux?.extraResources, b.mac?.extraResources]
     .flat().filter(Boolean);
   assert.ok(!extra.some((e) => /dist/.test(typeof e === 'string' ? e : `${e.from} ${e.to}`)),
