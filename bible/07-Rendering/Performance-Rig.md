@@ -40,7 +40,8 @@ besides (`Eye-Of-The-Beholder.md`). A crowd of armed players, as at a boss fight
 is drawn by sampling its picture under each px of its box (`src/player/eyeOfTheBeholder/layeredWeapon.js`
 `samplePicture`), and the sampler allocates nothing. A px whose footprint holds no opaque texel of the picture is
 skipped (`footprintEmpty`): the map from the screen to a blade or a chain is affine, so the box of the px's corners holds
-every sample. A bow's map folds at its grip, so a bow is sampled whole. The picture is the same to the byte.
+every sample. A bow's map folds at its grip, so a px row across the grip is sampled whole. The skip and the samples read
+one spread (`spreadOf`), and the tests hold a draw with the skip to one without it. The picture is the same to the byte.
 
 ### Boss fights
 

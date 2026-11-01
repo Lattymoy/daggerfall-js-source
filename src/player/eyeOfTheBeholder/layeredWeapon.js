@@ -720,18 +720,21 @@ export function dropSpecks(out, was) {
   return out;
 }
 
-/** The offsets across the screen a sample is also read at, `spread` px either side (samplePicture's): made once a draw. */
-export const offsetsOf = (spread) => (spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0]);
+/** A draw's spread across the screen, `spread` px either side, and the offsets a sample is also read at: made once a
+ *  draw, and read by both samplePicture and footprintEmpty, so the box a px may skip is always its samples' own. */
+export const spreadOf = (spread) => ({ spread, offs: spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0] });
+/** The tests' door: `skipAir` false samples every px, the oracle a draw with the skip is held to. */
+export const SAMPLE_TUNING = { skipAir: true };
 /** samplePicture's point and colour, refilled each call: a crowd's frames are composed on the page's own thread, and
  *  a weapon reads up to 720 samples a px. */
 const _pt = [0, 0], _rgb = [0, 0, 0];
 /** Sample a held picture over one px: the mean colour of its opaque samples where a third of them are, else null.
- *  `at(x, y, o)` writes the picture's point for a sample of the composed picture into `o`; a sample at each of `offs`
- *  across the screen counts as its own (a thing thinner than the picture draws it). The colour answered is shared:
- *  read it before the next call. */
-export function samplePicture(img, x, y, n, at, offs) {
+ *  `at(x, y, o)` must write the picture's point for a sample of the composed picture into `o`, every call; a sample at
+ *  each of `sp.offs` across the screen counts as its own (a thing thinner than the picture draws it). The colour
+ *  answered is shared: read it before the next call. */
+export function samplePicture(img, x, y, n, at, sp) {
   let k = 0, R = 0, G = 0, B = 0;
-  const W = img.width, H = img.height, c = img.colors;
+  const W = img.width, H = img.height, c = img.colors, offs = sp.offs;
   for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) for (let j = 0; j < offs.length; j++) {
     at(x + (sx + 0.5) / n + offs[j], y + (sy + 0.5) / n, _pt);
     const X = Math.round(_pt[0]), Y = Math.round(_pt[1]);
@@ -763,8 +766,9 @@ function opaqueSums(img) {
 /** Whether every sample samplePicture takes for px (x, y) misses the picture, so it answers null. Only for an `at`
  *  that is affine: then every sample lies inside the box of the px's corners (widened by `spread` across), and a box
  *  holding no opaque texel holds no hit. Most of a thin weapon's box is open air, and a px there skips its samples. */
-export function footprintEmpty(img, x, y, at, spread) {
+export function footprintEmpty(img, x, y, at, sp) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const spread = sp.spread;
   for (let cy = 0; cy < 2; cy++) for (let cx = 0; cx < 2; cx++) {
     at(x + (cx ? 1 + spread : -spread), y + cy, _pt);
     if (_pt[0] < x0) x0 = _pt[0]; if (_pt[0] > x1) x1 = _pt[0];
@@ -777,6 +781,12 @@ export function footprintEmpty(img, x, y, at, spread) {
   if (!(X0 <= X1 && Y0 <= Y1)) return true;
   const t = opaqueSums(img), S = W + 1;
   return t[(Y1 + 1) * S + X1 + 1] - t[Y0 * S + X1 + 1] - t[(Y1 + 1) * S + X0] + t[Y0 * S + X0] === 0;
+}
+/** One px of a held picture: null where its footprint is open air (`affine`: the map is affine over this px, so the
+ *  skip is sound), else samplePicture's colour. The one door each draw reads, so its picture and spread are one. */
+function pictureAt(img, x, y, n, at, sp, affine) {
+  if (affine && SAMPLE_TUNING.skipAir && footprintEmpty(img, x, y, at, sp)) return null;
+  return samplePicture(img, x, y, n, at, sp);
 }
 
 /**
@@ -797,12 +807,11 @@ function drawPicture(out, P, L, shown, img = P.img) {
     const ex = x - L.qx, ey = y - L.qy, s = (ex * L.ux + ey * L.uy) / L.along, v = ((ex * L.nx + ey * L.ny) / L.across) * sg;
     o[0] = P.gx + P.ux * s + P.rx * v; o[1] = P.gy + P.uy * s + P.ry * v;
   };
-  const offs = offsetsOf(0.25);   // a handle a picture px wide keeps a px on screen
+  const sp = spreadOf(0.25);   // a handle a picture px wide keeps a px on screen
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (!shown(d[i + 3], (x + 0.5 - L.qx) * L.ux + (y + 0.5 - L.qy) * L.uy)) continue;   // the body is in front here
-    if (footprintEmpty(img, x, y, at, 0.25)) continue;
-    const c = samplePicture(img, x, y, n, at, offs);
+    const c = pictureAt(img, x, y, n, at, sp, true);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
@@ -855,12 +864,11 @@ function drawChain(out, P, L, shown, g = [0, 1]) {
     const c = ((x - hx) * gx + (y - hy) * gy) / ka + (C.lead ?? 0), v = ((x - hx) * gy - (y - hy) * gx) / k;
     o[0] = C.x + C.dx * c - C.dy * v; o[1] = C.y + C.dy * c + C.dx * v;
   };
-  const offs = offsetsOf(0.3);   // a chain is round: a px wide at the least, from any side
+  const sp = spreadOf(0.3);   // a chain is round: a px wide at the least, from any side
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (!shown(d[i + 3], proj)) continue;
-    if (footprintEmpty(C.img, x, y, at, 0.3)) continue;
-    const c = samplePicture(C.img, x, y, n, at, offs);
+    const c = pictureAt(C.img, x, y, n, at, sp, true);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
@@ -883,11 +891,12 @@ function drawBowPicture(out, bow, P, view, tips) {
     const s = (hy - y) / (cm * up), r = (x - hx - s * cm * lean) / (cm * bx), sl = Math.abs(s) * P.long;   // the longer limb, both ways
     o[0] = P.gx + P.ux * sl + P.rx * r; o[1] = P.gy + P.uy * sl + P.ry * r;
   };
-  const offs = offsetsOf(spread);
+  const sp = spreadOf(spread);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (bowHidden(d[i + 3], before, x + 0.5 - hx, y + 0.5 - hy)) continue;
-    const c = samplePicture(P.img, x, y, n, at, offs);
+    // the map folds at the grip's row (|s|); a px row wholly on one side of it is affine
+    const c = pictureAt(P.img, x, y, n, at, sp, y >= hy || y + 1 <= hy);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }

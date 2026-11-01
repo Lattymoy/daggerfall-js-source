@@ -95,6 +95,9 @@ export const FALL_SLIDE = 2 * Math.PI;
 /** AUDIT WB D9: above this elevation (radians) no ridge and no tower stands - the great tower's crown is at 0.36, its
  *  crest and the antialiasing's margin above it - and the sky skips their noise there, the most of its sky. */
 export const RIDGES_TOP = 0.42;
+/** A ridge's noise is skipped this far (radians, a tenth of a px) over its highest crest: GLSL ES lets pow() run a few
+ *  millionths over 1, and the margin keeps the skip exact there. */
+export const RIDGE_MARGIN = 0.0001;
 /** A rate of `turns` cycles a period, as the shader's radians a second. */
 const w = (turns) => ((turns / DEAD_CLOCK_PERIOD) * 2 * Math.PI).toFixed(6);
 /** The ridges, far to near: base elevation, rise, features round the horizon, jaggedness, haze toward the horizon. */
@@ -308,8 +311,15 @@ void main() {
   vec3 col = mix(mid, zenith, smoothstep(0.08, 1.2, e));
   col = mix(col, deadHorizon(d), 1.0 - smoothstep(0.0, 0.22, e));   // AUDIT SD III (V14): edges rising - reversed ones are undefined in GLSL
 
+  // ── lightning: its light on the air, everywhere; on the clouds, below
+  float near = 0.0;
+  if (uFlash.z > 0.0) {
+    vec3 F = vec3(sin(uFlash.x) * cos(uFlash.y), sin(uFlash.y), -cos(uFlash.x) * cos(uFlash.y));
+    near = pow(max(dot(d, F), 0.0), 18.0);
+    col += vec3(0.5, 0.22, 0.12) * uGain * uFlash.z * near * 0.3;
+  }
   // ── the clouds: a deck over the court, read where the ray meets it, turned into the vortex. Where the deck has faded
-  // out (at and under the horizon) the clouds add nothing, so their noise is skipped there; a flash still lights the air
+  // out (at and under the horizon) the clouds add nothing, so their noise is skipped there
   float deck = smoothstep(0.015, 0.2, e);
   if (deck > 0.0) {
   float up = max(d.y, 0.0);
@@ -348,22 +358,13 @@ void main() {
   vec3 cloudLit = vec3(0.95, 0.36, 0.085) * uGain;
   float lit = clamp(rim * 1.05 * fromBelow + eye * 1.1 + (1.0 - cover) * 0.12 * fromBelow, 0.0, 1.5);
   vec3 cloud = mix(cloudDark, cloudLit, min(lit, 1.0)) + cloudLit * max(lit - 1.0, 0.0);
-  if (uFlash.z > 0.0) {
-    vec3 F = vec3(sin(uFlash.x) * cos(uFlash.y), sin(uFlash.y), -cos(uFlash.x) * cos(uFlash.y));
-    float near = pow(max(dot(d, F), 0.0), 18.0);
-    cloud += vec3(1.0, 0.82, 0.7) * uGain * uFlash.z * near * (0.35 + 0.9 * n);
-    col += vec3(0.5, 0.22, 0.12) * uGain * uFlash.z * near * 0.3;
-  }
+  if (uFlash.z > 0.0) cloud += vec3(1.0, 0.82, 0.7) * uGain * uFlash.z * near * (0.35 + 0.9 * n);
   col = mix(col, cloud, cover * deck * 0.92);
   // the eye itself: a furnace in the middle of the turning
   col += vec3(1.0, 0.62, 0.26) * uGain * pow(eye, 3.0) * 1.3 * deck;
   // its arms: the brighter streaks that wind into it
   float arms = sin(atan(vr.y, vr.x) * 3.0 + 6.0 / (r + 0.4));
   col += vec3(0.9, 0.3, 0.06) * uGain * smoothstep(0.55, 1.0, arms) * exp(-r * 1.4) * 0.35 * deck;
-  } else if (uFlash.z > 0.0) {
-    vec3 F = vec3(sin(uFlash.x) * cos(uFlash.y), sin(uFlash.y), -cos(uFlash.x) * cos(uFlash.y));
-    float near = pow(max(dot(d, F), 0.0), 18.0);
-    col += vec3(0.5, 0.22, 0.12) * uGain * uFlash.z * near * 0.3;
   }
 
   // ── the beam: from the great tower's crown up into the eye, bands of fire climbing it
@@ -384,8 +385,8 @@ void main() {
     float tw = 0.0;
     ${i === 0 ? `tw = max(tw, lesser0(az, e)); tw = max(tw, lesser3(az, e));` : ''}${i === 1 ? `tw = max(tw, lesser1(az, e)); tw = max(tw, lesser2(az, e));` : ''}${i === 2 ? `tw = max(tw, sigil(az, e));` : ''}
     // a ridge never stands above its base and rise: over that, and off its towers, it covers nothing, so its noise is
-    // skipped (the sum is the shader's own, so the bound is the same float the height can reach)
-    if (e < ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} + aa || tw > 0.0) {
+    // skipped. The margin is for a driver whose pow() is built from exp2 and log2 and runs a hair over its rise
+    if (e < ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} + aa + ${RIDGE_MARGIN.toFixed(4)} || tw > 0.0) {
     float hgt = ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} * ridge(az, ${R.freq.toFixed(2)}, ${(i * 17.3 + 4.1).toFixed(2)}, ${R.sharp.toFixed(2)});
     float m = max(1.0 - smoothstep(hgt - aa, hgt + aa, e), tw);
     vec3 rock = vec3(0.028, 0.006, 0.005) * uGain;

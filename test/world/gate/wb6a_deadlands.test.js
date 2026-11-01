@@ -12,7 +12,7 @@ import {
   deadClock, deadAzimuth, deadlandsFlash, seaVertices, skyBasis, skyGain, courtLighting, DeadlandsRenderer,
   DEAD_CLOCK_PERIOD, DEAD_SKY_VS, DEAD_SKY_FS, DEAD_SEA_FS, HORIZON_GLSL, SEA_R, SEA_FADE, SEA_RINGS, SEA_SPOKES,
   SIGIL_TOWER, LESSER_TOWERS, VORTEX_ELEV, VORTEX_TURNS, VORTEX_INFLOW_TURNS, CLOUD_LOOP_TURNS, SEA_LOOP_TURNS,
-  BEAM_CLIMB_TURNS, SPINE_TURNS, SEA_PULSE_TURNS, FALL_TURNS, FLASH_SLOT_S, FLASH_S, COURT_TRILIGHT, COURT_KEY_LIGHT, RIDGES,
+  BEAM_CLIMB_TURNS, SPINE_TURNS, SEA_PULSE_TURNS, FALL_TURNS, FLASH_SLOT_S, FLASH_S, COURT_TRILIGHT, COURT_KEY_LIGHT, RIDGES, RIDGE_MARGIN,
 } from '../../../src/render/deadlands.js';
 import { LAVA_Y, COURT_FOG } from '../../../src/world/gate/gateArena.js';
 import { COURT_R } from '../../../src/net/gate/gateBrain.js';
@@ -114,11 +114,14 @@ test('WB6a the towers and the ranges: the great tower behind the boss as the pla
   assert.match(DEAD_SKY_FS, /tw = max\(tw, sigil\(az, e\)\);/, 'the great tower stands in the near range');
 });
 
-test('the sky skips noise that cannot show: the clouds where the deck has faded, a ridge over its highest crest and off its towers - a flash still lights the air under the deck (mutants: the bound dropped; the flash lost under the deck)', () => {
+test('the sky skips noise that cannot show: the clouds where the deck has faded, a ridge over its highest crest and off its towers - a flash lights the air before the deck, everywhere (mutants: the bound dropped; the margin dropped; the flash\'s air inside the deck)', () => {
   assert.match(DEAD_SKY_FS, /float deck = smoothstep\(0\.015, 0\.2, e\);\n {2}if \(deck > 0\.0\) \{/, 'the deck skipped where it adds nothing');
-  assert.match(DEAD_SKY_FS, /\} else if \(uFlash\.z > 0\.0\) \{[^}]*col \+= vec3\(0\.5, 0\.22, 0\.12\) \* uGain \* uFlash\.z \* near \* 0\.3;/, 'a flash under the deck still lights the air');
+  const air = DEAD_SKY_FS.indexOf('col += vec3(0.5, 0.22, 0.12) * uGain * uFlash.z * near * 0.3;');
+  assert.ok(air > 0 && air < DEAD_SKY_FS.indexOf('float deck = smoothstep(0.015, 0.2, e);'), 'a flash lights the air before the deck, under it too');
+  assert.equal(DEAD_SKY_FS.split('pow(max(dot(d, F), 0.0), 18.0)').length, 2, 'the strike\'s light read once');
+  assert.ok(RIDGE_MARGIN > 1e-5 && RIDGE_MARGIN < 1e-3, 'over a driver\'s pow(), under a px');
   for (const R of RIDGES) {
-    const bound = `if (e < ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} + aa || tw > 0.0) {`;
+    const bound = `if (e < ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} + aa + ${RIDGE_MARGIN.toFixed(4)} || tw > 0.0) {`;
     const at = DEAD_SKY_FS.indexOf(bound);
     assert.ok(at > 0, `a ridge's bound is its own base and rise: ${bound}`);
     assert.ok(DEAD_SKY_FS.indexOf(`float hgt = ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} * ridge(`, at) > at, 'its noise read only inside the bound');

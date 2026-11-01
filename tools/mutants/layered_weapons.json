@@ -442,8 +442,8 @@
   {
     "name": "LAYERED-WEAPONS-chain-thin",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "  const offs = offsetsOf(0.3);   // a chain is round: a px wide at the least, from any side",
-    "new": "  const offs = offsetsOf(0);   // a chain is round: a px wide at the least, from any side",
+    "old": "  const sp = spreadOf(0.3);   // a chain is round: a px wide at the least, from any side",
+    "new": "  const sp = spreadOf(0);   // a chain is round: a px wide at the least, from any side",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -462,8 +462,8 @@
   {
     "name": "LAYERED-WEAPONS-no-spread",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "export const offsetsOf = (spread) => (spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0]);",
-    "new": "export const offsetsOf = (spread) => [0];",
+    "old": "export const spreadOf = (spread) => ({ spread, offs: spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0] });",
+    "new": "export const spreadOf = (spread) => ({ spread, offs: [0] });",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1538,5 +1538,39 @@
       "test/player/eyeOfTheBeholder/layered_sample.test.js"
     ],
     "why": "a map off to infinity is skipped where it was sampled"
+  },
+  {
+    "name": "LAYERED-SAMPLE-skip-spread-zero",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const spread = sp.spread;",
+    "new": "  const spread = 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js",
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the skip's box is narrower than the samples: a px drawn only by its offsets is skipped"
+  },
+  {
+    "name": "LAYERED-SAMPLE-draw-spread-zero",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const c = pictureAt(img, x, y, n, at, sp, true);",
+    "new": "    const c = pictureAt(img, x, y, n, at, spreadOf(0), true);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js",
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a handle a picture px wide breaks into dashes"
+  },
+  {
+    "name": "LAYERED-SAMPLE-bow-fold",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "y >= hy || y + 1 <= hy);",
+    "new": "true);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js",
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "equivalent": true,
+    "why": "kept as the skip's soundness: a px row across the grip folds the bow's map, and its corners' box can miss a texel at the grip. heldBow sets the grip in the limb's gap, which is clear, so no frame heldBow makes changes; the guard holds for any picture"
   }
 ]

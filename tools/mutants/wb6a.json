@@ -178,5 +178,45 @@
     "tests": [
       "test/world/gate/wb6a_deadlands.test.js"
     ]
+  },
+  {
+    "name": "WB6a-sky-ridge-bound-dropped",
+    "file": "src/render/deadlands.js",
+    "old": "    if (e < ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} + aa + ${RIDGE_MARGIN.toFixed(4)} || tw > 0.0) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/world/gate/wb6a_deadlands.test.js"
+    ],
+    "why": "every ridge's noise read over the whole sky under RIDGES_TOP again"
+  },
+  {
+    "name": "WB6a-sky-ridge-margin-dropped",
+    "file": "src/render/deadlands.js",
+    "old": " + aa + ${RIDGE_MARGIN.toFixed(4)} || tw > 0.0) {",
+    "new": " + aa || tw > 0.0) {",
+    "tests": [
+      "test/world/gate/wb6a_deadlands.test.js"
+    ],
+    "why": "a driver's pow() a hair over 1 and a ridge's last share of its land skipped"
+  },
+  {
+    "name": "WB6a-sky-deck-unskipped",
+    "file": "src/render/deadlands.js",
+    "old": "  if (deck > 0.0) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/world/gate/wb6a_deadlands.test.js"
+    ],
+    "why": "the clouds' noise read at and under the horizon, where the deck adds nothing"
+  },
+  {
+    "name": "WB6a-sky-flash-air-lost",
+    "file": "src/render/deadlands.js",
+    "old": "    col += vec3(0.5, 0.22, 0.12) * uGain * uFlash.z * near * 0.3;\n",
+    "new": "",
+    "tests": [
+      "test/world/gate/wb6a_deadlands.test.js"
+    ],
+    "why": "a strike no longer lights the air"
   }
 ]
