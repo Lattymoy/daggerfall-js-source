@@ -21,12 +21,12 @@ const gen = (archetype, style, o = {}) => generateSettlement({
   env: o.env ?? SYNTHETIC[archetype], ...o,
 });
 
-test('RMBC2 the data: a style for every theatre (the Bay and the nine provinces), and the seven archetypes (mutant: a theatre\'s style dropped)', () => {
+test('RMBC2 the data: a style for every theatre (the Bay and the nine provinces), and the eight archetypes (mutant: a theatre\'s style dropped)', () => {
   assert.deepEqual(Object.keys(SETTLEMENT_STYLES).sort(), [...THEATRE_KEYS].sort());
   assert.equal(styleOfTheatre(0), SETTLEMENT_STYLES.IliacBay);
   assert.equal(styleOfTheatre(2), SETTLEMENT_STYLES.Hammerfell);
   assert.equal(styleOfTheatre(99), SETTLEMENT_STYLES.IliacBay);
-  assert.deepEqual(Object.keys(SETTLEMENT_ARCHETYPES), ['oasis', 'mining', 'fort', 'river', 'wetland', 'village', 'outskirts']);
+  assert.deepEqual(Object.keys(SETTLEMENT_ARCHETYPES), ['oasis', 'mining', 'fort', 'river', 'wetland', 'village', 'lanes', 'outskirts']);
   assert.throws(() => gen('castle', 'Skyrim'), RangeError);
   assert.throws(() => gen('fort', 'Akavir'), RangeError);
 });

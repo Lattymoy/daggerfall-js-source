@@ -47,6 +47,8 @@ export const SETTLEMENT_TARGETS = Object.freeze([
   { province: 'BlackMarsh', archetype: 'wetland', style: 'BlackMarsh', name: 'Hatchwater', type: LOCATION_TYPES.TownVillage },
   // on a bank of one of Cyrodiil's rivers; a village where none fits
   { province: 'Imperial', archetype: 'river', style: 'Imperial', name: 'Corrol Ford', type: LOCATION_TYPES.TownHamlet, else: 'village' },
+  // a village of lanes branching off one street, a settlement of its own
+  { province: 'Skyrim', archetype: 'lanes', style: 'Skyrim', name: 'Hrolfsfork', type: LOCATION_TYPES.TownVillage },
 ]);
 const SITE = Object.freeze({ east: 409.6, north: 409.6, radius: 90 });
 /** A river town's sites: toward each edge of its pixel, where a coast's water stands. */
@@ -142,7 +144,7 @@ async function main() {
     if (!best) { console.log(`${t.province}: no ${t.archetype} site fits`); continue; }
     taken.push([best.x, best.y]);
     const L = best.made.plan, rep = best.made.report;
-    const fix = { layout: rep.layout, ...(rep.layout === 'ring' ? { centre: rep.centre.map((v) => Math.round(v * 100) / 100) } : {}) };
+    const fix = { layout: rep.layout, ...(rep.layout === 'ring' ? { centre: rep.centre.map((v) => Math.round(v * 100) / 100) } : {}), ...(rep.layout === 'tree' ? { bearing: rep.bearing } : {}) };
     if (rep.shore) fix.shore = { dir: rep.shore.dir.map((v) => Math.round(v * 1e6) / 1e6), at: rep.shore.at };
     const [ax, ay] = bayToPicture(best.x + 0.5, best.y + 0.5);
     out.push({ ordinal, name: t.name, province: t.province, type: t.type, archetype: t.archetype, style: t.style, seed: ordinal + 1,

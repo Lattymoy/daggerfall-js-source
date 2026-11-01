@@ -100,7 +100,7 @@ try {
   const inside = await page.evaluate(() => window.__building?.() ?? null);
   console.log(JSON.stringify({ door: d.type, greeted, modeBefore: before, modeAfter: after, inside }));
   if (after !== 'interior') { console.log(said.slice(0, 15).join('\n')); fail(`the door opened no rooms (mode ${after})`); }
-  else if (!JSON.parse(inside ?? 'null')?.name) fail('inside, but no building was read');
+  else if (!(JSON.parse(inside ?? 'null')?.type > 0)) fail('inside, but no building was read');   // a house has a type and no name
   await drain(); await frames(20, 180000);
   await page.screenshot({ path: join(out, 'inside.png'), timeout: 240000 }).catch((e) => console.log('no shot inside:', e.message.split('\n')[0]));
 } catch (e) { fail(e.message); }

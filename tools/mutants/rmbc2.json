@@ -422,5 +422,286 @@
       "test/world/settlement/rmbc2_contract.test.js",
       "test/world/settlement/rmbc2_gen.test.js"
     ]
+  },
+  {
+    "name": "TREE-forks-gone",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "  for (const side of [1, -1]) street('lane', at(middle, aside, side * (greenHalf + 0.25))",
+    "new": "  for (const side of []) street('lane', at(middle, aside, side * (greenHalf + 0.25))",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-twigs-gone",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "if (kind.bands >= 2) for (const lane",
+    "new": "if (kind.bands >= 9) for (const lane",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-ranks",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "rank: one.role === 'trunk' ? 'main' : one.role === 'lane' ? 'side' : 'alley'",
+    "new": "rank: one.role === 'trunk' ? 'main' : 'side'",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-lane-gap",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "gap = halfOf(width) * Math.abs(dcos(lean) / dsin(lean)) + 0.25;",
+    "new": "gap = 0.25;",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-link-edge",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "one.side * (streets[one.parent].width / 2 + 0.5)",
+    "new": "one.side * (streets[one.parent].width / 2 + 2)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-link-landing",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "links.push(linkOf(parent, cell, round(from), at(one.start, dirOf(one.bearing), LANE_REACH)",
+    "new": "links.push(linkOf(parent, cell, round(from), at(one.start, dirOf(one.bearing), LANE_REACH + 1)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-plaza-link-line",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "const from = one.parent === 'plaza' ? at(one.start, dirOf(one.bearing), -(one.gap + LANE_REACH))",
+    "new": "const from = one.parent === 'plaza' ? at(middle, dirOf(one.bearing), greenHalf - LANE_REACH)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-along-break",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "at(one.start, way, cuts[i] - LANE_REACH), at(one.start, way, cuts[i] + LANE_REACH)",
+    "new": "at(one.start, way, cuts[i] - LANE_REACH - 1), at(one.start, way, cuts[i] + LANE_REACH)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-windows",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "for (const window of one.windows) if (window.side === side) spans =",
+    "new": "for (const window of one.windows) if (window.side === -side) spans =",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-landing",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "cell.alongFrom + (cell.alongFrom === 0 && one.parent !== 'plaza' ? LANE_CLEAR : 1)",
+    "new": "cell.alongFrom + 1",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-facing",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "compassBearing(-across[0] * side, -across[1] * side)",
+    "new": "compassBearing(across[0] * side, across[1] * side)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-green-clearance",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "if (ways.every((link) => distanceToSegment(spot, link.a, link.b) >= reach + link.width / 2 + FEATURE_CLEAR)) return",
+    "new": "if (ways.every((link) => distanceToSegment(spot, link.a, link.b) >= 0)) return",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-green-edge",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "        if (edgeDistance(spot, green.poly) < reach + FEATURE_CLEAR) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-gate-near-end",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": ".sort((one, other) => other.alongTo - one.alongTo)[0]",
+    "new": ".sort((one, other) => one.alongTo - other.alongTo)[0]",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-trees-window",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "      if (one.windows.some((window) => window.side === side && along > window.from - TREE_CLEAR && along < window.to + TREE_CLEAR)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-hull-collinear",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "while (lower.length >= 2 && turn(lower[lower.length - 2], lower[lower.length - 1], point) <= 0)",
+    "new": "while (lower.length >= 2 && turn(lower[lower.length - 2], lower[lower.length - 1], point) < 0)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-contour-turned",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "compassBearing(fall[1], -fall[0])",
+    "new": "compassBearing(fall[0], fall[1])",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-fix-unread",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "Number.isFinite(fix.bearing) ?",
+    "new": "false ?",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-road-unread",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": ": roads.length ? (roads[0] * Math.PI) / 180",
+    "new": ": false ? (roads[0] * Math.PI) / 180",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-bars-unread",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": " && !cellBarred(cell.poly, env, input.bounds)",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-water-unread",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "(islands || cell.wet <= 0.25)",
+    "new": "(true)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-deck-unraised",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "raised: islands, h: islands ? under.top + deck : under.natural",
+    "new": "raised: false, h: under.natural",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-overlap-unread",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": " && [...cells.values()].every((other) => !ringsOverlap(cell.poly, other.poly))",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-district-draw-shared",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "front = one.width / 2, draw = drawOf(cell.j);",
+    "new": "front = one.width / 2, draw = drawOf(0);",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-unseeded",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "hash32(seed >>> 0, place >>> 0, 0x7472, ...salt)",
+    "new": "hash32(7, place >>> 0, 0x7472, ...salt)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-cuts-in-window",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "    if (window) cut = cut - (window[0] - 3) < window[1] + 3 - cut ? window[0] - 3 : window[1] + 3;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-layout-undispatched",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  if (layout === 'tree') return /** @type {any} */ (layoutTree(input, env, ground));",
+    "new": "  if (layout === 'tree') layout = 'row';",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-yard-undispatched",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  if (layout.layout === 'tree') return treeYardTrees(input, layout);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-gate-services-inward",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "(ring || tree ? p.c.k : -p.c.k)",
+    "new": "(ring ? p.c.k : -p.c.k)",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-bearing-unreported",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "...(tree ? { bearing: L.bearing } : {}), ",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ]
+  },
+  {
+    "name": "TREE-trees-ways-redundant",
+    "file": "src/world/settlement/settlementTree.js",
+    "old": "if (!layout.links.some((link) => distanceToSegment(spot, link.a, link.b) < link.width / 2 + TREE_CLEAR)) out.push(",
+    "new": "if (true) out.push(",
+    "tests": [
+      "test/world/settlement/rmbc2_tree.test.js"
+    ],
+    "equivalent": true,
+    "why": "a yard stands behind its plots, a street's half width and a plot's depth off every link down a street, and a lane's window keeps it off the lane's link across its parent"
   }
 ]

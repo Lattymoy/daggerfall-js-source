@@ -21,8 +21,9 @@ export const SYNTHETIC = Object.freeze({
   river: { heightAt: (e, n) => 40 + Math.max(0, (n - 360) * 0.06), waterAt: (e, n) => n < 360 },
   wetland: { heightAt: (e, n) => 30 + 0.3 * Math.sin(e / 9) * Math.cos(n / 11), waterAt: (e, n) => Math.sin(e / 9) * Math.cos(n / 11) < -0.2 },
   village: { heightAt: (e, n) => 60 + Math.sin(e / 50) + Math.cos(n / 60) },
+  lanes: { heightAt: (e, n) => 70 + 0.06 * (e - 400) + 2 * Math.sin(n / 45) },
 });
-const STYLE_OF = { oasis: 'Hammerfell', mining: 'Skyrim', fort: 'HighRock', river: 'Imperial', wetland: 'BlackMarsh', village: 'Morrowind' };
+const STYLE_OF = { oasis: 'Hammerfell', mining: 'Skyrim', fort: 'HighRock', river: 'Imperial', wetland: 'BlackMarsh', village: 'Morrowind', lanes: 'Skyrim' };
 
 /** A pixel's ground as the kernel makes it: heights in metres, bilinear between its 129 x 129 samples. */
 async function bayGround(arena2) {

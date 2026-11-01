@@ -32,10 +32,10 @@ test('RMBC3 nothing that lays a plan, checks it or carves its ground reads an en
   }
 });
 
-test('RMBC3 golden prints: three plans bit for bit at generator version 6 (mutant: any change to the layout)', () => {
+test('RMBC3 golden prints: four plans bit for bit at generator version 6, a tree among them (mutant: any change to the layout)', () => {
   assert.equal(SETTLEMENT_GENERATOR_VERSION, 6);
   const print = (archetype) => settlementPrint(generateSettlement({ place: PLACE, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype, style: 'Hammerfell', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] }).plan);
-  assert.deepEqual([print('fort'), print('river'), print('wetland')], [3926353778, 3517183680, 3147698137]);
+  assert.deepEqual([print('fort'), print('river'), print('wetland'), print('lanes')], [3926353778, 3517183680, 3147698137, 892890669]);
 });
 
 test('RMBC3 one layout, two parts: the worker\'s layout dressed is the whole generator\'s plan; its dressing draws on the seed too (mutants: either part unseeded)', () => {

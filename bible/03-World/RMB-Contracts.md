@@ -106,12 +106,31 @@ Skyrim, moss stone in the Bay, flags in Cyrodiil), a plot's frontage and depth, 
 row), its street and lane, its deck (Valenwood's 4 m platforms, Black Marsh's 1.4 m stilts, 0 elsewhere), its terrace
 step and its temple's divine. An archetype gives its layout, centre, size, bands and sectors, gates, walls, keep, docks,
 wealth, services and the feature at its heart: an oasis village, a mining settlement, a fortified mountain town, a river
-trade settlement, a wetland village on decks, a plain village, and the outskirts round a town.
+trade settlement, a wetland village on decks, a plain village, a village of lanes (`lanes`), and the outskirts round a
+town.
 
 `settlementLayout.js` `layoutSettlement` lays out stages A to C from the ground (`env.heightAt`, `waterAt`). A, the
 site: a fort on the highest point, an oasis round the lowest, a river town's quay on the shore. B, the cells: a ring
 town wraps a square and a row town follows an arc round a hillside or along a shore, both cut in one polar frame, so one
 set of cells, links and plots serves both; `auto` reads the ground (a hill a ring, a slope a row).
+
+### The street tree
+
+The third layout, `tree` (`settlementTree.js` `layoutTree`, `dressTree`), is a branching street tree. A green at the
+site's middle; a trunk street through it from gate to gate, bending a little at the green; a lane off each of the
+green's two sides; lanes off the trunk, leaning forward and taking turns either side; and, with two `bands`, a narrower
+lane (a twig, its style's lane wide) off some lanes. Every street is straight, with a pad down it: its paving in the
+middle and a row of plots either side. A street is cut into terraces at most `CHUNK_MAX` (36 m) long, joined down its
+middle.
+
+A lane starts clear of its parent's pad, a gap as wide as its lean needs. Its link runs from its parent's street edge
+across that gap to its own street. The parent keeps a window clear of plots there, and no terrace breaks inside it. A
+lane is cut short where its next terrace would meet a pad, water or barred ground.
+
+The trunk's way is published (`fix.bearing`, degrees). A new site takes a road's way, or else the slope's contour, so
+the trunk stands nearly level and its lanes climb in terraces. A house's door faces its street. A gate stands at each
+trunk end. The green's feature keeps clear of every way onto it (`greenSpot`). Services wanted near the square stand
+beside the green, and those wanted near a gate stand on the trunk's last terrace. The outline is the hull of every pad.
 
 C, the terraces: each cut cell's pad starts at the mean height of its dry ground, a deck at its highest ground and its style's deck, and
 neighbours are pulled together until every step is climbable by its link, a step between cut terraces never past the
@@ -290,10 +309,10 @@ settlement in the running game, shoots it and walks through a door; `tools/townG
 
 ## The published settlements
 
-`settlements.json` publishes nine settlements, one in each province past the Bay: Corvel Keep (High Rock, a fort), Sahr
+`settlements.json` publishes ten settlements, one in each province past the Bay and a tenth: Corvel Keep (High Rock, a fort), Sahr
 Waters (Hammerfell, an oasis), Kolvar's Cut (Skyrim, a mine), Velas Rest (Morrowind), Aleth Quay (Sumurset, a river town),
-Thorn Canopy (Valenwood, on decks), Tasha's Bend (Elsweyr), Hatchwater (Black Marsh, on stilts) and Corrol Ford
-(Cyrodiil, a river town on the White Rose). `tools/settlementSites.mjs` searched each on the player's own files: the
+Thorn Canopy (Valenwood, on decks), Tasha's Bend (Elsweyr), Hatchwater (Black Marsh, on stilts), Corrol Ford
+(Cyrodiil, a river town on the White Rose) and Hrolfsfork (Skyrim, a village of lanes, the street tree's own). `tools/settlementSites.mjs` searched each on the player's own files: the
 province's land, no Arena town, capital, countryside place or lair on its pixel or beside it, and a fit that is `ok`. A
 river town searches a river's bank where its province has carved rivers, and a coast elsewhere. `--only` lays some rows
 again and keeps every other as written.
@@ -349,11 +368,7 @@ Hammerfell id in the corpus.
 ## Pins
 
 `test/world/settlement/`: `rmbc1_contract.test.js`, `rmbc1_ids.test.js`, `rmbc1_legacy.test.js`,
-`rmbc1_legacy_corpus.test.js` (on ARENA2), `rmbc2_contract.test.js`, `rmbc2_gen.test.js`, `rmbc3_exact.test.js`,
-`rmbc3_ground.test.js`, `rmbc3_owed.test.js`, `rmbc4_features.test.js`, `rmbc4_stand.test.js`, `rmbc6_growth.test.js`, `rmbc6_organic.test.js`, `rmbc7_publish.test.js`,
+`rmbc1_legacy_corpus.test.js` (on ARENA2), `rmbc2_contract.test.js`, `rmbc2_gen.test.js`, `rmbc2_tree.test.js`,
+`rmbc3_exact.test.js`, `rmbc3_ground.test.js`, `rmbc3_owed.test.js`, `rmbc3_rivers.test.js`, `rmbc4_features.test.js`, `rmbc4_stand.test.js`, `rmbc6_growth.test.js`, `rmbc6_organic.test.js`, `rmbc7_publish.test.js`,
 `rmbc8_homes.test.js` and `rmbc9_editor.test.js`; the spawn guard in `spawnworld.test.js`. Their mutants are in
 `tools/mutants/rmbc*.json` (eight lists); `node tools/mutate.mjs tools/mutants/rmbc*.json` runs them.
-
-## Not yet
-
-- A third layout, a branching street tree, for a settlement of its own.

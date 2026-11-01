@@ -33,19 +33,19 @@ export const SETTLEMENT_STYLES = Object.freeze({
 export const styleOfTheatre = (theatre) => SETTLEMENT_STYLES[/** @type {keyof typeof SETTLEMENT_STYLES} */ (THEATRE_KEYS[theatre] ?? 'IliacBay')] ?? SETTLEMENT_STYLES.IliacBay;
 
 /**
- * @typedef {{ type: string, near: 'plaza'|'gate'|'any', guild?: string }} Service - a building the settlement keeps,
- *   by its BUILDING_TYPES name, and where it wants to stand
- * @typedef {{ frame: 'ring'|'row'|'auto', centre: 'high'|'low'|'site'|'contour'|'water', size: readonly [number, number],
+ * @typedef {{ type: string, near: 'plaza'|'gate'|'any', guild?: string }} Service - a building the settlement keeps, by its BUILDING_TYPES name, and where it wants to stand
+ * @typedef {{ frame: 'ring'|'row'|'tree'|'auto', centre: 'high'|'low'|'site'|'contour'|'water', size: readonly [number, number],
  *   bands: number, sectors: readonly [number, number], plaza: number, gates: number, islands: boolean, wall: boolean,
  *   keep: boolean, docks: boolean, wealth: number, services: readonly Service[], centreFeature: string, core?: boolean }} Archetype
- *   size: a ring's radius or a row's length, metres; bands: rings or rows of plots; islands: decks of their own, bridged
+ *   size: a ring's radius, a row's length or a tree's trunk, metres; bands: rings or rows of plots (a tree's: how deep its
+ *   lanes branch); plaza: a ring's square, a tree's green; islands: decks of their own, bridged
  */
 const archetype = (/** @type {Archetype} */ a) => Object.freeze(a);
 /** @param {string} type @param {'plaza'|'gate'|'any'} [near] @param {string} [guild] @returns {Service} */
 const S = (type, near = 'any', guild = undefined) => Object.freeze({ type, near, ...(guild ? { guild } : {}) });
 
 /** The kinds of settlement the engine lays out: an oasis, a mining settlement, a fort, a river town, a wetland, a plain
- *  village, and a town's outskirts. */
+ *  village, a village of lanes branching off one street, and a town's outskirts. */
 export const SETTLEMENT_ARCHETYPES = Object.freeze({
   oasis: archetype({ frame: 'ring', centre: 'low', size: [62, 80], bands: 3, sectors: [7, 9], plaza: 16, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.45,
     services: [S('Tavern', 'gate'), S('GeneralStore', 'plaza'), S('Temple', 'plaza'), S('Alchemist', 'plaza')], centreFeature: 'well' }),
@@ -59,6 +59,9 @@ export const SETTLEMENT_ARCHETYPES = Object.freeze({
     services: [S('Tavern', 'plaza'), S('GeneralStore', 'plaza'), S('Temple')], centreFeature: 'market' }),
   village: archetype({ frame: 'auto', centre: 'site', size: [48, 64], bands: 2, sectors: [6, 8], plaza: 14, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.4,
     services: [S('Tavern', 'gate'), S('GeneralStore', 'plaza')], centreFeature: 'well' }),
+  // A green, a trunk street through it from gate to gate, lanes off both, narrower lanes off those (settlementTree.js)
+  lanes: archetype({ frame: 'tree', centre: 'site', size: [140, 180], bands: 2, sectors: [4, 6], plaza: 12, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.45,
+    services: [S('Tavern', 'plaza'), S('GeneralStore', 'gate'), S('Temple', 'plaza'), S('Alchemist'), S('Armorer', 'gate')], centreFeature: 'well' }),
   // A town's outskirts - round its legacy core (the plaza's place, `core`), along its roads, never alone
   outskirts: archetype({ frame: 'ring', centre: 'site', size: [0, 0], bands: 3, sectors: [16, 22], plaza: 0, gates: 0, islands: false, wall: false, keep: false, docks: false, wealth: 0.35,
     services: [S('Tavern', 'plaza')], centreFeature: 'none', core: true }),

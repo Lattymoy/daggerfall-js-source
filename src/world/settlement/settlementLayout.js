@@ -11,6 +11,7 @@ import { settlementGroundAt } from './settlementGround.js';
 import { distanceToSegment } from './settlementGeometry.js';
 import { wrapAngle } from '../mat4.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
+import { layoutTree, treeYardTrees } from './settlementTree.js';
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
@@ -49,7 +50,7 @@ export const ROAD_CLEAR = 4;
  * @typedef {{ place: number, origin: { px: number, py: number, east: number, north: number }, seed: number, archetype: string, style: string,
  *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, keys?: 'anchored', districtSeeds?: Record<string, number>, protectedKeys?: number[],
  *   published?: any[], params?: { size?: number, density?: number, bands?: number, sectors?: number, open?: number },
- *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number } }, core?: { centre: number[], half: number[], y: number, clear?: number }, bounds?: { e0: number, e1: number, n0: number, n1: number } }} SettlementInput
+ *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number }, bearing?: number }, core?: { centre: number[], half: number[], y: number, clear?: number }, bounds?: { e0: number, e1: number, n0: number, n1: number } }} SettlementInput
  */
 
 export const TAU = Math.PI * 2;
@@ -155,6 +156,7 @@ export function layoutSettlement(input, env) {
     else if (dhypot(ground.grad[0], ground.grad[1]) > 0.08) [layout, centre] = ['row', 'contour'];
     else [layout, centre] = ['ring', 'site'];
   }
+  if (layout === 'tree') return /** @type {any} */ (layoutTree(input, env, ground));   // a branching street tree (settlementTree.js)
   const ring = layout === 'ring';
   const shore = centre === 'water' ? (fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site) : null;   // A fixed shore's way, its distance the ground's
   if (centre === 'water' && !shore) centre = 'contour';
@@ -329,22 +331,7 @@ export function layoutSettlement(input, env) {
     cells.set('mound', { id: 'mound', k: -1, j: -1, a: 0, b: r, poly: Array.from({ length: 16 }, (_, i) => frame.toW(gb + (i / 16) * TAU, r)), natural: pz.natural, top: pz.top, h: pz.h + 1.5, raised: pz.raised, gb });
     links.push({ from: 'plaza', to: 'mound', kind: 'plaza', a: frame.toW(gb, r + 1.6), b: frame.toW(gb, r - 1.6), run: 3.2, bridge: false, max: Math.min(st.terrace, PITCH_MAX.stairs * 3.2) * 0.95 - 0.02, width: 3 });
   }
-  // a deck never sinks within DECK_CLEAR of the ground under it, and raising every deck together always meets every
-  // link; a deck moves four times as readily as cut ground, which costs earth where a deck costs a longer post
-  const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);
-  const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);   // a core never moves: the town stands where it stands
-  for (let it = 0; it < 2000; it++) {
-    let worst = 0;
-    for (const l of links) {
-      const f = cells.get(l.from), t = cells.get(l.to), d = t.h - f.h, over = Math.abs(d) - l.max;
-      if (over <= 0) continue;
-      worst = Math.max(worst, over);
-      const s = Math.sign(d) * over, share = give(f) / (give(f) + give(t));
-      f.h = Math.max(least(f), f.h + s * share);
-      t.h = Math.max(least(t), t.h - s * (1 - share));
-    }
-    if (worst < 1e-4) break;
-  }
+  settleTerraces(cells, links);
   if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);   // A cell its town's height would cut too deep is not built
   const kept = [...cells.values()].filter((c) => c.k >= 0);
   const datum = core ? cm(core.y) : kept.length ? cm(kept.reduce((s, c) => s + c.natural, 0) / kept.length) : 0;
@@ -374,6 +361,29 @@ export function layoutSettlement(input, env) {
     core: core ? { centre: core.centre, half: core.half } : null,
     cells: [...cells.values()].map((c) => ({ ...(c.road?.length ? { road: c.road } : {}), id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, low: c.low, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
   };
+}
+
+/**
+ * The terraces: neighbours pulled together until every link's step is climbable. A deck never sinks within DECK_CLEAR of
+ * the ground under it, and raising every deck together always meets every link; a deck moves four times as readily as cut
+ * ground, which costs earth where a deck costs a longer post; a core never moves. @param {Map<string, any>} cells
+ * @param {Array<{ from: string, to: string, max: number }>} links
+ */
+export function settleTerraces(cells, links) {
+  const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);
+  const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);
+  for (let it = 0; it < 2000; it++) {
+    let worst = 0;
+    for (const l of links) {
+      const f = cells.get(l.from), t = cells.get(l.to), d = t.h - f.h, over = Math.abs(d) - l.max;
+      if (over <= 0) continue;
+      worst = Math.max(worst, over);
+      const s = Math.sign(d) * over, share = give(f) / (give(f) + give(t));
+      f.h = Math.max(least(f), f.h + s * share);
+      t.h = Math.max(least(t), t.h - s * (1 - share));
+    }
+    if (worst < 1e-4) break;
+  }
 }
 
 /** How far from a rectangle's middle its edge stands at a bearing. @param {readonly number[]} half its half sides, east and
@@ -498,6 +508,7 @@ export const districtDraw = (input) => (/** @type {number} */ j) => {
  * @returns {Array<{ id: string, pad: string, at: Pt }>}
  */
 export function yardTrees(input, layout) {
+  if (layout.layout === 'tree') return treeYardTrees(input, layout);
   const style = SETTLEMENT_STYLES[input.style], frame = polarFrame(layout.c), rngOf = districtDraw(input), out = [];
   const walled = !!SETTLEMENT_ARCHETYPES[input.archetype]?.wall && layout.ring;
   const lane = layout.gap / 2 + layout.wl + TREE_CLEAR, side = layout.gap / 2 + TREE_CLEAR;

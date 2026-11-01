@@ -13,6 +13,7 @@ import { emptyIdLedger, reconcileBuildingIds, anchorLedger } from './settlementI
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
 import { FORT_WALL, FORT_TOWER, FEATURE_CLEAR, MARKET_RING, featureReach } from './settlementLimits.js';
 import { distanceToSegment, pointInRing, edgeDistance, ringWithin } from './settlementGeometry.js';
+import { dressTree } from './settlementTree.js';
 import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX, districtDraw, yardTrees, onRoad } from './settlementLayout.js';
 
 export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement, yardTrees, onRoad } from './settlementLayout.js';
@@ -49,16 +50,17 @@ export function dressSettlement(input, L, { check = true } = {}) {
   const cellId = (k, j) => (k === 0 ? 'plaza' : `c${k}.${j}`);
   const kept = { length: L.keptCount };
 
-  // D - each band's street along its inner edge, each sector's lane; districts by sector
-  const streets = [], plots = [], features = [], districts = [];
-  for (let j = 0; j < sectors; j++) {
+  // D - each band's street along its inner edge, each sector's lane; districts by sector (a tree's own: settlementTree.js)
+  const tree = layout === 'tree' ? dressTree(input, L, { density, openShare, kind: A.centreFeature }) : null;
+  const streets = tree?.streets ?? [], plots = tree?.plots ?? [], features = tree?.features ?? [], districts = tree?.districts ?? [];
+  for (let j = 0; j < (tree ? 0 : sectors); j++) {
     if (L.core && reachOf[j] < 1) continue;   // a sector its town's roads left unbuilt is no district
     const [u0, u1] = edges[j], r0 = L.core ? radii[j][0] : ring ? inner : inner + vOut;
     const poly = [...along(frame, grids[j], u0, u1, outR(j)), ...(r0 > 1 ? along(frame, grids[j], u0, u1, r0).reverse() : [frame.c])];
     districts.push({ id: `d${j}`, purpose: gateSectors.includes(j) ? 'market' : 'residential', poly: dedupe(poly) });
   }
   for (const c of cells.values()) {
-    if (c.k < 1) continue;
+    if (c.k < 1 || tree) continue;
     const r = c.a + ws / 2, e0 = c.u0 + inset(r, gap / 2 + 0.5), e1 = c.u1 - inset(r, gap / 2 + 0.5);
     streets.push({ id: `s${c.k}.${c.j}`, rank: c.k === 1 ? 'main' : 'side', width: ws, pad: c.id, path: along(frame, grids[c.j], e0, e1, r) });
     const lu = (v) => c.u0 + inset(v, gap / 2 + wl / 2);
@@ -66,9 +68,9 @@ export function dressSettlement(input, L, { check = true } = {}) {
   }
 
   // E, F - plots behind each street; a building on each big enough, its door to the street
-  const proposed = [];
+  const proposed = tree?.proposed ?? [];
   for (const c of [...cells.values()].sort((x, y) => (x.k - y.k) || (x.j - y.j))) {
-    if (c.k < 1) continue;
+    if (c.k < 1 || tree) continue;
     const rf = c.a + ws, depth = Math.min(plotDepth, c.b - st.back - rf);
     if (depth < st.depth[0] * 0.7) continue;
     const us = c.u0 + inset(rf, gap / 2 + wl), ue = c.u1 - inset(rf, gap / 2);
@@ -121,7 +123,7 @@ export function dressSettlement(input, L, { check = true } = {}) {
   });
   const fresh = (/** @type {any} */ p) => !was.has(p.id) || input.districtSeeds?.[`d${p.c.j}`] !== undefined;
   for (const s of homeless) {
-    const score = (p) => (s.near === 'plaza' ? -p.c.k : s.near === 'gate' ? (gateSectors.includes(p.c.j) ? 10 : 0) + (ring ? p.c.k : -p.c.k) : 0) * 10 + p.prestige + (s.type === 'Temple' ? p.area / 100 : 0);
+    const score = (p) => (s.near === 'plaza' ? -p.c.k : s.near === 'gate' ? (gateSectors.includes(p.c.j) ? 10 : 0) + (ring || tree ? p.c.k : -p.c.k) : 0) * 10 + p.prestige + (s.type === 'Temple' ? p.area / 100 : 0);
     const free = order.filter((p) => !taken.has(p.id)), open = free.filter(fresh);
     if (!free.length) break;
     serve((open.length ? open : free).reduce((x, y) => (score(y) > score(x) ? y : x)), s);
@@ -139,7 +141,7 @@ export function dressSettlement(input, L, { check = true } = {}) {
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
   // the outskirts' heart is their town; a row town's is an open plot near its middle
-  const centre = A.centreFeature === 'none' ? null : cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : ring ? null : rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2, new Map(plots.map((plot) => [plot.id, plot])));
+  const centre = A.centreFeature === 'none' ? null : tree ? tree.centre : cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : ring ? null : rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2, new Map(plots.map((plot) => [plot.id, plot])));
   if (centre?.garden) features.splice(features.indexOf(centre.garden), 1);
   if (centre) features.push({ id: 'centre', kind: A.centreFeature, pad: centre.pad ?? 'plaza', at: centre.at, ...(centre.size === undefined ? {} : { size: centre.size }) });
   for (const t of yardTrees(input, L)) features.push({ id: t.id, kind: 'tree', pad: t.pad, at: t.at });
@@ -151,12 +153,12 @@ export function dressSettlement(input, L, { check = true } = {}) {
   const outer = (/** @type {number} */ j) => (beyond ? Math.max(outR(j), outR((j + 1) % sectors), outR((j + sectors - 1) % sectors)) + beyond : outR(j));
   const quay = Math.min(inner + vOut, ...L.docks.map((d) => dhypot(d.path[1][0] - L.c[0], d.path[1][1] - L.c[1]) - 1));
   const allStops = grids.flat().filter((u, i, a) => i === 0 || u - a[i - 1] > 1e-9);
-  const footprint = dedupe(L.c, [...edges.flatMap(([u0, u1], j) => along(frame, grids[j], u0, u1, outer(j))), ...(ring ? [] : along(frame, allStops, uStart, uStart + uSpan, quay).reverse())]);
+  const footprint = tree ? dedupe(null, tree.footprint) : dedupe(L.c, [...edges.flatMap(([u0, u1], j) => along(frame, grids[j], u0, u1, outer(j))), ...(ring ? [] : along(frame, allStops, uStart, uStart + uSpan, quay).reverse())]);
 
   // A grown town's keys are its anchors' own; a published settlement keeps its ledger
   const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);
   const ids = reconcileBuildingIds(ledger0, buildings, { protectedKeys: input.protectedKeys, published: input.published });
-  const gates = gateSectors.filter((j) => cells.has(cellId(gateBand, j))).map((j, i) => {
+  const gates = tree ? tree.gates : gateSectors.filter((j) => cells.has(cellId(gateBand, j))).map((j, i) => {
     const c = cells.get(cellId(gateBand, j));
     const v = ring ? c.b - 1 : c.a + ws / 2;
     const u = ring ? c.u0 + inset(v, gap / 2 + wl / 2) : j === 0 ? c.u0 + inset(v, gap / 2 + 1) : c.u1 - inset(v, gap / 2 + 1);
@@ -176,7 +178,7 @@ export function dressSettlement(input, L, { check = true } = {}) {
     plan, ledger: ids.ledger,
     report: {
       ok: !problems.length && !ids.conflicts.length && fit.buildings >= fit.least && fit.cutMax <= fit.cutLimit, fit,
-      layout, centre: frame.c, shore: L.shore, datum, problems, conflicts: ids.conflicts,
+      layout, centre: frame.c, shore: L.shore, ...(tree ? { bearing: L.bearing } : {}), datum, problems, conflicts: ids.conflicts,
       counts: { pads: pads.length, links: planLinks.length, plots: plots.length, buildings: buildings.length, features: features.length },
       services: buildings.filter((b) => !isResidence(b.type)).length, relief: pads.length ? cm(Math.max(...pads.map((p) => p.y)) - Math.min(...pads.map((p) => p.y))) : 0,
     },

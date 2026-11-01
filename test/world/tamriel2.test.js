@@ -320,6 +320,6 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (FOUNDATION F4): 77 - the land's rows (world/land/landLayer.js and its landEdits.json), asked by the ground, pure
   // Skyrim's plant catalog (world/tamriel/skyrimFlora.js) sits on the Lands table; bump when that import lands.
   // the settlements' layout, ground and outskirts on a pixel (world/settlement/) and the one angle wrap they read
-  // (world/mat4.js), all pure, sit on it too
-  assert.ok(seen.size > 20 && seen.size < 90, `${seen.size} modules`);
+  // (world/mat4.js), all pure, sit on it too; and the street tree's layout (world/settlement/settlementTree.js)
+  assert.ok(seen.size > 20 && seen.size < 91, `${seen.size} modules`);
 });

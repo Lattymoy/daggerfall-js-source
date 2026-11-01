@@ -20,8 +20,8 @@
   {
     "name": "RMBC6-core-gives",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);   // a core never moves: the town stands where it stands",
-    "new": "  const give = (c) => (c.core ? 1 : c.raised ? 4 : 1);   // a core never moves: the town stands where it stands",
+    "old": "  const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);",
+    "new": "  const give = (c) => (c.core ? 1 : c.raised ? 4 : 1);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

@@ -80,9 +80,10 @@ test('RMBC5 the settlements\' lane: past the capitals\', a made place\'s, the re
   assert.equal(isSettlementPlaceId((SETTLEMENT_LANE << 20) >>> 0), false, 'the made-place flag is part of the lane');
 });
 
-test('RMBC5 the published settlements: one in each province past the Bay, inputs alone, each on its pixel and none on the Bay (TAMRIEL-WIDE; mutants: the pixel lookup, the Bay\'s guard)', () => {
+test('RMBC5 the published settlements: one in each province past the Bay and a tenth of its own, inputs alone, each on its pixel and none on the Bay (TAMRIEL-WIDE; mutants: the pixel lookup, the Bay\'s guard)', () => {
   setTamrielFit(null);
-  assert.deepEqual(SETTLEMENT_ROWS.map((r) => r.province).sort(), THEATRE_KEYS.slice(1).sort(), 'every province, the Bay\'s ground left to DFU\'s places');
+  assert.deepEqual([...new Set(SETTLEMENT_ROWS.map((r) => r.province))].sort(), THEATRE_KEYS.slice(1).sort(), 'every province, the Bay\'s ground left to DFU\'s places');
+  assert.deepEqual(SETTLEMENT_ROWS.slice(THEATRE_KEYS.length - 1).map((r) => [r.name, r.archetype, r.fix?.layout]), [['Hrolfsfork', 'lanes', 'tree']], 'a tenth: a village of lanes, the tree layout\'s own');
   assert.deepEqual(SETTLEMENT_ROWS.map((r) => r.ordinal), SETTLEMENT_ROWS.map((_, i) => i));
   const json = readFileSync(new URL('../../../src/world/settlement/settlements.json', import.meta.url), 'utf8');
   assert.doesNotMatch(json, /"(y|datum|pads|natural|heights?)"/, 'nothing of the player\'s ground is published');
