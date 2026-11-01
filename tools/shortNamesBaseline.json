@@ -2543,7 +2543,7 @@
  "src/world/deepWater/deepWatersWorker.js": 5,
  "src/world/deepWater/deepWaterTileData.js": 28,
  "src/world/deepWater/deepWaterTransients.js": 7,
- "src/world/detStandIns.js": 102,
+ "src/world/detStandIns.js": 98,
  "src/world/dfLook.js": 22,
  "src/world/dreadSky.js": 19,
  "src/world/dryGround.js": 2,

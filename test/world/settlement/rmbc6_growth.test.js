@@ -180,7 +180,7 @@ test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the bu
   assert.match(gen, /locationRect: wodResult\?\.locationRect \?\? growthClearing\(locationRect, settlement\) \?\? settlement\?\.rect \?\? null,/);
   assert.match(read('scenes/pixelBuild.js'), /\n {6}growth: growthJobAt\(groundLocation, px, py\),/);
   assert.match(read('scenes/groundFrameHost.js'), /return settlementMovedAt\(stood\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/);
-  assert.match(read('scenes/settlementHost.js'), /const slot = takeSlot\(\), made = standSettlement\(p, blocksFile\(\), slot\);/);
+  assert.match(read('scenes/settlementHost.js'), /const slot = takeSlot\(\);\n\s+let made = null;\n\s+try \{ made = standSettlement\(p, blocksFile\(\), slot\); \}/);
 });
 
 test('RMBC6 a settlement\'s ground is kept by the herbs and the ore as by the trees: a grown town\'s town and outskirts as one, a published one\'s own, a plain town\'s rect (mutants: the herbs, the ore, the outskirts forgotten)', async () => {

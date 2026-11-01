@@ -1296,8 +1296,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-G1-never-carried",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const groundWas = _groundBefore.get(pkey);",
-    "new": "    const groundWas = null;",
+    "old": "    const kept = _groundBefore.get(pkey), groundWas = kept && KEPT_UNDER.get(kept) === owedEpoch() ? kept : null;",
+    "new": "    const kept = _groundBefore.get(pkey), groundWas = null;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

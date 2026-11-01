@@ -275,8 +275,8 @@
   {
     "name": "SWAP-BEHIND-ground-ride-under-the-build-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const groundWas = _groundBefore.get(pkey);",
-    "new": "    const groundWas = _groundBefore.get(key);",
+    "old": "    const kept = _groundBefore.get(pkey), groundWas",
+    "new": "    const kept = _groundBefore.get(key), groundWas",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

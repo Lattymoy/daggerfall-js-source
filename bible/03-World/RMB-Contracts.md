@@ -207,8 +207,9 @@ its envelope to each re-stand as the stamp, while an anchor, a ship's deck or a 
 stamped with the law by number, owes nothing.
 
 A pixel's first build pays the debt: `pixelBuild.js` rides every record on the pixel by the build's own move, through
-`rideGround` (the piles, torches, camps and bodies; the living walk on the ground as it is). A rebuild pays without
-riding, its own ride already carrying what lies there. The move is read as the ground is drawn, the two triangles of
+`rideGround` (the piles, torches, camps and bodies; the living walk on the ground as it is). A rebuild within one
+load pays without riding, its own ride carrying what lies there; ground kept from a build before a load is no
+record's, and rides nothing (`owedEpoch`). The move is read as the ground is drawn, the two triangles of
 each quad. With the Landforms row off, a save of an older frame or one that owes a carve is still stood again, a ship's
 deck too.
 
@@ -221,7 +222,7 @@ slopes and a bridge a planked one, each skirted down its sides.
 
 `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
 roof and pitch, its door the fabric's door model turned to its street. `buildingInterior` is its rooms
-(`fabricBuildingInterior`, filed under its place and key with a `cacheKey` of its own). `buildingRecord` is what its
+(`fabricBuildingInterior`, cached under its place, key, kind and footprint: `interiorCacheKey`). `buildingRecord` is what its
 door hands the game. Model ids run from `SETTLEMENT_MODEL_BASE` (7,600,000), 4,096 a run. Every settlement standing takes
 a run from a free list of 512 (`takeSlot`), and gives it back when taken down (`releaseSlot`).
 
@@ -249,7 +250,9 @@ ids come back built from the new plan.
 
 The host stands at most one settlement a frame (`STANDS_PER_FRAME`). It files a collider once, riding the floating
 frame as a pixel's own buckets do, and holds it back while feet stand inside a building or a solid feature
-(`featureSolids`). Each piece is culled on its own box by the street's view test. It dresses unchecked: a published
+(`featureSolids`). Each piece is culled on its own box by the street's view test. It moves its doors' generation
+(`doorsGen`) as a settlement stands or goes, so the street's door picks see it at once; a plan whose stand throws
+gives its run back and is not tried again. It dresses unchecked: a published
 plan is held to the contract when it is published, and a grown town by `rmbc6_organic.test.js`'s corpus.
 
 A generated house is a home as a block's is: `homeCandidate` and `homePurchasable` take its record, `homeOnlinePrice`

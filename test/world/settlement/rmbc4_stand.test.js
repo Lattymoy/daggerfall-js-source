@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP, FLIGHT_STEP } from '../../../src/world/settlement/settlementModels.js';
+import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP, FLIGHT_STEP, interiorCacheKey } from '../../../src/world/settlement/settlementModels.js';
 import { standSettlement, createSettlementHost, slotsFree } from '../../../src/scenes/settlementHost.js';
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
@@ -223,4 +223,70 @@ test('RMBC4 a stair is its steps: from one pad\'s height to the other\'s, every 
   const ramp = flightOf('ramp'), rampYs = new Set();
   for (let i = 1; i < ramp.positions.length; i += 3) if (ramp.positions[i] >= 10 - 1e-6) rampYs.add(Math.round(ramp.positions[i] * 1000) / 1000);
   assert.ok(rampYs.size <= 6, 'a ramp: its two ends and its skirts');
+});
+
+test('RMBC4 the host moves its doors\' generation as a settlement stands and goes, and the modes read it with the world\'s; a stand that throws gives its run back and is not tried again; two rebuilt pixels re-stand one a frame, each asked once while it waits (mutants: the generation still, the world\'s sum, the run kept, a throw retried, the budget, the swap asked each frame)', () => {
+  const second = { px: 1085, py: 241, settlement: { ordinal: ROW.ordinal, layout: L } };
+  let entries = [P, second];
+  const host = createSettlementHost({ built: () => entries, translation: (px, py, out = [0, 0, 0]) => { out[0] = out[1] = out[2] = 0; return out; } });
+  const gen0 = host.doorsGen();
+  host.frame();
+  assert.ok(host.doorsGen() > gen0 && host.count() === 1, 'one stood, its doors announced');
+  host.frame();
+  const stood = host.doorsGen();
+  // both rebuilt with a new plan in one frame: one stands again now, the other waits a frame, its swap asked once
+  const other = layoutSettlement({ ...input, seed: input.seed + 3 }, env);
+  let reads = 0;
+  const waiting = { ordinal: ROW.ordinal, get layout() { reads++; return other; } };
+  entries = [{ ...P, settlement: { ordinal: ROW.ordinal, layout: other } }, { ...second, settlement: waiting }];
+  const before = [host.planAt(1084, 241), host.planAt(1085, 241)];
+  host.frame();
+  const moved = [host.planAt(1084, 241) !== before[0], host.planAt(1085, 241) !== before[1]];
+  assert.deepEqual(moved, [true, false], 'one a frame');
+  assert.ok(host.doorsGen() > stood, 'its doors announced again');
+  const asked = reads;
+  host.frame();
+  assert.ok(host.planAt(1085, 241) !== before[1], 'the other the next frame');
+  assert.ok(asked > 0 && asked <= 2, `its swap asked once while it waited (${asked})`);
+  entries = [];
+  const up = host.doorsGen();
+  host.frame();
+  assert.ok(host.doorsGen() > up && host.count() === 0, 'taken down, announced');
+  // a plan that throws: its run given back, tried once
+  const free = slotsFree(), warn = console.warn;
+  let warned = 0;
+  console.warn = () => { warned++; };
+  try {
+    entries = [{ px: 1086, py: 241, settlement: { ordinal: ROW.ordinal, layout: { ...L, cells: null } } }];
+    host.frame(); host.frame(); host.frame();
+  } finally { console.warn = warn; }
+  assert.equal(slotsFree(), free, 'its run back on the free list');
+  assert.equal(warned, 1, 'tried once');
+  const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(world, /doorGeneration: \(\) => doorGeneration \+ \(settlements\?\.doorsGen\(\) \?\? 0\),/, 'the modes\' door cache moves with them');
+});
+
+test('RMBC4 a building\'s rooms are cached under its kind and its footprint with its key: a plan that retypes or reshapes it under the same key never hands it the rooms it had (mutants: the kind, the footprint)', () => {
+  const b = plan.buildings[0];
+  assert.equal(interiorCacheKey(input.place, b), interiorCacheKey(input.place, { ...b }));
+  assert.notEqual(interiorCacheKey(input.place, b), interiorCacheKey(input.place, { ...b, type: b.type + 1 }), 'another kind');
+  assert.notEqual(interiorCacheKey(input.place, b), interiorCacheKey(input.place, { ...b, footprint: b.footprint.map(([e, n]) => [e + 0.5, n]) }), 'another shape');
+  assert.ok(interiorCacheKey(input.place, b).startsWith(`settlement:${input.place >>> 0}.${b.key}.`), 'its place and key first');
+});
+
+test('RMBC4 a rebuilt town waiting for the frame\'s budget is compared with its stood plan once, however many frames it waits (mutant: the swap asked each frame)', () => {
+  let entries = [P];
+  const host = createSettlementHost({ built: () => entries, translation: (px, py, out = [0, 0, 0]) => { out[0] = out[1] = out[2] = 0; return out; } });
+  host.frame();
+  const other = layoutSettlement({ ...input, seed: input.seed + 5 }, env);
+  let reads = 0;
+  const waiting = { ...P, settlement: { ordinal: ROW.ordinal, get layout() { reads++; return other; } } };
+  const fresh = (i) => ({ px: 1090 + i, py: 241, settlement: { ordinal: ROW.ordinal, layout: L } });
+  for (let i = 0; i < 3; i++) {   // each frame a new town takes the frame's one stand first
+    entries = [...Array.from({ length: i + 1 }, (_, k) => fresh(k)), waiting];
+    host.frame();
+  }
+  assert.ok(host.planAt(1084, 241) !== null && reads > 0 && reads <= 2, `asked once in three frames waiting (${reads})`);
+  entries = [];
+  host.frame();
 });

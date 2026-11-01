@@ -74,8 +74,8 @@
   {
     "name": "RMBC4-stand-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "          if (!town) { if (stands > 0) { stands--; stand(p, key); } }",
-    "new": "          if (!town) { if (stands > 0) { stands--; } }",
+    "old": "          if (!town) { if (stands > 0 && !broken.has(p.settlement)) { stands--; stand(p, key); } }",
+    "new": "          if (!town) { if (stands > 0 && !broken.has(p.settlement)) { stands--; } }",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -192,7 +192,7 @@
   {
     "name": "AUDIT-rebuild-plan-kept",
     "file": "src/scenes/settlementHost.js",
-    "old": "    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) {",
+    "old": "    if (town.src !== entry.settlement && !town.alike) {",
     "new": "    if (false) {",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
@@ -363,7 +363,7 @@
   {
     "name": "HOST-budget-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "if (!town) { if (stands > 0) { stands--; stand(p, key); } }",
+    "old": "if (!town) { if (stands > 0 && !broken.has(p.settlement)) { stands--; stand(p, key); } }",
     "new": "if (!town) stand(p, key);",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
@@ -862,6 +862,96 @@
     "new": "    const from = i / steps, to = (i + 1) / steps, below = fromY + i * rise, top = fromY + i * rise;",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-doors-still",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    stood.set(key, s);\n    doorsGen++;\n",
+    "new": "    stood.set(key, s);\n",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-doors-takedown-still",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    stood.delete(s.key);\n    doorsGen++;",
+    "new": "    stood.delete(s.key);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-doors-unsummed",
+    "file": "src/scenes/world.js",
+    "old": "doorGeneration: () => doorGeneration + (settlements?.doorsGen() ?? 0),",
+    "new": "doorGeneration: () => doorGeneration,",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-throw-run-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    if (!made) { releaseSlot(slot); return; }",
+    "new": "    if (!made) return;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-throw-retried",
+    "file": "src/scenes/settlementHost.js",
+    "old": "if (stands > 0 && !broken.has(p.settlement))",
+    "new": "if (stands > 0)",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-swap-asked-each-frame",
+    "file": "src/scenes/settlementHost.js",
+    "old": "if (town.src !== entry.settlement && town.alikeOf !== entry.settlement) [town.alikeOf",
+    "new": "if (town.src !== entry.settlement) [town.alikeOf",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-restand-unbudgeted",
+    "file": "src/scenes/settlementHost.js",
+    "old": "restand(town, p, stands > 0)",
+    "new": "restand(town, p, true)",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "MODELS-interior-kindless",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "hash32(building.type >>> 0, ...(building.footprint",
+    "new": "hash32(0, ...(building.footprint",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "MODELS-interior-shapeless",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "hash32(building.type >>> 0, ...(building.footprint ?? []).flat().map((metres) => Math.round(metres * 100) >>> 0))",
+    "new": "hash32(building.type >>> 0)",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "OWED-stale-ground-ridden",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "groundWas = kept && KEPT_UNDER.get(kept) === owedEpoch() ? kept : null;",
+    "new": "groundWas = kept;",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
     ]
   }
 ]

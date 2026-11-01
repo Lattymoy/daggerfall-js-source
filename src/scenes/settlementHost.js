@@ -102,6 +102,8 @@ export function standSettlement(p, blocksFile, slot = -1) {
 export function createSettlementHost({ renderer = null, pipeline = null, collider = () => null, built, translation, blocksFile = () => null, feet = () => null, exterior = () => true }) {
   installSettlementModels();
   /** @type {Map<string, any>} */ const stood = new Map();
+  const broken = new WeakSet();   // a plan whose stand threw: tried once, its run given back
+  let doorsGen = 0;   // moved as a settlement stands or goes: the modes' door picks are cached by it
   const t = [0, 0, 0];
   const mesh = (s, id) => {
     const src = s.hold ?? pipeline;
@@ -110,7 +112,9 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     Promise.resolve(src.getGpuMesh(id)).then((g) => s.meshes.set(id, g ?? null), () => {});   // one taken down meanwhile is no one's
   };
   function stand(p, key) {
-    const slot = takeSlot(), made = standSettlement(p, blocksFile(), slot);
+    const slot = takeSlot();
+    let made = null;
+    try { made = standSettlement(p, blocksFile(), slot); } catch (e) { broken.add(p.settlement); console.warn('[settlements]', e?.message ?? e); }
     if (!made) { releaseSlot(slot); return; }
     _models.set(made.groundId, made.ground);
     _models.set(made.featuresId, made.features);
@@ -123,6 +127,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     s.ride = onFloatingFrame(floatingFrameOf(translation), () => translation(s.px, s.py, s.at));
     fileHomeFrames(s, p.homeFrames);   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
     stood.set(key, s);
+    doorsGen++;
     mesh(s, s.groundId);
     mesh(s, s.featuresId);
     for (const x of s.pieces) { mesh(s, x.id); mesh(s, x.piece.doorId); }
@@ -131,7 +136,8 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
    *  another (roads landed under a grown town) is taken down and stood again - when this frame may stand one (answers so). */
   function restand(town, entry, mayStand) {
     const same = (a, b) => JSON.stringify(a.layout) === JSON.stringify(b.layout) && JSON.stringify(a.input ?? null) === JSON.stringify(b.input ?? null);
-    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) {
+    if (town.src !== entry.settlement && town.alikeOf !== entry.settlement) [town.alikeOf, town.alike] = [entry.settlement, same(town.src, entry.settlement)];   // asked once an entry, not each frame it waits
+    if (town.src !== entry.settlement && !town.alike) {
       if (!mayStand) return false;   // the old plan stands a frame longer
       takeDown(town);
       stand(entry, town.key);
@@ -146,6 +152,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
   }
   function takeDown(s) {
     stood.delete(s.key);
+    doorsGen++;
     releaseSlot(s.slot);
     s.hold?.release?.();
     for (const k of s.homeKeys) s.homeFrames?.delete(k);
@@ -202,7 +209,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
           const key = `${p.px},${p.py}`;
           live.add(key);
           const town = stood.get(key);
-          if (!town) { if (stands > 0) { stands--; stand(p, key); } }
+          if (!town) { if (stands > 0 && !broken.has(p.settlement)) { stands--; stand(p, key); } }
           else if ((town.src !== p.settlement || town.homeFrames !== (p.homeFrames ?? null)) && restand(town, p, stands > 0)) stands--;
         }
         for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);
@@ -236,6 +243,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     /** The plan stood on a pixel, or null (a probe's, a test's). */
     planAt: (px, py) => stood.get(`${px},${py}`)?.plan ?? null,
     /** The run and model ids a pixel's settlement stands on, or null (a probe's, a test's). */
+    doorsGen: () => doorsGen,
     idsAt: (px, py) => { const s = stood.get(`${px},${py}`); return s ? { slot: s.slot, ground: s.groundId, features: s.featuresId } : null; },
     count: () => stood.size,
     destroyAll() { for (const s of [...stood.values()]) takeDown(s); },

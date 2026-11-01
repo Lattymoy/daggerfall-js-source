@@ -27942,7 +27942,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // WORLD-HOVER: the token that says whether the list above is still
     // the one it was. See `doorGeneration`'s own note for why this
     // host has one and the fixed city does not.
-    doorGeneration: () => doorGeneration,
+    doorGeneration: () => doorGeneration + (settlements?.doorsGen() ?? 0),   // and the settlements' doors as they stand and go
     // IS1: the save composer's doors for the interior mode's pause and
     // F9/F11 (GameManager.cs:570-586 dispatches the quick keys
     // scene-free). THE FOUR HOSTS: world.js hands its ONE composer in

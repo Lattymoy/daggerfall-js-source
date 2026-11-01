@@ -127,7 +127,9 @@ import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pi
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
 import { growthJobAt, settlementHomeTown, settlementHomeRegion } from '../world/settlement/townGrowthJob.js';
 import { settlementMovedAt } from '../world/settlement/settlementStand.js';
-import { payPads } from '../world/settlement/settlementOwed.js';   // a record's carve owed until its pixel builds
+import { payPads, owedEpoch } from '../world/settlement/settlementOwed.js';   // a record's carve owed until its pixel builds
+/** Each build's ground and the saves read when it stood: ground kept from before a load rides nothing. */
+const KEPT_UNDER = new WeakMap();
 
 /** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
 const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
@@ -1618,9 +1620,9 @@ export function createPixelBuild(host) {
     // the new samples less the old (TERRAIN-SCALE1's law); and the player the hold held over this pixel, on their feet,
     // rides it too - put back where they stood, they fell the cut (28.7 m, 118 HP, at the worst); a fall under way is
     // their own (FALL-KEPT).
-    const groundWas = _groundBefore.get(pkey);
+    const kept = _groundBefore.get(pkey), groundWas = kept && KEPT_UNDER.get(kept) === owedEpoch() ? kept : null;   // built before a load: no record's ground
+    if (kept) _groundBefore.delete(pkey);
     if (groundWas) {
-      _groundBefore.delete(pkey);
       const now = built.get(pkey).samples, t = host.state.pixelTranslation(px, py);
       // heightAt's own read over the pixel's samples, pixel-local - FLORA-GROUND: the ground's one law (walkGroundAt)
       const groundIn = (smp, x, z) => walkGroundAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])));
@@ -1630,6 +1632,7 @@ export function createPixelBuild(host) {
     // a record that loaded before this pixel stood without its settlement's carve (world/settlement/settlementOwed.js): it
     // rides the build's own move now, and the debt is paid
     const owedTown = built.get(pkey)?.settlement;
+    KEPT_UNDER.set(built.get(pkey).samples, owedEpoch());
     if (host.rideGround && payPads(pkey) && !groundWas && owedTown?.moved) {   // a rebuild's own ride, above, carries its records
       const origin = host.state.pixelTranslation(px, py);
       host.rideGround(origin, pkey, (x, z) => settlementMovedAt(owedTown, origin, x, z, TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)), key !== pkey);

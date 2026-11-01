@@ -7,7 +7,7 @@
 import { MeshBuilder } from '../detStandIns.js';
 import { art, CAPITAL_ART, taper, cap, ring, wallRun, merlons, roundTower, gableRoof, robedFigure, translated } from '../capitalShapes.js';
 import { hash32 } from '../blockHash.js';
-import { padAt, edgeDistance, pointInRing } from './settlementGeometry.js';
+import { padFinder, edgeDistance, pointInRing, ringArea2 } from './settlementGeometry.js';
 import { SETTLEMENT_STYLES } from './settlementStyles.js';
 import { FORT_WALL, FORT_TOWER, MARKET_RING, DOCK_HALF } from './settlementLimits.js';
 
@@ -20,9 +20,12 @@ export const FENCE = Object.freeze({ h: 0.9, post: 2.4 });
 /** A seeded draw for a feature: the same on every client. @param {string} id @param {number} salt */
 const draw = (id, salt) => hash32(salt, ...[...id].map((char) => char.charCodeAt(0))) / 0x100000000;
 
+/** Each plan's pads read once (padFinder), for its every post, rail and foot. */
+const FINDERS = new WeakMap();
 /** The ground's height under a plan point: its pad's top, else the nearest pad's (a point on the rim). */
 function groundAt(plan, datum, point) {
-  const on = /** @type {any} */ (padAt(plan.pads, point));
+  if (!FINDERS.has(plan.pads)) FINDERS.set(plan.pads, padFinder(plan.pads));
+  const on = /** @type {any} */ (FINDERS.get(plan.pads)(point));
   if (on) return datum + on.y;
   let nearest = null, best = Infinity;
   for (const pad of plan.pads) {
@@ -120,11 +123,19 @@ function beds(mesh, outline, floor, inset, id) {
   for (const [pointEast, pointNorth] of outline) { west = Math.min(west, pointEast); east = Math.max(east, pointEast); south = Math.min(south, pointNorth); north = Math.max(north, pointNorth); }
   const rowsEast = draw(id, 2) < 0.5, first = rowsEast ? south : west, last = rowsEast ? north : east;
   const low = rowsEast ? west : south, high = rowsEast ? east : north, at = (along, across) => (rowsEast ? [along, across] : [across, along]);
-  const inside = (point) => pointInRing(point, outline) && edgeDistance(point, outline) >= inset;
+  const turn = Math.sign(ringArea2(outline)) || 1;
   for (let across = first + inset + 0.4; across < last - inset; across += 1.4) {
-    let from = null, to = null;
-    for (let along = low; along <= high; along += 0.5) if (inside(at(along, across))) { from ??= along; to = along; }
-    if (from === null || to === null || to - from < 1) continue;
+    // the row clipped by each edge moved in by `inset` (the ring's inside, a little less at a concave corner)
+    let from = low, to = high;
+    for (let i = 0; i < outline.length; i++) {
+      const a = outline[i], b = outline[(i + 1) % outline.length], length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const normal = [(-(b[1] - a[1]) / length) * turn, ((b[0] - a[0]) / length) * turn], start = at(0, across), step = at(1, across);
+      const rate = normal[0] * (step[0] - start[0]) + normal[1] * (step[1] - start[1]), room = normal[0] * (start[0] - a[0]) + normal[1] * (start[1] - a[1]) - inset;
+      if (Math.abs(rate) < 1e-9) { if (room < 0) from = Infinity; continue; }
+      const edge = -room / rate;
+      if (rate > 0) from = Math.max(from, edge); else to = Math.min(to, edge);
+    }
+    if (!(to - from >= 1)) continue;
     const middle = at((from + to) / 2, across), length = to - from;
     mesh.box(SOIL, [middle[0], floor + 0.1, middle[1]], rowsEast ? [length, 0.2, 0.7] : [0.7, 0.2, length], 1);
     mesh.box(LEAVES, [middle[0], floor + 0.32, middle[1]], rowsEast ? [length - 0.2, 0.25, 0.4] : [0.4, 0.25, length - 0.2], 1);

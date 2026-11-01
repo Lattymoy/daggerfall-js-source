@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { owePads, payPads, padsOwedAt, padsOwed, padsOwedFrom, savedPadsOwed, clearPadsOwed, padsOwedBuilt } from '../../../src/world/settlement/settlementOwed.js';
+import { owePads, payPads, padsOwedAt, padsOwed, padsOwedFrom, savedPadsOwed, clearPadsOwed, padsOwedBuilt, owedEpoch } from '../../../src/world/settlement/settlementOwed.js';
 import { recordFrame, createGroundFrame } from '../../../src/scenes/groundFrameHost.js';
 import { SETTLEMENT_ROWS, settlementPixel } from '../../../src/world/settlement/settlementPlaces.js';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -92,6 +92,8 @@ test('OWED the wiring (by source): the save carries the debt and hands it back; 
   assert.match(save, /groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed\(\) \};/);
   assert.match(save, /groundFrame: snap\.groundFrame \?\? null, padsOwed: snap\.padsOwed \?\? \[\] \};/);
   assert.equal(world.match(/restandHeight\([^)]*, extras\)/g)?.length, 3, 'the camps, the save\'s rows and its player');
+  assert.match(build, /const kept = _groundBefore\.get\(pkey\), groundWas = kept && KEPT_UNDER\.get\(kept\) === owedEpoch\(\) \? kept : null;/, 'ground kept from before a load is dropped');
+  assert.match(build, /KEPT_UNDER\.set\(built\.get\(pkey\)\.samples, owedEpoch\(\)\);/, 'each build\'s ground stamped with the saves read');
   assert.match(build, /if \(host\.rideGround && payPads\(pkey\) && !groundWas && owedTown\?\.moved\) \{[^\n]*\n\s+const origin = host\.state\.pixelTranslation\(px, py\);\n\s+host\.rideGround\(origin, pkey, \(x, z\) => settlementMovedAt\(owedTown, origin, x, z, TERRAIN_SIZE \/ \(HEIGHTMAP_DIMENSION - 1\)\), key !== pkey\);/);
 });
 
@@ -127,8 +129,17 @@ test('OWED the carve is read as the ground is drawn: the two triangles of each q
   }
 });
 
-test('OWED only a pixel\'s first build rides its debt; a rebuild pays it, its own ride carrying what lies there (by source; mutant: a rebuild riding twice)', () => {
+test('OWED a pixel\'s debt rides its build\'s own move once; a rebuild within one load rides its own kept ground instead, and ground kept from a build before a load rides nothing (by source and the ledger\'s count; mutants: the stale ground ridden, a rebuild riding twice)', () => {
   assert.match(read('scenes/pixelBuild.js'), /if \(host\.rideGround && payPads\(pkey\) && !groundWas && owedTown\?\.moved\) \{/);
+  clearPadsOwed();
+  const begun = owedEpoch();
+  padsOwedFrom({ padsOwed: [] });
+  assert.equal(owedEpoch(), begun + 1, 'a save read moves the count');
+  const save = { padsOwed: [] };
+  padsOwedFrom(save); const once = owedEpoch(); padsOwedFrom(save);
+  assert.equal(owedEpoch(), once, 'its re-stands read it once');
+  clearPadsOwed();
+  assert.equal(owedEpoch(), once + 1, 'a new world moves it too');
   assert.match(read('world/settlement/settlementOwed.js'), /for \(const key of list\) if \(!builtNow\(key\)\) owed\.add\(key\);/);
   assert.match(read('scenes/groundFrameHost.js'), /padsOwedBuilt\(\(key\) => built\.has\(key\)\);/);
   assert.match(read('scenes/shipBoardHost.js'), /\|\| landform \|\| !\(t\.restore\?\.groundFrame >= RECORD_GROUND_STAMP\.groundFrame\)\)\) \{/, 'a deck of an older frame stood again with the row off');

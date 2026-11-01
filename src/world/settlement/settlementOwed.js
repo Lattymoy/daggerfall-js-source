@@ -11,6 +11,8 @@ const owed = new Set();
 let saved = new Set();
 /** The save whose debt was read last, so the several re-stands of one load read it once. */
 let readFrom = null;
+/** How many saves were read, or worlds begun: ground kept from a build of an earlier one is no record's now. */
+let epoch = 0;
 /** Whether a pixel stands built now (the frame host's): a save's debt there is paid exactly as its records re-stand. */
 let builtNow = (/** @type {string} */ _key) => false;
 
@@ -47,11 +49,15 @@ export function padsOwed() {
 export function padsOwedFrom(stamp) {
   if (!stamp || stamp === readFrom) return;
   readFrom = stamp;
+  epoch++;
   const list = Array.isArray(stamp.padsOwed) ? stamp.padsOwed.filter((key) => typeof key === 'string' && /^-?\d+,-?\d+$/.test(key)) : [];
   saved = new Set(list);
   owed.clear();
   for (const key of list) if (!builtNow(key)) owed.add(key);   // built: its records re-stand by its build's own move now
 }
+
+/** The saves read and worlds begun so far: a build's ground carries the count it was built under. */
+export const owedEpoch = () => epoch;
 
 /** Whether the loaded save's records on a pixel were written without its carve. @param {string} key */
 export function savedPadsOwed(key) {
@@ -60,6 +66,7 @@ export function savedPadsOwed(key) {
 
 /** A new world: nothing owed, no save read. */
 export function clearPadsOwed() {
+  epoch++;
   owed.clear();
   saved = new Set();
   readFrom = null;

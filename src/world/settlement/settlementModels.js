@@ -167,7 +167,14 @@ export function buildingPiece(plan, b, floor, style) {
 /** A building's rooms: the fabric's interior over its footprint and door, filed under its own place and key.
  *  @param {number} place @param {import('./settlementContract.js').Building} b @param {ReturnType<typeof buildingPiece>} piece @param {any} blocksFile */
 export function buildingInterior(place, b, piece, blocksFile) {
-  return fabricBuildingInterior({ key: hash32(place >>> 0, b.key), cacheKey: `settlement:${place >>> 0}.${b.key}`, pool: piece.pool, donor: piece.donor, party: 0, plot: piece.plot, door: piece.door }, blocksFile);
+  return fabricBuildingInterior({ key: hash32(place >>> 0, b.key), cacheKey: interiorCacheKey(place, b), pool: piece.pool, donor: piece.donor, party: 0, plot: piece.plot, door: piece.door }, blocksFile);
+}
+
+/** The rooms' cache name: its place and key, and its kind and footprint, so a plan that retypes or reshapes a building
+ *  under its key (roads landed under a grown town) never hands it the rooms it had. @param {number} place @param {any} building */
+export function interiorCacheKey(place, building) {
+  const shape = hash32(building.type >>> 0, ...(building.footprint ?? []).flat().map((metres) => Math.round(metres * 100) >>> 0));
+  return `settlement:${place >>> 0}.${building.key}.${shape}`;
 }
 
 /** A building as the game's doors, shops and talk read it (systems/talk/talkTopics.js buildingDataForDoor's shape).

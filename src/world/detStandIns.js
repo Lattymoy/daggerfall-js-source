@@ -52,13 +52,15 @@ export class MeshBuilder {
   }
   /** One triangle with a normal; the winding is corrected to face along it. */
   tri(tex, a, b, c, n, ua = [0, 0], ub = [1, 0], uc = [1, -1]) {
-    const g = this._group(tex);
-    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-    const cr = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-    const flip = cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0;
-    const verts = flip ? [[a, ua], [c, uc], [b, ub]] : [[a, ua], [b, ub], [c, uc]];
+    // the last picture's group kept: a model lays many faces of one picture in a row (a town's fences, its beds)
+    const g = tex === this._lastTex ? this._lastGroup : (this._lastGroup = this._group((this._lastTex = tex)));
+    const abX = b[0] - a[0], abY = b[1] - a[1], abZ = b[2] - a[2], acX = c[0] - a[0], acY = c[1] - a[1], acZ = c[2] - a[2];
+    const flip = (abY * acZ - abZ * acY) * n[0] + (abZ * acX - abX * acZ) * n[1] + (abX * acY - abY * acX) * n[2] < 0;
+    const [second, secondUv, third, thirdUv] = flip ? [c, uc, b, ub] : [b, ub, c, uc];
     const base = g.positions.length / 3;
-    for (const [p, uv] of verts) { g.positions.push(p[0], p[1], p[2]); g.normals.push(n[0], n[1], n[2]); g.uvs.push(uv[0], uv[1]); }
+    g.positions.push(a[0], a[1], a[2], second[0], second[1], second[2], third[0], third[1], third[2]);
+    g.normals.push(n[0], n[1], n[2], n[0], n[1], n[2], n[0], n[1], n[2]);
+    g.uvs.push(ua[0], ua[1], secondUv[0], secondUv[1], thirdUv[0], thirdUv[1]);
     g.indices.push(base, base + 1, base + 2);
   }
   /** A quad p0-p1-p2-p3 (in order round its edge) facing n; `uv` its four corners. */

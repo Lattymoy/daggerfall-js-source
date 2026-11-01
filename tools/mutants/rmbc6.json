@@ -192,8 +192,8 @@
   {
     "name": "RMBC6-host-no-slot",
     "file": "src/scenes/settlementHost.js",
-    "old": "    const slot = takeSlot(), made = standSettlement(p, blocksFile(), slot);",
-    "new": "    const slot = takeSlot(), made = standSettlement(p, blocksFile(), -1);",
+    "old": "    try { made = standSettlement(p, blocksFile(), slot); }",
+    "new": "    try { made = standSettlement(p, blocksFile(), -1); }",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -322,7 +322,8 @@
     "old": "    if (!from || !to || Math.abs(to.h - from.h) <= link.max + 1e-3) continue;",
     "new": "    continue;",
     "tests": [
-      "test/world/settlement/rmbc6_growth.test.js"
+      "test/world/settlement/rmbc6_growth.test.js",
+      "test/world/settlement/rmbc6_organic.test.js"
     ]
   },
   {
