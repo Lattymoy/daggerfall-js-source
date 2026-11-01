@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC4 (bible/03-World/RMB-Contracts.md): A SETTLEMENT STOOD - its ground paved at its pads' heights with walls
+// A SETTLEMENT STOOD - its ground paved at its pads' heights with walls
 // down their rims, decks on posts, links between its pads; each building the fabric's mesher over its footprint, its door
 // on its front wall facing its street, its rooms the fabric's own filed under its place and key, its record the door's; the
 // host stands what the built pixels hold, draws it, files it with the collider, hands its doors over and takes it down.
@@ -48,7 +48,7 @@ test('RMBC4 the ground\'s model: every pad paved at its own height, a wall down 
     if (p.base === 'cut') assert.ok(ys.has(Math.round((L.datum + p.y - WALL_DROP) * 100) / 100), `${p.id}'s wall reaches down`);
   }
   assert.ok(g.indices.length / 3 > plan.pads.length * 10);
-  // ORGANIC: its terraces paved in its style's stone - a village's, never a city's flags (mutant: the style unread)
+  // its terraces paved in its style's stone - a village's, never a city's flags (mutant: the style unread)
   const recs = (m) => new Set(m.subMeshes.map((x) => `${x.textureArchive}/${x.textureRecord}`));
   const [sand, flags] = [art(CAPITAL_ART.sandstone), art(CAPITAL_ART.bridgeStone)].map(([a, r]) => `${a}/${r}`);
   const desert = recs(groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), 'Hammerfell'));
@@ -135,6 +135,6 @@ test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and a
   assert.match(world, /if \(!hit\?\.pixelKey\) return hit\?\.settlement \? \{ \.\.\.hit\.settlement \} : null;/, 'a copy: the transition writes on the record (the game\'s first run threw on a frozen one)');
   const build = readFileSync(new URL('../../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
   assert.match(build, /bridges, meets, settlement \} = await terrainGen\.generate\(\{/);
-  assert.match(build, /\n\s+settlement,\s+\/\/ RMB-CONTRACTS RMBC4/);
+  assert.match(build, /\n\s+settlement,\s+\/\/ its settlement's layout/);
   assert.match(readFileSync(new URL('../../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8'), /\n {2}if \(worldPlaces\) worldPlaces\.registerLive\(SETTLEMENTS_SOURCE, \{ stamp: \(\) => \[tamrielFit\(\)\], rows: \(\) => settlementPlaceRows\(\) \}\);/);
 });

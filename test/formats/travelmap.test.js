@@ -346,7 +346,7 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // beside the Starfall's stars - one statement above the last needle, which is unchanged
   // PIN MOVED (AMBIENT-LIFE, met at its merge with STOREFRONT, 2026-10-31): the creatures ride `state.initOffset` beside
   // the wind, above the last needle, which stands at 13898 - inside STOREFRONT's window
-  // PIN MOVED (RMB-CONTRACTS RMBC4), 14000 -> 14200: the settlements taken down with the old frame
+  // 14200: the settlements taken down with the old frame too
   // (`settlements?.destroyAll()`), with its note, above the last needle (13898 on main, 14009 merged)
   const core = src.slice(k, k + 14200);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'awaitedBuild(first.px']) {

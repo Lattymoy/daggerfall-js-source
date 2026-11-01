@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC4 (2026-10-31, bible/03-World/RMB-Contracts.md RD-17): A DRESSED SETTLEMENT AS MODELS. Its ground: each cut
+// A DRESSED SETTLEMENT AS MODELS. Its ground: each cut
 // pad paved with a retaining wall down its rim (the terrain is carved under it - settlementGround.js), each raised pad a
 // deck on posts, each link a stair, ramp or bridge between its pads' heights. Its buildings: the Imperial City fabric's
 // mesher (imperialFabricModels.js buildPlot) over each footprint in its style's walls and roof, its door the fabric's door
@@ -76,7 +76,7 @@ export function groundModel(plan, datum, cells, style = 'IliacBay') {
   const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum + p.y]));
   const ground = art(CAPITAL_ART[SETTLEMENT_STYLES[style]?.ground] ?? CAPITAL_ART.bridgeStone);   // its style's paving
   for (const pad of plan.pads) {
-    if (pad.legacy) continue;   // RMBC6: a core's ground is its town's own tiles
+    if (pad.legacy) continue;   // A core's ground is its town's own tiles
     const y = /** @type {number} */ (Y.get(pad.id)), raised = pad.base === 'raised', top = raised ? PLANK : ground;
     for (const [i, j, k] of earClip(pad.poly)) {
       const p = [pad.poly[i], pad.poly[j], pad.poly[k]];

@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC1 (bible/03-World/RMB-Contracts.md): THE SETTLEMENT PLAN - the key bands, the pads a settlement's
+// THE SETTLEMENT PLAN - the key bands, the pads a settlement's
 // heights stand on, and every way validateSettlement refuses a plan. A terraced village past the Bay (Hammerfell's) stands
 // beside an authored square on the Bay (TAMRIEL-WIDE). Pins mutation-checked (tools/mutants/rmbc1.json).
 import test from 'node:test';

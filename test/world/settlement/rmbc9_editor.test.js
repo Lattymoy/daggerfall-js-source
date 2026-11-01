@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC9 (bible/03-World/RMB-Contracts.md): THE EDITOR'S SEAM. A row's controls changed within their bounds and
+// THE EDITOR'S SEAM. A row's controls changed within their bounds and
 // its structure fixed, or refused whole; one district dressed again from its own seed while every other keeps its
 // buildings, keys and services; a protected key's loss refused; what changed named by key. A Hammerfell settlement
 // (TAMRIEL-WIDE: the settlements' lane past the Bay). Pins mutation-checked (tools/mutants/rmbc9.json).

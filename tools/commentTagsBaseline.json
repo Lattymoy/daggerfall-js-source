@@ -3100,7 +3100,7 @@
  "src/world/terrain/terrainGenWorker.js": 49,
  "src/world/terrain/terrainHelper.js": 2,
  "src/world/terrain/terrainNature.js": 57,
- "src/world/terrain/terrainSampler.js": 22,
+ "src/world/terrain/terrainSampler.js": 20,
  "src/world/terrain/terrainSurface.js": 17,
  "src/world/terrain/terrainTiles.js": 46,
  "src/world/terrain/townBlendBefore.js": 1,

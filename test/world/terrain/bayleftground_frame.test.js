@@ -55,7 +55,7 @@ test('BAY-LEFT-GROUND D5 the frame\'s law: past the Bay a record is DFU\'s frame
   assert.equal(plain.restandHeight(old, x, 0, 1.5, null), plainBay.restandHeight(old, x, 0, 1.5, null), 'the row off, a record of the prefab\'s scale past the Bay: stood again as on the Bay - no old law\'s step');
   assert.equal(plain.groundFrameHeight(ground + off, x, 0), ground + off);
   assert.deepEqual({ ...RECORD_GROUND_STAMP }, { terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });
-  assert.equal(GROUND_FRAME_LAW, 6);   // PIN MOVED (RMB-CONTRACTS RMBC3): 6 - a settlement's pads carved; PIN MOVED (FB1029 ACROSS-EDGE): 5 - the ground about a town rose to meet it (test/world/fb1029_ground.test.js); PIN MOVED (FB1028 TOWN-GROUND): 4 - a town's blend moved DFU's own ground (test/world/terrain/fb1028_townground_frame.test.js); PIN MOVED (RELIEF-PEAKS): 3 - DFU's own ground past the Bay moved (its large map's law); D5's own law is LIFT_FRAME_LAW, 2 (test/world/reliefpeaks.test.js)
+  assert.equal(GROUND_FRAME_LAW, 6);   // PIN MOVED (FB1029 ACROSS-EDGE): 5 - the ground about a town rose to meet it (test/world/fb1029_ground.test.js); PIN MOVED (FB1028 TOWN-GROUND): 4 - a town's blend moved DFU's own ground (test/world/terrain/fb1028_townground_frame.test.js); PIN MOVED (RELIEF-PEAKS): 3 - DFU's own ground past the Bay moved (its large map's law); D5's own law is LIFT_FRAME_LAW, 2 (test/world/reliefpeaks.test.js)
   assert.equal(LIFT_FRAME_LAW, 2);
 });
 

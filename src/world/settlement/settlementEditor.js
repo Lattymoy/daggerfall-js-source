@@ -1,8 +1,8 @@
 // @ts-check
-// RMB-CONTRACTS RMBC9 (2026-10-31, bible/03-World/RMB-Contracts.md): THE EDITOR'S SEAM. What the WORLD 2.0 editor asks of a
+// THE EDITOR'S SEAM. What the WORLD 2.0 editor asks of a
 // settlement: a published row's controls changed within their bounds (`params`) and its structure fixed (`fix`), one
 // district dressed again from a seed of its own while every other keeps its buildings and keys, and what changed between
-// two plans. The ledger keeps every key an anchor still holds and refuses a protected one's loss (RD-6). Pure.
+// two plans. The ledger keeps every key an anchor still holds and refuses a protected one's loss. Pure.
 import { dressSettlement } from './settlementGen.js';
 
 /** The controls a row may set, each its least and most (settlementLayout.js reads them so). */

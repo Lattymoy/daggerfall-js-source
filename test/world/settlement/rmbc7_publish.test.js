@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC7 (bible/03-World/RMB-Contracts.md RD-6, RD-19, RD-20): WHAT A REVISION MAY NOT MOVE, AND THE LAW THE
+// WHAT A REVISION MAY NOT MOVE, AND THE LAW THE
 // PLANS RIDE. A town's protected keys are its homes' answer's; a published row is revised through its ledger, refused where
 // a protected building would move or go; a grown town's keys are its anchors' own, refused where a protected anchor is
 // gone; the ground's print reads both plans, so a change to a door's key moves GROUND_LAW. A Hammerfell settlement and a

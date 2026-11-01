@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC3/RMBC5 (bible/03-World/RMB-Contracts.md): THE GROUND UNDER A SETTLEMENT AND WHERE ONE STANDS - the carve
+// THE GROUND UNDER A SETTLEMENT AND WHERE ONE STANDS - the carve
 // never stands a vertex over the paving of any cut pad near it, so the 6.4 m grid never pokes through a terrace, and leaves
 // the land its own past the ease; a raised pad leaves the land alone. The published settlements, one a province past the
 // Bay, each found on its pixel in its own lane of map ids; the kernel lays one out on a pixel no location holds, and a
@@ -125,5 +125,5 @@ test('RMBC3 the frame\'s law: a record written before PADS_FRAME_LAW rides the c
   assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, 6), 101);
   const host = readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8');
   assert.match(host, /moved = settlementMovedField\(host\.woods, px, py\);/);
-  assert.match(host, /if \(liftRectAt\(px, py\)\) return grownMovedAt\(built\.get\(`\$\{px\},\$\{py\}`\)\?\.settlement,/, 'PIN MOVED (RMBC6): a pixel a location holds rides its outskirts\' carve, as its build handed it back');
+  assert.match(host, /if \(liftRectAt\(px, py\)\) return grownMovedAt\(built\.get\(`\$\{px\},\$\{py\}`\)\?\.settlement,/, 'a pixel a location holds rides its outskirts\' carve, as its build handed it back');
 });

@@ -150,7 +150,7 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   }));
   // the host's own three closures, lifted: shiftedDoor, doorTargets, buildingDataForDoor
   const shifted = lift(WORLD, '  const shiftedDoor = (entry) => {', '\n  };');
-  const targets = lift(WORLD, '    doorTargets: () => [...buildingDoors.map((e) => ({', '\n    })), ...(settlements?.doorTargets() ?? [])],');   // PIN MOVED (RMB-CONTRACTS RMBC4): and the settlements' doors (none here)
+  const targets = lift(WORLD, '    doorTargets: () => [...buildingDoors.map((e) => ({', '\n    })), ...(settlements?.doorTargets() ?? [])],');   // the settlements' doors after the buildings' (none here)
   const resolve = lift(WORLD, '    buildingDataForDoor: (hit) => {', '\n    },');
   // ARENA1: the door's location and exit group are arenaDoorTarget's (the pixel's town, or the arena's undercroft) - lifted too
   const arenaTarget = lift(WORLD, '  function arenaDoorTarget(e) {', '\n  }');

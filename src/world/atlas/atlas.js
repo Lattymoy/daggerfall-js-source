@@ -7,7 +7,7 @@
 // Identity is the registry's (world/worldWide/worldPlaces.js), so the atlas answers for every province. Pure: plain
 // records in, answers out. Not a DFU member (DFU has MapsFile and BlocksFile, no join). Ledger A (FOUNDATION).
 
-import { SETTLEMENTS_SOURCE } from '../settlement/settlementPlaces.js'; // RMB-CONTRACTS: the settlements' list
+import { SETTLEMENTS_SOURCE } from '../settlement/settlementPlaces.js'; // the settlements' list
 
 export const ATLAS_VERSION = 1;   // the surface's version: raised when a part's shape changes, so a consumer can check it
 
@@ -167,7 +167,7 @@ export function createAtlas({ resolveBlock = (n) => n } = {}) {
 
 /**
  * The places of a registry into an atlas: each listed place with the location `locate` answers for it. A place no
- * location answers is counted, not bundled. RMB-CONTRACTS: a settlement stands by its plan and has no location, so it
+ * location answers is counted, not bundled. a settlement stands by its plan and has no location, so it
  * is listed as `planned`, never asked.
  * @param {Atlas} atlas @param {Iterable<WorldPlace>} places @param {(place: WorldPlace) => any} locate
  * @returns {{ added: number, unlocated: number[], planned: number[] }}

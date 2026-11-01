@@ -23,10 +23,10 @@
 // cliff over its sea, and the sea north of it its meet raises (the town asked of both, as the stream asks it). ROAD-DRY:
 // Basic Roads' road across a pixel of open sea, its paving lifted. The town's cell asks its own meet too.
 //
-// RMB-CONTRACTS RMBC3 (bible/03-World/RMB-Contracts.md): AND A SETTLEMENT'S GROUND. A pixel past the Bay a settlement
+// AND A SETTLEMENT'S GROUND. A pixel past the Bay a settlement
 // stands on, its pads carved in (world/settlement/settlementStand.js): Sahr Waters, at its published pixel under the fit.
-// RMBC6: and a village's outskirts, laid round it on gentler ground and carved (world/settlement/townGrowth.js).
-// RMBC7: and both their plans' prints (`Plans`): a dressing change moves a door's key, and a door's room is the ground's.
+// and a village's outskirts, laid round it on gentler ground and carved (world/settlement/townGrowth.js).
+// and both their plans' prints (`Plans`): a dressing change moves a door's key, and a door's room is the ground's.
 //
 //   node tools/groundPrint.mjs --write    records the print under GROUND_LAW (test/fixtures/groundPrint.json)
 import { writeFileSync } from 'node:fs';
@@ -45,9 +45,9 @@ import { tamrielTrace, setTamrielTrace } from '../src/world/tamriel/tamrielLand.
 import { tamrielFit, setTamrielFit } from '../src/world/tamriel/tamrielFrame.js';
 import { CLIMATES } from '../src/formats/mapsTables.js';
 import { GROUND_LAW } from '../src/net/wire.js';
-import { SETTLEMENT_ROWS, settlementPixel } from '../src/world/settlement/settlementPlaces.js'; // RMB-CONTRACTS RMBC3
-import { townGrowthJob } from '../src/world/settlement/townGrowth.js'; // RMB-CONTRACTS RMBC6
-import { settlementInput } from '../src/world/settlement/settlementPlaces.js'; // RMB-CONTRACTS RMBC7: the plans' prints
+import { SETTLEMENT_ROWS, settlementPixel } from '../src/world/settlement/settlementPlaces.js';
+import { townGrowthJob } from '../src/world/settlement/townGrowth.js';
+import { settlementInput } from '../src/world/settlement/settlementPlaces.js'; // the plans' prints
 import { dressSettlement } from '../src/world/settlement/settlementGen.js';
 import { settlementPrint } from '../src/world/settlement/settlementContract.js';
 import { syntheticWoodsBytes, network } from '../test/landformWorld.mjs';
@@ -70,7 +70,7 @@ export const GROUND_PRINT_BEYOND = Object.freeze([
 ]);
 /** FB1028: the town read, its outline a 4 x 4 grid of blocks, its ground a hillside rising 20 bytes a pixel east. */
 export const GROUND_PRINT_TOWN = Object.freeze([420, 270]);
-/** RMB-CONTRACTS RMBC6: the grown village read - the town's 4 x 4 blocks on gentler ground - and its growth job. */
+/** the grown village read - the town's 4 x 4 blocks on gentler ground - and its growth job. */
 export const GROUND_PRINT_GROWN = Object.freeze([440, 300]);
 export const PRINT_GROWTH = townGrowthJob(
   { mapTableData: { mapId: 270420, locationType: 2 }, name: 'Print' },
@@ -81,7 +81,7 @@ export const PRINT_GROWTH = townGrowthJob(
 export const GROUND_PRINT_MEET = Object.freeze([150, 400]);
 /** FB1029 ROAD-DRY: the pixel of open sea the road down to the beach crosses (test/landformWorld.mjs network). */
 export const GROUND_PRINT_ROAD = Object.freeze([96, 200]);
-/** RMB-CONTRACTS RMBC3: the settlement read past the Bay - settlements.json's row 1 (Sahr Waters, Hammerfell). */
+/** the settlement read past the Bay - settlements.json's row 1 (Sahr Waters, Hammerfell). */
 export const GROUND_PRINT_SETTLEMENT = 1;
 /** The recorded print's home. */
 export const GROUND_PRINT_FILE = new URL('../test/fixtures/groundPrint.json', import.meta.url);
@@ -180,7 +180,7 @@ export function groundPrint() {
     about: [{ px: tx, py: ty, shape: townRect.shape }],
   });
   cells[`Town@${tx},${ty}`] = printed(town.samples);
-  // RMB-CONTRACTS RMBC6: a village on gentler ground (4 bytes a pixel), its outskirts laid round it and carved
+  // a village on gentler ground (4 bytes a pixel), its outskirts laid round it and carved
   const [gx, gy] = GROUND_PRINT_GROWN,
     gentle = new WoodsFile();
   gentle.load(syntheticWoodsBytes());
@@ -287,7 +287,7 @@ export function groundPrint() {
         }).samples,
       );
     }
-    // RMB-CONTRACTS RMBC3: a settlement's pixel, its pads carved (no location, no site: the settlement alone)
+    // a settlement's pixel, its pads carved (no location, no site: the settlement alone)
     const [sx, sy] = settlementPixel(SETTLEMENT_ROWS[GROUND_PRINT_SETTLEMENT]);
     const settled = generatePixelTerrain({
       woods: continent,
@@ -303,7 +303,7 @@ export function groundPrint() {
       landform: true,
     });
     cells[`Settlement@${sx},${sy}`] = printed(settled.samples);
-    // RMB-CONTRACTS RMBC7: AND THE PLANS - a dressed plan's print, so a change to its doors' keys moves the law too
+    // AND THE PLANS - a dressed plan's print, so a change to its doors' keys moves the law too
     const row = SETTLEMENT_ROWS[GROUND_PRINT_SETTLEMENT];
     cells.Plans = [settled.settlement, grownSettlement].map((g) =>
       g ? settlementPrint(dressSettlement(g.growth ? g.input : settlementInput(row, sx, sy), g.layout).plan) : 0,

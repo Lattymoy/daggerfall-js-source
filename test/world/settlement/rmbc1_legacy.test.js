@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC1 (bible/03-World/RMB-Contracts.md): A LEGACY TOWN AS A PLAN - built from what the game's own building
+// A LEGACY TOWN AS A PLAN - built from what the game's own building
 // walk mints (world/buildingSummaries.js), every key kept as BuildingDirectory.MakeBuildingKey gave it, every building where
 // RMBLayout.GetBuildingData stands it, its record its walls and rooms; and the directory read back from the plan. Synthetic,
 // so it runs everywhere: a town past the Bay (a cloned layout under a Hammerfell town's id) beside the Bay's. The player's

@@ -2,8 +2,8 @@
   {
     "name": "RMBC9-bound-open",
     "file": "src/world/settlement/settlementEditor.js",
-    "old": "if (!Number.isFinite(value) || value < range[0] || value > range[1]) {",
-    "new": "if (!Number.isFinite(value) || value < range[0]) {",
+    "old": "    if (!Number.isFinite(value) || value < range[0] || value > range[1]) { problems.push(`${k} ${value} is outside ${range[0]} to ${range[1]}`); continue; }",
+    "new": "    if (!Number.isFinite(value) || value < range[0]) { problems.push(`${k} ${value} is outside ${range[0]} to ${range[1]}`); continue; }",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RMBC9-layout-unchecked",
     "file": "src/world/settlement/settlementEditor.js",
-    "old": "if (!FIX_LAYOUTS.includes(wanted?.layout)) problems.push(",
-    "new": "if (false) problems.push(",
+    "old": "    if (!FIX_LAYOUTS.includes(wanted?.layout)) problems.push(`layout '${wanted?.layout}' is not one of ${FIX_LAYOUTS.join(', ')}`);",
+    "new": "    if (false) problems.push(`layout '${wanted?.layout}' is not one of ${FIX_LAYOUTS.join(', ')}`);",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC9-refused-half",
     "file": "src/world/settlement/settlementEditor.js",
-    "old": "return problems.length ? { row, problems } : { row: { ...row, params, fix }, problems };",
-    "new": "return { row: { ...row, params, fix }, problems };",
+    "old": "  return problems.length ? { row, problems } : { row: { ...row, params, fix }, problems };",
+    "new": "  return { row: { ...row, params, fix }, problems };",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC9-district-seed-unread",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0;",
-    "new": "const base = seed >>> 0;",
+    "old": "  const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };",
+    "new": "  const rngOf = (/** @type {number} */ j) => { const base = seed >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RMBC9-plot-by-global",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const set = 0.5 + draw(16, c.k, c.j, local) * 1.2;",
-    "new": "const set = 0.5 + draw(16, plots.length) * 1.2;",
+    "old": "      const set = 0.5 + draw(16, c.k, c.j, local) * 1.2;",
+    "new": "      const set = 0.5 + draw(16, plots.length) * 1.2;",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RMBC9-protected-unread",
     "file": "src/world/settlement/settlementEditor.js",
-    "old": "{ ...input, ledger, published, protectedKeys, districtSeeds:",
-    "new": "{ ...input, ledger, published, districtSeeds:",
+    "old": "  const made = dressSettlement({ ...input, ledger, published, protectedKeys, districtSeeds: { ...(input.districtSeeds ?? {}), [district]: seed >>> 0 } }, layout);",
+    "new": "  const made = dressSettlement({ ...input, ledger, published, districtSeeds: { ...(input.districtSeeds ?? {}), [district]: seed >>> 0 } }, layout);",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC9-shore-pinned",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "(fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site)",
-    "new": "fix.shore ?? findShore(env, site)",
+    "old": "  const shore = centre === 'water' ? (fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site) : null;   // A fixed shore's way, its distance the ground's",
+    "new": "  const shore = centre === 'water' ? fix.shore ?? findShore(env, site) : null;   // A fixed shore's way, its distance the ground's",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js",
       "test/world/settlement/rmbc2_gen.test.js",
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-storeys-global",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "tall: choose(st.storeys, 12, c.k, c.j, local) }",
-    "new": "tall: choose(st.storeys, 12, proposed.length) }",
+    "old": "      proposed.push({ id, c, fp, door, facing, prestige, area: width * bd, tall: choose(st.storeys, 12, c.k, c.j, local) });",
+    "new": "      proposed.push({ id, c, fp, door, facing, prestige, area: width * bd, tall: choose(st.storeys, 12, proposed.length) });",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-displaced-anywhere",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "open = free.filter(fresh);",
-    "new": "open = free;",
+    "old": "    const free = order.filter((p) => !taken.has(p.id)), open = free.filter(fresh);",
+    "new": "    const free = order.filter((p) => !taken.has(p.id)), open = free;",
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]

@@ -1,10 +1,10 @@
-#!/usr/bin/env node
-// RMB-CONTRACTS RMBC2 (bible/03-World/RMB-Contracts.md): THE GENERATOR SEEN FROM ABOVE. Lays out every archetype and writes
+// /usr/bin/env node
+// THE GENERATOR SEEN FROM ABOVE. Lays out every archetype and writes
 // one SVG each: the ground under it, its pads by height, its links by kind, its streets, plots, buildings, doors, gates and
 // features. With ARENA2 (`ARENA2_PATH`) the ground is the Bay's own (WOODS.WLD through the terrain kernel), each archetype on
 // a pixel whose ground suits it; without, a synthetic hill, slope, shore and marsh. The pictures are of our own layout over a
 // height field, never of the game's art.
-//   node tools/settlementProbe.mjs [--out scratch/settlements] [--seed 7] [--synthetic]
+//  node tools/settlementProbe.mjs [--out scratch/settlements] [--seed 7] [--synthetic]
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { isMain } from './lib/isMain.mjs';

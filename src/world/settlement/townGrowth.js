@@ -1,6 +1,6 @@
 // @ts-check
-// RMB-CONTRACTS RMBC6 (2026-10-31, bible/03-World/RMB-Contracts.md RD-18, RD-19): A TOWN GROWS. Every city, town and
-// village keeps its legacy core whole - its blocks, its buildings and their keys (RD-9) - and its outskirts are laid out
+// A TOWN GROWS. Every city, town and
+// village keeps its legacy core whole - its blocks, its buildings and their keys - and its outskirts are laid out
 // round it in rings on the land its pixel leaves: never on a road, the town's own ground, a camp or water, never within
 // GROWTH_MARGIN of the pixel's edge, so the carve and its ease meet no neighbour. Worker-safe (world/ alone): the terrain
 // worker lays the outskirts out and carves them; the host dresses the same layout from the same input.
@@ -33,14 +33,14 @@ export function townGrowthJob(location, style, regionIndex) {
   const type = location?.mapTableData?.locationType;
   if (!GROWTH_TYPES.includes(type) || location?.capital) return null;
   const place = location.mapTableData.mapId >>> 0, grid = location.exterior?.exteriorData;
-  const blocks = Math.max(1, (grid?.width ?? 1) * (grid?.height ?? 1));   // RMBC8: its houses priced by its town's size
+  const blocks = Math.max(1, (grid?.width ?? 1) * (grid?.height ?? 1));   // Its houses priced by its town's size
   return { place, name: String(location.name ?? ''), type, style, seed: hash32(place, 0x6e0b, type) >>> 0, regionIndex, blocks };
 }
 
 /**
  * The settlement input of a town's outskirts: the same from the same job, pixel and rect, on the worker and the host.
  * @param {GrowthJob} job @param {number} px @param {number} py @param {TileRect} rect @param {number} coreY its ground, metres
- * @param {number[]} [roads] ORGANIC: the bearings its roads leave by (roadsOut)
+ * @param {number[]} [roads] the bearings its roads leave by (roadsOut)
  */
 export function growthInput(job, px, py, rect, coreY, roads = []) {
   const centre = [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
@@ -48,14 +48,14 @@ export function growthInput(job, px, py, rect, coreY, roads = []) {
   const far = TILES * SAMPLE_M - GROWTH_MARGIN;
   return {
     place: job.place, origin: { px, py, east: 0, north: 0 }, seed: job.seed, archetype: 'outskirts', style: job.style,
-    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // RD-19: no ledger ships
-    params: { bands: job.type === 0 ? 4 : 3, density: 0.7, open: 0.4 },   // ORGANIC: as deep as its roads lead, thinning off them
+    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // No ledger ships
+    params: { bands: job.type === 0 ? 4 : 3, density: 0.7, open: 0.4 },   // as deep as its roads lead, thinning off them
     core: { centre, half, y: coreY }, bounds: { e0: GROWTH_MARGIN, e1: far, n0: GROWTH_MARGIN, n1: far },
   };
 }
 
 /**
- * ORGANIC: the bearings a town's roads leave it by, degrees clockwise from north - its path tiles met on a circle a street
+ * the bearings a town's roads leave it by, degrees clockwise from north - its path tiles met on a circle a street
  * past its square's corners, each run of them one road at its middle; none where no path or every way is one.
  * @param {Uint8Array|null} paths @param {number[]} centre @param {number} half
  */
@@ -98,7 +98,7 @@ export function growthBlocked({ paths = null, mask = null, tilemap = null, camps
  * @param {TileRect} rect @param {Parameters<typeof growthBlocked>[0]} bars
  */
 export function standTownGrowth(px, py, samples, job, rect, bars) {
-  // ORGANIC: a road bars a building, never a cell - the town's ground, a camp and water bar the cell
+  // a road bars a building, never a cell - the town's ground, a camp and water bar the cell
   const roads = bars.paths ?? null;
   const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };
   const centre = [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
@@ -131,7 +131,7 @@ export function standTownGrowth(px, py, samples, job, rect, bars) {
   return { mapId: job.place, ordinal: -1, growth: true, job, input, layout, moved, rect: { xMin: tile(x0), xMax: tile(x1), yMin: tile(y0), yMax: tile(y1) } };
 }
 
-/** RMBC6: the trees' clearing of a grown town - its rect and its outskirts' as one, the outline's clearing given up for it;
+/** The trees' clearing of a grown town - its rect and its outskirts' as one, the outline's clearing given up for it;
  *  the location's own where it did not grow. @param {any} locationRect @param {any} settlement */
 export function growthClearing(locationRect, settlement) {
   if (!locationRect || !settlement?.growth) return locationRect;
@@ -140,7 +140,7 @@ export function growthClearing(locationRect, settlement) {
 }
 
 /**
- * RMBC6: how far a grown town's carve moved the ground at a scene point, metres - its build's own `moved` field, read
+ * How far a grown town's carve moved the ground at a scene point, metres - its build's own `moved` field, read
  * between its samples; 0 where its pixel is not built or did not grow (a record there re-stands when it is).
  * @param {any} settlement a built pixel's @param {number[]} origin its translation @param {number} x @param {number} z
  * @param {number} cell a sample's spacing in scene units

@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC3 (2026-10-31, bible/03-World/RMB-Contracts.md RD-15): A SETTLEMENT'S LAYOUT, THE PART THE GROUND NEEDS.
+// A SETTLEMENT'S LAYOUT, THE PART THE GROUND NEEDS.
 // Stages A to C of the generator: the site and its frame, the cells, and the terraces - each cell's pad, the links between
 // them, the datum. The terrain worker runs it on its own natural ground, carves the land to its pads and hands the layout
 // on, so the ground and the buildings come from one computation; settlementGen.js dresses it. Serializable: plain
@@ -11,7 +11,7 @@ import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js'
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const SETTLEMENT_GENERATOR_VERSION = 4;   // 4: AUDIT - a plot numbered by its split, its storeys its own, a deck too steep dropped. 3: ORGANIC - a core's outskirts hug it and follow its roads. 2: RMBC9 - each district its own draw, each plot by its cell and number
+export const SETTLEMENT_GENERATOR_VERSION = 4;   // moves with any change to a plan; the golden prints (rmbc3_exact) hold it
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -93,7 +93,7 @@ function findShore(env, site) {
   return null;
 }
 
-/** RMBC9: a published shore - its direction fixed, its distance read from the ground every client stands, so a ground
+/** A published shore - its direction fixed, its distance read from the ground every client stands, so a ground
  *  that moves its water moves the quay with it; null with no water that way. */
 function shoreAlong(env, site, dir) {
   if (!env.waterAt || !dir) return null;
@@ -111,8 +111,7 @@ export function splits(rng, n, total, salt) {
 
 /**
  * Stages A to C. roads: the bearings roads arrive from (degrees clockwise from north); params: the editor's controls -
- * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground. RMBC6:
- * core a legacy town's square (half its side, its ground's height) in the plaza's place; bounds where a cell may stand;
+ * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground. * core a legacy town's square (half its side, its ground's height) in the plaza's place; bounds where a cell may stand;
  * env.blockedAt the ground no cell may take.
  * @param {SettlementInput} input @param {SiteEnv} env
  */
@@ -129,7 +128,7 @@ export function layoutSettlement(input, env) {
   // a published settlement fixes what its ground chose when the toolchain laid it out (settlementPlaces.js `fix`)
   const fix = input.fix ?? {};
   const ground = readSite(env, site);
-  const core = input.core ?? null;   // RMBC6: a legacy town's square - the ring's middle, never moved
+  const core = input.core ?? null;   // A legacy town's square - the ring's middle, never moved
   let layout = fix.layout ?? A.frame, centre = A.centre;
   if (core) [layout, centre] = ['ring', 'core'];
   if (fix.layout === 'ring') centre = fix.centre ? 'fixed' : 'site';
@@ -140,7 +139,7 @@ export function layoutSettlement(input, env) {
     else [layout, centre] = ['ring', 'site'];
   }
   const ring = layout === 'ring';
-  const shore = centre === 'water' ? (fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site) : null;   // RMBC9: a fixed shore's way, its distance the ground's
+  const shore = centre === 'water' ? (fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site) : null;   // A fixed shore's way, its distance the ground's
   if (centre === 'water' && !shore) centre = 'contour';
   const islands = A.islands || st.deck > 0;
   const deck = islands ? Math.max(st.deck, A.islands ? 1.4 : 0) : 0;
@@ -149,7 +148,7 @@ export function layoutSettlement(input, env) {
   const bandDepth = ws + plotDepth + st.back + gap;
   const bands = clampWithin(Math.round(params.bands ?? A.bands), 1, 8);
   const size = pick(A.size, 3) * sizeK * (A.frame === 'auto' && !ring ? 2.2 : 1);   // an auto village's size is a radius
-  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // ORGANIC: a core's narrower, to hug it
+  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it
   const depthAll = bands * bandDepth;
 
   let frame, inner, uStart, uSpan, vOut = 0;
@@ -184,7 +183,7 @@ export function layoutSettlement(input, env) {
 
   // B - the cells: sector edges, each sector's band radii, the arc grid a sector's bands share
   const edges = splits(rng, sectors, uSpan, 6).map(([a, b]) => [a + uStart, b + uStart]);
-  const innerOf = (/** @type {number} */ j) => (core ? coreEdge(core.half, edges[j][0], edges[j][1]) + ws + rng(21, j) * 6 : inner);   // ORGANIC: a core's hugged, set back a little or more
+  const innerOf = (/** @type {number} */ j) => (core ? coreEdge(core.half, edges[j][0], edges[j][1]) + ws + rng(21, j) * 6 : inner);   // a core's hugged, set back a little or more
   const radii = edges.map((_, j) => {
     const out = [innerOf(j)];
     for (let k = 1; k <= bands; k++) out.push(out[k - 1] + bandDepth + (rng(7, j, k) - 0.5) * ws * 0.8);
@@ -192,7 +191,7 @@ export function layoutSettlement(input, env) {
   });
   // a ring town leaves some outer sectors unbuilt, so its edge is ragged; never a gate's
   const reachOf = edges.map((_, j) => (ring && bands > 1 && rng(15, j) < 0.25 ? bands - 1 : bands));
-  if (core) roadReach(reachOf, edges, roads, bands, rng);   // ORGANIC: a core's outskirts reach out along its roads
+  if (core) roadReach(reachOf, edges, roads, bands, rng);   // a core's outskirts reach out along its roads
   const grids = edges.map(([u0, u1], j) => {
     const m = Math.max(2, Math.ceil(((u1 - u0) * radii[j][bands]) / ARC_STEP));
     return Array.from({ length: m + 1 }, (_, i) => u0 + ((u1 - u0) * i) / m);
@@ -218,7 +217,7 @@ export function layoutSettlement(input, env) {
   for (let j = 0; j < sectors; j++) {
     const [u0, u1] = edges[j];
     for (let k = 1; k <= reachOf[j]; k++) {
-      if (core && k > 1 && rng(19, j, k) < 0.18 * (k - 1)) { reachOf[j] = k - 1; break; }   // ORGANIC: an end left ragged
+      if (core && k > 1 && rng(19, j, k) < 0.18 * (k - 1)) { reachOf[j] = k - 1; break; }   // an end left ragged
       const ai = radii[j][k - 1] + gap / 2, bi = radii[j][k] - gap / 2;
       const outer = along(frame, grids[j], u0 + inset(bi, gap / 2), u1 - inset(bi, gap / 2), bi);
       const innerArc = along(frame, grids[j], u0 + inset(ai, gap / 2), u1 - inset(ai, gap / 2), ai).reverse();
@@ -249,7 +248,7 @@ export function layoutSettlement(input, env) {
     c.h = islands ? c.top + deck : c.natural;
   }
   for (const c of [...cells.values()]) if (!c.core && ((!islands && c.wet > 0.25) || cellBarred(c.poly, env, input.bounds))) cells.delete(c.id);
-  // ORGANIC: a road crossing a cell keeps it - where in the cell it runs is kept, and the dressing builds beside it
+  // a road crossing a cell keeps it - where in the cell it runs is kept, and the dressing builds beside it
   if (env.roadAt) for (const cell of cells.values()) if (!cell.core) cell.road = roadAcross(cell.poly, env.roadAt, frame.c);
   const gateBand = ring ? bands : 1;
   for (const j of gateSectors) {
@@ -317,7 +316,7 @@ export function layoutSettlement(input, env) {
     }
     if (worst < 1e-4) break;
   }
-  if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);   // RMBC6: a cell its town's height would cut too deep is not built
+  if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);   // A cell its town's height would cut too deep is not built
   const kept = [...cells.values()].filter((c) => c.k >= 0);
   const datum = core ? cm(core.y) : kept.length ? cm(kept.reduce((s, c) => s + c.natural, 0) / kept.length) : 0;
   /** @type {import('./settlementContract.js').Pad[]} */
@@ -337,7 +336,7 @@ export function layoutSettlement(input, env) {
   };
 }
 
-/** RMBC6 ORGANIC: how far from a square's middle its edge stands at the furthest along a sector's span - at a corner if
+/** How far from a square's middle its edge stands at the furthest along a sector's span - at a corner if
  *  the span holds one (half a side times the root of two), else at whichever end is nearer a corner.
  *  @param {number} half @param {number} from @param {number} to */
 export function coreEdge(half, from, to) {
@@ -346,7 +345,7 @@ export function coreEdge(half, from, to) {
   return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));
 }
 
-/** RMBC6 ORGANIC: each sector's reach by how squarely it faces a road out of the town - a road's sector its whole depth,
+/** Each sector's reach by how squarely it faces a road out of the town - a road's sector its whole depth,
  *  one a sixth of a turn off any road none; with no road, about a band all round. Written into `reachOf`. */
 export function roadReach(reachOf, edges, roads, bands, rng) {
   const ways = roads.map((deg) => (deg * Math.PI) / 180);
@@ -358,7 +357,7 @@ export function roadReach(reachOf, edges, roads, bands, rng) {
   }
 }
 
-/** RMBC6: the cells round a fixed core whose cut passes `limit`, dropped; then the outer end of a link the solve left too
+/** The cells round a fixed core whose cut passes `limit`, dropped; then the outer end of a link the solve left too
  *  steep (a deck held over its ground beside a core that never moves); and what no longer reaches the core after them. The
  *  links left. Dropping a cell only loosens its neighbours, so every link left still holds. */
 function dropDeepCuts(cells, links, limit) {
@@ -381,7 +380,7 @@ function dropDeepCuts(cells, links, limit) {
   return live;
 }
 
-/** RMBC6: a cell that may not stand - a corner past the bounds, or any 3 m point inside it on ground the env bars.
+/** A cell that may not stand - a corner past the bounds, or any 3 m point inside it on ground the env bars.
  *  @param {readonly Pt[]} poly @param {SiteEnv} env @param {SettlementInput['bounds']} bounds */
 export function cellBarred(poly, env, bounds) {
   if (bounds && poly.some(([e, n]) => e < bounds.e0 || e > bounds.e1 || n < bounds.n0 || n > bounds.n1)) return true;
@@ -392,7 +391,7 @@ export function cellBarred(poly, env, bounds) {
   return false;
 }
 
-/** ORGANIC: the bearings from the frame's centre of every 3 m point inside a cell a road takes, sorted, rounded to a
+/** the bearings from the frame's centre of every 3 m point inside a cell a road takes, sorted, rounded to a
  *  thousandth of a radian - where the dressing leaves a plot unbuilt. @param {readonly Pt[]} poly
  *  @param {(east: number, north: number) => boolean} roadAt @param {Pt} centre */
 export function roadAcross(poly, roadAt, centre) {

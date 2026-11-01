@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC8 (bible/03-World/RMB-Contracts.md): A HOUSE IN A NEW SETTLEMENT IS A HOME. A generated house's door
+// A HOUSE IN A NEW SETTLEMENT IS A HOME. A generated house's door
 // hands the game a record the home law reads as it reads a block's: a candidate, for sale, priced by its own ground and
 // its town's size, its scene named by its place and minted key, every id the account service's claim checks accepted, its
 // yard in a cell no RMB key reaches; the host files each house's yard frame on its pixel and takes it back. A Hammerfell

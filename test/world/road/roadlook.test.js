@@ -387,7 +387,7 @@ test('ROAD-LOOK the wiring: the kernel lays the river back under its bridges aft
   assert.ok(i0 > 0 && i1 > i0 && i2 > i1 && i3 > i2, 'the paint, the bridges, the smoothing, the waters');
   assert.match(k, /\n {4}bridges,   \/\/ ROAD-LOOK/);
   const p = read('src/scenes/pixelBuild.js');
-  assert.match(p, /townGround, arenaRoads, bridges, meets, settlement \} = await terrainGen\.generate\(\{/);   // PIN MOVED (RMB-CONTRACTS RMBC4): and the settlement. PIN MOVED (FB1029 ACROSS-EDGE): the pixel's town meets answered last
+  assert.match(p, /townGround, arenaRoads, bridges, meets, settlement \} = await terrainGen\.generate\(\{/);   // PIN MOVED (FB1029 ACROSS-EDGE): the pixel's town meets answered last
   assert.match(p, /standBridges\(bridges, px, py, \{ addStatic: \(m, at\) => addStatic\(m, at, true\), solid: \(m, at\) => late\.add\(key, m\.positions, m\.indices, at, \{ translation: bridgeBucket \}\), grow: unionBox \}\);/);
 });
 

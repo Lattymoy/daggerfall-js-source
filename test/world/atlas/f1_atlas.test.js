@@ -34,7 +34,7 @@ const SERVED = new Set(['AAA.RMB', 'BBB.RMB', 'CCC.RMB', 'N0000001.RDB', 'B00000
 const resolveBlock = (n) => (SERVED.has(n) ? n : n === 'AAX.RMB' ? 'AAA.RMB' : '');
 const filled = () => {
   const atlas = createAtlas({ resolveBlock });
-  // RMB-CONTRACTS: a settlement past the Bay (Skyrim's), on the settlements' list - planned, never asked of `locate`
+  // a settlement past the Bay (Skyrim's), on the settlements' list - planned, never asked of `locate`
   const settled = placeOfRow({ mapId: 875036674, name: "Kolvar's Cut", px: 1501, py: -401, type: 2, area: SKYRIM_AREA }, SETTLEMENTS_SOURCE);
   const r = fillAtlas(atlas, [...PLACES, placeOfRow({ mapId: 4, name: 'Nowhere', px: 5, py: 5, type: 0, region: 1 }, 'bay'), settled], (p) => (p.source === SETTLEMENTS_SOURCE ? LOCS[1] : LOCS[p.mapId]));
   return { atlas, r };
@@ -51,7 +51,7 @@ test('F1 the surface: version 1 and the closed set of eight part kinds; a kind o
 
 test('F1 one bundle a place: identity is the registry\'s, the grid and the plan by the vocabulary\'s ids, buildings and doors whole; a place no location answers is counted, not bundled; a second add keeps the first (mutants: the identity copied, the start lost, the doors\' building dropped, the keep, the dungeon ungated)', () => {
   const { atlas, r } = filled();
-  assert.deepEqual(r, { added: 3, unlocated: [4], planned: [875036674] });   // PIN MOVED (RMB-CONTRACTS): and the settlement planned
+  assert.deepEqual(r, { added: 3, unlocated: [4], planned: [875036674] });   // the settlement place planned, never located
   const town = atlas.place(1);
   assert.equal(town.place, PLACES[0], 'the registry\'s own record, not a copy');
   assert.deepEqual([town.exterior.w, town.exterior.h, [...town.exterior.blocks]], [2, 1, [0, 1]]);

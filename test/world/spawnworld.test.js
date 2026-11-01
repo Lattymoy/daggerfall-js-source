@@ -115,7 +115,7 @@ function stand({ places = new Set(), online = true } = {}) {
   const src = rd('src/scenes/spawnStandHost.js');
   const lift = (head, close) => { const i = src.indexOf(head); assert.ok(i > 0, head); return src.slice(i, src.indexOf(close, i) + close.length); };
   const d = { index: new Map(), ledger: createSpawnLedger(), now: 0, inside: null, gen: 0, roads: { roads: new Uint8Array(1000 * 500), tracks: new Uint8Array(1000 * 500) } };
-  // PIN MOVED (RMB-CONTRACTS RMBC5): the spawn asks a settlement's pixel first - the real one, handed in
+  // the spawn asks a settlement's pixel first - the real one, handed in
   const make = new Function('d', 'places', 'online', 'cloneAt', 'pathFreePixel', 'spawnsDungeon', 'CLIMATES', 'settlementOnPixel', `
     const params = { has: (k) => k === 'online' && online }, _spawnSalt = 1, maps = { getClimateIndex: () => 231 }, _spawnGround = () => true;
     const terrainGen = { roads: () => d.roads }, _spawnUnroaded = new Set(), _spawnLedger = d.ledger, _insideSpawn = (k) => k === d.inside, locationIndex = d.index;

@@ -1,11 +1,11 @@
-#!/usr/bin/env node
-// RMB-CONTRACTS RMBC7 (bible/03-World/RMB-Contracts.md RD-6, RD-19, RD-20): A REVISION ASKED OF WHAT PLAYERS HOLD. Lays
+// /usr/bin/env node
+// A REVISION ASKED OF WHAT PLAYERS HOLD. Lays
 // every published settlement and every grown town a protected key names on the player's own ground, dressed by this
 // tree's generator, and refuses (exit 1) where a protected key would move or go: a published row through its ledger, a
 // grown town where its key's building is gone. `--dump` writes the plans before a generator change; `--published` reads
 // them after, so a protected building moved, renamed or retyped is named in either. `--write` records the published rows'
 // ledgers when nothing refuses.
-//   ARENA2_PATH=... node tools/settlementRevise.mjs --protected homes.json [--dump plans.json] [--published plans.json] [--write]
+//  ARENA2_PATH=... node tools/settlementRevise.mjs --protected homes.json [--dump plans.json] [--published plans.json] [--write]
 // homes.json: the account service's /v1/homes/town answers (an array, one a town), or { "<mapId>": [keys] }.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -83,7 +83,7 @@ async function main() {
     const conflicts = revisionConflicts(input, g.settlement.layout, guarded.get(place) ?? [], before[place] ?? []);
     for (const c of conflicts) refused.push(`${row.name} (${place}): ${c.code} ${c.key ?? ''} ${c.why}`);
     const made = dressSettlement(input, g.settlement.layout);
-    if (!made.report.ok) refused.push(`${row.name}: no longer fits its ground (${made.report.counts.buildings} buildings, cut ${made.report.fit.cutMax} m)`);   // RMBC9: a row that stands empty is refused
+    if (!made.report.ok) refused.push(`${row.name}: no longer fits its ground (${made.report.counts.buildings} buildings, cut ${made.report.fit.cutMax} m)`);   // A row that stands empty is refused
     dump[place] = kept(made.plan);
     ledgers.set(row.ordinal, made.ledger);
   }

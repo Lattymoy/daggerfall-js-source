@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC1 (2026-10-31, bible/03-World/RMB-Contracts.md): A SETTLEMENT IS A PLAN, AND RMB IS ONE SOURCE OF ITS
+// A SETTLEMENT IS A PLAN, AND RMB IS ONE SOURCE OF ITS
 // BUILDINGS. A plan is metres: a footprint, flat pads at their own heights (terraces), links between them, streets,
 // districts and buildings. A building keeps the identity every table keys on - its place's map id and a building key -
 // and a key minted for a new building lies in a band no RMB key reaches, so nothing decodes it into a block cell.

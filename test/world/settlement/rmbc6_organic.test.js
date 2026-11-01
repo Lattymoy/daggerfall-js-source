@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC6 ORGANIC (bible/03-World/RMB-Contracts.md): A GROWN TOWN'S OUTSKIRTS HUG IT AND FOLLOW ITS ROADS. Each
+// A GROWN TOWN'S OUTSKIRTS HUG IT AND FOLLOW ITS ROADS. Each
 // sector starts at its town's square's own edge along its span, a street out and a setback; it reaches out as squarely as
 // it faces a road leaving the town, a road's sector its whole depth; a road bars a building, never its cell, so houses line
 // it; an end is left ragged. A Bay village and a Hammerfell town beside it (TAMRIEL-WIDE). Pins mutation-checked
@@ -81,7 +81,7 @@ test('ORGANIC a road bars a plot, never a cell: a plot its bearing falls in, wid
 });
 
 test('ORGANIC a town grows along its roads: more buildings within a twelfth of a turn of a road than in as wide a span off them, houses either side, and a plot it drops renames none (a Hammerfell town; mutants: the reach, a plot numbered by those kept)', () => {
-  const g = town((P) => { for (let y = 0; y < T; y++) P[y * T + 56] = 1; }, 'Hammerfell', 7002, 2);   // PIN MOVED (AUDIT): column 60 dropped no plot before another
+  const g = town((P) => { for (let y = 0; y < T; y++) P[y * T + 56] = 1; }, 'Hammerfell', 7002, 2);
   const { plan } = dressSettlement(g.input, g.layout), c = g.layout.core.centre, roads = g.input.roads.map((d) => (d * Math.PI) / 180);
   assert.equal(roads.length, 2, 'the road leaves north and south');
   const near = plan.buildings.filter((b) => roads.some((w) => apart(bearing(b.at[0], b.at[1], c), w) < TAU / 12)).length;
@@ -92,7 +92,7 @@ test('ORGANIC a town grows along its roads: more buildings within a twelfth of a
   const crossed = new Set(g.layout.cells.filter((x) => x.road?.length).map((x) => x.id));
   assert.ok(crossed.size > 0);
   assert.ok(plan.plots.filter((x) => crossed.has(x.pad)).length < blind.plots.filter((x) => crossed.has(x.pad)).length, 'fewer plots where the road runs');
-  // a plot the road drops renames none after it: each left keeps its number, ground, building, key and height (RD-19)
+  // a plot the road drops renames none after it: each left keeps its number, ground, building, key and height
   const blindPlot = new Map(blind.plots.map((x) => [x.id, x])), blindAt = new Map(blind.buildings.map((x) => [x.anchor, x]));
   for (const x of plan.plots) assert.deepEqual(x.poly, blindPlot.get(x.id)?.poly, `${x.id} where it was`);
   for (const b of plan.buildings) assert.deepEqual([b.key, b.footprint, b.storeys], [blindAt.get(b.anchor)?.key, blindAt.get(b.anchor)?.footprint, blindAt.get(b.anchor)?.storeys], `${b.anchor} as it was`);

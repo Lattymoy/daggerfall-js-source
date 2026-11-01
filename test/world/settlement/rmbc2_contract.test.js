@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC2 (bible/03-World/RMB-Contracts.md): WHAT RMBC2 ADDED TO THE PLAN - a pad inside another (a raised square,
+// WHAT A GENERATED PLAN ADDS - a pad inside another (a raised square,
 // a keep's mound) is the ground where it stands; a pad's base, cut into the ground or raised on posts; plots, a building's
 // ground or open land; features. A Hammerfell village past the Bay, as in rmbc1_contract.test.js. Pins mutation-checked
 // (tools/mutants/rmbc2.json).

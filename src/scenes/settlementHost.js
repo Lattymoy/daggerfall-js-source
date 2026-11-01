@@ -1,10 +1,10 @@
 // @ts-check
-// RMB-CONTRACTS RMBC4 (2026-10-31, bible/03-World/RMB-Contracts.md RD-17): THE SETTLEMENTS, WHERE THEY STAND - the streaming
+// THE SETTLEMENTS, WHERE THEY STAND - the streaming
 // world's pool on the yards' shape (merchantYardsHost.js). Each built pixel whose worker laid out a settlement
 // (`p.settlement`, settlement/settlementStand.js) is dressed here from its row and that layout, its ground and buildings
 // made models (settlement/settlementModels.js, a model family the pipeline uploads), drawn at the pixel's translation,
 // filed with the collider, and its doors handed to the modes with each building's record and its generated rooms.
-// THE FOUR HOSTS (bible/Home.md): scenes/world.js WIRED; scenes/worldModes.js WIRED through world.js's doorTargets and
+// THE FOUR HOSTS: scenes/world.js WIRED; scenes/worldModes.js WIRED through world.js's doorTargets and
 // buildingDataForDoor (no line of its own); scenes/exterior.js and scenes/dungeonContext.js FLAGGED: they stream no pixel.
 import { registerCustomModelFamily } from '../world/customModels.js';
 import { installFabricDoors } from '../world/imperialFabricBuildings.js';   // the doors' models: the Imperial City installs them only when it builds
@@ -30,7 +30,7 @@ export function installSettlementModels() {
   registerCustomModelFamily({ owns: isSettlementModelId, build: (id) => _models.get(id) ?? null, keep: 4096, climateFree: true });
 }
 
-/** RMBC8: each house's yard frame (scenes/pixelBuild.js homeFrames' shape: its place, its box and its footprint's rect,
+/** Each house's yard frame (scenes/pixelBuild.js homeFrames' shape: its place, its box and its footprint's rect,
  *  pixel-local), filed on its pixel's own map so the yards stand round it. @param {any} town @param {any} frames */
 export function fileHomeFrames(town, frames) {
   if (!(frames instanceof Map)) return;
@@ -44,10 +44,10 @@ export function fileHomeFrames(town, frames) {
     town.homeKeys.push(record.buildingKey);
   }
 }
-/** RMBC8: how high a house's yard box reaches over its floor, metres - two storeys and a roof. */
+/** How high a house's yard box reaches over its floor, metres - two storeys and a roof. */
 export const HOUSE_HEIGHT = 9;
 
-/** RMBC6: the model runs a grown town takes, in turn - the published rows keep their ordinals' runs below the first. */
+/** The model runs a grown town takes, in turn - the published rows keep their ordinals' runs below the first. */
 export const GROWTH_SLOT_FIRST = 16;
 export const GROWTH_SLOTS = 512 - GROWTH_SLOT_FIRST;
 let _nextSlot = 0;
@@ -56,7 +56,7 @@ export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++ % GROWTH_SL
 
 /**
  * A settlement on its built pixel, dressed: its plan, its pieces and its doors, pixel-local. Pure but for the model map.
- * RMBC6: a grown town's outskirts carry their own input and job (world/settlement/townGrowth.js), and take `slot`'s run.
+ * a grown town's outskirts carry their own input and job (world/settlement/townGrowth.js), and take `slot`'s run.
  * @param {{ px: number, py: number, settlement: { ordinal: number, layout: any, growth?: boolean, input?: any, job?: any } }} p
  * @param {any} blocksFile @param {number} [slot]
  */
@@ -97,10 +97,10 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     if (!made) return;
     _models.set(made.groundId, made.ground);
     for (const x of made.pieces) _models.set(x.id, x.piece.model);
-    // PLACE-LRU: its meshes held through its own hold, let go as it goes (scenes/dataPipeline.js holdPlace)
+    // Its meshes held through its own hold, let go as it goes (scenes/dataPipeline.js holdPlace)
     const hold = pipeline?.holdPlace?.('settlement', key) ?? null;
     const s = { key, px: p.px, py: p.py, ...made, hold, meshes: new Map(), colAt: null, scene: null, homeFrames: null, homeKeys: [] };
-    fileHomeFrames(s, p.homeFrames);   // RMBC8: its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
+    fileHomeFrames(s, p.homeFrames);   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
     stood.set(key, s);
     mesh(s, s.groundId);
     for (const x of s.pieces) { mesh(s, x.id); mesh(s, x.piece.doorId); }

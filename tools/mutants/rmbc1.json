@@ -2,8 +2,8 @@
   {
     "name": "RMBC1-band-edge-moved",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (key < RMB_KEY_LIMIT || key === HOME_KEY_MAX) return 'rmb';",
-    "new": "if (key <= RMB_KEY_LIMIT || key === HOME_KEY_MAX) return 'rmb';",
+    "old": "  if (key < RMB_KEY_LIMIT || key === HOME_KEY_MAX) return 'rmb';",
+    "new": "  if (key <= RMB_KEY_LIMIT || key === HOME_KEY_MAX) return 'rmb';",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RMBC1-key0-unread",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (key < RMB_KEY_LIMIT || key === HOME_KEY_MAX) return 'rmb';",
-    "new": "if (key < RMB_KEY_LIMIT) return 'rmb';",
+    "old": "  if (key < RMB_KEY_LIMIT || key === HOME_KEY_MAX) return 'rmb';",
+    "new": "  if (key < RMB_KEY_LIMIT) return 'rmb';",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC1-minted-foot-open",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "return key >= MINTED_KEY_MIN && key <= MINTED_KEY_MAX ? 'minted' : 'none';",
-    "new": "return key > MINTED_KEY_MIN && key <= MINTED_KEY_MAX ? 'minted' : 'none';",
+    "old": "  return key >= MINTED_KEY_MIN && key <= MINTED_KEY_MAX ? 'minted' : 'none';",
+    "new": "  return key > MINTED_KEY_MIN && key <= MINTED_KEY_MAX ? 'minted' : 'none';",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RMBC1-parts-key0",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "const k = key === HOME_KEY_MAX ? 0 : key;",
-    "new": "const k = key;",
+    "old": "  const k = key === HOME_KEY_MAX ? 0 : key;",
+    "new": "  const k = key;",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RMBC1-lift-dropped",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "return pad ? pad.y + (b.lift ?? 0) : null;",
-    "new": "return pad ? pad.y : null;",
+    "old": "  return pad ? pad.y + (b.lift ?? 0) : null;",
+    "new": "  return pad ? pad.y : null;",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RMBC1-print-unordered",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "Object.keys(v).sort()",
-    "new": "Object.keys(v)",
+    "old": "    : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v);",
+    "new": "    : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).map((k) => [k, canon(v[k])])) : v);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC1-off-pad-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    if (!onePad(b.footprint, pad)) bad('off-pad', at,",
-    "new": "    if (false) bad('off-pad', at,",
+    "old": "    if (!onePad(b.footprint, pad)) bad('off-pad', at, `reaches past pad '${b.pad}': it would float over lower ground or sink into higher`);",
+    "new": "    if (false) bad('off-pad', at, `reaches past pad '${b.pad}': it would float over lower ground or sink into higher`);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RMBC1-overlap-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "for (const other of walled) if (ringsOverlap(",
-    "new": "for (const other of walled) if (false && ringsOverlap(",
+    "old": "    for (const other of walled) if (ringsOverlap(b.footprint, /** @type {Pt[]} */ (other.footprint))) bad('overlap', at, `overlaps building ${other.key}`);",
+    "new": "    for (const other of walled) if (false && ringsOverlap(b.footprint, /** @type {Pt[]} */ (other.footprint))) bad('overlap', at, `overlaps building ${other.key}`);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RMBC1-walk-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "      stack.push(...(ways.get(id) ?? []));\n",
-    "new": "",
+    "old": "      stack.push(...(ways.get(id) ?? []));\n    }",
+    "new": "    }",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RMBC1-pitch-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {",
-    "new": "if (l.kind === 'grade' ? rise > STEP_MAX : false) {",
+    "old": "    if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {",
+    "new": "    if (l.kind === 'grade' ? rise > STEP_MAX : false) {",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RMBC1-step-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {",
-    "new": "if (l.kind === 'grade' ? false : rise > PITCH_MAX[l.kind] * run) {",
+    "old": "    if (l.kind === 'grade' ? rise > STEP_MAX : rise > PITCH_MAX[l.kind] * run) {",
+    "new": "    if (l.kind === 'grade' ? false : rise > PITCH_MAX[l.kind] * run) {",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RMBC1-stairs-pitch-moved",
     "file": "src/world/settlement/settlementLimits.js",
-    "old": "stairs: 0.75,",
-    "new": "stairs: 1,",
+    "old": "export const PITCH_MAX = Object.freeze({ grade: Infinity, stairs: 0.75, ramp: 0.25, bridge: 0.25 });",
+    "new": "export const PITCH_MAX = Object.freeze({ grade: Infinity, stairs: 1, ramp: 0.25, bridge: 0.25 });",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RMBC1-no-entrance-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (!Array.isArray(b.entrances) || !b.entrances.length) { bad('no-entrance'",
-    "new": "if (false) { bad('no-entrance'",
+    "old": "    if (!Array.isArray(b.entrances) || !b.entrances.length) { bad('no-entrance', at, `is ${b.access} but has no door`); continue; }",
+    "new": "    if (false) { bad('no-entrance', at, `is ${b.access} but has no door`); continue; }",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RMBC1-off-wall-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (edgeDistance(e.at, b.footprint) > WALL_REACH) {",
-    "new": "if (false) {",
+    "old": "      if (edgeDistance(e.at, b.footprint) > WALL_REACH) { bad('entrance-off-wall', eat, `stands more than ${WALL_REACH} m from the wall`); continue; }",
+    "new": "      if (false) { bad('entrance-off-wall', eat, `stands more than ${WALL_REACH} m from the wall`); continue; }",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RMBC1-door-into-house",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "const before = pointInRing(out1, b.footprint) ? null : padOf(out1);",
-    "new": "const before = padOf(out1);",
+    "old": "      const before = pointInRing(out1, b.footprint) ? null : padOf(out1);",
+    "new": "      const before = padOf(out1);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RMBC1-door-step-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (!before || Math.abs(before.y - floor) > STEP_MAX) {",
-    "new": "if (!before) {",
+    "old": "      if (!before || Math.abs(before.y - floor) > STEP_MAX) { bad('entrance-blocked', eat, `no ground within ${STEP_MAX} m of the floor ${APPROACH} m outside it`); continue; }",
+    "new": "      if (!before) { bad('entrance-blocked', eat, `no ground within ${STEP_MAX} m of the floor ${APPROACH} m outside it`); continue; }",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RMBC1-pad-overlap-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "      if (!nested) bad('pad-overlap', at,",
-    "new": "      if (false) bad('pad-overlap', at,",
+    "old": "      if (!nested) bad('pad-overlap', at, `crosses pad ${other.id}'s rim: pads touch or one stands wholly inside the other`);",
+    "new": "      if (false) bad('pad-overlap', at, `crosses pad ${other.id}'s rim: pads touch or one stands wholly inside the other`);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RMBC1-pad-outside-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    if (foot && !ringWithin(pad.poly, foot)) bad('outside', at, 'reaches past the footprint');\n",
-    "new": "",
+    "old": "    if (foot && !ringWithin(pad.poly, foot)) bad('outside', at, 'reaches past the footprint');\n    for (const other of pads.values()) {",
+    "new": "    for (const other of pads.values()) {",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RMBC1-street-pad-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (!pad || ![...s.path, ...mids].every((p) => padOf(p) === pad)) bad('street-off-pad'",
-    "new": "if (!pad) bad('street-off-pad'",
+    "old": "    if (!pad || ![...s.path, ...mids].every((p) => padOf(p) === pad)) bad('street-off-pad', at, `every point must stand on pad '${s.pad}'; a change of height is a link`);",
+    "new": "    if (!pad) bad('street-off-pad', at, `every point must stand on pad '${s.pad}'; a change of height is a link`);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RMBC1-legacy-band-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (b.source === 'legacy' ? band !== 'rmb' : band !== 'minted') {",
-    "new": "if (b.source === 'legacy' ? false : band !== 'minted') {",
+    "old": "    if (b.source === 'legacy' ? band !== 'rmb' : band !== 'minted') {",
+    "new": "    if (b.source === 'legacy' ? false : band !== 'minted') {",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RMBC1-minted-band-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (b.source === 'legacy' ? band !== 'rmb' : band !== 'minted') {",
-    "new": "if (b.source === 'legacy' ? band !== 'rmb' : false) {",
+    "old": "    if (b.source === 'legacy' ? band !== 'rmb' : band !== 'minted') {",
+    "new": "    if (b.source === 'legacy' ? band !== 'rmb' : false) {",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RMBC1-dup-key-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    if (keys.has(b.key)) { bad('id-dup', at, 'two buildings share this key'); continue; }\n",
-    "new": "",
+    "old": "    if (keys.has(b.key)) { bad('id-dup', at, 'two buildings share this key'); continue; }\n    keys.set(b.key, b);",
+    "new": "    keys.set(b.key, b);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RMBC1-version-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (plan?.contract !== SETTLEMENT_CONTRACT_VERSION) {",
-    "new": "if (false) {",
+    "old": "  if (plan?.contract !== SETTLEMENT_CONTRACT_VERSION) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RMBC1-origin-unbounded",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "!worldPixelOk(o.px) || ",
-    "new": "",
+    "old": "  if (!o || !worldPixelOk(o.px) || !worldPixelOk(o.py) || !fin(o.east) || !fin(o.north)) bad('origin', 'plan', 'origin is not a world pixel and metres past it');",
+    "new": "  if (!o || !worldPixelOk(o.py) || !fin(o.east) || !fin(o.north)) bad('origin', 'plan', 'origin is not a world pixel and metres past it');",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RMBC1-rmb-asset-anyone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (b.exterior?.kind === 'rmb' && b.source !== 'legacy') bad(",
-    "new": "if (false) bad(",
+    "old": "    if (b.exterior?.kind === 'rmb' && b.source !== 'legacy') bad('asset', at, 'only a legacy building stands as an RMB record');",
+    "new": "    if (false) bad('asset', at, 'only a legacy building stands as an RMB record');",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RMBC1-link-end-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    if (padOf(l.a) !== from || padOf(l.b) !== to) bad('link-end'",
-    "new": "    if (false) bad('link-end'",
+    "old": "    if (padOf(l.a) !== from || padOf(l.b) !== to) bad('link-end', at, `its ends must stand on pads ${l.from} and ${l.to}`);",
+    "new": "    if (false) bad('link-end', at, `its ends must stand on pads ${l.from} and ${l.to}`);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RMBC1-footprint-left-to-record",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "      if (b.source !== 'legacy') bad('poly', at, 'only a legacy building may leave its footprint to its record');\n      else if",
-    "new": "      if",
+    "old": "      if (b.source !== 'legacy') bad('poly', at, 'only a legacy building may leave its footprint to its record');\n      else if (!inOrOn(b.at, pad.poly)) bad('off-pad', at, `stands off its pad '${b.pad}'`);",
+    "new": "      if (!inOrOn(b.at, pad.poly)) bad('off-pad', at, `stands off its pad '${b.pad}'`);",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RMBC1-next-not-advanced",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "key = keys[b.anchor] = next++;",
-    "new": "key = keys[b.anchor] = next;",
+    "old": "      key = keys[b.anchor] = next++;",
+    "new": "      key = keys[b.anchor] = next;",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RMBC1-kept-key-unread",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "let key = keys[b.anchor];",
-    "new": "let key;",
+    "old": "    let key = keys[b.anchor];",
+    "new": "    let key;",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RMBC1-retire-skipped",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "    delete keys[anchor];\n    retired.push(key);\n",
-    "new": "",
+    "old": "    delete keys[anchor];\n    retired.push(key);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RMBC1-next-reset",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "ledger: Object.freeze({ place: ledger.place, next, keys",
-    "new": "ledger: Object.freeze({ place: ledger.place, next: MINTED_KEY_MIN, keys",
+    "old": "    ledger: Object.freeze({ place: ledger.place, next, keys: Object.freeze(keys), retired: Object.freeze([...ledger.retired, ...retired]) }),",
+    "new": "    ledger: Object.freeze({ place: ledger.place, next: MINTED_KEY_MIN, keys: Object.freeze(keys), retired: Object.freeze([...ledger.retired, ...retired]) }),",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "RMBC1-protected-removed-gone",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "if (guarded.has(key)) { conflicts.push({ code: 'protected-removed'",
-    "new": "if (false) { conflicts.push({ code: 'protected-removed'",
+    "old": "    if (guarded.has(key)) { conflicts.push({ code: 'protected-removed', key, anchor, why: 'a protected building would be removed: its owner keeps it until a migration moves them' }); continue; }",
+    "new": "    if (false) { conflicts.push({ code: 'protected-removed', key, anchor, why: 'a protected building would be removed: its owner keeps it until a migration moves them' }); continue; }",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RMBC1-protected-moved-gone",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "if (guarded.has(key) && before && standOf(before) !== standOf(b)) {",
-    "new": "if (false) {",
+    "old": "    if (guarded.has(key) && before && standOf(before) !== standOf(b)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "RMBC1-lift-not-a-move",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "JSON.stringify([b.pad, b.at, b.yaw, b.lift, b.footprint])",
-    "new": "JSON.stringify([b.pad, b.at, b.yaw, b.footprint])",
+    "old": "const standOf = (b) => JSON.stringify([b.pad, b.at, b.yaw, b.lift, b.footprint]);",
+    "new": "const standOf = (b) => JSON.stringify([b.pad, b.at, b.yaw, b.footprint]);",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "RMBC1-legacy-minted",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "    if (b.source === 'legacy') return b;\n",
-    "new": "",
+    "old": "    if (b.source === 'legacy') return b;\n    if (seen.has(b.anchor)) conflicts.push({ code: 'anchor-dup', anchor: b.anchor, why: 'two buildings share an anchor, so one would take the other\\'s key' });",
+    "new": "    if (seen.has(b.anchor)) conflicts.push({ code: 'anchor-dup', anchor: b.anchor, why: 'two buildings share an anchor, so one would take the other\\'s key' });",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "RMBC1-anchor-dup-gone",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "if (seen.has(b.anchor)) conflicts.push(",
-    "new": "if (false) conflicts.push(",
+    "old": "    if (seen.has(b.anchor)) conflicts.push({ code: 'anchor-dup', anchor: b.anchor, why: 'two buildings share an anchor, so one would take the other\\'s key' });",
+    "new": "    if (false) conflicts.push({ code: 'anchor-dup', anchor: b.anchor, why: 'two buildings share an anchor, so one would take the other\\'s key' });",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "RMBC1-spent-gone",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "if (next > MINTED_KEY_MAX) {",
-    "new": "if (false) {",
+    "old": "      if (next > MINTED_KEY_MAX) { conflicts.push({ code: 'keys-spent', anchor: b.anchor, why: 'the place has minted every key of its band' }); return b; }",
+    "new": "      if (false) { conflicts.push({ code: 'keys-spent', anchor: b.anchor, why: 'the place has minted every key of its band' }); return b; }",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "RMBC1-ledger-next-behind",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "k < MINTED_KEY_MIN || k >= l.next",
-    "new": "k < MINTED_KEY_MIN || k > l.next",
+    "old": "  if (all.some((k) => !Number.isSafeInteger(k) || k < MINTED_KEY_MIN || k >= l.next)) out.push('a key is outside what the ledger minted');",
+    "new": "  if (all.some((k) => !Number.isSafeInteger(k) || k < MINTED_KEY_MIN || k > l.next)) out.push('a key is outside what the ledger minted');",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "RMBC1-ledger-twice-gone",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "if (new Set(all).size !== all.length) out.push(",
-    "new": "if (false) out.push(",
+    "old": "  if (new Set(all).size !== all.length) out.push('a key is kept twice, or kept and retired');",
+    "new": "  if (false) out.push('a key is kept twice, or kept and retired');",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "RMBC1-empty-foot-moved",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "next: MINTED_KEY_MIN, keys: Object.freeze({})",
-    "new": "next: MINTED_KEY_MIN + 1, keys: Object.freeze({})",
+    "old": "export const emptyIdLedger = (place) => Object.freeze({ place, next: MINTED_KEY_MIN, keys: Object.freeze({}), retired: Object.freeze([]) });",
+    "new": "export const emptyIdLedger = (place) => Object.freeze({ place, next: MINTED_KEY_MIN + 1, keys: Object.freeze({}), retired: Object.freeze([]) });",
     "tests": [
       "test/world/settlement/rmbc1_ids.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "RMBC1-legacy-key-reminted",
     "file": "src/world/settlement/legacySettlement.js",
-    "old": "key: s.buildingKey, source: 'legacy'",
-    "new": "key: s.recordIndex + 1, source: 'legacy'",
+    "old": "      key: s.buildingKey, source: 'legacy', anchor: `rmb:${s.blockX},${s.blockY}.${s.recordIndex}`, pad: LEGACY_PAD,",
+    "new": "      key: s.recordIndex + 1, source: 'legacy', anchor: `rmb:${s.blockX},${s.blockY}.${s.recordIndex}`, pad: LEGACY_PAD,",
     "tests": [
       "test/world/settlement/rmbc1_legacy.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "RMBC1-block-origin-dropped",
     "file": "src/world/settlement/legacySettlement.js",
-    "old": "at: [s.blockX * RMB_SIDE + s.position[0], s.blockY * RMB_SIDE + s.position[2]]",
-    "new": "at: [s.position[0], s.position[2]]",
+    "old": "      at: [s.blockX * RMB_SIDE + s.position[0], s.blockY * RMB_SIDE + s.position[2]], yaw: s.rotationY, lift: 0,",
+    "new": "      at: [s.position[0], s.position[2]], yaw: s.rotationY, lift: 0,",
     "tests": [
       "test/world/settlement/rmbc1_legacy.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "RMBC1-minted-decoded",
     "file": "src/world/settlement/legacySettlement.js",
-    "old": "const parts = rmbPartsOfKey(b.key);",
-    "new": "const parts = rmbPartsOfKey(b.key) ?? { x: 0, y: 0, record: 0 };",
+    "old": "    const parts = rmbPartsOfKey(b.key);",
+    "new": "    const parts = rmbPartsOfKey(b.key) ?? { x: 0, y: 0, record: 0 };",
     "tests": [
       "test/world/settlement/rmbc1_legacy.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "RMBC1-room-everywhere",
     "file": "src/world/settlement/legacySettlement.js",
-    "old": "interior: s.hasInterior ? rmb : null",
-    "new": "interior: rmb",
+    "old": "      footprint: null, storeys: null, exterior: rmb, interior: s.hasInterior ? rmb : null, entrances: [],",
+    "new": "      footprint: null, storeys: null, exterior: rmb, interior: rmb, entrances: [],",
     "tests": [
       "test/world/settlement/rmbc1_legacy.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "RMBC1-house-public",
     "file": "src/world/settlement/legacySettlement.js",
-    "old": "access: isResidence(s.buildingType) ? 'private' : 'public'",
-    "new": "access: 'public'",
+    "old": "      access: isResidence(s.buildingType) ? 'private' : 'public',",
+    "new": "      access: 'public',",
     "tests": [
       "test/world/settlement/rmbc1_legacy.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "RMBC1-directory-floor-flat",
     "file": "src/world/settlement/legacySettlement.js",
-    "old": "position: Object.freeze([b.at[0], floorOf(plan, b), b.at[1]])",
-    "new": "position: Object.freeze([b.at[0], 0, b.at[1]])",
+    "old": "      position: Object.freeze([b.at[0], floorOf(plan, b), b.at[1]]), rotationY: b.yaw, hasInterior: !!b.interior,",
+    "new": "      position: Object.freeze([b.at[0], 0, b.at[1]]), rotationY: b.yaw, hasInterior: !!b.interior,",
     "tests": [
       "test/world/settlement/rmbc1_legacy.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "RMBC1-probes-gone",
     "file": "src/world/settlement/settlementGeometry.js",
-    "old": "\n    || innerProbes(a).some((p) => strictlyIn(p, b, 0)) || innerProbes(b).some((p) => strictlyIn(p, a, 0));",
-    "new": ";",
+    "old": "  return a.some((p) => strictlyIn(p, b)) || b.some((p) => strictlyIn(p, a))\n    || innerProbes(a).some((p) => strictlyIn(p, b, 0)) || innerProbes(b).some((p) => strictlyIn(p, a, 0));",
+    "new": "  return a.some((p) => strictlyIn(p, b)) || b.some((p) => strictlyIn(p, a));",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "RMBC1-self-cross-gone",
     "file": "src/world/settlement/settlementGeometry.js",
-    "old": "if (segmentsCross(a, b, c, d) || distanceToSegment(c, a, b) <= GEOM_EPS || distanceToSegment(a, c, d) <= GEOM_EPS) return false;",
-    "new": "if (false) return false;",
+    "old": "      if (segmentsCross(a, b, c, d) || distanceToSegment(c, a, b) <= GEOM_EPS || distanceToSegment(a, c, d) <= GEOM_EPS) return false;",
+    "new": "      if (false) return false;",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "RMBC1-within-cross-gone",
     "file": "src/world/settlement/settlementGeometry.js",
-    "old": "    for (let j = 0; j < outer.length; j++) if (segmentsCross(a, b, outer[j], outer[(j + 1) % outer.length])) return false;\n",
-    "new": "",
+    "old": "    for (let j = 0; j < outer.length; j++) if (segmentsCross(a, b, outer[j], outer[(j + 1) % outer.length])) return false;\n    if (!inOrOn([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], outer)) return false;",
+    "new": "    if (!inOrOn([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], outer)) return false;",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"
     ]

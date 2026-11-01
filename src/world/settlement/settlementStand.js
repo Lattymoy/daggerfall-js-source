@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC3 (2026-10-31, bible/03-World/RMB-Contracts.md RD-15): A SETTLEMENT ON ITS PIXEL, IN THE TERRAIN WORKER.
+// A SETTLEMENT ON ITS PIXEL, IN THE TERRAIN WORKER.
 // A pixel no location stands on and a settlement does: its layout made on the pixel's own natural ground (the samples
 // after the roads, before any carve), its pads carved into that ground, and the layout and the trees' clearing handed back
 // with the pixel. Called by world/terrain/terrainGen.js generatePixelTerrain. Worker-safe: world/ alone.
@@ -34,7 +34,7 @@ export function standSettlementGround(px, py, samples, bare = null) {
   const row = settlementOnPixel(px, py);
   if (!row) return null;
   const input = settlementInput(row, px, py);
-  // RMBC9: laid out on the land with no road cut into it (`bare()`, the kernel's), so its plan is its inputs' and the
+  // Laid out on the land with no road cut into it (`bare()`, the kernel's), so its plan is its inputs' and the
   // land's whatever network a client stands; carved into the ground as it is
   const layout = layoutSettlement(input, sampleEnv(bare?.() ?? samples));
   const metres = Float64Array.from(samples, (s) => s * M);

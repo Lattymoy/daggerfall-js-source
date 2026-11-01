@@ -22,7 +22,7 @@ import { outlineTownLocation, townOutlineBlockJson } from '../world/townOutline.
 import { standTownWall, setTownWallPaths, townWallPathsReader } from '../world/townWalls.js';   // TOWN-SHAPES TS4: a city past the Bay walled on its outline; ROAD-FOLLOW: its gates where its roads come in
 import { startLairSites } from '../systems/starts/startSite.js';
 import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';   // AUDIT TESA II P7: the places past the Bay on the world's registry
-import { settlementPlaceRows, SETTLEMENTS_SOURCE } from '../world/settlement/settlementPlaces.js';   // RMB-CONTRACTS RMBC5: the settlements on the registry
+import { settlementPlaceRows, SETTLEMENTS_SOURCE } from '../world/settlement/settlementPlaces.js';   // the settlements on the registry
 import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // WW7-7: a pixel the roads past the Bay rolled a place on is dry
 import { nearestSafePlace } from '../systems/deathRespawn.js';   // AUDIT TESA II P2/P3: the nearest town of the world
 import { townClimateAt } from '../world/urban/townLook.js';   // URBANIZER U1: a town past the Bay in its province's own stone (the Imperial City aside)
@@ -334,7 +334,7 @@ export function createTamrielPlaces(host) {
       rows: () => pastBayPlaceRows({ pixels: _arenaTemplates ? arenaPixels() : null, templateOf: (p) => arenaTemplateOf(_arenaTemplates, p), capitals: !!_capitalBase }),   // WW7-5: each its location's index
     });
   }
-  // RMB-CONTRACTS RMBC5: THE SETTLEMENTS (world/settlement/settlementPlaces.js) - after the places past the Bay, so a town of
+  // THE SETTLEMENTS (world/settlement/settlementPlaces.js) - after the places past the Bay, so a town of
   // theirs keeps its pixel; no location index (no raid's town), no RMB location behind them (the pixel's worker lays them out)
   if (worldPlaces) worldPlaces.registerLive(SETTLEMENTS_SOURCE, { stamp: () => [tamrielFit()], rows: () => settlementPlaceRows() });
   /** AUDIT TESA II Z7: whether the countryside or a lair may stand on a pixel past the Bay - their rolls' own pick and the

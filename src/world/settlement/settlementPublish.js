@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC7 (2026-10-31, bible/03-World/RMB-Contracts.md RD-6, RD-19, RD-20): WHAT A REVISION MAY NOT MOVE. A
+// WHAT A REVISION MAY NOT MOVE. A
 // town's protected keys are its homes' and halls' (the account service's /v1/homes/town answer, readable by anyone). A
 // published settlement is revised against them through its ledger; a grown town's keys are its anchors' own, so a
 // revision there is refused when a protected key's anchor would be gone. tools/settlementRevise.mjs asks these. Pure.

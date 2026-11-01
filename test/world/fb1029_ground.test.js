@@ -190,7 +190,7 @@ test('ACROSS-EDGE the levels: a location stands where it stood - its level, outl
 });
 
 test('ACROSS-EDGE the records\' frame (MEET_FRAME_LAW 5): a record written before it rides the meets\' move, its height over the ground kept, the row on or off; one stamped 5 takes none; before 4 the town\'s test reads the ground less the meets (mutants: the move dropped; taken by a stamped record; the town\'s test read on the met ground)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, MEET_FRAME_LAW, TOWN_FRAME_LAW], [6, 5, 4]);   // PIN MOVED (RMB-CONTRACTS RMBC3): the stamp 6 - a settlement's carve (PADS_FRAME_LAW, test/world/settlement/rmbc3_ground.test.js)
+  assert.deepEqual([GROUND_FRAME_LAW, MEET_FRAME_LAW, TOWN_FRAME_LAW], [6, 5, 4]);   // the stamp 6: a settlement's carve (PADS_FRAME_LAW)
   const ground = 500, off = 2.5, x = 12, meet = () => 30, town = () => 24, lift = (xx) => 100 + xx;
   const state = { compensation: [0, 7, 0], localFromWorld: (nx, nz) => [nx, nz] };
   for (const landform of [true, false]) {
@@ -230,7 +230,7 @@ test('ACROSS-EDGE the wiring (by source): every pixel\'s job asks the towns of i
   const frame = src('src/scenes/groundFrameHost.js');
   assert.match(frame, /const townMeets = createTownMeets\(\{ groundLocationAt: _liftLocationAt, maps, blocks \}\);/);
   assert.match(frame, /field = landformLiftField\(host\.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere\(\{ before \}\), about\);/);
-  assert.match(frame, /return \{ \.\.\.law, landformLiftAt, groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, townMeets \};/);   // PIN MOVED (RMB-CONTRACTS RMBC3): and a settlement's carve beside it
+  assert.match(frame, /return \{ \.\.\.law, landformLiftAt, groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, townMeets \};/);   // a settlement's carve beside the town's and the meets'
   assert.match(src('src/scenes/world.js'), /const \{ groundFrameHeight, groundFrameNative, restandHeight, scaleOf, townMeets \} = createGroundFrame\(\{/);
   assert.match(src('src/scenes/deepWater/deepWatersHost.js'), /deepWatersLocationRects\(woods, locations, maps, blocks, meetsTown\)/);
   assert.match(src('src/world/deepWater/deepWatersClient.js'), /rows\.push\(\[py \* 1000 \+ px, r\.xMin, r\.xMax, r\.yMin, r\.yMax, \.\.\.\(r\.shape \? \[r\.shape, \.\.\.\(met \? \[1\] : \[\]\)\] : \[\]\)\]\);/);

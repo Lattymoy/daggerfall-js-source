@@ -2,8 +2,8 @@
   {
     "name": "RMBC3-sin-quarter",
     "file": "src/world/settlement/exactMath.js",
-    "old": "return q === 0 ? sinCore(r) : q === 1 ? cosCore(r) :",
-    "new": "return q === 0 ? sinCore(r) : q === 1 ? -cosCore(r) :",
+    "old": "  return q === 0 ? sinCore(r) : q === 1 ? cosCore(r) : q === 2 ? -sinCore(r) : -cosCore(r);",
+    "new": "  return q === 0 ? sinCore(r) : q === 1 ? -cosCore(r) : q === 2 ? -sinCore(r) : -cosCore(r);",
     "tests": [
       "test/world/settlement/rmbc3_exact.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC3-engine-sin-back",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  return { c, toW: (u, v) => /** @type {Pt} */ ([cm(c[0] + v * dsin(u)),",
-    "new": "  return { c, toW: (u, v) => /** @type {Pt} */ ([cm(c[0] + v * Math.sin(u)),",
+    "old": "  return { c, toW: (u, v) => /** @type {Pt} */ ([cm(c[0] + v * dsin(u)), cm(c[1] + v * dcos(u))]), du: (s, v) => s / Math.max(v, 1e-6) };",
+    "new": "  return { c, toW: (u, v) => /** @type {Pt} */ ([cm(c[0] + v * Math.sin(u)), cm(c[1] + v * dcos(u))]), du: (s, v) => s / Math.max(v, 1e-6) };",
     "tests": [
       "test/world/settlement/rmbc3_exact.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RMBC3-deck-carved",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "  if (on && (on.base === 'raised' || on.legacy)) return null;   // RMBC6: a legacy core's ground is its town's own\n",
-    "new": "",
+    "old": "  if (on && (on.base === 'raised' || on.legacy)) return null;   // A legacy core's ground is its town's own\n  let low = Infinity, near = Infinity;",
+    "new": "  let low = Infinity, near = Infinity;",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RMBC3-lane-unflagged",
     "file": "src/world/settlement/settlementPlaces.js",
-    "old": "=== SETTLEMENT_LANE && (Number(id) & 0x80000) !== 0;",
-    "new": "=== SETTLEMENT_LANE;",
+    "old": "export const isSettlementPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === SETTLEMENT_LANE && (Number(id) & 0x80000) !== 0;",
+    "new": "export const isSettlementPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === SETTLEMENT_LANE;",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]

@@ -1,11 +1,11 @@
-#!/usr/bin/env node
-// RMB-CONTRACTS RMBC5 (bible/03-World/RMB-Contracts.md RD-16): WHERE THE SETTLEMENTS STAND. On the player's own files (the
+// /usr/bin/env node
+// WHERE THE SETTLEMENTS STAND. On the player's own files (the
 // map picture traced and fitted as the world host does, WOODS.WLD past the Bay's seam), each province's settlement is laid
 // out on pixel after pixel of its land that no place holds - no Arena town, capital, countryside place or lair on it or
 // beside it - and the best one whose fit is ok is kept. The row written publishes inputs alone: the pixel as a point of
 // the picture, the site, the structure the ground chose (fixed, so every client lays the same cells) and the key ledger.
 // Nothing derived from the player's ground is written (Port-Doctrine).
-//   ARENA2_PATH=... node tools/settlementSites.mjs [--write] [--svg scratch/settlement-sites]
+//  ARENA2_PATH=... node tools/settlementSites.mjs [--write] [--svg scratch/settlement-sites]
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ImgFile } from '../src/formats/imgFile.js';

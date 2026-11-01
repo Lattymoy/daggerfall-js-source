@@ -294,8 +294,8 @@ test('RELIEF-PEAKS the far views\' wiring (by source): the far ring\'s grid on r
 // ── THE RECORDS PAST THE BAY ──────────────────────────────────────
 
 test('RELIEF-PEAKS the records\' frame (GROUND_FRAME_LAW 3): a record past the Bay written before it stood DFU\'s ground of its day, so it rides that ground\'s own move - with the row on or off, its height over the ground kept; a stamped record and the Bay\'s take none; D5\'s old lift still LIFT_FRAME_LAW\'s (mutants: the move dropped; dropped with the row off; taken by a stamped record; taken on the Bay; the old lift by the new law)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [6, 3, 2]);   // PIN MOVED (RMB-CONTRACTS RMBC3): the stamp 6, a settlement's carve; PIN MOVED (FB1029 ACROSS-EDGE): the stamp 5 (test/world/fb1029_ground.test.js); PIN MOVED (FB1028 TOWN-GROUND): the stamp 4, RELIEF-PEAKS' own law RELIEF_FRAME_LAW (test/world/terrain/fb1028_townground_frame.test.js)
-  assert.equal(RECORD_GROUND_STAMP.groundFrame, 6);   // PIN MOVED (RMB-CONTRACTS RMBC3): records now stamp 6
+  assert.deepEqual([GROUND_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [6, 3, 2]);   // the stamp 6: a settlement's carve. PIN MOVED (FB1029 ACROSS-EDGE): the stamp 5 (test/world/fb1029_ground.test.js); PIN MOVED (FB1028 TOWN-GROUND): the stamp 4, RELIEF-PEAKS' own law RELIEF_FRAME_LAW (test/world/terrain/fb1028_townground_frame.test.js)
+  assert.equal(RECORD_GROUND_STAMP.groundFrame, 6);
   const now = (x) => 100 + x, before = (x) => 40 + x, moved = (x) => 25 + x / 4;   // the lift now and on the old law's ground; DFU's ground's move
   const liftAt = (x, z, o = {}) => (o.before ? before(x) : now(x));
   const ground = 500;   // DFU's ground today at the spot: ground - moved(x) when the record was written
@@ -352,7 +352,7 @@ test('RELIEF-PEAKS the records\' wiring (by source): the host hands its frame th
     assert.equal(k({ ranges: false }), sampleKernel(g, px, py, 129, true, createLandforms({ woods: g, ranges: false }))(64, 64) * MAX_TERRAIN_HEIGHT);
   });
   const host = read('src/scenes/groundFrameHost.js'), w = read('src/scenes/world.js'), lf = read('src/world/landforms.js');
-  assert.match(host, /movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt \}\);/);   // PIN MOVED (RMB-CONTRACTS RMBC3): and a settlement's carve   // PIN MOVED (FB1028 TOWN-GROUND): the town's blend's move handed beside it; PIN MOVED (FB1029 ACROSS-EDGE): and the meets'
+  assert.match(host, /movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt \}\);/);   // PIN MOVED (FB1028 TOWN-GROUND): the town's blend's move handed beside it; PIN MOVED (FB1029 ACROSS-EDGE): and the meets'
   assert.match(host, /moved = groundMovedField\(woods, px, py, rect\);/);
   assert.match(host, /const t = host\.state\.pixelTranslation\(px, py\), rect = liftRectAt\(px, py\);\n\s*const key = `\$\{px\},\$\{py\},\$\{rect \?/);
   assert.match(w, /climates: _landformClimates, ranges: !before \}\) : null\);/);

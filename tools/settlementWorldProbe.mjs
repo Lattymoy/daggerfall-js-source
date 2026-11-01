@@ -1,9 +1,9 @@
-#!/usr/bin/env node
-// RMB-CONTRACTS RMBC4 (bible/03-World/RMB-Contracts.md): A SETTLEMENT IN THE RUNNING GAME. Boots the streaming world in shot
+// /usr/bin/env node
+// A SETTLEMENT IN THE RUNNING GAME. Boots the streaming world in shot
 // mode, jumps to a settlement's pixel (window.__tesaJump), waits for its host to stand it (window.__settlementView), and
 // shoots it from the air and from a street; then walks to a door and presses it, and says whether the rooms opened.
 // Needs ARENA2 (the dev server's /arena2). The shots are of the player's own ground: they stay in scratch/.
-//   ARENA2_PATH=... node tools/settlementWorldProbe.mjs [px py] [--out scratch/settlement-world]
+//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [px py] [--out scratch/settlement-world]
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';

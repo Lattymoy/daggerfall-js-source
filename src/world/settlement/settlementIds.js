@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC1 (2026-10-31, bible/03-World/RMB-Contracts.md): A NEW BUILDING'S KEY IS KEPT, NOT DERIVED. The ledger
+// A NEW BUILDING'S KEY IS KEPT, NOT DERIVED. The ledger
 // mints a key once for a plot's anchor and keeps it there through every regeneration; an anchor that goes retires its key,
 // which is never minted again. A key the account service protects (a home, a hall, a rental, a recall) is neither retired
 // nor moved without an explicit migration: the reconcile refuses. Legacy keys are their RMB records' and pass untouched.
@@ -17,7 +17,7 @@ import { hash32 } from '../blockHash.js';
 export const emptyIdLedger = (place) => Object.freeze({ place, next: MINTED_KEY_MIN, keys: Object.freeze({}), retired: Object.freeze([]) });
 
 /**
- * RMBC7 (RD-19): A GROWN TOWN'S LEDGER, ITS ANCHORS' OWN. Each anchor's key is a hash of its place and its name in the
+ * A GROWN TOWN'S LEDGER, ITS ANCHORS' OWN. Each anchor's key is a hash of its place and its name in the
  * minted band, so a plot added or dropped moves no other key and every client agrees with no ledger shipped. Two names
  * on one hash (about one town in 5,000) probe forward in sorted order: the later one's key hangs on the earlier, and
  * protectedGone refuses a protected key that changes hands.

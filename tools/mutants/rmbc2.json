@@ -11,8 +11,8 @@
   {
     "name": "RMBC2-one-ring-nested",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "const nested = Math.abs(ringArea2(pad.poly)) !== Math.abs(ringArea2(other.poly)) && (",
-    "new": "const nested = (",
+    "old": "      const nested = Math.abs(ringArea2(pad.poly)) !== Math.abs(ringArea2(other.poly)) && (ringWithin(pad.poly, other.poly) || ringWithin(other.poly, pad.poly));",
+    "new": "      const nested = (ringWithin(pad.poly, other.poly) || ringWithin(other.poly, pad.poly));",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC2-half-over-nested",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "(ringWithin(pad.poly, other.poly) || ringWithin(other.poly, pad.poly))",
-    "new": "true",
+    "old": "      const nested = Math.abs(ringArea2(pad.poly)) !== Math.abs(ringArea2(other.poly)) && (ringWithin(pad.poly, other.poly) || ringWithin(other.poly, pad.poly));",
+    "new": "      const nested = Math.abs(ringArea2(pad.poly)) !== Math.abs(ringArea2(other.poly)) && true;",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC2-onepad-smaller-unread",
     "file": "src/world/settlement/settlementContract.js",
-    "old": " && !padList.some((q) => q !== pad && Math.abs(ringArea2(q.poly)) < a && ringsOverlap(ring, q.poly))",
-    "new": "",
+    "old": "    return ringWithin(ring, pad.poly) && !padList.some((q) => q !== pad && Math.abs(ringArea2(q.poly)) < a && ringsOverlap(ring, q.poly));",
+    "new": "    return ringWithin(ring, pad.poly);",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RMBC2-base-unchecked",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (pad.base !== undefined && !PAD_BASES.includes(pad.base)) bad('pad'",
-    "new": "if (false) bad('pad'",
+    "old": "    if (pad.base !== undefined && !PAD_BASES.includes(pad.base)) bad('pad', at, `base '${pad.base}' is not one of ${PAD_BASES}`);",
+    "new": "    if (false) bad('pad', at, `base '${pad.base}' is not one of ${PAD_BASES}`);",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RMBC2-plot-overlap-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    for (const other of plots.values()) if (ringsOverlap(pl.poly, other.poly)) bad('overlap'",
-    "new": "    for (const other of plots.values()) if (false) bad('overlap'",
+    "old": "    for (const other of plots.values()) if (ringsOverlap(pl.poly, other.poly)) bad('overlap', at, `overlaps plot ${other.id}`);",
+    "new": "    for (const other of plots.values()) if (false) bad('overlap', at, `overlaps plot ${other.id}`);",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RMBC2-plot-pad-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "    if (!onePad(pl.poly, pad)) bad('off-pad'",
-    "new": "    if (false) bad('off-pad'",
+    "old": "    if (!onePad(pl.poly, pad)) bad('off-pad', at, `reaches past pad '${pl.pad}'`);",
+    "new": "    if (false) bad('off-pad', at, `reaches past pad '${pl.pad}'`);",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RMBC2-off-plot-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (plot && !ringWithin(b.footprint, plot.poly)) bad('off-plot'",
-    "new": "if (false) bad('off-plot'",
+    "old": "    if (plot && !ringWithin(b.footprint, plot.poly)) bad('off-plot', at, `reaches past its plot '${plot.id}'`);",
+    "new": "    if (false) bad('off-plot', at, `reaches past its plot '${plot.id}'`);",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC2-feature-kind-gone",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "if (!FEATURE_KINDS.includes(f.kind)) { bad('feature'",
-    "new": "if (false) { bad('feature'",
+    "old": "    if (!FEATURE_KINDS.includes(f.kind)) { bad('feature', at, `kind '${f.kind}' is not one of ${FEATURE_KINDS}`); continue; }",
+    "new": "    if (false) { bad('feature', at, `kind '${f.kind}' is not one of ${FEATURE_KINDS}`); continue; }",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RMBC2-feature-pad-unread",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "f.pad !== undefined ? padOf(f.at) !== pads.get(f.pad) : !foot || !inOrOn(f.at, foot)",
-    "new": "f.pad !== undefined ? false : !foot || !inOrOn(f.at, foot)",
+    "old": "    if (f.at !== undefined && (!ptOk(f.at) || (f.pad !== undefined ? padOf(f.at) !== pads.get(f.pad) : !foot || !inOrOn(f.at, foot)))) bad('feature', at, f.pad !== undefined ? `does not stand on pad '${f.pad}'` : 'stands past the footprint');",
+    "new": "    if (f.at !== undefined && (!ptOk(f.at) || (f.pad !== undefined ? false : !foot || !inOrOn(f.at, foot)))) bad('feature', at, f.pad !== undefined ? `does not stand on pad '${f.pad}'` : 'stands past the footprint');",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RMBC2-feature-path-unread",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "!f.path.every((p) => ptOk(p) && !!foot && inOrOn(p, foot))",
-    "new": "false",
+    "old": "    if (f.path !== undefined && (!Array.isArray(f.path) || f.path.length < 2 || !f.path.every((p) => ptOk(p) && !!foot && inOrOn(p, foot)))) bad('feature', at, 'its path must run inside the footprint');",
+    "new": "    if (f.path !== undefined && (!Array.isArray(f.path) || f.path.length < 2 || false)) bad('feature', at, 'its path must run inside the footprint');",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RMBC2-gate-pad-unread",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "!ptOk(g.at) || padOf(g.at) !== pads.get(g.pad)",
-    "new": "!ptOk(g.at)",
+    "old": "    if (!pads.has(g.pad) || !ptOk(g.at) || padOf(g.at) !== pads.get(g.pad)) { bad('gate', at, `does not stand on pad '${g.pad}'`); continue; }",
+    "new": "    if (!pads.has(g.pad) || !ptOk(g.at)) { bad('gate', at, `does not stand on pad '${g.pad}'`); continue; }",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RMBC2-relax-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      f.h = Math.max(least(f), f.h + s * share);\n      t.h = Math.max(least(t), t.h - s * (1 - share));\n",
-    "new": "",
+    "old": "      f.h = Math.max(least(f), f.h + s * share);\n      t.h = Math.max(least(t), t.h - s * (1 - share));\n    }",
+    "new": "    }",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RMBC2-deck-floor-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);",
-    "new": "const least = (c) => -Infinity;",
+    "old": "  const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);",
+    "new": "  const least = (c) => -Infinity;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RMBC2-terrace-cap-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02,",
-    "new": "max: pitch * 0.95 - 0.02,",
+    "old": "    return { ...w, a, b, run, bridge, max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02, width: w.kind === 'along' ? ws : wl };",
+    "new": "    return { ...w, a, b, run, bridge, max: pitch * 0.95 - 0.02, width: w.kind === 'along' ? ws : wl };",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RMBC2-bridge-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const bridge = f.raised && t.raised && gap > 0;",
-    "new": "const bridge = false;",
+    "old": "    const bridge = f.raised && t.raised && gap > 0;",
+    "new": "    const bridge = false;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RMBC2-landing-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (g && islands && deck > STEP_MAX) { g.raised = false; g.h = g.natural; }",
-    "new": "if (false) { g.raised = false; g.h = g.natural; }",
+    "old": "    if (g && islands && deck > STEP_MAX) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on the ground",
+    "new": "    if (false) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on the ground",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RMBC2-front-sag-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const half = (p1 - p0) / 2, sag = rf * (1 - dcos(half));",
-    "new": "const half = (p1 - p0) / 2, sag = 0;",
+    "old": "      const half = (p1 - p0) / 2, sag = rf * (1 - dcos(half));",
+    "new": "      const half = (p1 - p0) / 2, sag = 0;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RMBC2-back-sag-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "backSag = (rf + depth) * (1 - dcos(Math.min(half, step / 2)));",
-    "new": "backSag = 0;",
+    "old": "      const step = (c.u1 - c.u0) / Math.max(1, grids[c.j].length - 1), backSag = (rf + depth) * (1 - dcos(Math.min(half, step / 2)));",
+    "new": "      const step = (c.u1 - c.u0) / Math.max(1, grids[c.j].length - 1), backSag = 0;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RMBC2-temple-divine-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "factionId: T[s.type] === T.Temple ? DIVINES[st.temple] :",
-    "new": "factionId: T[s.type] === T.Temple ? 0 :",
+    "old": "  const serve = (/** @type {any} */ plot, /** @type {any} */ s) => taken.set(plot.id, { type: T[s.type], factionId: T[s.type] === T.Temple ? DIVINES[st.temple] : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 });",
+    "new": "  const serve = (/** @type {any} */ plot, /** @type {any} */ s) => taken.set(plot.id, { type: T[s.type], factionId: T[s.type] === T.Temple ? 0 : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 });",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RMBC2-ledger-unread",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "input.ledger ?? emptyIdLedger(place);",
-    "new": "emptyIdLedger(place);",
+    "old": "  const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);",
+    "new": "  const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : emptyIdLedger(place);",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RMBC2-dress-unseeded",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0;",
-    "new": "const base = 0;",
+    "old": "  const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };",
+    "new": "  const rngOf = (/** @type {number} */ j) => { const base = 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };",
     "tests": [
       "test/world/settlement/rmbc3_exact.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RMBC2-shore-sag-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "back = shore.at - 2 - sag;",
-    "new": "back = shore.at - 2;",
+    "old": "      const sag = R0 * (1 - dcos(size / (R0 + depthAll / 2) / 2)), back = shore.at - 2 - sag;",
+    "new": "      const sag = R0 * (1 - dcos(size / (R0 + depthAll / 2) / 2)), back = shore.at - 2;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RMBC2-docks-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const n = Math.max(1, Math.floor(size / 24));",
-    "new": "const n = 0;",
+    "old": "    const n = Math.max(1, Math.floor(size / 24));",
+    "new": "    const n = 0;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RMBC2-roads-unread",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const wants = roads.length ? roads.map(",
-    "new": "const wants = false ? roads.map(",
+    "old": "    const wants = roads.length ? roads.map((d) => (d * Math.PI) / 180) : Array.from({ length: A.gates }, (_, i) => uStart + ((i + 0.5) * TAU) / A.gates);",
+    "new": "    const wants = false ? roads.map((d) => (d * Math.PI) / 180) : Array.from({ length: A.gates }, (_, i) => uStart + ((i + 0.5) * TAU) / A.gates);",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RMBC2-fit-few-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "fit.buildings >= fit.least && ",
-    "new": "",
+    "old": "      ok: !problems.length && !ids.conflicts.length && fit.buildings >= fit.least && fit.cutMax <= fit.cutLimit, fit,",
+    "new": "      ok: !problems.length && !ids.conflicts.length && fit.cutMax <= fit.cutLimit, fit,",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RMBC2-fit-cut-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": " && fit.cutMax <= fit.cutLimit",
-    "new": "",
+    "old": "      ok: !problems.length && !ids.conflicts.length && fit.buildings >= fit.least && fit.cutMax <= fit.cutLimit, fit,",
+    "new": "      ok: !problems.length && !ids.conflicts.length && fit.buildings >= fit.least, fit,",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RMBC2-open-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "|| draw(17, c.k, c.j, local) < openShare",
-    "new": "",
+    "old": "      if (width < 5 || bd < 5 || draw(17, c.k, c.j, local) < openShare) {",
+    "new": "      if (width < 5 || bd < 5 ) {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RMBC2-keep-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (A.keep && cells.has('plaza') && !core) {",
-    "new": "if (false) {",
+    "old": "  if (A.keep && cells.has('plaza') && !core) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RMBC2-valenwood-cut",
     "file": "src/world/settlement/settlementStyles.js",
-    "old": "deck: 4,",
-    "new": "deck: 0,",
+    "old": "  Valenwood: style({ look: 'Valenwood', ground: 'mossStone', wall: 'facadeTimber', roofArt: 'roof', pitch: 40, storeys: [1, 1], roof: 'gable', frontage: [7, 10], depth: [7, 9], gap: 3, street: 3, lane: 2, back: 2, deck: 4, terrace: 2, temple: 'Zenithar' }),",
+    "new": "  Valenwood: style({ look: 'Valenwood', ground: 'mossStone', wall: 'facadeTimber', roofArt: 'roof', pitch: 40, storeys: [1, 1], roof: 'gable', frontage: [7, 10], depth: [7, 9], gap: 3, street: 3, lane: 2, back: 2, deck: 0, terrace: 2, temple: 'Zenithar' }),",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RMBC2-elsweyr-dropped",
     "file": "src/world/settlement/settlementStyles.js",
-    "old": "  Elsweyr: style({",
-    "new": "  ElsweyrGone: style({",
+    "old": "  Elsweyr: style({ look: 'Elsweyr', ground: 'sandstone', wall: 'facadeOchre', roofArt: 'terracotta', pitch: 0, storeys: [1, 2], roof: 'flat', frontage: [8, 12], depth: [9, 12], gap: 1, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: 'Akatosh' }),",
+    "new": "  ElsweyrGone: style({ look: 'Elsweyr', ground: 'sandstone', wall: 'facadeOchre', roofArt: 'terracotta', pitch: 0, storeys: [1, 2], roof: 'flat', frontage: [8, 12], depth: [9, 12], gap: 1, street: 4.5, lane: 2.5, back: 2, deck: 0, terrace: 3, temple: 'Akatosh' }),",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RMBC2-side-exact",
     "file": "src/world/settlement/settlementGeometry.js",
-    "old": "return s > GEOM_EPS ? 1 : s < -GEOM_EPS ? -1 : 0;",
-    "new": "return s > 0 ? 1 : s < 0 ? -1 : 0;",
+    "old": "const side = (c, d, p) => { const s = cross(c, d, p) / (dhypot(d[0] - c[0], d[1] - c[1]) || 1); return s > GEOM_EPS ? 1 : s < -GEOM_EPS ? -1 : 0; };",
+    "new": "const side = (c, d, p) => { const s = cross(c, d, p) / (dhypot(d[0] - c[0], d[1] - c[1]) || 1); return s > 0 ? 1 : s < 0 ? -1 : 0; };",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RMBC2-layout-unseeded",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
-    "new": "const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
+    "old": "  const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
+    "new": "  const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]

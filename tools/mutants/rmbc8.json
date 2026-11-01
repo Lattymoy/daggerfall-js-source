@@ -2,8 +2,8 @@
   {
     "name": "RMBC8-town-blocks-one",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "const blocks = Math.max(1, (grid?.width ?? 1) * (grid?.height ?? 1));",
-    "new": "const blocks = 1;",
+    "old": "  const blocks = Math.max(1, (grid?.width ?? 1) * (grid?.height ?? 1));   // Its houses priced by its town's size",
+    "new": "  const blocks = 1;   // Its houses priced by its town's size",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RMBC8-record-blocks-one",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "townBlocks: town.blocks ?? 1,",
-    "new": "townBlocks: 1,",
+    "old": "    footprintM2: Math.round(area), regionIndex: town.regionIndex, townMapId: town.place >>> 0, townBlocks: town.blocks ?? 1, townName: town.name,",
+    "new": "    footprintM2: Math.round(area), regionIndex: town.regionIndex, townMapId: town.place >>> 0, townBlocks: 1, townName: town.name,",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC8-host-blocks-dropped",
     "file": "src/scenes/settlementHost.js",
-    "old": "blocks: held.growth ? held.job.blocks ?? 1 : 1 };",
-    "new": "blocks: 1 };",
+    "old": "  const town = { place: input.place, name, regionIndex: held.growth ? held.job.regionIndex : regionOfTheatre(theatreAt(p.px, p.py)), blocks: held.growth ? held.job.blocks ?? 1 : 1 };",
+    "new": "  const town = { place: input.place, name, regionIndex: held.growth ? held.job.regionIndex : regionOfTheatre(theatreAt(p.px, p.py)), blocks: 1 };",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC8-frames-unfiled",
     "file": "src/scenes/settlementHost.js",
-    "old": "    fileHomeFrames(s, p.homeFrames);",
-    "new": "    void p;",
+    "old": "    fileHomeFrames(s, p.homeFrames);   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)",
+    "new": "    void p;   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RMBC8-shop-filed",
     "file": "src/scenes/settlementHost.js",
-    "old": "if (!isResidence(record.buildingType) || frames.has(record.buildingKey)) continue;",
-    "new": "if (frames.has(record.buildingKey)) continue;",
+    "old": "    if (!isResidence(record.buildingType) || frames.has(record.buildingKey)) continue;",
+    "new": "    if (frames.has(record.buildingKey)) continue;",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RMBC8-frame-flat",
     "file": "src/scenes/settlementHost.js",
-    "old": "box: [rect[0], floor, rect[1], rect[2], floor + HOUSE_HEIGHT, rect[3]]",
-    "new": "box: [rect[0], floor, rect[1], rect[2], floor, rect[3]]",
+    "old": "    frames.set(record.buildingKey, { at: [b.at[0], floor, b.at[1]], box: [rect[0], floor, rect[1], rect[2], floor + HOUSE_HEIGHT, rect[3]], rects: [rect], grounds: [], type: record.buildingType, faction: record.factionId ?? 0, parts: [], terraced: false });",
+    "new": "    frames.set(record.buildingKey, { at: [b.at[0], floor, b.at[1]], box: [rect[0], floor, rect[1], rect[2], floor, rect[3]], rects: [rect], grounds: [], type: record.buildingType, faction: record.factionId ?? 0, parts: [], terraced: false });",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RMBC8-home-town-unnamed",
     "file": "src/world/settlement/townGrowthJob.js",
-    "old": "(settlement && !settlement.growth ? settlement.mapId >>> 0 : 0)",
-    "new": "0",
+    "old": "export const settlementHomeTown = (settlement) => (settlement && !settlement.growth ? settlement.mapId >>> 0 : 0);",
+    "new": "export const settlementHomeTown = (settlement) => 0;",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC8-home-region-bay",
     "file": "src/world/settlement/townGrowthJob.js",
-    "old": "(settlement ? regionOfTheatre(theatreAt(px, py)) : 0)",
-    "new": "0",
+    "old": "export const settlementHomeRegion = (settlement, px, py) => (settlement ? regionOfTheatre(theatreAt(px, py)) : 0);",
+    "new": "export const settlementHomeRegion = (settlement, px, py) => 0;",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]

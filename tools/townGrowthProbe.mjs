@@ -1,9 +1,9 @@
-#!/usr/bin/env node
-// RMB-CONTRACTS RMBC6 (bible/03-World/RMB-Contracts.md): A TOWN'S OUTSKIRTS IN THE RUNNING GAME. Boots the streaming world in
+// /usr/bin/env node
+// A TOWN'S OUTSKIRTS IN THE RUNNING GAME. Boots the streaming world in
 // shot mode at a town (`?region=&loc=`), waits for the settlement host to stand its outskirts (window.__settlementView),
 // judges they stood with every mesh, and shoots them from the air. Needs ARENA2 (the dev server's /arena2). The shots are
 // of the player's own ground: they stay in scratch/.
-//   ARENA2_PATH=... node tools/townGrowthProbe.mjs [region] [town] [--out scratch/town-growth]
+//  ARENA2_PATH=... node tools/townGrowthProbe.mjs [region] [town] [--out scratch/town-growth]
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';

@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC1 (bible/03-World/RMB-Contracts.md): A LEGACY TOWN AS A PLAN, on the player's own files - the city of
+// A LEGACY TOWN AS A PLAN, on the player's own files - the city of
 // Daggerfall as MAPS.BSA and BLOCKS.BSA hold it, and the same layout cloned under a Hammerfell town's id the way TESA7
 // stands a town past the Bay (world/arenaLocations.js synthesizeArenaLocation). Every key the game's walk mints is the
 // plan's, and both plans keep the contract.

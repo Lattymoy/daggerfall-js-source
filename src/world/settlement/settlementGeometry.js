@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC1 (2026-10-31, bible/03-World/RMB-Contracts.md): the plane geometry a settlement plan is checked with.
+// the plane geometry a settlement plan is checked with.
 // A point is [east, north] in metres. Touching is not overlap: row houses share a wall and terraces share a rim.
 // Pure; its one import is exactMath.js, so every engine measures alike. Not a DFU member.
 import { dhypot } from './exactMath.js';

@@ -2,8 +2,8 @@
   {
     "name": "RMBC4-ear-convex-gone",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "      if (cross(a, b, c) <= 1e-9) continue;\n",
-    "new": "",
+    "old": "      if (cross(a, b, c) <= 1e-9) continue;\n      const ear = /** @type {any} */ ([a, b, c]);",
+    "new": "      const ear = /** @type {any} */ ([a, b, c]);",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RMBC4-ear-test-gone",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "      if (idx.some((j) => { const p = ring[j]; return p !== a && p !== b && p !== c && pointInRing(p, ear); })) continue;\n",
-    "new": "",
+    "old": "      if (idx.some((j) => { const p = ring[j]; return p !== a && p !== b && p !== c && pointInRing(p, ear); })) continue;\n      out.push([idx[(i + idx.length - 1) % idx.length], idx[i], idx[(i + 1) % idx.length]]);",
+    "new": "      out.push([idx[(i + idx.length - 1) % idx.length], idx[i], idx[(i + 1) % idx.length]]);",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC4-pad-height-flat",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum + p.y]));",
-    "new": "const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum]));",
+    "old": "  const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum + p.y]));",
+    "new": "  const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum]));",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC4-wall-short",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "const low = raised ? y - DECK_RIM : y - WALL_DROP;",
-    "new": "const low = raised ? y - DECK_RIM : y - 1;",
+    "old": "    const low = raised ? y - DECK_RIM : y - WALL_DROP;",
+    "new": "    const low = raised ? y - DECK_RIM : y - 1;",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RMBC4-door-unturned",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "const e = b.entrances[0], ry = e.facing + 180;",
-    "new": "const e = b.entrances[0], ry = e.facing;",
+    "old": "  const e = b.entrances[0], ry = e.facing + 180;   // the door model faces south at its origin: turned to face out",
+    "new": "  const e = b.entrances[0], ry = e.facing;   // the door model faces south at its origin: turned to face out",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RMBC4-building-grounded",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "model: mb.build(), frame: trs(cx, floor, cn, 0, 0, 0),",
-    "new": "model: mb.build(), frame: trs(cx, 0, cn, 0, 0, 0),",
+    "old": "    model: mb.build(), frame: trs(cx, floor, cn, 0, 0, 0), doorId: fabricDoorModelId(donor), doorModel, doorFrame,",
+    "new": "    model: mb.build(), frame: trs(cx, 0, cn, 0, 0, 0), doorId: fabricDoorModelId(donor), doorModel, doorFrame,",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RMBC4-record-key",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "nameSeed: b.nameSeed, buildingKey: b.key, hasInterior: true,",
-    "new": "nameSeed: b.nameSeed, buildingKey: b.key + 1, hasInterior: true,",
+    "old": "    buildingType: b.type, factionId: b.factionId, quality: b.quality, nameSeed: b.nameSeed, buildingKey: b.key, hasInterior: true,",
+    "new": "    buildingType: b.type, factionId: b.factionId, quality: b.quality, nameSeed: b.nameSeed, buildingKey: b.key + 1, hasInterior: true,",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC4-stand-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "        if (!stood.has(key)) stand(p, key);\n",
-    "new": "",
+    "old": "          if (!stood.has(key)) stand(p, key);\n        }",
+    "new": "          }",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RMBC4-takedown-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "      for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);\n",
-    "new": "",
+    "old": "        for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);\n        for (const s of stood.values()) standCollider(s);",
+    "new": "          for (const s of stood.values()) standCollider(s);",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RMBC4-doors-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "      if (exterior()) for (const s of stood.values()) out.push(...scene(s).doors);\n",
-    "new": "",
+    "old": "      if (exterior()) for (const s of stood.values()) out.push(...scene(s).doors);\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RMBC4-feet-ignored",
     "file": "src/scenes/settlementHost.js",
-    "old": "    if (f && !s.colAt && s.plan.buildings.some((b) => inside(b.footprint, f[0] - sc.t[0], f[2] - sc.t[2]))) return;\n",
-    "new": "",
+    "old": "    if (f && !s.colAt && s.plan.buildings.some((b) => inside(b.footprint, f[0] - sc.t[0], f[2] - sc.t[2]))) return;\n    col.removeBucket?.(`settlement:${s.key}`);",
+    "new": "    col.removeBucket?.(`settlement:${s.key}`);",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RMBC4-pixel-layout-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      settlement,   // RMB-CONTRACTS RMBC4:",
-    "new": "      settlementGone: settlement,   // RMB-CONTRACTS RMBC4:",
+    "old": "      settlement,   // its settlement's layout",
+    "new": "      settlementGone: settlement,   // its settlement's layout",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "ORGANIC-paving-unstyled",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "const ground = art(CAPITAL_ART[SETTLEMENT_STYLES[style]?.ground] ?? CAPITAL_ART.bridgeStone);",
-    "new": "const ground = art(CAPITAL_ART.bridgeStone);",
+    "old": "  const ground = art(CAPITAL_ART[SETTLEMENT_STYLES[style]?.ground] ?? CAPITAL_ART.bridgeStone);   // its style's paving",
+    "new": "  const ground = art(CAPITAL_ART.bridgeStone);   // its style's paving",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "ORGANIC-paving-host-unstyled",
     "file": "src/scenes/settlementHost.js",
-    "old": "new Map(L.cells.map((c) => [c.id, c])), style),",
-    "new": "new Map(L.cells.map((c) => [c.id, c]))),",
+    "old": "  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style), pieces, climateBase: townLookBase(style) ?? 300 };",
+    "new": "  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))), pieces, climateBase: townLookBase(style) ?? 300 };",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]

@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC1 (2026-10-31, bible/03-World/RMB-Contracts.md): A LEGACY TOWN AS A PLAN. Every building of an RMB
+// A LEGACY TOWN AS A PLAN. Every building of an RMB
 // layout keeps the key BuildingDirectory.MakeBuildingKey gave it (buildingSummaries' own - never minted again here), stands
 // where RMBLayout.GetBuildingData puts it, and points at its record for its walls, doors and rooms. The ground is the one
 // flat pad today's towns stand on (blendLocationTerrain, TS2's outline). The directory is the plan read back the way the

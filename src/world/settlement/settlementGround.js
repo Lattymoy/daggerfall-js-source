@@ -1,6 +1,6 @@
 // @ts-check
-// RMB-CONTRACTS RMBC3 (2026-10-31, bible/03-World/RMB-Contracts.md RD-14): THE GROUND UNDER A SETTLEMENT. Its pads are drawn
-// and walked as their own paving and decks (RMBC4); the terrain is carved to sit just under every cut pad near it, so a
+// THE GROUND UNDER A SETTLEMENT. Its pads are drawn
+// and walked as their own paving and decks; the terrain is carved to sit just under every cut pad near it, so a
 // 6.4 m grid never pokes through a terrace finer than itself, and eases back to the land's own past the town. A raised
 // pad leaves the land under it alone. Pure and worker-safe: the terrain worker and this thread read the same law. A
 // departure from DFU's BlendLocationTerrain, which flattens a location's whole rect to one height.
@@ -23,7 +23,7 @@ const smooth = (/** @type {number} */ t) => { const k = t < 0 ? 0 : t > 1 ? 1 : 
 export function settlementGroundAt(pads, datum, e, n, natural) {
   /** @type {readonly [number, number]} */ const p = [e, n];
   const on = padAt(pads, p);
-  if (on && (on.base === 'raised' || on.legacy)) return null;   // RMBC6: a legacy core's ground is its town's own
+  if (on && (on.base === 'raised' || on.legacy)) return null;   // A legacy core's ground is its town's own
   let low = Infinity, near = Infinity;
   for (const pad of pads) {
     if (pad.base === 'raised' || pad.legacy) continue;
@@ -49,7 +49,7 @@ export function settlementGroundAt(pads, datum, e, n, natural) {
  * metres apart); the plan's frame is the pixel's, shifted by its origin's metres. Answers how many vertices it moved.
  * @param {Float64Array|Float32Array|number[]} S @param {number} dim @param {number} step
  * @param {{ pads: import('./settlementContract.js').Pad[], origin: { east: number, north: number } }} plan
- * @param {number} datum @param {((e: number, n: number) => boolean)=} keep RMBC6: ground the carve never moves (a town's own)
+ * @param {number} datum @param {((e: number, n: number) => boolean)=} keep ground the carve never moves (a town's own)
  */
 export function carveSettlementGround(S, dim, step, plan, datum, keep = undefined) {
   let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity], moved = 0;

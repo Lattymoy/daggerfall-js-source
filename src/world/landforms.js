@@ -133,7 +133,7 @@ import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOIS
 import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect, calcAvgMaxHeight } from './terrain/terrainTiles.js';
 import { townMeetsAbout, applyTownMeets, meetLiftAt } from './terrain/townMeet.js';   // ACROSS-EDGE: the ground meets a town across its pixel's edge
 import { blendShapedBefore } from './terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
-import { standSettlementGround } from './settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's carve, for a record's move
+import { standSettlementGround } from './settlement/settlementStand.js';   // a settlement's carve, for a record's move
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
@@ -1320,7 +1320,7 @@ export function townMeetMovedField(woods, px, py, locationRect, about, hDim = HE
 }
 
 /**
- * RMB-CONTRACTS RMBC3 (PADS_FRAME_LAW 6): HOW FAR A SETTLEMENT'S PADS MOVED DFU'S OWN GROUND at pixel (px, py) under a record
+ * HOW FAR A SETTLEMENT'S PADS MOVED DFU'S OWN GROUND at pixel (px, py) under a record
  * written before it - the kernel's ground with its settlement carved in, less the ground without (kernel units over
  * MAX_TERRAIN_HEIGHT, as townMeetMovedField's); null where no settlement stands.
  * @param {any} woods @param {number} px @param {number} py

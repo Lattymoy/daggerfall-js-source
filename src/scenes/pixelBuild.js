@@ -125,7 +125,7 @@ import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel'
 import { standBridges } from '../world/road/bridgeModels.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
-import { growthJobAt, settlementHomeTown, settlementHomeRegion } from '../world/settlement/townGrowthJob.js';   // RMB-CONTRACTS RMBC6, RMBC8
+import { growthJobAt, settlementHomeTown, settlementHomeRegion } from '../world/settlement/townGrowthJob.js';
 
 /** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
 const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
@@ -363,7 +363,7 @@ export function createPixelBuild(host) {
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
       about: townMeets?.about(px, py, meetsTown(groundLocation) ? locationRect?.shape : null) ?? null,   // ACROSS-EDGE: the towns of its 3 x 3 its ground meets
-      growth: growthJobAt(groundLocation, px, py),   // RMB-CONTRACTS RMBC6: a city, town or village grows its outskirts
+      growth: growthJobAt(groundLocation, px, py),   // a city, town or village grows its outskirts
     });
     const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;
     const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
@@ -1493,7 +1493,7 @@ export function createPixelBuild(host) {
       // (TravelOptionsMod.cs:541-551). Null for a pixel with no location.
       locationRect,
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
-      homeTown: homeTown || settlementHomeTown(settlement), homeKeys: pixelHomeKeys, buildingKeys: pixelBuildingKeys,   // HOME-LOOK: the homes drawn on their own, and every building's key; RMBC8: a settlement's place where no location stands
+      homeTown: homeTown || settlementHomeTown(settlement), homeKeys: pixelHomeKeys, buildingKeys: pixelBuildingKeys,   // HOME-LOOK: the homes drawn on their own, and every building's key; a settlement's place where no location stands
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
       homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? settlementHomeRegion(settlement, px, py),   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
       seatAnchors, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
@@ -1546,7 +1546,7 @@ export function createPixelBuild(host) {
       jungleTrees: jungleSet.length ? { px, py, ox: 0, oy: 0, oz: 0, handles: jungleHandles, groups: jungleSet, trees: null, centers: null } : null,   // BANTHA1: the jungle's 3D trees, the jungle door's set (scenes/treesHost.js)
       grahtOaks: grahtStood?.set ?? null,   // GRAHT1: its graht-oaks (scenes/grahtHost.js - framed at its translation, near and far)
       landProps: landStood?.set ?? null,   // TESA-LANDS: its landmarks (scenes/landPropsHost.js - framed at its translation, near and far)
-      settlement,   // RMB-CONTRACTS RMBC4: its settlement's layout, pixel-local metres (scenes/settlementHost.js dresses and stands it) - null where none stands
+      settlement,   // its settlement's layout, pixel-local metres (scenes/settlementHost.js dresses and stands it) - null where none stands
       wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
       privateersHold,   // WOD4: the camp's block origins and its Start's state, null off the Hold
       arena: arenaOrigin,   // ARENA2: the colosseum's block origin, pixel-local - null off Daggerfall's cell (4,3)

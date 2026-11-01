@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC2 (2026-10-31, bible/03-World/RMB-Contracts.md): WHAT A GENERATED SETTLEMENT IS MADE OF, AS DATA. A
+// WHAT A GENERATED SETTLEMENT IS MADE OF, AS DATA. A
 // style is a theatre's way of building (every theatre has one: the Bay and the nine provinces); an archetype is a kind of
 // settlement - its layout family, its size, its services and its features. A designer adds a row; the engine
 // (settlementGen.js) reads rows and never names a province. The numbers are ours: DFU's towns are RMB grids.
@@ -58,7 +58,7 @@ export const SETTLEMENT_ARCHETYPES = Object.freeze({
     services: [S('Tavern', 'plaza'), S('GeneralStore', 'plaza'), S('Temple')], centreFeature: 'market' }),
   village: archetype({ frame: 'auto', centre: 'site', size: [48, 64], bands: 2, sectors: [6, 8], plaza: 14, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.4,
     services: [S('Tavern', 'gate'), S('GeneralStore', 'plaza')], centreFeature: 'well' }),
-  // RMB-CONTRACTS RMBC6: a town's outskirts - rings round its legacy core (the plaza's place, `core`), never alone
+  // A town's outskirts - rings round its legacy core (the plaza's place, `core`), never alone
   outskirts: archetype({ frame: 'ring', centre: 'site', size: [0, 0], bands: 3, sectors: [16, 22], plaza: 0, gates: 0, islands: false, wall: false, keep: false, docks: false, wealth: 0.35,
     services: [S('Tavern', 'plaza')], centreFeature: 'none', core: true }),
 });

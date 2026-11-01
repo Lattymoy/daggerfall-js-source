@@ -1,9 +1,9 @@
 // @ts-check
-// RMB-CONTRACTS RMBC2 (2026-10-31, bible/03-World/RMB-Contracts.md): A SETTLEMENT LAID OUT ON ITS GROUND. A ring town wraps
+// A SETTLEMENT LAID OUT ON ITS GROUND. A ring town wraps
 // a square; a row town follows an arc - round a hillside, along a shore. Its layout (settlementLayout.js, stages A to C) cuts
 // it into cells, each a flat pad near its natural height, terraced so every step is climbable. This dresses a layout -
 // streets, plots, a building on each plot big enough, the archetype's services on the best of them, features, keys -
-// and checks the plan. Deterministic from its inputs on every engine (exactMath.js, RD-13). Not a DFU member.
+// and checks the plan. Deterministic from its inputs on every engine (exactMath.js). Not a DFU member.
 import { hash32 } from '../blockHash.js';
 import { dsin, dcos, datan2, dhypot } from './exactMath.js';
 import { BUILDING_TYPES, isResidence } from '../buildingNames.js';
@@ -30,7 +30,7 @@ export const generateSettlement = (input) => dressSettlement(input, LAYOUT_OF(in
  * @param {import('./settlementLayout.js').SettlementInput} input @param {ReturnType<typeof layoutSettlement>} L
  * @returns {{ plan: SettlementPlan, ledger: IdLedger, report: any }}
  */
-/** ORGANIC: whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
+/** whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
  *  @param {readonly number[]} road @param {number} start @param {number} end @param {number} margin */
 export function onRoad(road, start, end, margin) {
   for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;
@@ -42,7 +42,7 @@ export function dressSettlement(input, L) {
   const A = SETTLEMENT_ARCHETYPES[input.archetype], st = SETTLEMENT_STYLES[input.style];
   if (!A) throw new RangeError(`no settlement archetype '${input.archetype}' (settlementStyles.js SETTLEMENT_ARCHETYPES)`);
   if (!st) throw new RangeError(`no settlement style '${input.style}' (settlementStyles.js SETTLEMENT_STYLES)`);
-  // RMBC9: each district draws from its own seed (the editor's `districtSeeds`), each plot by its own cell and number
+  // Each district draws from its own seed (the editor's `districtSeeds`), each plot by its own cell and number
   const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };
   const density = clampWithin(params.density ?? 1, 0.5, 2), openShare = clampWithin(params.open ?? 0.08, 0, 0.9);
   const frame = polarFrame(L.c), inset = (v, s) => frame.du(s, v);
@@ -56,7 +56,7 @@ export function dressSettlement(input, L) {
   // D - each band's street along its inner edge, each sector's lane; districts by sector
   const streets = [], plots = [], features = [], districts = [];
   for (let j = 0; j < sectors; j++) {
-    if (L.core && reachOf[j] < 1) continue;   // ORGANIC: a sector its town's roads left unbuilt is no district
+    if (L.core && reachOf[j] < 1) continue;   // a sector its town's roads left unbuilt is no district
     const [u0, u1] = edges[j], r0 = L.core ? radii[j][0] : ring ? inner : inner + vOut;
     const poly = [...along(frame, grids[j], u0, u1, outR(j)), ...(r0 > 1 ? along(frame, grids[j], u0, u1, r0).reverse() : [frame.c])];
     districts.push({ id: `d${j}`, purpose: gateSectors.includes(j) ? 'market' : 'residential', poly: dedupe(poly) });
@@ -81,7 +81,7 @@ export function dressSettlement(input, L) {
     if (n < 1) continue;
     for (const [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none
       const p0 = us + s0, p1 = us + s1;
-      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // ORGANIC: the road runs here - its plots either side
+      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // the road runs here - its plots either side
       const id = `${c.id}.p${local}`;
       const poly = [...along(frame, grids[c.j], p0, p1, rf), ...along(frame, grids[c.j], p0, p1, rf + depth).reverse()];
       plots.push({ id, pad: c.id, poly, street: `s${c.k}.${c.j}`, district: `d${c.j}` });
@@ -114,7 +114,7 @@ export function dressSettlement(input, L) {
   const T = BUILDING_TYPES, taken = new Map();
   if (mound) taken.set('keep', { type: T.Palace, factionId: 0 });
   const order = [...proposed].sort((x, y) => y.prestige - x.prestige || (x.id < y.id ? -1 : 1));
-  // RMBC9: every service first keeps the plot it was published on while that plot stands; one whose plot is gone takes a
+  // Every service first keeps the plot it was published on while that plot stands; one whose plot is gone takes a
   // plot drawn afresh (its anchor new, or its district's seed its own) before another district's - so none moves a house
   const was = new Map((input.published ?? []).map((building) => [building.anchor, building.type]));
   const serve = (/** @type {any} */ plot, /** @type {any} */ s) => taken.set(plot.id, { type: T[s.type], factionId: T[s.type] === T.Temple ? DIVINES[st.temple] : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 });
@@ -142,7 +142,7 @@ export function dressSettlement(input, L) {
   });
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
-  if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // RMBC6: a core is the town's own
+  if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own
   for (const c of cells.values()) {
     if (c.k < 1) continue;
     for (let t = 0; t < 3; t++) if (rngOf(c.j)(13, c.k, c.j, t) < 0.5) features.push({ id: `t${c.id}.${t}`, kind: 'tree', pad: c.id, at: frame.toW(c.u0 + (c.u1 - c.u0) * (0.25 + t * 0.25), c.b - st.back / 2) });
@@ -166,7 +166,7 @@ export function dressSettlement(input, L) {
     }
   }
 
-  // RMBC7: a grown town's keys are its anchors' own (RD-19); a published settlement keeps its ledger
+  // A grown town's keys are its anchors' own; a published settlement keeps its ledger
   const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);
   const ids = reconcileBuildingIds(ledger0, buildings, { protectedKeys: input.protectedKeys, published: input.published });
   const gates = gateSectors.filter((j) => cells.has(cellId(gateBand, j))).map((j, i) => {
@@ -175,7 +175,7 @@ export function dressSettlement(input, L) {
     const u = ring ? c.u0 + inset(v, gap / 2 + wl / 2) : j === 0 ? c.u0 + inset(v, gap / 2 + 1) : c.u1 - inset(v, gap / 2 + 1);
     return { id: `gate${i}`, pad: c.id, at: frame.toW(u, v) };
   });
-  if (L.core) gates.unshift({ id: 'gate-core', pad: 'plaza', at: /** @type {Pt} */ ([cm(L.core.centre[0]), cm(L.core.centre[1])]) });   // RMBC6: the outskirts' way in is their town
+  if (L.core) gates.unshift({ id: 'gate-core', pad: 'plaza', at: /** @type {Pt} */ ([cm(L.core.centre[0]), cm(L.core.centre[1])]) });   // The outskirts' way in is their town
   /** @type {SettlementPlan} */
   const plan = {
     contract: SETTLEMENT_CONTRACT_VERSION, place, source: 'procedural', generator: { id: GENERATOR_ID, version: SETTLEMENT_GENERATOR_VERSION, seed: seed >>> 0 }, revision: 0,

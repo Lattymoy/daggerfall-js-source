@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC3 (2026-10-31, bible/03-World/RMB-Contracts.md RD-13): THE SAME ANSWER ON EVERY ENGINE. Every client lays
+// THE SAME ANSWER ON EVERY ENGINE. Every client lays
 // out a settlement from its own ground, so two browsers must reach the same plan bit for bit. Math.sin, cos, atan2 and hypot
 // may differ in their last bit between engines; +, -, *, / and Math.sqrt are rounded exactly by IEEE 754. These are built
 // from those alone, in a fixed order, accurate to about 1e-15. Pure, and imports nothing. Not a DFU member.

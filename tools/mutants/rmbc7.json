@@ -2,8 +2,8 @@
   {
     "name": "RMBC7-hash-placeless",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "hash32(place >>> 0, 0x5eed, ...[...a]",
-    "new": "hash32(0, 0x5eed, ...[...a]",
+    "old": "    let k = MINTED_KEY_MIN + (hash32(place >>> 0, 0x5eed, ...[...a].map((char) => char.charCodeAt(0))) % span);",
+    "new": "    let k = MINTED_KEY_MIN + (hash32(0, 0x5eed, ...[...a].map((char) => char.charCodeAt(0))) % span);",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RMBC7-probe-gone",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "while (taken.has(k)) k = k === MINTED_KEY_MAX ? MINTED_KEY_MIN : k + 1;",
-    "new": "",
+    "old": "    while (taken.has(k)) k = k === MINTED_KEY_MAX ? MINTED_KEY_MIN : k + 1;",
+    "new": "    ",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC7-order-unsorted",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "for (const a of [...new Set(anchors)].sort()) {",
-    "new": "for (const a of [...new Set(anchors)]) {",
+    "old": "  for (const a of [...new Set(anchors)].sort()) {",
+    "new": "  for (const a of [...new Set(anchors)]) {",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC7-keys-law-unread",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const ledger0 = input.keys === 'anchored' ?",
-    "new": "const ledger0 = false ?",
+    "old": "  const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);",
+    "new": "  const ledger0 = false ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RMBC7-growth-ledgered",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "roads, keys: /** @type {'anchored'} */ ('anchored'),",
-    "new": "roads,",
+    "old": "    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // No ledger ships",
+    "new": "    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads,   // No ledger ships",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js",
       "test/world/settlement/rmbc6_growth.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "RMBC7-home-dropped",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "/** @type {number} */ (home.buildingKey) > 0) keys.add(home.buildingKey);",
-    "new": "/** @type {number} */ (home.buildingKey) > 600) keys.add(home.buildingKey);",
+    "old": "  for (const home of answer?.homes ?? []) if (Number.isSafeInteger(home?.buildingKey) && /** @type {number} */ (home.buildingKey) > 0) keys.add(home.buildingKey);",
+    "new": "  for (const home of answer?.homes ?? []) if (Number.isSafeInteger(home?.buildingKey) && /** @type {number} */ (home.buildingKey) > 600) keys.add(home.buildingKey);",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "RMBC7-protected-unread",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "return dressSettlement({ ...input, protectedKeys, published }, layout).report.conflicts;",
-    "new": "return dressSettlement({ ...input, protectedKeys: [], published }, layout).report.conflicts;",
+    "old": "  return dressSettlement({ ...input, protectedKeys, published }, layout).report.conflicts;",
+    "new": "  return dressSettlement({ ...input, protectedKeys: [], published }, layout).report.conflicts;",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "RMBC7-published-unread",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "return dressSettlement({ ...input, protectedKeys, published }, layout).report.conflicts;",
-    "new": "return dressSettlement({ ...input, protectedKeys }, layout).report.conflicts;",
+    "old": "  return dressSettlement({ ...input, protectedKeys, published }, layout).report.conflicts;",
+    "new": "  return dressSettlement({ ...input, protectedKeys }, layout).report.conflicts;",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "RMBC7-band-unread",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && (",
-    "new": "return protectedKeys.filter((k) => (",
+    "old": "  return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && (!held.has(k) || (was.has(k) && changed(was.get(k), held.get(k)))));",
+    "new": "  return protectedKeys.filter((k) => (!held.has(k) || (was.has(k) && changed(was.get(k), held.get(k)))));",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "RMBC7-file-unfiltered",
     "file": "tools/settlementRevise.mjs",
-    "old": "out.set(Number(k) >>> 0, v.filter((x) => Number.isSafeInteger(x)));",
-    "new": "out.set(Number(k) >>> 0, v);",
+    "old": "  else for (const [k, v] of Object.entries(json ?? {})) if (Array.isArray(v)) out.set(Number(k) >>> 0, v.filter((x) => Number.isSafeInteger(x)));",
+    "new": "  else for (const [k, v] of Object.entries(json ?? {})) if (Array.isArray(v)) out.set(Number(k) >>> 0, v);",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-protected-kind-unread",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "if (guarded.has(key) && before?.type !== undefined && (before.type !== b.type || before.access !== b.access)) {",
-    "new": "if (false) {",
+    "old": "    if (guarded.has(key) && before?.type !== undefined && (before.type !== b.type || before.access !== b.access)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-protected-kind-unpublished",
     "file": "src/world/settlement/settlementIds.js",
-    "old": "before?.type !== undefined && (",
-    "new": "(",
+    "old": "    if (guarded.has(key) && before?.type !== undefined && (before.type !== b.type || before.access !== b.access)) {",
+    "new": "    if (guarded.has(key) && (before.type !== b.type || before.access !== b.access)) {",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-gone-published-unread",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "(!held.has(k) || (was.has(k) && changed(was.get(k), held.get(k))))",
-    "new": "!held.has(k)",
+    "old": "  return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && (!held.has(k) || (was.has(k) && changed(was.get(k), held.get(k)))));",
+    "new": "  return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && !held.has(k));",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUDIT-gone-absent-field-read",
     "file": "src/world/settlement/settlementPublish.js",
-    "old": "KEPT.some((f) => f in a && ",
-    "new": "KEPT.some((f) => ",
+    "old": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((f) => f in a && JSON.stringify(a[f]) !== JSON.stringify(b[f]));",
+    "new": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((f) => JSON.stringify(a[f]) !== JSON.stringify(b[f]));",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]

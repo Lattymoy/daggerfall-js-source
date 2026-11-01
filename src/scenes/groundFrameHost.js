@@ -28,7 +28,7 @@ import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 T
 import { setLocationTiles } from '../world/terrain/terrainTiles.js';
 import { inWorldGrid } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the lift on the world's grid
 import { inBay } from '../world/tamriel/tamrielFrame.js';
-import { grownMovedAt } from '../world/settlement/townGrowth.js';   // RMB-CONTRACTS RMBC6: a grown town's carve, as its build handed it back
+import { grownMovedAt } from '../world/settlement/townGrowth.js';   // a grown town's carve, as its build handed it back
 
 /** The map pixel under a scene point of the stream's frame (`state`: its origin and its compensation). */
 export function framePixelAt(state, x, z) {
@@ -99,7 +99,7 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
   const restandHeight = (y, x, z, was, frame = null) => {
     const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;
     const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;
-    const pads = padsMovedAt && Number.isFinite(y) && !(frame >= PADS_FRAME_LAW) ? padsMovedAt(x, z) : 0;   // RMB-CONTRACTS: a settlement's carve
+    const pads = padsMovedAt && Number.isFinite(y) && !(frame >= PADS_FRAME_LAW) ? padsMovedAt(x, z) : 0;   // a settlement's carve
     const town = (yy) => (townMovedAt && Number.isFinite(y) && !(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0);
     if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet + pads;
     if (!Number.isFinite(y)) return y;
@@ -107,7 +107,7 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
     y += relief;   // RELIEF-PEAKS: DFU's frame of its day onto today's
     y += town(y);   // FB1028: its town's blend's move
     y += meet;   // ACROSS-EDGE: the meets' move
-    y += pads;   // RMB-CONTRACTS RMBC3: a settlement's carve
+    y += pads;   // a settlement's carve
     const now = landform ? landformLiftAt(x, z) : 0;
     const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;
     const h = heightAt(x, z);
@@ -235,13 +235,13 @@ export function createGroundFrame(host) {
     const t = host.state.pixelTranslation(px, py);
     return moved ? moved((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
   };
-  /** RMB-CONTRACTS RMBC3 (PADS_FRAME_LAW 6): how far a settlement's carve moved DFU's own ground at a scene point under a
+  /** how far a settlement's carve moved DFU's own ground at a scene point under a
    *  record written before it, world units (world/landforms.js settlementMovedField); none on a pixel a location holds. */
   const _padsMoved = new Map();
   const padsMovedAt = (x, z) => {
     const [px, py] = framePixelAt(host.state, x, z);
     if (!host.woods || !inWorldGrid(px, py)) return 0;
-    if (liftRectAt(px, py)) return grownMovedAt(built.get(`${px},${py}`)?.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);   // RMBC6
+    if (liftRectAt(px, py)) return grownMovedAt(built.get(`${px},${py}`)?.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);
     const key = `${px},${py}`;
     let moved = _padsMoved.get(key);
     if (moved !== undefined) _padsMoved.delete(key);

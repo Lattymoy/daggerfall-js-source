@@ -651,7 +651,7 @@ export function fabricBuildingInterior(b, blocksFile) {
     byKey = new Map();
     _built.set(host, byKey);
   }
-  const id = b.cacheKey ?? b.key; // RMB-CONTRACTS RMBC4: a settlement's building files under its own name, never an Imperial plot's hash
+  const id = b.cacheKey ?? b.key; // a settlement's building files under its own name, never an Imperial plot's hash
   let out = byKey.get(id);
   if (out) {
     byKey.delete(id);

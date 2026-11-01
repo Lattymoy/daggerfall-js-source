@@ -11,8 +11,8 @@
   {
     "name": "RMBC6-capital-grows",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "if (!GROWTH_TYPES.includes(type) || location?.capital) return null;",
-    "new": "if (!GROWTH_TYPES.includes(type)) return null;",
+    "old": "  if (!GROWTH_TYPES.includes(type) || location?.capital) return null;",
+    "new": "  if (!GROWTH_TYPES.includes(type)) return null;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RMBC6-core-gives",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);",
-    "new": "const give = (c) => (c.core ? 1 : c.raised ? 4 : 1);",
+    "old": "  const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);   // a core never moves: the town stands where it stands",
+    "new": "  const give = (c) => (c.core ? 1 : c.raised ? 4 : 1);   // a core never moves: the town stands where it stands",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RMBC6-datum-mean",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const datum = core ? cm(core.y) :",
-    "new": "const datum = false ? cm(core.y) :",
+    "old": "  const datum = core ? cm(core.y) : kept.length ? cm(kept.reduce((s, c) => s + c.natural, 0) / kept.length) : 0;",
+    "new": "  const datum = false ? cm(core.y) : kept.length ? cm(kept.reduce((s, c) => s + c.natural, 0) / kept.length) : 0;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RMBC6-gate-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "  if (L.core) gates.unshift({ id: 'gate-core',",
-    "new": "  if (false) gates.unshift({ id: 'gate-core',",
+    "old": "  if (L.core) gates.unshift({ id: 'gate-core', pad: 'plaza', at: /** @type {Pt} */ ([cm(L.core.centre[0]), cm(L.core.centre[1])]) });   // The outskirts' way in is their town",
+    "new": "  if (false) gates.unshift({ id: 'gate-core', pad: 'plaza', at: /** @type {Pt} */ ([cm(L.core.centre[0]), cm(L.core.centre[1])]) });   // The outskirts' way in is their town",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RMBC6-well-in-core",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "if (cells.has('plaza') && !L.core) features.push(",
-    "new": "if (cells.has('plaza')) features.push(",
+    "old": "  if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own",
+    "new": "  if (cells.has('plaza')) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RMBC6-bounds-unread",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  if (bounds && poly.some(([e, n]) => e < bounds.e0",
-    "new": "  if (false && poly.some(([e, n]) => e < bounds.e0",
+    "old": "  if (bounds && poly.some(([e, n]) => e < bounds.e0 || e > bounds.e1 || n < bounds.n0 || n > bounds.n1)) return true;",
+    "new": "  if (false && poly.some(([e, n]) => e < bounds.e0 || e > bounds.e1 || n < bounds.n0 || n > bounds.n1)) return true;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RMBC6-sweep-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (insideRing(poly, e, n) && env.blockedAt(e, n)) return true;",
-    "new": "if (false) return true;",
+    "old": "  for (let e = west + 1.5; e < east; e += 3) for (let n = south + 1.5; n < north; n += 3) if (insideRing(poly, e, n) && env.blockedAt(e, n)) return true;",
+    "new": "  for (let e = west + 1.5; e < east; e += 3) for (let n = south + 1.5; n < north; n += 3) if (false) return true;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RMBC6-road-free",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "if (paths?.[i] || mask?.[i] ||",
-    "new": "if (mask?.[i] ||",
+    "old": "    if (paths?.[i] || mask?.[i] || (tilemap && isOutdoorWaterTile(tilemap[i]))) return true;",
+    "new": "    if (mask?.[i] || (tilemap && isOutdoorWaterTile(tilemap[i]))) return true;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RMBC6-water-free",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "(tilemap && isOutdoorWaterTile(tilemap[i]))",
-    "new": "false",
+    "old": "    if (paths?.[i] || mask?.[i] || (tilemap && isOutdoorWaterTile(tilemap[i]))) return true;",
+    "new": "    if (paths?.[i] || mask?.[i] || false) return true;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RMBC6-camps-free",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "return camps.some((camp) => x >= camp.xMin",
-    "new": "return false && camps.some((camp) => x >= camp.xMin",
+    "old": "    return camps.some((camp) => x >= camp.xMin && x < camp.xMax && y >= camp.yMin && y < camp.yMax);",
+    "new": "    return false && camps.some((camp) => x >= camp.xMin && x < camp.xMax && y >= camp.yMin && y < camp.yMax);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RMBC6-keep-gone",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "if (n < lo[1] - reach || n > hi[1] + reach || keep?.(e, n)) continue;",
-    "new": "if (n < lo[1] - reach || n > hi[1] + reach) continue;",
+    "old": "      if (n < lo[1] - reach || n > hi[1] + reach || keep?.(e, n)) continue;",
+    "new": "      if (n < lo[1] - reach || n > hi[1] + reach) continue;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RMBC6-legacy-carved",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "if (on && (on.base === 'raised' || on.legacy)) return null;",
-    "new": "if (on && on.base === 'raised') return null;",
+    "old": "  if (on && (on.base === 'raised' || on.legacy)) return null;   // A legacy core's ground is its town's own",
+    "new": "  if (on && on.base === 'raised') return null;   // A legacy core's ground is its town's own",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RMBC6-moved-units",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "moved[i] = (now - samples[i]) * MAX_TERRAIN_HEIGHT;",
-    "new": "moved[i] = (now - samples[i]) * UNIT_METRES;",
+    "old": "    if (now !== samples[i]) { moved[i] = (now - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = now; }",
+    "new": "    if (now !== samples[i]) { moved[i] = (now - samples[i]) * UNIT_METRES; samples[i] = now; }",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RMBC6-slot-unguarded",
     "file": "src/scenes/settlementHost.js",
-    "old": "if (held.growth ? !(held.input && held.job && slot >= GROWTH_SLOT_FIRST) : !row) return null;",
-    "new": "if (held.growth ? !(held.input && held.job) : !row) return null;",
+    "old": "  if (held.growth ? !(held.input && held.job && slot >= GROWTH_SLOT_FIRST) : !row) return null;",
+    "new": "  if (held.growth ? !(held.input && held.job) : !row) return null;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RMBC6-run-ordinal",
     "file": "src/scenes/settlementHost.js",
-    "old": "run = held.growth ? slot : row.ordinal;",
-    "new": "run = held.growth ? 0 : row.ordinal;",
+    "old": "  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = held.growth ? slot : row.ordinal;",
+    "new": "  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = held.growth ? 0 : row.ordinal;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "RMBC6-host-no-slot",
     "file": "src/scenes/settlementHost.js",
-    "old": "standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1)",
-    "new": "standSettlement(p, blocksFile(), -1)",
+    "old": "    const made = standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1);",
+    "new": "    const made = standSettlement(p, blocksFile(), -1);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "RMBC6-deep-cuts-kept",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);",
-    "new": "  if (false) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);",
+    "old": "  if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);   // A cell its town's height would cut too deep is not built",
+    "new": "  if (false) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);   // A cell its town's height would cut too deep is not built",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "ORGANIC-corner-unread",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
-    "new": "return Math.max(at(from), at(to));",
+    "old": "  return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
+    "new": "  return Math.max(at(from), at(to));",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "ORGANIC-ends-mean",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
-    "new": "return corner <= to ? half * Math.SQRT2 : Math.min(at(from), at(to));",
+    "old": "  return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
+    "new": "  return corner <= to ? half * Math.SQRT2 : Math.min(at(from), at(to));",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "ORGANIC-hug-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "(core ? coreEdge(core.half, edges[j][0], edges[j][1]) + ws + rng(21, j) * 6 : inner)",
-    "new": "(core ? core.half * Math.SQRT2 + ws : inner)",
+    "old": "  const innerOf = (/** @type {number} */ j) => (core ? coreEdge(core.half, edges[j][0], edges[j][1]) + ws + rng(21, j) * 6 : inner);   // a core's hugged, set back a little or more",
+    "new": "  const innerOf = (/** @type {number} */ j) => (core ? core.half * Math.SQRT2 + ws : inner);   // a core's hugged, set back a little or more",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -237,7 +237,7 @@
   {
     "name": "ORGANIC-reach-flat",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  if (core) roadReach(reachOf, edges, roads, bands, rng);   // ORGANIC: a core's outskirts reach out along its roads",
+    "old": "  if (core) roadReach(reachOf, edges, roads, bands, rng);   // a core's outskirts reach out along its roads",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
@@ -246,8 +246,8 @@
   {
     "name": "ORGANIC-lean-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "const lean = Math.max(0, 1 - off / (TAU / 6));",
-    "new": "const lean = 0.5;",
+    "old": "    const lean = Math.max(0, 1 - off / (TAU / 6));",
+    "new": "    const lean = 0.5;",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "ORGANIC-road-floor",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "off < TAU / 24 ? 1 : 0, bands);",
-    "new": "0, bands);",
+    "old": "    reachOf[j] = clampWithin(Math.round(bands * lean + (rng(15, j) - 0.45) * 1.2), off < TAU / 24 ? 1 : 0, bands);",
+    "new": "    reachOf[j] = clampWithin(Math.round(bands * lean + (rng(15, j) - 0.45) * 1.2), 0, bands);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "ORGANIC-run-start",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "if (!hit[a] && start >= 0) { out.push((((first + (start + k - 1) / 2) % steps) * 360) / steps); start = -1; }",
-    "new": "if (!hit[a] && start >= 0) { out.push((((first + start) % steps) * 360) / steps); start = -1; }",
+    "old": "    if (!hit[a] && start >= 0) { out.push((((first + (start + k - 1) / 2) % steps) * 360) / steps); start = -1; }",
+    "new": "    if (!hit[a] && start >= 0) { out.push((((first + start) % steps) * 360) / steps); start = -1; }",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "ORGANIC-wrap-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "for (const turn of [-TAU, 0, TAU, 2 * TAU])",
-    "new": "for (const turn of [0])",
+    "old": "  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;",
+    "new": "  for (const bearing of road) for (const turn of [0]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "ORGANIC-road-hard",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null })",
-    "new": "blockedAt: growthBlocked({ ...bars, mask: bars.mask ?? rect.mask ?? null })",
+    "old": "  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };",
+    "new": "  const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "ORGANIC-plot-on-road",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;",
-    "new": "",
+    "old": "      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // the road runs here - its plots either side",
+    "new": "   // the road runs here - its plots either side",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js",
       "test/world/settlement/rmbc6_growth.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "ORGANIC-roads-unread",
     "file": "src/world/settlement/townGrowth.js",
-    "old": ", roadsOut(bars.paths ?? null, centre, half));",
-    "new": ", []);",
+    "old": "  const input = growthInput(job, px, py, rect, Math.round(env.heightAt(centre[0], centre[1]) * 100) / 100, roadsOut(bars.paths ?? null, centre, half));",
+    "new": "  const input = growthInput(job, px, py, rect, Math.round(env.heightAt(centre[0], centre[1]) * 100) / 100, []);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-plot-numbered-by-kept",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "for (const [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none\n      const p0 = us + s0, p1 = us + s1;\n",
-    "new": "for (let [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none\n      const p0 = us + s0, p1 = us + s1; local = plots.filter((p) => p.pad === c.id).length;\n",
+    "old": "    for (const [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none\n      const p0 = us + s0, p1 = us + s1;",
+    "new": "    for (let [local, [s0, s1]] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j).entries()) {   // a plot's number is its split's: one dropped renames none\n      const p0 = us + s0, p1 = us + s1; local = plots.filter((p) => p.pad === c.id).length;",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]

@@ -1,4 +1,4 @@
-// RMB-CONTRACTS RMBC1 (bible/03-World/RMB-Contracts.md): THE KEY LEDGER - a new building's key minted once and kept by
+// THE KEY LEDGER - a new building's key minted once and kept by
 // its anchor through every regeneration, a gone anchor's key retired and never minted again, a protected building neither
 // removed nor moved. A village past the Bay (a made place's id) and a town on it (its MAPS id). Pins mutation-checked
 // (tools/mutants/rmbc1.json).

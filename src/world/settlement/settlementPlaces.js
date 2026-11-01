@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC5 (2026-10-31, bible/03-World/RMB-Contracts.md RD-16): THE SETTLEMENTS THAT STAND, AS DATA. settlements.json
+// THE SETTLEMENTS THAT STAND, AS DATA. settlements.json
 // publishes each one's inputs and nothing derived from the player's ground: its name, kind, style, seed, its point on the
 // map picture (so it keeps to its land whatever the fit), its site in its pixel, the structure fixed by the toolchain (its
 // layout and centre, a river town's shore) and its key ledger. Every client lays it out on its own ground and agrees.

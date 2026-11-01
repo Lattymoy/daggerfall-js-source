@@ -1,5 +1,5 @@
 // @ts-check
-// RMB-CONTRACTS RMBC3 (2026-10-31, bible/03-World/RMB-Contracts.md): HOW STEEP A WAY BETWEEN PADS MAY BE, a leaf both the
+// HOW STEEP A WAY BETWEEN PADS MAY BE, a leaf both the
 // contract (settlementContract.js re-exports it) and the worker-safe layout read. Our own numbers: DFU's towns are flat.
 
 /** Most a grade link may rise, metres: a step a walker takes without stairs. */
