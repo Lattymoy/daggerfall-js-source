@@ -56,3 +56,8 @@ test('DA11 the shell reads the site from inside the archive when packaged, from 
   assert.match(main, /if \(!p\.startsWith\(DIST \+ path\.sep\)\) return new Response\('forbidden', \{ status: 403 \}\);/, 'still traversal-proofed into dist/');
   assert.match(main, /const fileResponse = \(p, mime\) => net\.fetch\(pathToFileURL\(p\)\.toString\(\), \{ bypassCustomProtocolHandlers: true \}\)/);
 });
+
+test('HOST-WORKERD: the runtime path is the workerd package\'s default export, not the module object', () => {
+  // workerd's main is an esbuild CJS module: { default: <binary path>, version, compatibilityDate }
+  assert.match(main, /require\('workerd'\)\.default\.replace\(/, 'Host fails with "require(...).replace is not a function"');
+});
