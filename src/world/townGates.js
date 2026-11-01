@@ -2,7 +2,7 @@
 // GATE-ROADS (bible/03-World/Town-Shapes.md GATE-ROADS): A WALLED TOWN'S GATES FOR THEIR ROADS - each gate in its pixel's
 // tiles and what stands in its road's way, for the terrain kernel to lay (world/road/gateRoads.js layGateRoads). The main
 // thread's: a wall on its outline is made here (world/townWalls.js, its gates on its roads and its streets); a ring a town
-// keeps - Daggerfall's own, or a town mod's (Beautiful Cities rebuilds every Bay city's) - stands its gates in its blocks.
+// keeps - Daggerfall's own (the town packs that rebuilt the Bay's retired in OWN-WORK3) - stands its gates in its blocks.
 import {
   townWallOf,
   townWallCells,
