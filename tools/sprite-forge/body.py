@@ -53,10 +53,12 @@ def blob_mesh(name, blobs, res=0.007):
     return me
 
 
-def vloft(name, sections, centre, n=40, cap_top=True, cap_bottom=True):
+def vloft(name, sections, centre, n=40, cap_top=True, cap_bottom=True, muscles=()):
     """A smooth body of horizontal rings. `sections` rows are (z, half width, front depth, back depth[, pecs, abs]),
     eased between rows (PCHIP, so no overshoot); `centre(z)` gives the ring's centre (x, y). Pecs swell the front
-    either side of the middle, abs the middle; a ring's points run round from +X."""
+    either side of the middle, abs the middle; a ring's points run round from +X. `muscles` are swells of their own,
+    each (bearing in degrees round from +X, half-width in degrees, top, bottom, height in metres): a muscle rises and
+    falls smoothly along its length and across its width."""
     import bmesh
     from scipy.interpolate import PchipInterpolator
     rows = np.array([list(r) + [0.0] * (6 - len(r)) for r in sections], dtype=float)
@@ -74,8 +76,14 @@ def vloft(name, sections, centre, n=40, cap_top=True, cap_bottom=True):
         bump = np.where(front, pec * (np.exp(-((c - 0.42) / 0.28) ** 2) + np.exp(-((c + 0.42) / 0.28) ** 2))
                         + ab * np.exp(-(c / 0.3) ** 2), 0.0)
         cx, cy = centre(z)
-        xs = cx + a * c
-        ys = cy + (depth + bump) * s_
+        swell = np.zeros(n)
+        for bearing, half, top, bottom, height in muscles:
+            if bottom < z < top:
+                along = np.sin(np.pi * (z - bottom) / (top - bottom)) ** 2
+                gap = np.angle(np.exp(1j * (th - np.radians(bearing))))
+                swell += height * along * np.exp(-(gap / np.radians(half)) ** 2)
+        xs = cx + a * c + swell * c
+        ys = cy + (depth + bump) * s_ + swell * s_
         loops.append([bm.verts.new((float(x), float(y), float(z))) for x, y in zip(xs, ys)])
     for lo, hi in zip(loops, loops[1:]):
         for k in range(n):

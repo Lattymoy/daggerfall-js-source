@@ -50,6 +50,20 @@ ARM = [(arm_z(z), a, f, b) for z, a, f, b in [
     (0.978, 0.047, 0.042, 0.043), (0.97, 0.042, 0.036, 0.037), (0.962, 0.04, 0.034, 0.035),
 ]]
 BRACER = (arm_z(0.972), arm_z(1.163))   # the arm's faces between these heights are its bracer
+
+
+def arm_muscles(x):
+    """The bare arm's muscles, for the arm on side `x` (+1 left): bearings measured round from +X, so the outward side
+    is 0 degrees on the left arm and 180 on the right; the front (-Y) is 270, the back 90."""
+    out = 0.0 if x > 0 else 180.0
+    lean = 30.0 * (1 if x > 0 else -1)   # the triceps sits back and a little outward
+    return [
+        (out, 55, arm_z(1.47), arm_z(1.33), 0.018),                     # deltoid's cap
+        (270, 40, arm_z(1.38), arm_z(1.22), 0.02),                     # biceps
+        (90 - lean, 45, arm_z(1.43), arm_z(1.22), 0.016),               # triceps
+        (90, 25, arm_z(1.235), arm_z(1.18), 0.008),                     # the elbow's point
+        (270 + (40 if x > 0 else -40), 40, arm_z(1.19), arm_z(1.14), 0.011),   # the forearm's swell above the bracer
+    ]
 HAND_DESIGN = 0.965   # the hand joint's height the hands below were designed at
 LEG = [
     (1.00, 0.118, 0.118, 0.12), (0.90, 0.12, 0.12, 0.125), (0.80, 0.112, 0.11, 0.112), (0.70, 0.102, 0.098, 0.10),
@@ -58,16 +72,28 @@ LEG = [
 
 
 def _hand(x, closed):
-    """A hand's blobs, designed round a hand joint at (0.26x, -0.005, HAND_DESIGN), moved to where the joint is."""
+    """A hand's blobs, designed round a hand joint at (0.26x, -0.005, HAND_DESIGN), moved to where the joint is. The
+    palm faces the thigh (its thickness across X, its width front to back); four fingers lie front to back, the index
+    foremost, and the thumb comes off the palm's front."""
     d = rest('hand_L' if x > 0 else 'hand_R') - Vector((0.26 * x, -0.005, HAND_DESIGN))
-    def at(*p):
-        return tuple(Vector(p) + d)
-    if closed:
-        return [blob(at(0.262 * x, -0.008, 0.905), (0.036, 0.05, 0.047)),
-                seg(at(0.25 * x, -0.048, 0.94), at(0.25 * x, -0.064, 0.905), 0.015)]
-    return [blob(at(0.263 * x, -0.008, 0.915), (0.022, 0.048, 0.052)),
-            seg(at(0.264 * x, -0.01, 0.885), at(0.268 * x, -0.014, 0.79), 0.018, 0.043),
-            seg(at(0.254 * x, -0.048, 0.94), at(0.248 * x, -0.07, 0.872), 0.015)]
+    inward = -x   # toward the body
+
+    def at(px, py, pz):
+        return tuple(Vector((0.262 * x + px * inward, py, pz)) + d)
+    rows = (-0.034, -0.012, 0.01, 0.03)   # each finger's place, front to back
+    if closed:   # the fist: knuckles in a row, the fingers curled under against the palm, the thumb over them
+        parts = [blob(at(0.0, -0.004, 0.912), (0.03, 0.05, 0.038))]
+        for i, fy in enumerate(rows):
+            parts.append(blob(at(-0.012, fy, 0.874), (0.014, 0.012, 0.014)))
+            parts.append(seg(at(-0.008, fy, 0.874), at(0.02, fy, 0.872), 0.011 - 0.001 * i))
+        parts.append(seg(at(0.012, -0.05, 0.93), at(0.022, -0.045, 0.88), 0.013))
+        return parts
+    parts = [blob(at(0.0, -0.004, 0.918), (0.02, 0.048, 0.046))]
+    for i, fy in enumerate(rows):
+        length = (0.072, 0.08, 0.076, 0.062)[i]
+        parts.append(seg(at(-0.002, fy, 0.882), at(0.012, fy * 1.05, 0.882 - length), 0.0105 - 0.0008 * i))
+    parts.append(seg(at(0.008, -0.048, 0.932), at(0.02, -0.066, 0.872), 0.013))
+    return parts
 
 
 def _torso_weights(p):
@@ -111,7 +137,7 @@ def build_body(M):
 
     def limb(s, x):
         arm_pts = [rest(f'uarm_{s}') + Vector((0, 0, 0.06)), rest(f'uarm_{s}'), rest(f'farm_{s}'), rest(f'hand_{s}')]
-        me = vloft(f'arm_{s}', ARM, chain_centre(arm_pts), n=28)
+        me = vloft(f'arm_{s}', ARM, chain_centre(arm_pts), n=36, muscles=arm_muscles(x))
         face_materials(me, lambda c: 1 if BRACER[0] < c[2] < BRACER[1] else 0)
         skins.append(Skinned(f'arm_{s}', me, [M['skin'], M['bracer']], [f'clav_{s}', f'uarm_{s}', f'farm_{s}'],
                              _arm_weights(coords(me))))
@@ -136,10 +162,15 @@ def build_body(M):
     _mirror(limb)
 
     # head: face and jaw under a mail coif, the silver helm with its nasal and cheek guards over both
+    # the face in skin: skull, jaw and chin, a nose, the brow's ridge and the cheekbones, so where the helm lets the
+    # light in, the cheeks and chin catch it as the classic fighter's do
     _hang(parts, _rigid('face', blob_mesh('face', [
         blob((0, -0.035, 1.665), (0.085, 0.098, 0.11)), blob((0, -0.085, 1.585), (0.058, 0.055, 0.045)),
-        blob((0, -0.136, 1.645), (0.014, 0.022, 0.026)), blob((0, -0.12, 1.69), (0.066, 0.025, 0.02))],
-        res=0.005), M['face']), 'head')
+        blob((0, -0.136, 1.645), (0.014, 0.022, 0.026)), blob((0, -0.12, 1.69), (0.066, 0.025, 0.02)),
+        blob((0.046, -0.112, 1.655), (0.03, 0.02, 0.02)), blob((-0.046, -0.112, 1.655), (0.03, 0.02, 0.02)),
+        blob((0.05, -0.09, 1.588), (0.026, 0.03, 0.022)), blob((-0.05, -0.09, 1.588), (0.026, 0.03, 0.022)),
+        blob((0, -0.122, 1.566), (0.03, 0.024, 0.022))],
+        res=0.004), M['skin']), 'head')
     _hang(parts, loft('coif', (0, -0.025, 1.72), (0, -0.02, 1.47), [
         (0.0, 0.10, 0.10, 0, 0.018), (0.25, 0.108, 0.112, 0, 0.022), (0.55, 0.10, 0.10, 0, 0.03),
         (0.8, 0.088, 0.088, 0, 0.026), (1.0, 0.075, 0.075, 0, 0.02)],
