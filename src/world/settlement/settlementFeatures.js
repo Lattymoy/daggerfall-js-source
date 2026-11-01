@@ -9,11 +9,11 @@ import { art, CAPITAL_ART, taper, cap, ring, wallRun, merlons, roundTower, gable
 import { hash32 } from '../blockHash.js';
 import { padAt, edgeDistance, pointInRing } from './settlementGeometry.js';
 import { SETTLEMENT_STYLES } from './settlementStyles.js';
+import { FORT_WALL, FORT_TOWER, MARKET_RING, DOCK_HALF } from './settlementLimits.js';
 
 const TIMBER = art(CAPITAL_ART.timber), CLOTH = art(CAPITAL_ART.cloth), WATER = art(CAPITAL_ART.water), LEAVES = art(CAPITAL_ART.leaves);
 const MARBLE = art(CAPITAL_ART.marble), BRONZE = art(CAPITAL_ART.bronze), SOIL = art(CAPITAL_ART.dark);
-/** A fort's wall: how high over its ground, how thick, how far its foot is sunk. */
-export const FORT_WALL = Object.freeze({ h: 6, thick: 2, sink: 3 });
+export { FORT_WALL, FORT_TOWER } from './settlementLimits.js';
 /** A garden's and a fence's rails: how high, and a post every so many metres. */
 export const FENCE = Object.freeze({ h: 0.9, post: 2.4 });
 
@@ -74,17 +74,18 @@ function statue(mesh, stone, east, floor, north, face, pose) {
   robedFigure(mesh, BRONZE, east, north, floor + 2.0, 3.6, face, pose);
 }
 
-/** A market's stalls: five in a ring 5 m round its point, turned by its own draw. @param {readonly number[]} at @param {string} id */
-export function stallsOf(at, id) {
+/** A market's stalls: five in a ring round its point (`ring` metres, the feature's size), turned by its own draw.
+ *  @param {readonly number[]} at @param {string} id @param {number} [ring] */
+export function stallsOf(at, id, ring = MARKET_RING) {
   return Array.from({ length: 5 }, (_, i) => {
     const angle = (i / 5) * Math.PI * 2 + draw(id, 1);
-    return [at[0] + Math.cos(angle) * 5, at[1] + Math.sin(angle) * 5];
+    return [at[0] + Math.cos(angle) * ring, at[1] + Math.sin(angle) * ring];
   });
 }
 
 /** A market: stalls in a ring round the point, each four posts, a cloth awning, a counter and a crate. */
-function market(mesh, east, floor, north, id) {
-  for (const [stallEast, stallNorth] of stallsOf([east, north], id)) {
+function market(mesh, east, floor, north, id, ring) {
+  for (const [stallEast, stallNorth] of stallsOf([east, north], id, ring)) {
     for (const [across, deep] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) mesh.box(TIMBER, [stallEast + across * 1.2, floor + 1.1, stallNorth + deep * 0.8], [0.14, 2.2, 0.14], 1);
     mesh.box(CLOTH, [stallEast, floor + 2.25, stallNorth], [2.8, 0.1, 2.0], 0.5);
     mesh.box(TIMBER, [stallEast, floor + 0.5, stallNorth + 0.3], [2.2, 1.0, 0.7], 1);
@@ -140,17 +141,17 @@ export function featuresModel(plan, datum, styleKey = 'IliacBay') {
   const mesh = new MeshBuilder(), plots = new Map((plan.plots ?? []).map((plot) => [plot.id, plot]));
   const gate = plan.gates?.[0]?.at ?? null;
   for (const feature of plan.features ?? []) {
-    const at = feature.at, floor = at ? groundAt(plan, datum, at) : 0;
+    const at = feature.at, floor = at ? (feature.y === undefined ? groundAt(plan, datum, at) : datum + feature.y) : 0;   // one off every pad brings its own ground
     if (feature.kind === 'well') well(mesh, stone, roofArt, at[0], floor, at[1]);
     else if (feature.kind === 'fountain') fountain(mesh, style.ground === 'marble' ? MARBLE : stone, at[0], floor, at[1]);
     else if (feature.kind === 'statue') {
       const toward = gate ? [gate[0] - at[0], gate[1] - at[1]] : [0, -1], length = Math.hypot(toward[0], toward[1]) || 1;
       statue(mesh, stone, at[0], floor, at[1], [toward[0] / length, toward[1] / length], Math.floor(draw(feature.id, 3) * 4));
-    } else if (feature.kind === 'market') market(mesh, at[0], floor, at[1], feature.id);
-    else if (feature.kind === 'tower') roundTower(mesh, at[0], at[1], 3, FORT_WALL.h + 3, { y: floor, wall: stone, roof: roofArt });
+    } else if (feature.kind === 'market') market(mesh, at[0], floor, at[1], feature.id, feature.size);
+    else if (feature.kind === 'tower') roundTower(mesh, at[0], at[1], FORT_TOWER.r, FORT_WALL.h + FORT_TOWER.over, { y: floor, wall: stone, roof: roofArt });
     else if (feature.kind === 'wall' && feature.path) {
       for (let i = 0; i + 1 < feature.path.length; i++) {
-        const start = feature.path[i], end = feature.path[i + 1], base = Math.min(groundAt(plan, datum, start), groundAt(plan, datum, end));
+        const start = feature.path[i], end = feature.path[i + 1], base = feature.ground ? datum + feature.ground[i] : Math.min(groundAt(plan, datum, start), groundAt(plan, datum, end));
         translated(mesh, 0, base, 0, () => {
           wallRun(mesh, stone, start, end, FORT_WALL.thick, FORT_WALL.h, FORT_WALL.sink);
           merlons(mesh, stone, start, end, FORT_WALL.thick, FORT_WALL.h);
@@ -174,7 +175,7 @@ export function featuresModel(plan, datum, styleKey = 'IliacBay') {
 function dock(mesh, plan, datum, path) {
   const [start, end] = path;
   const deck = groundAt(plan, datum, start) + 0.1, length = Math.hypot(end[0] - start[0], end[1] - start[1]) || 1;
-  const dirEast = (end[0] - start[0]) / length, dirNorth = (end[1] - start[1]) / length, sideEast = -dirNorth * 1.5, sideNorth = dirEast * 1.5;
+  const dirEast = (end[0] - start[0]) / length, dirNorth = (end[1] - start[1]) / length, sideEast = -dirNorth * DOCK_HALF, sideNorth = dirEast * DOCK_HALF;
   mesh.quad(TIMBER, [start[0] - sideEast, deck, start[1] - sideNorth], [start[0] + sideEast, deck, start[1] + sideNorth], [end[0] + sideEast, deck, end[1] + sideNorth], [end[0] - sideEast, deck, end[1] - sideNorth],
     [0, 1, 0], [[0, 0], [1, 0], [1, -length / 2], [0, -length / 2]]);
   for (let along = 0; along <= length; along += 3) for (const side of [-1, 1]) mesh.box(TIMBER, [start[0] + dirEast * along + sideEast * side, deck - 1.6, start[1] + dirNorth * along + sideNorth * side], [0.25, 3.2, 0.25], 1);
@@ -197,8 +198,8 @@ export function featureSolids(plan) {
     if (feature.kind === 'well') out.push(roundRing(at, 1.3, 12));
     else if (feature.kind === 'fountain') out.push(roundRing(at, 2.4, 16));
     else if (feature.kind === 'statue') out.push(boxRing(at, 1.45, 1.45));
-    else if (feature.kind === 'tower') out.push(roundRing(at, 3.6, 16));
-    else if (feature.kind === 'market') for (const stall of stallsOf(at, feature.id)) out.push(boxRing(stall, 1.4, 1.0));
+    else if (feature.kind === 'tower') out.push(roundRing(at, FORT_TOWER.r + FORT_TOWER.eave, 16));
+    else if (feature.kind === 'market') for (const stall of stallsOf(at, feature.id, feature.size)) out.push(boxRing(stall, 1.4, 1.0));
     else if (feature.kind === 'wall' && feature.path) {
       for (let i = 0; i + 1 < feature.path.length; i++) {
         const start = feature.path[i], end = feature.path[i + 1], length = Math.hypot(end[0] - start[0], end[1] - start[1]) || 1;

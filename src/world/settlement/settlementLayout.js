@@ -6,12 +6,14 @@
 // records, no functions. Worker-safe: it reaches world/ alone (test/world/tamriel2.test.js TAMRIEL2-WORKER).
 import { hash32 } from '../blockHash.js';
 import { dsin, dcos, datan2, dhypot } from './exactMath.js';
-import { STEP_MAX, PITCH_MAX } from './settlementLimits.js';
+import { STEP_MAX, PITCH_MAX, FORT_WALL, FORT_TOWER, FEATURE_REACH, FEATURE_CLEAR, TREE_CLEAR } from './settlementLimits.js';
+import { settlementGroundAt } from './settlementGround.js';
+import { distanceToSegment } from './settlementGeometry.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const SETTLEMENT_GENERATOR_VERSION = 5;   // moves with any change to a plan; the golden prints (rmbc3_exact) hold it
+export const SETTLEMENT_GENERATOR_VERSION = 6;   // moves with any change to a plan; the golden prints (rmbc3_exact) hold it
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -25,6 +27,16 @@ export const SHORE_RADIUS = Object.freeze([600, 1200]);
 const LINK_REACH = 2.5;
 /** A site whose terraces stand further than this many terrace steps from their ground is too steep for the archetype. */
 export const CUT_STEPS_MAX = 2.5;
+/** How far a dock looks for water past its quay, and how far it runs out over it, metres. */
+export const DOCK_REACH = 40;
+export const DOCK_OUT = 8;
+/** A keep's half side, metres; its mound's radius past its corners; and the square round the mound, a street and the
+ *  square's feature. */
+export const KEEP_HALF = 7;
+export const KEEP_MOUND = KEEP_HALF * Math.SQRT2 + 2.5;
+export const KEEP_ROOM = 6;
+/** How far a yard tree stands from a road through its cell, metres along its arc. */
+export const ROAD_CLEAR = 4;
 
 /**
  * @typedef {readonly [number, number]} Pt
@@ -32,7 +44,7 @@ export const CUT_STEPS_MAX = 2.5;
  * @typedef {{ place: number, origin: { px: number, py: number, east: number, north: number }, seed: number, archetype: string, style: string,
  *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, keys?: 'anchored', districtSeeds?: Record<string, number>, protectedKeys?: number[],
  *   published?: any[], params?: { size?: number, density?: number, bands?: number, sectors?: number, open?: number },
- *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number } }, core?: { centre: number[], half: number, y: number }, bounds?: { e0: number, e1: number, n0: number, n1: number } }} SettlementInput
+ *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number } }, core?: { centre: number[], half: number[], y: number, clear?: number }, bounds?: { e0: number, e1: number, n0: number, n1: number } }} SettlementInput
  */
 
 export const TAU = Math.PI * 2;
@@ -111,7 +123,7 @@ export function splits(rng, n, total, salt) {
 
 /**
  * Stages A to C. roads: the bearings roads arrive from (degrees clockwise from north); params: the editor's controls -
- * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground. * core a legacy town's square (half its side, its ground's height) in the plaza's place; bounds where a cell may stand;
+ * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground. * core a legacy town's rectangle (half its sides east and north, its ground's height, the street round the town inside it) in the plaza's place; bounds where a cell may stand;
  * env.blockedAt the ground no cell may take.
  * @param {SettlementInput} input @param {SiteEnv} env
  */
@@ -148,14 +160,15 @@ export function layoutSettlement(input, env) {
   const bandDepth = ws + plotDepth + st.back + gap;
   const bands = clampWithin(Math.round(params.bands ?? A.bands), 1, 8);
   const size = pick(A.size, 3) * sizeK * (A.frame === 'auto' && !ring ? 2.2 : 1);   // an auto village's size is a radius
-  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it
+  const across = (A.plaza * sizeK + (bands * bandDepth) / 2) / (A.plaza + (bands * bandDepth) / 2);   // a ring's middle, as much longer as its square is wider
+  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) * across : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it
   const depthAll = bands * bandDepth;
 
   let frame, inner, uStart, uSpan, vOut = 0;
   if (ring) {
     const c = centre === 'core' ? /** @type {NonNullable<typeof core>} */ (core).centre : centre === 'fixed' ? fix.centre : centre === 'high' ? searchCentre(env, site, 'high') : centre === 'low' ? searchCentre(env, site, 'low') : [site.east, site.north];
     frame = polarFrame(c);
-    inner = core ? core.half * Math.SQRT2 + ws : A.plaza;   // a core's corners and a street round them
+    inner = core ? dhypot(core.half[0], core.half[1]) + ws : Math.max(A.plaza * sizeK, A.keep ? KEEP_MOUND + KEEP_ROOM + gap / 2 : 0);   // a core's corners and a street round them; a keep's mound and room round it
     uStart = rng(5) * TAU;
     uSpan = TAU;
   } else {
@@ -225,9 +238,9 @@ export function layoutSettlement(input, env) {
     }
   }
   if (core) {
-    const [midE, midN] = core.centre, side = core.half;
-    const square = [[midE - side, midN - side], [midE + side, midN - side], [midE + side, midN + side], [midE - side, midN + side]].map(([e, n]) => /** @type {Pt} */ ([cm(e), cm(n)]));
-    cells.set('plaza', { id: 'plaza', k: 0, j: -1, a: 0, b: side, poly: square, core: true });
+    const [midE, midN] = core.centre, [east, north] = core.half;
+    const rect = [[midE - east, midN - north], [midE + east, midN - north], [midE + east, midN + north], [midE - east, midN + north]].map(([e, n]) => /** @type {Pt} */ ([cm(e), cm(n)]));
+    cells.set('plaza', { id: 'plaza', k: 0, j: -1, a: 0, b: Math.max(east, north), poly: rect, core: true });
   } else if (ring && inner > 0) {
     const r = inner - gap / 2, us = [];
     for (const g of grids) for (const u of g) if (!us.length || u - us[us.length - 1] > 1e-9) us.push(u);
@@ -240,10 +253,10 @@ export function layoutSettlement(input, env) {
     if (c.core) { c.natural = c.top = c.h = /** @type {NonNullable<typeof core>} */ (core).y; c.wet = 0; c.raised = false; continue; }
     const samples = c.poly.filter((_, i) => i % 2 === 0);
     samples.push(ringCentroid(c.poly));
-    const hs = samples.map(([e, n]) => env.heightAt(e, n));
-    c.natural = hs.reduce((s, x) => s + x, 0) / hs.length;
+    const hs = samples.map(([e, n]) => env.heightAt(e, n)), dry = hs.filter((_, i) => !env.waterAt?.(samples[i][0], samples[i][1]));
+    c.natural = (dry.length ? dry : hs).reduce((s, x) => s + x, 0) / (dry.length || hs.length);   // its dry ground's: a pad never under the water it meets
     c.top = Math.max(...hs);
-    c.wet = samples.filter(([e, n]) => env.waterAt?.(e, n)).length / samples.length;
+    c.wet = 1 - dry.length / samples.length;
     c.raised = islands;
     c.h = islands ? c.top + deck : c.natural;
   }
@@ -253,7 +266,7 @@ export function layoutSettlement(input, env) {
   const gateBand = ring ? bands : 1;
   for (const j of gateSectors) {
     const g = cells.get(cellId(gateBand, j));
-    if (g && islands && deck > STEP_MAX) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on the ground
+    if (g && islands && deck > STEP_MAX && g.wet <= 0.5) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on its dry ground; a deck where that is under half
   }
 
   // the ways between cells; what no gate reaches is dropped
@@ -285,7 +298,9 @@ export function layoutSettlement(input, env) {
       b = frame.toW(t.u0 + inset(t.a + ws / 2, reachU), t.a + ws / 2);
     } else {
       const lu = edges[t.j][0] + inset((f.b + t.a) / 2, gap / 2 + wl / 2);
-      a = frame.toW(lu, f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH));
+      // a core's a metre inside its town's edge that way, on the town's own level ground
+      const start = f.core ? rectEdge(/** @type {NonNullable<typeof core>} */ (core).half.map((side) => side - (core?.clear ?? 0) - 1), lu) : f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH);
+      a = frame.toW(lu, start);
       b = frame.toW(lu, t.a + Math.min(LINK_REACH, ws));
     }
     const run = dhypot(b[0] - a[0], b[1] - a[1]);
@@ -294,9 +309,9 @@ export function layoutSettlement(input, env) {
     const pitch = (bridge ? PITCH_MAX.bridge : PITCH_MAX.stairs) * run;
     return { ...w, a, b, run, bridge, max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02, width: w.kind === 'along' ? ws : wl };
   });
-  const keepHalf = 7;
+  const keepHalf = KEEP_HALF;
   if (A.keep && cells.has('plaza') && !core) {
-    const pz = cells.get('plaza'), r = keepHalf * Math.SQRT2 + 2.5, gb = gateSectors.length ? midOf(gateSectors[0]) : uStart;
+    const pz = cells.get('plaza'), r = KEEP_MOUND, gb = gateSectors.length ? midOf(gateSectors[0]) : uStart;
     cells.set('mound', { id: 'mound', k: -1, j: -1, a: 0, b: r, poly: Array.from({ length: 16 }, (_, i) => frame.toW(gb + (i / 16) * TAU, r)), natural: pz.natural, top: pz.top, h: pz.h + 1.5, raised: pz.raised, gb });
     links.push({ from: 'plaza', to: 'mound', kind: 'plaza', a: frame.toW(gb, r + 1.6), b: frame.toW(gb, r - 1.6), run: 3.2, bridge: false, max: Math.min(st.terrace, PITCH_MAX.stairs * 3.2) * 0.95 - 0.02, width: 3 });
   }
@@ -328,21 +343,99 @@ export function layoutSettlement(input, env) {
     return { id: `l${i}`, kind: l.bridge ? 'bridge' : rise <= STEP_MAX ? 'grade' : rise <= PITCH_MAX.ramp * l.run ? 'ramp' : 'stairs', from: l.from, to: l.to, a: l.a, b: l.b, width: l.width };
   });
 
+  const walls = A.wall && ring ? fortWalls(frame, cells, { edges, grids, sectors, gateSectors }, env, pads, datum) : { walls: [], towers: [] };
+  const docks = A.docks && !ring && vOut < 0 ? docksOut(frame, cells, { uStart, uSpan, size, inner, gap }, env) : [];
+
   return {
     version: SETTLEMENT_GENERATOR_VERSION, layout, c: frame.c, shore, ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand,
-    islands, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, keptCount: kept.length, datum, pads, links: planLinks,
+    islands, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, keptCount: kept.length, datum, pads, links: planLinks, ...walls, docks,
     core: core ? { centre: core.centre, half: core.half } : null,
     cells: [...cells.values()].map((c) => ({ ...(c.road?.length ? { road: c.road } : {}), id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
   };
 }
 
-/** How far from a square's middle its edge stands at the furthest along a sector's span - at a corner if
- *  the span holds one (half a side times the root of two), else at whichever end is nearer a corner.
- *  @param {number} half @param {number} from @param {number} to */
+/** How far from a rectangle's middle its edge stands at a bearing. @param {readonly number[]} half its half sides, east and
+ *  north @param {number} bearing */
+export function rectEdge(half, bearing) {
+  const across = Math.abs(dsin(bearing)), up = Math.abs(dcos(bearing));
+  return Math.min(across > 1e-12 ? half[0] / across : Infinity, up > 1e-12 ? half[1] / up : Infinity);
+}
+
+/** How far from a rectangle's middle its edge stands at the furthest along a sector's span - at a corner if the span
+ *  holds one, else at whichever end is nearer a corner. @param {readonly number[]} half @param {number} from @param {number} to */
 export function coreEdge(half, from, to) {
-  const at = (/** @type {number} */ angle) => half / Math.max(Math.abs(dsin(angle)), Math.abs(dcos(angle)));
-  const corner = TAU / 8 + Math.ceil((from - TAU / 8) / (TAU / 4)) * (TAU / 4);
-  return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));
+  const corner = datan2(half[0], half[1]);
+  for (const at of [corner, TAU / 2 - corner, TAU / 2 + corner, TAU - corner]) if (at + Math.ceil((from - at) / TAU) * TAU <= to) return dhypot(half[0], half[1]);
+  return Math.max(rectEdge(half, from), rectEdge(half, to));
+}
+
+/**
+ * A walled ring's walls and towers, just outside the cells that stand: each sector's run past its outermost cell's rim,
+ * stepping round a taller neighbour on the shorter side, where no cell stands; a tower projecting out at every corner and
+ * either side of each gate. A run breaks over water and a tower there is not built. Each foot is the ground the carve
+ * leaves there, over the datum (a deck town's the land's own).
+ * @param {ReturnType<typeof polarFrame>} frame @param {Map<string, any>} cells
+ * @param {{ edges: number[][], grids: number[][], sectors: number, gateSectors: number[] }} rings @param {SiteEnv} env @param {import('./settlementContract.js').Pad[]} pads @param {number} datum
+ */
+function fortWalls(frame, cells, { edges, grids, sectors, gateSectors }, env, pads, datum) {
+  const rim = edges.map(() => -Infinity);
+  for (const cell of cells.values()) if (cell.k >= 1) rim[cell.j] = Math.max(rim[cell.j], cell.b);
+  const has = (/** @type {number} */ j) => rim[j] > -Infinity, walled = (/** @type {number} */ j) => has(j) && !gateSectors.includes(j);
+  const line = (/** @type {number} */ j) => rim[j] + FORT_WALL.thick / 2 + FEATURE_CLEAR;
+  const off = (/** @type {number} */ j) => {   // the step at the end of sector j: on its shorter side
+    const next = (j + 1) % sectors;
+    if (!has(j) || !has(next) || rim[j] === rim[next]) return 0;
+    const turn = (FORT_WALL.thick / 2 + FEATURE_CLEAR) / Math.min(line(j), line(next));
+    return rim[j] < rim[next] ? -turn : turn;
+  };
+  const ground = (/** @type {Pt} */ point) => { const natural = env.heightAt(point[0], point[1]); return (settlementGroundAt(pads, datum, point[0], point[1], natural) ?? natural) - datum; };
+  const wet = (/** @type {Pt} */ point) => !!env.waterAt?.(point[0], point[1]);
+  const walls = [], towers = [];
+  for (let j = 0; j < sectors; j++) {
+    const prev = (j + sectors - 1) % sectors, next = (j + 1) % sectors, from = edges[j][0] + off(prev);
+    if (walled(prev) || walled(j)) {
+      const at = frame.toW(from, Math.max(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);   // its eave past the rim too
+      const ring = [at, ...Array.from({ length: 8 }, (_, i) => /** @type {Pt} */ ([at[0] + FORT_TOWER.r * dsin((i * TAU) / 8), at[1] + FORT_TOWER.r * dcos((i * TAU) / 8)]))];
+      if (!ring.some(wet)) towers.push({ id: `tower${j}`, at, y: cm(Math.min(...ring.map(ground))) });
+    }
+    if (!walled(j)) continue;
+    const to = edges[j][1] + off(j), path = along(frame, grids[j], from, to, line(j));
+    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side
+    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));
+    let run = { path: [path[0]], ground: /** @type {number[]} */ ([]) }, n = 0;
+    const close = () => { if (run.ground.length) walls.push({ id: `wall${j}.${n++}`, path: run.path, ground: run.ground }); };
+    for (let i = 0; i + 1 < path.length; i++) {
+      const [a, b] = [path[i], path[i + 1]], steps = Math.max(1, Math.ceil(dhypot(b[0] - a[0], b[1] - a[1]) / 2));
+      const points = Array.from({ length: steps + 1 }, (_, k) => /** @type {Pt} */ ([a[0] + ((b[0] - a[0]) * k) / steps, a[1] + ((b[1] - a[1]) * k) / steps]));
+      if (points.some(wet)) { close(); run = { path: [b], ground: [] }; continue; }
+      run.path.push(b);
+      run.ground.push(cm(Math.min(...points.map(ground))));
+    }
+    close();
+  }
+  return { walls, towers };
+}
+
+/**
+ * A river town's docks: each from its quay straight out to the water and DOCK_OUT past its edge, on a quay that stands;
+ * none where no water lies within DOCK_REACH.
+ * @param {ReturnType<typeof polarFrame>} frame @param {Map<string, any>} cells
+ * @param {{ uStart: number, uSpan: number, size: number, inner: number, gap: number }} row @param {SiteEnv} env
+ */
+function docksOut(frame, cells, { uStart, uSpan, size, inner, gap }, env) {
+  const docks = [], quay = inner + gap / 2, wet = (/** @type {number} */ bearing, /** @type {number} */ out) => { const point = frame.toW(bearing, out); return !!env.waterAt?.(point[0], point[1]); };
+  const n = Math.max(1, Math.floor(size / 24));
+  for (let i = 0; i < n; i++) {
+    const bearing = uStart + (uSpan * (i + 0.5)) / n;
+    if (![...cells.values()].some((cell) => cell.k === 1 && cell.u0 <= bearing && bearing <= cell.u1)) continue;   // its quay's cell dropped
+    let edge = null;
+    for (let out = quay - 1; out >= quay - DOCK_REACH; out--) if (wet(bearing, out)) { edge = out; break; }
+    if (edge === null) continue;
+    let end = edge;
+    while (end > edge - DOCK_OUT && wet(bearing, end - 1)) end--;
+    docks.push({ id: `dock${i}`, path: [frame.toW(bearing, quay), frame.toW(bearing, end)] });
+  }
+  return docks;
 }
 
 /** Each sector's reach by how squarely it faces a road out of the town - a road's sector its whole depth, one a
@@ -373,14 +466,27 @@ export const districtDraw = (input) => (/** @type {number} */ j) => {
 export function yardTrees(input, layout) {
   const style = SETTLEMENT_STYLES[input.style], frame = polarFrame(layout.c), rngOf = districtDraw(input), out = [];
   const walled = !!SETTLEMENT_ARCHETYPES[input.archetype]?.wall && layout.ring;
+  const lane = layout.gap / 2 + layout.wl + TREE_CLEAR, side = layout.gap / 2 + TREE_CLEAR;
   for (const cell of layout.cells) {
-    // none on a deck (a tree is the ground's), nor in a walled town's outer band, whose yard its wall stands on
+    // none on a deck (a tree is the ground's), nor in a walled town's outer band, beside its wall
     if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;
+    const radius = cell.b - style.back / 2;
     for (let slot = 0; slot < 3; slot++) {
-      if (rngOf(cell.j)(13, cell.k, cell.j, slot) < 0.5) out.push({ id: `t${cell.id}.${slot}`, pad: cell.id, at: frame.toW(cell.u0 + (cell.u1 - cell.u0) * (0.25 + slot * 0.25), cell.b - style.back / 2) });
+      if (rngOf(cell.j)(13, cell.k, cell.j, slot) >= 0.5) continue;
+      const bearing = cell.u0 + (cell.u1 - cell.u0) * (0.25 + slot * 0.25), at = frame.toW(bearing, radius);
+      // clear of its lane, the next sector's, a road through its cell and every way between pads
+      if ((bearing - cell.u0) * radius < lane || (cell.u1 - bearing) * radius < side || (cell.road && onRoad(cell.road, bearing, bearing, frame.du(ROAD_CLEAR, radius)))) continue;
+      if (!layout.links.some((link) => distanceToSegment(at, link.a, link.b) < link.width / 2 + TREE_CLEAR)) out.push({ id: `t${cell.id}.${slot}`, pad: cell.id, at });
     }
   }
   return out;
+}
+
+/** whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
+ *  @param {readonly number[]} road @param {number} start @param {number} end @param {number} margin */
+export function onRoad(road, start, end, margin) {
+  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;
+  return false;
 }
 
 /** The cells round a fixed core whose cut passes `limit`, dropped; then the outer end of a link the solve left too

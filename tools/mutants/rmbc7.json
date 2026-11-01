@@ -38,8 +38,8 @@
   {
     "name": "RMBC7-growth-ledgered",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // No ledger ships",
-    "new": "    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads,   // No ledger ships",
+    "old": "    site: { east: centre[0], north: centre[1], radius: Math.max(...half) * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // No ledger ships",
+    "new": "    site: { east: centre[0], north: centre[1], radius: Math.max(...half) * 2 }, roads,   // No ledger ships",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js",
       "test/world/settlement/rmbc6_growth.test.js"

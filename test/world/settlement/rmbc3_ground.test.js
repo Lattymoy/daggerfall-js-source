@@ -8,9 +8,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { settlementGroundAt, carveSettlementGround, PAD_CLEAR, PAD_REACH, GROUND_EASE } from '../../../src/world/settlement/settlementGround.js';
 import { generateSettlement } from '../../../src/world/settlement/settlementGen.js';
-import { padAt } from '../../../src/world/settlement/settlementGeometry.js';
+import { padAt, edgeDistance } from '../../../src/world/settlement/settlementGeometry.js';
 import { SETTLEMENT_ROWS, SETTLEMENT_LANE, settlementPlaceId, isSettlementPlaceId, settlementOnPixel, settlementPixel, settlementPlaceRows } from '../../../src/world/settlement/settlementPlaces.js';
-import { standSettlementGround, settlementTreeFlats, SAMPLE_M } from '../../../src/world/settlement/settlementStand.js';
+import { standSettlementGround, settlementTreeFlats, SAMPLE_M, SEA_M } from '../../../src/world/settlement/settlementStand.js';
 import { MINTED_KEY_MIN } from '../../../src/world/settlement/settlementContract.js';
 import { THEATRE_KEYS, theatreAt } from '../../../src/world/worldWide/worldGrid.js';
 import { isMadePlaceId } from '../../../src/world/placeIds.js';
@@ -138,6 +138,24 @@ test('RMBC3 the frame\'s law: a record written before PADS_FRAME_LAW rides the c
   assert.match(host, /return settlementMovedAt\(stood\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/, 'a built pixel\'s own carve');
 });
 
+test('RMBC3 a published quay meets its sea: the pixel\'s carve leaves the sea\'s bed off its pads, its docks run out over the water (mutant: the sea unread by the stand)', () => {
+  const row = SETTLEMENT_ROWS.find((r) => r.archetype === 'river'), [px, py] = settlementPixel(row), D = HEIGHTMAP_DIMENSION, dir = row.fix.shore.dir;
+  const seaward = (e, n) => (e - row.site.east) * dir[0] + (n - row.site.north) * dir[1] > row.fix.shore.at;
+  const metres = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, before = new Float32Array(D * D);
+  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) before[x * D + y] = (seaward(x * SAMPLE_M, y * SAMPLE_M) ? SEA_M - 3 : SEA_M + 4) / metres;
+  const after = Float32Array.from(before), stood = standSettlementGround(px, py, after);
+  assert.ok(stood);
+  const pads = stood.layout.pads;
+  let near = 0;
+  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
+    const p = [x * SAMPLE_M, y * SAMPLE_M], i = x * D + y;
+    if (before[i] * metres >= SEA_M || padAt(pads, p)) continue;
+    assert.equal(after[i], before[i], `the bed at ${x}, ${y}`);
+    if (pads.some((pad) => edgeDistance(p, pad.poly) < PAD_REACH)) near++;
+  }
+  assert.ok(near > 3, `${near} of its bed within a pad's hold`);
+});
+
 test('RMBC3 the carve hands back its own move: the build\'s `moved` is each sample carved less the sample it was, in the frame\'s units, and nothing off the pads\' reach (mutants: the moved field unfilled, its units)', () => {
   setTamrielFit(null);
   const w = new WoodsFile(); w.load(syntheticWoodsBytes());
@@ -153,15 +171,31 @@ test('RMBC3 the carve hands back its own move: the build\'s `moved` is each samp
   assert.ok(carved > 50 && carved < D * D / 2, `${carved} samples carved, the rest left`);
 });
 
+test('RMBC3 the carve never raises the sea\'s bed off its pads: a quay meets its harbour\'s water, a pad\'s own ground is still raised to it, the land above the sea as ever (mutants: the sea, the pad\'s own ground)', () => {
+  const sea = 99;
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, 95, sea), null, 'beside the quay, under the sea: left');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, 95), 100 - PAD_CLEAR, 'with no sea, raised as ever');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 20, 95, sea), 100 - PAD_CLEAR, 'under the pad itself: its ground');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, 99.5, sea), 100 - PAD_CLEAR, 'a beach above the sea raised to it');
+  assert.equal(settlementGroundAt(PADS, 100, 20, 45, 105, sea), 100 - PAD_CLEAR, 'higher land cut down to it');
+  const S = Float64Array.from({ length: 129 * 129 }, (_, i) => (Math.floor(i / 129) * SAMPLE_M < 38 ? 95 : 101));   // its bed within the hold of the quay
+  const kept = Float64Array.from(S);
+  carveSettlementGround(kept, 129, SAMPLE_M, { pads: [{ id: 'quay', poly: sq(40, 0, 80, 800), y: 0, base: 'cut' }], origin: { east: 0, north: 0 } }, 101, undefined, sea);
+  for (let i = 0; i < S.length; i++) if (Math.floor(i / 129) * SAMPLE_M < 38) assert.equal(kept[i], 95, 'the harbour\'s bed');
+  const raised = Float64Array.from(S);
+  carveSettlementGround(raised, 129, SAMPLE_M, { pads: [{ id: 'quay', poly: sq(40, 0, 80, 800), y: 0, base: 'cut' }], origin: { east: 0, north: 0 } }, 101);
+  assert.equal(raised[5 * 129 + 10], 101 - PAD_CLEAR, 'with no sea the hold fills it');
+});
+
 test('RMBC3 the carve asks each sample only the pads that can touch it, and lays the ground every pad would (mutant: the reach the index grows by)', () => {
   const D = 129, step = SAMPLE_M;
   for (const archetype of ['fort', 'wetland']) {
     const { plan } = generateSettlement({ place: 9, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 3, archetype, style: 'Skyrim', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] });
     const base = Float64Array.from({ length: D * D }, (_, i) => 40 + Math.sin(i / 50) * 9), indexed = Float64Array.from(base);
-    carveSettlementGround(indexed, D, step, plan, 30);
+    carveSettlementGround(indexed, D, step, plan, 30, undefined, 38);
     let moved = 0;
     for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
-      const i = x * D + y, h = settlementGroundAt(plan.pads, 30, x * step, y * step, base[i]);
+      const i = x * D + y, h = settlementGroundAt(plan.pads, 30, x * step, y * step, base[i], 38);
       assert.equal(indexed[i], h === null ? base[i] : h, `${archetype} ${x},${y}`);
       if (h !== null && h !== base[i]) moved++;
     }

@@ -41,7 +41,7 @@ export function standSettlementGround(px, py, samples, bare = null) {
   // land's whatever network a client stands; carved into the ground as it is
   const layout = layoutSettlement(input, sampleEnv(bare?.() ?? samples));
   const metres = Float64Array.from(samples, (s) => s * M);
-  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum);
+  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, undefined, SEA_M);
   const moved = new Float32Array(samples.length);   // what the carve moved each sample, as a grown town's: a record's move
   for (let i = 0; i < samples.length; i++) { const now = Math.fround(metres[i] / M); if (now !== samples[i]) { moved[i] = (now - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = now; } }
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;

@@ -6,9 +6,9 @@
 // worker lays the outskirts out and carves them; the host dresses the same layout from the same input.
 import { hash32 } from '../blockHash.js';
 import { dsin, dcos } from './exactMath.js';
-import { layoutSettlement } from './settlementLayout.js';
+import { layoutSettlement, rectEdge } from './settlementLayout.js';
 import { carveSettlementGround } from './settlementGround.js';
-import { sampleEnv, SAMPLE_M } from './settlementStand.js';
+import { sampleEnv, SAMPLE_M, SEA_M } from './settlementStand.js';
 import { isOutdoorWaterTile } from '../terrain/terrainSurface.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../terrain/terrainSampler.js';
 
@@ -16,7 +16,7 @@ import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from
 export const GROWTH_TYPES = Object.freeze([0, 1, 2]);
 /** How far inside its pixel's edge an outskirts cell keeps, metres: a cell's diagonal and the carve's ease (28 m). */
 export const GROWTH_MARGIN = 40;
-/** The street between a town's rect and its core's square, metres. */
+/** The street between a town's rect and its core's rectangle, metres. */
 export const CORE_CLEAR = 6;
 /** The tiles across a pixel. */
 const TILES = HEIGHTMAP_DIMENSION - 1;
@@ -43,27 +43,30 @@ export function townGrowthJob(location, style, regionIndex) {
  * @param {number[]} [roads] the bearings its roads leave by (roadsOut)
  */
 export function growthInput(job, px, py, rect, coreY, roads = []) {
-  const centre = [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
-  const half = (Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR;
-  const far = TILES * SAMPLE_M - GROWTH_MARGIN;
+  const centre = coreCentre(rect), half = coreHalf(rect), far = TILES * SAMPLE_M - GROWTH_MARGIN;
   return {
     place: job.place, origin: { px, py, east: 0, north: 0 }, seed: job.seed, archetype: 'outskirts', style: job.style,
-    site: { east: centre[0], north: centre[1], radius: half * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // No ledger ships
+    site: { east: centre[0], north: centre[1], radius: Math.max(...half) * 2 }, roads, keys: /** @type {'anchored'} */ ('anchored'),   // No ledger ships
     params: { bands: job.type === 0 ? 4 : 3, density: 0.7, open: 0.4 },   // as deep as its roads lead, thinning off them
-    core: { centre, half, y: coreY }, bounds: { e0: GROWTH_MARGIN, e1: far, n0: GROWTH_MARGIN, n1: far },
+    core: { centre, half, y: coreY, clear: CORE_CLEAR }, bounds: { e0: GROWTH_MARGIN, e1: far, n0: GROWTH_MARGIN, n1: far },
   };
 }
 
+/** A town's core: its rect's middle, and its half sides east and north with a street round it, metres. @param {TileRect} rect */
+export const coreCentre = (rect) => [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
+export const coreHalf = (/** @type {TileRect} */ rect) => [((rect.xMax - rect.xMin) / 2) * SAMPLE_M + CORE_CLEAR, ((rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR];
+
 /**
- * the bearings a town's roads leave it by, degrees clockwise from north - its path tiles met on a circle a street
- * past its square's corners, each run of them one road at its middle; none where no path or every way is one.
- * @param {Uint8Array|null} paths @param {number[]} centre @param {number} half
+ * the bearings a town's roads leave it by, degrees clockwise from north - its path tiles met a street past its core's
+ * edge all round, each run of them one road at its middle; none where no path or every way is one.
+ * @param {Uint8Array|null} paths @param {number[]} centre @param {number[]} half its core's half sides
  */
 export function roadsOut(paths, centre, half) {
   if (!paths) return [];
-  const steps = 360, radius = half * Math.SQRT2 + 12, hit = new Uint8Array(steps);
+  const steps = 360, hit = new Uint8Array(steps);
   for (let a = 0; a < steps; a++) {
-    const angle = (a / steps) * 2 * Math.PI, x = Math.floor((centre[0] + radius * dsin(angle)) / SAMPLE_M), y = Math.floor((centre[1] + radius * dcos(angle)) / SAMPLE_M);
+    const angle = (a / steps) * 2 * Math.PI, radius = rectEdge(half, angle) + 12;
+    const x = Math.floor((centre[0] + radius * dsin(angle)) / SAMPLE_M), y = Math.floor((centre[1] + radius * dcos(angle)) / SAMPLE_M);
     hit[a] = x >= 0 && y >= 0 && x < TILES && y < TILES && paths[y * TILES + x] ? 1 : 0;
   }
   const first = hit.indexOf(0);
@@ -101,8 +104,7 @@ export function standTownGrowth(px, py, samples, job, rect, bars) {
   // a road bars a building, never a cell - the town's ground, a camp and water bar the cell
   const roads = bars.paths ?? null;
   const env = { ...sampleEnv(samples), blockedAt: growthBlocked({ ...bars, paths: null, mask: bars.mask ?? rect.mask ?? null }), roadAt: roads ? growthBlocked({ paths: roads }) : undefined };
-  const centre = [((rect.xMin + rect.xMax) / 2) * SAMPLE_M, ((rect.yMin + rect.yMax) / 2) * SAMPLE_M];
-  const half = (Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR;
+  const centre = coreCentre(rect), half = coreHalf(rect);
   const input = growthInput(job, px, py, rect, Math.round(env.heightAt(centre[0], centre[1]) * 100) / 100, roadsOut(bars.paths ?? null, centre, half));
   const layout = layoutSettlement(input, env);
   const built = layout.pads.filter((pad) => !pad.legacy);
@@ -110,7 +112,7 @@ export function standTownGrowth(px, py, samples, job, rect, bars) {
   const mask = bars.mask ?? rect.mask ?? null, core = /** @type {NonNullable<typeof layout.core>} */ (layout.core);
   // a sample is a corner of four tiles: kept when any of them is the town's, so a kept tile's whole surface stands
   const keep = (/** @type {number} */ e, /** @type {number} */ n) => {
-    if (Math.abs(e - core.centre[0]) <= core.half && Math.abs(n - core.centre[1]) <= core.half) return true;
+    if (Math.abs(e - core.centre[0]) <= core.half[0] && Math.abs(n - core.centre[1]) <= core.half[1]) return true;
     const atX = Math.round(e / SAMPLE_M), atY = Math.round(n / SAMPLE_M);
     return !!mask && [[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([dx, dy]) => {
       const x = atX + dx, y = atY + dy;
@@ -118,7 +120,7 @@ export function standTownGrowth(px, py, samples, job, rect, bars) {
     });
   };
   const metres = Float64Array.from(samples, (sample) => sample * UNIT_METRES);
-  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, keep);
+  carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, keep, SEA_M);
   // the carve as a record's frame reads it (landforms.js settlementMovedField's units): kernel units, x * 129 + y
   const moved = new Float32Array(samples.length);
   for (let i = 0; i < samples.length; i++) {

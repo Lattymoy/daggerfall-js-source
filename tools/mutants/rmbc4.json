@@ -300,7 +300,7 @@
   {
     "name": "FEATURES-stalls-huddled",
     "file": "src/world/settlement/settlementFeatures.js",
-    "old": "return [at[0] + Math.cos(angle) * 5, at[1] + Math.sin(angle) * 5];",
+    "old": "return [at[0] + Math.cos(angle) * ring, at[1] + Math.sin(angle) * ring];",
     "new": "return [at[0] + Math.cos(angle) * 1, at[1] + Math.sin(angle) * 1];",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
@@ -426,8 +426,8 @@
   {
     "name": "GEN-check-not-skipped",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "const problems = check ? validateSettlement(plan) : [];",
-    "new": "const problems = validateSettlement(plan);",
+    "old": "  const problems = check ? validateSettlement(plan) : [];   // unchecked, a host's: the plan is held to the contract where it is made",
+    "new": "  const problems = validateSettlement(plan);   // unchecked, a host's: the plan is held to the contract where it is made",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "TREES-deck-planted",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;",
-    "new": "if (cell.k < 1 || (walled && cell.k === layout.reachOf[cell.j])) continue;",
+    "old": "    if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;",
+    "new": "    if (cell.k < 1 || (walled && cell.k === layout.reachOf[cell.j])) continue;",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "TREES-under-the-wall",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;",
-    "new": "if (cell.k < 1 || cell.raised) continue;",
+    "old": "    if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;",
+    "new": "    if (cell.k < 1 || cell.raised) continue;",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -495,6 +495,187 @@
     "new": "settlementTreeFlats(settlement, nature, null)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "WALLS-step-taller-side",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    return rim[j] < rim[next] ? -turn : turn;",
+    "new": "    return rim[j] < rim[next] ? turn : -turn;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "WALLS-on-the-rim",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  const line = (/** @type {number} */ j) => rim[j] + FORT_WALL.thick / 2 + FEATURE_CLEAR;",
+    "new": "  const line = (/** @type {number} */ j) => rim[j];",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "WALLS-foot-uncarved",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "return (settlementGroundAt(pads, datum, point[0], point[1], natural) ?? natural) - datum; };",
+    "new": "return natural - datum; };",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "WALLS-wet-run-kept",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if (points.some(wet)) { close(); run = { path: [b], ground: [] }; continue; }",
+    "new": "      if (false) { close(); run = { path: [b], ground: [] }; continue; }",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TOWERS-wet-kept",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if (!ring.some(wet)) towers.push({ id: `tower${j}`, at, y: cm(Math.min(...ring.map(ground))) });",
+    "new": "      if (true) towers.push({ id: `tower${j}`, at, y: cm(Math.min(...ring.map(ground))) });",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TOWERS-lower-corner",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      const at = frame.toW(from, Math.max(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);",
+    "new": "      const at = frame.toW(from, Math.min(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TOWERS-gate-unflanked",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (walled(prev) || walled(j)) {",
+    "new": "    if (walled(j)) {",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "WALLS-gate-side-open",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "DOCKS-over-land",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (edge === null) continue;",
+    "new": "    if (edge === null) edge = quay - DOCK_REACH;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-on-the-road",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": " || (cell.road && onRoad(cell.road, bearing, bearing, frame.du(ROAD_CLEAR, radius)))) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "TREES-in-the-lane",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if ((bearing - cell.u0) * radius < lane || ",
+    "new": "      if (",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "TREES-on-the-ways",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if (!layout.links.some((link) => distanceToSegment(at, link.a, link.b) < link.width / 2 + TREE_CLEAR)) out.push(",
+    "new": "      if (true) out.push(",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "CENTRE-ways-ignored",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "        if (ways.every((link) => distanceToSegment(at, link.a, link.b) >= reach + link.width / 2 + FEATURE_CLEAR)) return { at, size };",
+    "new": "        return { at, size };",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "CENTRE-ring-unshrunk",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "  for (const size of kind === 'market' ? [MARKET_RING, MARKET_RING * 0.85, MARKET_RING * 0.7] : [undefined]) {",
+    "new": "  for (const size of kind === 'market' ? [MARKET_RING] : [undefined]) {",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "CENTRE-on-the-mound",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "    const reach = featureReach({ kind, size }), least = mound ? mound.b + reach + FEATURE_CLEAR : 0, most = rim - reach - FEATURE_CLEAR;",
+    "new": "    const reach = featureReach({ kind, size }), least = 0, most = rim - reach - FEATURE_CLEAR;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "OUTLINE-walls-out",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "  const beyond = L.walls.length + L.towers.length ? FORT_WALL.thick + 2 * FORT_TOWER.r + 3 * FEATURE_CLEAR : 0;",
+    "new": "  const beyond = 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "OUTLINE-docks-out",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "  const quay = Math.min(inner + vOut, ...L.docks.map((d) => dhypot(d.path[1][0] - L.c[0], d.path[1][1] - L.c[1]) - 1));",
+    "new": "  const quay = Math.min(inner + vOut, ...[].map((d) => dhypot(d.path[1][0] - L.c[0], d.path[1][1] - L.c[1]) - 1));",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js",
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-tower-own-ground",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "(feature.y === undefined ? groundAt(plan, datum, at) : datum + feature.y)",
+    "new": "groundAt(plan, datum, at)",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-wall-own-ground",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "base = feature.ground ? datum + feature.ground[i] : Math.min(",
+    "new": "base = Math.min(",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-market-ring-unread",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "  for (const [stallEast, stallNorth] of stallsOf([east, north], id, ring)) {",
+    "new": "  for (const [stallEast, stallNorth] of stallsOf([east, north], id)) {",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
     ]
   }
 ]

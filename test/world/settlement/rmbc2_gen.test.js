@@ -5,9 +5,9 @@
 // (TAMRIEL-WIDE). Pins mutation-checked (tools/mutants/rmbc2.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateSettlement, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, DECK_CLEAR } from '../../../src/world/settlement/settlementGen.js';
+import { generateSettlement, layoutSettlement, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, DECK_CLEAR } from '../../../src/world/settlement/settlementGen.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES, styleOfTheatre } from '../../../src/world/settlement/settlementStyles.js';
-import { settlementPrint, groundAt, padAt, STEP_MAX } from '../../../src/world/settlement/settlementContract.js';
+import { settlementPrint, groundAt, padAt, STEP_MAX, validateSettlement } from '../../../src/world/settlement/settlementContract.js';
 import { BUILDING_TYPES as T, isResidence } from '../../../src/world/buildingNames.js';
 import { GUILD_FACTION_IDS, DIVINES } from '../../../src/systems/guild/guildFactions.js';
 import { THEATRE_KEYS } from '../../../src/world/worldWide/worldGrid.js';
@@ -167,4 +167,32 @@ test('RMBC2 every building stands on its own plot, its door to its street; every
   }
   for (const p of plan.plots) assert.ok(streets.has(p.street));
   assert.ok(plan.features.some((f) => f.kind === 'garden'), 'some plots stay open ground');
+});
+
+test('RMBC2 a marsh town\'s gate is a landing on its dry ground, never the mean of its pools; a gate mostly water stays a deck (mutants: the dry mean, the landing\'s share)', () => {
+  const sea = 34, height = (e, n) => sea + (Math.sin(e / 7) * Math.sin(n / 9) > 0.25 ? -2 : 1);
+  const env = { heightAt: height, waterAt: (e, n) => height(e, n) < sea + 0.5 };
+  let decks = 0, landings = 0;
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    const { plan, report } = gen('village', 'BlackMarsh', { env, seed });
+    assert.ok(report.ok);
+    const cut = plan.pads.filter((p) => p.base === 'cut');
+    for (const p of cut) assert.equal(report.datum + p.y, sea + 1, `${seed}: ${p.id} on its dry ground`);
+    landings += cut.length;
+    decks += plan.gates.filter((g) => plan.pads.find((p) => p.id === g.pad).base === 'raised').length;
+  }
+  assert.ok(landings > 5 && decks > 0, `${landings} landings; a gate over its pools a deck`);
+});
+
+test('RMBC2 size scales a ring as it does a row: its square and its sectors, so its buildings (mutant: a ring\'s size unread)', () => {
+  for (const archetype of ['oasis', 'fort', 'wetland']) {
+    const [small, one, big] = [0.5, 1, 2].map((size) => {
+      const input = { place: PAST_BAY, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 1, archetype, style: 'Hammerfell', site: SITE, params: { size } };
+      return { L: layoutSettlement(input, SYNTHETIC[archetype]), plan: generateSettlement({ ...input, env: SYNTHETIC[archetype] }).plan };
+    });
+    assert.ok(small.L.inner < one.L.inner && one.L.inner === SETTLEMENT_ARCHETYPES[archetype].plaza && big.L.inner === 2 * one.L.inner, `${archetype}: its square`);
+    assert.ok(small.L.sectors < one.L.sectors && one.L.sectors < big.L.sectors, `${archetype}: its sectors`);
+    assert.ok(big.plan.buildings.length > one.plan.buildings.length, `${archetype}: more to it`);
+    for (const size of [0.5, 0.75, 1.5]) assert.deepEqual(validateSettlement(gen(archetype, 'Hammerfell', { params: { size } }).plan), [], `${archetype} at ${size}: its square's feature off the keep's mound and its ways`);
+  }
 });

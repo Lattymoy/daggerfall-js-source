@@ -9,8 +9,8 @@ The owner set the aim: settlements made procedurally, with heights, not block la
 The owner's rules: every town grows, and it grows along its roads, not in planned rings. Both are departures from DFU,
 whose towns are flat RMB grids that end at their rect and have no stairs between levels.
 
-The code is `src/world/settlement/`. Every module there is pure and `@ts-check`, and the layout's modules are
-worker-safe (`world/` and `formats/` alone).
+The code is `src/world/settlement/`. Every module there is `@ts-check`, and all but `settlementOwed.js` (the loaded
+world's owed carve, below) are pure. The layout's modules are worker-safe (`world/` and `formats/` alone).
 
 ## Identity: a place and a building key
 
@@ -70,12 +70,14 @@ height under a point; `floorOf` is a building's pad height plus its lift.
 
 ### What the check refuses
 
-`validateSettlement` is pure, so the client, a tool and the account service run the same law. It answers every problem
+`validateSettlement` is pure, so the client and every tool run the same law. It answers every problem
 at once, each with a code, what it names and a plain reason. A plan of another contract version is refused alone
 (`contract`). The frame and rings: `source`, `place`, `origin`, `poly`. Ids: `id-dup`. The ground: `pad` (an unknown
 base), `pad-missing` (a link, plot or building on a pad the plan lacks), `pad-overlap`, `outside` (past the footprint),
 `link`, `link-end` and `link-steep` (a grade step rises at most `STEP_MAX`, 0.4 m; stairs 0.75 and ramps and bridges
-0.25 of their run), `gate` (a gate off its pad). Streets: `street`, `street-off-pad`. Features: `feature`.
+0.25 of their run), `gate` (a gate off its pad). Streets: `street`, `street-off-pad`. Features: `feature`, and `feature-blocks`
+(a feature's body over a building, a way between pads, its pad's rim or another pad; a tree's trunk; a wall's or a
+dock's run, though a dock may leave a street).
 
 Buildings: `transform` (no point, yaw or lift of 0 or more), `key-band` (a legacy building keeps its RMB key, a new one
 is minted), `anchor`, `asset`, `access`, `off-pad`, `off-plot`, `overlap` (touching is not overlap: row houses share a
@@ -106,10 +108,22 @@ trade settlement, a wetland village on decks, a plain village, and the outskirts
 `settlementLayout.js` `layoutSettlement` lays out stages A to C from the ground (`env.heightAt`, `waterAt`). A, the
 site: a fort on the highest point, an oasis round the lowest, a river town's quay on the shore. B, the cells: a ring
 town wraps a square and a row town follows an arc round a hillside or along a shore, both cut in one polar frame, so one
-set of cells, links and plots serves both; `auto` reads the ground (a hill a ring, a slope a row). C, the terraces: each
-cell's pad starts at its natural height and neighbours are pulled together until every step is climbable by its link,
-a step between cut terraces never past the style's terrace. A deck never sinks within `DECK_CLEAR` (0.6 m) of its
-ground and moves four times as readily as cut ground.
+set of cells, links and plots serves both; `auto` reads the ground (a hill a ring, a slope a row).
+
+C, the terraces: each cut cell's pad starts at the mean height of its dry ground, a deck at its highest ground and its style's deck, and
+neighbours are pulled together until every step is climbable by its link, a step between cut terraces never past the
+style's terrace. A deck never sinks within `DECK_CLEAR` (0.6 m) of its ground and moves four times as readily as cut
+ground.
+
+A deck town's gate is a landing on its dry ground where at least half of it is dry, else a deck. A ring's size
+scales its square and, with the ring's middle, its sectors; a keep always has room round its mound (`KEEP_ROOM`).
+
+The layout stands what needs the ground. A fort's walls (`fortWalls`) run just outside the cells that stand, each
+sector's run a hand past its outermost rim; round a taller sector they step out on the shorter side, where no cell
+stands. A tower projects at every corner, its eave clear of the rim, and two flank each gate. A run breaks over water
+and a tower there is not built; each foot is the ground the carve leaves (`ground`, `y`). A river town's docks
+(`docksOut`) run from a quay that stands out to the water and `DOCK_OUT` (8 m) past its edge; a dock that finds no
+water within `DOCK_REACH` (40 m) is not built.
 
 `settlementGen.js` `dressSettlement` dresses a layout with stages D to G: streets and lanes; plots, a frontage at a time,
 each numbered by its split so a plot dropped renames none; a building on each plot big enough, its door to its street,
@@ -117,22 +131,29 @@ its storeys its own plot's draw; the services on the plots that suit them (the t
 keep its mound); and the features. Each district draws from its own seed (`districtSeeds`) and each plot by its cell and
 number. `generateSettlement` is both parts at once. A layout passed as plain records dresses to the same plan.
 
+The square's feature (`centreSpot`) stands at its preferred bearing and distance, else the nearest spot that keeps its
+body on the square, off the keep's mound and clear of every way onto it; a market's ring draws in on a small square.
+A yard tree (`yardTrees`) keeps off its lane, a road through its cell (`ROAD_CLEAR`, 4 m) and every way between pads
+(`TREE_CLEAR`, 1 m). None stands on a deck, nor in a walled town's outer band.
+
 The generator reports its fit: the buildings it stood and its deepest cut. A site too wet or too steep for its archetype
-answers `ok: false`. Swept over six archetypes, ten styles, six grounds and three seeds, every plan keeps the contract;
-on a marsh only the styles that build on decks stand a town. `tools/settlementProbe.mjs` draws each archetype from
+answers `ok: false`. `rmbc2_gen.test.js` lays every archetype in every style on ground that suits it, and each plan
+keeps the contract. `tools/settlementProbe.mjs` draws each archetype from
 above, on synthetic ground or, with ARENA2, on a pixel of the Bay that suits it. Its pictures stay in `scratch/`.
 
 The generator reads no `Math.sin`, `cos`, `atan2` or `hypot`, which may differ in their last bit between browsers.
 `exactMath.js` builds them from `+`, `-`, `*`, `/` and `Math.sqrt`, which IEEE 754 rounds exactly, in a fixed order.
 Golden prints in `rmbc3_exact.test.js` hold three plans bit for bit; a change that moves one is a new
-`SETTLEMENT_GENERATOR_VERSION` (4).
+`SETTLEMENT_GENERATOR_VERSION` (6).
 
 ## Every town grows
 
 `townGrowth.js` `townGrowthJob` takes a city, town or village (MAPS types 0 to 2), on the Bay and past it, never a
 capital over several pixels. `pixelBuild.js` hands it to the terrain worker as `growth`, with its theatre's style and
 region (`townGrowthJob.js` `growthJobAt`). The town's core keeps every block, building and key at its own height: it is
-the layout's plaza, `legacy`, fixed at the town's ground, and the terrace solve never moves it.
+the layout's plaza, `legacy`, fixed at the town's ground, and the terrace solve never moves it. The core is the town's
+own rectangle with a street round it (`coreHalf`, `CORE_CLEAR` 6 m), so a long town grows hard by its long sides. Each
+link from the core starts a metre inside the town's edge that way, on its level ground.
 
 The outskirts take the land the pixel leaves. A cell is dropped on barred ground (`growthBlocked`: the town's ground
 mask, a water tile, a World of Daggerfall camp) or within `GROWTH_MARGIN` (40 m) of the pixel's edge, so the carve meets
@@ -142,11 +163,12 @@ A city takes four bands, a town or village three, at 0.7 density with 40% of plo
 
 ### Along its roads
 
-A town grows along its roads, never in even rings. `coreEdge` starts each sector at the square's own edge along its
+A town grows along its roads, never in even rings. `coreEdge` starts each sector at the core's own edge along its
 span, a street out and a setback of up to 6 m, and a core takes 16 to 22 narrower sectors (at most 24) so the inner
-line follows the square. `roadsOut` reads the bearings the town's roads leave by: each run of path tiles on a circle a
-street past the square's corners is one road, at its middle. `roadReach` gives each sector a depth by how squarely it
-faces one: a road's sector its whole depth, never less than a band; one a sixth of a turn off any road about none.
+line follows the rectangle. `roadsOut` reads the bearings the town's roads leave by: each run of path tiles met a
+street past the core's edge all round is one road, at its middle. `roadReach` gives each sector a depth by how squarely
+it faces one: a road's sector its whole depth, at least a band where it faces the road squarely; one a sixth of a turn
+off any road about none.
 
 A road is a soft bar. It keeps the cells it crosses (`roadAcross` records where in each it runs, its bearings within a
 turn), and the dressing's `onRoad` leaves unbuilt the plots it would cross, widened by 3 m, so houses line it either
@@ -158,8 +180,9 @@ no road grows a thin, broken belt; a steep town grows little; a city that fills 
 The terrain's vertices are 6.4 m apart, coarser than a street, so a pad is drawn and walked as its own paving or deck,
 and the terrain sits under it. `settlementGround.js` `carveSettlementGround` holds the terrain under every cut pad
 within `PAD_REACH` (one cell's diagonal), so no triangle rises through, and eases back to the land over `GROUND_EASE`
-(28 m). A raised pad and a legacy pad ask nothing of the ground. A grown town's carve keeps its core and its town's own
-ground (`keep`): a sample is kept when any of the four tiles round it is the town's.
+(28 m). A raised pad and a legacy pad ask nothing of the ground. Off every pad the carve never raises ground under the
+sea, so a quay meets its harbour's water. A grown town's carve keeps its core and its town's own ground (`keep`): a
+sample is kept when any of the four tiles round it is the town's.
 
 The terrain worker lays the settlement out and the main thread dresses it. On a pixel no location holds and a published
 settlement does, `settlementStand.js` `standSettlementGround` lays it out on the pixel's land with no road cut into it
@@ -190,31 +213,39 @@ deck too.
 ## Standing in the world
 
 `settlementModels.js` makes a dressed settlement into models. `groundModel` paves each cut pad at its height in its
-style's ground, with a retaining wall down its rim, decks each raised pad on posts, and lays each link as a stair, ramp
-or bridge. `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
+style's ground, with a retaining wall down its rim, decks each raised pad on posts, and lays each link as a skirted
+slope between its pads' heights, paved for a stair or ramp and planked for a bridge. `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
 roof and pitch, its door the fabric's door model turned to its street. `buildingInterior` is its rooms
 (`fabricBuildingInterior`, filed under its place and key with a `cacheKey` of its own). `buildingRecord` is what its
-door hands the game. Model ids run from `SETTLEMENT_MODEL_BASE` (7,600,000), 4,096 a run: a published row's run is its
-ordinal, a grown town takes runs 16 to 511 in turn (`nextGrowthSlot`).
+door hands the game. Model ids run from `SETTLEMENT_MODEL_BASE` (7,600,000), 4,096 a run. Every settlement standing takes
+a run from a free list of 512 (`takeSlot`), and gives it back when taken down (`releaseSlot`).
 
 `settlementFeatures.js` `featuresModel` stands every feature but a tree as one model in its style's stone and timber,
 each on the ground under it: a well (a kerb round water, two posts and a little roof), a fountain, a bronze statue on
-its plinth facing the way in, a market's five stalls round its heart, a fort's walls along its rim (sunk 3 m and
-crenellated) with round towers at their ends, a river town's docks out from its quay, a garden's fence round its plot
-with planted beds, a field's rows and a fence's rails. The host draws it with the ground and files it in the same
-collider bucket. Its id is the run's last (`featuresModelId`).
+its plinth facing the way in, a market's five stalls round its heart, a fort's walls (sunk 3 m and crenellated) and
+round towers, a river town's docks, and a garden's fence round its plot with planted beds. An authored plan may add a
+field's rows and a fence's rails. The host draws it with the ground and files it in the same collider bucket. Its id is
+the run's last (`featuresModelId`). `settlementLimits.js` holds every feature's reach, which the generator keeps clear
+and the contract checks.
 
-A settlement's yard trees are the pixel's own nature. `settlementTreeFlats` hands the kernel a tree record that every
-climate's archive holds (`YARD_TREE_RECORDS`, 13 or 30) at each of the dressing's points (`yardTrees`), on its pad's
-top. So the seasons, the wind, the low-poly trees and the axe treat it as they treat the woods around it.
+A settlement's yard trees are the pixel's own nature. `settlementTreeFlats` hands the kernel a tree at each of the
+dressing's points (`yardTrees`), on its pad's top, of a species the pixel already grows (`liveTreesOf`: the live trees
+the kernel laid there, a zone's with its archive, never a dead one; none laid, the climate's live trees, else
+`YARD_TREE_FALLBACK`). So the seasons, the wind, the low-poly trees and the axe treat it as they treat the woods
+around it.
 
 `scenes/settlementHost.js` is the streaming world's pool, on the yards' shape. It dresses each built pixel's layout,
-asks the pipeline for the meshes through a place hold, draws them at the pixel's translation, files the ground and the
-buildings in one collider bucket (held back while feet stand inside a wall), and hands each door to the modes with its
+asks the pipeline for the meshes through a place hold, draws them at the pixel's translation, files the ground, the
+features and the buildings in one collider bucket, and hands each door to the modes with its
 record and its rooms (a `dfBlock` of its own, never a BLOCKS.BSA record). A pixel built again in place swaps its entry
 with no frame between: the same plan files its yards on the new entry, and another plan is taken down and stood again.
 Taking a settlement down lets go of its models, the model family's kept copies too (`forgetFamilyModel`), so a run's
 ids come back built from the new plan.
+
+The host stands at most one settlement a frame (`STANDS_PER_FRAME`). It files a collider once, riding the floating
+frame as a pixel's own buckets do, and holds it back while feet stand inside a building or a solid feature
+(`featureSolids`). Each piece is culled on its own box by the street's view test. It dresses unchecked: a published
+plan is held to the contract when it is published, and a grown town by `rmbc6_organic.test.js`'s corpus.
 
 A generated house is a home as a block's is: `homeCandidate` and `homePurchasable` take its record, `homeOnlinePrice`
 prices it by its own ground and its town's size (`townBlocks`), and its door asks its town's homes when hovered. The
@@ -225,8 +256,8 @@ house.
 
 The spawn law (`spawnGroundPlace.js` `spawnAt`) keeps a published settlement's pixel from the online dungeon roll, so
 the Overworld and the ground never shape it for a dungeon that does not stand. `buildingDataForDoor` answers a
-door with no location pixel by a copy of the record it carries. `tools/settlementWorldProbe.mjs` and
-`tools/townGrowthProbe.mjs` jump to a settlement in the running game, shoot it and walk through a door.
+door with no location pixel by a copy of the record it carries. `tools/settlementWorldProbe.mjs` jumps to a published
+settlement in the running game, shoots it and walks through a door; `tools/townGrowthProbe.mjs` shoots a grown town.
 
 ## The published settlements
 
@@ -277,8 +308,8 @@ stands no settlement. `scenes/dungeonContext.js` FLAGGED: a dungeon stands no st
 
 ## The whole of Tamriel
 
-A plan is keyed by its place's map id from the registry, and its origin is bounded by `worldPixelOk`. Nothing reads
-MAPS.BSA's rows. The generator has a style for every theatre. Every city, town and village grows, the Bay's and every
+A plan is keyed by its place's map id from the registry, and its origin is bounded by `worldPixelOk`. A grown town
+reads its own location's MAPS row (`townGrowthJob`); a published settlement reads none. The generator has a style for every theatre. Every city, town and village grows, the Bay's and every
 province's alike. The published settlements stand one in each province; the Bay's ground is left to DFU's places.
 The pins hold cases past the Bay: Hammerfell's in the contract, the stand, the ledger, the publication and the editor;
 High Rock, Skyrim, Valenwood and Hammerfell towns beside the Bay's in the growth; Daggerfall's city cloned under a
@@ -288,7 +319,7 @@ Hammerfell id in the corpus.
 
 `test/world/settlement/`: `rmbc1_contract.test.js`, `rmbc1_ids.test.js`, `rmbc1_legacy.test.js`,
 `rmbc1_legacy_corpus.test.js` (on ARENA2), `rmbc2_contract.test.js`, `rmbc2_gen.test.js`, `rmbc3_exact.test.js`,
-`rmbc3_ground.test.js`, `rmbc4_stand.test.js`, `rmbc6_growth.test.js`, `rmbc6_organic.test.js`, `rmbc7_publish.test.js`,
+`rmbc3_ground.test.js`, `rmbc3_owed.test.js`, `rmbc4_features.test.js`, `rmbc4_stand.test.js`, `rmbc6_growth.test.js`, `rmbc6_organic.test.js`, `rmbc7_publish.test.js`,
 `rmbc8_homes.test.js` and `rmbc9_editor.test.js`; the spawn guard in `spawnworld.test.js`. Their mutants are
 `tools/mutants/rmbc1.json` to `rmbc9.json`; `node tools/mutate.mjs tools/mutants/rmbc*.json` runs them.
 

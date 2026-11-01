@@ -12,7 +12,7 @@ import { dressSettlement } from '../../../src/world/settlement/settlementGen.js'
 import { validateSettlement, keyBandOf } from '../../../src/world/settlement/settlementContract.js';
 import { pointInRing, edgeDistance } from '../../../src/world/settlement/settlementGeometry.js';
 import { PAD_REACH, GROUND_EASE } from '../../../src/world/settlement/settlementGround.js';
-import { SAMPLE_M, settlementMovedAt } from '../../../src/world/settlement/settlementStand.js';
+import { SAMPLE_M, SEA_M, settlementMovedAt } from '../../../src/world/settlement/settlementStand.js';
 import { settlementGroundAt } from '../../../src/world/settlement/settlementGround.js';
 import { SETTLEMENT_ARCHETYPES } from '../../../src/world/settlement/settlementStyles.js';
 import { standSettlement, takeSlot, releaseSlot, SETTLEMENT_SLOTS } from '../../../src/scenes/settlementHost.js';
@@ -123,7 +123,7 @@ test('RMBC6 the carve: the core and the town\'s own ground never move, nor the p
   let moved = 0;
   for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
     const i = x * D + y, e = x * SAMPLE_M, n = y * SAMPLE_M;
-    const edge = x === 0 || y === 0 || x === D - 1 || y === D - 1, inCore = Math.abs(e - ce) <= half && Math.abs(n - cn) <= half;
+    const edge = x === 0 || y === 0 || x === D - 1 || y === D - 1, inCore = Math.abs(e - ce) <= half[0] && Math.abs(n - cn) <= half[1];
     const onMask = [[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([dx, dy]) => x + dx >= 0 && y + dy >= 0 && x + dx < T && y + dy < T && mask[(y + dy) * T + x + dx]);
     if (edge || inCore || onMask) assert.equal(after[i], before[i], `kept at ${x}, ${y}`);
     if (after[i] !== before[i]) {
@@ -133,7 +133,7 @@ test('RMBC6 the carve: the core and the town\'s own ground never move, nor the p
   }
   assert.ok(moved > 100, 'the outskirts carved');
   assert.equal(settlementGroundAt(g.layout.pads, g.layout.datum, ce, cn, 123), null, 'a legacy pad asks nothing of its ground');
-  const corner = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => [ce + a * (half - 1), cn + b * (half - 1)])
+  const corner = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([a, b]) => [ce + a * (half[0] - 1), cn + b * (half[1] - 1)])
     .find((q) => g.layout.pads.some((p) => !p.legacy && edgeDistance(q, p.poly) < PAD_REACH));
   assert.ok(corner, 'a core corner beside its outskirts');
   assert.equal(settlementGroundAt(g.layout.pads, g.layout.datum, corner[0], corner[1], 123), null, 'not even beside its outskirts');
@@ -191,4 +191,22 @@ test('RMBC6 a settlement\'s ground is kept by the herbs and the ore as by the tr
   assert.equal(settlementClearing({ locationRect: core, settlement: null }), core, 'a town that did not grow');
   assert.equal(settlementClearing({}), null);
   for (const f of ['scenes/herbHost.js', 'scenes/mineHost.js']) assert.match(readFileSync(new URL(`../../../src/${f}`, import.meta.url), 'utf8'), /locationRect: settlementClearing\(entry\) \?\? entry\.locationRect \?\? entry\.wodSite \?\? null,/, f);
+});
+
+test('RMBC6 a grown town by the sea leaves its bed: off its pads the carve never raises ground under the sea (mutant: the sea unread by the growth)', () => {
+  const rect = rectOf(2), job = village(5009, 'IliacBay', 17), metres = M, sea = SEA_M;
+  const before = new Float32Array(D * D);
+  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) before[x * D + y] = (x < 40 ? sea - 3 : sea + 4 + 0.02 * x * SAMPLE_M) / metres;
+  const mid = before[64 * D + 64];
+  for (let x = rect.xMin; x <= rect.xMax; x++) for (let y = rect.yMin; y <= rect.yMax; y++) before[x * D + y] = mid;
+  const after = Float32Array.from(before), g = standTownGrowth(200, 200, after, job, rect, {});
+  assert.ok(g);
+  let near = 0;
+  for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
+    const p = [x * SAMPLE_M, y * SAMPLE_M], i = x * D + y;
+    if (before[i] * metres >= sea || g.layout.pads.some((pad) => pointInRing(p, pad.poly))) continue;
+    assert.equal(after[i], before[i], `the bed at ${x}, ${y}`);
+    if (g.layout.pads.some((pad) => !pad.legacy && edgeDistance(p, pad.poly) < PAD_REACH + GROUND_EASE)) near++;
+  }
+  assert.ok(near > 3, `${near} of its bed within the carve's reach`);
 });

@@ -61,6 +61,18 @@ export function segmentsCross(a, b, c, d) {
   return side(c, d, a) * side(c, d, b) < 0 && side(a, b, c) * side(a, b, d) < 0;
 }
 
+/** Distance between two segments: 0 where they cross. @param {Pt} start @param {Pt} end @param {Pt} from @param {Pt} to */
+export function segmentDistance(start, end, from, to) {
+  if (segmentsCross(start, end, from, to)) return 0;
+  return Math.min(distanceToSegment(start, from, to), distanceToSegment(end, from, to), distanceToSegment(from, start, end), distanceToSegment(to, start, end));
+}
+
+/** Distance from a segment to a ring: 0 where it reaches inside or across it. @param {Pt} start @param {Pt} end @param {readonly Pt[]} ring */
+export function segmentRingDistance(start, end, ring) {
+  if (pointInRing(start, ring) || pointInRing(end, ring)) return 0;
+  return Math.min(...ring.map((corner, i) => segmentDistance(start, end, corner, ring[(i + 1) % ring.length])));
+}
+
 /** A ring a plan can use: three or more finite points, an area, and no edge meeting another but its neighbours. @param {unknown} ring */
 export function ringOk(ring) {
   if (!Array.isArray(ring) || ring.length < 3) return false;
@@ -90,8 +102,18 @@ function innerProbes(ring) {
   });
 }
 
-/** The rings share ground: an edge crosses an edge, or a vertex or an inner probe of one is strictly in the other. @param {readonly Pt[]} a @param {readonly Pt[]} b */
+/** A ring's box, grown by `grow`: [west, south, east, north]. @param {readonly Pt[]} ring @param {number} [grow] */
+export function ringBox(ring, grow = 0) {
+  let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+  for (const [e, n] of ring) { west = Math.min(west, e); east = Math.max(east, e); south = Math.min(south, n); north = Math.max(north, n); }
+  return [west - grow, south - grow, east + grow, north + grow];
+}
+
+/** The rings share ground: an edge crosses an edge, or a vertex or an inner probe of one is strictly in the other. Two
+ *  whose boxes stand apart share none. @param {readonly Pt[]} a @param {readonly Pt[]} b */
 export function ringsOverlap(a, b) {
+  const boxA = ringBox(a), boxB = ringBox(b);
+  if (boxA[0] > boxB[2] || boxB[0] > boxA[2] || boxA[1] > boxB[3] || boxB[1] > boxA[3]) return false;
   for (let i = 0; i < a.length; i++) {
     for (let j = 0; j < b.length; j++) if (segmentsCross(a[i], a[(i + 1) % a.length], b[j], b[(j + 1) % b.length])) return true;
   }
@@ -118,9 +140,24 @@ export function ringWithin(inner, outer) {
 export function padAt(pads, p) {
   let best = null, bestArea = Infinity;
   for (const pad of pads) {
-    if (!inOrOn(p, pad.poly)) continue;
+    const [west, south, east, north] = ringBox(pad.poly, GEOM_EPS);
+    if (p[0] < west || p[0] > east || p[1] < south || p[1] > north || !inOrOn(p, pad.poly)) continue;
     const a = Math.abs(ringArea2(pad.poly));
     if (a < bestArea) { best = pad; bestArea = a; }
   }
   return best;
+}
+
+/** padAt over pads read once: each one's box and area kept, for a plan asked of many points. Answers as padAt does.
+ *  @template {{ poly: readonly Pt[] }} P @param {readonly P[]} pads @returns {(p: Pt) => P|null} */
+export function padFinder(pads) {
+  const kept = pads.map((pad) => ({ pad, box: ringBox(pad.poly, GEOM_EPS), area: Math.abs(ringArea2(pad.poly)) }));
+  return (point) => {
+    let best = null, bestArea = Infinity;
+    for (const { pad, box, area } of kept) {
+      if (point[0] < box[0] || point[0] > box[2] || point[1] < box[1] || point[1] > box[3] || area >= bestArea || !inOrOn(point, pad.poly)) continue;
+      best = pad; bestArea = area;
+    }
+    return best;
+  };
 }

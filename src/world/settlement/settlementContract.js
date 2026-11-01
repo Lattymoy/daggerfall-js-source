@@ -8,7 +8,7 @@ import { HOME_KEY_MAX, homeBuildingKeyOk } from '../../net/homeLaw.js';
 import { worldPixelOk } from '../../net/wire.js';
 import { fnv1a } from '../../formats/fnv1a.js';
 import { dsin, dcos, dhypot } from './exactMath.js';
-import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt } from './settlementGeometry.js';
+import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt, padFinder, distanceToSegment, segmentDistance, segmentRingDistance } from './settlementGeometry.js';
 export { padAt };
 
 /** Raised when the plan's shape changes, so a reader can refuse a plan it does not know. */
@@ -45,7 +45,7 @@ export const INTERIOR_KINDS = Object.freeze(['rmb', 'generated', 'prefab']);
 export const FEATURE_KINDS = Object.freeze(['well', 'fountain', 'market', 'garden', 'field', 'tree', 'statue', 'wall', 'tower', 'fence', 'dock']);
 /**
  * @typedef {{ id: string, pad: string, poly: Pt[], street?: string, district?: string }} Plot - a building's ground, or open land
- * @typedef {{ id: string, kind: string, pad?: string, at?: Pt, path?: Pt[], yaw?: number, size?: number }} Feature
+ * @typedef {{ id: string, kind: string, pad?: string, at?: Pt, path?: Pt[], yaw?: number, size?: number, y?: number, ground?: number[] }} Feature
  */
 const fin = (/** @type {unknown} */ v) => typeof v === 'number' && Number.isFinite(v);
 const ptOk = (/** @type {any} */ p) => Array.isArray(p) && p.length === 2 && fin(p[0]) && fin(p[1]);
@@ -57,7 +57,7 @@ export const RMB_KEY_LIMIT = 0x80000;
 export const MINTED_KEY_MIN = 0x800000;
 export const MINTED_KEY_MAX = HOME_KEY_MAX - 1;
 
-import { STEP_MAX, PITCH_MAX } from './settlementLimits.js';
+import { STEP_MAX, PITCH_MAX, FORT_WALL, DOCK_HALF, FEATURE_CLEAR, TREE_CLEAR, featureReach } from './settlementLimits.js';
 export { STEP_MAX, PITCH_MAX };
 /** How far before a door its approach is read, metres (imperialHomes.js DOOR_OUT's distance). */
 export const APPROACH = 0.8;
@@ -135,7 +135,7 @@ export function validateSettlement(plan) {
   }
   const padList = [...pads.values()];
   /** @param {Pt} p */
-  const padOf = (p) => padAt(padList, p);
+  const padOf = padFinder(padList);
   /** A ring on `pad` crosses no smaller pad's rim (the ground inside it would be another height). @param {Pt[]} ring @param {Pad} pad */
   const onePad = (ring, pad) => {
     const a = Math.abs(ringArea2(pad.poly));
@@ -257,6 +257,31 @@ export function validateSettlement(plan) {
       const before = pointInRing(out1, b.footprint) ? null : padOf(out1);
       if (!before || Math.abs(before.y - floor) > STEP_MAX) { bad('entrance-blocked', eat, `no ground within ${STEP_MAX} m of the floor ${APPROACH} m outside it`); continue; }
       if (!reached.has(before.id)) bad('unreachable', eat, `its pad '${before.id}' has no way from a gate`);
+    }
+  }
+  // a feature's body keeps off every building and every way between pads: the square's feature, a market's stalls, a
+  // tower, a wall's run, a dock, a tree's trunk
+  const runs = (plan.links ?? []).filter((link) => ptOk(link.a) && ptOk(link.b) && fin(link.width));
+  for (const feature of plan.features ?? []) {
+    const at = `feature:${feature.id}`, reach = featureReach(feature);
+    if ((reach > 0 || feature.kind === 'tree') && ptOk(feature.at)) {
+      const room = feature.kind === 'tree' ? FEATURE_CLEAR : reach, onWay = feature.kind === 'tree' ? TREE_CLEAR : reach;
+      const hit = walled.find((b) => pointInRing(feature.at, /** @type {Pt[]} */ (b.footprint)) || edgeDistance(feature.at, /** @type {Pt[]} */ (b.footprint)) < room);
+      if (hit) bad('feature-blocks', at, `building ${hit.key}`);   // the code says it; the reason names what it meets
+      const way = runs.find((link) => distanceToSegment(feature.at, link.a, link.b) < onWay + link.width / 2);
+      if (way) bad('feature-blocks', at, `way ${way.id}`);
+      // a body on its own pad, over no other's rim (a keep's mound, a terrace); one off every pad off them all
+      const own = feature.pad !== undefined ? pads.get(feature.pad) : null, over = reach > 0 && padList.find((pad) => (pad === own ? edgeDistance(feature.at, pad.poly) < reach : pointInRing(feature.at, pad.poly) || edgeDistance(feature.at, pad.poly) < reach));
+      if (over) bad('feature-blocks', at, `${over === own ? 'rim' : 'pad'} ${over.id}`);
+    }
+    const half = feature.kind === 'wall' ? FORT_WALL.thick / 2 : feature.kind === 'dock' ? DOCK_HALF : 0;
+    if (!half || !Array.isArray(feature.path) || !feature.path.every(ptOk)) continue;
+    for (let i = 0; i + 1 < feature.path.length; i++) {
+      const [from, to] = [feature.path[i], feature.path[i + 1]];
+      const hit = walled.find((b) => segmentRingDistance(from, to, /** @type {Pt[]} */ (b.footprint)) < half);
+      if (hit) { bad('feature-blocks', at, `building ${hit.key}`); break; }
+      const way = feature.kind === 'wall' && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street
+      if (way) { bad('feature-blocks', at, `way ${way.id}`); break; }
     }
   }
   return out;

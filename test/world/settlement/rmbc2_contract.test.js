@@ -40,7 +40,7 @@ test('RMBC2 the plan with a raised dais in its square keeps the contract; the da
 
 test('RMBC2 nesting is whole or nothing: a pad half over the square\'s rim, two pads of one ring, a building over the dais\'s rim (mutants: the nested test, the onePad test)', () => {
   assert.deepEqual(codes(edit((p) => { p.pads[1].poly = sq(90, 40, 110, 60); p.links = []; p.buildings.shift(); })), ['outside', 'pad-overlap']);
-  assert.deepEqual(codes(edit((p) => { p.pads[1].poly = sq(0, 0, 100, 100); p.links = []; p.buildings.shift(); })), ['pad-overlap']);
+  assert.deepEqual(codes(edit((p) => { p.pads[1].poly = sq(0, 0, 100, 100); p.links = []; p.buildings.shift(); })), ['feature-blocks', 'pad-overlap'], 'and the well under it');
   assert.deepEqual(codes(edit((p) => { p.buildings[1].footprint = sq(30, 40, 42, 52); p.buildings[1].entrances[0].at = [36, 40]; p.plots = []; })), ['off-pad']);
   assert.deepEqual(codes(edit((p) => { p.gates[0].at = [50, 50]; })), ['gate', 'unreachable'], 'a gate on the dais is not the square\'s');
   assert.deepEqual(codes(edit((p) => { p.links[0].b = [50, 39]; })), ['link-end']);
@@ -59,10 +59,33 @@ test('RMBC2 plots: a building keeps to its own; plots do not overlap and lie on 
   assert.deepEqual(codes(edit((p) => { p.plots[1].id = 'house'; })), ['id-dup']);
 });
 
+test('RMBC2 a feature\'s body keeps off every building and every way: the square\'s feature by its reach, a market by its ring, a tree by its trunk, a wall\'s run by its thickness; a dock may leave a street, never cross a house (mutants: the reach, the ring, the tree, the wall, the way, the dock)', () => {
+  const add = (feature) => codes(edit((p) => { p.features.push({ id: 'x', ...feature }); }));
+  assert.deepEqual(add({ kind: 'well', pad: 'square', at: [15, 72] }), [], 'two metres off the house');
+  assert.deepEqual(add({ kind: 'well', pad: 'square', at: [15, 73] }), ['feature-blocks'], 'its roof over the house');
+  assert.deepEqual(add({ kind: 'well', pad: 'square', at: [15, 80] }), ['feature-blocks'], 'in it');
+  assert.deepEqual(add({ kind: 'well', pad: 'square', at: [51, 35] }), ['feature-blocks'], 'on the steps\' foot');
+  assert.deepEqual(add({ kind: 'well', pad: 'square', at: [55, 34] }), [], 'beside them');
+  assert.deepEqual(add({ kind: 'market', pad: 'square', at: [20, 67] }), ['feature-blocks'], 'its stalls against the house');
+  assert.deepEqual(add({ kind: 'market', pad: 'square', at: [20, 67], size: 3.5 }), [], 'a smaller ring clear of it');
+  assert.deepEqual(add({ kind: 'tree', pad: 'square', at: [15, 73.5] }), [], 'a trunk beside the house');
+  assert.deepEqual(add({ kind: 'tree', pad: 'square', at: [15, 73.9] }), ['feature-blocks'], 'in its wall');
+  assert.deepEqual(add({ kind: 'tree', pad: 'square', at: [52.4, 38] }), ['feature-blocks'], 'on the steps');
+  assert.deepEqual(add({ kind: 'tree', pad: 'square', at: [52.6, 38] }), [], 'beside them');
+  assert.deepEqual(add({ kind: 'wall', path: [[0, 72.9], [30, 72.9]] }), [], 'a wall hard by the house');
+  assert.deepEqual(add({ kind: 'wall', path: [[0, 73.1], [30, 73.1]] }), ['feature-blocks'], 'into it');
+  assert.deepEqual(add({ kind: 'wall', path: [[45, 39], [55, 39]] }), ['feature-blocks'], 'across the steps');
+  assert.deepEqual(add({ kind: 'dock', path: [[45, 39], [55, 39]] }), [], 'a dock leaving a way');
+  assert.deepEqual(add({ kind: 'dock', path: [[0, 80], [30, 80]] }), ['feature-blocks'], 'never through a house');
+});
+
 test('RMBC2 features: a kind the contract knows, standing on its pad or inside the footprint (mutants: the kind, the pad, the path)', () => {
   assert.ok(FEATURE_KINDS.includes('dock') && FEATURE_KINDS.includes('wall'));
   assert.deepEqual(codes(edit((p) => { p.features[0].kind = 'dragon'; })), ['feature']);
-  assert.deepEqual(codes(edit((p) => { p.features[0].at = [50, 50]; })), ['feature'], 'the well is the square\'s, not the dais\'s');
+  assert.deepEqual(codes(edit((p) => { p.features[0].at = [41.5, 41.5]; })), ['feature', 'feature-blocks'], 'the well is the square\'s, not the dais\'s: on the dais, its body over the dais');
+  assert.deepEqual(codes(edit((p) => { p.features[0].at = [38.5, 50]; })), ['feature-blocks'], 'on the square, its roof over the dais\'s rim');
+  assert.deepEqual(codes(edit((p) => { p.features[0].at = [1, 50]; })), ['feature-blocks'], 'its body past its pad\'s rim');
+  assert.deepEqual(codes(edit((p) => { p.features[0].at = [37.5, 50]; })), [], 'clear of both');
   assert.deepEqual(codes(edit((p) => { p.features[1].path = [[0, 0], [130, 0]]; })), ['feature']);
   assert.deepEqual(codes(edit((p) => { delete p.features[0].pad; p.features[0].at = [120, 20]; })), ['feature']);
   assert.deepEqual(codes(edit((p) => { p.features[1].id = 'well'; })), ['id-dup']);

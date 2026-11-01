@@ -47,8 +47,8 @@
   {
     "name": "RMBC6-well-in-core",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "  if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own",
-    "new": "  if (cells.has('plaza')) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own",
+    "old": "  const centre = cells.has('plaza') && !L.core ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : null;   // A core is the town's own",
+    "new": "  const centre = cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : null;   // A core is the town's own",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "ORGANIC-corner-unread",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
-    "new": "  return Math.max(at(from), at(to));",
+    "old": "if (at + Math.ceil((from - at) / TAU) * TAU <= to) return dhypot(half[0], half[1]);",
+    "new": "if (false) return dhypot(half[0], half[1]);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "ORGANIC-ends-mean",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));",
-    "new": "  return corner <= to ? half * Math.SQRT2 : Math.min(at(from), at(to));",
+    "old": "  return Math.max(rectEdge(half, from), rectEdge(half, to));",
+    "new": "  return Math.min(rectEdge(half, from), rectEdge(half, to));",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -272,7 +272,7 @@
   },
   {
     "name": "ORGANIC-wrap-gone",
-    "file": "src/world/settlement/settlementGen.js",
+    "file": "src/world/settlement/settlementLayout.js",
     "old": "  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;",
     "new": "  for (const bearing of road) for (const turn of [0]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;",
     "tests": [
@@ -337,8 +337,8 @@
   {
     "name": "AUDIT-core-cap",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it",
-    "new": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 16 : 16);   // a core's narrower, to hug it",
+    "old": "ring ? 3 : 2, core ? 24 : 16);",
+    "new": "ring ? 3 : 2, core ? 16 : 16);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "AUDIT-district-skip",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "if (L.core && reachOf[j] < 1) continue;",
-    "new": "if (false) continue;",
+    "old": "    if (L.core && reachOf[j] < 1) continue;   // a sector its town's roads left unbuilt is no district",
+    "new": "    if (false) continue;   // a sector its town's roads left unbuilt is no district",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUDIT-district-inner",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "r0 = L.core ? radii[j][0] : ring",
-    "new": "r0 = ring",
+    "old": "    const [u0, u1] = edges[j], r0 = L.core ? radii[j][0] : ring ? inner : inner + vOut;",
+    "new": "    const [u0, u1] = edges[j], r0 = ring ? inner : inner + vOut;",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "AUDIT-road-margin",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "onRoad(c.road, p0, p1, inset(rf, 3))",
-    "new": "onRoad(c.road, p0, p1, 0)",
+    "old": "      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // the road runs here - its plots either side",
+    "new": "      if (c.road && onRoad(c.road, p0, p1, 0)) continue;   // the road runs here - its plots either side",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-print-plot-on-road",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (c.road && onRoad(c.road, p0, p1, inset(rf, 3))) continue;   // the road runs here - its plots either side",
+    "new": "      if (false) continue;   // the road runs here - its plots either side",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-road-circle",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "radius = half * Math.SQRT2 + 12",
-    "new": "radius = half * Math.SQRT2",
+    "old": "radius = rectEdge(half, angle) + 12;",
+    "new": "radius = rectEdge(half, angle);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -449,6 +449,60 @@
     "file": "src/world/settlement/townGrowth.js",
     "old": "export const settlementClearing = (entry) => growthClearing(entry?.locationRect ?? null, entry?.settlement) ?? entry?.settlement?.rect ?? null;",
     "new": "export const settlementClearing = (entry) => entry?.locationRect ?? entry?.settlement?.rect ?? null;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "CORE-square",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "export const coreHalf = (/** @type {TileRect} */ rect) => [((rect.xMax - rect.xMin) / 2) * SAMPLE_M + CORE_CLEAR, ((rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR];",
+    "new": "export const coreHalf = (/** @type {TileRect} */ rect) => Array(2).fill((Math.max(rect.xMax - rect.xMin, rect.yMax - rect.yMin) / 2) * SAMPLE_M + CORE_CLEAR);",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "CORE-link-outside",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": ".half.map((side) => side - (core?.clear ?? 0) - 1), lu)",
+    "new": ".half, lu)",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "CORE-keep-square",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "Math.abs(n - core.centre[1]) <= core.half[1]) return true;",
+    "new": "Math.abs(n - core.centre[1]) <= core.half[0]) return true;",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "CORE-roads-circle",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "radius = rectEdge(half, angle) + 12;",
+    "new": "radius = Math.hypot(half[0], half[1]) + 12;",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "CORE-corner-square",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  const corner = datan2(half[0], half[1]);",
+    "new": "  const corner = TAU / 8;",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ]
+  },
+  {
+    "name": "SEA-growth-unread",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "layout.datum, keep, SEA_M);",
+    "new": "layout.datum, keep);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

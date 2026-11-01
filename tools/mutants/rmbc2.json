@@ -146,8 +146,8 @@
   {
     "name": "RMBC2-landing-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (g && islands && deck > STEP_MAX) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on the ground",
-    "new": "    if (false) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on the ground",
+    "old": "    if (g && islands && deck > STEP_MAX && g.wet <= 0.5) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -217,9 +217,9 @@
   },
   {
     "name": "RMBC2-docks-gone",
-    "file": "src/world/settlement/settlementGen.js",
-    "old": "    const n = Math.max(1, Math.floor(size / 24));",
-    "new": "    const n = 0;",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  const n = Math.max(1, Math.floor(size / 24));",
+    "new": "  const n = 0;",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -311,6 +311,115 @@
     "old": "  const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;",
     "new": "  const rng = (...ns) => hash32(place >>> 0, ...ns) / 0x100000000;",
     "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-reach-none",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "    const at = `feature:${feature.id}`, reach = featureReach(feature);",
+    "new": "    const at = `feature:${feature.id}`, reach = 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-tree-trunk",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "      const room = feature.kind === 'tree' ? FEATURE_CLEAR : reach, onWay = feature.kind === 'tree' ? TREE_CLEAR : reach;",
+    "new": "      const room = feature.kind === 'tree' ? FEATURE_CLEAR : reach, onWay = reach;",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-wall-ways-free",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "      const way = feature.kind === 'wall' && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "new": "      const way = false && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-dock-ways-held",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "      const way = feature.kind === 'wall' && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "new": "      const way = runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-wall-thin",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "    const half = feature.kind === 'wall' ? FORT_WALL.thick / 2 : feature.kind === 'dock' ? DOCK_HALF : 0;",
+    "new": "    const half = feature.kind === 'wall' ? FORT_WALL.thick / 4 : feature.kind === 'dock' ? DOCK_HALF : 0;",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-market-ring-unread",
+    "file": "src/world/settlement/settlementLimits.js",
+    "old": "(feature.kind === 'market' ? (feature.size ?? MARKET_RING) : 0)",
+    "new": "(feature.kind === 'market' ? MARKET_RING : 0)",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "LANDING-pools-mean",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    c.natural = (dry.length ? dry : hs).reduce((s, x) => s + x, 0) / (dry.length || hs.length);   // its dry ground's: a pad never under the water it meets",
+    "new": "    c.natural = hs.reduce((s, x) => s + x, 0) / (dry.length || hs.length);   // its dry ground's: a pad never under the water it meets",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "LANDING-any-share",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (g && islands && deck > STEP_MAX && g.wet <= 0.5) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on its dry ground; a deck where that is under half",
+    "new": "    if (g && islands && deck > STEP_MAX && g.wet <= 1) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on its dry ground; a deck where that is under half",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "SIZE-ring-square",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    inner = core ? dhypot(core.half[0], core.half[1]) + ws : Math.max(A.plaza * sizeK, A.keep ? KEEP_MOUND + KEEP_ROOM + gap / 2 : 0);   // a core's corners and a street round them; a keep's mound and room round it",
+    "new": "    inner = core ? dhypot(core.half[0], core.half[1]) + ws : Math.max(A.plaza, A.keep ? KEEP_MOUND + KEEP_ROOM + gap / 2 : 0);   // a core's corners and a street round them; a keep's mound and room round it",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "SIZE-ring-sectors",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) * across : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it",
+    "new": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-cramped",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    inner = core ? dhypot(core.half[0], core.half[1]) + ws : Math.max(A.plaza * sizeK, A.keep ? KEEP_MOUND + KEEP_ROOM + gap / 2 : 0);   // a core's corners and a street round them; a keep's mound and room round it",
+    "new": "    inner = core ? dhypot(core.half[0], core.half[1]) + ws : Math.max(A.plaza * sizeK, 0);   // a core's corners and a street round them; a keep's mound and room round it",
+    "tests": [
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "CONTRACT-body-over-pads",
+    "file": "src/world/settlement/settlementContract.js",
+    "old": "      const own = feature.pad !== undefined ? pads.get(feature.pad) : null, over = reach > 0 && padList.find((pad) => (pad === own ? edgeDistance(feature.at, pad.poly) < reach : pointInRing(feature.at, pad.poly) || edgeDistance(feature.at, pad.poly) < reach));",
+    "new": "      const own = feature.pad !== undefined ? pads.get(feature.pad) : null, over = false && padList.find((pad) => (pad === own ? edgeDistance(feature.at, pad.poly) < reach : pointInRing(feature.at, pad.poly) || edgeDistance(feature.at, pad.poly) < reach));",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js",
       "test/world/settlement/rmbc2_gen.test.js"
     ]
   }

@@ -2712,7 +2712,7 @@
  "src/world/segment.js": 8,
  "src/world/settlement/exactMath.js": 18,
  "src/world/settlement/legacySettlement.js": 2,
- "src/world/settlement/settlementContract.js": 17,
+ "src/world/settlement/settlementContract.js": 16,
  "src/world/settlement/settlementGen.js": 64,
  "src/world/settlement/settlementGeometry.js": 28,
  "src/world/settlement/settlementGround.js": 7,

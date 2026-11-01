@@ -11,9 +11,11 @@ import { GUILD_FACTION_IDS, DIVINES } from '../../systems/guild/guildFactions.js
 import { SETTLEMENT_CONTRACT_VERSION, validateSettlement } from './settlementContract.js';
 import { emptyIdLedger, reconcileBuildingIds, anchorLedger } from './settlementIds.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
-import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX, districtDraw, yardTrees } from './settlementLayout.js';
+import { FORT_WALL, FORT_TOWER, FEATURE_CLEAR, MARKET_RING, featureReach } from './settlementLimits.js';
+import { distanceToSegment } from './settlementGeometry.js';
+import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX, districtDraw, yardTrees, onRoad } from './settlementLayout.js';
 
-export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement, yardTrees } from './settlementLayout.js';
+export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement, yardTrees, onRoad } from './settlementLayout.js';
 
 /** @typedef {import('./settlementContract.js').SettlementPlan} SettlementPlan @typedef {import('./settlementContract.js').Building} Building */
 /** @typedef {import('./settlementIds.js').IdLedger} IdLedger @typedef {readonly [number, number]} Pt */
@@ -25,12 +27,6 @@ const LAYOUT_OF = (input) => layoutSettlement(input, /** @type {any} */ (input.e
  */
 export const generateSettlement = (input) => dressSettlement(input, LAYOUT_OF(input));
 
-/** whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
- *  @param {readonly number[]} road @param {number} start @param {number} end @param {number} margin */
-export function onRoad(road, start, end, margin) {
-  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;
-  return false;
-}
 
 /**
  * Stages D to G on a layout: the terrain worker's, or layoutSettlement's. `check` false skips the contract's check (a host
@@ -142,26 +138,18 @@ export function dressSettlement(input, L, { check = true } = {}) {
   });
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
-  if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // A core is the town's own
+  const centre = cells.has('plaza') && !L.core ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : null;   // A core is the town's own
+  if (centre) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: centre.at, ...(centre.size === undefined ? {} : { size: centre.size }) });
   for (const t of yardTrees(input, L)) features.push({ id: t.id, kind: 'tree', pad: t.pad, at: t.at });
+  for (const w of L.walls) features.push({ id: w.id, kind: 'wall', path: w.path, ground: w.ground });
+  for (const t of L.towers) features.push({ id: t.id, kind: 'tower', at: t.at, y: t.y });
+  for (const d of L.docks) features.push({ id: d.id, kind: 'dock', path: d.path });
+  // the outline holds every pad, a fort's walls and towers past its rim, a river town's docks out over its water
+  const beyond = L.walls.length + L.towers.length ? FORT_WALL.thick + 2 * FORT_TOWER.r + 3 * FEATURE_CLEAR : 0;
+  const outer = (/** @type {number} */ j) => (beyond ? Math.max(outR(j), outR((j + 1) % sectors), outR((j + sectors - 1) % sectors)) + beyond : outR(j));
+  const quay = Math.min(inner + vOut, ...L.docks.map((d) => dhypot(d.path[1][0] - L.c[0], d.path[1][1] - L.c[1]) - 1));
   const allStops = grids.flat().filter((u, i, a) => i === 0 || u - a[i - 1] > 1e-9);
-  const footprint = dedupe(L.c, [...edges.flatMap(([u0, u1], j) => along(frame, grids[j], u0, u1, outR(j))),
-    ...(ring ? [] : along(frame, allStops, uStart, uStart + uSpan, inner + vOut).reverse())]);
-  if (A.wall && ring) {
-    for (let j = 0; j < sectors; j++) {
-      if (gateSectors.includes(j)) continue;
-      const jn = (j + 1) % sectors, jp = (j + sectors - 1) % sectors;
-      features.push({ id: `wall${j}`, kind: 'wall', path: [...along(frame, grids[j], edges[j][0], edges[j][1], outR(j)), frame.toW(edges[j][1], outR(jn))] });
-      features.push({ id: `tower${j}`, kind: 'tower', at: frame.toW(edges[j][0], Math.min(outR(j), outR(jp))) });
-    }
-  }
-  if (A.docks && !ring && vOut < 0) {
-    const n = Math.max(1, Math.floor(size / 24));
-    for (let i = 0; i < n; i++) {
-      const u = uStart + (uSpan * (i + 0.5)) / n;
-      features.push({ id: `dock${i}`, kind: 'dock', path: [frame.toW(u, inner), frame.toW(u, inner + vOut + 0.5)] });
-    }
-  }
+  const footprint = dedupe(L.c, [...edges.flatMap(([u0, u1], j) => along(frame, grids[j], u0, u1, outer(j))), ...(ring ? [] : along(frame, allStops, uStart, uStart + uSpan, quay).reverse())]);
 
   // A grown town's keys are its anchors' own; a published settlement keeps its ledger
   const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);
@@ -193,6 +181,31 @@ export function dressSettlement(input, L, { check = true } = {}) {
   };
 }
 
+
+/**
+ * The square's feature: at its preferred bearing and distance from the middle, else the nearest that keeps its body on
+ * the square, off the keep's mound and clear of every way onto it; a market's ring drawn in on a small square. Null where
+ * none fits. @param {string} kind @param {ReturnType<typeof polarFrame>} frame @param {ReturnType<typeof layoutSettlement>} layout
+ * @param {number} bearing @param {number} distance
+ */
+function centreSpot(kind, frame, layout, bearing, distance) {
+  const plaza = layout.cells.find((cell) => cell.id === 'plaza'), mound = layout.cells.find((cell) => cell.id === 'mound');
+  const rim = Math.min(...plaza.poly.map((corner, i) => distanceToSegment(frame.c, corner, plaza.poly[(i + 1) % plaza.poly.length])));   // its chords' nearest
+  const ways = layout.links.filter((link) => link.from === 'plaza' || link.to === 'plaza');
+  for (const size of kind === 'market' ? [MARKET_RING, MARKET_RING * 0.85, MARKET_RING * 0.7] : [undefined]) {
+    const reach = featureReach({ kind, size }), least = mound ? mound.b + reach + FEATURE_CLEAR : 0, most = rim - reach - FEATURE_CLEAR;
+    if (most < least) continue;
+    const out = [];
+    for (let step = clampWithin(distance, least, most); step > least; step -= 1) out.push(step);
+    for (const away of [...out, least]) {
+      for (let k = 0; k < (away > 0 ? 48 : 1); k++) {
+        const at = frame.toW(bearing + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (TAU / 48), away);
+        if (ways.every((link) => distanceToSegment(at, link.a, link.b) >= reach + link.width / 2 + FEATURE_CLEAR)) return { at, size };
+      }
+    }
+  }
+  return null;
+}
 
 const degrees = (/** @type {number} */ rad) => cm((((rad * 180) / Math.PI) % 360 + 360) % 360);
 
