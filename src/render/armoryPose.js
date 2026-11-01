@@ -154,6 +154,7 @@ export function newPose() {
     armsTurned: false,
     bands: null,
     flank: null,
+    chestSpan: null,
     back: 0,
     arm: 1,
     hock: false,
@@ -654,6 +655,9 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
   const fl = arms ? null : mk?.flank,
     armHalf = ARM_PX.half * art;
   out.flank = fl ? { y: at(fl.row), lo: off(fl.lo + armHalf), hi: off(fl.hi - armHalf) } : null;
+  // the body's run across the card at the chest's rows, its two edges (m) - the back's span for a chest piece
+  out.chestSpan =
+    mk?.chest != null && mk?.chestHalf != null ? [off(mk.chest - mk.chestHalf), off(mk.chest + mk.chestHalf)] : null;
   return true;
 }
 

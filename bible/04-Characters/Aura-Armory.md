@@ -26,10 +26,20 @@ wears them from the account card and the profile's character slots, and sees the
 - **Drawn** by `src/render/armoryPass.js` after each mode's opaque world, beside the auras, wired by
   `src/scenes/auraHost.js`. `src/render/armoryPose.js` turns the drawn body into seventeen points: a rig's bone origins,
   or on a sprite rows of the frame moved by the picture's own marks (head, chest, pelvis, arm edges, legs) read once at
-  upload. Pieces add light, test depth without writing it, and take fog.
+  upload. Pieces add light, test depth without writing it, and take fog. Their light is cut to the auras' levels
+  through the ordered dither (`src/render/auraPixel.js`), never snapped to texels: a piece is a hand's breadth of fine
+  work, and blocked it was noise.
 - **The card law.** On a sprite every point is lifted toward the eye, so pieces lie on the card's near side. A sprite's
   forearm and an arm hidden behind the body draw nothing. Seen from behind under a cloak, pieces draw before the
   cloth so it lies over them.
+- **A sprite's arm** (`armClip`, `armWornSide`). The card hides nothing of a piece, so each arm piece is cut at its
+  arm's inner edge as the eye sees it: the line half the arm's width in from shoulder to elbow, toward the chest on the
+  card. Nothing of it, embers included, lands on the body. A far arm the picture never shows clear of the body (no band
+  read) wears nothing: it is behind the torso, and its trace runs on the torso's edge.
+- **A sprite's chest.** The Ember Heart and the Eternal Sigil lay their depth along the eye's line through the painted
+  chest, so they stay on it from every side, before the card from the front and behind it from the back. Seen edge on,
+  a card's chest piece is gone. From behind and to a side, the Sigil's back stands between the back's far edge and the
+  near arm's inner edge, because the chest's run there takes in that arm.
 - **The body's states.** Beast form hides every piece; a rider keeps head, torso and arms; sunk to the neck only the
   head draws; the player's own first person draws no body piece.
 - **The weapon slot** is drawn by the weapon glow, not the pass (`Weapon-Glow.md`): every weapon in the player's hand
@@ -65,5 +75,8 @@ DFU has no accounts and no cosmetic effects. The Broker's sale extends the port'
 - `src/ui/characterSlots.js`, `src/render/characterStage.js` - the profile's slots and stage
 - `src/render/weaponPiecePreview.js` - a weapon piece's shop stage
 - `test/render/armory.test.js`, `test/render/armorymirror.test.js` - drawing, sprite points, the card's right
+- `test/render/armbehind.test.js`, `test/render/auditaurapixel.test.js` - the arm's cut, the chest from every side
+- `tools/armoryProbe.mjs`, `tools/armorySpriteProbe.mjs` - the pieces on a real GPU; the second on Layered Gearing in
+  all eight views (`SETS=1`, `ANIM=Move:2` for a walk's frame), the arms and the chest read against the picture
 - `test/server/armory_service.test.js`, `test/net/armorylive.test.js` - the service and the live room
 - `test/ui/profileslots.test.js` - the character slots
