@@ -14,7 +14,8 @@ from rig import Pose, solve_arm
 
 # A frame's fitted adjustment (fit.py): joint rotations added to its keys ('rot'), the body's turn ('turn'), the axe
 # grip and haft ('grip', 'haft', body space), the attack's fist and axe head on screen ('fist', 'head'), the axe's
-# roll about its haft in degrees ('roll'). Keyed '<anim>:<view>:<frame>'.
+# roll about its haft in degrees ('roll'), the fist's place along it ('slide', metres), and each solved elbow's
+# swivel ('elbow_L', 'elbow_R', degrees). Keyed '<anim>:<view>:<frame>'.
 FIT = {}
 _adj = {}
 
@@ -67,7 +68,11 @@ def grip(pose, side, at, haft, pole, knuckles=None):
     k = (rot @ Vector(knuckles)) if knuckles is not None else (at_w - shoulder)
     k = (k - k.project(haft_w)).normalized()
     wrist = at_w - k * FIST
-    solve_arm(pose, side, wrist, rot @ Vector(pole), hand_dir=k, hand_up=haft_w.cross(k))
+    pole_w = rot @ Vector(pole)
+    swivel = _adj.get(f'elbow_{side}')
+    if swivel:   # the elbow turned about the shoulder-to-wrist line
+        pole_w = Matrix.Rotation(math.radians(swivel), 3, (wrist - shoulder).normalized()) @ pole_w
+    solve_arm(pose, side, wrist, pole_w, hand_dir=k, hand_up=haft_w.cross(k))
     return at_w, haft_w
 
 
@@ -84,7 +89,8 @@ def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), 
     blade = rot @ Vector(blade_up)
     if _adj.get('roll'):
         blade = Matrix.Rotation(math.radians(_adj['roll']), 3, haft_w) @ blade
-    return frame_matrix(at_w, haft_w, blade)
+    # 'slide': the fist further down the haft (+) or up it, so the axe reaches further or less
+    return frame_matrix(at_w - haft_w * _adj.get('slide', 0.0), haft_w, blade)
 
 
 def stance(rot, yaw):

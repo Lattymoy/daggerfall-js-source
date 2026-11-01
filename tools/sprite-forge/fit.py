@@ -30,16 +30,19 @@ WEIGHTS = {'sil': 0.6, 2: 0.2, 3: 0.2, 4: 0.1, 'axe': 0.25}
 # what a frame may adjust, by animation: (key, joint, axis, step)
 BODY = [('turn', None, 0, 8.0)] + [('rot', j, a, st) for j, a, st in [
     ('pelvis', 0, 5), ('pelvis', 1, 5), ('pelvis', 2, 6), ('spine', 0, 5), ('spine', 2, 6), ('chest', 0, 5),
-    ('chest', 2, 6), ('neck', 0, 5), ('head', 0, 6), ('head', 2, 8),
+    ('chest', 2, 6), ('spine', 1, 4), ('chest', 1, 4), ('neck', 0, 5), ('head', 0, 6), ('head', 2, 8),
     ('clav_L', 1, 4), ('clav_L', 2, 4), ('clav_R', 1, 4), ('clav_R', 2, 4),
     ('thigh_L', 0, 8), ('thigh_L', 1, 5), ('thigh_L', 2, 8), ('shin_L', 0, 8), ('foot_L', 0, 8), ('foot_L', 2, 10),
     ('thigh_R', 0, 8), ('thigh_R', 1, 5), ('thigh_R', 2, 8), ('shin_R', 0, 8), ('foot_R', 0, 8), ('foot_R', 2, 10)]]
-LEFT_ARM = [('rot', 'uarm_L', 0, 10), ('rot', 'uarm_L', 1, 8), ('rot', 'uarm_L', 2, 8), ('rot', 'farm_L', 0, 10)]
+LEFT_ARM = [('rot', 'uarm_L', 0, 10), ('rot', 'uarm_L', 1, 8), ('rot', 'uarm_L', 2, 8), ('rot', 'farm_L', 0, 10),
+            ('rot', 'hand_L', 0, 12), ('rot', 'hand_L', 2, 12)]
 GRIP = [('grip', None, a, 0.04) for a in range(3)] + [('haft', None, a, 0.2) for a in range(3)]
 SWING = [('fist', None, a, 0.04) for a in range(2)] + [('head', None, a, 0.06) for a in range(2)]
-ROLL = [('roll', None, 0, 20.0)]
+ROLL = [('roll', None, 0, 20.0), ('slide', None, 0, 0.04), ('elbow_R', None, 0, 15.0)]
+SCALARS = ('turn', 'roll', 'slide', 'elbow_L', 'elbow_R')   # adjustments that are one number
 PARAMS = {'idle': BODY + LEFT_ARM + GRIP + ROLL, 'walk': BODY + LEFT_ARM + GRIP + ROLL,
-          'hurt': BODY + LEFT_ARM + GRIP + ROLL, 'attack': BODY + SWING + ROLL, 'bow': BODY + GRIP}
+          'hurt': BODY + LEFT_ARM + GRIP + ROLL, 'attack': BODY + SWING + ROLL + [('elbow_L', None, 0, 15.0)],
+          'bow': BODY + GRIP + [('elbow_R', None, 0, 15.0), ('elbow_L', None, 0, 15.0)]}
 
 
 def class_of(mat):
@@ -248,7 +251,7 @@ def score(img, ref, ref_weapon=None):
 def adj_of(params, x):
     adj = {}
     for (key, joint, axis, _), v in zip(params, x):
-        if key in ('turn', 'roll'):
+        if key in SCALARS:
             adj[key] = float(v)
         elif key == 'rot':
             r = adj.setdefault('rot', {}).setdefault(joint, [0.0, 0.0, 0.0])
@@ -263,7 +266,7 @@ def vector_of(params, adj):
     """The adjustment `adj` as fit_frame's vector (adj_of's inverse)."""
     out = []
     for key, joint, axis, _ in params:
-        if key in ('turn', 'roll'):
+        if key in SCALARS:
             out.append(adj.get(key, 0.0))
         elif key == 'rot':
             out.append(adj.get('rot', {}).get(joint, [0.0, 0.0, 0.0])[axis])
