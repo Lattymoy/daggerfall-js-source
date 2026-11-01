@@ -9920,6 +9920,7 @@ export function createWorldModes(host) {
       uploadRecord(waterArchive, 0);
       ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass
       dungeonReturn = {
+        deathEntrance: entries.some(e=>e.group===hit.group&&e.door.doorType===DOOR_TYPE.DUNGEON_ENTRANCE)?doorWorldPosition(hit.door):hit.egFrom?.pos??null,
         waterArchive,
         candidates: entries.filter((e) =>
           e.group === hit.group && e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE),
@@ -12991,6 +12992,7 @@ export function createWorldModes(host) {
   registerPresenter({ mount: (win) => showQuestOverlay(win), priority: 10 });
   registerPresenter({ holds: (win) => interiorWindows.containsWindow(win) });   // TUT1 audit: whether this host's stack still holds a window (systems/notify.js windowHeld) - a registration of its own, no `mount`, so the presenter above keeps its shape (the dungeon's answers for its own)
   const modesApi = {
+    deathEntrancePosition:()=>mode!=='dungeon'?null:dungeonReturn?.deathEntrance??((dungeonReturn?.gate||dungeonReturn?.arena||dungeonReturn?.sdHollow)?returnLanding()?.pos??null:null),
     get mode() { return mode; },
     /**
      * LW11 (bible/06-Systems/Living-World-II.md): A CARAVAN'S COUNTER ON THE ROAD - the trade window on a shelf of the

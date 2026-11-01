@@ -246,6 +246,7 @@ export const CATEGORIES = Object.freeze([
       'feat:road-verges',
       'feat:mod-roads-hazelnut',
     ]),
+    sec('death-markers', 'Death markers', ["feat:keta-death-enabled", "feat:keta-death-map", "feat:keta-death-beams", "feat:keta-death-limit", "feat:keta-death-height", "feat:keta-death-opacity", "feat:keta-death-range", "feat:keta-death-look", "feat:keta-death-label-range", "feat:keta-death-delay", "feat:keta-death-focus", "feat:keta-death-size", "feat:keta-death-clear-arrival", "feat:keta-death-wave", "feat:keta-death-label-opacity", "feat:keta-death-color", "port:deathMarkerHistory"]),
     sec('weather', 'Weather & ambience', ['feat:weather-events', 'feat:mod-better-ambience']),
     sec('towns', 'Towns & people', [
       'feat:living-world',

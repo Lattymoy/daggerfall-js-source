@@ -1,3 +1,4 @@
+import {createDeathMarkerSettings} from '../deathMarkerSettings.js';
 // ═══════════════════════════════════════════════════════════════════
 // ENHANCED — THE MAIN MENU
 //
@@ -1911,7 +1912,7 @@ const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enh
 export function portPool({ pause = false } = {}) {
   const pool = new Map();
   // RPT1026-CLIENT: and the Motion section's other players' shake beside the Game rows
-  for (const r of [...portRowsGame({ pause }), peerSpellShakeRow(), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
+  for (const r of [...portRowsGame({ pause }), peerSpellShakeRow(), createDeathMarkerSettings(), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
     if (r?.dataset?.opt) pool.set(r.dataset.opt, r);
   }
   return pool;
