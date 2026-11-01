@@ -13,7 +13,7 @@ import {
   responseByte, responseByteForAtlas, seasonHelperAtlasName, windfallResponse, seasonWindChance, geographyWindMultiplier,
   windfallSettings, windfallWeather, createWindfall, windfallStatusText, windfallOn, WINDFALL_COMMAND,
 } from '../../src/systems/windfall.js';
-import { MOD_SETTINGS, modSetting, setModSetting } from '../../src/systems/modSettings.js';
+import { MOD_SETTINGS, RETIRED_KEYS, modSetting, setModSetting } from '../../src/systems/modSettings.js';
 import { archivePrefix } from '../../src/systems/seasonsIliacBay.js';
 import { WEATHER_TYPES } from '../../src/world/weather.js';
 import { lerpF } from '../../src/systems/mathf.js';
@@ -123,9 +123,9 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
   assert.equal(wild.storm.swayAmplitude, F(0.08), 'sway 8% at most');
   assert.equal(wild.normal.shiverFrequency, 0.5, 'shiver 0.5 a second at least');
   assert.equal(wild.windy.strength, 1.5);
-  // every key the mod ships, under its section, with the mod's default and range, and our words (the heading's offset
-  // says it has no effect here - one wind); the mod's own General.Enabled is the port's switch. OWN-WORK4: Windfall
-  // 1.0.0's modsettings.json as it shipped, held here as a literal - [default, min, max], a switch [default].
+  // every key the mod ships, under its section, with the mod's default and range, and our words; the mod's own
+  // General.Enabled is the port's switch. OWN-WORK4: Windfall 1.0.0's modsettings.json as it shipped, held here as a
+  // literal - [default, min, max], a switch [default]. OWN-AUDIT (2026-11-01): the heading's offset is retired (below).
   const SHIPPED = {
     'General.WindDirectionDegrees': [35, 0, 360], 'General.OverallWindyPeriodFrequency': [100, 0, 200],
     'General.NaturalWindstormFrequency': [100, 0, 200], 'General.GustFrequency': [100, 0, 200],
@@ -158,7 +158,6 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
   };
   // PLAIN-TEXT (2026-10-19): the mod's lines spoke of crown displacement, billboard height and windy-period frequencies; each is said plainly for a player - their words, exactly
   const PLAIN = {
-    'General.WindDirectionDegrees': 'Has no effect here. The enhanced outdoors set the wind’s direction.',
     'General.OverallWindyPeriodFrequency': 'How often windy spells come overall. 100% is the mod’s normal rate.',
     'General.NaturalWindstormFrequency': 'How often a windy spell turns into a windstorm of 1 to 3 hours. At 100%, 8% of them do.',
     'General.GustFrequency': 'How often breezes and gusts come. 0% turns them off, and 200% makes them twice as often.',
@@ -215,6 +214,12 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
     'Presentation.SnowFlurryAmount': 'How much snow blows off the trees.',
   };
   let n = 0;
+  // OWN-AUDIT: General.WindDirectionDegrees retired - added to a heading rolled each day it chose no direction, and the
+  // one wind sets the heading here; its shipped 35 stands in the daily heading (WINDFALL_HEADING_OFFSET), a stale save let go
+  assert.equal(MOD_SETTINGS[WINDFALL_VENDOR].keys['General.WindDirectionDegrees'], undefined, 'retired');
+  assert.ok(RETIRED_KEYS.some((r) => r.vendor === WINDFALL_VENDOR && r.key === 'General.WindDirectionDegrees'), 'and let go from a saved file');
+  assert.equal(windfallSettings().windDirectionDegrees, SHIPPED['General.WindDirectionDegrees'][0], 'its shipped number in the daily heading');
+  delete SHIPPED['General.WindDirectionDegrees'];
   for (const [key, [value, min, max]] of Object.entries(SHIPPED)) {
     const def = MOD_SETTINGS[WINDFALL_VENDOR].keys[key];
     assert.ok(def, `${key} declared`); n++;
@@ -222,7 +227,7 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
     if (min !== undefined) assert.deepEqual([def.min, def.max], [min, max], `${key}: the mod's range`);
     assert.equal(def.description, PLAIN[key], `${key}: our plain words`);
   }
-  assert.equal(n, 55, 'the 55 keys the mod ships beside its Enabled');
+  assert.equal(n, 54, 'the 55 keys the mod ships beside its Enabled, less the one retired');
   assert.equal(n, Object.keys(MOD_SETTINGS[WINDFALL_VENDOR].keys).length - 1, 'no key of the port\'s own');
   assert.equal(windfallOn(''), modSetting(WINDFALL_VENDOR, 'Enabled'));
   setModSetting(WINDFALL_VENDOR, 'Enabled', true);

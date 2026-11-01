@@ -136,7 +136,7 @@ test('TO1: the settings - our own table, key for key (OWN-WORK3; the keys are Tr
   for (const k of TRAVEL_OPTIONS_1_11_KEYS.filter((n) => n in ours)) assert.equal(stringBreach(ours[k].description), null, k);
   assert.equal(ours['CautiousTravel.SpeedPenalty'].description, 'How much slower a cautious journey goes, in percent.');
   assert.equal(ours['LocationColours.Coven'].description, 'The color of this kind of place on the travel map.');
-  assert.equal(ours['GeneralOptions.AllowRealGrass'].description, 'Has no effect here: Real Grass isn\u2019t included.');
+  assert.equal(ours['GeneralOptions.AllowRealGrass'].description, 'Show the grass during a sped-up journey.');   // OWN-AUDIT: our own grass, held by the journey (grassHidden)
 });
 
 test('TO1: the words - our own, key for key (OWN-WORK3: the mod\'s string table left the tree with the four keys nothing read)', () => {

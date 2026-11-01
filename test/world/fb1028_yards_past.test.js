@@ -1,6 +1,7 @@
 // FB1028 YARDS Y2 (the owner: every yard where #1184 stood it; bible/03-World/Town-Shapes.md FB1028): past the Bay the
 // yards read the town ground and the ring as #1184 drew them. Its own file: the sweep installs its own data (no colosseum
-// stood), as 2036a509e's cells were measured, and test/world/fb1028_walls.test.js installs the game's.
+// stood), as 2036a509e's cells were measured, and test/world/fb1028_walls.test.js installs the game's. OWN-WORK3: on
+// Daggerfall's own blocks the two move no yard past the Bay, so Y2's mutants die in that file (Town-Shapes section 16).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -14,16 +15,21 @@ const skipReal = !ARENA2 || !['BLOCKS.BSA', 'MAPS.BSA', 'ARCH3D.BSA', 'WOODS.WLD
 const D = 128;
 const siteStr = (q) => `${q.kind} ${q.gx} ${q.gy} ${q.turn}`;
 
-test('FB1028 YARDS Y2 with ARENA2: past the Bay the yards on the ground and ring as #1184 drew them - nine walled templates whose yards the new mask and ring moved stand on 2036a509e\'s cells (mutants: the yards on today\'s mask; today\'s ring on their ground)', { skip: skipReal, timeout: 1_800_000 }, async () => {
+test('FB1028 YARDS Y2 with ARENA2: past the Bay the yards on the ground and ring as #1184 drew them - nine walled templates\' every yard on the cells 2036a509e stands them on Daggerfall\'s own blocks', { skip: skipReal, timeout: 1_800_000 }, async () => {
   const S = await import('../../tools/townBoardsSweep.mjs');
   const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
   const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
   const { layoutLocation } = await import('../../src/world/locationLayout.js');
   const { longitudeLatitudeToMapPixel } = await import('../../src/formats/mapsFile.js');
   const { shapeBefore } = await import('../../src/world/terrain/townBlendBefore.js');
+  // PIN MOVED (OWN-WORK3): these were Beautiful Cities' blocks, each template's yard the new mask and ring moved. Each is
+  // now every yard 2036a509e's code stands on Daggerfall's own blocks (its sweep with no pack opened).
   const base = {
-    32: 'stable 152 120 0', 49: 'stable 186 180 0|transport 216 180 0', 81: 'stable 220 56 0', 160: 'transport 128 180 1', 200: 'stable 176 120 0',
-    248: 'stable 123 84 0', 280: 'transport 54 135 1', 304: 'stable 314 84 0', 337: 'stable 184 37 1',
+    32: 'stable 312 186 1|transport 255 165 2|carpenter 254 129 2', 49: 'stable 88 120 0|transport 113 321 1|carpenter 94 300 2',
+    81: 'stable 152 56 0|transport 273 256 2|carpenter 248 228 2', 160: 'stable 159 120 0|transport 169 264 1|carpenter 137 270 3',
+    200: 'stable 152 56 0|transport 169 205 1|carpenter 176 234 1', 248: 'stable 94 184 0|transport 179 228 2|carpenter 188 275 0',
+    280: 'stable 103 120 0|transport 192 86 3|carpenter 175 180 2', 304: 'stable 152 56 0|transport 119 163 1|carpenter 101 186 3',
+    337: 'stable 280 184 0|transport 271 290 1|carpenter 264 270 3',
   };
   const sw = await S.openSweep(ARENA2);
   try {

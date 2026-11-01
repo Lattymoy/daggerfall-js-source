@@ -1,13 +1,10 @@
 // @ts-check
-// SNOWFALL1 (2026-10-08) - THE SNOW SURFACE. OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for
-// everything") - OUR OWN GLSL, WRITTEN FROM THE EFFECT. One program draws the runtime's three tiers (the local window,
-// the middle ring, the blanket). A vertex stands on the ground, raised by the snow's depth (systems/snowfall.js's law)
-// times its coverage and what the tracks left, faded at the tier's edges. The fragment is our albedo, a path's snow
-// trodden grey, a track packed darker and colder with its depth - in the ground's own fragment program in place of the
-// tile (snowTerrainFs), so the snow takes every light the ground takes, on either lane. Port-Ledger A, SNOWFALL1.
-// OWN-WORK4 AUDIT (2026-11-01): the vertex law is our design from what the snow must do (bible/03-World/Snowfall.md):
-// a narrow track kept by the deepest press across the vertex's cell, a track's profile sharpened by an ease, the tiers'
-// edges eased by a quintic, the ring landing on the blanket over three quarters of its band, our own layer offsets.
+// SNOWFALL1 (2026-10-08) - THE SNOW SURFACE, OUR OWN (OWN-WORK4; the vertex law our design, OWN-WORK4 AUDIT,
+// bible/03-World/Snowfall.md). One program draws the runtime's three tiers (the window, the ring, the blanket). A
+// vertex stands on the ground, raised by the snow's depth times its coverage and what the tracks left (a narrow track
+// kept by the deepest press across its cell), eased out at the tier's edges; the ring lands on the blanket three
+// quarters into its band. The fragment is our albedo read twice, a path trodden grey, a track packed darker and colder
+// - in the ground's own fragment program in place of the tile (snowTerrainFs), so the snow takes the ground's light.
 import { snowCoreGlsl, SNOW_TILE_M } from './snowCoverGlsl.js'; // AUDIT PRECIP GROUND-9: the ground's own snow, where this snow lies
 
 /** The attribute locations of a snow mesh: position, normal, the grid's uv, three contexts, the blanket's target. */

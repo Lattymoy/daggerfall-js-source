@@ -263,8 +263,8 @@
   {
     "name": "rain-no-lowpass",
     "file": "src/systems/betterAmbience.js",
-    "old": "            ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), { lowpass: AMBIENT_RAIN_LOWPASS_HZ }) // DISC11: the street's level, not 1",
-    "new": "            ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), {}) // DISC11: the street's level, not 1",
+    "old": "            ? audio.loop(key, level, { lowpass: AMBIENT_RAIN_LOWPASS_HZ })",
+    "new": "            ? audio.loop(key, level, {})",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]

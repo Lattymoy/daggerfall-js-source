@@ -61,7 +61,7 @@ const SHIPPED = Object.freeze([
 ["SailingAssist.AutoTrimming","toggle",true],
 ["SailingAssist.AutoStowSquareSails","toggle",true],
 ["SailingAssist.AutoStowGaffSails","toggle",true],
-["Compatibility.AnimatedWaterVertexWaves","toggle",false],
+["Compatibility.AnimatedWaterVertexWaves","toggle",false,{"retired":true}],
 ["Compatibility.PersistentDungeonBoats","toggle",false],
 ["Map.RestrictPositionReadingTime","toggle",true,{"description":"Position can only be viewed around midday and midnight"}],
 ["Map.RestrictPositionReadingWeather","toggle",true,{"description":"Position can only be viewed in Sunny or Cloudy weather"}],
@@ -96,6 +96,7 @@ test('CSA-A: every shipped key is declared - its section and name joined with a 
   for (const row of SHIPPED) {
     if (row[0] === 'spacer') continue;
     const [name, kind, value, a, b] = row;
+    if (row.some((x) => x?.retired)) { assert.equal(DEF.keys[name], undefined, `${name}: OWN-AUDIT retired it (it named Animated Water)`); continue; }
     const description = row.find((x) => x && typeof x === 'object' && !Array.isArray(x))?.description;
     shipped.push(name);
     const d = DEF.keys[name];
@@ -114,15 +115,18 @@ test('CSA-A: every shipped key is declared - its section and name joined with a 
     else assert.ok(d.description, `${name}: the port writes the line the mod left empty`);
   }
   assert.equal(written, 6, 'PortLocationSearchRange and five of Map\'s');
-  assert.equal(shipped.length, 50);
+  assert.equal(shipped.length, 49, 'the fifty shipped, less the one OWN-AUDIT retired');
   assert.deepEqual(Object.keys(DEF.keys), ['Enabled', ...shipped], 'the registry is the table, in its order, and nothing more');
   assert.equal(modSetting(V, 'Waves.Speed'), 100);
   assert.equal(modSetting(V, 'Controls.ToggleSail'), 'Space');
 });
 
-test('CSA-A: BadTack, BadTackMultiplier and AutoStowGaffSails, which the mod shipped and never read, say they do nothing - and the boat\'s effect bundle is named as Iliac Puddle No More looks for it', () => {
-  for (const k of ['Handling.BadTack', 'Handling.BadTackMultiplier', 'SailingAssist.AutoStowGaffSails'])
-    assert.equal(DEF.keys[k].description, 'Has no effect: the mod never uses this setting.', `${k} says so`);
+test('CSA-A x OWN-AUDIT: BadTack, BadTackMultiplier and AutoStowGaffSails, which the mod shipped and never read, are ours and say what they do (comeSailAway/sailAssist.js) - and the boat\'s effect bundle is named as Iliac Puddle No More looks for it', () => {
+  assert.deepEqual(['Handling.BadTack', 'Handling.BadTackMultiplier', 'SailingAssist.AutoStowGaffSails'].map((k) => DEF.keys[k].description), [
+    'The sails lose speed the closer you sail to the wind.',
+    'The share of sail speed kept when you sail close to the wind.',
+    'Stow the gaff sails for you when the wind would push them back.',
+  ]);
   // what Deep Waters' swim already waits for (world/deepWater/deepWaterSwim.js isBoatEffectBundle)
   assert.ok(isBoatEffectBundle("I'm On A Boat"));
 });
@@ -133,7 +137,7 @@ test('CSA-A: the switch has its Features row, its credit and its online lane - a
   assert.equal(row.group, 'world');
   assert.equal(row.title, 'Come Sail Away by RedRoryOTheGlen');
   assert.equal(row.effect, 'Takes effect when the game next loads.', 'the templates merge at load');
-  assert.deepEqual([...MOD_CURATED[V]], ['SailingAssist.AutoTrimming', 'WindDirectionWidget.Enable', 'Waves.Enable', 'Audio.SoundVolume'], 'the four a player reaches for first');
+  assert.deepEqual([...MOD_CURATED[V]], ['SailingAssist.AutoTrimming', 'Handling.BadTack', 'WindDirectionWidget.Enable', 'Waves.Enable', 'Audio.SoundVolume'], 'the four a player reaches for first, and OWN-AUDIT\'s bad tack');
   const credit = CREDITS.mods.find((m) => (m.vendor ?? m.retired)?.includes(V)); // OWN-WORK4: a retired credit names its folder under `retired`
   assert.ok(credit, 'a credit');
   assert.deepEqual([credit.title, credit.version, credit.author], ['Come Sail Away', '2.1', 'RedRoryOTheGlen']);

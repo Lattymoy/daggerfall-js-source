@@ -18,7 +18,7 @@ import { featureTile, FEATURE_KEYS_NOTE } from '../../src/ui/enhanced/enhancedMe
 import { paneControls, discardControlsStaging, controlsStaging, FIXED_KEYS_HEAD } from '../../src/ui/enhanced/enhancedControls.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { fixedKeyRows, modKeyRows, shortcutKeyText, buttonText, setUnsavedBinding, FIXED_KEY_ROWS, TRANSPORT_KEY_ROWS } from '../../src/systems/controlsConfig.js';
-import { MOD_ACTIONS, ACTION_GROUPS, createBindings, resetDefaults, setBinding, codeForAction } from '../../src/systems/inputActions.js';
+import { MOD_ACTIONS, MOD_TILE_ACTIONS, ACTION_GROUPS, createBindings, resetDefaults, setBinding, codeForAction, actionLive } from '../../src/systems/inputActions.js';
 import { SHORTCUT_TEXT } from '../../src/systems/dialogShortcuts.js';
 import { setBindings } from '../../src/ui/input.js';
 
@@ -107,10 +107,14 @@ test('UXB1-F: a mod\'s keys, as its tile names them - the Controls page\'s own l
   const store = defaults();
   const labels = new Map(ACTION_GROUPS.flatMap((g) => g.rows.map((r) => [r.action, r.label])));
   for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
-    assert.deepEqual(modKeyRows(vendor, store), rows.map(({ action }) => ({
+    // OWN-AUDIT (2026-11-01): and after the mod's own, the game's actions its tile shows (MOD_TILE_ACTIONS)
+    assert.deepEqual(modKeyRows(vendor, store), [...rows.map(({ action }) => action), ...(MOD_TILE_ACTIONS[vendor] ?? [])].map((action) => ({
       action, label: labels.get(action), key: buttonText(codeForAction(store, action), true),
     })), vendor);
   }
+  assert.deepEqual(modKeyRows('eye-of-the-beholder', store).map((r) => [r.label, r.key]).at(-1), ['First / third person', 'MOUSE4'],
+    'OWN-AUDIT: the mod\'s Camera.TogglePerspective, as the game\'s own action on its tile');
+  assert.equal(actionLive('TogglePerspective'), true, 'shown on the tile, never gated on the mod');
   assert.deepEqual(modKeyRows('handheld-torches', store).map((r) => [r.label, r.key]),
     [['Light or douse', 'O'], ['Drop the light', 'G'], ['Throw a torch (hold to charge)', 'X']], 'drop torch');
   assert.deepEqual(modKeyRows('horse-cart-and-cargo', store).map((r) => [r.label, r.key]),

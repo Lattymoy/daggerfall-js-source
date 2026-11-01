@@ -256,10 +256,10 @@ test('AUDIT 66 F8: the component\'s teardown has owners - the switch\'s falling 
   assert.equal(playerTorchOffsetOverride(), null, 'and the process-global override is handed back');
 });
 
-test('AUDIT 66 F9: DrawTrajectory is a law, not a frame - the arc integrates from the free hand at the tilted look, breaks on a wall, and runs 300 steps; and the component no longer spends a frame on points nothing can draw', () => {
+test('AUDIT 66 F9: DrawTrajectory is a law - the arc integrates from the free hand at the tilted look, breaks on a wall, and runs 300 steps; OWN-AUDIT: the wind-up draws it (ownaudit_ht_keys.test.js)', () => {
   const src = rd('src/systems/handheldTorches.js');
   assert.ok(!/drawTrajectory\(\)/.test(src), 'no per-frame integration left in Update');
-  assert.match(src, /export function throwArcPoints\(/, 'the mod\'s own arithmetic, kept whole for the host that can draw it');
+  assert.match(src, /export function throwArcPoints\(/, 'the mod\'s own arithmetic, kept whole - the wind-up draws it');
   assert.deepEqual([TRAJECTORY_STEPS, TRAJECTORY_FIXED_DT, TRAJECTORY_SPEED, TRAJECTORY_GRAVITY], [300, 0.02, 25, 9.8]);
   const open = throwArcPoints({ origin: [0, 1, 0], forward: [0, 0, 1], right: [1, 0, 0], freeHand: FREE_HAND.Right, strength: 1, throwAngle: 0, throwGravity: 1, throwStrength: 1, bodyStrength: 100 });
   assert.equal(open.length, TRAJECTORY_STEPS + 1, 'no wall: the first point plus 300 steps');
@@ -277,9 +277,9 @@ test('AUDIT 66 F9: DrawTrajectory is a law, not a frame - the arc integrates fro
   const wall = throwArcPoints({ origin: [0, 1, 0], bodyStrength: 100, collider: { raycast: () => 0.25 } });
   assert.equal(wall.length, 2, 'the first step meets it');
   near(Math.hypot(wall[1][0] - wall[0][0], wall[1][1] - wall[0][1], wall[1][2] - wall[0][2]), 0.25, 1e-9, 'and the arc stops AT the hit, not past it');
-  // the switch says what it does, beside the other one the port cannot draw
+  // OWN-AUDIT (2026-11-01): the switch says what it does now that the arc is drawn
   const def = MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys['Throwing.ShowTrajectory'];
-  assert.equal(def.description, 'Has no effect here: the throw\u2019s arc isn\u2019t drawn in this game.', 'the pane says the arc is not drawn here');
+  assert.equal(def.description, 'While you wind up a throw, dots show where the torch will fly and land.');
 });
 
 test('AUDIT 66 F10: the dropped light\'s range carries no PlayerTorchLightScale - the port holds that setting inert for a radius, in one place - and the dep no host could feed is gone', () => {

@@ -29,7 +29,7 @@ the tree (commit `cc44705af` still holds them; the provenance is `01-Overview/Ow
 is now our own: `src/systems/dynamicSkies/dynamicSkies.js` (the rule below), `dynamicSkiesRuntime.js`
 (the instance), `dynamicSkiesAssets.js` (the noise and the snowflake, painted at runtime) and
 `src/render/dynamicSkiesRenderer.js` (GLSL written from the effect, not ported). The switch, the five
-settings and every place the sky is wired are unchanged. The storm's flash is still the mod's routine.
+settings and every place the sky is wired are unchanged. The storm's flash is ours too (OWN-WORK4 AUDIT, `StormFlash`).
 `test/systems/dynamicSkies.test.js` holds the tables as literals. The sections below are DS1's record.
 
 | part | our rule |
@@ -451,7 +451,7 @@ The 0.2 s flash duration is set at `BLBSkybox.cs:183`
 (`lightningFlash.flashDuration = 0.2f;` inside the lightning-effect
 setup), not `:184` - `:184` is the blank line before the setup's
 `Debug.Log`. The lane's new pin cited `:184` twice while the production
-comment beside it (`src/systems/dynamicSkies/dynamicSkies.js:"this.flashDuration ="`) already read
+comment beside it (in `src/systems/dynamicSkies/dynamicSkies.js`, gone with the routine, OWN-WORK4 AUDIT) already read
 `:183`; the two test cites and the Testing.md row are corrected to `:183`
 and now agree with the port. No behaviour and no other cite moved: the
 five `LightningFlash.cs` lines (`:52`, `:55`, `:61`, `:77`, `:79`)

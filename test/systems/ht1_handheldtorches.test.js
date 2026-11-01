@@ -167,7 +167,7 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
     'Handling.OnPick': 'What happens when you pick up a light. Store packs it, Equip holds it if a hand is free, and Force Equip sheathes your weapon to hold it.',
     'Handling.RelaxedTwoHandedWeapons': 'A two-handed weapon leaves your light alone until you swing it. A bow still needs both hands.',
     'Handling.RelaxedLanterns': 'A lantern stays lit even when both your hands are full.',
-    'Presentation.Tint': 'Has no effect here: the First-person lighting feature decides whether the hand takes the light of the room.',
+    'Presentation.Tint': 'The hand with the light is shaded by the room, as your weapon is. Off keeps it bright.',   // OWN-AUDIT: live (draw's tint)
     'Presentation.Ambidexterity': 'The light is drawn in whichever hand is free, left or right.',
     'Presentation.PlayerTorchAudio': 'A torch in your hand crackles as it burns.',
     'Bob.Length': 'How quickly the light sways as you walk.',
