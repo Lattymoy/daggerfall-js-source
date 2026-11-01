@@ -32,12 +32,12 @@ test('OWN-AUDIT BadTack in the runtime: a boat close-hauled makes less way with 
     const way = (deg, settings) => {
       const s = scene({ settings: { 'SailingAssist.AutoStowSquareSails': false, 'SailingAssist.AutoStowGaffSails': false, ...settings } });
       if (handling) s.deps.handling = () => handling;   // the helm's hand, taken as she is helmed (helmway.test.js's own)
-      const boat = s.helm(s.place(1, 2));
+      const boat = s.helm(s.place(1, 4));   // two gaffs and a staysail: fore-and-aft canvas that draws close-hauled
       s.rt.state.windVectorCurrent = windOff(deg);
       return s.rt.sailWayOf(boat);
     };
-    const off = way(150, {});
-    const on = way(150, { 'Handling.BadTack': true, 'Handling.BadTackMultiplier': 0.5 });
+    const off = way(140, {});
+    const on = way(140, { 'Handling.BadTack': true, 'Handling.BadTackMultiplier': 0.5 });
     assert.ok(off > 0, `${handling ?? 'classic'}: she makes way close-hauled`);
     near(on / off, 0.5, 1e-4, `${handling ?? 'classic'}: close-hauled, half her way`);
     near(way(20, { 'Handling.BadTack': true, 'Handling.BadTackMultiplier': 0.5 }), way(20, {}), 1e-6, `${handling ?? 'classic'}: on a run, all of it`);
