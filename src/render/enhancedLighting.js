@@ -68,31 +68,47 @@ import {
   WET_DARKEN,
 } from '../combat/blood/bloodArt.js'; // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
-import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
-import { FOG_GLSL as EL_FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog law's one home, the classic lane's too (the lane's five interpolate it by this name)
-import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share, the lane's flats too
-import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
-import { BAYER_GLSL, BAYER_MEAN, DISSOLVE_GLSL } from './orderedDither.js';   // SHIP-FADE: and the mesh shader's dissolve
-import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js';   // LPT1: a low-poly tree's fragment half (the classic lane's BB_FS takes the same)
-import { CLOUD_SHADOW_GLSL, RING_CLOUD_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here; OW-HORIZON: the ring's sun under it
-import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
-import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
-import { FLAT_DISSOLVE_GLSL } from '../systems/dissolve.js';   // DISSOLVE: the classic BB_FS's own
-import { FLAT_CRACK_GLSL } from '../systems/veinCrack.js';   // VEIN-CRACKS: the classic BB_FS's own
-import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
-import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
-import { roadEdgeGlsl } from './roadEdgeGlsl.js';   // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk
-import { groundEdgeGlsl } from './groundEdgeGlsl.js';   // COAST-LOOK: the ground's kinds blended and the sea's cut on their line, both terrain programs' one chunk
-import { ecotoneGlsl } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours, both terrain programs' one chunk
-import { snowCoverGlsl, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps, after it
-import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
-import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: under the enhanced water the ground is a bed
-import { RING_SEA_GLSL, FLORA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the ring's sea and the horizon's haze, the classic ring's own text; FAR-FLORA: the canopy's grain
-import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: and the jungle's haze over it, the classic ring's own text
-import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM } from './realWindows.js';   // RW1: the real windows, the classic FS's own block on the lane's codec
-import { MESH_ALPHA_GLSL } from './meshAlpha.js';   // POI-2: the lane's mesh FS ends on the same translucency as the classic one
-import { windowLightGlsl } from './windowLight.js';   // WL1: the windows' light, read in the lantern loop's own function
-import { RAIN_WET_GLSL, RAIN_GROUND_GLSL, WET_DARK, WET_WALL_DARK, PUDDLE_GLOSS, PUDDLE_GLINT, PUDDLE_WIN_GLINT, PUDDLE_STRETCH } from './wetGlsl.js';   // the wet world
+import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js'; // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
+import { FOG_GLSL as EL_FOG_GLSL } from './fogGlsl.js'; // AUDIT 68 S17-fog-glsl-dup: the fog law's one home, the classic lane's too (the lane's five interpolate it by this name)
+import { COLUMN_GLSL } from './columnGlsl.js'; // DW-F: the water column's share, the lane's flats too
+import {
+  AIR_ADAPT_GLSL,
+  AIR_CONTACT_GLSL,
+  AIR_CONTACT_RANGE_FRACTION,
+  airOn,
+  contactOn,
+  glslFloat,
+} from './airPass.js'; // EL6: no AO block - the resolve's; EL8: the contact block
+import { BAYER_GLSL, BAYER_MEAN, DISSOLVE_GLSL } from './orderedDither.js'; // SHIP-FADE: and the mesh shader's dissolve
+import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js'; // LPT1: a low-poly tree's fragment half (the classic lane's BB_FS takes the same)
+import { CLOUD_SHADOW_GLSL, RING_CLOUD_GLSL } from './cloudShadow.js'; // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here; OW-HORIZON: the ring's sun under it
+import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js'; // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
+import { SHADE_DARK } from '../systems/concealDraw.js'; // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
+import { FLAT_DISSOLVE_GLSL } from '../systems/dissolve.js'; // DISSOLVE: the classic BB_FS's own
+import { FLAT_CRACK_GLSL } from '../systems/veinCrack.js'; // VEIN-CRACKS: the classic BB_FS's own
+import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash.js'; // HITFLASH1: the struck-red term, the classic BB_FS's own
+import { pageParam } from '../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
+import { roadEdgeGlsl } from './roadEdgeGlsl.js'; // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk
+import { groundEdgeGlsl } from './groundEdgeGlsl.js'; // COAST-LOOK: the ground's kinds blended and the sea's cut on their line, both terrain programs' one chunk
+import { ecotoneGlsl } from './ecotoneGlsl.js'; // ECOTONE1: the ground's share of its neighbours, both terrain programs' one chunk
+import { snowCoverGlsl, SNOW_TILE_M } from './snowCoverGlsl.js'; // PRECIP4: the snow the ground keeps, after it
+import { snowCapGlsl } from './snowCapGlsl.js'; // PEAKS1: a steep face over the cap's line is bare rock
+import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js'; // WATER-NEXT 2: under the enhanced water the ground is a bed
+import { RING_SEA_GLSL, FLORA_GLSL } from './horizonHaze.js'; // FAR-SEA1: the ring's sea and the horizon's haze, the classic ring's own text; FAR-FLORA: the canopy's grain
+import { RING_HAZE_GLSL } from './hazeGlsl.js'; // BANTHA1: and the jungle's haze over it, the classic ring's own text
+import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM } from './realWindows.js'; // RW1: the real windows, the classic FS's own block on the lane's codec
+import { MESH_ALPHA_GLSL } from './meshAlpha.js'; // POI-2: the lane's mesh FS ends on the same translucency as the classic one
+import { windowLightGlsl } from './windowLight.js'; // WL1: the windows' light, read in the lantern loop's own function
+import {
+  RAIN_WET_GLSL,
+  RAIN_GROUND_GLSL,
+  WET_DARK,
+  WET_WALL_DARK,
+  PUDDLE_GLOSS,
+  PUDDLE_GLINT,
+  PUDDLE_WIN_GLINT,
+  PUDDLE_STRETCH,
+} from './wetGlsl.js'; // the wet world
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
  *  vec4 + forty-eight vec3 are 96 uniform vectors; ES 3.0 guarantees 224
@@ -572,9 +588,9 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
-const EL_POINT_LIT_GLSL = elPointLitGlsl(true);   // mesh/char: no puddle winGlint (terrain-only below)
-const EL_POINT_LIT_TERRAIN_GLSL = elPointLitGlsl(true, true);   // lit panes in puddles
-const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat');   // WL1: the billboard program's
+const EL_POINT_LIT_GLSL = elPointLitGlsl(true); // mesh/char: no puddle winGlint (terrain-only below)
+const EL_POINT_LIT_TERRAIN_GLSL = elPointLitGlsl(true, true); // lit panes in puddles
+const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat'); // WL1: the billboard program's
 
 /** The mesh fragment shader of the lane - the classic FS's every term
  *  (the automap presentation, the trilight, emission's cancel-and-return,

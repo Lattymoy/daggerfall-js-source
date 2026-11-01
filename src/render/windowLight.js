@@ -28,7 +28,7 @@ import {
 } from '../world/windowRoomArt.js';
 import { pageParam } from '../systems/pageQuery.js';
 import { WL_REC, APERTURE_CELL_REC, windowAperturesOf } from './windowApertures.js';
-import { WIN_GLINT_LOD0, WIN_GLINT_LOD1, WIN_GLINT_NEAR_M, WIN_GLINT_FAR_M, WIN_GLINT_FADE_M } from './wetGlsl.js';   // how soft a window is in a puddle
+import { WIN_GLINT_LOD0, WIN_GLINT_LOD1, WIN_GLINT_NEAR_M, WIN_GLINT_FAR_M, WIN_GLINT_FADE_M } from './wetGlsl.js'; // how soft a window is in a puddle
 
 export { WL_REC, windowAperturesOf };
 
@@ -503,7 +503,12 @@ const f = (x) => {
  *  map's word, read once a quad - LA-COST3's vBBSunVis).
  *  `wetGlint` the wet ground's mirror of the glass (needs AIR_CONTACT_GLSL above - the enhanced lane only).
  * @param {{ atten?: string, shadow?: boolean | 'flat', clusters?: boolean, wetGlint?: boolean }} [opts] */
-export function windowLightGlsl({ atten = 'wlClassicAtten(rl, r)', shadow = false, clusters = false, wetGlint = false } = {}) {
+export function windowLightGlsl({
+  atten = 'wlClassicAtten(rl, r)',
+  shadow = false,
+  clusters = false,
+  wetGlint = false,
+} = {}) {
   return `
 // WL1: WINDOW LIGHT (render/windowLight.js)
 layout(std140) uniform WinLights { vec4 uWinL[${WL_MAX_LIGHTS * WL_VEC4}]; };
@@ -620,7 +625,9 @@ vec3 winLit(vec3 wp, vec3 n, float isFlat, float flatSun) {
   }
   return acc;
 }
-${wetGlint ? `// the glass itself in wet ground at wp - mirror ray into the aperture's mask (a row of panes is the mask, not
+${
+  wetGlint
+    ? `// the glass itself in wet ground at wp - mirror ray into the aperture's mask (a row of panes is the mask, not
 // one lamp), V toward the eye; pw tightens the lobe. Occlusion marches the previous depth along the ray past a bush
 // (contactShadow's 0.6 m is too short for a shrub between the puddle and the pane). Needs AIR_CONTACT_GLSL above.
 float winGlintOcc(vec3 wp, vec3 n, vec3 dir, float dist) {
@@ -700,8 +707,10 @@ vec3 winGlint(vec3 wp, vec3 n, vec3 V, float pw, float scatter) {
   }
   return acc;
 }
-` : `vec3 winGlint(vec3 wp, vec3 n, vec3 V, float pw, float scatter) { return vec3(0.0); }
-`}
+`
+    : `vec3 winGlint(vec3 wp, vec3 n, vec3 V, float pw, float scatter) { return vec3(0.0); }
+`
+}
 `;
 }
 

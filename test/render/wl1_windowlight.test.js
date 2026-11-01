@@ -220,8 +220,9 @@ test('WL1 W4: THE SHADER\'S BLOCK walks what the twin walks - in both sets: the 
   const flat = windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: 'flat' });
   assert.ok(flat.includes('float g = kind == 0 ? elAttenuation(rl, r) : (kind == 1 ? flatSun : 1.0);') && !/sunShadow(?:Soft)?At\(/.test(flat));
   const el = rd('src/render/enhancedLighting.js');
-  const point = el.slice(el.indexOf('const elPointLitGlsl = (wlShadow) => `'), el.indexOf('`;', el.indexOf('const elPointLitGlsl = (wlShadow) => `')));
-  assert.ok(point.includes("${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow })}"), 'the lane\'s point term carries the block');
+  const pointAt = el.indexOf('const elPointLitGlsl = (wlShadow');
+  const point = el.slice(pointAt, el.indexOf('`;', pointAt));
+  assert.ok(point.includes("${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow") && point.includes('})}'), 'the lane\'s point term carries the block');
   assert.ok(point.includes('acc + winLit(wp, n, 0.0, 1.0)') && point.includes('acc + winLit(wp, vec3(0.0), 1.0, flatSun)'));
   assert.ok(el.includes("const EL_POINT_LIT_GLSL = elPointLitGlsl(true);") && el.includes("const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat');"));
   assert.ok(EL_BB_FS.includes(flat) && EL_MESH_FS.includes(lane), 'the flat\'s program takes the flat block, a surface\'s the sun map\'s');

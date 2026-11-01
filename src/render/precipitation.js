@@ -140,7 +140,8 @@ export function packShelters(xzOut, yOut, buildings, eye) {
   for (const b of buildings ?? []) {
     const box = b?.aabb;
     if (!box?.min || !box?.max) continue;
-    const midX = (box.min[0] + box.max[0]) * 0.5, midZ = (box.min[2] + box.max[2]) * 0.5;
+    const midX = (box.min[0] + box.max[0]) * 0.5,
+      midZ = (box.min[2] + box.max[2]) * 0.5;
     const dist2 = (midX - eye[0]) ** 2 + (midZ - eye[2]) ** 2;
     if (dist2 > reach2) continue;
     near.push({ aabb: box, dist2 });
@@ -161,7 +162,9 @@ export function packShelters(xzOut, yOut, buildings, eye) {
   return n;
 }
 
-export const LAB_WX_VS = LAB_HEAD + `layout(location=0) in vec2 aCorner;
+export const LAB_WX_VS =
+  LAB_HEAD +
+  `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
 uniform float uTime, uKind, uBox, uFall;
@@ -549,11 +552,26 @@ export class PrecipitationRenderer {
     const lp = buildProgram(gl, LAB_WX_VS, LAB_WX_FS);
     this.labProgram = lp;
     this.lab = {};
-    for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uShelterN', 'uShelterXZ', 'uShelterY']) this.lab[u] = gl.getUniformLocation(lp, u);
+    for (const u of [
+      'uVP',
+      'uEye',
+      'uRight',
+      'uUp',
+      'uTime',
+      'uKind',
+      'uBox',
+      'uFall',
+      'uWindV',
+      'uWindOff',
+      'uShelterN',
+      'uShelterXZ',
+      'uShelterY',
+    ])
+      this.lab[u] = gl.getUniformLocation(lp, u);
     // shelter buffers may already hold this frame's pack (setShelters before the first drawLab)
     if (!this._shelterXZ) {
       this._shelterXZ = new Float32Array(SHELTER_MAX * 4);
-      this._shelterY = new Float32Array(SHELTER_MAX * 2);   // minY, maxY pairs
+      this._shelterY = new Float32Array(SHELTER_MAX * 2); // minY, maxY pairs
       this._shelterN = 0;
     }
     // the lab's instances: x,y,z in [0, BOX) + a phase, from the lab's
@@ -784,15 +802,15 @@ export class PrecipitationRenderer {
     gl.uniform1f(L.uBox, LAB_BOX);
     gl.uniform1f(L.uFall, LAB_FALL[mode] ?? LAB_FALL.rain);
     gl.uniform2fv(L.uWindV, this.windV);
-    gl.uniform2fv(L.uWindOff, this.windUpload());   // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
-    gl.uniform1i(L.uShelterN, this._shelterN | 0);   // Rain under a roof
+    gl.uniform2fv(L.uWindOff, this.windUpload()); // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
+    gl.uniform1i(L.uShelterN, this._shelterN | 0); // Rain under a roof
     if (this._shelterN > 0) {
       gl.uniform4fv(L.uShelterXZ, this._shelterXZ);
       gl.uniform2fv(L.uShelterY, this._shelterY);
     }
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.enable(gl.DEPTH_TEST);   // walls and roofs occlude; an open 2D run left this off and rain drew through
+    gl.enable(gl.DEPTH_TEST); // walls and roofs occlude; an open 2D run left this off and rain drew through
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.labVao);

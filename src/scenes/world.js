@@ -32574,8 +32574,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // OW-RAIN (Mac: "it stops raining (you can still hear it) ... when you move on the overworld map"): the Overworld's
         // click is a Travel Options journey, whose DisableWeatherAndSound stood the particles down while the rain loop
         // played on - but the Overworld's journey is SEEN, the world going on under it, so what falls keeps falling there
+        precip.setShelters?.(modes?.buildingBoxes?.() ?? [], wxEye32);   // no fall under a roof
         if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {
-          precip.setShelters?.(modes?.buildingBoxes?.() ?? [], wxEye32);   // no fall under a roof
           precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);   // PRECIP1: at the air's snow share
           renderer.markForeignPass();   // EV6: so did the rain
         }
