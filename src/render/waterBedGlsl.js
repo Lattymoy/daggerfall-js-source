@@ -7,7 +7,7 @@
 // ground (`uWaterBed`, the hosts' switch - never the classic skin, which draws the tile as DFU does), each water texel
 // of the ground - the draw's corner table's own coverage (world/water/waterCorners.js WATER_DRAW_MASK_TABLE), feathered as the
 // water's shore is - takes the climate's DIRT (the tileset's record 1, the same texel turned the same way), darkened
-// and cooled to silt. A puddle record keeps its art (WATER-PUDDLE: its water is its picture's).
+// and cooled to silt - a puddle record's painted water by its art's own mask (WATER-LEVEL: no water tile art is drawn).
 // Both terrain programs take this text: renderer.js TERRAIN_FS and the lane's EL_TERRAIN_FS (enhancedLighting.js).
 // ═══════════════════════════════════════════════════════════════════
 import { PUDDLE_RECORDS } from '../world/puddleMask.js';
@@ -34,12 +34,16 @@ uniform uvec4 uBedMask[8];     // the draw's water corners, packed as the water'
 vec2 bedCover(uint data, vec2 f, vec2 p, vec3 tl, vec2 gx, vec2 gy, float snowC, bool blended) {
   if (uWaterBed < 0.5) return vec2(0.0);
   uint rec = data >> 2u;
-  if (${PUDDLE_RECORDS.map((r) => `rec == ${r}u`).join(' || ')}) return vec2(0.0);
   uvec4 v = uBedMask[data >> 5u];
   uint j = (data >> 3u) & 3u;
   uint word = j == 0u ? v.x : (j == 1u ? v.y : (j == 2u ? v.z : v.w));
   uint m = (word >> ((data & 7u) * 4u)) & 15u;
   if (m == 0u) return vec2(0.0);
+  if (${PUDDLE_RECORDS.map((r) => `rec == ${r}u`).join(' || ')}) {
+    float pa = textureGrad(uTileArr, tl, gx, gy).a;
+    if (snowC > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).a, snowC);
+    return vec2(smoothstep(0.3, 0.7, pa), 0.0);
+  }
   float c = mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);
   float k = smoothstep(0.3, 0.7, c - (blended ? geWander(p) : 0.0));
   float art = 0.0;

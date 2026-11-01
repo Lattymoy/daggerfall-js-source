@@ -299,8 +299,9 @@
   {
     "name": "COAST-LOOK-sheet-wander-sign",
     "file": "src/render/waterSurface.js",
-    "old": "coverage(corners, f) - (geEntry(data)",
-    "new": "coverage(corners, f) + (geEntry(data)",
+    "old": "0.5 - 0.5 * vCut - (geEntry(data)",
+    "new": "0.5 - 0.5 * vCut + (geEntry(data)",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the sheet's shore is its cut field's coverage less the wander.",
     "tests": [
       "test/render/coastlook.test.js"
     ]

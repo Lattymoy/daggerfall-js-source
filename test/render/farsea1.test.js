@@ -272,7 +272,7 @@ test('FAR-SEA1: the renderer - setSeaHaze reaches the water\'s frame block, begi
   const r = new Renderer({ getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 });
   const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   const P = new Float32Array([0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1]), N = new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]), IX = new Uint32Array([0, 2, 1, 1, 2, 3]);
-  const sheet = r.createWaterSheet(IX, { terrain: r.createTerrainSurface(P, N, IX) });
+  const sheet = r.createWaterSheet({ positions: P, depths: new Float32Array(8), cut: new Float32Array(4).fill(-1), indices: IX });   // PIN MOVED (WATER-LEVEL): a sheet its own buffers
   const wu = waterUniforms({ seconds: 0, sky: { zenith: [0.2, 0.3, 0.6], horizon: [0.6, 0.7, 0.8] } });   // AUDIT FAR-SEA1 C11: the producer's shape
   const seaHaze = () => calls.filter((c) => c[0] === 'uniform2fv' && c[1] === 'uSeaHaze').map((c) => c[2]);
   const both = (got, want, m) => want.forEach((v, i) => close(got[i], v, `${m} ${i}`, 1e-3));

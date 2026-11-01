@@ -21,6 +21,8 @@ import { roadEdgeGlsl, EDGE_NOISE_GLSL } from '../../src/render/roadEdgeGlsl.js'
 import { roadEdgeNoise } from '../../src/world/road/roadEdge.js';
 import { WATER_BED_GLSL, waterBedMix } from '../../src/render/waterBedGlsl.js';
 import { waterSurfaceFs, SHORE_SOFTNESS } from '../../src/render/waterSurface.js';
+import { waterBedOf, flatGrid } from '../../src/world/water/waterBed.js';
+import { fanCut } from '../../src/world/water/waterLevel.js';
 import { EL_TERRAIN_FS } from '../../src/render/enhancedLighting.js';
 import { terrainClipFs } from '../../src/render/renderer.js';
 import { marchTile, assignTiles } from '../../src/world/terrain/terrainTiles.js';
@@ -274,13 +276,19 @@ test('COAST-LOOK the silt and the sheet take the ground\'s line where the ground
   const sheet = glslFunctions(fs, { uGroundEdge: 1 });
   for (let y = 0.05; y < D; y += 7.1) for (let x = 0.07; x < D; x += 6.3) near(sheet.geWander([x, y]), groundEdgeWander(x, y), 1e-12, `the sheet's wander at (${x}, ${y})`);
   for (let byte = 0; byte < 256; byte++) assert.equal(sheet.geEntry(byte), GROUND_KIND_TABLE[byte], `the sheet's entry ${byte}`);
-  assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\) - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');
-  // the sheet and the sand on one line: where the ground's share of land is a half, the sheet's water is a half
-  const edge = convertTile(marchTile(DIRT, DIRT, WATER, WATER));
+  // PIN MOVED (WATER-LEVEL): the sheet's shore is its cut field's coverage (world/water/waterLevel.js), less the same wander
+  assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* vCut - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');
+  // the sheet and the sand on one line: where the ground's share of land is a half, the sheet's water is a half - the
+  // sheet built over a dirt row, a row of the march's edge and a row of water, its cut as the GPU interpolates it
+  const edge = convertTile(marchTile(DIRT, DIRT, WATER, WATER)), dirt = convertTile(marchTile(DIRT, DIRT, DIRT, DIRT));
+  const rows = new Uint8Array(3 * 3);
+  for (let x = 0; x < 3; x++) { rows[x] = dirt; rows[3 + x] = edge; rows[6 + x] = 0; }
+  const built = waterBedOf(flatGrid(3, 3, 0), rows, { tileDim: 3 }).sheet, q = built.indices.findIndex((v, i) => i % 12 === 1 && v === 1 * 4 + 1);
+  const [c00, c10, c01, c11] = [5, 6, 9, 10].map((i) => built.cut[i]), cc = built.cut[built.indices[q - 1]];
   for (let x = 0.5; x < 20; x += 0.77) {
     for (let fy = 0.02; fy < 1; fy += 0.01) {
       const land = cornerShare(groundKindsOf(edge).mask, x % 1, fy) + groundEdgeWander(x, 50 + fy);
-      const sea = sheet.coverage(WATER_DRAW_MASK_TABLE[edge], [x % 1, fy]) - groundEdgeWander(x, 50 + fy);
+      const sea = 0.5 - 0.5 * fanCut(c00, c10, c01, c11, cc, x % 1, fy) - groundEdgeWander(x, 50 + fy);
       near(land + sea, 1, 1e-12, 'the sea the land\'s complement');
     }
   }

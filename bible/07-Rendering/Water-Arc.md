@@ -1359,7 +1359,8 @@ cell puts the sea against grass or stone. The hard edges are the drawing's:
   as its own), each kind takes ECOTONE1's neighbours by its own record and PRECIP4's winter twin by the same. Every
   other tile is drawn as before.
 - **The water's edge is the same line.** The sheet's shore is the coverage less the same wander where the ground blends
-  (`waterSurface.js:"coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"`); the sheet's water is
+  (`waterSurface.js:"0.5 - 0.5 * vCut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"` - the cut field's coverage
+  since WATER-LEVEL, below; the corners' own coverage at COAST-LOOK); the sheet's water is
   the land's share's complement. The silt takes it too, and a blended tile's painted water is no fringe (SHORE-SILT): its
   art is not drawn. A record whose art reads as water (WATER-DRAW2's corners, the docks) keeps the art's line.
 - **Deep Waters' cut is a field** (`groundEdge.js:"export function coastCutAt(cutAt, x, y) {"`). A clipped tile's point
@@ -1387,3 +1388,115 @@ coast's ring of clipped quads runs through the clip program, which discards most
 `farclip1.test.js`, `dwf_farsea.test.js` and BOOT2's ceiling (92: the two modules). Mutants: `tools/mutants/coastlook.json`
 (43, all dead); `farclip1.json`, `ecotone1.json` and `precip1.json` re-aimed by content. The departure: Port-Ledger A,
 COAST-LOOK.
+
+
+## WATER-LEVEL - WATER IS A LEVEL, NOT A TILE (2026-10-31)
+
+The owner, 2026-10-31: *"We need to make sure we go away from the water tiles and move into a proper water shader."*
+Asked how far, the owner chose all water on the Enhanced skin - the sea, Daggerfall's rivers, town ponds and moats,
+World 2.0's lakes and rivers, Cyrodiil's waters - drawn as a surface at its own level with a smooth shore, none as a
+tile. Where Daggerfall's data says water only as tiles (an RMB pond, the Bay's painted rivers) the tiles still mark
+where it is. The classic skin keeps DFU's flat tile, and the `enhanced-water` row stays the player's switch
+(WATER-OFF). A departure: Port-Ledger A, WATER-LEVEL.
+
+**Why.** The sheet was the pixel's grid as built, lifted `WATER_LIFT` wherever a tile said water, and its shore each
+tile's corner coverage. So every body stood on its uncarved ground: World 2.0's rivers on their channels' floors, not at
+their surfaces, and every shore a line drawn tile by tile. The levels the laws know (the sea's clamp, World 2.0's
+`waterAt` surface, Cyrodiil's river and lake levels) were thrown away at the tile.
+
+**The law** (`world/water/waterLevel.js`, `world/water/streamLevels.js`, carved with the bed by `waterBed.js`
+`waterBedOf`):
+
+- **The tiles mark the water.** A grid vertex's vote is the share of the tiles meeting it that call that corner water
+  (the draw's table, `waterVotes`). A tile past the map is no vote, so both pixels mark a seam by their own tiles and
+  agree wherever both are water; a Deep Waters clip is no vote. The bed's halo (AUDIT WATER-NEXT F2) now sees the waters
+  World 2.0 and Cyrodiil paint (`paintedWaterAt`): no neighbour's kernel holds them, so a lake met every seam as a bank
+  and its sheet drew a line of foam along it.
+- **A body is a level.** A marked vertex takes its body's own law where one speaks - World 2.0's surface where a region
+  holds the whole ground (34 + its metres, the gate `paintGen2Waters` paints by), Cyrodiil's river or lake level, the
+  sea's 34 where the ground stands at its clamp - else its uncarved ground (a town's pond, a Bay river). A dry vertex
+  beside one borrows its neighbours' mean, never above its own ground: the plane runs on into the bank.
+- **The bed is carved, never raised:** min(ground, level - carve). Daggerfall's flat water carves as BANK-FLUSH carves
+  it; a law's deeper floor (World 2.0's channels and lake beds) is left alone.
+- **The sheet stands at the level** (`waterSheet`): its own mesh, a quad drawn where its four corners hold a level and
+  one is the water's own, never a clipped one, as four triangles about its centre. Attribute 1 is the plane's depth
+  over the carved ground and the shading's depth (never under the bed's profile, so a pond reads as deep as before);
+  attribute 2 is the cut.
+
+**The shore is where the plane meets the ground.** The depth test cuts the sheet where the bank rises through it, and
+the water fades in over `SHORE_MEET` (0.06) of depth behind the surface - the depth copy's on Full, the attribute on
+Simple and the classic lane - so a lake's shore is its level's own line. Where the plane runs on over ground no higher
+than it (a town's flat pond; a borrowing vertex within `DEPTH_CUT_RISE` of the level), the cut field ends it: 1 - 2 x
+the vote at the water's vertices, -1 at a borrowing vertex the ground cuts and 1 at one it does not, interpolated, the
+quad's centre its tile's own water (water a tile wide keeps a middle), less COAST-LOOK's wander where the ground
+blends. The shader reads no corner table: the tilemap gives a puddle's art and the ground's line.
+
+**The ground under it.** The terrain pass keeps drawing silt and wet mud where the tiles mark water (SHORE-SILT), and a
+puddle record's painted water now goes under the silt too, by its art's own mask: no water tile art is drawn on the
+Enhanced skin with the row on. The swell grows with the water's own depth over the carved ground, so a trough never
+dips under it; `SHELF_SHEET_DEPTH`, `NO_BED_DEPTH`, `SHEET_NO_BED` and `sheetDepthsOf` are retired with the sheet that had
+no level.
+
+**One sea.** The near sheet's sea stands at the kernel's clamp, 34, as Iliac Puddle No More's open sea does (its own
+3 cm over it, `SURFACE_RENDER_Y_OFFSET`, against the near sheet's `WATER_LIFT`) and the far ring's. A tile the cap clips
+holds no quad of the near sheet, so the two never stand over one texel (DW-F), and `dwRecarve` levels the sheet again
+whenever the cap's TileMap moves. FAR-SEA1's haze still finds the sea by its level.
+
+**What does not move** (WATER-NEXT, WATER-DRAW1): every reader of water as play keeps its line. The feet
+(`player/exteriorSurface.js`, the corner table's default - the law's), `onExteriorWater`, the swim motor on the
+uncarved ground, fall damage and the fish schools (`isOutdoorWaterTile`), the townsfolk's paths
+(`cityNavigation.js`, `WATER_MASK_TABLE`), fishing's water height, Deep Waters' swim at the sea's height and Come Sail
+Away's `WATER_LEVEL` read no level and no sheet. The level is drawn only.
+
+**THE FOUR HOSTS.** The streaming world (`scenes/world.js`: the kernel's sheet at the build in `scenes/pixelBuild.js`,
+at a restride and at Deep Waters' re-carve) and the fixed town (`scenes/exterior.js`, its flat grid's sheet, its own
+ground the level - no law) draw the water at its level; the interiors (`scenes/worldModes.js`) and the dungeons
+(`scenes/dungeonContext.js`) draw the classic plane and no sheet. bootWorld 35,127 -> 35,117 logical lines, bootExterior
+5,063 -> 5,058: the sheet is built with the bed, not by the hosts.
+
+**TAMRIEL-WIDE.** The levels are the world's: a pixel's sources are asked by its world point (`streamLevelAt`, the
+canon's sample frame), so the Bay's sea, Cyrodiil's rivers and lakes and any World 2.0 region stand by the one law, and
+a province's sea by the clamp it shares with the Bay. The pins hold World 2.0's blackmarsh-test lake past the Bay beside
+Daggerfall's sea, and the probe (`tools/waterLevelProbe.mjs`) shoots Cyrodiil and hammerfell-test beside the Bay.
+
+**What it costs.** The sheet is built on the terrain worker with the bed it is carved with (a coast's pixel a few
+milliseconds there, beside the bed's own), and again on the main thread when Deep Waters' cap lands on a coastal pixel.
+Its mesh is five floats a vertex and a centre a drawn quad; the fragment reads no corner table.
+
+**Recorded, not done.** A far ring's grid (stride 4, 25.6 units a cell) marks the water at its own vertices, so a river
+or pond narrower than a cell stands no sheet there and reads as its silt; DFU's tile would be the far ring's water, and
+that is the owner's call. A borrowing vertex on a pixel's seam takes the mean of the marked vertices its own grid holds,
+so a sloped body crossing a seam can meet its neighbour's sheet a few centimetres apart there; and a shore that falls
+exactly on a seam ends on it, since neither pixel votes the other's tiles.
+
+**For the owner: the play's level past the Bay.** World 2.0's water now stands at its surface over channels and lake beds
+that lie metres under it; the feet and the swim still stand on the uncarved ground, as WATER-NEXT keeps them. So a
+walker in a World 2.0 lake walks its bed under the drawn water (`hammerfell-test`'s lake, the probe's near shot, is seen
+from below it). Daggerfall's water, Cyrodiil's (its channel's floor is its level) and the sea are not parted so. Moving
+the swim to the level is a change to play, and the owner's call.
+
+**Seen** (`tools/waterLevelProbe.mjs`, the same poses before and after on the real game, headless with the player's
+ARENA2; renders of game data, kept outside the tree). Cyrodiil's Lake Canulus and the river below it, and
+hammerfell-test's lake, had a line of foam down every pixel seam; it is gone. hammerfell-test's lake stands at its own
+surface: the near pose, set on its bed, now looks up at it from under the water. Daggerfall's moat, its pond and the Bay
+river beside it, Sentinel's canal and its coast read as they did - their water's level was already their ground - with
+the shore on the cut field's line and, at the coast, a thread of foam where the sea meets the sand. Snowfall's snow is
+off in the probe: it lies up to the tiles' edge and hid every shore.
+
+**Recorded, as found.** At Sentinel's coast the near sheet over the cap's kept tiles is a darker blue than Iliac Puddle
+No More's open sea beyond the clip (the mod's Top Color tints its own), a step of tone along the clip's line in the
+before shot and the after. One look for both is a choice of colour, left for the owner. And a pond a town's blocks lay
+in square tiles on flat ground keeps a square's outline, its corners rounded: the cut field and the silt under it follow
+the tiles that mark it, and a rounder shore would want the silt rounded with it.
+
+**Pinned** in `test/world/water/waterlevel.test.js` (9): the votes, the halo's painted water, the levels and the cut, the bed never raised, the
+sheet's extent and its centres, the streamed levels on the Bay and in World 2.0's blackmarsh-test, the shader, THE FOUR
+HOSTS and the play's readers, the record. PIN MOVED: `water.test.js` (the shader's attributes, no corner table, the
+silt holding the coverage twin, the sheet's index set), `waterbed.test.js`, `waternext.test.js`, `audit_waternext.test.js`
+(H2's law moved, its constants retired), `bankflush.test.js`, `coastlook.test.js` (the shore the cut field's, the land's
+complement through the sheet's fan), `audit_farsea1.test.js`, `farsea1.test.js`, `perfextb.test.js`, `dwf_farsea.test.js`,
+`floraground_rings.test.js`, `grasspath.test.js` and `waterdraw2.test.js` (`buildWaterIndices` retired: the votes say what
+the pass draws), and `hostceiling.test.js` (both ceilings lowered). Mutants: `tools/mutants/waterlevel.json` (25, all
+dead); re-aimed by content, `audit_waternext.json` (five; H2's no-bed constant retired with its law), `bankflush.json`
+(three), `dwf.json` (two), `waternext.json` (two), `coastlook.json`, `grasspath.json` and `hostsplit.json` (one each) -
+190 dead over the eight lists, none survived.

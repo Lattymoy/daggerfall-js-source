@@ -12,7 +12,7 @@ import { WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE, ISLAND_DRAWN, CORNER_DRAWN, bu
 import { BlocksFile } from '../../../src/formats/blocksFile.js';
 import { dryPuddles, groundTileWet } from '../../../src/world/puddleDry.js';
 import { waterBedDepths } from '../../../src/world/water/waterBed.js';
-import { buildWaterIndices } from '../../../src/render/waterSurface.js';
+import { waterVotes } from '../../../src/world/water/waterLevel.js';   // PIN MOVED (WATER-LEVEL): the tiles mark the water the sheet stands at
 
 const ARENA2 = process.env.ARENA2_PATH;
 /** A table's four entries for a record, turn by turn. */
@@ -65,9 +65,9 @@ test('WATER-DRAW2 PUDDLE-DRY follows the draw: a lone island and a lone corner d
 
 test('WATER-NEXT\'s readers follow the draw: an island tile is drawn and a pond of them has a bed (mutants: the islands undrawn)', () => {
   const dim = 16, bytes = new Uint8Array(dim * dim).fill(2 << 2);   // grass
-  assert.equal(buildWaterIndices(bytes, 1, undefined, dim), null, 'grass: no water');
+  assert.equal(waterVotes(bytes, { tileDim: dim }), null, 'grass: no water');
   for (let z = 5; z <= 9; z++) for (let x = 5; x <= 9; x++) bytes[z * dim + x] = (19 << 2) | ((x + z) & 3);   // a pond of islands, every turn
-  assert.ok(buildWaterIndices(bytes, 1, undefined, dim), 'the sheet covers them');
+  assert.ok(waterVotes(bytes, { tileDim: dim })[7 * (dim + 1) + 7] === 1, 'the sheet covers them');
   const bed = waterBedDepths(bytes, { tileDim: dim });
   assert.ok(bed, 'and carves under them');
   assert.equal(bed[5 * (dim + 1) + 5], 0, 'the bank');

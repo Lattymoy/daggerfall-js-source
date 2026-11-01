@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { waterBedDepths, waterBedCarve, bedFields, waterBedOf, flatGrid, bedProfile, BED_DEPTH, BED_RAMP, TILE_UNITS, SHELF_CHAMFER, sheetDepthsOf } from '../../../src/world/water/waterBed.js';
-import { WATER_DRAW_MASK_TABLE, SHELF_SHEET_DEPTH } from '../../../src/world/water/waterCorners.js';
+import { waterBedDepths, waterBedCarve, bedFields, waterBedOf, flatGrid, bedProfile, BED_DEPTH, BED_RAMP, TILE_UNITS, SHELF_CHAMFER } from '../../../src/world/water/waterBed.js';
+import { WATER_DRAW_MASK_TABLE } from '../../../src/world/water/waterCorners.js';
 import { PUDDLE_RECORDS } from '../../../src/world/puddleMask.js';
 import { WATER_SURFACE_VS } from '../../../src/render/waterSurface.js';
 
@@ -15,10 +15,11 @@ const DRY = 1 << 2;
 /** a seeded generator, so a failure names its map */
 const rng = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 
-test('BANK-FLUSH: the shelf is one cell, diagonal included, and the sheet\'s shelf depth is the bed\'s own there (mutants: the shelf, the constant)', () => {
+test('BANK-FLUSH: the shelf is one cell, diagonal included, and the swell grows only where water stands over the ground (mutants: the shelf, the swell\'s depth)', () => {
   assert.equal(SHELF_CHAMFER, 4);
-  assert.ok(Math.abs(SHELF_SHEET_DEPTH - BED_DEPTH * bedProfile(SHELF_CHAMFER * (TILE_UNITS / 3) / BED_RAMP)) < 1e-3);
-  assert.match(WATER_SURFACE_VS, /smoothstep\(1\.668, 4\.168, aDepth\)/, 'the swell grows past the shelf');
+  // PIN MOVED (WATER-LEVEL): SHELF_SHEET_DEPTH retired - the sheet's attribute carries the water's own depth over the carved
+  // ground, 0 on the shelf (its ground stands at the level), so the swell grows from nothing there
+  assert.match(WATER_SURFACE_VS, /smoothstep\(0\.0, 2\.500, aDepth\.x\)/, 'the swell grows with the depth over the ground');
 });
 
 test('BANK-FLUSH: on any shore, every tile the sheet has an edge in - a corner its table calls dry, or a puddle\'s art - has all four corners uncarved, so the sheet\'s edge lies on its ground; open water still carves to BED_DEPTH; the carve never passes the sheet\'s depth (mutants: the shelf skipped, the puddles kept, the halo\'s carve)', () => {
@@ -60,17 +61,21 @@ test('BANK-FLUSH: on any shore, every tile the sheet has an edge in - a corner i
   assert.ok(Math.abs(c[row + 10] - BED_DEPTH * bedProfile((6 - SHELF_CHAMFER) * (TILE_UNITS / 3) / BED_RAMP)) < 1e-5, 'two cells in, the profile\'s first step');
 });
 
-test('BANK-FLUSH: a grid\'s bed - the ground lowered by the carve, the sheet\'s depths the bed\'s; the fixed town alike; the re-carve compares both (mutants: the ground by the sheet\'s depths)', () => {
+test('BANK-FLUSH: a grid\'s bed - the ground lowered by the carve, the sheet\'s shading never under the bed\'s depths; the fixed town alike; the re-carve levels the sheet again and uploads the ground where it moved (mutants: the ground by the sheet\'s depths)', () => {
   const T = 16, bytes = new Uint8Array(T * T).fill(DRY);
   for (let z = 2; z < 14; z++) for (let x = 2; x < 14; x++) bytes[z * T + x] = 0;
   const grid = flatGrid(T, T, 10);
   const bed = waterBedOf(grid, bytes, { tileDim: T, width: T, height: T });
   const f = bedFields(bytes, { tileDim: T });
   assert.deepEqual(bed.depths, f.carve, '`depths` is what the ground moved (the snow\'s height reads it)');
-  assert.deepEqual(bed.sheetDepths, sheetDepthsOf(f.depths, T + 1, T + 1));
+  // PIN MOVED (WATER-LEVEL): the sheet's depths a pair - over the carved ground, and the shading's, never under the bed's
+  for (let i = 0; i < f.depths.length; i++) {
+    assert.ok(Math.abs(bed.sheet.depths[i * 2] - f.carve[i]) < 1e-5, 'flat water: the plane over the carve by the carve');
+    assert.ok(bed.sheet.depths[i * 2 + 1] >= f.depths[i] - 1e-6, 'the shading never under the bed\'s profile');
+  }
   for (let i = 0; i < f.carve.length; i++) assert.ok(Math.abs(bed.ground.positions[i * 3 + 1] - (10 - f.carve[i])) < 1e-5);
   assert.equal(bed.ground.positions[(3 * 17 + 3) * 3 + 1], 10, 'a cell in from the bank, the ground stands');
   const w = rd('src/scenes/world.js'), recarve = w.slice(w.indexOf('  function dwRecarve(p) {'), w.indexOf('  function hostBed(grid, bed)'));
-  assert.match(recarve, /if \(same\(fields\?\.carve \?\? null, p\._bed\.depths\) && same\(fields \? sheetDepthsOf\(fields\.depths, g, g\) : null, p\._bed\.sheetDepths\)\) return;/);
-  assert.match(recarve, /const bed = fields \? gridBed\(grid, bedBytesOf\(p\), stride, halo\) : null;/);
+  assert.match(recarve, /const bed = gridBed\(grid, bedBytesOf\(p\), stride, halo, p\);/, 'PIN MOVED (WATER-LEVEL): levelled by the TileMap that stands, the pixel\'s own laws');
+  assert.match(recarve, /const moved = !same\(bed\?\.depths \?\? null, p\._bed\.depths\);[^\n]*\n\s*p\._bed = [^\n]*\n\s*if \(!moved\) return;/, 'the sheet kept new always, the ground uploaded where the carve moved');
 });

@@ -8,10 +8,11 @@
 // probe (tools/waterProbe.mjs).
 import { Renderer } from '../render/renderer.js';
 import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhancedSky.js';
-import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
+import { waterUniforms } from '../render/waterSurface.js';
 import { WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // WATER-DRAW1: the lab is the PASS's lab
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
 import { waterBedOf } from '../world/water/waterBed.js';
+import { seaLevelAt } from '../world/water/waterLevel.js';
 import { generateTileData, assignTiles } from '../world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
@@ -64,7 +65,7 @@ assignTiles(tileData, tilemap, true);
 const tilemapBytes = convertTilemap(tilemap);
 const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
 const grid = buildTerrainGrid(heightmap, 1);
-const bed = waterBedOf(grid, tilemapBytes, { stride: 1 });   // WATER-NEXT 2: the bed under the lab's water, as the hosts carve it
+const bed = waterBedOf(grid, tilemapBytes, { stride: 1, levelAt: (vx, vz, y) => seaLevelAt(y) });   // WATER-NEXT 2: the bed under the lab's water, as the hosts carve it; WATER-LEVEL: the sea at its level
 const terrain = renderer.createTerrainSurface(bed?.ground.positions ?? grid.positions, bed?.ground.normals ?? grid.normals, buildTerrainIndices(1));
 // sixty-four flat tiles: water, dirt, grass, stone, and every shore
 // record a mix of the two it joins, so a shape reads even without the art
@@ -93,9 +94,8 @@ for (let r = 0; r < 64; r++) {
 }
 const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
-// WATER-AUDIT: the water's own quads over the terrain's vertices, as the hosts draw it
-const waterIndices = buildWaterIndices(tilemapBytes, 1);
-const water = waterIndices ? renderer.createWaterSheet(waterIndices, bed ? { positions: bed.sheet, depths: bed.sheetDepths } : { terrain }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
+// WATER-LEVEL: the water's sheet at its level, carved with the bed, as the hosts draw it
+const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;
 const hasWater = !!water;
 renderer.waterBed = hasWater;   // AUDIT WATER-NEXT G15: the lab's ground under its water is a bed, as the hosts draw it (render/waterBedGlsl.js)
 

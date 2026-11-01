@@ -7,9 +7,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  waterBedDepths, sheetDepthsOf, flatGrid, bedHalo, bedNearEdge, carveBed, bedProfile,
-  BED_DEPTH, BED_RAMP, TILE_UNITS, NO_BED_DEPTH, SHEET_NO_BED, BED_HALO_TILES,
+  waterBedDepths, waterBedOf, flatGrid, bedHalo, bedNearEdge, carveBed, bedProfile,
+  BED_DEPTH, BED_RAMP, TILE_UNITS, BED_HALO_TILES,
 } from '../../../src/world/water/waterBed.js';
+import * as WATER_CORNERS from '../../../src/world/water/waterCorners.js';
 import { gridBed } from '../../../src/world/terrain/terrainGen.js';
 import { generateTileData, assignTiles, tileDataAt, marchTile, createLookupTable, GROUND_RECORD_LIMIT } from '../../../src/world/terrain/terrainTiles.js';
 import { convertTilemap, CLIP_SENTINEL } from '../../../src/world/terrain/terrainSurface.js';
@@ -86,16 +87,18 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   }
   // the kernel's one grid law carries it; the answer's shape is the host's
   const k = rd('src/world/terrain/terrainGen.js');
-  assert.match(k, /const halo = bed && stride === 1 && bedNearEdge\(bed\) \? bedHalo\(ghost, px, py\) : null;\n\s*return \{ positions: grid\.positions, normals: grid\.normals, bed: bed \? gridBed\(grid, bed, stride, halo\) : null \};/);
+  assert.match(k, /const halo = bed && stride === 1 && bedNearEdge\(bed\) \? bedHalo\(ghost, px, py, undefined, paintedWaterAt\(px, py\)\) : null;[^\n]*\n\s*return \{ positions: grid\.positions, normals: grid\.normals, bed: bed \? gridBed\(grid, bed, stride, halo, \{ px, py \}\) : null \};/);   // PIN MOVED (WATER-LEVEL): and the pixel, whose bodies' laws level its water
   assert.match(k, /const grid = restrideGrid\(\{ woods, px, py, stride, samples, landforms, bed: bed \? tilemapBytes : null, meets: meetsOf\(meets, landforms\) \}\);/, 'the build\'s grid carves by its own TileMap');   // PIN MOVED (FB1029 ACROSS-EDGE): and its town meets
   const g = flatGrid(128, 128, 0);
   const sea = new Uint8Array(128 * 128), kb = gridBed(g, sea, 1);
-  assert.deepEqual(Object.keys(kb).sort(), ['depths', 'halo', 'normals', 'positions', 'sheetDepths']);
-  assert.ok(kb.depths.every((d) => d === BED_DEPTH) && kb.sheetDepths.every((d) => d === BED_DEPTH), 'open water with no bank is deep everywhere');
+  assert.deepEqual(Object.keys(kb).sort(), ['depths', 'halo', 'normals', 'positions', 'sheet']);   // PIN MOVED (WATER-LEVEL): the sheet whole, at its level
+  assert.ok(kb.depths.every((d) => d === BED_DEPTH) && kb.sheet.depths.every((d) => d === BED_DEPTH), 'open water with no bank is deep everywhere');
   assert.equal(kb.positions[1], -BED_DEPTH, 'the carved ground'); assert.equal(g.positions[1], 0, 'the grid as it stood');
   assert.equal(gridBed(g, new Uint8Array(128 * 128).fill(DRY), 1), null, 'no water, no bed');
   const wk = rd('src/world/terrain/terrainGenWorker.js');
-  assert.equal((wk.match(/bed\.depths\.buffer, (?:out\.)?bed\.sheetDepths\.buffer, (?:out\.)?bed\.positions\.buffer, (?:out\.)?bed\.normals\.buffer/g) || []).length, 2, 'both replies transfer the bed - none copied across the wire');
+  // PIN MOVED (WATER-LEVEL): one list of the bed's buffers, its sheet's among them (terrainGen.js bedBuffers)
+  assert.equal((wk.match(/transfer\.push\(\.\.\.bedBuffers\((?:out\.)?bed\)\);/g) || []).length, 2, 'both replies transfer the bed - none copied across the wire');
+  assert.match(k, /export const bedBuffers = \(bed\) => \(bed \? \[bed\.depths\.buffer, bed\.positions\.buffer, bed\.normals\.buffer, \.\.\.sheetBuffers\(bed\.sheet\), \.\.\.\(bed\.halo \? \[bed\.halo\.bits\.buffer\] : \[\]\)\] : \[\]\);/);
   assert.match(rd('src/world/terrain/terrainGenClient.js'), /g\.resolve\(\{ positions: m\.positions, normals: m\.normals, bed: m\.bed \?\? null \}\);/, 'the promotion\'s answer keeps it');
   const w = hostText('src/scenes/world.js');
   assert.doesNotMatch(w, /waterBedOf\(/, 'the streaming host carves nothing on its own thread');
@@ -124,10 +127,11 @@ test('AUDIT WATER-NEXT H1: Deep Waters\' cap carves the bed - a tile it repaints
   assert.match(w, /entry\._dwBytes = bytes === entry\.tilemapBytes \? null : bytes;\n\s*dwRecarve\(entry\);[^\n]*\n\s*dwClipTerrain\(entry\);\n\s*dwWaterSurface\(entry\);/, 'the cap carves, then clips, then re-indexes');
   assert.match(w, /function bedBytesOf\(p\) \{ return p\._dwBytes \?\? p\.tilemapBytes; \}/);
   const recarve = w.slice(w.indexOf('  function dwRecarve(p) {'), w.indexOf('  function hostBed(grid, bed)'));
-  assert.match(recarve, /const fields = bedFields\(bedBytesOf\(p\), \{ stride, halo \}\);/);   // PIN MOVED (BANK-FLUSH): the carve and the sheet's depths, one chamfer
-  assert.match(recarve, /const grid = \{ positions: p\._bed\.sheet, normals: p\._bed\.normals \};/, 'from the grid as it stood');
+  // PIN MOVED (WATER-LEVEL): the whole bed again, by the TileMap that stands - the sheet levelled anew, its extent the cap's
+  assert.match(recarve, /const bed = gridBed\(grid, bedBytesOf\(p\), stride, halo, p\);/);
+  assert.match(recarve, /const grid = \{ positions: p\._bed\.grid, normals: p\._bed\.normals \};/, 'from the grid as it stood');
   assert.match(recarve, /renderer\.destroyMesh\(p\.terrain\);\n\s*p\.terrain = renderer\.createTerrainSurface\(bed\?\.positions \?\? grid\.positions, bed\?\.normals \?\? grid\.normals,/);
-  assert.match(recarve, /p\._bed = \{ sheet: grid\.positions, normals: grid\.normals, depths: bed\?\.depths \?\? null, sheetDepths: bed\?\.sheetDepths \?\? null, halo \};/, 'the grid kept, so a lifted cap carves it back');
+  assert.match(recarve, /p\._bed = \{ grid: grid\.positions, normals: grid\.normals, depths: bed\?\.depths \?\? null, sheet: bed\?\.sheet \?\? null, halo \};/, 'the grid kept, so a lifted cap carves it back');
   assert.match(w, /const bed = waterOn \? hostBed\(grid, grid\.bed\) : null;/, 'the restride keeps the kernel\'s bed - no carved copy held on the host');
 });
 
@@ -173,7 +177,7 @@ test('AUDIT WATER-NEXT F2: a seam\'s vertex is carved alike on both sides - the 
   assert.equal(tileDataAt(SCALED_OCEAN_ELEVATION, 3, 5, 10, 10), 0, 'water by its height alone');
   assert.equal(BED_HALO_TILES, 4, 'the ramp\'s three tiles and the vote\'s one');
   const k = rd('src/world/water/waterBed.js');
-  assert.match(k, /v = tileDataAt\(sampleHeight\(Math\.fround\(ghost\(x, z\)\)\), x - dx \* side, z \+ dz \* side, px \+ dx, py \+ dz\);/);
+  assert.match(k, /v = painted && painted\(px \+ x \/ side, py \+ 1 - z \/ side\) \? WATER : tileDataAt\(sampleHeight\(Math\.fround\(ghost\(x, z\)\)\), x - dx \* side, z \+ dz \* side, px \+ dx, py \+ dz\);/);   // PIN MOVED (WATER-LEVEL): a water the neighbour paints (World 2.0, Cyrodiil) is water to the halo
   assert.match(k, /const dz = tz < 0 \? 1 : tz >= side \? -1 : 0;/, 'the map\'s Y runs south (terrainSampler.js ghostSampler)');
   // the march is AssignTilesJob's (TerrainHelper's): the shape the four corners' low bits, the ring their sum over four
   const LUT = createLookupTable();
@@ -197,23 +201,25 @@ test('AUDIT WATER-NEXT F2: a seam\'s vertex is carved alike on both sides - the 
   assert.equal(bedNearEdge(east), true, 'a middle row\'s east edge too');
 });
 
-test('AUDIT WATER-NEXT H2: the sheet\'s own depths - a vertex the carve reaches keeps its depth, its bank 0, and water on ground never carved NO_BED_DEPTH negated, which the shader reads as tint with no swell (mutants: the stream given the carve\'s 0; the swell on uncarved ground; the constant positive)', () => {
+test('AUDIT WATER-NEXT H2, MOVED BY WATER-LEVEL: water on ground never carved stands at its level with no depth over the ground, so it takes no swell; a pond\'s heart keeps the carve\'s depth; the no-bed constants are retired (mutants: the stream carved; the swell on uncarved ground)', () => {
   const T = 16, b = new Uint8Array(T * T).fill(DRY);
   for (let z = 4; z < 12; z++) for (let x = 2; x < 8; x++) b[z * T + x] = 0;   // a pond, carved
   for (let z = 0; z < T; z++) b[z * T + 13] = 0;                               // a one-tile stream across the pixel
-  const d = waterBedDepths(b, { tileDim: T });
-  const s = sheetDepthsOf(d, 17, 17);
-  assert.ok(s[8 * 17 + 5] > 0 && s[8 * 17 + 5] === d[8 * 17 + 5], 'the pond\'s heart keeps the carve\'s depth');
-  assert.equal(s[4 * 17 + 3], 0, 'its bank is 0 - the shore\'s foam');
-  for (let z = 1; z < 16; z++) assert.equal(s[z * 17 + 13], Math.fround(SHEET_NO_BED), `the stream's vertex ${z} is uncarved water (a Float32Array's)`);
-  assert.equal(SHEET_NO_BED, -NO_BED_DEPTH);
-  assert.equal(NO_BED_DEPTH, 1.2);
-  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : \(aDepth < 0\.0 \? 0\.0 : smoothstep\(1\.668, 4\.168, aDepth\)\);/);   // PIN MOVED (BANK-FLUSH): the swell grows past the shelf the carve leaves
-  assert.match(WATER_SURFACE_VS, /vDepth = max\(abs\(aDepth\) \+ lift, 0\.0\);/);
-  assert.match(rd('src/render/renderer.js'), /gl\.vertexAttrib1f\(1, -NO_BED_DEPTH\);/, 'a sheet with no bed at all: the same constant');
-  const w = hostText('src/scenes/world.js');
-  assert.match(w, /function waterSheetOf\(bed, terrain\) \{ return bed\?\.depths \? \{ positions: bed\.sheet, depths: bed\.sheetDepths \} : \{ terrain \}; \}/);
-  assert.match(rd('src/scenes/exterior.js'), /\{ positions: townBed\.sheet, depths: townBed\.sheetDepths \}/);
+  const grid = flatGrid(T, T, 10), bed = waterBedOf(grid, b, { tileDim: T }), d = waterBedDepths(b, { tileDim: T });
+  const at = (x, z) => z * 17 + x;
+  assert.ok(bed.sheet.depths[at(5, 8) * 2 + 1] === d[at(5, 8)] && d[at(5, 8)] > 0, 'the pond\'s heart keeps the bed\'s depth');
+  for (let z = 1; z < 16; z++) {
+    for (const x of [13, 14]) {
+      assert.equal(bed.sheet.positions[at(x, z) * 3 + 1], 10, `the stream's vertex (${x}, ${z}) stands at its level, the uncarved ground`);
+      assert.equal(bed.sheet.depths[at(x, z) * 2], 0, 'no water over that ground - the swell has nothing to dip into');
+    }
+  }
+  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : smoothstep\(0\.0, 2\.500, aDepth\.x\);/);
+  assert.match(WATER_SURFACE_VS, /vDepth = vec2\(aDepth\.x \+ uLift \+ lift, max\(aDepth\.y \+ lift, 0\.0\)\);/);
+  for (const k of ['NO_BED_DEPTH', 'SHEET_NO_BED', 'SHELF_SHEET_DEPTH']) assert.equal(WATER_CORNERS[k], undefined, `${k} retired: every sheet stands at a level`);
+  assert.doesNotMatch(rd('src/render/renderer.js'), /NO_BED_DEPTH/);
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /waterSheetOf|sheetDepths/);
+  assert.doesNotMatch(rd('src/scenes/exterior.js'), /sheetDepths/);
 });
 
 /** The water's fragment shader on the repo's GLSL evaluator, the pixel composed as the blend composes it. */
@@ -221,16 +227,14 @@ function shade({ dist, waterDepth, sceneOn, scene, sun = 0, wind = 0 }) {
   const fs = waterSurfaceFs(CLOUD_SHADOW_GLSL);
   const proj = mirrorProjectionX(perspective(1.2, 16 / 9, 0.2, 6000));
   const win = (z) => ((proj[10] * -z + proj[14]) / z) * 0.5 + 0.5;
-  const mask = packWaterMask(WATER_DRAW_MASK_TABLE), words = [];
-  for (let i = 0; i < 8; i++) words.push([mask[i * 4], mask[i * 4 + 1], mask[i * 4 + 2], mask[i * 4 + 3]]);
   const wp = [10.5, 0, 10.5], cam = [wp[0], wp[1] + dist, wp[2]];
   const bed = win(dist + waterDepth);
   const sample = (s) => (s === 'uSceneDepth' ? [bed, 0, 0, 1] : s === 'uScene' ? [...scene, 1] : s === 'uRipple' ? [0.5, 0, 0, 1] : [0.2, 0.35, 0.45, 1]);
   const fns = glslFunctions(fs, {
     texelFetch: () => [0, 0, 0, 0], textureLod: sample, texture: sample, textureGrad: () => [0, 0, 0, 1],
     dFdx: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01), dFdy: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01),
-    vWorldPos: wp, vLocalXZ: [wp[0], wp[2]], vDepth: waterDepth, vGrow: 1,
-    uTileSize: 6.4, uTileDim: 128, uWaterMask: words, uOpen: 0, uOpenColor: [1, 1, 1],
+    vWorldPos: wp, vLocalXZ: [wp[0], wp[2]], vDepth: [waterDepth, waterDepth], vCut: -1, vGrow: 1,   // PIN MOVED (WATER-LEVEL): the depths a pair, the cut inside
+    uTileSize: 6.4, uTileDim: 128, uOpen: 0, uOpenColor: [1, 1, 1],
     uTime: 0, uWindDir: [1, 0], uWindStrength: wind, uSwell: 0, uRain: 0,
     uLightDir: [0, 1, 0], uAmbient: [0.5, 0.5, 0.5], uSunScale: sun, uSunColor: [1, 0.95, 0.9],
     uMoonDir: [0, 1, 0], uMoonScale: 0, uMoonColor: [0, 0, 0],

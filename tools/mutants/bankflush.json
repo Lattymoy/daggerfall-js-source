@@ -23,22 +23,25 @@
   {
     "name": "BANKFLUSH-ground-by-the-sheet",
     "file": "src/world/water/waterBed.js",
-    "old": "  const ground = carveBed(grid.positions, grid.normals, fields.carve, gx, gz);",
-    "new": "  const ground = carveBed(grid.positions, grid.normals, fields.depths, gx, gz);",
+    "old": "if (fields.carve[i] > 0) moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]));",
+    "new": "if (fields.depths[i] > 0) moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.depths[i]));",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the ground carved under the level by the carve.",
     "tests": ["test/world/water/bankflush.test.js"]
   },
   {
     "name": "BANKFLUSH-sheet-by-the-carve",
     "file": "src/world/water/waterBed.js",
-    "old": "sheetDepths: sheetDepthsOf(fields.depths, gx, gz)",
-    "new": "sheetDepths: sheetDepthsOf(fields.carve, gx, gz)",
+    "old": "bedDepths: fields?.depths ?? null",
+    "new": "bedDepths: fields?.carve ?? null",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the sheet's shading never under the bed's own depths.",
     "tests": ["test/world/water/bankflush.test.js"]
   },
   {
     "name": "BANKFLUSH-swell-on-the-shelf",
     "file": "src/render/waterSurface.js",
-    "old": "smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
-    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));",
+    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
+    "new": "smoothstep(-1.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the shelf stands at the level: no swell over it.",
     "tests": ["test/world/water/bankflush.test.js"]
   }
 ]

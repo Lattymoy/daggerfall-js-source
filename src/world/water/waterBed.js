@@ -17,13 +17,14 @@
 //
 // DRAWN ONLY. `carveBed` lowers a COPY of the uploaded positions and re-lights the slopes it made; the game's ground -
 // world.js heightAt over the pixel's samples, the fixed town's flat quad - never moves: the feet swim, the foes stand
-// and the flats are seated where DFU has them. The sheet takes the grid AS IT STOOD and the depth under each vertex,
-// so the water knows, at every pixel it draws, how much water lies under it (WATER-NEXT's shading reads it).
+// and the flats are seated where DFU has them. WATER-LEVEL: the sheet stands at its body's level (waterLevel.js), the
+// depth under each vertex beside it, so the water knows how much water lies under it at every pixel it draws.
 // ═══════════════════════════════════════════════════════════════════
-import { WATER_DRAW_MASK_TABLE, NO_BED_DEPTH, SHEET_NO_BED } from './waterCorners.js';
+import { WATER_DRAW_MASK_TABLE } from './waterCorners.js';
 import { convertTile } from '../terrain/terrainSurface.js';
-import { tileDataAt, marchTile, sampleHeight } from '../terrain/terrainTiles.js';   // AUDIT WATER-NEXT F2: a neighbour's tiles, by its own law
+import { tileDataAt, marchTile, sampleHeight, WATER } from '../terrain/terrainTiles.js';   // AUDIT WATER-NEXT F2: a neighbour's tiles, by its own law
 import { PUDDLE_RECORDS } from '../puddleMask.js';   // BANK-FLUSH: a puddle's water ends where its art does
+import { waterVotes, waterLevels, waterSheet } from './waterLevel.js';   // WATER-LEVEL: the water is a level, its sheet stands at it
 
 /** The bed's depth at the heart of wide water, world units (a tile is 6.4; a man stands about 1.8). */
 export const BED_DEPTH = 4.0;
@@ -31,8 +32,6 @@ export const BED_DEPTH = 4.0;
 export const BED_RAMP = 19.2;
 /** A tile's side, world units. */
 export const TILE_UNITS = 6.4;
-/** The sheet's depths for water with no bed under it - their one home is the water's leaf (waterCorners.js). */
-export { NO_BED_DEPTH, SHEET_NO_BED };
 
 /**
  * BANK-FLUSH (2026-10-12, Dudey's field video: "on the bank you can look under the blue, it's like the whole water
@@ -146,10 +145,11 @@ export const BED_HALO_TILES = Math.ceil(BED_RAMP / TILE_UNITS) + 1;
  * @param {(x: number, z: number) => number} ghost the sample at a coordinate of this pixel's frame, past its edge too
  * @param {number} px @param {number} py the pixel
  * @param {Uint8Array|number[]} [table]
+ * @param {?((x: number, y: number) => boolean)} [painted] WATER-LEVEL: a world point the kernel paints as water past the Bay
  * @returns {{tp: number, dim: number, bits: Uint8Array}} each tile's water corners in a band `tp` deep round the
  *   128-tile map (`dim` a row; the map's own tiles left 0 - they are the TileMap's)
  */
-export function bedHalo(ghost, px, py, table = WATER_DRAW_MASK_TABLE) {
+export function bedHalo(ghost, px, py, table = WATER_DRAW_MASK_TABLE, painted = null) {
   const tp = BED_HALO_TILES, side = 128, dim = side + 2 * tp;
   const bits = new Uint8Array(dim * dim);
   const memo = new Map();
@@ -158,7 +158,7 @@ export function bedHalo(ghost, px, py, table = WATER_DRAW_MASK_TABLE) {
     const key = ((dx + 1) * 3 + (dz + 1)) * 1048576 + (x + 512) * 1024 + (z + 512);
     let v = memo.get(key);
     if (v === undefined) {
-      v = tileDataAt(sampleHeight(Math.fround(ghost(x, z))), x - dx * side, z + dz * side, px + dx, py + dz);
+      v = painted && painted(px + x / side, py + 1 - z / side) ? WATER : tileDataAt(sampleHeight(Math.fround(ghost(x, z))), x - dx * side, z + dz * side, px + dx, py + dz);
       memo.set(key, v);
     }
     return v;
@@ -299,55 +299,27 @@ export function carveBed(positions, normals, depths, gx, gz) {
 }
 
 /**
- * AUDIT WATER-NEXT H2 (2026-10-07): THE SHEET'S DEPTHS - the water's attribute 1, beside the carve's own depths. Where the
- * carve reaches, the bed's: a wet vertex its depth, and a bank vertex beside one 0 (where the shore's foam lies). Where it
- * does not - a one-tile stream in a pixel whose pond was carved: no vertex of it is wet, so nothing under it moved -
- * SHEET_NO_BED, as a pixel with no bed at all draws its every sheet. The sheet had taken the carve's 0 there: a stream
- * that is tinted water in one pixel was a clear film edged in foam in the next, whenever a pond stood somewhere in it.
- * @param {Float32Array} depths waterBedDepths' answer
- * @param {number} gx vertices a row
- * @param {number} gz rows
- * @returns {Float32Array}
- */
-export function sheetDepthsOf(depths, gx, gz) {
-  const out = new Float32Array(depths.length);
-  for (let z = 0; z < gz; z++) {
-    for (let x = 0; x < gx; x++) {
-      const i = z * gx + x;
-      if (depths[i] > 0) { out[i] = depths[i]; continue; }
-      let bank = false;
-      for (let dz = -1; dz <= 1 && !bank; dz++) {
-        const nz = z + dz;
-        if (nz < 0 || nz >= gz) continue;
-        for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx;
-          if (nx >= 0 && nx < gx && depths[nz * gx + nx] > 0) { bank = true; break; }
-        }
-      }
-      out[i] = bank ? 0 : SHEET_NO_BED;
-    }
-  }
-  return out;
-}
-
-/**
- * One grid's bed, whole: the depths, the carved ground to upload, and the sheet (the grid as it stood) with its own
- * depths (sheetDepthsOf). null where the grid holds no wet vertex - the ground uploads as built and the water, if any,
- * lies on it as WATER1's did.
+ * One grid's bed, whole (WATER-LEVEL): the levels (world/water/waterLevel.js), the ground carved to at least the bed's
+ * profile under them and never raised (min(ground, level - carve) - Daggerfall's flat water carved as BANK-FLUSH carves
+ * it, a law's deeper floor left alone), and the water's sheet at its level. `depths` is what the GROUND moved (the snow
+ * and the hosts' heights read the drawn ground by it). null where no tile is water.
  * @param {{positions: Float32Array, normals: Float32Array}} grid
  * @param {Uint8Array} bytes the converted tilemap
- * @param {{stride?: number, tileDim?: number, width?: number, height?: number, halo?: ?{tp: number, dim: number, bits: Uint8Array}}} [o]
- *   `halo` bedHalo's band (a near grid of the streaming world: the seams agree)
+ * @param {{stride?: number, tileDim?: number, width?: number, height?: number, halo?: ?{tp: number, dim: number, bits: Uint8Array}, levelAt?: ?((vx: number, vz: number, y: number) => number)}} [o]
  */
 export function waterBedOf(grid, bytes, o = {}) {
-  const stride = o.stride ?? 1, tileDim = o.tileDim ?? 128;
+  const stride = o.stride ?? 1, tileDim = o.tileDim ?? 128, halo = o.halo ?? null;
   const width = o.width ?? tileDim, height = o.height ?? tileDim;
-  const fields = bedFields(bytes, { stride, tileDim, width, height, halo: o.halo ?? null });
-  if (!fields) return null;
-  const gx = width / stride + 1, gz = height / stride + 1;
-  const ground = carveBed(grid.positions, grid.normals, fields.carve, gx, gz);   // BANK-FLUSH: the ground by the carve, the sheet by the bed
-  // `depths` is what the GROUND moved (the snow and the hosts' heights read the drawn ground by it); the sheet's own
-  return { depths: fields.carve, sheetDepths: sheetDepthsOf(fields.depths, gx, gz), ground, sheet: grid.positions, gx, gz };
+  const votes = waterVotes(bytes, { stride, tileDim, width, height });
+  if (!votes) return null;
+  const gx = width / stride + 1, gz = height / stride + 1, n = gx * gz;
+  const fields = bedFields(bytes, { stride, tileDim, width, height, halo });
+  const { level, cut } = waterLevels({ grid: grid.positions, gx, gz, votes, levelAt: o.levelAt ?? null });
+  const moved = new Float32Array(n);
+  if (fields) for (let i = 0; i < n; i++) if (fields.carve[i] > 0) moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]));
+  const ground = carveBed(grid.positions, grid.normals, moved, gx, gz);
+  const sheet = waterSheet({ grid: grid.positions, ground: ground.positions, gx, gz, votes, level, cut, bedDepths: fields?.depths ?? null, bytes, stride, tileDim });
+  return { depths: moved, sheet, ground, grid: grid.positions, gx, gz };
 }
 
 /** A flat grid `width` x `height` tiles at height `y` (the fixed town's ground, which DFU lays as one flat quad), the

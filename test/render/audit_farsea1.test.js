@@ -19,7 +19,6 @@ import {
 import { waterSurfaceFs, WATER_TINT, WATER_F0, SHORE_SOFTNESS, WATER_ABSORB } from '../../src/render/waterSurface.js';
 import { CLOUD_SHADOW_GLSL, RING_CLOUD_GLSL } from '../../src/render/cloudShadow.js';
 import { EL_FAR_RING_FS, EL_EXPOSURE } from '../../src/render/enhancedLighting.js';
-import { WATER_DRAW_MASK_TABLE, packWaterMask } from '../../src/world/water/waterCorners.js';
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 
 const rd = (p) => readFileSync(p, 'utf8');
@@ -32,8 +31,6 @@ const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); re
 // the lane's ring without its eye's texture and its dither (a byte of noise): the sea is summed in the water's space
 const LANE_FS = EL_FAR_RING_FS.replace('float ex = uELExposure * elAdapt();', 'float ex = uELExposure;')
   .replace(/outColor = vec4\(col \+ \(bayer4\(gl_FragCoord\.xy\) - [0-9.]+\) \/ 255\.0, 1\.0\);/, 'outColor = vec4(col, 1.0);');
-const mask = packWaterMask(WATER_DRAW_MASK_TABLE), WORDS = [];
-for (let i = 0; i < 8; i++) WORDS.push([mask[i * 4], mask[i * 4 + 1], mask[i * 4 + 2], mask[i * 4 + 3]]);
 
 /** The streamed open sea's final pixel (Iliac Puddle No More's sheet, drawn by the water's program - the sea at the grid's
  *  edge), composed through its SRC_ALPHA blend over the ground the world's fog closed, `d` ahead of an eye `h` up. */
@@ -45,8 +42,8 @@ function water({ d, h, L, sky, fog, fogRange, texel, openColor }) {
   const fns = glslFunctions(FS_W, {
     texelFetch: () => [0, 0, 0, 0], textureLod: sample, texture: sample, textureGrad: () => [0, 0, 0, 1],
     dFdx: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01), dFdy: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01),
-    vWorldPos: wp, vLocalXZ: [10.5, 10.5], vDepth: 4, vGrow: 1,
-    uTileSize: 6.4, uTileDim: 128, uWaterMask: WORDS, uOpen: 1, uOpenColor: openColor,
+    vWorldPos: wp, vLocalXZ: [10.5, 10.5], vDepth: [4, 4], vCut: -1, vGrow: 1,   // PIN MOVED (WATER-LEVEL): the sheet's depths a pair, its cut beside them; no corner table
+    uTileSize: 6.4, uTileDim: 128, uOpen: 1, uOpenColor: openColor,
     uTime: 0, uWindDir: [0, 1], uWindStrength: 0, uSwell: 0, uRain: 0,
     uLightDir: L.dir, uAmbient: L.amb, uSunScale: L.sun, uSunColor: L.sunColor, uMoonDir: L.moonDir, uMoonScale: L.moon, uMoonColor: L.moonColor,
     uPointCount: 0, uPointLights: Array(16).fill([0, 0, 0, 1]), uPointColors: Array(16).fill([0, 0, 0]), uIndirect: [0, 0, 0, 0], uIndirectColor: [0, 0, 0],

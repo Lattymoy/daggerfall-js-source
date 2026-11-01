@@ -23,8 +23,9 @@
   {
     "name": "AUDIT-WATER-NEXT-P1-worker-copies-the-bed",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "    if (out.bed) transfer.push(out.bed.depths.buffer, out.bed.sheetDepths.buffer, out.bed.positions.buffer, out.bed.normals.buffer, ...(out.bed.halo ? [out.bed.halo.bits.buffer] : []));",
+    "old": "    transfer.push(...bedBuffers(out.bed));   // AUDIT WATER-NEXT P1: the bed, carved here; WATER-LEVEL: and its sheet",
     "new": "",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the bed and its sheet one list of buffers (terrainGen.js bedBuffers).",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
   {
@@ -51,14 +52,15 @@
   {
     "name": "AUDIT-WATER-NEXT-H1-recarve-from-the-carved-ground",
     "file": "src/scenes/world.js",
-    "old": "    const grid = { positions: p._bed.sheet, normals: p._bed.normals };",
+    "old": "    const grid = { positions: p._bed.grid, normals: p._bed.normals };",
     "new": "    const grid = { positions: p.terrain.positions, normals: p._bed.normals };",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the grid as it stood is `_bed.grid` now.",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
   {
     "name": "AUDIT-WATER-NEXT-F2-no-halo",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py) : null;",
+    "old": "  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py, undefined, paintedWaterAt(px, py)) : null;",
     "new": "  const halo = null;",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
@@ -85,23 +87,18 @@
   },
   {
     "name": "AUDIT-WATER-NEXT-H2-stream-the-carves-zero",
-    "file": "src/world/water/waterBed.js",
-    "old": "      out[i] = bank ? 0 : SHEET_NO_BED;",
-    "new": "      out[i] = 0;",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      if (!(votes[i] > 0)) continue;\n      const own",
+    "new": "      if (!(votes[i] >= 1)) continue;\n      const own",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - H2's law moved: water on ground never carved stands at its level (a stream with no wet vertex keeps its sheet).",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
   {
     "name": "AUDIT-WATER-NEXT-H2-swell-on-uncarved-ground",
     "file": "src/render/waterSurface.js",
-    "old": "(aDepth < 0.0 ? 0.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
-    "new": "smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, abs(aDepth)));",
-    "tests": ["test/world/terrain/audit_waternext.test.js"]
-  },
-  {
-    "name": "AUDIT-WATER-NEXT-H2-no-bed-constant-positive",
-    "file": "src/render/renderer.js",
-    "old": "    gl.vertexAttrib1f(1, -NO_BED_DEPTH);",
-    "new": "    gl.vertexAttrib1f(1, NO_BED_DEPTH);",
+    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
+    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.y);",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the swell grows with the depth over the carved ground, never the shading's.",
     "tests": ["test/world/terrain/audit_waternext.test.js"]
   },
   {

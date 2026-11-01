@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SWELL_TRAINS, SWELL_G, SWELL_CALM, SWELL_GALE, SWELL_GLSL, swellAt, swellAmplitude, waterUniforms, waterSurfaceFs, WATER_SURFACE_VS,
-  WATER_ABSORB, NO_BED_DEPTH, FOAM_DEPTH, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, WATER_RIPPLE_UNIT,
+  WATER_ABSORB, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, WATER_RIPPLE_UNIT,
 } from '../../src/render/waterSurface.js';
 import { BB_SURFACE_UNIT, CLOUD_SHADOW_UNIT } from '../../src/render/renderer.js';
 
@@ -48,12 +48,13 @@ test('WATER-NEXT 2 the GLSL is the JS: SWELL_GLSL carries each train\'s wavenumb
 });
 
 test('WATER-NEXT 2 the sheet: lifted by the swell, which dies over the bank (none on a bed shallower than nothing), whole on the open sea; its depth rides the swell (mutants: the swell on the bank; the open sea still)', () => {
-  // PIN MOVED (AUDIT WATER-NEXT H2/G8): a negative depth (water on uncarved ground) takes no swell, the heave fades with
-  // the eye's distance, and the depth is the magnitude
-  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : \(aDepth < 0\.0 \? 0\.0 : smoothstep\(1\.668, 4\.168, aDepth\)\);/);   // PIN MOVED (BANK-FLUSH): the swell grows past the shelf the carve leaves
+  // PIN MOVED (WATER-LEVEL): the swell grows with the water's own depth over the carved ground (attribute 1's x), so a
+  // trough never dips under it - BANK-FLUSH's shelf stands at the level, AUDIT WATER-NEXT H2's uncarved water has none;
+  // the heave fades with the eye's distance (G8); the depths ride it, the plane's over the ground and the shading's
+  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : smoothstep\(0\.0, 2\.500, aDepth\.x\);/);
   assert.match(WATER_SURFACE_VS, /vec3 sw = swellAt\(world\.xz, uTime, uWindDir, uSwell \* grow\);/);
   assert.match(WATER_SURFACE_VS, /float lift = sw\.x \* \(1\.0 - smoothstep\(300\.0, 600\.0, length\(world\.xz - uCamPos\.xz\)\)\);\s*\n\s*world\.y \+= lift;/);
-  assert.match(WATER_SURFACE_VS, /vDepth = max\(abs\(aDepth\) \+ lift, 0\.0\);/);
+  assert.match(WATER_SURFACE_VS, /vDepth = vec2\(aDepth\.x \+ uLift \+ lift, max\(aDepth\.y \+ lift, 0\.0\)\);/);
 });
 
 test('WATER-NEXT 2 the look: the path through the water is the scene\'s depth behind the surface, never less than the bed\'s; the pushed look never takes what stands in front of the water; Beer-Lambert to the water\'s own lit colour; without a copy the blend makes the same sum (mutants: the occluder taken; the bed\'s floor dropped; the blend\'s alpha the shore\'s alone)', () => {
@@ -66,7 +67,7 @@ test('WATER-NEXT 2 the look: the path through the water is the scene\'s depth be
   assert.match(fs, /vec3 T = exp\(-uAbsorb \* path\);\s*\n\s*under = textureLod\(uScene, uv, 0\.0\)\.rgb;[^\n]*\n\s*trans = T \* \(1\.0 - F\);\s*\n\s*own = lit \* \(vec3\(1\.0\) - T\) \* \(1\.0 - F\) \+ skyRefl \* F;/);
   assert.match(fs, /cover = 1\.0 - t \* \(1\.0 - F\);\s*\n\s*own = lit \* \(1\.0 - t\) \* \(1\.0 - F\) \+ skyRefl \* F;/);
   assert.ok(WATER_ABSORB[0] > WATER_ABSORB[1] && WATER_ABSORB[1] > WATER_ABSORB[2], 'red is swallowed first');
-  assert.ok(NO_BED_DEPTH > FOAM_DEPTH * 2, 'a sheet with no bed is never a shore, even in a gale');
+  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(vDepth\.y \+ 0\.02\) \/ slant;/, 'PIN MOVED (WATER-LEVEL): the bed\'s path is the shading\'s depth - never under the bed\'s profile');
 });
 
 test('WATER-NEXT 3 the shore: foam over the shallow band the swell pushes up and down the bank, crests whitening only in a strong wind, foam opaque and unglinting (mutants: no run-up; crests in a calm; the foam see-through)', () => {
@@ -98,14 +99,15 @@ test('WATER-NEXT 2 the copy: once a frame, before the first water draw, the lane
   assert.match(waterSurfaceFs('', ''), /if \(uOpen == 1 && uSceneOn == 1\) edge \*= smoothstep\(0\.0, 0\.12, vdepth\);/, 'the sea\'s staircase edge gone where it covers no water');
 });
 
-test('WATER-NEXT 2 the bed\'s face: both terrain programs draw the ground under the enhanced water as silted dirt, by the water\'s own corner coverage, never under a puddle\'s art; only the hosts that draw the enhanced water switch it on, once a program (mutants: the bed in the classic skin; the puddle\'s art lost; the switch never set)', async () => {
+test('WATER-NEXT 2 the bed\'s face: both terrain programs draw the ground under the enhanced water as silted dirt, by the water\'s own corner coverage, a puddle\'s painted water by its art\'s mask (WATER-LEVEL); only the hosts that draw the enhanced water switch it on, once a program (mutants: the bed in the classic skin; the puddle\'s art lost; the switch never set)', async () => {
   const { WATER_BED_GLSL, waterBedMix, BED_RECORD, BED_SILT } = await import('../../src/render/waterBedGlsl.js');
   const { EL_TERRAIN_FS } = await import('../../src/render/enhancedLighting.js');
   const r = read('src/render/renderer.js');
   assert.equal(BED_RECORD, 1, 'the tileset\'s dirt');
   assert.ok(BED_SILT.every((v) => v < 1), 'darkened');
   assert.match(WATER_BED_GLSL, /if \(uWaterBed < 0\.5\) return vec2\(0\.0\);/, 'off, nothing');   // PIN MOVED (SHORE-SILT): the bed's share and its fringe's
-  assert.match(WATER_BED_GLSL, /rec == 8u \|\| rec == 9u \|\| rec == 23u/, 'a puddle keeps its art');
+  // PIN MOVED (WATER-LEVEL): a puddle's painted water goes under the silt by its art's own mask - no water tile art drawn
+  assert.match(WATER_BED_GLSL, /rec == 8u \|\| rec == 9u \|\| rec == 23u[^\n]*\{\n\s*float pa = textureGrad\(uTileArr, tl, gx, gy\)\.a;[^\n]*\n[^\n]*\n\s*return vec2\(smoothstep\(0\.3, 0\.7, pa\), 0\.0\);/);
   assert.match(waterBedMix(), /textureGrad\(uTileArr, vec3\(tuv, 1\.0\), gx, gy\)\.rgb \* vec3\(0\.62, 0\.60, 0\.52\)/);
   assert.match(waterBedMix((t) => `elDecode(${t})`), /elDecode\(textureGrad\(uTileArr, vec3\(tuv, 1\.0\), gx, gy\)\.rgb\)/, 'the lane decodes it as it decodes the ground');
   assert.ok(EL_TERRAIN_FS.includes(WATER_BED_GLSL) && EL_TERRAIN_FS.includes(waterBedMix((t) => `elDecode(${t})`)), 'the lane\'s terrain');

@@ -11,7 +11,8 @@ import { readFileSync } from 'node:fs';
 import { glslFunctions } from '../../glsl.mjs';
 import { clippedTerrainIndices, CLIP_SENTINEL, patchTilemapForClip } from '../../../src/world/deepWater/deepWaterCap.js';
 import { buildTerrainGrid, buildTerrainIndices, TERRAIN_SKIRT_DEPTH, convertTilemap } from '../../../src/world/terrain/terrainSurface.js';
-import { buildWaterIndices } from '../../../src/render/waterSurface.js';
+import { waterBedOf } from '../../../src/world/water/waterBed.js';
+import { waterVotes } from '../../../src/world/water/waterLevel.js';
 import { WATER_DRAW_MASK_TABLE } from '../../../src/world/water/waterCorners.js';
 import { HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.js';
 import { FOG_GLSL } from '../../../src/render/fogGlsl.js';
@@ -234,28 +235,27 @@ test('DW-F: WATER1 reads the cap\'s TileMap - the carved sea and the repainted w
   for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) raw[y * T + x] = x < 64 ? 0 : 2;
   const bytes = convertTilemap(raw), patched = patchTilemapForClip(bytes, { samples, tilemap: raw });
   assert.equal(WATER_DRAW_MASK_TABLE[CLIP_SENTINEL], 0, 'the clip\'s byte is no water to WATER1');
-  const wet = (idx, stride) => {
-    const g = 128 / stride + 1, out = new Set();
-    for (let t = 0; t < idx.length; t += 6) { const i0 = idx[t]; out.add(`${(i0 % g) * stride},${Math.floor(i0 / g) * stride}`); }
+  // PIN MOVED (WATER-LEVEL): the sheet's quads (world/water/waterLevel.js) - each holds a corner the cap left water at
+  const quads = (b, stride) => {
+    const g = 128 / stride + 1, out = new Map(), sheet = waterBedOf(buildTerrainGrid(samples, stride), b, { stride })?.sheet;
+    for (let t = 1; t < (sheet?.indices.length ?? 0); t += 12) { const i0 = sheet.indices[t]; out.set(`${(i0 % g) * stride},${Math.floor(i0 / g) * stride}`, [i0, i0 + 1, i0 + g, i0 + g + 1]); }
     return out;
   };
   for (const stride of [1, 4]) {
-    const before = wet(buildWaterIndices(bytes, stride), stride), after = wet(buildWaterIndices(patched, stride), stride);
+    const before = quads(bytes, stride), after = quads(patched, stride), votes = waterVotes(patched, { stride });
     assert.ok(before.has(`${8 * stride},0`), 'the original: the sea wears WATER1');
-    for (const k of after) {
-      const [tx, tz] = k.split(',').map(Number);
-      let any = false;
-      for (let z = tz; z < tz + stride; z++) for (let x = tx; x < tx + stride; x++) any ||= WATER_DRAW_MASK_TABLE[patched[z * 128 + x]] > 0;
-      assert.ok(any, `stride ${stride}: a sheet over ${k}, which the cap left no water`);
-    }
-    assert.ok(![...after].some((k) => Number(k.split(',')[0]) < 40), `stride ${stride}: none over the carved sea`);
+    for (const [k, corners] of after) assert.ok(corners.some((i) => votes[i] > 0), `stride ${stride}: a sheet over ${k}, which the cap left no water`);
+    assert.ok(![...after.keys()].some((k) => Number(k.split(',')[0]) < 40), `stride ${stride}: none over the carved sea`);
     assert.ok(after.size > 0 && after.size < before.size, `stride ${stride}: the water the cap leaves (raised, no ground within eight) keeps its sheet`);
   }
   const world = rd('src/scenes/world.js');
   // PIN MOVED (AUDIT WATER-NEXT H1): the bed is carved again by the cap's TileMap before the clip and the sheet read the ground
   assert.match(world, /function dwSetTilemap\(entry, bytes\) \{\n\s+renderer\.writeTilemapTexture\(entry\.tilemapTex, bytes, TERRAIN_TILE_DIM\);\n\s+entry\._dwBytes = bytes === entry\.tilemapBytes \? null : bytes;\n\s+dwRecarve\(entry\);[^\n]*\n\s+dwClipTerrain\(entry\);\n\s+dwWaterSurface\(entry\);/);
-  assert.match(world, /const idx = buildWaterIndices\(p\._dwBytes \?\? p\.tilemapBytes, p\._stride \?\? 1\);/, 'the patch where there is one, the original when it goes');
-  assert.match(world, /const waterIndices = waterOn \? buildWaterIndices\(p\._dwBytes \?\? p\.tilemapBytes, stride\) : null;/, 'and a restride reads it too');
+  // PIN MOVED (WATER-LEVEL): the sheet is levelled by the TileMap the bed is carved by - the patch where there is one
+  assert.match(world, /function bedBytesOf\(p\) \{ return p\._dwBytes \?\? p\.tilemapBytes; \}/, 'the patch where there is one, the original when it goes');
+  assert.match(world, /const bed = gridBed\(grid, bedBytesOf\(p\), stride, halo, p\);/, 'the cap\'s sheet levelled by it');
+  assert.match(world, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet\) : null;/);
+  assert.match(world, /bed: waterOn \? bedBytesOf\(p\) : null \}\)\) \{/, 'and a restride reads it too');
   assert.match(world, /if \(!p\._visible \|\| !p\.water \|\| p\.deepWaters\?\.hide\) continue;/, 'a hidden cap takes its water with it, as before');
 });
 

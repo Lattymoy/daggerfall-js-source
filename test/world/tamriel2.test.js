@@ -323,5 +323,7 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // exact.js, formats/fnv1a.js), all pure
   // PIN MOVED (WG2 baked towns): 85 - a town's terrace pad, one law for the generator and the streamed ground
   // (world/gen2/padLaw.js), pure
-  assert.ok(seen.size > 20 && seen.size < 86, `${seen.size} modules`);
+  // PIN MOVED (WATER-LEVEL, bible/07-Rendering/Water-Arc.md): 87 - the water's level, built with its bed on the worker
+  // (world/water/waterLevel.js) and the streamed bodies' own laws (world/water/streamLevels.js), both pure
+  assert.ok(seen.size > 20 && seen.size < 88, `${seen.size} modules`);
 });

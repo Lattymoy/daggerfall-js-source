@@ -6,7 +6,8 @@ import { paintRoads, TILE, TRACK_TILES } from '../../../src/world/road/roadPaint
 import { generatePixelTerrain } from '../../../src/world/terrain/terrainGen.js';
 import { createLookupTable } from '../../../src/world/terrain/terrainTiles.js';
 import { waterCorners, WATER_MASK_TABLE } from '../../../src/world/water/waterCorners.js';
-import { buildWaterIndices, tilemapRectHasWater } from '../../../src/render/waterSurface.js';
+import { tilemapRectHasWater } from '../../../src/render/waterSurface.js';
+import { waterVotes } from '../../../src/world/water/waterLevel.js';   // PIN MOVED (WATER-LEVEL): the tiles mark the water the sheet stands at
 import { discSlotCount, cellKey, createGrassField, GRASS_CELL, LAB_GRASS } from '../../../src/render/labGrass.js';
 import { grassRecordsOf } from '../../../src/render/labGrass.js';
 import { DIR } from '../../../src/world/road/roadNetwork.js';
@@ -300,13 +301,14 @@ test('WATER-DRAW1: the draw and the feet ask different questions, and only the d
   // draw's, and `buildWaterMaskTable()` is not the string
   // `WATER_MASK_TABLE`. The question is what the pass DRAWS.
   const dry = new Uint8Array(128 * 128).fill(2 << 2);   // grass, whole
-  assert.equal(buildWaterIndices(dry, 1), null, 'a dry pixel builds no water quads');
+  assert.equal(waterVotes(dry), null, 'a dry pixel marks no water');
   dry[64 * 128 + 64] = 9 << 2;                          // one record-9 tile
-  assert.ok(buildWaterIndices(dry, 1), 'a record-9 tile DRAWS - the pass takes the draw’s table');
-  assert.equal(buildWaterIndices(dry, 1, WATER_MASK_TABLE), null, '...and the feet’s table still calls that pixel dry');
+  assert.ok(waterVotes(dry), 'a record-9 tile DRAWS - the pass takes the draw’s table');
+  assert.equal(waterVotes(dry, { table: WATER_MASK_TABLE }), null, '...and the feet’s table still calls that pixel dry');
   assert.ok(tilemapRectHasWater(dry, 128, 128, 128), 'and the town host’s gate opens on it too');
-  const pass = read('src/render/waterSurface.js');
-  assert.doesNotMatch(pass.replace(/WATER_DRAW_MASK_TABLE/g, ''), /WATER_MASK_TABLE|buildWaterMaskTable/, 'and nothing in the pass reaches for the feet’s table by any spelling');
+  for (const f of ['src/render/waterSurface.js', 'src/world/water/waterLevel.js']) {
+    assert.doesNotMatch(read(f).replace(/WATER_DRAW_MASK_TABLE/g, ''), /WATER_MASK_TABLE|buildWaterMaskTable/, `and nothing in ${f} reaches for the feet’s table by any spelling`);
+  }
   assert.match(read('src/render/renderer.js'), /packWaterMask\(WATER_DRAW_MASK_TABLE\)/, 'and so does the shader’s uniform');
   assert.match(read('src/player/exteriorSurface.js'), /import \{ waterCorners, waterCoverage \} from '\.\.\/world\/water\/waterCorners\.js';/, 'the feet keep the default, which is the law’s');
   assert.match(read('src/world/city/cityNavigation.js'), /WATER_MASK_TABLE\[\(record << 2\) \| t\]/, 'and so does the town’s navigation');

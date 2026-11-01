@@ -15,7 +15,7 @@ import { boxNearGate, gateSiteTest, pointNearGate, WOD_FLAT_GATE_CLEAR_M } from 
 import { boxNearPath, pointNearPath, UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR, wodPiecewise, wodSiteClear, wodSiteFootprint } from '../world/road/roadClearance.js';
 import { buildingKeysOfType, castleEntranceOf, siegeFieldOf } from '../systems/siegeField.js';
 import { buildingSummaries } from '../world/buildingSummaries.js';
-import { buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';
+import { waterSwitchOn } from '../render/waterSurface.js';
 import { CITY_GATE_CLOSED_MODEL_ID, CITY_GATE_OPEN_MODEL_ID, isBulletinBoard, isCityGate } from '../world/rmbLayout.js';
 import { carveLefay, isLefayTown, monumentSpotOf } from '../world/lefayMonument.js';
 import { carveYards } from '../world/merchantYards/merchantYardSites.js';
@@ -139,7 +139,7 @@ export function createPixelBuild(host) {
     livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownAt, livingTripsOf, loadGroundSet, lookOfHome,
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
-    townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
+    townEcon, townPlacesFor, townSeats, verges, waterOn, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class (scenes/floraSeat.js warmFlora)
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // IC-SWAP-BEHIND: a rebuild built behind its view (scenes/swapBehind.js); TESA: the province past the Bay, the Arena roads' stale law and its set
     townMeets   // ACROSS-EDGE: the towns its ground meets (scenes/townMeetsHost.js)
@@ -416,9 +416,8 @@ export function createPixelBuild(host) {
     const bed = hostBed({ positions, normals }, carved);
     const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    // WATER1 / WATER-AUDIT (M4): the water's own quads - null for a pixel without water, which never enters the pass
-    const waterIndices = waterOn ? buildWaterIndices(tilemapBytes, stride) : null;
-    const water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, terrain)) : null;
+    // WATER-LEVEL: the water's sheet at its level, carved with the bed - null for a pixel without water, which never enters the pass
+    const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;
     made.terrain = terrain; made.water = water;   // BUILD-FAIL1
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.

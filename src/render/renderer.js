@@ -1589,7 +1589,7 @@ export const PANEL_CLEAR_RGBA = Object.freeze([49 / 255, 77 / 255, 121 / 255, 5 
 // see AUTOMAP_WATER_COLOR below for the seam DFU reads it across.
 import { WATER_MAP_COLOR } from './underwaterFog.js';
 import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';   // WATER1: the enhanced water pass over the terrain grid
-import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, NO_BED_DEPTH, WATER_RIPPLE_UNIT, AURORA_SKY_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
+import { WATER_LAYER_UNITS, WATER_SCENE_UNIT, WATER_SCENE_DEPTH_UNIT, WATER_RIPPLE_UNIT, AURORA_SKY_UNIT } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: WATER1's offset is the sea's surface film's
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: the ground under the water is a bed
 import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // MAC2: the corner table's one home; WATER-DRAW1: the PASS takes the draw's table, not the feet's
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
@@ -7543,10 +7543,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN
-   *  vertex buffers with an index set of its own (buildWaterIndices'
-   *  water quads) - the water pass draws this, not the whole grid. Dies
-   *  with the terrain it rides: destroy it before destroyMesh frees the
-   *  buffers it points at. */
+   *  vertex buffers with an index set of its own (DW-C: the clip's cull
+   *  draws the ground through it - WATER-LEVEL's sheet has its own mesh).
+   *  Dies with the terrain it rides: destroy it before destroyMesh frees
+   *  the buffers it points at. */
   createWaterSurface(terrain, indices) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
@@ -7565,32 +7565,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, ebo, indexCount: indices.length };
   }
 
-  /** WATER-NEXT 2: THE WATER'S SHEET - the water pass's own surface: the grid AS IT STOOD before its bed was carved
-   *  (world/water/waterBed.js; `positions`, uploaded here), the bed's depth under each vertex on attribute 1 (`depths`), and
-   *  the water quads (`indices`). Without a bed (`positions` null: no vertex of the grid is under water - a one-tile
-   *  stream) it rides the terrain's own position buffer and attribute 1 is the constant NO_BED_DEPTH: the water lies
-   *  on the ground as WATER1's did, shallow. destroyWaterSurface frees what it owns. */
-  createWaterSheet(indices, { terrain = null, positions = null, depths = null } = {}) {
+  /** WATER-LEVEL: THE WATER'S SHEET - its own mesh at the water's level (world/water/waterLevel.js waterSheet): the
+   *  positions, attribute 1 the depth over the carved ground and the shading's, attribute 2 the shore's cut, and the
+   *  quads that hold a level. destroyWaterSurface frees what it owns. */
+  createWaterSheet({ positions, depths, cut, indices }) {
     const gl = this.gl;
     const vao = gl.createVertexArray();
     this._bindVao(vao);
     const owned = [];
-    const own = (data, loc, size) => {
+    for (const [data, loc, size] of [[positions, 0, 3], [depths, 1, 2], [cut, 2, 1]]) {
       const b = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, b);
       gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, size * 4, 0);
       owned.push(b);
-    };
-    if (positions) own(positions, 0, 3);
-    else {
-      gl.bindBuffer(gl.ARRAY_BUFFER, terrain.buffers[0]);
-      gl.enableVertexAttribArray(0);
-      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
     }
-    if (positions && depths) own(depths, 1, 1);
-    else gl.disableVertexAttribArray(1);
     const ebo = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
@@ -8301,7 +8291,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl, u = (n) => gl.getUniformLocation(P, n);
     return {
       proj: u('uProj'), view: u('uView'), model: u('uModel'), lift: u('uLift'),
-      tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), tileDim: u('uTileDim'), mask: u('uWaterMask'),
+      tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), tileDim: u('uTileDim'),
       pointCount: u('uPointCount'), pointLights: u('uPointLights'), pointColors: u('uPointColors'), indirect: u('uIndirect'), indirectColor: u('uIndirectColor'),
       time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'),
       lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
@@ -8320,7 +8310,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // the program's own snow state, shadowed (PERF-EXT13: a frame without snow costs the water no call): its lines'
       // unit sent, its switch (GL's own 0 - off - until sent), the altitude it holds, the winter half it reads
       snowUnit: false, snowOn: false, snowAlt: NaN, snowArr: -1,
-      maskUploaded: false,
     };
   }
 
@@ -8382,7 +8371,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const L = laneWater ? this._wsLane : this._ws;
     this._use(laneWater ? this.waterSurfaceProgramLane : this.waterSurfaceProgram);
     this._csLoc.water = L.cloud; this._waterSurfaceFog = L.fog;
-    if (!L.maskUploaded) { gl.uniform4uiv(L.mask, packWaterMask(WATER_DRAW_MASK_TABLE)); L.maskUploaded = true; }   // WATER-DRAW1
     this._waterFrameBlock(L, u, 0);
     gl.uniform1f(L.tileSize, tileSize);
     gl.uniform1i(L.tileDim, tileDim);
@@ -8456,7 +8444,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _drawWaterRows(L, rows, n) {
     this._close2D();   // PERF-2D: every draw hands the baseline back first (a no-op after the callers' own)
     const gl = this.gl;
-    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/water/waterCorners.js SHEET_NO_BED)
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);

@@ -20,7 +20,7 @@ import { gen2Install } from '../gen2/gen2Ground.js';   // WG2: the published reg
 import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
-import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
+import { generatePixelTerrain, restrideGrid, bedBuffers } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
 import { farCellClimate, midRingWet, DRY } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here; MAP-WATERS: a middle-ring pixel's rivers
 import { midRingFloraPixel, midRingCoverPixel, bandTreesPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples; FAR-TREES: a band pixel's own trees
@@ -148,7 +148,7 @@ function handle(m) {
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
     if (out.landProps?.length) transfer.push(out.landProps.buffer);   // TESA-LANDS: the landmarks (a Fens pixel's 5,000 reeds)
-    if (out.bed) transfer.push(out.bed.depths.buffer, out.bed.sheetDepths.buffer, out.bed.positions.buffer, out.bed.normals.buffer, ...(out.bed.halo ? [out.bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: the bed, carved here
+    transfer.push(...bedBuffers(out.bed));   // AUDIT WATER-NEXT P1: the bed, carved here; WATER-LEVEL: and its sheet
     out.nature = packNature(out.nature);   // AUDIT BANTHA1 PERF-2: by column, its buffers transferred - never a clone of 12,000 objects
     transfer.push(...natureBuffers(out.nature));
     globalThis.postMessage({ t: 'done', ...out }, transfer);
@@ -236,7 +236,7 @@ function answerGrid(m) {
     // worker's own network - the one its jobs paint
     const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });
     const transfer = [positions.buffer, normals.buffer];
-    if (bed) transfer.push(bed.depths.buffer, bed.sheetDepths.buffer, bed.positions.buffer, bed.normals.buffer, ...(bed.halo ? [bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: and its bed
+    transfer.push(...bedBuffers(bed));   // AUDIT WATER-NEXT P1: and its bed; WATER-LEVEL: and its sheet
     globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });

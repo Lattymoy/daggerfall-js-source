@@ -72,8 +72,7 @@ import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchMo
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt, walkGroundAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none; FLORA-GROUND: the ground's one law
-import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
-import { bedFields, sheetDepthsOf } from '../world/water/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
+import { waterUniforms, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface; WATER-LEVEL: its sheet stands at its level (world/water/waterLevel.js), carved with the bed
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/water/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -4959,26 +4958,27 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  sea with the ground beside it (world/deepWater/deepWaterCap.js) - and the bed had been carved by the pixel's own TileMap at
    *  the build, so every such tile was a pit four units deep, of grass or sand, with no water over it (Iliac Puddle No
    *  More is on by default: a river's mouth on a coast). When the cap's TileMap moves the bed, the ground is carved again
-   *  from the grid as it stood (`_bed.sheet` and `_bed.normals`); the clip and the water's sheet are re-made after it by
-   *  the caller. Once a cap (a coastal pixel's): one depth pass, and a carve and an upload where the bed moved. */
+   *  from the grid as it stood (`_bed.grid` and `_bed.normals`); the clip and the water's sheet are re-made after it by
+   *  the caller. WATER-LEVEL: the sheet is levelled again whenever the TileMap moves (the cap's clip is its edge); the
+   *  ground is uploaded again only where the carve moved. */
   function dwRecarve(p) {
-    if (!waterOn || !p._bed || !p.terrain) return;   // no vertex was under water: a cap only takes water away
+    if (!waterOn || !p._bed || !p.terrain) return;   // no tile was water: a cap only takes water away
     const stride = p._stride ?? 1;
     const halo = stride === 1 ? p._bed.halo : null;   // AUDIT WATER-NEXT F2: the seams' tiles the build read
-    const fields = bedFields(bedBytesOf(p), { stride, halo });   // BANK-FLUSH: the ground's carve (`_bed.depths`) and the sheet's depths, one chamfer
-    const g = 128 / stride + 1, same = (a, b) => a === b || (a && b && a.length === b.length && a.every((d, i) => d === b[i]));
-    if (same(fields?.carve ?? null, p._bed.depths) && same(fields ? sheetDepthsOf(fields.depths, g, g) : null, p._bed.sheetDepths)) return;
-    const grid = { positions: p._bed.sheet, normals: p._bed.normals };
-    const bed = fields ? gridBed(grid, bedBytesOf(p), stride, halo) : null;
+    const grid = { positions: p._bed.grid, normals: p._bed.normals };
+    const bed = gridBed(grid, bedBytesOf(p), stride, halo, p);   // WATER-LEVEL: carved and levelled by the TileMap that stands
+    const same = (a, b) => a === b || (a && b && a.length === b.length && a.every((d, i) => d === b[i]));
+    const moved = !same(bed?.depths ?? null, p._bed.depths);
+    p._bed = { grid: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheet: bed?.sheet ?? null, halo };   // the grid kept: a cap lifted carves it back
+    if (!moved) return;
     renderer.destroyMesh(p.terrain);
     p.terrain = renderer.createTerrainSurface(bed?.positions ?? grid.positions, bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    p._bed = { sheet: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheetDepths: bed?.sheetDepths ?? null, halo };   // the grid kept: a cap lifted carves it back
     seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants on the ground as carved now (scenes/floraSeat.js)
   }
-  /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (the water's sheet, and its normals for a
-   *  re-carve) and the depths; the carved ground is uploaded and let go. null where no vertex is under water. */
-  function hostBed(grid, bed) { return bed ? { sheet: grid.positions, normals: grid.normals, depths: bed.depths, sheetDepths: bed.sheetDepths, halo: bed.halo ?? null } : null; }
+  /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (its normals too, for a re-carve), the
+   *  depths and the water's sheet (WATER-LEVEL); the carved ground is uploaded and let go. null where no tile is water. */
+  function hostBed(grid, bed) { return bed ? { grid: grid.positions, normals: grid.normals, depths: bed.depths, sheet: bed.sheet, halo: bed.halo ?? null } : null; }
   // DW-F: WATER1 - the port's own water, drawn over the tiles whose art is water - reads the TileMap the cap
   // leaves: a texel the mod clips (the carved sea) or repaints from the ground beside it (raised water) takes
   // WATER1's sheet with it, as it takes the ground's water art, and the texture's water is the sheet's again
@@ -4988,12 +4988,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function dwWaterSurface(p) {
     if (!waterOn || !p.terrain) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
-    const idx = buildWaterIndices(p._dwBytes ?? p.tilemapBytes, p._stride ?? 1);
-    p.water = idx ? renderer.createWaterSheet(idx, waterSheetOf(p._bed, p.terrain)) : null;   // WATER-NEXT 2: the bed the build carved
+    p.water = p._bed?.sheet ? renderer.createWaterSheet(p._bed.sheet) : null;   // WATER-LEVEL: the sheet dwRecarve levelled by the cap's TileMap
   }
-  /** WATER-NEXT 2: a water sheet's source - the bed's grid and depths, or (no vertex under water) the terrain's own
-   *  positions with no bed (renderer.createWaterSheet). */
-  function waterSheetOf(bed, terrain) { return bed?.depths ? { positions: bed.sheet, depths: bed.sheetDepths } : { terrain }; }   // AUDIT WATER-NEXT H2: the sheet's own depths
   // DW-C: THE CLIP'S CULL - a quad, and at a far stride a skirt segment, whose every tile the cap clipped leaves the
   // ground's index set: the mod's discard exactly while a tile is a quad (stride 1). FAR-CLIP1: at EV4's far stride a
   // quad is sixteen tiles and a part-clipped one stands - its clipped tiles are the clip program's to discard
@@ -5468,7 +5464,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownAt, livingTripsOf, loadGroundSet, lookOfHome,
     jungle, lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
-    townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
+    townEcon, townPlacesFor, townSeats, verges, waterOn, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     townMeets,   // ACROSS-EDGE: the towns its ground meets (scenes/townMeetsHost.js)
@@ -5644,7 +5640,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     terrainGen.grid({ ...gridGround(p), stride, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took; ACROSS-EDGE: and its meets
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
       if (strideFor(p.px, p.py) !== stride || p._stride === stride) return;   // walked back out, or restrided meanwhile
-      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), stride, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
+      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), stride, grid.bed?.halo ?? null, p) };   // the cap's TileMap moved meanwhile: carved by the one that stands
       restrideTerrain(p, stride, grid);
     }).catch((e) => console.error(`[terrain] restride of ${key} failed:`, e));
   }
@@ -5657,8 +5653,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     p._bed = bed;
     p.terrain = renderer.createTerrainSurface(grid.bed?.positions ?? grid.positions, grid.bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    const waterIndices = waterOn ? buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride) : null;   // DW-F: the cap's TileMap, where it patched one
-    p.water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, p.terrain)) : null;
+    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;   // WATER-LEVEL: the kernel's sheet, levelled by the TileMap the water draws from (DW-F)
     p._stride = stride;
     seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass

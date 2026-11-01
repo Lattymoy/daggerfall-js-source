@@ -101,8 +101,9 @@
   {
     "name": "DW-F-water1-patch-unread",
     "file": "src/scenes/world.js",
-    "old": "const idx = buildWaterIndices(p._dwBytes ?? p.tilemapBytes, p._stride ?? 1);",
-    "new": "const idx = buildWaterIndices(p.tilemapBytes, p._stride ?? 1);",
+    "old": "    const bed = gridBed(grid, bedBytesOf(p), stride, halo, p);",
+    "new": "    const bed = gridBed(grid, p.tilemapBytes, stride, halo, p);",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the cap's sheet is levelled by the TileMap the bed is carved by.",
     "tests": [
       "test/world/deepWater/dwf_farsea.test.js"
     ]
@@ -119,8 +120,9 @@
   {
     "name": "DW-F-water1-restride-original",
     "file": "src/scenes/world.js",
-    "old": "buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride)",
-    "new": "buildWaterIndices(p.tilemapBytes, stride)",
+    "old": "bed: waterOn ? bedBytesOf(p) : null })) {",
+    "new": "bed: waterOn ? p.tilemapBytes : null })) {",
+    "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - a restride's sheet comes with the kernel's bed, by the cap's TileMap.",
     "tests": [
       "test/world/deepWater/dwf_farsea.test.js"
     ]

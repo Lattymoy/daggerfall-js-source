@@ -9,7 +9,6 @@ import { fileURLToPath } from 'node:url';
 import { waterBedDepths, carveBed, waterBedOf, flatGrid, bedProfile, BED_DEPTH, BED_RAMP, TILE_UNITS } from '../../../src/world/water/waterBed.js';
 import { buildTerrainGrid } from '../../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../../../src/world/terrain/terrainSampler.js';
-import { buildWaterIndices } from '../../../src/render/waterSurface.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -68,8 +67,9 @@ test('WATER-NEXT 2 the carve: the ground the eye sees lowered by the bed, the in
   const bytes = map(128, (x, z) => x >= 40 && x <= 80 && z >= 40 && z <= 80);
   const before = grid.positions.slice();
   const bed = waterBedOf(grid, bytes, { stride: 1 });
-  assert.deepEqual(grid.positions, before, 'the build\'s grid is the sheet, untouched');
-  assert.equal(bed.sheet, grid.positions);
+  assert.deepEqual(grid.positions, before, 'the build\'s grid untouched');
+  assert.equal(bed.grid, grid.positions, 'PIN MOVED (WATER-LEVEL): the grid as it stood is kept; the sheet stands at its level');
+  assert.equal(bed.sheet.positions[(60 * 129 + 60) * 3 + 1], before[(60 * 129 + 60) * 3 + 1], 'flat water\'s level is its uncarved ground');
   const i = 60 * 129 + 60;
   assert.ok(Math.abs(bed.ground.positions[i * 3 + 1] - (before[i * 3 + 1] - BED_DEPTH)) < 1e-4, 'the heart lowered the whole depth');
   assert.equal(bed.ground.positions[10 * 3 + 1], before[10 * 3 + 1], 'dry ground stays');
@@ -94,12 +94,14 @@ test('WATER-NEXT 2 the town\'s grid: DFU\'s flat ground as its tiles, the terrai
   assert.equal(g.positions.length, 4 * 3 * 3);
   assert.deepEqual([...g.positions.slice(0, 6)], [0, -0.025, 0, 6.4, -0.025, 0].map(Math.fround));
   assert.deepEqual([...g.indices.slice(0, 6)], [0, 4, 5, 0, 5, 1], 'buildTerrainIndices\' own triangles');
-  // a 4-wide town in an 8-square tilemap padded with zeros (water): only the town's quads
+  // a 4-wide town in an 8-square tilemap padded with zeros (water): only the town's quads - PIN MOVED (WATER-LEVEL): the
+  // sheet's, the water tile and the ring its level runs on into, in the 5-wide grid
   const bytes = new Uint8Array(64).fill(0);
   for (let z = 0; z < 2; z++) for (let x = 0; x < 4; x++) bytes[z * 8 + x] = DRY;
   bytes[0] = WET;
-  const idx = buildWaterIndices(bytes, 1, undefined, 8, 4, 2);
-  assert.deepEqual([...idx], [0, 5, 6, 0, 6, 1], 'one quad, in the 5-wide grid');
+  const sheet = waterBedOf(flatGrid(4, 2, 0), bytes, { tileDim: 8, width: 4, height: 2 }).sheet;
+  assert.equal(sheet.indices.length / 12, 4, 'the tile and the three about it that meet its corners');
+  assert.ok(sheet.indices.every((i) => i < 15 + 4), 'the 5 x 3 grid and the four quads\' centres');
 });
 
 test('WATER-NEXT 2 the hosts: the world carves at the build and at a restride and keeps the bed for the cap\'s re-index; the fixed town lays its grid; the lab as the hosts (mutants: a host uploading the uncarved grid; the sheet off the terrain\'s buffers)', () => {
@@ -108,16 +110,18 @@ test('WATER-NEXT 2 the hosts: the world carves at the build and at a restride an
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel for the bed');
   assert.match(w, /const bed = hostBed\(\{ positions, normals \}, carved\);/);
   assert.match(w, /const terrain = renderer\.createTerrainSurface\(carved\?\.positions \?\? positions, carved\?\.normals \?\? normals,/);
-  assert.match(w, /const water = waterIndices \? renderer\.createWaterSheet\(waterIndices, waterSheetOf\(bed, terrain\)\) : null;/);
+  // PIN MOVED (WATER-LEVEL): the sheet is the bed's own, at its level - no sheet of the terrain's buffers
+  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);
   assert.match(w, /const bed = waterOn \? hostBed\(grid, grid\.bed\) : null;/, 'the restride');
-  assert.match(w, /p\.water = idx \? renderer\.createWaterSheet\(idx, waterSheetOf\(p\._bed, p\.terrain\)\) : null;/, 'the cap\'s re-index');
+  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet\) : null;/, 'the cap\'s re-index');
   assert.match(w, /_bed: bed,/);
-  assert.match(w, /function hostBed\(grid, bed\) \{ return bed \? \{ sheet: grid\.positions, normals: grid\.normals, depths: bed\.depths, sheetDepths: bed\.sheetDepths, halo: bed\.halo \?\? null \} : null; \}/);
-  assert.match(w, /function waterSheetOf\(bed, terrain\) \{ return bed\?\.depths \? \{ positions: bed\.sheet, depths: bed\.sheetDepths \} : \{ terrain \}; \}/);   // AUDIT WATER-NEXT H2: the sheet's own depths
+  assert.match(w, /function hostBed\(grid, bed\) \{ return bed \? \{ grid: grid\.positions, normals: grid\.normals, depths: bed\.depths, sheet: bed\.sheet, halo: bed\.halo \?\? null \} : null; \}/);
+  assert.doesNotMatch(w, /waterSheetOf|terrain: p\.terrain \}|\{ terrain \}/, 'no sheet rides the terrain\'s buffers');
   const e = read('src/scenes/exterior.js');
   assert.match(e, /const townBed = townGrid \? waterBedOf\(townGrid, tilemapBytes, \{ tileDim: tilemapDim, width: loc\.width \* GROUND_TILE_DIM, height: loc\.height \* GROUND_TILE_DIM \}\) : null;/);
+  assert.match(e, /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet\) : null;/);
   assert.match(e, /renderer\.drawWaterSurface\(townWater, identityMatrix,/);
-  assert.match(read('src/tools/waterLab.js'), /renderer\.createWaterSheet\(waterIndices, bed \? \{ positions: bed\.sheet, depths: bed\.sheetDepths \} : \{ terrain \}\)/);
+  assert.match(read('src/tools/waterLab.js'), /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);
   // the game's ground is the samples', never the drawn grid's
   assert.doesNotMatch(w.slice(w.indexOf('const heightAt = (x, z, terrainOnly = false) => {'), w.indexOf('// BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN.')), /positions|_bed/);
 });

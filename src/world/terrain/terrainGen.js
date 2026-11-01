@@ -39,6 +39,8 @@ import { inBay } from '../tamriel/tamrielFrame.js';
 import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
+import { streamLevelAt, paintedWaterAt } from '../water/streamLevels.js';   // WATER-LEVEL: each body's own level - the sea, World 2.0, Cyrodiil
+import { sheetBuffers } from '../water/waterLevel.js';
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
 import { paintGen2Waters } from '../gen2/gen2Ground.js';   // WG2: a published region's waters laid in as water (bible/03-World/World-2-Canon.md)
 import { landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: the zones' own flats past the Bay
@@ -329,7 +331,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * every build and restride, 0.3 ms for a pixel with no water at all and a millisecond or two for a coast's; here it rides
  * the worker with the grid it carves, the build's, the promotion's and the restride's alike.
  * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, beyond?: ?Map<number, number>, climates?: ?Uint8Array, landforms?: ?object, bed?: ?Uint8Array }} job
- * @returns {{ positions: Float32Array, normals: Float32Array, bed: ?{depths: Float32Array, sheetDepths: Float32Array, positions: Float32Array, normals: Float32Array} }}
+ * @returns {{ positions: Float32Array, normals: Float32Array, bed: ?{depths: Float32Array, sheet: ?object, positions: Float32Array, normals: Float32Array} }}
  */
 export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, beyond = null, climates = null, landforms = null, bed = null, meets = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
   const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);   // BAY-LEFT-GROUND: and the sites past the Bay
@@ -338,17 +340,21 @@ export function restrideGrid({ woods, px, py, stride = 1, samples, landform = fa
   const grid = buildTerrainGrid(samples, stride, ghost);
   // AUDIT WATER-NEXT F2: a near grid's bed reads its neighbours' tiles across the seams (the ghost is their own kernel),
   // where its water comes near an edge
-  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py) : null;
-  return { positions: grid.positions, normals: grid.normals, bed: bed ? gridBed(grid, bed, stride, halo) : null };
+  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py, undefined, paintedWaterAt(px, py)) : null;   // WATER-LEVEL: and the waters the neighbours paint
+  return { positions: grid.positions, normals: grid.normals, bed: bed ? gridBed(grid, bed, stride, halo, { px, py }) : null };
 }
 
-/** AUDIT WATER-NEXT P1: a grid's bed as the kernel answers it - the depths, the sheet's depths and the carved ground, the
- *  grid untouched, and the seam's halo it was carved with (F2: kept by the host for a re-carve); null where no vertex is
- *  under water (world/water/waterBed.js waterBedOf). The host's re-carve (Deep Waters' TileMap) takes the same shape. */
-export function gridBed(grid, bytes, stride = 1, halo = null) {
-  const carved = waterBedOf(grid, bytes, { stride, halo });
-  return carved ? { depths: carved.depths, sheetDepths: carved.sheetDepths, positions: carved.ground.positions, normals: carved.ground.normals, halo } : null;
+/** AUDIT WATER-NEXT P1: a grid's bed as the kernel answers it - the depths, the water's sheet at its level (WATER-LEVEL:
+ *  `at` the pixel, whose bodies' own laws give it) and the carved ground, the grid untouched, and the seam's halo it was
+ *  carved with (F2: kept by the host for a re-carve); null where no tile is water (world/water/waterBed.js waterBedOf).
+ *  The host's re-carve (Deep Waters' TileMap) takes the same shape. */
+export function gridBed(grid, bytes, stride = 1, halo = null, at = null) {
+  const carved = waterBedOf(grid, bytes, { stride, halo, levelAt: at ? streamLevelAt(at.px, at.py, stride) : null });
+  return carved ? { depths: carved.depths, sheet: carved.sheet, positions: carved.ground.positions, normals: carved.ground.normals, halo } : null;
 }
+
+/** A bed's buffers, for a worker's transfer list (the build's reply and the restride's alike). */
+export const bedBuffers = (bed) => (bed ? [bed.depths.buffer, bed.positions.buffer, bed.normals.buffer, ...sheetBuffers(bed.sheet), ...(bed.halo ? [bed.halo.bits.buffer] : [])] : []);
 
 /** FB1028 YARDS Y2 (the owner: every yard where #1184 stood it): the painted paths with the ring as #1184 painted it on
  *  the yards' ground - a tile today's ring (`ring`, townRoadRing over today's mask) paved there is none, as #1184's ring

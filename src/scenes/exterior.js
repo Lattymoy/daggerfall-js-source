@@ -35,7 +35,7 @@ import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES, LOCATION_TYPES, RE
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrain/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
-import { waterUniforms, tilemapRectHasWater, waterSwitchOn, buildWaterIndices } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
+import { waterUniforms, tilemapRectHasWater, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
 import { waterBedOf, flatGrid } from '../world/water/waterBed.js';   // WATER-NEXT 2: the town's grid and the bed under its water
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS } from '../world/water/waterRipples.js';   // AUDIT WATER-NEXT m12: the rings round a wading player, the streaming world's own stir
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
@@ -1057,10 +1057,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     toGlobal: (x, z) => { _snowG[0] = snowPixel.x * TERRAIN_SIZE + (x - snowSW[0]); _snowG[1] = (499 - snowPixel.y) * TERRAIN_SIZE + (z - snowSW[2]); return _snowG; },
     settlements: (a, b, c, d) => settlementsIn((x, y) => (x === snowPixel.x && y === snowPixel.y ? dfLocation : null), a, b, c, d),
   } });
-  const townWater = waterOn ? (() => {
-    const idx = buildWaterIndices(tilemapBytes, 1, undefined, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);
-    return idx ? renderer.createWaterSheet(idx, townBed ? { positions: townBed.sheet, depths: townBed.sheetDepths } : { terrain: groundSurface }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
-  })() : null;
+  const townWater = townBed?.sheet ? renderer.createWaterSheet(townBed.sheet) : null;   // WATER-LEVEL: the town's water at its level, its sheet carved with the bed
 
   /** FD1 - the RAW (pre-conversion) tilemap byte under the player,
    *  this host's twin of world.js's FS1 `playerGroundTile`.

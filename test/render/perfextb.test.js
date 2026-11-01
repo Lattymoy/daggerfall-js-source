@@ -448,9 +448,10 @@ function waterScene(lane) {
   const arrays = [null, arrA, arrA, arrB, arrB, arrB, arrA, arrA, arrB, arrA];
   const rows = arrays.map((arr, i) => {
     const m = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, i * 819.2, 0, 0, 1]);
-    // AUDIT WATER-NEXT m9: the sheets the hosts mint (createWaterSheet) - a bed's own buffers on the odd rows, the
-    // terrain's position buffer and the constant depth on the even
-    return [i % 2 ? r.createWaterSheet(IX, { positions: P, depths: new Float32Array([0, 1.5, 2, 4]) }) : r.createWaterSheet(IX, { terrain: r.createTerrainSurface(P, N, IX) }), m, arr, { id: `tilemap${i}` }];
+    // AUDIT WATER-NEXT m9: the sheets the hosts mint (createWaterSheet) - PIN MOVED (WATER-LEVEL): every sheet its own
+    // buffers at its level (the terrain's buffers no longer ride one), a deep one on the odd rows and a shallow on the even
+    const d = i % 2 ? [0, 0, 1.5, 1.5, 2, 2, 4, 4] : [0.1, 1, 0.1, 1, 0.1, 1, 0.1, 1];
+    return [r.createWaterSheet({ positions: P, depths: new Float32Array(d), cut: new Float32Array([-1, -1, 1, 0]), indices: IX }), m, arr, { id: `tilemap${i}` }];
   });
   r.setLighting(new Float32Array([0.3, 0.3, 0.35]), 0.8, new Float32Array([1, 0.9, 0.8]));
   const lights = new Float32Array(20 * 4); for (let i = 0; i < 20; i++) lights.set([i, 3, -i, 12], i * 4);
