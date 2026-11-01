@@ -4,9 +4,29 @@ class sprites' records hold them. One animation serves all five views; the view 
 Rotations are degrees about the joint's rest axes (+X left, +Y back, +Z up): a thigh or arm swings forward on -X,
 a knee bends on +X, an elbow on -X, the trunk leans forward on +X; a left limb spreads out on -Y, a right on +Y.
 Points given in body space are in the root's frame: the ground under the body, facing -Y."""
+import json
+import os
+
 from mathutils import Matrix, Vector
 
 from rig import Pose, solve_arm
+
+# A frame's fitted adjustment (fit.py): joint rotations added to its keys ('rot'), the body's turn ('turn'), the axe
+# grip and haft ('grip', 'haft', body space), the attack's fist and axe head on screen ('fist', 'head'). Keyed
+# '<anim>:<view>:<frame>'.
+FIT = {}
+_adj = {}
+
+
+def load_fit(path):
+    FIT.clear()
+    if os.path.exists(path):
+        FIT.update(json.load(open(path)))
+
+
+def _plus(a, key):
+    d = _adj.get(key)
+    return Vector(a) + Vector(d) if d else Vector(a)
 
 SOLE = [Vector((0, 0.04, -0.085)), Vector((0, -0.13, -0.08)), Vector((0, -0.19, -0.075))]
 FIST = 0.075   # wrist to the middle of a closed fist
@@ -54,6 +74,7 @@ def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), 
            knuckles_r=None, knuckles_l=None):
     """The axe held by its haft at `grip_at` (right fist), the head along `haft`, blades along `blade_up`; with
     `left_at` (a distance up the haft) the left fist holds it too."""
+    grip_at, haft = _plus(grip_at, 'grip'), _plus(haft, 'haft')
     at_w, haft_w = grip(pose, 'R', grip_at, haft, pole_r, knuckles_r)
     if left_at is not None:
         hv = Vector(haft).normalized()
@@ -62,11 +83,11 @@ def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), 
     return frame_matrix(at_w, haft_w, rot @ Vector(blade_up))
 
 
-def stance(rot, yaw, extra=None):
-    p = Pose(dict(rot), yaw=yaw)
-    if extra:
-        for j, r in extra.items():
-            p.rot[j] = r
+def stance(rot, yaw):
+    rot = dict(rot)
+    for j, d in _adj.get('rot', {}).items():
+        rot[j] = tuple(a + b for a, b in zip(rot.get(j, (0, 0, 0)), d))
+    p = Pose(rot, yaw=yaw + _adj.get('turn', 0.0))
     grounded(p)
     return p
 
@@ -156,6 +177,7 @@ ATTACK = {
 
 def attack(frame, view, yaw):
     turn, fist, head, depth, crouch, lean, blades = ATTACK[view][frame]
+    fist, head = tuple(_plus(fist, 'fist')), tuple(_plus(head, 'head'))
     bend = crouch * 220
     p = stance({
         'pelvis': (0, 0, 0), 'spine': (lean * 0.5, 0, 0), 'chest': (lean * 0.5, 0, 0), 'neck': (4, 0, 0),
@@ -207,6 +229,7 @@ BOW_TURN = -90   # the body's front a quarter turn right of the shot
 
 def bow(frame, view, yaw):
     at, up, draw, nocked = BOW_KEYS[frame]
+    at, up = _plus(at, 'grip'), _plus(up, 'haft')
     p = stance({
         'pelvis': (0, 0, 0), 'spine': (2, 0, 0), 'chest': (0, 0, 0),
         'neck': (4, 0, 30), 'head': (-6, 0, 30),
@@ -233,5 +256,14 @@ def bow(frame, view, yaw):
 ANIMS = {'idle': idle, 'walk': walk, 'attack': attack, 'hurt': hurt, 'bow': bow}
 
 
-def pose_for(anim, frame, view, yaw):
-    return ANIMS[anim](frame, view, yaw)
+# which fists close round a grip: the axe's right hand (both hands in the attack), the bow's and the string's
+FISTS = {'idle': 'R', 'walk': 'R', 'hurt': 'R', 'attack': 'LR', 'bow': 'LR'}
+
+
+def pose_for(anim, frame, view, yaw, adj=None):
+    global _adj
+    _adj = adj if adj is not None else FIT.get(f'{anim}:{view}:{frame}', {})
+    pose, gear = ANIMS[anim](frame, view, yaw)
+    _adj = {}
+    gear['fist'] = {s: s in FISTS[anim] for s in 'LR'}
+    return pose, gear

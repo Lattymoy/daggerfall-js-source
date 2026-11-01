@@ -6,6 +6,7 @@
 //   - the install: a forge picture is snapped to the player's palette as it decodes; another artist's is worn as drawn
 //   - the snap: grain 0 snaps only - a colour goes to one palette colour wherever it sits
 //   - the reference tool writes outside the repo only: the outlines it takes are game data
+//   - the fit: one adjustment a frame, of the kinds a pose takes, within bounds
 //   - (ARENA2) the spec's canvases and frame counts are TEXTURE.488's own
 //
 // The install test's pictures are its own, written by tools/pngIO.mjs: no game data.
@@ -126,6 +127,21 @@ test('F5: the reference tool will not write its outlines into the repo', () => {
   } catch (e) { code = e.status; said = String(e.stderr); }
   assert.equal(code, 2);
   assert.match(said, /outside the repo/);
+});
+
+test('F7: the fit holds one adjustment a frame the spec names - joint turns, the body\'s turn, the axe\'s grip - none past its bounds', () => {
+  const fit = JSON.parse(readFileSync(join(root, 'tools/sprite-forge/specs/488-fit.json'), 'utf8'));
+  const want = spec.records.flatMap((rec) => Array.from({ length: rec.frames }, (_, f) => `${rec.anim}:${rec.view}:${f}`));
+  assert.deepEqual(Object.keys(fit).sort(), [...new Set(want)].sort());
+  for (const [key, adj] of Object.entries(fit)) {
+    for (const kind of Object.keys(adj)) assert.ok(['rot', 'turn', 'grip', 'haft', 'fist', 'head'].includes(kind), `${key}: ${kind}`);
+    if ('turn' in adj) assert.ok(Math.abs(adj.turn) <= 90, `${key}: turn ${adj.turn}`);
+    for (const [joint, r] of Object.entries(adj.rot ?? {})) {
+      assert.equal(r.length, 3, `${key} ${joint}`);
+      for (const v of r) assert.ok(Math.abs(v) <= 75, `${key} ${joint}: ${v} degrees`);
+    }
+    for (const kind of ['grip', 'fist', 'head']) for (const v of adj[kind] ?? []) assert.ok(Math.abs(v) <= 0.5, `${key} ${kind}: ${v} m`);
+  }
 });
 
 test('F6 (ARENA2): the spec\'s canvases and frame counts are TEXTURE.488\'s own', { skip: !ARENA2 && 'ARENA2_PATH is not set' }, () => {

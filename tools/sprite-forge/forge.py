@@ -29,7 +29,7 @@ VIEW_YAW = [0.0, -45.0, -90.0, -135.0, -180.0]   # record k of an animation: the
 class Fighter:
     def __init__(self):
         self.M = palette()
-        self.parts = model.build_body(self.M)
+        self.parts, self.skins, self.hands = model.build_body(self.M)
         self.axe = model.build_axe(self.M)
         self.bow = model.build_bow(self.M)
         self.extra = []
@@ -42,6 +42,13 @@ class Fighter:
         W = pose.world()
         for ob, j in self.parts:
             ob.matrix_world = W[j]
+        for sk in self.skins:
+            sk.pose(W)
+        fists = gear.get('fist', {})
+        for side, kinds in self.hands.items():
+            closed = fists.get(side, False)
+            kinds['fist'].hide_render = not closed
+            kinds['open'].hide_render = closed
         for ob in self.extra:
             bpy.data.objects.remove(ob, do_unlink=True)
         self.extra = []
@@ -94,7 +101,7 @@ def write_spec(path, spec):
 def best_place(works, outlines, canvas):
     """The canvas pixel for the root that overlaps the classic outlines most (mean IoU over the record's frames)."""
     cw, ch = canvas
-    refs = [np.array([c == '1' for c in o], dtype=bool).reshape(ch, cw) for o in outlines]
+    refs = [np.array([c != '0' for c in o], dtype=bool).reshape(ch, cw) for o in outlines]
     masks = [w[..., 3] > 0 for w in works]
     # the feet rest on the canvas's last row, as every classic record's do
     lowest = max(int(np.nonzero(m.any(axis=1))[0].max()) for m in masks)
@@ -123,6 +130,7 @@ def main():
     ap.add_argument('--samples', type=int, default=64)
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     spec = json.load(open(args.spec))
+    poses.load_fit(args.spec.replace('.json', '-fit.json'))
     bpy.ops.wm.read_factory_settings(use_empty=True)
     stage.setup(args.samples)
     fighter = Fighter()

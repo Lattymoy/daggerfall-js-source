@@ -17,12 +17,19 @@ def plain(name, rgb, metal=0.0, rough=0.5, spec=0.5):
     return _principled(name, rgb, metal, rough, spec)[0]
 
 
+def _rest(nt):
+    """The mesh's rest position (body.py): a pattern read from it stays put however the mesh is posed."""
+    at = nt.nodes.new('ShaderNodeAttribute')
+    at.attribute_type = 'GEOMETRY'
+    at.attribute_name = 'rest'
+    return at.outputs['Vector']
+
+
 def _coords(m, scale):
     nt = m.node_tree
-    tc = nt.nodes.new('ShaderNodeTexCoord')
     mp = nt.nodes.new('ShaderNodeMapping')
     mp.inputs['Scale'].default_value = scale
-    nt.links.new(tc.outputs['Object'], mp.inputs['Vector'])
+    nt.links.new(_rest(nt), mp.inputs['Vector'])
     return mp.outputs['Vector']
 
 
@@ -32,9 +39,8 @@ def chain(name, dark, light, around=11.0, rows=95.0, rough=0.45):
     m, b = _principled(name, light, metal=0.55, rough=rough)
     nt = m.node_tree
     L = nt.links
-    tc = nt.nodes.new('ShaderNodeTexCoord')
     xyz = nt.nodes.new('ShaderNodeSeparateXYZ')
-    L.new(tc.outputs['Object'], xyz.inputs[0])
+    L.new(_rest(nt), xyz.inputs[0])
 
     def op(kind, a, b_=None, val=None):
         n = nt.nodes.new('ShaderNodeMath')
@@ -110,10 +116,10 @@ def palette():
     return {
         'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.5, spec=0.4),
         'silver': plain('silver', (0.62, 0.62, 0.64), metal=0.55, rough=0.32),
-        'cuirass': speckle('cuirass', (0.035, 0.035, 0.04), (0.22, 0.22, 0.24)),
+        'cuirass': speckle('cuirass', (0.03, 0.03, 0.035), (0.16, 0.16, 0.18), scale=70.0, at=0.52),
         'mail': chain('mail', (0.015, 0.015, 0.02), (0.30, 0.30, 0.33)),
         'coif': chain('coif', (0.02, 0.02, 0.025), (0.22, 0.22, 0.24), around=14.0, rows=120.0),
-        'leather': plain('leather', (0.28, 0.13, 0.05), rough=0.6),
+        'leather': plain('leather', (0.16, 0.07, 0.025), rough=0.6),
         'cloth': plain('cloth', (0.045, 0.14, 0.015), rough=0.75, spec=0.25),
         'boot': plain('boot', (0.012, 0.17, 0.18), rough=0.4, spec=0.45),
         'bracer': plain('bracer', (0.42, 0.42, 0.45), metal=1.0, rough=0.3),
