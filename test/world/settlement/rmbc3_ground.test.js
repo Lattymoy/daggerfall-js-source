@@ -11,7 +11,6 @@ import { generateSettlement } from '../../../src/world/settlement/settlementGen.
 import { padAt } from '../../../src/world/settlement/settlementGeometry.js';
 import { SETTLEMENT_ROWS, SETTLEMENT_LANE, settlementPlaceId, isSettlementPlaceId, settlementOnPixel, settlementPixel, settlementPlaceRows } from '../../../src/world/settlement/settlementPlaces.js';
 import { standSettlementGround, SAMPLE_M } from '../../../src/world/settlement/settlementStand.js';
-import { settlementMovedField, createLandforms } from '../../../src/world/landforms.js';
 import { MINTED_KEY_MIN } from '../../../src/world/settlement/settlementContract.js';
 import { THEATRE_KEYS, theatreAt } from '../../../src/world/worldWide/worldGrid.js';
 import { isMadePlaceId } from '../../../src/world/placeIds.js';
@@ -125,27 +124,20 @@ test('RMBC3 the frame\'s law: a record written before PADS_FRAME_LAW rides the c
   assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, 5), 101 - 2.5);
   assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, 6), 101);
   const host = readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8');
-  assert.match(host, /moved = settlementMovedField\(host\.woods, px, py, HEIGHTMAP_DIMENSION, landformsHere\(\), landformsHere\(\{ bare: true \}\)\);/, 'off a built pixel, the kernel\'s way on the shaped ground');
-  assert.match(host, /if \(stood\?\.moved \|\| liftRectAt\(px, py\)\) return settlementMovedAt\(stood, origin, x, z, heightCell\);/, 'a built pixel\'s own carve first, a grown town\'s alone');
+  assert.match(host, /return settlementMovedAt\(stood\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/, 'a built pixel\'s own carve');
 });
 
-test('RMBC3 a record\'s move off a built pixel is the kernel\'s own: laid out on the shaped land with no road, carved into the shaped ground - never DFU\'s plain ground (mutants: the plain ground, the moved field dropped)', () => {
+test('RMBC3 the carve hands back its own move: the build\'s `moved` is each sample carved less the sample it was, in the frame\'s units, and nothing off the pads\' reach (mutants: the moved field unfilled, its units)', () => {
   setTamrielFit(null);
   const w = new WoodsFile(); w.load(syntheticWoodsBytes());
   const woods = groundWoods(w), row = SETTLEMENT_ROWS[1], [px, py] = settlementPixel(row), D = HEIGHTMAP_DIMENSION;
   const r = generatePixelTerrain({ woods, px, py, stride: 1, climateType: CLIMATES.Woodlands, landform: true, tilemap: new Uint8Array(128 * 128) });
-  const field = settlementMovedField(woods, px, py, D, createLandforms({ woods }), createLandforms({ woods, roads: null }));
-  const plain = settlementMovedField(woods, px, py, D);
-  let worst = 0, apart = 0, n = 0;
-  for (let i = 0; i < D * D; i += 7) {
-    const x = Math.floor(i / D), y = i % D, k = r.settlement.moved[i];
-    if (!k) continue;
-    n++;
-    worst = Math.max(worst, Math.abs(field(x, y) - k));
-    apart = Math.max(apart, Math.abs(plain(x, y) - k));
+  const was = Float32Array.from(r.samples, (v, i) => v - r.settlement.moved[i] / MAX_TERRAIN_HEIGHT);   // the ground before the carve
+  const again = Float32Array.from(was), stood = standSettlementGround(px, py, again, () => Float32Array.from(was));
+  let carved = 0;
+  for (let i = 0; i < D * D; i++) {
+    assert.ok(Math.abs(again[i] - was[i] - stood.moved[i] / MAX_TERRAIN_HEIGHT) < 1e-6, `sample ${i}`);
+    if (stood.moved[i]) carved++;
   }
-  assert.ok(n > 50, `${n} samples carved`);
-  assert.ok(worst < 1e-3, `the kernel's move, within a float's noise: ${worst}`);
-  assert.ok(apart > 0.05, `DFU's plain ground lays another town: ${apart}`);
-  assert.equal(settlementMovedField(woods, px + 3, py, D, createLandforms({ woods })), null, 'none stands');
+  assert.ok(carved > 50 && carved < D * D / 2, `${carved} samples carved, the rest left`);
 });

@@ -356,8 +356,8 @@
   {
     "name": "MEET-frame-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt });",
-    "new": "movedAt: groundMovedAt, townMovedAt, padsMovedAt });",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, owesAt, readOwed: padsOwedFrom });",
+    "new": "movedAt: groundMovedAt, townMovedAt, padsMovedAt, owesAt, readOwed: padsOwedFrom });",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],

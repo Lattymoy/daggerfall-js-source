@@ -172,6 +172,6 @@ test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the bu
   assert.match(gen, /const settlement = hasLocation \? \(growth && locationRect \? standTownGrowth\(px, py, samples, growth, locationRect, \{ paths, tilemap, camps \}\) : null\) : standSettlementGround\(px, py, samples, bare\);/);
   assert.match(gen, /locationRect: wodResult\?\.locationRect \?\? growthClearing\(locationRect, settlement\) \?\? settlement\?\.rect \?\? null,/);
   assert.match(read('scenes/pixelBuild.js'), /\n {6}growth: growthJobAt\(groundLocation, px, py\),/);
-  assert.match(read('scenes/groundFrameHost.js'), /if \(stood\?\.moved \|\| liftRectAt\(px, py\)\) return settlementMovedAt\(stood, origin, x, z, heightCell\);/);
+  assert.match(read('scenes/groundFrameHost.js'), /return settlementMovedAt\(stood\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/);
   assert.match(read('scenes/settlementHost.js'), /standSettlement\(p, blocksFile\(\), p\.settlement\.growth \? nextGrowthSlot\(\) : -1\)/);
 });

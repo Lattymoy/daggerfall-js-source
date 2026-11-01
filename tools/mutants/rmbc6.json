@@ -183,8 +183,8 @@
   {
     "name": "RMBC6-frame-unread",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "if (stood?.moved || liftRectAt(px, py)) return settlementMovedAt(",
-    "new": "if (stood?.moved || liftRectAt(px, py)) return 0 && settlementMovedAt(",
+    "old": "return settlementMovedAt(stood.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);",
+    "new": "return 0 && settlementMovedAt(stood.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

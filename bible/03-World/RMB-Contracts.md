@@ -170,15 +170,16 @@ trees' clearing and `moved`, what the carve moved each sample. `pixelBuild.js` p
 ### A record written before the carve
 
 The carve moved the ground under saved records, so the record frame's law is 6 (`terrainSampler.js` `GROUND_FRAME_LAW`
-and `PADS_FRAME_LAW`). A record written under an older law re-stands by the carve's move there (`groundFrameHost.js`
-`padsMovedAt`). On a built pixel that is the build's own `moved`, exact (`settlementMovedAt`). On a published
-settlement's pixel not built yet, `landforms.js` `settlementMovedField` lays it out the kernel's way on the shaped
-ground (the host's `landformsHere`, and `landformsHere({ bare: true })` for the layout), within a float's noise of the
-kernel.
+and `PADS_FRAME_LAW`). A record written under an older law re-stands by the carve's move under it (`groundFrameHost.js`
+`padsMovedAt`), and that move is always its pixel's build's own `moved` (`settlementMovedAt`): no other thread can lay a
+town's outskirts as the kernel lays them, with its roads, camps and tiles.
 
-A grown town's pixel not built yet answers 0: its carve reads the roads, camps and tiles only the kernel's job holds, so
-no main-thread copy can match it. A record there that loads before its pixel streams in keeps its old height. That is
-a camp or a pile written before law 6 on land the outskirts now cover.
+A record that loads before its pixel is built stands without the move, and its pixel is owed
+(`settlementOwed.js`: a published settlement's pixel, or a town's that grows). The save carries the debt (`padsOwed`, an
+additive field), and a load hands its envelope to every re-stand, so a record the save owed re-stands by the carve
+again, even under law 6. The pixel's first build pays it: `pixelBuild.js` rides every record on the pixel (the piles,
+torches, camps, street foes and the watch, through `rideGround`) by the build's own move. With the Landforms row off,
+a save of an older frame or one that owes a carve is still stood again.
 
 ## Standing in the world
 
@@ -278,4 +279,3 @@ Hammerfell id in the corpus.
 
 - A third layout, a branching street tree, for a settlement of its own.
 - Cyrodiil's rivers as water, so Corrol Ford can stand as a river town.
-- A grown town's carve for a record on a pixel not built yet (above).

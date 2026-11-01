@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION } from '../../../src/world/terrain/terrainSampler.js';
+import { RECORD_GROUND_STAMP, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION } from '../../../src/world/terrain/terrainSampler.js';
 import { surfaceHeightAt, buildTerrainGrid } from '../../../src/world/terrain/terrainSurface.js';
 import { layoutNature } from '../../../src/world/terrain/terrainNature.js';
 import { ringHeight } from '../../../src/render/farRing.js';
@@ -101,7 +101,7 @@ test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s
 test('TERRAIN-SCALE1: the host stands every saved exterior height again as it lands it - the player, the piles, torches, camps, foes, guards, the inside pools, the exterior scene cache, the anchor', () => {
   assert.match(WORLD, /const was = scaleOf\(extras\.terrainScale\);/);
   // PIN MOVED (BAY-LEFT-GROUND, D5): each record's frame's law (`groundFrame`) stamped beside its scale and read beside it
-  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was, extras\.groundFrame\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
+  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was, extras\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
   assert.match(WORLD, /extras\.interior\.foes = restandRows\(extras\.interior\.foes\); extras\.interior\.guards = restandRows\(extras\.interior\.guards\);/);
   assert.match(WORLD, /droppedLoot\.restoreWorld\(restandRows\(w\.piles\)/);
   assert.match(WORLD, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\)/);
@@ -121,7 +121,7 @@ test('TERRAIN-SCALE1: the host stands every saved exterior height again as it la
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */
-function quickloadHelpers(stamp) {
+function quickloadHelpers(stamp, frame = RECORD_GROUND_STAMP.groundFrame) {
   const i = WORLD.indexOf('        const was = scaleOf(extras.terrainScale);');
   const j = WORLD.indexOf('        if (extras.interior) {', i);
   assert.ok(i > 0 && j > i);
@@ -130,7 +130,7 @@ function quickloadHelpers(stamp) {
   const restandHeight = (y, x, z, was) => { calls.push([y, x, z, was]); return y - 1; };
   const scaleOf = (s) => (s > 0 ? s : DEFAULT_TERRAIN_SCALE);
   // LANDFORM1: the row off - every height DFU's frame, nothing to put back on
-  const api = new Function('extras', 'state', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'landform', `${WORLD.slice(i, j)}\nreturn { was, restandRows, restandAt };`)({ terrainScale: stamp }, state, restandHeight, scaleOf, STREAMING_TERRAIN_SCALE, null);
+  const api = new Function('extras', 'state', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'landform', 'RECORD_GROUND_STAMP', `${WORLD.slice(i, j)}\nreturn { was, restandRows, restandAt };`)({ terrainScale: stamp, groundFrame: frame }, state, restandHeight, scaleOf, STREAMING_TERRAIN_SCALE, null, RECORD_GROUND_STAMP);
   return { ...api, calls };
 }
 
@@ -147,9 +147,11 @@ test('TERRAIN-SCALE1: the quickload stands each record on the ground under its O
   assert.equal(h.restandRows(undefined), undefined, 'a list the envelope does not carry passes through as it came');
   const t = quickloadHelpers(1.25);
   const same = [{ nativeX: 1, nativeZ: 2, y: 3 }];
-  assert.equal(t.restandRows(same), same, 'written on today\'s scale: the rows as they came');
+  assert.equal(t.restandRows(same), same, 'written on today\'s scale and frame: the rows as they came');
   assert.equal(t.restandAt('pos')(same), same);
   assert.equal(t.calls.length, 0);
+  const older = quickloadHelpers(1.25, RECORD_GROUND_STAMP.groundFrame - 1);   // an older frame's moves stand with the row off too
+  assert.deepEqual(older.restandRows(same), [{ nativeX: 1, nativeZ: 2, y: 2 }]);
 });
 
 test('TERRAIN-SCALE1: an exterior scene a save carried from before the stamp stands its piles and torches again as the arrival lands them', () => {

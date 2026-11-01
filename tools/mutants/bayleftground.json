@@ -669,8 +669,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-save-unstamped",
     "file": "src/systems/save/save.js",
-    "old": "terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
-    "new": "terrainScale: STREAMING_TERRAIN_SCALE };",
+    "old": "terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
+    "new": "terrainScale: STREAMING_TERRAIN_SCALE, padsOwed: padsOwed() };",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -678,8 +678,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-save-restore-drops-it",
     "file": "src/systems/save/save.js",
-    "old": ", groundFrame: snap.groundFrame ?? null };",
-    "new": " };",
+    "old": ", groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
+    "new": ", padsOwed: snap.padsOwed ?? [] };",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -751,7 +751,7 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-save-player-reader-blind",
     "file": "src/scenes/world.js",
-    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame)",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, extras)",
     "new": "const ly = restandHeight(w.y ?? 2, lx, lz, was)",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
@@ -760,7 +760,7 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-save-rows-reader-blind",
     "file": "src/scenes/world.js",
-    "old": "return restandHeight(y, x, z, was, extras.groundFrame); };",
+    "old": "return restandHeight(y, x, z, was, extras); };",
     "new": "return restandHeight(y, x, z, was); };",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
@@ -769,7 +769,7 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-camps-reader-blind",
     "file": "src/scenes/world.js",
-    "old": "restandHeight(p[1], x, z, savedScale, extras.groundFrame)",
+    "old": "restandHeight(p[1], x, z, savedScale, extras)",
     "new": "restandHeight(p[1], x, z, savedScale)",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"

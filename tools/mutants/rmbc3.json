@@ -137,8 +137,8 @@
   {
     "name": "RMBC3-pads-move-stamped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "!(frame >= PADS_FRAME_LAW) ? padsMovedAt(x, z) : 0;",
-    "new": "!(frame >= 99) ? padsMovedAt(x, z) : 0;",
+    "old": "const owes = !(frame >= PADS_FRAME_LAW) || !!owesAt?.(x, z);",
+    "new": "const owes = !(frame >= 99) || !!owesAt?.(x, z);",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -164,15 +164,6 @@
     "why": "the settlements carved the ground and the law stayed at FB1029's"
   },
   {
-    "name": "AUDIT-moved-plain-ground",
-    "file": "src/world/landforms.js",
-    "old": "standSettlementGround(px, py, generateSamples(woods, px, py, hDim, landforms), () => generateSamples(woods, px, py, hDim, bare))",
-    "new": "standSettlementGround(px, py, generateSamples(woods, px, py, hDim, null), () => generateSamples(woods, px, py, hDim, null))",
-    "tests": [
-      "test/world/settlement/rmbc3_ground.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-moved-unfilled",
     "file": "src/world/settlement/settlementStand.js",
     "old": "{ moved[i] = (v - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = v; }",
@@ -182,12 +173,130 @@
     ]
   },
   {
-    "name": "AUDIT-built-carve-unread",
+    "name": "OWED-never-owed",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "if (stood?.moved || liftRectAt(px, py))",
-    "new": "if (liftRectAt(px, py))",
+    "old": "    if (settlementOnPixel(px, py) || growthJobAt(_liftLocationAt(px, py), px, py)) owePads(key);\n",
+    "new": "",
     "tests": [
-      "test/world/settlement/rmbc3_ground.test.js"
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-grown-never-owed",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "if (settlementOnPixel(px, py) || growthJobAt(_liftLocationAt(px, py), px, py)) owePads(key);",
+    "new": "if (settlementOnPixel(px, py)) owePads(key);",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-debt-kept-once-read",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "      payPads(key);\n      return settlementMovedAt(",
+    "new": "      return settlementMovedAt(",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-debt-unread",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "const owes = !(frame >= PADS_FRAME_LAW) || !!owesAt?.(x, z);",
+    "new": "const owes = !(frame >= PADS_FRAME_LAW);",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-stamp-unread",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (stamp) readOwed?.(stamp);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-new-world-owes-old",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "  clearPadsOwed();   // a new world owes nothing\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-save-read-twice",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "  if (!stamp || stamp === readFrom) return;",
+    "new": "  if (!stamp) return;",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-keys-unchecked",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "stamp.padsOwed.filter((key) => typeof key === 'string' && /^-?\\d+,-?\\d+$/.test(key))",
+    "new": "stamp.padsOwed",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-save-carries-none",
+    "file": "src/systems/save/save.js",
+    "old": "groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
+    "new": "groundFrame: GROUND_FRAME_LAW };",
+    "tests": [
+      "test/systems/save/save.test.js"
+    ]
+  },
+  {
+    "name": "OWED-load-drops-it",
+    "file": "src/systems/save/save.js",
+    "old": "groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
+    "new": "groundFrame: snap.groundFrame ?? null };",
+    "tests": [
+      "test/systems/save/save.test.js"
+    ]
+  },
+  {
+    "name": "OWED-build-never-pays",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (host.rideGround && payPads(pkey) && owedTown?.moved) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-quickload-row-off-skips-old-frames",
+    "file": "src/scenes/world.js",
+    "old": "const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;",
+    "new": "const today = was === STREAMING_TERRAIN_SCALE && !landform;",
+    "tests": [
+      "test/world/terrain/auditlandforms.test.js",
+      "test/world/terrain/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "OWED-quickload-row-off-skips-owed",
+    "file": "src/scenes/world.js",
+    "old": "const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;",
+    "new": "const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame;",
+    "tests": [
+      "test/world/terrain/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "OWED-camps-row-off-skips-owed",
+    "file": "src/scenes/world.js",
+    "old": "!landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length ? outer : outer.map",
+    "new": "!landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame ? outer : outer.map",
+    "tests": [
+      "test/world/terrain/auditlandforms.test.js"
     ]
   }
 ]

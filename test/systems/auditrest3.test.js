@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { setSharedClock } from '../../src/systems/worldTick.js';
+import { RECORD_GROUND_STAMP } from '../../src/world/terrain/terrainSampler.js';
 import { _resetForTests } from '../../src/systems/uiPrefs.js';
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
@@ -68,14 +69,15 @@ test('AUDIT REST III A1: the world host\'s one home stands the save\'s camps out
     scaleOf: (s) => (s > 0 ? s : 1), STREAMING_TERRAIN_SCALE: 2, state: { localFromWorld: (x, z) => [x / 10, z / 10] },
     restandHeight: (y, x, z, was) => `y${y}@${x},${z}/${was}`, campFromNatives: 'fromNatives',
     landform: null,   // LANDFORM1: the row off - every height DFU's frame, no lift to put back on
+    RECORD_GROUND_STAMP,
   };
   const stand = mount(`${fnOf('src/scenes/world.js', 'standSavedOuterCamps')}\nreturn standSavedOuterCamps;`, state);
   stand({ world: {} });
   stand(undefined);
   assert.deepEqual(calls, [], 'a save from before AUDIT REST II H6 carries none: nothing dropped');
   const row = { id: 'me:1:1', pos: [100, 5, 200] };
-  stand({ world: { outerCamps: [row] }, terrainScale: 2 });
-  assert.deepEqual(calls, ['drop', ['restore', [row], 'fromNatives']], 'the same ground: the save\'s rows as they are');
+  stand({ world: { outerCamps: [row] }, terrainScale: 2, groundFrame: RECORD_GROUND_STAMP.groundFrame });
+  assert.deepEqual(calls, ['drop', ['restore', [row], 'fromNatives']], 'the same ground and frame: the save\'s rows as they are');
   calls.length = 0;
   stand({ world: { outerCamps: [row] }, terrainScale: 1 });
   assert.deepEqual(calls[1][1], [{ id: 'me:1:1', pos: [100, 'y5@10,20/1', 200] }], 'another ground: re-stood');

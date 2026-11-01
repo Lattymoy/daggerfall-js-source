@@ -1709,7 +1709,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js); D5: `before` the landforms under a
    *  record's frame's OLD law - the Bay's table alone, the ground past the Bay before its sites: what a record written past
    *  the Bay before LIFT_FRAME_LAW stood on (scenes/groundFrameHost.js) - RELIEF-PEAKS: with no ranges, which it never stood. */
-  const landformsHere = ({ before = false, bare = false } = {}) => (landform ? createLandforms({ woods, roads: bare ? null : terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);   // RELIEF-PEAKS: the old law's without the ranges; `bare` the land with no road, a settlement's layout's
+  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);   // RELIEF-PEAKS: the old law's without the ranges
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -7039,11 +7039,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const outer = extras?.world?.outerCamps;
     if (!Array.isArray(outer)) return;
     const savedScale = scaleOf(extras.terrainScale);   // TERRAIN-SCALE1: each stood again on today's ground, as the world branch's
-    const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {   // LANDFORM1: and the row's lift put back on (DFU's frame, AUDIT LANDFORMS C1)
+    const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length ? outer : outer.map((r) => {   // LANDFORM1: and the row's lift put back on (DFU's frame, AUDIT LANDFORMS C1); an older frame's moves, or a carve owed, with the row off too
       const p = r?.pos;
       if (!Array.isArray(p)) return r;
       const [x, z] = state.localFromWorld(p[0], p[2]);
-      return { ...r, pos: [p[0], restandHeight(p[1], x, z, savedScale, extras.groundFrame), p[2]] };   // BAY-LEFT-GROUND: by its frame's law
+      return { ...r, pos: [p[0], restandHeight(p[1], x, z, savedScale, extras), p[2]] };   // BAY-LEFT-GROUND: by its frame's law, and the carve it owes
     });
     camps.dropOwn(); camps.restore(rows, campFromNatives);
   }
@@ -14640,14 +14640,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // exact over the arrival pixel, which is built by now, and over the
         // building an inside save re-enters)
         const was = scaleOf(extras.terrainScale);
-        const today = was === STREAMING_TERRAIN_SCALE && !landform;   // LANDFORM1: every height DFU's frame - the row's lift goes back on
-        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras.groundFrame); };   // BAY-LEFT-GROUND: by its frame's law
+        const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;   // LANDFORM1: every height DFU's frame - the row's lift goes back on; an older frame's moves and a carve owed stand with the row off too
+        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras); };   // BAY-LEFT-GROUND: by its frame's law
         // a list the envelope does not carry passes through as it came, and a record without its position is the restore's to refuse
         const restandRows = (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
         const restandAt = (key) => (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
         if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
-        const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame) + state.compensation[1];
+        const ly = restandHeight(w.y ?? 2, lx, lz, was, extras) + state.compensation[1];
         // IS1: an inside save re-enters its building BEFORE the player
         // lands - the Respawner's building arm (PlayerEnterExit
         // .cs:559-567) with RestorePosition landing the saved

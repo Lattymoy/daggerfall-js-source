@@ -659,8 +659,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-quickload-scale-only",
     "file": "src/scenes/world.js",
-    "old": "const today = was === STREAMING_TERRAIN_SCALE && !landform;",
-    "new": "const today = was === STREAMING_TERRAIN_SCALE;",
+    "old": "const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;",
+    "new": "const today = was === STREAMING_TERRAIN_SCALE && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -670,7 +670,7 @@
   {
     "name": "AUDIT-LANDFORMS-D-camps-fast-path-scale-only",
     "file": "src/scenes/world.js",
-    "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {",
+    "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length ? outer : outer.map((r) => {",
     "new": "const rows = savedScale === STREAMING_TERRAIN_SCALE ? outer : outer.map((r) => {",
     "tests": [
       "test/systems/landform.test.js",

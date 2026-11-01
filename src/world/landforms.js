@@ -133,8 +133,6 @@ import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOIS
 import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect, calcAvgMaxHeight } from './terrain/terrainTiles.js';
 import { townMeetsAbout, applyTownMeets, meetLiftAt } from './terrain/townMeet.js';   // ACROSS-EDGE: the ground meets a town across its pixel's edge
 import { blendShapedBefore } from './terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
-import { standSettlementGround } from './settlement/settlementStand.js';   // a settlement's carve, for a record's move
-import { settlementOnPixel } from './settlement/settlementPlaces.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
@@ -1240,7 +1238,7 @@ const meetsOf = (met, shaped) => (met ?? []).map((m) => ({ px: m.px, py: m.py, m
 /** A field of a pixel's samples (`f(x, y)`, integer samples 0..span) read between them: the read the collider's own floor
  *  takes (world.js heightAt), held to the pixel - FLORA-GROUND: the ground's one law, the drawn quad's two triangles cut on
  *  its (x, y)-(x+1, y+1) diagonal (terrainSurface.js walkGroundAt). */
-export function fieldBetween(f, span) {
+function fieldBetween(f, span) {
   return (sx, sy) => {
     const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));
     const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));
@@ -1318,19 +1316,6 @@ export function townMeetMovedField(woods, px, py, locationRect, about, hDim = HE
   }
   const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);
   return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
-}
-
-/**
- * HOW FAR A SETTLEMENT'S PADS MOVED THE GROUND at pixel (px, py) under a record written before it, for a pixel not built
- * yet (a built one's own `moved` is exact): the kernel's way - laid out on the shaped land with no road (`bare`), carved
- * into the shaped ground with them (`landforms`) - in kernel units over MAX_TERRAIN_HEIGHT; null where none stands.
- * @param {any} woods @param {number} px @param {number} py @param {number} [hDim] @param {any} [landforms] @param {any} [bare]
- */
-export function settlementMovedField(woods, px, py, hDim = HEIGHTMAP_DIMENSION, landforms = null, bare = landforms) {
-  if (!settlementOnPixel(px, py)) return null;   // a pixel with none costs no kernel pass
-  const stood = standSettlementGround(px, py, generateSamples(woods, px, py, hDim, landforms), () => generateSamples(woods, px, py, hDim, bare));
-  if (!stood) return null;
-  return fieldBetween((x, y) => stood.moved[x * hDim + y], hDim - 1);
 }
 
 /**

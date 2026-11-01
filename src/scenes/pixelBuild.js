@@ -126,6 +126,8 @@ import { standBridges } from '../world/road/bridgeModels.js';   // ROAD-LOOK: a 
 import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
 import { growthJobAt, settlementHomeTown, settlementHomeRegion } from '../world/settlement/townGrowthJob.js';
+import { settlementMovedAt } from '../world/settlement/settlementStand.js';
+import { payPads } from '../world/settlement/settlementOwed.js';   // a record's carve owed until its pixel builds
 
 /** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
 const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
@@ -1623,6 +1625,13 @@ export function createPixelBuild(host) {
       const groundIn = (smp, x, z) => walkGroundAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])));
       const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
       host.rideGround?.(t, pkey, moved, key !== pkey);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld
+    }
+    // a record that loaded before this pixel stood without its settlement's carve (world/settlement/settlementOwed.js): it
+    // rides the build's own move now, and the debt is paid
+    const owedTown = built.get(pkey)?.settlement;
+    if (host.rideGround && payPads(pkey) && owedTown?.moved) {
+      const origin = host.state.pixelTranslation(px, py);
+      host.rideGround(origin, pkey, (x, z) => settlementMovedAt(owedTown, origin, x, z, TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)), key !== pkey);
     }
     if (homeTown) host._homeLookV = -1;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,

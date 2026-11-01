@@ -348,8 +348,8 @@
   {
     "name": "FB1028-frame-town-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt });",
-    "new": "movedAt: groundMovedAt, meetMovedAt, padsMovedAt });",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, owesAt, readOwed: padsOwedFrom });",
+    "new": "movedAt: groundMovedAt, meetMovedAt, padsMovedAt, owesAt, readOwed: padsOwedFrom });",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]

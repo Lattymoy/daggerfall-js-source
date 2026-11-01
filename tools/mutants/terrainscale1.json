@@ -121,8 +121,8 @@
   {
     "name": "TS1-quickload-row-in-scene-frame",
     "file": "src/scenes/world.js",
-    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras.groundFrame); };",
-    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was, extras.groundFrame);",
+    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras); };",
+    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was, extras);",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ],
@@ -149,7 +149,7 @@
   {
     "name": "TS1-quickload-player-raw",
     "file": "src/scenes/world.js",
-    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame) + state.compensation[1];",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, extras) + state.compensation[1];",
     "new": "const ly = (w.y ?? 2) + state.compensation[1];",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
@@ -234,8 +234,8 @@
   {
     "name": "TS1-save-unstamped",
     "file": "src/systems/save/save.js",
-    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
-    "new": "modData, groundFrame: GROUND_FRAME_LAW };",
+    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
+    "new": "modData, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "TS1-restore-drops-stamp",
     "file": "src/systems/save/save.js",
-    "old": "terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null };",
-    "new": "terrainScale: null, groundFrame: snap.groundFrame ?? null };",
+    "old": "terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
+    "new": "terrainScale: null, groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ],
