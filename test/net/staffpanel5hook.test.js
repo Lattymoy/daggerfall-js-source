@@ -780,7 +780,7 @@ test('STAFF-PANEL5-FOLLOW host: outside a party the pose goes on as the where no
 
 /** A device signed in (net/accountClient.js storedSession's shape). */
 const signedIn = () => {
-  const mem = new Map([[SESSION_KEY, JSON.stringify({ secret: 's3cret', id: 'acct-mob', name: 'SirMcMobdon' })], [SERVICE_KEY, 'https://accounts.test']]);
+  const mem = new Map([[SESSION_KEY, JSON.stringify({ secret: 's3cret', id: 'acct-chief', name: 'SirMcMobdon' })], [SERVICE_KEY, 'https://accounts.test']]);
   return { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
 };
 const minted = (token) => new Response(JSON.stringify({ token, name: 'SirMcMobdon', kind: 'account', glyphs: ['dev'] }), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -823,7 +823,7 @@ test('STAFF-HIDE-TOGGLE relink, on real sessions and the real minter: the held t
   const { FakeWS, sockets } = fakeSocketClass();
   let hidden = false, mints = 0;
   const minter = accountTokenMinter({ fetch: async () => minted(`v1.${hidden ? 'hidden' : 'shown'}${++mints}.sig`), storage: signedIn() });
-  const session = (presence) => { const x = new OnlineSession({ url: 'wss://relay.test', name: 'SirMcMobdon', id: 'peer-mob1', secret: 'secret-mob1', presence, WebSocketImpl: FakeWS }); x.mintToken = minter; return x; };
+  const session = (presence) => { const x = new OnlineSession({ url: 'wss://relay.test', name: 'SirMcMobdon', id: 'peer-chief1', secret: 'secret-chief1', presence, WebSocketImpl: FakeWS }); x.mintToken = minter; return x; };
   const main = session(true), hub = session(false), region = session(false), gone = session(false);
   main.join('world:3,12');
   hub.join(SOCIAL_ROOM);

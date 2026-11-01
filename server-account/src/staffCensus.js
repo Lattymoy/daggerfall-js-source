@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // STAFF-PANEL4-CENSUS (2026-10-22; design doc "DFO Staff Panel: design", "Item and gold census",
 // "Built on the save judge", "Server load" and the weak spots "Copies found misses modded dupes..." and "Census rows ride
-// every save...") - THE ITEM AND GOLD CENSUS, AND THE CONTESTED PIECES. Admin only (mob, 03:03Z: a Moderator gets the chat
+// every save...") - THE ITEM AND GOLD CENSUS, AND THE CONTESTED PIECES. Admin only (a Moderator gets the chat
 // reports, Mute and Ban, and the few things named for them - not this).
 //
 // ═══ THE TALLY RIDES THE JUDGE, NEVER A SAVE OF ITS OWN ═════════════

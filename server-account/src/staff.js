@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL1 (2026-10-22, mob: a staff admin panel, its own browser extension; design doc "DFO Staff Panel: design",
+// STAFF-PANEL1 (2026-10-22: a staff admin panel, its own browser extension; design doc "DFO Staff Panel: design",
 // build step 1) - THE PANEL'S SIGN-IN, ITS SESSIONS, ITS ROLES AND ITS AUDIT LOG.
 //
 // ═══ THREE LOCKS ═══

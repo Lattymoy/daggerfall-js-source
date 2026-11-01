@@ -24,7 +24,7 @@
     "file": "src/scenes/staffFollowHost.js",
     "old": "        if (parked !== null && (hidden() || parked !== where())) parked = null;",
     "new": "        if (parked !== null && parked !== where()) parked = null;",
-    "why": "a hidden staff member let go of a follow stands in no room until they walk off that map pixel - every player stays unloaded (mob: \"when i change form invis all players dont load\")",
+    "why": "a hidden staff member let go of a follow stands in no room until they walk off that map pixel - every player stays unloaded",
     "tests": [
       "test/net/staffmap_e2e.test.js"
     ]
@@ -44,7 +44,7 @@
     "file": "src/scenes/staffFollowHost.js",
     "old": "    if (door.panel()) bar.show({ following: hook.locked(), hidden: hiddenNow, asking, seeing: host.seeing() });",
     "new": "    if (door.panel()) bar.show({ following: false, hidden: hiddenNow, asking, seeing: host.seeing() });",
-    "why": "a locked follow has no Unlock on the game's screen - with the panel's card closed the staff member is stuck behind the target's eyes (mob: \"follow needs a unlock button in game\")",
+    "why": "a locked follow has no Unlock on the game's screen - with the panel's card closed the staff member is stuck behind the target's eyes",
     "tests": [
       "test/ui/staffFollowBar.test.js"
     ]
@@ -74,7 +74,7 @@
     "file": "src/scenes/staffViewHost.js",
     "old": "    if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));",
     "new": "    if (false) layer.menu(name || sub, rows);",
-    "why": "a tag's click follows at once again - no menu (mob: \"when u lcick on someon\", \"i mean the pop up\")",
+    "why": "a tag's click follows at once again - no menu",
     "tests": [
       "test/scenes/staffview1.test.js"
     ]
@@ -114,7 +114,7 @@
     "file": "src/net/staffHook.js",
     "old": "        if (typeof r === 'string' && r.length > 0 && r.length <= ROOM_HINT_MAX && !isSocialRoom(r) && !isChatRoom(r)) {",
     "new": "        if (false) {",
-    "why": "a player picked off the staff member's own ground whose game has sent no where note is locked on and never drawn - the camera never moves (mob: \"panel open said locked never moved\")",
+    "why": "a player picked off the staff member's own ground whose game has sent no where note is locked on and never drawn - the camera never moves",
     "tests": [
       "test/net/staffpanel5drop_e2e.test.js"
     ]

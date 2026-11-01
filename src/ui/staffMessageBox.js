@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
+// STAFF-PANEL5-MESSAGE (2026-10-22: a message in the middle of one player's screen; design doc "DFO Staff
 // Panel: design", Message on screen): THE BOX - "a box in the middle of their screen headed 'Message from staff', with
 // the staff member's name and the text, until they press OK".
 //

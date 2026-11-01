@@ -1,7 +1,7 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // STAFF-PANEL3-ECON (2026-10-22; design doc "DFO Staff Panel: design", build step 3: "Market and trades, Node activity,
-// Economy (all read existing data)") - THE PANEL'S ECONOMY SCREENS, an Admin's alone (mob, 03:03Z: Moderators get the
+// Economy (all read existing data)") - THE PANEL'S ECONOMY SCREENS, an Admin's alone (Moderators get the
 // chat reports, Mute and Ban; "Admin sees and does everything"). Every answer is a read of what the service already
 // keeps; nothing here writes a game table.
 //

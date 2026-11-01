@@ -55,7 +55,7 @@
 // It kindles UP: the ground lights as the fire's does, and the column rises from the feet to past the crown. Every rate
 // whole over the clock (radianceRatesWhole). No third draw.
 //
-// SHADOW-CLOAK (2026-10-04, Mac, for SirMcMobdon: "A holo shadow cloak with red accents. Extremely detailed"; then "less
+// SHADOW-CLOAK (2026-10-04, Mac, for the Shadow Fang account: "A holo shadow cloak with red accents. Extremely detailed"; then "less
 // digital, adjust hood since it's at a weird orientation, not as tall, more cape like, change the floating elements to
 // be more emblem like", "For the emblems have it use that user's glyph", "when the user transforms into a werewolf have
 // this rip apart with fragments floating around"): THE HOLO SHADOW CLOAK, the fourth look - a CAPE ON THE BODY in the
@@ -326,7 +326,7 @@ export const CLOAK_MANTLE_Y = 1.2;
 export const CLOAK_TRIM = Object.freeze({ band: 0.034, tooth: 0.045 });
 /** On the ground: the shadow's pool. */
 export const CLOAK_POOL_R = 0.85;
-/** THE EMBLEM: the wearer's own glyph - SirMcMobdon's, the Shadow Fang's wolf's head (ui/playerBadge.js GLYPH_PATH
+/** THE EMBLEM: the wearer's own glyph - the Shadow Fang account's, the Shadow Fang's wolf's head (ui/playerBadge.js GLYPH_PATH
  *  and its eye, GLYPH_DETAIL), the very path the badge draws - on a disc of shadow ringed in crimson. On the cape's back
  *  (its middle's height and its disc's radius, m) and at the clasp (its disc's). */
 export const CLOAK_GLYPH = GLYPH_PATH.shadowfang;
@@ -1986,7 +1986,7 @@ const vec3 CLOAK_EMBER = ${v3(CLOAK_RGB.ember)};
 const vec3 CLOAK_SHADOW = ${v3(CLOAK_RGB.shadow)};
 const vec3 CLOAK_LINING = ${v3(CLOAK_RGB.lining)};
 float cloakBreath() { return 0.85 + 0.15 * sin(uTime * CLOAK_TAU ${hzGlsl(CLOAK_HZ.pulse)}); }
-// THE WEARER'S GLYPH (ui/playerBadge.js GLYPH_PATH.shadowfang, SirMcMobdon's wolf's head, and its eye - GLYPH_DETAIL),
+// THE WEARER'S GLYPH (ui/playerBadge.js GLYPH_PATH.shadowfang, the Shadow Fang account's wolf's head, and its eye - GLYPH_DETAIL),
 // cut into straight edges (glyphEdges) in its own 16-unit box, y down as its path is: the distance to its outline,
 // negative inside (even-odd - the badge fills nonzero, the same for a path that never crosses itself, which a pin checks)
 ${glyphEdgesGlsl('CLOAK_GLYPH_EDGES', CLOAK_GLYPH_EDGES)}

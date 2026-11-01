@@ -17,7 +17,7 @@
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
-    "note": "the merged greater-of, mob's \"shouldn't be picking\""
+    "note": "the merged greater-of, no-picking rule"
   },
   {
     "name": "WEAPON-GEAR-only-past-200",
@@ -67,6 +67,6 @@
     "tests": [
       "test/combat/weapon_gear.test.js"
     ],
-    "note": "mob's other option, the top ~9% higher"
+    "note": "the other option, the top ~9% higher"
   }
 ]

@@ -13,13 +13,13 @@
 //
 // STAFF-HIDE-TOGGLE (2026-10-23): 0159 made Hide me ON BY DEFAULT (players.staff_hide, every row 1 - ), so a staff member who never pressed it was minted hidden tokens for as long as a staff
 // session stood, and the relay drops every line a hidden socket says but the staff channel's (server/src/staffHidden.js
-// hiddenMay) - mob could not talk in chat, and his own game was in no room the pen tool's map reads. Now it is off until
+// hiddenMay) - an owner could not talk in chat, and their own game was in no room the pen tool's map reads. Now it is off until
 // pressed, for every member (0165 moves the switch to `staff_hide_on`, default 0, keeping a Hide me pressed since 0159 -
 // the audit log's newest `hide` row), and either way the press takes effect AT ONCE: the panel tells the open game, through
 // the staff hook's door (src/net/staffHook.js `relink`), to leave every room and open each again on a fresh token, which this
 // file's mint (hiddenToken) reads the switch for on the primary - hidden from that hello on, or shown. Show myself still
 // pushes its hide orders (hiddenEnd) for a game the panel cannot reach. What chat a hidden staff member may say is not
-// decided yet (mob's call): the relay's half is server/src/staffHidden.js HIDDEN_CHAT and hiddenMay, the game's the mint's
+// decided yet (an open call): the relay's half is server/src/staffHidden.js HIDDEN_CHAT and hiddenMay, the game's the mint's
 // `hidden` answer (src/net/accountClient.js mintFresh, which drops it today) and the chat's send (scenes/world.js chatSend).
 //
 // THE TOKEN (hiddenToken): every relay token the game's own mint (index.js /v1/auth/token) makes for such an account while
@@ -80,7 +80,7 @@ const LIVE_SQL = `SELECT p.staff_hide_on, s.token_hash, s.key_id, k.cfg, k.pub F
  *  game comes back as a normal player - a staff member's only key forgotten was refused for good). A session gone idle
  *  or past its 8 hours writes no row: it is no word of the staff member's.
  *  STAFF-HIDE-TOGGLE: and only while the switch is on, read on the primary beside the log - migration 0165 turned it off for
- *  every member who never pressed Hide me, and wrote no Show myself row for it (the move was mob's word, not theirs): read
+ *  every member who never pressed Hide me, and wrote no Show myself row for it (the move was not theirs): read
  *  off the log alone, such a member's game, hidden before the move, would be minted no token at all once their session
  *  idled, and could never go online until they signed in or out. */
 const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(detail, '$.sub') AS sub FROM staff_audit WHERE actor = ?1 AND act = 'hidden-token' ORDER BY at DESC, id DESC LIMIT 1) h

@@ -1,4 +1,4 @@
-// GUILD-LETTER-FIX (2026-10-25, mob: a player's level 10 Lyrezi vampire never had the Dark Brotherhood's letter - the
+// GUILD-LETTER-FIX (2026-10-25, chief: a player's level 10 Lyrezi vampire never had the Dark Brotherhood's letter - the
 // tally at InviteSent, no letter pending, The Acceptance Test nowhere in the save; "do it") - THE STAFF PANEL SENDS A
 // CRIME GUILD'S LETTER AGAIN, OR CALLS ONE OFF: /v1/staff/fix/letter { id, ticket, guild, op, note }, an Admin's
 // (server-account/src/staffRealm.js), the review's `letter` act (review.js letterAct, staffMend) over its law
@@ -22,7 +22,7 @@ const enc = new TextEncoder();
 const nowS = () => Math.floor(Date.now() / 1000);
 const PASSWORD = 'a good long one';
 const b64url = (bytes) => Buffer.from(bytes).toString('base64url');
-const TICKET = 'mob-letter-1';
+const TICKET = 'chief-letter-1';
 const NOTE = 'player report: no Brotherhood letter';
 /** The reporter's record: the Brotherhood's tally parked, no letter pending, no quest, both membership books empty. */
 const stuck = (extra = {}) => ({
@@ -42,12 +42,12 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up (test/server/staffpanel3realm.test.js's): mob an Admin and a developer, Asynian a
+/** The Worker with the panel set up (test/server/staffpanel3realm.test.js's): chief an Admin and a developer, Asynian a
  *  Moderator, each signed in; realm characters seated through the service. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
-    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`,
+    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`,
   });
   const raw = s.env.DB._raw;
   const staff = async (path, body = {}, token = null) => {
@@ -57,11 +57,11 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const asyKey = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await asyKey.proof('enroll', 'Asynian')) })).body;
-  const admin = (path, body = {}) => staff(path, body, mob.session);
+  const admin = (path, body = {}) => staff(path, body, chief.session);
   /** A checkpoint under a lease, one on - the character's own tab's, unless one is named. */
   const put = async (who, id, save, { seq = null, lease = null } = {}) => {
     const row = raw.prepare('SELECT lease, seq FROM realm_characters WHERE id = ?').get(id);
@@ -88,8 +88,8 @@ async function stand() {
     assert.equal(r.status, 200, JSON.stringify(r.body));
     return r.body.data.banks;
   };
-  const letter = (c, body, as = mob.session) => staff('/v1/staff/fix/letter', { id: c.id, ticket: TICKET, note: NOTE, guild: 'db', op: 'send', ...body }, as);
-  return { ...s, raw, staff, admin, mob, asy, put, seat, row, findings, repairs, faucet, audits, letter };
+  const letter = (c, body, as = chief.session) => staff('/v1/staff/fix/letter', { id: c.id, ticket: TICKET, note: NOTE, guild: 'db', op: 'send', ...body }, as);
+  return { ...s, raw, staff, admin, chief, asy, put, seat, row, findings, repairs, faucet, audits, letter };
 }
 
 test('GUILD-LETTER-FIX THE LAW: a fix asks a ticket of the repair\'s shape, a guild (db, tg) and an act (send, cancel); nothing else is a fix (mutants: the ticket unread; the guild unread; the act unread)', () => {
@@ -185,13 +185,13 @@ test('GUILD-LETTER-FIX THE FIX: an Admin sends the reporter\'s letter again - th
   assert.equal(s.row(c.id).seq, after.seq, 'moved nothing');
   assert.equal((await s.admin('/v1/staff/fix/bank', { id: c.id, ticket: TICKET, note: NOTE, was: 0, gold: 5 })).body.error, 'repair-ticket', 'a letter\'s ticket is no bank set\'s');
   // the law's refusals, said: a letter already on its way
-  const pend = await s.letter(c, { ticket: 'mob-letter-2' });
+  const pend = await s.letter(c, { ticket: 'chief-letter-2' });
   assert.deepEqual([pend.status, pend.body.error], [409, 'letter-pending']);
   // and the call-off, a ticket of its own
-  const off = await s.letter(c, { ticket: 'mob-letter-3', op: 'cancel' });
+  const off = await s.letter(c, { ticket: 'chief-letter-3', op: 'cancel' });
   assert.equal(off.status, 200, JSON.stringify(off.body));
   assert.deepEqual([off.body.op, off.body.was], ['cancel', DARK_BROTHERHOOD_TALLY_TARGET]);
   assert.deepEqual([recordOf(s.env, c.id).darkBrotherhoodRequirementTally, recordOf(s.env, c.id).timeForDarkBrotherhoodLetter], [INVITE_SENT, 0]);
-  assert.equal(s.repairs(c.id).find((x) => x.ticket === 'mob-letter-3').flag, GUILD_LETTER_OPS.cancel);
-  assert.equal((await s.letter(c, { ticket: 'mob-letter-4', op: 'cancel' })).body.error, 'letter-none');
+  assert.equal(s.repairs(c.id).find((x) => x.ticket === 'chief-letter-3').flag, GUILD_LETTER_OPS.cancel);
+  assert.equal((await s.letter(c, { ticket: 'chief-letter-4', op: 'cancel' })).body.error, 'letter-none');
 });

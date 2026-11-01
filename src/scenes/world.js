@@ -18871,7 +18871,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     } else if (c.player != null) {
       if (worldMoveBusy() || modes?.transitioning) { say('You cannot teleport right now.'); return; }
       if (!staffTeleportClient) { say('Exact player teleport requires an online connection.'); return; }
-      teleportToStaffPlayer(c.player).then((who) => { say(staffTpLine(who)); staffFollow.follow(who.acct); })   // STAFF-PANEL5-FOLLOW: a TP follows on from their view (mob, 06:01Z) - where a Staff Panel mints the follow
+      teleportToStaffPlayer(c.player).then((who) => { say(staffTpLine(who)); staffFollow.follow(who.acct); })   // STAFF-PANEL5-FOLLOW: a TP follows on from their view - where a Staff Panel mints the follow
         .catch((e) => { console.error('[staff] player teleport:', e); say(e.message || 'The player teleport failed.'); });
       return;
     } else {

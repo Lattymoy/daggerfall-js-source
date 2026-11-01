@@ -74,7 +74,7 @@
     "file": "server-account/wrangler.toml",
     "old": "OWNER_KEYS = \"SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM\"",
     "new": "OWNER_KEYS = \"\"",
-    "why": "mob's first computer is not named, so no owner can sign in after the deploy",
+    "why": "the first owner computer is not named, so no owner can sign in after the deploy",
     "tests": [
       "test/server/staffpanel1.test.js"
     ]
@@ -256,7 +256,7 @@
     "file": "server-account/src/staff.js",
     "old": "export const STAFF_AUDIT_KEEP_S = 30 * 24 * 60 * 60;",
     "new": "export const STAFF_AUDIT_KEEP_S = 365 * 24 * 60 * 60;",
-    "why": "mob's month kept as a year",
+    "why": "the month kept as a year",
     "tests": [
       "test/server/staffpanel1.test.js"
     ]

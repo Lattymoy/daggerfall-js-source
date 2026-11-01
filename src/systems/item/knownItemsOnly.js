@@ -29,17 +29,17 @@ import '../thunderlock.js';
 import '../upkeep/upkeepItemRows.js';
 import '../walletItem.js';
 import { RRI_TEMPLATES } from '../roleplayRealismItems/rriItems.js';
-import { registerCustomTemplates, templateByIndex } from './itemTemplates.js';
+import { templateByIndex } from './itemTemplates.js';
 import { savedItemLists } from '../save/save.js';
 
-registerCustomTemplates(RRI_TEMPLATES);   // the mod's rows, as its install registers them (rriInstall.js)
+const RRI_INDEXES = new Set(RRI_TEMPLATES.map((t) => t.index));   // the mod's rows count as known, registered or not (rriInstall.js)
 
 /**
  * Takes out of every item list a save holds the items whose template this build does not have: a character from a
  * newer realm, copied into an older build (a private server's pinned one), never holds a piece that build cannot read.
  * The pack's lit light keeps its item. Answers how many went.
  * shortcut: items alone; a newer spell, power or quest the build lacks stays in the save - add it if one breaks a load.
- * @param <built-in function any> snap
+ * @param {any} snap
  */
 export function dropUnknownItems(snap) {
   const lit = Array.isArray(snap?.items) ? (snap.items[snap.lightSourceIndex ?? -1] ?? null) : null;
@@ -47,7 +47,7 @@ export function dropUnknownItems(snap) {
   for (const list of savedItemLists(snap)) {
     for (let i = list.length - 1; i >= 0; i--) {
       const it = list[i];
-      if (it && typeof it === 'object' && Number.isInteger(it.templateIndex) && !templateByIndex(it.templateIndex)) {
+      if (it && typeof it === 'object' && Number.isInteger(it.templateIndex) && !templateByIndex(it.templateIndex) && !RRI_INDEXES.has(it.templateIndex)) {
         list.splice(i, 1);
         gone++;
       }

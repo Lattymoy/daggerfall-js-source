@@ -51,7 +51,7 @@ test('THE REWARD: earned by three kills alone (REWARD-KILLS: a stand no longer) 
   stand.bd = 1;
   foldStaffWord(stand, EV, 'acctS', 'Sal', { n: 0, bu: 1, fb: 0 }, T0 + 60_000);
   foldStaffWord(stand, EV, 'acctS', 'Sal', { n: 0, bu: 1, bk: 1, fb: 0 }, T0 + 60_000);
-  assert.deepEqual(staffEventEarned(stand).map((x) => x.acct), [], 'REWARD-KILLS (mob 2026-10-25, card "Kills only (3+)"): stood the run with no kills - earns nothing now; one word and one kill: not');
+  assert.deepEqual(staffEventEarned(stand).map((x) => x.acct), [], 'REWARD-KILLS (chief 2026-10-25, card "Kills only (3+)"): stood the run with no kills - earns nothing now; one word and one kill: not');
   assert.equal(stand.a.acctS.t, 16, 'a word a tick');
   // ten on the board, the rest earned past it (rank 0)
   const many = fought(Array.from({ length: 14 }, (_, i) => [`acct${i}`, `P${i}`, STAFF_EVENT_EARN_KILLS + i, T0 + 1000 + i * STAFF_EVENT_KILL_MS * 40]), 'acct0', late);

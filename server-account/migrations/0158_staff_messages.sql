@@ -1,4 +1,4 @@
--- STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; Moderators too, 06:28Z;
+-- STAFF-PANEL5-MESSAGE (2026-10-22: a message in the middle of one player's screen; Moderators too, 06:28Z;
 -- design doc "DFO Staff Panel: design", Message on screen): THE STAFF'S MESSAGES, stored before anything is sent
 -- (server-account/src/staffMessage.js).
 --

@@ -36,7 +36,7 @@ const nowS = () => Math.floor(Date.now() / 1000);
 const PASSWORD = 'a good long one';
 const b64url = (bytes) => Buffer.from(bytes).toString('base64url');
 const DF = 17, WR = 23, SENTINEL = 5;   // Daggerfall (the Empire's account), Wayrest, and a branch below nothing
-const TICKET = 'mob-bank-1';
+const TICKET = 'chief-bank-1';
 const NOTE = 'set from the ticket';
 
 /** The game's own bank table (banking.js createBankAccounts), `gold` by region, and a loan standing in Wayrest. */
@@ -57,12 +57,12 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up (test/server/staffpanel3realm.test.js's): mob an Admin and a developer, Asynian a
+/** The Worker with the panel set up (test/server/staffpanel3realm.test.js's): chief an Admin and a developer, Asynian a
  *  Moderator, each signed in; realm characters seated through the service. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
-    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`,
+    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`,
   });
   const raw = s.env.DB._raw;
   const staff = async (path, body = {}, token = null) => {
@@ -72,11 +72,11 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const asyKey = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await asyKey.proof('enroll', 'Asynian')) })).body;
-  const admin = (path, body = {}) => staff(path, body, mob.session);
+  const admin = (path, body = {}) => staff(path, body, chief.session);
   /** A checkpoint under a lease, one on - the character's own tab's, unless one is named. */
   const put = async (who, id, save, { seq = null, lease = null } = {}) => {
     const row = raw.prepare('SELECT lease, seq FROM realm_characters WHERE id = ?').get(id);
@@ -104,7 +104,7 @@ async function stand() {
     return r.body.data.banks;
   };
   const setBank = (c, body) => admin('/v1/staff/fix/bank', { id: c.id, ticket: TICKET, note: NOTE, ...body });
-  return { ...s, raw, staff, admin, mob, asy, put, seat, row, findings, repairs, faucet, audits, banks, setBank };
+  return { ...s, raw, staff, admin, chief, asy, put, seat, row, findings, repairs, faucet, audits, banks, setBank };
 }
 
 test('STAFF-SET-BANK THE LAW: a set asks a ticket of the repair\'s shape, the total staff read (any finite number - below nothing, or past every safe integer) and a bank of 0 to one int\'s worth; nothing else is a set (mutants: the ticket unread; the total unread; the total read loosely; each bound of the gold)', () => {
@@ -112,7 +112,7 @@ test('STAFF-SET-BANK THE LAW: a set asks a ticket of the repair\'s shape, the to
   assert.deepEqual(bankSetOf({ ticket: TICKET, was: -200, gold: GOLD_INT_MAX }), { ticket: TICKET, was: -200, gold: GOLD_INT_MAX }, 'a branch below nothing; one int\'s worth at most');
   assert.equal(bankSetOf({ ticket: TICKET, was: 1e18, gold: 0 })?.was, 1e18, 'any finite total is a set\'s to name; whether it is the bank\'s is the record\'s (applyBankSet)');
   for (const [why, v] of [
-    ['no body', null], ['no object', 'mob-bank-1'],
+    ['no body', null], ['no object', 'chief-bank-1'],
     ['no ticket', { was: 0, gold: 0 }], ['a ticket of no shape', { ticket: 'Bank Set', was: 0, gold: 0 }],
     ['no total named', { ticket: TICKET, gold: 0 }], ['a total of null', { ticket: TICKET, was: null, gold: 0 }], ['a total as text', { ticket: TICKET, was: '5700', gold: 0 }],
     ['a total past every number', { ticket: TICKET, was: Infinity, gold: 0 }], ['a total of no number', { ticket: TICKET, was: NaN, gold: 0 }],
@@ -230,7 +230,7 @@ test('STAFF-SET-BANK DOWN, AND BELOW NOTHING: a bank set down is written in the 
   // a bank below nothing (no honest bank is - the judge holds on it): set up, the faucet is the gold set, none for the hole
   const d = await s.seat('Debtor', freshSave({ name: 'Debtor', bankAccounts: bankOf({ [DF]: 0, [WR]: -300 }) }));
   assert.equal(s.row(d.id).held, 'law', 'a bank below nothing holds');
-  const up = await s.setBank(d, { ticket: 'mob-bank-2', was: await s.banks(d), gold: 1_000 });
+  const up = await s.setBank(d, { ticket: 'chief-bank-2', was: await s.banks(d), gold: 1_000 });
   assert.deepEqual([up.status, up.body.was, up.body.held], [200, -300, 'law'], 'no hold lifted: the next checkpoint judges the record as it stands');
   assert.deepEqual(s.faucet(), { gold: 1_000, n: 1 });
   assert.deepEqual(recordOf(s.env, d.id).bankAccounts.map((a) => a.accountGold).filter((g) => g !== 0), [1_000]);
@@ -289,12 +289,12 @@ test('STAFF-SET-BANK ONCE A TICKET: the same ticket again is the set it was - an
   assert.deepEqual(await s.admin('/v1/staff/fix/repair', { id: c.id, ticket: TICKET, faction: 8, flag: FACTION_FLAGS.Summoned, gold: 0, note: NOTE }), { status: 409, body: { error: 'repair-ticket' } });
   assert.equal(recordOf(s.env, c.id).goldPieces, -500, 'the purse unmended');
   // a mend's ticket, asked as a bank set
-  assert.equal((await s.admin('/v1/staff/fix/mend', { id: c.id, ticket: 'mob-purse-1', was: -500, gold: 500, note: NOTE })).status, 200);
+  assert.equal((await s.admin('/v1/staff/fix/mend', { id: c.id, ticket: 'chief-purse-1', was: -500, gold: 500, note: NOTE })).status, 200);
   const mended = recordOf(s.env, c.id);
-  assert.deepEqual(await s.setBank(c, { ticket: 'mob-purse-1', was: 6_000, gold: 1 }), { status: 409, body: { error: 'repair-ticket' } });
+  assert.deepEqual(await s.setBank(c, { ticket: 'chief-purse-1', was: 6_000, gold: 1 }), { status: 409, body: { error: 'repair-ticket' } });
   assert.deepEqual(recordOf(s.env, c.id), mended, 'the mend\'s ticket sets no bank');
   assert.deepEqual(s.audits('fix-bank').at(-1).detail.error, 'repair-ticket');
-  assert.equal((await s.setBank(c, { ticket: 'mob-bank-3', was: 6_000, gold: 1 })).status, 200, 'a ticket of its own does');
+  assert.equal((await s.setBank(c, { ticket: 'chief-bank-3', was: 6_000, gold: 1 })).status, 200, 'a ticket of its own does');
 });
 
 test('STAFF-SET-BANK A BANK THE JUDGE COUNTS OTHERWISE (REVIEW, 2026-10-23): a branch past every safe integer, banks summed past every number, a branch below nothing beside gold, and a fraction - each said by the profile, set, audited, and its faucet the gold the set witnessed, as the judge counts a bank (judge.js goldOf, wealthOf), never the total named (mutants: the faucet from the total; a branch below nothing counted; the total unbounded)', async () => {
@@ -309,7 +309,7 @@ test('STAFF-SET-BANK A BANK THE JUDGE COUNTS OTHERWISE (REVIEW, 2026-10-23): a b
     const before = { row: s.row(c.id), rec: recordOf(s.env, c.id), faucet: s.faucet().gold };
     const was = await s.banks(c);
     assert.equal(was, said, `${handle}: the profile says it`);
-    const r = await s.setBank(c, { ticket: `mob-${handle.toLowerCase()}`, was, gold: set });
+    const r = await s.setBank(c, { ticket: `chief-${handle.toLowerCase()}`, was, gold: set });
     assert.equal(r.status, 200, `${handle}: ${JSON.stringify(r.body)}`);
     assert.deepEqual([r.body.was, r.body.gold], [said, set], handle);
     const rec = recordOf(s.env, c.id);
@@ -317,7 +317,7 @@ test('STAFF-SET-BANK A BANK THE JUDGE COUNTS OTHERWISE (REVIEW, 2026-10-23): a b
     const witnessed = s.row(c.id).witnessed - before.row.witnessed;
     assert.equal(witnessed, wealthOf(rec) - wealthOf(before.rec), `${handle}: witnessed what the set moved`);
     assert.equal(s.faucet().gold - before.faucet, Math.max(0, witnessed), `${handle}: the faucet is the gold the set witnessed`);
-    assert.deepEqual(s.audits('fix-bank').at(-1), { act: 'fix-bank', target: before.row.player, outcome: 'ok', detail: { char: c.id, name: handle, note: NOTE, ticket: `mob-${handle.toLowerCase()}`, gold: set, was: said, repeat: false } }, `${handle}: the set's audit row`);
+    assert.deepEqual(s.audits('fix-bank').at(-1), { act: 'fix-bank', target: before.row.player, outcome: 'ok', detail: { char: c.id, name: handle, note: NOTE, ticket: `chief-${handle.toLowerCase()}`, gold: set, was: said, repeat: false } }, `${handle}: the set's audit row`);
   }
   assert.deepEqual(s.faucet(), { gold: 3_000_000 + 1_000 + 6_000, n: 3 }, 'no faucet row for the mixed bank: no gold came in');
 });

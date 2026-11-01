@@ -1,4 +1,4 @@
--- STAFF-PANEL3-DESK (2026-10-22, mob: the features picked at 04:13Z and 06:28Z; design doc "DFO Staff Panel: design"): THE
+-- STAFF-PANEL3-DESK (2026-10-22: the features picked at 04:13Z and 06:28Z; design doc "DFO Staff Panel: design"): THE
 -- PANEL'S DESK - staff notes on a player, each staff member's own watchlist, and each staff member's own settings
 -- (server-account/src/staffDesk.js).
 --
@@ -7,7 +7,7 @@
 -- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads
 -- them.
 --
--- staff_notes    A SHORT SHARED HISTORY ON ONE PLAYER (mob, 06:28Z: Moderators too): "warned in person 21 Oct", newest
+-- staff_notes    A SHORT SHARED HISTORY ON ONE PLAYER (Moderators too): "warned in person 21 Oct", newest
 --                first, written by any staff member and read by all. `author_name` the staff member's name as it stood
 --                when they wrote it - no key on `author`, so a staff account gone keeps its notes. RETENTION: the newest
 --                STAFF_NOTES_KEEP a player (the insert trims past it in the same batch), and the account's own go with it

@@ -16,8 +16,8 @@ const enc = new TextEncoder();
 const nowS = () => Math.floor(Date.now() / 1000);
 const b64url = (bytes) => Buffer.from(bytes).toString('base64url');
 
-/** The Worker with mob an owner and Admin, signed in; Brisk a realm character whose law finding stands (so a tab reads
- *  it), with a staff note and on mob's watchlist. */
+/** The Worker with chief an owner and Admin, signed in; Brisk a realm character whose law finding stands (so a tab reads
+ *  it), with a staff note and on chief's watchlist. */
 async function stand() {
   const pair = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = b64url(new Uint8Array(await subtle.exportKey('raw', pair.publicKey)));

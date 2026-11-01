@@ -44,7 +44,7 @@
     "file": "src/scenes/world.js",
     "old": "rowActions: (peerId) => [...socialRowActions(peerId), ...chatSafety.rosterActions(peerId)],",
     "new": "rowActions: (peerId) => [...socialRowActions(peerId)],",
-    "why": "mob: the Find a player list offers no Follow",
+    "why": "the Find a player list offers no Follow",
     "tests": [
       "test/net/soc3_socialpanel.test.js"
     ]

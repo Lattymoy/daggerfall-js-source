@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-EVENT (2026-10-24, mob; net/staffEvent/staffEventLaw.js, bible/11-Multiplayer/Staff-Events.md): A STAFF EVENT ON
+// STAFF-EVENT (2026-10-24; net/staffEvent/staffEventLaw.js, bible/11-Multiplayer/Staff-Events.md): A STAFF EVENT ON
 // THIS MACHINE. The hub's book of the events live, each held as a RAID of its own (systems/raidingParties.js runs it - one
 // player in the place stands its monsters, the rest stand them as puppets, by RAID2's own law), and each event's ledger
 // as its place's cell last said it: whether its mini boss is due, stood, fell, and the kills so far. The kills are read

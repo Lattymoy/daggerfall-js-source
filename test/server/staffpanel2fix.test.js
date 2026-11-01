@@ -35,14 +35,14 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up and the relay's door recorded (no other fetch leaves): SirMcMobdon (an Admin and the
+/** The Worker with the panel set up and the relay's door recorded (no other fetch leaves): the Shadow Fang account (an Admin and the
  *  owner) and the Moderators Asynian and Tabbyvish signed in to the panel; Devvy (an Admin) and Fang (the Shadow Fang's
  *  title, which moderates) not; Troll and Sylvia, two players. `g` each one's game session. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'SirMcMobdon,Devvy', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'SirMcMobdon', SHADOW_FANG_HANDLES: 'Fang',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY, MOD_AI: 'off',
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY, MOD_AI: 'off',
     DISCORD_MODERATORS: '111111111111111111:Asynian,222222222222222222:Tabbyvish,333333333333333333:SirMcMobdon',
   });
   const pushed = [];
@@ -64,9 +64,9 @@ async function stand() {
   const sylvia = await s.registered('Sylvia');
   const raw = s.env.DB._raw;
   raw.prepare('UPDATE players SET created_at = ? WHERE id = ?').run(nowS() - SPROUT_S - 60, sylvia.id);   // old enough to count
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
   const enrol = async (handle) => {
-    const inv = await staff('/v1/staff/invite', { handle }, mob.session);
+    const inv = await staff('/v1/staff/invite', { handle }, chief.session);
     const key = await extensionKey();
     const r = await staff('/v1/staff/enroll', { handle, password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', handle)) });
     assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -98,7 +98,7 @@ async function stand() {
   const row = (id) => raw.prepare('SELECT * FROM players WHERE id = ?').get(id);
   const caseRow = (id) => raw.prepare('SELECT * FROM mod_cases WHERE id = ?').get(id);
   const strikes = (id) => raw.prepare("SELECT COUNT(*) AS n FROM mod_actions WHERE target = ? AND kind IN ('mute', 'ban')").get(id).n;
-  return { ...s, raw, staff, game: s.call, g, mob, asy, tab, troll, sylvia, caseOn, player, ctx, press, command, row, caseRow, strikes, pushed, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, game: s.call, g, chief, asy, tab, troll, sylvia, caseOn, player, ctx, press, command, row, caseRow, strikes, pushed, restore: () => { globalThis.fetch = real; } };
 }
 
 test('STAFF-PANEL2-FIX 1: ONE CASE, ONE SANCTION from every door - a Mute or Ban carries its case and the press\'s one-time id; the same press sent again is the first, answered; a second act on the case is refused from the panel, the game and Discord; an act in flight holds the case; a refused act gives it back (mutants: the take\'s act_click check; the repeat look; the give-back; the click asked of a panel press)', async () => {
@@ -141,7 +141,7 @@ test('STAFF-PANEL2-FIX 1: ONE CASE, ONE SANCTION from every door - a Mute or Ban
     assert.ok(s.raw.prepare("SELECT 1 FROM staff_audit WHERE act = 'mute' AND outcome = 'ok' AND detail LIKE '%\"repeat\":true%'").get(), 'the repeat written down');
     // a second sanction on the case: the panel (another member, an Admin), and a Discord button - none lands
     assert.deepEqual(await s.staff('/v1/staff/ban', { target: s.troll.id, case: id, days: 7, click: 'press-a004' }, s.tab.session).then((r) => [r.status, r.body]), [409, { error: 'case-closed' }]);
-    assert.deepEqual((await s.staff('/v1/staff/dismiss', { target: s.troll.id, case: id }, s.mob.session)).body, { error: 'case-closed' });
+    assert.deepEqual((await s.staff('/v1/staff/dismiss', { target: s.troll.id, case: id }, s.chief.session)).body, { error: 'case-closed' });
     const card = await s.press('222222222222222222', `safe:b30:${id}`, 'discord-0000000001');
     assert.equal(card.type, 7, 'Discord shows the card as it stands');
     assert.equal(s.row(s.troll.id).banned_until, null);
@@ -195,7 +195,7 @@ test('STAFF-PANEL2-FIX 3: CASES HAVE A KIND - a spawn case opens beside a chat c
     // the lists
     const panel = async (who) => (await s.staff('/v1/staff/cases', {}, who.session)).body.cases.filter((c) => c.target === t.id).map((c) => `${c.kind}:${c.id}`).sort();
     assert.deepEqual(await panel(s.asy), [`chat:${chat}`]);
-    assert.deepEqual(await panel(s.mob), [`chat:${chat}`, `spawn:${spawn}`].sort());
+    assert.deepEqual(await panel(s.chief), [`chat:${chat}`, `spawn:${spawn}`].sort());
     const inGame = async (who) => (await s.game('/v1/mod/cases', {}, s.g[who].secret)).body.cases.filter((c) => c.target === t.id).map((c) => c.kind).sort();
     assert.deepEqual(await inGame('Tabbyvish'), ['chat']);
     assert.deepEqual(await inGame('SirMcMobdon'), ['chat', 'spawn']);
@@ -203,7 +203,7 @@ test('STAFF-PANEL2-FIX 3: CASES HAVE A KIND - a spawn case opens beside a chat c
     assert.deepEqual((await s.staff('/v1/staff/case', { target: t.id, case: spawn }, s.asy.session)).body, { error: 'no-case' });
     assert.deepEqual((await s.staff('/v1/staff/claim', { target: t.id, case: spawn }, s.asy.session)).body, { error: 'no-case' }, 'nor a claim of it');
     assert.equal(s.caseRow(spawn).claimed_by, null);
-    assert.equal((await s.staff('/v1/staff/case', { target: t.id, case: spawn }, s.mob.session)).body.case.kind, 'spawn');
+    assert.equal((await s.staff('/v1/staff/case', { target: t.id, case: spawn }, s.chief.session)).body.case.kind, 'spawn');
     const u = await s.player();
     const lone = await openCaseFor(s.ctx(), s.env, u.id, 'review', 'spawn');
     assert.equal((await s.game('/v1/mod/case', { target: u.id }, s.g.Tabbyvish.secret)).status, 404, 'a spawn case alone: none for a Moderator');
@@ -218,7 +218,7 @@ test('STAFF-PANEL2-FIX 3: CASES HAVE A KIND - a spawn case opens beside a chat c
     assert.deepEqual([bare.status, bare.body.case], [200, undefined]);
     assert.equal(s.caseRow(lone).status, 'open');
     // an Admin's act on each kind: the spawn case closed, the chat case left
-    assert.equal((await s.staff('/v1/staff/dismiss', { target: t.id, case: spawn }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/dismiss', { target: t.id, case: spawn }, s.chief.session)).status, 200);
     assert.deepEqual([s.caseRow(spawn).status, s.caseRow(chat).status], ['dismissed', 'open']);
     assert.equal((await s.game('/v1/mod/dismiss', { target: u.id }, s.g.SirMcMobdon.secret)).status, 200, 'an Admin in the game: the spawn case modCase showed');
     assert.equal(s.caseRow(lone).status, 'dismissed');
@@ -229,11 +229,11 @@ test('STAFF-PANEL2-FIX 4: WHO SET EACH SANCTION is stored, and an Admin\'s is li
   const s = await stand();
   try {
     const troll = s.troll.id;
-    const mobId = s.g.SirMcMobdon.id;
+    const chiefId = s.g.SirMcMobdon.id;
     const asyId = s.g.Asynian.id;
     // a ban
-    assert.equal((await s.staff('/v1/staff/ban', { target: troll, days: 7, click: 'press-s001' }, s.mob.session)).status, 200);
-    assert.deepEqual([s.row(troll).banned_by, s.row(troll).ban_admin], [mobId, 1]);
+    assert.equal((await s.staff('/v1/staff/ban', { target: troll, days: 7, click: 'press-s001' }, s.chief.session)).status, 200);
+    assert.deepEqual([s.row(troll).banned_by, s.row(troll).ban_admin], [chiefId, 1]);
     assert.deepEqual(await s.staff('/v1/staff/unban', { target: troll }, s.asy.session).then((r) => [r.status, r.body]), [403, { error: 'admin-sanction' }]);
     assert.equal((await s.game('/v1/mod/unban', { target: troll }, s.g.Tabbyvish.secret)).status, 403);
     assert.match((await s.command('222222222222222222', 'unban', { player: troll })).data.content, /An Admin set this/);
@@ -249,13 +249,13 @@ test('STAFF-PANEL2-FIX 4: WHO SET EACH SANCTION is stored, and an Admin\'s is li
     // a mute
     const syl = s.sylvia.id;
     assert.equal((await s.game('/v1/mod/mute', { target: syl, minutes: 60 }, s.g.SirMcMobdon.secret)).status, 200);
-    assert.deepEqual([s.row(syl).muted_by, s.row(syl).mute_admin], [mobId, 1]);
+    assert.deepEqual([s.row(syl).muted_by, s.row(syl).mute_admin], [chiefId, 1]);
     assert.deepEqual(await s.game('/v1/mod/mute', { target: syl, minutes: 0 }, s.g.Tabbyvish.secret).then((r) => [r.status, r.body.error]), [403, 'admin-sanction']);
     assert.equal((await s.staff('/v1/staff/mute', { target: syl, minutes: 30, click: 'press-s005' }, s.asy.session)).body.error, 'admin-sanction', 'cut short');
     assert.match((await s.command('222222222222222222', 'unmute', { player: syl })).data.content, /An Admin set this/);
     assert.equal((await s.game('/v1/mod/mute', { target: syl, minutes: 120 }, s.g.Tabbyvish.secret)).status, 200, 'lengthened');
     assert.deepEqual([s.row(syl).muted_by, s.row(syl).mute_admin], [s.g.Tabbyvish.id, 1]);
-    assert.equal((await s.staff('/v1/staff/mute', { target: syl, minutes: 0, click: 'press-s006' }, s.mob.session)).status, 200, 'the Admin lifts it');
+    assert.equal((await s.staff('/v1/staff/mute', { target: syl, minutes: 0, click: 'press-s006' }, s.chief.session)).status, 200, 'the Admin lifts it');
     assert.deepEqual([s.row(syl).muted_until, s.row(syl).mute_admin], [null, null]);
     // a Moderator's own mute another Moderator lifts
     assert.equal((await s.game('/v1/mod/mute', { target: syl, minutes: 60 }, s.g.Tabbyvish.secret)).status, 200);
@@ -273,7 +273,7 @@ test('STAFF-PANEL2-FIX 6: A CLAIMED HIGH CASE LEFT IDLE returns to the top, and 
     const medOn = await s.player();
     const med = s.caseOn(medOn, { ai_state: 'done', ai_category: 'harassment', ai_severity: 2 });
     assert.equal((await s.staff('/v1/staff/claim', { target: heldOn.id }, s.tab.session)).status, 200);
-    assert.equal((await s.staff('/v1/staff/claim', { target: medOn.id }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/claim', { target: medOn.id }, s.chief.session)).status, 200);
     const order = async () => (await s.staff('/v1/staff/cases', {}, s.asy.session)).body.cases;
     assert.deepEqual((await order()).map((c) => c.id), [free, held, med], 'a claimed case below the rest of its level');
     // its holder's last look or act HIGH_IDLE_S ago (claim_until is CLAIM_S past it)
@@ -295,7 +295,7 @@ test('STAFF-PANEL2-FIX 6: A CLAIMED HIGH CASE LEFT IDLE returns to the top, and 
     assert.equal((await s.staff('/v1/staff/claim', { target: other.id }, s.asy.session)).status, 200);
     s.raw.prepare('UPDATE staff_sessions SET last_act = ? WHERE player_id = ?').run(nowS() - STAFF_IDLE_S, s.g.Asynian.id);
     assert.equal(s.caseRow(oc).claimed_by, s.g.Asynian.id, 'the row still names the holder');
-    assert.equal((await s.staff('/v1/staff/claim', { target: other.id }, s.mob.session)).status, 200, 'and anyone may take it');
+    assert.equal((await s.staff('/v1/staff/claim', { target: other.id }, s.chief.session)).status, 200, 'and anyone may take it');
     assert.equal(s.caseRow(oc).claim_from, null, 'nobody was holding it to be told');
     // and a session past its whole life
     assert.equal(s.caseRow(oc).claimed_by, s.g.SirMcMobdon.id);
@@ -317,7 +317,7 @@ test('STAFF-PANEL2-FIX 8: CUTTING OFF A STAFF MEMBER holds at every door - the s
     };
     assert.ok((await glyphs(s.g.Asynian.secret)).includes('mod'));
     assert.equal((await s.game('/v1/mod/cases', {}, s.g.Asynian.secret)).status, 200);
-    const cut = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session);
+    const cut = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.chief.session);
     assert.deepEqual([cut.status, cut.body], [200, { ok: true, handle: 'Asynian', relay: true }]);
     assert.equal(s.row(asyId).staff_suspended, 1);
     // the order at the relay's door: the account's sockets closed
@@ -337,23 +337,23 @@ test('STAFF-PANEL2-FIX 8: CUTTING OFF A STAFF MEMBER holds at every door - the s
     assert.ok(!(await glyphs(back.body.secret)).includes('mod'), 'no staff glyph on the next token');
     assert.match((await s.command('111111111111111111', 'lookup', { player: 'Troll' })).data.content, /Only the game's moderators/);
     assert.deepEqual((await s.staff('/v1/staff/login', { handle: 'Asynian', password: PASSWORD, ...(await s.asy.key.proof('login', 'Asynian')) })).body, { error: 'staff-login' });
-    const team = (await s.staff('/v1/staff/team', {}, s.mob.session)).body.team.find((p) => p.handle === 'Asynian');
+    const team = (await s.staff('/v1/staff/team', {}, s.chief.session)).body.team.find((p) => p.handle === 'Asynian');
     assert.deepEqual([team.role, team.suspended], ['moderator', true]);
-    assert.deepEqual((await s.staff('/v1/staff/mod/add', { handle: 'Asynian' }, s.mob.session)).body, { error: 'staff-suspended' });
+    assert.deepEqual((await s.staff('/v1/staff/mod/add', { handle: 'Asynian' }, s.chief.session)).body, { error: 'staff-suspended' });
     // an Admin cut off: no developer either, and no Dev glyph
     assert.ok((await glyphs(s.g.Devvy.secret)).includes('dev'));
-    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Devvy' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Devvy' }, s.chief.session)).status, 200);
     const devvy = (await s.game('/v1/auth/login', { handle: 'Devvy', password: PASSWORD })).body.secret;
     assert.equal((await s.game('/v1/mod/cases', {}, devvy)).status, 403);
     assert.ok(!(await glyphs(devvy)).includes('dev'));
     // the title that moderates, cut off: its glyph and its role gone
     assert.ok((await glyphs(s.g.Fang.secret)).includes('shadowfang'));
-    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Fang' }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/cut', { handle: 'Fang' }, s.chief.session)).status, 200);
     const fang = (await s.game('/v1/auth/login', { handle: 'Fang', password: PASSWORD })).body.secret;
     assert.equal((await s.game('/v1/mod/cases', {}, fang)).status, 403);
     assert.ok(!(await glyphs(fang)).includes('shadowfang'));
     // an owner's invite brings a member back
-    const inv = await s.staff('/v1/staff/invite', { handle: 'Asynian' }, s.mob.session);
+    const inv = await s.staff('/v1/staff/invite', { handle: 'Asynian' }, s.chief.session);
     assert.deepEqual([inv.status, inv.body.role], [200, 'moderator']);
     assert.equal(s.row(asyId).staff_suspended, 0);
     assert.ok(s.raw.prepare("SELECT 1 FROM staff_audit WHERE act = 'invite' AND target = ? AND detail LIKE '%\"restored\":true%'").get(asyId));
@@ -399,7 +399,7 @@ test('STAFF-PANEL5-CUT-FIX: THE CUT ORDERS EVERY HIDDEN SOCKET CLOSED, ITS PUSH 
     const batch = s.env.DB.batch.bind(s.env.DB);
     s.env.DB.batch = async (st) => { const r = await batch(st); skew += 3000; return r; };
     const t0 = nowS();
-    const cut = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session);
+    const cut = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.chief.session);
     s.env.DB.batch = batch;
     assert.deepEqual([cut.status, cut.body], [200, { ok: true, handle: 'Asynian', relay: false }]);
     assert.deepEqual(new Set((await ordersOf('hide', t0 + 3)).map((c) => c.s)), new Set([gone, live]), 'the deleted session\'s subject too');
@@ -413,7 +413,7 @@ test('STAFF-PANEL5-CUT-FIX: THE CUT ORDERS EVERY HIDDEN SOCKET CLOSED, ITS PUSH 
     // pressed again: every order pushed again, the relay taking them now
     globalThis.fetch = fetch0;
     s.pushed.length = 0;
-    const again = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session);
+    const again = await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.chief.session);
     assert.deepEqual([again.status, again.body], [200, { ok: true, handle: 'Asynian', relay: true }]);
     assert.deepEqual(new Set((await ordersOf('hide')).map((c) => c.s)), new Set([gone, live]));
     assert.equal((await ordersOf('staffcut'))[0]?.s, asyId);
@@ -421,7 +421,7 @@ test('STAFF-PANEL5-CUT-FIX: THE CUT ORDERS EVERY HIDDEN SOCKET CLOSED, ITS PUSH 
     assert.ok(s.raw.prepare("SELECT 1 FROM staff_audit WHERE act = 'cut' AND target = ? AND detail LIKE '%\"again\":true%'").get(asyId), 'the second cut written as one');
     assert.equal(s.row(asyId).staff_suspended, 1);
     // nobody else's: a player never staff is still no staff to cut
-    assert.deepEqual((await s.staff('/v1/staff/cut', { handle: 'Troll' }, s.mob.session)).body, { error: 'no-staff' });
+    assert.deepEqual((await s.staff('/v1/staff/cut', { handle: 'Troll' }, s.chief.session)).body, { error: 'no-staff' });
   } finally { Date.now = realNow; globalThis.fetch = fetch0; s.restore(); }
 });
 
@@ -439,7 +439,7 @@ test('STAFF-PANEL2-FIX 8: A NEW PASSWORD ENDS THE STAFF PANEL\'S SESSIONS - chan
     const reg = await s.game('/v1/auth/register', { handle: 'Ravenna', password: PASSWORD, ...ACCEPTED, set: true }, g.secret);
     const code = reg.body.recoveryCodes?.[0] ?? reg.body.recoveryCode;
     assert.ok(code, `registering answers a recovery code: ${JSON.stringify(reg)}`);
-    const inv = await s.staff('/v1/staff/invite', { handle: 'Ravenna' }, s.mob.session);
+    const inv = await s.staff('/v1/staff/invite', { handle: 'Ravenna' }, s.chief.session);
     const key = await extensionKey();
     const raven = (await s.staff('/v1/staff/enroll', { handle: 'Ravenna', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Ravenna')) })).body;
     assert.equal((await s.staff('/v1/staff/me', {}, raven.session)).status, 200);
@@ -546,7 +546,7 @@ test('STAFF-PANEL2-FIX review 3: EVERY DOOR\'S ACT IS IN THE AUDIT LOG, written 
     assert.equal((await s.game('/v1/mod/mute', { target: e.id, minutes: 30 }, s.troll.secret)).status, 403);
     assert.equal(rows('mute', e.id).length, 1);
     // the owners read the game's and Discord's acts in their log
-    const log = (await s.staff('/v1/staff/audit', { target: b.id }, s.mob.session)).body.rows;
+    const log = (await s.staff('/v1/staff/audit', { target: b.id }, s.chief.session)).body.rows;
     assert.deepEqual(log.map((r) => [r.act, r.actorName, r.detail.door]), [['dismiss', 'Tabbyvish', 'Discord']]);
   } finally { s.restore(); }
 });

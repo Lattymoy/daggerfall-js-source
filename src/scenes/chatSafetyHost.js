@@ -760,7 +760,7 @@ export function createChatSafetyHost({
       if (agreedHere && !issued.conduct) return;
       agreed = issued.conduct;
     },
-    /** A spoken line's menu: Report it (a reason each) and Block or Unblock its speaker. STAFF-PANEL2 (2026-10-22, mob:
+    /** A spoken line's menu: Report it (a reason each) and Block or Unblock its speaker. STAFF-PANEL2 (2026-10-22:
      *  "remove the report buttons iunch for admin and mods as well", "chat they arnt usefu for us"): an Admin or a
      *  Moderator (`staff`) gets no Report - they act on a player, not report them. STAFF-PANEL2-CHATMENU: and gets the
      *  acts they use on players instead (staffRows), then Block. */

@@ -36,7 +36,7 @@
 // and Moderators both. The thread closes with the unfreeze (a Talk thread by staff); its lines are kept STAFF_LINES_KEEP_S.
 //
 // THE DISCORD INVITE the frozen player's Staff tab shows is a setting (DISCORD_INVITE_URL, server-account/wrangler.toml),
-// so it changes without a game update (mob, 03:22Z: https://discord.gg/QADbZYQ73j). Unset, the tab shows none.
+// so it changes without a game update (https://discord.gg/QADbZYQ73j). Unset, the tab shows none.
 //
 // Offline only, not tried live yet.
 // ═══════════════════════════════════════════════════════════════════

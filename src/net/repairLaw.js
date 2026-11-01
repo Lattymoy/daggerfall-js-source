@@ -33,7 +33,7 @@
 // the Empire's set (and a count of no number, which no fold moves and the profile counts as none, at nothing too: a set
 // leaves the bank the profile says and nothing beside it). A loan stays where it stands, as the fold leaves it.
 //
-// GUILD-LETTER-FIX (2026-10-25, mob: a player's level 10 vampire never had the Dark Brotherhood's letter - its tally at
+// GUILD-LETTER-FIX (2026-10-25: a player's level 10 vampire never had the Dark Brotherhood's letter - its tally at
 // InviteSent, no letter pending, The Acceptance Test nowhere in the save; "do it"): A CRIME GUILD'S LETTER, SENT AGAIN OR
 // CALLED OFF BY STAFF. DFU parks the tally before the quest starts (systems/crimeGuilds.js DB-LETTER), so a letter whose
 // quest could not be made spent the invitation for good, and nothing in a save tells that from a test the player failed:

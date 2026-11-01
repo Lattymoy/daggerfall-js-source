@@ -1,6 +1,6 @@
 // SHADOW-FANG — ONE PLAYER'S OWN TITLE AND GLYPH (2026-09-26).
 //
-// Mac: "SirMcMobdon gets a brand new title/glyph. Remove them from Apostle. The glyph needs to be like the reference
+// Mac: "the Shadow Fang account gets a brand new title/glyph. Remove them from Apostle. The glyph needs to be like the reference
 // shown" - a snarling wolf's head in profile, black, with a red eye - and "Black and crimson graident for the
 // title/glyph with the title name being Shadow Fang".
 //

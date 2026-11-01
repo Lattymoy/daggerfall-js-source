@@ -274,7 +274,7 @@ export const TIER_LISTS = Object.freeze({
   disciple: 'DISCIPLE_HANDLES',
   apostle: 'APOSTLE_HANDLES',
   hierophant: 'HIEROPHANT_HANDLES',
-  // SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new title/glyph. Remove them from Apostle" - a title
+  // SHADOW-FANG (2026-09-26, Mac): "the Shadow Fang account gets a brand new title/glyph. Remove them from Apostle" - a title
   // made for one player, granted the tiers' way: a list in the config, the title and its glyph together. SHADOW-CLOAK
   // (2026-10-04): and the third list to grant an aura with it (TIER_AURA, below).
   shadowfang: 'SHADOW_FANG_HANDLES',
@@ -337,7 +337,7 @@ export const TIER_AURA = Object.freeze({
   wikimaid: 'lilacwarren',
   nirnrootsage: 'sagesmoke',
   coldharbour: 'vampirichaze',
-}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
+}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, for the Shadow Fang account: a holo shadow cloak with red accents, extremely detailed): the Holo Shadow Cloak
 
 /** STAFF-PANEL2-FIX (design doc, Weak spots: "Cutting off a staff member misses most doors" - "A stored suspended flag is
  *  checked in every role path"): a staff member an owner cut off (`players.staff_suspended`, migration 0156, staff.js

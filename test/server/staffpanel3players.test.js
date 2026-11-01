@@ -48,13 +48,13 @@ const RECORD = {
   sceneCache: { scenes: [{ sceneName: 'DaggerfallInterior [MapID=1, BuildingKey=2]', decorItems: { shelf: [{ name: 'Silver Goblet', group: 'Plate', templateIndex: 9996, value: 40 }] } }] },
 };
 
-/** The Worker with the panel set up: mob (an Admin and owner) and Asynian (a Moderator) signed in, Brisk playing a realm
+/** The Worker with the panel set up: chief (an Admin and owner) and Asynian (a Moderator) signed in, Brisk playing a realm
  *  character, Sylvia a second player, and SquidKamer's title on a list. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', DUNGEON_MASTER_HANDLES: 'SquidKamer',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, DISCORD_MODERATORS: '111111111111111111:Asynian,333333333333333333:Watcher9',
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, DISCORD_MODERATORS: '111111111111111111:Asynian,333333333333333333:Watcher9',
   });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
@@ -63,17 +63,17 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
-  assert.ok(asy.session && mob.session);
+  assert.ok(asy.session && chief.session);
   const brisk = await s.seated('Brisk', { save: RECORD });
   const sylvia = await s.seated('Sylvia');
   const raw = s.env.DB._raw;
   const char = raw.prepare('SELECT * FROM realm_characters WHERE id = ?').get(brisk.character);
   const audits = (act) => raw.prepare('SELECT target, detail, outcome, role FROM staff_audit WHERE act = ? ORDER BY id').all(act).map((r) => ({ ...r }));
-  return { ...s, raw, staff, mob, asy, brisk, sylvia, char, audits };
+  return { ...s, raw, staff, chief, asy, brisk, sylvia, char, audits };
 }
 
 test('STAFF-PANEL3-PLAYERS: the doors are listed among the staff panel\'s; none opens without a staff session, and a Moderator is refused every one and written down (mutant: the role check)', async () => {
@@ -94,30 +94,30 @@ test('STAFF-PANEL3-PLAYERS: the doors are listed among the staff panel\'s; none 
 
 test('STAFF-PANEL3-PLAYERS: THE SEARCH - every account by its handle or a character\'s name, any case, a prefix; "online now" a filter; paged by handle; written down once in ten minutes a view (mutants: the name half; the online filter; the page)', async () => {
   const s = await stand();
-  const r = await s.staff('/v1/staff/players', { q: 'bri' }, s.mob.session);
+  const r = await s.staff('/v1/staff/players', { q: 'bri' }, s.chief.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual(r.body.players.map((p) => p.handle), ['Brisk']);
   assert.deepEqual(r.body.players[0].characters.map((c) => [c.id, c.name, c.playing]), [[s.brisk.character, 'Brisk', true]]);
   assert.equal(r.body.next, null);
   // a character's name finds its account, whatever the handle
   s.raw.prepare('UPDATE realm_characters SET name = ? WHERE id = ?').run('Thornwick', s.sylvia.character);
-  assert.deepEqual((await s.staff('/v1/staff/players', { q: 'THORN' }, s.mob.session)).body.players.map((p) => p.handle), ['Sylvia'], 'by a character\'s name, any case');
-  assert.deepEqual((await s.staff('/v1/staff/players', { q: 'horn' }, s.mob.session)).body.players, [], 'a prefix, never the middle of a name');
+  assert.deepEqual((await s.staff('/v1/staff/players', { q: 'THORN' }, s.chief.session)).body.players.map((p) => p.handle), ['Sylvia'], 'by a character\'s name, any case');
+  assert.deepEqual((await s.staff('/v1/staff/players', { q: 'horn' }, s.chief.session)).body.players, [], 'a prefix, never the middle of a name');
   // online now: a tab that beat inside the play clock's grace
   s.raw.prepare('UPDATE players SET played_at = ? WHERE id = ?').run(nowS() - 10, s.brisk.id);
   s.raw.prepare('UPDATE players SET played_at = ? WHERE id = ?').run(nowS() - PLAY_GRACE_S - 5, s.sylvia.id);
-  const on = await s.staff('/v1/staff/players', { online: true }, s.mob.session);
+  const on = await s.staff('/v1/staff/players', { online: true }, s.chief.session);
   assert.deepEqual(on.body.players.map((p) => [p.handle, p.online]), [['Brisk', true]]);
-  const every = await s.staff('/v1/staff/players', {}, s.mob.session);
+  const every = await s.staff('/v1/staff/players', {}, s.chief.session);
   assert.deepEqual(every.body.players.map((p) => p.handle), ['Asynian', 'Brisk', 'SirMcMobdon', 'Sylvia'], 'every account with a handle, by handle; guests none');
   assert.equal(every.body.players.find((p) => p.handle === 'Sylvia').online, false);
   // paged by handle
   for (let i = 0; i < PLAYERS_PAGE; i++) await s.registered(`Zed${String(i).padStart(2, '0')}`);
-  const p1 = await s.staff('/v1/staff/players', { q: 'zed' }, s.mob.session);
+  const p1 = await s.staff('/v1/staff/players', { q: 'zed' }, s.chief.session);
   assert.equal(p1.body.players.length, PLAYERS_PAGE);
   assert.equal(p1.body.next, null, 'a page just full has none after it');
-  const p2 = await s.staff('/v1/staff/players', {}, s.mob.session);
-  const p3 = await s.staff('/v1/staff/players', { from: p2.body.next }, s.mob.session);
+  const p2 = await s.staff('/v1/staff/players', {}, s.chief.session);
+  const p3 = await s.staff('/v1/staff/players', { from: p2.body.next }, s.chief.session);
   assert.equal(p2.body.players.length + p3.body.players.length, PLAYERS_PAGE + 4);
   assert.equal(new Set([...p2.body.players, ...p3.body.players].map((p) => p.id)).size, PLAYERS_PAGE + 4, 'every account once across the pages');
   assert.equal(p3.body.next, null);
@@ -207,7 +207,7 @@ test('STAFF-PANEL3-PLAYERS: A PROFILE - the card, the badges from the judge\'s s
   trade('s2', { a_player: sylvia.id, a_char: sylvia.character, b_player: brisk.id, b_char: ch, state: 'refused', why: 'trade-held:b', created_at: t - 2 });
   trade('s3', { a_player: sylvia.id, a_char: sylvia.character, b_player: brisk.id, b_char: ch, state: 'refused', why: 'trade-held:a', created_at: t - 1 });
 
-  const open = await s.staff('/v1/staff/player', { name: 'brisk' }, s.mob.session);
+  const open = await s.staff('/v1/staff/player', { name: 'brisk' }, s.chief.session);
   assert.equal(open.status, 200, JSON.stringify(open.body));
   const { card, badges, first } = open.body;
   assert.deepEqual([card.handle, card.level, card.online, card.strikes], ['Brisk', s.char.level_seen, false, 0], 'the level the realm trusts, off the row - never the save\'s own word');
@@ -228,7 +228,7 @@ test('STAFF-PANEL3-PLAYERS: A PROFILE - the card, the badges from the judge\'s s
   assert.deepEqual(inv.items.map((r) => r.where).sort(), ['bag', 'carried', 'carried', 'carried', 'deliveries', 'escrow', 'home', 'market-gold', 'stores', 'wagon']);
   assert.deepEqual([inv.purse, inv.banks], [500, 250]);
   const tab = async (name, more = {}) => {
-    const r = await s.staff('/v1/staff/player', { target: brisk.id, tab: name, ...more }, s.mob.session);
+    const r = await s.staff('/v1/staff/player', { target: brisk.id, tab: name, ...more }, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.equal(r.body.card, undefined, 'a tab alone');
     return r.body.data;
@@ -288,7 +288,7 @@ test('STAFF-PANEL3-PLAYERS: A PROFILE - the card, the badges from the judge\'s s
   // every view written down once in ten minutes, whatever its pages and filters
   assert.deepEqual(s.audits('player-read').map((a) => [a.target, JSON.parse(a.detail).tab]),
     [[brisk.id, 'inventories'], [brisk.id, 'skills'], [brisk.id, 'equipment'], [brisk.id, 'market'], [brisk.id, 'trades'], [brisk.id, 'economy'], [brisk.id, 'history'], [brisk.id, 'overview']]);
-  assert.deepEqual((await s.staff('/v1/staff/player', { name: 'nobody-here' }, s.mob.session)).status, 404);
+  assert.deepEqual((await s.staff('/v1/staff/player', { name: 'nobody-here' }, s.chief.session)).status, 404);
 });
 
 test('STAFF-PANEL3-PLAYERS FIX: A PROFILE SHOWS EVERY OPEN CASE - a chat case and a spawn case at once, both on Overview by kind, and both in its badge (mutants: the first case only; the order; the badge a boolean)', async () => {
@@ -298,10 +298,10 @@ test('STAFF-PANEL3-PLAYERS FIX: A PROFILE SHOWS EVERY OPEN CASE - a chat case an
     VALUES (?, ?, ?, 'open', ?, ?, ?, 0, 'off', 'off', ?)`).run(id, s.brisk.id, source, t - 60, t - 60, source === 'report' ? 1 : 0, kind);
   kase('case-spawn-000001', 'spawn', 'review');
   kase('case-chat-0000001', 'chat', 'report');
-  const open = await s.staff('/v1/staff/player', { target: s.brisk.id }, s.mob.session);
+  const open = await s.staff('/v1/staff/player', { target: s.brisk.id }, s.chief.session);
   assert.equal(open.status, 200, JSON.stringify(open.body));
   assert.deepEqual(open.body.badges.overview, { count: 2, level: 'high', why: ['2 open cases'] });
-  const ov = (await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'overview' }, s.mob.session)).body.data;
+  const ov = (await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'overview' }, s.chief.session)).body.data;
   assert.deepEqual(ov.openCases.map((c) => [c.id, c.kind, c.reports, c.claimedBy]), [['case-chat-0000001', 'chat', 1, null], ['case-spawn-000001', 'spawn', 0, null]]);
 });
 
@@ -314,7 +314,7 @@ test('STAFF-PANEL3-PLAYERS FIX: THE ECONOMY\'S GAINS PAGE - every gain in the ra
   const seen = [];
   let from = 0;
   for (let pages = 0; from !== null && pages < 10; pages++) {
-    const r = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'economy', days: 30, ...(from ? { from } : {}) }, s.mob.session);
+    const r = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'economy', days: 30, ...(from ? { from } : {}) }, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.ok(r.body.data.gains.length <= PLAYERS_PAGE, 'a page');
     seen.push(...r.body.data.gains.map((g) => g.detail.gain));
@@ -332,10 +332,10 @@ test('STAFF-PANEL3-PLAYERS: THE LEDGER\'S WORD - a copy it locked shown on the p
   const claim = raw.prepare("INSERT OR REPLACE INTO item_uids (uid, player, char_id, seen_seq, state, fp, claim_char, claim_at, at) VALUES (?, ?, ?, 1, 'held', '1:1', ?, ?, ?)");
   claim.run('ffffeeeeddddcccc', sylvia.id, sylvia.character, gem.character, t, t);   // Gem claims Sylvia's piece
   claim.run('1111222233334444', gem.id, gem.character, sylvia.character, t, t);      // Sylvia claims Gem's
-  const open = await s.staff('/v1/staff/player', { target: gem.id }, s.mob.session);
+  const open = await s.staff('/v1/staff/player', { target: gem.id }, s.chief.session);
   assert.equal(open.status, 200, JSON.stringify(open.body));
   assert.deepEqual(open.body.badges.inventories, { count: 3, level: 'high', why: ['1 locked copy', '2 pending claims'] });
-  const inv = (await s.staff('/v1/staff/player', { target: gem.id, tab: 'inventories' }, s.mob.session)).body.data;
+  const inv = (await s.staff('/v1/staff/player', { target: gem.id, tab: 'inventories' }, s.chief.session)).body.data;
   assert.deepEqual(inv.items.filter((r) => r.locked).map((r) => [r.name, r.key]), [['Letter of Credit', 'abcdabcdabcdabcd']], 'the copy the ledger locked, by its key');
   assert.equal(inv.items.find((r) => r.name === 'Bread').locked, undefined);
 });
@@ -346,15 +346,15 @@ test('STAFF-PANEL3-PLAYERS: A LIST PAGES -a section asked alone from `from`, ans
   for (let i = 0; i < PLAYERS_PAGE + 3; i++) {
     s.raw.prepare("INSERT INTO mod_actions (target, kind, until, reason, actor, actor_name, at) VALUES (?, 'unmute', NULL, NULL, 'x', 'x', ?)").run(s.brisk.id, t - i);
   }
-  const p1 = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'history' }, s.mob.session);
+  const p1 = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'history' }, s.chief.session);
   assert.equal(p1.body.data.acts.rows.length, PLAYERS_PAGE);
   assert.equal(p1.body.data.acts.next, PLAYERS_PAGE);
-  const p2 = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'history', section: 'acts', from: p1.body.data.acts.next }, s.mob.session);
+  const p2 = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'history', section: 'acts', from: p1.body.data.acts.next }, s.chief.session);
   assert.deepEqual(Object.keys(p2.body.data), ['acts']);
   assert.equal(p2.body.data.acts.rows.length, 3);
   assert.equal(p2.body.data.acts.next, null);
   assert.equal(p2.body.data.acts.rows[2].at, t - PLAYERS_PAGE - 2, 'oldest last');
-  const inv = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'inventories', from: 4 }, s.mob.session);
+  const inv = await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'inventories', from: 4 }, s.chief.session);
   assert.equal(inv.body.data.total, 6);
   assert.deepEqual(inv.body.data.items.map((r) => r.name), ['Copper Ore', 'Silver Goblet']);
   assert.equal(ITEMS_PAGE > inv.body.data.total, true);
@@ -362,12 +362,12 @@ test('STAFF-PANEL3-PLAYERS: A LIST PAGES -a section asked alone from `from`, ans
 
 test('STAFF-PANEL3-PLAYERS: DEVICES AND SIGN OUT EVERYWHERE - the player\'s own list and act, from the panel, by the account\'s id, and written down (mutants: the act unwritten; a name taken for an act)', async () => {
   const s = await stand();
-  const d = await s.staff('/v1/staff/player/devices', { name: 'Brisk' }, s.mob.session);
+  const d = await s.staff('/v1/staff/player/devices', { name: 'Brisk' }, s.chief.session);
   assert.equal(d.status, 200, JSON.stringify(d.body));
   assert.equal(d.body.devices.length, 1);
   assert.equal(Object.keys(d.body.devices[0]).includes('secret'), false);
-  assert.deepEqual((await s.staff('/v1/staff/player/signout', { name: 'Brisk' }, s.mob.session)).body, { error: 'no-player' }, 'an act names the account by its id');
-  const out = await s.staff('/v1/staff/player/signout', { target: s.brisk.id }, s.mob.session);
+  assert.deepEqual((await s.staff('/v1/staff/player/signout', { name: 'Brisk' }, s.chief.session)).body, { error: 'no-player' }, 'an act names the account by its id');
+  const out = await s.staff('/v1/staff/player/signout', { target: s.brisk.id }, s.chief.session);
   assert.deepEqual(out.body, { ok: true, target: s.brisk.id, revoked: 1 });
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(s.brisk.id).n, 0, 'the game sessions are gone');
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(s.sylvia.id).n, 1, 'another account\'s untouched');
@@ -380,7 +380,7 @@ test('STAFF-PANEL3-PLAYERS FIX: SIGN OUT EVERYWHERE REFUSES A GUEST - its sessio
   const g = await s.guest();
   const sessions = () => s.raw.prepare('SELECT COUNT(*) AS n FROM sessions WHERE player_id = ?').get(g.id).n;
   assert.equal(sessions(), 1);
-  assert.deepEqual(await s.staff('/v1/staff/player/signout', { target: g.id }, s.mob.session), { status: 409, body: { error: 'no-handle' } });
+  assert.deepEqual(await s.staff('/v1/staff/player/signout', { target: g.id }, s.chief.session), { status: 409, body: { error: 'no-handle' } });
   assert.equal(sessions(), 1, 'the guest keeps its way in');
   const name = s.raw.prepare('SELECT guest_name FROM players WHERE id = ?').get(g.id).guest_name;
   assert.deepEqual(s.audits('signout-all').map((a) => [a.target, JSON.parse(a.detail), a.outcome]), [[g.id, { name, error: 'no-handle' }, 'failed']]);
@@ -394,7 +394,7 @@ test('STAFF-PANEL3-PLAYERS: A HANDLE RENAMED - migration 0134\'s way, the old na
   raw.prepare("INSERT INTO guilds (id, name, name_key, tag, ranks, founded_at) VALUES ('g1', 'Oak', 'oak', 'OAK', '[]', ?)").run(t);
   raw.prepare("INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, 'g1', 0, 'Brisk', ?)").run(brisk.id, brisk.character, t);
   raw.prepare("INSERT INTO mod_actions (target, kind, actor, actor_name, at) VALUES (?, 'mute', ?, 'Brisk', ?)").run(s.sylvia.id, brisk.id, t);
-  const rename = (body, token = s.mob.session) => s.staff('/v1/staff/player/rename', body, token);
+  const rename = (body, token = s.chief.session) => s.staff('/v1/staff/player/rename', body, token);
   const squid = await s.registered('SquidKamer');
   const helper = await s.registered('Helper');
   raw.prepare('UPDATE players SET staff_mod = 1 WHERE id = ?').run(helper.id);
@@ -442,7 +442,7 @@ test('STAFF-PANEL3-PLAYERS: A HANDLE RENAMED - migration 0134\'s way, the old na
 test('STAFF-PANEL3-PLAYERS: A CHARACTER RENAMED - its row\'s name, the one the mint signs where the player wears it; never another account\'s handle or a listed name (mutants: each refusal)', async () => {
   const s = await stand();
   const { raw, brisk } = s;
-  const rename = (body) => s.staff('/v1/staff/player/rename', body, s.mob.session);
+  const rename = (body) => s.staff('/v1/staff/player/rename', body, s.chief.session);
   const refusals = [
     [{ target: brisk.id, char: brisk.character, to: 'Sylvia' }, 'rename-taken', 'another account\'s handle'],
     [{ target: brisk.id, char: brisk.character, to: 'Lattymoy' }, 'rename-listed', 'a listed name'],
@@ -493,7 +493,7 @@ test('STAFF-PANEL3-PLAYERS FIX: A HANDLE RENAMED WRITES ITS OWN COPIES ALONE - n
   // a letter of Sylvia's under a name like it, and Brisk's own
   insert('letters', { id: 'lt-sylvia', to_id: brisk.id, from_id: sylvia.id, from_name: 'Brisk', subject: 'hi', body: 'hello', sent_at: t });
   insert('letters', { id: 'lt-brisk', to_id: sylvia.id, from_id: brisk.id, from_name: 'Brisk', subject: 'hi', body: 'hello', sent_at: t });
-  const ok = await s.staff('/v1/staff/player/rename', { target: brisk.id, to: 'Bristle' }, s.mob.session);
+  const ok = await s.staff('/v1/staff/player/rename', { target: brisk.id, to: 'Bristle' }, s.chief.session);
   assert.deepEqual(ok.body, { ok: true, target: brisk.id, from: 'Brisk', to: 'Bristle' });
   const one = (sql, ...a) => raw.prepare(sql).get(...a);
   assert.equal(one('SELECT name FROM renown_tracks WHERE player = ?', sylvia.id).name, 'brisk', 'another account\'s character');
@@ -511,10 +511,10 @@ test('STAFF-PANEL3-PLAYERS: SERVER LOAD - the trades read and the search by a ch
   const seen = [];
   const prepare = s.env.DB.prepare.bind(s.env.DB);
   s.env.DB.prepare = (sql) => { seen.push(sql); return prepare(sql); };
-  await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'trades' }, s.mob.session);
-  await s.staff('/v1/staff/players', { q: 'thor' }, s.mob.session);
-  await s.staff('/v1/staff/players', { online: true }, s.mob.session);
-  await s.staff('/v1/staff/player', { target: s.brisk.id }, s.mob.session);
+  await s.staff('/v1/staff/player', { target: s.brisk.id, tab: 'trades' }, s.chief.session);
+  await s.staff('/v1/staff/players', { q: 'thor' }, s.chief.session);
+  await s.staff('/v1/staff/players', { online: true }, s.chief.session);
+  await s.staff('/v1/staff/player', { target: s.brisk.id }, s.chief.session);
   s.env.DB.prepare = prepare;
   const plan = (sql) => s.raw.prepare(`EXPLAIN QUERY PLAN ${sql}`).all().map((r) => r.detail).join(' | ');
   const trades = seen.filter((q) => /FROM realm_trades/.test(q));

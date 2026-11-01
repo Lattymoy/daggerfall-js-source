@@ -36,15 +36,15 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up: mob (an Admin and owner) and Asynian (a Moderator) signed in. `relay` answers the
+/** The Worker with the panel set up: chief (an Admin and owner) and Asynian (a Moderator) signed in. `relay` answers the
  *  relay's public doors and `ae` the Analytics Engine SQL API (each `(url, init) => body` or a throw); every call is
  *  recorded in `asked`. */
 async function stand(extra = {}) {
   _resetStatusForTests();
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY + SAFE_LAW_PATH, ...extra,
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY + SAFE_LAW_PATH, ...extra,
   });
   const asked = [];
   const answers = {
@@ -66,8 +66,8 @@ async function stand(extra = {}) {
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
   const raw = s.env.DB._raw;
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
   const audits = (act) => raw.prepare('SELECT * FROM staff_audit WHERE act = ? ORDER BY id').all(act);
@@ -80,7 +80,7 @@ async function stand(extra = {}) {
     raw.prepare(`INSERT INTO mod_cases (${Object.keys(row).join(', ')}) VALUES (${Object.keys(row).map(() => '?').join(', ')})`).run(...Object.values(row));
     return id;
   };
-  return { ...s, raw, staff, mob, asy, answers, asked, audits, caseOn, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, chief, asy, answers, asked, audits, caseOn, restore: () => { globalThis.fetch = real; } };
 }
 
 /** Date.now moved `ms` on for `fn`. */
@@ -139,7 +139,7 @@ test('STAFF-PANEL6-STATUS: server status is the Admins\' - a Moderator is refuse
 test('STAFF-PANEL6-STATUS: an Admin sets, moves and clears a limit, each written down with what it was; a bad one is refused and written down failed', async () => {
   const s = await stand();
   try {
-    const set = (body) => s.staff('/v1/staff/limit/set', body, s.mob.session);
+    const set = (body) => s.staff('/v1/staff/limit/set', body, s.chief.session);
     assert.deepEqual((await set({ metric: 'activity.minted', amber: 100, red: 500 })).body, { ok: true, metric: 'activity.minted', amber: 100, red: 500 });
     assert.deepEqual((await set({ metric: 'activity.minted', amber: null, red: 400 })).body, { ok: true, metric: 'activity.minted', amber: null, red: 400 });
     let lim = (await s.staff('/v1/staff/limits', {}, s.asy.session)).body.limits;
@@ -149,10 +149,10 @@ test('STAFF-PANEL6-STATUS: an Admin sets, moves and clears a limit, each written
       const r = await set(bad);
       assert.deepEqual([r.status, r.body], [400, { error: 'body' }], JSON.stringify(bad));
     }
-    lim = (await s.staff('/v1/staff/limits', {}, s.mob.session)).body.limits;
+    lim = (await s.staff('/v1/staff/limits', {}, s.chief.session)).body.limits;
     assert.equal(lim['activity.minted'].red, 400, 'a refused set changed nothing');
     assert.deepEqual((await set({ metric: 'activity.minted', amber: null, red: null })).body, { ok: true, metric: 'activity.minted', amber: null, red: null });
-    assert.deepEqual((await s.staff('/v1/staff/limits', {}, s.mob.session)).body.limits, {}, 'both lines none: the limit is gone');
+    assert.deepEqual((await s.staff('/v1/staff/limits', {}, s.chief.session)).body.limits, {}, 'both lines none: the limit is gone');
     const rows = s.audits('limit-set').map((a) => [a.outcome, JSON.parse(a.detail)]);
     assert.deepEqual(rows.filter(([o]) => o === 'ok').map(([, d]) => d), [
       { metric: 'activity.minted', amber: 100, red: 500, was: null },
@@ -184,7 +184,7 @@ test('STAFF-PANEL6-STATUS: with no Analytics token the load says "not configured
     s.raw.prepare(`INSERT INTO market_sales (buyer, rid, char_id, listing, seller, kind, material, units, price, total, tax, from_region, to_region, arrives_at, at, day, n)
       VALUES (?, 's1', 'c', 'l1', ?, 'material', 'iron', 1, 5, 5, 0, 1, 1, ?, ?, ?, 'n')`).run(ids[0], ids[1], t, t - 60, utcDay(t - 60));
 
-    const r = await s.staff('/v1/staff/status', {}, s.mob.session);
+    const r = await s.staff('/v1/staff/status', {}, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     const { body } = r;
     assert.deepEqual(body.tiles.map((x) => x.id), ['players', 'load', 'activity', 'health']);
@@ -213,7 +213,7 @@ test('STAFF-PANEL6-STATUS: with the token, the load is read from Analytics Engin
       if (sql.includes("blob2 = 'CRON'")) return { data: [{ job: 'cron:auctions', failed: 2 }, { job: 'cron:board', failed: 0 }] };
       return { data: [{ requests: 3000, slow: 52, r429: 10, r503: 5, r5xx: 15, d1_wait_ms: 60000, beats: 120 }] };
     };
-    const { body } = await s.staff('/v1/staff/status', {}, s.mob.session);
+    const { body } = await s.staff('/v1/staff/status', {}, s.chief.session);
     const ae = s.asked.filter((a) => a.to === 'ae');
     assert.equal(ae.length, 3, 'three questions');
     for (const a of ae) {
@@ -237,7 +237,7 @@ test('STAFF-PANEL6-STATUS: missing data is said so - an Analytics Engine or rela
   try {
     s.answers.ae = () => new Response('no', { status: 500 });
     s.answers.relay = () => { throw new Error('down'); };
-    const { body } = await s.staff('/v1/staff/status', {}, s.mob.session);
+    const { body } = await s.staff('/v1/staff/status', {}, s.chief.session);
     assert.deepEqual(tileOf(body, 'load').sources, { analytics: 'missing' });
     assert.equal(tileOf(body, 'load').values.rps, null);
     assert.equal(tileOf(body, 'players').sources.breaches, 'missing');
@@ -250,28 +250,28 @@ test('STAFF-PANEL6-STATUS: missing data is said so - an Analytics Engine or rela
   const t = await stand();
   try {
     t.answers.relay = (url) => (url.endsWith('/health') ? { ok: false } : new Response('x', { status: 503 }));
-    const { body } = await t.staff('/v1/staff/status', {}, t.mob.session);
+    const { body } = await t.staff('/v1/staff/status', {}, t.chief.session);
     assert.deepEqual([checkOf(body, 'relay').ok, tileOf(body, 'health').level], [false, 'red']);
   } finally { t.restore(); }
   // the service's own database read failing is a service health failure
   const v = await stand();
   try {
     v.raw.exec('DROP TABLE mod_feed');
-    const { body } = await v.staff('/v1/staff/status', {}, v.mob.session);
+    const { body } = await v.staff('/v1/staff/status', {}, v.chief.session);
     assert.deepEqual([checkOf(body, 'service').ok, checkOf(body, 'service').why, tileOf(body, 'health').level], [false, 'the service\'s database read failed', 'red']);
     assert.deepEqual([tileOf(body, 'players').values.registered, tileOf(body, 'players').sources.registered], [null, 'missing']);
   } finally { v.restore(); }
   // an account named with no token asks nothing
   const w = await stand({ STAFF_ANALYTICS_ACCOUNT: ACCT });
   try {
-    const { body } = await w.staff('/v1/staff/status', {}, w.mob.session);
+    const { body } = await w.staff('/v1/staff/status', {}, w.chief.session);
     assert.equal(tileOf(body, 'load').sources.analytics, 'not-configured');
     assert.equal(w.asked.filter((a) => a.to === 'ae').length, 0);
   } finally { w.restore(); }
   // an account id that is not one never reaches the address
   const u = await stand({ STAFF_ANALYTICS_TOKEN: 'tok', STAFF_ANALYTICS_ACCOUNT: '../x' });
   try {
-    const { body } = await u.staff('/v1/staff/status', {}, u.mob.session);
+    const { body } = await u.staff('/v1/staff/status', {}, u.chief.session);
     assert.equal(tileOf(body, 'load').sources.analytics, 'not-configured');
     assert.equal(u.asked.filter((a) => a.to === 'ae').length, 0);
   } finally { u.restore(); }
@@ -284,28 +284,28 @@ test('STAFF-PANEL6-STATUS: the AI reviewer failing turns health red - a failed r
     const p = await s.registered('Troll');
     // a closed case left 'due' is nobody's read: no failure
     s.caseOn(await s.registered('Old'), { status: 'dismissed', ai_state: 'due', updated_at: nowS() - 10 * AI_WAIT_S });
-    let body = (await s.staff('/v1/staff/status', {}, s.mob.session)).body;
+    let body = (await s.staff('/v1/staff/status', {}, s.chief.session)).body;
     assert.deepEqual([checkOf(body, 'ai').ok, tileOf(body, 'health').level], [true, 'grey'], 'a closed case waits on nothing');
     _resetStatusForTests();
     const id = s.caseOn(p, { ai_state: 'failed' });
-    body = (await s.staff('/v1/staff/status', {}, s.mob.session)).body;
+    body = (await s.staff('/v1/staff/status', {}, s.chief.session)).body;
     assert.deepEqual([checkOf(body, 'ai').ok, checkOf(body, 'ai').failed, tileOf(body, 'health').level], [false, 1, 'red']);
     assert.match(checkOf(body, 'ai').why, /1 open case the AI check failed to read/);
     s.raw.prepare("UPDATE mod_cases SET ai_state = 'due', updated_at = ? WHERE id = ?").run(nowS() - AI_WAIT_S + 30, id);
-    body = await later(STATUS_FAST_S * 1000, async () => (await s.staff('/v1/staff/status', {}, s.mob.session)).body);
+    body = await later(STATUS_FAST_S * 1000, async () => (await s.staff('/v1/staff/status', {}, s.chief.session)).body);
     assert.deepEqual([checkOf(body, 'ai').ok, tileOf(body, 'health').level], [true, 'grey'], 'waiting, not yet late');
     s.raw.prepare('UPDATE mod_cases SET updated_at = ? WHERE id = ?').run(nowS() - AI_WAIT_S - 60, id);
-    body = await later(2 * STATUS_FAST_S * 1000, async () => (await s.staff('/v1/staff/status', {}, s.mob.session)).body);
+    body = await later(2 * STATUS_FAST_S * 1000, async () => (await s.staff('/v1/staff/status', {}, s.chief.session)).body);
     assert.deepEqual([checkOf(body, 'ai').ok, tileOf(body, 'health').level], [false, 'red'], 'a case read waiting too long');
     s.raw.prepare("UPDATE mod_cases SET ai_state = 'done' WHERE id = ?").run(id);
     s.raw.prepare("INSERT INTO mod_feed (id, at, lines, state) VALUES ('f1', ?, '[]', 'due')").run(nowS() - AI_WAIT_S - 60);
-    body = await later(3 * STATUS_FAST_S * 1000, async () => (await s.staff('/v1/staff/status', {}, s.mob.session)).body);
+    body = await later(3 * STATUS_FAST_S * 1000, async () => (await s.staff('/v1/staff/status', {}, s.chief.session)).body);
     assert.deepEqual([checkOf(body, 'ai').ok, tileOf(body, 'health').level], [false, 'red'], 'a feed batch waiting too long');
   } finally { s.restore(); }
   const off = await stand();
   try {
     off.caseOn(await off.registered('Troll'), { ai_state: 'failed' });
-    const { body } = await off.staff('/v1/staff/status', {}, off.mob.session);
+    const { body } = await off.staff('/v1/staff/status', {}, off.chief.session);
     assert.deepEqual([checkOf(body, 'ai').ok, checkOf(body, 'ai').why, tileOf(body, 'health').level], [null, 'reviewer off', 'grey']);
   } finally { off.restore(); }
 });
@@ -316,7 +316,7 @@ test('STAFF-PANEL6-STATUS: each part is kept for its window - a poll in ten seco
   let off = 0;
   Date.now = () => T0 + off;   // the service's clock held still, then moved by whole seconds
   try {
-    const status = () => s.staff('/v1/staff/status', { poll: true }, s.mob.session);
+    const status = () => s.staff('/v1/staff/status', { poll: true }, s.chief.session);
     const first = (await status()).body;
     const count = () => ({ health: s.asked.filter((a) => a.url.endsWith('/health')).length, ae: s.asked.filter((a) => a.to === 'ae').length, eg: s.asked.filter((a) => a.url.endsWith(EG_LIVE_PATH)).length });
     assert.deepEqual(count(), { health: 1, ae: 3, eg: 1 });
@@ -334,7 +334,7 @@ test('STAFF-PANEL6-STATUS: each part is kept for its window - a poll in ten seco
     assert.deepEqual(count(), { health: 3, ae: 6, eg: 2 }, 'the slow part at its own');
     // a limit set in this isolate shows on the next read, not STATUS_FAST_S on
     s.raw.prepare('UPDATE players SET played_at = ? WHERE handle IS NOT NULL').run(nowS());
-    await s.staff('/v1/staff/limit/set', { metric: 'players.registered', amber: 1, red: 3 }, s.mob.session);
+    await s.staff('/v1/staff/limit/set', { metric: 'players.registered', amber: 1, red: 3 }, s.chief.session);
     const now = (await status()).body;
     assert.deepEqual([tileOf(now, 'players').level, tileOf(now, 'players').values.registered], ['amber', 2]);
   } finally { Date.now = real; s.restore(); }
@@ -346,21 +346,21 @@ test('STAFF-PANEL6-STATUS: a tile goes amber or red past the limits an Admin set
     const t = nowS();
     const id = s.raw.prepare("SELECT id FROM players WHERE handle = 'SirMcMobdon'").get().id;
     s.raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid) VALUES ('mint', NULL, 'account', ?, 'test', 900, ?, ?, ?, NULL, 'big')`).run(id, utcDay(t), t - 10, id);
-    const set = (metric, amber, red) => s.staff('/v1/staff/limit/set', { metric, amber, red }, s.mob.session);
+    const set = (metric, amber, red) => s.staff('/v1/staff/limit/set', { metric, amber, red }, s.chief.session);
     await set('activity.minted', 500, 1000);
-    let { body } = await s.staff('/v1/staff/status', {}, s.mob.session);
+    let { body } = await s.staff('/v1/staff/status', {}, s.chief.session);
     let act = tileOf(body, 'activity');
     assert.deepEqual([act.level, act.why, body.level], ['amber', ['Marks minted, last hour: 900 (amber at 500)'], 'amber']);
     await set('activity.minted', 500, 900);
-    body = (await s.staff('/v1/staff/status', {}, s.mob.session)).body;
+    body = (await s.staff('/v1/staff/status', {}, s.chief.session)).body;
     act = tileOf(body, 'activity');
     assert.deepEqual([act.level, act.why, body.level], ['red', ['Marks minted, last hour: 900 (red at 900)'], 'red']);
     await set('activity.burned', 0, null);   // a second metric amber does not lower a red tile
-    body = (await s.staff('/v1/staff/status', {}, s.mob.session)).body;
+    body = (await s.staff('/v1/staff/status', {}, s.chief.session)).body;
     assert.equal(tileOf(body, 'activity').level, 'red');
     assert.equal(tileOf(body, 'activity').why.length, 2);
     // Home's status watch: the red tile, high
-    const home = (await s.staff('/v1/staff/home', { n: 3 }, s.mob.session)).body;
+    const home = (await s.staff('/v1/staff/home', { n: 3 }, s.chief.session)).body;
     const w = home.watches.find((x) => x.id === 'status');
     assert.deepEqual([w.items, w.high, w.total], [[{ level: 'high', why: tileOf(body, 'activity').why.join(' · '), sub: null, name: 'Game activity, last hour' }], 1, 1]);
   } finally { s.restore(); }
@@ -406,9 +406,9 @@ test('STAFF-PANEL6-STATUS: HOME through the Worker - the Reports watch ranked as
     assert.deepEqual(rep.items.map((i) => i.why).slice(0, 2), ['1 reporter · AI check failed', '1 reporter · AI check: harassment, high'], 'the why, one line');
     const cases = (await s.staff('/v1/staff/cases', {}, s.asy.session)).body;
     assert.deepEqual([cases.high, cases.cases.map((x) => x.target)], [2, rep.items.map((i) => i.sub)], 'the same ranking as the Reports list');
-    const one = (await s.staff('/v1/staff/home', { n: 3 }, s.mob.session)).body;
+    const one = (await s.staff('/v1/staff/home', { n: 3 }, s.chief.session)).body;
     assert.deepEqual(one.watches.map((x) => [x.id, x.items.length]), [['reports', 3], ['economy', 0], ['gains', 0], ['contested', 0], ['bursts', 0], ['monsters', 0], ['freeze', 0], ['watchlist', 0], ['status', 0]], 'an Admin: every watch, the quiet ones in their usual order (PIN MOVED, STAFF-PANEL5: the feeds\' two and the freeze\'s)');
-    for (const n of [4, 0, '5', 100]) assert.deepEqual((await s.staff('/v1/staff/home', { n }, s.mob.session)).body, { error: 'body' }, String(n));
+    for (const n of [4, 0, '5', 100]) assert.deepEqual((await s.staff('/v1/staff/home', { n }, s.chief.session)).body, { error: 'body' }, String(n));
     await s.staff('/v1/staff/home', { n: 10 }, s.asy.session);
     const rows = s.audits('home-read');
     assert.deepEqual(rows.map((x) => [x.role, x.outcome]), [['moderator', 'ok'], ['admin', 'ok'], ['moderator', 'ok']], 'once a view a window: a new n is a new view');

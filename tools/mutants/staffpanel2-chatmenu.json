@@ -64,7 +64,7 @@
     "file": "src/scenes/chatSafetyHost.js",
     "old": "                      if (ok === false)",
     "new": "                      if (ok === 'no')",
-    "why": "Follow with no Staff Panel over the game does nothing and says nothing (mob: \"why doesnt follow work?\")",
+    "why": "Follow with no Staff Panel over the game does nothing and says nothing",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ]

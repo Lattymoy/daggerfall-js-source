@@ -4,7 +4,7 @@
     "file": "src/scenes/staffViewHost.js",
     "old": "      ...(acts ? dismissRow(sub) : []),\n    ];",
     "new": "    ];",
-    "why": "a flag on a nameplate cannot be dismissed (mob: \"need a dismiss button on players name plates for flags\")",
+    "why": "a flag on a nameplate cannot be dismissed",
     "tests": [
       "test/scenes/staffview1.test.js"
     ]

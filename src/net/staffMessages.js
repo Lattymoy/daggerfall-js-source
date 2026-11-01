@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
+// STAFF-PANEL5-MESSAGE (2026-10-22: a message in the middle of one player's screen; design doc "DFO Staff
 // Panel: design", Message on screen): THE GAME'S HALF - the hub's nudge in, the words read, the box shown, the OK said.
 //
 // The hub's `{t:'smsg', mi}` (net/online.js `onStaffMessage`) says only that a message waits; it is made from the account

@@ -87,7 +87,7 @@ export const TITLE_TEXT = Object.freeze({
   disciple: 'Disciple', // TITLE-N: the Patreon tiers, lowest first
   apostle: 'Apostle',
   hierophant: 'Hierophant',
-  shadowfang: 'Shadow Fang', // SHADOW-FANG (2026-09-26, Mac): SirMcMobdon's own
+  shadowfang: 'Shadow Fang', // SHADOW-FANG (2026-09-26, Mac): the Shadow Fang account's own
   penitent: 'Penitent', // PENITENT (2026-09-29, Mac): Diggleborf's own
   gatebreaker: 'Gatebreaker', // WB9g (2026-09-30, Mac): the Sigil Broker's, bought
   herald: 'Herald', // HERALD (2026-10-01, Mac): the Patreon tier between Disciple and Hierophant
@@ -231,7 +231,7 @@ export const AURA_TEXT = Object.freeze({
   }, // BLOOD-OF-COLDHARBOUR: a dark violet haze about the body, blood rising into Daedric runes, granted with the title
 });
 
-/** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
+/** SHADOW-FANG (2026-09-26, Mac): "the Shadow Fang account gets a brand new
  *  title/glyph... Black and crimson graident for the title/glyph with the
  *  title name being Shadow Fang", and the glyph "like the reference
  *  shown" - a snarling wolf's head in profile, black, with a red eye.

@@ -16,7 +16,7 @@
 //
 // A TOKEN OPENS EACH ROOM ONCE (net/identityToken.js), so the game asks one for each room its follow enters, naming it
 // (`room`). A private one - a home, a caravan, a boat's cabin - is written down by name (`follow-home`); every other is
-// one `follow` row a member, a target and a minute (onceIn). The owners are not alerted: that waits for mob (the design
+// one `follow` row a member, a target and a minute (onceIn). The owners are not alerted: that waits on a decision (the design
 // doc's privacy policy line, "staff may watch play").
 // ═══════════════════════════════════════════════════════════════════
 import { mintToken, ID_RE, MAX_TTL_S } from '../../src/net/identityToken.js';
@@ -25,7 +25,7 @@ import { signingKey } from './signing.js';
 import { displayName } from './accounts.js';
 
 export const FOLLOW_ROUTES = Object.freeze(['/v1/staff/follow']);
-/** The roles that may follow (mob, 07:04Z). */
+/** The roles that may follow. */
 export const FOLLOW_ROLES = Object.freeze(['admin', 'moderator']);
 /** A follow's rows: one a member, a target and this many seconds - a follow through ten rooms is one row, not ten. */
 export const FOLLOW_AUDIT_S = 60;

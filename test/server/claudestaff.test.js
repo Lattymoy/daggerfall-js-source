@@ -35,7 +35,7 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker, the panel's members signed in (SirMcMobdon an Admin, owner and on the order list; kpblca_1 an Admin on the
+/** The Worker, the panel's members signed in (the Shadow Fang account an Admin, owner and on the order list; kpblca_1 an Admin on the
  *  order list; Asynian a Moderator) and three players, with Claude switched `claude`. */
 async function stand(claude = 'on', extra = {}) {
   const leadKey = await extensionKey();

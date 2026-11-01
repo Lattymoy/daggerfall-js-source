@@ -1,6 +1,6 @@
 // NIRNROOT-SAGE — BLOB-MARLEY'S OWN: THE NIRNROOT SAGE, ITS GLYPH, AND SAGE'S SMOKE (2026-10-26).
 //
-// For Blob-Marley, an Immortal backer - his custom aura, worked out with SirMcMobdon: "a cloud of billowing smoke with
+// For Blob-Marley, an Immortal backer - his custom aura, worked out with the Shadow Fang account: "a cloud of billowing smoke with
 // nirnroots circling around me", and his final idea, "billowing smoke, circling nirn roots around midsection, small
 // glowing green runes encircling feet". The owner named the title Nirnroot Sage and its glyph a nirnroot sprig. The
 // handle list grants all three together (TIER_LISTS, TIER_GLYPH and TIER_AURA, WIKIMAID's law); the title is drawn a

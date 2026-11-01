@@ -52,13 +52,13 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up and the relay's door recorded (staffpanel2's stand): mob an Admin, Asynian a Moderator,
+/** The Worker with the panel set up and the relay's door recorded (staffpanel2's stand): chief an Admin, Asynian a Moderator,
  *  and Troll and Sylvia, two players; the market's switches on. `s.relayDown(true)` makes the door fail. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY, DISCORD_INVITE_URL: INVITE,
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY, DISCORD_INVITE_URL: INVITE,
     PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on',
   });
   const pushed = [];
@@ -88,8 +88,8 @@ async function stand() {
   const troll = await s.registered('Troll');
   const sylvia = await s.registered('Sylvia');
   const raw = s.env.DB._raw;
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const asyKey = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await asyKey.proof('enroll', 'Asynian')) })).body;
   assert.ok(asy.session, 'the Moderator signed in');
@@ -97,9 +97,9 @@ async function stand() {
   const row = (id) => ({ ...raw.prepare('SELECT frozen_until, frozen_reason, frozen_by, frozen_at, freeze_rev, freeze_live FROM players WHERE id = ?').get(id) });
   const thread = (id) => { const t = raw.prepare('SELECT * FROM staff_chat_threads WHERE player = ?').get(id); return t ? { ...t } : null; };
   const audits = (act) => raw.prepare('SELECT role, act, target, outcome, detail FROM staff_audit WHERE act = ? ORDER BY id').all(act).map((r) => ({ ...r, detail: JSON.parse(r.detail ?? 'null') }));
-  const freeze = (who, extra = {}, token = mob.session) => staff('/v1/staff/freeze', { target: who.id, minutes: 60, reason: 'botting in Daggerfall', ...extra }, token);
+  const freeze = (who, extra = {}, token = chief.session) => staff('/v1/staff/freeze', { target: who.id, minutes: 60, reason: 'botting in Daggerfall', ...extra }, token);
   const said = (path, who, body = {}) => s.call(path, body, who.secret);
-  return { ...s, raw, staff, ask, mob, asy, troll, sylvia, idOf, row, thread, audits, freeze, said, pushed, relayDown: (v) => { down = v; }, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, ask, chief, asy, troll, sylvia, idOf, row, thread, audits, freeze, said, pushed, relayDown: (v) => { down = v; }, restore: () => { globalThis.fetch = real; } };
 }
 
 test('STAFF-PANEL5-FREEZE: the doors are listed - the panel\'s among the staff panel\'s, none open without a staff session; the player\'s own among the game\'s, behind its session; the clocks\' jobs named', async () => {
@@ -148,7 +148,7 @@ test('STAFF-PANEL5-FREEZE: A FREEZE - its minutes, its reason, never staff and n
     await bad({ reason: '' }, 'bad-reason');
     await bad({}, 'staff-self', 409, { id: s.idOf('SirMcMobdon') });
     await bad({}, 'protected', 403, { id: s.idOf('Asynian') });
-    const un = await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session);
+    const un = await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session);
     assert.deepEqual([un.status, un.body], [409, { error: 'not-frozen' }]);
     assert.deepEqual(s.audits('freeze').map((a) => [a.outcome, a.detail.error]), [['failed', 'bad-minutes'], ['failed', 'bad-minutes'], ['failed', 'bad-minutes'], ['failed', 'bad-reason'], ['failed', 'staff-self'], ['failed', 'protected']]);
     assert.deepEqual(s.audits('unfreeze').map((a) => [a.outcome, a.detail.error]), [['failed', 'not-frozen']]);
@@ -167,7 +167,7 @@ test('STAFF-PANEL5-FREEZE: A FREEZE - its minutes, its reason, never staff and n
     assert.deepEqual([s.thread(s.troll.id).why, s.thread(s.troll.id).player_in, s.thread(s.troll.id).closed_at], ['freeze', 1, null], 'A FREEZE OPENS THE THREAD, the player in it');
 
     _now += 10;
-    const u = await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session);
+    const u = await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session);
     assert.deepEqual(u.body, { ok: true, target: s.troll.id, name: 'Troll', until: 0, reason: null, live: true });
     assert.deepEqual(s.row(s.troll.id), { frozen_until: null, frozen_reason: null, frozen_by: s.idOf('SirMcMobdon'), frozen_at: nowS(), freeze_rev: 2, freeze_live: 1 });
     const lift = await verifyOrder(s.pushed[1], s.identityPublic, { subtle, nowS: nowS(), kind: 'freeze' });
@@ -231,7 +231,7 @@ test('STAFF-PANEL5-FREEZE: ONE GATE - A MODDED CLIENT that ignores the freeze sc
     assert.equal(freezeRefusal('/v1/realm/r00000000000000000000/data', true, { frozen_until: nowS() + 1 }, nowS()), null);
     // another account is not touched, and the unfreeze opens the doors
     assert.notEqual((await s.ask('POST', '/v1/market/read', s.sylvia.secret, { character: 'c', region: DF, view: 'mine', hubs: HUBS })).body?.error, 'frozen');
-    await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session);
+    await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session);
     assert.notEqual((await s.ask('POST', '/v1/heartbeat', s.troll.secret, { beat: true })).body?.error, 'frozen');
     assert.equal((await s.said('/v1/auth/logout', s.troll)).status, 200, 'signing out');
   } finally { s.restore(); }
@@ -256,7 +256,7 @@ test('STAFF-PANEL5-FREEZE: UNDER A PASS MINTED BEFORE THE FREEZE the checkpoint 
     assert.equal(beat.status, 200, 'the pass\'s reads wait for its renewal');
     assert.deepEqual(played(), was, 'the beat credits a frozen account nothing');
     // unfrozen, the next beat credits again
-    await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session);
+    await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session);
     _now += 30;
     await s.ask('POST', '/v1/heartbeat', s.troll.secret, { beat: true }, { pass: first.pass });
     assert.notDeepEqual(played(), was, 'unfrozen: credited');
@@ -292,7 +292,7 @@ test('STAFF-PANEL5-FREEZE: A FROZEN ACCOUNT\'S GOODS SELL NOTHING - a buy of its
     assert.deepEqual([(await buy()).status, (await buy()).body], [409, { error: 'market-seller-frozen' }]);
     assert.deepEqual([(await bid()).status, (await bid()).body], [409, { error: 'market-seller-frozen' }]);
     assert.equal(s.raw.prepare('SELECT owner FROM products WHERE provenance = ?').get(PV).owner, mac.id, 'nothing sold');
-    await s.staff('/v1/staff/unfreeze', { target: mac.id }, s.mob.session);
+    await s.staff('/v1/staff/unfreeze', { target: mac.id }, s.chief.session);
     const sold = await buy();
     assert.equal(sold.status, 200, JSON.stringify(sold.body));
     assert.equal((await bid()).status, 200);
@@ -309,7 +309,7 @@ test('STAFF-PANEL5-FREEZE: A FALL THAT NAMES A FROZEN ACCOUNT IS REFUSED - a kil
     const r = await fall();
     assert.deepEqual([r.status, r.body], [409, { error: 'fallen-frozen' }]);
     assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM wild_falls').get().n, 0, 'no fall recorded');
-    await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session);
+    await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session);
     assert.notEqual((await fall()).body?.error, 'fallen-frozen', 'unfrozen: the filing is the fall\'s own law\'s again');
   } finally { s.restore(); }
 });
@@ -317,7 +317,7 @@ test('STAFF-PANEL5-FREEZE: A FALL THAT NAMES A FROZEN ACCOUNT IS REFUSED - a kil
 test('STAFF-PANEL5-FREEZE: THE STAFF CHAT - Talk opens a thread outside a freeze and the player joins on the first staff line; every line stored here first, the audit naming it by id and length (never its words), a staff line\'s nudge pushed (`staffline`, `sl` its id); the player reads (the Discord invite beside) and answers, the open threads list the waiting first; staff close a Talk thread, never a freeze\'s (mutants: the join; the nudge; the words in the audit; the waiting order; the close)', async () => {
   const s = await stand();
   try {
-    assert.deepEqual((await s.staff('/v1/staff/talk', { target: s.idOf('SirMcMobdon') }, s.mob.session)).body, { error: 'staff-self' });
+    assert.deepEqual((await s.staff('/v1/staff/talk', { target: s.idOf('SirMcMobdon') }, s.chief.session)).body, { error: 'staff-self' });
     const t = await s.staff('/v1/staff/talk', { target: s.sylvia.id }, s.asy.session);
     assert.deepEqual(t.body, { ok: true, target: s.sylvia.id, name: 'Sylvia', why: 'talk', playerIn: false });
     assert.deepEqual([s.thread(s.sylvia.id).why, s.thread(s.sylvia.id).player_in, s.thread(s.sylvia.id).opened_by], ['talk', 0, s.idOf('Asynian')]);
@@ -346,26 +346,26 @@ test('STAFF-PANEL5-FREEZE: THE STAFF CHAT - Talk opens a thread outside a freeze
     assert.deepEqual([theirs.role, theirs.target, theirs.detail], ['player', s.sylvia.id, { line: back.body.line.id, len: 10 }], 'the player\'s line in the audit log too - its id and length, never its words');
     assert.deepEqual((await s.said('/v1/staff-chat/read', s.sylvia, { after: line.body.line.id })).body.lines.map((l) => l.text), ['Of course!'], 'after its cursor');
     // the open threads: the one waiting on staff first
-    await s.staff('/v1/staff/talk', { target: s.troll.id }, s.mob.session);
-    const chats = (await s.staff('/v1/staff/chats', {}, s.mob.session)).body;
+    await s.staff('/v1/staff/talk', { target: s.troll.id }, s.chief.session);
+    const chats = (await s.staff('/v1/staff/chats', {}, s.chief.session)).body;
     assert.deepEqual(chats.chats.map((c) => [c.name, c.waiting, c.why]), [['Sylvia', true, 'talk'], ['Troll', false, 'talk']]);
     assert.equal(chats.next, null);
     // the staff read: newest first, who wrote it
-    const thread = (await s.staff('/v1/staff/chat', { target: s.sylvia.id }, s.mob.session)).body;
+    const thread = (await s.staff('/v1/staff/chat', { target: s.sylvia.id }, s.chief.session)).body;
     assert.deepEqual(thread.lines.map((l) => [l.text, l.by ?? null]), [['Of course!', null], ['A word about your stall, please.', 'Asynian']]);
     assert.deepEqual([thread.open, thread.why, thread.playerIn, thread.frozen, thread.next], [true, 'talk', true, null, null]);
     assert.equal(s.audits('chat-read').length, 1);
-    await s.staff('/v1/staff/chat', { target: s.sylvia.id }, s.mob.session);
+    await s.staff('/v1/staff/chat', { target: s.sylvia.id }, s.chief.session);
     assert.equal(s.audits('chat-read').length, 1, 'a read written once in its window');
     // closed by staff
-    assert.deepEqual((await s.staff('/v1/staff/chat-close', { target: s.sylvia.id }, s.mob.session)).body, { ok: true, target: s.sylvia.id });
+    assert.deepEqual((await s.staff('/v1/staff/chat-close', { target: s.sylvia.id }, s.chief.session)).body, { ok: true, target: s.sylvia.id });
     assert.deepEqual((await s.said('/v1/staff-chat/send', s.sylvia, { text: 'wait' })).body, { error: 'no-thread' });
     assert.equal((await s.said('/v1/staff-chat/read', s.sylvia)).body.open, false);
-    assert.deepEqual((await s.staff('/v1/staff/chat-send', { target: s.sylvia.id, text: 'x' }, s.mob.session)).body, { error: 'no-thread' });
-    assert.deepEqual((await s.staff('/v1/staff/chat-close', { target: s.sylvia.id }, s.mob.session)).body, { error: 'no-thread' });
+    assert.deepEqual((await s.staff('/v1/staff/chat-send', { target: s.sylvia.id, text: 'x' }, s.chief.session)).body, { error: 'no-thread' });
+    assert.deepEqual((await s.staff('/v1/staff/chat-close', { target: s.sylvia.id }, s.chief.session)).body, { error: 'no-thread' });
     // a freeze's thread closes with its unfreeze alone
     await s.freeze(s.troll);
-    assert.deepEqual((await s.staff('/v1/staff/chat-close', { target: s.troll.id }, s.mob.session)).body, { error: 'freeze-thread' });
+    assert.deepEqual((await s.staff('/v1/staff/chat-close', { target: s.troll.id }, s.chief.session)).body, { error: 'freeze-thread' });
     assert.equal(s.audits('chat-close').at(-1).outcome, 'failed');
   } finally { s.restore(); }
 });
@@ -380,11 +380,11 @@ test('STAFF-PANEL5-FREEZE: A MUTED AND FROZEN PLAYER still talks to staff in the
     for (let i = 0; i < PLAYER_LINES_MAX; i++) assert.equal((await s.said('/v1/staff-chat/send', s.troll, { text: `line ${i}` })).status, 200, `line ${i}`);
     const over = await s.said('/v1/staff-chat/send', s.troll, { text: 'one more' });
     assert.deepEqual([over.status, over.body], [429, { error: 'rate' }]);
-    for (let i = 0; i < CHAT_PAGE; i++) await s.staff('/v1/staff/chat-send', { target: s.troll.id, text: `answer ${i}` }, s.mob.session);
-    const p1 = (await s.staff('/v1/staff/chat', { target: s.troll.id }, s.mob.session)).body;
+    for (let i = 0; i < CHAT_PAGE; i++) await s.staff('/v1/staff/chat-send', { target: s.troll.id, text: `answer ${i}` }, s.chief.session);
+    const p1 = (await s.staff('/v1/staff/chat', { target: s.troll.id }, s.chief.session)).body;
     assert.equal(p1.lines.length, CHAT_PAGE);
     assert.equal(p1.lines[0].text, `answer ${CHAT_PAGE - 1}`);
-    const p2 = (await s.staff('/v1/staff/chat', { target: s.troll.id, before: p1.next }, s.mob.session)).body;
+    const p2 = (await s.staff('/v1/staff/chat', { target: s.troll.id, before: p1.next }, s.chief.session)).body;
     assert.deepEqual([p2.lines.length, p2.lines[0].text, p2.next], [PLAYER_LINES_MAX, `line ${PLAYER_LINES_MAX - 1}`, null]);
     assert.deepEqual(p2.frozen, { until: nowS() + 3600, reason: 'botting in Daggerfall' });
   } finally { s.restore(); }
@@ -399,7 +399,7 @@ test('STAFF-PANEL5-FREEZE: A FAILED PUSH IS SAID AND TRIED AGAIN - the act saved
     const f = await s.freeze(s.troll, { reason: 'spam' });
     assert.deepEqual([f.status, f.body.live], [200, false], 'saved, not live yet');
     assert.deepEqual([s.row(s.troll.id).frozen_until, s.row(s.troll.id).freeze_live], [nowS() + 3600, 0]);
-    const list = (await s.staff('/v1/staff/freezes', {}, s.mob.session)).body;
+    const list = (await s.staff('/v1/staff/freezes', {}, s.chief.session)).body;
     assert.deepEqual(list.freezes.map((r) => [r.name, r.live, r.frozen]), [['Troll', false, true], ['Sylvia', true, true]], 'not live first');
     assert.deepEqual(list.freezes[0].by, 'SirMcMobdon');
     assert.deepEqual(list.freezes[0].chat, { open: true, lastAt: nowS(), waiting: false });
@@ -407,7 +407,7 @@ test('STAFF-PANEL5-FREEZE: A FAILED PUSH IS SAID AND TRIED AGAIN - the act saved
     const home = await HOME_WATCH.top({ db: s.env.DB, nowS: nowS() }, s.env, {}, 10);
     assert.deepEqual(home, { items: [{ level: 'high', why: 'saved, not live yet', sub: s.troll.id, name: 'Troll' }], high: 1, total: 1 });
     // the panel's push again, the door still down
-    const again = await s.staff('/v1/staff/freeze-push', { target: s.troll.id }, s.mob.session);
+    const again = await s.staff('/v1/staff/freeze-push', { target: s.troll.id }, s.chief.session);
     assert.deepEqual([again.body.live, s.audits('freeze-push').at(-1).outcome], [false, 'failed']);
     s.relayDown(false);
     const n = s.pushed.length;
@@ -420,7 +420,7 @@ test('STAFF-PANEL5-FREEZE: A FAILED PUSH IS SAID AND TRIED AGAIN - the act saved
     assert.deepEqual([fresh.ok, fresh.claims.i, fresh.claims.fz], [true, nowS(), nowS() - PUSH_RETRY_AFTER_S + 3600], 'a FRESH order, its end the act\'s');
     assert.equal(await retryFreezePushes({ db: s.env.DB, nowS: nowS() }, s.env), 0, 'nothing waits');
     assert.equal(await retryFreezePushes({ db: s.env.DB, nowS: nowS() }, { ...s.env, RELAY_LAW_URL: undefined }), 0);
-    const live = await s.staff('/v1/staff/freeze-push', { target: s.troll.id }, s.mob.session);
+    const live = await s.staff('/v1/staff/freeze-push', { target: s.troll.id }, s.chief.session);
     assert.deepEqual([live.body.live, s.pushed.length], [true, n + 1], 'live already: nothing pushed');
     // a push marks only its own revision live - and pushes the newer act's row after its own (STAFF-PANEL5-FREEZE-FIX)
     s.raw.prepare('UPDATE players SET freeze_live = 0, freeze_rev = 7 WHERE id = ?').run(s.troll.id);
@@ -431,9 +431,9 @@ test('STAFF-PANEL5-FREEZE: A FAILED PUSH IS SAID AND TRIED AGAIN - the act saved
     assert.equal(s.row(s.troll.id).freeze_live, 1, 'the newer act live by the push after');
     // a list past its page answers `next`
     for (let i = 0; i < FREEZES_PAGE; i++) s.raw.prepare('INSERT INTO players (id, guest_name, created_at, last_seen, frozen_until, freeze_live, frozen_at) VALUES (?, ?, 1, 1, ?, 1, ?)').run(`p_frz${String(i).padStart(5, '0')}`, `Frozen ${i}`, nowS() + 60, i);
-    const p1 = (await s.staff('/v1/staff/freezes', {}, s.mob.session)).body;
+    const p1 = (await s.staff('/v1/staff/freezes', {}, s.chief.session)).body;
     assert.deepEqual([p1.freezes.length, p1.next], [FREEZES_PAGE, FREEZES_PAGE]);
-    const p2 = (await s.staff('/v1/staff/freezes', { from: p1.next }, s.mob.session)).body;
+    const p2 = (await s.staff('/v1/staff/freezes', { from: p1.next }, s.chief.session)).body;
     assert.deepEqual([p2.freezes.length, p2.next], [2, null]);
   } finally { s.restore(); }
 });
@@ -456,7 +456,7 @@ test('STAFF-PANEL5-FREEZE: TWO ADMINS AT ONCE - an act read at a revision anothe
     const pushed = s.pushed.length;
     // an unfreeze loses to a fresh freeze landing first: that freeze's thread stays open
     race(() => bump(', frozen_at = frozen_at + 1'));
-    res = await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session);
+    res = await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session);
     assert.deepEqual([res.status, res.body], [409, { error: 'freeze-moved' }], 'the lost unfreeze');
     assert.deepEqual([s.pushed.length, s.thread(s.troll.id).closed_at, s.thread(s.troll.id).player_in], [pushed, null, 1], 'the winning freeze\'s thread open');
     assert.equal(s.audits('unfreeze').at(-1).outcome, 'failed');
@@ -470,7 +470,7 @@ test('STAFF-PANEL5-FREEZE: THE HOUR\'S SWEEP closes a freeze\'s thread whose fre
     await s.said('/v1/staff-chat/send', s.troll, { text: 'why?' });
     const home = await HOME_WATCH.top({ db: s.env.DB, nowS: nowS() }, s.env, {}, 10);
     assert.deepEqual(home.items, [{ level: 'medium', why: 'frozen, waiting on a staff answer', sub: s.troll.id, name: 'Troll' }]);
-    assert.equal((await s.staff('/v1/staff/talk', { target: s.sylvia.id }, s.mob.session)).status, 200, 'a Talk thread beside it');
+    assert.equal((await s.staff('/v1/staff/talk', { target: s.sylvia.id }, s.chief.session)).status, 200, 'a Talk thread beside it');
     s.raw.prepare("INSERT INTO staff_chat_lines (player, at, author, staff, text) VALUES (?, ?, ?, 0, 'old')").run(s.sylvia.id, nowS() - STAFF_LINES_KEEP_S - 1, s.sylvia.id);
     assert.equal(await sweepStaffChat(s.env.DB, nowS(), 100), 1, 'the old line alone: the freeze stands');
     assert.equal(s.thread(s.troll.id).closed_at, null);
@@ -509,7 +509,7 @@ test('STAFF-PANEL5-FREEZE-FIX A STALE PUSH NEVER HAS THE LAST WORD (a review: a 
     s.relayDown(false);
     _now += PUSH_RETRY_AFTER_S;
     let from = s.pushed.length;
-    before = async () => { assert.equal((await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session)).body.live, true); };
+    before = async () => { assert.equal((await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session)).body.live, true); };
     assert.equal(await retryFreezePushes({ db: s.env.DB, nowS: nowS() }, s.env), 1);
     let c = await claims(from);
     assert.deepEqual(c.map((x) => x.fz), [0, nowS() - PUSH_RETRY_AFTER_S + 3600, 0], 'the unfreeze, the stale freeze after it, then the row as it stands');
@@ -532,7 +532,7 @@ test('STAFF-PANEL5-FREEZE-FIX A STALE PUSH NEVER HAS THE LAST WORD (a review: a 
     s.env.DB.batch = async (list) => { s.env.DB.batch = batch; _now += 2; return batch.call(s.env.DB, list); };
     const asked = nowS();
     from = s.pushed.length;
-    assert.equal((await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/unfreeze', { target: s.troll.id }, s.chief.session)).status, 200);
     c = await claims(from);
     assert.deepEqual([c[0].i, s.row(s.troll.id).frozen_at], [asked + 2, asked], 'minted after the commit; the act kept at its request');
     // THE CLOCK READS EACH ROW AT ITS OWN PUSH: Sylvia's push first, and Troll's freeze lifted by an Admin meanwhile
