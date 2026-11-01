@@ -137,8 +137,8 @@
   {
     "name": "RMBC6-slot-unguarded",
     "file": "src/scenes/settlementHost.js",
-    "old": "  if (held.growth ? !(held.input && held.job && slot >= GROWTH_SLOT_FIRST) : !row) return null;",
-    "new": "  if (held.growth ? !(held.input && held.job) : !row) return null;",
+    "old": "!(slot >= 0 && slot < SETTLEMENT_SLOTS) || (held.growth",
+    "new": "(held.growth",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RMBC6-run-ordinal",
     "file": "src/scenes/settlementHost.js",
-    "old": "  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = held.growth ? slot : row.ordinal;",
-    "new": "  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = held.growth ? 0 : row.ordinal;",
+    "old": ", run = slot;",
+    "new": ", run = 0;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "RMBC6-host-no-slot",
     "file": "src/scenes/settlementHost.js",
-    "old": "    const made = standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1);",
-    "new": "    const made = standSettlement(p, blocksFile(), -1);",
+    "old": "    const slot = takeSlot(), made = standSettlement(p, blocksFile(), slot);",
+    "new": "    const slot = takeSlot(), made = standSettlement(p, blocksFile(), -1);",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -420,8 +420,35 @@
   {
     "name": "AUDIT-slot-wrap",
     "file": "src/scenes/settlementHost.js",
-    "old": "export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++ % GROWTH_SLOTS);",
-    "new": "export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++);",
+    "old": "!_free.includes(slot)",
+    "new": "true",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "CLEAR-herbs-in-town",
+    "file": "src/scenes/herbHost.js",
+    "old": "        locationRect: settlementClearing(entry) ?? entry.locationRect ?? entry.wodSite ?? null, // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js); a settlement's ground first",
+    "new": "        locationRect: entry.locationRect ?? entry.wodSite ?? null, // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js); a settlement's ground first",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "CLEAR-ore-in-town",
+    "file": "src/scenes/mineHost.js",
+    "old": "locationRect: settlementClearing(entry) ?? entry.locationRect",
+    "new": "locationRect: entry.locationRect",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "CLEAR-outskirts-forgotten",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "export const settlementClearing = (entry) => growthClearing(entry?.locationRect ?? null, entry?.settlement) ?? entry?.settlement?.rect ?? null;",
+    "new": "export const settlementClearing = (entry) => entry?.locationRect ?? entry?.settlement?.rect ?? null;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

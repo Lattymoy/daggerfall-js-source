@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-moved-unfilled",
     "file": "src/world/settlement/settlementStand.js",
-    "old": "{ moved[i] = (v - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = v; }",
-    "new": "{ samples[i] = v; }",
+    "old": "{ moved[i] = (now - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = now; }",
+    "new": "{ samples[i] = now; }",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -360,6 +360,15 @@
     "new": ")) {",
     "tests": [
       "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "CARVE-index-reach-shrunk",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "near = padsNear(plan.pads, reach);",
+    "new": "near = padsNear(plan.pads, PAD_REACH);",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
     ]
   }
 ]

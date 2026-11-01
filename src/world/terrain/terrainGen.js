@@ -63,9 +63,8 @@ import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS:
  * @param {?object} job.locationRect - setLocationTiles' answer.
  * @param {boolean} job.hasLocation
  * @param {number} job.climateType - the pixel's climate, for nature.
- * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] -
- *   WOD2: the World of Daggerfall instances the main thread's
- *   pickLocations placed on this pixel, in order; null with the mod off.
+ * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] - the World of Daggerfall instances pickLocations placed here, in order; null with the mod off.
+ * @param {?number} [job.natureArchive] - the climate's summer nature archive: the species a settlement's yard trees may take.
  * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the Real forests switch (null off, DFU's scatter): the
  *   climate's summer nature archive, and whether the pixel's location is a place the woods hide (a dungeon, a shrine).
  * @param {boolean} [job.landform] - LANDFORM1-3: the Landforms row (off,
@@ -123,7 +122,7 @@ export const meetsOf = (meets, landforms) => (meets?.length ? meets.map((m) => (
  *  ACROSS-EDGE the meets they took, which its ghost rows take too - one place, so no grid job leaves them behind. */
 export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples, meets: p.meets ?? null });
 
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null, about = null, growth = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null, about = null, growth = null, natureArchive = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -294,7 +293,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // TESA-LANDS: past the Bay the zones' landmarks (world/lands/landProps.js) - the pixel's build keeps its flats off the
   // feet of those it stands (scenes/pixelBuild.js: a landmark the gate's clearing or a rock drops leaves its ground's own)
   const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);
-  nature.push(...settlementTreeFlats(settlement));   // a settlement's yard trees, the land's own pictures in its clearing
+  nature.push(...settlementTreeFlats(settlement, nature, natureArchive));   // a settlement's yard trees: the land's own live species
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
     roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands

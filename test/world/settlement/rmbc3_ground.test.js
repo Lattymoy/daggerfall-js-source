@@ -21,6 +21,7 @@ import { COUNTRY_LANE, LAIR_LANE } from '../../../src/world/tamrielCountry.js';
 import { recordFrame } from '../../../src/scenes/groundFrameHost.js';
 import { GROUND_FRAME_LAW, PADS_FRAME_LAW, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT } from '../../../src/world/terrain/terrainSampler.js';
 import { generatePixelTerrain } from '../../../src/world/terrain/terrainGen.js';
+import { isTreeRecord } from '../../../src/world/terrain/terrainNature.js';
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
 import { groundWoods } from '../../../src/world/tamriel/tamrielGround.js';
 import { CLIMATES } from '../../../src/formats/mapsTables.js';
@@ -112,6 +113,13 @@ test('RMBC3 the kernel lays out a pixel\'s settlement and carves it; a location 
   // its yard trees are the pixel's own nature, at the dressing's points (mutant: the trees left out)
   const yard = settlementTreeFlats(r.settlement);
   assert.ok(yard.length > 5 && yard.every((t) => r.nature.some((f) => f.record === t.record && f.x === t.x && f.y === t.y && f.z === t.z)));
+  // with its climate's archive the kernel's yard trees are that pixel's own live trees (mutant: the archive unhanded)
+  const woodland = generatePixelTerrain({ ...job, tilemap: new Uint8Array(128 * 128), natureArchive: 504 });
+  const spots = new Set(settlementTreeFlats(woodland.settlement).map((t) => `${t.x},${t.z}`));
+  const planted = woodland.nature.filter((f) => spots.has(`${f.x},${f.z}`));
+  assert.ok(planted.length === spots.size && planted.every((f) => isTreeRecord(f.archive ?? 504, f.record) && !(f.archive === undefined && f.record === 30)), 'live trees of the woodlands, never its dead oak');
+  assert.ok(new Set(planted.map((f) => f.record)).size >= 2, 'the pixel\'s own several kinds, not one stand-in');
+  assert.match(readFileSync(new URL('../../../src/scenes/pixelBuild.js', import.meta.url), 'utf8'), /\n {6}natureArchive: climate\.natureArchive,/);
   const pad = r.settlement.layout.pads.find((p) => p.base === 'cut');
   const [e, n] = pad.poly[0], i = Math.round(e / SAMPLE_M) * HEIGHTMAP_DIMENSION + Math.round(n / SAMPLE_M);
   assert.ok(r.samples[i] * MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE <= r.settlement.layout.datum + Math.max(...r.settlement.layout.pads.map((p) => p.y)) + 1e-3);
@@ -143,4 +151,20 @@ test('RMBC3 the carve hands back its own move: the build\'s `moved` is each samp
     if (stood.moved[i]) carved++;
   }
   assert.ok(carved > 50 && carved < D * D / 2, `${carved} samples carved, the rest left`);
+});
+
+test('RMBC3 the carve asks each sample only the pads that can touch it, and lays the ground every pad would (mutant: the reach the index grows by)', () => {
+  const D = 129, step = SAMPLE_M;
+  for (const archetype of ['fort', 'wetland']) {
+    const { plan } = generateSettlement({ place: 9, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 3, archetype, style: 'Skyrim', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] });
+    const base = Float64Array.from({ length: D * D }, (_, i) => 40 + Math.sin(i / 50) * 9), indexed = Float64Array.from(base);
+    carveSettlementGround(indexed, D, step, plan, 30);
+    let moved = 0;
+    for (let x = 0; x < D; x++) for (let y = 0; y < D; y++) {
+      const i = x * D + y, h = settlementGroundAt(plan.pads, 30, x * step, y * step, base[i]);
+      assert.equal(indexed[i], h === null ? base[i] : h, `${archetype} ${x},${y}`);
+      if (h !== null && h !== base[i]) moved++;
+    }
+    assert.ok(moved > 100, `${archetype}: ${moved} moved`);
+  }
 });

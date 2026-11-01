@@ -13,7 +13,7 @@ import { homeSceneOf } from '../../../src/systems/online/onlineHomes.js';
 import { homeListingOf } from '../../../src/net/homeListingLaw.js';
 import { yardCellOf, yardCellOk } from '../../../src/net/yardCellLaw.js';
 import { isResidence } from '../../../src/world/buildingNames.js';
-import { standSettlement, createSettlementHost, fileHomeFrames, GROWTH_SLOT_FIRST, HOUSE_HEIGHT } from '../../../src/scenes/settlementHost.js';
+import { standSettlement, createSettlementHost, fileHomeFrames, HOUSE_HEIGHT } from '../../../src/scenes/settlementHost.js';
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { SETTLEMENT_ROWS, settlementInput } from '../../../src/world/settlement/settlementPlaces.js';
 import { townGrowthJob, standTownGrowth } from '../../../src/world/settlement/townGrowth.js';
@@ -23,7 +23,7 @@ import { SYNTHETIC } from '../../../tools/settlementProbe.mjs';
 
 const ROW = SETTLEMENT_ROWS.find((r) => r.province === 'Hammerfell');
 const L = layoutSettlement({ ...settlementInput(ROW, 1084, 241), env: SYNTHETIC.oasis }, SYNTHETIC.oasis);
-const SAHR = standSettlement({ px: 1084, py: 241, settlement: { ordinal: ROW.ordinal, layout: L } }, null);
+const SAHR = standSettlement({ px: 1084, py: 241, settlement: { ordinal: ROW.ordinal, layout: L } }, null, 0);
 const D = 129, M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
 function grownVillage() {
   const rect = { xMin: 52, xMax: 76, yMin: 52, yMax: 76 }, s = new Float32Array(D * D);
@@ -31,7 +31,7 @@ function grownVillage() {
   for (let x = rect.xMin; x <= rect.xMax; x++) for (let y = rect.yMin; y <= rect.yMax; y++) s[x * D + y] = s[64 * D + 64];
   const job = townGrowthJob({ mapTableData: { mapId: 14814319, locationType: 2 }, name: 'Arkbridge', exterior: { exteriorData: { width: 2, height: 2 } } }, 'IliacBay', 17);
   const g = standTownGrowth(255, 134, s, job, rect, {});
-  return { job, made: standSettlement({ px: 255, py: 134, settlement: g }, null, GROWTH_SLOT_FIRST) };
+  return { job, made: standSettlement({ px: 255, py: 134, settlement: g }, null, 16) };
 }
 
 test('RMBC8 a generated house is a home for sale: a candidate, purchasable, priced in the law\'s range by its ground and its town\'s size (mutants: the town\'s blocks, the footprint)', () => {

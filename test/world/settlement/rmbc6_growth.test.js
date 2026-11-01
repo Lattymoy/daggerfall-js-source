@@ -15,7 +15,7 @@ import { PAD_REACH, GROUND_EASE } from '../../../src/world/settlement/settlement
 import { SAMPLE_M, settlementMovedAt } from '../../../src/world/settlement/settlementStand.js';
 import { settlementGroundAt } from '../../../src/world/settlement/settlementGround.js';
 import { SETTLEMENT_ARCHETYPES } from '../../../src/world/settlement/settlementStyles.js';
-import { standSettlement, nextGrowthSlot, GROWTH_SLOT_FIRST, GROWTH_SLOTS } from '../../../src/scenes/settlementHost.js';
+import { standSettlement, takeSlot, releaseSlot, SETTLEMENT_SLOTS } from '../../../src/scenes/settlementHost.js';
 import { buildingModelId, groundModelId } from '../../../src/world/settlement/settlementModels.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
 
@@ -149,21 +149,28 @@ test('RMBC6 the carve: the core and the town\'s own ground never move, nor the p
   assert.equal(growthClearing(rect, null), rect);
 });
 
-test('RMBC6 one layout, every client: the same job, rect and ground lay the same plan twice, and the host dresses it in a run of its own (mutants: the slot\'s run, the growth\'s input, the slots\' wrap)', () => {
+test('RMBC6 one layout, every client: the same job, rect and ground lay the same plan twice, and the host dresses it in a run of its own (mutants: the slot\'s run, the growth\'s input, the free list)', () => {
   const rect = rectOf(2), job = village(5005, 'HighRock', 62);
   const a = standTownGrowth(200, 200, ground(0.02, rect), job, rect, {}), b = standTownGrowth(200, 200, ground(0.02, rect), job, rect, {});
   assert.deepEqual(a.layout, b.layout);
   assert.deepEqual(growthInput(job, 200, 200, rect, a.input.core.y), a.input);
   const p1 = dressSettlement(a.input, a.layout).plan, p2 = dressSettlement(b.input, b.layout).plan;
   assert.deepEqual(p1.buildings.map((x) => x.key), p2.buildings.map((x) => x.key), 'the keys a ledger mints in order');
-  const made = standSettlement({ px: 200, py: 200, settlement: a }, null, GROWTH_SLOT_FIRST + 3);
-  assert.equal(made.groundId, groundModelId(GROWTH_SLOT_FIRST + 3));
-  assert.equal(made.pieces[0].id, buildingModelId(GROWTH_SLOT_FIRST + 3, 0));
+  const made = standSettlement({ px: 200, py: 200, settlement: a }, null, 19);
+  assert.equal(made.groundId, groundModelId(19));
+  assert.equal(made.pieces[0].id, buildingModelId(19, 0));
   assert.deepEqual([made.pieces[0].record.townMapId, made.pieces[0].record.townName, made.pieces[0].record.regionIndex], [5005, 'Testford', 62], 'its doors are its town\'s');
-  assert.ok(standSettlement({ px: 200, py: 200, settlement: a }, null, 3) === null, 'a grown town never takes a published row\'s run');
-  const first = nextGrowthSlot();   // the slots go round: each in its band, the first again after every other
-  for (let i = 1; i < GROWTH_SLOTS; i++) { const s = nextGrowthSlot(); assert.ok(s >= GROWTH_SLOT_FIRST && s < GROWTH_SLOT_FIRST + GROWTH_SLOTS && s !== first); }
-  assert.equal(nextGrowthSlot(), first);
+  assert.ok(standSettlement({ px: 200, py: 200, settlement: a }, null, SETTLEMENT_SLOTS) === null, 'no run past the band');
+  // the runs come from a free list: none taken twice while it stands, a run let go comes round after every other
+  const taken = Array.from({ length: SETTLEMENT_SLOTS }, () => takeSlot());
+  assert.equal(new Set(taken).size, SETTLEMENT_SLOTS);
+  assert.ok(taken.every((slot) => slot >= 0 && slot < SETTLEMENT_SLOTS));
+  assert.equal(takeSlot(), -1, 'every run stands');
+  releaseSlot(taken[7]);
+  releaseSlot(taken[3]);
+  releaseSlot(taken[7]);
+  assert.deepEqual([takeSlot(), takeSlot(), takeSlot()], [taken[7], taken[3], -1], 'oldest let go first, once each');
+  for (const slot of taken) releaseSlot(slot);
 });
 
 test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the build hands it its town, the trees clear both, the frame reads the carve (mutants: each seam)', () => {
@@ -173,5 +180,15 @@ test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the bu
   assert.match(gen, /locationRect: wodResult\?\.locationRect \?\? growthClearing\(locationRect, settlement\) \?\? settlement\?\.rect \?\? null,/);
   assert.match(read('scenes/pixelBuild.js'), /\n {6}growth: growthJobAt\(groundLocation, px, py\),/);
   assert.match(read('scenes/groundFrameHost.js'), /return settlementMovedAt\(stood\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/);
-  assert.match(read('scenes/settlementHost.js'), /standSettlement\(p, blocksFile\(\), p\.settlement\.growth \? nextGrowthSlot\(\) : -1\)/);
+  assert.match(read('scenes/settlementHost.js'), /const slot = takeSlot\(\), made = standSettlement\(p, blocksFile\(\), slot\);/);
+});
+
+test('RMBC6 a settlement\'s ground is kept by the herbs and the ore as by the trees: a grown town\'s town and outskirts as one, a published one\'s own, a plain town\'s rect (mutants: the herbs, the ore, the outskirts forgotten)', async () => {
+  const { settlementClearing } = await import('../../../src/world/settlement/townGrowth.js');
+  const core = { xMin: 50, xMax: 70, yMin: 50, yMax: 70 }, grown = { growth: true, rect: { xMin: 40, xMax: 80, yMin: 45, yMax: 75 } };
+  assert.deepEqual(settlementClearing({ locationRect: core, settlement: grown }), { xMin: 40, xMax: 80, yMin: 45, yMax: 75 });
+  assert.deepEqual(settlementClearing({ locationRect: null, settlement: { rect: core } }), core, 'a published settlement: its own');
+  assert.equal(settlementClearing({ locationRect: core, settlement: null }), core, 'a town that did not grow');
+  assert.equal(settlementClearing({}), null);
+  for (const f of ['scenes/herbHost.js', 'scenes/mineHost.js']) assert.match(readFileSync(new URL(`../../../src/${f}`, import.meta.url), 'utf8'), /locationRect: settlementClearing\(entry\) \?\? entry\.locationRect \?\? entry\.wodSite \?\? null,/, f);
 });

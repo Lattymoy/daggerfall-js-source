@@ -139,3 +139,7 @@ export function growthClearing(locationRect, settlement) {
   return { xMin: Math.min(locationRect.xMin, grown.xMin), xMax: Math.max(locationRect.xMax, grown.xMax), yMin: Math.min(locationRect.yMin, grown.yMin), yMax: Math.max(locationRect.yMax, grown.yMax) };
 }
 
+/** The ground a built pixel's settlement keeps (its town and outskirts as one, or a published settlement's own), the
+ *  kernel's trees' clearing - herbs and ore keep off it too. @param {any} entry a built pixel's */
+export const settlementClearing = (entry) => growthClearing(entry?.locationRect ?? null, entry?.settlement) ?? entry?.settlement?.rect ?? null;
+

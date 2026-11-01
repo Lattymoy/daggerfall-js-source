@@ -11,7 +11,10 @@ import { installFabricDoors } from '../world/imperialFabricBuildings.js';   // t
 import { SETTLEMENT_ROWS, settlementInput } from '../world/settlement/settlementPlaces.js';
 import { dressSettlement } from '../world/settlement/settlementGen.js';
 import { groundModel, buildingPiece, buildingInterior, buildingRecord, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_RUN } from '../world/settlement/settlementModels.js';
-import { featuresModel } from '../world/settlement/settlementFeatures.js';
+import { featuresModel, featureSolids } from '../world/settlement/settlementFeatures.js';
+import { onFloatingFrame, floatingFrameOf } from '../player/collider.js';
+import { localAabb, transformedAabb } from '../render/frustum.js';
+import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decor/decorRoom.js';
 import { regionOfTheatre } from '../formats/mapsTables.js';
 import { theatreAt } from '../world/worldWide/worldGrid.js';
 import { townLookBase } from '../world/urban/townLook.js';
@@ -48,25 +51,34 @@ export function fileHomeFrames(town, frames) {
 /** How high a house's yard box reaches over its floor, metres - two storeys and a roof. */
 export const HOUSE_HEIGHT = 9;
 
-/** The model runs a grown town takes, in turn - the published rows keep their ordinals' runs below the first. */
-export const GROWTH_SLOT_FIRST = 16;
-export const GROWTH_SLOTS = 512 - GROWTH_SLOT_FIRST;
-let _nextSlot = 0;
-/** The next run a grown town takes; a run comes round again only after GROWTH_SLOTS others, long after its meshes went. */
-export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++ % GROWTH_SLOTS);
+/** The model runs a settlement takes, published or grown, from a free list oldest-let-go first: a run comes round again
+ *  only after every other was let go, its meshes long settled, and never while a settlement stands on it. */
+export const SETTLEMENT_SLOTS = 512;
+const _free = Array.from({ length: SETTLEMENT_SLOTS }, (_, i) => i);
+/** A free run, or -1 when every run stands. */
+export const takeSlot = () => _free.shift() ?? -1;
+/** How many runs are free. */
+export const slotsFree = () => _free.length;
+/** A run let go, to come round last. @param {number} slot */
+export const releaseSlot = (slot) => {
+  if (slot >= 0 && slot < SETTLEMENT_SLOTS && !_free.includes(slot)) _free.push(slot);
+};
+/** Settlements stood in one frame at most: a stand is tens of milliseconds of dressing and meshing. */
+export const STANDS_PER_FRAME = 1;
+const IDENTITY = trs(0, 0, 0, 0, 0, 0);
 
 /**
  * A settlement on its built pixel, dressed: its plan, its pieces and its doors, pixel-local. Pure but for the model map.
- * a grown town's outskirts carry their own input and job (world/settlement/townGrowth.js), and take `slot`'s run.
+ * a grown town's outskirts carry their own input and job (world/settlement/townGrowth.js); every settlement takes `slot`'s run.
  * @param {{ px: number, py: number, settlement: { ordinal: number, layout: any, growth?: boolean, input?: any, job?: any } }} p
  * @param {any} blocksFile @param {number} [slot]
  */
 export function standSettlement(p, blocksFile, slot = -1) {
   const held = p.settlement, row = held.growth ? null : SETTLEMENT_ROWS[held.ordinal];
-  if (held.growth ? !(held.input && held.job && slot >= GROWTH_SLOT_FIRST) : !row) return null;
+  if (!(slot >= 0 && slot < SETTLEMENT_SLOTS) || (held.growth ? !(held.input && held.job) : !row)) return null;
   const input = held.growth ? held.input : settlementInput(row, p.px, p.py), L = held.layout;
-  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = held.growth ? slot : row.ordinal;
-  const { plan } = dressSettlement(input, L);
+  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = slot;
+  const { plan } = dressSettlement(input, L, { check: false });   // its plan held to the contract where it is made and published
   const town = { place: input.place, name, regionIndex: held.growth ? held.job.regionIndex : regionOfTheatre(theatreAt(p.px, p.py)), blocks: held.growth ? held.job.blocks ?? 1 : 1 };
   const floorOf = new Map(plan.pads.map((d) => [d.id, L.datum + d.y]));
   const pieces = plan.buildings.map((b, i) => {
@@ -79,7 +91,7 @@ export function standSettlement(p, blocksFile, slot = -1) {
   if (pieces.length >= SETTLEMENT_MODEL_RUN - 1) return null;   // its features keep the run's last id
   return {
     row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style),
-    featuresId: featuresModelId(run), features: featuresModel(plan, L.datum, style), pieces, climateBase: townLookBase(style) ?? 300,
+    featuresId: featuresModelId(run), features: featuresModel(plan, L.datum, style), solids: featureSolids(plan), pieces, climateBase: townLookBase(style) ?? 300,
   };
 }
 
@@ -98,14 +110,17 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     Promise.resolve(src.getGpuMesh(id)).then((g) => s.meshes.set(id, g ?? null), () => {});   // one taken down meanwhile is no one's
   };
   function stand(p, key) {
-    const made = standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1);
-    if (!made) return;
+    const slot = takeSlot(), made = standSettlement(p, blocksFile(), slot);
+    if (!made) { releaseSlot(slot); return; }
     _models.set(made.groundId, made.ground);
     _models.set(made.featuresId, made.features);
     for (const x of made.pieces) _models.set(x.id, x.piece.model);
     // Its meshes held through its own hold, let go as it goes (scenes/dataPipeline.js holdPlace)
     const hold = pipeline?.holdPlace?.('settlement', key) ?? null;
-    const s = { key, px: p.px, py: p.py, src: p.settlement, ...made, hold, meshes: new Map(), colAt: null, scene: null, homeFrames: null, homeKeys: [] };
+    const s = { key, px: p.px, py: p.py, slot, src: p.settlement, ...made, hold, meshes: new Map(), colAt: false, scene: null, homeFrames: null, homeKeys: [], at: [0, 0, 0], ride: null,
+      boxes: { ground: localAabb(made.ground.positions), features: made.features.indices.length ? localAabb(made.features.positions) : null, pieces: made.pieces.map((x) => localAabb(x.piece.model.positions)) } };
+    // its collider rides the floating frame as a pixel's own buckets do: filed once, never again as the origin moves
+    s.ride = onFloatingFrame(floatingFrameOf(translation), () => translation(s.px, s.py, s.at));
     fileHomeFrames(s, p.homeFrames);   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
     stood.set(key, s);
     mesh(s, s.groundId);
@@ -113,18 +128,25 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     for (const x of s.pieces) { mesh(s, x.id); mesh(s, x.piece.doorId); }
   }
   /** A pixel built again in place swaps its entry with no frame between: the same plan files its yards on the new entry,
-   *  another (roads landed under a grown town) is taken down and stood again. */
-  function restand(town, entry) {
+   *  another (roads landed under a grown town) is taken down and stood again - when this frame may stand one (answers so). */
+  function restand(town, entry, mayStand) {
     const same = (a, b) => JSON.stringify(a.layout) === JSON.stringify(b.layout) && JSON.stringify(a.input ?? null) === JSON.stringify(b.input ?? null);
-    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) { takeDown(town); stand(entry, town.key); return; }
+    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) {
+      if (!mayStand) return false;   // the old plan stands a frame longer
+      takeDown(town);
+      stand(entry, town.key);
+      return true;
+    }
     town.src = entry.settlement;
-    if (town.homeFrames === (entry.homeFrames ?? null)) return;
+    if (town.homeFrames === (entry.homeFrames ?? null)) return false;
     for (const k of town.homeKeys) town.homeFrames?.delete(k);
     town.homeKeys = [];
     fileHomeFrames(town, entry.homeFrames);
+    return false;
   }
   function takeDown(s) {
     stood.delete(s.key);
+    releaseSlot(s.slot);
     s.hold?.release?.();
     for (const k of s.homeKeys) s.homeFrames?.delete(k);
     collider()?.removeBucket?.(`settlement:${s.key}`);
@@ -137,24 +159,27 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     if (s.scene && s.scene.t[0] === t[0] && s.scene.t[1] === t[1] && s.scene.t[2] === t[2]) return s.scene;
     const at = (m) => { const o = Float32Array.from(m); o[12] += t[0]; o[13] += t[1]; o[14] += t[2]; return o; };
     const ground = trs(t[0], t[1], t[2], 0, 0, 0);
-    const pieces = s.pieces.map((x) => ({ id: x.id, frame: at(x.piece.frame), doorId: x.piece.doorId, doorFrame: at(x.piece.doorFrame) }));
+    const pieces = s.pieces.map((x, i) => { const frame = at(x.piece.frame); return { id: x.id, frame, doorId: x.piece.doorId, doorFrame: at(x.piece.doorFrame), box: transformedAabb(s.boxes.pieces[i], frame) }; });
     const doors = s.pieces.map((x, i) => x.piece.doors?.[0] && ({
       door: { ...x.piece.doors[0], matrix: pieces[i].doorFrame }, localDoor: x.piece.doors[0], dfBlock: x.dfBlock, recordIndex: 0,
       climateBase: s.climateBase, season: INTERIOR_SEASON, settlement: x.record,
     })).filter(Boolean);
-    return (s.scene = { t: [t[0], t[1], t[2]], ground, pieces, doors });
+    const groundBox = transformedAabb(s.boxes.ground, ground), featuresBox = s.boxes.features && transformedAabb(s.boxes.features, ground);
+    return (s.scene = { t: [t[0], t[1], t[2]], ground, groundBox, featuresBox, pieces, doors });
   }
-  /** Its collider: the ground and every building, filed again when the origin moves; held back while feet stand inside a wall. */
+  /** Its collider: the ground, its features and every building, filed once in the pixel's frame; held back while feet stand
+   *  inside a wall, a building's or a feature's (a fort's wall, a tower, a well). */
   function standCollider(s) {
-    const col = collider(), sc = scene(s);
-    if (!col?.addMesh || s.colAt === sc) return;
-    const f = feet();
-    if (f && !s.colAt && s.plan.buildings.some((b) => inside(b.footprint, f[0] - sc.t[0], f[2] - sc.t[2]))) return;
-    col.removeBucket?.(`settlement:${s.key}`);
-    col.addMesh(`settlement:${s.key}`, s.ground.positions, s.ground.indices, sc.ground);
-    if (s.features.indices.length) col.addMesh(`settlement:${s.key}`, s.features.positions, s.features.indices, sc.ground);
-    for (const [i, x] of s.pieces.entries()) col.addMesh(`settlement:${s.key}`, x.piece.model.positions, x.piece.model.indices, sc.pieces[i].frame);
-    s.colAt = sc;
+    const col = collider();
+    if (!col?.addMesh || s.colAt) return;
+    const feetNow = feet(), t = translation(s.px, s.py, s.at);
+    if (feetNow && [...s.plan.buildings.map((b) => b.footprint), ...s.solids].some((ring) => inside(ring, feetNow[0] - t[0], feetNow[2] - t[2]))) return;
+    const bucket = `settlement:${s.key}`;
+    col.removeBucket?.(bucket);
+    col.addMesh(bucket, s.ground.positions, s.ground.indices, IDENTITY, s.ride);
+    if (s.features.indices.length) col.addMesh(bucket, s.features.positions, s.features.indices, IDENTITY, s.ride);
+    for (const x of s.pieces) col.addMesh(bucket, x.piece.model.positions, x.piece.model.indices, x.piece.frame, s.ride);
+    s.colAt = true;
   }
   // a shot-mode probe's view (tools/settlementWorldProbe.mjs): each stood settlement, its middle in the scene, its doors
   if (typeof window !== 'undefined' && pageHas('shot')) {
@@ -171,30 +196,34 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     frame() {
       try {
         const live = new Set();
+        let stands = STANDS_PER_FRAME;
         for (const p of built()) {
           if (!p?.settlement) continue;
           const key = `${p.px},${p.py}`;
           live.add(key);
           const town = stood.get(key);
-          if (!town) stand(p, key);
-          else if (town.src !== p.settlement || town.homeFrames !== (p.homeFrames ?? null)) restand(town, p);
+          if (!town) { if (stands > 0) { stands--; stand(p, key); } }
+          else if ((town.src !== p.settlement || town.homeFrames !== (p.homeFrames ?? null)) && restand(town, p, stands > 0)) stands--;
         }
         for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);
         for (const s of stood.values()) standCollider(s);
       } catch (e) { console.warn('[settlements]', e?.message ?? e); }
     },
-    draw(r = renderer) {
+    /** Each settlement's ground, features and buildings; `cull` the street's view test (world.js yardCull), asked of each
+     *  piece's box: in view drawn, off screen in a shadow's reach cast alone, else neither. Answers how many it drew. */
+    draw(r = renderer, cull = null) {
       if (!r?.drawMesh || !exterior()) return 0;
       let n = 0;
+      const one = (mesh, matrix, box) => {
+        const verdict = cull && box ? cull(box) : DECOR_DRAW;
+        if (!mesh || verdict === DECOR_SKIP) return 0;
+        (verdict === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, matrix, null);
+        return verdict === DECOR_DRAW ? 1 : 0;
+      };
       for (const s of stood.values()) {
-        const sc = scene(s), g = s.meshes.get(s.groundId), features = s.meshes.get(s.featuresId);
-        if (g) { r.drawMesh(g, sc.ground, null); n++; }
-        if (features) { r.drawMesh(features, sc.ground, null); n++; }
-        for (const x of sc.pieces) {
-          const m = s.meshes.get(x.id), d = s.meshes.get(x.doorId);
-          if (m) { r.drawMesh(m, x.frame, null); n++; }
-          if (d) { r.drawMesh(d, x.doorFrame, null); n++; }
-        }
+        const sc = scene(s);
+        n += one(s.meshes.get(s.groundId), sc.ground, sc.groundBox) + one(s.meshes.get(s.featuresId), sc.ground, sc.featuresBox);
+        for (const x of sc.pieces) n += one(s.meshes.get(x.id), x.frame, x.box) + one(s.meshes.get(x.doorId), x.doorFrame, x.box);
       }
       return n;
     },
@@ -206,6 +235,8 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     },
     /** The plan stood on a pixel, or null (a probe's, a test's). */
     planAt: (px, py) => stood.get(`${px},${py}`)?.plan ?? null,
+    /** The run and model ids a pixel's settlement stands on, or null (a probe's, a test's). */
+    idsAt: (px, py) => { const s = stood.get(`${px},${py}`); return s ? { slot: s.slot, ground: s.groundId, features: s.featuresId } : null; },
     count: () => stood.size,
     destroyAll() { for (const s of [...stood.values()]) takeDown(s); },
   };

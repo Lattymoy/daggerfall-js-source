@@ -74,11 +74,17 @@ function statue(mesh, stone, east, floor, north, face, pose) {
   robedFigure(mesh, BRONZE, east, north, floor + 2.0, 3.6, face, pose);
 }
 
+/** A market's stalls: five in a ring 5 m round its point, turned by its own draw. @param {readonly number[]} at @param {string} id */
+export function stallsOf(at, id) {
+  return Array.from({ length: 5 }, (_, i) => {
+    const angle = (i / 5) * Math.PI * 2 + draw(id, 1);
+    return [at[0] + Math.cos(angle) * 5, at[1] + Math.sin(angle) * 5];
+  });
+}
+
 /** A market: stalls in a ring round the point, each four posts, a cloth awning, a counter and a crate. */
 function market(mesh, east, floor, north, id) {
-  const stalls = 5;
-  for (let i = 0; i < stalls; i++) {
-    const angle = (i / stalls) * Math.PI * 2 + draw(id, 1), stallEast = east + Math.cos(angle) * 5, stallNorth = north + Math.sin(angle) * 5;
+  for (const [stallEast, stallNorth] of stallsOf([east, north], id)) {
     for (const [across, deep] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) mesh.box(TIMBER, [stallEast + across * 1.2, floor + 1.1, stallNorth + deep * 0.8], [0.14, 2.2, 0.14], 1);
     mesh.box(CLOTH, [stallEast, floor + 2.25, stallNorth], [2.8, 0.1, 2.0], 0.5);
     mesh.box(TIMBER, [stallEast, floor + 0.5, stallNorth + 0.3], [2.2, 1.0, 0.7], 1);
@@ -172,4 +178,34 @@ function dock(mesh, plan, datum, path) {
   mesh.quad(TIMBER, [start[0] - sideEast, deck, start[1] - sideNorth], [start[0] + sideEast, deck, start[1] + sideNorth], [end[0] + sideEast, deck, end[1] + sideNorth], [end[0] - sideEast, deck, end[1] - sideNorth],
     [0, 1, 0], [[0, 0], [1, 0], [1, -length / 2], [0, -length / 2]]);
   for (let along = 0; along <= length; along += 3) for (const side of [-1, 1]) mesh.box(TIMBER, [start[0] + dirEast * along + sideEast * side, deck - 1.6, start[1] + dirNorth * along + sideNorth * side], [0.25, 3.2, 0.25], 1);
+}
+
+/** A ring of `sides` points `radius` round a plan point. */
+const roundRing = (at, radius, sides) => Array.from({ length: sides }, (_, i) => [at[0] + Math.cos((i / sides) * Math.PI * 2) * radius, at[1] + Math.sin((i / sides) * Math.PI * 2) * radius]);
+/** A rectangle round a plan point, `across` east and `deep` north. */
+const boxRing = (at, across, deep) => [[at[0] - across, at[1] - deep], [at[0] + across, at[1] - deep], [at[0] + across, at[1] + deep], [at[0] - across, at[1] + deep]];
+
+/**
+ * The rings a body may not stand inside, one a solid feature (plan frame): a wall's run, a tower, a well, a fountain, a
+ * statue's plinth, a stall. The host holds its collider back while feet stand in one, as it does inside a building.
+ * @param {import('./settlementContract.js').SettlementPlan} plan @returns {Array<Array<[number, number]>>}
+ */
+export function featureSolids(plan) {
+  const out = [];
+  for (const feature of plan.features ?? []) {
+    const at = feature.at;
+    if (feature.kind === 'well') out.push(roundRing(at, 1.3, 12));
+    else if (feature.kind === 'fountain') out.push(roundRing(at, 2.4, 16));
+    else if (feature.kind === 'statue') out.push(boxRing(at, 1.45, 1.45));
+    else if (feature.kind === 'tower') out.push(roundRing(at, 3.6, 16));
+    else if (feature.kind === 'market') for (const stall of stallsOf(at, feature.id)) out.push(boxRing(stall, 1.4, 1.0));
+    else if (feature.kind === 'wall' && feature.path) {
+      for (let i = 0; i + 1 < feature.path.length; i++) {
+        const start = feature.path[i], end = feature.path[i + 1], length = Math.hypot(end[0] - start[0], end[1] - start[1]) || 1;
+        const sideEast = (-(end[1] - start[1]) / length) * (FORT_WALL.thick / 2), sideNorth = ((end[0] - start[0]) / length) * (FORT_WALL.thick / 2);
+        out.push([[start[0] - sideEast, start[1] - sideNorth], [end[0] - sideEast, end[1] - sideNorth], [end[0] + sideEast, end[1] + sideNorth], [start[0] + sideEast, start[1] + sideNorth]]);
+      }
+    }
+  }
+  return out;
 }

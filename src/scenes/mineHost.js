@@ -47,6 +47,7 @@ import { getPref } from '../systems/uiPrefs.js';
 import { MOTHERLODE_TIER, MOTHERLODE_RANK } from '../net/motherlodeLaw.js';   // PROF2b
 import { MOTHERLODE_TEXT } from '../net/motherlodeBook.js';
 import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { settlementClearing } from '../world/settlement/townGrowth.js';   // a settlement's ground, as the kernel's trees keep off it
 
 /** The item flats' archive; a picture a new ore has none of its own borrows Lodestone's (PROF0 4.8). */
 export const ORE_FLAT_ARCHIVE = 254;
@@ -452,7 +453,7 @@ export function mineKind({ book, lodes = null, marks = null }) {
     professions: Object.freeze(['mining']),
     nodesOf({ px, py, day, info, confirmed, specs, entry, near }) {
       const stone = {
-        samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null, rocks: entry.rocks ?? [],   // AUDIT 29 C8
+        samples: entry.samples, tilemap: entry.tilemap, locationRect: settlementClearing(entry) ?? entry.locationRect ?? entry.wodSite ?? null, rocks: entry.rocks ?? [],   // AUDIT 29 C8; a settlement's ground first
         near: near ?? [],   // ROCK-NEAR: the neighbours' pieces reaching in
         beach: entry.beach ?? null,   // AUDIT LANDFORMS II H2: the beach line DFU's own blend draws in a town's pixel
         verge: entry.verge ?? null,   // VERGE1: off the roads

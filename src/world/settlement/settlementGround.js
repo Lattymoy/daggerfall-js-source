@@ -54,16 +54,39 @@ export function settlementGroundAt(pads, datum, e, n, natural) {
 export function carveSettlementGround(S, dim, step, plan, datum, keep = undefined) {
   let lo = [Infinity, Infinity], hi = [-Infinity, -Infinity], moved = 0;
   for (const pad of plan.pads) for (const [e, n] of pad.poly) { lo = [Math.min(lo[0], e), Math.min(lo[1], n)]; hi = [Math.max(hi[0], e), Math.max(hi[1], n)]; }
-  const reach = PAD_REACH + GROUND_EASE;
+  const reach = PAD_REACH + GROUND_EASE, near = padsNear(plan.pads, reach);
   for (let x = 0; x < dim; x++) {
     const e = x * step - plan.origin.east;
     if (e < lo[0] - reach || e > hi[0] + reach) continue;
     for (let y = 0; y < dim; y++) {
       const n = y * step - plan.origin.north;
       if (n < lo[1] - reach || n > hi[1] + reach || keep?.(e, n)) continue;
-      const i = x * dim + y, h = settlementGroundAt(plan.pads, datum, e, n, S[i]);
+      const i = x * dim + y, h = settlementGroundAt(near(e, n), datum, e, n, S[i]);
       if (h !== null && h !== S[i]) { S[i] = h; moved++; }
     }
   }
   return moved;
+}
+
+/** The size of padsNear's cells, metres. */
+const NEAR_CELL = 32;
+/**
+ * The pads that can touch a point: each whose box, grown by `reach`, holds it, in the plan's own order - so the ground a
+ * point asks of them is the ground it asks of every pad (a pad past its grown box is past `reach`), ties and all.
+ * @param {import('./settlementContract.js').Pad[]} pads @param {number} reach @returns {(e: number, n: number) => import('./settlementContract.js').Pad[]}
+ */
+export function padsNear(pads, reach) {
+  const cells = new Map(), none = [];
+  pads.forEach((pad) => {
+    let west = Infinity, east = -Infinity, south = Infinity, north = -Infinity;
+    for (const [e, n] of pad.poly) { west = Math.min(west, e); east = Math.max(east, e); south = Math.min(south, n); north = Math.max(north, n); }
+    for (let cellX = Math.floor((west - reach) / NEAR_CELL); cellX <= Math.floor((east + reach) / NEAR_CELL); cellX++) {
+      for (let cellZ = Math.floor((south - reach) / NEAR_CELL); cellZ <= Math.floor((north + reach) / NEAR_CELL); cellZ++) {
+        const key = `${cellX},${cellZ}`;
+        if (!cells.has(key)) cells.set(key, []);
+        cells.get(key).push(pad);
+      }
+    }
+  });
+  return (e, n) => cells.get(`${Math.floor(e / NEAR_CELL)},${Math.floor(n / NEAR_CELL)}`) ?? none;
 }

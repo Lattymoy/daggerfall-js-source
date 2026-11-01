@@ -193,6 +193,8 @@ export function onFloatingFrame(frame, translation) {
   if (typeof translation === 'function') FRAME_OF.set(translation, frame);
   return translation;
 }
+/** The floating frame a translation provider rides (onFloatingFrame), or null: a host handed one marks its own by it. */
+export const floatingFrameOf = (translation) => FRAME_OF.get(translation) ?? null;
 const RAY_NEAR = [];      // raycastHit's candidates
 const SPHERE_NEAR = [];   // the sphere walks' (never nested in a ray's walk, nor a ray in theirs)
 /** Where a bucket is filed (`bucket.lvl`): nothing yet, the fine cells, the coarse cells, `always`, `posed` (SEA-DROPS: a

@@ -74,8 +74,8 @@
   {
     "name": "RMBC4-stand-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "          if (!town) stand(p, key);\n          else if",
-    "new": "          if (!town) continue;\n          else if",
+    "old": "          if (!town) { if (stands > 0) { stands--; stand(p, key); } }",
+    "new": "          if (!town) { if (stands > 0) { stands--; } }",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RMBC4-feet-ignored",
     "file": "src/scenes/settlementHost.js",
-    "old": "    if (f && !s.colAt && s.plan.buildings.some((b) => inside(b.footprint, f[0] - sc.t[0], f[2] - sc.t[2]))) return;\n    col.removeBucket?.(`settlement:${s.key}`);",
-    "new": "    col.removeBucket?.(`settlement:${s.key}`);",
+    "old": "    if (feetNow && [...s.plan.buildings.map((b) => b.footprint), ...s.solids].some((ring) => inside(ring, feetNow[0] - t[0], feetNow[2] - t[2]))) return;\n",
+    "new": "",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -183,7 +183,7 @@
   {
     "name": "AUDIT-rebuild-unread",
     "file": "src/scenes/settlementHost.js",
-    "old": "          else if (town.src !== p.settlement || town.homeFrames !== (p.homeFrames ?? null)) restand(town, p);\n",
+    "old": "          else if ((town.src !== p.settlement || town.homeFrames !== (p.homeFrames ?? null)) && restand(town, p, stands > 0)) stands--;\n",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-rebuild-plan-kept",
     "file": "src/scenes/settlementHost.js",
-    "old": "    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) { takeDown(town); stand(entry, town.key); return; }\n",
-    "new": "",
+    "old": "    if (town.src !== entry.settlement && !same(town.src, entry.settlement)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "FEATURES-stalls-huddled",
     "file": "src/world/settlement/settlementFeatures.js",
-    "old": "stallEast = east + Math.cos(angle) * 5, stallNorth = north + Math.sin(angle) * 5",
-    "new": "stallEast = east + Math.cos(angle) * 1, stallNorth = north + Math.sin(angle) * 1",
+    "old": "return [at[0] + Math.cos(angle) * 5, at[1] + Math.sin(angle) * 5];",
+    "new": "return [at[0] + Math.cos(angle) * 1, at[1] + Math.sin(angle) * 1];",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "TREES-record-one-climate-lacks",
     "file": "src/world/settlement/settlementStand.js",
-    "old": "export const YARD_TREE_RECORDS = Object.freeze([13, 30]);",
-    "new": "export const YARD_TREE_RECORDS = Object.freeze([12, 30]);",
+    "old": "export const YARD_TREE_FALLBACK = 13;",
+    "new": "export const YARD_TREE_FALLBACK = 12;",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -327,7 +327,7 @@
   {
     "name": "TREES-left-out-of-nature",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  nature.push(...settlementTreeFlats(settlement));",
+    "old": "  nature.push(...settlementTreeFlats(settlement, nature, natureArchive));",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -336,7 +336,7 @@
   {
     "name": "FEATURES-host-undrawn",
     "file": "src/scenes/settlementHost.js",
-    "old": "        if (features) { r.drawMesh(features, sc.ground, null); n++; }\n",
+    "old": " + one(s.meshes.get(s.featuresId), sc.ground, sc.featuresBox)",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
@@ -358,6 +358,143 @@
     "new": "[s.groundId, ...s.pieces.map((x) => x.id)]",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-budget-gone",
+    "file": "src/scenes/settlementHost.js",
+    "old": "if (!town) { if (stands > 0) { stands--; stand(p, key); } }",
+    "new": "if (!town) stand(p, key);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-ride-gone",
+    "file": "src/scenes/settlementHost.js",
+    "old": "col.addMesh(bucket, s.ground.positions, s.ground.indices, IDENTITY, s.ride);",
+    "new": "col.addMesh(bucket, s.ground.positions, s.ground.indices, IDENTITY);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-refiled-every-shift",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    if (!col?.addMesh || s.colAt) return;",
+    "new": "    if (!col?.addMesh) return;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-cull-ignored",
+    "file": "src/scenes/settlementHost.js",
+    "old": "const verdict = cull && box ? cull(box) : DECOR_DRAW;",
+    "new": "const verdict = DECOR_DRAW;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-shadow-drawn",
+    "file": "src/scenes/settlementHost.js",
+    "old": "(verdict === DECOR_SHADOW ? castOnly(r) : r).drawMesh(mesh, matrix, null);",
+    "new": "r.drawMesh(mesh, matrix, null);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-solids-ignored",
+    "file": "src/scenes/settlementHost.js",
+    "old": "[...s.plan.buildings.map((b) => b.footprint), ...s.solids]",
+    "new": "[...s.plan.buildings.map((b) => b.footprint)]",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-slot-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    releaseSlot(s.slot);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "GEN-check-not-skipped",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const problems = check ? validateSettlement(plan) : [];",
+    "new": "const problems = validateSettlement(plan);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "HOST-dress-checked",
+    "file": "src/scenes/settlementHost.js",
+    "old": "dressSettlement(input, L, { check: false });",
+    "new": "dressSettlement(input, L);",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ],
+    "equivalent": true,
+    "why": "the check costs a stand tens of milliseconds and changes nothing it answers; a frame's time is not pinned"
+  },
+  {
+    "name": "TREES-dead-taken",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": " || isDead(archive, flat.record)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-zone-archive-dropped",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "...(archive !== null ? { archive } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-deck-planted",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;",
+    "new": "if (cell.k < 1 || (walled && cell.k === layout.reachOf[cell.j])) continue;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-under-the-wall",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;",
+    "new": "if (cell.k < 1 || cell.raised) continue;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-archive-unhanded",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      natureArchive: climate.natureArchive,   // a settlement's yard trees take its live species\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "TREES-kernel-archive-unread",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "settlementTreeFlats(settlement, nature, natureArchive)",
+    "new": "settlementTreeFlats(settlement, nature, null)",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
     ]
   }
 ]

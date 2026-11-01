@@ -84,8 +84,8 @@
   {
     "name": "RMBC7-plans-unprinted",
     "file": "tools/groundPrint.mjs",
-    "old": "    cells.Plans = [settled.settlement, grownSettlement].map((g) =>",
-    "new": "    cells.Unprinted = [settled.settlement, grownSettlement].map((g) =>",
+    "old": "    cells.Plans = [settled.settlement, grownSettlement, city.settlement].map((g) =>",
+    "new": "    cells.Unprinted = [settled.settlement, grownSettlement, city.settlement].map((g) =>",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js",
       "test/net/fb1017f_groundgate.test.js"
@@ -132,6 +132,24 @@
     "file": "src/world/settlement/settlementPublish.js",
     "old": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((field) => field in a && JSON.stringify(a[field]) !== JSON.stringify(b[field]));",
     "new": "  const changed = (/** @type {any} */ a, /** @type {any} */ b) => KEPT.some((field) => JSON.stringify(a[field]) !== JSON.stringify(b[field]));",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "PRINT-rows-left-out",
+    "file": "tools/groundPrint.mjs",
+    "old": "    cells.Plans.push(...rowPrints());\n  } finally {",
+    "new": "  } finally {",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "PRINT-city-left-out",
+    "file": "tools/groundPrint.mjs",
+    "old": "    cells.Plans = [settled.settlement, grownSettlement, city.settlement].map((g) =>",
+    "new": "    cells.Plans = [settled.settlement, grownSettlement].map((g) =>",
     "tests": [
       "test/world/settlement/rmbc7_publish.test.js"
     ]

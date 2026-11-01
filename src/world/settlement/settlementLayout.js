@@ -11,7 +11,7 @@ import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js'
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const SETTLEMENT_GENERATOR_VERSION = 4;   // moves with any change to a plan; the golden prints (rmbc3_exact) hold it
+export const SETTLEMENT_GENERATOR_VERSION = 5;   // moves with any change to a plan; the golden prints (rmbc3_exact) hold it
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -372,8 +372,10 @@ export const districtDraw = (input) => (/** @type {number} */ j) => {
  */
 export function yardTrees(input, layout) {
   const style = SETTLEMENT_STYLES[input.style], frame = polarFrame(layout.c), rngOf = districtDraw(input), out = [];
+  const walled = !!SETTLEMENT_ARCHETYPES[input.archetype]?.wall && layout.ring;
   for (const cell of layout.cells) {
-    if (cell.k < 1) continue;
+    // none on a deck (a tree is the ground's), nor in a walled town's outer band, whose yard its wall stands on
+    if (cell.k < 1 || cell.raised || (walled && cell.k === layout.reachOf[cell.j])) continue;
     for (let slot = 0; slot < 3; slot++) {
       if (rngOf(cell.j)(13, cell.k, cell.j, slot) < 0.5) out.push({ id: `t${cell.id}.${slot}`, pad: cell.id, at: frame.toW(cell.u0 + (cell.u1 - cell.u0) * (0.25 + slot * 0.25), cell.b - style.back / 2) });
     }

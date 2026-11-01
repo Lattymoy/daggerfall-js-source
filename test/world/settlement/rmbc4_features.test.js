@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { featuresModel, FORT_WALL, FENCE } from '../../../src/world/settlement/settlementFeatures.js';
 import { generateSettlement, yardTrees, layoutSettlement } from '../../../src/world/settlement/settlementGen.js';
-import { settlementTreeFlats, YARD_TREE_RECORDS } from '../../../src/world/settlement/settlementStand.js';
+import { settlementTreeFlats, liveTreesOf, YARD_TREE_FALLBACK } from '../../../src/world/settlement/settlementStand.js';
 import { TREE_RECORDS } from '../../../src/world/terrain/terrainNature.js';
 import { padAt, edgeDistance, pointInRing } from '../../../src/world/settlement/settlementGeometry.js';
 import { art, CAPITAL_ART } from '../../../src/world/capitalShapes.js';
@@ -81,20 +81,37 @@ test('FEATURES a river town\'s docks run out from its quay at its height; a wetl
   assert.ok(Math.max(...reach) < 7.5 && Math.min(...reach) > 2.5, 'five stalls round its heart, its middle open');
 });
 
-test('FEATURES the yard trees are the dressing\'s own and the pixel\'s nature: a tree record every climate holds, on its pad\'s top (mutants: a record one climate lacks, the pad\'s top, the dressing\'s draw)', () => {
-  for (const [archive, trees] of Object.entries(TREE_RECORDS)) for (const r of YARD_TREE_RECORDS) assert.ok(trees.includes(r), `${r} a tree in ${archive}`);
+test('FEATURES the yard trees are the pixel\'s own live species on their pads\' tops: the trees the kernel laid there (a zone\'s carry their archive), never a dead one; none laid, the climate\'s live trees (mutants: a dead tree taken, the zone\'s archive dropped, the pad\'s top)', () => {
+  assert.ok(Object.values(TREE_RECORDS).every((trees) => trees.includes(YARD_TREE_FALLBACK)), 'the fallback a tree in every climate');
+  // the woodlands (504): its great dead oak (30) is never taken; a zone's pine carries its archive
+  assert.deepEqual(liveTreesOf([{ record: 13 }, { record: 30 }, { record: 16 }, { record: 2 }, { record: 13 }], 504), [[13, null], [16, null]]);
+  assert.deepEqual(liveTreesOf([{ record: 25, archive: 504 }, { record: 13 }], 502), [[25, 504], [13, null]]);
+  assert.deepEqual(liveTreesOf([], 503), [[13, null], [30, null], [5, null]], 'none laid: the desert\'s live trees, its snags and thorn left out');
   for (const [archetype, style] of [['village', 'IliacBay'], ['oasis', 'Hammerfell']]) {
     const { input, layout, plan } = make(archetype, style);
     const dressed = plan.features.filter((f) => f.kind === 'tree').map((f) => [f.id, f.pad, f.at]);
     assert.deepEqual(yardTrees(input, layout).map((t) => [t.id, t.pad, t.at]), dressed, `${style}: the dressing's trees`);
-    const flats = settlementTreeFlats({ input, layout });
+    const flats = settlementTreeFlats({ input, layout }, [{ record: 13 }, { record: 16 }, { record: 30 }], 504);
     assert.equal(flats.length, dressed.length);
     for (const [i, f] of flats.entries()) {
       const pad = layout.pads.find((p) => p.id === dressed[i][1]);
       assert.deepEqual([f.x, f.y, f.z], [dressed[i][2][0], layout.datum + pad.y, dressed[i][2][1]]);
-      assert.ok(YARD_TREE_RECORDS.includes(f.record));
+      assert.ok([13, 16].includes(f.record) && f.archive === undefined);
     }
-    assert.ok(new Set(flats.map((f) => f.record)).size === YARD_TREE_RECORDS.length, 'both kinds of tree');
+    assert.equal(new Set(flats.map((f) => f.record)).size, 2, 'both live kinds');
   }
+  const zone = settlementTreeFlats({ input: make('village').input, layout: make('village').layout }, [{ record: 25, archive: 506 }], 504);
+  assert.ok(zone.length > 0 && zone.every((f) => f.record === 25 && f.archive === 506), 'a zone\'s tree, its archive with it');
   assert.deepEqual(settlementTreeFlats(null), []);
+});
+
+test('FEATURES no yard tree on a deck, nor in a walled town\'s outer band where its wall stands (mutants: the deck, the wall\'s band)', () => {
+  const wet = make('wetland', 'BlackMarsh');
+  const raised = new Set(wet.layout.cells.filter((c) => c.raised).map((c) => c.id));
+  assert.ok(raised.size > 0 && yardTrees(wet.input, wet.layout).every((t) => !raised.has(t.pad)));
+  const fort = make('fort', 'HighRock'), outer = new Set(fort.layout.cells.filter((c) => c.k === fort.layout.reachOf[c.j]).map((c) => c.id));
+  const trees = yardTrees(fort.input, fort.layout);
+  assert.ok(trees.length > 5 && trees.every((t) => !outer.has(t.pad)), 'clear of the wall');
+  const open = make('village', 'IliacBay');
+  assert.ok(yardTrees(open.input, open.layout).some((t) => open.layout.cells.find((c) => c.id === t.pad).k === open.layout.reachOf[open.layout.cells.find((c) => c.id === t.pad).j]), 'an open village\'s outer band has its trees');
 });

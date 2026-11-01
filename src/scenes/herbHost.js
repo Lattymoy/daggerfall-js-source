@@ -46,6 +46,7 @@ import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { noteAct } from '../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
+import { settlementClearing } from '../world/settlement/townGrowth.js'; // a settlement's ground, as the kernel's trees keep off it
 
 /** The item flats' archive - every plant's world picture is in it (its template's worldTextureRecord). */
 export const HERB_FLAT_ARCHIVE = 254;
@@ -229,7 +230,7 @@ export function herbKind({ book }) {
         seasonalEye: specs('herbalism')[100] === 'seasonal-eye',
         samples: entry.samples,
         tilemap: entry.tilemap,
-        locationRect: entry.locationRect ?? entry.wodSite ?? null, // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js)
+        locationRect: settlementClearing(entry) ?? entry.locationRect ?? entry.wodSite ?? null, // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js); a settlement's ground first
         rocks: [...(entry.rocks ?? []), ...(near ?? [])], // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too
         verge: entry.verge ?? null, // VERGE1: nor over a road
         beach: entry.beach ?? null, // AUDIT LANDFORMS II H2: the beach line DFU's own blend draws in a town's pixel

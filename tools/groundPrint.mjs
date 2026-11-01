@@ -48,7 +48,8 @@ import { GROUND_LAW } from '../src/net/wire.js';
 import { SETTLEMENT_ROWS, settlementPixel } from '../src/world/settlement/settlementPlaces.js';
 import { townGrowthJob } from '../src/world/settlement/townGrowth.js';
 import { settlementInput } from '../src/world/settlement/settlementPlaces.js'; // the plans' prints
-import { dressSettlement } from '../src/world/settlement/settlementGen.js';
+import { dressSettlement, layoutSettlement } from '../src/world/settlement/settlementGen.js';
+import { SYNTHETIC } from './settlementProbe.mjs';
 import { settlementPrint } from '../src/world/settlement/settlementContract.js';
 import { syntheticWoodsBytes, network } from '../test/landformWorld.mjs';
 
@@ -74,6 +75,12 @@ export const GROUND_PRINT_TOWN = Object.freeze([420, 270]);
 export const GROUND_PRINT_GROWN = Object.freeze([300, 250]);
 export const PRINT_GROWTH = townGrowthJob(
   { mapTableData: { mapId: 270420, locationType: 2 }, name: 'Print' },
+  'IliacBay',
+  17,
+);
+/** and a city's on the same ground: a city takes more bands than a village. */
+export const PRINT_GROWTH_CITY = townGrowthJob(
+  { mapTableData: { mapId: 270421, locationType: 0 }, name: 'Print City' },
   'IliacBay',
   17,
 );
@@ -205,6 +212,23 @@ export function groundPrint() {
   });
   cells[`Grown@${gx},${gy}`] = printed(grown.samples);
   const grownSettlement = grown.settlement;
+  const city = generatePixelTerrain({
+    woods: gentle,
+    px: gx,
+    py: gy,
+    stride: 1,
+    tilemap: new Uint8Array(128 * 128),
+    climateType: CLIMATES.Woodlands,
+    roads,
+    sites,
+    climates: woodlands,
+    landform: true,
+    locationRect: grownRect,
+    hasLocation: true,
+    about: [{ px: gx, py: gy, shape: grownRect.shape }],
+    growth: PRINT_GROWTH_CITY,
+  });
+  cells[`GrownCity@${gx},${gy}`] = printed(city.samples);
   // its outskirts follow their road, so a change to how they do moves the law
   if (!grownSettlement?.input.roads.length || !grownSettlement.layout.cells.some((c) => c.road?.length))
     throw new Error('the grown village has no road through it');
@@ -308,15 +332,26 @@ export function groundPrint() {
     cells[`Settlement@${sx},${sy}`] = printed(settled.samples);
     // AND THE PLANS - a dressed plan's print, so a change to its doors' keys moves the law too
     const row = SETTLEMENT_ROWS[GROUND_PRINT_SETTLEMENT];
-    cells.Plans = [settled.settlement, grownSettlement].map((g) =>
+    cells.Plans = [settled.settlement, grownSettlement, city.settlement].map((g) =>
       g ? settlementPrint(dressSettlement(g.growth ? g.input : settlementInput(row, sx, sy), g.layout).plan) : 0,
     );
+    cells.Plans.push(...rowPrints());
   } finally {
     setTamrielTrace(trace);
     setTamrielFit(fit);
     dropGroundCache();
   }
   return { law: GROUND_LAW, step: GROUND_PRINT_STEP, cells };
+}
+
+/** Every published row laid on its archetype's ground and dressed with its ledger, printed: a change to a row's inputs, its
+ *  keys or the generator moves the law, whichever row it is. @param {readonly any[]} [rows] */
+export function rowPrints(rows = SETTLEMENT_ROWS) {
+  return rows.map((row) => {
+    const env = SYNTHETIC[row.archetype] ?? SYNTHETIC.village,
+      input = { ...settlementInput(row, 0, 0), env };
+    return settlementPrint(dressSettlement(input, layoutSettlement(input, env)).plan);
+  });
 }
 
 /** How far the ground moved from a recorded print, metres, and where most: `{ most, at }` (`at` null when no cell moved). */

@@ -2759,7 +2759,7 @@
   "src/world/terrain/jungleNature.js": 42,
   "src/world/terrain/midRingGrid.js": 15,
   "src/world/terrain/natureWire.js": 7,
-  "src/world/terrain/terrainGen.js": 74,
+  "src/world/terrain/terrainGen.js": 73,
   "src/world/terrain/terrainGenClient.js": 40,
   "src/world/terrain/terrainGenWorker.js": 6,
   "src/world/terrain/terrainHelper.js": 43,

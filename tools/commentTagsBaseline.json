@@ -3095,7 +3095,7 @@
  "src/world/terrain/jungleNature.js": 36,
  "src/world/terrain/midRingGrid.js": 7,
  "src/world/terrain/natureWire.js": 1,
- "src/world/terrain/terrainGen.js": 84,
+ "src/world/terrain/terrainGen.js": 83,
  "src/world/terrain/terrainGenClient.js": 67,
  "src/world/terrain/terrainGenWorker.js": 49,
  "src/world/terrain/terrainHelper.js": 2,

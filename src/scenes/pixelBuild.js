@@ -357,6 +357,7 @@ export function createPixelBuild(host) {
       wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests || jungle ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,   // AUDIT BANTHA1 LAY-4: the jungle keeps a site's own pieces' ground as the woods do
       // FOREST1: the woods' archive (the climate's summer one, which names its Trees) and whether this pixel's place is one they hide
       forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType) } : null,
+      natureArchive: climate.natureArchive,   // a settlement's yard trees take its live species
       ecotone: natureBorder,   // ECOTONE1: null unless a neighbour's nature differs
       // TESA-LANDS: past the Bay a zone's own flats (world/tamriel/tamrielLands.js), their border with the Blended climates row
       lands: lands ? { blend: !!ecotones, archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType) } : null,

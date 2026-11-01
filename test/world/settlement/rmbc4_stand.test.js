@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP } from '../../../src/world/settlement/settlementModels.js';
-import { standSettlement, createSettlementHost } from '../../../src/scenes/settlementHost.js';
+import { standSettlement, createSettlementHost, slotsFree } from '../../../src/scenes/settlementHost.js';
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
 import { SETTLEMENT_ROWS, settlementInput, settlementPlaceId } from '../../../src/world/settlement/settlementPlaces.js';
@@ -110,7 +110,8 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.equal(added.length, 2 + plan.buildings.length, 'the ground, the features and every building, one bucket');
   await new Promise((r) => setTimeout(r, 10));
   assert.ok(host.draw() > plan.buildings.length);
-  assert.ok(drawn.includes(groundModelId(ROW.ordinal)) && drawn.includes(featuresModelId(ROW.ordinal)), 'its ground and its features drawn');
+  const ids = host.idsAt(1084, 241);
+  assert.ok(drawn.includes(ids.ground) && drawn.includes(ids.features) && ids.ground === groundModelId(ids.slot) && ids.features === featuresModelId(ids.slot), 'its ground and its features drawn, on its run');
   const doors = host.doorTargets();
   assert.equal(doors.length, plan.buildings.length);
   assert.equal(doors[0].settlement.buildingKey, plan.buildings[0].key);
@@ -119,7 +120,7 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.equal(host.planAt(1084, 241).buildings.length, plan.buildings.length);
   // built again in place, the entry swapped with no frame between: the same plan files its yards on the new entry,
   // another is stood again (mutants: the swap unread, the yards left on the old entry)
-  const was = host.planAt(1084, 241), yards = new Map(), wasGround = customModelFor(groundModelId(ROW.ordinal));
+  const was = host.planAt(1084, 241), yards = new Map(), wasIds = host.idsAt(1084, 241), wasGround = customModelFor(wasIds.ground);
   assert.ok(wasGround?.positions.length > 0, 'its ground built through the family');
   entries = [{ ...P, settlement: { ...P.settlement }, homeFrames: yards }];
   host.frame();
@@ -128,26 +129,28 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   entries = [{ ...P, settlement: { ordinal: ROW.ordinal, layout: layoutSettlement({ ...input, seed: input.seed + 1 }, env) }, homeFrames: new Map() }];
   host.frame();
   assert.notEqual(host.planAt(1084, 241), was, 'another plan stood again');
-  assert.ok(customModelFor(groundModelId(ROW.ordinal)) !== wasGround, 'its run\'s ids built again, never the old plan\'s kept model');
+  assert.ok(host.idsAt(1084, 241).slot !== wasIds.slot && customModelFor(wasIds.ground) === null, 'stood again on a fresh run, the old run\'s kept model let go');
   assert.equal(yards.size, 0, 'the old entry\'s yards let go');
   assert.equal(host.count(), 1);
-  const before = removed.length;
+  const before = removed.length, lastIds = host.idsAt(1084, 241);
   entries = [];
   host.frame();
   assert.equal(host.count(), 0);
   assert.deepEqual(removed.slice(before), ['settlement:1084,241'], 'taken down: its bucket removed once');
-  assert.equal(customModelFor(groundModelId(ROW.ordinal)), null, 'and its models gone');
-  assert.equal(customModelFor(featuresModelId(ROW.ordinal)), null, 'its features too');
-  assert.equal(standSettlement({ px: 0, py: 0, settlement: { ordinal: 99, layout: L } }, null), null);
+  assert.equal(customModelFor(lastIds.ground), null, 'and its models gone');
+  assert.equal(customModelFor(lastIds.features), null, 'its features too');
+  assert.equal(standSettlement({ px: 0, py: 0, settlement: { ordinal: 99, layout: L } }, null, 0), null, 'no row');
+  assert.equal(standSettlement(P, null, -1), null, 'no run');
   const sand = art(CAPITAL_ART.sandstone);   // the host paves in the row's style (mutant: the style unpassed)
-  assert.ok(standSettlement(P, null).ground.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1]));
+  assert.ok(standSettlement(P, null, 0).ground.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1]));
 });
 
 test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and asks the host; a settlement door\'s record answers the door; the pixel carries its layout (mutants: each seam)', () => {
   const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /settlements = createSettlementHost\(\{/);
   assert.match(world, /\n {4}settlements\?\.frame\(\);/);
-  assert.match(world, /settlements\?\.draw\(renderer\);/);
+  assert.match(world, /settlements\?\.draw\(renderer, yardCull\);/, 'by the street\'s view test');
+  assert.match(world, /translation: onFloatingFrame\(state, \(px, py, out\) => state\.pixelTranslation\(px, py, out\)\),/, 'its collider rides the floating frame');
   assert.equal(world.match(/settlements\?\.destroyAll\(\);/g)?.length, 2, 'at a re-anchor and a load');
   assert.match(world, /\.\.\.\(settlements\?\.doorTargets\(\) \?\? \[\]\)\]/);
   assert.match(world, /if \(!hit\?\.pixelKey\) return hit\?\.settlement \? \{ \.\.\.hit\.settlement \} : null;/, 'a copy: the transition writes on the record (the game\'s first run threw on a frozen one)');
@@ -155,4 +158,44 @@ test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and a
   assert.match(build, /bridges, meets, settlement \} = await terrainGen\.generate\(\{/);
   assert.match(build, /\n\s+settlement,\s+\/\/ its settlement's layout/);
   assert.match(readFileSync(new URL('../../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8'), /\n {2}if \(worldPlaces\) worldPlaces\.registerLive\(SETTLEMENTS_SOURCE, \{ stamp: \(\) => \[tamrielFit\(\)\], rows: \(\) => settlementPlaceRows\(\) \}\);/);
+});
+
+test('RMBC4 the host\'s costs: one settlement stood a frame; its collider filed once, riding the pixel\'s translation; each piece culled by the street\'s view test; feet in a well hold the collider back; the host dresses unchecked (mutants: the frame\'s budget, the ride, the cull, the solids, the check skipped)', async () => {
+  const { featureSolids } = await import('../../../src/world/settlement/settlementFeatures.js');
+  const { DECOR_SKIP, DECOR_SHADOW, DECOR_DRAW } = await import('../../../src/scenes/decor/decorRoom.js');
+  const added = [], rides = [], drawn = [], cast = [];
+  const collider = { addMesh: (k, pos, idx, m, ride) => { added.push(k); rides.push(ride); }, removeBucket: () => {} };
+  const t = [10, 2, -5];
+  const second = { px: 1085, py: 241, settlement: { ordinal: ROW.ordinal, layout: L } };
+  let feetAt = null;
+  const freeBefore = slotsFree();
+  const host = createSettlementHost({ renderer: { drawMesh: (m) => drawn.push(m.id), recordShadowMesh: (m) => cast.push(m.id) }, pipeline: { getGpuMesh: (id) => Promise.resolve({ id }) }, collider: () => collider,
+    built: () => [P, second], translation: (px, py, out = [0, 0, 0]) => { out[0] = t[0]; out[1] = t[1]; out[2] = t[2]; return out; }, feet: () => feetAt });
+  const well = plan.features.find((f) => f.kind === 'well');
+  assert.ok(featureSolids(plan).some((ring) => ring.length > 6), 'the well\'s ring among its solids');
+  feetAt = [well.at[0] + t[0], 0, well.at[1] + t[2]];   // a body in the well: nothing filed yet
+  host.frame();
+  assert.equal(host.count(), 1, 'one stood this frame');
+  assert.equal(added.length, 0, 'feet in a well: the collider waits');
+  feetAt = null;
+  host.frame();
+  assert.equal(host.count(), 2, 'the next the frame after');
+  const once = added.length;
+  assert.ok(once > 0 && rides.every((ride) => typeof ride === 'function' && ride()[0] === t[0]), 'each mesh filed with the pixel\'s translation to ride');
+  t[0] += 819.2;   // the floating origin moves: nothing filed again
+  host.frame();
+  assert.equal(added.length, once, 'filed once');
+  await new Promise((r) => setTimeout(r, 10));
+  drawn.length = 0;
+  assert.equal(host.draw(undefined, () => DECOR_SKIP), 0, 'all off screen and out of reach: nothing');
+  assert.equal(drawn.length + cast.length, 0);
+  host.draw(undefined, () => DECOR_SHADOW);
+  assert.ok(cast.length > 0 && drawn.length === 0, 'in a shadow\'s reach: cast alone');
+  assert.ok(host.draw(undefined, () => DECOR_DRAW) > 0 && drawn.length > 0, 'in view: drawn');
+  host.destroyAll();
+  assert.equal(slotsFree(), freeBefore, 'their runs let go');
+  const unchecked = dressSettlement(input, L, { check: false });
+  assert.deepEqual(unchecked.plan, plan, 'the same plan');
+  const broken = { ...L, pads: [...L.pads, { id: 'x', poly: [[0, 0], [1, 0]], y: 0, rim: 'grade', base: 'cut' }] };
+  assert.ok(dressSettlement(input, broken).report.problems.length > 0 && dressSettlement(input, broken, { check: false }).report.problems.length === 0, 'the check skipped, not its plan');
 });

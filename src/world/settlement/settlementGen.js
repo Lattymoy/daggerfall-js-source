@@ -33,11 +33,12 @@ export function onRoad(road, start, end, margin) {
 }
 
 /**
- * Stages D to G on a layout: the terrain worker's, or layoutSettlement's.
- * @param {import('./settlementLayout.js').SettlementInput} input @param {ReturnType<typeof layoutSettlement>} L
+ * Stages D to G on a layout: the terrain worker's, or layoutSettlement's. `check` false skips the contract's check (a host
+ * standing a plan its generator's tests and the publish already hold to it).
+ * @param {import('./settlementLayout.js').SettlementInput} input @param {ReturnType<typeof layoutSettlement>} L @param {{ check?: boolean }} [opts]
  * @returns {{ plan: SettlementPlan, ledger: IdLedger, report: any }}
  */
-export function dressSettlement(input, L) {
+export function dressSettlement(input, L, { check = true } = {}) {
   const { place, origin, seed, params = {} } = input;
   const A = SETTLEMENT_ARCHETYPES[input.archetype], st = SETTLEMENT_STYLES[input.style];
   if (!A) throw new RangeError(`no settlement archetype '${input.archetype}' (settlementStyles.js SETTLEMENT_ARCHETYPES)`);
@@ -178,7 +179,7 @@ export function dressSettlement(input, L) {
     origin, footprint, pads, links: planLinks, gates, streets, districts, buildings: ids.buildings, plots, features,
   };
   const cut = [...cells.values()].filter((c) => !c.raised).map((c) => Math.abs(c.h - c.natural));
-  const problems = validateSettlement(plan);
+  const problems = check ? validateSettlement(plan) : [];   // unchecked, a host's: the plan is held to the contract where it is made
   // fit: a site the archetype cannot stand on (a cut town on a marsh, a cliff) lays out too little or cuts too deep
   const fit = { kept: made ? cm(kept.length / made) : 0, buildings: buildings.length, least: A.services.length + 2, cutMax: cm(Math.max(0, ...cut)), cutLimit: cm(CUT_STEPS_MAX * st.terrace) };
   return {

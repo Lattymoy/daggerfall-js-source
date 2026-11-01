@@ -89,10 +89,27 @@ test('RMBC7 a grown town\'s revision: a protected minted key its new plan no lon
   assert.equal(emptyIdLedger(1).next, MINTED_KEY_MIN);
 });
 
-test('RMBC7 the plans ride the ground\'s law (by source): the print reads both plans, so a door\'s key moved moves GROUND_LAW (RD-20; mutant: the plans unprinted)', () => {
+test('RMBC7 the plans ride the ground\'s law (by source): the print reads the settlement\'s, the village\'s, the city\'s and every row\'s plan, so a door\'s key moved moves GROUND_LAW (mutant: the plans unprinted)', () => {
   const print = readFileSync(new URL('../../../tools/groundPrint.mjs', import.meta.url), 'utf8');
-  assert.match(print, /cells\.Plans = \[settled\.settlement, grownSettlement\]\.map\(/);
+  assert.match(print, /cells\.Plans = \[settled\.settlement, grownSettlement, city\.settlement\]\.map\(/);
   const recorded = JSON.parse(readFileSync(new URL('../../fixtures/groundPrint.json', import.meta.url), 'utf8'));
-  assert.equal(recorded.cells.Plans.length, 2);
-  assert.ok(recorded.cells.Plans.every((h) => Number.isSafeInteger(h) && h > 0), 'both plans stood and printed');
+  assert.equal(recorded.cells.Plans.length, 3 + SETTLEMENT_ROWS.length);
+  assert.ok(recorded.cells.Plans.every((h) => Number.isSafeInteger(h) && h > 0), 'every plan stood and printed');
+});
+
+test('RMBC7 the print reads every published row and a city\'s outskirts: a row\'s seed or ledger changed moves its print alone (mutants: a row left out, the city left out)', async () => {
+  const { rowPrints, PRINT_GROWTH_CITY } = await import('../../../tools/groundPrint.mjs');
+  const now = rowPrints();
+  assert.equal(now.length, SETTLEMENT_ROWS.length);
+  assert.equal(new Set(now).size, now.length, 'each its own');
+  for (const i of [0, SETTLEMENT_ROWS.length - 1]) {
+    const moved = rowPrints(SETTLEMENT_ROWS.map((r, k) => (k === i ? { ...r, seed: r.seed + 1 } : r)));
+    assert.ok(moved[i] !== now[i] && moved.every((p, k) => k === i || p === now[k]), `${SETTLEMENT_ROWS[i].name}'s seed`);
+  }
+  const keyed = rowPrints(SETTLEMENT_ROWS.map((r, k) => (k === 0 ? { ...r, ledger: { ...r.ledger, keys: Object.fromEntries(Object.entries(r.ledger.keys).map(([a, key]) => [a, key + 1])), next: r.ledger.next + 1 } } : r)));
+  assert.notEqual(keyed[0], now[0], 'its keys');
+  assert.equal(PRINT_GROWTH_CITY.type, 0, 'a city\'s growth');
+  const print = readFileSync(new URL('../../../tools/groundPrint.mjs', import.meta.url), 'utf8');
+  assert.match(print, /cells\.Plans = \[settled\.settlement, grownSettlement, city\.settlement\]/);
+  assert.match(print, /cells\.Plans\.push\(\.\.\.rowPrints\(\)\);/);
 });

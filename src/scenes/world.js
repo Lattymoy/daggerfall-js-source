@@ -23598,7 +23598,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     bench: () => openYardBench(),   // CARP-YARD: the joinery's workbench
   });
   // THE SETTLEMENTS (scenes/settlementHost.js) - each where its pixel's worker laid it out (`p.settlement`)
-  settlements = createSettlementHost({ pipeline, collider: () => collider, built: () => built.values(), translation: (px, py, out) => state.pixelTranslation(px, py, out),
+  settlements = createSettlementHost({ pipeline, collider: () => collider, built: () => built.values(), translation: onFloatingFrame(state, (px, py, out) => state.pixelTranslation(px, py, out)),
     blocksFile: () => blocks, feet: () => (walkMode && playerSpawned ? player.feetAt() : null), exterior: () => _mode() === 'exterior' });
   /** CARP-YARD (bible/03-World/Merchant-Yards.md CARP-YARD): THE JOINERY'S WORKBENCH PRESSED - the Crafting page (CRAFT-HALL;
    *  the Stores page until then), landed on the workbench's section, as a home's workbench opens it (worldModes
@@ -31887,7 +31887,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
     lefay?.draw(renderer);   // LEFAY1: the monuments
     merchantYards?.draw(renderer, yardCull);   // MERCHANT-YARDS: the yards' timber and the Wagon Yards' wagons on show; PERF-YARD (AUDIT 15): the street's view test
-    settlements?.draw(renderer);   // the settlements' ground, buildings and doors
+    settlements?.draw(renderer, yardCull);   // the settlements' ground, features, buildings and doors, by the street's view test
     poiHost?.draw(renderer, yardCull);   // POI-2: the approved POIs' opaque parts, by the street's view test
     portHost?.draw(renderer, yardCull);   // SHIPYARDS: the shipyards' timber and the lighthouses' stone, by the street's view test as the yards are
     if (_mode() === 'exterior') wardenShows?.draw(renderer);   // WARDEN1: a wagon on a guard's shoulders, or in the air
