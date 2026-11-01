@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-ENVIRONS-G5-faces-both",
     "file": "src/render/renderer.js",
-    "old": "      gl.enable(gl.POLYGON_OFFSET_FILL);\n      gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);",
-    "new": "      gl.disable(gl.CULL_FACE);\n      gl.enable(gl.POLYGON_OFFSET_FILL);\n      gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units);",
+    "old": "      gl.enable(gl.POLYGON_OFFSET_FILL);",
+    "new": "      gl.disable(gl.CULL_FACE);\n      gl.enable(gl.POLYGON_OFFSET_FILL);",
     "tests": [
       "test/render/snowfall1_runtime.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUDIT-ENVIRONS-P1-uniform-skipped-though-moved",
     "file": "src/render/renderer.js",
-    "old": "if (s && Object.is(s[0], f(v[0])) && Object.is(s[1], f(v[1])) && Object.is(s[2], f(v[2])) && Object.is(s[3], f(v[3]))) return;",
-    "new": "if (s && Object.is(s[0], f(v[0]))) return;",
+    "old": "      if (s && Object.is(s[0], f(v[0])) && Object.is(s[1], f(v[1])) && Object.is(s[2], f(v[2])) && Object.is(s[3], f(v[3]))) return;",
+    "new": "      if (s && Object.is(s[0], f(v[0]))) return;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "AUDIT-ENVIRONS-P1-unit-skipped-though-moved",
     "file": "src/render/renderer.js",
-    "old": "if (P && P.tex[unit] === tex[k]) continue;",
-    "new": "if (P && P.tex[unit]) continue;",
+    "old": "      if (P && P.tex[unit] === tex[k]) continue;   // AUDIT ENVIRONS P1: a pass's unit holding its picture already",
+    "new": "      if (P && P.tex[unit]) continue;   // AUDIT ENVIRONS P1: a pass's unit holding its picture already",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-ENVIRONS-P1-generic-set-kept",
     "file": "src/render/renderer.js",
-    "old": "if (!P || generic !== P.generic) {",
-    "new": "if (!P || !P.generic) {",
+    "old": "    if (!P || generic !== P.generic) {",
+    "new": "    if (!P || !P.generic) {",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-ENVIRONS-P1-model-by-two-axes",
     "file": "src/render/renderer.js",
-    "old": "if (!P || !P.model || !Object.is(m[12], f(u.origin[0])) || !Object.is(m[13], f(u.origin[1])) || !Object.is(m[14], f(u.origin[2]))) {",
-    "new": "if (!P || !P.model || !Object.is(m[12], f(u.origin[0])) || !Object.is(m[13], f(u.origin[1]))) {",
+    "old": "    if (!P || !P.model || !Object.is(m[12], f(u.origin[0])) || !Object.is(m[13], f(u.origin[1])) || !Object.is(m[14], f(u.origin[2]))) {",
+    "new": "    if (!P || !P.model || !Object.is(m[12], f(u.origin[0])) || !Object.is(m[13], f(u.origin[1]))) {",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "AUDIT-ENVIRONS-P1-offset-left-on",
     "file": "src/render/renderer.js",
-    "old": "    if (!P?.offset) return;   // nothing drawn\n    gl.disable(gl.POLYGON_OFFSET_FILL);",
-    "new": "    if (!P?.offset) return;   // nothing drawn",
+    "old": "    if (!P?.offset) return;   // nothing drawn\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n    this._bindVao(null);",
+    "new": "    if (!P?.offset) return;   // nothing drawn\n    this._bindVao(null);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "AUDIT-ENVIRONS-P1-vertex-array-left-bound",
     "file": "src/render/renderer.js",
-    "old": "    gl.disable(gl.POLYGON_OFFSET_FILL);\n    this._bindVao(null);\n    for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
-    "new": "    gl.disable(gl.POLYGON_OFFSET_FILL);\n    for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
+    "old": "    this._bindVao(null);\n    for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
+    "new": "    for (const [loc] of P.generic ?? []) gl.vertexAttrib4f(loc, 0, 0, 0, 1);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]

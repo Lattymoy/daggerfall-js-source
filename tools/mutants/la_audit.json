@@ -83,8 +83,8 @@
   {
     "name": "LA-AUDIT-A1-10-the-cells-VAO-never-freed",
     "file": "src/render/renderer.js",
-    "old": "    if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers\n",
-    "new": "",
+    "old": "    if (mesh.shadowVao) gl.deleteVertexArray(mesh.shadowVao);   // LA-AUDIT A1: its index buffer is one of mesh.buffers\n    // c2/S6: the wireframe cache is the mesh's, and dies with it",
+    "new": "    // c2/S6: the wireframe cache is the mesh's, and dies with it",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "LA-AUDIT-C1-the-shift-moves-no-stamp",
     "file": "src/render/renderer.js",
-    "old": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }",
-    "new": "this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); }",
+    "old": "  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); this._frameStamp++; }   // And the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps",
+    "new": "  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); this._air?.shiftOrigin(offset); this._wl?.shift(offset); }   // And the air's held view-projections - the contact march reprojects the moved world by them; WL1: and the windows the window light keeps",
     "tests": [
       "test/render/la_audit.test.js"
     ]

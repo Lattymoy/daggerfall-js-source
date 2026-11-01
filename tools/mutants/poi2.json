@@ -2,8 +2,8 @@
   {
     "name": "POI2-the-depth-written",
     "file": "src/render/renderer.js",
-    "old": "    gl.depthMask(false);\n    gl.uniform1f(this.uMeshAlpha, alpha);",
-    "new": "    gl.depthMask(true);\n    gl.uniform1f(this.uMeshAlpha, alpha);",
+    "old": "    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(false);",
+    "new": "    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(true);",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "POI2-the-blend-left-on",
     "file": "src/render/renderer.js",
-    "old": "      gl.depthMask(true);\n      gl.disable(gl.BLEND);\n    }\n  }\n\n",
-    "new": "      gl.depthMask(true);\n    }\n  }\n\n",
+    "old": "      gl.depthMask(true);\n      gl.disable(gl.BLEND);\n    }\n  }",
+    "new": "      gl.depthMask(true);\n    }\n  }",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "POI2-the-shadow-cast",
     "file": "src/render/renderer.js",
-    "old": "this._drawMeshBundle(mesh, modelMatrix, texRemap, false, true);",
-    "new": "this._drawMeshBundle(mesh, modelMatrix, texRemap, false, false);",
+    "old": "      this._drawMeshBundle(mesh, modelMatrix, texRemap, false, true);",
+    "new": "      this._drawMeshBundle(mesh, modelMatrix, texRemap, false, false);",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "POI2-the-sampler-unkeyed",
     "file": "src/render/renderer.js",
-    "old": "${opts.sampler && !opts.smooth ? samplerKey(opts.sampler) : ''}`;",
-    "new": "`;",
+    "old": "    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}${opts.clamp && !opts.smooth ? '#clamp' : ''}${opts.sampler && !opts.smooth ? samplerKey(opts.sampler) : ''}`;   // A sampler asked for keys apart too (render/meshAlpha.js samplerKey)   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)",
+    "new": "    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}${opts.opaque ? '#opaque' : ''}${opts.mips === false ? (opts.variant ?? '#ui') : ''}${opts.alpha ? '#alpha' : ''}${opts.clamp && !opts.smooth ? '#clamp' : ''}`;   // A sampler asked for keys apart too (render/meshAlpha.js samplerKey)   // INCIDENT 2026-09-04: DFU caches materials per alphaIndex; REVIEW 2026-09-05: the un-mipped UI variant of a world archive (item icons) keys apart too; AUDIT 61: `variant: ''` keeps the plain batch key for world art uploaded without a chain (a mod atlas built mipChain:false - SIB1)",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "MWNPC5-flush-drops-fx",
     "file": "src/render/renderer.js",
-    "old": "[it.tx / S, it.ty / S], q.fx, q.depth);",
-    "new": "[it.tx / S, it.ty / S], null, q.depth);",
+    "old": "            q.hitFlash, q.conceal, q.up, [it.tx / S, it.ty / S], q.fx, q.depth);   // And its tells; BODY-DEPTH: and where its texels stand",
+    "new": "            q.hitFlash, q.conceal, q.up, [it.tx / S, it.ty / S], null, q.depth);   // And its tells; BODY-DEPTH: and where its texels stand",
     "tests": [
       "test/render/mwnpc5_bodyfx.test.js"
     ]

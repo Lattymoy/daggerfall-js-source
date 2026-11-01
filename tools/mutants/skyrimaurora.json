@@ -749,8 +749,8 @@
   {
     "name": "SKYRIM-AURORA-the-map-unbound",
     "file": "src/render/renderer.js",
-    "old": "    this._bindAuroraSky(L, u.aurora);   // SKYRIM-AURORA\n",
-    "new": "",
+    "old": "    this._bindAuroraSky(L, u.aurora);\n    // the ground's own light, term for term, so the surface sits in the",
+    "new": "    // the ground's own light, term for term, so the surface sits in the",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "SKYRIM-AURORA-the-snow-sampler-unsent",
     "file": "src/render/renderer.js",
-    "old": "    this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;\n",
-    "new": "",
+    "old": "    this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;\n    this.gl.uniform1i(L.auroraSky, AURORA_SKY_UNIT);",
+    "new": "    this.gl.uniform1i(L.auroraSky, AURORA_SKY_UNIT);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "SKYRIM-AURORA-the-lanes-samplers-unsent",
     "file": "src/render/renderer.js",
-    "old": "        this._waterSamplerUnits(this.waterSurfaceProgramLane, this._wsLane);   // SKYRIM-AURORA\n",
-    "new": "",
+    "old": "        this._waterSamplerUnits(this.waterSurfaceProgramLane, this._wsLane);\n        const p = this.waterSurfaceProgramLane, gl = this.gl;",
+    "new": "        const p = this.waterSurfaceProgramLane, gl = this.gl;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "SKYRIM-AURORA-the-units-left-empty",
     "file": "src/render/renderer.js",
-    "old": "    for (const unit of [SNOW_LINES_UNIT, AURORA_SKY_UNIT]) { this._activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, this._blackTex); }\n",
-    "new": "",
+    "old": "    for (const unit of [SNOW_LINES_UNIT, AURORA_SKY_UNIT]) { this._activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, this._blackTex); }\n    this._activeTexture(gl.TEXTURE0);",
+    "new": "    this._activeTexture(gl.TEXTURE0);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]

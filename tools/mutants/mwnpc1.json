@@ -209,8 +209,8 @@
   {
     "name": "MWNPC1-nrm-transposed-product",
     "file": "src/render/renderer.js",
-    "old": "out[3] = sg * (a * d + b * e + c * f);",
-    "new": "out[3] = sg * (a * b + d * e + g * h);",
+    "old": "  out[0] = sg * (a * a + b * b + c * c); out[3] = sg * (a * d + b * e + c * f); out[6] = sg * (a * g + b * h + c * k);",
+    "new": "  out[0] = sg * (a * a + b * b + c * c); out[3] = sg * (a * b + d * e + g * h); out[6] = sg * (a * g + b * h + c * k);",
     "tests": [
       "test/formats/morrowind/mwnpc1_gpuskin.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "MWNPC1-fs-winding-equal",
     "file": "src/render/renderer.js",
-    "old": "bool ccw = gl_FrontFacing != (uFrontCW > 0.5);",
-    "new": "bool ccw = gl_FrontFacing == (uFrontCW > 0.5);",
+    "old": "  bool ccw = gl_FrontFacing != (uFrontCW > 0.5);",
+    "new": "  bool ccw = gl_FrontFacing == (uFrontCW > 0.5);",
     "tests": [
       "test/formats/morrowind/mwnpc1_gpuskin.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "MWNPC1-shadow-records-skin",
     "file": "src/render/renderer.js",
-    "old": "if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);",
-    "new": "if (this._casting && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);",
+    "old": "    if (this._casting && this._spriteDepth === 0 && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // The rigs cast - never from the sprite target or the studio bake",
+    "new": "    if (this._casting && this._studioDepth === 0) this._shadows.recordCharacter(mesh, modelMatrix);   // The rigs cast - never from the sprite target or the studio bake",
     "tests": [
       "test/formats/morrowind/mwnpc1_gpuskin.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "MWNPC1-unit-unset",
     "file": "src/render/renderer.js",
-    "old": "    gl.uniform1i(gl.getUniformLocation(program, 'uSkinPalette'), SKIN_PALETTE_UNIT);\n",
-    "new": "\n",
+    "old": "    gl.uniform1i(gl.getUniformLocation(program, 'uSkinPalette'), SKIN_PALETTE_UNIT);",
+    "new": "",
     "tests": [
       "test/formats/morrowind/mwnpc1_gpuskin.test.js"
     ]

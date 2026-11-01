@@ -128,8 +128,8 @@
   {
     "name": "GUIDE8-the-row-on-by-default",
     "file": "src/systems/features.js",
-    "old": "key: 'questGuidance', initial: 'journal',",
-    "new": "key: 'questGuidance', initial: 'exact',",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'journal', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/quest/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questGuidance', initial: 'exact', online: 'player', classic: 'journal', tiers: Object.freeze([['journal', 'Journal'], ['town', 'Town'], ['exact', 'Exact']]) }),   // systems/quest/questGuidance.js GUIDANCE_PREF, GUIDANCE_TIERS",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]

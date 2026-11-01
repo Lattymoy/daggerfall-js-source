@@ -155,8 +155,8 @@
   {
     "name": "PEAKS1-the-face-dropped-from-the-classic-program",
     "file": "src/render/renderer.js",
-    "old": "  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);",
-    "new": "  snowC = snowC;",
+    "old": "  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)",
+    "new": "  snowC = snowC;   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

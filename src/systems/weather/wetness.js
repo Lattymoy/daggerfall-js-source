@@ -1,5 +1,5 @@
 // @ts-check
-// WET1 (bible/07-Rendering/Weather-Arc.md WET1): how wet the ground about the player is. It soaks while rain falls and
+// How wet the ground about the player is. It soaks while rain falls and
 // dries after, on the game's clock, so a rest or a journey through a shower lands on ground that matches it. The lane's
 // ground and walls read it (render/wetGlsl.js). Interiors and dungeons never set it, so they draw dry.
 // DFU has no wet ground: a departure on the enhanced lane alone. Settings row `wet-world`; `?wet=off` is the door back.
@@ -20,8 +20,8 @@ export const PUDDLE_RAIN = Object.freeze([0.3, 0.8]);
 export function wetWorldMode(search = globalThis.location?.search ?? '') {
   if (pageParam('wet', search) === 'off') return 'off';
   if (!isEnhanced()) return 'off';
-  const v = getPref('wetWorld');
-  return v === 'off' || v === 'wet' || v === 'full' ? v : 'full';
+  const tier = getPref('wetWorld');
+  return tier === 'off' || tier === 'wet' || tier === 'full' ? tier : 'full';
 }
 
 /** Ground soaks and sheens. */
@@ -40,8 +40,8 @@ export function rainOf(shown, intensity, snowShare = 0) {
   return Math.max(0, Math.min(1, Number(intensity) || 0)) * (1 - Math.max(0, Math.min(1, Number(snowShare) || 0)));
 }
 
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
-const toward = (v, target, dt, up, down) => (v < target ? Math.min(target, v + dt / up) : Math.max(target, v - dt / down));
+const clamp01 = (val) => Math.max(0, Math.min(1, val));
+const toward = (val, target, dt, up, down) => (val < target ? Math.min(target, val + dt / up) : Math.max(target, val - dt / down));
 
 /** One step of the ground under `rain` for `dtMin` game minutes: { wet, puddle }, each 0..1. A first step or a clock run
  *  back (a load) lands on the weather whole; a long one (a rest, a journey) has run its course anyway. Pure. */

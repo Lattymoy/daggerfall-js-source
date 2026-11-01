@@ -20,8 +20,8 @@
   {
     "name": "AUDITRETRO2-F3-the-lane-resolved-under-the-scissor",
     "file": "src/render/renderer.js",
-    "old": "    if (sc) this.gl.disable(this.gl.SCISSOR_TEST);\n",
-    "new": "",
+    "old": "    if (sc) this.gl.disable(this.gl.SCISSOR_TEST);\n    if (this._perfOpen) this._perf?.mark('air');   // The AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)",
+    "new": "    if (this._perfOpen) this._perf?.mark('air');   // The AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITRETRO2-F3-the-scissor-not-put-back",
     "file": "src/render/renderer.js",
-    "old": "    if (sc) { this.gl.enable(this.gl.SCISSOR_TEST); this.gl.scissor(sc[0], sc[1], sc[2], sc[3]); }\n",
-    "new": "",
+    "old": "    if (sc) { this.gl.enable(this.gl.SCISSOR_TEST); this.gl.scissor(sc[0], sc[1], sc[2], sc[3]); }\n    this._frameFbo = null;",
+    "new": "    this._frameFbo = null;",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDITRETRO2-F8-the-2d-pass-left-in-the-strip",
     "file": "src/render/renderer.js",
-    "old": "    if (strip) gl.viewport(0, 0, this.canvas.width, this.canvas.height);   // the 2D pass's whole canvas back\n",
-    "new": "",
+    "old": "    if (strip) gl.viewport(0, 0, this.canvas.width, this.canvas.height);   // the 2D pass's whole canvas back\n  }",
+    "new": "  }",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDITRETRO2-J1-the-classic-present-outside-the-measure",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();\n    if (this._perfOpen && !this._air?.pending) this._perfClose();",
-    "new": "    if (this._perfOpen && !this._air?.pending) this._perfClose();\n    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();",
+    "old": "    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();\n    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would",
+    "new": "    if (this._perfOpen && !this._air?.pending) this._perfClose();\n    if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDITRETRO2-J1-the-lane-present-outside-the-measure",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)\n    this._perfClose();",
-    "new": "    this._perfClose();\n    if (this._retroOwed) this._presentRetroFrame();",
+    "old": "    if (this._retroOwed) this._presentRetroFrame();   // The lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)\n    this._perfClose();   // The clock stops at the resolve; the line, when it is due",
+    "new": "    this._perfClose();\n    if (this._retroOwed) this._presentRetroFrame();   // The clock stops at the resolve; the line, when it is due",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDITRETRO2-J1-the-present-takes-no-span",
     "file": "src/render/renderer.js",
-    "old": "    if (this._perfOpen) this._perf?.mark('retro');\n",
-    "new": "",
+    "old": "    if (this._perfOpen) this._perf?.mark('retro');\n    this._retroOwed = false;",
+    "new": "    this._retroOwed = false;",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDITRETRO2-J7-a-null-texture-keyed",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's",
-    "new": "    if (opts.replacement) { this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)",
+    "new": "    if (opts.replacement) { this._replacements.add(tex); }   // TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AUDITRETRO2-J7-a-null-emission-map-keyed",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map",
-    "new": "    if (opts.replacement) { this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // A replacement albedo's map - neither is capped (J7: a lost context's null is no key)",
+    "new": "    if (opts.replacement) { this._replacements.add(tex); }   // A replacement albedo's map - neither is capped (J7: a lost context's null is no key)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "AUDITRETRO2-J7-alpha-art-keyed-on-a-null",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);",
-    "new": "    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);",
+    "old": "    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);   // The texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)",
+    "new": "    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);   // The texture's own treatment, read at every screen draw of it (AUDIT RETRO1 J7: a lost context's null is no key)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDITRETRO2-J8-a-menus-resolve-opens-a-span",
     "file": "src/render/renderer.js",
-    "old": "    if (this._perfOpen) this._perf?.mark('air');",
-    "new": "    this._perf?.mark('air');",
+    "old": "    if (this._perfOpen) this._perf?.mark('air');   // The AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)",
+    "new": "    this._perf?.mark('air');   // The AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "AUDITRETRO2-I3-the-scissor-shadow-outlives-its-clear",
     "file": "src/render/renderer.js",
-    "old": "  clearScreenScissor() { this._scissor = null; this.gl.disable(",
-    "new": "  clearScreenScissor() { this.gl.disable(",
+    "old": "  clearScreenScissor() { this._scissor = null; this.gl.disable(this.gl.SCISSOR_TEST); }",
+    "new": "  clearScreenScissor() { this.gl.disable(this.gl.SCISSOR_TEST); }",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDITRETRO2-I6-a-replacements-emission-swept",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped",
-    "new": "    if (opts.replacement) { }   // AUDIT RETRO1 A4: a replacement albedo's map - neither is capped",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // A replacement albedo's map - neither is capped (J7: a lost context's null is no key)",
+    "new": "    if (opts.replacement) { }   // A replacement albedo's map - neither is capped (J7: a lost context's null is no key)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDITRETRO2-I6-a-panel-resolves-under-its-scissor",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;\n    // EVERY global",
-    "new": "    if (this._retroOwed) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;\n    // EVERY global",
+    "old": "    // the frame's first screen quad drew into the retro image (or the lane's frame) and the image was never shown\n    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }",
+    "new": "    // the frame's first screen quad drew into the retro image (or the lane's frame) and the image was never shown\n    if (this._retroOwed) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "AUDITRETRO2-I6-the-span-over-the-whole-canvas",
     "file": "src/render/renderer.js",
-    "old": "Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))",
-    "new": "Math.max(1, Math.round(this.canvas.height))",
+    "old": "    return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;",
+    "new": "    return this._retroOwed && f ? [f.height, Math.max(1, Math.round(this.canvas.height))] : null;",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "AUDITRETRO2-I6-retro-off-keeps-the-image-viewport",
     "file": "src/render/renderer.js",
-    "old": "      if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on",
-    "new": "      if (false) this._restoreWorldViewport();   // the frame retro mode goes off on",
+    "old": "      if (this._retroFrame) this._restoreWorldViewport();   // the frame retro mode goes off on: an owed present just took the viewport to the full canvas",
+    "new": "      if (false) this._restoreWorldViewport();   // the frame retro mode goes off on: an owed present just took the viewport to the full canvas",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]

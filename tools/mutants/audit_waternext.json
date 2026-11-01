@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-WATER-NEXT-H2-no-bed-constant-positive",
     "file": "src/render/renderer.js",
-    "old": "    gl.vertexAttrib1f(1, -NO_BED_DEPTH);",
-    "new": "    gl.vertexAttrib1f(1, NO_BED_DEPTH);",
+    "old": "    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/water/waterCorners.js SHEET_NO_BED)",
+    "new": "    gl.vertexAttrib1f(1, NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/water/waterCorners.js SHEET_NO_BED)",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G2-the-seas-stale-copy",
     "file": "src/render/renderer.js",
-    "old": "    // stood in front of - a wading foe's legs, a corpse in the shallows - and they came and went with a pond in view\n    this._underWater = undefined;",
-    "new": "    // stood in front of - a wading foe's legs, a corpse in the shallows - and they came and went with a pond in view",
+    "old": "    this._underWater = undefined;\n    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);",
+    "new": "    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "AUDIT-WATER-NEXT-G11-the-shadow-kept",
     "file": "src/render/renderer.js",
-    "old": "    if (this._underWater) this._forgetUnitShadows();   // AUDIT WATER-NEXT G11",
+    "old": "    if (this._underWater) this._forgetUnitShadows();",
     "new": "",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
@@ -191,7 +191,7 @@
   {
     "name": "AUDIT-WATER-NEXT-G11-the-ao-copy-shadow-kept",
     "file": "src/render/renderer.js",
-    "old": "    this._forgetUnitShadows();   // AUDIT WATER-NEXT G11: the copy's first frame bound its texture on the active unit",
+    "old": "    this._forgetUnitShadows();   // The copy's first frame bound its texture on the active unit",
     "new": "",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G12-the-field-carried-over",
     "file": "src/render/renderer.js",
-    "old": "    this._ripples = null;   // AUDIT WATER-NEXT G12",
-    "new": "    // AUDIT WATER-NEXT G12 (mutant)",
+    "old": "    this._ripples = null;   // No ripple field but the one a host hands over this frame",
+    "new": "    // No ripple field but the one a host hands over this frame",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G14-the-copy-past-the-resolve",
     "file": "src/render/renderer.js",
-    "old": "    this._underWater = undefined;   // AUDIT WATER-NEXT G14",
-    "new": "    // AUDIT WATER-NEXT G14 (mutant)",
+    "old": "    this._underWater = undefined;   // Resolved - the frame's copy is no copy of what is drawn next",
+    "new": "    // Resolved - the frame's copy is no copy of what is drawn next",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G13-the-field-not-the-bytes",
     "file": "src/render/renderer.js",
-    "old": "gl.uniform3f(L.rippleRect, r.packed[0], r.packed[1], this._rippleSpan);",
-    "new": "gl.uniform3f(L.rippleRect, r.origin[0], r.origin[1], this._rippleSpan);",
+    "old": "      gl.uniform3f(L.rippleRect, r.packed[0], r.packed[1], this._rippleSpan);   // Where the bytes were packed - the field may have slid since",
+    "new": "      gl.uniform3f(L.rippleRect, r.origin[0], r.origin[1], this._rippleSpan);   // Where the bytes were packed - the field may have slid since",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]

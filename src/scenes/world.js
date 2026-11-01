@@ -806,7 +806,7 @@ import { dungeonRoomSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B
 import { audio, QuestAudioSource, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { createWetness } from '../systems/weather/wetness.js';   // WET1: the wet ground
+import { createWetness } from '../systems/weather/wetness.js';   // the wet ground
 import { createWeatherFront, blendTerms, soundWeather, fallTerms, phaseTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls; AUDIT PRECIP FALL-3: the deck's light and the fall's fog
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, parkourDeps, createDetectFeed, foeNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost, liveCastEngine, realmSaveSink, setRealmSaveSink, setBeforeTitleExit } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
@@ -2828,7 +2828,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // screen at the last cut. The classic path takes `weatherTerms()`
   // whole, every frame: the row's own numbers, untouched.
   const weatherFront = createWeatherFront({ seed: Number(params.get('wseed')) || 7 });
-  const wetGround = createWetness();   // WET1: the ground soaks in the front's rain and dries after (systems/weather/wetness.js)
+  const wetGround = createWetness();   // the ground soaks in the front's rain and dries after (systems/weather/wetness.js)
   const weatherTerms = (snowShare = null) => phaseTerms({ sun: weatherSun, dim: LAB_DIM[weather] ?? 1, fog: weatherFog }, weather, (w) => ({ sun: weatherSunlightScale(w, season === SEASON.Winter), dim: LAB_DIM[w] ?? 1, fog: weatherFogRow(w) }), snowShare);   // PRECIP1 (AUDIT PRECIP FALL-3): on the law's lane the deck's light and the fall's fog at its snow share
   const FALL_LIGHT = Object.freeze({ sun: weatherSunlightScale('overcast', false), dim: LAB_DIM.overcast });   // RAIN-SPRINKLE: what a sprinkle's sky lights like - an overcast one's
   let wxNow = weatherTerms();
@@ -31854,7 +31854,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.beginCharacterSpriteBatch?.();
     const frameBodies = () => {   // PERF-V8
     try {
-      renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes, shown: fx.shown, intensity: fx.intensity, snow: fx.snow, tsec: now / 1000 }));   // WET1: after beginFrame, which dries it
+      renderer.setWet(wetGround.tick({ minutes: playerTicker.classicMinutes, shown: fx.shown, intensity: fx.intensity, snow: fx.snow, tsec: now / 1000 }));   // after beginFrame, which dries it
       renderer.setCloudShadow(sky?.cloudShadow ?? null);   // VC4: the frame's deck, for the body and everything before the pixel loop
       mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face: tvFace });   // DISC18: the body at the capsule's own feet, not the camera's smoothed ones
       drawPeerBodies(proj, view, mwv.eye, tvf ? tvFace : null);   // MWBODY1: the others' bodies, the same pass; OW-PEERS: grown under the Overworld
@@ -32575,7 +32575,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // click is a Travel Options journey, whose DisableWeatherAndSound stood the particles down while the rain loop
         // played on - but the Overworld's journey is SEEN, the world going on under it, so what falls keeps falling there
         if ((!_travelWeatherOff || tvf) && !_dwPrecipOff) {
-          precip.setShelters?.(modes?.buildingBoxes?.() ?? [], wxEye32);   // WET1c: no fall under a roof
+          precip.setShelters?.(modes?.buildingBoxes?.() ?? [], wxEye32);   // no fall under a roof
           precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);   // PRECIP1: at the air's snow share
           renderer.markForeignPass();   // EV6: so did the rain
         }

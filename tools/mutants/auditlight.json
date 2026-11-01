@@ -103,8 +103,8 @@
   {
     "name": "near1-mask-dropped-on-restore",
     "file": "src/render/renderer.js",
-    "old": "    this._pointCarried = s.pointCarried ?? null;   // AUDIT LIGHT-NEAR1: setPointLights read the mask off the array, and a snapshot's has none\n",
-    "new": "",
+    "old": "    this._pointCarried = s.pointCarried ?? null;   // setPointLights read the mask off the array, and a snapshot's has none\n    this._pointIds = s.pointIds ?? null;   // Nor its identities",
+    "new": "    this._pointIds = s.pointIds ?? null;   // Nor its identities",
     "tests": [
       "test/render/audit_lighting.test.js"
     ]

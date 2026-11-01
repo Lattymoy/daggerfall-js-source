@@ -239,8 +239,8 @@
   {
     "name": "LR-renderer-far-band-row",
     "file": "src/render/renderer.js",
-    "old": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }",
-    "new": "{ sp: this._wl.farSpace, row: WL_GRID_ROW, base: WL_FAR_LIST_BASE }",
+    "old": "    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // And the far rows' band",
+    "new": "    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // And the far rows' band",
     "tests": [
       "test/render/lightreach.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "LR-renderer-far-list-base",
     "file": "src/render/renderer.js",
-    "old": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }",
-    "new": "{ sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_LIST_BASE }",
+    "old": "    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // And the far rows' band",
+    "new": "    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_LIST_BASE }]) {   // And the far rows' band",
     "tests": [
       "test/render/lightreach.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "LR-renderer-far-block-unbound",
     "file": "src/render/renderer.js",
-    "old": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]",
-    "new": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_UBO_BINDING]]",
+    "old": "    for (const [block, point] of [['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]) {   // And the far rows'",
+    "new": "    for (const [block, point] of [['WinLights', WL_UBO_BINDING], ['WinFar', WL_UBO_BINDING]]) {   // And the far rows'",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "LR-audit-far-cap-unclamped",
     "file": "src/render/windowLight.js",
-    "old": "    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin); // AUDIT LIGHT-REACH W2: as the near cut's",
-    "new": "    // AUDIT LIGHT-REACH W2: as the near cut's",
+    "old": "    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin); // As the near cut's",
+    "new": "    // As the near cut's",
     "tests": [
       "test/render/audit_lightreach.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "LR-audit-gather-near-reach",
     "file": "src/render/windowLight.js",
-    "old": "    const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER; // LIGHT-REACH: a street's rows reach past its tiles",
-    "new": "    const reach = WL_GATHER; // LIGHT-REACH: a street's rows reach past its tiles",
+    "old": "    const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER; // A street's rows reach past its tiles",
+    "new": "    const reach = WL_GATHER; // A street's rows reach past its tiles",
     "tests": [
       "test/render/audit_lightreach.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "LR-audit-shift-keeps-rows",
     "file": "src/render/windowLight.js",
-    "old": "                    for (const r of t.rows) r.mask = null; // LIGHT-REACH: a row's record is in the world - made again",
-    "new": "                    // LIGHT-REACH: a row's record is in the world - made again",
+    "old": "                    for (const r of t.rows) r.mask = null; // A row's record is in the world - made again",
+    "new": "                    // A row's record is in the world - made again",
     "tests": [
       "test/render/audit_lightreach.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "LR-audit-mips-before-far",
     "file": "src/render/windowLight.js",
-    "old": "    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;\n      this._fitAt.far = now;\n    });\n    if (this._mipsDirty) {\n      // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }",
-    "new": "    if (this._mipsDirty) {\n      // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }\n    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;\n      this._fitAt.far = now;\n    });",
+    "old": "    // The far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;\n      this._fitAt.far = now;\n    });\n    if (this._mipsDirty) {\n      // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }",
+    "new": "    if (this._mipsDirty) {\n      // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too\n      const gl = this.gl;\n      this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);\n      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);\n      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n      this.deps.activeTexture(gl.TEXTURE0);\n      this._mipsDirty = false;\n    }\n    // The far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut\n    // a word of the far block, written again when the fit comes in\n    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;\n    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {\n      this._cutFar = Math.min(this._cutFar, this._fd[f]);\n      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;\n      this._fitCut.far = this._cutFar;\n      this._fitAt.far = now;\n    });",
     "tests": [
       "test/render/audit_lightreach.test.js"
     ]

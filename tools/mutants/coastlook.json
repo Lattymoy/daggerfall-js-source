@@ -218,8 +218,8 @@
   {
     "name": "COAST-LOOK-classic-blend-dropped",
     "file": "src/render/renderer.js",
-    "old": "  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);\n",
-    "new": "",
+    "old": "  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);\n  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)",
+    "new": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "COAST-LOOK-classic-snow-one-kind",
     "file": "src/render/renderer.js",
-    "old": "vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS)",
-    "new": "vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), geS)",
+    "old": "  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);",
+    "new": "  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "COAST-LOOK-switch-never-uploaded",
     "file": "src/render/renderer.js",
-    "old": "      gl.uniform1f(this.tUGroundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: a frame's, as the road edge's\n",
-    "new": "",
+    "old": "      gl.uniform1f(this.tUGroundEdge, this.coastEdges ? 1 : 0);   // A frame's, as the road edge's\n      this._uploadFog(this._terrainFog);",
+    "new": "      this._uploadFog(this._terrainFog);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "COAST-LOOK-sheet-switch-never-uploaded",
     "file": "src/render/renderer.js",
-    "old": "    gl.uniform1f(L.groundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: the sheet's shore on the ground's line (render/groundEdgeGlsl.js)\n",
-    "new": "",
+    "old": "    gl.uniform1f(L.groundEdge, this.coastEdges ? 1 : 0);   // The sheet's shore on the ground's line (render/groundEdgeGlsl.js)\n    this._bindUnderWater(L);",
+    "new": "    this._bindUnderWater(L);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "COAST-LOOK-clip-arms-swapped",
     "file": "src/render/renderer.js",
-    "old": "if (uGroundEdge > 0.0 ? coastCut(",
-    "new": "if (uGroundEdge <= 0.0 ? coastCut(",
+    "old": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
+    "new": "  return `${fs.slice(0, cut)}  if (uGroundEdge <= 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
     "tests": [
       "test/render/coastlook.test.js"
     ]

@@ -797,8 +797,8 @@
   {
     "name": "PROF4-tip-never-reset",
     "file": "src/render/renderer.js",
-    "old": "this._bbTipOn = !!tp; }",
-    "new": "this._bbTipOn = false; }",
+    "old": "      if (tp || this._bbTipOn) { gl.uniform3f(this.bbUTip, tp ? tp[0] : 0, tp ? tp[1] : 0, tp ? tp[2] : 0); this._bbTipOn = !!tp; }",
+    "new": "      if (tp || this._bbTipOn) { gl.uniform3f(this.bbUTip, tp ? tp[0] : 0, tp ? tp[1] : 0, tp ? tp[2] : 0); this._bbTipOn = false; }",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

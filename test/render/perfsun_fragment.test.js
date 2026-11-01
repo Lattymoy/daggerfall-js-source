@@ -1,4 +1,4 @@
-// PERF-SUN (2026-09-19, Mac: "exterior shadows at a distance, tree sway at
+// "exterior shadows at a distance, tree sway at
 // a distance, and whatever else can cause insane performance issues. On
 // the outside, I'm receiving over 1000 calls and looking up in the sky
 // restores frame rate").
@@ -55,7 +55,7 @@ test('PERF-SUN1: the far cascade takes ONE tap, and the near ones keep the kerne
   assert.equal(SHADOW_PCF_CASCADES, 2);
   assert.ok(SHADOW_PCF_CASCADES < SHADOW_CASCADES.length, 'at least one cascade is cheap, or the change does nothing');
   assert.ok(SHADOW_PCF_CASCADES >= 1, 'and at least one keeps the kernel, or EL7’s contact hairline goes');
-  // the kernel is still there for the near cascades - PERF-EXT5 (2026-09-25): the 3x3 in four bilinear taps, its
+  // the kernel is still there for the near cascades - PERF-EXT5: the 3x3 in four bilinear taps, its
   // weights exactly (test/render/perfexta.test.js)
   assert.match(SHADOW_GLSL, /vec2 wA = 2\.0 - f, wB = 1\.0 \+ f;/);
   assert.match(SHADOW_GLSL, /return lit \/ 9\.0;/);
@@ -103,12 +103,8 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
     // once, multiplied by uSunScale. Gating on either factor cannot
     // change a pixel - it only skips arriving at the same zero.
     assert.equal((src.match(/\buSunScale\s*\*\s*diff\b/g) ?? []).length, 1, `${name}: diff reaches the light exactly once`);
-    // PIN MOVED (WL1): the mesh hands diff to its mock room as well (RW_MAIN_ROOM), for the sun through the glass - a
-    // second consumer, and it carries uSunScale itself (realWindows.js rwRoomOver), so the gate still moves no pixel
     const rooms = name === 'mesh' ? 1 : 0;
     assert.equal((src.match(/rwRoomOver\([^;]*\bdiff\)/g) ?? []).length, rooms, `${name}: the mock room's sun is the one other consumer`);
-    // PIN MOVED (WET1, 2026-10-30): the sun's glint on the wet takes diff's shadows back off n.L - a consumer that
-    // carries uSunScale itself (render/wetGlsl.js wetSunGlint), so the gate still moves no pixel
     const wets = name === 'char' ? 0 : 1;
     assert.equal((src.match(/wetSunGlint\([^;]*\bdiff\b/g) ?? []).length, wets, `${name}: the wet's sun is a consumer`);
     assert.equal((src.match(/\bdiff\b/g) ?? []).length, 2 + rooms + wets, `${name}: ...and exactly one writer beside them`);
@@ -121,7 +117,7 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
   // own and the ndl gate would be a second question about it
   const water = code(waterSurfaceFs('', SHADOW_GLSL));
   assert.match(water, /float shadow = uSunScale > 0\.0 \? cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\) : 0\.0;/);
-  // AUDIT F3: `shadow` IS THE LOAD-BEARING VARIABLE HERE, NOT `diff`, and
+  // `shadow` IS THE LOAD-BEARING VARIABLE HERE, NOT `diff`, and
   // the first draft of this pin counted the wrong one. The water has TWO
   // consumers of `shadow` - the diffuse term and a sun SPECULAR - so
   // proving `diff` has a single consumer proved nothing about the second.
@@ -130,7 +126,6 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
   // where uSunScale is zero cannot move a pixel. Found by looking for
   // them all rather than by assuming there was one.
   const shadowUses = water.split('\n').filter((l) => /\bshadow\b/.test(l) && !/float shadow =/.test(l));
-  // PIN MOVED (WATER-NEXT 3): a third - the foam, lit by the sun it lies in, uSunScale on its own line too
   assert.equal(shadowUses.length, 3, `the water has ${shadowUses.length} consumers of shadow - every one must be under uSunScale`);
   assert.ok(shadowUses.some((l) => /vec3 foamLit = .*uSunScale \* shadow/.test(l)), 'the foam is the third, and it carries uSunScale itself');
   assert.ok(shadowUses.some((l) => /spec .*uSunScale \* shadow/.test(l)), 'the sun specular is one of them, and it carries uSunScale itself');
@@ -149,14 +144,14 @@ test('PERF-SUN2: a FLAT has no normal, so its gate is the sun’s own share of t
   // zero. uBBSun IS the sun's whole share, so this is a uniform branch:
   // free, coherent, and it takes out the entire night.
   const bb = EL_BB_FS.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
-  // LA-COST3 (2026-09-27): the map is read by the lane's billboard VERTEX shader now, once a quad - and the gate went
+  // The map is read by the lane's billboard VERTEX shader now, once a quad - and the gate went
   // with it: at night that stage reads nothing either, and the fragment's cloud read stays behind the same gate
   assert.match(bb, /vec3 sunLit = dot\(uBBSun, uBBSun\) > 0\.0 \? uBBSun \* cloudShadowAt\(vBBWorld\) \* vBBSunVis : vec3\(0\.0\);/);
-  assert.match(EL_LANE.bbVs.main, /vBBSunVis = \(dot\(uBBSun, uBBSun\) > 0\.0 \|\| uWinOn == 2\) \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the vertex stage takes the same gate');   // AUDIT BANTHA1 TREE-2 (PIN MOVED): read at `sunAt` - half a unit up, or a jungle tree's crown   // PIN MOVED (WL1): and a window's sun indoors (uWinOn 2), which the flat's window light takes from here
+  assert.match(EL_LANE.bbVs.main, /vBBSunVis = \(dot\(uBBSun, uBBSun\) > 0\.0 \|\| uWinOn == 2\) \? \(uMesh > 0\.5 \? sunShadowAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\)\) : sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)\) : 1\.0;/, 'the vertex stage takes the same gate');   // Read at `sunAt` - half a unit up, or a jungle tree's crown   // PIN MOVED: and a window's sun indoors (uWinOn 2), which the flat's window light takes from here
   assert.match(bb, /uTint \+ sunLit \+ elPointFlat/, 'and it enters the sum exactly where the product did');
   assert.doesNotMatch(bb, /uBBSun \* cloudShadowAt\(vBBWorld\) \* (?:sunShadowSoftAt\(base[^)]*\)\)|vBBSunVis) \+ elPointFlat/, 'the inline product is gone');
   // the shadow is still read at the flat's BASE, once for the whole
-  // sprite - a sprite in its own map would shadow itself (EL2); LA-COST3: the base the fragment's elPointFlat reads
+  // sprite - a sprite in its own map would shadow itself; LA-COST3: the base the fragment's elPointFlat reads
   assert.match(bb, /vec3 base = vBBBase \+ vec3\(0\.0, 0\.5, 0\.0\);/);
   assert.match(EL_LANE.bbVs.main, /vec3 sunAt = vBBBase \+ vec3\(0\.0, max\(0\.5, uSunLift \* /);
   assert.match(EL_LANE.bbVs.main, /sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/);
@@ -173,7 +168,6 @@ test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at bui
   assert.equal(floraSwayOf(210, 500, 3), 0, 'and anything that is not the climate’s flora does not lean at all');
   const w = hostText('src/scenes/world.js'), ex = read('src/scenes/exterior.js');
   for (const [name, src] of [['world', w], ['exterior', ex]]) {
-    // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host's pixel asks by its nature set (its climate's and a border's)
     assert.match(src, name === 'world' ? /batch\.sway = floraSwayOf\(archive, g\.natureSet, size\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, size\.h\);/, `${name}: set at BUILD`);
     assert.equal((src.match(/renderer\.setFlatWind\(/g) ?? []).length, 1, `${name}: one wind upload a frame, for every flat there is`);
   }
@@ -188,7 +182,7 @@ test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at bui
 });
 
 
-// ---- AUDIT PERF-SUN / PERF-FOG (2026-09-19) ------------------------------
+// --- AUDIT PERF-SUN / PERF-FOG ------------------------------
 
 test('AUDIT F4: three decoded colours, three scratches - the billboard tint\u2019s moon term was reading the SUN', async () => {
   // PRE-EXISTING, found by the audit that had just pinned `_fogLin`
@@ -227,7 +221,7 @@ test('AUDIT F2: the cheap tap runs OUTWARD from its index, and the note says so'
 });
 
 test('AUDIT F5/F6: the numbers behind what was taken and what was left', () => {
-  // F6 (REFUTED): the seam at the cascade 1/2 boundary gets LESS visible,
+  // The seam at the cascade 1/2 boundary gets LESS visible,
   // not more. A hardware tap is a 2x2 and the 3x3 loop an effective 4x4,
   // so the blur width in world units is texel x kernel.
   const blur = (r, taps) => (2 * r / SHADOW_SUN_SIZE) * (taps === 9 ? 4 : 2);
@@ -236,7 +230,7 @@ test('AUDIT F5/F6: the numbers behind what was taken and what was left', () => {
   assert.ok(farNow < farWas, 'the far cascade is SHARPER than it was, not blurrier');
   assert.ok(farNow / near < farWas / near,
     `the step across the boundary fell from ${(farWas / near).toFixed(1)}x to ${(farNow / near).toFixed(1)}x`);
-  // F5 (RECORDED, NOT TAKEN): cascade 1's texel is about a pixel and a
+  // Cascade 1's texel is about a pixel and a
   // half at thirty metres, so the same arithmetic that made the far
   // cascade cheap applies to it too. It keeps the kernel anyway, because
   // there the 3x3 is a soft EDGE - a look - and not only antialiasing.
@@ -266,7 +260,7 @@ test('AUDIT F1: the sway door\u2019s state is declared ABOVE its reader', () => 
 });
 
 
-// ---- TREES1 (2026-09-19) -------------------------------------------------
+// --- TREES1 -------------------------------------------------
 
 test('TREES1: a FLAT keeps the kernel at every distance, because it samples once for a whole sprite', () => {
   // Mac: "there's this weird darkening effect happening to trees."
@@ -293,12 +287,12 @@ test('TREES1: a FLAT keeps the kernel at every distance, because it samples once
   // be asked of what is left when the block is taken out.
   const body = (raw) => raw.replace(SHADOW_GLSL, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
   const bb = body(EL_BB_FS);
-  // LA-COST3 (2026-09-27): the flat's read is its vertex shader's now (once a quad, EL_BB_VS_EXT) - the soft one there
+  // The flat's read is its vertex shader's now (once a quad, EL_BB_VS_EXT) - the soft one there
   const bbVs = body(EL_LANE.bbVs.head + EL_LANE.bbVs.main);
-  assert.match(bbVs, /sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/, 'the flat reads the soft one');   // AUDIT BANTHA1 TREE-2 (PIN MOVED): at `sunAt`
-  // LPT1 (AUDIT LPT B4): a low-poly tree in the billboard program's mesh mode is no flat - its every VERTEX would run
+  assert.match(bbVs, /sunShadowSoftAt\(sunAt, vec3\(0\.0, 1\.0, 0\.0\), uSize\.y\)/, 'the flat reads the soft one');   // At `sunAt`
+  // A low-poly tree in the billboard program's mesh mode is no flat - its every VERTEX would run
   // the kernel, so it takes one tap at its root; the flat's path is what is left without that arm
-  const meshArm = 'uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : ';   // AUDIT BANTHA1 TREE-2 (PIN MOVED): one tap at `sunAt` - its root's half unit, a jungle tree's crown
+  const meshArm = 'uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : ';   // One tap at `sunAt` - its root's half unit, a jungle tree's crown
   assert.ok(bbVs.includes(meshArm), 'the tree\'s arm, gated on the mesh mode');
   assert.ok(!/[^t]sunShadowAt\(/.test(bbVs.replace(meshArm, '')), 'and never the cheap one, at the vertex either');
   assert.ok(!/sunShadow(?:Soft)?At\(/.test(bb), 'the flat’s fragment reads no sun map at all');

@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-B2-the-renderer-casts-it-anyway",
     "file": "src/render/renderer.js",
-    "old": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(",
-    "new": "    if (!wire && this._casting) this._shadows.recordMesh(",
+    "old": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's",
+    "new": "    if (!wire && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "HORSE-TIERS-forced-online",
     "file": "src/systems/features.js",
-    "old": "store: 'prefs', key: 'horseCare', initial: 'boons', online: 'player',",
-    "new": "store: 'prefs', key: 'horseCare', initial: 'boons', online: true,",
+    "old": "      store: 'prefs', key: 'horseCare', initial: 'boons', online: 'player',   // systems/upkeep/upkeepSwitch.js HORSE_CARE_PREF; HORSE-TIERS: upkeepTiers.js HORSE_CARE_DEFAULT",
+    "new": "      store: 'prefs', key: 'horseCare', initial: 'boons', online: true,   // systems/upkeep/upkeepSwitch.js HORSE_CARE_PREF; HORSE-TIERS: upkeepTiers.js HORSE_CARE_DEFAULT",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]

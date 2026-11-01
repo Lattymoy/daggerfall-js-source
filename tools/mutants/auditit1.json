@@ -264,8 +264,8 @@
   {
     "name": "AUDIT-IT1-W4-the-row-says-next-load",
     "file": "src/systems/features.js",
-    "old": "modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect the next time you start the game; loading a save is not enough.",
-    "new": "modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect when the game next loads.",
+    "old": "  modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect the next time you start the game; loading a save is not enough. Fares and rules change at the next map.'), 'world'),",
+    "new": "  modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect when the game next loads. Fares and rules change at the next map.'), 'world'),",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

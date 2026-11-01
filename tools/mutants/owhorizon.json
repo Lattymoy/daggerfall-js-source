@@ -269,8 +269,8 @@
   {
     "name": "OWH-the-renderer-untold",
     "file": "src/render/renderer.js",
-    "old": "    if (farLoc) gl.uniform2f(farLoc, cloudFarOf(cs), 1);   // OW-HORIZON: the ground past the square - told\n",
-    "new": "",
+    "old": "    if (farLoc) gl.uniform2f(farLoc, cloudFarOf(cs), 1);   // The ground past the square - told\n    this._activeTexture(gl.TEXTURE0);",
+    "new": "    this._activeTexture(gl.TEXTURE0);",
     "tests": [
       "test/render/owhorizon.test.js"
     ]

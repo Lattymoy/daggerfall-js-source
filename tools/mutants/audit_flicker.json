@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-FLICKER-R4-one-edge-only",
     "file": "src/render/renderer.js",
-    "old": "    const cut = this._everyLightNow !== this._everyLightPrev;",
-    "new": "    const cut = this._everyLightNow && !this._everyLightPrev;",
+    "old": "    const cut = this._everyLightNow !== this._everyLightPrev;   // A door crossed is a cut - nothing of the other side is held over it",
+    "new": "    const cut = this._everyLightNow && !this._everyLightPrev;   // A door crossed is a cut - nothing of the other side is held over it",
     "tests": [
       "test/render/audit_flicker.test.js",
       "test/render/la_post.test.js"

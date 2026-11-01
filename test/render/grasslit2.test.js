@@ -1,4 +1,4 @@
-// GRASS-LIT2 (2026-10-02, Mac: "Tackle the not done" - the five things GRASS-LIT's report left unpaid): the lanterns
+// "Tackle the not done" - the five things GRASS-LIT's report left unpaid): the lanterns
 // light the grass as they light the ground under it; a blade is lit about the ground's own normal, so a hillside's
 // field darkens with the hillside; the grass's colour is taken off the tile set that is DRAWN, a texture mod's
 // included; and the classic lane paints the field in its own tones, as the default lane shows it at noon. The vertex
@@ -35,7 +35,7 @@ const zeros3 = (n) => Array.from({ length: n }, () => [0, 0, 0]);
  *  `casterOf` the lights' shadow slots (-1: none). Answers the stage's outputs. */
 function vertex({ w = packHeightSlope(0.5, 0, 0, 0), sunDir = [0, 1, 0], moonDir = [0, 1, 0], lean = [0.5, 0.5], lane = 0, lights = [], vertexId = 2, casterOf = null, shadow = 1, cell = null, bind = {} }) {   // AUDIT A1: `cell` the cell's list (default: every light, in order); AUDIT C: `lean` aPB.xy, `bind` more globals
   const f = glslFunctions(LAB_GRASS_HEAD + GAME_GRASS_FIELD + GAME_GRASS_VS, {
-    // AUDIT GRASS-LIT2 C1: a unorm16 reaches the stage as a FLOAT32, and a GPU may normalise it by the reciprocal -
+    // A unorm16 reaches the stage as a FLOAT32, and a GPU may normalise it by the reciprocal -
     // the value such a GPU hands the stage; w / 65535 in doubles is exact, and hid a floor
     aCorner: [0.5, 0.5], aPA: [0.5, 0.5, 0, Math.fround(w * Math.fround(1 / 65535))], aPB: [...lean, 0.5, 0.5], aPC: [0.2, 0.3, 0.1, 0],
     uVP: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], uTime: 0, uWind: 0, uRange: 300, uEye: [0, 1, 0], uSunDir: sunDir, uMoonDir: moonDir, uWindDir: [1, 0],
@@ -43,7 +43,7 @@ function vertex({ w = packHeightSlope(0.5, 0, 0, 0), sunDir = [0, 1, 0], moonDir
     uGFieldOrigin: [0, 0], uGFieldM: 1, uSnowGlobal: 0, uWindV: [0, 0], uSunScale: 0.6, uCamPos: [0, 0, 0], uIndirect: [0, 0, 0, 0], uIndirectColor: [0, 0, 0],
     uCloudShadowRect: [0, 0, 0, 0], uSunVP: [Array(16).fill(0), Array(16).fill(0), Array(16).fill(0)], uSunOrigin: [0, 0, 0, 0], uSunShadowParams: [0, 0, 0, 0], uSunTexel: [0, 0, 0, 0],
     // a caster's map answers `shadow` everywhere: its params name a far plane, its taps the value
-    uPointShadowParams: [[0, 0, 0, 50], ...zeros4(SHADOW_POINT_CASTERS - 1)], uShadowIndex: Array(SHADOW_POINT_CASTERS).fill(-1), uCasterOf: casterOf ?? Array(EL_MAX_LIGHTS).fill(-1),   // FLICKER-FIX: sized by the casters (twelve), not a literal
+    uPointShadowParams: [[0, 0, 0, 50], ...zeros4(SHADOW_POINT_CASTERS - 1)], uShadowIndex: Array(SHADOW_POINT_CASTERS).fill(-1), uCasterOf: casterOf ?? Array(EL_MAX_LIGHTS).fill(-1),   // Sized by the casters (twelve), not a literal
     uLane: lane, uPointCount: (cell ?? lights.map((_, k) => k)).length,
     uPointIdx: Array.from({ length: GRASS_CELL_LIGHTS }, (_, k) => (cell ?? lights.map((_, j) => j))[k] ?? 0),   // AUDIT A1: the cell's list
     uPointLights: [...lights.map((l) => [...l.at, l.range]), ...zeros4(GRASS_MAX_LIGHTS - lights.length)],
@@ -129,7 +129,7 @@ test('GRASS-LIT2: the height lane packs the height and the ground\'s slope - lev
   assert.ok(Math.abs(u.nx - u.nz) < 1e-12 && Math.hypot(u.nx, u.nz) <= GRASS_SLOPE_SPAN + step, `${u.nx}, ${u.nz}`);
   assert.equal(unpackHeightSlope(packHeightSlope(1, 0, 0, 0)).hn, 1);
   assert.equal(unpackHeightSlope(packHeightSlope(0, 0, 0, 0)).hn, 0);
-  // AUDIT GRASS-LIT2 A3: a ZERO word (a pad blade, a cleared slot) is the height floor on LEVEL ground, not the steepest
+  // A ZERO word (a pad blade, a cleared slot) is the height floor on LEVEL ground, not the steepest
   // lean; A4: and a normal that is not one packs level
   assert.deepEqual(unpackHeightSlope(0), { hn: 0, nx: 0, nz: 0 });
   assert.equal(packHeightSlope(0.5, NaN, NaN, 3) & 1023, 0);
@@ -206,7 +206,7 @@ test('GRASS-LIT2: the vertex stage still fits the vectors WebGL2 promises every 
     for (const v of names.split(',')) vectors += Number(v.match(/\[(\d+)\]/)?.[1] ?? 1) * (type === 'mat4' ? 4 : 1);
   }
   assert.ok(vectors <= 256, `${vectors} vectors at most`);
-  assert.equal(vectors, 222, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1); OW-HORIZON: 222, the cloud block's far law (+1 - never told here, so the grass reads (0, 0): the map to its edge, as before)
+  assert.equal(vectors, 222, 'the count the docs quote');   // 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1); OW-HORIZON: 222, the cloud block's far law (+1 - never told here, so the grass reads (0, 0): the map to its edge, as before)
   // the two const face tables are 12 more if a driver keeps a dynamically indexed const array in uniform storage
   assert.ok(vectors + 12 <= 256);
   assert.ok(GAME_GRASS_VS.includes(`uniform vec4 uPointLights[${GRASS_MAX_LIGHTS}];`) && GAME_GRASS_VS.includes(`uniform vec3 uPointColors[${GRASS_MAX_LIGHTS}];`));
@@ -342,7 +342,7 @@ test('GRASS-LIT2: the placer asks the slope of every blade that stands, sliced o
   assert.equal(unpackHeightSlope(subs[0][3]).nx, 0);
   // the field threads the host's slope to every cell it places
   const placed = [];
-  // OW-HITCH: a cell is the renderer's during writeSlot alone - the field places its next cell into the same arrays - so
+  // A cell is the renderer's during writeSlot alone - the field places its next cell into the same arrays - so
   // the recorder keeps what it was handed as it was handed it
   const field = createGrassField({ allocSlots() {}, writeSlot: (s, c) => placed.push({ count: c.count, slope: c.slope.slice() }), clearSlot() {} }, { keep, slope, span: 40, range: 30, cell: 30, perFrame: 4, slots: 16, density: 1200000 });
   field.update(0, 0);
@@ -364,7 +364,7 @@ test('GRASS-LIT2: the host reads the slope off the near grid\'s normals it keeps
   assert.ok(learn.length > 0 && learn.length < 4000, `loadGroundSet's learning, read alone: ${learn.length} chars`);
   assert.ok(learn.startsWith('const drawnMeans = grassRecords.has(groundArchive) ? null\n      : groundDrawnMeans.has(groundArchive) ? groundDrawnMeans.get(groundArchive)\n      : (await dfmodGroundLayers(groundArchive, groundTex))?.map(tileMeanColour) ?? null;'));
   assert.ok(learn.indexOf('await') < learn.indexOf('grassRecords.set(') && learn.includes('groundMeanColour.set(groundArchive, drawnMeans ?? layers.map(tileMeanColour));'));
-  // AUDIT GRASS-LIT2 B2: the means are the UPLOADED layers' - taken beside the upload, not asked of the door again
+  // The means are the UPLOADED layers' - taken beside the upload, not asked of the door again
   // AUDIT PRECIP GROUND-2 (PIN MOVED): the set's OWN layers' means - never its twin's winter half
   assert.ok(gs.includes('if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);'));
   assert.ok(gs.indexOf('const layers = winter == null ? own.layers : twinLayers(') < gs.indexOf('await stepsBreathing(renderer.uploadTileArraySteps(key, layers), breathe);')
@@ -379,7 +379,7 @@ test('GRASS-LIT2: the host reads the slope off the near grid\'s normals it keeps
   let sr = 0;
   for (let k = 0; k < 4096; k++) { small.colors[k * 4] = (k * 37) % 251; sr += (k * 37) % 251; }
   assert.equal(tileMeanColour(small)[0], sr / 4096 / 255, 'a classic tile, every texel');
-  // AUDIT GRASS-LIT2 A5: never more than the cap - a 256 x 384 tile read all 98,304 under the floor
+  // Never more than the cap - a 256 x 384 tile read all 98,304 under the floor
   for (const n of [4096, 65536, 65537, 98304, 131044, 262144, 1048576, 1536 * 1536]) {
     const st = grassMeanStep(n);
     assert.ok(st % 2 === 1 && Math.ceil(n / st) <= GRASS_MEAN_SAMPLES, `${n} texels at step ${st}`);
@@ -389,11 +389,11 @@ test('GRASS-LIT2: the host reads the slope off the near grid\'s normals it keeps
 
 test('GRASS-LIT2: the shot hooks - the classic lane\'s tones by hand, and the heart of the deepest wood to look down on', () => {
   const w = hostText('src/scenes/world.js');
-  assert.ok(w.includes("labGrass.setTones(tones ?? (classic ? GRASS_TONES_CLASSIC : GRASS_TONES), classic)"));   // PIN MOVED (AUDIT MEADOW1): through the renderer, which moves the meadow's art ground with the tones
+  assert.ok(w.includes("labGrass.setTones(tones ?? (classic ? GRASS_TONES_CLASSIC : GRASS_TONES), classic)"));
   const hook = w.slice(w.indexOf('window.__forestSpot = (r = 10, here = false) => {'), w.indexOf('/** CSA-C probe: a land tile 3 tiles off a water tile'));
   assert.ok(hook.includes('forestAt(p.px * 128 + tx + dx, -p.py * 128 + tz + dz)'), 'FOREST1\'s field at the world tile');
   assert.ok(hook.includes('for (const p of here ? [cur] : built.values())') && hook.includes('origin: [t[0], t[2]]'), 'the player\'s own pixel on asking, and its origin - a pose off it stays in it');
-  // AUDIT GRASS-LIT2 B5: a zero step never left either hook's loop; a hillside's yaw looks down it, read at the far half's middle
+  // A zero step never left either hook's loop; a hillside's yaw looks down it, read at the far half's middle
   assert.ok(w.includes('window.__grassSpot = (r = 6, skip = 0, steep = 0) => {\n      r = Math.max(1, r | 0);'));
   assert.ok(hook.startsWith('window.__forestSpot = (r = 10, here = false) => {\n      r = Math.max(1, r | 0);'));
   assert.ok(w.includes('(tz + r * 2 + 0.5) * 6.4, [0, 1, 0])') && w.includes('yaw: n ? Math.atan2(n[0], n[2]) : 0,'));
@@ -402,7 +402,7 @@ test('GRASS-LIT2: the shot hooks - the classic lane\'s tones by hand, and the he
   assert.ok(block.lastIndexOf('window.__grassSpot') > block.lastIndexOf('  if (shotMode) {'));
 });
 
-// ═══ AUDIT GRASS-LIT2 (2026-10-02, Mac: "Audit this") ═══════════════════
+// ═══ AUDIT GRASS-LIT2 ═══════════════════
 /** a GL that records, names every uniform location by its name, and hands out ids */
 function recGl() {
   const calls = []; let ids = 0;
@@ -614,7 +614,7 @@ test('AUDIT GRASS-LIT2 C5: the draw cuts the lanterns to the shorter of its two 
 test('AUDIT GRASS-LIT2 C6: a rim cell placed a slice a frame asks the slope as a whole cell does - a walk\'s new cells stand on the hillside too', () => {
   const keep = () => 0, slope = () => [0.3, 0.9, -0.2];
   const placed = [];
-  const field = createGrassField({ allocSlots() {}, clearSlot() {}, shiftSlots() {}, writeSlot: (_s, c) => placed.push({ count: c.count, slope: c.slope.slice() }) }, { keep, slope, range: 120, span: 150 });   // OW-HITCH: kept as handed (the arrays are placed into again)
+  const field = createGrassField({ allocSlots() {}, clearSlot() {}, shiftSlots() {}, writeSlot: (_s, c) => placed.push({ count: c.count, slope: c.slope.slice() }) }, { keep, slope, range: 120, span: 150 });   // Kept as handed (the arrays are placed into again)
   for (let f = 0; f < 3000 && field.update(0, 0) !== 0; f++);
   placed.length = 0;
   let ex = 0, sliced = 0;
@@ -702,7 +702,7 @@ test('AUDIT GRASS-LIT2 C10: the ground the lanterns are held to IS the terrain p
   assert.ok(tfs.includes('    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);\n    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];\n'), 'the classic lane: (1 - d/r)^2 on n.L');
   assert.ok(tfs.includes('lit += tex * pointAcc;'), 'on the albedo');
   assert.ok(EL_TERRAIN_FS.includes('    if (d >= uPointLights[i].w) continue;') && EL_TERRAIN_FS.includes('    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n'), 'the lane: elAttenuation on n.L (the spec set aside, as groundLanterns says)');
-  assert.ok(EL_TERRAIN_FS.includes('elPointLitWet(vWorldPos, n, wetG, wetGlint)'), 'and the lane\'s terrain reads it');   // PIN MOVED (WET1, 2026-10-30): the wet variant - its diffuse is elPointLit's, the wet's glint is added beside it
+  assert.ok(EL_TERRAIN_FS.includes('elPointLitWet(vWorldPos, n, wetG, wetGlint)'), 'and the lane\'s terrain reads it');
 });
 
 test('AUDIT GRASS-LIT2 C11: the probes measure what they say - the light probe\'s classic "was" is the blade before GRASS-LIT2, in GRASS_TONES, and the look probe paints the lane it boots', () => {

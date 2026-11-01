@@ -263,8 +263,8 @@
   {
     "name": "renderer-panel-casts",
     "file": "src/render/renderer.js",
-    "old": "  get _casting() { return !!this._shadows && !this._panelSaved; }",
-    "new": "  get _casting() { return !!this._shadows; }",
+    "old": "  get _casting() { return !!this._shadows && !this._panelSaved; }   // !! - a bare prototype (the crash-report tests) has no pass at all",
+    "new": "  get _casting() { return !!this._shadows; }   // !! - a bare prototype (the crash-report tests) has no pass at all",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "renderer-panel-keeps",
     "file": "src/render/renderer.js",
-    "old": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
-    "new": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
+    "old": "    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+    "new": "    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
     "tests": [
       "test/render/el2_shadows.test.js",
       "test/render/audit_el.test.js"
@@ -283,8 +283,8 @@
   {
     "name": "renderer-wire-casts",
     "file": "src/render/renderer.js",
-    "old": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));",
-    "new": "    if (!noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));",
+    "old": "    if (!wire && !noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's",
+    "new": "    if (!noShadow && this._casting) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1));   // EL2; AUDIT BAY A12: a fading ship's share of her shadow; AUDIT WAGON-HITCH B2: never a grown mesh's",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "renderer-no-dead-mark",
     "file": "src/render/renderer.js",
-    "old": "    mesh._dead = true;   // EL2: a shadow record from the last frame may still hold it\n",
-    "new": "",
+    "old": "    mesh._dead = true;   // A shadow record from the last frame may still hold it\n    this._wl?.forget(mesh);   // None of its windows lights",
+    "new": "    this._wl?.forget(mesh);   // None of its windows lights",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "renderer-pass-rebuilt",
     "file": "src/render/renderer.js",
-    "old": "      this._shadows = this._shadowPass ??= new ShadowPass(",
-    "new": "      this._shadows = this._shadowPass = new ShadowPass(",
+    "old": "      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS } });   // And a Morrowind body's skin",
+    "new": "      this._shadows = this._shadowPass = new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS } });   // And a Morrowind body's skin",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "renderer-maps-after-clear",
     "file": "src/render/renderer.js",
-    "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
-    "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
+    "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // The maps, the images and the frame, before the clear",
+    "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);   // The maps, the images and the frame, before the clear",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "renderer-no-upload",
     "file": "src/render/renderer.js",
-    "old": "    if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms\n",
-    "new": "",
+    "old": "    if (this._shadows) this._shadows.upload(this._el[key].shadow);   // The maps and the receiver's uniforms\n    this._uploadAdapt(this._el[key].ao);   // The AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)",
+    "new": "    this._uploadAdapt(this._el[key].ao);   // The AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "lane-no-shadows",
     "file": "src/render/enhancedLighting.js",
-    "old": "  shadows: true, // EL2: the renderer builds its ShadowPass for this lane\n  air: true, // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)",
-    "new": "  air: true, // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)",
+    "old": "  shadows: true, // The renderer builds its ShadowPass for this lane\n  air: true, // And its AirPass, behind `?air=off` (syncLightingLane reads the door)",
+    "new": "  air: true, // And its AirPass, behind `?air=off` (syncLightingLane reads the door)",
     "tests": [
       "test/render/el2_shadows.test.js"
     ]

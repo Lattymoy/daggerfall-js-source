@@ -1,4 +1,4 @@
-// WET1 (bible/07-Rendering/Weather-Arc.md WET1): the wet world in the real game. Boots a street in the rain at each TODS
+// The wet world in the real game. Boots a street in the rain at each TODS
 // hour, with the wet ground and with `?wet=off`, and shoots the same look both ways. Exit 1 on a page error, or when the
 // wet shot does not differ from the dry one. Frames are counted on `__frame`, never slept for.
 // Usage: ARENA2_PATH=<arena2> OUT=<dir> node tools/wetProbe.mjs - and PORT=5186, TODS=21:30,12:00, REGION=Daggerfall,

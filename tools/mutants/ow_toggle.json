@@ -52,8 +52,8 @@
   {
     "name": "OW-TOGGLE-off-the-tile",
     "file": "src/systems/features.js",
-    "old": "    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
-    "new": "    'GeneralOptions.AvoidObstacles',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
+    "old": "    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',",
+    "new": "    'GeneralOptions.AvoidObstacles',",
     "tests": [
       "test/systems/travel/ow_toggle.test.js"
     ],

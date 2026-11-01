@@ -742,8 +742,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-renderer-blind-to-several",
     "file": "src/render/renderer.js",
-    "old": "    if (Array.isArray(proto)) { for (const h of proto) { const f = this._lptFrameOf(h); if (f) return f; } return null; }\n",
-    "new": "",
+    "old": "    if (Array.isArray(proto)) { for (const h of proto) { const f = this._lptFrameOf(h); if (f) return f; } return null; }\n    for (let i = 0; i < slots.length; i++) if (slots[i]?.cut.has(proto)) return slots[i];",
+    "new": "    for (let i = 0; i < slots.length; i++) if (slots[i]?.cut.has(proto)) return slots[i];",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

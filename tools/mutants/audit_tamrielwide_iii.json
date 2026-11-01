@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-TW-III-F3-the-note-promises-the-zone",
     "file": "src/systems/features.js",
-    "old": "fast travel reaches them, except into or out of Cyrodiil online.",
-    "new": "fast travel reaches them.",
+    "old": "      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)",
+    "new": "      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches them.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_iii.test.js"
     ],

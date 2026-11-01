@@ -82,8 +82,8 @@
   {
     "name": "FB1031-L1-renderer-share-test",
     "file": "src/render/renderer.js",
-    "old": "'inside', light, wlDayShare(this._wl?.outside) > 0);",
-    "new": "'inside', light, wlDayShare(this._wl?.outside) > 0.3);",
+    "old": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0);   // Day only while the day has a share - the frame fades by it",
+    "new": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0.3);   // Day only while the day has a share - the frame fades by it",
     "tests": [
       "test/render/fb1031_light.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "FB1031-L1-renderer-part-unhanded",
     "file": "src/render/renderer.js",
-    "old": "      dayOnly: windowLightMode() === 'day',",
-    "new": "      dayOnly: false,",
+    "old": "      dayOnly: windowLightMode() === 'day',   // Day only fades the light by the day's share",
+    "new": "      dayOnly: false,   // Day only fades the light by the day's share",
     "tests": [
       "test/render/fb1031_light.test.js"
     ],

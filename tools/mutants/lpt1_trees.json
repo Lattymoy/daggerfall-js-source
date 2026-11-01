@@ -2,8 +2,8 @@
   {
     "name": "LPT1-cut-any-picture",
     "file": "src/render/renderer.js",
-    "old": "const lc = b.lptProto ? this._lptFrameOf(b.lptProto) : null;",
-    "new": "const lc = b.lptProto ? (this._lptSlots.find((f) => f) ?? null) : null;",
+    "old": "      const lc = b.lptProto ? this._lptFrameOf(b.lptProto) : null;   // A far picture gives way to its 3D tree near the eye - sent when that changes between batches; BANTHA1: its own slot's",
+    "new": "      const lc = b.lptProto ? (this._lptSlots.find((f) => f) ?? null) : null;   // A far picture gives way to its 3D tree near the eye - sent when that changes between batches; BANTHA1: its own slot's",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LPT1-frame-not-spent",
     "file": "src/render/renderer.js",
-    "old": "    }\n    if (slots) slots.fill(null);",
-    "new": "    }",
+    "old": "    if (slots) slots.fill(null);\n    // The BLENDED phase: the spectral batches and the concealed",
+    "new": "    // The BLENDED phase: the spectral batches and the concealed",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LPT1-tree-unturned",
     "file": "src/render/renderer.js",
-    "old": "float tc = cos(aInst.w), tsn = sin(aInst.w);",
-    "new": "float tc = 1.0, tsn = 0.0;",
+    "old": "    float tc = cos(aInst.w), tsn = sin(aInst.w);",
+    "new": "    float tc = 1.0, tsn = 0.0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LPT1-tree-unscaled",
     "file": "src/render/renderer.js",
-    "old": "vec3 p = aCenter * uMeshScale * aScale;",
-    "new": "vec3 p = aCenter * uMeshScale;",
+    "old": "    vec3 p = aCenter * uMeshScale * aScale;",
+    "new": "    vec3 p = aCenter * uMeshScale;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LPT1-corner-unscaled",
     "file": "src/render/renderer.js",
-    "old": "verts[o + 3] = bbCornerX(corners[c][0], fs);",
-    "new": "verts[o + 3] = corners[c][0];",
+    "old": "        verts[o + 3] = bbCornerX(corners[c][0], fs);",
+    "new": "        verts[o + 3] = corners[c][0];",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LPT1-move-drops-scale",
     "file": "src/render/renderer.js",
-    "old": "verts[o + 3] = bbCornerX(BB_CORNERS[k][0], fs);",
-    "new": "verts[o + 3] = BB_CORNERS[k][0];",
+    "old": "        verts[o + 3] = bbCornerX(BB_CORNERS[k][0], fs);",
+    "new": "        verts[o + 3] = BB_CORNERS[k][0];",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LPT1-A1-flash-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (lastFlash !== 0) { gl.uniform1f(this.bbUHitFlash, 0); lastFlash = 0; }\n",
-    "new": "",
+    "old": "      if (lastFlash !== 0) { gl.uniform1f(this.bbUHitFlash, 0); lastFlash = 0; }\n      if (lastGlow !== 0) { gl.uniform1f(this.bbUEliteGlow, 0); lastGlow = 0; }",
+    "new": "      if (lastGlow !== 0) { gl.uniform1f(this.bbUEliteGlow, 0); lastGlow = 0; }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LPT1-A1-glow-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (lastGlow !== 0) { gl.uniform1f(this.bbUEliteGlow, 0); lastGlow = 0; }\n",
-    "new": "",
+    "old": "      if (lastGlow !== 0) { gl.uniform1f(this.bbUEliteGlow, 0); lastGlow = 0; }\n      if (this._bbPadOn) { gl.uniform4f(this.bbUElitePad, 0, 0, 0, 0); this._bbPadOn = false; }",
+    "new": "      if (this._bbPadOn) { gl.uniform4f(this.bbUElitePad, 0, 0, 0, 0); this._bbPadOn = false; }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LPT1-A1-pad-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (this._bbPadOn) { gl.uniform4f(this.bbUElitePad, 0, 0, 0, 0); this._bbPadOn = false; }\n",
-    "new": "",
+    "old": "      if (this._bbPadOn) { gl.uniform4f(this.bbUElitePad, 0, 0, 0, 0); this._bbPadOn = false; }\n      if (this._bbDissolveOn) { gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0); this._bbDissolveOn = false; }",
+    "new": "      if (this._bbDissolveOn) { gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0); this._bbDissolveOn = false; }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LPT1-A1-dissolve-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (this._bbDissolveOn) { gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0); this._bbDissolveOn = false; }\n",
-    "new": "",
+    "old": "      if (this._bbDissolveOn) { gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0); this._bbDissolveOn = false; }\n      if (this._bbCrackOn) { gl.uniform2f(this.bbUCrack, 0, 0); this._bbCrackOn = false; }   // The trees take no vein's seams",
+    "new": "      if (this._bbCrackOn) { gl.uniform2f(this.bbUCrack, 0, 0); this._bbCrackOn = false; }   // The trees take no vein's seams",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LPT1-A1-wash-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }\n",
-    "new": "",
+    "old": "      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }\n      if (this._bbColumnOn) { gl.uniform1f(bc.uColumnOn, 0); this._bbColumnOn = 0; }",
+    "new": "      if (this._bbColumnOn) { gl.uniform1f(bc.uColumnOn, 0); this._bbColumnOn = 0; }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LPT1-A2-the-sun-alone",
     "file": "src/render/renderer.js",
-    "old": "vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);",
-    "new": "vShade = uMeshColor * faceSun;",
+    "old": "    vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);",
+    "new": "    vShade = uMeshColor * faceSun;",
     "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the night's face light is the sky's (faceSky), no longer the eye's.",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "LPT1-A2-FLORA-GROUND-the-light-turned-to-the-eye-again",
     "file": "src/render/renderer.js",
-    "old": "float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);",
-    "new": "vec2 fe = length(uLptCut.xz - aInst.xz) > 1e-4 ? normalize(uLptCut.xz - aInst.xz) * 0.8 : vec2(0.0, 0.8); float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);",
+    "old": "    float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);",
+    "new": "    vec2 fe = length(uLptCut.xz - aInst.xz) > 1e-4 ? normalize(uLptCut.xz - aInst.xz) * 0.8 : vec2(0.0, 0.8); float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);",
     "note": "FLORA-GROUND (PIN MOVED): this record held the eye's turn (AUDIT LPT A2's 'the eye not turned to'); the light is the sky's now and no eye turns it, so the mutant is the eye's law put back - the reflective sheen the owner saw.",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "LPT1-A2-the-sun-whole-by-day",
     "file": "src/render/renderer.js",
-    "old": "const sun = this._clockLit ? Math.min(1, Math.max(0, (this._sunScale ?? 0) / LPT_SUN_FULL)) : 0;",
-    "new": "const sun = this._clockLit ? 1 : 0;",
+    "old": "    const sun = this._clockLit ? Math.min(1, Math.max(0, (this._sunScale ?? 0) / LPT_SUN_FULL)) : 0;",
+    "new": "    const sun = this._clockLit ? 1 : 0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "LPT1-A3-lean-by-the-prototype",
     "file": "src/render/renderer.js",
-    "old": "float lean = clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0);",
-    "new": "float lean = clamp(p.y / max(uSize.y, 1e-3), 0.0, 1.0);",
+    "old": "      float lean = clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0);   // AUDIT LPT A3: up THIS tree's height, as its far picture's quad",
+    "new": "      float lean = clamp(p.y / max(uSize.y, 1e-3), 0.0, 1.0);   // AUDIT LPT A3: up THIS tree's height, as its far picture's quad",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "LPT1-A4-material-colour-dropped",
     "file": "src/render/renderer.js",
-    "old": "if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, r, g, b); lr = r; lg = g; lb = b; }",
-    "new": "if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, 1, 1, 1); lr = r; lg = g; lb = b; }",
+    "old": "        if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, r, g, b); lr = r; lg = g; lb = b; }",
+    "new": "        if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, 1, 1, 1); lr = r; lg = g; lb = b; }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "LPT1-A4-mips-blended",
     "file": "src/render/renderer.js",
-    "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips",
-    "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "LPT1-A5-made-with-its-chain",
     "file": "src/render/renderer.js",
-    "old": "this._retroMips ? levels - 1 : 0);   // RETRO1: no chain read while retro mode says so",
-    "new": "levels - 1);   // RETRO1: no chain read while retro mode says so",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips ? levels - 1 : 0);   // No chain read while retro mode says so",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, levels - 1);   // No chain read while retro mode says so",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "LPT1-A5-retro-misses-the-atlases",
     "file": "src/render/renderer.js",
-    "old": "...this.emissionTextures.values(), ...(this.lptAtlases ?? [])]",
-    "new": "...this.emissionTextures.values()]",
+    "old": "    for (const tex of [...this.textures.values(), ...this.emissionTextures.values(), ...(this.lptAtlases ?? [])]) { if (this._replacements.has(tex)) continue; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level); }",
+    "new": "    for (const tex of [...this.textures.values(), ...this.emissionTextures.values()]) { if (this._replacements.has(tex)) continue; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level); }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "LPT1-A6-backs-drawn",
     "file": "src/render/renderer.js",
-    "old": "if (sub.cull !== lastCull) { if (sub.cull === 2) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE); lastCull = sub.cull; }",
-    "new": "lastCull = 0;",
+    "old": "        if (sub.cull !== lastCull) { if (sub.cull === 2) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE); lastCull = sub.cull; }",
+    "new": "        lastCull = 0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "LPT1-D6-atlas-never-bound",
     "file": "src/render/renderer.js",
-    "old": "        this._bindTex0(sub.tex);   // PERF-TEX3",
-    "new": "        // PERF-TEX3",
+    "old": "        this._bindTex0(sub.tex);   // Unit 0 through its helper, the shadow kept",
+    "new": "        // Unit 0 through its helper, the shadow kept",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "LPT1-D6-instances-from-the-start",
     "file": "src/render/renderer.js",
-    "old": "f.gpu.pointInstances(run.drawStart);",
-    "new": "f.gpu.pointInstances(0);",
+    "old": "      f.gpu.pointInstances(run.drawStart);",
+    "new": "      f.gpu.pointInstances(0);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "LPT1-D6-origin-kept",
     "file": "src/render/renderer.js",
-    "old": "    gl.uniform3f(this.bbUOrigin, 0, 0, 0);\n    if (this._bbTipOn)",
-    "new": "    if (this._bbTipOn)",
+    "old": "    gl.uniform3f(this.bbUOrigin, 0, 0, 0);\n    if (this._bbTipOn) { gl.uniform3f(this.bbUTip, 0, 0, 0); this._bbTipOn = false; }",
+    "new": "    if (this._bbTipOn) { gl.uniform3f(this.bbUTip, 0, 0, 0); this._bbTipOn = false; }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

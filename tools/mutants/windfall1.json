@@ -461,8 +461,8 @@
   {
     "name": "WINDFALL1-both-laws-at-once",
     "file": "src/render/renderer.js",
-    "old": "  } else if (uSway > 0.0) {\n    vec2 wv = uFlatWind.xy;",
-    "new": "  }\n  if (uSway > 0.0) {\n    vec2 wv = uFlatWind.xy;",
+    "old": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y * fs * (aCorner.y + 0.5));\n  } else if (uSway > 0.0) {",
+    "new": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y * fs * (aCorner.y + 0.5));\n  }\n  if (uSway > 0.0) {",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "WINDFALL1-bottom-corners-move",
     "file": "src/render/renderer.js",
-    "old": "* (uSway * uSize.y * fs * (aCorner.y + 0.5));",
-    "new": "* (uSway * uSize.y * fs);",
+    "old": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y * fs * (aCorner.y + 0.5));",
+    "new": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y * fs);",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "WINDFALL1-mask-ignored",
     "file": "src/render/renderer.js",
-    "old": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y",
-    "new": "    world += windfallLean((aCenter + uOrigin).xz, right) * (1.0 * uSize.y",
+    "old": "    world += windfallLean((aCenter + uOrigin).xz, right) * (uSway * uSize.y * fs * (aCorner.y + 0.5));",
+    "new": "    world += windfallLean((aCenter + uOrigin).xz, right) * (1.0 * uSize.y * fs * (aCorner.y + 0.5));",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "WINDFALL1-tree-lean-squared",
     "file": "src/render/renderer.js",
-    "old": "* (uSway * uSize.y * aScale * clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0));",
-    "new": "* (uSway * uSize.y * aScale * pow(clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0), 2.0));",
+    "old": "      world += windfallLean(aInst.xz, uRight) * (uSway * uSize.y * aScale * clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0));",
+    "new": "      world += windfallLean(aInst.xz, uRight) * (uSway * uSize.y * aScale * pow(clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0), 2.0));",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]

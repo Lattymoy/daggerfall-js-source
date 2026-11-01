@@ -56,8 +56,8 @@
   {
     "name": "vol-gain-dropped-from-prepare",
     "file": "src/render/renderer.js",
-    "old": "        scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march\n",
-    "new": "        exposure: this._exposure,\n",
+    "old": "        scatter: this._scatterGain(), exposure: this._exposure,   // The glow's gain (the fog's) and the scene's exposure, for the march",
+    "new": "        exposure: this._exposure,",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "vol-gate-blind-to-fresh",
     "file": "src/render/renderer.js",
-    "old": "  _airGlows() { return !!this._air && !!this._air.programs.vol && this._air.fresh && this._volumetricsWanted !== false",
-    "new": "  _airGlows() { return !!this._air && !!this._air.programs.vol && this._volumetricsWanted !== false",
+    "old": "  _airGlows() { return !!this._air && !!this._air.programs.vol && this._air.fresh && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }   // And the glow's shader BUILT - a GL that refused it (`vol: null`) marches nothing, and the lane's own glow zeroed here left the air with none at all",
+    "new": "  _airGlows() { return !!this._air && !!this._air.programs.vol && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }   // And the glow's shader BUILT - a GL that refused it (`vol: null`) marches nothing, and the lane's own glow zeroed here left the air with none at all",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]

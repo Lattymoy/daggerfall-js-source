@@ -20,8 +20,8 @@
   {
     "name": "BC-world-set-list-drifts",
     "file": "src/render/renderer.js",
-    "old": "export const worldSetPrograms = (src) => [[VS, src.meshFs],",
-    "new": "export const worldSetPrograms = (src) => [[VS, `${src.meshFs}\\n`],",
+    "old": "export const worldSetPrograms = (src) => [[VS, src.meshFs], [CHAR_SKIN_VS, skinFaceFs(src.charFs)], [bbVertexShader(src.bbVs), src.bbFs], [TERRAIN_VS, src.terrainFs], [DECAL_VS, src.decalFs ?? DECAL_FS]];",
+    "new": "export const worldSetPrograms = (src) => [[VS, `${src.meshFs}\\n`], [CHAR_SKIN_VS, skinFaceFs(src.charFs)], [bbVertexShader(src.bbVs), src.bbFs], [TERRAIN_VS, src.terrainFs], [DECAL_VS, src.decalFs ?? DECAL_FS]];",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BC-warm-start-drifts",
     "file": "src/render/renderer.js",
-    "old": "      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, VIEW_BG_FS]]),",
-    "new": "      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, `${VIEW_BG_FS}\\n`]]),",
+    "old": "      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, VIEW_BG_FS]]), run: () => { this._rwBg ??= this._rwBgProgram(); }, need: () => !this._rwBg },",
+    "new": "      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, `${VIEW_BG_FS}\\n`]]), run: () => { this._rwBg ??= this._rwBgProgram(); }, need: () => !this._rwBg },",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BC-warm-builder-start-builds",
     "file": "src/render/renderer.js",
-    "old": "      if (start) return startPrograms(gl, [[vs, fs]]);   // BOOT-COMPILE: the warm's start (warmSteps) - compiled, never waited on\n      this.charQuadProgram = this._buildProgram(vs, fs);",
-    "new": "      if (start) startPrograms(gl, [[vs, `${fs}\\n`]]);\n      this.charQuadProgram = this._buildProgram(vs, fs);",
+    "old": "}`;\n      if (start) return startPrograms(gl, [[vs, fs]]);   // The warm's start (warmSteps) - compiled, never waited on\n      this.charQuadProgram = this._buildProgram(vs, fs);",
+    "new": "}`;\n      if (start) startPrograms(gl, [[vs, `${fs}\\n`]]);\n      this.charQuadProgram = this._buildProgram(vs, fs);",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BC-warm-step-never-stands-down",
     "file": "src/render/renderer.js",
-    "old": "run: () => this._ensureCharQuadProgram(), need: () => !this.charQuadProgram },",
-    "new": "run: () => this._ensureCharQuadProgram(), need: () => true },",
+    "old": "      { start: () => this._ensureCharQuadProgram({ start: true }) ?? built, run: () => this._ensureCharQuadProgram(), need: () => !this.charQuadProgram },",
+    "new": "      { start: () => this._ensureCharQuadProgram({ start: true }) ?? built, run: () => this._ensureCharQuadProgram(), need: () => true },",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BC-retro-step-always-needed",
     "file": "src/render/renderer.js",
-    "old": "need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }",
-    "new": "need: () => !this._retro?.P }",
+    "old": "      ...(this._retroSource || this._scaleSource ? [{ start: () => startPrograms(this.gl, [[RETRO_VS, RETRO_FS]]), run: () => this._warmRetro(), need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program",
+    "new": "      ...(this._retroSource || this._scaleSource ? [{ start: () => startPrograms(this.gl, [[RETRO_VS, RETRO_FS]]), run: () => this._warmRetro(), need: () => !this._retro?.P }] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program",
     "tests": [
       "test/render/bootcompile.test.js"
     ]

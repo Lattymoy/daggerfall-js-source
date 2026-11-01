@@ -124,8 +124,8 @@
   {
     "name": "WEAPON-GLOW1-the-pad-upside-down",
     "file": "src/render/renderer.js",
-    "old": "gl.uniform4f(u.pad, cutL ? 0 : wx, down, cutR ? 0 : wx, 0);",
-    "new": "gl.uniform4f(u.pad, cutL ? 0 : wx, 0, cutR ? 0 : wx, down);",
+    "old": "    gl.uniform4f(u.pad, cutL ? 0 : wx, down, cutR ? 0 : wx, 0);",
+    "new": "    gl.uniform4f(u.pad, cutL ? 0 : wx, 0, cutR ? 0 : wx, down);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "WEAPON-GLOW1-the-field-baked-every-frame",
     "file": "src/render/renderer.js",
-    "old": "if (hit) { hit.used = ++this._glowFieldClock; return hit.tex; }",
-    "new": "if (hit && false) { hit.used = ++this._glowFieldClock; return hit.tex; }",
+    "old": "    if (hit) { hit.used = ++this._glowFieldClock; return hit.tex; }",
+    "new": "    if (hit && false) { hit.used = ++this._glowFieldClock; return hit.tex; }",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "WEAPON-GLOW1-the-oldest-field-kept",
     "file": "src/render/renderer.js",
-    "old": "if (list[i].used < list[old].used) old = i;",
-    "new": "if (list[i].used > list[old].used) old = i;",
+    "old": "      for (let i = 1; i < list.length; i++) if (list[i].used < list[old].used) old = i;",
+    "new": "      for (let i = 1; i < list.length; i++) if (list[i].used > list[old].used) old = i;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "WEAPON-GLOW1-the-screen-edge-a-silhouette",
     "file": "src/render/renderer.js",
-    "old": "cutR = dst.x + dst.w >= (frame?.view?.[0] ?? Infinity) - 0.5;",
-    "new": "cutR = false;",
+    "old": "    const cutL = dst.x <= 0.5, cutR = dst.x + dst.w >= (frame?.view?.[0] ?? Infinity) - 0.5;",
+    "new": "    const cutL = dst.x <= 0.5, cutR = false;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "WEAPON-GLOW1-the-cut-on-the-screen-side",
     "file": "src/render/renderer.js",
-    "old": "const field = this._glowField(tex, glow, aw, ah, mirror ? cutR : cutL, mirror ? cutL : cutR);",
-    "new": "const field = this._glowField(tex, glow, aw, ah, cutL, cutR);",
+    "old": "    const field = this._glowField(tex, glow, aw, ah, mirror ? cutR : cutL, mirror ? cutL : cutR);",
+    "new": "    const field = this._glowField(tex, glow, aw, ah, cutL, cutR);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "WEAPON-GLOW1-measured-in-screen-pixels",
     "file": "src/render/renderer.js",
-    "old": "const aw = Math.max(1, Math.round(frame?.art?.[0] ?? (dst.w * 320) / gl.drawingBufferWidth));",
-    "new": "const aw = Math.max(1, Math.round((dst.w * 320) / gl.drawingBufferWidth));",
+    "old": "    const aw = Math.max(1, Math.round(frame?.art?.[0] ?? (dst.w * 320) / gl.drawingBufferWidth));",
+    "new": "    const aw = Math.max(1, Math.round((dst.w * 320) / gl.drawingBufferWidth));",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "WEAPON-GLOW1-no-rings",
     "file": "src/render/renderer.js",
-    "old": "if (glow) this._drawWeaponGlows(mesh, modelMatrix, skin, false);",
-    "new": "",
+    "old": "    if (glow) this._drawWeaponGlows(mesh, modelMatrix, skin, false);",
+    "new": "    ",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "WEAPON-GLOW1-a-sheathed-weapon-glows",
     "file": "src/render/renderer.js",
-    "old": "if (!inGlowSlot(r, slot) || r.hidden) continue;",
-    "new": "if (!inGlowSlot(r, slot)) continue;",
+    "old": "      if (!inGlowSlot(r, slot) || r.hidden) continue;",
+    "new": "      if (!inGlowSlot(r, slot)) continue;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "WEAPON-GLOW1-the-charge-writes-alpha",
     "file": "src/render/renderer.js",
-    "old": "gl.colorMask(true, true, true, false);",
-    "new": "gl.colorMask(true, true, true, true);",
+    "old": "      gl.colorMask(true, true, true, false);",
+    "new": "      gl.colorMask(true, true, true, true);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "WEAPON-GLOW1-a-still-bakes-the-glow",
     "file": "src/render/renderer.js",
-    "old": "this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0",
-    "new": "this._spriteDepth > 0 && this._glowVpH > 0",
+    "old": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
+    "new": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._glowVpH > 0 && !!mesh.ranges;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "WEAPON-GLOW1-the-world-pass-glows",
     "file": "src/render/renderer.js",
-    "old": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth",
-    "new": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._studioDepth",
+    "old": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
+    "new": "    const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._studioDepth === 0 && this._glowVpH > 0 && !!mesh.ranges;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "WEAPON-GLOW1-the-charge-writes-depth",
     "file": "src/render/renderer.js",
-    "old": "gl.colorMask(true, true, true, false);\n      gl.depthMask(false);",
-    "new": "gl.colorMask(true, true, true, false);",
+    "old": "      gl.colorMask(true, true, true, false);\n      gl.depthMask(false);\n      gl.depthFunc(gl.LEQUAL);",
+    "new": "      gl.colorMask(true, true, true, false);\n      gl.depthFunc(gl.LEQUAL);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "WEAPON-GLOW1-a-ring-behind-the-wall",
     "file": "src/render/renderer.js",
-    "old": "  if (d >= ${GLOW_DEPTH_FLOOR.toFixed(8)}) return gl_FragCoord.z;",
-    "new": "  if (false) return gl_FragCoord.z;",
+    "old": "  if (d >= ${GLOW_DEPTH_FLOOR.toFixed(8)}) return gl_FragCoord.z;   // AUDIT WEAPON-GLOW MW-1: a weapon glow's ring stands at the back of its picture - its texel the quad's own, never a reach behind the body",
+    "new": "  if (false) return gl_FragCoord.z;   // AUDIT WEAPON-GLOW MW-1: a weapon glow's ring stands at the back of its picture - its texel the quad's own, never a reach behind the body",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -384,8 +384,8 @@
   {
     "name": "WEAPON-GLOW1-the-tile-at-the-corner",
     "file": "src/render/renderer.js",
-    "old": "this._glowOx = it.tx; this._glowOy = it.ty;",
-    "new": "this._glowOx = 0; this._glowOy = 0;",
+    "old": "        this._glowVpW = it.pw; this._glowVpH = it.ph; this._glowOx = it.tx; this._glowOy = it.ty;   // The tile's pixels and its corner",
+    "new": "        this._glowVpW = it.pw; this._glowVpH = it.ph; this._glowOx = 0; this._glowOy = 0;   // The tile's pixels and its corner",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "WEAPON-GLOW1-a-ring-at-the-bodys-depth",
     "file": "src/render/renderer.js",
-    "old": "rows[i * 4 + 2] = d.far;",
-    "new": "rows[i * 4 + 2] = 0;",
+    "old": "        rows[i * 4] = d.shift[0] * sx; rows[i * 4 + 1] = d.shift[1] * sy; rows[i * 4 + 2] = d.far; rows[i * 4 + 3] = d.ring;",
+    "new": "        rows[i * 4] = d.shift[0] * sx; rows[i * 4 + 1] = d.shift[1] * sy; rows[i * 4 + 2] = 0; rows[i * 4 + 3] = d.ring;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "WEAPON-GLOW1-one-instance-short",
     "file": "src/render/renderer.js",
-    "old": "else { gl.drawArraysInstanced(gl.TRIANGLES, r.first, r.count, n);",
-    "new": "else { gl.drawArraysInstanced(gl.TRIANGLES, r.first, r.count, n - 1);",
+    "old": "      else { gl.drawArraysInstanced(gl.TRIANGLES, r.first, r.count, n); this.stats.draws++; }   // every ring and ember, one draw",
+    "new": "      else { gl.drawArraysInstanced(gl.TRIANGLES, r.first, r.count, n - 1); this.stats.draws++; }   // every ring and ember, one draw",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -414,8 +414,8 @@
   {
     "name": "WEAPON-GLOW1-the-mesh-glow-cold",
     "file": "src/render/renderer.js",
-    "old": "run: () => this._ensureWeaponGlowMeshProgram(), need:",
-    "new": "run: () => {}, need:",
+    "old": "      { start: () => startPrograms(this.gl, [[glowMeshVs(CHAR_SKIN_VS), GLOW_MESH_FS]]), run: () => this._ensureWeaponGlowMeshProgram(), need: () => !this.weaponGlowMeshProgram },   // The glow's two, before the first glowing weapon",
+    "new": "      { start: () => startPrograms(this.gl, [[glowMeshVs(CHAR_SKIN_VS), GLOW_MESH_FS]]), run: () => {}, need: () => !this.weaponGlowMeshProgram },   // The glow's two, before the first glowing weapon",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -424,8 +424,8 @@
   {
     "name": "WEAPON-GLOW1-the-lens-unit-unread",
     "file": "src/render/renderer.js",
-    "old": "const unit = mesh.glowUnit > 0 ? mesh.glowUnit : glowUnit(this._glowVpH);",
-    "new": "const unit = glowUnit(this._glowVpH);",
+    "old": "    const unit = mesh.glowUnit > 0 ? mesh.glowUnit : glowUnit(this._glowVpH);",
+    "new": "    const unit = glowUnit(this._glowVpH);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],

@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-F4-the-billboard-tint-decodes-the-moon-and-the-sun-into-ONE-scratch-again",
     "file": "src/render/renderer.js",
-    "old": "mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
-    "new": "mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);",
+    "old": "        const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
+    "new": "        const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-F4-the-third-scratch-is-an-alias-of-the-second-so-the-fix-is-cosmetic",
     "file": "src/render/renderer.js",
-    "old": "this._decC = new Float32Array(3);",
-    "new": "this._decC = this._decB;",
+    "old": "    this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // Three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)",
+    "new": "    this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = this._decB;   // Three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]

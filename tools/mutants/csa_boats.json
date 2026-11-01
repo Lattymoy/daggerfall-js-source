@@ -478,8 +478,8 @@
   {
     "name": "CSA-B-renderer-emission-off-ignored",
     "file": "src/render/renderer.js",
-    "old": "gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);",
-    "new": "gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);",
+    "old": "        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);",
+    "new": "        gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "CSA-B-renderer-emission-off-shares-bind",
     "file": "src/render/renderer.js",
-    "old": "if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }",
-    "new": "if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; }",
+    "old": "      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }",
+    "new": "      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; }",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "CSA-B-renderer-bake-bounds-stale",
     "file": "src/render/renderer.js",
-    "old": "    boundsOf(positions).forEach((v, i) => { mesh.bounds[i] = v; });\n    for (const sm of mesh.subMeshes)",
-    "new": "    for (const sm of mesh.subMeshes)",
+    "old": "    boundsOf(positions).forEach((v, i) => { mesh.bounds[i] = v; });\n    for (const sm of mesh.subMeshes) boundsOf(positions, mesh.triIndices, sm.startIndex, sm.primitiveCount * 3).forEach((v, i) => { sm._bounds[i] = v; });",
+    "new": "    for (const sm of mesh.subMeshes) boundsOf(positions, mesh.triIndices, sm.startIndex, sm.primitiveCount * 3).forEach((v, i) => { sm._bounds[i] = v; });",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]

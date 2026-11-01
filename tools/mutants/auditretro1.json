@@ -2,8 +2,8 @@
   {
     "name": "AUDITRETRO1-A1-a-pillarbox-read-as-a-docked-strip",
     "file": "src/render/renderer.js",
-    "old": "const view = this._worldViewportFrame, docked = !!view && view.y > 0;",
-    "new": "const view = this._worldViewportFrame, docked = !!view;",
+    "old": "    const view = this._worldViewportFrame, docked = !!view && view.y > 0;",
+    "new": "    const view = this._worldViewportFrame, docked = !!view;",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "AUDITRETRO1-A4-a-replacement-capped-at-upload",
     "file": "src/render/renderer.js",
-    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // AUDIT RETRO1 A4: TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)\n    else if (mips",
-    "new": "    if (mips",
+    "old": "    if (opts.replacement) { if (tex) this._replacements.add(tex); }   // TryImportTexture's - DFU's retro arm never reaches it (J7: a lost context's null is no key)\n    else if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // Loaded under retro mode without mip maps (_applyRetroMips)",
+    "new": "    if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // Loaded under retro mode without mip maps (_applyRetroMips)",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "AUDITRETRO1-A4-a-replacement-capped-by-the-sweep",
     "file": "src/render/renderer.js",
-    "old": "if (this._replacements.has(tex)) continue; ",
-    "new": "",
+    "old": "    for (const tex of [...this.textures.values(), ...this.emissionTextures.values(), ...(this.lptAtlases ?? [])]) { if (this._replacements.has(tex)) continue; gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level); }",
+    "new": "    for (const tex of [...this.textures.values(), ...this.emissionTextures.values(), ...(this.lptAtlases ?? [])]) { gl.bindTexture(gl.TEXTURE_2D, tex); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, level); }",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "AUDITRETRO1-B2-a-panel-before-the-present",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;\n    // EVERY global",
-    "new": "    const gl = this.gl;\n    // EVERY global",
+    "old": "    // the frame's first screen quad drew into the retro image (or the lane's frame) and the image was never shown\n    if (this._retroOwed || this._air?.pending) { if (this._worldViewportPx) this.endWorldPass(); this._compositeAir(); }\n    const gl = this.gl;",
+    "new": "    // the frame's first screen quad drew into the retro image (or the lane's frame) and the image was never shown\n    const gl = this.gl;",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "AUDITRETRO1-B3-the-renderer-hands-no-scissor",
     "file": "src/render/renderer.js",
-    "old": "clear: this._clearColor, scissor: this._scissor,",
-    "new": "clear: this._clearColor, scissor: null,",
+    "old": "          post: f.post, lutShift: f.lutShift, clear: this._clearColor, scissor: this._scissor,",
+    "new": "          post: f.post, lutShift: f.lutShift, clear: this._clearColor, scissor: null,",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDITRETRO1-B5-the-depth-read-at-the-present",
     "file": "src/render/renderer.js",
-    "old": "          depth: f.depth, rect:",
-    "new": "          depth: this._air?.frame?.depth ?? f.depth, rect:",
+    "old": "          depth: f.depth, rect: this._viewportPx(f.view) ?? [0, 0, this.canvas.width, this.canvas.height], canvasW: this.canvas.width, canvasH: this.canvas.height,",
+    "new": "          depth: this._air?.frame?.depth ?? f.depth, rect: this._viewportPx(f.view) ?? [0, 0, this.canvas.width, this.canvas.height], canvasW: this.canvas.width, canvasH: this.canvas.height,",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -188,8 +188,8 @@
   {
     "name": "AUDITRETRO1-C2-the-arm-into-the-image",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed) {\n      const v = this._worldViewportFrame;\n      if (this._worldViewportPx) this.endWorldPass();\n      this._compositeAir();",
-    "new": "    if (false) {\n      const v = this._worldViewportFrame;\n      if (this._worldViewportPx) this.endWorldPass();\n      this._compositeAir();",
+    "old": "    if (this._retroOwed) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "AUDITRETRO1-C2-the-lane-arm-left-in-the-image",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed) {\n      const v = this._worldViewportFrame;",
-    "new": "    if (this._retroOwed && !this._air) {\n      const v = this._worldViewportFrame;",
+    "old": "    if (this._retroOwed) {",
+    "new": "    if (this._retroOwed && !this._air) {",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -215,8 +215,8 @@
   {
     "name": "AUDITRETRO1-C6-a-span-past-the-world-pass",
     "file": "src/render/renderer.js",
-    "old": "return this._retroOwed && f ? [f.height,",
-    "new": "return f ? [f.height,",
+    "old": "    return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;",
+    "new": "    return f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "AUDITRETRO1-D3-the-world-through-the-canvas-viewport",
     "file": "src/render/renderer.js",
-    "old": "    this._worldViewportPx = [0, 0, width, height];\n    this._restoreWorldViewport();",
-    "new": "    this._worldViewportPx = [0, 0, width, height];",
+    "old": "    this._restoreWorldViewport();\n    return this._retroFrame;",
+    "new": "    return this._retroFrame;",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "AUDITRETRO1-D3-the-clear-colour-left-black",
     "file": "src/render/renderer.js",
-    "old": "post: f.post, lutShift: f.lutShift, clear: this._clearColor,",
-    "new": "post: f.post, lutShift: f.lutShift, clear: null,",
+    "old": "          post: f.post, lutShift: f.lutShift, clear: this._clearColor, scissor: this._scissor,",
+    "new": "          post: f.post, lutShift: f.lutShift, clear: null, scissor: this._scissor,",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "AUDITRETRO1-D3-a-pass-a-frame",
     "file": "src/render/renderer.js",
-    "old": "_retroPass() { return (this._retro ??= new RetroPass(",
-    "new": "_retroPass() { return (this._retro = new RetroPass(",
+    "old": "  _retroPass() { return (this._retro ??= new RetroPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs) })); }",
+    "new": "  _retroPass() { return (this._retro = new RetroPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs) })); }",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "AUDITRETRO1-D4-the-emission-map-keeps-its-chain",
     "file": "src/render/renderer.js",
-    "old": "    else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap",
-    "new": "    else if (false) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: the albedo's cap",
+    "old": "    else if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // The albedo's cap, so both samples still come from one level",
+    "new": "    else if (false) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // The albedo's cap, so both samples still come from one level",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "AUDITRETRO1-D4-the-tile-array-keeps-its-chain",
     "file": "src/render/renderer.js",
-    "old": "    if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);",
-    "new": "    if (false) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);",
+    "old": "    if (!this._retroMips) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);   // Loaded under retro mode without mip maps (_applyRetroMips)",
+    "new": "    if (false) gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, 0);   // Loaded under retro mode without mip maps (_applyRetroMips)",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",
     "file": "src/render/airPass.js",
-    "old": "        this.prevValid = false;\n      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
-    "new": "      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
+    "old": "        this.prevValid = false;\n      } // The other slot's image - its previous depth is not this frame's previous",
+    "new": "      } // The other slot's image - its previous depth is not this frame's previous",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "AUDITRETRO1-E2-the-lut-kept-with-retro-off",
     "file": "src/render/renderer.js",
-    "old": "      this._retro?.dropLut();\n",
-    "new": "",
+    "old": "      this._retro?.dropLut();\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "AUDITRETRO1-E3-a-throwing-present-strands-the-frame",
     "file": "src/render/renderer.js",
-    "old": "    } finally {   // AUDIT RETRO1 E3: whatever the present did, the frame is the canvas's and the shadows are forgotten\n",
-    "new": "    } catch (e) { throw e; } {\n",
+    "old": "    } finally {   // Whatever the present did, the frame is the canvas's and the shadows are forgotten",
+    "new": "    } catch (e) { throw e; } {",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "AUDITRETRO1-E7-no-warm-step",
     "file": "src/render/renderer.js",
-    "old": "      ...(this._retroSource || this._scaleSource ? [{ start: () => startPrograms(this.gl, [[RETRO_VS, RETRO_FS]]), run: () => this._warmRetro(), need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program\n",
-    "new": "",
+    "old": "      ...(this._retroSource || this._scaleSource ? [{ start: () => startPrograms(this.gl, [[RETRO_VS, RETRO_FS]]), run: () => this._warmRetro(), need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program\n    ];",
+    "new": "    ];",
     "tests": [
       "test/render/auditretro1.test.js"
     ]

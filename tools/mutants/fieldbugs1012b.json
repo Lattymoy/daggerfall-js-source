@@ -137,8 +137,8 @@
   {
     "name": "GRASS-PORTAL-the-conceal-unread",
     "file": "src/render/renderer.js",
-    "old": "!b.castOnly && !!(b.conceal || ghostShaded(b));",
-    "new": "!b.castOnly && !!(ghostShaded(b));",
+    "old": "export const billboardBlended = (b) => !!b && !b.castOnly && !!(b.conceal || ghostShaded(b));",
+    "new": "export const billboardBlended = (b) => !!b && !b.castOnly && !!(ghostShaded(b));",
     "tests": [
       "test/render/fb1012b_grassportal.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "GRASS-PORTAL-the-held-list-never-let-go",
     "file": "src/render/renderer.js",
-    "old": "    if (held.length) this.drawBillboards(held, camRight, camUp);\n    held.length = 0;",
-    "new": "    if (held.length) this.drawBillboards(held, camRight, camUp);",
+    "old": "    held.length = 0;\n  }",
+    "new": "  }",
     "tests": [
       "test/render/fb1012b_grassportal.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "GRASS-PORTAL-the-list-unfiltered",
     "file": "src/render/renderer.js",
-    "old": "if (billboardBlended(b)) out.push(b); else batches[keep++] = b;",
-    "new": "if (billboardBlended(b)) out.push(b); batches[keep++] = b;",
+    "old": "    if (billboardBlended(b)) out.push(b); else batches[keep++] = b;",
+    "new": "    if (billboardBlended(b)) out.push(b); batches[keep++] = b;",
     "tests": [
       "test/render/fb1012b_grassportal.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "GRASS-PORTAL-a-second-law-in-the-phase",
     "file": "src/render/renderer.js",
-    "old": "      if (!billboardBlended(b)) continue;   // MWNPC5b",
-    "new": "      if (b.castOnly || !(b.conceal || isSpectralArchive(b.archive))) continue;   // MWNPC5b",
+    "old": "      if (!billboardBlended(b)) continue;   // Nor in the blended phase (cast-only); GRASS-PORTAL: one test",
+    "new": "      if (b.castOnly || !(b.conceal || isSpectralArchive(b.archive))) continue;   // Nor in the blended phase (cast-only); GRASS-PORTAL: one test",
     "tests": [
       "test/render/fb1012b_grassportal.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "VEIN-HUE-the-dye-unsent",
     "file": "src/render/renderer.js",
-    "old": " gl.uniform1f(this.bbUBatchDye, tn ? b.dye ?? 0 : 0);",
-    "new": "",
+    "old": "      if (tn || this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, tn ? tn[0] : 1, tn ? tn[1] : 1, tn ? tn[2] : 1); gl.uniform1f(this.bbUBatchDye, tn ? b.dye ?? 0 : 0); this._bbTintOn = !!tn; }   // Its dye with it",
+    "new": "      if (tn || this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, tn ? tn[0] : 1, tn ? tn[1] : 1, tn ? tn[2] : 1); this._bbTintOn = !!tn; }   // Its dye with it",
     "tests": [
       "test/render/fb1012b_veinhue.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "VEIN-HUE-the-classic-multiply-kept",
     "file": "src/render/renderer.js",
-    "old": "  if (uBatchDye > 0.0) lit = mix(lit, undyed * uBatchTint, uBatchDye);\n",
-    "new": "",
+    "old": "  if (uBatchDye > 0.0) lit = mix(lit, undyed * uBatchTint, uBatchDye);\n  // ECV1: a shade is its silhouette - the lit colour pulled to black;",
+    "new": "  // ECV1: a shade is its silhouette - the lit colour pulled to black;",
     "tests": [
       "test/render/fb1012b_veinhue.test.js"
     ]

@@ -66,8 +66,8 @@
   {
     "name": "PANE-CLIP-the-panes-never-handed-on",
     "file": "src/render/renderer.js",
-    "old": "this._rwPaneN = a.n ? a.np : 0;",
-    "new": "this._rwPaneN = 0;",
+    "old": "    if (a) { const kept = this._rwPanes; this._rwPanes = a.panes; this._rwPaneN = a.n ? a.np : 0; a.panes = kept; a.np = 0; }",
+    "new": "    if (a) { const kept = this._rwPanes; this._rwPanes = a.panes; this._rwPaneN = 0; a.panes = kept; a.np = 0; }",
     "tests": [
       "test/render/fb1012g_paneclip.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "PANE-CLIP-the-matrix-lost",
     "file": "src/render/renderer.js",
-    "old": "p.count = sm.primitiveCount * 3; p.m.set(m);",
-    "new": "p.count = sm.primitiveCount * 3;",
+    "old": "      p.vao = mesh.vao; p.start = sm.startIndex; p.count = sm.primitiveCount * 3; p.m.set(m);",
+    "new": "      p.vao = mesh.vao; p.start = sm.startIndex; p.count = sm.primitiveCount * 3;",
     "tests": [
       "test/render/fb1012g_paneclip.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "PANE-CLIP-a-let-go-room-drawn",
     "file": "src/render/renderer.js",
-    "old": "      if (!gl.isVertexArray(p.vao)) continue;\n",
-    "new": "",
+    "old": "      if (!gl.isVertexArray(p.vao)) continue;\n      gl.uniformMatrix4fv(P.model, false, p.m);",
+    "new": "      gl.uniformMatrix4fv(P.model, false, p.m);",
     "tests": [
       "test/render/fb1012g_paneclip.test.js"
     ]

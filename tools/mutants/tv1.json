@@ -72,8 +72,8 @@
   {
     "name": "TV1-focus-unset-stamp-lost",
     "file": "src/render/renderer.js",
-    "old": "    else if (f[3] === 0) return;\n    else f.fill(0);\n    this._frameStamp++;   // LA-COST1",
-    "new": "    else if (f[3] === 0) return;\n    else { f.fill(0); return; }\n    this._frameStamp++;   // LA-COST1",
+    "old": "    else f.fill(0);",
+    "new": "    else { f.fill(0); return; }",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-TV-B1-focus-carried-over",
     "file": "src/render/renderer.js",
-    "old": "    if (!this._focusArmed && this._focus[3] !== 0) this._focus.fill(0);",
-    "new": "    void 0;",
+    "old": "    if (!this._focusArmed && this._focus[3] !== 0) this._focus.fill(0);   // AUDIT TV B1: the travel view's focus too, unless set since the last beginFrame (setFocus)",
+    "new": "    void 0;   // AUDIT TV B1: the travel view's focus too, unless set since the last beginFrame (setFocus)",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-TV-B1-setfocus-never-arms",
     "file": "src/render/renderer.js",
-    "old": "    this._focusArmed = true;   // AUDIT TV B1: this frame's\n",
-    "new": "",
+    "old": "    this._focusArmed = true;   // AUDIT TV B1: this frame's\n    this._focusWide = !!p && !!wide;",
+    "new": "    this._focusWide = !!p && !!wide;",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "AUDIT-DEEP-R3-the-shadow-spotlight",
     "file": "src/render/renderer.js",
-    "old": "cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,",
-    "new": "cascadeScale: 1,",
+    "old": "      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)",
+    "new": "      cascadeScale: 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
@@ -782,8 +782,8 @@
   {
     "name": "AUDIT-DEEP2-D7-the-pop",
     "file": "src/render/renderer.js",
-    "old": "      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,",
-    "new": "      cascadeScale: this._focus[3] > 0.5 ? SHADOW_VIEW_SCALE : 1,",
+    "old": "      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)",
+    "new": "      cascadeScale: this._focus[3] > 0.5 ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],

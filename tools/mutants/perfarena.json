@@ -20,8 +20,8 @@
   {
     "name": "PERFARENA-offset-dropped",
     "file": "src/render/renderer.js",
-    "old": "      gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0);   // PERF-ARENA",
-    "new": "      gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);   // PERF-ARENA",
+    "old": "      gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0);   // A still batch's range of its arena's indices",
+    "new": "      gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);   // A still batch's range of its arena's indices",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PERFARENA-air-offset",
     "file": "src/render/airPass.js",
-    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0); // PERF-ARENA: a still batch's range of its arena's indices",
-    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0); // PERF-ARENA: a still batch's range of its arena's indices",
+    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0); // A still batch's range of its arena's indices",
+    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0); // A still batch's range of its arena's indices",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PERFARENA-double-free",
     "file": "src/render/renderer.js",
-    "old": "    if (batch._arena) { this._bbArenaFree(batch); return; }   // PERF-ARENA: its range back to its arena",
-    "new": "    if (batch._q0 != null && batch._quads) { arenaGive(this._bbArenas[0].free, batch._q0, batch._quads); batch.vao = null; return; }   // PERF-ARENA: its range back to its arena",
+    "old": "    if (batch._arena) { this._bbArenaFree(batch); return; }   // Its range back to its arena",
+    "new": "    if (batch._q0 != null && batch._quads) { arenaGive(this._bbArenas[0].free, batch._q0, batch._quads); batch.vao = null; return; }   // Its range back to its arena",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "PERFARENA-never-let-go",
     "file": "src/render/renderer.js",
-    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // AUDIT PERF-ARENA A6: an arena not standing (-1) is never spliced",
+    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // An arena not standing (-1) is never spliced",
     "new": "    if (false) {",
     "tests": [
       "test/render/perfarena.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "PERFARENA-first-let-go",
     "file": "src/render/renderer.js",
-    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // AUDIT PERF-ARENA A6: an arena not standing (-1) is never spliced",
+    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // An arena not standing (-1) is never spliced",
     "new": "    if (at >= 0 && a.free.length === 2 && a.free[1] === a.cap) {",
     "tests": [
       "test/render/perfarena.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "PERFARENA-shadow-trusted",
     "file": "src/render/renderer.js",
-    "old": "    this._lastVao = undefined;\n",
-    "new": "",
+    "old": "    this._lastVao = undefined;\n    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // With the basis); WINDFALL1: and the mod's law",
+    "new": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // With the basis); WINDFALL1: and the mod's law",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PERFARENA2-no-growth",
     "file": "src/render/renderer.js",
-    "old": "const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);",
-    "new": "const gl = this.gl, cap = Math.max(BB_ARENA_QUADS, quads);",
+    "old": "    const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);   // Each arena twice the last",
+    "new": "    const gl = this.gl, cap = Math.max(BB_ARENA_QUADS, quads);   // Each arena twice the last",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PERFARENA2-unbounded",
     "file": "src/render/renderer.js",
-    "old": "const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);",
-    "new": "const gl = this.gl, cap = Math.max(last ? last * 2 : BB_ARENA_QUADS, quads);",
+    "old": "    const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);   // Each arena twice the last",
+    "new": "    const gl = this.gl, cap = Math.max(last ? last * 2 : BB_ARENA_QUADS, quads);   // Each arena twice the last",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "AUDIT-ARENA-stale-home",
     "file": "src/render/renderer.js",
-    "old": "      for (const [k, home] of this._bbArenaOfKey) if (home === a) this._bbArenaOfKey.delete(k);   // PERF-ARENA2: no record homes in a deleted arena",
+    "old": "      for (const [k, home] of this._bbArenaOfKey) if (home === a) this._bbArenaOfKey.delete(k);   // No record homes in a deleted arena",
     "new": "      // (mutant) the homes kept",
     "tests": [
       "test/render/perfarena.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-ARENA-cap-ignores-batch",
     "file": "src/render/renderer.js",
-    "old": "cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);",
-    "new": "cap = last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS;",
+    "old": "    const gl = this.gl, cap = Math.max(last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS, quads);   // Each arena twice the last",
+    "new": "    const gl = this.gl, cap = last ? Math.min(BB_ARENA_MAX_QUADS, last * 2) : BB_ARENA_QUADS;   // Each arena twice the last",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-ARENA-not-rebound",
     "file": "src/render/renderer.js",
-    "old": "    for (const a of this._bbArenas) { this._bindVao(a.vao); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); }\n",
-    "new": "",
+    "old": "    for (const a of this._bbArenas) { this._bindVao(a.vao); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); }\n    this._bindVao(null);",
+    "new": "    this._bindVao(null);",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-ARENA-old-kept",
     "file": "src/render/renderer.js",
-    "old": "    if (had) gl.deleteBuffer(had.ib);\n",
-    "new": "",
+    "old": "    if (had) gl.deleteBuffer(had.ib);\n    this._bbIndex = { ib, cap };",
+    "new": "    this._bbIndex = { ib, cap };",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "AUDIT-ARENA-delete-shared",
     "file": "src/render/renderer.js",
-    "old": "      gl.deleteVertexArray(a.vao); gl.deleteBuffer(a.vb);   // AUDIT PERF-ARENA A4: the index buffer is every arena's",
+    "old": "      gl.deleteVertexArray(a.vao); gl.deleteBuffer(a.vb);   // The index buffer is every arena's",
     "new": "      gl.deleteVertexArray(a.vao); gl.deleteBuffer(a.vb); gl.deleteBuffer(this._bbIndex.ib);",
     "tests": [
       "test/render/perfarena.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-ARENA-homes-unbounded",
     "file": "src/render/renderer.js",
-    "old": "    if (this._bbArenaOfKey.size > BB_ARENA_HOMES_MAX) this._bbArenaOfKey.clear();",
-    "new": "    // (mutant) the homes never start over",
+    "old": "    if (this._bbArenaOfKey.size > BB_ARENA_HOMES_MAX) this._bbArenaOfKey.clear();   // A hint, never a law - and a key a doll (remotePlayers' doll_N) mints for good",
+    "new": "    // (mutant) the homes never start over   // AUDIT PERF-ARENA A5: a hint, never a law - and a key a doll (remotePlayers' doll_N) mints for good",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-ARENA-splice-unguarded",
     "file": "src/render/renderer.js",
-    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {",
-    "new": "    if (at !== 0 && a.free.length === 2 && a.free[1] === a.cap) {",
+    "old": "    if (at > 0 && a.free.length === 2 && a.free[1] === a.cap) {   // An arena not standing (-1) is never spliced",
+    "new": "    if (at !== 0 && a.free.length === 2 && a.free[1] === a.cap) {   // An arena not standing (-1) is never spliced",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-ARENA-dynamic-keeps-vao",
     "file": "src/render/renderer.js",
-    "old": "    batch.vao = null;   // AUDIT PERF-ARENA A7: as destroyBillboardBatch - a list still holding it skips it (no VAO), never draws a deleted one\n",
-    "new": "",
+    "old": "    batch.vao = null;   // As destroyBillboardBatch - a list still holding it skips it (no VAO), never draws a deleted one\n    batch.buffers = [];",
+    "new": "    batch.buffers = [];",
     "tests": [
       "test/render/perfarena.test.js"
     ]

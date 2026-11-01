@@ -382,8 +382,8 @@
   {
     "name": "GUIDE3-row-default-off",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: false, online: 'player' }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),   // ui/quest/questHerald.js HERALD_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: false, online: 'player' }),   // ui/quest/questHerald.js HERALD_PREF",
     "tests": [
       "test/ui/quest/guide3_herald.test.js",
       "test/systems/features.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "GUIDE3-row-forced-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: true }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),   // ui/quest/questHerald.js HERALD_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: true }),   // ui/quest/questHerald.js HERALD_PREF",
     "tests": [
       "test/ui/quest/guide3_herald.test.js",
       "test/systems/features.test.js"

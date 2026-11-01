@@ -223,8 +223,8 @@
   {
     "name": "RPT1026-SHAKE-ceiling-off-tile",
     "file": "src/systems/features.js",
-    "old": "'Dungeon Lighting.dungeonDarkness', 'Camera Shake.maxShake']),",
-    "new": "'Dungeon Lighting.dungeonDarkness']),",
+    "old": "  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness', 'Camera Shake.maxShake']),",
+    "new": "  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),",
     "tests": [
       "test/scenes/rpt1026_client_peershake.test.js"
     ],

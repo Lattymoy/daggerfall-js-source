@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-1-the-half-the-host-s",
     "file": "src/render/renderer.js",
-    "old": "layer = (t) => (t && this._arrLayers.get(t) === 2 * TWIN_LAYERS ? TWIN_LAYERS : 0);",
-    "new": "layer = (t) => (t ? TWIN_LAYERS : 0);",
+    "old": "      const arr = this._tSnowArr, layer = (t) => (t && this._arrLayers.get(t) === 2 * TWIN_LAYERS ? TWIN_LAYERS : 0);",
+    "new": "      const arr = this._tSnowArr, layer = (t) => (t ? TWIN_LAYERS : 0);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-anchor-unsent",
     "file": "src/render/renderer.js",
-    "old": "        gl.uniform2f(L.uSnowAnchor, sf.anchor[0], sf.anchor[1]);\n",
-    "new": "",
+    "old": "        gl.uniform2f(L.uSnowAnchor, sf.anchor[0], sf.anchor[1]);\n        gl.uniform4f(L.uSnowSet, sf.altitude, 1, sf.spacing, 0);",
+    "new": "        gl.uniform4f(L.uSnowSet, sf.altitude, 1, sf.spacing, 0);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

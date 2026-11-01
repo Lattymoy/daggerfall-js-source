@@ -92,8 +92,8 @@
   {
     "name": "BODY-DEPTH-the-batch-drops-it",
     "file": "src/render/renderer.js",
-    "old": "q.fx, q.depth);",
-    "new": "q.fx);",
+    "old": "            q.hitFlash, q.conceal, q.up, [it.tx / S, it.ty / S], q.fx, q.depth);   // And its tells; BODY-DEPTH: and where its texels stand",
+    "new": "            q.hitFlash, q.conceal, q.up, [it.tx / S, it.ty / S], q.fx);   // And its tells; BODY-DEPTH: and where its texels stand",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BODY-DEPTH-unit-1-kept-while-drawn-into",
     "file": "src/render/renderer.js",
-    "old": "    if (this._depthOnUnit1) { this._activeTexture(gl.TEXTURE1);",
-    "new": "    if (false) { this._activeTexture(gl.TEXTURE1);",
+    "old": "    if (this._depthOnUnit1) { this._activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); this._activeTexture(gl.TEXTURE0); this._tex1Bound = null; this._depthOnUnit1 = false; }",
+    "new": "    if (false) { this._activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); this._activeTexture(gl.TEXTURE0); this._tex1Bound = null; this._depthOnUnit1 = false; }",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BODY-DEPTH-the-quad-never-says-so",
     "file": "src/render/renderer.js",
-    "old": "if (dtex) { this._bindEmission(dtex); this._depthOnUnit1 = true; }",
-    "new": "if (dtex) { this._bindEmission(dtex); }",
+    "old": "    if (dtex) { this._bindEmission(dtex); this._depthOnUnit1 = true; }   // let go before the target is drawn into (_charSpriteRT)",
+    "new": "    if (dtex) { this._bindEmission(dtex); }   // let go before the target is drawn into (_charSpriteRT)",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]

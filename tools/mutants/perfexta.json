@@ -11,8 +11,8 @@
   {
     "name": "PERF-EXT1-2-a-batch-built-dynamic-gets-a-grid-too",
     "file": "src/render/renderer.js",
-    "old": "_place: count > 1 && !dynamic ? placementGrid(centers) : null,",
-    "new": "_place: count > 1 ? placementGrid(centers) : null,",
+    "old": "      _place: count > 1 && !dynamic ? placementGrid(centers) : null,",
+    "new": "      _place: count > 1 ? placementGrid(centers) : null,",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PERF-EXT1-3-a-move-keeps-the-birth-placements",
     "file": "src/render/renderer.js",
-    "old": "    batch._place = !batch._dyn && count > 1 ? placementGrid(count === centers.length ? centers : centers.slice(0, count)) : null;\n",
-    "new": "",
+    "old": "    batch._place = !batch._dyn && count > 1 ? placementGrid(count === centers.length ? centers : centers.slice(0, count)) : null;\n    if (!batch._dyn) batch._shId = undefined;",
+    "new": "    if (!batch._dyn) batch._shId = undefined;",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERF-EXT1-4-a-free-keeps-the-grid",
     "file": "src/render/renderer.js",
-    "old": "    batch._place = null;   // PERF-EXT1: the placement grid is the batch's, and goes with it\n",
-    "new": "",
+    "old": "    batch._place = null;   // The placement grid is the batch's, and goes with it\n    if (batch._arena) this._bbArenaFree(batch);   // Its range back to its arena - the arena's VAO is not the batch's to delete",
+    "new": "    if (batch._arena) this._bbArenaFree(batch);   // Its range back to its arena - the arena's VAO is not the batch's to delete",
     "tests": [
       "test/render/perfexta.test.js"
     ]

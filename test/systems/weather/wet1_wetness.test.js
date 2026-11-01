@@ -1,4 +1,4 @@
-// WET1 (bible/07-Rendering/Weather-Arc.md WET1): the ground soaks in the front's rain and dries after, on the game's
+// The ground soaks in the front's rain and dries after, on the game's
 // clock, and the lane's ground and walls draw it. The law is place-free - it reads the front at the player, wherever in
 // Tamriel that is - so no case here names a place.
 import '../../modsOff.js';
@@ -199,7 +199,7 @@ test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
   assert.ok(airPassPrograms({ vs: { mesh: 'm', bb: 'b' } }, false).some((p) => p[1] === PUDDLE_PASS_FS), 'air boot lists the pass');
   const airSrc = readFileSync(new URL('../../../src/render/airPass.js', import.meta.url), 'utf8');
   const blend = airSrc.slice(airSrc.indexOf('  _puddleProxy(rect) {'), airSrc.indexOf('  release() {'));
-  assert.ok(blend.includes('gl.activeTexture(gl.TEXTURE0);   // WET1f:') && blend.includes('gl.bindTexture(gl.TEXTURE_2D, F.puddle)'), 'blend samples puddle on unit 0, not depth');
+  assert.ok(blend.includes('gl.activeTexture(gl.TEXTURE0);') && blend.includes('gl.bindTexture(gl.TEXTURE_2D, frameImg.puddle)'), 'blend samples puddle on unit 0, not depth');
   assert.ok(airSrc.includes('_wetRoadDummy'), 'usampler2D always has an R8UI bound');
 });
 

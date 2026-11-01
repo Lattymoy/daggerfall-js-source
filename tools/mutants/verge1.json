@@ -175,8 +175,8 @@
   {
     "name": "VERGE1-off-by-default",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: true, online: true }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: false, online: true }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: true, online: true }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: false, online: true }),",
     "tests": [
       "test/world/road/verge1.test.js"
     ]

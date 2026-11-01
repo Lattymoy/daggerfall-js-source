@@ -157,8 +157,8 @@
   {
     "name": "switch-no-skin",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic'; // PERF-URL",
-    "new": "  return !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic'; // PERF-URL",
+    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
+    "new": "  return !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "switch-no-door",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic'; // PERF-URL",
-    "new": "  return isEnhanced() && !!getPref('enhancedLighting'); // PERF-URL",
+    "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
+    "new": "  return isEnhanced() && !!getPref('enhancedLighting');",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "renderer-pointcolors-raw",
     "file": "src/render/renderer.js",
-    "old": "    if (!lane || raw) return out;",
-    "new": "    return out;",
+    "old": "    if (!lane || raw) return out;   // `raw` for a classic-space program under the lane (the water)",
+    "new": "    return out;   // `raw` for a classic-space program under the lane (the water)",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "renderer-scatter-unfolded",
     "file": "src/render/renderer.js",
-    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), lane.scatterDensityMax ?? Infinity) : 0; }",
-    "new": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter : 0; }",
+    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), lane.scatterDensityMax ?? Infinity) : 0; }   // The glow's density capped (EL_SCATTER_DENSITY_MAX) - the haze's extinction (prepare's `haze`) is not",
+    "new": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter : 0; }   // The glow's density capped (EL_SCATTER_DENSITY_MAX) - the haze's extinction (prepare's `haze`) is not",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "renderer-scatter-uncapped",
     "file": "src/render/renderer.js",
-    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), lane.scatterDensityMax ?? Infinity) : 0; }",
-    "new": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), Infinity) : 0; }",
+    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), lane.scatterDensityMax ?? Infinity) : 0; }   // The glow's density capped (EL_SCATTER_DENSITY_MAX) - the haze's extinction (prepare's `haze`) is not",
+    "new": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), Infinity) : 0; }   // The glow's density capped (EL_SCATTER_DENSITY_MAX) - the haze's extinction (prepare's `haze`) is not",
     "tests": [
       "test/render/uw_glow.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "renderer-el-terrain-dropped",
     "file": "src/render/renderer.js",
-    "old": "      this._uploadEl('terrain');   // EL1\n",
-    "new": "",
+    "old": "      this._uploadEl('terrain');\n      gl.uniform1i(this.tUTileArr, 0);",
+    "new": "      gl.uniform1i(this.tUTileArr, 0);",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "renderer-el-char-dropped",
     "file": "src/render/renderer.js",
-    "old": "    this._uploadEl('char');   // EL1\n",
-    "new": "",
+    "old": "      this._uploadEl('char');\n    }",
+    "new": "      }",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "renderer-bb-tint-raw",
     "file": "src/render/renderer.js",
-    "old": "      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
-    "new": "      const am = this._ambient, mc = this._moonColor, sc = this._sunColor;",
+    "old": "        const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
+    "new": "        const am = this._ambient, mc = this._moonColor, sc = this._sunColor;",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]
@@ -337,7 +337,7 @@
   {
     "name": "renderer-flash-cap",
     "file": "src/render/renderer.js",
-    "old": "    const keep = Math.min(this.maxPointLights - 1, Math.floor(data.length / 4));   // EL1: one slot under the installed cap",
+    "old": "    const keep = Math.min(this.maxPointLights - 1, Math.floor(data.length / 4));   // One slot under the installed cap",
     "new": "    const keep = Math.min(15, Math.floor(data.length / 4));",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "renderer-setlights-cap",
     "file": "src/render/renderer.js",
-    "old": "    const n = this.maxPointLights;   // EL1: the installed set's cap\n    // MAC-T1: the carried mask is a property of the composed array",
-    "new": "    const n = 16;\n    // MAC-T1: the carried mask is a property of the composed array",
+    "old": "    const n = this.maxPointLights;   // The installed set's cap",
+    "new": "    const n = 16;",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]

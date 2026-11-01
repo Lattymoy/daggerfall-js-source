@@ -2,8 +2,8 @@
   {
     "name": "PERF-SCALE-the-scale-beats-retro",
     "file": "src/render/renderer.js",
-    "old": "    const scaled = cfg ? null : this._scaledImage();",
-    "new": "    const scaled = this._scaledImage();",
+    "old": "    const scaled = cfg ? null : this._scaledImage();   // Retro wins",
+    "new": "    const scaled = this._scaledImage();   // Retro wins",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "PERF-SCALE-the-canvas-not-the-host-rect",
     "file": "src/render/renderer.js",
-    "old": "    const p = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];\n    if (!(p[2] > 0 && p[3] > 0)) return null;",
-    "new": "    const p = [0, 0, this.canvas.width, this.canvas.height];\n    if (!(p[2] > 0 && p[3] > 0)) return null;",
+    "old": "    const p = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];",
+    "new": "    const p = [0, 0, this.canvas.width, this.canvas.height];",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "PERF-SCALE-floored-not-rounded",
     "file": "src/render/renderer.js",
-    "old": "width: Math.max(1, Math.round(p[2] * scale))",
-    "new": "width: Math.max(1, Math.floor(p[2] * scale))",
+    "old": "    return { scale, width: Math.max(1, Math.round(p[2] * scale)), height: Math.max(1, Math.round(p[3] * scale)) };",
+    "new": "    return { scale, width: Math.max(1, Math.floor(p[2] * scale)), height: Math.max(1, Math.round(p[3] * scale)) };",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "PERF-SCALE-the-LUT-kept-under-the-scale",
     "file": "src/render/renderer.js",
-    "old": "    if (scaled) { this._retro.dropLut(); this._retroFrame =",
-    "new": "    if (scaled) { this._retroFrame =",
+    "old": "    if (scaled) { this._retro.dropLut(); this._retroFrame = { kind: 'scale', scale: scaled.scale, width, height, post: 0, lutShift: 0, mipmaps: true, view: view ? { ...view } : null, depth: null }; }",
+    "new": "    if (scaled) { this._retroFrame = { kind: 'scale', scale: scaled.scale, width, height, post: 0, lutShift: 0, mipmaps: true, view: view ? { ...view } : null, depth: null }; }",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "PERF-SCALE-the-present-not-smooth",
     "file": "src/render/renderer.js",
-    "old": "          smooth: f.kind === 'scale',",
-    "new": "          smooth: false,",
+    "old": "          smooth: f.kind === 'scale',   // The render scale's image, LINEAR and effect-free",
+    "new": "          smooth: false,   // The render scale's image, LINEAR and effect-free",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "PERF-SCALE-the-sprite-sized-to-the-canvas",
     "file": "src/render/renderer.js",
-    "old": "return this._retroOwed && f ? [f.height,",
-    "new": "return this._retroOwed && f && f.kind === 'retro' ? [f.height,",
+    "old": "    return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;",
+    "new": "    return this._retroOwed && f && f.kind === 'retro' ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "PERF-SCALE-the-source-dropped",
     "file": "src/render/renderer.js",
-    "old": "setRenderScaleSource(fn) { this._scaleSource = typeof fn === 'function' ? fn : null; }",
-    "new": "setRenderScaleSource(fn) { this._scaleSource = null; }",
+    "old": "  setRenderScaleSource(fn) { this._scaleSource = typeof fn === 'function' ? fn : null; }",
+    "new": "  setRenderScaleSource(fn) { this._scaleSource = null; }",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "PERF-SCALE-75-by-default",
     "file": "src/systems/features.js",
-    "old": "key: 'renderScale', initial: 1, online: 'player'",
-    "new": "key: 'renderScale', initial: 0.75, online: 'player'",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 0.75, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PERF-SCALE-forced-online",
     "file": "src/systems/features.js",
-    "old": "key: 'renderScale', initial: 1, online: 'player'",
-    "new": "key: 'renderScale', initial: 1, online: true",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: true, classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "PERF-SCALE-review-the-image-kept-at-100",
     "file": "src/render/renderer.js",
-    "old": "      if (this._retroFrame) this._dropWorldImage();",
-    "new": "      if (false) this._dropWorldImage();",
+    "old": "      if (this._retroFrame) this._dropWorldImage();   // And the image it drew into is freed, the present being made",
+    "new": "      if (false) this._dropWorldImage();   // And the image it drew into is freed, the present being made",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "PERF-SCALE-review-the-image-kept",
     "file": "src/render/renderer.js",
-    "old": "    this._retro?.dropTarget();\n",
-    "new": "",
+    "old": "    this._retro?.dropTarget();\n    this._airPass?.dropFrame('retro');",
+    "new": "    this._airPass?.dropFrame('retro');",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "PERF-SCALE-review-the-lane-slot-kept",
     "file": "src/render/renderer.js",
-    "old": "    this._airPass?.dropFrame('retro');\n",
-    "new": "",
+    "old": "    this._airPass?.dropFrame('retro');\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-BRANCH-0925-PS-A2-the-installed-pass-asked",
     "file": "src/render/renderer.js",
-    "old": "    this._airPass?.dropFrame('retro');\n",
-    "new": "    this._air?.dropFrame('retro');\n",
+    "old": "    this._airPass?.dropFrame('retro');",
+    "new": "    this._air?.dropFrame('retro');",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "AUDIT-BRANCH-0925-PS-A1-all-off-leaves-the-scale",
     "file": "src/systems/features.js",
-    "old": "online: 'player', classic: 1, tiers: Object.freeze([[1, '100%']",
-    "new": "online: 'player', tiers: Object.freeze([[1, '100%']",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
     "tests": [
       "test/systems/ft18_features.test.js",
       "test/systems/perfscale.test.js"

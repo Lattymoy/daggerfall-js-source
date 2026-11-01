@@ -291,8 +291,8 @@
   {
     "name": "RETRO1-host-rect-forgotten",
     "file": "src/render/renderer.js",
-    "old": "mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };",
-    "new": "mipmaps: cfg.mipmaps, view: null, depth: null };",
+    "old": "    else this._retroFrame = { kind: 'retro', width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: view ? { ...view } : null, depth: null };",
+    "new": "    else this._retroFrame = { kind: 'retro', width, height, post: cfg.post, lutShift: cfg.lutShift, mipmaps: cfg.mipmaps, view: null, depth: null };",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "RETRO1-menus-go-retro-too",
     "file": "src/render/renderer.js",
-    "old": "    const retro = world && !this._panelSaved ? this._retroBegin() : null;",
-    "new": "    const retro = !this._panelSaved ? this._retroBegin() : null;",
+    "old": "    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // After the owed present, which reads the frame it presents",
+    "new": "    const retro = !this._panelSaved ? this._retroBegin() : null;   // After the owed present, which reads the frame it presents",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "RETRO1-owed-image-dropped",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed && !this._panelSaved) this._compositeAir();   // RETRO1: a retro image still owed",
-    "new": "    // RETRO1: a retro image still owed",
+    "old": "    if (this._retroOwed && !this._panelSaved) this._compositeAir();   // A retro image still owed is presented first, under its own frame's config (a lane image owed with it resolves into it on the way)",
+    "new": "    // RETRO1: a retro image still owed is presented first, under its own frame's config (a lane image owed with it resolves into it on the way)",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "RETRO1-lane-image-never-presented",
     "file": "src/render/renderer.js",
-    "old": "    if (this._retroOwed) this._presentRetroFrame();   // RETRO1: the lane resolved into the retro image",
-    "new": "    // RETRO1: the lane resolved into the retro image",
+    "old": "    if (this._retroOwed) this._presentRetroFrame();   // The lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)",
+    "new": "    // The lane resolved into the retro image - now the image to the canvas (J1: before the meter closes)",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "RETRO1-lane-resolves-to-the-canvas",
     "file": "src/render/renderer.js",
-    "old": "    if (retro && this._air) { this._air.resolveTo = this._retro.resolveTarget(retro.width, retro.height, this._frameFbo);",
-    "new": "    if (retro && this._air) { this._retro.resolveTarget(retro.width, retro.height, this._frameFbo);",
+    "old": "    if (retro && this._air) { this._air.resolveTo = this._retro.resolveTarget(retro.width, retro.height, this._frameFbo); retro.depth = this._air.frame?.depth ?? null; }",
+    "new": "    if (retro && this._air) { this._retro.resolveTarget(retro.width, retro.height, this._frameFbo); retro.depth = this._air.frame?.depth ?? null; }",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "RETRO1-lane-frame-canvas-sized",
     "file": "src/render/renderer.js",
-    "old": "this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas')",
-    "new": "this._air.beginFrameTarget(this.canvas.width, this.canvas.height, retro ? 'retro' : 'canvas')",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;",
+    "new": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height, retro ? 'retro' : 'canvas') : null;",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "RETRO1-lane-one-slot",
     "file": "src/render/renderer.js",
-    "old": "retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas')",
-    "new": "retro ? retro.height : this.canvas.height, 'canvas')",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;",
+    "new": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, 'canvas') : null;",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "RETRO1-late-upload-keeps-its-chain",
     "file": "src/render/renderer.js",
-    "old": "    else if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // RETRO1: loaded under retro mode without mip maps (_applyRetroMips)\n",
-    "new": "",
+    "old": "    else if (mips && !this._retroMips) gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, 0);   // Loaded under retro mode without mip maps (_applyRetroMips)\n    this.textures.set(key, tex);",
+    "new": "    this.textures.set(key, tex);",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "RETRO1-tile-arrays-skipped",
     "file": "src/render/renderer.js",
-    "old": "    for (const tex of this.tileArrays.values()) { gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, level); }\n",
-    "new": "",
+    "old": "    for (const tex of this.tileArrays.values()) { gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex); gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAX_LEVEL, level); }\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);",
+    "new": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "RETRO1-sky-test-reads-the-empty-depth",
     "file": "src/render/renderer.js",
-    "old": "retro.depth = this._air.frame?.depth ?? null; }",
-    "new": "retro.depth = null; }",
+    "old": "    if (retro && this._air) { this._air.resolveTo = this._retro.resolveTarget(retro.width, retro.height, this._frameFbo); retro.depth = this._air.frame?.depth ?? null; }",
+    "new": "    if (retro && this._air) { this._air.resolveTo = this._retro.resolveTarget(retro.width, retro.height, this._frameFbo); retro.depth = null; }",
     "tests": [
       "test/render/retro1.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "RETRO1-proj-aspect-signed",
     "file": "src/render/renderer.js",
-    "old": "return p && p[0] ? Math.abs(p[5] / p[0]) : null;",
-    "new": "return p && p[0] ? p[5] / p[0] : null;",
+    "old": "  get worldProjAspect() { const p = this._proj; return p && p[0] ? Math.abs(p[5] / p[0]) : null; }",
+    "new": "  get worldProjAspect() { const p = this._proj; return p && p[0] ? p[5] / p[0] : null; }",
     "tests": [
       "test/render/retro1.test.js"
     ]

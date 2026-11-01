@@ -1,11 +1,11 @@
 // @ts-check
-// WET1e: separate puddle proxy - NOT in terrain FS (that TDRd).
+// Separate puddle proxy - NOT in terrain FS (that TDRd).
 // Dial copies of wetGlsl / snowCoverGlsl - do not import wetGlsl (cycle: wetGlsl → airPass → here).
 import { SNOW_TILE_M } from './snowCoverGlsl.js';
-import { ROAD_RECORDS } from '../world/road/roadEdge.js';   // WET1f: full colour only on stone puddles
+import { ROAD_RECORDS } from '../world/road/roadEdge.js';   // Full colour only on stone puddles
 
 /** GLSL float literal - JS 4.0 stringifies as "4" (int), which breaks mix overloads. */
-const f = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
+const asF = (num) => (Number.isInteger(num) ? `${num}.0` : String(num));
 
 /** Max reflection travel (m); grows when the puddle is far from the eye. */
 export const WET_PROXY_DIST_M = 40;
@@ -100,7 +100,7 @@ float pudNoise(vec2 lt, int cell, uint salt) {
 }
 vec3 sampleBlur(vec2 hitUV, float along) {
   vec2 base = (uRect.xy + hitUV * uRect.zw) / uCanvas;
-  float rad = mix(${f(WET_PROXY_BLUR0)}, ${f(WET_PROXY_BLUR1)}, smoothstep(2.0, 22.0, along));
+  float rad = mix(${asF(WET_PROXY_BLUR0)}, ${asF(WET_PROXY_BLUR1)}, smoothstep(2.0, 22.0, along));
   vec2 px = rad / vec2(textureSize(uFrame, 0));
   vec3 c = texture(uFrame, base).rgb * 0.30;
   c += texture(uFrame, base + vec2(px.x, 0.0)).rgb * 0.12;
@@ -118,44 +118,44 @@ vec3 sampleBlur(vec2 hitUV, float along) {
   return c;
 }
 void main() {
-  if (uWet.y <= ${f(WET_PROXY_GATE)}) { outColor = vec4(0.0); return; }
+  if (uWet.y <= ${asF(WET_PROXY_GATE)}) { outColor = vec4(0.0); return; }
   vec2 wuv = (vUV * uCanvas - uRect.xy) / uRect.zw;
   if (wuv.x < 0.0 || wuv.x > 1.0 || wuv.y < 0.0 || wuv.y > 1.0) { outColor = vec4(0.0); return; }
   float d01 = depthAt(wuv);
   if (d01 >= 0.999) { outColor = vec4(0.0); return; }
   vec3 wp = worldAt(wuv);
-  if (wp.y > uCamPos.y - ${f(WET_PROXY_BELOW_EYE_M)}) { outColor = vec4(0.0); return; }
+  if (wp.y > uCamPos.y - ${asF(WET_PROXY_BELOW_EYE_M)}) { outColor = vec4(0.0); return; }
   float dist = length(uCamPos - wp);
-  float distFade = smoothstep(${f(WET_PROXY_FAR_M)}, ${f(WET_PROXY_NEAR_M)}, dist);
+  float distFade = smoothstep(${asF(WET_PROXY_FAR_M)}, ${asF(WET_PROXY_NEAR_M)}, dist);
   if (distFade <= 0.001) { outColor = vec4(0.0); return; }
   vec3 dx = dFdx(wp), dy = dFdy(wp);
   vec3 n = normalize(cross(dx, dy));
   if (n.y < 0.0) n = -n;
-  float flatN = smoothstep(${f(PUDDLE_PROXY_FLAT[0])}, ${f(PUDDLE_PROXY_FLAT[1])}, n.y);
+  float flatN = smoothstep(${asF(PUDDLE_PROXY_FLAT[0])}, ${asF(PUDDLE_PROXY_FLAT[1])}, n.y);
   if (flatN <= 0.001) { outColor = vec4(0.0); return; }
-  vec2 lt = wp.xz / ${f(SNOW_TILE_M)};
+  vec2 lt = wp.xz / ${asF(SNOW_TILE_M)};
   float p = 0.6 * pudNoise(lt, 1, ${PUDDLE_PROXY_SALT}u) + 0.4 * pudNoise(lt, 4, ${PUDDLE_PROXY_SALT + 1}u);
-  float th = 1.0 - ${f(PUDDLE_PROXY_SPREAD)} * uWet.y;
+  float th = 1.0 - ${asF(PUDDLE_PROXY_SPREAD)} * uWet.y;
   float road = roadGate(wp);   // WET1f: soil never takes the building mirror
   if (road <= 0.001) { outColor = vec4(0.0); return; }
-  float pud = smoothstep(th - ${f(PUDDLE_PROXY_EDGE)} * 0.35, th + ${f(PUDDLE_PROXY_EDGE)}, p) * flatN * road;
-  if (pud <= ${f(WET_PROXY_GATE)}) { outColor = vec4(0.0); return; }
+  float pud = smoothstep(th - ${asF(PUDDLE_PROXY_EDGE)} * 0.35, th + ${asF(PUDDLE_PROXY_EDGE)}, p) * flatN * road;
+  if (pud <= ${asF(WET_PROXY_GATE)}) { outColor = vec4(0.0); return; }
   vec3 V = normalize(uCamPos - wp);
   vec3 nFlat = vec3(0.0, 1.0, 0.0);
   vec3 R = reflect(-V, nFlat);
   if (R.y < 0.04) { outColor = vec4(0.0); return; }
-  float maxT = mix(${f(WET_PROXY_DIST_M)}, ${f(WET_PROXY_DIST_FAR_M)}, smoothstep(10.0, 40.0, dist));
-  float thick = mix(${f(WET_PROXY_THICK_M)}, ${f(WET_PROXY_THICK_M * 1.35)}, smoothstep(10.0, 40.0, dist));
+  float maxT = mix(${asF(WET_PROXY_DIST_M)}, ${asF(WET_PROXY_DIST_FAR_M)}, smoothstep(10.0, 40.0, dist));
+  float thick = mix(${asF(WET_PROXY_THICK_M)}, ${asF(WET_PROXY_THICK_M * 1.35)}, smoothstep(10.0, 40.0, dist));
   float ry = max(R.y, 0.05);
-  float t0 = clamp(${f(WET_PROXY_AIM0_M)} / ry, 0.5, maxT);
-  float t1 = clamp(${f(WET_PROXY_AIM1_M)} / ry, 0.5, maxT);
+  float t0 = clamp(${asF(WET_PROXY_AIM0_M)} / ry, 0.5, maxT);
+  float t1 = clamp(${asF(WET_PROXY_AIM1_M)} / ry, 0.5, maxT);
   if (t1 < t0) { float s = t0; t0 = t1; t1 = s; }
   // Best geometric hit in the span (soft thick) - UV average of heights re-collapsed to a mid-facade strip
   vec2 hitUV = vec2(-1.0);
   float tHit = 0.0;
   float best = 0.0;
   for (int i = 0; i < ${WET_PROXY_STEPS}; i++) {
-    float u = (float(i) + 0.5) / ${f(WET_PROXY_STEPS)};
+    float u = (float(i) + 0.5) / ${asF(WET_PROXY_STEPS)};
     float t = mix(t0, t1, u);
     vec3 rayP = wp + R * t;
     vec2 uv = project(rayP);
@@ -163,7 +163,7 @@ void main() {
     if (uv.y < wuv.y) continue;
     if (depthAt(uv) >= 0.999) continue;
     vec3 sceneW = worldAt(uv);
-    if (sceneW.y < wp.y + ${f(WET_PROXY_MIN_HIT_Y)}) continue;
+    if (sceneW.y < wp.y + ${asF(WET_PROXY_MIN_HIT_Y)}) continue;
     float err = length(sceneW - rayP);
     float conf = exp((-err * err) / max(2.0 * thick * thick, 1e-4));
     float edge = min(min(uv.x, uv.y), min(1.0 - uv.x, 1.0 - uv.y));
@@ -176,7 +176,7 @@ void main() {
   float lum = dot(col, vec3(0.25, 0.55, 0.2));
   col *= mix(1.12, 0.55, smoothstep(0.55, 1.7, lum));
   float fres = mix(0.4, 1.0, pow(1.0 - max(dot(nFlat, V), 0.0), 3.5));
-  float a = fres * pud * distFade * best * ${f(WET_PROXY_ALPHA)};
+  float a = fres * pud * distFade * best * ${asF(WET_PROXY_ALPHA)};
   outColor = vec4(col, a);
 }`;
 

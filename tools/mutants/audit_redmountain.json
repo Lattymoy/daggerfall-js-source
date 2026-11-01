@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N2-the-slot-unrun",
     "file": "src/render/renderer.js",
-    "old": "    if (after) { this._afterFlats = null; after(); this.markForeignPass(); this._use(this.program); }",
-    "new": "",
+    "old": "    if (after) { this._afterFlats = null; after(); this.markForeignPass(); this._use(this.program); }\n  }",
+    "new": "  }",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N2-the-frame's-slot-kept",
     "file": "src/render/renderer.js",
-    "old": "    this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: an armed draw is its frame's\n",
-    "new": "",
+    "old": "    this._afterFlats = null;   // An armed draw is its frame's\n    const s = this.stats;",
+    "new": "    const s = this.stats;",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

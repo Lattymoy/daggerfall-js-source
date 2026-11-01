@@ -273,8 +273,8 @@
   {
     "name": "BANTHA1-one-slot-drawn",
     "file": "src/render/renderer.js",
-    "old": "      for (let i = 0; i < slots.length; i++) if (slots[i]?.runs.length) this._drawLowPolyTrees(slots[i]);",
-    "new": "      if (slots[0]?.runs.length) this._drawLowPolyTrees(slots[0]);",
+    "old": "      for (let i = 0; i < slots.length; i++) if (slots[i]?.runs.length) this._drawLowPolyTrees(slots[i]);   // Every slot's trees",
+    "new": "      if (slots[0]?.runs.length) this._drawLowPolyTrees(slots[0]);   // Every slot's trees",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "BANTHA1-the-arming-ignored",
     "file": "src/render/renderer.js",
-    "old": "    if (!this._hazeArmed && this._haze[4] !== 0) this._haze[4] = 0;",
-    "new": "    if (this._haze[4] !== 0) this._haze[4] = 0;",
+    "old": "    if (!this._hazeArmed && this._haze[4] !== 0) this._haze[4] = 0;   // And the jungle's haze, unless set since the last beginFrame (setJungleHaze)",
+    "new": "    if (this._haze[4] !== 0) this._haze[4] = 0;   // And the jungle's haze, unless set since the last beginFrame (setJungleHaze)",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "BANTHA1-the-upload-left-out-of-the-fogs",
     "file": "src/render/renderer.js",
-    "old": "    if (prog.haze && (this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))) {",
-    "new": "    if (false) {",
+    "old": "    if (prog.haze && (this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))) { gl.uniform4fv(prog.haze, this._haze); if (keyed) this._hazeOn.set(bound, this._haze[4] !== 0); }",
+    "new": "    if (false) { gl.uniform4fv(prog.haze, this._haze); if (keyed) this._hazeOn.set(bound, this._haze[4] !== 0); }",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "BANTHA1-haze-never-sent-off",
     "file": "src/render/renderer.js",
-    "old": "(this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))",
-    "new": "(this._haze[4] !== 0)",
+    "old": "    if (prog.haze && (this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))) { gl.uniform4fv(prog.haze, this._haze); if (keyed) this._hazeOn.set(bound, this._haze[4] !== 0); }",
+    "new": "    if (prog.haze && (this._haze[4] !== 0)) { gl.uniform4fv(prog.haze, this._haze); if (keyed) this._hazeOn.set(bound, this._haze[4] !== 0); }",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "BANTHA1-haze-sent-every-frame",
     "file": "src/render/renderer.js",
-    "old": "(this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))",
-    "new": "(this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)) || true)",
+    "old": "    if (prog.haze && (this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)))) { gl.uniform4fv(prog.haze, this._haze); if (keyed) this._hazeOn.set(bound, this._haze[4] !== 0); }",
+    "new": "    if (prog.haze && (this._haze[4] !== 0 || (keyed && this._hazeOn.get(bound)) || true)) { gl.uniform4fv(prog.haze, this._haze); if (keyed) this._hazeOn.set(bound, this._haze[4] !== 0); }",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "AUDIT-BANTHA1-the-panel-drops-the-haze",
     "file": "src/render/renderer.js",
-    "old": "    this._haze.set(s.haze);   // BANTHA1\n",
-    "new": "\n",
+    "old": "    this._haze.set(s.haze);",
+    "new": "",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "AUDIT-BANTHA1-HAZE-6-the-view-out-unhazed",
     "file": "src/render/renderer.js",
-    "old": "    k.haze.set(this._haze);\n",
-    "new": "\n",
+    "old": "    k.haze.set(this._haze);",
+    "new": "",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

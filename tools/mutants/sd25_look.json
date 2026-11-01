@@ -85,8 +85,8 @@
   {
     "name": "SD25-the-grade-kept-past-its-frame",
     "file": "src/render/renderer.js",
-    "old": "    this._air.setGrade?.(this._sceneGrade); this._sceneGrade = null;",
-    "new": "    this._air.setGrade?.(this._sceneGrade);",
+    "old": "    this._air.setGrade?.(this._sceneGrade); this._sceneGrade = null;   // The frame's grade, or the lane's defaults back",
+    "new": "    this._air.setGrade?.(this._sceneGrade);   // The frame's grade, or the lane's defaults back",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]

@@ -1,6 +1,6 @@
-// ORG2 (2026-10-09, Mac: "Graphic settings needs its own tab, etc. I really need you to go all in"): THE GRAPHICS
+// THE GRAPHICS
 // PRESET. One choice over the settings that cost the most - how far the land is drawn, the grass, the clouds, the
-// ground's sharpness into the distance, the water and (RW1) the real windows - each a Features row whose own note says it is the one
+// ground's sharpness into the distance, the water and the real windows - each a Features row whose own note says it is the one
 // to turn down when the game runs slow (systems/features.js). HIGH IS HOW THE GAME SHIPS: every value in it is its row's
 // default, so a player who never touched them reads High, not Custom (test/systems/org2_options.test.js holds it to the rows'
 // own defaults). Render scale is not in it - it is the picture's resolution, a choice of its own on the same page.
@@ -18,13 +18,13 @@ export const PRESET_ROWS = Object.freeze([
   'cloud-quality',
   'ground-sharpness',
   'water-quality',
-  'wet-world', // WET1: Off / Wet / Full (puddle mirrors on High/Ultra)
+  'wet-world', // Off / Wet / Full (puddle mirrors on High/Ultra)
   'real-windows',
-]); // RW1: and the real windows - off on Low, the rooms alone on Medium, the view out too from High
-/** MEM-AUDIT (2026-10-23, the owner: "dig into the performance settings ... ensuring they are perfect"): THE PARTS A PRESET
+]); // And the real windows - off on Low, the rooms alone on Medium, the view out too from High
+/** THE PARTS A PRESET
  *  SETS - a row's drawer switch, by its pref, whose own note says it costs frame rate. Steady shadows (Enhanced lighting's
  *  part, FLICKER-FIX) redraws every far caster and swaying wood's shadow every frame - 42 lantern face passes a frame at
- *  Knightstale by day (Performance-Next.md, item 9) - and the preset left it standing on Low; render scale, whose note
+ *  Knightstale by day (item 9) - and the preset left it standing on Low; render scale, whose note
  *  says so too, is a choice of its own (the spec). Off on Low alone: Medium and up keep the steady picture, and High is
  *  still its default. */
 export const PRESET_PARTS = Object.freeze(['steadyShadows']);
@@ -88,7 +88,7 @@ export const GRAPHICS_PRESETS = Object.freeze([
   }),
 ]);
 
-/** AUDIT MEM-AUDIT G2: a preset's value for a row as the row reads once it is written - its lane's `readOf` (land view's,
+/** A preset's value for a row as the row reads once it is written - its lane's `readOf` (land view's,
  *  world/landView.js landViewAsRead: off the enhanced outdoors, DFU's number capped at 4), the value itself elsewhere. */
 export function presetAsRead(id, v) {
   const c = resolveControl(FEATURES.find((f) => f.id === id));

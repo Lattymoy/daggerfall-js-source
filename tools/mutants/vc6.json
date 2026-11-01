@@ -228,8 +228,8 @@
   {
     "name": "VC6c-the-renderer-keeps-the-deck-from-the-air-pass",
     "file": "src/render/renderer.js",
-    "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here\n",
-    "new": "",
+    "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // The FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here\n    this._air.setWet?.(this._wet);   // Puddle proxy pass gates on fill",
+    "new": "    this._air.setWet?.(this._wet);   // Puddle proxy pass gates on fill",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "VC6c-a-missing-deck-uploads-an-amount-that-shadows",
     "file": "src/render/airPass.js",
-    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]); // VC6c: no cloud field - amount 0, full sun",
-    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]); // VC6c: no cloud field - amount 0, full sun",
+    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]); // No cloud field - amount 0, full sun",
+    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]); // No cloud field - amount 0, full sun",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "VC6d-the-frames-first-span-is-never-opened",
     "file": "src/render/renderer.js",
-    "old": "{ this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }",
-    "new": "{ this._perf.begin(); this.stats.draws = 0; this._perfOpen = true; }",
+    "old": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // The frame's clock starts with its passes; VC6d: and its first span",
+    "new": "    if (world && this._perf) { this._perf.begin(); this.stats.draws = 0; this._perfOpen = true; }   // The frame's clock starts with its passes; VC6d: and its first span",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "VC6c-the-deck-is-read-at-prepare-where-beginFrame-has-just-cleared-it",
     "file": "src/render/renderer.js",
-    "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c:",
-    "new": "    this._air.setCloudShadow(this._cloudShadow ?? null);   // VC6c:",
+    "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // The FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here",
+    "new": "    this._air.setCloudShadow(this._cloudShadow ?? null);   // The FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "VC6c-a-frame-inherits-the-last-frames-deck",
     "file": "src/render/renderer.js",
-    "old": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n",
-    "new": "",
+    "old": "    this._deckOwed = null;   // Whatever was owed is drawn; this frame's deck is its host's to set\n    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // After the owed present, which reads the frame it presents",
+    "new": "    const retro = world && !this._panelSaved ? this._retroBegin() : null;   // After the owed present, which reads the frame it presents",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]

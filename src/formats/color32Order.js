@@ -67,7 +67,7 @@ export function toColor32OrderInPlace(image) {
  * The same conversion, handed back in the shape the upload path reads:
  * `{ colors, width, height }`, which is what `getColor32` returns and
  * what `uploadTexture`/`uploadEmissionTexture` take `asBytes` of
- * (renderer.js:"// WW3: the shape's", renderer.js:"// AUDIT 19 F7: the"). A decoded PNG's `{ width, height, data }`
+ * (renderer.js:"// The shape's own", renderer.js:"// The view, not"). A decoded PNG's `{ width, height, data }`
  * is NOT that shape - `color32.colors` would be `undefined` and
  * `asBytes` would throw on the first swapped record.
  * @param {{width:number,height:number,data:Uint8Array}} image

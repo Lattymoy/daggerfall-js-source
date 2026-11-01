@@ -137,8 +137,8 @@
   {
     "name": "RIPPLE-shadow-kept",
     "file": "src/render/renderer.js",
-    "old": "    this._tex1Bound = null;   // unit 1 is the billboards' emission unit",
-    "new": "    void 0;   // unit 1 is the billboards' emission unit",
+    "old": "    this._tex1Bound = null;   // unit 1 is the billboards' emission unit: its shadow is forgotten, the next flat binds its own",
+    "new": "    void 0;   // unit 1 is the billboards' emission unit: its shadow is forgotten, the next flat binds its own",
     "tests": [
       "test/world/water/waterripples.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "QUALITY-copy-anyway",
     "file": "src/render/renderer.js",
-    "old": "(this._air && this._frameFbo && !this.waterSimple)",
-    "new": "(this._air && this._frameFbo)",
+    "old": "    this._underWater = (this._air && this._frameFbo && !this.waterSimple) ? this._air.snapshotUnderWater() : null;",
+    "new": "    this._underWater = (this._air && this._frameFbo) ? this._air.snapshotUnderWater() : null;",
     "tests": [
       "test/render/waternext.test.js"
     ]

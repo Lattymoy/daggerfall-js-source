@@ -94,8 +94,8 @@
   {
     "name": "WINDOW-NIGHT-renderer-part-unread",
     "file": "src/render/renderer.js",
-    "old": "    const light = windowLightMode();",
-    "new": "    const light = 'on';",
+    "old": "    const light = windowLightMode();   // The Window light part - the view out and the rooms stand under it",
+    "new": "    const light = 'on';   // The Window light part - the view out and the rooms stand under it",
     "tests": [
       "test/render/windownight.test.js"
     ],
@@ -114,8 +114,8 @@
   {
     "name": "WINDOW-NIGHT-renderer-sun-blind",
     "file": "src/render/renderer.js",
-    "old": "'inside', light, wlDayShare(this._wl?.outside) > 0);",
-    "new": "'inside', light, true);",
+    "old": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0);   // Day only while the day has a share - the frame fades by it",
+    "new": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, true);   // Day only while the day has a share - the frame fades by it",
     "tests": [
       "test/render/windownight.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "WINDOW-NIGHT-default-off-on",
     "file": "src/systems/features.js",
-    "old": "key: 'windowLight', initial: 'on', online: 'player' }",
-    "new": "key: 'windowLight', initial: 'day', online: 'player' }",
+    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windowLight', initial: 'on', online: 'player' })]),",
+    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windowLight', initial: 'day', online: 'player' })]),",
     "tests": [
       "test/render/windownight.test.js"
     ],

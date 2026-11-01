@@ -5,7 +5,7 @@
 // floor. A fragment follows its ray back to the window's plane and reads the glass's mask there, so the lead and the
 // frame fall as shadow. The lights are a tile of window texture each (windowAperturesOf), counted in a band of LC1's grid
 // and read in both lanes' shaders (windowLightGlsl); a dark mock room throws nothing (world/windowRoomArt.js).
-// Not a DFU member: DFU's windows light nothing. 07-Rendering/Real-Windows.md, WL1.
+// Not a DFU member: DFU's windows light nothing., WL1.
 
 import {
   buildLightClusterBoxes,
@@ -28,7 +28,7 @@ import {
 } from '../world/windowRoomArt.js';
 import { pageParam } from '../systems/pageQuery.js';
 import { WL_REC, APERTURE_CELL_REC, windowAperturesOf } from './windowApertures.js';
-import { WIN_GLINT_LOD0, WIN_GLINT_LOD1, WIN_GLINT_NEAR_M, WIN_GLINT_FAR_M, WIN_GLINT_FADE_M } from './wetGlsl.js';   // WET1d: how soft a window is in a puddle
+import { WIN_GLINT_LOD0, WIN_GLINT_LOD1, WIN_GLINT_NEAR_M, WIN_GLINT_FAR_M, WIN_GLINT_FADE_M } from './wetGlsl.js';   // How soft a window is in a puddle
 
 export { WL_REC, windowAperturesOf };
 
@@ -45,7 +45,7 @@ export const WL_MASK_LAYERS = 64;
 /** The window lights' band in LC1's two textures: its grid below the lanterns' rows, its lists past theirs. */
 export const WL_GRID_ROW = CLUSTER_Z;
 export const WL_LIST_BASE = CLUSTER_LIST_W * CLUSTER_LIST_ROWS;
-/** LIGHT-REACH: the far rows' band, past the window lights'. */
+/** The far rows' band, past the window lights'. */
 export const WL_FAR_GRID_ROW = 2 * CLUSTER_Z;
 export const WL_FAR_LIST_BASE = 2 * CLUSTER_LIST_W * CLUSTER_LIST_ROWS;
 /** A light's kind (the shader's): a lamp behind the glass, a sun or moon read through the shadow map, or one without. */
@@ -71,13 +71,13 @@ export const WL_SUN_ANGLE = 0.0093;
 export const WL_SPILL_REACH = 6;
 export const WL_STOREY = 2.5;
 export const WL_SUN_GAIN = 0.9;
-/** WINDOW-NIGHT (a player: "It gets way to bright at night for me"): the night's gains of their own - the moon's well
+/** The night's gains of their own - the moon's well
  *  under the sun's, and the panes' glow a fifth of the day's. At 1 and 0.5 a full Masser's patch was four times a room's
- *  ambient on the Enhanced lane; now about once (Real-Windows.md WINDOW-NIGHT). */
+ *  ambient on the Enhanced lane; now about once ( WINDOW-NIGHT). */
 export const WL_MOON_GAIN = 0.3;
 export const WL_SKY_GAIN = 0.5;
 export const WL_SKY_NIGHT_GAIN = 0.1;
-/** AUDIT FB1031 L1: the day's share of the glass's light eases in over the sun's first WL_DUSK_RISE of height - the
+/** The day's share of the glass's light eases in over the sun's first WL_DUSK_RISE of height - the
  *  glow had stepped from the day's gain to the night's in one capture, eleven minutes before the room's own ambient
  *  turns at 18:00, and Day only had cut all its light in a frame. 0 with the sun down or no outside read. */
 export const WL_DUSK_RISE = 0.15;
@@ -92,7 +92,7 @@ export const wlGlowGain = (k) => WL_SKY_NIGHT_GAIN + (WL_SKY_GAIN - WL_SKY_NIGHT
 export const WL_GATHER = 72;
 export const WL_FADE_FROM = 0.8;
 export const WL_CUT_EASE = 3;
-/** AUDIT LIGHT-REACH W1: after a band's list overflowed, its cut eases out no farther than where it was cut for this
+/** After a band's list overflowed, its cut eases out no farther than where it was cut for this
  *  long (ms) - easing back each frame overflowed every other one, a 30 Hz beat on the windows at the edge. */
 export const WL_FIT_HOLD_MS = 1000;
 /** A light's share at distance `d` from the eye, its band's cut `cut`: whole to WL_FADE_FROM of it, none at it. */
@@ -108,7 +108,7 @@ export const WL_PLACEMENTS_MAX = 4096;
 export const WL_BUILD_TILES = 384;
 /** The outside's light, captured for a building's frame, is asked again this often. */
 export const WL_OUTSIDE_EVERY_MS = 250;
-/** LIGHT-REACH (the owner, 2026-10-29: "Increase distance for street and window lighting in overworld without killing
+/** "Increase distance for street and window lighting in overworld without killing
  *  performance"): THE FAR TIER. Past the nearest WL_MAX_LIGHTS, a street's window light is gathered out to
  *  WL_FAR_GATHER as ROWS - a storey's run of one wall's tiles, up to WL_ROW_TILES - each tile lit by its own lamp through
  *  its own glass, as the near tier lights it, in a second block of WL_FAR_MAX rows. A tile is the near tier's inside its
@@ -130,7 +130,7 @@ export function windowLightOn(search = globalThis.location?.search ?? '') {
 }
 /** Is the sun up for a building's glass in `o` (the outside as setOutside kept it)? By night the moon is the key. */
 export const wlSunUp = (o) => !!o && o.sunScale > 0 && o.sunDir[1] > 0.05;
-/** WINDOW-NIGHT: a frame's kind under the Window light part (`light`: realWindows.js windowLightMode) - Off lights none,
+/** A frame's kind under the Window light part (`light`: realWindows.js windowLightMode) - Off lights none,
  *  Day only none while the sun is down (`sunUp`: the renderer hands wlDayShare's above 0 - AUDIT FB1031 L1, the frame
  *  fades by it), and a street's light is a lit room's by night, so none under it. */
 export function wlKindFor(kind, light, sunUp) {
@@ -138,7 +138,7 @@ export function wlKindFor(kind, light, sunUp) {
   return light === 'day' && (kind === 'street' || !sunUp) ? null : kind;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 // THE MASKS - a window picture's glass, as a layer of the array the shader reads
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -185,7 +185,7 @@ export function holesOf(color32) {
   return { colors: out, width: color32.width, height: color32.height };
 }
 
-// ---------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 // THE LIGHTS - one record of WL_VEC4 vec4s each, written for the frame
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -245,7 +245,7 @@ export function writeWindowLight(out, at, l) {
   out[o + 27] = l.area;
 }
 
-/** AUDIT LIGHT-REACH W1: light `at`'s gobo and glow in `out` scaled by `k` - its fade taken in to a nearer cut. */
+/** Light `at`'s gobo and glow in `out` scaled by `k` - its fade taken in to a nearer cut. */
 export function scaleWindowLight(out, at, k) {
   const o = at * WL_VEC4 * 4;
   out[o + 20] *= k;
@@ -269,13 +269,13 @@ export function lampOf(c, nf, V, out = [0, 0, 0]) {
 /** The length of (x, y, z) - AUDIT LIGHT-REACH W5: Math.hypot's answer was a fresh heap number a call on the
  *  gather's paths and the boxes' build, and the far tier's 160 m tripled its calls. */
 const len3 = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
-/** LIGHT-REACH: THE VOLUME A WINDOW'S LIGHT CAN REACH, a box in the glass's own frame (LC_BOX floats into `out` at `at`,
+/** THE VOLUME A WINDOW'S LIGHT CAN REACH, a box in the glass's own frame (LC_BOX floats into `out` at `at`,
  *  for lightClusters.js buildLightClusterBoxes): the glass's glow out to WL_SPILL_REACH on its side, and the beam - from
  *  the lamp (`l.src`) through the glass to its reach, or along the sun's rays (`l.src` toward the sun) into the room.
  *  `beam` false: the glow alone; `spill` false: the beam alone (a far row). The box of the reach's sphere was six to
  *  nine times this, and every fragment in it walked the light only to be turned away. */
 export function windowLightBox(l, beam, out, at, spill = true) {
-  // AUDIT LIGHT-REACH W5: the frame's 128 boxes written out - no closures, no literals (a third of the pass's garbage)
+  // The frame's 128 boxes written out - no closures, no literals (a third of the pass's garbage)
   const c = l.c,
     U = l.U,
     V = l.V,
@@ -430,7 +430,7 @@ export function windowLightAt(rec, wp, n, maskAt, atten) {
   return [acc[0] + c5[0] * k, acc[1] + c5[1] * k, acc[2] + c5[2] * k];
 }
 
-/** LIGHT-REACH: the shader's walk of a far row (winRow) for one point - `rec` the row's WL_VEC4 vec4s, `frame` the far
+/** The shader's walk of a far row (winRow) for one point - `rec` the row's WL_VEC4 vec4s, `frame` the far
  *  block's two words (eye and near cut, lamp colour and far cut), `maskAt(u, v)` 0..1, `atten(d, r)` the lane's falloff. */
 export function windowRowAt(rec, frame, wp, n, maskAt, atten) {
   const g = (k) => [rec[k * 4], rec[k * 4 + 1], rec[k * 4 + 2], rec[k * 4 + 3]];
@@ -487,7 +487,7 @@ export function windowRowAt(rec, frame, wp, n, maskAt, atten) {
   return out;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 // THE SHADER TEXT - one block, interpolated into both lanes' lit programs
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -705,7 +705,7 @@ vec3 winGlint(vec3 wp, vec3 n, vec3 V, float pw, float scatter) {
 `;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------
 // THE PASS - the renderer's: the masks, the windows drawn lately, and each frame's lights
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -740,12 +740,12 @@ const lightRec = () => ({
 const byDistance = (a, b) => a.d - b.d;
 /** Whether the ball at `i` in `b` (centre, radius) lies wholly past `reach` of the eye. */
 const pastBall = (b, i, eye, reach) => len3(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3] > reach;
-/** AUDIT LIGHT-REACH W5: a far row's sort key - its nearest tile in WL_FAR_KEY ths of a metre, then its index among
+/** A far row's sort key - its nearest tile in WL_FAR_KEY ths of a metre, then its index among
  *  the frame's gathered (at most WL_FAR_KEY_N): 160 m and 65536 rows in 38 bits, a double's whole numbers. */
 const WL_FAR_KEY = 16384,
   WL_FAR_KEY_N = 65536;
 
-/** LIGHT-REACH: A CELL'S ROWS (the far tier's lights) - its wall tiles grouped by the picture's mapping on one plane (the
+/** A CELL'S ROWS (the far tier's lights) - its wall tiles grouped by the picture's mapping on one plane (the
  *  line tile 0 of a storey stands on, the spans, the normal), their storey and their share of v; each group's
  *  neighbours along u in runs of up to WL_ROW_TILES. A tile the mesh covers only in part along u is a row alone. Each row:
  *  its tiles by u (`js`, the cell's own indices), its states (WL_ROW_BASE) and whether any is lit. */
@@ -811,7 +811,7 @@ function rowOf(js, t) {
   return { js, states, lit, rec: null, box: null, mask: null, ok: false, ha: 0, pu: 0 };
 }
 
-/** AUDIT LIGHT-REACH W6: A ROW'S BOX THIS FRAME - over its lit tiles the far tier weighs (past the near fade's start
+/** A ROW'S BOX THIS FRAME - over its lit tiles the far tier weighs (past the near fade's start
  *  `from`, inside the far cut `to`, by their coverage centres as the shader reads them), not the whole run: a row
  *  beside the eye whose near tiles are the near tier's covered the screen, and beside a long wall the far band's list
  *  overflowed and its cut fell to 12 m. Its whole box shrunk along u; false when no lit tile weighs. */
@@ -864,20 +864,20 @@ export class WindowLightPass {
     this._mipsDirty = false;
     this.sources = { street: new Map(), inside: new Map() }; // mesh -> [{ m, remap, seen, subs }]
     this.data = new Float32Array(WL_MAX_LIGHTS * WL_VEC4 * 4);
-    this.boxes = new Float32Array(WL_MAX_LIGHTS * LC_BOX); // LIGHT-REACH: each light's reach as a box, for the grid
+    this.boxes = new Float32Array(WL_MAX_LIGHTS * LC_BOX); // Each light's reach as a box, for the grid
     this.space = createClusterSpace(WL_MAX_LIGHTS);
-    this.farBoxes = new Float32Array(WL_FAR_MAX * LC_BOX); // LIGHT-REACH: the far rows' boxes and band
+    this.farBoxes = new Float32Array(WL_FAR_MAX * LC_BOX); // The far rows' boxes and band
     this.farSpace = createClusterSpace(WL_FAR_MAX);
     this.count = 0;
-    this.farData = new Float32Array((WL_FAR_MAX * WL_VEC4 + 2) * 4); // LIGHT-REACH: the far rows, then the frame's two words
+    this.farData = new Float32Array((WL_FAR_MAX * WL_VEC4 + 2) * 4); // The far rows, then the frame's two words
     this.farCount = 0;
     this._cutFar = WL_FAR_GATHER;
     this._farCand = []; // the rows near enough this frame: { row, dMin, dMax, mask, s, sub, ci, t }, from _farPool
     this._farPool = [];
     this._farUsed = 0;
     this._fd = new Float32Array(WL_FAR_MAX); // each written row's nearest tile, for the far cut on an overflow
-    this._farKeys = new Float64Array(1024); // AUDIT LIGHT-REACH W5: the gathered rows' sort keys (nearest tile, then index)
-    this._fitCut = { street: Infinity, inside: Infinity, far: Infinity }; // AUDIT LIGHT-REACH W1: each band's cut at its last overflow
+    this._farKeys = new Float64Array(1024); // The gathered rows' sort keys (nearest tile, then index)
+    this._fitCut = { street: Infinity, inside: Infinity, far: Infinity }; // Each band's cut at its last overflow
     this._fitAt = { street: -Infinity, inside: -Infinity, far: -Infinity };
     this._rt = lightRec(); // a row's first tile, as a light, while its record is made
     this.outside = null; // { at, sunDir, sunColor, sunScale, moonDir, moonColor, moonScale, sky } - display colours
@@ -889,7 +889,7 @@ export class WindowLightPass {
     this._pending = []; // cells near enough not yet built: { d, s, sub, p, ci }, reused
     this._pendN = 0;
     this._ld = new Float32Array(WL_MAX_LIGHTS); // each written light's distance, for the cut on an overflow
-    this._lf = new Float32Array(WL_MAX_LIGHTS); // AUDIT LIGHT-REACH W1: and its fade, so an overflow's cut refades it
+    this._lf = new Float32Array(WL_MAX_LIGHTS); // And its fade, so an overflow's cut refades it
     this._lt = lightRec(); // the light being written, and a curtained window's whole glass
     this._whole = lightRec();
     this._v = [0, 0, 0];
@@ -908,7 +908,7 @@ export class WindowLightPass {
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.ubo);
     gl.bufferData(gl.UNIFORM_BUFFER, this.data.byteLength, gl.DYNAMIC_DRAW);
     gl.bindBufferBase(gl.UNIFORM_BUFFER, WL_UBO_BINDING, this.ubo);
-    this.farUbo = gl.createBuffer(); // LIGHT-REACH: the far rows' block, as the near one
+    this.farUbo = gl.createBuffer(); // The far rows' block, as the near one
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.farUbo);
     gl.bufferData(gl.UNIFORM_BUFFER, this.farData.byteLength, gl.DYNAMIC_DRAW);
     gl.bindBufferBase(gl.UNIFORM_BUFFER, WL_FAR_UBO_BINDING, this.farUbo);
@@ -1088,7 +1088,7 @@ export class WindowLightPass {
                       t.cent[i + 1] += offset[1];
                       t.cent[i + 2] += offset[2];
                     }
-                    for (const r of t.rows) r.mask = null; // LIGHT-REACH: a row's record is in the world - made again
+                    for (const r of t.rows) r.mask = null; // A row's record is in the world - made again
                   }
               }
         }
@@ -1154,7 +1154,7 @@ export class WindowLightPass {
     const o = this.outside;
     const sunDir = wlSunUp(o) ? o.sunDir : null;
     const moonDir = !sunDir && !dayOnly && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
-    // AUDIT FB1031 L1: the glow's gain by the day's share, and Day only's whole light faded by it (never the moon's)
+    // The glow's gain by the day's share, and Day only's whole light faded by it (never the moon's)
     const share = wlDayShare(o),
       dim = dayOnly ? share : 1;
     const keyGain = (sunDir ? WL_SUN_GAIN : WL_MOON_GAIN) * dim,
@@ -1196,7 +1196,7 @@ export class WindowLightPass {
     const dt = this._at[kind] ? Math.max(0, Math.min(0.25, (now - this._at[kind]) / 1000)) : 0;
     this._at[kind] = now;
     this._cuts[kind] = dt > 0 ? this._cuts[kind] + (want - this._cuts[kind]) * (1 - Math.exp(-WL_CUT_EASE * dt)) : want;
-    // AUDIT LIGHT-REACH W2: never past the first tile the block leaves out - one inside the cut and not written lost its
+    // Never past the first tile the block leaves out - one inside the cut and not written lost its
     // fade's share whole, and its far row (which takes the rest) did not make it up
     if (n < cand.length) this._cuts[kind] = Math.min(this._cuts[kind], cand[n].d);
     let cut = Math.min(this._cuts[kind], WL_GATHER);
@@ -1231,7 +1231,7 @@ export class WindowLightPass {
       this._fitAt[kind] = now;
     }
     w = fit;
-    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut
+    // The far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut
     // a word of the far block, written again when the fit comes in
     const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;
     const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {
@@ -1270,7 +1270,7 @@ export class WindowLightPass {
     return w + wf;
   }
 
-  /** AUDIT LIGHT-REACH W1: how far a band's cut may ease out (`kind`: street, inside or far) - where its list last
+  /** How far a band's cut may ease out (`kind`: street, inside or far) - where its list last
    *  overflowed, for WL_FIT_HOLD_MS. */
   _held(kind, now) {
     return now - this._fitAt[kind] < WL_FIT_HOLD_MS ? this._fitCut[kind] : Infinity;
@@ -1290,14 +1290,14 @@ export class WindowLightPass {
     return fit;
   }
 
-  /** LIGHT-REACH: THE FAR TIER'S ROWS - those the gather found with a lit tile past the near fade's start (`cut`'s
+  /** THE FAR TIER'S ROWS - those the gather found with a lit tile past the near fade's start (`cut`'s
    *  WL_FADE_FROM), the nearest WL_FAR_MAX by their nearest tile, their cut easing as the near one's does - into the far
    *  block and their boxes, the frame's two words last. Answers the rows written. */
   _farFrame(eye, cut, lamp, now, dt) {
     const fc = this._farCand,
       pool = this._farPool,
       from = cut * WL_FADE_FROM;
-    // AUDIT LIGHT-REACH W5: ordered by keys in a typed array - nearest tile, then the pool's index - not a comparator's
+    // Ordered by keys in a typed array - nearest tile, then the pool's index - not a comparator's
     // sort, whose copies were a fifth of the pass's garbage a frame
     if (this._farKeys.length < this._farUsed) this._farKeys = new Float64Array(2 * this._farUsed);
     const keys = this._farKeys;
@@ -1310,7 +1310,7 @@ export class WindowLightPass {
     const keep = Math.min(n, WL_FAR_MAX);
     const want = Math.min(keep < n ? fc[keep - 1].dMin : WL_FAR_GATHER, this._held('far', now));
     this._cutFar = dt > 0 ? this._cutFar + (want - this._cutFar) * (1 - Math.exp(-WL_CUT_EASE * dt)) : want;
-    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin); // AUDIT LIGHT-REACH W2: as the near cut's
+    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin); // As the near cut's
     const cutF = Math.min(this._cutFar, WL_FAR_GATHER);
     let w = 0;
     for (let i = 0; i < keep; i++) {
@@ -1346,7 +1346,7 @@ export class WindowLightPass {
    *  not yet built waits for _buildPending. */
   _gather(mesh, s, kind, eye, glass, cand) {
     let n = 0;
-    const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER; // LIGHT-REACH: a street's rows reach past its tiles
+    const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER; // A street's rows reach past its tiles
     for (let si = 0; si < mesh.wl.length; si++) {
       const sub = mesh.wl[si];
       const key = s.remap && s.remap.has(sub.key) ? s.remap.get(sub.key) : sub.key;
@@ -1375,7 +1375,7 @@ export class WindowLightPass {
     return n;
   }
 
-  /** LIGHT-REACH: a built cell into the frame - its tiles as the near tier's candidates while the cell is within
+  /** A built cell into the frame - its tiles as the near tier's candidates while the cell is within
    *  WL_GATHER, and on the street its rows as the far tier's. */
   _gatherBuilt(s, sub, p, ci, mask, kind, eye, cand) {
     const b = p.ball,
@@ -1386,7 +1386,7 @@ export class WindowLightPass {
     return n;
   }
 
-  /** LIGHT-REACH: a built cell's rows with a lit tile, each by its nearest and farthest tile (the coverage centres: a
+  /** A built cell's rows with a lit tile, each by its nearest and farthest tile (the coverage centres: a
    *  row's are on one line, its ends the farthest), within WL_FAR_GATHER. */
   _gatherRows(s, sub, t, ci, mask, eye) {
     const P = t.cent;
@@ -1564,11 +1564,11 @@ export class WindowLightPass {
       const cb = curtainBitsOf(h);
       if (roomCurtained(cb)) t.curtains[j] = curtainEdges(cb);
     }
-    t.rows = cellRows(ap, first, t); // LIGHT-REACH: the far tier's runs of this cell's tiles
+    t.rows = cellRows(ap, first, t); // The far tier's runs of this cell's tiles
     return t;
   }
 
-  /** LIGHT-REACH: a far candidate's row record and box (WL_VEC4 vec4s, LC_BOX floats), made from its first tile and the
+  /** A far candidate's row record and box (WL_VEC4 vec4s, LC_BOX floats), made from its first tile and the
    *  mask's glass, kept with the row until the mask or the floating origin changes. False when no glass is on its share. */
   _rowRecord(c) {
     const { row, s, sub, ci, t, mask } = c;
@@ -1643,7 +1643,7 @@ export class WindowLightPass {
       b[5] *= g;
     }
     row.ha = ha;
-    row.pu = Math.hypot(PU[0], PU[1], PU[2]); // AUDIT LIGHT-REACH W6: for the frame's own run (rowBox)
+    row.pu = Math.hypot(PU[0], PU[1], PU[2]); // For the frame's own run (rowBox)
     row.ok = true;
     return true;
   }
@@ -1697,7 +1697,7 @@ export class WindowLightPass {
     if (!this._aperture(c, curtains, l)) return null;
     const whole = curtains && this._aperture(c, null, this._whole) ? this._whole : null;
     if (whole) l.area += (whole.area - l.area) * WL_CURTAIN_PASS;
-    // AUDIT LIGHT-REACH W3: the room's lamp behind the whole glass - a curtain hides it, it does not move it (and the far
+    // The room's lamp behind the whole glass - a curtain hides it, it does not move it (and the far
     // row hangs it there: the gap's middle made the pool jump sideways at the hand-over)
     lampOf(whole ? whole.c : l.c, l.nf, l.V, l.src);
     const kg = WL_LAMP_GOBO * fade,
@@ -1747,7 +1747,7 @@ export class WindowLightPass {
     this.tex = null;
     this.ubo = null;
     this.farUbo = null;
-    // AUDIT LIGHT-REACH W7: the free list and the holders go with the layers - kept, a freed layer was given out again
+    // The free list and the holders go with the layers - kept, a freed layer was given out again
     // beside the counter's own count of it (two masks on one layer)
     this.masks.clear();
     this._layers = 0;

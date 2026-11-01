@@ -193,8 +193,8 @@
   {
     "name": "FT18-a-part-not-the-rows-own",
     "file": "src/systems/features.js",
-    "old": "      if (!pt || !own.has(pt.key)) out.push(`part '${pt?.key}' is not the row's key or one it covers`);\n",
-    "new": "",
+    "old": "      if (!pt || !own.has(pt.key)) out.push(`part '${pt?.key}' is not the row's key or one it covers`);\n      if (typeof pt?.label !== 'string' || !pt.label) out.push(`part '${pt?.key}' has no label`);",
+    "new": "      if (typeof pt?.label !== 'string' || !pt.label) out.push(`part '${pt?.key}' has no label`);",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "FT18-a-classic-unchecked",
     "file": "src/systems/features.js",
-    "old": "    if (!ok) out.push(`classic '${c.classic}' is not one of the row's values`);\n",
-    "new": "",
+    "old": "    if (!ok) out.push(`classic '${c.classic}' is not one of the row's values`);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "FT18-a-covered-pref-without-its-default",
     "file": "src/systems/features.js",
-    "old": "        if (a.initial === undefined) out.push(`also: the covered pref '${a.key}' declares its initial value`);\n",
-    "new": "",
+    "old": "        if (a.initial === undefined) out.push(`also: the covered pref '${a.key}' declares its initial value`);\n        if (!(a.online === true || a.online === false || a.online === 'player')) out.push(`also: the covered pref '${a.key}' declares its online answer`);",
+    "new": "        if (!(a.online === true || a.online === false || a.online === 'player')) out.push(`also: the covered pref '${a.key}' declares its online answer`);",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "FT18-the-search-reads-no-note",
     "file": "src/systems/features.js",
-    "old": "  return fold([f?.title, f?.note, GROUPS",
-    "new": "  return fold([f?.title, GROUPS",
+    "old": "  return fold([f?.title, f?.note, GROUPS[f?.group]?.label, ...(f?.kinds ?? []).map((k) => KINDS[k]?.label),",
+    "new": "  return fold([f?.title, GROUPS[f?.group]?.label, ...(f?.kinds ?? []).map((k) => KINDS[k]?.label),",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "FT18-the-search-reads-no-part",
     "file": "src/systems/features.js",
-    "old": "    ...(c.parts ?? []).map((pt) => pt.label), mod?.title",
-    "new": "    mod?.title",
+    "old": "    ...(c.parts ?? []).map((pt) => pt.label), mod?.title, mod?.author, c.vendor].filter(Boolean).join(' \\n '));",
+    "new": "    mod?.title, mod?.author, c.vendor].filter(Boolean).join(' \\n '));",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "FT18-curly-quotes-kept",
     "file": "src/systems/features.js",
-    "old": ".replace(/[\\u2018\\u2019]/g, \"'\")",
-    "new": "",
+    "old": "const fold = (t) => String(t ?? '').normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[\\u2018\\u2019]/g, \"'\").toLowerCase();",
+    "new": "const fold = (t) => String(t ?? '').normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "FT18-the-walls-ignore-their-classic",
     "file": "src/systems/features.js",
-    "old": "key: 'Video/RandomDungeonTextures', classic: 0 }),",
-    "new": "key: 'Video/RandomDungeonTextures' }),",
+    "old": "    control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures', classic: 0 }),   // Classic, what All off sets - a choice with no Off",
+    "new": "    control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures' }),   // Classic, what All off sets - a choice with no Off",
     "tests": [
       "test/systems/ft18_features.test.js",
       "test/ui/settings/ft11_dfu_rest.test.js"

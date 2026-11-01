@@ -120,8 +120,8 @@
   {
     "name": "adapt-images-start-dark",
     "file": "src/render/airPass.js",
-    "old": "    const [hi, lo] = packAdapt(1); // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
-    "new": "    const [hi, lo] = [0, 0]; // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
+    "old": "    const [hi, lo] = packAdapt(1); // The multiplier 1 at sixteen bits - [128, 0]",
+    "new": "    const [hi, lo] = [0, 0]; // The multiplier 1 at sixteen bits - [128, 0]",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "renderer-frame-in-panel",
     "file": "src/render/renderer.js",
-    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ?",
-    "new": "    this._frameFbo = this._air ? this._air.beginFrameTarget(retro ?",
+    "old": "    this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;",
+    "new": "    this._frameFbo = this._air ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;",
     "tests": [
       "test/render/el4_frame.test.js"
     ],
@@ -240,8 +240,8 @@
   {
     "name": "renderer-no-adapt-loc",
     "file": "src/render/renderer.js",
-    "old": "      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };",
-    "new": "      a.ao = { adapt: null };",
+    "old": "      a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // The eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)",
+    "new": "      a.ao = { adapt: null };   // The eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)",
     "tests": [
       "test/render/el4_frame.test.js"
     ]

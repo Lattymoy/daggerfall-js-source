@@ -558,8 +558,8 @@
   {
     "name": "AUDIT30-A6-a-static-move-ungridded",
     "file": "src/render/renderer.js",
-    "old": "batch._place = !batch._dyn && count > 1 ? placementGrid(count === centers.length ? centers : centers.slice(0, count)) : null;",
-    "new": "batch._place = null;",
+    "old": "    batch._place = !batch._dyn && count > 1 ? placementGrid(count === centers.length ? centers : centers.slice(0, count)) : null;",
+    "new": "    batch._place = null;",
     "tests": [
       "test/net/audit30_host.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "AUDIT30-A6-the-shadow-untold",
     "file": "src/render/renderer.js",
-    "old": "    if (!batch._dyn) batch._shId = undefined;\n",
-    "new": "",
+    "old": "    if (!batch._dyn) batch._shId = undefined;\n    // THE SPHERE, WITHOUT BUILDING A FLAT ARRAY TO ASK FOR IT. This",
+    "new": "    // THE SPHERE, WITHOUT BUILDING A FLAT ARRAY TO ASK FOR IT. This",
     "tests": [
       "test/net/audit30_host.test.js"
     ]

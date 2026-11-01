@@ -11,8 +11,8 @@
   {
     "name": "HT-WAIST-the-key-not-curated",
     "file": "src/systems/features.js",
-    "old": "'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length'",
-    "new": "'Handling.StowWhenSpellcasting', 'Bob.Length'",
+    "old": "    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length']),",
+    "new": "    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "FAR-CLIP1-the-byte-compared-wrong",
     "file": "src/render/renderer.js",
-    "old": ": data == ${CLIP_SENTINEL}u) discard;",
-    "new": ": data == ${CLIP_SENTINEL - 1}u) discard;",
+    "old": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
+    "new": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL - 1}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FAR-CLIP1-the-byte-compared-inverted",
     "file": "src/render/renderer.js",
-    "old": ": data == ${CLIP_SENTINEL}u) discard;",
-    "new": ": data != ${CLIP_SENTINEL}u) discard;",
+    "old": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
+    "new": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data != ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FAR-CLIP1-a-second-gradient-line-let-through",
     "file": "src/render/renderer.js",
-    "old": "  if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw",
-    "new": "  if (at < 0) throw",
+    "old": "  if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw new Error('FAR-CLIP1: a terrain program ends its tile decode with ONE gradient line, which the clip goes after');",
+    "new": "  if (at < 0) throw new Error('FAR-CLIP1: a terrain program ends its tile decode with ONE gradient line, which the clip goes after');",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FAR-CLIP1-no-gradient-line-let-through",
     "file": "src/render/renderer.js",
-    "old": "  if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw",
-    "new": "  if (fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw",
+    "old": "  if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw new Error('FAR-CLIP1: a terrain program ends its tile decode with ONE gradient line, which the clip goes after');",
+    "new": "  if (fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw new Error('FAR-CLIP1: a terrain program ends its tile decode with ONE gradient line, which the clip goes after');",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FAR-CLIP1-the-draw-ignores-the-ask",
     "file": "src/render/renderer.js",
-    "old": "    if (!!clip !== this._terrainClip) this._terrainVariant(!!clip);   // FAR-CLIP1\n",
-    "new": "",
+    "old": "    if (!!clip !== this._terrainClip) this._terrainVariant(!!clip);\n    this._use(this.terrainProgram);",
+    "new": "    this._use(this.terrainProgram);",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FAR-CLIP1-an-install-keeps-a-clip-it-has-not-built",
     "file": "src/render/renderer.js",
-    "old": "    this._terrainClip = !!(this._terrainClip && set.terrainClip);",
-    "new": "    this._terrainClip = !!this._terrainClip;",
+    "old": "    this._terrainClip = !!(this._terrainClip && set.terrainClip);   // A set whose clip program is not built yet installs its plain one",
+    "new": "    this._terrainClip = !!this._terrainClip;   // A set whose clip program is not built yet installs its plain one",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FAR-CLIP1-the-lane-table-the-plain-programs",
     "file": "src/render/renderer.js",
-    "old": "terrain: elLocs(this.terrainProgram)",
-    "new": "terrain: elLocs(set.terrain)",
+    "old": "    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(this.terrainProgram), decal: elLocs(set.decal) };   // The decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's",
+    "new": "    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain), decal: elLocs(set.decal) };   // The decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FAR-CLIP1-the-swap-never-builds",
     "file": "src/render/renderer.js",
-    "old": "    if (clip) this._ensureTerrainClip();\n",
-    "new": "",
+    "old": "    if (clip) this._ensureTerrainClip();\n    this._terrainClip = clip;",
+    "new": "    this._terrainClip = clip;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FAR-CLIP1-the-swap-installs-nothing",
     "file": "src/render/renderer.js",
-    "old": "    this._terrainClip = clip;\n    this._installWorldSet(this._worldSet);",
-    "new": "    this._terrainClip = clip;",
+    "old": "    this._installWorldSet(this._worldSet);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FAR-CLIP1-the-clip-built-from-the-plain-source",
     "file": "src/render/renderer.js",
-    "old": "terrainClipFs(set.terrainFs)",
-    "new": "set.terrainFs",
+    "old": "    return (set.terrainClip ??= this._buildProgram(TERRAIN_VS, terrainClipFs(set.terrainFs)));",
+    "new": "    return (set.terrainClip ??= this._buildProgram(TERRAIN_VS, set.terrainFs));",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "FAR-CLIP1-built-eagerly",
     "file": "src/render/renderer.js",
-    "old": "      terrainClip: null,\n",
-    "new": "      terrainClip: this._buildProgram(TERRAIN_VS, terrainClipFs(src.terrainFs)),\n",
+    "old": "      terrainClip: null,",
+    "new": "      terrainClip: this._buildProgram(TERRAIN_VS, terrainClipFs(src.terrainFs)),",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FAR-CLIP1-built-again-at-every-ask",
     "file": "src/render/renderer.js",
-    "old": "    return (set.terrainClip ??= this._buildProgram(",
-    "new": "    return (set.terrainClip = this._buildProgram(",
+    "old": "    return (set.terrainClip ??= this._buildProgram(TERRAIN_VS, terrainClipFs(set.terrainFs)));",
+    "new": "    return (set.terrainClip = this._buildProgram(TERRAIN_VS, terrainClipFs(set.terrainFs)));",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "FAR-CLIP1-the-renderer-writes-its-own-byte",
     "file": "src/render/renderer.js",
-    "old": "import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)\n",
-    "new": "const CLIP_SENTINEL = 255;\n",
+    "old": "import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // The byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)",
+    "new": "const CLIP_SENTINEL = 255;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]

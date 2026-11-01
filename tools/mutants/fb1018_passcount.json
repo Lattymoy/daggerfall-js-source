@@ -62,8 +62,8 @@
   {
     "name": "PASS-COUNT-shadow-never-written",
     "file": "src/render/renderer.js",
-    "old": "    this.stats.shadowDraws = (sp.stats.sunDraws | 0) + (sp.stats.pointDraws | 0);",
-    "new": "",
+    "old": "    this.stats.shadowDraws = (sp.stats.sunDraws | 0) + (sp.stats.pointDraws | 0);   // The shadow maps' replays this frame",
+    "new": "   // The shadow maps' replays this frame",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "PASS-COUNT-shadow-not-zeroed",
     "file": "src/render/renderer.js",
-    "old": "s.bbCulled = 0; s.shadowDraws = 0;   // PERF-CROWD2; PASS-COUNT",
-    "new": "s.bbCulled = 0;   // PERF-CROWD2; PASS-COUNT",
+    "old": "    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0; s.shadowDraws = 0;",
+    "new": "    s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PASS-COUNT-view-uncounted",
     "file": "src/render/renderer.js",
-    "old": "      this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;\n",
-    "new": "",
+    "old": "      this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;\n      if (this._rwPaneOn) {   // the panes are the pass's alone: off, the sampler back on unit 0 (a picture is always bound there), the unit emptied",
+    "new": "      if (this._rwPaneOn) {   // the panes are the pass's alone: off, the sampler back on unit 0 (a picture is always bound there), the unit emptied",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PASS-COUNT-panes-uncounted",
     "file": "src/render/renderer.js",
-    "old": "this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;",
-    "new": "this._rwViewDraws = (begun ? this.stats.draws : 0);",
+    "old": "      this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;",
+    "new": "      this._rwViewDraws = (begun ? this.stats.draws : 0);",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "PASS-COUNT-throw-uncounted",
     "file": "src/render/renderer.js",
-    "old": "this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;",
-    "new": "this._rwViewDraws = (drew ? this.stats.draws : 0) + panes;",
+    "old": "      this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;",
+    "new": "      this._rwViewDraws = (drew ? this.stats.draws : 0) + panes;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "PASS-COUNT-view-not-reset",
     "file": "src/render/renderer.js",
-    "old": "    this._rwViewDraws = 0;   // PASS-COUNT: the view out's draws, taken by the room's frame",
-    "new": "    void 0;   // PASS-COUNT: the view out's draws, taken by the room's frame",
+    "old": "    this._rwViewDraws = 0;   // The view out's draws, taken by the room's frame (the stats' note) - the view out's own begin zeroes it too, and its close counts afresh",
+    "new": "    void 0;   // The view out's draws, taken by the room's frame (the stats' note) - the view out's own begin zeroes it too, and its close counts afresh",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],

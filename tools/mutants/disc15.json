@@ -56,8 +56,8 @@
   {
     "name": "DISC15-the-flag-sticky",
     "file": "src/render/renderer.js",
-    "old": "this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;",
-    "new": "this._everyLightPrev = this._everyLightNow;",
+    "old": "    if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;   // A door crossed either way is a cut - the air's contact march has no previous frame of this room (its prepare is below)",
+    "new": "    if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } this._everyLightPrev = this._everyLightNow;   // A door crossed either way is a cut - the air's contact march has no previous frame of this room (its prepare is below)",
     "tests": [
       "test/render/disc15.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC15-the-streets-records-replayed-for-the-tavern",
     "file": "src/render/renderer.js",
-    "old": "    if (cut) sp.discard();",
-    "new": "    ",
+    "old": "    if (cut) sp.discard();   // AUDIT FLICKER R4: a door crossed EITHER way - the street's first frame replayed the room's records into its cascades (the room stands in world coordinates at its building), and the far cascade held them a frame more",
+    "new": "       // AUDIT FLICKER R4: a door crossed EITHER way - the street's first frame replayed the room's records into its cascades (the room stands in world coordinates at its building), and the far cascade held them a frame more",
     "tests": [
       "test/render/disc15.test.js"
     ]

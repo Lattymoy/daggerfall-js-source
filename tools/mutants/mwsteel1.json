@@ -74,8 +74,8 @@
   {
     "name": "MWSTEEL1-switch-open-by-default",
     "file": "src/systems/features.js",
-    "old": "key: 'mwSteelHelm', initial: 'closed',",
-    "new": "key: 'mwSteelHelm', initial: 'open',",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'open', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]

@@ -611,8 +611,8 @@
   {
     "name": "EGZN-view-shares-the-callers",
     "file": "src/render/renderer.js",
-    "old": "    return { vao: mesh.vao, subMeshes: subMeshes.map((sm) => ({ ...sm })), buffers: [],",
-    "new": "    return { vao: mesh.vao, subMeshes, buffers: [],",
+    "old": "    return { vao: mesh.vao, subMeshes: subMeshes.map((sm) => ({ ...sm })), buffers: [], triIndices: mesh.triIndices, bounds: mesh.bounds, viewOf: mesh };",
+    "new": "    return { vao: mesh.vao, subMeshes, buffers: [], triIndices: mesh.triIndices, bounds: mesh.bounds, viewOf: mesh };",
     "tests": [
       "test/world/eliteGates/egz_camera_host.test.js"
     ]

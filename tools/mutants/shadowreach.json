@@ -38,8 +38,8 @@
   {
     "name": "record-is-a-draw",
     "file": "src/render/renderer.js",
-    "old": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }",
-    "new": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this.drawMesh(mesh, modelMatrix, texRemap); }",
+    "old": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap, 1 - (this._dissolve ?? 1)); }   // AUDIT BAY A12: a fading ship's share",
+    "new": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this.drawMesh(mesh, modelMatrix, texRemap); }   // AUDIT BAY A12: a fading ship's share",
     "tests": [
       "test/render/shadowreach.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "record-in-a-panel",
     "file": "src/render/renderer.js",
-    "old": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length)",
-    "new": "  recordShadowBillboards(batches, camRight, camUp) { if (this._shadows && batches?.length)",
+    "old": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall); }",
+    "new": "  recordShadowBillboards(batches, camRight, camUp) { if (this._shadows && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall); }",
     "tests": [
       "test/render/shadowreach.test.js"
     ]

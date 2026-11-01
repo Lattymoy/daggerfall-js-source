@@ -1256,8 +1256,8 @@
   {
     "name": "KG3-L-features-creator",
     "file": "src/systems/features.js",
-    "old": "{ title: 'The King\\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }",
-    "new": "{ title: 'The King\\u2019s Gambit', author: '' }",
+    "old": "    get title() { return t('features.mod.title', '{title} by {author}', { title: 'The King\\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }); },",
+    "new": "    get title() { return t('features.mod.title', '{title} by {author}', { title: 'The King\\u2019s Gambit', author: '' }); },",
     "tests": [
       "test/systems/ft9_mods.test.js"
     ]

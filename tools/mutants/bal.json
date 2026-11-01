@@ -286,8 +286,8 @@
   {
     "name": "BAL4-the-ai-ships-off",
     "file": "src/systems/features.js",
-    "old": "store: 'prefs', key: 'enhancedAI', initial: true, online: true,",
-    "new": "store: 'prefs', key: 'enhancedAI', initial: false, online: true,",
+    "old": "      store: 'prefs', key: 'enhancedAI', initial: true, online: true,   // ON by default (it was off - DFU's classic motor the 1:1 law); the lane forces it on online as it always did; an unstamped shelf adopts it (uiPrefs.js PREF1_ADOPT_NEW_DEFAULT)",
+    "new": "      store: 'prefs', key: 'enhancedAI', initial: false, online: true,   // ON by default (it was off - DFU's classic motor the 1:1 law); the lane forces it on online as it always did; an unstamped shelf adopts it (uiPrefs.js PREF1_ADOPT_NEW_DEFAULT)",
     "tests": [
       "test/systems/bal_arc.test.js",
       "test/systems/ft5_enhancedai.test.js"

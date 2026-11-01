@@ -164,7 +164,7 @@
   {
     "name": "AUDIT-FAR-SEA1-H1-the-panel-drops-the-haze",
     "file": "src/render/renderer.js",
-    "old": "    this._seaHaze.set(s.seaHaze);   // AUDIT FAR-SEA1 H1",
+    "old": "    this._seaHaze.set(s.seaHaze);",
     "new": "",
     "tests": [
       "test/ui/automap/roadc_panelframe.test.js"

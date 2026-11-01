@@ -234,8 +234,8 @@
   {
     "name": "SURVBOONS-bar-without-boons",
     "file": "src/systems/features.js",
-    "old": "[tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons', 'Boons')), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]",
-    "new": "[tier(false, OFF), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]",
+    "old": "      tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons', 'Boons')), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]),",
+    "new": "      tiers: Object.freeze([tier(false, OFF), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]),",
     "why": "the bar has no Boons segment",
     "tests": [
       "test/systems/survival/survboons.test.js",
@@ -779,8 +779,8 @@
   {
     "name": "BOONS-DEFAULT-the-row-casual-again",
     "file": "src/systems/features.js",
-    "old": "store: 'prefs', key: 'survival', initial: 'boons', online: 'player',",
-    "new": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
+    "old": "      store: 'prefs', key: 'survival', initial: 'boons', online: 'player',   // Difficulty.js SURVIVAL_DEFAULT",
+    "new": "      store: 'prefs', key: 'survival', initial: 'casual', online: 'player',   // Difficulty.js SURVIVAL_DEFAULT",
     "why": "BOONS-DEFAULT: the Features row - the shelf's default (RF4) - back to Casual",
     "tests": [
       "test/systems/survival/survtiers.test.js"

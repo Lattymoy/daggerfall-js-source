@@ -253,8 +253,8 @@
   {
     "name": "GATE-MIX-held-placeholder-real",
     "file": "src/render/renderer.js",
-    "old": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;\n    this._uploadSink?.(false, key);\n    return true;",
-    "new": "    if (!this.textures.has(key)) return false;\n    this._uploadSink?.(false, key);\n    return true;",
+    "old": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;",
+    "new": "    if (!this.textures.has(key)) return false;",
     "tests": [
       "test/scenes/gatemix_frames.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "GATE-MIX-held-not-held",
     "file": "src/render/renderer.js",
-    "old": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;\n    this._uploadSink?.(false, key);\n    return true;",
-    "new": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;\n    return true;",
+    "old": "    this._uploadSink?.(false, key);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/scenes/gatemix_frames.test.js"
     ],

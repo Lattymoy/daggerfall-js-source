@@ -94,7 +94,7 @@
   {
     "name": "MAC-I-the-lane-decode-lands-on-a-screen-quad",
     "file": "src/render/renderer.js",
-    "old": "      const colors = this._pointColorData(count, true);   // EL1: the classic-space read, as the water takes",
+    "old": "      const colors = this._pointColorData(count, true);   // The classic-space read, as the water takes",
     "new": "      const colors = this._pointColorData(count);",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "MAC-P-the-borrow-is-never-returned",
     "file": "src/render/renderer.js",
-    "old": "    } finally {\n      if (vmSaved) {\n        this._lightDir = vmSaved.lightDir; this._ambient = vmSaved.ambient; this._sunScale = vmSaved.sunScale;",
-    "new": "    } finally {\n      if (false) {\n        this._lightDir = vmSaved.lightDir; this._ambient = vmSaved.ambient; this._sunScale = vmSaved.sunScale;",
+    "old": "      if (vmSaved) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]

@@ -383,8 +383,8 @@
   {
     "name": "TELL2-glint-over-flash",
     "file": "src/render/renderer.js",
-    "old": "  lit = glintLit(lit, albedo + emission, uGlint);   // TELL2: the body lifted toward its blow's colour as it winds up\n  lit = hitFlashLit(lit, albedo + emission, uHitFlash);",
-    "new": "  lit = hitFlashLit(lit, albedo + emission, uHitFlash);\n  lit = glintLit(lit, albedo + emission, uGlint);",
+    "old": "  lit = glintLit(lit, albedo + emission, uGlint);   // TELL2: the body lifted toward its blow's colour as it winds up\n  lit = hitFlashLit(lit, albedo + emission, uHitFlash);   // HITFLASH1: over any concealment, never instead of it",
+    "new": "  lit = hitFlashLit(lit, albedo + emission, uHitFlash);\n  lit = glintLit(lit, albedo + emission, uGlint);   // HITFLASH1: over any concealment, never instead of it",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "TELL2-no-pad",
     "file": "src/render/renderer.js",
-    "old": "const ep = eg !== 0 ? b.elitePad : (gt ? TELL_GLINT_PAD : null);",
-    "new": "const ep = eg !== 0 ? b.elitePad : null;",
+    "old": "      const ep = eg !== 0 ? b.elitePad : (gt ? TELL_GLINT_PAD : null);   // ELITE FOES: the widened quad (an elite's, or its corpse's) and the embers' clock; TELL2: a glint's outline the room it needs",
+    "new": "      const ep = eg !== 0 ? b.elitePad : null;   // ELITE FOES: the widened quad (an elite's, or its corpse's) and the embers' clock; TELL2: a glint's outline the room it needs",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]

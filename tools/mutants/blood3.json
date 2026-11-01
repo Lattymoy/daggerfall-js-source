@@ -272,8 +272,8 @@
   {
     "name": "AUDITBLOOD3-F9-the-classic-sets-absorption-reaches-GLSL-bare",
     "file": "src/render/renderer.js",
-    "old": "exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick))",
-    "new": "exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick))",
+    "old": "  vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;",
+    "new": "  vec3 rgb = vColor.rgb * exp(vec3(${BLOOD_ABSORB_ENCODED[0]}, ${BLOOD_ABSORB_ENCODED[1]}, ${BLOOD_ABSORB_ENCODED[2]}) * (1.0 - thick)) * lightAcc;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

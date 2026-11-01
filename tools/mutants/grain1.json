@@ -38,8 +38,8 @@
   {
     "name": "GRAIN1-the-chain-is-built-before-the-layers-are-uploaded-so-the-distance-goes-to-an-empty-texture",
     "file": "src/render/renderer.js",
-    "old": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);",
-    "new": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);\n    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);",
+    "old": "    for (let i = 0; i < layers.length; i++) {",
+    "new": "    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);\n    for (let i = 0; i < layers.length; i++) {",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "GRAIN1-MAGNIFICATION-goes-linear-and-smears-the-ground-underfoot",
     "file": "src/render/renderer.js",
-    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    // GRAIN1: and anisotropy",
-    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);\n    // GRAIN1: and anisotropy",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "GRAIN2-the-row-is-everyones-instead-of-the-players-own",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player',",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host',",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-GRAIN-off-is-still-trilinear",
     "file": "src/render/renderer.js",
-    "old": "minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };",
-    "new": "minFilter: 'LINEAR_MIPMAP_LINEAR' };",
+    "old": "  return { aniso: anisotropyFor(tier, driverMax), minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };",
+    "new": "  return { aniso: anisotropyFor(tier, driverMax), minFilter: 'LINEAR_MIPMAP_LINEAR' };",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "AUDIT-GRAIN-a-cached-archive-is-re-uploaded",
     "file": "src/render/renderer.js",
-    "old": "    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);\n    const gl = this.gl;\n    const tex = gl.createTexture();\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);",
-    "new": "    const gl = this.gl;\n    const tex = gl.createTexture();\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);",
+    "old": "    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);\n    const gl = this.gl;",
+    "new": "    const gl = this.gl;",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "AUDIT-GRAIN-the-apply-skips-the-filter",
     "file": "src/render/renderer.js",
-    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl[s.minFilter]);\n    if (ext)",
-    "new": "    if (ext)",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl[s.minFilter]);\n    if (ext) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);",
+    "new": "    if (ext) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "AUDIT-GRAIN-the-apply-walks-nothing",
     "file": "src/render/renderer.js",
-    "old": "    for (const tex of this.tileArrays.values()) {\n      this._activeTexture(gl.TEXTURE0);",
-    "new": "    for (const tex of []) {\n      this._activeTexture(gl.TEXTURE0);",
+    "old": "    let s = null;\n    for (const tex of this.tileArrays.values()) {",
+    "new": "    let s = null;\n    for (const tex of []) {",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "AUDIT-GRAIN-the-apply-leaves-the-array-shadow-stale",
     "file": "src/render/renderer.js",
-    "old": "    this._tArrayTex = null;   // PERF-TEX2's shadow",
-    "new": "    // PERF-TEX2's shadow",
+    "old": "    this._tArrayTex = null;   // PERF-TEX2's shadow: the next terrain draw binds its own array again",
+    "new": "    // PERF-TEX2's shadow: the next terrain draw binds its own array again",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-GRAIN-the-row-leaves-the-classic-lane",
     "file": "src/systems/features.js",
-    "old": "    kinds: Object.freeze(['enhanced', 'classic']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
-    "new": "    kinds: Object.freeze(['enhanced']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
+    "old": "    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },\n    kinds: Object.freeze(['enhanced', 'classic']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
+    "new": "    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },\n    kinds: Object.freeze(['enhanced']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]

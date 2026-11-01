@@ -326,7 +326,7 @@
   {
     "name": "DISC7-contact-rect-never-uploaded",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect); // DISC7\n    this.contactParams[3] = live ? 1 : 0;",
+    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect);\n    this.contactParams[3] = live ? 1 : 0;",
     "new": "    this.contactParams[3] = live ? 1 : 0;",
     "tests": [
       "test/systems/disc7.test.js"

@@ -29,8 +29,8 @@
   {
     "name": "AUDIT68-S16-perf-no-air-the-screen-draw-never-closes-the-meter",
     "file": "src/render/renderer.js",
-    "old": "    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - ",
-    "new": "    // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - ",
+    "old": "    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would",
+    "new": "    // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would",
     "tests": [
       "test/render/audit68_render_a.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT68-S16-perf-a-frame-with-no-screen-draw-is-never-closed",
     "file": "src/render/renderer.js",
-    "old": "    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: a world frame",
-    "new": "    // AUDIT 68 S16-perf-no-resolve-leak: a world frame",
+    "old": "    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: a world frame with no resolve owed (the classic lane, `?air=off`) that drew no screen quad",
+    "new": "    // AUDIT 68 S16-perf-no-resolve-leak: a world frame with no resolve owed (the classic lane, `?air=off`) that drew no screen quad",
     "tests": [
       "test/render/audit68_render_a.test.js"
     ]

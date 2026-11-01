@@ -263,8 +263,8 @@
   {
     "name": "MWNPC16-pose-gen-never-bumped",
     "file": "src/render/renderer.js",
-    "old": "    this._activeTexture(gl.TEXTURE0);\n    mesh._poseGen = (mesh._poseGen ?? 0) + 1;",
-    "new": "    this._activeTexture(gl.TEXTURE0);",
+    "old": "    this._activeTexture(gl.TEXTURE0);\n    mesh._poseGen = (mesh._poseGen ?? 0) + 1;   // A new pose - the shadow pass's body look (shadowPass.js recordCharacter)",
+    "new": "    this._activeTexture(gl.TEXTURE0);   // A new pose - the shadow pass's body look (shadowPass.js recordCharacter)",
     "tests": [
       "test/render/mwnpc16_bodyshadow.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "MWNPC16-word-not-kept",
     "file": "src/render/renderer.js",
-    "old": "    gl.bindTexture(gl.TEXTURE_2D, want);\n    this._skinUnitHolds = want;",
-    "new": "    gl.bindTexture(gl.TEXTURE_2D, want);",
+    "old": "    this._skinUnitHolds = want;\n    this._activeTexture(gl.TEXTURE0);",
+    "new": "    this._activeTexture(gl.TEXTURE0);",
     "tests": [
       "test/render/mwnpc16_bodyshadow.test.js"
     ]

@@ -83,8 +83,8 @@
   {
     "name": "GLOW-R-the-bottom-cut",
     "file": "src/render/renderer.js",
-    "old": "gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, world ? 0 : 1);",
-    "new": "gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, 1);",
+    "old": "      gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, world ? 0 : 1);",
+    "new": "      gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, 1);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GLOW-R-the-rows-top-down",
     "file": "src/render/renderer.js",
-    "old": "gl.uniform1i(u.flipY, world ? 1 : 0);",
-    "new": "gl.uniform1i(u.flipY, 0);",
+    "old": "      gl.uniform1i(u.flipY, world ? 1 : 0);   // BACK-HOLSTER GLOW: a world picture's rows run bottom-up",
+    "new": "      gl.uniform1i(u.flipY, 0);   // BACK-HOLSTER GLOW: a world picture's rows run bottom-up",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GLOW-R-no-pad-under-the-foot",
     "file": "src/render/renderer.js",
-    "old": "const fw = aw + 2 * wx, fh = ah + down + (world ? up : 0);",
-    "new": "const fw = aw + 2 * wx, fh = ah + down;",
+    "old": "    const fw = aw + 2 * wx, fh = ah + down + (world ? up : 0);",
+    "new": "    const fw = aw + 2 * wx, fh = ah + down;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GLOW-R-the-field-key-shared",
     "file": "src/render/renderer.js",
-    "old": "const key = world ? -1 - flat : flat;",
-    "new": "const key = flat;",
+    "old": "    const key = world ? -1 - flat : flat;   // BACK-HOLSTER GLOW: a world picture's its own",
+    "new": "    const key = flat;   // BACK-HOLSTER GLOW: a world picture's its own",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "GLOW-R-the-sheet-list-taken",
     "file": "src/render/renderer.js",
-    "old": "const list = world ? this._glowWorldFieldList : this._glowFieldList;",
-    "new": "const list = this._glowFieldList;",
+    "old": "    const list = world ? this._glowWorldFieldList : this._glowFieldList;   // BACK-HOLSTER GLOW: a crowd's never the sheet's",
+    "new": "    const list = this._glowFieldList;   // BACK-HOLSTER GLOW: a crowd's never the sheet's",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "GLOW-R-depth-written",
     "file": "src/render/renderer.js",
-    "old": "      gl.depthMask(false);\n      gl.depthFunc(gl.LEQUAL);\n      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);",
-    "new": "      gl.depthFunc(gl.LEQUAL);\n      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);",
+    "old": "      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n      gl.depthMask(false);\n      gl.depthFunc(gl.LEQUAL);",
+    "new": "      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n      gl.depthFunc(gl.LEQUAL);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GLOW-R-LEQUAL-kept",
     "file": "src/render/renderer.js",
-    "old": "      gl.depthFunc(gl.LESS);\n      gl.depthMask(true);\n      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
-    "new": "      gl.depthMask(true);\n      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "old": "    } finally {\n      gl.depthFunc(gl.LESS);\n      gl.depthMask(true);",
+    "new": "    } finally {\n      gl.depthMask(true);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "GLOW-R-culling-left-off",
     "file": "src/render/renderer.js",
-    "old": "      gl.enable(gl.CULL_FACE);\n      this._bindVao(null);\n    }\n    return true;",
-    "new": "      this._bindVao(null);\n    }\n    return true;",
+    "old": "      gl.enable(gl.CULL_FACE);\n      this._bindVao(null);",
+    "new": "      this._bindVao(null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "GLOW-R-a-smear",
     "file": "src/render/renderer.js",
-    "old": "    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad\n",
-    "new": "",
+    "old": "    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad\n    this._close2D();",
+    "new": "    this._close2D();",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "GLOW-R-the-2D-run-left-open",
     "file": "src/render/renderer.js",
-    "old": "    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad\n    this._close2D();",
-    "new": "    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad",
+    "old": "    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad\n    this._close2D();\n    const gl = this.gl;",
+    "new": "    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad\n    const gl = this.gl;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-A7-no-fog-sent",
     "file": "src/render/renderer.js",
-    "old": "      this._uploadFog(this._wgwFog);\n",
-    "new": "\n",
+    "old": "      this._uploadFog(this._wgwFog);",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT-A8-never-culled",
     "file": "src/render/renderer.js",
-    "old": "if (!this._bbCullOff && !sphereInPlanes(",
-    "new": "if (false && !sphereInPlanes(",
+    "old": "    if (!this._bbCullOff && !sphereInPlanes(spherePlanes(vp, this._glowPlanes), q.origin[0] + q.up[0] * mid, q.origin[1] + q.up[1] * mid, q.origin[2] + q.up[2] * mid, r)) return false;",
+    "new": "    if (false && !sphereInPlanes(spherePlanes(vp, this._glowPlanes), q.origin[0] + q.up[0] * mid, q.origin[1] + q.up[1] * mid, q.origin[2] + q.up[2] * mid, r)) return false;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-A8-the-pad-left-out",
     "file": "src/render/renderer.js",
-    "old": "r = 0.5 * Math.hypot(q.w * (1 + 2 * wx / aw), q.h * (1 + (up + down) / ah));",
-    "new": "r = 0.5 * Math.hypot(q.w, q.h);",
+    "old": "    const mid = 0.5 * (1 + (down - up) / ah) * q.h, r = 0.5 * Math.hypot(q.w * (1 + 2 * wx / aw), q.h * (1 + (up + down) / ah));",
+    "new": "    const mid = 0.5 * (1 + (down - up) / ah) * q.h, r = 0.5 * Math.hypot(q.w, q.h);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
