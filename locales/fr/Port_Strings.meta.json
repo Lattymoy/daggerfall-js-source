@@ -1360,8 +1360,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.cacheTaken": {
-  "en": "90e8e1c18163",
-  "tr": "5a7c5cd2012a",
+  "en": "bc6089841b25",
+  "tr": "bbe61f7c4b14",
   "by": "claude-in-session"
  },
  "account.refusal.capped": {
@@ -4620,8 +4620,8 @@
   "by": "claude-in-session"
  },
  "aurumCache.empty": {
-  "en": "bd5fbad0d973",
-  "tr": "cd1d03dcd8cb",
+  "en": "18cc5210064c",
+  "tr": "a9f5a901fafb",
   "by": "claude-in-session"
  },
  "aurumCache.emptyName": {
