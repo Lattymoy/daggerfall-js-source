@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): THE BOATS' SYNTHESIZER - the few pieces csaClips.js makes Come Sail Away's five clips from:
+// THE BOATS' SYNTHESIZER - the few pieces csaClips.js makes Come Sail Away's five clips from:
 // a seeded noise, one-pole and biquad filters, envelopes, a resonant body and a loop's seam. Pure functions over
 // Float32Array PCM, deterministic on their seeds, no Web Audio. The die is the port's synth's own (audio/synth/dsp.js).
 // Not a DFU member.

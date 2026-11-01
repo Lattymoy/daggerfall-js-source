@@ -2,7 +2,8 @@
 
 jefetienne's DFU mod Readied Spellcasting Hands 1.3 (MIT), ported 1:1 from its own source: while a spell is readied,
 the first-person view shows the casting hands raised, where DFU shows nothing until the click starts the cast. It is a
-Features row under Combat, on by default. The vendored source is `vendor/readied-spellcasting-hands/`.
+Features row under Combat, on by default. Our code is the record; the release's provenance is in
+`01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -37,5 +38,5 @@ one-handed weapon.
 
 - `src/combat/fpsSpellCasting.js` `readiedHandsFrame` - the mod's condition
 - `src/combat/weapon/weaponRig.js` - the draw
-- `tools/readiedHandsAssets.mjs` - reproduces the vendored files from the bundle
-- `test/systems/rsh1_readiedhands.test.js` - the condition, the draw, the lanes
+- `test/systems/rsh1_readiedhands.test.js` - the condition, the draw, the lanes; the mod's condition, frame 0 and the
+  0.134 inset as literals

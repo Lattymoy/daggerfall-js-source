@@ -33,6 +33,11 @@ WebAudio code.
 - **Footsteps:** DFU's player footsteps by ground; Immersive Footsteps' surfaces (`src/systems/immersiveFootsteps.js`).
 - **Foes:** DFU's EnemySounds attract loop and attack sounds, at the monster volume (`src/systems/monsterVolume.js`).
 - **Better Ambience** (`src/systems/betterAmbience.js`): the mod's ambient layers, including rain through the walls.
+- **The mods' clips are our own** (OWN-WORK, the owner): Better Ambience's, Immersive Footsteps', Windfall's and Come
+  Sail Away's are made at runtime by our seeded synth (`src/audio/synth/`, `src/systems/windfall/windfallSynth.js`,
+  `src/systems/comeSailAway/csaSynth/`), at each clip's name, length and rate. Each is set by its loudness
+  (`src/audio/synth/dsp.js` `loudnessOf`) against Daggerfall's own sounds. A long bed is layered loops of different
+  lengths (`src/audio/layeredLoop.js`), so it comes round only after hours.
 
 ### Music (`src/systems/music.js`, `src/systems/song/`)
 
@@ -91,6 +96,7 @@ and the enhanced sounds above. DFU plays nothing on building and dungeon transit
 - `src/systems/enhancedSounds.js`, `src/systems/wind/windAudio.js`, `src/systems/soundscape/`,
   `src/systems/horse/horseVoice.js`
 - `src/systems/monsterVolume.js`, `src/systems/animalVolume.js` - the extra sliders
+- `src/audio/synth/`, `src/audio/layeredLoop.js` - our clips and the layered loop; `test/audio/synth/ownsounds.test.js`
 - `test/systems/audio.test.js`, `test/systems/audio3d.test.js`, `test/systems/music.test.js`,
   `test/systems/gatemix_limiter.test.js`, `test/systems/volume_sliders.test.js`, `test/systems/midiout1.test.js`,
   `test/systems/soundscape/soundbeds.test.js`, `test/systems/horse/horsevoice.test.js`,

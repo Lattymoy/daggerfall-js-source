@@ -243,8 +243,8 @@
   {
     "name": "AUDIT1003-W6-PIXEL-UNHANDED",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());",
-    "new": "const gpu = await getGpuMesh(placed.modelIdNum);",
+    "old": "          const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());   // A model built here breathes with the pixel (the colosseum's seal)",
+    "new": "          const gpu = await getGpuMesh(placed.modelIdNum);   // A model built here breathes with the pixel (the colosseum's seal)",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT1003-W7-UNMARKED",
     "file": "src/scenes/pixelBuild.js",
-    "old": "normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });",
-    "new": "normal: doorNormalOf(d, local) });",
+    "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)",
+    "new": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local) });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)",
     "tests": [
       "test/world/audit1003_world.test.js",
       "test/scenes/castle_gate.test.js"

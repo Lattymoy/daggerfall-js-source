@@ -232,8 +232,8 @@
   {
     "name": "TVR-the-far-flag-unread",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    if (!F.ready || step <= 0 || !F.deformed) return; // TV-REFILL: a clean mask has nothing to fill",
-    "new": "    if (!F.ready || step <= 0) return; // TV-REFILL: a clean mask has nothing to fill",
+    "old": "    if (!F.ready || step <= 0 || !F.deformed) return; // A clean mask has nothing to fill",
+    "new": "    if (!F.ready || step <= 0) return; // A clean mask has nothing to fill",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "TVR-a-far-stamp-unflagged",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = true;\n    } // TV-REFILL",
-    "new": "    } // TV-REFILL",
+    "old": "      F.deformed = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "TVR-a-scroll-forgets",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid",
-    "new": "      F.deformed = F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid",
+    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // What the scroll kept, and what the field laid",
+    "new": "      F.deformed = F.lastChanged > 0; // What the scroll kept, and what the field laid",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "TVR-a-recentres-restore-unflagged",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid",
-    "new": "      F.deformed = !!out && F.deformed; // TV-REFILL: what the scroll kept, and what the field laid",
+    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // What the scroll kept, and what the field laid",
+    "new": "      F.deformed = !!out && F.deformed; // What the scroll kept, and what the field laid",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "TVR-a-stand-unflagged",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = F.lastChanged > 0; // TV-REFILL",
-    "new": "      F.deformed = false; // TV-REFILL",
+    "old": "      F.deformed = F.lastChanged > 0;",
+    "new": "      F.deformed = false;",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "TVR-the-flag-left-up",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    F.deformed = any; // TV-REFILL: none found, none left",
-    "new": "    F.deformed = true; // TV-REFILL: none found, none left",
+    "old": "    F.deformed = any; // None found, none left",
+    "new": "    F.deformed = true; // None found, none left",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]

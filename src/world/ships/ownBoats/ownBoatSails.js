@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): THE BOATS' OWN SAILS - each a skinned canvas on a grid of bones (world/ships/galleonRig.js's
+// THE BOATS' OWN SAILS - each a skinned canvas on a grid of bones (world/ships/galleonRig.js's
 // canvasGeometry, the fleet's), with its poses as clips over the Sail and Staysail Controllers (ownBoatAnimation.js).
 // Come Sail Away's runtime reads a sail by its node's NAME (its kind - Square, Lateen, Gaff, Stay - and its size -
 // Small, Large - are its handling: systems/comeSailAway/comeSailAwayBoat.js getBoatTransforms), trims it by its Boom's

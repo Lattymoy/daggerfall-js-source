@@ -101,8 +101,8 @@
   {
     "name": "the-host-never-finds-the-block",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);   // WOD4\n",
-    "new": "",
+    "old": "        if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);\n        if (b.blockName === ARENA_BLOCK) arenaOrigin = [originMatrix[12], originMatrix[13], originMatrix[14]];   // ARENA2",
+    "new": "        if (b.blockName === ARENA_BLOCK) arenaOrigin = [originMatrix[12], originMatrix[13], originMatrix[14]];   // ARENA2",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]

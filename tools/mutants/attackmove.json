@@ -2,8 +2,8 @@
   {
     "name": "ATTACK-MOVE-turn-paints-stance",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);\n      else updateBillboardDelayed(frameCurrent, o, stateCurrent);",
-    "new": "updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "old": "      if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);\n      else updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "new": "      updateBillboardDelayed(frameCurrent, o, stateCurrent);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ATTACK-MOVE-queued-stance-fires",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "if (isAnimating && p.table !== isAnimating.table) continue;",
-    "new": "",
+    "old": "      if (isAnimating && p.table !== isAnimating.table) continue;",
+    "new": "      ",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ATTACK-TURN-turn-paints-walk-frame",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);",
-    "new": "updateBillboard(frameCurrent, o, isAnimating.table);",
+    "old": "      if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);",
+    "new": "      if (isAnimating) updateBillboard(frameCurrent, o, isAnimating.table);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "ATTACK-WARM-not-wired",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (renderer && cfg.wornArmour) warmLayered();",
-    "new": "",
+    "old": "      if (renderer && cfg.wornArmour) warmLayered();   // A weapon or piece changed - its clips composed before a blow",
+    "new": "   // A weapon or piece changed - its clips composed before a blow",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "ATTACK-WARM-walker-not-wired",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (worn) warmWalker(r, { onFoot: set ?? 0, ...worn });   // ATTACK-WARM",
+    "old": "      if (worn) warmWalker(r, { onFoot: set ?? 0, ...worn });",
     "new": "",
     "tests": [
       "test/net/layered_peers.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "ATTACK-WARM-walker-sheathed-warms",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const sig = look.sheathed ? null : warmSigOf(look);",
-    "new": "const sig = warmSigOf(look);",
+    "old": "    const sig = look.sheathed ? null : warmSigOf(look);",
+    "new": "    const sig = warmSigOf(look);",
     "tests": [
       "test/net/layered_peers.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "ATTACK-WARM-walker-queue-not-drained",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    for (const [t, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) store.ensure(spriteFor(t, o, f, look));   // ATTACK-WARM",
+    "old": "    for (const [t, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) store.ensure(spriteFor(t, o, f, look));",
     "new": "",
     "tests": [
       "test/net/layered_peers.test.js"

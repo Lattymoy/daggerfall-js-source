@@ -292,8 +292,8 @@
   {
     "name": "ICS-build-places-in-one",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n",
-    "new": "",
+    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n        // And its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/",
+    "new": "        // And its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "ICS-build-pieces-unflooded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n",
-    "new": "",
+    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n        population = livingWorldOn() ? new LivingTown(nav, {",
+    "new": "        population = livingWorldOn() ? new LivingTown(nav, {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "ICS-journey-never-asks-again",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.autopilot && st.route?.streetWait && !st.route.street) { st.route.streetWait = false; startRouteLeg(); applyRate(); }\n",
-    "new": "",
+    "old": "    // A TOWN'S WAY STILL IN THE MAKING (scenes/townWalkHost.js: a search of a city's grid a few thousand\n    // cells a frame, never one task) asked again until it is found\n    if (st.autopilot && st.route?.streetWait && !st.route.street) { st.route.streetWait = false; startRouteLeg(); applyRate(); }\n    // A SAILED LEG AIMED AGAIN once its pixel's ground is built - aimed before it was, at its middle",
+    "new": "    // A TOWN'S WAY STILL IN THE MAKING (scenes/townWalkHost.js: a search of a city's grid a few thousand cells a frame,\n    // never one task) asked again until it is found AUDIT FB1021d PS-1: A SAILED LEG AIMED AGAIN once its pixel's ground\n    // is built - aimed before it was, at its middle",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "ICS-journey-pending-taken-for-none",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }",
-    "new": "",
+    "old": "    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }   // The host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile",
+    "new": "   // The host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ICS-build-layout-whole",
     "file": "src/scenes/pixelBuild.js",
-    "old": "await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());",
-    "new": "stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));",
+    "old": "      const loc = await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());   // The pack's own switch; IC-STUTTER: a block a step",
+    "new": "      const loc = stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));   // The pack's own switch; IC-STUTTER: a block a step",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "ICS-build-grid-in-one",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          await breather.breathe();   // IC-STUTTER: a block of the walkers' grid a breath (a city's sixty-four were one task)\n",
-    "new": "",
+    "old": "          await breather.breathe();   // A block of the walkers' grid a breath (a city's sixty-four were one task)\n        }",
+    "new": "        }",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

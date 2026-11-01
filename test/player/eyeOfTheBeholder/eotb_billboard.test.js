@@ -14,13 +14,12 @@ import { ownDeathKeys } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js'
 
 // ═══ EOTB3: THE PLAYER BILLBOARD ══════════════════════════════════
 //
-// The body you see in third person when you have no Morrowind data
-// (Mac: "This is moreso for those who opt out of using morrowind").
-// EOTB-IL (2026-09-17): every law below is read off the assembly, and
+// The body you see in third person when you have no Morrowind data.
+// EOTB-IL: every law below is read off the assembly, and
 // the two Mac reported - the chop and the turn - are the first two
 // pins after the table.
 
-// OWN-WORK4 (2026-10-31): the mod's states.json (PlayerBillboard.InitializeStates, read off Eye Of The Beholder 2.1's
+// The mod's states.json (PlayerBillboard.InitializeStates, read off Eye Of The Beholder 2.1's
 // IL), written out - its copy left the tree. Each table: its eight records in orientation order, a flipped one marked
 // `m`, and the constructor's ignored fourth argument.
 const SHIPPED_STATES = {
@@ -33,7 +32,7 @@ const SHIPPED_STATES = {
   MoveMeleeLycan: ['20 21m 22m 23m 24 23 22 21', 0], AttackMeleeLycan: ['25 26m 27m 28m 29 28 27 26', 0], DeathLycan: ['10 11m 12m 13m 14 13 12 11', 0],
 };
 const bundle = { tables: Object.fromEntries(Object.entries(SHIPPED_STATES).map(([t, [recs, frames]]) => [t, recs.split(' ').map((r) => ({ record: parseInt(r, 10), mirror: r.endsWith('m'), frames }))])) };
-// NO-BETHESDA2 (2026-10-31): a sprite the mod ships is an eotbDerived.json spec, rebuilt from the player's ARENA2;
+// A sprite the mod ships is an eotbDerived.json spec, rebuilt from the player's ARENA2;
 // OWN-WORK4: or our own death (eotbDeath.js) - so the names the mod has are both (nobethesda2_eotb.test.js)
 const SPRITE_NAMES = [...Object.keys(EOTB_DERIVED), ...ownDeathKeys(EOTB_DERIVED)];
 
@@ -69,7 +68,7 @@ test('EOTB-IL: THE CHOP - the clip lengths are the ART’s, counted per record o
   // one (IL_5a70-IL_5ad4), so the count is asked of the sprites the
   // port names - every archive, every record - and compared with TABLE_FRAMES.
   const counts = new Map();   // archive -> record -> frames
-  for (const name of SPRITE_NAMES) {   // NO-BETHESDA2: the specs; OWN-WORK4: and our death
+  for (const name of SPRITE_NAMES) {   // The specs; OWN-WORK4: and our death
     const m = /^(\d+)_(\d+)-(\d+)$/.exec(name);
     if (!m) continue;
     if (!counts.has(+m[1])) counts.set(+m[1], new Map());
@@ -129,7 +128,7 @@ test('EOTB3: every sprite the table asks for is a sprite the bundle actually shi
       const archive = tableArchive(table, { onFoot: 0, onHorse: 0, lycanthropyType: 1 });
       for (let f = 0; f < frameCount(table); f++) {
         asked++;
-        if (!eotbHas(spriteKey(archive, record, f))) missing.push(`${table}[${o}] -> ${spriteKey(archive, record, f)}`);   // NO-BETHESDA2: a spec; OWN-WORK4: or our death
+        if (!eotbHas(spriteKey(archive, record, f))) missing.push(`${table}[${o}] -> ${spriteKey(archive, record, f)}`);   // A spec; OWN-WORK4: or our death
       }
     }
   }
@@ -138,7 +137,7 @@ test('EOTB3: every sprite the table asks for is a sprite the bundle actually shi
 });
 
 test('EOTB3: every on-foot and horse archive the settings can pick is present', () => {
-  // NO-BETHESDA2: an archive is its specs (OWN-WORK4: and our death) - no folder
+  // An archive is its specs (OWN-WORK4: and our death) - no folder
   const has = (archive) => SPRITE_NAMES.some((n) => n.startsWith(`${archive}_`));
   for (let i = 0; i <= 15; i++) assert.ok(has(ARCHIVE_FOOT + i), `OnFoot ${i}`);
   for (let i = 0; i <= 4; i++) assert.ok(has(ARCHIVE_HORSE + i), `OnHorse ${i}`);
@@ -293,7 +292,7 @@ test('EOTB-IL: the one-shots’ arithmetic - the melee tick, ONE-STROKE’s halv
   // GetMeleeAnimTickTime (IL_545c-IL_549c): the weapon's frame time times five over the clip's frames
   assert.equal(meleeAnimTickTime(0.2, 6), 0.2 * 5 / 6);
   assert.equal(meleeAnimTickTime(0.2, 5), 0.2, 'a five-frame clip runs at the weapon’s own tick');
-  // ONE-STROKE (Mac: "attacking plays only one animation"): a blow plays ONE of the swing's two strokes, by its count's
+  // A blow plays ONE of the swing's two strokes, by its count's
   // parity - the six-frame swing is frames 0-2 and 3-5; the IL's ping-pong (0 1 2 3 3 2 1) is retired
   assert.deepEqual([0, 1, 2, 3].map((k) => meleeStrokeFrames(6, k)), [[0, 1, 2], [3, 4, 5], [0, 1, 2], [3, 4, 5]]);
   assert.deepEqual(meleeStrokeFrames(6), [0, 1, 2], 'no count named: the first stroke');
@@ -359,6 +358,6 @@ test('EOTB3: the sprite key is the bundle’s own naming', () => {
   assert.equal(spriteKey(112364, 25, 3), '112364_25-3');
   const { record } = stateFor('AttackMelee', 0);
   assert.equal(spriteKey(ARCHIVE_FOOT, record, 0), '112364_25-0');
-  assert.ok(eotbHas('112364_25-5'), 'and the swing really has a sixth frame');   // NO-BETHESDA2: a spec
+  assert.ok(eotbHas('112364_25-5'), 'and the swing really has a sixth frame');   // A spec
   assert.ok(!eotbHas('112364_0-1'), 'and the idle really has no second');
 });

@@ -1,5 +1,5 @@
 // PERF-HIDE (2026-10-12, a profile of a player's client in its first seconds in the world: the wagon pool's horse looks
-// dyed 0.9 s of the main thread; bible/07-Rendering/Performance-Priority.md PERF-HIDE) - THE HIDE IS THE PICTURE'S,
+// dyed 0.9 s of the main thread; PERF-HIDE) - THE HIDE IS THE PICTURE'S,
 // NOT THE LOOK'S: found once a picture and kept with it, and the dye's helpers answer into scratch - and every dyed
 // picture, a sprite's and the 3D horse's, is byte for byte the one COATS1 dyed before.
 import { test } from 'node:test';
@@ -9,7 +9,7 @@ import { recolorHorse, recolorHorseTexels, pictureHide, horseLookCode, texelPlan
 import { toColor32 } from '../../../src/formats/color32Order.js';
 import { horsePictures } from '../../../tools/lib/horsePictures.mjs';
 
-// OWN-WORK4 (2026-10-31): the cart's horse is ours (systems/horse/horseArt.js), built from the player's ARENA2 - so the
+// The cart's horse is ours (systems/horse/horseArt.js), built from the player's ARENA2 - so the
 // pins that dye it need ARENA2_PATH, and the digest is our pictures' under today's dye.
 const NO_ARENA2 = !process.env.ARENA2_PATH && 'ARENA2_PATH not set';
 const HORSE = horsePictures();
@@ -28,8 +28,8 @@ test('PERF-HIDE: every sprite dyed byte for byte as COATS1 dyed it - each patter
     const p = await picture(f);
     for (let pattern = 0; pattern < 5; pattern++) for (const [coat, legs, opts] of WAYS) h.update(bytes(recolorHorse(p, look(coat, pattern, legs, 41 + pattern), opts)));
   }
-  // OWN-WORK4: the digest of our 60 pictures under the dye (the retired mod's pictures read 097b3ce7 before PERF-HIDE and after;
-  // ours with the saddle leather no coat takes; OWN-AUDIT (2026-11-01): the front views without their rider,
+  // The digest of our 60 pictures under the dye (the retired mod's pictures read 097b3ce7 before PERF-HIDE and after;
+  // ours with the saddle leather no coat takes; OWN-AUDIT: the front views without their rider,
   // horse/horseFrontRider.js - the standing pictures take frame 0's mask)
   assert.equal(h.digest('hex'), '3f11286e278a1a135b2e8caaff7cbd6f5cea8652b50297cd54e7b10ac024f88b');
 });

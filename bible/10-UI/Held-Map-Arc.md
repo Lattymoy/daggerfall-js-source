@@ -15,11 +15,11 @@ on the paper (`SCALE_MAX` 14). The sheet rises and lowers over 0.3 s. Travel is 
 flight.
 
 **The ink** (`src/ui/ink/inkMap.js`). `buildInkModel` is pure: the coast from the land's boundary along pixel edges,
-smoothed; borders between land pixels of different regions; roads and tracks from Hazelnut's arrays only (the port's
-generated Bay network is never drawn here); high ground as carets; names placed greedily by rank, an overlap dropped.
-Zoom bands: far (under 2.4 paper px per map px) inks coast, borders, roads, cities and region names, with tracks as a
-hair; mid (under 5.5) adds towns, temples, dungeons and tracks; near adds everything discovery admits. Place marks are
-their own layer (`syncMarksLayer`), so a pan does not repaint them. Nothing is a painted asset.
+smoothed; borders between land pixels of different regions; roads and tracks from the Bay's network while the Basic
+Roads switch is on (`roadChains`; `03-World/Roads.md`); high ground as carets; names placed greedily by rank, an overlap
+dropped. Zoom bands: far (under 2.4 paper px per map px) inks coast, borders, roads, cities and region names, with
+tracks as a hair; mid (under 5.5) adds towns, temples, dungeons and tracks; near adds everything discovery admits. Place
+marks are their own layer (`syncMarksLayer`), so a pan does not repaint them. Nothing is a painted asset.
 
 **The card and Travel Options.** A click on a mark picks it; the card beside the paper uses the same pure laws as
 the classic window (ship restriction, the teleport fee asked with the pick). Travel Options' additions are ink: the

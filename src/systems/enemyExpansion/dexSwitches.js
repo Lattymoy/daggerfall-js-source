@@ -1,7 +1,5 @@
-// OWN-WORK2 (2026-10-31, the owner: "removing mods from outside authors and instead replacing them with our own work") -
 // WHICH ENEMY TABLES ARE LOADED FOR THE GAME, for the leaves that cannot import an install. Daggerfall Enemy Expansion's
-// switch, and our meaner monsters for it (dexMeaner.js), which took the place of Ralzar's MUDEX 1.0.1 (MUDEX1,
-// 2026-10-20). Meaner Monsters' own Init finds DEX by its GUID and asks the player to swap it ("Please switch to MUDEX",
+// switch, and our meaner monsters for it (dexMeaner.js), which took the place of Ralzar's MUDEX 1.0.1. Meaner Monsters' own Init finds DEX by its GUID and asks the player to swap it ("Please switch to MUDEX",
 // MeanerMonsters.cs:159-164); the port makes the swap - no switch of its own (MM1: no compatibility switches between
 // mods), Meaner Monsters' switch beside DEX's turns ours on:
 //   - DEX loaded and Meaner Monsters on at the game's load: ours are loaded (DEX's install latches them), and read

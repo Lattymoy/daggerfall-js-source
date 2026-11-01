@@ -1,4 +1,4 @@
-// FB1028 YARDS Y2 (the owner: every yard where #1184 stood it; bible/03-World/Town-Shapes.md FB1028): past the Bay the
+// FB1028 YARDS Y2 (the owner: every yard where #1184 stood it; FB1028): past the Bay the
 // yards read the town ground and the ring as #1184 drew them. Its own file: the sweep installs its own data (no colosseum
 // stood), as 2036a509e's cells were measured, and test/world/fb1028_walls.test.js installs the game's. OWN-WORK3: on
 // Daggerfall's own blocks the two move no yard past the Bay, so the ring is read off the yards' paths themselves.
@@ -22,8 +22,6 @@ test('FB1028 YARDS Y2 with ARENA2: past the Bay the yards on the ground and ring
   const { layoutLocation } = await import('../../src/world/locationLayout.js');
   const { longitudeLatitudeToMapPixel } = await import('../../src/formats/mapsFile.js');
   const { shapeBefore } = await import('../../src/world/terrain/townBlendBefore.js');
-  // PIN MOVED (OWN-WORK3): these were Beautiful Cities' blocks, each template's yard the new mask and ring moved. Each is
-  // now every yard 2036a509e's code stands on Daggerfall's own blocks (its sweep with no pack opened).
   const base = {
     32: 'stable 312 186 1|transport 255 165 2|carpenter 254 129 2', 49: 'stable 88 120 0|transport 113 321 1|carpenter 94 300 2',
     81: 'stable 152 56 0|transport 273 256 2|carpenter 248 228 2', 160: 'stable 159 120 0|transport 169 264 1|carpenter 137 270 3',

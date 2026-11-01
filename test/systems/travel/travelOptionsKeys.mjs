@@ -1,4 +1,4 @@
-// OWN-WORK3 (2026-10-31): Travel Options 1.11's own setting keys, as its settings file named them, section-dot-name.
+// Travel Options 1.11's own setting keys, as its settings file named them, section-dot-name.
 // They are a saved setting's name, so they are a fact the pins keep; the mod's file itself left the tree.
 export const TRAVEL_OPTIONS_1_11_KEYS = Object.freeze([
   'CautiousTravel.PlayerControlledCautiousTravel', 'CautiousTravel.SpeedPenalty', 'CautiousTravel.MaxChanceToAvoidEncounter',
@@ -20,5 +20,5 @@ export const TRAVEL_OPTIONS_1_11_KEYS = Object.freeze([
   'LocationColours.Coven', 'LocationColours.Farm', 'LocationColours.WealthyHome', 'LocationColours.PoorHome', 'LocationColours.Temple',
   'LocationColours.Cult', 'LocationColours.Tavern', 'LocationColours.City', 'LocationColours.Hamlet', 'LocationColours.Village',
 ]);
-/** RATE-LAW: the mod's TimeAcceleration section, which the port no longer declares. */
+/** The mod's TimeAcceleration section, which the port no longer declares. */
 export const RATE_LAW_RETIRED = Object.freeze(['TimeAcceleration.DefaultStartingAcceleration', 'TimeAcceleration.AlwaysUseStartingAcceleration', 'TimeAcceleration.AccelerationLimit']);

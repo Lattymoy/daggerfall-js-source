@@ -1,11 +1,11 @@
-// VE4 (2026-10-05, Mac: "Put it in the codebase") - VANILLA ENHANCED SHIPS WITH THE PORT. OWN-WORK4 (2026-10-31, the
-// owner: "A proper 1 to 1 recreation for everything") - AND IS OUR OWN: the Base, Masked Roads, Snowless Swamps and
-// Jungles, Sands of the Alik'r and Snowfall's winter ground keep their place in the texture-mod door (key, title,
-// switch, dependencies, names and sizes - systems/ownTextures/ownTexturePacks.json), and each picture is built when it
-// is first drawn from the player's own classic record (systems/classicArt.js) under our rule (ownTextureRules.js).
-// AUDIT VE P1 (Mac: "performance isn't affected"): the rule runs in the pack's worker (vanillaEnhancedDecodeWorker.js)
-// and the pixels come back moved; a page with none builds here, the same pixels. A built picture is kept a while
-// (OWN_CACHE_BYTES), and two asks share one build. FIRST-VISIT: the same workers decode a served PNG.
+// VANILLA ENHANCED SHIPS WITH THE PORT. OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything")
+// - AND IS OUR OWN: the Base, Masked Roads, Snowless Swamps and Jungles, Sands of the Alik'r and Snowfall's winter
+// ground keep their place in the texture-mod door (key, title, switch, dependencies, names and sizes -
+// systems/ownTextures/ownTexturePacks.json), and each picture is built when it is first drawn from the player's own
+// classic record (systems/classicArt.js) under our rule (ownTextureRules.js). AUDIT VE P1: the rule runs in the pack's
+// worker (vanillaEnhancedDecodeWorker.js) and the pixels come back moved; a page with none builds here, the same
+// pixels. A built picture is kept a while (OWN_CACHE_BYTES), and two asks share one build. FIRST-VISIT: the same
+// workers decode a served PNG.
 import { OWN_TEXTURE_PACKS, ownSpec, ownSliceSpecs, specKey } from '../ownTextures/ownTexturePacks.js';
 import { applyOwnRule } from '../ownTextures/ownTextureRules.js';
 import { setShippedDfmods } from '../dfmodTextures.js';
@@ -15,7 +15,7 @@ import { APP_ROOT } from '../appRoot.js';
 import { classicArt } from '../classicArt.js';
 
 const VE_DIRS = Object.freeze(['base', 'masked-roads', 'snowless-swamps-and-jungles']);
-/** OWN-WORK4: where the pictures come from now - our rules over the player's own records, no repository. */
+/** Where the pictures come from now - our rules over the player's own records, no repository. */
 export const VE_PACK_SOURCE = Object.freeze({
   rules: 'systems/ownTextures/ownTextureRules.js',
   records: 'systems/classicArt.js',
@@ -23,7 +23,7 @@ export const VE_PACK_SOURCE = Object.freeze({
 /** The Vanilla Enhanced mods, as the listing has them: `{ key, dir, rule, index }`. */
 export const VE_PACK_MODS = Object.freeze(OWN_TEXTURE_PACKS.filter((m) => VE_DIRS.includes(m.dir)));
 
-/** AUDIT VE: the shipped mods on until the player chooses otherwise - the Base (Mac: "Ensure this is on by default"). */
+/** AUDIT VE: the shipped mods on until the player chooses otherwise - the Base. */
 export const ON_BY_DEFAULT = Object.freeze(new Set(['base']));
 
 const fetchBytes = async (url) => {
@@ -114,7 +114,7 @@ const askWorker = (lanes, msg, transfer = []) =>
     }
   });
 
-/** FIRST-VISIT: any served PNG by its URL, top-down RGBA and whole, decoded in a worker where the page has one (the
+/** Any served PNG by its URL, top-down RGBA and whole, decoded in a worker where the page has one (the
  *  weapon rig's body sprites: 200 ms of a warm launch's boot on this thread). A relative URL is the page's, not the
  *  worker's. */
 export async function decodeServedPng(url) {
@@ -227,8 +227,8 @@ export function vePackClient(mod) {
   };
 }
 
-/** ALIKR1 / SNOWFALL1: the environment packs - Sands of the Alik'r and Snowfall's winter ground, each `{ key, dir, rule,
- *  index }`, on by default (Mac: "These should be on by default"). */
+/** The environment packs - Sands of the Alik'r and Snowfall's winter ground, each `{ key, dir, rule,
+ *  index }`, on by default. */
 export const ENVIRONMENT_PACK_MODS = Object.freeze(OWN_TEXTURE_PACKS.filter((m) => !VE_DIRS.includes(m.dir)));
 const SHIPPED = Object.freeze([
   ...VE_PACK_MODS.map((m) =>

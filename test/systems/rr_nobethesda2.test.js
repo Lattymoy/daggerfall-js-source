@@ -1,7 +1,6 @@
-// NO-BETHESDA2 (2026-10-31; the owner: "ensuring they are not implemented"): the Roleplay & Realism pictures that are
-// Daggerfall's own records are built from the player's ARENA2 by their specs, never carried. CI has no ARENA2, so the
-// wiring is pinned with a fake reader. With ARENA2_PATH every spec is built and held to the pictures the mods shipped,
-// by a digest of their RGBA taken before the files left the tree.
+// The Roleplay & Realism pictures that are Daggerfall's own records are built from the player's ARENA2 by their specs,
+// never carried. CI has no ARENA2, so the wiring is pinned with a fake reader. With ARENA2_PATH every spec is built
+// and held to the pictures the mods shipped, by a digest of their RGBA taken before the files left the tree.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -14,7 +13,7 @@ import { installRoleplayRealismItems, _resetRoleplayRealismItems } from '../../s
 import { RRI_SPRITES } from '../../src/systems/roleplayRealismItems/rriIndex.js';
 import { DYE_COLORS } from '../../src/characters/dyes.js';
 import { installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED, RR_BUTTON_RECORDS } from '../../src/systems/roleplayRealism/rrVariants.js';
-import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4: our week button
+import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // Our week button
 import { drawMessageBox, registerButtonArt, _setMessageBoxArtForTests } from '../../src/ui/messageBox.js';
 import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 
@@ -26,7 +25,7 @@ const ARENA2 = process.env.ARENA2_PATH;
 function fakeArt() {
   const asked = [];
   const pic = { width: 3, height: 2, data: Uint8Array.from({ length: 24 }, (_, i) => (i % 4 === 3 ? 255 : i * 10)) };
-  // OWN-WORK4 AUDIT: the keepers read the player's records as palette indices - a made-up person, 20 x 40
+  // The keepers read the player's records as palette indices - a made-up person, 20 x 40
   const person = { width: 20, height: 40, data: new Uint8Array(800).fill(0x72) };
   return { asked, pic, art: { build: async (spec) => { asked.push(spec); return pic; }, bitmap: async () => person, palette: async () => ({ get: (i) => ({ r: i, g: i, b: i }) }) } };
 }
@@ -105,7 +104,7 @@ const digestOf = (p) => {
 };
 /** Taken from the mods' own PNGs (HEAD before NO-BETHESDA2) - and the rebuilt pictures gave the same. */
 const SHIPPED = {
-  'src/systems/roleplayRealism/rrDerivedArt.json': 'ab1479d4bc22f9b2a204176837efd1c0cc892116fc9d6a7aae0124f170183bd3',   // OWN-WORK4: 197_4-0 alone, the edit-free spec
+  'src/systems/roleplayRealism/rrDerivedArt.json': 'ab1479d4bc22f9b2a204176837efd1c0cc892116fc9d6a7aae0124f170183bd3',   // 197_4-0 alone, the edit-free spec
 };
 
 test('NO-BETHESDA2 with ARENA2: every spec builds at its picture\'s size, and the pictures are the ones the mods shipped', { skip: !ARENA2 && 'ARENA2_PATH not set' }, async () => {

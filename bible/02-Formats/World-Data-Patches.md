@@ -2,8 +2,8 @@
 
 World data is Daggerfall Unity's way for a mod to replace or add a region's locations, a block or a building record,
 as JSON. The port serves it through one door that MapsFile and BlocksFile ask before they read MAPS.BSA or
-BLOCKS.BSA. The player meets it as the mods' towns, ships, gates and forts, and as the port's own blocks (the arena,
-the capitals past the Bay, the curated dungeon blocks).
+BLOCKS.BSA. The player meets it as the mods' ships, the Master Armorer's keep and shop, and as the port's own blocks
+(the arena, the capitals past the Bay, the curated dungeon blocks).
 
 ## How it works
 
@@ -14,15 +14,14 @@ block gets an index past the BSA's count) and a building record replaced inside 
 be RMB, RDB or RDI. `src/systems/worldDataVariants.js` says which variant is in force. The JSON is converted into the
 readers' own shapes (`locationFromJson`, `blockFromJson`, `rdbBlockFromJson`).
 
-**Three ways a mod's files arrive** (`src/scenes/modWorldData.js` `loadModWorldData`, once, before the first region
-loads):
+**How a mod's files arrive** (`src/scenes/modWorldData.js` `loadModWorldData`, once, before the first region loads):
 
-1. `vendor/*/WorldData/*.json` - a file of the mod's own, registered whole (Roleplay & Realism's fort).
-2. `vendor/*/WorldDataPatches/*.json` - a patch: the author's edit of one classic block or building record
-   (Warm Ashes - Ships, Immersive Travel's gates). It is rebuilt at load from the player's own BLOCKS.BSA.
-3. `vendor/*/WorldDataPack/*.pack.json.gz` - a pack: thousands of files as edits over the player's MAPS.BSA and
-   BLOCKS.BSA (Beautiful Villages, Beautiful Cities). It is fetched as a URL, never a code chunk, only when its mod
-   is loaded for the game. Each file is rebuilt the first time the door asks for it.
+1. `vendor/*/WorldDataPatches/*.json` - a patch: the author's edit of one classic block or building record (Warm Ashes -
+   Ships). It is rebuilt at load from the player's own BLOCKS.BSA.
+2. Our own files, built in code from the player's blocks and registered under the DFU names a mod's logic reads: the
+   Master Armorer's keep and shop (`src/systems/roleplayRealism/rrWorld.js`, `06-Systems/Roleplay-Realism.md`).
+3. A pack: thousands of files as edits over the player's MAPS.BSA and BLOCKS.BSA. The format and its builder stay; no
+   pack ships, since the town packs are retired (`03-World/Beautiful-Towns.md`).
 
 **A patch** (`src/formats/worldData/worldDataPatch.js` `rebuildWorldDataPatch`) names its base block or building and
 the sha256 of the author's file. `src/formats/worldData/worldDataJson.js` `blockToDfuJson` writes the classic block in
@@ -38,16 +37,15 @@ another file of the pack. Ops are the patch's plus `sr`, a run of elements set a
 `$m $f $d $3 $b $t $g` records carried as rows of numbers. A pack keeps at most `DECODED_NODES_MAX` decoded nodes.
 
 **Load order.** The door keeps every mod's entry of a file name, highest priority first, and the first live one
-answers (`ModManager.TryGetAsset` walks enabled mods in reverse load order). `WORLD_DATA_PRIORITY` puts Beautiful
-Cities over Beautiful Villages. Every patch vendor stands at 0. The served blocks are kept up to `BLOCK_CACHE_MAX`.
+answers (`ModManager.TryGetAsset` walks enabled mods in reverse load order). The served blocks are kept up to
+`BLOCK_CACHE_MAX`.
 
-**Layout pins** (`src/systems/layoutPins.js`): a save's town records which mods it was made under. A pinned town is
-served with those mods and without the others, and `ensureWorldDataPack` loads a pack a pin needs.
+**Layout pins** (`src/systems/layoutPins.js`): a save's town records which layout it was made under. No layout mod is
+loaded, so a record stamped with a pack's layout sleeps (`ensureWorldDataPack` answers false).
 
 **The port's own blocks** (`registerPortBlock`, `registerPortBlockOf`, `registerPortBlockFamily`,
 `registerPortBuilding`, `registerLocationEdit`) are served behind no switch: the arena, the capitals and the towns past
-the Bay, the curated dungeon blocks, the ship refit. A layer (`registerWorldDataLayer`) is laid on a served file, as
-Immersive Travel's carriages are on whichever gate is served.
+the Bay, the curated dungeon blocks, the ship refit. A layer (`registerWorldDataLayer`) is laid on a served file.
 
 ## Rules
 
@@ -64,8 +62,6 @@ Immersive Travel's carriages are on whichever gate is served.
   read once for the game. Online it is open whatever the setting says, because the room's mods stand buildings every
   player walks (`ONLINE_ROOM_MOD_KEYS` in `src/systems/online/onlineLane.js`). Each mod's own switch still decides its
   files.
-- **A pack mod is loaded for the game or not at all.** Its switch is read once and latched, so a switch flipped
-  mid-game moves no town. A pack that fails to load leaves its towns classic, and `worldDataPacksMissing` names it.
 - **What DFU's editor writes is kept**, because DFU loads it: the automap with its ground-flat bytes (0xFB) zeroed
   (`GetBlockAutoMap` mutates its block), regrouped RDB root lists, rotations after a round trip through Euler angles,
   and header record counts that do not match the arrays. Layout reads the arrays, as DFU does.
@@ -101,10 +97,10 @@ Departures:
 - `src/formats/worldData/worldDataPatch.js` - a patch rebuilt.
 - `src/formats/worldData/worldDataPack.js` - the pack format and reader.
 - `src/scenes/modWorldData.js` - the loader and the background checks.
-- `tools/worldDataPatch.mjs`, `tools/worldDataPackBuild.mjs`, `tools/worldDataPackNames.mjs` - the builders.
+- `tools/worldDataPatch.mjs`, `tools/worldDataPackBuild.mjs` - the builders.
 - `test/formats/worldData/wd1_worlddata.test.js` - patches and the serialiser.
-- `test/formats/worldData/wd3_pack.test.js` - packs. With `ARENA2_PATH` set it rebuilds every file of both packs,
-  sha256 for sha256.
-- `test/formats/worldData/it1_worlddata.test.js` - Immersive Travel's gate patches and the carriage layer.
+- `test/formats/worldData/wd3_pack.test.js` - the pack format.
+- `test/formats/worldData/it1_worlddata.test.js` - Immersive Travel's carriage stand at every gate.
 - `test/formats/worldData/wdowned.test.js` - a location's base patched in place (`patchJson` `owned`).
-- `test/formats/worldData/fb1005_hills.test.js`, `fb1005_sealedcellar.test.js` - fixes to houses in the pack towns.
+- `test/formats/worldData/fb1005_hills.test.js`, `fb1005_sealedcellar.test.js` - the stand-in hills' shapes under a
+  house, and a quest marker reached by its stair.

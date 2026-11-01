@@ -33,8 +33,8 @@ const ins = (id) => recipeById(id).inputs.map((i) => [i.key, i.n]);
 test('SMITH-RRI law: the Light Flail (514) 3 ingots, 1 Copper and 1 Cured Leather - the Mace\'s and the Flail\'s row; the Archer\'s Axe (513) 2 ingots, 1 Copper and 1 Oak Plank - half the Battle Axe\'s 4, at half its weight; each at all eleven metals, its tier\'s rank (mutants: an ingot moved; a fitting moved; a template swapped)', () => {
   const two = WEAPON_PRODUCTS.filter((p) => p.templateIndex > 512).map((p) => [p.id, p.name, p.templateIndex, p.ingots, p.also.map(([k, n]) => [k, n])]);
   assert.deepEqual(two, [
-    ['lightflail', 'Light Flail', 514, 3, [['metal:copper', 1], ['leather:cured', 1]]],
-    ['archersaxe', 'Archer\'s Axe', 513, 2, [['metal:copper', 1], ['plank:oak', 1]]],
+    ['lightflail', 'Short Flail', 514, 3, [['metal:copper', 1], ['leather:cured', 1]]],
+    ['archersaxe', 'Hatchet', 513, 2, [['metal:copper', 1], ['plank:oak', 1]]],
   ]);
   const row = (id) => WEAPON_PRODUCTS.find((p) => p.id === id);
   assert.deepEqual([row('lightflail').ingots, row('lightflail').also], [row('mace').ingots, row('flail').also], 'the Mace\'s and the Flail\'s row');
@@ -45,7 +45,7 @@ test('SMITH-RRI law: the Light Flail (514) 3 ingots, 1 Copper and 1 Cured Leathe
   const metals = ['iron', 'steel', 'silver', 'moonstone', 'dwarven', 'mithril', 'adamantium', 'ebony', 'orichalcum', 'daedric', 'warforged'];
   assert.deepEqual(metals.map((m) => recipeById(`lightflail:${m}`).material), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 7]);
   assert.deepEqual(metals.map((m) => recipeById(`archersaxe:${m}`).rank), [0, 10, 25, 40, 40, 55, 70, 70, 70, 90, 70]);
-  assert.deepEqual([recipeById('archersaxe:moonstone').name, recipeById('lightflail:orichalcum').name, recipeById('lightflail:warforged').name], ['Elven Archer\'s Axe', 'Orcish Light Flail', 'Warforged Light Flail']);
+  assert.deepEqual([recipeById('archersaxe:moonstone').name, recipeById('lightflail:orichalcum').name, recipeById('lightflail:warforged').name], ['Elven Hatchet', 'Orcish Short Flail', 'Warforged Short Flail']);
   assert.deepEqual([recipeById('lightflail:steel').family, recipeById('archersaxe:steel').templateIndex], ['weapons', 513]);
   assert.deepEqual([firstCraftKey(recipeById('lightflail:ebony')), firstCraftKey(recipeById('archersaxe:iron'))], ['lightflail@6', 'archersaxe@1'], 'a pattern of its own at a tier - its own first-makes');
 });
@@ -67,14 +67,14 @@ test('SMITH-RRI the anvil lists the two while the mod\'s weapon class stands - o
   const names = () => patternsOf(anvilRecipes('weapons')).map((p) => p.name);
   try {
     assert.equal(names().length, 17);
-    assert.deepEqual(names().slice(-2), ['Light Flail', 'Archer\'s Axe']);
+    assert.deepEqual(names().slice(-2), ['Short Flail', 'Hatchet']);
     assert.equal(onlineForcedModSetting('roleplay-realism-items', 'newWeapons', '?online'), true, 'online the class always stands');
     setModSetting('roleplay-realism-items', 'newArmor', false);
     assert.equal(names().length, 17, 'the armour switch is not the weapons\'');
     setModSetting('roleplay-realism-items', 'newWeapons', false);
     assert.equal(weaponTypeForItem(weaponOfMaterial(514, 0)), WEAPON_TYPES.None, 'unregistered, no weapon');
     assert.equal(names().length, 15);
-    assert.ok(!names().includes('Light Flail') && !names().includes('Archer\'s Axe'));
+    assert.ok(!names().includes('Short Flail') && !names().includes('Hatchet'));
     assert.ok(anvilRecipes('armour').length > 0, 'the rest stands');
   } finally { _resetModSettings(); }
 });

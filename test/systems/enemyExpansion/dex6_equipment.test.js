@@ -1,9 +1,8 @@
-// DEX6 (2026-10-20, Mac: "I want to implement this as our next mod 1:1") - DAGGERFALL ENEMY EXPANSION'S EQUIPMENT.
-// BestiaryMod.Start takes EnemyEntity.AssignEnemyEquipment over: while Roleplay & Realism: Items' realisticEnemyEquipment
-// is on, the mod's copy of RRI's class arm (DEX_RRICompat.cs) kits a class foe - its class read off the row's
-// EquipmentTable, its armor off its career's forbidden armor, an unknown class armed with a longblade, its second weapon
-// put on - and ItemHelper's arm does while it is off (systems/enemyExpansion/dexEquipment.js over
-// combat/rriEnemyEquipment.js). Each pinned against the C#, and each with a mutation it must fail under
+// DAGGERFALL ENEMY EXPANSION'S EQUIPMENT. BestiaryMod.Start takes EnemyEntity.AssignEnemyEquipment over: while Roleplay &
+// Realism: Items' realisticEnemyEquipment is on, the mod's copy of RRI's class arm (DEX_RRICompat.cs) kits a class foe -
+// its class read off the row's EquipmentTable, its armor off its career's forbidden armor, an unknown class armed with a
+// longblade, its second weapon put on - and ItemHelper's arm does while it is off (systems/enemyExpansion/dexEquipment.js
+// over combat/rriEnemyEquipment.js). Each pinned against the C#, and each with a mutation it must fail under
 // (tools/mutants/dex6.json).
 import '../../modsOff.js';
 import test from 'node:test';
@@ -36,7 +35,7 @@ import { _resetDexTroll } from '../../../src/systems/enemyExpansion/dexTroll.js'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const COMPAT = readFileSync(join(ROOT, 'vendor/daggerfall-enemy-expansion/Scripts/Compatibility/DEX_RRICompat.cs'), 'utf8');
 const BESTIARY = readFileSync(join(ROOT, 'vendor/daggerfall-enemy-expansion/Scripts/BestiaryMod.cs'), 'utf8');
-const RRI_JS = readFileSync(join(ROOT, 'src/combat/rriEnemyEquipment.js'), 'utf8');   // OWN-WORK3: RRI's kit as our JS restates Roleplay & Realism: Items 1.3's
+const RRI_JS = readFileSync(join(ROOT, 'src/combat/rriEnemyEquipment.js'), 'utf8');   // RRI's kit as our JS restates Roleplay & Realism: Items 1.3's
 const silent = () => {};
 const RRI = 'roleplay-realism-items';
 const DEX = 'daggerfall-enemy-expansion';

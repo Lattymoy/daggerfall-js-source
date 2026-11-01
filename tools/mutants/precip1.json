@@ -302,8 +302,8 @@
   {
     "name": "PRECIP2-the-cell-share-unread",
     "file": "src/render/volumetricClouds.js",
-    "old": "const warm = c.raw === 'snow' ? 'rain' : c.raw, k = Math.min(1, Math.max(0, c.snow));",
-    "new": "const warm = c.raw === 'snow' ? 'rain' : c.raw, k = 0;",
+    "old": "    const warm = c.raw === 'snow' ? 'rain' : c.raw, k = Math.min(1, Math.max(0, c.snow));",
+    "new": "    const warm = c.raw === 'snow' ? 'rain' : c.raw, k = 0;",
     "tests": [
       "test/systems/weather/precip1_air.test.js",
       "test/render/audit_precip_sky.test.js"
@@ -546,8 +546,8 @@
   {
     "name": "PRECIP4-the-build-season-the-hosts",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const pixelSeason = snowRec ? snowRec.pixel(groundMid - SEA_LEVEL_M, host.season) : host.season;",
-    "new": "const pixelSeason = host.season;",
+    "old": "    const pixelSeason = snowRec ? snowRec.pixel(groundMid - SEA_LEVEL_M, host.season) : host.season;",
+    "new": "    const pixelSeason = host.season;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "PRECIP4-the-twin-unloaded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const ownSet = loadGroundSet(groundArchive, pipeline, snowCover?.winterOf(climate) ?? null);",
-    "new": "const ownSet = loadGroundSet(groundArchive, pipeline, null);",
+    "old": "    const ownSet = loadGroundSet(groundArchive, pipeline, snowCover?.winterOf(climate) ?? null);   // On the snow lane its twin, its winter in it",
+    "new": "    const ownSet = loadGroundSet(groundArchive, pipeline, null);   // On the snow lane its twin, its winter in it",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -564,8 +564,8 @@
   {
     "name": "PRECIP4-the-flat-season-the-pixels",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const fSeason = snowRec ? snowRec.flat(f.x, f.z, f.y - SEA_LEVEL_M, pixelSeason) : pixelSeason;",
-    "new": "const fSeason = pixelSeason;",
+    "old": "      const fSeason = snowRec ? snowRec.flat(f.x, f.z, f.y - SEA_LEVEL_M, pixelSeason) : pixelSeason;",
+    "new": "      const fSeason = pixelSeason;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "PRECIP4-the-snow-unkept",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const snowSeen = snowRec?.done(models.length > 0 || dfLocation != null) ?? null;",
-    "new": "const snowSeen = null;",
+    "old": "    const snowSeen = snowRec?.done(models.length > 0 || dfLocation != null) ?? null;",
+    "new": "    const snowSeen = null;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "PRECIP4-the-build-unsettled",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (snowCover?.on) await snowCover.settle(breather);",
-    "new": "    // unsettled",
+    "old": "    if (snowCover?.on) await snowCover.settle(breather);   // the snow about the player integrated to the clock's minute before a season is read",
+    "new": "    // unsettled   // the snow about the player integrated to the clock's minute before a season is read",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

@@ -301,8 +301,8 @@
   {
     "name": "compat-warning-ungated",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "  if (!(c.betterAmbienceCheck && c.betterAmbienceFootstepsModuleCheck)) return false;",
-    "new": "",
+    "old": "    if (!(c.betterAmbienceCheck && c.betterAmbienceFootstepsModuleCheck)) return false;",
+    "new": "  ",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "compat-ignores-allow",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "  if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;",
-    "new": "  if (!s.Enabled) return false;",
+    "old": "    if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;",
+    "new": "    if (!s.Enabled) return false;",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]

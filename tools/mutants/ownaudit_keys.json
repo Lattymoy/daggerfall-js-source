@@ -65,8 +65,8 @@
   {
     "name": "OWNAUDIT-keys-arc-kept-after-release",
     "file": "src/systems/handheldTorches.js",
-    "old": "      w.arc = aimArc();\n    } else w.arc = null;",
-    "new": "      w.arc = aimArc();\n    }",
+    "old": "    } else w.arc = null;",
+    "new": "    }",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "OWNAUDIT-keys-arc-landing-dropped",
     "file": "src/systems/torchArc.js",
-    "old": "    if (last - i < ARC_LOOK.every) i = last; // the landing is always drawn\n",
-    "new": "",
+    "old": "    if (last - i < ARC_LOOK.every) i = last; // the landing is always drawn\n    const at = worldToScreen(points[i], proj, view, width, height);",
+    "new": "    const at = worldToScreen(points[i], proj, view, width, height);",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "OWNAUDIT-keys-arc-rig-unwired",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (handheldOn() && !paralyzed && !sheetWindowUp()) handheld.drawThrowArc(renderer);",
-    "new": "",
+    "old": "      if (handheldOn() && !paralyzed && !sheetWindowUp()) handheld.drawThrowArc(renderer);   // The throw's arc, under every lane and view, on the world's own screen",
+    "new": "   // The throw's arc, under every lane and view, on the world's own screen",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OWNAUDIT-keys-tint-ignored",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (!w.s.tintSprite) tint = null;",
-    "new": "    if (!w.s.tintSprite) tint = tint;",
+    "old": "    if (!w.s.tintSprite) tint = null; // Presentation.Tint off - the hand keeps its own colours",
+    "new": "    if (!w.s.tintSprite) tint = tint; // Presentation.Tint off - the hand keeps its own colours",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "OWNAUDIT-keys-foe-light-always-casts",
     "file": "src/scenes/droppedTorches.js",
-    "old": "    const shadowless = !s().fireLightShadows;",
-    "new": "    const shadowless = false;",
+    "old": "    const shadowless = !s().fireLightShadows;   // Throwing.EmissionShadows",
+    "new": "    const shadowless = false;   // Throwing.EmissionShadows",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OWNAUDIT-keys-mask-forgets-shadowless",
     "file": "src/scenes/magicCandle.js",
-    "old": "    else if (l.shadowless) carried[i] = CARRIED_SHADOWLESS;\n",
-    "new": "",
+    "old": "    else if (l.shadowless) carried[i] = CARRIED_SHADOWLESS;\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OWNAUDIT-keys-glare-skips-shadowless",
     "file": "src/render/airPass.js",
-    "old": "if (f.carried && f.carried[i] === CARRIED_IN_HAND) continue;",
-    "new": "if (f.carried && f.carried[i]) continue;",
+    "old": "      if (f.carried && f.carried[i] === CARRIED_IN_HAND) continue; // A shadowless light keeps its glare. MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
+    "new": "      if (f.carried && f.carried[i]) continue; // A shadowless light keeps its glare. MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
     "tests": [
       "test/systems/ownaudit_ht_keys.test.js",
       "test/render/mact_bugs.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "OWNAUDIT-keys-offset-fine-dropped",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1) + (s['Animation.FineGlobalOffsetScale'] ?? 0),",
-    "new": "    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1),",
+    "old": "    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1) + (s['Animation.FineGlobalOffsetScale'] ?? 0),   // The XML's shifts, scaled (place)",
+    "new": "    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1),   // The XML's shifts, scaled (place)",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "OWNAUDIT-keys-sites-host-empty",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    footprints: (globalX, globalZ, radius) => ground.footprints?.(globalX, globalZ, radius) ?? [], // OWN-AUDIT: LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)",
-    "new": "    footprints: () => [], // OWN-AUDIT: LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)",
+    "old": "    footprints: (globalX, globalZ, radius) => ground.footprints?.(globalX, globalZ, radius) ?? [], // LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)",
+    "new": "    footprints: () => [], // LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)",
     "tests": [
       "test/systems/ownaudit_keys.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "OWNAUDIT-keys-retired-kept",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'windfall', key: 'General.WindDirectionDegrees' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'windfall', key: 'General.WindDirectionDegrees' }),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/ownaudit_keys.test.js",
       "test/systems/windfall1_model.test.js"
@@ -238,8 +238,8 @@
   {
     "name": "OWNAUDIT-keys-tile-action-gone",
     "file": "src/systems/inputActions.js",
-    "old": "  'eye-of-the-beholder': Object.freeze(['TogglePerspective']),\n",
-    "new": "",
+    "old": "  'eye-of-the-beholder': Object.freeze(['TogglePerspective']),\n});",
+    "new": "});",
     "tests": [
       "test/systems/ownaudit_keys.test.js",
       "test/systems/uxb1f_featurekeys.test.js"
@@ -248,8 +248,8 @@
   {
     "name": "OWNAUDIT-keys-tile-rows-mod-only",
     "file": "src/systems/controlsConfig.js",
-    "old": "  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((row) => row.action), ...(MOD_TILE_ACTIONS[vendor] ?? [])]; // OWN-AUDIT: and the game's own a mod's tile shows",
-    "new": "  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((row) => row.action)]; // OWN-AUDIT: and the game's own a mod's tile shows",
+    "old": "  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((row) => row.action), ...(MOD_TILE_ACTIONS[vendor] ?? [])]; // And the game's own a mod's tile shows",
+    "new": "  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((row) => row.action)]; // And the game's own a mod's tile shows",
     "tests": [
       "test/systems/uxb1f_featurekeys.test.js"
     ]

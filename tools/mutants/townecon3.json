@@ -132,8 +132,8 @@
   {
     "name": "TOWNECON3-living-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          econBandOf: () => townEcon.bandOf(livingTown.mapId),   // TOWN-ECON TE3: the town's economy, as its talk tells it (none offline)\n",
-    "new": "",
+    "old": "          econBandOf: () => townEcon.bandOf(livingTown.mapId),   // The town's economy, as its talk tells it (none offline)\n          extraPeople: (day, town) => host.legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)",
+    "new": "          extraPeople: (day, town) => host.legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],

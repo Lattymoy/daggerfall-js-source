@@ -7,7 +7,7 @@
 // (player/eyeOfTheBeholder/eotbSprite.js spriteFor): the body, the preload, the peers and the Skin card. (2) The card is two panels,
 // ON FOOT and MOUNTED, each closed to the worn skin and opened on a press to the skins it offers.
 //
-// OWN-WORK4 (2026-10-31): the sheets are ours now - each skin's frames are its classic sheet's (`from`, the player's own
+// The sheets are ours now - each skin's frames are its classic sheet's (`from`, the player's own
 // TEXTURE file) painted by player/classSkinArt.js, and the pack is gone. These pins hold OUR table as literals; with
 // ARENA2_PATH set they hold it to the player's files too. Driven through the real spriteFor, the real settings store,
 // the real look and wire door, the real walker layer and the real card against a fake document; the cascade read off
@@ -171,7 +171,7 @@ test('SKIN2: the setting offers them, the look sends them, the relay keeps them,
     destroyBillboardBatch() {},
   };
   const art = createEotbArt({ renderer, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }) });
-  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
+  const w = createPeerWalkers({ art, layeredAll: () => false });
   const peer = { id: 'p1', look: { eo: sorc }, shown: { x: 4, y: 0, z: 9, yaw: 0, pitch: 0, mv: 1, wd: 0, an: 0, sr: 0, cn: 0, ar: 0 } };
   const at = { eye: [4, 1, 20], dt: 0.01 };
   w.sync([peer], (p) => [p.x, p.y, p.z], at);
@@ -242,7 +242,7 @@ const text = (n) => n.textContent;
 
 test('SKIN2: the card is two panels, closed to the skin worn - one opens at a time, and a choice wears it and closes', () => {
   _resetModSettings();
-  setModSetting(V, 'Graphics.LayeredGear', 0);   // PIN MOVED (LAYERED-GEAR-ON): Layered Gearing is on by default; these pins are the Skins look's
+  setModSetting(V, 'Graphics.LayeredGear', 0);
   const sets = skinSets();
   assert.equal(sets.foot.length, FOOT_SKIN_COUNT);
   assert.equal(sets.foot[16].key, '1523_15-0', 'a class skin\'s picture is its own front-on idle');
@@ -264,7 +264,7 @@ test('SKIN2: the card is two panels, closed to the skin worn - one opens at a ti
   assert.deepEqual(find(card.root, 'skingroup').map(text), FOOT_GROUPS.map((g) => g.label));
   const grids = find(card.root, 'skingrid');
   assert.deepEqual(grids.map((g) => g.children.length), [EOTB_FOOT_SET_COUNT, CLASS_SKINS.length]);
-  assert.equal(grids[1].attrs['aria-label'], 'Original classes');   // PIN MOVED: BR5, the original game's classes, not its name
+  assert.equal(grids[1].attrs['aria-label'], 'Original classes');
   assert.ok(grids.every((g) => g.parent === grids[0].parent && panelOf(heads()[0]) === grids[0].parent.parent), 'inside the panel it opened');
   // open mounted: on foot closes - one at a time
   heads()[1].onclick();
@@ -295,7 +295,7 @@ test('SKIN2: the card is two panels, closed to the skin worn - one opens at a ti
 
 test('SKIN2: the head carries the worn skin\'s picture - the same one its tile draws', () => {
   _resetModSettings();
-  setModSetting(V, 'Graphics.LayeredGear', 0);   // PIN MOVED (LAYERED-GEAR-ON): Layered Gearing is on by default; these pins are the Skins look's
+  setModSetting(V, 'Graphics.LayeredGear', 0);
   assert.ok(skinSets().foot.every((s) => s.url === null), 'node: no bundle (the browser build\'s glob is the only source of URLs)');
   const withUrls = () => { const s = skinSets(); for (const x of [...s.foot, ...s.horse]) x.url = `u:${x.key}`; return s; };
   const card = skinCard(doc, { sets: withUrls });

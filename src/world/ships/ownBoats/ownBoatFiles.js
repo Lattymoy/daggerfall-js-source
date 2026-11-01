@@ -1,10 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): COME SAIL AWAY'S FILES, OURS - the
-// twelve prefabs (the trigger boxes 112400-112406, the hulls 112410-112414), their shared component table, their meshes
-// (records over one buffer, as systems/comeSailAway/comeSailAwayModels.js decodes them), materials and animation.
-// Come Sail Away 2.1 carried its author's models; ours are built at the load by this folder's builders, nothing read
-// off the author's files, every name and place the runtime reads kept (comeSailAwayBoat.js getBoatTransforms).
-// `ownBoatFiles()` builds them once a process. Not a DFU member.
+// COME SAIL AWAY'S FILES, OURS - the twelve prefabs (the trigger boxes 112400-112406, the hulls 112410-112414), their
+// shared component table, their meshes (records over one buffer, as systems/comeSailAway/comeSailAwayModels.js decodes
+// them), materials and animation. Come Sail Away 2.1 carried its author's models; ours are built at the load by this
+// folder's builders, nothing read off the author's files, every name and place the runtime reads kept
+// (comeSailAwayBoat.js getBoatTransforms). `ownBoatFiles()` builds them once a process. Not a DFU member.
 import { ownBench, triggerBox, nodeOf } from './ownBoatKit.js';
 import { CONTROLLERS, baseClips } from './ownBoatAnimation.js';
 import { buildRowboat } from './ownRowboat.js';

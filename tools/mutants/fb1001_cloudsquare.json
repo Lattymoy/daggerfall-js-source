@@ -2,8 +2,8 @@
   {
     "name": "CLOUD-SQUARE-the-one-tap-back",
     "file": "src/render/volumetricClouds.js",
-    "old": "  vec4 c = mapBicubic(uv);",
-    "new": "  vec4 c = texture(uMap, uv);",
+    "old": "  vec4 c = mapBicubic(uv);   // CLOUD-SQUARE: never one bilinear tap - a texel is 6 to 23 screen pixels",
+    "new": "  vec4 c = texture(uMap, uv);   // CLOUD-SQUARE: never one bilinear tap - a texel is 6 to 23 screen pixels",
     "tests": [
       "test/render/fb1001_cloudsquare.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CLOUD-SQUARE-a-taps-offset",
     "file": "src/render/volumetricClouds.js",
-    "old": "t1 = (i + 1.5 + w3 / g1) / size;",
-    "new": "t1 = (i + 1.0 + w3 / g1) / size;",
+    "old": "  vec2 t0 = (i - 0.5 + w1 / g0) / size, t1 = (i + 1.5 + w3 / g1) / size;",
+    "new": "  vec2 t0 = (i - 0.5 + w1 / g0) / size, t1 = (i + 1.0 + w3 / g1) / size;",
     "tests": [
       "test/render/fb1001_cloudsquare.test.js"
     ]

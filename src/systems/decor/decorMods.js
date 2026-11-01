@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// DECOR-MODS (FIELD BUGS 2026-10-05b) — THE TOWN MODS' FURNISHINGS, IN
+// THE TOWN MODS' FURNISHINGS, IN
 // THE CATALOGUE WHILE THEY STAND.
 //
 // The owner: "There seems to be a lot of missing decor items with house
@@ -70,9 +70,9 @@ import {
 import { TOWN_PICTURES } from '../../world/townPictures.js';
 import { customAliasFor, hasCustomModel } from '../../world/customModels.js';
 import { hasTextureReplacement } from '../textureReplacement.js';
-import { decorKey, isDecorModEntry } from './decorCatalogue.js'; // AUDIT 05b A11: the one key a piece and its entry share
+import { decorKey, isDecorModEntry } from './decorCatalogue.js'; // The one key a piece and its entry share
 
-// OWN-WORK3 (2026-10-31): the town mods are retired. Their stand-ins stand at every boot (scenes/modWorldData.js), so
+// The town mods are retired. Their stand-ins stand at every boot (scenes/modWorldData.js), so
 // every piece is offered and every piece a player placed still stands; the counts below are the last measure.
 
 /** THE MODS' PIECES THAT STAND INSIDE - offered in every room (and a yard): model id or `archive_record` -> how many
@@ -297,7 +297,7 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     '56790_25': 602,
   }),
 });
-/** AUDIT FB1029e H1: THE MODELS DAGGERFALL LAYS AS FURNITURE (ObjectType 3) in its own rooms - measured over every
+/** THE MODELS DAGGERFALL LAYS AS FURNITURE (ObjectType 3) in its own rooms - measured over every
  *  interior of BLOCKS.BSA (test/scenes/builtin_mods_alinor.test.js measures it again). The mods reuse other classic
  *  ids as their rooms' structure and their ships' rigging (a 12.6 m beam, a mast), which are never furniture. */
 export const ROOM_PROP_MODELS = Object.freeze([
@@ -311,7 +311,7 @@ export const ROOM_PROP_MODELS = Object.freeze([
   51122, 51128,
 ]);
 const ROOM_PROPS = new Set(ROOM_PROP_MODELS);
-/** AUDIT FB1029e H1: the mods' room pieces that hold the room up - DET's pillars (its ceilings' timbers and rafters) and
+/** The mods' room pieces that hold the room up - DET's pillars (its ceilings' timbers and rafters) and
  *  a column's drum - never taken out. */
 export const MOD_ROOM_STRUCTURE = Object.freeze([45081, 45110, 45111, 45112, 45129, 45169]);
 const STRUCTURE = new Set(MOD_ROOM_STRUCTURE);
@@ -403,9 +403,9 @@ export const DECOR_MOD_STREETS = Object.freeze({
     '10035_7': 28,
   }),
 });
-/** AUDIT SHIP-REFIT: THE PIECES A REMOVED MOD'S SHIPS STOOD - offered still (their pictures stand at every boot,
+/** THE PIECES A REMOVED MOD'S SHIPS STOOD - offered still (their pictures stand at every boot,
  *  world/townStandIns.js installPortStandIns) and numbered among a room's, so no piece's name or number moves: each with
- *  the count last measured on those ships (2026-10-05). */
+ *  the count last measured on those ships. */
 export const DECOR_MOD_KEPT = Object.freeze({
   models: Object.freeze({}),
   flats: Object.freeze({
@@ -502,7 +502,7 @@ export function decorModNaming(what) {
   if (what.model != null) {
     const id = what.model;
     const bed = townBedOf(id);
-    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: bed.model }; // AUDIT 05b A3: its classic bed by the table, never by a switch
+    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: bed.model }; // Its classic bed by the table, never by a switch
     if (TOWN_PAINTINGS[id]) return { base: 'Painting', as: id };
     if (RMBRP_ROCKS[id]) return { base: 'Boulder', as: id };
     if (RMBRP_STALLS[id]) return { base: 'Market stall', as: id };
@@ -528,10 +528,10 @@ export function decorModLive(what) {
   return hasTextureReplacement(what.flat[0], what.flat[1]);
 }
 
-/** AUDIT 05b A3: how often the house decorator asks the switches again while its panel is up (and once as it opens). */
+/** How often the house decorator asks the switches again while its panel is up (and once as it opens). */
 export const DECOR_MODS_LIVE_S = 1;
 /**
- * AUDIT 05b A3: THE MODS' PIECES THE PORT STANDS NOW, of a catalogue's `entries` - their keys, the offer's own
+ * THE MODS' PIECES THE PORT STANDS NOW, of a catalogue's `entries` - their keys, the offer's own
  * (systems/decor/decorCatalogue.js decorRoomEntries offers a mod's piece among them alone). `live` decorModLive unless told.
  * @param {readonly any[]|null} entries @param {(what: any) => boolean} [live]
  */

@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): THE BOATS' OWN EFFECTS - the wake, the bow waves, the oars' and the rudders' drops and their
+// THE BOATS' OWN EFFECTS - the wake, the bow waves, the oars' and the rudders' drops and their
 // splashes, and the pennant, as the particle systems world/unityParticles.js plays. Come Sail Away's runtime
 // (systems/comeSailAway/comeSailAway.js) finds them by the names its walk reads (WakeObject, FlagObject, OarEffect,
 // RudderEffect), plays and stops them, and sets the wake's life, size and drift and the pennant's speed each frame - so

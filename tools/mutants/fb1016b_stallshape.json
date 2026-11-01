@@ -32,8 +32,8 @@
   {
     "name": "STALL-SHAPE-every-stall-a-counter",
     "file": "src/world/townStandIns.js",
-    "old": "  ...Object.fromEntries(\n    Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, Number(id) >= RMBRP_STALL_OPEN_FIRST)]),\n  ), // STALL-SHAPE: the pack's two meshes",
-    "new": "  ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, false)])), // STALL-SHAPE: the pack's two meshes",
+    "old": "  ...Object.fromEntries(\n    Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, Number(id) >= RMBRP_STALL_OPEN_FIRST)]),\n  ), // The pack's two meshes",
+    "new": "  ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, false)])), // The pack's two meshes",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],

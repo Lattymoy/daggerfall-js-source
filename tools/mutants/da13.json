@@ -262,8 +262,8 @@
   {
     "name": "DA13-27-the-game-download-holds-nothing",
     "file": "app/lib/launcherState.cjs",
-    "old": "      u.status = 'downloading';\n      u.percent = 0; u.transferred = 0; u.total = Number(ev.total) || 0;\n      break;\n    case 'game-applied':",
-    "new": "      u.status = 'current';\n      u.percent = 0; u.transferred = 0; u.total = Number(ev.total) || 0;\n      break;\n    case 'game-applied':",
+    "old": "      u.version = ev.version ?? null;\n      u.status = 'downloading';",
+    "new": "      u.version = ev.version ?? null;\n      u.status = 'current';",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "DA13-28-a-game-found-after-play-hijacks",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (s.launch || !MAY_FIND.has(u.status)) break;\n      u.kind = 'game';",
-    "new": "      if (!MAY_FIND.has(u.status)) break;\n      u.kind = 'game';",
+    "old": "      // The game's own channel carries it - the files that changed, fetched before play as an installer is\n      if (s.launch || !MAY_FIND.has(u.status)) break;",
+    "new": "      // The game's own channel carries it - the files that changed, fetched before play as an installer is\n      if (!MAY_FIND.has(u.status)) break;",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "DA13-29-the-version-played-never-moves",
     "file": "app/lib/launcherState.cjs",
-    "old": "      s.current = String(ev.version).trim();\n",
-    "new": "",
+    "old": "      s.current = String(ev.version).trim();\n      if (u.kind === 'game') { u.status = 'current'; u.kind = null; u.percent = 100; } else if (u.status === 'checking' || u.status === 'offline') u.status = 'current';",
+    "new": "      if (u.kind === 'game') { u.status = 'current'; u.kind = null; u.percent = 100; } else if (u.status === 'checking' || u.status === 'offline') u.status = 'current';",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "DA13-30-a-failure-strands-the-launcher",
     "file": "app/lib/launcherState.cjs",
-    "old": "{ u.status = 'checking'; u.kind = null; u.version = null; }",
-    "new": "{ u.status = 'failed'; u.kind = null; u.version = null; }",
+    "old": "      if (u.kind === 'game' && (u.status === 'downloading' || u.status === 'background')) { u.status = 'checking'; u.kind = null; u.version = null; }",
+    "new": "      if (u.kind === 'game' && (u.status === 'downloading' || u.status === 'background')) { u.status = 'failed'; u.kind = null; u.version = null; }",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],

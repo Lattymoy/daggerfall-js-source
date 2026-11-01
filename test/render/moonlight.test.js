@@ -1,4 +1,4 @@
-// EV5 - MOONLIGHT, pinned with no GL and no game data: the phase-lit
+// MOONLIGHT, pinned with no GL and no game data: the phase-lit
 // fraction, the term derived from skyState's own moon output (masser
 // keys, secunda lifts the ambient), the day/cloud/phase gates, the
 // in-place ambient fold, and the wiring shape - three lit shaders take
@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import {
   skyState, moonlightTerm, withMoonAmbient, phaseLitFraction, MOONLIGHT,
 } from '../../src/render/enhancedSky.js';
-import { dynamicMoonState, dynamicMoonlight } from '../../src/render/dynamicSkiesBridge.js';   // AUDIT 65 MC-3: the mod's arm of moonlight(), and the state its own producer mints
+import { dynamicMoonState, dynamicMoonlight } from '../../src/render/dynamicSkiesBridge.js';   // The mod's arm of moonlight(), and the state its own producer mints
 import { LUNAR_PHASES } from '../../src/systems/gameDate.js';
 
 const midnight = (phases, weather = 'sunny') =>
@@ -97,7 +97,7 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   const bbAt = r.indexOf('  drawBillboards(batches');
   assert.ok(bbAt > 0, 'the billboard pass');
   const litBranch = r.slice(r.indexOf('if (this._clockLit)', bbAt), r.indexOf('gl.uniform3f(this.bbUTint, 1, 1, 1)'));
-  assert.equal((litBranch.match(/mc\[\d\] \* this\._moonScale \* 0\.5/g) || []).length, 3);   // EL1: `mc` is _moonColor as the installed set wants it (_c3)
+  assert.equal((litBranch.match(/mc\[\d\] \* this\._moonScale \* 0\.5/g) || []).length, 3);   // `mc` is _moonColor as the installed set wants it (_c3)
   assert.match(litBranch, /mc = this\._c3\(this\._moonColor, this\._decB\)/);
   // the studio borrow zeroes the moon and returns it - no moonlight on
   // a UI read-back panel
@@ -109,22 +109,19 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   assert.ok(r.includes('this._moonScale = 0;\n    this._moonColor'), 'constructor default is no moon');
   // the seam: only the enhanced sky has moon state to answer with
   const shared = readFileSync('src/scenes/shared.js', 'utf8');
-  // DS1: the mod's moons feed the same term (dynamicMoons); the dome's
-  // arm and the classic null are as they were.
-  // AUDIT 65 MC-3: the mod's arm is the BRIDGE's own export now, not a
-  // second copy of its body - dynamicMoonlight carries the null guard,
-  // so the arm a future host forgets lives in one place.
-  // PIN MOVED (NIGHT-FOG): the term's body is the controller's `moonNow`, which the lit fog asks too (systems/weather/nightFog.js)
-  // PIN MOVED (SKYRIM-AURORA): and the aurora's light added to it (scenes/auroraHost.js withAuroraLight - null with none)
-  // PIN MOVED (AUDIT SKYRIM-AURORA 2): at a view out's clock minute (`moonlight(minute)`)
+  // The mod's moons feed the same term (dynamicMoons); the dome's arm and the classic null are as they were. AUDIT 65 MC-3: the
+  // mod's arm is the BRIDGE's own export now, not a second copy of its body - dynamicMoonlight carries the null guard, so the arm
+  // a future host forgets lives in one place. PIN MOVED: the term's body is the controller's `moonNow`, which the lit fog asks too
+  // (systems/weather/nightFog.js) PIN MOVED: and the aurora's light added to it (scenes/auroraHost.js withAuroraLight - null with
+  // none) PIN MOVED: at a view out's clock minute (`moonlight(minute)`)
   assert.match(shared, /const moonNow = \(minute\) => withAuroraLight\(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\), aurora\?\.light\(minute\) \?\? null\);/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
-  assert.match(shared, /moonlight\(minute\) \{ return moonNow\(minute\); \},/, 'and the world light asks the same term');   // PIN MOVED (AUDIT SKYRIM-AURORA 2): a view out's minute
+  assert.match(shared, /moonlight\(minute\) \{ return moonNow\(minute\); \},/, 'and the world light asks the same term');
   // and the export itself answers, rather than merely being named: the
   // null arm, and byte-for-byte moonlightTerm for a state the mod's own
   // producer mints (dynamicMoonState, the shape shared.js hands it).
   assert.equal(dynamicMoonlight(null), null, 'no mod moons, no term - the classic night');
-  const dyn = {   // PIN MOVED (OWN-WORK4): our sky's instance, its moons by name
+  const dyn = {
     _sunDir: [0, -0.5, 0],
     phases: { masser: { phase: LUNAR_PHASES.Full }, secunda: { phase: LUNAR_PHASES.Full } },
     moonDirection: (w) => (w === 'masser' ? [0, 0.7, 0.7] : [0, 0.5, 0.5]),
@@ -135,7 +132,6 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // both exterior hosts drive it; no interior host ever does
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = readFileSync(host, 'utf8');
-    // PIN MOVED (AUDIT CAPTAIN'S SEA G14): the streaming world's key leaned past the Veil, the moon as it is else
     assert.ok(src.includes(host === 'src/scenes/world.js' ? 'renderer.setMoonlight(canopyMoon(moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow, jungle?.canopy))' : 'renderer.setMoonlight(moonNow)'), `${host} sets the key`);
     assert.ok(src.includes('withMoonAmbient(exteriorAmbient('), `${host} folds secunda into the ambient`);
   }
@@ -151,7 +147,7 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // only setMoonlight calls in worldModes and the automap are the
   // null form, one per modal arm.
   const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
-  // WB6a: the one exception, and it cannot leak - the Burning Court's key light (the vortex's fire behind the boss)
+  // The one exception, and it cannot leak - the Burning Court's key light (the vortex's fire behind the boss)
   // is set on the moon's term in the dungeon arm, in the SAME frame and right after that arm's own null clear, so the
   // next frame of any arm starts dark again (WB6b: a strike in the Deadlands' sky swings it for a moment - the same call)
   // SD5a: and the Shattered Hour's key (its clock-face's light) the same way - in the Hour alone, straight after the court's

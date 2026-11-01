@@ -463,8 +463,8 @@
   {
     "name": "N2-the-beast-walks-on-the-wall",
     "file": "src/net/peer/peerRiders.js",
-    "old": "stopped: !peerMoving(pose), sheathed: !pose?.wd });",
-    "new": "stopped: !pose?.mv, sheathed: !pose?.wd });",
+    "old": "export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !peerMoving(pose), sheathed: !pose?.wd });   // A beast on the wall walks no stride",
+    "new": "export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !pose?.mv, sheathed: !pose?.wd });   // A beast on the wall walks no stride",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "N2-the-beast-faces-the-camera's-yaw",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it",
-    "new": "    const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it",
+    "old": "    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // A beast on the wall faces it",
+    "new": "    const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // A beast on the wall faces it",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ],

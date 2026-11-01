@@ -2,8 +2,8 @@
   {
     "name": "OWN-WORK2-no-relief",
     "file": "src/world/road/riverNetwork.js",
-    "old": "e[i] = heights[i] + d.relief * reliefNoise(i % W, Math.floor(i / W), d.reliefPx);",
-    "new": "e[i] = heights[i];",
+    "old": "  for (let i = 0; i < N; i++) e[i] = heights[i] + d.relief * reliefNoise(i % W, Math.floor(i / W), d.reliefPx);",
+    "new": "  for (let i = 0; i < N; i++) e[i] = heights[i];",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OWN-WORK2-the-area-law",
     "file": "src/world/road/riverNetwork.js",
-    "old": "const mask = area[i] >= d.riverArea ? rivers : area[i] >= d.streamArea ? streams : null;",
-    "new": "const mask = area[i] >= d.streamArea ? rivers : null;",
+    "old": "    const mask = area[i] >= d.riverArea ? rivers : area[i] >= d.streamArea ? streams : null;",
+    "new": "    const mask = area[i] >= d.streamArea ? rivers : null;",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OWN-WORK2-the-price-unread",
     "file": "src/world/roadsProducer.js",
-    "old": "    land.river = riverPrices(rivers, streams, RIVER_FORD);\n",
-    "new": "",
+    "old": "    land.river = riverPrices(rivers, streams, RIVER_FORD);\n    const gates = edgeGates(dry, W, H);",
+    "new": "    const gates = edgeGates(dry, W, H);",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "OWN-WORK2-the-place-pixel-wet",
     "file": "src/world/roadsProducer.js",
-    "old": "&& l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = 0;",
-    "new": "&& l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = dry[l.y * W + l.x];",
+    "old": "    for (const l of locations) if ((ROAD_TYPES.has(l.type) || TRACK_TYPES.has(l.type)) && l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = 0;",
+    "new": "    for (const l of locations) if ((ROAD_TYPES.has(l.type) || TRACK_TYPES.has(l.type)) && l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = dry[l.y * W + l.x];",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "OWN-WORK2-the-network-unwatered",
     "file": "src/world/roadsProducer.js",
-    "old": "    waterOffPaths(Object.assign(net, { rivers, streams }));",
-    "new": "    Object.assign(net, { rivers, streams });",
+    "old": "    waterOffPaths(Object.assign(net, { rivers, streams }));   // An arm a path and a water share is the path's",
+    "new": "    Object.assign(net, { rivers, streams });   // An arm a path and a water share is the path's",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "OWN-WORK2-the-rivers-uncached",
     "file": "src/world/roadsCache.js",
-    "old": "  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS, rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } }; // OWN-WORK2: the land's law's and the rivers' dials too",
-    "new": "  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS }; // OWN-WORK2: the land's law's and the rivers' dials too",
+    "old": "  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS, rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } }; // The land's law's and the rivers' dials too",
+    "new": "  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS }; // The land's law's and the rivers' dials too",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "OWN-WORK2-the-bay-tree-across-the-sea",
     "file": "src/world/road/roadNetwork.js",
-    "old": "if (together(nodes[i], nodes[j])) all.push(",
-    "new": "all.push(",
+    "old": "  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (together(nodes[i], nodes[j])) all.push([dist(nodes[i], nodes[j]), i, j]);",
+    "new": "  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) all.push([dist(nodes[i], nodes[j]), i, j]);",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]

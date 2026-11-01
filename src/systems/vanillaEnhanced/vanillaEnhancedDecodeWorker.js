@@ -1,5 +1,5 @@
-// AUDIT VE P1 (2026-10-05, Mac: "performance isn't affected") - THE SHIPPED PACK'S PICTURES, MADE OFF THE MAIN THREAD.
-// OWN-WORK4 (2026-10-31): a pack's picture is built here - the page posts the player's classic record and its spec, and
+// AUDIT VE P1 - THE SHIPPED PACK'S PICTURES, MADE OFF THE MAIN THREAD.
+// OWN-WORK4: a pack's picture is built here - the page posts the player's classic record and its spec, and
 // this runs our rule (systems/ownTextures/ownTextureRules.js applyOwnRule), the same pixels the page's fallback makes.
 // FIRST-VISIT: a served PNG is decoded and fitted here (mipFitSize, resampleRgba). The pixels come back moved.
 //

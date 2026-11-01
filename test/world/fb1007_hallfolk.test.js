@@ -6,7 +6,7 @@
 // A guild's hall IS an online home (GUILD1d: the homes table's row, its character the guild's own mark), and the
 // door's build already stood none of its people: the build reads the town's answer once (`home`), and AddPeople's
 // owned arm hides every resident of a home - anyone's. The "sometimes" was the REST. The rest window's close runs
-// DaggerfallInterior.UpdateNpcPresence (ROAD-B B5), which stands back up every person of a building whose hours pass
+// DaggerfallInterior.UpdateNpcPresence, which stands back up every person of a building whose hours pass
 // and never asks who owns it - DFU's own law, written for the bank's deed. A House2-4 is open 6-18, so any rest by
 // day - the window opened and shut, or a night's sleep in the hall's own beds (GUILD1d made a member's hall their bed)
 // - put the house's old residents back in the hall. A HouseForSale, a House1, a House5 or a House6 never passes, which
@@ -38,7 +38,7 @@ import { standService } from '../accountDb.mjs';
 
 const WM = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
 
-const VILLAGES = null;   // OWN-WORK3: Beautiful Villages retired - no pack to build its rooms from
+const VILLAGES = null;   // Beautiful Villages retired - no pack to build its rooms from
 const noop = () => {};
 
 async function quietly(fn) {
@@ -95,7 +95,7 @@ const RESIDENTS = [
 const TOWN = 7;
 const KEY = 7;
 /** Warvale's house #1 - its people put in - the entry the street hands the mode machine, and an inside save's identity
- *  for it (IS1): a House2 of no faction, the type HOME2 sells and a guild buys as its hall (homeCandidate). */
+ *  for it: a House2 of no faction, the type HOME2 sells and a guild buys as its hall (homeCandidate). */
 function warvale(buildingType = BUILDING_TYPES.House2) {
   const block = genras00();
   const sr = block.rmbBlock.subRecords[1];
@@ -184,6 +184,5 @@ test('HALL-FOLK by source: the interior host\'s re-roll asks the build\'s own la
   const body = dep.slice(0, dep.indexOf('\n    },\n'));
   assert.match(body, /if \(!interiorBuilding \|\| !interiorCtx\) return;[\s\S]*?if \(interiorHome \|\| privateVisitRoom\) return;[\s\S]*?if \(!updateNpcPresence\(interiorBuilding\?\.buildingType/, 'the room first, then DFU\'s law');
   assert.match(WM, /interiorHome = home;   \/\/ HOME1: the visit's latch/, 'the latch is the build\'s own answer');
-  // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt)
   assert.match(WM, /isHouseOwned: \(key\) => home !== null \|\| houseOwnedAt\(/, 'the one the people gate read');
 });

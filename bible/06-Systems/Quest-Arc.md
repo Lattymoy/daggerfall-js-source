@@ -8,7 +8,9 @@ them. What the player sees of it (the journal's faces, the way to a quest's plac
 ## How it works
 
 **The pack.** DFU ships quests as decompiled `.txt` sources, and so does this game: 265 quests and the quest tables are
-vendored at `vendor/dfu-quests` (MIT, provenance in its README). The quest corpus needs no ARENA2 and no network.
+vendored at `vendor/dfu-quests` (MIT, provenance in its README). The game reads each quest with messages from our own
+file, DFU's QBN in our own words (`src/systems/quest/own/`, `Own-Words.md`). The quest corpus needs no ARENA2 and no
+network.
 
 **The parse layer** reads a quest into messages, resources and tasks: `table.js` (Table.cs), `symbol.js`, `message.js`
 (Message.cs), `parser.js`, and the resource classes `place.js`, `person.js`, `item.js`, `foe.js` and `clock.js`.

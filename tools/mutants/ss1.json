@@ -531,8 +531,8 @@
   {
     "name": "SS5-a-long-row-left-whole",
     "file": "src/ui/messageBox.js",
-    "old": "  if (!fnt || !Array.isArray(lines)) return lines;\n  return lines.flatMap((l) => {",
-    "new": "  return lines;\n  return lines.flatMap((l) => {",
+    "old": "  if (!fnt || !Array.isArray(lines)) return lines;",
+    "new": "  return lines;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

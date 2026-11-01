@@ -2,7 +2,7 @@
 // after traveling for a while I get low framerates"; EvoAva: "The game is starting to slow down, and especially freeze")
 // - THE OVERWORLD'S COSTS, MEASURED IN THE SOURCE AND PAID.
 //
-// TV-BURST: the view's first frame started all twelve dungeon models' loads at once, inside its draw (OW-DUNGEONS) - now
+// The view's first frame started all twelve dungeon models' loads at once, inside its draw - now
 // one a frame once the view is up, the nearest first, and a view brought down lets them go to their shelf.
 // TV-PIN: their climate's pictures went up through the host's PINNED door and stayed on the GPU for the session - now
 // through the place's own hold, freed with it (run here on the REAL data pipeline and renderer over a counting GL).
@@ -29,9 +29,9 @@ import { trs } from '../../src/world/mat4.js';
 import { PersistentTrackField, SnowCoverage, TRACK_MAX_CELLS } from '../../src/systems/snowfall.js';
 import { SnowfallRuntime } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowPixelBox } from '../../src/scenes/snowfallHost.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
-const WORLD = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the dungeons' models live in scenes/travelViewDungeonModels.js
+const WORLD = hostText('src/scenes/world.js');   // HOST-SPLIT: the dungeons' models live in scenes/travelViewDungeonModels.js
 const lift = (re, what) => { const m = re.exec(WORLD); assert.ok(m, `lifted from scenes/world.js: ${what}`); return m[1]; };
 const settle = (ms = 1) => new Promise((r) => setTimeout(r, ms));
 

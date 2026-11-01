@@ -1,5 +1,5 @@
 // PERF-SAILS4 (2026-10-14, the owner's client online in a port after PERF-SAILS3: a ship's animators 0.31 ms of the
-// frame and her running rope's holders 0.45; bible/07-Rendering/Performance-Crowd.md PERF-SAILS4) - A CLIP'S CURVES
+// frame and her running rope's holders 0.45; PERF-SAILS4) - A CLIP'S CURVES
 // BOUND ONCE AND A STILL CLIP POSED ONCE (world/unityAnimator.js), AND A ROPE'S BONES READ OFF THE FRAME'S WALK
 // (scenes/comeSailAway/comeSailAwayPool.js worldOf) - every pose the animators write and every bake the ropes make what it was.
 import '../../modsOff.js';
@@ -44,7 +44,7 @@ test('PERF-SAILS4: every pose the sea\'s animators write is the one they wrote b
   for (let f = 0; f < 60; f++) for (const a of rudders) { a.update(1 / 60); for (const p of a.props) h.update(bits(p.node.localRotation)); h.update(`${a.stateName}|`); }
   assert.ok(rudders.filter((a) => a.stateName === 'Rowing').length >= 8, 'rowing');
   pool.destroyAll();
-  // the same run on the animator before PERF-SAILS4 (origin/main d8ccf7fd6); OWN-WORK4 (2026-10-31): re-pinned over our
+  // the same run on the animator before PERF-SAILS4 (origin/main d8ccf7fd6); OWN-WORK4: re-pinned over our
   // own boats' clips (ccc3a6ec... over Come Sail Away 2.1's)
   assert.equal(h.digest('hex'), 'a5f50df6f70ed2815fe8871dc349684585ce8837d5d664cce3c59ef96152ca52');
 });

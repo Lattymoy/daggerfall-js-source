@@ -1,9 +1,9 @@
 # Features
 
-The Features registry declares every switchable, enhanceable feature in one place: the port's own systems, the
-vendored mods and Daggerfall Unity's optional features. Each feature is one row on the Settings screen
+The Features registry declares every switchable, enhanceable feature in one place: the port's own systems, the ported
+mods and Daggerfall Unity's optional features. Each feature is one row on the Settings screen
 (`10-UI/Settings-Screen-Spec.md`), placed in the tab and section about what it changes. A row wears one or more labels
-saying who made it: **Enhanced**, **Mod Authored** or **DFU Classic**.
+saying where it began: **Enhanced**, **Mod Authored** or **Classic Option** (`KINDS`). No label names an author.
 
 ## How it works
 
@@ -23,9 +23,9 @@ example land view distance (the port's radius and DFU's `Experimental/TerrainDis
 sky, Dynamic Skies). Such a row names a `lane`; the lane module registers itself (`registerFeatureLane`,
 `src/systems/featureLanes.js`) and the menu reads it through `resolveControl`, so the registry imports no store.
 
-**A mod's row** comes from `src/systems/modSettings.js`: its switch, its title with the author's name, and its own
-description as the note. Its `Modules.` keys show as chips (derived, so a new module needs no edit) and a curated set
-of dials (`MOD_CURATED`); other keys keep the mod's shipped values.
+**A mod's row** comes from `src/systems/modSettings.js`: its switch, the mod's name alone as its title (CREDITS-OUT, the
+owner), and its description as the note. Its `Modules.` keys show as chips (derived, so a new module needs no edit) and
+a curated set of dials (`MOD_CURATED`); other keys keep the mod's shipped values.
 
 **Every control is a bar**, Off its first segment, so a two-state and a five-state control look alike
 (`tileStates` answers the segments for every store). Online, a row the room decides is locked and says so.
@@ -36,7 +36,7 @@ everything to defaults returns every row, its parts and a mod's modules to how t
 it leaves rows the room decides.
 
 **Search** (`featureSearchText`, `matchesFeatureQuery`) finds every word, in any order, in the title, note, labels,
-parts or a mod's title, author and vendor, with accents folded.
+parts or a mod's title and key, with accents folded.
 
 ## Rules
 
@@ -54,7 +54,7 @@ parts or a mod's title, author and vendor, with accents folded.
 
 DFU's optional features are its own settings keys (`settings.ini`); its mods are configured through their
 `modsettings.json`. We keep both stores and their defaults and present each under one row beside the port's own. A
-mod's description is rewritten plainly where shown (`10-UI/Plain-Words.md`); its vendored file is untouched.
+mod's description is our own words (`10-UI/Plain-Words.md`).
 
 ## Code and tests
 

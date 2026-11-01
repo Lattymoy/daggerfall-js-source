@@ -1,9 +1,9 @@
-// AUDIT MW-CLOAK (2026-10-09, Mac: "Lets audit everything so far"): THE CLOAK IN MOTION. Four cold reviews of MW-EBONY1,
-// MW-CLOAK1 and MW-CLOAK2 found the cloak's two fits held at REST alone: the hem, swinging with the thighs, swept through
-// a hip-hung blade on every step its leg went forward (31 of the addon's 71 scabbards); a greatsword's tip came through
-// it in a stride and a bow's limb as the spine leant back; a pauldron came through its shoulders as an arm swung back;
-// and seated, its hem wrapped forward under the thighs past the knees. The pins below hold the cloak and what hangs
-// round it through the poses (fixtures/mw/cloakRig.mjs SWEEP), on the port's own plate and our own scabbards (OWN-WORK4).
+// THE CLOAK IN MOTION. Four cold reviews of MW-EBONY1, MW-CLOAK1 and MW-CLOAK2 found the cloak's two fits held at REST
+// alone: the hem, swinging with the thighs, swept through a hip-hung blade on every step its leg went forward (31 of the
+// addon's 71 scabbards); a greatsword's tip came through it in a stride and a bow's limb as the spine leant back; a
+// pauldron came through its shoulders as an arm swung back; and seated, its hem wrapped forward under the thighs past the
+// knees. The pins below hold the cloak and what hangs round it through the poses (fixtures/mw/cloakRig.mjs SWEEP), on the
+// port's own plate and our own scabbards.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { assembleFirstPersonArm, poseAssembly, bindPartsInto } from '../../../src/formats/morrowind/mwFirstPerson.js';
@@ -55,9 +55,9 @@ test('AUDIT MW-CLOAK: fit 1 holds the cloak over the poses - the rest, a stride 
   const restOnly = await body(ARMOR_MATERIAL.Ebony);
   fitCloakOver(restOnly, { isCloak, isUnder, poses: [{}] });
   const missed = sweep(restOnly, isUnder);
-  // OWN-WORK4: on our biped (its shoulders let down and forward) the rest fit alone misses the lean and the stride, not an arm
+  // On our biped (its shoulders let down and forward) the rest fit alone misses the lean and the stride, not an arm
   assert.deepEqual(missed, ['leanBack5', 'leanBack10', 'strideL', 'strideR'], `fitted at rest alone, a pose of the sweep comes through (${missed})`);
-  // MW-CAPE-RIGID: the cloak rides the chest alone, so leaning back swings its whole hem forward into the legs
+  // The cloak rides the chest alone, so leaning back swings its whole hem forward into the legs
   const noLean = await body(ARMOR_MATERIAL.Ebony);
   fitCloakOver(noLean, { isCloak, isUnder, poses: CLOAK_FIT_POSES.slice(0, 3) });
   assert.deepEqual(sweep(noLean, isUnder), ['leanBack10'], 'fitted without the lean, leaning back brings the plate through');
@@ -78,7 +78,7 @@ test('AUDIT MW-CLOAK: the stowed gear GOES WITH the cloak - the addon\'s greatsw
   poseAssembly(asm);
   const atRest = asm.pieces.filter(isGear).map((p) => Float32Array.from(p.positions));
   const unfollowed = sweep(asm, isGear);
-  // MW-CAPE-RIGID: the cloak rides the chest alone, so the legs no longer swing its hem through hip gear - a lean of the
+  // The cloak rides the chest alone, so the legs no longer swing its hem through hip gear - a lean of the
   // chest does (it came through walking and striding too while the hem hung over the thighs)
   assert.deepEqual(unfollowed, ['leanBack5', 'leanBack10'], 'fitted at rest alone, the gear comes through leaning back, and only then');
   const follow = followCloak(asm, { isCloak, isGear });
@@ -94,7 +94,7 @@ test('AUDIT MW-CLOAK: the stowed gear GOES WITH the cloak - the addon\'s greatsw
     assert.ok(worst < 1e-3, `${p.bone} at rest unmoved (${worst})`);
   });
   assert.deepEqual(sweep(asm, isGear), [], 'tied to the cloak, no stowed piece through it in any pose of the sweep');
-  // MW-CAPE-RIGID: slung gear hangs from the cloak's own bone (retail's slung holsters are Bip01 Spine2's), so cloak and
+  // Slung gear hangs from the cloak's own bone (retail's slung holsters are Bip01 Spine2's), so cloak and
   // gear are one rigid body - in no pose of the sweep does the follow turn or slide it (the steel longbow's slide,
   // leaning back, was needed while the cloak hung over the spine and the thighs)
   const sk = asm.skeleton;
@@ -206,7 +206,7 @@ test('AUDIT MW-CLOAK: what the fits will not chase or move - a thing more than C
   const hip = await body(ARMOR_MATERIAL.Steel, ['longsword']);
   fitCloakOver(hip, { isCloak, isUnder, poses: [{}] });
   const src = hip.pieces.find(isGear).source;
-  assert.deepEqual(fitStowedGear(hip, { isCloak, isGear, pitchLimit: 1 }).map((r) => r.how), ['unresolved']);   // OWN-WORK4: ours pitches clear within 5
+  assert.deepEqual(fitStowedGear(hip, { isCloak, isGear, pitchLimit: 1 }).map((r) => r.how), ['unresolved']);   // Ours pitches clear within 5
   assert.equal(hip.pieces.find(isGear).source, src);
   // a rod hung at the hip across the back, behind the sheet between its ends and its ends past the cloak's sides: no
   // vertex of it is over the cloak, so the vertices alone call it clear - its edges, sampled, do not

@@ -1,27 +1,26 @@
-// TWO-HANDS, THE MORROWIND LANE (2026-10-16, bible/05-Combat/Two-Hands.md): the second hand on the 3D body - an arm, or
+// TWO-HANDS, THE MORROWIND LANE: the second hand on the 3D body - an arm, or
 // the whole body, as the mirror of another (combat/twoHands/mirrorRig.js) on our own biped (OWN-WORK4; once Weapon Sheathing's
 // xbase_anim, bones along their local X) and the fixture rig; the left hand's weapon on the Weapon Bone Left
 // (combat/fpArm.js resolveOffWeaponParts, setOffWeapon); the left-hand blow, the fists' mirror, and the running hands
 // through the real arm's update. The sprite lane's pins are test/combat/twohands.test.js.
 //
-// TWO-HANDS AUDIT (2026-10-16): the lane's eleven findings, each pinned where it was reproduced - a Weapon Bone Left made
+// The lane's eleven findings, each pinned where it was reproduced - a Weapon Bone Left made
 // by the mirror for a skeleton without one (every retail one), each arm hung from this frame's body and every joint on
 // its bone (the law in each bone's frame), the carry in each bone's frame, the run and the climb blended, a mirrored
 // blow's way across the screen, a carry kept across a view switch, the pair's draw composed, the portrait's pair, a
 // failed left-hand swap remembered forever, the mirror's cost, the run's lens - and the rig's own stride phase.
 //
-// TWO-HANDS FIELD (2026-10-16, Mac after the merge): a pair's left arm in first person was out of the picture whole ("No
-// left arm") - mirrored across the chest the clip posed, not across the eye; and on the move in third person both arms
-// swung the same way ("Both arms swing the same direction") - the left arm was the frame's own right, mirrored.
+// A pair's left arm in first person was out of the picture whole ("No left arm") - mirrored across the chest the clip
+// posed, not across the eye; and on the move in third person both arms swung the same way ("Both arms swing the same
+// direction") - the left arm was the frame's own right, mirrored.
 //
-// TWO-HANDS AUDIT 2 (2026-10-16, lane 3): the made Weapon Bone Left mirrored hand to hand in the skin's frame (M1), the
-// guard dropped where something else has the hands and carried off the arm (M2), the stride following the head bob
-// without jumping (M3, the sprite lane's law too), the guard sized by the blade's own height (M4), the made bone and the
-// guard paid for only where used (M5), a rebuild keeping the left blade (M6), the blades' effects and glows going with
+// TWO-HANDS AUDIT 2 (2026-10-16, lane 3): the made Weapon Bone Left mirrored hand to hand in the skin's frame, the
+// guard dropped where something else has the hands and carried off the arm, the stride following the head bob
+// without jumping (M3, the sprite lane's law too), the guard sized by the blade's own height, the made bone and the
+// guard paid for only where used, a rebuild keeping the left blade, the blades' effects and glows going with
 // the blades; and two of L5's - the lantern under the Morrowind arm, H between the fists.
 //
-// TWO-HANDS SPREAD (2026-10-17, Mac: "For the morrowind first person, when duel wielding can we spread out the arms a bit
-// more sense it can make the weapons overlap"): the first-person pair's arms turned out at their tops - the law's angle,
+// TWO-HANDS SPREAD: the first-person pair's arms turned out at their tops - the law's angle,
 // a blade's inner edge on the picture, the turn on the skeleton, and the arm laying it in first person alone.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,11 +36,11 @@ import { HeadBobber } from '../../src/player/headBobber.js';
 import { MW_WEAPON_TYPE, MW_UNITS_PER_METER, assembleFirstPersonArm, poseAssembly } from '../../src/formats/morrowind/mwFirstPerson.js';
 import { bodyRec } from '../fixtures/mw/bodyRec.mjs';
 import { SHADOW_INVERSE_BINDS, RETAIL_SKELETON_BYTES, retailSkeleton } from '../fixtures/mw/retailRig.mjs';
-import { composeWornArmor } from '../../src/formats/morrowind/mwItemMap.js';   // MIRROR-BIND: the port's own gauntlets, a left and a right piece
+import { composeWornArmor } from '../../src/formats/morrowind/mwItemMap.js';   // The port's own gauntlets, a left and a right piece
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const f = (n) => new Uint8Array(readFileSync(new URL(`../fixtures/mw/${n}`, import.meta.url)));
-const retailBytes = () => RETAIL_SKELETON_BYTES;   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
+const retailBytes = () => RETAIL_SKELETON_BYTES;   // Our own biped (tools/ownBiped.mjs)
 const retail = () => buildSkeleton(parseNif(retailBytes()));
 const M = (sk, pose) => skeletonSpaceMatrices(sk, pose, GRAPH_ROOT);
 
@@ -104,10 +103,6 @@ test('TWO-HANDS mirror, THE LAW on the retail biped: at rest it is the rest; an 
   const wrote = applyMirrorRig(sk, p1, GRAPH_ROOT, skeletonSpaceMatrices, { limbs: { L: { pose: null, side: 'R', mirror: true } } });
   assert.ok(wrote.length >= 10);
   const got = M(sk, p1);
-  // PIN MOVED (TWO-HANDS AUDIT): the skin delta's TRANSLATION is no longer the graph law's on retail. Its rest stands a
-  // few tenths of a unit (its legs 6.7) off its own mirror, and the graph law hung each bone at the mirror of its
-  // counterpart's frame - a turned counterpart slid the joint off its parent by that asymmetry (a finger joint 10% off
-  // its bone here). The rotations stay the law's exactly; every joint now stays on its bone (mirrorRig.js's header).
   for (const ref of plan.arms.L) {
     const c = plan.counterpart.get(ref);
     if (c == null) continue;
@@ -358,7 +353,7 @@ test('TWO-HANDS AUDIT the left hand\'s weapon bone (finding 1; AUDIT 2, L3 M1): 
   // the player's assembly hands the skeleton file along: its made bone is the skin's
   const asm = await assembleFirstPersonArm({ skeletonBytes: bytes, parts: [], offWeaponBone: true });
   assert.ok(diff(localOf(asm.skeleton.nodes.get(asm.skeleton.byName.get('weapon bone left'))), want) < 1e-4, 'through the assembly: the skin\'s mirror');
-  // TWO-HANDS AUDIT 2 (L3 M5): two names and the hands' rests - never the whole plan (every NPC and peer body made one,
+  // Two names and the hands' rests - never the whole plan (every NPC and peer body made one,
   // ~0.7 ms, to read two bones): a skeleton's names counted as the addon asks them
   const counted = buildSkeleton(nif);
   let asked = 0;
@@ -531,7 +526,6 @@ test('TWO-HANDS AUDIT the arm, THE PAIR\'S GUARD (Mac: "When attacking with a we
   const rel = g.map((r, i) => (r.u === 'AttackRelease' ? i : -1)).filter((i) => i >= 0);
   const at = rel[rel.length - 1];   // the release's last frame: the blow's hit
   const drop = rest - g[at].e;
-  // PIN MOVED (TWO-HANDS AUDIT 2, L3 M4): the drop was the fists' GUARD.DOWN of 200 px (GUARD_LENS_DROP, 0.0519 rad)
   assert.ok(Math.abs(drop - wantDrop) < 0.15 * wantDrop, `at the hit the held wrist is ${drop.toFixed(4)} rad lower on the picture (LOWER ${GUARD.LOWER} of its blade's ${shownHeight().toFixed(3)} on the picture: ${wantDrop.toFixed(4)}; the fists' ${GUARD_LENS_DROP.toFixed(4)})`);
   assert.ok(Math.abs(arm.handsState().guardDrop.L - wantDrop) < 0.1 * wantDrop, `measured once, on the build's rest: ${arm.handsState().guardDrop.L.toFixed(4)} (as drawn at rest ${wantDrop.toFixed(4)})`);
   // the left blade is measured in the RIGHT hand (its bone's counterpart, unmirrored): a pair at rest holds the left arm as
@@ -564,7 +558,7 @@ test('TWO-HANDS AUDIT the arm on a skeleton WITHOUT a Weapon Bone Left (finding 
   assert.equal(h.pair, true);
   assert.ok(h.mirrored && h.composed === 'dual', 'the pair held: the left arm is the right\'s mirror before any blade binds');
   assert.ok(Math.abs(h.wrists.L[0] + h.wrists.R[0]) < 0.05, `${h.wrists.L} / ${h.wrists.R}`);
-  // TWO-HANDS AUDIT 2 (L3 M4): the guard of a hand that holds no blade is the fists' tuck (GUARD.DOWN of 200 px); the hand
+  // The guard of a hand that holds no blade is the fists' tuck (GUARD.DOWN of 200 px); the hand
   // with one, LOWER of that blade's own height - each measured once per blade bound
   blow(arm, 'R');
   assert.equal(arm.handsState().guardDrop.L, GUARD_LENS_DROP, 'the bladeless left hand: the fists\' tuck');
@@ -591,9 +585,6 @@ test('TWO-HANDS AUDIT the arm on a skeleton WITHOUT a Weapon Bone Left (finding 
 }));
 
 test('TWO-HANDS the arm, the fists: a blow by the hand its clip throws with plays as the clip has it; a blow by the other is the clip in the mirror - the other fist held where the idle holds it', () => seeded(async () => {
-  // PIN MOVED (TWO-HANDS AUDIT): run on a seeded stream (seeded()) - the blows' strengths are the reference's random
-  // draw on this fixture (no wind-up window), and unseeded the 3x ratio below failed one run in ten at the base commit
-  // too (2.67x at the worst draw, measured over forty streams)
   const arm = await drawnArm();
   arm.setHands({ mode: 'fists', lead: 'R' });
   const same = blow(arm, 'R');
@@ -656,10 +647,6 @@ test('TWO-HANDS the arm, the running hands: running with nothing in hand the pum
   let opposite = 0, n = 0;
   for (let i = 21; i < 60; i++) { const a = zs.L[i] - zs.L[i - 1], b = zs.R[i] - zs.R[i - 1]; if (Math.abs(a) > 1e-3 && Math.abs(b) > 1e-3) { n++; if (Math.sign(a) !== Math.sign(b)) opposite++; } }
   assert.ok(opposite / n > 0.8, `out of step (${opposite}/${n})`);
-  // PIN MOVED (TWO-HANDS AUDIT 2, L3 M3): the rig's phase was taken AS IT STANDS (`run.phase === 2.5` for a phase handed
-  // still) - and HeadBobber's clock jumps: a run resumed inside its 0.5 s stop sets the timer to PI, so a stutter-step
-  // swapped the fists in a frame. Now the phase FOLLOWS the bob: on it while the bob keeps the stride's step, caught up
-  // within RUN_PUMP.CATCH of the stride's own tempo when it jumps, never backward. A real HeadBobber drives it here.
   const bobber = new HeadBobber(), bag = {}, look = { pitch: 0, yaw: 0 };
   const DT = 1 / 60, V = 7, walk = V * DT * Math.PI / RUN_STEP_M;
   const runFrame = (moving) => {
@@ -741,7 +728,7 @@ test('TWO-HANDS AUDIT the arm, THE RUN ON THE LENS (finding 11): with the arms o
     arm.setHands({ mode: 'fists', lead: 'R' });
     arm.setSheathed(true);
     for (let i = 0; i < 40; i++) arm.update(1 / 60);
-    // a phase that stands, so each look reads the same stroke - PIN MOVED (TWO-HANDS AUDIT 2): and a stride that stands
+    // a phase that stands, so each look reads the same stroke - PIN MOVED: and a stride that stands
     // with it (speed 0): the phase now FOLLOWS the bob within the stride's tempo (handsLaw.js runPhaseFollow), and a bob
     // standing still under a body running 7 m/s is no clock it stands on
     arm.setRunHands(true, { speed: 0, phase: 1 });
@@ -1084,14 +1071,9 @@ test('TWO-HANDS AUDIT 2 the rig under a READY Morrowind arm (L5): a light that i
 test('TWO-HANDS the arm, by source: the mirror is posed over the clip ahead of the neck and the climb (the assembly\'s own hook), both rigs ask it, the run is solved under the climb\'s request in the same slot (TWO-HANDS AUDIT: blended, never chosen), and the rig hands the arm the hands\' mode, the left hand\'s weapon and the blow\'s hand every frame', () => {
   const fp = rd('src/formats/morrowind/mwFirstPerson.js');
   assert.match(fp, /const pose = fns\.poseSkeleton\(skeleton, tracks, sampleTrack, time, \{ accumRoot \}\);\n\s*\/\/ TWO-HANDS \(bible\/05-Combat\/Two-Hands\.md\): THE SECOND HAND - an arm, or the whole body, as the mirror of another\n\s*\/\/ \(combat\/twoHands\/mirrorRig\.js\), straight over the clip's pose and under every law that follows it \(the neck's look, the\n\s*\/\/ climb's hands\): a left-hand blow, a second weapon held up\. An arm read from ANOTHER clip \(`clip`: the idle under a\n\s*\/\/ blow\) is posed here, on this skeleton, at that clip's own time\.\n\s*assembly\.mirrored = mirror \? applyMirrorRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, mirrorWithPoses\(mirror, fns, skeleton, accumRoot\)\) : null;\n\s*\/\/ MW-D20: ONE SPACE\. The reference poses every piece - skinned, rigid,\n\s*\/\/ and the camera node rule 54 reads - in the same space, the full\n\s*\/\/ graph below the Skeleton group with the root node's own transform\n\s*\/\/ included\. What stood here memoised matrices PER DECLARED SKIN ROOT\n\s*\/\/ and placed rigid pieces relative to the file root: two spaces that\n\s*\/\/ coincide exactly when every declared root is the root and the root's\n\s*\/\/ transform is identity - true of every fixture, false of retail data,\n\s*\/\/ where the difference is a hand floating away from its forearm\.\n\s*applyFirstPersonNeck\(/);
-  // PIN MOVED (BODY-MOTION, 2026-10-18): the third-person body's own motion (`motion`, characters/bodyMotion/) is solved
-  // between the neck and the run - over the mirror, under the run and the climb
-  // PIN MOVED (BOW-AIM, FIELD BUGS 2026-10-26c): the third person's ranged aim (`aim`, combat/spineAim.js) between the neck and the motion
   assert.match(fp, /applyFirstPersonNeck\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.aimFit = aim \? aim\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.motionFit = motion \? motion\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.runFit = run \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, run\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.climbFit = climb \? applyClimbRig/, 'the run under the climb, after the neck');
   const arm = rd('src/combat/fpArm.js');
   assert.equal((arm.match(/mirror: mirrorFor\('(first|third)', /g) ?? []).length, 2, 'both views');
-  // PIN MOVED (TWO-HANDS AUDIT, finding 4): the slot took the climb OR the run (`climb: held ? null : (firstClimb(climbWorld,
-  // cam) ?? firstRun(cam)),`) and dropped the run whole the frame a climb began; now both, the run under the climb
   assert.match(arm, /const fClimb = held \? null : firstClimb\(climbWorld, cam\);/);
   assert.match(arm, /climb: fClimb,\n(?:\s*\/\/[^\n]*\n)*\s*run: firstRun\(cam\),/);
   assert.match(arm, /else if \(r\.slot === 'offweapon'\) r\.hidden = !offShown\(built\);/);
@@ -1100,13 +1082,13 @@ test('TWO-HANDS the arm, by source: the mirror is posed over the clip ahead of t
   const rig = rd('src/combat/weapon/weaponRig.js');
   assert.match(rig, /const armItem = pairUp\(\) \? playerWeapon\.handItem\('R'\) : playerWeapon\.weapon;/);
   assert.match(rig, /fpArm\.setHands\(\{ mode: pairUp\(\) \? playerWeapon\.handsMode : HANDS_MODE\.Single, lead: playerWeapon\.leadHand \}\);/);
-  assert.match(rig, /const offItem = pairUp\(\) && playerWeapon\.handsMode === HANDS_MODE\.Dual \? playerWeapon\.handItem\('L'\) : null;\n\s*fpArm\.setOffWeapon\(offItem\);/);   // the left item named once - its blade and its glow (WEAPON-GLOW1)
+  assert.match(rig, /const offItem = pairUp\(\) && playerWeapon\.handsMode === HANDS_MODE\.Dual \? playerWeapon\.handItem\('L'\) : null;\n\s*fpArm\.setOffWeapon\(offItem\);/);   // the left item named once - its blade and its glow
   assert.match(rig, /hand: pairUp\(\) \? playerWeapon\.strike\?\.hand \?\? null : null \}\);/);
-  assert.match(rig, /fpArm\.setRunHands\?\.\(wanted, \{ speed, phase: Number\.isFinite\(mv\.bobTimer\) \? runPhaseOfBob\(mv\.bobTimer\) : null \}\);/);   // PIN MOVED (TWO-HANDS AUDIT): the arms on the head bob's clock
+  assert.match(rig, /fpArm\.setRunHands\?\.\(wanted, \{ speed, phase: Number\.isFinite\(mv\.bobTimer\) \? runPhaseOfBob\(mv\.bobTimer\) : null \}\);/);
   assert.match(rig, /const armsRun = fpArm\.active\(\) && !!fpArm\.runPosed\?\.\(\);/);
 });
 
-// ---- TWO-HANDS FIELD (2026-10-16, Mac after the merge) ------------------------------------------------------------
+// ---- TWO-HANDS FIELD ------------------------------------------------------------
 
 test('TWO-HANDS FIELD the law, A STRIDE\'S OTHER HALF (strideOppositeTime): half the group\'s loop window on, read off its own loop keys inside the block the state plays - wrapping inside the window; the group\'s start to stop where it has no loop keys; another block\'s keys never; nothing without a window', () => {
   const st = { group: 'walkforward', startTime: 1.0, stopTime: 2.4, loopStartTime: 1.0, loopStopTime: Infinity };
@@ -1224,8 +1206,7 @@ test('TWO-HANDS FIELD the arm, THE FIRST-PERSON PAIR IS MIRRORED ACROSS THE EYE 
   assert.ok(Math.abs(tl[0] + tr[0]) < 0.02, `third person: the body's own mirror (${tl} / ${tr})`);
 }));
 
-// ---- TWO-HANDS MIRROR-BIND (2026-10-17, Mac: "adjust the positioning of the morrowind left hand duel wield model on first
-// person, so its properly mirrored. Third person looks good") --------------------------------------------------------
+// ---- TWO-HANDS MIRROR-BIND --------------------------------------------------------
 
 /** The MW-STEEL4 stand-in for a first-person rig (test/formats/morrowind/mwsteel4.test.js): retail's bones, a camera, and
  *  the arms' rests turned off each other's mirror as a clip's first frame turns them - `shadow` its Tri Shadow or none. */
@@ -1319,8 +1300,7 @@ test('TWO-HANDS MIRROR-BIND the bind is read only where it is a mirror, and the 
   assert.ok(dist(mirrored.get(hand('L')).t, a.get(hand('L')).t) < 1e-6, 'and the joint where the mirror stands it');
 });
 
-// ---- TWO-HANDS SPREAD (2026-10-17, Mac: "For the morrowind first person, when duel wielding can we spread out the arms
-// a bit more sense it can make the weapons overlap") ----------------------------------------------------------------
+// ---- TWO-HANDS SPREAD ----------------------------------------------------------------
 
 test('TWO-HANDS SPREAD the law (handsLaw.js pairSpreadAngle): the least turn in [MIN, MAX] at which the blades stand GAP apart on the picture - each a share of its height, as the angle it spans at its middle; MIN where the blades stand clear already or no pair of them is on the picture, MAX where even it cannot clear them, and between, the turn the edges ask - read at every angle tried, so an arm turned about a shoulder (an edge moving less than the turn) still stands GAP apart (mutants: TWO-HANDS-SPREAD-no-min, TWO-HANDS-SPREAD-no-max, TWO-HANDS-SPREAD-no-gap, TWO-HANDS-SPREAD-halving-backwards, TWO-HANDS-SPREAD-answer-short, TWO-HANDS-SPREAD-one-blade-asks)', () => {
   assert.deepEqual({ ...PAIR_SPREAD }, { MIN: 0.04, GAP: 0.04, MAX: 0.2, TAU: 0.12 });

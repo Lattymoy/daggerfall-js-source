@@ -1,4 +1,4 @@
-// MM1 (2026-09-12) - MEANER MONSTERS 1.5.2 (Ralzar), THE MOD, 1:1.
+// MEANER MONSTERS 1.5.2 (Ralzar), THE MOD, 1:1.
 // Mac: "Next is this mod to integrate 1-1. Additionally for mod options,
 // everything should be compatible across the board and there shouldn't
 // be compatibility switches between mods."
@@ -37,7 +37,7 @@ test('MM1: the table is the DLL\'s, row for row - twenty-four rows in its order,
   assert.deepEqual(foldMeanerMonsters(MEANER_MONSTERS_PCO_ROWS)[4].armorValue, 8, '...and foldable, were pco ever true');
   // no row sets a sound or a corpse
   assert.ok(MEANER_MONSTERS_ROWS.every((r) => r.moveSnd === -1 && r.barkSnd === -1 && r.attackSnd === -1 && r.corpseTex === -1));
-  // AUDIT MM1: were a row ever to set one, CorpseTexture's packed int unpacks to the port's {archive, record}
+  // Were a row ever to set one, CorpseTexture's packed int unpacks to the port's {archive, record}
   assert.deepEqual(unpackCorpseTexture((96 << 16) + 5), { archive: 96, record: 5 });
   assert.deepEqual(foldMeanerMonsters([{ id: 9, level: -1, minHp: -1, maxHp: -1, armor: -1, minDmg: -1, maxDmg: -1, minDmg2: -1, maxDmg2: -1, minDmg3: -1, maxDmg3: -1, moveSnd: 12, barkSnd: -1, attackSnd: -1, corpseTex: (405 << 16) + 2 }])[9], { moveSound: 12, corpseTexture: { archive: 405, record: 2 } });
 });
@@ -53,7 +53,7 @@ test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled
   assert.equal(meanerMonstersEnabled(), true, 'MO1 (Mac, 2026-09-12): on by default - every mod is');
   setModSetting('meanerMonsters', 'Enabled', false);
   assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth);
-  setModSetting('meanerMonsters', 'Enabled', true); setModSetting('pcaao', 'Enabled', false);   // MO1: the overhaul is on by default too - this is Ralzar's alone
+  setModSetting('meanerMonsters', 'Enabled', true); setModSetting('pcaao', 'Enabled', false);   // The overhaul is on by default too - this is Ralzar's alone
   const rat = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(rat.basics.maxHealth, 25, 'Ralzar\'s rat'); assert.equal(rat.basics.armorValue, 8);
   assert.equal(rat.maxHealth, 20, 'Range(15, 26) at a half roll');
@@ -72,7 +72,7 @@ test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled
 });
 
 test('MM1: the forty-six xml files - the shipped files equal the table (werewolf and wereboar x1.2, the dragonling x2.5, its corpse x2), and DFU\'s SetBillboardScale applies them after the record\'s own scale, under the switch alone (mutants: the scale before the truncation, or always on)', () => {
-  // OWN-WORK1 (2026-10-31): the forty-six xml files of Meaner Monsters 1.5.2 (`<archive>_<record>-0.xml`, each
+  // The forty-six xml files of Meaner Monsters 1.5.2 (`<archive>_<record>-0.xml`, each
   // `<info><scaleX>..</scaleX><scaleY>..</scaleY></info>`), read off the files and written out when
   // vendor/meanerMonsters left the tree: archive -> record -> [scaleX, scaleY]
   const shipped = {
@@ -102,7 +102,7 @@ test('MM1: the forty-six xml files - the shipped files equal the table (werewolf
   on = false;
   assert.deepEqual(mobileBillboardSize(t, 0), plain, 'off: the record\'s own size');
   assert.deepEqual(mobileBillboardSize({ getSize: () => ({ width: 10, height: 10 }), getScale: () => ({ width: 0, height: 0 }) }, 0), scaledBillboardSize({ width: 10, height: 10 }, { width: 0, height: 0 }), 'a texture with no archive: no xml');
-  // AUDIT MM1: a STATIC billboard reads the xml only with an imported texture for the record
+  // A STATIC billboard reads the xml only with an imported texture for the record
   // (GetStaticBillboardMaterial's `if (LoadFromCacheOrImport(...))`, TextureReplacement.cs:504-519) - so the
   // dragonling's corpse (96/0, x2 in the file) stays classic-sized under this mod, which ships no PNG
   on = true;
@@ -127,11 +127,11 @@ test('MM1: the forty-six xml files - the shipped files equal the table (werewolf
 
 test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard sized through the one door, the boot install before the overhaul\'s, the Mods pane entry, the credit, and the overhaul\'s two compatibility switches GONE (mutant: any)', () => {
   assert.match(rd('src/formats/textureFile.js'), /this\.archive = Number\.parseInt\(fileName\.slice\('TEXTURE\.'\.length\), 10\);/);
-  for (const f of readdirSync(new URL('../../../src/scenes', import.meta.url), { recursive: true }).filter((x) => x.endsWith('.js'))) {   // TIDY2: and the feature folders
+  for (const f of readdirSync(new URL('../../../src/scenes', import.meta.url), { recursive: true }).filter((x) => x.endsWith('.js'))) {   // And the feature folders
     const s = rd(`src/scenes/${f}`);
     assert.doesNotMatch(s, /scaledBillboardSize\(\w+(?:\.\w+)*\.getSize\(/, `${f}: a billboard sized past the xml door`);
   }
-  // AUDIT MM1: the mobile units through the mobile door (DaggerfallMobileUnit / MobilePersonBillboard), everything else static
+  // The mobile units through the mobile door (DaggerfallMobileUnit / MobilePersonBillboard), everything else static
   assert.match(rd('src/characters/enemy/enemyAnchor.js'), /return mobileBillboardSize\(t, 0\)\.h;/, 'the idle height reads the scaled record');
   assert.match(rd('src/scenes/exteriorFoes.js'), /const sz0? = mobileBillboardSize\(f\.tex, o\.record\);/);   // ELITE FOES: `sz0`, then an elite's quarter more
   assert.match(rd('src/scenes/dungeonContext.js'), /const sz = mobileBillboardSize\(f\.mobileTex, out\.record\);/);
@@ -143,7 +143,7 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   const wt = rd('src/systems/worldTick.js');
   assert.ok(wt.indexOf('installMeanerMonsters();') < wt.indexOf('installPcaao();'), 'the dependency Awakes first');
   const m = MOD_SETTINGS.meanerMonsters;
-  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled']); assert.equal(m.keys.Enabled.default, true);   // MO1
+  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled']); assert.equal(m.keys.Enabled.default, true);
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('meanerMonsters') < Object.keys(MOD_SETTINGS).indexOf('pcaao'), 'listed before the overhaul, as it loads');
   assert.equal(MOD_SETTINGS.pcaao.keys.meanerMonsters, undefined, 'Mac: no compatibility switches between mods');
   assert.equal(MOD_SETTINGS.pcaao.keys.rolePlayRealismArchery, undefined);

@@ -2,8 +2,8 @@
   {
     "name": "TREES-world-no-seat",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off",
-    "new": "const hillY = false && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off",
+    "old": "          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
+    "new": "          const hillY = false && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TREES-world-gate-narrowed",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const hillY = hillSeat && isNatureArchive(flat.archive) ?",
-    "new": "const hillY = hillSeat && flat.archive === natureArchive ?",
+    "old": "          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
+    "new": "          const hillY = hillSeat && flat.archive === natureArchive ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TREES-world-ground-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
-    "new": "NATURE_FLATS_Y - (blockY - locLocal[1]) : null;",
+    "old": "          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
+    "new": "          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y - (blockY - locLocal[1]) : null;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TREES-world-seat-not-built",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const hillSeat = blockHillSeat(b.layout.models);",
-    "new": "const hillSeat = null;",
+    "old": "        const hillSeat = blockHillSeat(b.layout.models);   // The block's hills as the port draws them, null for none of ours. No RMB ground plane on terrain (addGroundPlane = false).",
+    "new": "        const hillSeat = null;   // The block's hills as the port draws them, null for none of ours. No RMB ground plane on terrain (addGroundPlane = false).",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]

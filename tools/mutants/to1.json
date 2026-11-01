@@ -283,8 +283,8 @@
   {
     "name": "circumnavigate-no-bail",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  return null;\n}\n\n/** The mod, as a host builds it.",
-    "new": "  return 'ne';\n}\n\n/** The mod, as a host builds it.",
+    "old": "  return null;",
+    "new": "  return 'ne';",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "follow-keeps-destination",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        st.road = (roadDataPt & playerDirection) !== 0;\n        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
-    "new": "        st.road = (roadDataPt & playerDirection) !== 0;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "old": "        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "new": "        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "cautious-watch-always",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (st.destinationCautious) {\n        const e = deps.entity?.() ?? {};",
-    "new": "      if (true) {\n        const e = deps.entity?.() ?? {};",
+    "old": "      if (st.destinationCautious) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "fatigue-multiplier-dropped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        if ((e.fatigue ?? 0) < FATIGUE_MULTIPLIER * st.settings.cautiousFatigueMin) {",
-    "new": "        if ((e.fatigue ?? 0) < st.settings.cautiousFatigueMin) {",
+    "old": "        if ((e.fatigue ?? 0) < FATIGUE_MULTIPLIER * st.settings.cautiousFatigueMin) { stopTravelWithMessage(T.MsgLowFatigue); return { drive, handled: true, stopped: 'fatigue' }; }",
+    "new": "        if ((e.fatigue ?? 0) < st.settings.cautiousFatigueMin) { stopTravelWithMessage(T.MsgLowFatigue); return { drive, handled: true, stopped: 'fatigue' }; }",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -699,7 +699,7 @@
   {
     "name": "m1-detach-latch-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.enterRectDetached) return;   // AUDIT-TO1 M1: the mod's `-=` at :994-996",
+    "old": "    if (st.enterRectDetached) return;   // The mod's `-=` at :994-996",
     "new": "",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -726,8 +726,8 @@
   {
     "name": "l5-estimate-kept-on-clear",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.estimateMinutes = null;   // AUDIT-TO1 L5",
-    "new": "",
+    "old": "    st.route = null;\n    st.estimateMinutes = null;",
+    "new": "    st.route = null;\n",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -744,8 +744,8 @@
   {
     "name": "d2-onpush-guard-not-called-site-a",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "    this.popUp.enforceShipRestriction();\n    this.popUp.refresh();\n  }\n\n  /** TO1 (:505-530 and TravelOptionsPopUp.cs:151-163): the popup on",
-    "new": "    this.popUp.refresh();\n  }\n\n  /** TO1 (:505-530 and TravelOptionsPopUp.cs:151-163): the popup on",
+    "old": "    this.popUp.enforceShipRestriction();\n    this.popUp.refresh();",
+    "new": "    this.popUp.refresh();",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -927,8 +927,8 @@
   {
     "name": "g3-resume-no-closes-the-map",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; }\n      return;\n    }\n    // TO1 (:477-497): the teleport fee",
-    "new": "      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this.closeTravelWindows(true); }\n      return;\n    }\n    // TO1 (:477-497): the teleport fee",
+    "old": "      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; }",
+    "new": "      if (code === 'KeyN' || code === 'Escape') { this._click(); this.top = null; this.closeTravelWindows(true); }",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -1001,8 +1001,8 @@
   {
     "name": "hook-asks-the-pixel-first",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (host.travelOptions && dfLocation) {\n      const here = playerTravelPixel();\n      if (px === here.x && py === here.y) host.travelOptions.initLocationRects(here);\n    }\n",
-    "new": "    if (dfLocation && px === playerTravelPixel().x && py === playerTravelPixel().y) host.travelOptions?.initLocationRects(playerTravelPixel());\n",
+    "old": "    if (host.travelOptions && dfLocation) {\n      const here = playerTravelPixel();\n      if (px === here.x && py === here.y) host.travelOptions.initLocationRects(here);\n    }",
+    "new": "    if (dfLocation && px === playerTravelPixel().x && py === playerTravelPixel().y) host.travelOptions?.initLocationRects(playerTravelPixel());",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

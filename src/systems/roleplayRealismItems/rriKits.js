@@ -1,4 +1,4 @@
-// RRI2 - THE KITS. RoleplayRealismItemsMod.cs (Hazelnut & Ralzar, MIT):
+// THE KITS. RoleplayRealismItemsMod.cs (Hazelnut & Ralzar, MIT):
 // the starting equipment by skill (:759-897), the starting spellbook by
 // skill (:900-1096, nine new spells), the three shelf hooks the mod
 // subscribes to PlayerActivate.OnLootSpawned (:173-220, :280-310) and
@@ -9,7 +9,7 @@
 import { mintCondition, setItemFields, templateByIndex, itemValueOf } from '../item/itemTemplates.js';
 import { addItem, addGoldPieces } from '../inventory.js';
 import { createWeapon } from '../../combat/enemyEquipment.js';
-import { createRandomPotion, createRandomOfGroup } from '../loot/loot.js'; // DW-E5: CreateRandomGem / CreateRandomIngredient(group), one home
+import { createRandomPotion, createRandomOfGroup } from '../loot/loot.js'; // CreateRandomGem / CreateRandomIngredient(group), one home
 import { createRandomBook } from '../books.js';
 import { randomizeArmorVariant } from '../shopStock.js';
 import { CLOTHING_DYES, DYE_COLORS } from '../../characters/dyes.js';
@@ -25,12 +25,12 @@ import { LOOT_CONTAINER_TYPES } from '../sceneCache.js';
 import { rriModule } from './rriItems.js';
 import { liveStat } from '../statMods.js';
 import { equipTableOf, equipItem } from '../equip.js';
-import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js'; // SWING-LAW: a two-hander's handling
-import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from '../conditionRepair.js'; // DISC21-A: the questions' dagger, one home
-import { markFound } from '../item/foundMark.js'; // AUDIT MEND-THIRD L3-6: the kit handed over worn, marked
+import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js'; // A two-hander's handling
+import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from '../conditionRepair.js'; // The questions' dagger, one home
+import { markFound } from '../item/foundMark.js'; // The kit handed over worn, marked
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { WEAPON_TYPES } from '../../combat/fpsWeapon.js';
-import { techniqueFamily } from '../../combat/technique/techniqueRoster.js'; // BAL10: the family a weapon swings with (an RRI class's own)
+import { techniqueFamily } from '../../combat/technique/techniqueRoster.js'; // The family a weapon swings with (an RRI class's own)
 import {
   BANDAGE_TEMPLATE,
   bandageHeal,
@@ -61,8 +61,8 @@ export function rriAnimTimeOverride(liveSpeed, ctx) {
     weaponWeight: melee ? null : (templateByIndex(weapon.templateIndex)?.baseWeight ?? 0),
     melee,
     weaponType: ctx.weaponType,
-    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // SWING-LAW: the handling the port's law reads
-    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade', // BAL10: a short blade handles as a dagger, whatever sprite draws it
+    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // The handling the port's law reads
+    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade', // A short blade handles as a dagger, whatever sprite draws it
   });
 }
 
@@ -109,7 +109,7 @@ function addOrEquipWornItem(entity, item, equip, rolls) {
     item.group === 'WomensClothing'
   ) {
     item.currentCondition = Math.trunc((0.3 + rolls() * (0.75 - 0.3)) * (item.maxCondition ?? 0));
-    markFound(item); // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is
+    markFound(item); // A new character's kit is handed over worn - marked, as a found piece is
   }
   if (equip) equipItem(entity, item);
   return item;
@@ -127,7 +127,7 @@ function clothing(female, templateIndex, rolls, { variant = -1, dye = DYE_COLORS
 }
 /** ItemBuilder.CreateArmor (:428): `variant = -1` by default, and -1
  *  takes RandomizeArmorVariant (:813-843) - the kit's calls
- *  (RoleplayRealismItemsMod.cs:834-859) pass none (AUDIT-RR2 G11). */
+ *  (RoleplayRealismItemsMod.cs:834-859) pass none. */
 function armor(templateIndex, material, rolls, variant = -1) {
   return mint({
     group: 'Armor',
@@ -301,7 +301,7 @@ export function assignSkillEquipment(
     if (isQuestionsDagger(dagger)) {
       mintCondition(dagger);
       dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);
-      markFound(dagger); // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)
+      markFound(dagger); // Handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)
     }
   }
   for (const skill of career.primarySkills ?? []) assignSkillItems(entity, skill, rolls);
@@ -395,7 +395,7 @@ function spell(i, name, target, element, icon, effects) {
   rec.cost = classicCastingCost(rec);
   return Object.freeze(rec);
 }
-/** OWN-WORK3: the nine spells' names, DFO's own - each says what the spell does. */
+/** The nine spells' names, DFO's own - each says what the spell does. */
 export const RRI_SPELLS = Object.freeze({
   minorShock: spell(0, 'Static Touch', TARGET.ByTouch, ELEMENT.Shock, 37, [
     effect('DamageHealth', { magnitude: [2, 10, 1, 2, 1] }),
@@ -524,5 +524,5 @@ export function useBandage(item, collection, { entity = null } = {}) {
   tallySkill(entity, SKILLS.Medical, 1);
   return { kind: 'bandaged', healed: heal };
 }
-/** DISC13-B: what the pack's Use button asks (useItem.js usableItem) - off, the handler hands the click back. */
+/** What the pack's Use button asks (useItem.js usableItem) - off, the handler hands the click back. */
 useBandage.usable = () => rriModule('bandaging');

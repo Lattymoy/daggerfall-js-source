@@ -47,9 +47,9 @@ numbers, and the renderer is our own code. The player sees it as every frame of 
 
 ### Distance
 
-- **View distance.** Land view distance (`landViewDistance`, default 5; DFU's 3 on All off) sets the streamed grid.
-  The fog's end scales with the live terrain distance over DFU's 2400 rows (Dynamic Skies' authored rows install
-  verbatim). Outer-ring chunks build at a coarser stride; ghost rows give true central-difference normals at chunk edges.
+- **View distance.** Land view distance (`landViewDistance`, default 5; DFU's 3 on All off) sets the streamed grid. The
+  fog's end scales with the live terrain distance over DFU's 2400 rows (Dynamic Skies' own fog rows install as they
+  stand). Outer-ring chunks build at a coarser stride; ghost rows give true central-difference normals at chunk edges.
 - **Past the grid:** the middle ring (`src/render/midRing.js`), the far province ring of real heights with its own
   projection (`src/render/farRing.js`), the far field to the horizon (`src/render/farField.js`), trees carried a ring
   past the grid (`src/render/farTrees.js`, `src/render/farFlora.js`), landmark silhouettes
@@ -81,7 +81,8 @@ Both terrain programs (classic and lane) are built from shared GLSL chunks, each
   instanced field (`src/render/labGrass.js`), with the pixel-tuft style (`src/render/grassPixelArt.js`) and the owner's
   meadow sprites (`src/render/grassMeadow.js`). Grass dims at night.
 - **Skies:** the classic painted panorama (`src/render/skyRenderer.js`); the port's dome (`src/render/enhancedSky.js`);
-  Dynamic Skies; volumetric clouds; the aurora (`Dynamic-Skies.md`, `Volumetric-Clouds-Arc.md`, `Skyrim-Aurora.md`).
+  Dynamic Skies, our own; volumetric clouds; the aurora (`Dynamic-Skies.md`, `Volumetric-Clouds-Arc.md`,
+  `Skyrim-Aurora.md`).
 
 ### Picture size and pace
 

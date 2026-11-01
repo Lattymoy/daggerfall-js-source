@@ -1,7 +1,7 @@
-// AUDIT-STOREFRONT II, lane C (2026-10-29): two dyes that leaned on what came before them. The riders' masks were
-// memoised as their import's promise, so one failed load failed every mounted sprite for the session (C3). The 3D
+// AUDIT-STOREFRONT II, lane C: two dyes that leaned on what came before them. The riders' masks were
+// memoised as their import's promise, so one failed load failed every mounted sprite for the session. The 3D
 // horse's mane and tail never set the shared pixel record's seed, so its fire's flicker was whichever horse the last
-// dye was for (C4).
+// dye was for.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -20,7 +20,7 @@ test('AUDIT-STOREFRONT II C3 the riders\' masks: a load that fails answers none 
 });
 
 test('AUDIT-STOREFRONT II C4 the 3D horse\'s mane and tail in a mount look: one picture for every horse in the look, whichever horse\'s coat was dyed last (mutants: the hair\'s seed left to the last dye)', () => {
-  // OWN-WORK4: any horse dyed first will do - a bay's hide, drawn here (the cart's horse is built from ARENA2 now)
+  // Any horse dyed first will do - a bay's hide, drawn here (the cart's horse is built from ARENA2 now)
   const raw = { width: 60, height: 40, data: new Uint8Array(60 * 40 * 4) };
   for (let y = 8; y < 34; y++) for (let x = 6; x < 54; x++) raw.data.set(y < 12 ? [24, 20, 18, 255] : [139 - (y % 5) * 6, 90 - (x % 4) * 4, 43, 255], (y * 60 + x) * 4);
   const w = 24, h = 6, hair = new Uint8Array(w * h * 4);

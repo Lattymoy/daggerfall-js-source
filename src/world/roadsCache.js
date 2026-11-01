@@ -46,7 +46,7 @@ const DB = 'daggerfall-roads',
 export function roadsCacheKey({ settlements, woodsLength, dials = {}, land = landLayer().stamp }) {
   let sum = 0;
   for (const s of settlements) sum = (sum + s.x * 31 + s.y * 17 + (s.type | 0) * 7) >>> 0;
-  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS, rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } }; // OWN-WORK2: the land's law's and the rivers' dials too
+  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS, rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } }; // The land's law's and the rivers' dials too
   return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}${land ? `:land${land}` : ''}`; // FOUNDATION F4: the land's rows move the ground the roads were laid on
 }
 
@@ -138,6 +138,6 @@ export async function cachedNetwork({ key, build, store = idbStore() }) {
       rivers: net.rivers ?? null,
       streams: net.streams ?? null,
       stats: net.stats,
-    }); // OWN-WORK2: and the rivers
+    }); // And the rivers
   return net ? { ...net, cached: false } : null;
 }

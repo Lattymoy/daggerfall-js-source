@@ -92,8 +92,8 @@
   {
     "name": "OWN-WORK4-windfall-held-ignored",
     "file": "src/systems/windfallEffects.js",
-    "old": "          if (held.has(clip.name)) continue;\n",
-    "new": "",
+    "old": "          if (held.has(clip.name)) continue;\n          try {",
+    "new": "          try {",
     "tests": [
       "test/systems/ownwork4_windfall.test.js"
     ]

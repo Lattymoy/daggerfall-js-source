@@ -46,7 +46,7 @@
 
 import { billboardSize } from '../world/rmbFlats.js';
 import { LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
-import { lightList, packLight, copyLights, CARRIED_IN_HAND, CARRIED_SHADOWLESS } from '../render/lightId.js';   // LIGHT-ID: the player's lights into the list through the one seam
+import { lightList, packLight, copyLights, CARRIED_IN_HAND, CARRIED_SHADOWLESS } from '../render/lightId.js';   // The player's lights into the list through the one seam
 
 /** MagicCandleBehaviour + the prefab's Light, as numbers. */
 export const CANDLE = Object.freeze({
@@ -135,7 +135,7 @@ export function createCandleWobble(rolls = Math.random) {
  * and "no candle" without branching.
  */
 export function withPlayerLights(base, ...lights) {
-  // LT1: a host riding the per-light colour channel hands the PAIRED
+  // A host riding the per-light colour channel hands the PAIRED
   // shape - `{ data, colors }` from nearestLights' colorOf arm - and
   // gets it back with the player lights prepended to BOTH arrays under
   // the one cap. A player light may carry its own `color` (colour x
@@ -152,11 +152,11 @@ export function withPlayerLights(base, ...lights) {
       colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2];
     });
     colors.set(base.colors.subarray(0, keep), live.length * 3);
-    return { data, colors, carried: data.carried };   // MAC-T1: the mask rides the pair too
+    return { data, colors, carried: data.carried };   // The mask rides the pair too
   }
   const live = lights.filter(Boolean);
   if (!live.length) return base;
-  // AUDIT-EL F4: NO CAP HERE. This composer cut the scene's lights to
+  // NO CAP HERE. This composer cut the scene's lights to
   // sixteen minus the player's, which was the shader's cap restated - and
   // under the Enhanced Lighting lane (forty-eight slots) it silently kept
   // the classic count in every host. The renderer's setPointLights cuts
@@ -164,12 +164,12 @@ export function withPlayerLights(base, ...lights) {
   // sit first, what it drops is the base's farthest - which is exactly
   // what the old arithmetic dropped on the classic set, light for light.
   const keep = (base.length / 4) * 4;
-  const out = lightList(keep / 4 + live.length);   // LIGHT-ID: each light's identity beside it, the base's carried over
-  // MAC-T1: THE CARRIED MASK - one byte per light, in the array's own order, 1 for a record that says `carried`
+  const out = lightList(keep / 4 + live.length);   // Each light's identity beside it, the base's carried over
+  // THE CARRIED MASK - one byte per light, in the array's own order, 1 for a record that says `carried`
   // (the player's torch and candle; playerTorch.js says why). Per LIGHT, not "the first N": this same list carries the
   // dropped and thrown torches and the burning foes (droppedTorches.lights()), which sit over real billboards and
   // keep their glare. It rides the array as a property; the renderer lifts it off before it cuts the array to its cap.
-  // OWN-AUDIT (2026-11-01): 2 for a record that says `shadowless` (a burning foe's, EmissionShadows off) - no shadow
+  // OWN-AUDIT: 2 for a record that says `shadowless` (a burning foe's, EmissionShadows off) - no shadow
   // map and no contact march, as the hand's, but its glare kept (render/airPass.js reads 1 alone)
   const carried = new Uint8Array(keep / 4 + live.length);
   live.forEach((l, i) => {
@@ -243,7 +243,7 @@ export function createMagicCandle({
       else batch.origin = [pos[0] - basePos[0], pos[1] - basePos[1], pos[2] - basePos[2]];
     },
     /** The point light, in nearestLights' own shape, or null. */
-    light: () => (lit ? { x: pos[0], y: pos[1], z: pos[2], range: CANDLE.range, carried: true } : null),   // MAC-T1: the candle is the player's own light too
+    light: () => (lit ? { x: pos[0], y: pos[1], z: pos[2], range: CANDLE.range, carried: true } : null),   // The candle is the player's own light too
     batch: () => batch,
     /** THE FOUR HOSTS RULE: a floating-origin recenter would leave the
      *  candle behind in the old space - its centre is baked into a

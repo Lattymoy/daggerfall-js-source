@@ -1,4 +1,4 @@
-// TEX1 (2026-09-14) - ONE SHAPE FOR EVERY TEXTURE DOOR, and the crash that
+// ONE SHAPE FOR EVERY TEXTURE DOOR, and the crash that
 // proved the class.
 //
 // Mac's page died on daggerfalljs.dev with
@@ -137,7 +137,7 @@ test('TEX1 every door converts at the door: no module under src/ imports toColor
   // HT3: the two SCREEN sprites keep their rows (toScreenOrder); their
   // world neighbours still flip. Both are the same SHAPE, which is what
   // TEX1 is about - what changed is which way up, not what it answers.
-  // PIN MOVED (NO-BETHESDA2, 2026-10-31): the torches' picture is torchPicture's - a PNG decoded or one rebuilt, top-down
+  // PIN MOVED: the torches' picture is torchPicture's - a PNG decoded or one rebuilt, top-down
   assert.match(rd('src/systems/handheldTorches.js'), /return pic && toScreenOrder\(pic\);/, 'handheld torches (the crash), rows kept');
   assert.match(rd('src/scenes/droppedTorches.js'), /return pic && toColor32\(pic\);/, 'dropped torches');
   assert.match(rd('src/combat/weapon/weaponWidgetAssets.js'), /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the weapon widget (WW3), rows kept');

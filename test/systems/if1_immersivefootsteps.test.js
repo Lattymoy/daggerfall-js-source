@@ -1,8 +1,7 @@
-// IF1 - IMMERSIVE FOOTSTEPS 1.01 (Kirk.O), THE MOD, 1:1 (2026-09-16, Mac:
-// "Next mod we will be adding 1:1").
+// IMMERSIVE FOOTSTEPS 1.01 (Kirk.O), THE MOD, 1:1.
 //
 // The mod is two MonoBehaviours whose sources the author publishes under
-// MIT, restated in systems/immersiveFootsteps.js. OWN-WORK4 (2026-10-31):
+// MIT, restated in systems/immersiveFootsteps.js. OWN-WORK4:
 // the vendored copy is retired and its clips are our own (audio/synth/), so
 // the pins hold the restatement to the SOURCE as literal tables (the tile and
 // archive tables as Object.cs wrote them, the settings as modsettings.json
@@ -17,7 +16,7 @@
 // and the mod's own quirks kept verbatim (altStep never set, the chain
 // and plate re-rolls writing the LEATHER interval). Then the hosts.
 //
-// AUDIT-IF (2026-09-16): five findings pinned below (F1 the build's inlining, F2 the off-terrain tile,
+// Five findings pinned below (F1 the build's inlining, F2 the off-terrain tile,
 // F3 the concurrent load, F4 the null discovery record, F5 both inventory skins). Campaign:
 // tools/mutants/if1.json - 30 mutants, 28 killed, 2 equivalent as recorded; the two first-run
 // survivors were pins that measured a constant against itself, made literal.
@@ -87,7 +86,7 @@ function rig(over = {}, { rolls = [], fetchOk = () => true } = {}) {
 
 // ═══ the settings, the assets, the seams ══════════════════════════════════
 
-// OWN-WORK4 (2026-10-31): vendor/immersive-footsteps is retired. Its manifest and modsettings.json, as they read at
+// vendor/immersive-footsteps is retired. Its manifest and modsettings.json, as they read at
 // cc44705af, are written here so a changed default, range or option still fails the pins below.
 const SHIPPED_MANIFEST = Object.freeze({
   ModTitle: 'ImmersiveFootsteps', ModVersion: '1.01', ModAuthor: 'Kirk.O', DFUnity_Version: '1.0.0', GUID: '8c75cd21-ca71-4841-b637-7728433c99f1',
@@ -118,7 +117,7 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(manifest.clips, 210, 'the 210 clips the manifest names - each name now a clip of ours');
   assert.equal(Object.values(IF_CLIP_MS).flat().length * 2, manifest.clips, 'OWN-WORK4: our synth answers every one, in both qualities');
   assert.equal(manifest.scripts.length, 2, 'the two scripts the manifest names, from the author\'s MIT repository');
-  // PLAIN-TEXT (2026-10-19): every line the mod wrote in Title Case with "|| Default = True", said plainly for a player (the two logging keys say they do nothing here) - their words, exactly
+  // PLAIN-TEXT: every line the mod wrote in Title Case with "|| Default = True", said plainly for a player (the two logging keys say they do nothing here) - their words, exactly
   const PLAIN = {
     'AudioQualitySettings.SoundClipQuality': 'Quality of the footstep sounds',
     'FootstepSettings.AllowFootstepSounds': 'Your footsteps make a sound',
@@ -159,11 +158,11 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   const row = FEATURES.find((f) => f.id === 'mod-immersive-footsteps');
   assert.ok(row, 'FT9: a Mod Authored row over the switch');
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /immersive-footsteps/);
-  assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'sound');   // FT18: under Sound
+  assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'sound');   // Under Sound
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k} is a real key`);
-  // CREDITS-OUT (2026-11-01): no credit on a screen; the MIT notice our code owes travels in LICENSE
+  // No credit on a screen; the MIT notice our code owes travels in LICENSE
   assert.match(rd('LICENSE'), /Immersive Footsteps 1\.01's scripts by\nKirk\.O[\s\S]*MIT License\n\nCopyright \(C\) 2024 Kirk\.O\n/);
-  // OWN-WORK4: the vendor README's four text pins left with it.
+  // The vendor README's four text pins left with it.
 });
 
 test('IF1: LoadAudio\'s 105 names per quality - Main is clips 1-3, Alt 4-6, four sways, two landings, one splash - and every one is a clip our synth makes (OWN-WORK4), at the mod\'s length and the quality\'s rate', () => {
@@ -200,7 +199,7 @@ test('IF1: LoadAudio\'s 105 names per quality - Main is clips 1-3, Alt 4-6, four
 
 // ═══ the tables, as the source wrote them ══════════════════════════════════
 
-/** OWN-WORK4: Object.cs's tables as the author wrote them (ImmersiveFootstepsObject.cs at ac03581, read at cc44705af), by key. */
+/** Object.cs's tables as the author wrote them (ImmersiveFootstepsObject.cs at ac03581, read at cc44705af), by key. */
 const SOURCE_TABLES = Object.freeze({
   Shallow_Water: [5, 6, 8, 20, 21, 23, 30, 31, 33, 34, 35, 36, 49],
   Path: [46, 47, 55],
@@ -597,7 +596,7 @@ test('IF1: [verbatim] altStep is declared and never set - over a thousand steps 
   assert.equal(FOOTSTEP_SETS.length, 14);
 });
 
-// ═══ AUDIT-IF (2026-09-16, Mac: "Lets now do a comprehensive audit on this before merging") ═══
+// ═══ AUDIT-IF ═══
 
 test('AUDIT-IF F2: a tile of -1 (off terrain, StreamingWorld.PlayerTileMapIndex\'s answer) is no table\'s and lands the climate\'s own else arm - not tile 0\'s deep water', async () => {
   const r = rig();
@@ -646,7 +645,7 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
     assert.match(src, /if \(_step && classicFootstepAllowed\(_step\.clip\)\) audio\.playOneShot\(_step\.clip, _step\.volume\);/, `${name}: DisableVanillaFootsteps (BA1: through the one gate both mods' DisableBuiltInFootsteps answer)`);
     assert.ok(!/if \(_step\) audio\.playOneShot\(_step\.clip, _step\.volume\);/.test(src), `${name}: no ungated classic play`);
     assert.equal((src.match(/immersiveFootsteps\.update\(dt, \{/g) ?? []).length, 1, `${name}: one FixedUpdate feed`);
-    assert.match(src, /import \{ immersiveFootsteps(?:, [^}]+)? \} from '\.\.\/systems\/immersiveFootsteps\.js'/, name);   // BA1: world.js also takes reportModCompatibilityIssues
+    assert.match(src, /import \{ immersiveFootsteps(?:, [^}]+)? \} from '\.\.\/systems\/immersiveFootsteps\.js'/, name);   // World.js also takes reportModCompatibilityIssues
   }
   // the exterior hosts hand the exterior arm's reads; the inside hosts the water arm's
   for (const src of [world, ext]) {
@@ -672,7 +671,7 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   assert.match(ic, /const swapped = texRemap\.get\(base\) \?\? base;/, 'through the climate remap - DFU names the material after the swapped archive');
   assert.match(ic, /^\s+floorMaterials,/m, 'on the context');
   assert.match(rd('src/ui/native/nativeInventory.js'), /_closeSilently\(\) \{[\s\S]{0,400}this\.done = true;[\s\S]{0,400}immersiveFootsteps\.onInventoryClose\(this\.hooks\.entity \?\? null\);/);
-  // AUDIT-IF F5: BOTH skins. The enhanced pack (the default) closes through inventoryDoor's own close, not _closeSilently.
+  // BOTH skins. The enhanced pack (the default) closes through inventoryDoor's own close, not _closeSilently.
   assert.match(rd('src/ui/inventoryDoor.js'), /closeSession\(deps, \{ dropped \}\);[\s\S]{0,700}immersiveFootsteps\.onInventoryClose\(deps\.entity \?\? null\);/, 'the enhanced skin\'s close refreshes too');
   assert.equal((rd('src/systems/inventorySession.js').match(/immersiveFootsteps/g) ?? []).length, 0, 'not in closeSession: inventorySession.js is upstream of transport.js, which the component imports');
 });

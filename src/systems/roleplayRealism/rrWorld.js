@@ -1,8 +1,7 @@
-// OWN-WORK3 (2026-10-31, the owner: "replacing them with our own work"): THE MASTER ARMORER'S WORLD, DFO'S OWN.
-// The release's quest line reads three world-data files: a new location, its block and the armorer's rebuilt shop.
-// All three are ours. The keep is a Bay palace block from the player's own BLOCKS.BSA, its court stood down and the
-// lord's household stood in the court's places. The shop is the player's own smithy with Brannoc Hale at its quest
-// marker (bible/06-Systems/Roleplay-Realism.md, OWN-WORK3).
+// THE MASTER ARMORER'S WORLD, DFO'S OWN. The release's quest line reads three world-data files: a new location, its
+// block and the armorer's rebuilt shop. All three are ours. The keep is a Bay palace block from the player's own
+// BLOCKS.BSA, its court stood down and the lord's household stood in the court's places. The shop is the player's
+// own smithy with Brannoc Hale at its quest marker.
 import { blockToDfuJson, buildingToDfuJson } from '../../formats/worldData/worldDataJson.js';
 import { registerWorldDataAsset, blockReplacementFilename, buildingReplacementFilename } from '../../formats/worldData/worldDataReplacement.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';

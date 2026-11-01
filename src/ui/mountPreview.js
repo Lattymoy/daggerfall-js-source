@@ -1,13 +1,12 @@
 // @ts-check
-// STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md sections 7 and 9): A MOUNT LOOK TRIED ON - the horse the world
-// draws (the cart's horse's side view - OWN-WORK4: ours, systems/horse/horseArt.js) in the look, by the world's own dye
-// (systems/horse/horseCoats.js recolorHorse, its mount part), on a canvas of its own with the look's beat drawn over it:
-// embers and smoke, light wisping off a ghost, sun motes, sparks and steam. For the profile's Mount slot and the shop's
-// panels. Still for less motion. Not a DFU member.
+// STOREFRONT: A MOUNT LOOK TRIED ON - the horse the world draws (the cart's horse's side view - OWN-WORK4: ours,
+// systems/horse/horseArt.js) in the look, by the world's own dye (systems/horse/horseCoats.js recolorHorse, its mount
+// part), on a canvas of its own with the look's beat drawn over it: embers and smoke, light wisping off a ghost, sun
+// motes, sparks and steam. For the profile's Mount slot and the shop's panels. Still for less motion. Not a DFU member.
 import { recolorHorse, withMountLook } from '../systems/horse/horseCoats.js';
 import { VIEW_SIDE } from '../systems/horse/mountPaint.js';
 import { prefersReducedMotion } from '../systems/hitFlash.js';   // the viewer's less motion, read live
-import { ownHorsePicture } from '../systems/horse/horseArt.js';   // OWN-WORK4: the picture, ours
+import { ownHorsePicture } from '../systems/horse/horseArt.js';   // The picture, ours
 
 /** The picture the preview dyes (the side view) and its scale on the canvas (whole pixels, the art's own). */
 export const MOUNT_PREVIEW_FILE = 'horse3.png';
@@ -25,7 +24,7 @@ export const MOUNT_PREVIEW_BEAT = Object.freeze({
 
 /** @type {Promise<{ width: number, height: number, data: Uint8Array } | null> | null} the picture, built once */
 let _art = null;
-/** OWN-WORK4: the side view, built from the player's own files once; a build that fails answers none and is forgotten. */
+/** The side view, built from the player's own files once; a build that fails answers none and is forgotten. */
 const ownArt = () => (_art ??= ownHorsePicture(MOUNT_PREVIEW_FILE).catch(() => { _art = null; return null; }));
 
 /**

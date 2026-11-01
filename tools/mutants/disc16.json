@@ -39,8 +39,8 @@
   {
     "name": "DISC16-B-the-preset-left-on",
     "file": "src/systems/modSettings.js",
-    "old": "        default: false, // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
-    "new": "        default: true, // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
+    "old": "        default: false, // OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
+    "new": "        default: true, // OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
     "tests": [
       "test/combat/disc16.test.js",
       "test/combat/weapon/dw1_diverseweapons.test.js",

@@ -1,4 +1,4 @@
-// CSA-F (2026-09-27) - COME SAIL AWAY'S EFFECTS IN THE RUNTIME: systems/comeSailAway/comeSailAway.js's wake arm (Update 4737-4755),
+// COME SAIL AWAY'S EFFECTS IN THE RUNTIME: systems/comeSailAway/comeSailAway.js's wake arm (Update 4737-4755),
 // the two loops' play state and their fades (6527-6600), the rudder's drops at the helm, the wake and the oars' splashes
 // carried by a floating-origin shift, LateUpdate's bob and flag, and RotateWind's rain and snow - over the vendored hulls
 // (the real SpawnBoat and its real particle systems) and a scripted scene. Every expectation is worked out here from
@@ -16,7 +16,7 @@ import { evaluateMinMax, SPACE } from '../../../src/world/unityParticles.js';
 import { PART_CUT_FS, PART_PREMUL_FS, CUBE_FS, CUBE_TRIANGLES, softParticleTexture } from '../../../src/render/comeSailAwayRender.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const near = (a, b, eps = 1e-5, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b}`);

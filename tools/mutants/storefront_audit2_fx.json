@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-C3-the-failure-thrown-at-the-picture",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": ".then((m) => m.RIDER_MASKS, () => { _riders = null; return null; })",
-    "new": ".then((m) => m.RIDER_MASKS)",
+    "old": "export const ridersReady = (load = loadRiders) => (_riders ??= load().then((m) => m.RIDER_MASKS, () => { _riders = null; return null; }));",
+    "new": "export const ridersReady = (load = loadRiders) => (_riders ??= load().then((m) => m.RIDER_MASKS));",
     "tests": [
       "test/systems/horse/storefront_audit2_fx_dye.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-C3-the-failure-kept-for-the-session",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "() => { _riders = null; return null; }",
-    "new": "() => null",
+    "old": "export const ridersReady = (load = loadRiders) => (_riders ??= load().then((m) => m.RIDER_MASKS, () => { _riders = null; return null; }));",
+    "new": "export const ridersReady = (load = loadRiders) => (_riders ??= load().then((m) => m.RIDER_MASKS, () => null));",
     "tests": [
       "test/systems/horse/storefront_audit2_fx_dye.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-C6-read-once-as-the-horse-was-made",
     "file": "src/ui/mountPreview.js",
-    "old": "const still = typeof reduced === 'function' ? reduced : () => !!reduced;",
-    "new": "const still = ((r) => () => r)(typeof reduced === 'function' ? reduced() : !!reduced);",
+    "old": "  const still = typeof reduced === 'function' ? reduced : () => !!reduced;",
+    "new": "  const still = ((r) => () => r)(typeof reduced === 'function' ? reduced() : !!reduced);",
     "tests": [
       "test/ui/storefront_audit2_fx_stage.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-C6-the-default-read-once",
     "file": "src/ui/mountPreview.js",
-    "old": "reduced = () => prefersReducedMotion(), picture = ownArt } = {}) {",
-    "new": "reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches, picture = ownArt } = {}) {",
+    "old": "export function mountPreview(doc, { coat = 0, reduced = () => prefersReducedMotion(), picture = ownArt } = {}) {",
+    "new": "export function mountPreview(doc, { coat = 0, reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches, picture = ownArt } = {}) {",
     "tests": [
       "test/ui/storefront_audit2_fx_stage.test.js"
     ]

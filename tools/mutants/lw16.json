@@ -496,8 +496,8 @@
   {
     "name": "LW16-host-option",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          carriedOf: (day) => livingCarriedOf(livingTown, day),   // LW16: the word carried in from the towns about\n",
-    "new": "",
+    "old": "          carriedOf: (day) => livingCarriedOf(livingTown, day),   // The word carried in from the towns about\n          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // Its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
+    "new": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // Its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"
     ]

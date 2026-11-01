@@ -74,8 +74,8 @@
   {
     "name": "WAGON-HITCH-peer-anchor-ignored",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (anchor) hitchPeerWagon(p, anchor, dt);",
-    "new": "      if (anchor && false) hitchPeerWagon(p, anchor, dt);",
+    "old": "      if (anchor) hitchPeerWagon(p, anchor, dt);   // Their cart's wagon on its shafts from their rider as drawn HERE",
+    "new": "      if (anchor && false) hitchPeerWagon(p, anchor, dt);   // Their cart's wagon on its shafts from their rider as drawn HERE",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-B5-the-tilt-kept",
     "file": "src/scenes/horseCartPool.js",
-    "old": "p.hitch = null; p.shownUp = null;",
-    "new": "p.hitch = null;",
+    "old": "      else if (p.wagon) { p.hitch = null; p.shownUp = null; p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }",
+    "new": "      else if (p.wagon) { p.hitch = null; p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-B1-the-probe-at-the-mod-s-height",
     "file": "src/scenes/horseCartPool.js",
-    "old": "GROUND_RAY_HEIGHT + rise, q[2]], [0, -1, 0], GROUND_RAY_DISTANCE + 2 * rise)",
-    "new": "GROUND_RAY_HEIGHT, q[2]], [0, -1, 0], GROUND_RAY_DISTANCE)",
+    "old": "  const groundYAt = (q, rise = 0) => pickGround(phys.raycastAll([q[0], q[1] + GROUND_RAY_HEIGHT + rise, q[2]], [0, -1, 0], GROUND_RAY_DISTANCE + 2 * rise), q[1])?.point?.[1] ?? null;",
+    "new": "  const groundYAt = (q, rise = 0) => pickGround(phys.raycastAll([q[0], q[1] + GROUND_RAY_HEIGHT, q[2]], [0, -1, 0], GROUND_RAY_DISTANCE), q[1])?.point?.[1] ?? null;",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]

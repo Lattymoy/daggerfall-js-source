@@ -57,7 +57,10 @@ table, so a DFU pack's CSVs and the port's drafts are the same kind of file.
 ## Rules
 
 - Community packs: install and bundle allowed. A player installs any DFU pack from their own disk; the port bundles a
-  pack only when its terms allow, credited (Mac).
+  pack only when its terms allow (Mac). Its translators stay in the language's record (`locales/<tag>/translators.json`,
+  a bundled pack's `PACK.json`), and no screen credits them (CREDITS-OUT, the owner).
+- No string a player reads names Daggerfall Unity, DFU, Interkarma or Nexus, in any language
+  (`test/systems/credits.test.js`).
 - AI translation: AI drafts, labelled. A machine language says so, and a human pack always outranks a draft (Mac).
 - The bulk runs both ways: the port's strings in-session, the game's text through the pipeline (Mac).
 - Routing (`tools/l10n/ROUTE-BRIEF.md`): route what a player reads; use DFU's own key where DFU has the same English;
@@ -83,6 +86,7 @@ saved ids are the port's own.
 - `test/systems/l10n1.test.js` - the core against DFU's masters
 - `test/systems/l10n1b.test.js` - whole and drafting languages against the catalog
 - `test/systems/l10n6b.test.js` - every row a language has is the machine's or a person's
+- `test/systems/l10n6_credits.test.js` - the translators' record
 - `test/systems/l10n4_hardcoded.test.js` - the ratchet
 - `test/tooling/l10n4_insession.test.js`, `test/tooling/l10n4_routing.test.js` - the drafting door and routing
 

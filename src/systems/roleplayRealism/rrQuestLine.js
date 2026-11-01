@@ -1,4 +1,4 @@
-// RR3 - THE MASTER ARMORER QUEST LINE: what RoleplayRealism.cs registers
+// THE MASTER ARMORER QUEST LINE: what RoleplayRealism.cs registers
 // for it (:41-53 the two quest tables, :241-256 the list, the factions
 // and the merchant service, :259-297 the two PlayerGPS subscribers,
 // :300-311 the building key, :414-484 the custom armor service,
@@ -9,9 +9,9 @@
 import { DIRECTION_HINTS } from '../talk/talk.js';
 import { ARMOR_MATERIAL } from '../armorMaterials.js';
 import { groupTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';
-import { customItemsForGroup } from '../item/itemTemplates.js'; // FORAGE1: GetCustomItemsForGroup's one home
+import { customItemsForGroup } from '../item/itemTemplates.js'; // GetCustomItemsForGroup's one home
 
-/** OWN-WORK3: the quest line's own lines and names, DFO's. */
+/** The quest line's own lines and names, DFO's. */
 export const RR_TEXT = Object.freeze({
   fortVerynear1: 'Boot prints churn the mud here, and a dented shield lies in the grass.',
   fortVerynear2: 'Armed men passed this way, and not long ago.',
@@ -130,7 +130,7 @@ export function rrMasterArmBuildingKey(regionIndex) {
 export const RR_ARMORER_BLOCK = 'ARMRAM03.RMB';
 export const RR_ARMORER_RECORD = 14;
 /**
- * WD3 (2026-10-01): THE SHOP WHERE ITS BLOCK STANDS. GetMasterArmBuildingKey hard-codes the cell ARMRAM03 has in the
+ * THE SHOP WHERE ITS BLOCK STANDS. GetMasterArmBuildingKey hard-codes the cell ARMRAM03 has in the
  * three classic towns - (2,1) in Pjiga, (3,2) in Penmore, (2,2) in Paponirea - and the shop variant itself follows the
  * BLOCK wherever it stands (WorldDataVariants keys it by block name and record). Beautiful Villages lays those towns
  * out again and moves the block - Penmore's to (2,2), Pjiga's to (0,1); Paponirea's stays - and in DFU the two mods

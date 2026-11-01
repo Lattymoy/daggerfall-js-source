@@ -1,4 +1,4 @@
-// CSA-J (2026-09-28) - COME SAIL AWAY'S CLOSE: the message receiver (ComeSailAway.cs 1833-1890) and the one mod in
+// COME SAIL AWAY'S CLOSE: the message receiver (ComeSailAway.cs 1833-1890) and the one mod in
 // the port that sends to it - Eye of the Beholder, whose ModCompatibilityChecking hands OnUpdateSailing to it
 // (IL_0756-IL_079a), whose OnUpdateSailing asks GetBoatMeshObject (IL_07a8-IL_0922), whose camera targets the boat
 // (IL_1612-IL_16c5) and whose sprite faces its heading (IL_471c-IL_4765). Over the real SpawnBoat and the vendored
@@ -15,7 +15,7 @@ import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { quatRotate, quatAngleAxis } from '../../../src/world/quat.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 import { ownFile } from '../../ownBoats.mjs';
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
@@ -61,7 +61,7 @@ function scene(opts = {}) {
     playerTerrain: () => terrains[0],
     terrainAt: (x, y) => terrains.find((t) => t.mapPixelX === x && t.mapPixelY === y) ?? null,
     terrains: () => terrains,
-    heightMapValue: opts.heightMapValue ?? (() => 255),   // CSA-F: WOODS.WLD all land - the waves lay nothing, and cast no ray
+    heightMapValue: opts.heightMapValue ?? (() => 255),   // WOODS.WLD all land - the waves lay nothing, and cast no ray
     worldCompensation: () => [0, 0, 0],
     hudText: (t) => out.hud.push(t),
     midScreenText: (t, s) => out.mid.push([t, s]),
@@ -72,7 +72,7 @@ function scene(opts = {}) {
     persistentDungeonBoats: () => false,
     packedItems: { serialize: (items) => items.map((it) => ({ ...it })), deserialize: (records) => records.map((it) => ({ ...it })) },
     dt: () => 0.25,
-    setting: (key) => ({ 'Waves.Enable': false, ...opts.settings })[key],   // CSA-F: the helm measured with no current - FixedUpdate writes none with the waves off (csa_waves pins it)
+    setting: (key) => ({ 'Waves.Enable': false, ...opts.settings })[key],   // The helm measured with no current - FixedUpdate writes none with the waves off (csa_waves pins it)
     input,
     helm: {
       setPlayerPosition: (p) => { player.position = [...p]; },
@@ -93,7 +93,7 @@ function scene(opts = {}) {
     timeScale: () => timeScale,
     setTimeScale: (s) => { timeScale = s; out.timeScales.push(s); },
     messageBox: (t) => out.boxes.push(t),
-    // CSA-H: PackBoat is the runtime's now - its parts item minted here and handed to the pack
+    // PackBoat is the runtime's now - its parts item minted here and handed to the pack
     items: { create: (templateIndex) => ({ group: 'UselessItems2', templateIndex, name: templateIndex === 1320 ? 'Parts of' : 'Deed to', message: 0, UID: 900 + out.packed.length }), addToPlayer: (item) => out.packed.push(item) },
   };
   const rt = createComeSailAwayRuntime(deps);
@@ -374,7 +374,7 @@ test('CSA-J: World of Daggerfall\'s terrain and Animated Water are not in the po
   assert.ok(boat.RudderEmitters.every((e) => e.isPlaying), 'DisableParticles false: StartSailing plays the rudder\'s particles');
 });
 
-// ── the audit's fixes (CSA-J) ─────────────────────────────────────────────────────
+// ── the audit's fixes ─────────────────────────────────────────────────────
 
 test('CSA-J (the audit): OnPostFastTravel - the arrival puts the time scale back to one and says nothing (1973-1976)', () => {
   const s = scene();
@@ -394,7 +394,7 @@ test('CSA-J (the audit): the hosts - the Transport press leaves the helm before 
   assert.match(w, /csaFrame: \(dt, axes\) => \{ _csaAxes = axes; csaFrame\(dt\); \},/, 'indoors the mod\'s frame is the modes\' to call');
   assert.match(w, /if \(csaRuntime\) csaSounds\(\);[^\n]*\n\s+if \(csaRender\) \{ csaWaveFrames\(\); csaParticleTextures\(\); \}/, 'the waves\' and the particles\' pictures loaded at boot, as Start has them');
   const m = src('scenes/worldModes.js');
-  assert.match(m, /function onExhaustedInterior\(\) \{\n\s+if \(_inExhaustion \|\| exhaustedShowing\(\)\) return;[^\n]*\n\s+_inExhaustion = true;\n\s+try \{\n\s+const out = exhaustionOutcome\(\{\n[\s\S]{0,600}?\n\s+if \(out\.kind === 'spent'\) \{[^\n]*return; \}\n\s+host\.csaOnPlayerDeath\?\.\(\);/);   // AUDIT LIVED1b K1: the box's guard beside the latch (AUDIT C&C N2/H1: both lanes)   // PIN MOVED (FIELD BUGS 2026-10-13e SPENT-ASHORE): a collapse with foes in the building is no death - the rest arm alone reaches OnPlayerDeath, as world.js's and the dungeon's
+  assert.match(m, /function onExhaustedInterior\(\) \{\n\s+if \(_inExhaustion \|\| exhaustedShowing\(\)\) return;[^\n]*\n\s+_inExhaustion = true;\n\s+try \{\n\s+const out = exhaustionOutcome\(\{\n[\s\S]{0,600}?\n\s+if \(out\.kind === 'spent'\) \{[^\n]*return; \}\n\s+host\.csaOnPlayerDeath\?\.\(\);/);   // The box's guard beside the latch (AUDIT C&C N2/H1: both lanes)   // PIN MOVED: a collapse with foes in the building is no death - the rest arm alone reaches OnPlayerDeath, as world.js's and the dungeon's
   assert.match(m, /const presentInteriorDeath = \(\) => \{\n\s+host\.csaOnPlayerDeath\?\.\(\);/);
   assert.match(m, /csaOnPlayerDeath: \(\) => host\.csaOnPlayerDeath\?\.\(\),/, 'handed to the dungeon');
   assert.match(m, /if \(mode === 'dungeon' && dungeonCtx\?\.drainPlayerFatigue\) \{ dungeonCtx\.drainPlayerFatigue\(n\); return true; \}\n\s+if \(mode === 'interior'\) \{ drainInteriorFatigue\(n\); return true; \}\n\s+return false;/);
@@ -403,7 +403,7 @@ test('CSA-J (the audit): the hosts - the Transport press leaves the helm before 
   assert.doesNotMatch(w, /!== 'exterior'\) csaFrame\(dt\)/, 'no longer ahead of the modes\' frame');
   const d = src('scenes/dungeonContext.js');
   assert.match(d, /const _prevDeathPresenter = setDeathPresenter\(\(\) => \{\n\s+opts\.csaOnPlayerDeath\?\.\(\);/);
-  assert.match(d, /function onExhausted\(\) \{\n[\s\S]{0,900}?if \(out\.kind === 'drown'\) \{[^\n]*return; \}\n[\s\S]{0,800}?const sandSpare = opts\.playerSpare\?\.\(\) \?\? null;\n\s+if \(sandSpare\) \{[^\n]*return; \}[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s+if \(out\.kind === 'spent'\) \{[^\n]*return; \}\n\s+opts\.csaOnPlayerDeath\?\.\(\);/);   // PIN MOVED (AUDIT ARENA-LADDER A1): the sand's collapse a fall, asked before it   // FIELD BUGS 2026-09-30b SWIM-SPENT (PIN MOVED): a swimmer's drain to nothing is no death - the collapse's arms alone reach OnPlayerDeath   // PIN MOVED (FIELD BUGS 2026-10-13e SPENT-ASHORE): nor a fighter's with foes about - the rest arm alone reaches it now
+  assert.match(d, /function onExhausted\(\) \{\n[\s\S]{0,900}?if \(out\.kind === 'drown'\) \{[^\n]*return; \}\n[\s\S]{0,800}?const sandSpare = opts\.playerSpare\?\.\(\) \?\? null;\n\s+if \(sandSpare\) \{[^\n]*return; \}[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s+if \(out\.kind === 'spent'\) \{[^\n]*return; \}\n\s+opts\.csaOnPlayerDeath\?\.\(\);/);
   assert.match(d, /drainPlayerFatigue: \(n\) => drainFatigue\(n\),/);
 });
 
@@ -439,11 +439,10 @@ test('CSA-J (the audit): the load\'s doors - OnStartLoad ahead of the save\'s pl
   const w = src('scenes/world.js');
   const q = w.slice(w.indexOf('async function worldQuickLoad('));
   assert.ok(q.indexOf('csaRuntime.OnStartLoad()') < q.indexOf('const extras = restorePlayer(playerEntity, snap, spellsByIndex);'), 'the world load: OnStartLoad first');
-  // PIN MOVED (AUDIT WK-P4, 2026-10-01): the same door lifts the party first (crewAshore.clear), the mod's call unchanged
   assert.match(w, /modStartLoad: \(\) => \{ crewAshore\.clear\(\); (?:(?:revenantAshore\.clear|clearSworn)\(\); )?if \(csaRuntime\) csaCall\(\(\) => csaRuntime\.OnStartLoad\(\)\); \},[^\n]*\n\s+modSaveLoad: \(modData\) => \{ restoreModSaveRecords\(modData, csaModLoadFailed\); \},[^\n]*\n\s+modLoaded: \(\) => \{ if \(csaRuntime\) csaCall\(\(\) => csaRuntime\.OnLoad\(\)\); \},/);
   const d = src('scenes/dungeonContext.js');
   assert.match(d, /opts\.modStartLoad\?\.\(\);[^\n]*\n\s+const extras = restorePlayer\(playerEntity, snap, spellsByIndex\);/);
-  assert.match(d, /this\.restoreSaved\(extras, setPlayerPos\);\n\s+(?:opts\.outerCampsLoad\?\.\(extras\);[^\n]*\n\s+)?opts\.modLoaded\?\.\(\);/);   // AUDIT REST III A1 (RE-AIMED): the save's camps outside stand before OnLoad, the load's own
+  assert.match(d, /this\.restoreSaved\(extras, setPlayerPos\);\n\s+(?:opts\.outerCampsLoad\?\.\(extras\);[^\n]*\n\s+)?opts\.modLoaded\?\.\(\);/);   // AUDIT REST III A1: the save's camps outside stand before OnLoad, the load's own
   const m = src('scenes/worldModes.js');
   assert.match(m, /modStartLoad: \(\) => host\.modStartLoad\?\.\(\),/);
   assert.match(m, /modLoaded: \(\) => host\.modLoaded\?\.\(\),/);
@@ -454,11 +453,10 @@ test('CSA-J (the audit): the load\'s doors - OnStartLoad ahead of the save\'s pl
   assert.match(w, /else \{ _wodInside = false; townTalk\.say\('\(the dungeon could not be entered[^\n]*\n\s+if \(!entered\) csaElsewhere = true;/);
   assert.match(w, /return rec && rec\.currentBoat >= 0 \? \{ \.\.\.modData, \[COME_SAIL_AWAY_VENDOR\]: \{ \.\.\.rec, currentBoat: -1 \} \} : modData;/);
   assert.match(w, /ohAbyss\?\.onRespawnerComplete\(\);[^\n]*\n\s+if \(csaRuntime\) await csa\.preload\(\);[^\n]*\n\s+if \(csaElsewhere\) extras\.modData = csaHelmLeft\(extras\.modData\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s+const hccRecord = extras\.modData\?\.\[HCC_VENDOR\] \?\? null;\n\s+if \(hccRecord\) hccRuntime\.restoreSaveData\(hccRecord, \{ elsewhere: csaElsewhere \}\);\n\s+restoreModSaveRecords\(extras\.modData, csaModLoadFailed\);/, 'both before the mod loop (and HCC\'s restore, which reads the same record set)');
-  // PIN MOVED (ETHER-CROSSING, bible/03-World/Eltheric-Ocean.md): and the ship held while the crossing carries her across
   assert.match(w, /const paused = gamePaused\(\) \|\| _loading \|\| _partyArrivalPending \|\| _etherCrossing;/);
   assert.match(w, /const csaOn = \(\) => _csaOnAtLoad;/);
   assert.match(w, /root: csaRuntime\?\.state\?\.parentedObjects\?\.get\(f\.ai\)\?\.boat\?\.GameObject \?\? null \}\);/);
-  assert.match(w, /const c = \(v\) => Math\.max\(0, Math\.min\(TERRAIN_SIZE, v\)\); return terrainSampleHeightAt\(p\.samples, c\(q\[0\] - o\[0\]\), c\(q\[2\] - o\[2\]\), p\._stride \?\? 1\);/);   // FIELD-CSA2: the clamp stands; the height is Unity's heightmap's (terrainSurface.js terrainSampleHeightAt)
+  assert.match(w, /const c = \(v\) => Math\.max\(0, Math\.min\(TERRAIN_SIZE, v\)\); return terrainSampleHeightAt\(p\.samples, c\(q\[0\] - o\[0\]\), c\(q\[2\] - o\[2\]\), p\._stride \?\? 1\);/);   // The clamp stands; the height is Unity's heightmap's (terrainSurface.js terrainSampleHeightAt)
   // the bed's press, the gate less its offer rung, in the three doors that answer a bed
   for (const [f, s] of [['world.js', w], ['dungeonContext.js', d], ['worldModes.js', m]]) {
     assert.match(s, /giveOffer,\n\s+\.\.\.\(_restFromBed \? \{ giveOffer: null \} : null\),/, `${f}: the offer rung skipped for a bed`);

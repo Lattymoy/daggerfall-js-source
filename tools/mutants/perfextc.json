@@ -147,8 +147,8 @@
   {
     "name": "PERF-EXT21-only-a-location-publish-re-reads-the-grass-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (host.labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
-    "new": "    if ((dfLocation || wodSite) && host.labGrassField) {   // WOD2: a levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
+    "old": "    if (host.labGrassField) {   // A levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
+    "new": "    if ((dfLocation || wodSite) && host.labGrassField) {   // A levelled camp moved the ground the same way; AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved it back; PERF-EXT21: every publish re-reads it",
     "tests": [
       "test/world/terrain/grassshift.test.js",
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js",
@@ -403,8 +403,8 @@
   {
     "name": "PERF-EXT23-the-world-host-merges-in-one-piece-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());   // PERF4",
-    "new": "    const staticMerged = staticBuilder.finish();   // PERF4",
+    "old": "    const staticMerged = await staticBuilder.finishSliced(() => breather.breathe());",
+    "new": "    const staticMerged = staticBuilder.finish();",
     "tests": [
       "test/render/publishtail.test.js",
       "test/world/perf4.test.js",
@@ -414,8 +414,8 @@
   {
     "name": "PERF-EXT23-the-world-host-does-not-hand-the-spheres-over",
     "file": "src/scenes/pixelBuild.js",
-    "old": "renderer.createMesh(staticMerged, { bounds: staticMerged.bounds })",
-    "new": "renderer.createMesh(staticMerged)",
+    "old": "    const staticBatch = staticMerged ? renderer.createMesh(staticMerged, { bounds: staticMerged.bounds }) : null;",
+    "new": "    const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;",
     "tests": [
       "test/render/publishtail.test.js",
       "test/world/perf4.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "PERF-EXT23-the-flats-loop-never-breathes",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      await breather.breathe();   // PERF-EXT23: a flat group a breath",
-    "new": "      // PERF-EXT23: a flat group a breath",
+    "old": "      await breather.breathe();   // A flat group a breath - its texture is a cached promise, a microtask, and gave no frame back",
+    "new": "      // A flat group a breath - its texture is a cached promise, a microtask, and gave no frame back",
     "tests": [
       "test/render/publishtail.test.js"
     ]

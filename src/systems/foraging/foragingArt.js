@@ -1,6 +1,6 @@
-// OWN-WORK4 (2026-10-31; bible/06-Systems/Foraging.md): THE SEVEN FORAGING PICTURES, OUR OWN. Each tool, the wood
-// bundle and the egg is a recipe for our painter (art/ownPainter.js) at the size and archive the game reads
-// (`<archive>_0-0`, 64 x 64, the Fishing-Net 128 x 128). No pixel of the retired release is read.
+// THE SEVEN FORAGING PICTURES, OUR OWN. Each tool, the wood bundle and the egg is a recipe for our painter
+// (art/ownPainter.js) at the size and archive the game reads (`<archive>_0-0`, 64 x 64, the Fishing-Net 128
+// x 128). No pixel of the retired release is read.
 import { createPainter, RAMP, ellipse, poly, stroke, union } from '../../art/ownPainter.js';
 
 /** A frame along a tool's handle: `up` the handle from (fromX, fromY) toward (toX, toY), `across` it to the right. */

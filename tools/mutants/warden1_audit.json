@@ -361,8 +361,8 @@
   {
     "name": "AUDIT-WARDEN1-C2-hold-lone-unjoined",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (h) { h.n++; h.lone = h.lone || !!lone; }",
-    "new": "if (h) { h.n++; }",
+    "old": "      if (on) { if (h) { h.n++; h.lone = h.lone || !!lone; } else _held.set(owner, { n: 1, lone: !!lone }); }",
+    "new": "      if (on) { if (h) { h.n++; } else _held.set(owner, { n: 1, lone: !!lone }); }",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -370,8 +370,8 @@
   {
     "name": "AUDIT-WARDEN1-C2-every-drawn-horse",
     "file": "src/scenes/horseCartPool.js",
-    "old": ".filter((h) => h.drawn && (h.hitched || f.hitched || lone))",
-    "new": ".filter((h) => h.drawn)",
+    "old": "    const horses = (_teams.get(owner) ?? []).filter((h) => h.drawn && (h.hitched || f.hitched || lone)).map((h) => ({ at: [h.position[0], h.position[1], h.position[2]], forward: [h.forward[0], h.forward[1], h.forward[2]] }));",
+    "new": "    const horses = (_teams.get(owner) ?? []).filter((h) => h.drawn).map((h) => ({ at: [h.position[0], h.position[1], h.position[2]], forward: [h.forward[0], h.forward[1], h.forward[2]] }));",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "AUDIT-WARDEN1-C2-hitched-wagon-horse-dropped",
     "file": "src/scenes/horseCartPool.js",
-    "old": ".filter((h) => h.drawn && (h.hitched || f.hitched || lone))",
-    "new": ".filter((h) => h.drawn && (h.hitched || lone))",
+    "old": "    const horses = (_teams.get(owner) ?? []).filter((h) => h.drawn && (h.hitched || f.hitched || lone)).map((h) => ({ at: [h.position[0], h.position[1], h.position[2]], forward: [h.forward[0], h.forward[1], h.forward[2]] }));",
+    "new": "    const horses = (_teams.get(owner) ?? []).filter((h) => h.drawn && (h.hitched || lone)).map((h) => ({ at: [h.position[0], h.position[1], h.position[2]], forward: [h.forward[0], h.forward[1], h.forward[2]] }));",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "AUDIT-WARDEN1-C8-pool-tier-dropped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "=> drawWagon(r, texRemap, position, rotation, tier, turn, 1, kind, hitched, look),",
-    "new": "=> drawWagon(r, texRemap, position, rotation, 0, turn, 1, kind, hitched, look),",
+    "old": "    drawShowWagon: (r, texRemap, position, rotation, kind, look = null, tier = 0, turn = null, hitched = false) => drawWagon(r, texRemap, position, rotation, tier, turn, 1, kind, hitched, look),   // The watch's carried wagon in its own paint, load, wheels and hitch",
+    "new": "    drawShowWagon: (r, texRemap, position, rotation, kind, look = null, tier = 0, turn = null, hitched = false) => drawWagon(r, texRemap, position, rotation, 0, turn, 1, kind, hitched, look),   // The watch's carried wagon in its own paint, load, wheels and hitch",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "AUDIT-WARDEN1-C8-snapshot-tier",
     "file": "src/scenes/horseCartPool.js",
-    "old": "tier: w.tier ?? 0, turn,",
-    "new": "tier: 0, turn,",
+    "old": "    return { kind: w.model, look: w.look ?? null, tier: w.tier ?? 0, turn, hitched: !!f.hitched, conceal: p?.look ?? null, horseLook: lookOfOwner(owner, f.at), lone: !!lone, at: [f.at[0], f.at[1], f.at[2]], rotation: [...f.rotation], horses };",
+    "new": "    return { kind: w.model, look: w.look ?? null, tier: 0, turn, hitched: !!f.hitched, conceal: p?.look ?? null, horseLook: lookOfOwner(owner, f.at), lone: !!lone, at: [f.at[0], f.at[1], f.at[2]], rotation: [...f.rotation], horses };",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "AUDIT-WARDEN1-C13-snapshot-unconcealed",
     "file": "src/scenes/horseCartPool.js",
-    "old": "conceal: p?.look ?? null,",
-    "new": "conceal: null,",
+    "old": "    return { kind: w.model, look: w.look ?? null, tier: w.tier ?? 0, turn, hitched: !!f.hitched, conceal: p?.look ?? null, horseLook: lookOfOwner(owner, f.at), lone: !!lone, at: [f.at[0], f.at[1], f.at[2]], rotation: [...f.rotation], horses };",
+    "new": "    return { kind: w.model, look: w.look ?? null, tier: w.tier ?? 0, turn, hitched: !!f.hitched, conceal: null, horseLook: lookOfOwner(owner, f.at), lone: !!lone, at: [f.at[0], f.at[1], f.at[2]], rotation: [...f.rotation], horses };",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]

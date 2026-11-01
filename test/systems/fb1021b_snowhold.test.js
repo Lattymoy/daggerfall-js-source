@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { SnowCoverage } from '../../src/systems/snowfall.js';
 import { SnowfallRuntime, BLANKET } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowPixelBox } from '../../src/scenes/snowfallHost.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const SIZE = 819.2, RING = 3, X0 = 500, Y0 = 250;
 const quiet = (fn) => { const w = console.warn; console.warn = () => {}; try { return fn(); } finally { console.warn = w; } };

@@ -1,5 +1,4 @@
-// NIGHT-FOG (2026-10-26; bible/07-Rendering/Weather-Arc.md NIGHT-FOG; the owner: "In foggy biomes, when its dark, you can
-// barely see anything"): THE FOG IS LIT BY THE LIGHT THE LAND IS LIT BY. On the enhanced lane the frame's fog colour is
+// THE FOG IS LIT BY THE LIGHT THE LAND IS LIT BY. On the enhanced lane the frame's fog colour is
 // never darker than air of NIGHT_AIR.albedo lit by the open air's light - the exterior ambient and the moons - and what
 // a fog lacks of that air's luminance is made up in the air's own colour (systems/weather/nightFog.js). Under Dynamic
 // Skies (the lane's default sky) every fog closed to black from dusk to dawn; under the port's dome a clear night's fog
@@ -22,8 +21,6 @@ const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e;
 const nearAll = (a, b, e = 1e-6) => a.length === b.length && [...a].every((v, i) => near(v, b[i], e));
 const WEATHERS = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
-// PIN MOVED (OWN-WORK4, 2026-10-31): Dynamic Skies is our own sky now - its fog colour is its horizon (skyFrame), its
-// light curve its own rule. The mod's black night these pins were written against is history.
 const MOD_CURVE = DYNAMIC_LIGHT_CURVE;
 /** Dynamic Skies' fog colour at a minute: the sky's horizon, as the instance publishes it */
 const modFog = (w, m) => skyFrame({ minuteOfDay: m, row: skyWeatherRow(w), lightCurve: MOD_CURVE }).fogColor;
@@ -31,7 +28,7 @@ const modFog = (w, m) => skyFrame({ minuteOfDay: m, row: skyWeatherRow(w), light
 const domeFog = (w, m) => outdoorFogColor(fogForWeather(w), skyState({ minuteOfDay: m, weather: w }).clearColor);
 /** the air at a minute in a weather, no moon */
 const airAt = (w, m, nightScale = 1, moon = null) => airColor(airLight({ minute: m, nightScale, sun: weatherSunlightScale(w, false), moon }));
-/** each light curve the world can run: the rig's (the dome) and Dynamic Skies' own (its rule, OWN-WORK4) */
+/** each light curve the world can run: the rig's (the dome) and Dynamic Skies' own */
 const underCurve = (keys, fn) => { setLightCurve(keys); try { fn(); } finally { setLightCurve(null); } };
 
 test('NIGHT-FOG THE AIR\'S NUMBERS: half the light that reaches it, half of Masser\'s key, leaned cool (mutants: each number moved)', () => {

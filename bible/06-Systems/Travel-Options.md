@@ -1,10 +1,11 @@
 # Travel Options
 
-Hazelnut's Travel Options mod (Nexus mod 122, version 1.11, MIT), ported: a journey the player walks with the game
+Hazelnut's Travel Options mod (version 1.11, MIT), ported: a journey the player walks with the game
 running fast, the terrain streaming past and a control panel across the top of the screen, instead of a fade to the
 destination. Encounters, places, wounds, disease and the sea can interrupt it. With Hazelnut's Basic Roads, the follow
-key walks a road from junction to junction. The player meets it on the travel map and the follow key. The vendored
-record is `vendor/travel-options/README.md`.
+key walks a road from junction to junction. The player meets it on the travel map and the follow key. The code is a
+port of the MIT scripts, whose notices (Hazelnut's and Jedidia's) are in `LICENSE`; the words, settings and pictures
+are ours, and the release's record is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -22,8 +23,8 @@ prompt.
 
 **Following a road.** Standing on a road and facing along it, the follow key walks to the next junction
 (`FollowPath`, `SelectNextPath`); at a pixel with exactly two ways out it carries straight on, anywhere else it stops
-and shows the junction map. In a town's border ring the journey walks round the town. The roads are Hazelnut's Basic
-Roads network when that mod is on; the game's own generated roads are never followed. Past the Bay, a road's byte is
+and shows the junction map. In a town's border ring the journey walks round the town. The roads are the Bay's network
+while Basic Roads is on (`03-World/Roads.md`). Past the Bay, a road's byte is
 the roads past the Bay's own (`src/world/arenaRoads.js` `arenaRoadByte`, read through `src/world/road/pathData.js`),
 so following, the junction map and the road rate work across Tamriel.
 
@@ -44,13 +45,31 @@ real seconds, so a journey trains Running and Jumping as walking the same real m
 click that marks a place, `I` to list a place's discovered buildings, `H` for help, a click on empty ground to walk
 there, a resume prompt, and the Mages Guild teleport charge of `(8 - rank) * 200` gold when Paid Teleportation is on.
 
+**The grass on a journey** (`GeneralOptions.AllowRealGrass`). The mod turns Real Grass off for a sped-up journey and on
+again at its end; here the same pair holds back our own grass field (`src/systems/travel/travelOptions.js`
+`grassHidden`, asked by `src/scenes/world.js` where it draws the field). With the switch off, as it ships, a sped-up
+journey draws no grass and spends nothing keeping a field up at sixty times speed; on, the grass stays. The journey's
+end always gives it back. Grass grows in every province, so it holds everywhere.
+
+**Our words, settings and pictures.** The Localize table is ours (`src/systems/travel/travelOptionsText.js`), and so
+are the settings' descriptions and choices (`src/systems/modSettings.js`); the 51 key names stay the mod's, since a
+saved setting is named by them. The steering's three stops say "Your journey stops." The control strip (320 x 27) and
+the map's two PORTS buttons (45 x 11) are recipes for our painter (`src/ui/travel/travelArt.js`): carved stone with our
+own letters, every recess and button where `CONTROL_RECTS` and `PORTS_SIZE` place them, under the names the windows
+ask for (`TOcontrolUI`, `TOportsOff`, `TOportsOn`). Nothing is fetched.
+
 **The enhanced lane** has its own panel (`src/ui/enhanced/enhancedTravelControl.js`): the same controls at screen
 resolution, with time left, distance, whether the journey follows a road, and the junction map on a real canvas. It
 is drawn from the HUD, not an overlay, because an overlay holds the clock.
 
 ## Rules
 
-- **The mod, ported 1:1** (Mac), with an enhanced panel and Basic Roads compatibility as his additions.
+- **The mod, ported 1:1** (Mac), with an enhanced panel and Basic Roads compatibility as his additions; the words,
+  settings and pictures ours (OWN-WORK, the owner).
+- **Our settings' defaults:** Cautiously and Inns walked, both on (a default trip is walked; the mod shipped Inns off);
+  ships from a port only, to anywhere; any spot on the map can be picked, no stop at places, no weather or footsteps
+  on a sped-up journey. The cautious numbers stand as the walked journey was tuned: 20% slower (5-40), at most 95% to
+  slip past (60-100), stops at 5% health (0-25) and 5 fatigue (0-50).
 - **Road x100, open ground x60** (Mac) as the speed dial's ceilings; the dials and the road rule
   (`src/systems/travel/travelPace.js` `PACE_STEPS`, `ROAD_PACE_MAX`, `OPEN_PACE_MAX`) stand by the owner's word.
 - **A journey's x100 survives a gap in the road** (Mac): the ground caps the dial and never rewrites it.
@@ -65,7 +84,8 @@ The mod's files map one to one: `TravelOptionsMod.cs` (`src/systems/travel/trave
 `TravelOptionsMapWindow.cs` (`src/ui/travel/travelMapOptions.js`), `TravelOptionsPopUp.cs`, and the port table
 (`src/systems/travel/travelPorts.js`). Departures, each for its reason:
 
-- Hidden Map Locations and Real Grass are mods the game does not have; their hooks do nothing.
+- Hidden Map Locations is a mod the game does not have; its hook does nothing. Real Grass's pair holds back our own
+  grass.
 - The four path toggle buttons ship no art; the enhanced map's chips set the same flags.
 - The ports filter resets each time the map opens, because the map window is made fresh each time.
 - Only the traveller and the calendar are scaled, not Unity's whole clock, so encounters and the terrain build keep up.
@@ -81,13 +101,13 @@ The mod's files map one to one: `TravelOptionsMod.cs` (`src/systems/travel/trave
 - `src/ui/travel/travelControlUI.js`, `travelJunctionMap.js`, `travelMapOptions.js`, `travelPopUp.js` - the panel,
   junction map, map additions, popup
 - `src/ui/enhanced/enhancedTravelControl.js` - the enhanced panel
-- `test/systems/travel/to1_travelOptions.test.js` - the port against the mod
+- `src/ui/travel/travelArt.js`, `src/systems/travel/travelOptionsText.js` - our pictures and words
+- `test/systems/travel/to1_travelOptions.test.js` - the port against the mod, our settings as literals
+- `test/systems/ownaudit_keys.test.js` - the grass on a journey
 - `test/systems/travel/pacedials.test.js`, `travel_speed_preference.test.js`, `ratelawfix.test.js` - speed
 - `test/systems/travel/bayleft_paths.test.js` - roads past the Bay
 
 ## Open
 
-- The three textures re-encoded from the mod's bundle still wait for their permission line
-  (`01-Overview/Mod-Registry.md`).
 - An enemy's lead-in slow-down starts farther out at x60 and x100 than at the mod's slower rates; a tuning for the
   owner.

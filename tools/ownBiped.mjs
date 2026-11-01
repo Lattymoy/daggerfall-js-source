@@ -1,6 +1,6 @@
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions"): OUR OWN
-// BIPED, the skeleton the pins and the bakes stand a Morrowind body on. It replaces the retail hierarchy Weapon
-// Sheathing's skeleton addon carried, which is retired. Morrowind's own skeleton is the player's, never the tree's.
+// OUR OWN BIPED, the skeleton the pins and the bakes stand a Morrowind body on. It replaces the retail hierarchy
+// Weapon Sheathing's skeleton addon carried, which is retired. Morrowind's own skeleton is the player's, never the
+// tree's.
 //
 //   THE NAMES AND THE TREE are the game's interface: the Bip01 bones a retail body binds by name, and their parents.
 //   THE BIND is our own record: where each bone stands in the bind our shipped armour is skinned in (the steel plate's

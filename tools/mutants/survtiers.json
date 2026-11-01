@@ -174,8 +174,8 @@
   {
     "name": "SURVTIERS-row-default-hard",
     "file": "src/systems/features.js",
-    "old": "store: 'prefs', key: 'survival', initial: 'boons', online: 'player',",
-    "new": "store: 'prefs', key: 'survival', initial: 'hard', online: 'player',",
+    "old": "      store: 'prefs', key: 'survival', initial: 'boons', online: 'player',   // Difficulty.js SURVIVAL_DEFAULT",
+    "new": "      store: 'prefs', key: 'survival', initial: 'hard', online: 'player',   // Difficulty.js SURVIVAL_DEFAULT",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the row's default is Boons.",
     "tests": [
       "test/systems/survival/survtiers.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "SURVTIERS-row-stores-off-by-name",
     "file": "src/systems/features.js",
-    "old": "tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons',",
-    "new": "tiers: Object.freeze([tier('off', OFF), tier('boons', () => t('features.mod.climatesCalories.boons',",
+    "old": "      tiers: Object.freeze([tier(false, OFF), tier('boons', () => t('features.mod.climatesCalories.boons', 'Boons')), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]),",
+    "new": "      tiers: Object.freeze([tier('off', OFF), tier('boons', () => t('features.mod.climatesCalories.boons', 'Boons')), tier('casual', () => t('features.mod.climatesCalories.casual', 'Casual')), tier('hard', () => t('features.mod.climatesCalories.hard', 'Hard'))]),",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -916,8 +916,8 @@
   {
     "name": "SURVTIERS-the-note-grows-a-third-sentence",
     "file": "src/systems/features.js",
-    "old": "comes back once you’ve seen to them; on Hard",
-    "new": "comes back once you’ve seen to them. On Hard",
+    "old": "      + 'comes back once you’ve seen to them; on Hard they cost attributes and health and can make you sick; '",
+    "new": "      + 'comes back once you’ve seen to them. On Hard they cost attributes and health and can make you sick; '",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]

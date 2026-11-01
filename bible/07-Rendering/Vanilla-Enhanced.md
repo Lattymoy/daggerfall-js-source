@@ -1,25 +1,30 @@
 # Vanilla Enhanced
 
-Vanilla Enhanced (carademono, Daggerfall Unity mod 273) repaints Daggerfall's own textures: the terrain tile sets, the
-nature flats, city walls and dungeon archives. We ship three of its mods, and a fresh game wears its Base. The player
-meets it as the **Texture Overhaul** card (Classic or Vanilla Enhanced, with add-on switches) and the **Replacement
-packs** card. This page also holds the texture-mod door's laws, which every texture mod, shipped or attached, obeys.
+Vanilla Enhanced is our own enhancement of Daggerfall's textures: the terrain tile sets, the nature flats, city walls
+and dungeon archives. It keeps the keys, titles, switches, dependencies, arrays, records and sizes of carademono's
+three mods of that name - the Base, Masked Roads, and Snowless Swamps and Jungles - and builds every picture from the
+player's own classic record by our rule (OWN-WORK, the owner; the release's record is in `01-Overview/Own-Work.md`). A
+fresh game wears its Base. The player meets it as the **Texture Overhaul** card (Classic or Vanilla Enhanced, with
+add-on switches) and the **Replacement packs** card. This page also holds the texture-mod door's laws, which every
+texture mod, shipped or attached, obeys.
 
 ## How it works
 
 ### The pack
 
-- `tools/vanillaEnhancedVendor.mjs` reads the mod's public repository at a pinned commit and writes three mods under
-  `public/art/vanilla-enhanced/`: `base`, `masked-roads` and `snowless-swamps-and-jungles` (1,436 pictures, byte for
-  byte), each with a file listing (path and sha256) and a name index. Run without `--write` it checks the tree.
-- Terrain arrays ship as the pictures they were compressed from: each BC7 slice is carried only when it is within BC7's
-  error of a source PNG. Masked Roads' 403 array is 57 deep, so it is indexed with no slices and refused, as DFU does.
-- Left out: Winter Tracks (never reached over the Base's arrays, in DFU as here), Kokey's Temperate (Kokey's own mod)
-  and every Material (we have no Material reader).
-- `src/systems/vanillaEnhanced/vanillaEnhancedPack.js` registers the shipped mods in the texture-mod door
+- `src/systems/ownTextures/ownTexturePacks.json` names each pack's records and sizes: the Base's 1,238, Masked Roads'
+  9, Snowless Swamps' 160. The Base's names leave out eight rock textures of RMB Resource Pack's meshes
+  (`Woodland_3-0`, `Desert_3-0` and six more): the game draws no such mesh, and its stand-in boulders wear the
+  climate's rock record (`src/world/townStandIns.js` `RMBRP_ROCKS`), which the Base dresses.
+- Each picture is built when it is first drawn, from the player's own classic record, by our rule
+  (`src/systems/ownTextures/ownTextureRules.js`): the Base an edge-aware upscale (`upscaleEdgeAware`, a cubic held
+  inside its four nearest texels), our grain and a gentle grade (`enhance`); Masked Roads the same, the paving's own
+  stones raised and lit (`road`); Snowless Swamps' winter its summer record.
+- `src/systems/vanillaEnhanced/vanillaEnhancedPack.js` registers the packs in the texture-mod door
   (`src/systems/dfmodTextures.js` `setShippedDfmods`), beside the environment packs (Sands of the Alik'r, Snowfall).
-  Its client fetches a picture when first drawn and decodes it at the texture detail in a worker
-  (`vanillaEnhancedDecodeWorker.js`); without OffscreenCanvas in a worker it decodes on the page's thread.
+  The rule runs in the pack's worker (`vanillaEnhancedDecodeWorker.js`), and a page with none builds on its own thread,
+  the same pixels. A built picture is kept a while, and two asks share one build. A terrain set of 56 records at 256
+  takes about 0.8 s of building on a loaded machine, shared by the pack's two workers. Nothing is fetched.
 
 ### The door's load order
 
@@ -58,9 +63,8 @@ weather and Snowfall lay no snow on that ground (`winterGroundSnowless`).
 
 ## Rules
 
-- Shipping Vanilla Enhanced is Port-Doctrine's one exception to "a render of game data is game data" (Mac). The
-  exception names `public/art/vanilla-enhanced/` and nothing else; `test/tooling/doctrine.test.js` marks its rows
-  `derived` and fails a derived row outside that directory. A second derived pack needs its own approval.
+- Our own rules over the player's records (OWN-WORK, the owner), so no repaint and no render of game data ships
+  (Port-Doctrine).
 - The Base is on by default (Mac); its add-ons ship off until picked, because they change the roads and the swamps'
   winters (`ON_BY_DEFAULT`). Each shipped mod's switch is kept as the player's choice (`dfmodShipped`).
 - Replace Game Artwork is on by default, as DFU's is.
@@ -79,20 +83,21 @@ Departures:
 5. `Mod.Enabled` lives on the prefs shelf, not in a Mods.json; a fresh attach is on.
 6. Wearing Vanilla Enhanced turns Replace Game Artwork on.
 7. The add-ons ship off; in DFU a mod in the Mods folder is on.
-8. Terrain arrays draw from the pictures they were compressed from, without BC7's error.
+8. Every picture is ours, built from the player's own classic record.
 
 ## Code and tests
 
 - `src/systems/dfmodTextures.js` - the door: `dfmodLoadOrder`, `groundSource`, `dfmodGroundLayers`, `setShippedDfmods`
-- `src/systems/vanillaEnhanced/vanillaEnhancedPack.js` - the shipped mods and their client
+- `src/systems/ownTextures/ownTextureRules.js`, `src/systems/ownTextures/ownTexturePacks.js` - the rules and the specs
+- `src/systems/vanillaEnhanced/vanillaEnhancedPack.js` - the packs and their client
 - `src/systems/vanillaEnhanced/vanillaEnhanced.js` - the card's Classic and Vanilla Enhanced, the add-ons
-- `tools/vanillaEnhancedVendor.mjs` - vendors and checks the pack
 - `test/systems/ve1_vanillaEnhanced.test.js` - load order, index, the ground's decision and set, hosts, card
-- `test/systems/ve4_vanillaEnhancedShipped.test.js` - the pack's files and proofs, shadowing, the real index slice by
-  slice, the client, add-ons
+- `test/systems/ve4_vanillaEnhancedShipped.test.js` - the packs' builds, shadowing, the index slice by slice, the
+  client, add-ons; mutants `tools/mutants/ve4.json`
+- `test/systems/ownwork4_textures.test.js` - the rules; mutants `tools/mutants/ownwork4_textures.json`
 - `tools/overhaulsProbe.mjs` - the card in Chromium
 
 ## Open
 
-- The mod's ten Materials (its rocks over World of Daggerfall's models) are not read: we have no Material reader.
-- We ship the repository's 3.4.7; a player's 3.5.0 copy attaches over it. A probe over a real 3.5.0 bundle is owed.
+- The mod's ten Materials (its rocks over World of Daggerfall's models) have no twin: we have no Material reader.
+- A player's own copy of the mod attaches over ours, by key or Title. A probe over a real bundle is owed.

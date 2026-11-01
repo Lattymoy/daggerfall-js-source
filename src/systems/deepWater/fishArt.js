@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31; bible/03-World/Deep-Waters.md): THE SEVEN FISH, OUR OWN PICTURES. Each species is a recipe
-// for our painter (art/ownPainter.js), keyed by the texture name the species reads, at the power-of-two size the sea
-// samples. A fish is drawn in the shape it shows (its billboard's aspect, `space`) and sampled at its picture's size,
-// so restoreIconAspect gives its icon that shape back. All face left. No pixel of the retired release is read.
+// THE SEVEN FISH, OUR OWN PICTURES. Each species is a recipe for our painter (art/ownPainter.js), keyed by the
+// texture name the species reads, at the power-of-two size the sea samples. A fish is drawn in the shape it shows
+// (its billboard's aspect, `space`) and sampled at its picture's size, so restoreIconAspect gives its icon that shape
+// back. All face left. No pixel of the retired release is read.
 import { createPainter, RAMP, ellipse, poly, stroke, union, rampShade } from '../../art/ownPainter.js';
 
 /** A body lit from above: `back` over the line `split` (a y), `belly` under it. */

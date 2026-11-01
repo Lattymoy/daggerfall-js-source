@@ -327,8 +327,8 @@
   {
     "name": "HCC-disabled-still-shows",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!runtime || !enabled) return null;",
-    "new": "    if (!runtime) return null;",
+    "old": "  function shown() {\n    if (!runtime || !enabled) return null;",
+    "new": "  function shown() {\n    if (!runtime) return null;",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "HCC-following-box-without-trigger",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push(",
-    "new": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following) out.push(",
+    "old": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push({ key: KEY_FOLLOWING_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "new": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following) out.push({ key: KEY_FOLLOWING_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -519,8 +519,8 @@
   {
     "name": "AUDIT-HCC-O1-targets-landed-once",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs\n",
-    "new": "",
+    "old": "      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs\n      // RPT1026-EVENTS GATE-WAY (a private report: a wagon parked across a breach's gate, and a portal laid there as it",
+    "new": "      // RPT1026-EVENTS GATE-WAY (a private report: a wagon parked across a breach's gate, and a portal laid there as it",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -546,8 +546,8 @@
   {
     "name": "AUDIT-HCC-O6-peer-press-any-reach",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }\n",
-    "new": "",
+    "old": "    if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }\n    const n = hoverName(key);",
+    "new": "    const n = hoverName(key);",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "AUDIT-HCC-O7-switch-off-silent",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (_lastKey !== '') { _lastKey = ''; onChanged?.(); }\n",
-    "new": "",
+    "old": "      if (_lastKey !== '') { _lastKey = ''; onChanged?.(); }\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -564,8 +564,8 @@
   {
     "name": "AUDIT-HCC-O8-disabled-loads-peers",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!enabled) return false;   // AUDIT HCC O8: a disabled mod is one DFU never loaded - nothing of a peer's stands or loads\n",
-    "new": "",
+    "old": "    if (!enabled) return false;   // AUDIT HCC O8: a disabled mod is one DFU never loaded - nothing of a peer's stands or loads\n    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "new": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "AUDIT-HCC-O9-unseen-horse-named",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (p.horse && p.shownHorse && _stillReady) out.push(",
-    "new": "      if (p.horse && p.shownHorse) out.push(",
+    "old": "      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: teamAabb(owner, { ...p.horse, position: p.shownHorse }), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "new": "      if (p.horse && p.shownHorse) out.push({ key: peerKey(owner, 'h'), aabb: teamAabb(owner, { ...p.horse, position: p.shownHorse }), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
     "tests": [
       "test/systems/horse/hcc_pool.test.js"
     ]
@@ -591,8 +591,8 @@
   {
     "name": "AUDIT-HCC-H4-switch-off-keeps-observing",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      runtime?.suspend?.();   // AUDIT HCC H4: the machine lets go of what it was observing\n",
-    "new": "",
+    "old": "      runtime?.suspend?.();   // AUDIT HCC H4: the machine lets go of what it was observing\n      destroyAll();",
+    "new": "      destroyAll();",
     "tests": [
       "test/systems/audit_hcc.test.js"
     ]

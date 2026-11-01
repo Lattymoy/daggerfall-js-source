@@ -1,5 +1,5 @@
 // @ts-check
-// RIDE (2026-09-23, Mac: "Also need to ensure over people see others riding on horses"): ANOTHER PLAYER IN THE SADDLE.
+// RIDE: ANOTHER PLAYER IN THE SADDLE.
 //
 // The pose never said how a player travelled, so a peer on a horse or a cart walked on foot on everyone else's
 // screen - their doll or their body sliding over the road at a gallop's pace. The pose carries the mount now
@@ -27,53 +27,53 @@
 // them - a beast is never nothing. (DISC23-B's walkers leave a beast to this layer: `pose.wb` skips them.)
 import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, ORIENTATIONS, LYCAN_TICK, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, RANGED_TICK, SPELL_TICK } from '../../player/eyeOfTheBeholder/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
-import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
+import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // A class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
 import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, worldOrderLayered, lookedPixels, ridersReady, isDerivedSprite, decodeDerivedSprite } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
-import { isLayeredKey, decodeLayered, outfitOfItems, outfitPieces, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
-import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
+import { isLayeredKey, decodeLayered, outfitOfItems, outfitPieces, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // A walker in the armour it wears
+import { modSetting } from '../../systems/modSettings.js';   // Whether this player wears Layered Gearing
 import { POSE_RIDE } from '../wire.js';
 import { peerMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: a rider's horse in its mount look
 import {
   isRearView, createLanternArt, loadLanternArt, createSpriteLantern, stepSpriteLantern, spriteStride, hangSpriteLantern,
   mintSpriteLantern, dropSpriteLantern,
-} from '../../player/eyeOfTheBeholder/eotbLantern.js';   // HT-WAIST-BACK: the lantern on every EOTB sprite, one home - the local body's and these
+} from '../../player/eyeOfTheBeholder/eotbLantern.js';   // The lantern on every EOTB sprite, one home - the local body's and these
 import {
   createHolsterArt, loadHolsterPicture, createSpriteHolster, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, holsterItemOfLook,
-} from '../../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on every EOTB sprite's back, one home
+} from '../../player/eyeOfTheBeholder/eotbHolster.js';   // The sheathed weapon on every EOTB sprite's back, one home
 import { peerWeaponGlow, createSpriteGlow, setSpriteGlow, heldGlowPx, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
 import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from '../../player/eyeOfTheBeholder/eotbQuiver.js';   // QUIVER: a bow's quiver on the back
-import { createBackShieldArt, backShieldSeen, BACK_SHIELD } from '../../player/eyeOfTheBeholder/eotbBackShield.js';   // BACK-SHIELD: a sheathed walker's shield on its back
+import { createBackShieldArt, backShieldSeen, BACK_SHIELD } from '../../player/eyeOfTheBeholder/eotbBackShield.js';   // A sheathed walker's shield on its back
 import { quadHalfDiagonal } from '../../render/bounds.js';   // AUDIT FLICKER R1: a sprite's reach, as the batch was made with
-import { stepPeerPace } from './peerPace.js';   // HT-WAIST-BACK: the pace off the drawn pose, MWBODY1's law
-import { peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a walker on the wall faces it and takes no stride
-import { gatherActOf, peerGatherTool, peerGatherSwing } from './peerGather.js';   // PEER-ACTS: a walker at a gathering act
-import { peerWeaponOf, peerHandsOf } from './peerBodies.js';   // LAYERED-WEAPONS: the weapon in the hand the peer uses (LAYERED-DUAL: or its pair)
+import { stepPeerPace } from './peerPace.js';   // The pace off the drawn pose, MWBODY1's law
+import { peerBodyYaw, peerMoving } from './peerClimb.js';   // A walker on the wall faces it and takes no stride
+import { gatherActOf, peerGatherTool, peerGatherSwing } from './peerGather.js';   // A walker at a gathering act
+import { peerWeaponOf, peerHandsOf } from './peerBodies.js';   // The weapon in the hand the peer uses (LAYERED-DUAL: or its pair)
 import { layeredWeaponOf, layeredHands } from '../../player/eyeOfTheBeholder/layeredWeapon.js';
-import { warmSigOf, warmFramesOf, LAYERED_WARM_A_FRAME } from '../../player/eyeOfTheBeholder/layeredWarm.js';   // ATTACK-WARM
-import { loadBackPicture } from '../../player/eyeOfTheBeholder/eotbHolsterFlail.js';   // FLAIL-BACK
-import { withoutShield, loadShieldPicture } from '../../player/eyeOfTheBeholder/layeredShield.js';   // LAYERED-SHIELD: a walker's marks without its shield
+import { warmSigOf, warmFramesOf, LAYERED_WARM_A_FRAME } from '../../player/eyeOfTheBeholder/layeredWarm.js';
+import { loadBackPicture } from '../../player/eyeOfTheBeholder/eotbHolsterFlail.js';
+import { withoutShield, loadShieldPicture } from '../../player/eyeOfTheBeholder/layeredShield.js';   // A walker's marks without its shield
 
 /** The table a riding pose shows: standing, walking, galloping (EOTB's three mounted tables). */
 export const rideTable = (mv) => (mv === 2 ? 'GallopHorse' : mv === 1 ? 'MoveHorse' : 'IdleHorse');
-/** PR-WW1: the loop table a pose in beast form shows - EOTB's own chooseTable, transformed first, off the pose's move
+/** The loop table a pose in beast form shows - EOTB's own chooseTable, transformed first, off the pose's move
  *  bit and drawn flag (the claws up at a stand are IdleMeleeLycan; a beast that moves is MoveLycan either way). */
-export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !peerMoving(pose), sheathed: !pose?.wd });   // AUDIT CLIMB-ARC N2: a beast on the wall walks no stride
-/** PR-WW1: the claw a beast's swing plays (eotbBody playLycanAttack's clip: its frames forward at LYCAN_TICK). */
+export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !peerMoving(pose), sheathed: !pose?.wd });   // A beast on the wall walks no stride
+/** The claw a beast's swing plays (eotbBody playLycanAttack's clip: its frames forward at LYCAN_TICK). */
 export const CLAW_TABLE = 'AttackMeleeLycan';
 /** AUDIT RIDE: a sprite whose fetch or decode failed is asked for again after this long (a long-open tab across a
  *  deploy that moved the art's hashes answers 404 until it reloads - not forever). */
 export const RIDER_RETRY_MS = 30000;
-/** COATS1: how many riders' horse looks' dyed pictures stand at once, and how long a look undrawn is before it may go. */
+/** How many riders' horse looks' dyed pictures stand at once, and how long a look undrawn is before it may go. */
 export const RIDER_LOOKS_KEPT = 12;
 export const RIDER_LOOK_IDLE_MS = 2000;
 /** PEER-ART (FIELD BUGS 2026-10-22d, Foretold: "an instance out of 7 that is leaking 5gb of ram"): how many sprites'
  *  decoded pictures the store keeps for another texture of the same sprite (its mirror) - the most recently asked. Every
- *  one was kept for the session: a worn-armour walker (LAYERED-PEERS) is some 55 frames of its own outfit, and each new
+ *  one was kept for the session: a worn-armour walker is some 55 frames of its own outfit, and each new
  *  outfit met online kept ~4 MB of decoded pixels that nothing read again. */
 export const RIDER_PIXELS_KEPT = 64;
-/** PEER-ART: a sprite's LOOK, whose pictures go together - a rider's horse (COATS1), or a walker's worn-armour outfit
+/** A sprite's LOOK, whose pictures go together - a rider's horse, or a walker's worn-armour outfit
  *  (layeredArmor.js layeredSprite's key less its record and frame: `LA:<body>:<combo>:<code>`); null for the class
  *  sprites every player shares, which stand. @param {{ horse?: any, key?: string }} s */
 export function spriteLookOf(s) {
@@ -84,27 +84,27 @@ export function spriteLookOf(s) {
 }
 
 async function decodeUrl(url) {
-  if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng));   // WORN-ARMOUR: composed from its strip
-  if (isDerivedSprite(url)) return decodeDerivedSprite(url);   // NO-BETHESDA2: built from the player's own TEXTURE file
+  if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng));   // Composed from its strip
+  if (isDerivedSprite(url)) return decodeDerivedSprite(url);   // Built from the player's own TEXTURE file
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
-  return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
+  return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())), { owned: true });   // The decode is this door's alone - turned in its own bytes
 }
 
 /**
- * DISC23-B: THE ART, ONE STORE. A rider and a walker draw from the same bundle (the on-foot and mounted archives are
+ * THE ART, ONE STORE. A rider and a walker draw from the same bundle (the on-foot and mounted archives are
  * one set of names) and the renderer caches a texture by archive and record, so the two layers share one store:
  * a sprite fetched, decoded and uploaded once, whoever asked first. `ensure(s)` answers `{ w, h }` once the sprite's
  * texture is up, else null (asked, loading, failed and cooling down, or no art at all).
  *
- * HT-WAIST-BACK: and the LANTERN's picture - `lantern.ensure()`, the local body's own store and loader
+ * And the LANTERN's picture - `lantern.ensure()`, the local body's own store and loader
  * (player/eyeOfTheBeholder/eotbLantern.js createLanternArt, loadLanternArt from the player's ARENA2), uploaded under the same key, which
  * the renderer caches once for both. Asked only when a pose first says `hl`. `loadLantern` is the pins' door.
  */
 export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, clock = () => Date.now(), loadLantern = loadLanternArt, loadHolster = loadBackPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture } = {}) {
   const tex = new Map();      // `${archive}:${rec}` -> { w, h } | Promise | null (no art at all) | { failedAt } (asked again after RIDER_RETRY_MS)
   const pixels = new Map();   // sprite key -> decode promise, the most recently asked last (PEER-ART: RIDER_PIXELS_KEPT of them)
-  // COATS1: the riders' horses' looks (systems/horse/horseCoats.js) - each its own dyed pictures, so a look is let go once
+  // The riders' horses' looks (systems/horse/horseCoats.js) - each its own dyed pictures, so a look is let go once
   // RIDER_LOOKS_KEPT others were drawn since (EVERY ALLOCATION HAS AN OWNER: every horse is its own look, and a session
   // meets many riders). PEER-ART: and a walker's worn-armour outfit, the same (spriteLookOf). code -> { keys: Set<tex key>,
   // used: clock(), frame: the sweep's count when last drawn }
@@ -139,7 +139,7 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     const k = `${s.archive}:${s.rec}`;
     noteLook(s, k);
     let have = tex.get(k);
-    // PEER-ART: a texture let go under this key by another store (my own body's looks, eotbBody.js) is uploaded again -
+    // A texture let go under this key by another store (my own body's looks, eotbBody.js) is uploaded again -
     // the renderer's cache is one for every store, and an outfit can be mine and a peer's at once
     if (have && !(have instanceof Promise) && !('failedAt' in have) && renderer?.textures?.has && !renderer.textures.has(k.replace(':', '_'))) { tex.delete(k); have = undefined; }
     // AUDIT: a frame drawn before its weapon's picture came is decoded again (the picture is asked for again)
@@ -150,14 +150,14 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     const url = urlFor(s.key);
     if (!url) { tex.set(k, null); return null; }
     let img = pixels.get(s.key);
-    if (img) pixels.delete(s.key);   // PEER-ART: asked again - the most recent
+    if (img) pixels.delete(s.key);   // Asked again - the most recent
     else { img = decode(url); img.catch(() => { if (pixels.get(s.key) === img) pixels.delete(s.key); }); }
     pixels.set(s.key, img);
-    if (pixels.size > RIDER_PIXELS_KEPT) pixels.delete(pixels.keys().next().value);   // PEER-ART: the longest unasked goes
+    if (pixels.size > RIDER_PIXELS_KEPT) pixels.delete(pixels.keys().next().value);   // The longest unasked goes
     const p = img.then(async (raw) => {
-      const riders = s.horse ? await ridersReady() : null;   // AUDIT-STOREFRONT: the rider the dye spares
-      if (tex.get(k) !== p) return null;   // COATS1: let go while in flight - never uploaded
-      const { width, height, colors } = lookedPixels(s, raw, riders);   // COATS1: a rider's mount in its look
+      const riders = s.horse ? await ridersReady() : null;   // The rider the dye spares
+      if (tex.get(k) !== p) return null;   // Let go while in flight - never uploaded
+      const { width, height, colors } = lookedPixels(s, raw, riders);   // A rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
       return { w: width, h: height, marks: spriteMarks(withoutShield(px, raw.shield, width, height, s.mirror), width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, raw.held, width, height, s.mirror), heldOff: heldGlowPx(px, raw.held, width, height, s.mirror, 2), ...(raw.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
@@ -167,12 +167,12 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     return null;
   }
   const live = () => (renderer?.uploadTexture ? renderer : null);
-  return { ensure, sweep, renderer, lantern: createLanternArt(live, loadLantern), holster: createHolsterArt(live, loadHolster), quiver: createQuiverArt(live, loadQuiver), backShield: createBackShieldArt(live, loadBackShield) };   // BACK-HOLSTER: the weapons' pictures, one store for the walkers; QUIVER: and the quivers'
+  return { ensure, sweep, renderer, lantern: createLanternArt(live, loadLantern), holster: createHolsterArt(live, loadHolster), quiver: createQuiverArt(live, loadQuiver), backShield: createBackShieldArt(live, loadBackShield) };   // The weapons' pictures, one store for the walkers; QUIVER: and the quivers'
 }
 
 /**
  * One layer of peer figures - a map of drawn sprites, their batches, and the placement EOTB's own billboard takes.
- * Shared by the riders and (DISC23-B) the walkers, so the two place a sprite by ONE law.
+ * Shared by the riders and the walkers, so the two place a sprite by ONE law.
  */
 function figureLayer(art) {
   const renderer = art.renderer;
@@ -180,10 +180,10 @@ function figureLayer(art) {
   function drop(id) {
     const r = figs.get(id);
     if (r?.batch) renderer?.destroyBillboardBatch?.(r.batch);
-    if (r?.lantern) dropSpriteLantern(r.lantern, renderer);   // HT-WAIST-BACK: a walker's lantern goes with the walker
-    if (r?.holster) dropSpriteHolster(r.holster, renderer);   // BACK-HOLSTER: and the weapon on its back
+    if (r?.lantern) dropSpriteLantern(r.lantern, renderer);   // A walker's lantern goes with the walker
+    if (r?.holster) dropSpriteHolster(r.holster, renderer);   // And the weapon on its back
     if (r?.quiver) dropSpriteHolster(r.quiver, renderer);   // QUIVER: and its quiver
-    if (r?.backShield) dropSpriteHolster(r.backShield, renderer);   // BACK-SHIELD: and the shield on its back
+    if (r?.backShield) dropSpriteHolster(r.backShield, renderer);   // And the shield on its back
     figs.delete(id);
   }
   /** Stand `s` at `feet` for figure `r`: its batch (re-made when the sprite changes), its size, its offset. `mode`
@@ -194,16 +194,16 @@ function figureLayer(art) {
     const up = art.ensure(s);
     const g = grow > 1 ? grow : 1;
     if (up) {
-      const xml = spriteOffset(s.archive, s.record, s.frame);   // OWN-AUDIT: a frame drawn on another canvas has its own shift
+      const xml = spriteOffset(s.archive, s.record, s.frame);   // A frame drawn on another canvas has its own shift
       const own = spriteSize(up.w, up.h, mode, xml.scale);
       const size = g > 1 ? { w: own.w * g, h: own.h * g } : own;
       const key = `${s.archive}:${s.rec}`;
       if (!r.batch) {
         r.batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]);
         r.batch.origin = [0, 0, 0];
-        r.batch.conceal = r.veil ?? null;   // INVIS-LOOK: a new sprite keeps the figure's draw
+        r.batch.conceal = r.veil ?? null;   // A new sprite keeps the figure's draw
         r.batchKey = key;
-      } else if (r.batchKey !== key || r.g !== g) {   // OW-PEERS: a new grow is a new size through the batch standing
+      } else if (r.batchKey !== key || r.g !== g) {   // A new grow is a new size through the batch standing
         // AUDIT FLICKER R1: A NEW FRAME IS WRITTEN THROUGH THE BATCH STANDING, as the foes' and the bands' are. It was
         // destroyed and made again at every animation frame (a rider's every 1/16 s) in the update, after the frame's
         // records were taken and before the next frame replays them: the replay met a dead batch and the figure cast
@@ -212,18 +212,18 @@ function figureLayer(art) {
         if (r.batch.bounds) r.batch.bounds[3] = quadHalfDiagonal(size);
         r.batchKey = key;
       }
-      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = up.held ?? null; r.heldOff = up.heldOff ?? null; r.pair = s.pair ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
+      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = up.held ?? null; r.heldOff = up.heldOff ?? null; r.pair = s.pair ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // Its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
       if (r.batch) r.batch.noShadow = g > 1;
     }
     if (r.batch && r.xml) {
       // EOTB's placement (eotbBody place()): the offset in metres, x along the view's right (negated when mirrored),
-      // y over the feet; the renderer's billboard is bottom-anchored (EOTB-FEET), so the base is the feet plus y
+      // y over the feet; the renderer's billboard is bottom-anchored, so the base is the feet plus y
       const x = (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1);
       const y = (r.xml.y / r.xml.scale) * (r.g ?? 1);
       r.batch.origin[0] = feet[0] + right[0] * x; r.batch.origin[1] = feet[1] + y; r.batch.origin[2] = feet[2] + right[2] * x;
     }
   }
-  /** INVIS-LOOK (2026-09-27): a concealed peer's draw (ECV1's visual, the host's) or null - kept on the figure, so a
+  /** A concealed peer's draw (ECV1's visual, the host's) or null - kept on the figure, so a
    *  sprite made later takes it, and set on the batch standing now. */
   function veil(r, v) {
     r.veil = v ?? null;
@@ -233,24 +233,23 @@ function figureLayer(art) {
     figs, drop, place, veil,
     sweep(seen) { for (const id of [...figs.keys()]) if (!seen.has(id)) drop(id); },
     isDrawn: (id) => !!figs.get(id)?.batch,
-    batchOf: (id) => figs.get(id)?.batch ?? null,   // PEERFX3: the one sprite a hurt flash tints
+    batchOf: (id) => figs.get(id)?.batch ?? null,   // The one sprite a hurt flash tints
     heightOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml ? r.size.h + (r.xml.y / r.xml.scale) * (r.g ?? 1) : 0; },
-    /** SERAPH-WINGS (2026-10-05): the figure as drawn - { base, mpp, beast }, its quad's foot over the feet (m), its metres
+    /** The figure as drawn - { base, mpp, beast }, its quad's foot over the feet (m), its metres
      *  a pixel and whether it is a beast's (AUDIT 3: the shoulders by the pixel) - or null, and null in the saddle (the
      *  frame is the horse's too): what an aura on its back reads for the bones a sprite has not got (render/auraRing.js
      *  auraSpriteBones). */
     figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast', marks: r.marks ?? null, shift: (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1) } : null; },   // ARMORY: and where the body stands in its picture - its marks, the quad's offset along its right
-    /** SPRITE-FACE (2026-10-05, Mac: "The sprite rotation on character input is a little finicky and make the aura
-     *  misallign"): the way the figure drawn faces - { yaw, turn }: `yaw` its picture's (the eight-way view it was drawn
+    /** The way the figure drawn faces - { yaw, turn }: `yaw` its picture's (the eight-way view it was drawn
      *  in, about the eye it was drawn for - eotbBillboard.js portrayedYaw), `turn` the pose's own facing - this frame's,
      *  in the saddle too; null when not drawn or seen from its own feet. An aura on the sprite is hung on `yaw`, which the
-     *  pose's facing runs up to half a view off (render/auraRing.js auraSpritePosed); `card` (AUDIT CAPE-CARD A3), a flat
+     *  pose's facing runs up to half a view off (render/auraRing.js auraSpritePosed); `card`, a flat
      *  card, so a rider's wings stand behind it as a walker's do. */
     faceOf: (id) => { const r = figs.get(id); return r?.batch && r.face && r.face.yaw !== null ? r.face : null; },
     batches: () => [...figs.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) {
       for (const r of figs.values()) {
-        for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]) if (o) { o[0] += offset[0]; o[1] += offset[1]; o[2] += offset[2]; }   // HT-WAIST-BACK: the lantern and the pace's last feet follow the origin too; BACK-HOLSTER: the weapon
+        for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]) if (o) { o[0] += offset[0]; o[1] += offset[1]; o[2] += offset[2]; }   // The lantern and the pace's last feet follow the origin too; BACK-HOLSTER: the weapon
       }
     },
     destroy() { for (const id of [...figs.keys()]) drop(id); },
@@ -261,33 +260,33 @@ function figureLayer(art) {
 const UP = Object.freeze([0, 1, 0]);
 /** The viewer's side of a sprite: its eight-way view of a figure facing `yaw` at `feet`, from `eye`. */
 const viewOf = (yaw, feet, eye) => orientationFor([Math.sin(yaw), 0, Math.cos(yaw)], eye ? [eye[0] - feet[0], 0, eye[2] - feet[2]] : [0, 0, 0]);
-/** SPRITE-FACE: figure `r`'s facing as drawn this frame - the picture's (`view` about `eye`) and the pose's (`yaw`) - on
+/** Figure `r`'s facing as drawn this frame - the picture's (`view` about `eye`) and the pose's (`yaw`) - on
  *  its own record, written in place (the layer's `faceOf`). */
 function faceDrawn(r, view, yaw, feet, eye) {
-  const f = r.face ?? (r.face = { yaw: null, turn: 0, card: true });   // AUDIT CAPE-CARD A3: a flat card - a rider, with no figure to read, hangs behind it (a walker's figure wins)
+  const f = r.face ?? (r.face = { yaw: null, turn: 0, card: true });   // A flat card - a rider, with no figure to read, hangs behind it (a walker's figure wins)
   f.yaw = eye ? portrayedYaw(view, [eye[0] - feet[0], 0, eye[2] - feet[2]]) : null;
   f.turn = yaw;
 }
 
 /**
  * `renderer` the host's (uploadTexture, createBillboardBatch, destroyBillboardBatch); `urlFor` / `decode` the art's
- * doors (the pins drive fakes), or `art` a store another layer already holds (DISC23-B). `enabled()` is whether riders
+ * doors (the pins drive fakes), or `art` a store another layer already holds. `enabled()` is whether riders
  * are drawn at all (the art is Eye Of The Beholder's).
  */
 export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, enabled = () => true, clock = () => Date.now(), art = null } = {}) {
   const store = art ?? createEotbArt({ renderer, urlFor, decode, clock });
   const layer = figureLayer(store);
   const riders = layer.figs;   // id -> { table, frame, clock, batch, batchKey, size, xml, mirror, an, claw }
-  const deferred = [];   // WEREWOLF1 (AUDIT E4): this frame's beasts held for `settle`
+  const deferred = [];   // This frame's beasts held for `settle`
   let hScene = null, hEye = null, hRight = null, hDt = 0;   // and the frame's own placing, kept for them (no object a frame)
   /** @type {(id: string) => object|null} */
-  let hConceal = () => null;   // INVIS-LOOK: and the frame's concealed draws, for a deferred beast too
-  let hGrow = null;   // OW-PEERS: the Overworld's grow (feet -> times), for a deferred beast too
+  let hConceal = () => null;   // And the frame's concealed draws, for a deferred beast too
+  let hGrow = null;   // The Overworld's grow (feet -> times), for a deferred beast too
 
   /**
    * One frame. `peers` the host's drawable list ({ id, pose, shown }), `toScene` the pose's feet in scene units, `eye`
    * the viewer's eye, `right` the viewer's camera right (the sprite's x offset runs along it, as EOTB's does).
-   * WEREWOLF1 (AUDIT E4): `defer(peer)` a beast on foot another layer may stand THIS frame (the viewer's Morrowind
+   * WEREWOLF1: `defer(peer)` a beast on foot another layer may stand THIS frame (the viewer's Morrowind
    * wolf, net/peer/peerBodies.js) - held back, and drawn or let go by `settle` once that layer has synced. A `skip` read
    * before it was the last frame's answer: the frame a peer transformed drew nothing, the frame its wolf first stood
    * drew both, and the frame the wolf walked out of range drew neither.
@@ -309,19 +308,19 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
       // and the casts all read; the latest word ran up to a whole interval ahead of the rider's own name
       const pose = peer?.shown;
       if (!pose) continue;
-      // PR-WW1: a beast (`wb` 1 the werewolf, 2 the wereboar - LycanthropyTypes) is this layer's as a rider is
+      // A beast (`wb` 1 the werewolf, 2 the wereboar - LycanthropyTypes) is this layer's as a rider is
       const beast = pose.wb | 0;
       const riding = pose.rd === POSE_RIDE.Horse || pose.rd === POSE_RIDE.Cart;
       if (!beast && !riding) continue;
       seen.add(peer.id);
-      if (riding && !beast && yields(peer)) { deferred.push(peer); continue; }   // COATS3D: on the 3D horse - the bodies', settled below
-      if (beast && !riding && defer(peer)) { deferred.push(peer); continue; }   // WEREWOLF1 (AUDIT E4): settled below
+      if (riding && !beast && yields(peer)) { deferred.push(peer); continue; }   // On the 3D horse - the bodies', settled below
+      if (beast && !riding && defer(peer)) { deferred.push(peer); continue; }   // Settled below
       one(peer, pose, beast, riding, toScene, eye, right, dt);
     }
     layer.sweep(seen);
   }
 
-  /** WEREWOLF1 (AUDIT E4): the beasts `sync` held back, now the other layer has stood what it stands this frame - each
+  /** The beasts `sync` held back, now the other layer has stood what it stands this frame - each
    *  drawn here, or let go where `stands(id)` (its wolf is standing). COATS3D: and the riders it yielded, let go where
    *  `seated(id)` (their body stands astride the 3D horse), else drawn here as every rider is. AUDIT FB1022d D1: the
    *  frame's last word on the art store too - once a frame, after the walkers' sync, its looks are swept (createEotbArt).
@@ -340,8 +339,8 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
   function one(peer, pose, beast, riding, toScene, eye, right, dt) {
     let r = riders.get(peer.id);
     if (!r) { r = { table: null, frame: 0, clock: 0, batch: null, batchKey: null, size: null, xml: null, mirror: false, an: null, claw: null, veil: null }; riders.set(peer.id, r); }
-    layer.veil(r, hConceal(peer.id));   // INVIS-LOOK: a concealed rider (or beast) is drawn translucent
-    // PR-WW1: THE CLAW - the swing count moving on a beast plays EOTB's lycan swing once, forward, a LYCAN_TICK a
+    layer.veil(r, hConceal(peer.id));   // A concealed rider (or beast) is drawn translucent
+    // THE CLAW - the swing count moving on a beast plays EOTB's lycan swing once, forward, a LYCAN_TICK a
     // frame; the count first seen is no swing (a peer met mid-fight does not claw at nothing). It is the local
     // body's own rule (eotbBody playLycanAttack, IL): never in the saddle, and a swing while the claw plays does not
     // restart it
@@ -361,14 +360,14 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
     // `riding` reads it), and PR-WW1: a beast running on foot at half the frame (speedMod, the local body's term)
     else if (n > 1) { r.clock += Math.max(0, dt); const ft = frameTime(riding) * (beast && !riding ? speedMod({ running: pose.mv === 2 && peerMoving(pose) }) : 1); while (r.clock >= ft) { r.clock -= ft; r.frame = (r.frame + 1) % n; } }
     const feet = toScene(pose);
-    // PR-WW1: the form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
+    // The form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
     // still reads the rider's own set
-    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it
-    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast, horse: peerMountLook(peer.id, pose.rc | 0, feet) });   // COATS1: `rc` the look their horse wears; STOREFRONT: their mount look over it, by the Others' effects choice
+    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // A beast on the wall faces it
+    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast, horse: peerMountLook(peer.id, pose.rc | 0, feet) });   // `rc` the look their horse wears; STOREFRONT: their mount look over it, by the Others' effects choice
     if (!s) return;
-    faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
-    // PR-WW1: the transformed forms take the saddle's size (sizeMod - one constant serves both)
-    layer.place(r, s, feet, right, beast ? { transformed: true } : { riding: true }, hGrow ? hGrow(feet) : 1);   // OW-PEERS
+    faceDrawn(r, view, yaw, feet, eye);   // The way it is drawn facing, for an aura on it
+    // The transformed forms take the saddle's size (sizeMod - one constant serves both)
+    layer.place(r, s, feet, right, beast ? { transformed: true } : { riding: true }, hGrow ? hGrow(feet) : 1);
   }
 
   return {
@@ -378,12 +377,12 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
      *  layers stand nothing for them. AUDIT RIDE: a rider whose art is not up yet (or failed) is not drawn, so it keeps
      *  its doll or body - never nothing at all; PR-WW1: a beast likewise keeps DISC12's enemy sprite (remotePlayers). */
     isRiding: layer.isDrawn,
-    batchOf: layer.batchOf,   // PEERFX3
+    batchOf: layer.batchOf,
     /** The name tag's height over a rider's feet (0: not drawn) - remotePlayers' `bodyHeight` hand-off: the sprite's
      *  own top this frame (its size over the feet plus EOTB's y offset), as a body's head is its own. */
     heightOf: layer.heightOf,
-    figureOf: layer.figureOf,   // AUDIT 3 (SERAPH-WINGS): a beast's on foot - none in the saddle
-    faceOf: layer.faceOf,   // SPRITE-FACE: a beast's, and a rider's
+    figureOf: layer.figureOf,   // A beast's on foot - none in the saddle
+    faceOf: layer.faceOf,   // A beast's, and a rider's
     batches: layer.batches,
     offsetAll: layer.offsetAll,
     destroy: layer.destroy,
@@ -391,10 +390,10 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
   };
 }
 
-/** DISC23-B: the peers' on-foot swing is timed at this Speed - DFU's own GetMeleeWeaponAnimTime line at the middle of
+/** The peers' on-foot swing is timed at this Speed - DFU's own GetMeleeWeaponAnimTime line at the middle of
  *  the stat's range, since a peer's Speed is not on the wire (the local body times its own swing by its own). */
 export const PEER_SWING_SPEED = 50;
-/** DISC23-B: the one-shot a pose edge starts - the arm's three counters (world.js `arm`), each the clip EOTB plays
+/** The one-shot a pose edge starts - the arm's three counters (world.js `arm`), each the clip EOTB plays
  *  for that act (eotbBody.js's own doors: PlayMeleeAttackAnimation, the loose, the cast), with its own frame tick.
  *  `frames(count)` is the clip's frames for the counter's new value: ONE-STROKE - a blow is the stroke its count
  *  names (eotbBillboard.js meleeStrokeFrames, the count the swinger's own body read), over the weapon's animation. */
@@ -403,27 +402,27 @@ export const WALK_ONE_SHOTS = Object.freeze([
   Object.freeze({ field: 'ar', table: 'AttackRanged', frames: () => forwardFrames(frameCount('AttackRanged')), tick: () => RANGED_TICK }),
   Object.freeze({ field: 'cn', table: 'AttackSpell', frames: () => forwardFrames(frameCount('AttackSpell')), tick: () => SPELL_TICK }),
 ]);
-/** PEER-ACTS (GATHER-FEEL II): the stroke of the melee clip (WALK_ONE_SHOTS' AttackMelee, meleeStrokeFrames' blow) a
+/** The stroke of the melee clip (WALK_ONE_SHOTS' AttackMelee, meleeStrokeFrames' blow) a
  *  gathering act's moment plays - a tool's blow the second, the chop (two chops on the axes and hammers, an overhead one
  *  on a sword), the net's throw the first, a sweep of the arm. A set draws its own weapon: the tool is not its art. */
 export const WALK_GATHER_STROKES = Object.freeze({ blow: 1, throw: 0 });
-/** PEER-ACTS: a walker's hands, as its standing table reads them - at a gathering act the act's (ready while it holds a
+/** A walker's hands, as its standing table reads them - at a gathering act the act's (ready while it holds a
  *  tool, sheathed while its hands hold none - the bare hand, the Basket, the net - and never a bow drawn nor a spell
  *  readied), else the pose's own (its drawn flag, its readied spell, its drawn bow). Pure. */
 export const walkerHands = (pose) => (gatherActOf(pose)
   ? { sheathed: !peerGatherTool(pose), spellcasting: false, usingBow: false }
   : { sheathed: !pose.wd, spellcasting: !!pose.sr, usingBow: pose.wd === 2 });
 
-/** LAYERED-WEAPONS: the weapon a layered walker holds - the tool of its gathering act, else the one in the hand its pose
+/** The weapon a layered walker holds - the tool of its gathering act, else the one in the hand its pose
  *  says it uses (the look carries both hands) - as a weapon code (layeredWeapon.js), or null for bare hands. Pure. */
 export const walkerWeapon = (look, pose) => layeredWeaponOf(gatherActOf(pose) ? peerGatherTool(pose) : peerWeaponOf(look, pose));
-/** LAYERED-DUAL: what a walker's hands hold for its worn look - a pair (peerHandsOf: the right, the left, the last
+/** What a walker's hands hold for its worn look - a pair (peerHandsOf: the right, the left, the last
  *  blow's hand `ah`), else walkerWeapon's one; a gathering act's tool before either. SPELL-BURST: its cast's element
  *  (the pose's `ce`) and its spell hand. */
 export function walkerHeld(look, pose) {
   const h = gatherActOf(pose) ? null : peerHandsOf(look, pose);
   const held = h?.dual ? layeredHands({ pairRight: h.right, pairLeft: h.left, pairStrike: pose?.ah ? 'L' : 'R' }) : { weapon: walkerWeapon(look, pose) };
-  return { ...held, cast: Number.isInteger(pose?.ce) ? pose.ce : 4, ...(h?.spellHand ? { spellHand: true } : {}), ...(pose && !pose.wd ? { sheathed: true } : {}) };   // BACK-SHIELD: its shield on its back
+  return { ...held, cast: Number.isInteger(pose?.ce) ? pose.ce : 4, ...(h?.spellHand ? { spellHand: true } : {}), ...(pose && !pose.wd ? { sheathed: true } : {}) };   // Its shield on its back
 }
 
 /**
@@ -443,17 +442,14 @@ export function walkerHeld(look, pose) {
  * (`skip` - the viewer's own choice of bodies, which a Morrowind player made for everyone they meet). It takes the
  * place of the class sprite and the doll, and hands the name pass its height as the riders do.
  *
- * HT-WAIST-BACK (2026-09-24, Mac: "Make sure all the eye of the Beholder sprites get this change"): AND THEIR LANTERN.
- * A walker whose shown pose says `hl` (HT-WAIST-NET: their lit lantern hangs at the waist) hangs Daggerfall's lantern
+ * AND THEIR LANTERN. A walker whose shown pose says `hl` (HT-WAIST-NET: their lit lantern hangs at the waist) hangs Daggerfall's lantern
  * picture at the sprite's right hip by the local body's own law (player/eyeOfTheBeholder/eotbLantern.js - the art, the hang, the swing's
- * drive, the batch), swung off this walker's own motion - its pace off the drawn feet (net/peer/peerPace.js, MWBODY1's),
- * the pose's yaw's turn, the walk clip's phase - and DRAWN only from straight behind (`isRearView` of the view this
- * walker is drawn from, the local sprite's rule). Seen from a back diagonal, the side or the front it still hangs and
- * swings, undrawn. Its batch
- * goes when the lantern is put out, when the walker goes (the figure's drop) and when the layer is destroyed. It
- * lights nothing (a peer casts no light). The hosts draw it with `drawLanterns`, beside the bodies (world.js
- * drawPeerBodies, the one hook every mode's pass calls after the player's own body): its tilt is its own right and
- * up, which the flats' shared pass cannot carry.
+ * drive, the batch), swung off this walker's own motion - its pace off the drawn feet (net/peer/peerPace.js, MWBODY1's), the pose's
+ * yaw's turn, the walk clip's phase - and DRAWN only from straight behind (`isRearView` of the view this walker is drawn from, the local
+ * sprite's rule). Seen from a back diagonal, the side or the front it still hangs and swings, undrawn. Its batch goes when the lantern
+ * is put out, when the walker goes (the figure's drop) and when the layer is destroyed. It lights nothing (a peer casts no light). The
+ * hosts draw it with `drawLanterns`, beside the bodies (world.js drawPeerBodies, the one hook every mode's pass calls after the player's
+ * own body): its tilt is its own right and up, which the flats' shared pass cannot carry.
  */
 /**
  * LAYERED-PEERS (2026-10-19, the owner, of LAYERED-GEAR in play: "when layered skins are on you only see it on your
@@ -465,16 +461,16 @@ export function viewerLayered() {
   try { return !!modSetting('eye-of-the-beholder', 'Enabled') && (modSetting('eye-of-the-beholder', 'Graphics.LayeredGear') ?? 0) > 0; } catch { return false; }   // not vendored: no sprite body
 }
 
-/** ATTACK-WARM: the most walker frames waiting to be composed - a crowd's arrival asks no more. */
+/** The most walker frames waiting to be composed - a crowd's arrival asks no more. */
 export const WARM_QUEUE_MAX = 960;
 
 export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, enabled = () => true, clock = () => Date.now(), art = null, layeredAll = viewerLayered } = {}) {
   const store = art ?? createEotbArt({ renderer, urlFor, decode, clock });
   const layer = figureLayer(store);
   const walkers = layer.figs;   // id -> { table, frame, clock, shot, last, batch, ..., lantern, pace, paceFeet }
-  /** HT-WAIST-BACK: the lanterns drawn this frame (kept, not rebuilt - the draw path allocates nothing) */
+  /** The lanterns drawn this frame (kept, not rebuilt - the draw path allocates nothing) */
   const lit = [];
-  /** BACK-HOLSTER: and the weapons on the walkers' backs */
+  /** And the weapons on the walkers' backs */
   const slung = [];
   /** BACK-HOLSTER GLOW: and their glows - on the back, and round a walker whose weapon is drawn */
   const glows = [];
@@ -489,7 +485,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
   };
 
   /** The pose's own standing table (EOTB chooseTable, the mod's default ReadyStance - the sender's is not on the wire). */
-  const standing = (pose) => chooseTable({ stopped: !peerMoving(pose), ...walkerHands(pose) });   // CLIMB5: on the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one
+  const standing = (pose) => chooseTable({ stopped: !peerMoving(pose), ...walkerHands(pose) });   // On the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one
 
   /**
    * One frame: `peers`, `toScene`, `eye`, `right` and `dt` as the riders' sync; `skip(id)` a peer another layer
@@ -499,13 +495,13 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
    */
   function sync(peers, toScene, { eye = null, right = [1, 0, 0], dt = 0, skip = () => false, hurt = () => false, conceal = () => null, grow = null } = {}) {
     const on = enabled();
-    const all = on && layeredAll();   // LAYERED-PEERS: read once a frame
+    const all = on && layeredAll();   // Read once a frame
     const seen = new Set();
     lit.length = 0; slung.length = 0; glows.length = 0;
     for (const peer of on ? peers ?? [] : []) {
       const pose = peer?.shown;
       const set = peer?.look?.eo;
-      // LAYERED-GEAR: a player who chose the On foot Layered Gearing Skin (their look's `lg`, net/wire.js validLook) is
+      // A player who chose the On foot Layered Gearing Skin (their look's `lg`, net/wire.js validLook) is
       // a walker in the armour they wear, in the body they chose - a set or none (remotePlayers.sync then skips them: a
       // walker's height is their body's, world.js bodyHeight). LAYERED-PEERS: and while this player wears it, so is
       // every other player - in the body they chose, else their character's own (the look's `gender`), whatever they
@@ -514,8 +510,8 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;
       seen.add(peer.id);
       let r = walkers.get(peer.id);
-      if (!r) { r = { table: null, frame: 0, clock: 0, shot: null, last: null, gather: {}, batch: null, batchKey: null, size: null, xml: null, mirror: false, lantern: null, holster: null, quiver: null, backShield: null, pace: 0, paceFeet: null, veil: null }; walkers.set(peer.id, r); }   // PEER-ACTS: `gather` the act as last seen
-      layer.veil(r, conceal(peer.id));   // INVIS-LOOK: a concealed walker is drawn translucent
+      if (!r) { r = { table: null, frame: 0, clock: 0, shot: null, last: null, gather: {}, batch: null, batchKey: null, size: null, xml: null, mirror: false, lantern: null, holster: null, quiver: null, backShield: null, pace: 0, paceFeet: null, veil: null }; walkers.set(peer.id, r); }   // `gather` the act as last seen
+      layer.veil(r, conceal(peer.id));   // A concealed walker is drawn translucent
       // a new swing, shaft or cast plays its clip once - the FIRST sight of a peer is not an edge (their counters are
       // whatever a session of swinging left them at)
       if (r.last) {
@@ -527,7 +523,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
         }
       }
       r.last = { an: pose.an | 0, ar: pose.ar | 0, cn: pose.cn | 0 };
-      // PEER-ACTS: a tool's blow and the net's throw play their stroke of the melee clip once - an act's first sight none
+      // A tool's blow and the net's throw play their stroke of the melee clip once - an act's first sight none
       const acted = peerGatherSwing(r.gather, pose);
       if (acted) {
         const o = /** @type {typeof WALK_ONE_SHOTS[number]} */ (WALK_ONE_SHOTS.find((w) => w.table === 'AttackMelee'));
@@ -552,33 +548,33 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
         if (n > 1) { r.clock += step; while (r.clock >= ft) { r.clock -= ft; r.frame = (r.frame + 1) % n; } }
       }
       const feet = toScene(pose);
-      const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs
-      // PEERFX3: A CLASS SKIN STRUCK SHOWS ITS HURT POSE for a moment - Daggerfall's own one-frame flinch (records
+      const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // Facing the wall it climbs
+      // A CLASS SKIN STRUCK SHOWS ITS HURT POSE for a moment - Daggerfall's own one-frame flinch (records
       // 10-14, the table class skins read for Death, player/classSkins.js). Eye Of The Beholder's sets carry no hurt
       // table (their Death is the fall), so they flinch by the red flash alone.
       const flinch = set >= EOTB_FOOT_SET_COUNT && hurt(peer.id);
-      // LAYERED-GEAR: such a walker wears what its look says it wears - the helmet, chest and legs pieces (and a cloak's
+      // Such a walker wears what its look says it wears - the helmet, chest and legs pieces (and a cloak's
       // dye) its own client sent (net/wire.js look items) - in the body it chose (LAYERED-PEERS: or its own); leather
       // where it wears none
       const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, ...(r.shot?.hands ?? walkerHeld(peer.look, pose)) } : null;
-      const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn, ...(flinch ? { armedTable: r.table } : {}) } : { onFoot: set });   // LAYERED-WEAPONS: a flinch keeps the weapon
-      if (worn) warmWalker(r, { onFoot: set ?? 0, ...worn });   // ATTACK-WARM
+      const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn, ...(flinch ? { armedTable: r.table } : {}) } : { onFoot: set });   // A flinch keeps the weapon
+      if (worn) warmWalker(r, { onFoot: set ?? 0, ...worn });
       if (!s) continue;
-      faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
-      const g = grow ? grow(feet) : 1;   // OW-PEERS: grown under the Overworld, as the traveller is
+      faceDrawn(r, view, yaw, feet, eye);   // The way it is drawn facing, for an aura on it
+      const g = grow ? grow(feet) : 1;   // Grown under the Overworld, as the traveller is
       layer.place(r, s, feet, right, { riding: false }, g);
-      if (g > 1) { if (r.lantern) { dropSpriteLantern(r.lantern, store.renderer); r.lantern = null; } }   // OW-PEERS: a grown walker's waist is not where the lantern hangs (eotbBody's OW-BIG rule)
+      if (g > 1) { if (r.lantern) { dropSpriteLantern(r.lantern, store.renderer); r.lantern = null; } }   // A grown walker's waist is not where the lantern hangs (eotbBody's OW-BIG rule)
       else hangLantern(r, pose, feet, view, eye, right, step, ft);
-      slingHolster(r, peer, g > 1 ? null : pose, feet, view, eye, right);   // BACK-HOLSTER: OW-PEERS' rule too
+      slingHolster(r, peer, g > 1 ? null : pose, feet, view, eye, right);   // OW-PEERS' rule too
       slingQuiver(r, peer, g > 1 ? null : pose, feet, view, eye, right);   // QUIVER
-      slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn, feet, view, eye, right);   // BACK-SHIELD
+      slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn, feet, view, eye, right);
       if (g === 1) glowInHand(r, peer, pose, right);   // BACK-HOLSTER GLOW
     }
-    for (const [t, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) store.ensure(spriteFor(t, o, f, look));   // ATTACK-WARM
+    for (const [t, o, f, look] of warmQueue.splice(0, LAYERED_WARM_A_FRAME)) store.ensure(spriteFor(t, o, f, look));
     layer.sweep(seen);
   }
 
-  /** HT-WAIST-BACK: a walker's lantern for this frame - put out, freed; lit, swung off the walker's motion and hung at
+  /** A walker's lantern for this frame - put out, freed; lit, swung off the walker's motion and hung at
    *  its sprite's hip by the one law, and listed to draw when the viewer sees the sprite's back. */
   function hangLantern(r, pose, feet, view, eye, right, dt, ft) {
     if (!pose.hl) {
@@ -595,7 +591,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     const pf = r.paceFeet ?? (r.paceFeet = [0, 0, 0]);
     pf[0] = at[0]; pf[1] = at[1]; pf[2] = at[2];
     r.paceKey = on;
-    const face = peerBodyYaw(pose);   // CLIMB5
+    const face = peerBodyYaw(pose);
     const fx = Math.sin(face), fz = Math.cos(face);   // the facing viewOf turns the sprite by
     const stride = spriteStride(peerMoving(pose) && !r.shot, r.pace, r.frame, r.clock, ft, frameCount(r.table));
     stepSpriteLantern(l, dt, fx, fz, r.pace, stride);
@@ -603,19 +599,19 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     if (!art || !r.batch || !r.size || !eye) return;
     hangSpriteLantern(l, r.batch.origin, r.size.h, fx, fz, eye, feet, Math.atan2(-right[2], right[0]), 1, art);
     if (!isRearView(view)) return;   // not seen from straight behind: it hangs, it swings, it is not drawn
-    if (r.veil) return;   // INVIS-LOOK: nor on a concealed walker - it would hang, lit and whole, on nobody
+    if (r.veil) return;   // Nor on a concealed walker - it would hang, lit and whole, on nobody
     mintSpriteLantern(l, store.renderer);
     lit.push(l);
   }
 
-  /** BACK-HOLSTER: a walker's sheathed weapon on its back (`wd` 0), by the local body's law - its look's weapon hand, the
+  /** A walker's sheathed weapon on its back (`wd` 0), by the local body's law - its look's weapon hand, the
    *  picture its own client would draw, hung off this walker's figure as drawn. Its batch goes once it is not hung, or
    *  with the walker. A concealed walker's is veiled as the walker is. */
   function slingHolster(r, peer, pose, feet, view, eye, right) {
     const item = pose && !pose.wd ? holsterItemOfLook(peer.look?.items, !!pose.lh) : null;
     const art = item && holstersOnBack(item) ? store.holster?.ensure(item, peer.look) : null;
     const fig = art && r.form === 'walker' ? layer.figureOf(peer.id) : null;
-    const l = fig ? r.holster ?? createSpriteHolster(peer.id) : null;   // AUDIT BACK-HOLSTER A6: made only to hang
+    const l = fig ? r.holster ?? createSpriteHolster(peer.id) : null;   // Made only to hang
     if (!l || !hangSpriteHolster(l, fig, view, feet, eye, right, art)) {
       if (r.holster) { dropSpriteHolster(r.holster, store.renderer); r.holster = null; }
       return;
@@ -633,7 +629,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     const item = pose ? holsterItemOfLook(peer.look?.items, !!pose.lh) : null;
     const art = quiverRidesWith(item) ? store.quiver?.ensure(!!pose.am) : null;
     const fig = art && r.form === 'walker' ? layer.figureOf(peer.id) : null;
-    const l = fig ? r.quiver ?? createSpriteHolster(peer.id) : null;   // made only to hang (AUDIT BACK-HOLSTER A6's rule)
+    const l = fig ? r.quiver ?? createSpriteHolster(peer.id) : null;   // made only to hang
     if (!l || !hangSpriteHolster(l, fig, view, feet, eye, right, art, BACK_QUIVER)) {
       if (r.quiver) { dropSpriteHolster(r.quiver, store.renderer); r.quiver = null; }
       return;
@@ -643,13 +639,13 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     slung.push(l);
   }
 
-  /** BACK-SHIELD: a sheathed layered walker's shield on its back, over its weapon (`worn` its worn look). Its batch goes
+  /** A sheathed layered walker's shield on its back, over its weapon (`worn` its worn look). Its batch goes
    *  once it is not hung, or with the walker; veiled as the walker is. */
   function slingBackShield(r, peer, pose, worn, feet, view, eye, right) {
     const code = pose && !pose.wd ? outfitPieces(worn.outfit)?.shield : null;
     const art = code ? backShieldSeen(store.backShield?.ensure(code, worn.gender === 'female' ? 'female' : 'male'), view) : null;
     const fig = art && r.form === 'walker' ? layer.figureOf(peer.id) : null;
-    const l = fig ? r.backShield ?? createSpriteHolster(peer.id) : null;   // made only to hang (AUDIT BACK-HOLSTER A6's rule)
+    const l = fig ? r.backShield ?? createSpriteHolster(peer.id) : null;   // made only to hang
     if (!l || !hangSpriteHolster(l, fig, view, feet, eye, right, art, BACK_SHIELD)) {
       if (r.backShield) { dropSpriteHolster(r.backShield, store.renderer); r.backShield = null; }
       return;
@@ -674,13 +670,13 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     if (off) glows.push(setSpriteGlow(r.glowOff ??= createSpriteGlow(peer.id), r.batch.archive, off, offLook, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
   }
 
-  /** HT-WAIST-BACK: draw this frame's lanterns, each on its own tilted basis - the hosts call it beside the bodies
+  /** Draw this frame's lanterns, each on its own tilted basis - the hosts call it beside the bodies
    *  (world.js drawPeerBodies, which every mode's pass calls after the player's own body). */
   function drawLanterns() {
     const rr = store.renderer;
     if (!rr?.drawBillboards) return 0;
     for (let i = 0; i < lit.length; i++) rr.drawBillboards(lit[i].list, lit[i].right, lit[i].up);
-    for (let i = 0; i < slung.length; i++) rr.drawBillboards(slung[i].list, slung[i].right, slung[i].up);   // BACK-HOLSTER: and the weapons on their backs
+    for (let i = 0; i < slung.length; i++) rr.drawBillboards(slung[i].list, slung[i].right, slung[i].up);   // And the weapons on their backs
     return lit.length;
   }
 
@@ -689,16 +685,16 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     /** Whether a peer stands as their chosen sprite this frame - the class sprite and the doll stand nothing for them.
      *  Not until the art is up: a walker still loading keeps what stood before. */
     isWalking: layer.isDrawn,
-    batchOf: layer.batchOf,   // PEERFX3
+    batchOf: layer.batchOf,
     heightOf: layer.heightOf,
-    figureOf: layer.figureOf,   // SERAPH-WINGS
-    faceOf: layer.faceOf,   // SPRITE-FACE
+    figureOf: layer.figureOf,
+    faceOf: layer.faceOf,
     batches: layer.batches,
-    drawLanterns,   // HT-WAIST-BACK
+    drawLanterns,
     holstersDrawn: () => slung,   // BACK-HOLSTER, OVER THE AURA: this frame's weapons on the walkers' backs
     glowsDrawn: () => glows,   // BACK-HOLSTER GLOW: this frame's glows on the walkers
     offsetAll: layer.offsetAll,
-    destroy() { lit.length = 0; slung.length = 0; glows.length = 0; layer.destroy(); },   // HT-WAIST-BACK: and every lantern with its walker (the figure's drop)
+    destroy() { lit.length = 0; slung.length = 0; glows.length = 0; layer.destroy(); },   // And every lantern with its walker (the figure's drop)
     get walkers() { return walkers; },
   };
 }

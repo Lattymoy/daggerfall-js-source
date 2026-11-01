@@ -2,8 +2,8 @@
   {
     "name": "TOWN-DRESS-road-unread",
     "file": "src/world/townDress.js",
-    "old": "if (weight(gx, gy) === ROAD_WEIGHT) return false;",
-    "new": "if (weight(gx, gy) === -1) return false;",
+    "old": "      if (weight(gx, gy) === ROAD_WEIGHT) return false;",
+    "new": "      if (weight(gx, gy) === -1) return false;",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TOWN-DRESS-door-unread",
     "file": "src/world/townDress.js",
-    "old": "for (const d of doors.at(x, z, r)) if (inDoorway(d, x, z, r)) return false;",
-    "new": "for (const d of doors.at(x, z, r)) if (inDoorway(d, x, z, r) && false) return false;",
+    "old": "    for (const d of doors.at(x, z, r)) if (inDoorway(d, x, z, r)) return false;",
+    "new": "    for (const d of doors.at(x, z, r)) if (inDoorway(d, x, z, r) && false) return false;",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TOWN-DRESS-lot-unread",
     "file": "src/world/townDress.js",
-    "old": "if (lot > 0) for (const l of lotNear.at(x, z, r + lot)) if (inBox(l, x, z, r + lot)) return false;",
-    "new": "",
+    "old": "    if (lot > 0) for (const l of lotNear.at(x, z, r + lot)) if (inBox(l, x, z, r + lot)) return false;",
+    "new": "    ",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TOWN-DRESS-capital-dressed",
     "file": "src/world/townDress.js",
-    "old": "if (!rule || dfLocation?.capital || !loc?.blocks?.length || !nav?.grid) return null;",
-    "new": "if (!rule || !loc?.blocks?.length || !nav?.grid) return null;",
+    "old": "  if (!rule || dfLocation?.capital || !loc?.blocks?.length || !nav?.grid) return null;",
+    "new": "  if (!rule || !loc?.blocks?.length || !nav?.grid) return null;",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TOWN-DRESS-climate-unread",
     "file": "src/world/townDress.js",
-    "old": "const climate = dfLocation.climate?.zoneClimateType ?? dfLocation.climate?.climateType ?? CLIMATE_BASE_TYPES.Temperate;",
-    "new": "const climate = CLIMATE_BASE_TYPES.Temperate;",
+    "old": "  const climate = dfLocation.climate?.zoneClimateType ?? dfLocation.climate?.climateType ?? CLIMATE_BASE_TYPES.Temperate;",
+    "new": "  const climate = CLIMATE_BASE_TYPES.Temperate;",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TOWN-DRESS-counter-moved",
     "file": "src/world/townDress.js",
-    "old": "counterY: 0.92,",
-    "new": "counterY: 0.75,",
+    "old": "  counterY: 0.92, counterD: 0.7, counterT: 0.06,   // the counter's top, its depth and its board's thickness",
+    "new": "  counterY: 0.75, counterD: 0.7, counterT: 0.06,   // the counter's top, its depth and its board's thickness",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TOWN-DRESS-awning-off-the-frame",
     "file": "src/world/townDress.js",
-    "old": "yb = S.backH + slope * o + 0.02",
-    "new": "yb = S.backH + slope * o + 0.5",
+    "old": "  const slope = (S.backH - S.frontH) / (S.front - S.back), yb = S.backH + slope * o + 0.02, yf = S.frontH - slope * o + 0.02;",
+    "new": "  const slope = (S.backH - S.frontH) / (S.front - S.back), yb = S.backH + slope * o + 0.5, yf = S.frontH - slope * o + 0.02;",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TOWN-DRESS-block-edited-in-place",
     "file": "src/world/townDress.js",
-    "old": "  if (!dfBlock?.rmbBlock || (!adds?.flats?.length && !adds?.models?.length)) return dfBlock;",
-    "new": "  if (!dfBlock?.rmbBlock || (!adds?.flats?.length && !adds?.models?.length)) return dfBlock;\n  dfBlock.rmbBlock.miscFlatObjectRecords.push(...adds.flats);",
+    "old": "  const rmb = dfBlock.rmbBlock;",
+    "new": "  dfBlock.rmbBlock.miscFlatObjectRecords.push(...adds.flats);\n  const rmb = dfBlock.rmbBlock;",
     "tests": [
       "test/world/townDress.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "TOWN-DRESS-stall-uncarved",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        carveTownDress(nav, townDress);   // TOWN-DRESS: and round the market's stalls",
+    "old": "        carveTownDress(nav, townDress);   // And round the market's stalls",
     "new": "",
     "tests": [
       "test/world/townDress.test.js"

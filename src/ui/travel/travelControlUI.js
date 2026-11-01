@@ -1,4 +1,4 @@
-// TO1: THE TRAVEL CONTROL PANEL - TravelControlUI.cs (Hazelnut, MIT,
+// THE TRAVEL CONTROL PANEL - TravelControlUI.cs (Hazelnut, MIT,
 // contributor Jedidia), the strip that sits across the top of the
 // screen while an accelerated journey runs: where you are going, how
 // fast time is passing, and three buttons - the map, the camp, the way
@@ -21,7 +21,7 @@
 //
 // THE ART is our own strip (OWN-WORK4, travelArt.js), painted at the
 // mod's 320x27 under the name it read, `TOcontrolUI`.
-// RATE-LAW (2026-10-04, Mac: "Remove travel options dials"): the mod's
+// RATE-LAW: the mod's
 // spinner is gone. It was DFU's `UpDownSpinner` (CHAR02I1.IMG, the mod
 // ships no art for it - :106-110) over the strip's own recess after
 // "TIME x:"; the recess now carries the rate the journey's ground runs at
@@ -33,7 +33,7 @@ import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
 import { TRAVEL_OPTIONS_TEXT as T } from '../../systems/travel/travelOptionsText.js';
 import { firstHotkey } from '../../systems/dialogShortcuts.js';
-import { travelPicture } from './travelArt.js'; // OWN-WORK4: our own strip
+import { travelPicture } from './travelArt.js'; // Our own strip
 
 /** TravelControlUI.cs:19-24 - every rect on the strip, virtual pixels
  *  of the 320x200 screen. The panel itself is `baseSize` at the top
@@ -73,14 +73,12 @@ export async function preloadTravelControlArt(deps = {}) {
   let strip = null;
   try {
     const { toScreenOrder } = await import('../../formats/color32Order.js');
-    // AUDIT-TO1 E1: a picture is `{ width, height, data }`, which is
-    // what uploadTexture EATS, not what drawImg DRAWS - drawImg reads
-    // `img.tex` (ui/native/nativePanel.js), and a picture stored as-is has none,
-    // so drawScreenQuad ran untextured and painted the whole 320x27
-    // strip as one opaque white bar with the yellow text on top. The
-    // port's idiom for a picture on a screen quad is
-    // handheldTorches.js:"frame++;" - toScreenOrder, then upload, then
-    // `{ tex, w, h }` (loadImg's own shape, ui/native/nativePanel.js:"export async function loadImg").
+    // A picture is `{ width, height, data }`, which is what uploadTexture EATS, not what drawImg DRAWS
+    // - drawImg reads `img.tex` (ui/native/nativePanel.js), and a picture stored as-is has none, so
+    // drawScreenQuad ran untextured and painted the whole 320x27 strip as one opaque white bar with
+    // the yellow text on top. The port's idiom for a picture on a screen quad is
+    // handheldTorches.js:"frame++;" - toScreenOrder, then upload, then `{ tex, w, h }` (loadImg's own
+    // shape, ui/native/nativePanel.js:"export async function loadImg").
     const px = toScreenOrder(travelPicture('TOcontrolUI'));
     const tex =
       deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ??
@@ -89,7 +87,7 @@ export async function preloadTravelControlArt(deps = {}) {
   } catch {
     strip = null;
   }
-  _art = { strip }; // RATE-LAW: no spinner art - the readout is text
+  _art = { strip }; // No spinner art - the readout is text
   return _art;
 }
 export const travelControlArtLoaded = () => !!_art;
@@ -102,7 +100,7 @@ export function _setTravelControlArtForTests(art) {
  *  `cursorActive` flag, for the right reason - with the pointer LOCKED, clientX/clientY are frozen at the last free
  *  position, so a world click landed on whatever control the cursor had been parked over. But the port frees the
  *  pointer without that flag: the chat, the friends panel and the F-menu release it with the flag DOWN (world.js
- *  surfaceOpen), online Enter opens the chat rather than toggling it (KB1), Escape releases it, and a finger never
+ *  surfaceOpen), online Enter opens the chat rather than toggling it, Escape releases it, and a finger never
  *  holds it. A player looking at a free cursor over the spinner clicked, the gate refused, and the click relocked
  *  the pointer instead - Map, Camp and Exit have keys, so only the mouse-only spinner looked broken, stuck at its
  *  start value of 10. The gate is the LOCK itself now: a locked click (frozen coordinates) is still refused, a click
@@ -126,8 +124,8 @@ export class TravelControlUI {
    *  limits (RATE-LAW: the journey's ground sets the rate). */
   constructor(deps = {}) {
     this.deps = deps;
-    this.timeAcceleration = 1; // RATE-LAW: the rate in force, written by the journey (travelOptions.js applyRate)
-    this.onRoad = false; // RATE-LAW: and whether its ground is a road or a track
+    this.timeAcceleration = 1; // The rate in force, written by the journey (travelOptions.js applyRate)
+    this.onRoad = false; // And whether its ground is a road or a track
     this.isShowing = false; // :56
     this.destinationName = '';
     this.message = '';
@@ -136,7 +134,7 @@ export class TravelControlUI {
     this.isChoiceWindow = true; // the port's raw-key routing flag
   }
 
-  /** RATE-LAW: the journey says the rate its ground runs at (systems/timeScale.js travelRateOf). */
+  /** The journey says the rate its ground runs at (systems/timeScale.js travelRateOf). */
   setRate(rate, onRoad = false) {
     this.timeAcceleration = rate;
     this.onRoad = !!onRoad;
@@ -263,7 +261,7 @@ export class TravelControlUI {
       this.cancelWindow();
       return true;
     }
-    return true; // the strip swallows a click that hit no button - the rate's readout among them (RATE-LAW)
+    return true; // the strip swallows a click that hit no button - the rate's readout among them
   }
 
   /** :180-186, Draw. The mod also draws the HUD's vitals and compass
@@ -275,12 +273,12 @@ export class TravelControlUI {
     const m = nativeMetrics(canvas);
     const [, , pw, ph] = CONTROL_RECTS.panel;
     const x0 = Math.trunc((NATIVE_W - pw) / 2); // :99-101 - centred, top
-    if (_art?.strip?.tex) drawImg(renderer, _art.strip, m, x0, 0, pw, ph); // AUDIT-TO1 E1: the uploaded strip, in drawImg's own shape
+    if (_art?.strip?.tex) drawImg(renderer, _art.strip, m, x0, 0, pw, ph); // The uploaded strip, in drawImg's own shape
     // :113-115 - the destination label is centred inside its own panel
     const [dx, dy, dw] = CONTROL_RECTS.dest;
     if (this.destinationName)
       shadowText(renderer, font, this.destinationName, m, x0 + dx, dy, { align: 'center', w: dw });
-    // RATE-LAW: the rate in the recess the spinner sat in - its value row, at the mod's anchor; no arrows
+    // The rate in the recess the spinner sat in - its value row, at the mod's anchor; no arrows
     const [sx, sy] = CONTROL_RECTS.timeAccel;
     const [vx, vy, vw] = UD_SPINNER.value;
     shadowText(renderer, font, String(this.timeAcceleration), m, x0 + sx + vx, sy + vy, { align: 'center', w: vw });

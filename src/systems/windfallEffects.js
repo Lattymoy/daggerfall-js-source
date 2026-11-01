@@ -1,5 +1,4 @@
-// WINDFALL1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments
-// seamlessly") - WINDFALL's WindEnvironmentEffects, ported off its assembly: the three sounds (a gust's one-shot, the
+// WINDFALL's WindEnvironmentEffects, ported off its assembly: the three sounds (a gust's one-shot, the
 // windy day's intermittent passages, the canopy's ruffle) and the three particle flows (the gust's leaves, the
 // ambient leaves, the winter boughs' snow) the wind drives. Pure: the host hands it the frame and three sources
 // (systems/audio.js AudioEngine.source - Unity's AudioSource: a live volume and pitch, one-shots on it, isPlaying,

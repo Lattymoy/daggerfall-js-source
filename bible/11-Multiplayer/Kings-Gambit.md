@@ -75,7 +75,8 @@ Daggerfall Unity ships no such game; the mod does. Its rules are ported verbatim
 `GetReachable`, `InRange`, `HasLineOfSight`, `Attack`, `SpawnHazardPair`, `TierFor`). Departures: the pieces are Iliac
 cards rather than the mod's sprites; its procedural particle blobs and IMGUI become the card table's panel and cloth;
 its log keeps 12 lines, not two; its colours are replaced by the house's coat so nothing is told by colour alone; and
-online play runs on the relay, not the mod's peer link.
+online play runs on the relay, not the mod's peer link. Our code is the record of the rules (`src/net/kingsGambit.js`,
+`src/systems/gambit/gambitPatrons.js`); the release's record is in `01-Overview/Own-Work.md`.
 
 ## Code and tests
 
@@ -93,4 +94,4 @@ online play runs on the relay, not the mod's peer link.
 ## Open
 
 - `src/scenes/dungeonContext.js` stands no tavern, so it has no board online.
-- The mod names no author; the credits use the unnamed form until the owner records one.
+- The mod names no author; its record in `01-Overview/Own-Work.md` stays open until the owner records one.

@@ -1,12 +1,10 @@
-// CSA-B (2026-09-27) - COME SAIL AWAY'S BOATS BUILT: world/prefabNode.js (a
-// Unity prefab instanced - the Transform rules the C# leans on),
-// systems/comeSailAway/comeSailAwayModels.js (the vendored meshes read back, and which
-// Daggerfall texture each renderer's slot wears) and systems/comeSailAway/comeSailAwayBoat.js
-// (SpawnBoat, GetBoatTransforms, the variants and the helpers in the C#'s
-// order). The rules are pinned on hand-built trees; the five hulls on the
-// vendored prefabs, each against an expectation this file works out for
-// itself from the prefab tree (the active walk, the names, the boxes) rather
-// than from the builder.
+// COME SAIL AWAY'S BOATS BUILT: world/prefabNode.js (a Unity prefab instanced - the Transform
+// rules the C# leans on), systems/comeSailAway/comeSailAwayModels.js (the vendored meshes
+// read back, and which Daggerfall texture each renderer's slot wears) and
+// systems/comeSailAway/comeSailAwayBoat.js (SpawnBoat, GetBoatTransforms, the variants and
+// the helpers in the C#'s order). The rules are pinned on hand-built trees; the five hulls on
+// the vendored prefabs, each against an expectation this file works out for itself from the
+// prefab tree (the active walk, the names, the boxes) rather than from the builder.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,7 +22,7 @@ import {
 import { ownFile } from '../../ownBoats.mjs';
 import { OWN_BOAT_ARCHIVE } from '../../../src/world/ships/ownBoats/ownBoatArt.js';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const FILES = { prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') };
 const MODELS = comeSailAwayModels(FILES);
 const { prefabs, components } = FILES.prefabs;
@@ -142,7 +140,7 @@ test('CSA-B: a mesh decodes to the port\'s model shape - its submeshes\' baseVer
   assert.ok(g.indices instanceof Uint32Array, 'the renderer draws UNSIGNED_INT');
   assert.deepEqual([...g.bindPoses[0]].slice(12, 15), [5, 6, 7], 'the translation lands in the fourth column');
   assert.deepEqual([...matrixFromUnityRows([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])], [1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16]);
-  // OWN-WORK4: our carrack's hull reads whole out of our files' buffer, every index inside its vertices, a submesh a picture
+  // Our carrack's hull reads whole out of our files' buffer, every index inside its vertices, a submesh a picture
   const carrack = MODELS.geometry('own:carrack:hull');
   assert.equal(carrack.subMeshes.length, 7);
   assert.ok([...carrack.indices].every((i) => i < carrack.vertexCount));
@@ -151,7 +149,7 @@ test('CSA-B: a mesh decodes to the port\'s model shape - its submeshes\' baseVer
 });
 
 test('CSA-B: which Daggerfall texture a slot wears - RuntimeMaterials in the component\'s order and then the next one\'s, ApplyGameTextures\' AAA_RRR child names, and Unity\'s draw rule when the materials and submeshes do not pair', () => {
-  // OWN-WORK4: our boats carry no RuntimeMaterials - each renderer names its own pictures (our archive's), which the walk
+  // Our boats carry no RuntimeMaterials - each renderer names its own pictures (our archive's), which the walk
   // leaves as they are; a component with two runs both, in order, the second's writes over the first's
   const mast = [...nodes(prefabs[112414])].find(([n]) => n.name === 'CarrackMast3')[0];
   const inst = instantiatePrefab(mast, components);
@@ -196,7 +194,7 @@ test('CSA-B: which Daggerfall texture a slot wears - RuntimeMaterials in the com
   assert.deepEqual(rendererModel(g, [{ bundle: 'WaterMaskMaterial' }, { archive: 7, record: 2 }]).subMeshes.map((s) => s.startIndex), [3]);
   assert.equal(rendererModel(g, [{ bundle: 'Default-Material' }, null]), null);
   assert.equal(rendererModelKey('m', [{ archive: 7, record: 2 }, null]), 'csa:m|7_2,-');
-  // OWN-WORK4: and every renderer of ours pairs - a material a submesh (the small ship's anchor's two)
+  // And every renderer of ours pairs - a material a submesh (the small ship's anchor's two)
   const anchor = [...nodes(prefabs[112412])].find(([n]) => n.name === 'GalleonAnchor')[0];
   const key = components[anchor.components.find((i) => components[i].type === 'MeshFilter')].m_Mesh.mesh;
   assert.deepEqual([MODELS.meshes[key].submeshes.length, components[anchor.components.find((i) => components[i].type === 'MeshRenderer')].materials.length], [2, 2]);
@@ -477,7 +475,7 @@ test('CSA-B: ApplyGameTextures and FixDeformations on every walked sail - the sl
   }
   assert.equal(sails, want, 'every skinned renderer of the active tree, and only those');
   assert.ok(sails >= 10);
-  // OWN-WORK4: a sail under a scaled node (our small ship's second lateen's, scaled 2.83 here): its holder's local scale
+  // A sail under a scaled node (our small ship's second lateen's, scaled 2.83 here): its holder's local scale
   // is one over that
   const scaled = ownFile('prefabs.json');
   [...nodes(scaled.prefabs[112412])].find(([n]) => n.name === 'GalleonLargeLateen2Sail')[0].scale = [2.83, 2.83, 2.83];

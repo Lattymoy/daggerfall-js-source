@@ -211,8 +211,8 @@
   {
     "name": "SWING-LAW-RRI-override-hands-no-hands",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // SWING-LAW: the handling the port's law reads",
-    "new": "    twoHanded: false, // SWING-LAW: the handling the port's law reads",
+    "old": "    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // The handling the port's law reads",
+    "new": "    twoHanded: false, // The handling the port's law reads",
     "tests": [
       "test/systems/swinglaw.test.js",
       "test/systems/rri2_realism.test.js"

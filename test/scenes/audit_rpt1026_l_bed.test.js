@@ -27,7 +27,7 @@ import { createRestWindow } from '../../src/ui/restDoor.js';
 import { setWorldMinutes, setSharedClock, setOwnMinutes } from '../../src/systems/worldTick.js';
 
 
-const VILLAGES = null;   // OWN-WORK3: Beautiful Villages retired - no pack to build its rooms from
+const VILLAGES = null;   // Beautiful Villages retired - no pack to build its rooms from
 const noop = () => {};
 async function quietly(fn) {
   const saved = [console.warn, console.error, console.log];

@@ -1,4 +1,4 @@
-// FIELD-CONSOLE1 (2026-09-27) - A PLAYER'S CONSOLE, READ LINE BY LINE. Two of its lines were faults:
+// A PLAYER'S CONSOLE, READ LINE BY LINE. Two of its lines were faults:
 //
 //   [town] FACTION.TXT unavailable: Cannot access 'Ut' before initialization
 //     townTalk's load (built far up bootWorld) resumes after its FACTION.TXT fetch and reads the region through
@@ -21,10 +21,10 @@ test('FIELD-CONSOLE1: the region read townTalk makes at load is a hoisted declar
   const build = w.indexOf('const townTalk = createTownTalk({');
   assert.ok(build > 0);
   assert.match(w.slice(build, build + 2000), /regionIndex: \(\) => _questRegionIndex\(\),/, 'the load reads it');
-  // AUDIT NAV1 (B2): a raid parsed at sea reads the crown's region through its pin, for the length of the parse
+  // A raid parsed at sea reads the crown's region through its pin, for the length of the parse
   assert.match(w, /\n  function _questRegionIndex\(\) \{\n    if \(_questRegionPin != null\) return _questRegionPin;[^\n]*\n    const px = playerTravelPixel\(\);\n    return maps\.getRegionIndexAt\(px\.x, px\.y\);\n  \}/);
   // everything its body reads is declared before townTalk is built (the load may resume at any later await)
-  // PIN MOVED (STAFF-EVENT): the maps are handed to the staff hook's place picker as they are made (net/staffPlaces.js gameMaps)
+  // PIN MOVED: the maps are handed to the staff hook's place picker as they are made (net/staffPlaces.js gameMaps)
   for (const decl of ['function playerTravelPixel()', 'let _questRegionPin = null;', 'const maps = gameMaps(new MapsFile());', 'const state = new StreamingWorldState(', 'const cam = {', 'const walkMode = ', 'const player = new PlayerMotor(']) {
     const at = w.indexOf(decl);
     assert.ok(at > 0, decl);
@@ -34,7 +34,7 @@ test('FIELD-CONSOLE1: the region read townTalk makes at load is a hoisted declar
 });
 
 test('FIELD-CONSOLE1: a torch frame the set does not carry is a miss, never a fetch', async () => {
-  // OWN-WORK4: the set is our recipes (handheldTorchesArt.js) and the rebuilt candles - nothing is fetched at all
+  // The set is our recipes (handheldTorchesArt.js) and the rebuilt candles - nothing is fetched at all
   const ht = read('src/systems/handheldTorches.js');
   assert.doesNotMatch(ht, /import\.meta\.glob|fetch\(/, 'no file to glob, nothing to fetch');
   assert.match(ht, /async function defaultLoadSprite\(record, frame\) \{\n\s*if \(!vendoredTexture\(`\$\{SPRITE_ARCHIVE\}_\$\{record\}-\$\{frame\}\.png`\)\) return null;/);

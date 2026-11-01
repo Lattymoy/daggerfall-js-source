@@ -65,11 +65,20 @@ module decides whether the device is touch (`src/ui/touch/touchDevice.js` `isTou
 `?touch=` to force). Gamepads (`src/ui/gamepadInput.js`) press real registry keys; Enhanced Plus has its own pad
 layout and cursor (`src/ui/plus/plusPad.js`). Keys are in `10-UI/Controls.md`.
 
-**The brand** (`src/ui/brandMark.js`). The product is **DFO Online**, DFO where a label is short. The logo is the
-dragon mark, `src/assets/branding/dfo-online.png`, drawn by the front door, the masthead, the intro film, the landing
-page and the desktop launcher from that one file. Every box that draws it keeps its height; the letters sit right of
-the file's centre, so a centred mark is drawn back by `BRAND_LOGO_OPTICAL_SHIFT`. The intro film lives in
-`src/ui/intro/`.
+**The brand** (`src/ui/brandMark.js`). The product is **DFO Online**, DFO where a label is short. The logo is the DFO
+Online wordmark - red D, F and O in gold edges over a parchment scroll reading Online -
+`src/assets/branding/dfo-online.png`, 1232 x 699, drawn by the front door, the masthead, the intro film, the landing
+page and the desktop launcher from that one file. Every box that draws it keeps its height: the door
+`min(347px, 53.9vw)`, a short landscape screen `min(253px, 35.9vw)`, the masthead `64.2%`, the film `min(61vw, 880px)`
+and `min(52.5vw, 709px)`, the landing page `min(347px, 69.1vw)`; a phone's film box is held to `90vw`. A centred mark is
+drawn back by `BRAND_LOGO_OPTICAL_SHIFT` (LOGO-CENTRE, Mac), how far its paint's centre stands from the file's: the
+wordmark weighs on the file's own centre, so the shift is 0, which `test/ui/brand.test.js` measures. The intro film
+lives in `src/ui/intro/`.
+
+**No credits** (CREDITS-OUT, the owner; `01-Overview/Port-Doctrine.md`). No screen credits a work or names its author:
+there is no About pane card, no logo card in the intro and no "by" on a Features row, which carries the mod's name
+alone. The site's last section is Legal: the trademark notice and the licence. The notices the MIT and OFL licences
+require ship in the build as plain files, shown and linked nowhere (`vite.config.js` `licenceFiles`).
 
 ## Rules
 
@@ -79,13 +88,14 @@ the file's centre, so a centred mark is drawn back by `BRAND_LOGO_OPTICAL_SHIFT`
 - The one construction seam (`bible/Home.md`): a thing two hosts build gets one constructor; hosts call it.
 - Notices on the enhanced skin slide in from the right and work for every mod that raises one (Mac).
 - The product is DFO Online, DFO where short (Mac). The original game is named only where it must be: the copy a
-  player brings, credits and license, the trademark notice, Daggerfall Unity and mods by their own names, DFU's own
-  settings text, and the Iliac Bay's places. Elsewhere a player reads "the original game" or "classic". `test/ui/brand.test.js`
+  player brings, the trademark notice, mods by their own names and the Iliac Bay's places. No player string names
+  Daggerfall Unity, DFU, Interkarma or Nexus (CREDITS-OUT, the owner; `test/systems/credits.test.js`). Elsewhere a
+  player reads "the original game" or "classic". `test/ui/brand.test.js`
   reads the producers (Features rows, Overhaul cards, mod settings and others) so a new line naming the old game fails.
 - Keys other systems hold keep their old spelling: the relay's and account service's worker addresses, the D1
   database name, the Patreon key-derivation salt, the repository, the domain, the appId, the userData folder and the
   storage keys.
-- The dragon logo replaces the placeholder on the website, the intro and the main menu (Mac).
+- The DFO Online wordmark is the logo on the website, the intro and the main menu (Mac).
 - The player's choice of words face covers every enhanced surface; the default must be readable without it.
 
 ## Daggerfall Unity

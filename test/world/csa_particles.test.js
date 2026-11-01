@@ -1,7 +1,7 @@
-// CSA-F (2026-09-27) - UNITY'S PARTICLE SYSTEM AS COME SAIL AWAY'S PREFABS USE IT: world/unityParticles.js over the
+// UNITY'S PARTICLE SYSTEM AS COME SAIL AWAY'S PREFABS USE IT: world/unityParticles.js over the
 // prefabs' own systems - the curves, emission by time, distance and burst, the shapes, Local scaling, the size and
 // force modules, plane collisions and their sub-emitters, Play and Stop. Every expectation is worked out here from the
-// modules' documented behaviour and the serialized values. OWN-WORK4 (2026-10-31): over our own boats' systems
+// modules' documented behaviour and the serialized values. OWN-WORK4: over our own boats' systems
 // (world/ships/ownBoats/ownBoatEffects.js), their values read from the prefab, not written here.
 
 import { test } from 'node:test';
@@ -15,7 +15,7 @@ import { evaluateCurve } from '../../src/world/worldClock.js';
 import { quatRotate } from '../../src/world/quat.js';
 import { ownFile } from '../ownBoats.mjs';
 
-const P = ownFile('prefabs.json'); // OWN-WORK4: our boats' prefabs (test/ownBoats.mjs)
+const P = ownFile('prefabs.json'); // Our boats' prefabs (test/ownBoats.mjs)
 const near = (a, b, eps = 1e-6, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b}`);
 const nearV = (a, b, eps = 1e-6, msg = '') => a.forEach((v, i) => near(v, b[i], eps, `${msg}[${i}]`));
 /** A draw sequence: each call the next value, round again. */
@@ -44,7 +44,7 @@ test('CSA-F: AnimationCurve.Evaluate - a cubic Hermite on each span\'s outer slo
   const h = (t) => { const d = b.time - a.time, s = (t - a.time) / d; return (2 * s ** 3 - 3 * s ** 2 + 1) * a.value + (s ** 3 - 2 * s ** 2 + s) * a.outSlope * d + (-2 * s ** 3 + 3 * s ** 2) * b.value + (s ** 3 - s ** 2) * b.inSlope * d; };
   near(evaluateKeyframes(keys, 0.25), h(0.25));
   near(evaluateKeyframes(keys, b.time), 1, 1e-6);
-  // OWN-WORK4: a span leaving its first key on a slope (our wake's keys leave level) - its out slope read: 0.75 midway
+  // A span leaving its first key on a slope (our wake's keys leave level) - its out slope read: 0.75 midway
   near(evaluateKeyframes([{ time: 0, value: 0, inSlope: 0, outSlope: 2 }, { time: 1, value: 1, inSlope: 0, outSlope: 0 }], 0.5), 0.75, 1e-9);
   assert.equal(evaluateKeyframes(keys, 0.3), evaluateCurve(keys.map((k) => [k.time, k.value, k.inSlope, k.outSlope]), 0.3), 'worldClock\'s evaluateCurve, the one home');
   assert.equal(evaluateKeyframes([], 0.5), 0, 'an empty curve: nought');

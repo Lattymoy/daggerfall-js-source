@@ -1,4 +1,4 @@
-// WW1: WEAPON WIDGET'S TEXTURES, from the player's own copy of the mod.
+// WEAPON WIDGET'S TEXTURES, from the player's own copy of the mod.
 //
 // The mod's bundle carries 173 PNGs - the classic weapon sprites, record
 // 0 frame 0 (the idle pose), one per metal, repainted at double size
@@ -21,7 +21,7 @@
 // (the classic frame at double size).
 
 import { readUnityBundle } from '../../formats/unity/unityBundle.js';
-import { toScreenOrder } from '../../formats/color32Order.js'; // WW3: the ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
+import { toScreenOrder } from '../../formats/color32Order.js'; // The ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from '../../systems/textureReplacement.js';
 import { MATERIAL_NAMES } from '../../systems/item/itemInfo.js'; // MetalTypes' names, Iron..Daedric
 import { WEAPON_MATERIALS } from '../../characters/weapons.js';
@@ -150,9 +150,9 @@ export function weaponWidgetImage(name) {
         const b = await weaponWidgetBundle();
         const tex = b?.bundle?.textures?.find((t) => t.name === name);
         if (tex) {
-          // DWHD1 (a player: "all weapons are overhead"): rows KEPT. The bundle reader (unityBundle.decodeTexture2D)
-          // already answers top-first; the flip that was here turned every Weapon Widget frame upside down on its
-          // screen quad - the same fault HT3 fixed for the loose PNG below
+          // Rows KEPT. The bundle reader (unityBundle.decodeTexture2D) already answers top-first; the flip that
+          // was here turned every Weapon Widget frame upside down on its screen quad - the same fault HT3 fixed
+          // for the loose PNG below
           try {
             return toScreenOrder(tex.rgba());
           } catch (e) {
@@ -165,7 +165,7 @@ export function weaponWidgetImage(name) {
         try {
           const bytes = await _load(loose);
           if (!bytes || !bytes.byteLength) return null;
-          // HT3: the loose PNG keeps its rows. The bundle arm above is a
+          // The loose PNG keeps its rows. The bundle arm above is a
           // FLIP because Unity stores bottom-up; a decoded PNG is already
           // top-first, and this is a SCREEN quad, so flipping it here was
           // the same upside-down sprite the held torch showed.

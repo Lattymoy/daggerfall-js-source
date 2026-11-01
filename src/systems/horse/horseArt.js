@@ -1,6 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper
-// 1 to 1 recreation for everything"): THE CART'S HORSE, OURS. Horse Cart and Cargo 1.0.0-rc12 drew a saddled horse of
+// THE CART'S HORSE, OURS. Horse Cart and Cargo 1.0.0-rc12 drew a saddled horse of
 // its own: five views standing (`horse1..5.png`, 121x94) and a five-view, eight-frame walk (`Walk.<view>-<frame>.png`,
 // 121x95), read by its HorseTextureSet and HorseWalkAnimationSet. Ours keeps those names, sizes, views and frames. Each
 // picture is built from the player's own ARENA2: Daggerfall's horse under its rider (TEXTURE.495 records 0-4, the
@@ -572,7 +571,7 @@ export async function ownHorsePicture(
   );
 }
 
-/** OWN-AUDIT: the front view's rider as we drew him (horseFrontRider.js) laid over the baked mask, on a record of the
+/** The front view's rider as we drew him (horseFrontRider.js) laid over the baked mask, on a record of the
  *  size he was drawn over; any other record keeps the baked mask alone. */
 export function withFrontRider(
   /** @type {Uint8Array|null} */ mask,

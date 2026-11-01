@@ -2,8 +2,8 @@
   {
     "name": "FB0929D-MAPKEY-the-flip-only-hides",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "  filters[which] = !filters[which];\n  return true;",
-    "new": "  filters[which] = true;\n  return true;",
+    "old": "  filters[which] = !filters[which];",
+    "new": "  filters[which] = true;",
     "tests": [
       "test/ui/fb0929d_mapkey.test.js",
       "test/systems/travel/travelmapwindow.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "FB0929D-MAPKEY-the-classic-flips-its-own-copy",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "    if (!flipTravelMapFilter(this.filters, which)) return;\n    this._updateMapLocationDotsTexture();",
-    "new": "    if (!(which in this.filters)) return;\n    this.filters[which] = !this.filters[which];\n    this._updateMapLocationDotsTexture();",
+    "old": "    if (!flipTravelMapFilter(this.filters, which)) return;",
+    "new": "    if (!(which in this.filters)) return;\n    this.filters[which] = !this.filters[which];",
     "why": "the law re-spelled in the classic window rather than pressed: the same behaviour, so only the source pin (ONE flip, both skins) can see it - and it does",
     "tests": [
       "test/ui/fb0929d_mapkey.test.js"

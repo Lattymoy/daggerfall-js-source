@@ -1,5 +1,5 @@
-#!/usr/bin/env node
-// FIELD BUGS 2026-10-04d QUEST-MARKERS: THE TOWN PACKS' QUEST MARKERS, MEASURED - the list the port's curation carries
+// /usr/bin/env node
+// THE TOWN PACKS' QUEST MARKERS, MEASURED - the list the port's curation carries
 // (src/systems/quest/markerCuration.js CURATED_QUEST_MARKERS), made from the player's own data, as tools/rmbrpHills.mjs
 // measured the RMB Resource Pack's hills.
 //
@@ -46,9 +46,9 @@ const SPAWN = 11,
   ENTER = 8,
   REST = 4,
   EDITOR = 199;
-/** SEALED-CELLAR: the packs' hatch markers - 199.14 over the plug, 199.13 at the stair's other side. */
+/** The packs' hatch markers - 199.14 over the plug, 199.13 at the stair's other side. */
 export const HATCH = Object.freeze([14, 13]);
-/** AUDIT FB1005 S1: how far a hatch's spot stands from the room's entrance (its enter and rest markers), in metres. */
+/** How far a hatch's spot stands from the room's entrance (its enter and rest markers), in metres. */
 export const HATCH_DOOR_CLEAR_M = 1.5;
 export const VENDORS = Object.freeze([
   ['beautiful-villages', 10],
@@ -76,7 +76,7 @@ export async function openTownData(arena2) {
   setValue('Enhancements', 'AssetInjection', 'True');
   W.installWorldDataReplacement();
   W.bindWorldDataBlocks(blocks);
-  const packs = {}; // OWN-WORK3: the town packs are retired - the towns stand as Daggerfall lays them
+  const packs = {}; // The town packs are retired - the towns stand as Daggerfall lays them
   W.latchWorldDataDoor();
   W.quietLocationOverrides(true);
   const maps = new MapsFile();
@@ -422,7 +422,7 @@ export async function measureInterior(getModel, dfBlock, blockIndex, recordIndex
   const entries = layout.markers.filter((m) => m.type === ENTER || m.type === REST);
   const walk = walkFloor(tris, entries);
   const sealed = hatchesOf(layout.markers, walk);
-  // AUDIT FB1005 S1: a hatch's spot is a floor (THE RAY) and not the entrance - a quest foe stood there meets the player
+  // A hatch's spot is a floor (THE RAY) and not the entrance - a quest foe stood there meets the player
   // at the door (TEMPASF0 #7's stood 0.95 m from its one enter marker)
   const hatchSpotOk = (c) =>
     rayVerdict(tris, c) === 'ok' && entries.every((m) => Math.hypot(c.x - m.x, c.z - m.z) >= HATCH_DOOR_CLEAR_M);
@@ -431,7 +431,7 @@ export async function measureInterior(getModel, dfBlock, blockIndex, recordIndex
     const ray = rayVerdict(tris, p),
       reachable = walk.sees(p);
     const condemned = (ray === 'void' || ray === 'insideSolid') && !reachable;
-    // SEALED-CELLAR: past a shut hatch - the walk from its far side reaches it - it stands by the hatch's near side
+    // Past a shut hatch - the walk from its far side reaches it - it stands by the hatch's near side
     const hatch = !condemned && !reachable ? sealed.find((h) => (h.walk ??= walkFloor(tris, [h.far])).sees(p)) : null;
     const spot = condemned ? walk.clearSpot(p) : hatch ? walk.clearSpot(hatch.near, hatchSpotOk) : null;
     return {
@@ -445,7 +445,7 @@ export async function measureInterior(getModel, dfBlock, blockIndex, recordIndex
   });
 }
 
-/** SEALED-CELLAR: an interior's hatches the entrance's walk reaches - `{ near, far }`, a 199.14 or 199.13 it reaches
+/** An interior's hatches the entrance's walk reaches - `{ near, far }`, a 199.14 or 199.13 it reaches
  *  and the nearest marker of the other number (metres) - in the layout's marker order. */
 export function hatchesOf(markers, walk) {
   const out = [];
@@ -490,7 +490,7 @@ export async function measureTownPacks(data, { only = null, log = () => {} } = {
         ?.names()
         .filter((n) => n.endsWith('.RMB.json'))
         .map((n) => n.slice(0, -5))
-        .sort() ?? []; // OWN-WORK3: no pack, no building
+        .sort() ?? []; // No pack, no building
     for (const name of names) {
       if (wanted && ![...wanted].some((w) => w.startsWith(`${vendor}|${name}|`))) continue;
       const { dfBlock, index } = data.packBlock(vendor, name);

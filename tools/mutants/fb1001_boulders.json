@@ -20,8 +20,8 @@
   {
     "name": "ROCK-FOOT-the-whole-box-carried",
     "file": "src/scenes/pixelBuild.js",
-    "old": "{ const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }",
-    "new": "pixelRocks.push(box);",
+    "old": "        if (rockPick(m.pick)) { const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }   // A rock piece that stood - a vein's foot or a boulder; ROCK-FOOT: as it stands out of the ground, never its whole mesh's box (none if wholly under it)",
+    "new": "        if (rockPick(m.pick)) pixelRocks.push(box);   // A rock piece that stood - a vein's foot or a boulder; ROCK-FOOT: as it stands out of the ground, never its whole mesh's box (none if wholly under it)",
     "tests": [
       "test/net/prof2_client.test.js"
     ]

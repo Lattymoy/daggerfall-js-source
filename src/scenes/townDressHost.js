@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// TOWN-DRESS (OWN-WORK3, 2026-10-31) - THE TOWN'S DRESS, WIRED INTO A TOWN PIXEL'S BUILD (scenes/pixelBuild.js). The law
+// THE TOWN'S DRESS, WIRED INTO A TOWN PIXEL'S BUILD (scenes/pixelBuild.js). The law
 // is world/townDress.js; this module hands it the town's walk grid - its blocks' cells, its ground, its wall and its
 // painted paths (the build's own walk shut), its yards, its port and its monument carved out - and the models of its
 // blocks, then dresses the laid-out town in place before its blocks are drawn. It stands after the yards and the port:
@@ -12,7 +12,7 @@ import { carveLefay } from '../world/lefayMonument.js';
 import { carveCapitalWalks } from '../world/capitalWalks.js';
 import { townFabricOf } from '../world/urban/townFabricStand.js';
 import { townDressSteps, dressLocation, buildTownStall, TOWN_STALL_MODEL } from '../world/townDress.js';
-import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: the build's breather between the law's steps
+import { stepsBreathing } from '../world/puddleMask.js';   // The build's breather between the law's steps
 import { registerCustomModel } from '../world/customModels.js';
 
 let _installed = false;

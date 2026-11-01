@@ -1,5 +1,5 @@
 // PERF-SAILS3 (2026-10-14, a live capture of the owner's client in a port, online - the boats' frame 1.8 ms of a 10 ms
-// frame and 1.5 MB a frame of its garbage; bible/07-Rendering/Performance-Crowd.md PERF-SAILS3) - A BOAT'S PLAN: what
+// frame and 1.5 MB a frame of its garbage; PERF-SAILS3) - A BOAT'S PLAN: what
 // of her walk the frame, the flats and the draw read is found once and kept while her walk's nodes and the trees' shape
 // stand, the walk written where it stood, the flats' sizes and scales and the ropes' bones and poses in records of their
 // own - and everything the pool draws, bakes and stands is what it was before, to the bit.
@@ -75,9 +75,9 @@ test('PERF-SAILS3: everything the pool draws, records for the shadows, bakes and
     put(`F${f}|`);
     if (f % 25 === 0) await new Promise((res) => setTimeout(res, 5));   // the bakes' and the meshes' uploads land
   }
-  assert.deepEqual(counts(), { meshN: 254, batchN: 224 }, 'the meshes and the flats made');   // OWN-WORK4: our boats' meshes (359 the mod's)
+  assert.deepEqual(counts(), { meshN: 254, batchN: 224 }, 'the meshes and the flats made');   // Our boats' meshes (359 the mod's)
   // the same run on the pool before PERF-SAILS3 (origin/main 395099cec, DF-ART III's ships in it; 6fb2ddd4... on d8ccf7fd6, before DF-ART, the same both sides then too)
-  // OWN-WORK4 (2026-10-31): re-pinned over our own boats (1912a297... over Come Sail Away 2.1's)
+  // OWN-WORK4: re-pinned over our own boats (1912a297... over Come Sail Away 2.1's)
   assert.equal(h.digest('hex'), '4805ac0c47073cd779013943a7394083bfe49cc0a0bb79a7edf0685f08e61a98');
 });
 

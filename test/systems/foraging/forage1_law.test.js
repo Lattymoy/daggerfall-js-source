@@ -1,7 +1,6 @@
-// FORAGE1-FORAGE2 - FORAGING 1.7 (Harbinger451), THE LAW (2026-09-28, Mac: "Heres this for life skills";
-// "Your lead"). bible/06-Systems/Foraging.md is the record. The pins hold src/systems/foraging/foragingLaw.js to the
+// FORAGING 1.7 (Harbinger451), THE LAW. bible/06-Systems/Foraging.md is the record. The pins hold src/systems/foraging/foragingLaw.js to the
 // mod's own build: every table is the IL's (FORAGE0 section 6, read off <PrivateImplementationDetails> and the inline
-// stelem arrays) and every check comes in its tool's order. OWN-WORK3 (2026-10-31): the rows, the lines and the quests
+// stelem arrays) and every check comes in its tool's order. OWN-WORK3: the rows, the lines and the quests
 // are our own, pinned here as literals, and the quests carry FORAGE-FIX's mends.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,7 +20,7 @@ import { ON_EXTERIOR_WATER } from '../../../src/player/exteriorSurface.js';
 import { TEMPLATE as CC } from '../../../src/systems/survival/food.js';
 import { stringBreach } from '../../../tools/plainText.mjs';
 import { FORAGING_QUESTS, ownQuest, asBuilt, AS_BUILT } from './foragingAsBuilt.mjs';
-import { FORAGING_ART } from '../../../src/systems/foraging/foragingArt.js';   // OWN-WORK4: our own seven pictures
+import { FORAGING_ART } from '../../../src/systems/foraging/foragingArt.js';   // Our own seven pictures
 
 /** A draw that answers `i` of an `n`-long list: Random.Range(0, n) == i. */
 const at = (i, n) => () => (i + 0.5) / n;
@@ -34,7 +33,7 @@ const OPEN = Object.freeze({
 });
 
 test('FORAGE1: the twelve templates (OWN-WORK3: our own rows), group 9, and nothing else registers in their range', () => {
-  // id, name, kg, uses, gold, rarity, picture - the ids, names and pictures facts, the rest our design (Foraging.md OWN-WORK3)
+  // id, name, kg, uses, gold, rarity, picture - the ids, names and pictures facts, the rest our design
   assert.deepEqual(FORAGING_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.hitPoints, t.basePrice, t.rarity, t.worldTextureArchive, t.worldTextureRecord]), [
     [1600, 'Wood-Axe', 3.0, 50, 90, 10, 11600, 0], [1601, 'Pick-Axe', 3.5, 50, 110, 10, 11601, 0],
     [1602, 'Sickle', 1.0, 50, 60, 10, 11602, 0], [1603, 'Fishing-Net', 2.0, 50, 70, 10, 11603, 0],
@@ -224,7 +223,7 @@ test('FORAGE1: the Basket\'s five blocks, INT alone, and its finds - FORAGE-FIX 
   assert.deepEqual(basketFind({ block: 'D', count: 1, food: 2 }, true), { templateIndex: CC.Apple, count: 1, message: 'You gather one Apple.' });
   assert.deepEqual(basketFind({ block: 'B', count: 3, food: 2 }, false), { templateIndex: FT.Orange, count: 3, message: 'You gather three Oranges.' });
   assert.equal(fruitTemplate('Orange', true), CC.Orange);
-  // Q10: the build's C&C branch found nothing for these two; the fix finds the eggs
+  // The build's C&C branch found nothing for these two; the fix finds the eggs
   assert.deepEqual(basketFind({ block: 'C', count: 2, food: 4 }, true), { templateIndex: FT.Egg, count: 2, message: 'You find two Eggs.' });
   assert.deepEqual(basketFind({ block: 'E', count: 4, food: 4 }, true), { templateIndex: FT.Egg, count: 4, message: 'You find four Eggs.' });
   assert.deepEqual(basketFind({ block: 'A', count: 0, food: 3 }, false), { templateIndex: null, count: 0, message: 'You find nothing fit to eat.' });

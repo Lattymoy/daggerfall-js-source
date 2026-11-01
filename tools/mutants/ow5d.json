@@ -42,8 +42,8 @@
   {
     "name": "OW5b-D2-build-skips-the-ask",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;",
-    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;",
+    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;   // An empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)",
+    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;   // An empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],

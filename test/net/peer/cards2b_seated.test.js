@@ -1,5 +1,4 @@
-// CARDS2b (2026-10-07, bible/11-Multiplayer/Tavern-Cards.md section 12; Mac: "a sort of table enviroment where you can
-// see other players sprites"): THE SEATED BODY. Driven: the seated request's every point (player/seatPose.js) at two
+// THE SEATED BODY. Driven: the seated request's every point (player/seatPose.js) at two
 // facings, its mapping into the rig's space (the climb rig's climbRequestToRig), and the pose SOLVED on retail's own
 // biped - the hips level with the knees, the shins standing, the feet and the hands on their marks, the head lowered to
 // the seated eye; the wire's `st` (bounded, omitted standing, sent at once, eased whole); the peer's seat request and its
@@ -29,7 +28,7 @@ const r3 = (v) => Math.round(v * 1000) / 1000;
 const pt = (p) => p.map(r3);
 const U = MW_UNITS_PER_METER;
 const POSE = { x: 1, y: 2, z: 3, yaw: 0.5, pitch: 0, mv: 0 };
-const biped = (() => { let sk = null; return () => (sk ??= buildSkeleton(parseNif(RETAIL_SKELETON_BYTES))); })();   // OWN-WORK4: our own biped
+const biped = (() => { let sk = null; return () => (sk ??= buildSkeleton(parseNif(RETAIL_SKELETON_BYTES))); })();   // Our own biped
 /** The seat solved on retail's biped at a race: each joint as the WORLD has it (drawThird's own model: right and forward
  *  by the build, up by the height, about the seat's feet and facing). */
 function solveSeat(seat, race = { weight: 1, height: 1 }) {
@@ -163,10 +162,8 @@ test('CARDS2b by source: the pose the seat says, the request to the peers\' rigs
   const wm = read('src/scenes/worldModes.js');
   const has = (src, s, why) => assert.ok(src.includes(s), why ?? s);
   has(wm, "    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top, free: ");
-  // PIN MOVED (AUDIT CARDS-6 B4): a blow - never a round of damage over time, told from inside the player's minute pass
   has(wm, "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before && !tickInFlight()) standFromCardTable(); });", 'a hit stands you up');
-  // PIN MOVED (AUDIT KG II C1): the arm is a block now - at a King's Gambit battle the Escape action is the board's cancel
-  const esc = wm.indexOf("    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) {");   // KB1: the registry's Escape, never its raw code
+  const esc = wm.indexOf("    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) {");   // The registry's Escape, never its raw code
   assert.ok(esc > 0 && esc < wm.indexOf('    // U43: THE ONE DISPATCH.'), 'Escape stands you up, spent above the one dispatch');
   assert.ok(wm.slice(esc, wm.indexOf('\n    }\n', esc)).includes('      standFromCardTable(); e.preventDefault(); return;'), 'and stands you up');
   has(wm, "    seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),");

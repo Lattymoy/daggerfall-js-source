@@ -2428,8 +2428,8 @@
   {
     "name": "BLOOD2e-the-row-is-off-by-default",
     "file": "src/systems/features.js",
-    "old": "key: 'blood-screen', initial: true",
-    "new": "key: 'blood-screen', initial: false",
+    "old": "        Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),",
+    "new": "        Object.freeze({ store: 'prefs', key: 'blood-screen', initial: false, online: 'player' }),",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

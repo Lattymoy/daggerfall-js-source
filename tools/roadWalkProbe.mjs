@@ -1,10 +1,10 @@
-#!/usr/bin/env node
-// ROAD-SMOOTH (bible/06-Systems/Travel-View.md ROAD-SMOOTH) - ROAD JOURNEYS ON THE FREEWARE'S ROADS, PLANNED AND WALKED.
-// The roads past the Bay laid as the roads' worker lays them (tools/tesaRoadsAtlas.mjs's inputs, every region with land),
-// kept in a file so a second run skips the build; then journeys sampled from a seed - on the Bay, past it, the Bay to past
-// it, and five named - planned on the host's own ground and walked by the real Travel Options through its own `update`,
-// a body flown `step` units a frame. Per set: the pace kept, the frames stood and cut a km, the walk's turning against
-// the road's, the heading's reversals a km, the worst frame's turn, the distance off the painted road.
+// /usr/bin/env node
+// ROAD JOURNEYS ON THE FREEWARE'S ROADS, PLANNED AND WALKED. The roads past the Bay laid as the roads' worker lays them
+// (tools/tesaRoadsAtlas.mjs's inputs, every region with land), kept in a file so a second run skips the build; then
+// journeys sampled from a seed - on the Bay, past it, the Bay to past it, and five named - planned on the host's own
+// ground and walked by the real Travel Options through its own `update`, a body flown `step` units a frame. Per set: the
+// pace kept, the frames stood and cut a km, the walk's turning against the road's, the heading's reversals a km, the worst
+// frame's turn, the distance off the painted road.
 //
 //   ARENA2_PATH=/home/claude/dfdata/arena2 node tools/roadWalkProbe.mjs [--cache FILE] [--n 30] [--seed 7] [--step 433,1300]
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -41,7 +41,7 @@ import {
 import { cyrodiilTrunksFor } from '../src/scenes/tamrielRoadsHost.js';
 import { CAPITALS, capitalOnPixel, capitalGates, capitalSpanPixels } from '../src/world/tamrielCapitals.js';
 import { WATER_BYTE } from '../src/world/roadsProducer.js';
-import { bayRoads } from '../test/bayRoads.mjs'; // OWN-WORK2: the Bay's own network, off the same ARENA2
+import { bayRoads } from '../test/bayRoads.mjs'; // The Bay's own network, off the same ARENA2
 import { isMainStoryDungeon } from '../src/world/dungeon/dungeonTextures.js';
 import { countryTemplates, countryCounts, bayLand as bayLandOf, countryRates } from '../src/world/tamrielCountry.js';
 import { lairTemplates, lairPools, LAIR_TYPES } from '../src/world/tamrielDungeons.js';

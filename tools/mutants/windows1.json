@@ -430,8 +430,8 @@
   {
     "name": "RW1-glass-blooms",
     "file": "src/render/airPass.js",
-    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
-    "new": "          // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // An interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "new": "          // An interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "RW1-ships-rooms-only",
     "file": "src/systems/features.js",
-    "old": "key: 'realWindows', initial: 'full',",
-    "new": "key: 'realWindows', initial: 'rooms',",
+    "old": "      store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // render/realWindows.js realWindowsMode reads it",
+    "new": "      store: 'prefs', key: 'realWindows', initial: 'rooms', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // render/realWindows.js realWindowsMode reads it",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "RW1-AUDIT-the-replays-stale-vao",
     "file": "src/render/airPass.js",
-    "old": "    f.bindVao?.(null); // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
-    "new": "    void f; // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "old": "    f.bindVao?.(null); // The images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "new": "    void f; // The images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
     "tests": [
       "test/render/windows1_view.test.js"
     ]

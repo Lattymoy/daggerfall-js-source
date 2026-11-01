@@ -1,8 +1,8 @@
-// RR2 - THE NPC SPRITE VARIANTS (RoleplayRealism.cs :775-1077, Hazelnut, MIT): a shop's or tavern's 182 keeper drawn
+// THE NPC SPRITE VARIANTS (RoleplayRealism.cs :775-1077, Hazelnut, MIT): a shop's or tavern's 182 keeper drawn
 // as one of the seven `197_N` pictures by the building's quality, and four of five residents as the townsfolk walkers
 // of the climate's race, with a face to match. DFU rewrites the interior's billboards after the transition; the port
 // asks `rrVariantPerson` as each person is listed. Six keepers are our rule over the player's own people (OWN-WORK4
-// AUDIT, rrKeepers.js), one is rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety
+// AUDIT, rrKeepers.js), one is rebuilt from the player's files, each with our scale. The Villager Variety
 // arm (:948-978) has no counterpart: `materialSet` is false and the walker's archive is taken, the C#'s else.
 import {
   PERSON_TEXTURES,
@@ -21,11 +21,11 @@ import { registerButtonArt } from '../../ui/messageBox.js';
 import { setFlatFaceOverride } from '../../characters/staticNpc.js';
 import { classicArt } from '../classicArt.js';
 import { rrModule, rrRefinedTrainingOn } from './rrRealism.js';
-import RR_DERIVED from './rrDerivedArt.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader (OWN-WORK4)
-import { rrWeekButtonPicture } from './rrKeeperArt.js'; // OWN-WORK4: our own week button
-import { rrKeeperPicture } from './rrKeepers.js'; // OWN-WORK4 AUDIT: our keepers, put together from the player's own people
+import RR_DERIVED from './rrDerivedArt.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader
+import { rrWeekButtonPicture } from './rrKeeperArt.js'; // Our own week button
+import { rrKeeperPicture } from './rrKeepers.js'; // Our keepers, put together from the player's own people
 
-/** OWN-WORK3: each record's billboard scale (TextureReplacement's `scaleX`, `scaleY`), by our rule - a variant keeper
+/** Each record's billboard scale (TextureReplacement's `scaleX`, `scaleY`), by our rule - a variant keeper
  *  stands as big as the classic keeper it replaces (182_0 for records 0-3, 182_1 for 4-5, 182_2 for 6): that keeper's
  *  size with its record scale, over the 197 record's size, to three places. RR_KEEPER_OF says whose. */
 export const RR_KEEPER_OF = Object.freeze({ 0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 2 });
@@ -40,7 +40,7 @@ export const RR_NPC_XML_SCALE = Object.freeze({
 });
 export const RR_NPC_ARCHIVE = 197;
 export const RR_NPC_RECORDS = Object.freeze([0, 1, 2, 3, 4, 5, 6]);
-/** OWN-WORK4: the BUTTONS.RCI record our art adds - 21, "5 Days", the training window's week button (RR_WEEK_BUTTON),
+/** The BUTTONS.RCI record our art adds - 21, "5 Days", the training window's week button (RR_WEEK_BUTTON),
  *  our own. The release relabelled sixteen more (22-37) that nothing here asks for; they are not carried. */
 export const RR_BUTTON_RECORDS = Object.freeze([21]);
 
@@ -136,7 +136,7 @@ export function rrVariantPerson(
     const v = rrResidentVariant(
       { archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed },
       walkerRace(getWorldClimateSettings(worldClimate)?.people, region),
-    ); // AUDIT FB1010 C3: the street's own rule
+    ); // The street's own rule
     if (v) {
       setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex); // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as
       return { textureArchive: v.textureArchive, textureRecord: v.textureRecord };
@@ -147,7 +147,7 @@ export function rrVariantPerson(
 
 // ---- the art on its doors ----------------------------------------------------
 let _installed = false;
-/** NO-BETHESDA2: the picture that is Daggerfall's own record alone (197_4-0), by name - its spec, built from the
+/** The picture that is Daggerfall's own record alone (197_4-0), by name - its spec, built from the
  *  player's ARENA2 and never carried (rrDerivedArt.json). */
 export { RR_DERIVED };
 /** Once: the seven 197 sprites on the replacement door (lazy, gated on

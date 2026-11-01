@@ -2,8 +2,8 @@
   {
     "name": "RAINLEAK-lab-uptime-through",
     "file": "src/render/precipitation.js",
-    "old": "    gl.uniform1f(L.uTime, this.clock(timeSeconds)); // RAIN-CLOCK",
-    "new": "    gl.uniform1f(L.uTime, timeSeconds); // RAIN-CLOCK",
+    "old": "    gl.uniform1f(L.uTime, this.clock(timeSeconds));",
+    "new": "    gl.uniform1f(L.uTime, timeSeconds);",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAINLEAK-classic-uptime-through",
     "file": "src/render/precipitation.js",
-    "old": "    gl.uniform1f(this.uTime, this.clock(timeSeconds)); // RAIN-CLOCK",
-    "new": "    gl.uniform1f(this.uTime, timeSeconds); // RAIN-CLOCK",
+    "old": "    gl.uniform1f(this.uTime, this.clock(timeSeconds));",
+    "new": "    gl.uniform1f(this.uTime, timeSeconds);",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RAINLEAK-pixel-snow-uptime-through",
     "file": "src/render/precipitation.js",
-    "old": "    gl.uniform1f(P.uTime, this.clock(timeSeconds)); // RAIN-CLOCK",
-    "new": "    gl.uniform1f(P.uTime, timeSeconds); // RAIN-CLOCK",
+    "old": "    gl.uniform1f(P.uTime, this.clock(timeSeconds));",
+    "new": "    gl.uniform1f(P.uTime, timeSeconds);",
     "tests": [
       "test/systems/rainleak.test.js"
     ]

@@ -1,6 +1,6 @@
-// L10N6 (2026-10-03): THE TRANSLATIONS' RECORD. Mac's decisions (Localization-Arc.md): the game says which languages
+// THE TRANSLATIONS' RECORD. Mac's decisions: the game says which languages
 // are machine-translated, a person's translation outranks a draft, and a pack is bundled only on its authors' terms.
-// CREDITS-OUT (2026-11-01, the owner: "No more credits"): the About pane's translation rows are RETIRED with
+// CREDITS-OUT: the About pane's translation rows are RETIRED with
 // ui/credits.js; what stays is the record - `locales/<tag>/translators.json` and a bundled pack's PACK.json, read by
 // scenes/localeData.js into the language's record.
 import { test, beforeEach } from 'node:test';

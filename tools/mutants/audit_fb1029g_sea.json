@@ -55,8 +55,8 @@
   {
     "name": "AFB-SEA-F4-the-route-arrival-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n    st.arrived++;   // SEA-ROWS\n",
-    "new": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n",
+    "old": "    st.arrived++;\n    // AUDIT DEEP X-7: asked AT the arrival - a journey the view began but the player came down from ends in the mod's box",
+    "new": "    // AUDIT DEEP X-7: asked AT the arrival - a journey the view began but the player came down from ends in the mod's box",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "AFB-SEA-F4-the-place-arrival-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n",
-    "new": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n",
+    "old": "      travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();",
+    "new": "      travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "AFB-SEA-F4-the-pixel-arrival-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n",
-    "new": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n",
+    "old": "      st.road ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();",
+    "new": "      st.road ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],

@@ -1,4 +1,4 @@
-// CSA-I (2026-09-27) - COME SAIL AWAY'S POSITION READING AND THE WATER WALK: the position box and its coroutine
+// COME SAIL AWAY'S POSITION READING AND THE WATER WALK: the position box and its coroutine
 // (ComeSailAway.cs 5525-5541, 5589-5780), OnGUI's map and debug values (4089-4182, systems/comeSailAway/comeSailAwayMap.js), and
 // LateUpdate's water walk (4963-4982, 5044-5051; StartWaterwalking / EndWaterwalking 5966-6029) - over the real
 // SpawnBoat and the vendored models, every host door scripted.
@@ -12,9 +12,9 @@ import {
   travelMapPicture, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, dayOfMonthWithSuffix, markerLabel,
   csFloatString, mapOverlayDraws, MAP_MARKER_MODE_COLORS, MAP_MARKER_MODE_LABELS, MAP_HELP_LINES, DAGGERFALL_DEFAULT_TEXT_COLOR,
   COLOR_BLACK, COLOR_RED, LINE_TEXTURE,
-  mapSheetAt, sheetOfPixel, sheetRect, tamrielMapPicture, TAMRIEL_MAP_IMG, MAP_SHEET_TAMRIEL, COLOR_WHITE,   // BAY-LEFT-MAPS C12
+  mapSheetAt, sheetOfPixel, sheetRect, tamrielMapPicture, TAMRIEL_MAP_IMG, MAP_SHEET_TAMRIEL, COLOR_WHITE,
 } from '../../../src/systems/comeSailAway/comeSailAwayMap.js';
-import { bayToPicture, tamrielFrameInBay } from '../../../src/world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS C12: the frame's fit
+import { bayToPicture, tamrielFrameInBay } from '../../../src/world/tamriel/tamrielFrame.js';   // The frame's fit
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { REGION_PANEL_OFFSET } from '../../../src/ui/travel/travelMapWindow.js';
@@ -22,7 +22,7 @@ import { isEntityWaterWalking, assignModBundle, removeBundleNamed, WATER_WALKING
 import { liveBundles } from '../../../src/systems/mysticism.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the host whole
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 import { ownFile } from '../../ownBoats.mjs';
 const f = Math.fround;
@@ -68,7 +68,6 @@ function scene(opts = {}) {
     cargoWeight: () => 0, sphereCastAll: () => [], enemies: () => [],
     enemiesNearby: () => false, travelOptionsActive: () => null, timeScale: () => 1, setTimeScale: () => {}, soundVolume: () => 1,
     audio: { play: () => {}, stop: () => {}, oneShot: () => {}, dfOneShot: () => {}, dfClipAtPoint: () => {}, uiOneShot: () => {} },
-    // CSA-I
     messageBox: (t) => { out.boxes.push(t); world.box = true; },
     topWindowIsMessageBox: () => world.box,
     gamePaused: () => world.paused || world.box,
@@ -398,10 +397,10 @@ test('CSA-I: WaterWalkingSilent on the port\'s effect list - its own kind (no st
 // ── the host's seams ─────────────────────────────────────────────────────────────────────────────────────────────
 
 test('CSA-I: the host\'s seams - the map\'s window (a native window: every key, its key-ups, OnGUI\'s draw), rotated with the host\'s edges; the mouse bottom up; the two pictures off the player\'s files; the draw\'s shadow then text; the debug values beside the widget; IsWaterWalking read one way everywhere', () => {
-  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, BAY-LEFT-MAPS): the map's pictures and its draw list are scenes/csaMapHost.js's - the host read whole
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /topWindowIsMessageBox: \(\) => \(modes\?\.topWindow\?\.\(\) \?\? null\) instanceof ActionTextBox,/);
   assert.match(w, /map: \{ open: \(\) => csaMapOpen\(\), close: \(\) => csaMapClose\(\) \},/);
-  assert.match(w, /isChoiceWindow: true,\s*get done\(\) \{ return _csaMapWindow !== win; \},\s*input\(code, e\) \{ if \(!e\?\.repeat\) _csaMapKeys\.down\.add\(code\); _csaMapKeys\.held\.add\(code\); \},\s*keyup\(code\) \{ if \(_csaMapKeys\.held\.delete\(code\)\) _csaMapKeys\.up\.add\(code\); \},/);   // AUDIT PRE-MERGE 0928 U1: the release its own press made (test/systems/audit0928_input.test.js)
+  assert.match(w, /isChoiceWindow: true,\s*get done\(\) \{ return _csaMapWindow !== win; \},\s*input\(code, e\) \{ if \(!e\?\.repeat\) _csaMapKeys\.down\.add\(code\); _csaMapKeys\.held\.add\(code\); \},\s*keyup\(code\) \{ if \(_csaMapKeys\.held\.delete\(code\)\) _csaMapKeys\.up\.add\(code\); \},/);   // The release its own press made (test/systems/audit0928_input.test.js)
   assert.match(w, /draw\(\) \{ csaDrawMap\(\); \},/);
   assert.match(w, /if \(modes\?\.mountWindow\?\.\(win\)\) _csaMapWindow = win;/);
   assert.match(w, /beginInputFrame\(latch\.edge\); csaInputFrame\(\);/);
@@ -426,7 +425,7 @@ test('CSA-I: the host\'s seams - the map\'s window (a native window: every key, 
 });
 
 // ── BAY-LEFT-MAPS C12 (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
-// exceptions."; bible/03-World/Come-Sail-Away.md BAY-LEFT-MAPS) - THE READING PAST THE BAY ──────────────────────────────────
+// exceptions."; BAY-LEFT-MAPS) - THE READING PAST THE BAY ──────────────────────────────────
 // The mod's picture is the Bay's, so a boat past it had no cross. Past the Bay's map the reading is drawn on Daggerfall's
 // painting of Tamriel (TMAP00I0.IMG), the cross where the frame's fit puts the pixel; the markers are their sheet's.
 

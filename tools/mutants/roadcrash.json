@@ -11,8 +11,8 @@
   {
     "name": "RC-walk-reads-null-rects",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!st.locationRect || !st.locationBorderRect) {\n      ui?.closeWindow();\n      if (st.autopilot) interruptTravel();\n      return;\n    }",
-    "new": "    if (false) {\n      ui?.closeWindow();\n      if (st.autopilot) interruptTravel();\n      return;\n    }",
+    "old": "    if (!st.locationRect || !st.locationBorderRect) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/travel/roadcrash.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RC-guard-closes-but-leaves-the-leg",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      ui?.closeWindow();\n      if (st.autopilot) interruptTravel();\n      return;",
-    "new": "      ui?.closeWindow();\n      return;",
+    "old": "      if (st.autopilot) interruptTravel();\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/travel/roadcrash.test.js"
     ]

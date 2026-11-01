@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GN2-PF3-her-glow-at-her-first-draw",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
-    "new": "await pipeline.getTexture(art.archive); }",
+    "old": "        try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
+    "new": "        try { await pipeline.getTexture(art.archive); }",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-GN2-PF5-her-archive-never-marked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        pipeline?.markClassicArt?.(art.archive);\n",
-    "new": "",
+    "old": "        pipeline?.markClassicArt?.(art.archive);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-GN2-PF5-her-glow-a-replacement",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "{ replacement: !pipeline.isClassicArt?.(archive) }",
-    "new": "{ replacement: true }",
+    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
+    "new": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: true });",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],

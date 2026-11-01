@@ -1,4 +1,4 @@
-// UL1 (2026-09-12) - UNLEVELED LOOT 1.1.2 (Ralzar), THE MOD, 1:1.
+// UNLEVELED LOOT 1.1.2 (Ralzar), THE MOD, 1:1.
 // Mac: "Heres the next mod unleveled loot. Again 1:1"
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -127,7 +127,7 @@ test('UL1: the corpse - a Daedra Lord\'s roll over 70 drops daedric (a weapon ov
   const lord = makeEnemyEntity(31, ENEMY_BASICS[31], career(), 10, fixed(0.5));
   lord.items = [goldStack(250)];
   // rolls: Range(0,101)=100 (>70), METAL-RAMP's Range(0,20)=0 (under level 10: the race's metal - fb1019b_metalramp pins the ramp), DAEDRIC-RARE's keep 0 (under its tenth: Daedric kept - daedricrare pins it), Range(0,100)=99 (>50: a weapon), Range(113,131)=113 (a dagger), rangeFloat(0.3,0.75)=0.3, gold: Range(1,6)=1
-  unlevelDroppedLoot(lord, { rolls: seq(0.999, 0, 0, 0.999, 0, 0, 0) });   // PIN MOVED (DAEDRIC-RARE): the keep draw
+  unlevelDroppedLoot(lord, { rolls: seq(0.999, 0, 0, 0.999, 0, 0, 0) });
   assert.equal(lord.items.length, 2);
   const dagger = lord.items[1];
   assert.equal(dagger.group, 'Weapons'); assert.equal(dagger.templateIndex, 113); assert.equal(dagger.material, 9, 'daedric');
@@ -146,7 +146,7 @@ test('UL1: the corpse - a Daedra Lord\'s roll over 70 drops daedric (a weapon ov
   assert.equal(lord2.items[0].stackCount, 1 * 5, '7 / 10 -> 0 -> 1, x Range(1, 6) at 0.999 = 5');
   // the Seducer always drops a weapon; a Daedroth needs over 80
   const seducer = makeEnemyEntity(29, ENEMY_BASICS[29], career(), 10, fixed(0.5)); seducer.items = [];
-  unlevelDroppedLoot(seducer, { rolls: seq(0.76, 0, 0, 0, 0.5, 0.5) });   // PIN MOVED (DAEDRIC-RARE): the keep draw
+  unlevelDroppedLoot(seducer, { rolls: seq(0.76, 0, 0, 0, 0.5, 0.5) });
   assert.equal(seducer.items.length, 1); assert.equal(seducer.items[0].group, 'Weapons');
   const daedroth = makeEnemyEntity(27, ENEMY_BASICS[27], career(), 10, fixed(0.5)); daedroth.items = [];
   unlevelDroppedLoot(daedroth, { rolls: seq(0.80) });
@@ -201,17 +201,17 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   assert.equal(formulaOverride('randomMaterial'), null);
   let seen = 0; registerEnemyDeathHandler('t', () => { seen++; }); raiseEnemyDeath({ items: [] }); registerEnemyDeathHandler('t', null); raiseEnemyDeath({ items: [] });
   assert.equal(seen, 1);
-  // AUDIT VC6 (2026-09-18): the three kills raise it WITH the raiser's
-  // own terms now - a handler that ROLLS (SURV2's corpse food) was
-  // falling to Math.random and to an invented luck of 50, which made a
-  // guards pin fail one run in eight. The shapes are pinned in
-  // test/systems/surv2_items.test.js; here it is still that all three raise.
+  // The three kills raise it WITH the raiser's own terms now - a handler
+  // that ROLLS (SURV2's corpse food) was falling to Math.random and to an
+  // invented luck of 50, which made a guards pin fail one run in eight. The
+  // shapes are pinned in test/systems/surv2_items.test.js; here it is still
+  // that all three raise.
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js', 'src/scenes/dungeonContext.js']) assert.match(rd(f), /raiseEnemyDeath\(\w+\.entity, \{[^}]*\}\);/, `${f}: the kill raises OnEnemyDeath, with its own roll and luck`);
   assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomMaterial'\)\?\.\(playerLevel, rolls\)/); assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomArmorMaterial'\)\?\.\(playerLevel, rolls\)/);
   // the pane
   const m = MOD_SETTINGS.unleveledLoot;
-  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, true);   // MO1
-  // OWN-WORK1 (2026-10-31): the shipped modsettings' one section, MaterialSwitching, written out when
+  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, true);
+  // The shipped modsettings' one section, MaterialSwitching, written out when
   // vendor/unleveledLoot left the tree - ten MultipleChoiceKeys named for the materials, each offering all ten,
   // each Value its own index, all ten with the one description
   const SHIPPED_OPTIONS = ['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'];
@@ -227,7 +227,7 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(isChoiceKey\(def\)\) \{/, 'the pane steps the choice keys by name');
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('pcaao') < Object.keys(MOD_SETTINGS).indexOf('unleveledLoot'), 'listed after the overhaul, as its manifest orders it');
   assert.match(rd('LICENSE'), /Unleveled Loot 1\.1\.2[\s\S]*Copyright \(C\) 2020 Ralzar\n/, 'CREDITS-OUT: the MIT notice travels in LICENSE');
-  // OWN-WORK1: the shipped manifest's version and its two required dependencies, written out; the port's header records them
+  // The shipped manifest's version and its two required dependencies, written out; the port's header records them
   assert.equal(UNLEVELED_LOOT_VERSION, '1.1.2', 'the manifest\'s ModVersion');
   assert.match(rd('src/systems/unleveledLoot.js'), /The manifest REQUIRES roleplayrealism and roleplayrealism-items;/);
   const wt = rd('src/systems/worldTick.js');

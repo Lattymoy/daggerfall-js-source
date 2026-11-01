@@ -1,4 +1,4 @@
-// AUDIT PRE-MERGE 0928 - THE INPUT LENS (keyboard, pad and touch over the Sea Update): U1, U2, U3, U8.
+// THE INPUT LENS (keyboard, pad and touch over the Sea Update): U1, U2, U3, U8.
 //
 //   U1  the position map took a release it never saw pressed - the Escape that put "According to my instruments..."
 //       away on its press put the map away on its release
@@ -31,7 +31,7 @@ import { ownFile } from '../ownBoats.mjs';
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
 const MODES = read('src/scenes/worldModes.js');
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }), particleRandom: () => 0.5 });
 const CANVAS = { width: 320, height: 200, clientWidth: 320, clientHeight: 200, getBoundingClientRect: () => ({ left: 0, top: 0, width: 320, height: 200 }) };
@@ -118,7 +118,7 @@ function mapSeam({ latch, keys, townTalk }) {
     grab(MODES, /\n(  function closeSpellWindow\(win\) \{[\s\S]*?\n  \})\n/, 'closeSpellWindow'),
   ].join('\n');
   const modes = new Function('townTalk', 'mode', 'dungeonCtx', 'interiorOverlay', `${doors}\nreturn { mountWindow: (win) => mountSpellWindow(win), closeWindow: (win) => closeSpellWindow(win) };`)(townTalk, 'exterior', null, null);
-  // FONT3: the window's dispose takes its words' DOM layer down (ui/enhanced/enhancedTextLayer.js) - the seam's one new free name
+  // The window's dispose takes its words' DOM layer down (ui/enhanced/enhancedTextLayer.js) - the seam's one new free name
   return new Function('latch', 'keys', 'modes', 'csaDrawMap', 'hideEnhancedTextLayer', `${src}\nreturn { csaInputFrame, csaInput, csaMapOpen, csaMapClose, mapWindow: () => _csaMapWindow };`)(latch, keys, modes, () => {}, () => {});
 }
 
@@ -209,7 +209,7 @@ function placingRig() {
   const rt = createComeSailAwayRuntime(deps);
   const scope = {
     _tapArmed: 0, _tapPoint: null, _tapDir: null, _tapLockOnly: false, _tapClick: false, _lastProj: null, _lastView: null,
-    modes: null, yards: null, gatherHost: null, canvas: CANVAS, cam: { pos: [0, 0, 0] }, ndcFromScreen: () => [0, 0], worldViewportRect: () => null, rayDirFromScreen: () => [0, 0, 1],   // HOME-YARD (AUDIT): the hook asks the yards' flight too - none offline; ACT-TOUCH: and the gathering host's act - none here
+    modes: null, yards: null, gatherHost: null, canvas: CANVAS, cam: { pos: [0, 0, 0] }, ndcFromScreen: () => [0, 0], worldViewportRect: () => null, rayDirFromScreen: () => [0, 0, 1],   // The hook asks the yards' flight too - none offline; ACT-TOUCH: and the gathering host's act - none here
     released, latch: { edge: keyEdges() }, keys: new Set(),
   };
   const hookSrc = grab(WORLD, /\n    tap: (\(x, y, opts = null\) => \{\n[\s\S]*?\n    \}),\n/, 'the touch layer\'s tap hook');
@@ -348,7 +348,7 @@ test('AUDIT PRE-MERGE 0928 D2/U5: Controls.md\'s defaults ARE generated from the
       if (m) rows.push([m[1], m[2], m[3], m[4]]);
     }
     const want = g.rows.filter((r) => !hidden(r.action)).map((r) => {
-      const key = firstCode(DEFAULT_BINDINGS, r.action) ?? DEFAULT_SHARES.find(([, a]) => a === r.action)?.[0] ?? null, pad = firstCode(DEFAULT_SECONDARY_BINDINGS, r.action);   // HELM-KEYS: a default share's key is its key
+      const key = firstCode(DEFAULT_BINDINGS, r.action) ?? DEFAULT_SHARES.find(([, a]) => a === r.action)?.[0] ?? null, pad = firstCode(DEFAULT_SECONDARY_BINDINGS, r.action);   // A default share's key is its key
       return [r.action, key ? buttonText(key, true) : '(unbound)', pad ? `\`${pad}\`` : '', r.label];
     });
     assert.deepEqual(rows, want, `${g.title}: the page's table is the registry's`);

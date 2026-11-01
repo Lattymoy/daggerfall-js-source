@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): OUR CARRACK - Come Sail Away's hull 4 (prefab 112414), built here: the hull Mac's carrack
+// OUR CARRACK - Come Sail Away's hull 4 (prefab 112414), built here: the hull Mac's carrack
 // (world/ships/carrackModel.js) stands in for, and what stands when his model will not. Three masts and a bowsprit
 // under five sails (a spritsail, two courses, a main topsail and a mizzen lateen); a well-decked hull - her main deck
 // low in her waist (3.64), its cargo hatch over her hold, her castles' half deck (6.8) fore and aft over it, the poop and

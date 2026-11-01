@@ -1,5 +1,4 @@
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper 1
-// to 1 recreation for everything"): THE CLASS SKINS, OURS. Each class frame is the player's own classic sheet frame,
+// THE CLASS SKINS, OURS. Each class frame is the player's own classic sheet frame,
 // dyed and marked by its class's scheme (player/classSkinArt.js); the pack's 1,683 pictures are gone. Pinned on palettes
 // and TEXTURE files made here, so CI needs no ARENA2; the last pin builds every class frame from the real data when
 // ARENA2_PATH is set.
@@ -214,7 +213,7 @@ test('OWN-WORK4: a class key builds from its own classic record - the sheet, rec
   assert.deepEqual(built, paintClassFrame(FIGURE, TABLES, CLASS_LOOKS.Healer, { outer: CLOTH, view: 0 }));
   await classSkinPicture('1541_8-6', { picture: read, palette });
   assert.deepEqual(asked.at(-1), [477, 8, 6], 'the sorceress: TEXTURE.477, record 8\'s seventh');
-  // ACRO-SHORT: her short record is marked at its own figure's height
+  // Her short record is marked at its own figure's height
   const short = await classSkinPicture('1524_16-0', { picture: read, palette });
   assert.deepEqual(short, paintClassFrame(FIGURE, TABLES, CLASS_LOOKS.Acrobat, { outer: DRAPE, view: 1, height: CLASS_FIGURE * classRecordScale(1524, 16) }));
   assert.notDeepEqual(short, paintClassFrame(FIGURE, TABLES, CLASS_LOOKS.Acrobat, { outer: DRAPE, view: 1 }), 'not at the group\'s 110');

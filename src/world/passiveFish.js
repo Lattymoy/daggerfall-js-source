@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// DW-E3 (2026-09-25): ILIAC PUDDLE NO MORE'S PASSIVE FISH - the species
+// ILIAC PUDDLE NO MORE'S PASSIVE FISH - the species
 // and the laws a fish lives by, as pure functions (jet082, 1.2.2):
 // PassiveFishSpecies.cs, PassiveFishSpeciesCatalog.cs, PassiveFishSchool
 // .cs, PassiveFishBehaviour.cs and the placement half of
@@ -35,7 +35,7 @@ import { WATER_BIOME, climateToBiome } from './underwater/underwaterDecorations.
 import { rangeInt, rangeFloat } from '../systems/unleveledLoot.js'; // Random.Range(int, int) and (float, float)
 import { insideUnitSphere } from '../scenes/magicCandle.js'; // Random.insideUnitSphere
 import { roundToInt } from '../systems/mathf.js'; // Mathf.RoundToInt
-import { FISH_NAMES } from '../systems/deepWater/deepWatersFishRows.js'; // OWN-WORK3: one name a fish, its item's and its species'
+import { FISH_NAMES } from '../systems/deepWater/deepWatersFishRows.js'; // One name a fish, its item's and its species'
 
 export { rangeInt, rangeFloat, insideUnitSphere };
 
@@ -116,7 +116,7 @@ export function passiveFishSpecies(
 
 const B = WATER_BIOME;
 const species = passiveFishSpecies;
-/** PassiveFishSpeciesCatalog.All, in its order, under our own names (OWN-WORK3). */
+/** PassiveFishSpeciesCatalog.All, in its order, under our own names. */
 export const PASSIVE_FISH_SPECIES = Object.freeze([
   species(
     9001,

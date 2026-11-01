@@ -1,7 +1,7 @@
-// SHADER-EASE (2026-10-29): THE SEA'S WARM STARTS ITS PROGRAMS, THEN BUILDS. Deep Waters' seven programs, Ocean Holes'
+// THE SEA'S WARM STARTS ITS PROGRAMS, THEN BUILDS. Deep Waters' seven programs, Ocean Holes'
 // two and the rain's one to three were warmed by a bare step: every compile and its LINK_STATUS read inside one idle
-// callback. Each now names its programs (WARM-POLL), so the build runs once the driver says they are done. LINK-WAIT
-// keeps each slow LINK_STATUS read (bible/07-Rendering/Performance-Priority.md SHADER-EASE).
+// callback. Each now names its programs, so the build runs once the driver says they are done. LINK-WAIT
+// keeps each slow LINK_STATUS read.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -65,7 +65,6 @@ test('SHADER-EASE WARM-POLL every list is its build: the pairs started are the o
   }
   assert.equal(DEEP_WATERS_PROGRAMS.length, 7);
   assert.equal(OCEAN_HOLES_PROGRAMS.length, 2);
-  // PIN MOVED (OWN-WORK4 AUDIT): the enhanced lane warms Better Ambience's fall beside the lab
   assert.deepEqual(LANES.map((o) => precipPrograms(o).length), [1, 3, 4, 1]);
 });
 
@@ -115,7 +114,7 @@ test('SHADER-EASE WARM-POLL the rain\'s step: built once its programs are done, 
   assert.equal(ready(), true);
   step.run();
   assert.ok(precip instanceof PrecipitationRenderer);
-  assert.equal(f.count('createProgram'), 3, 'the three it started (the classic pass, the lab, Better Ambience\'s fall), no more');   // PIN MOVED (OWN-WORK4 AUDIT)
+  assert.equal(f.count('createProgram'), 3, 'the three it started (the classic pass, the lab, Better Ambience\'s fall), no more');
   const first = precip;
   step.run();
   assert.equal(precip, first, 'not built twice');

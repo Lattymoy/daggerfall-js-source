@@ -1,9 +1,11 @@
 # Seasons of the Iliac Bay
 
-Seasons of the Iliac Bay (RosyTheRascal, version 1.1, Nexus 1377) gives the woodland, hills, haunted-woodland and
+Seasons of the Iliac Bay (RosyTheRascal, version 1.1) gives the woodland, hills, haunted-woodland and
 mountain nature flats (TEXTURE.504 to 510) autumn colour in Fall, flowers in Spring and snow in Winter, drawn at 3.1
 times their classic size. We port its script 1:1. Its textures are repaints of Daggerfall's flats, so the player
-supplies them from their own copy of the mod; without it the mod is inert.
+supplies them from their own copy of the mod; without it the mod is inert. Our code is the record:
+`test/systems/seasonsIliacBay.test.js` holds the manifest's identity and its 372 texture names as a literal table, and
+the release's record is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -87,5 +89,5 @@ installed cache.
 
 - The all-or-nothing rule is unchecked against ARENA2's real record counts for TEXTURE.504 to 510, and no probe draws
   the mod.
-- `vendor/seasons-iliac-bay/README.md` waits for Mac to paste the permission's text or link.
+- The permission record for the ported script is open (`01-Overview/Own-Work.md`).
 - LZMA bundles, stripped type trees and other texture formats are refused with a clear error.

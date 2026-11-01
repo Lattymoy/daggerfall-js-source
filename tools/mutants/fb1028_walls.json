@@ -273,8 +273,8 @@
   {
     "name": "FB1028-yards-the-walkers-shut",
     "file": "src/scenes/pixelBuild.js",
-    "old": "loc, yardShut, () => breather.breathe())",
-    "new": "loc, walkShut, () => breather.breathe())",
+    "old": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // On the town's own ground; IC-STUTTER: a step at a time through the build's breather",
+    "new": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut, () => breather.breathe()) : null;   // On the town's own ground; IC-STUTTER: a step at a time through the build's breather",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUDIT-FB1028-YARDS-the-walkers-shut-not-carried",
     "file": "src/scenes/pixelBuild.js",
-    "old": "dfLocation), walkShut, dfLocation) : null;",
-    "new": "dfLocation), null, dfLocation) : null;",
+    "old": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
+    "new": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), null, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -450,8 +450,8 @@
   {
     "name": "FB1028-Y2-the-crops-kept",
     "file": "src/scenes/pixelBuild.js",
-    "old": "locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);",
-    "new": "locationRect.shapeWas = locationRect.shape;",
+    "old": "    if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)",
+    "new": "    if (locationRect?.shape) locationRect.shapeWas = locationRect.shape;   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -460,8 +460,8 @@
   {
     "name": "FB1028-Y2-the-host-reads-todays-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true)",
-    "new": "townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)",
+    "old": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
+    "new": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"

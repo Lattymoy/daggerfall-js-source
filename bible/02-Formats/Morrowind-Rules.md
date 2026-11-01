@@ -176,7 +176,8 @@ the attack's three plays, actor scale, the NIF stream layout) are cited in the m
   arm's `shoot release` (`shotBusy`).
 - **A weapon record's mesh must be in the archives**: `pickWeaponRecord` prefers a record whose model is present.
 - **Spell effects** are mapped: harm by element, the rest by family, then by school.
-- **Sheathing** is drawn (Mac), where the reference keeps it off by default: Weapon Sheathing's assets are vendored.
+- **Sheathing** is drawn (Mac), where the reference keeps it off by default: our own bones and scabbards are
+  built in code (`06-Systems/Weapon-Sheathing.md`).
 - **The over-the-shoulder camera** does not pull out as the look rises or the actor speeds up.
 - **Beast Footwear Shafts only** draws a boot's ankles where the reference refuses the whole boot.
 

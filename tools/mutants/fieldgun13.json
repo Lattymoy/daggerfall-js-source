@@ -65,8 +65,8 @@
   {
     "name": "FIELD-GUN13-8-the-gate-relaxes-every-leg-of-shown",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const gunSliding = !!c && gunUp() && thunderlockSliding()\n        && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0\n        && !eotbHidesWeapon() && !fpArm.active();\n",
-    "new": "      const gunSliding = !!c && gunUp() && thunderlockSliding();\n",
+    "old": "      const gunSliding = !!c && gunUp() && thunderlockSliding()\n        && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0\n        && !eotbHidesWeapon() && !fpArm.active();",
+    "new": "      const gunSliding = !!c && gunUp() && thunderlockSliding();",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FIELD-GUN13-9-the-sheathe-leg-is-said-negatively",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  function thunderlockSliding() {\n    if (!playerWeapon.sheathed) return false;",
-    "new": "  function thunderlockSliding() {\n    if (shown()) return false;",
+    "old": "    if (!playerWeapon.sheathed) return false;",
+    "new": "    if (shown()) return false;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FIELD-GUN13-10-the-clone-draws-on-a-sliding-frame",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (gunSliding && !shown()) return;\n",
-    "new": "",
+    "old": "      // And nothing BELOW this line may draw on a sliding\n      // frame. `gunSliding` relaxed three gates for the gun's own arm\n      // alone; with no art loaded yet the weapon is sheathed as far as\n      // the clone and the classic sprite are concerned, exactly as it\n      // was before.\n      if (gunSliding && !shown()) return;\n      // Under the free hand's cast the weapon lowers by its guard (a share of its own drawn height)",
+    "new": "      // And nothing BELOW this line may draw on a sliding frame. `gunSliding` relaxed three gates for the gun's\n      // own arm alone; with no art loaded yet the weapon is sheathed as far as the clone and the classic sprite\n      // are concerned, exactly as it was before. SPELL-HAND: under the free hand's cast the weapon lowers by\n      // its guard (a share of its own drawn height)",
     "tests": [
       "test/systems/thunderlock.test.js",
       "test/systems/ht1_handheldtorches.test.js",

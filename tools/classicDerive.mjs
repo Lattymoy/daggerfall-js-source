@@ -1,9 +1,9 @@
-#!/usr/bin/env node
-// NO-BETHESDA2 (2026-10-31; the owner: "ensuring they are not implemented"): A MOD'S PICTURES THAT ARE DAGGERFALL'S OWN
-// LEAVE THE TREE. DEX0's law (Port-Doctrine, the fourth exception) for every picture folder: a picture whose drawn
-// pixels are at least DERIVED_SHARE a classic record's, exactly, in ART_PAL or PAL.PAL, is not carried. It becomes a
-// spec (formats/derivedTexture.js, with `pal`) built at runtime from the player's own TEXTURE file
-// (formats/classicPictures.js); only the pixels the author changed ride along, as edits.
+// /usr/bin/env node
+// A MOD'S PICTURES THAT ARE DAGGERFALL'S OWN LEAVE THE TREE. DEX0's law (Port-Doctrine, the fourth exception) for
+// every picture folder: a picture whose drawn pixels are at least DERIVED_SHARE a classic record's, exactly, in
+// ART_PAL or PAL.PAL, is not carried. It becomes a spec (formats/derivedTexture.js, with `pal`) built at runtime
+// from the player's own TEXTURE file (formats/classicPictures.js); only the pixels the author changed ride along, as
+// edits.
 //
 //   node tools/classicDerive.mjs --arena2 <ARENA2> --dir <folder> --out <derived.json> [--rci] [--cif] [--remove]
 //

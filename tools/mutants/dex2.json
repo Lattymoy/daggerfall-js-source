@@ -2,8 +2,8 @@
   {
     "name": "DEX2-a-stand-in-one-frame-a-record",
     "file": "src/systems/textureReplacement.js",
-    "old": "    getFrameCount: (record) => vendorFrameCount(archive, record),",
-    "new": "    getFrameCount: () => 1,",
+    "old": "    getFrameCount: (record) => vendorFrameCount(archive, record), // A record's own frames (a mobile's walk), never one for all",
+    "new": "    getFrameCount: () => 1, // A record's own frames (a mobile's walk), never one for all",
     "why": "every mobile drawn from a stand-in stands on its first frame",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "DEX2-the-preload-decodes-the-released",
     "file": "src/systems/textureReplacement.js",
-    "old": "!decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]);",
-    "new": "!decodedFrom(key, entry)) todo.push([key, entry]);",
+    "old": "    if (entry && !entry.lazy && !decodedFrom(key, entry) && !releasedFrom(key, entry)) todo.push([key, entry]); // AUDIT DEX B5: nor one the GPU holds alone",
+    "new": "    if (entry && !entry.lazy && !decodedFrom(key, entry)) todo.push([key, entry]); // AUDIT DEX B5: nor one the GPU holds alone",
     "why": "AUDIT DEX B5: an archive's refresh decodes back every picture the GPU already holds",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "DEX2-another-records-picture-on-a-miss",
     "file": "src/systems/textureReplacement.js",
-    "old": "      if (_vendor.get(key)?.readOnly) return _decoded.get(key) ?? pendingPicture(archive, r, f);\n",
-    "new": "",
+    "old": "      if (_vendor.get(key)?.readOnly) return _decoded.get(key) ?? pendingPicture(archive, r, f);\n      return decodedOf(archive, r) ?? null;",
+    "new": "      return decodedOf(archive, r) ?? null;",
     "why": "AUDIT DEX B5: a readOnly frame asked again answers another record's picture (or nothing, and the upload throws)",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "DEX2-a-pending-picture-asked-every-frame",
     "file": "src/systems/textureReplacement.js",
-    "old": "      if (asking) return;\n",
-    "new": "",
+    "old": "        if (asking) return;\n        asking = true;",
+    "new": "          asking = true;",
     "why": "AUDIT DEX B5: a readOnly picture that will not decode is fetched and decoded again every frame a foe draws it",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "BOWCLOCK-a-shot-starts-the-arm-cannot-draw",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying()\n",
-    "new": "const strike = !paralyzed && c && canAttack && !techniqueFlying()\n",
+    "old": "      const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying()",
+    "new": "      const strike = !paralyzed && c && canAttack && !techniqueFlying()",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BOWCLOCK-the-drawn-release-waits-on-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (",
-    "new": "!!m.ranged && (",
+    "old": "    return !!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (fpArm.active() || fpArm.thirdActive()) && (fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
+    "new": "    return !!m.ranged && (fpArm.active() || fpArm.thirdActive()) && (fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BOWCLOCK-the-touch-tap-starts-a-shot-the-arm-cannot-draw",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (armCannotDraw() || (pelletsOwed() && !playerWeapon.mixedPair)) return;   // BOW-CLOCK",
-    "new": "      if (pelletsOwed() && !playerWeapon.mixedPair) return;   // BOW-CLOCK",
+    "old": "      if (armCannotDraw() || (pelletsOwed() && !playerWeapon.mixedPair)) return;   // Nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it (MIXED-PAIR: the pair's dry gun gives its pull to the blade - gunReady)",
+    "new": "      if (pelletsOwed() && !playerWeapon.mixedPair) return;   // Nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it (MIXED-PAIR: the pair's dry gun gives its pull to the blade - gunReady)",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BOWCLOCK-the-ceiling-lets-go-mid-draw",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "(_heldHitAge >= HELD_HIT_MAX_S && !fpArm.shotBusy())",
-    "new": "_heldHitAge >= HELD_HIT_MAX_S",
+    "old": "        if (fpArm.takeShootRelease() || (_heldHitAge >= HELD_HIT_MAX_S && !fpArm.shotBusy()) || _heldHitAge >= HELD_HIT_CAP_S) {",
+    "new": "        if (fpArm.takeShootRelease() || _heldHitAge >= HELD_HIT_MAX_S || _heldHitAge >= HELD_HIT_CAP_S) {",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOWCLOCK-a-busy-arm-holds-the-arrow-for-ever",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": " || _heldHitAge >= HELD_HIT_CAP_S) {",
-    "new": ") {",
+    "old": "        if (fpArm.takeShootRelease() || (_heldHitAge >= HELD_HIT_MAX_S && !fpArm.shotBusy()) || _heldHitAge >= HELD_HIT_CAP_S) {",
+    "new": "        if (fpArm.takeShootRelease() || (_heldHitAge >= HELD_HIT_MAX_S && !fpArm.shotBusy())) {",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]

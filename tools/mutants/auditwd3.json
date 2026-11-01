@@ -188,8 +188,8 @@
   {
     "name": "AWD3-CURATED-BASELINE-IGNORED",
     "file": "src/systems/layoutPins.js",
-    "old": "      const on = servesUnpinned(v, key); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own",
-    "new": "      const on = !!_vendorOn(v); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own",
+    "old": "      const on = servesUnpinned(v, key); // A curated town's baseline is Daggerfall's own",
+    "new": "      const on = !!_vendorOn(v); // A curated town's baseline is Daggerfall's own",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

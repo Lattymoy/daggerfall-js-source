@@ -32,8 +32,8 @@
   {
     "name": "ownaudit-eotb-anchor-laid-read",
     "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
-    "old": "  if (feet - Math.round(BODY_ROWS[1] * tall) < 0) return pic.width / 2;\n",
-    "new": "",
+    "old": "  if (feet - Math.round(BODY_ROWS[1] * tall) < 0) return pic.width / 2;\n  for (let k = Math.round(BODY_ROWS[0] * tall); k <= Math.round(BODY_ROWS[1] * tall); k++) {",
+    "new": "  for (let k = Math.round(BODY_ROWS[0] * tall); k <= Math.round(BODY_ROWS[1] * tall); k++) {",
     "tests": [
       "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ownaudit-eotb-anchor-death-scaled",
     "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
-    "old": "    if (name.startsWith('Death')) continue;\n",
-    "new": "",
+    "old": "    if (name.startsWith('Death')) continue;\n    const votes = /** @type {[number, number][]} */ ([]);",
+    "new": "    const votes = /** @type {[number, number][]} */ ([]);",
     "tests": [
       "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "ownaudit-eotb-anchor-frame-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
-    "old": "(entry)[Math.min(Math.max(frame | 0, 0), entry.length - 1)]",
-    "new": "(entry)[0]",
+    "old": "  const [right, up] = Array.isArray(entry[0]) ? /** @type {Shift[]} */ (entry)[Math.min(Math.max(frame | 0, 0), entry.length - 1)] : /** @type {Shift} */ (entry);",
+    "new": "  const [right, up] = Array.isArray(entry[0]) ? /** @type {Shift[]} */ (entry)[0] : /** @type {Shift} */ (entry);",
     "tests": [
       "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js",
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "ownaudit-eotb-anchor-beast-size",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  const perPixel = archive >= ARCHIVE_LYCAN ? SIZE_RIDING_OR_TRANSFORMED : SIZE_ON_FOOT;",
-    "new": "  const perPixel = SIZE_ON_FOOT;",
+    "old": "  const perPixel = archive >= ARCHIVE_LYCAN ? SIZE_RIDING_OR_TRANSFORMED : SIZE_ON_FOOT;   // the beasts and the horses are drawn at the larger size",
+    "new": "  const perPixel = SIZE_ON_FOOT;   // the beasts and the horses are drawn at the larger size",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],

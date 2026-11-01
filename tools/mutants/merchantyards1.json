@@ -120,8 +120,8 @@
   {
     "name": "MERCHANT-YARDS-the-people-walk-through",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (yardSites?.length) carveYards(nav, yardSites);",
-    "new": "        void carveYards;",
+    "old": "        if (yardSites?.length) carveYards(nav, yardSites);   // And round the yards",
+    "new": "        void carveYards;   // And round the yards",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]

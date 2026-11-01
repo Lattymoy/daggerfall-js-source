@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { planMove, composeLedger, unresolvedIn, globRe, byName, namesIn, extsOf, FROZEN, LEDGER, TEXT_EXT } from '../../tools/moveModule.mjs';
 
-// TIDY1 (2026-10-16, bible/01-Overview/Code-Map.md): THE MAP OF WHERE THINGS LIVE, AND THE TREE THE MOVES LEFT.
-// The map is held to the tree both ways - a directory of code nobody wrote a row for fails, and so does a row for a
-// directory that is gone - and the tree to what the moves promise: no address of a moved file left, every relative
-// import resolving, every glob naming files. The move tool's own rules are tidy1_movetool.test.js's (AUDIT TIDY).
+// THE MAP OF WHERE THINGS LIVE, AND THE TREE THE MOVES LEFT. The map is held to the tree both ways - a directory of
+// code nobody wrote a row for fails, and so does a row for a directory that is gone - and the tree to what the
+// moves promise: no address of a moved file left, every relative import resolving, every glob naming files. The
+// move tool's own rules are tidy1_movetool.test.js's (AUDIT TIDY).
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -40,14 +40,14 @@ test('TIDY1: Come Sail Away lives in its folder', () => {
   assert.deepEqual(readdirSync(join(root, 'src/systems/comeSailAway')).sort(), [
     'comeSailAway.js', 'comeSailAwayActions.js', 'comeSailAwayBoat.js', 'comeSailAwayHulls.js', 'comeSailAwayItems.js',
     'comeSailAwayMap.js', 'comeSailAwayModels.js', 'comeSailAwayWaves.js', 'comeSailAwayWire.js', 'csaBoatMenu.js',
-    'csaLoadWind.js',   // PIN MOVED (FIELD BUGS 2026-10-21b SAIL-WIND: a load outdoors never keeps the indoors' wind - the runtime's OnLoad seam, beside it)
-    'csaPictures.js',   // PIN MOVED (OWN-WORK4: the wind widget's arrow, the splash and the breakers painted as ours - the models' pictures, beside them)
-    'csaPixel.js',   // PIN MOVED (AUDIT FB1029d A4, NO-PIXEL: a boat's pixel where she has none - out of the runtime's scope, beside it)
-    'csaSynth',   // PIN MOVED (OWN-WORK4: the five clips made as ours - their folder)
-    'ladenRest.js',   // PIN MOVED (FIELD BUGS 2026-10-29e LADEN-REST: a laden boat's swing and way still come to rest - the runtime's rates' seam, beside it)
-    'peaceWay.js',   // PIN MOVED (NAVAL-REFIT PEACE-WAY: her way out of a fight - the runtime's own speed seam, beside it)
-    'sailAssist.js',   // PIN MOVED (OWN-AUDIT: BadTack and AutoStowGaffSails, keys the mod never read, made live - the handling's seam, beside it)
-    'shipBuildsKept.js',   // PIN MOVED (FIRST-VISIT: the port ships' builds kept across launches - the models' loader's, beside it)
+    'csaLoadWind.js',
+    'csaPictures.js',
+    'csaPixel.js',
+    'csaSynth',
+    'ladenRest.js',
+    'peaceWay.js',
+    'sailAssist.js',
+    'shipBuildsKept.js',
   ]);
 });
 
@@ -118,7 +118,7 @@ test('AUDIT TIDY SRC-1: every import.meta.glob names a folder that stands, and f
       }
     }
   }
-  assert.ok(n >= 20, `only ${n} glob patterns read - the scan missed them`);   // OWN-WORK4: the retired packs' sprite globs went with their folders
+  assert.ok(n >= 20, `only ${n} glob patterns read - the scan missed them`);   // The retired packs' sprite globs went with their folders
   assert.deepEqual(bad, []);
   assert.ok(all.has('src/scenes/localeData.js'), 'the empty-on-purpose list names a file that stands');
 });

@@ -173,8 +173,8 @@
   {
     "name": "U7-keys-live",
     "file": "src/systems/inputActions.js",
-    "old": "(modLatchedOn(vendor) ?? !!modSetting(vendor, 'Enabled'))",
-    "new": "!!modSetting(vendor, 'Enabled')",
+    "old": "  return !vendor || (modLatchedOn(vendor) ?? !!modSetting(vendor, 'Enabled'));   // A next-load mod its host latched at mount (Come Sail Away, Travel Options) keeps its keys for the game it was loaded for",
+    "new": "  return !vendor || !!modSetting(vendor, 'Enabled');   // A next-load mod its host latched at mount (Come Sail Away, Travel Options) keeps its keys for the game it was loaded for",
     "tests": [
       "test/systems/comeSailAway/audit0928_save.test.js"
     ]

@@ -110,8 +110,8 @@
   {
     "name": "YARD-LINE-the-record-unstamped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced:",
-    "new": "rects, grounds: [ground], parts: [[cpu, local]], terraced:",
+    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
+    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
     "tests": [
       "test/scenes/fb1012b_yardline.test.js"
     ]

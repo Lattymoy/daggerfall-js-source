@@ -1,8 +1,8 @@
-// NO-BETHESDA2 (2026-10-31, the owner: "ensuring they are not implemented"): EYE OF THE BEHOLDER'S DAGGERFALL PICTURES,
-// REBUILT. 2869 of the mod's 3035 sprites are TEXTURE records exactly (tools/classicDerive.mjs). They are carried as
-// specs (src/player/eyeOfTheBeholder/eotbDerived.json) and built from the player's ARENA2 (eotbSprite.js). OWN-WORK4: the
-// author's own 166, the death, are ours (eotbDeath.js). Pinned on TEXTURE files and palettes made here, so CI needs no
-// ARENA2. The last pin builds every sprite from the real data when ARENA2_PATH is set.
+// EYE OF THE BEHOLDER'S DAGGERFALL PICTURES, REBUILT. 2869 of the mod's 3035 sprites are TEXTURE records exactly
+// (tools/classicDerive.mjs). They are carried as specs (src/player/eyeOfTheBeholder/eotbDerived.json) and built from the
+// player's ARENA2 (eotbSprite.js). OWN-WORK4: the author's own 166, the death, are ours (eotbDeath.js). Pinned on TEXTURE
+// files and palettes made here, so CI needs no ARENA2. The last pin builds every sprite from the real data when
+// ARENA2_PATH is set.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -28,7 +28,7 @@ import { EOTB_DERIVED, eotbHas, eotbPictures } from '../../../tools/lib/eotbPict
 import { ownDeathKeys, deathSpec, layDown } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
 import { STATE_TABLES, TABLE_FRAMES, ARCHIVE_FOOT, ARCHIVE_HORSE, ARCHIVE_LYCAN, stateFor } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 
-/** OWN-WORK4 (2026-10-31): every sprite the bundle shipped (its manifest's 3035 PNGs, left the tree with the directory),
+/** Every sprite the bundle shipped (its manifest's 3035 PNGs, left the tree with the directory),
  *  named by the tables: each archive's records, each record's frames. */
 const MANIFEST = (() => {
   const out = new Set();

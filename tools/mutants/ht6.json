@@ -11,7 +11,7 @@
   {
     "name": "HT6-no-host-ever-claims-the-change",
     "file": "src/systems/handheldTorches.js",
-    "old": "    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change",
+    "old": "    _liveHandLaw = applyHandLaw; // This host has the player, so this component answers the equip change",
     "new": "",
     "tests": [
       "test/systems/ht6_offhand.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "HT6-a-disposed-component-keeps-answering",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;\n  } // HT6: a torn-down component stops answering the equip change",
+    "old": "    if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;\n  } // A torn-down component stops answering the equip change",
     "new": "  }",
     "tests": [
       "test/systems/ht6_offhand.test.js"

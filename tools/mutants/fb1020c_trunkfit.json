@@ -102,8 +102,8 @@
   {
     "name": "TRUNK-FIT-host-nature-taken",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (isNatureArchive(archive)) continue;\n      const t = await getTexture(archive);\n      if (record < t.recordCount) solids.push(",
-    "new": "      const t = await getTexture(archive);\n      if (record < t.recordCount) solids.push(",
+    "old": "      if (isNatureArchive(archive)) continue;\n      const t = await getTexture(archive);",
+    "new": "      const t = await getTexture(archive);",
     "tests": [
       "test/world/road/fb1020c_trunkfit.test.js"
     ],

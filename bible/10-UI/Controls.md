@@ -67,7 +67,7 @@ LT raises the hotbar to be arranged with the pad.
 ## Rules
 
 - One solid, organized keybinding standard: what needs keys, and every key working as intended (Mac).
-- One registry owns every world key, the vendored mods' included; a mod's group shows under its name while the mod
+- One registry owns every world key, the ported mods' included; a mod's group shows under its name while the mod
   is on.
 - One key, one action by default; a player may share a key.
 - A held key is asked for, never taken.

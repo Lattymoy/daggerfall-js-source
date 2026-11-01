@@ -146,8 +146,8 @@
   {
     "name": "HV2-pool-view-unhanded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);",
-    "new": "e.out = poseWhereSeen(rig, e.horse, h.position, null, _eye, _frameNo, e.phase, e.out);",
+    "old": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
+    "new": "      e.out = poseWhereSeen(rig, e.horse, h.position, null, _eye, _frameNo, e.phase, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "HV2-pool-frame-eye-unhanded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);",
-    "new": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, null, _frameNo, e.phase, e.out);",
+    "old": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
+    "new": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, null, _frameNo, e.phase, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "HV2-pool-phase-unhanded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);",
-    "new": "e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, 0, e.out);",
+    "old": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
+    "new": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, 0, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "HV2-AUDIT-pool-last-answer-unhanded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "_frameNo, e.phase, e.out);",
-    "new": "_frameNo, e.phase);",
+    "old": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);   // Posed in the last pass's view, on its cadence - and as it comes into it",
+    "new": "      e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase);   // Posed in the last pass's view, on its cadence - and as it comes into it",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]

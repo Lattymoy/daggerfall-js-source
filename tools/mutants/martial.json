@@ -624,8 +624,8 @@
   {
     "name": "BAL10-the-items-kit-hands-no-short-blade",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade', // BAL10: a short blade handles as a dagger, whatever sprite draws it",
-    "new": "    shortBlade: false, // BAL10: a short blade handles as a dagger, whatever sprite draws it",
+    "old": "    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade', // A short blade handles as a dagger, whatever sprite draws it",
+    "new": "    shortBlade: false, // A short blade handles as a dagger, whatever sprite draws it",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

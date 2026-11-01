@@ -236,8 +236,8 @@
   {
     "name": "VOYAGER1-the-terrain-unread",
     "file": "src/world/road/roadNetwork.js",
-    "old": "if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);",
-    "new": "if (false) cost = terrain.step(terrain, cx, cy, nx, ny, cost);",
+    "old": "      if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // The land's law (world/road/roadLand.js landStep) - OWN-WORK2: on the Bay too",
+    "new": "      if (false) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // The land's law (world/road/roadLand.js landStep) - OWN-WORK2: on the Bay too",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "VOYAGER1-no-wider-box",
     "file": "src/world/road/roadNetwork.js",
-    "old": "if (best && !(opts.terrain && !opts.stopOn && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;",
-    "new": "if (best) return best.p;",
+    "old": "    if (best && !(opts.terrain && !opts.stopOn && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;",
+    "new": "    if (best) return best.p;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-named-unstamped",
     "file": "src/world/road/roadNetwork.js",
-    "old": "if (path) { stamp(roads, path); stats.trunkLegs++;",
-    "new": "if (path) { stats.trunkLegs++;",
+    "old": "    if (path) { stamp(roads, path); stats.trunkLegs++; for (const p of path) stats.trunkPath.push(p.x, p.y); } else miss(a, b);",
+    "new": "    if (path) { stats.trunkLegs++; for (const p of path) stats.trunkPath.push(p.x, p.y); } else miss(a, b);",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-last-end-owns",
     "file": "src/world/road/roadNetwork.js",
-    "old": "if (!inMap(a) || !inMap(b) || !owned(firstOf(a, b))) continue;",
-    "new": "if (!inMap(a) || !inMap(b) || !owned(b)) continue;",
+    "old": "    if (!inMap(a) || !inMap(b) || !owned(firstOf(a, b))) continue;",
+    "new": "    if (!inMap(a) || !inMap(b) || !owned(b)) continue;",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "VOYAGER1-a-track-widens",
     "file": "src/world/road/roadNetwork.js",
-    "old": "!(opts.terrain && !opts.stopOn && best.g >",
-    "new": "!(opts.terrain && best.g >",
+    "old": "    if (best && !(opts.terrain && !opts.stopOn && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;",
+    "new": "    if (best && !(opts.terrain && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]

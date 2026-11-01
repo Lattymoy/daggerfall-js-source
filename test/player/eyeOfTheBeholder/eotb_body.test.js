@@ -21,9 +21,6 @@ import { WEAPONS } from '../../../src/characters/weapons.js';
 import { warmFramesOf, warmSigOf, LAYERED_WARM_A_FRAME } from '../../../src/player/eyeOfTheBeholder/layeredWarm.js';
 
 const MOD = 'eye-of-the-beholder';
-// PIN MOVED (LAYERED-GEAR-ON: Layered Gearing is on by default, the owner 2026-10-19): these pins are Eye of the
-// Beholder's own body, 1:1 with PlayerBillboard, so they wear its sets - Skins, Graphics.LayeredGear 0. The layered
-// body has its own pins (worn_armour.test.js, skinmode_toggle.test.js).
 const resetSettings = () => { _resetModSettings(); setModSetting(MOD, 'Graphics.LayeredGear', 0); };
 resetSettings();
 
@@ -74,9 +71,6 @@ test('EOTB5: the sprite is sized in METRES PER PIXEL, and the saddle shares its 
   assert.equal(spriteSize(53, 110, {}, 2).h, 110 / 2 * 0.019);
 });
 
-// PIN MOVED (OWN-AUDIT, 2026-11-01; the owner: "no latching onto other mod authors"): this pinned the author's hand-tuned
-// XML, six triples over 288 records. Those offsets are gone; each sprite's shift is what our law measures on its own
-// pictures (eotbAnchor.js, written to eotbAnchors.json by tools/eotbAnchors.mjs), in the XML's shape and units.
 test('OWN-AUDIT: the per-sprite offsets are our law\'s, in metres in the XML\'s shape - every record of every set measured, the beasts at their size, a frame on another canvas its own (mutants: ownaudit-eotb-anchor-*)', () => {
   const own = (archive, record, frame = 0) => anchorShift(EOTB_ANCHORS, archive, record, frame);
   const at = (archive, record, frame, m) => { const s = own(archive, record, frame); return { scale: 1, x: s.right * m, y: s.up * m }; };
@@ -94,7 +88,7 @@ test('OWN-AUDIT: the per-sprite offsets are our law\'s, in metres in the XML\'s 
   assert.deepEqual(spriteOffset(1524, 15), { scale: 1, x: 0, y: 0 }, 'a sprite the law has not measured (a class sheet) stands as drawn');
   // the author's table is not in the tree, nor read
   assert.ok(!existsSync(join(root, 'src/player/eyeOfTheBeholder/eotbSpriteInfo.json')));
-  // get_scaleOffset has no caller in the assembly; OWN-AUDIT (2026-11-01) made the dial ours, in the body's place, not here
+  // get_scaleOffset has no caller in the assembly; OWN-AUDIT made the dial ours, in the body's place, not here
   assert.ok(!/(function|const|let)\s+scaleOffset\b/.test(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSprite.js'), 'utf8')), 'the record\'s offset is the law\'s, unscaled');
 });
 
@@ -381,7 +375,6 @@ test('AUDIT-EOTB F7b: the MIRROR reaches the UPLOAD, and the draw keeps the LAST
 });
 
 test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, sunk by a crouch, the top at the swim line, the XML X along the right', async (t) => {
-  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
   setModSetting(MOD, 'Graphics.TurnToView', 2);
   t.after(() => setModSetting(MOD, 'Graphics.TurnToView', 1));
   const { b } = await liveBody();
@@ -390,7 +383,7 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   await new Promise((res) => setTimeout(res, 2));
   b.draw(null, { eye: [0, 1.5, -2], feet: [0, 0, 0], yaw: 0 });
   const h = 6 * SIZE_ON_FOOT;
-  // EOTB-FEET: `placed` is what the RENDERER is handed, and the
+  // `placed` is what the RENDERER is handed, and the
   // renderer's billboard is bottom-anchored (BB_VS: the base, the
   // centre half a height above it) - so the mod's centre arms land
   // here less size/2. The old pin asserted the CENTRE at h/2 and called
@@ -412,7 +405,7 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   assert.match(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbBody.js'), 'utf8'), /const base = y - size\.h \* 0\.5;\n\s+return \[origin\[0\] \+ right\[0\] \* x \+ fwd\[0\] \* z, origin\[1\] \+ base,/, 'and the body hands it the base');
   // the X: record 18 is index 5 straight and index 3 mirrored, and UpdateBillboard negates X for the mirrored state
   // (IL_4ba7-IL_4bd1). A drawn weapon faces the camera's forward (+z); the camera at the back-left is index 5, at the
-  // back-right 3. PIN MOVED (OWN-AUDIT, 2026-11-01): the shift is our law's (eotbAnchors.json), not the author's -0.2.
+  // back-right 3. PIN MOVED: the shift is our law's (eotbAnchors.json), not the author's -0.2.
   const ownX = Number(spriteOffset(ARCHIVE_FOOT, 18).x.toFixed(6)), ownY = spriteOffset(ARCHIVE_FOOT, 18).y;
   assert.notEqual(ownX, 0);
   const { b: armed } = await liveBody();
@@ -430,7 +423,7 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   await new Promise((res) => setTimeout(res, 2));
   armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
   assert.equal(Number(armed.state().placed[0].toFixed(6)), -ownX, 'and the offset negated for the mirrored state');
-  // OWN-AUDIT (2026-11-01): Animation.GlobalOffsetScale, FineGlobalOffsetScale added, scales the shift - 2.5 times
+  // Animation.GlobalOffsetScale, FineGlobalOffsetScale added, scales the shift - 2.5 times
   setModSetting(MOD, 'Animation.GlobalOffsetScale', 2);
   setModSetting(MOD, 'Animation.FineGlobalOffsetScale', 0.5);
   t.after(() => { setModSetting(MOD, 'Animation.GlobalOffsetScale', 1); setModSetting(MOD, 'Animation.FineGlobalOffsetScale', 0); });
@@ -528,7 +521,7 @@ test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining - and sinc
   const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(viteConfig);
   assert.ok(m, 'and it is a callback, not a number');
   assert.match(m[1], /\?\s*false\s*:\s*undefined/, 'false for a mod\u2019s file, UNDEFINED for everything else');
-  // INLINE1 (2026-09-20): this pin used to hold "every other vendor asset keeps
+  // This pin used to hold "every other vendor asset keeps
   // the default" and named dynamic-skies as the example. That was the premise
   // that failed - the allow-list of three folders was an enumeration, twenty
   // vendor folders landed after it and none joined, and Shield Widget's 275
@@ -584,10 +577,9 @@ test('OW-BIG (Mac: "The player sprite needs to appear larger"): under the travel
   assert.notEqual(big, plain, 'a batch of its own at the step');
   assert.deepEqual([big.size.w, big.size.h].map((v) => Number(v.toFixed(6))), [plain.size.w * 6, plain.size.h * 6].map((v) => Number(v.toFixed(6))), 'six times the sprite');
   assert.equal(big.selfCard, false, 'not the player\'s own card at the lamps');
-  // PIN MOVED (AUDIT OW5 R2): the giant casts nothing - noShadow, which every shadow replay skips; selfCard off was never that
   assert.equal(big.noShadow, true, 'no giant\'s shadow');
   assert.ok(!plain.noShadow, 'the sprite at its own size casts as ever');
-  assert.match(readFileSync(new URL('../../../src/render/shadowPass.js', import.meta.url), 'utf8'), /if \(b\.noShadow \|\| b\.castOnly \|\| SHADOW_NO_CAST_ARCHIVES\.has\(b\.archive\)/, 'the replay skips a noShadow batch in every pass');   // PIN MOVED (MWNPC16): and a cast-only one - its Morrowind body casts
+  assert.match(readFileSync(new URL('../../../src/render/shadowPass.js', import.meta.url), 'utf8'), /if \(b\.noShadow \|\| b\.castOnly \|\| SHADOW_NO_CAST_ARCHIVES\.has\(b\.archive\)/, 'the replay skips a noShadow batch in every pass');
   const n = r.batches.length;
   draw({ yaw: 0.3, up: [0, 1, 0], grow: 6 });
   assert.equal(r.batches.length, n, 'the same step: the same batch');
@@ -694,7 +686,7 @@ test('ATTACK-WARM: the frames a look queues - its swing (each hand\'s for a pair
 });
 
 test('TURN-FREE (the owner, 2026-10-31: "Allow players to view all rotations of their character when idle or moving in a direction with the camera facing another direction"): a readied body keeps its own facing - stood still, the eye goes round it and sees all eight views; walking aside it faces its walk; a blow turns it to the eye', async () => {
-  const shipped = 2;   // OWN-WORK4: the shipped modsettings.json's Graphics.TurnToView (When Weapon Readied), written out
+  const shipped = 2;   // The shipped modsettings.json's Graphics.TurnToView (When Weapon Readied), written out
   assert.equal(MOD_SETTINGS[MOD].keys['Graphics.TurnToView'].default, 1, 'the port ships Only When Animating - a departure');
   assert.notEqual(MOD_SETTINGS[MOD].keys['Graphics.TurnToView'].default, shipped, 'from the bundle\'s When Weapon Readied');
   const { b } = await liveBody();

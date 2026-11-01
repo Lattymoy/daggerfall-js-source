@@ -144,8 +144,8 @@
   {
     "name": "WALKS-build-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS",
-    "new": "        // carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS",
+    "old": "        carveCapitalWalks(nav, dfLocation);   // And off a capital's works over Daggerfall's blocks",
+    "new": "        // carveCapitalWalks(nav, dfLocation);   // FB1029 BRIDGE-ENDS: and off a capital's works over Daggerfall's blocks",
     "tests": [
       "test/world/fb1029_bridgeends.test.js"
     ],

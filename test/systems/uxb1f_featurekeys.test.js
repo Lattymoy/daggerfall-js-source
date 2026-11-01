@@ -107,7 +107,7 @@ test('UXB1-F: a mod\'s keys, as its tile names them - the Controls page\'s own l
   const store = defaults();
   const labels = new Map(ACTION_GROUPS.flatMap((g) => g.rows.map((r) => [r.action, r.label])));
   for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
-    // OWN-AUDIT (2026-11-01): and after the mod's own, the game's actions its tile shows (MOD_TILE_ACTIONS)
+    // And after the mod's own, the game's actions its tile shows (MOD_TILE_ACTIONS)
     assert.deepEqual(modKeyRows(vendor, store), [...rows.map(({ action }) => action), ...(MOD_TILE_ACTIONS[vendor] ?? [])].map((action) => ({
       action, label: labels.get(action), key: buttonText(codeForAction(store, action), true),
     })), vendor);

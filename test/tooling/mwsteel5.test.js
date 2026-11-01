@@ -135,7 +135,7 @@ test('MW-STEEL5: the evidence, re-run (tools/helmLiftProbe.mjs) - the screenshot
     assert.ok(r.raise != null && r.raise > 2.5 && r.raise < 5.5, `eye ${r.eyeZ}: the screenshot's scalp at a raise of ${r.raise}`);
     assert.ok(r.ratios.every((x, i) => i === 0 || x >= r.ratios[i - 1]), `eye ${r.eyeZ}: the higher the head, the more scalp`);
   }
-  // OWN-WORK4: the probe stands on our biped, whose head is the bind's - the span 2.9 to 3.8 there (3.2 to 4.3 on retail's
+  // The probe stands on our biped, whose head is the bind's - the span 2.9 to 3.8 there (3.2 to 4.3 on retail's
   // idle, which HELM_LIFT was read on): the lift within half a unit of it
   assert.ok(lo - 0.5 <= HELM_LIFT && HELM_LIFT <= hi + 0.5, `HELM_LIFT ${HELM_LIFT} within half a unit of the probe's ${lo.toFixed(2)} to ${hi.toFixed(2)}`);
   // the head where the scene put it shows no scalp in MW-STEEL1's helm - and the game's, raised across the whole span
@@ -147,7 +147,7 @@ test('MW-STEEL5: the evidence, re-run (tools/helmLiftProbe.mjs) - the screenshot
     assert.equal(scalpRatio(open, { raise: 0, eyeZ }), 0, `eye ${eyeZ}: the scene's head inside the scene's open helm`);
     assert.equal(scalpRatio(open, { raise: hi + 0.75, eyeZ, helm: 'shipped' }), 0, `eye ${eyeZ}: the game's head inside the shipped open helm`);
   }
-  // and lowered to where the closed helm ships, that helm would show it - which is why it hides the head (MW-FIT1)
+  // and lowered to where the closed helm ships, that helm would show it - which is why it hides the head
   assert.ok(EYE_HEIGHTS.some((eyeZ) => scalpRatio(set, { raise: lo, eyeZ, helm: 'shipped' }) > 0), 'the closed helm, unlifted, is no hat for the game\'s head');
 });
 

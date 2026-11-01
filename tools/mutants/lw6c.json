@@ -191,8 +191,8 @@
   {
     "name": "LW6c-handed-host",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (i >= 0) playerEntity.items.splice(i, 1); },",
-    "new": "void i; },",
+    "old": "          takeKeepsake: (item) => { const i = playerEntity.items?.indexOf(item) ?? -1; if (i >= 0) playerEntity.items.splice(i, 1); },",
+    "new": "          takeKeepsake: (item) => { const i = playerEntity.items?.indexOf(item) ?? -1; void i; },",
     "tests": [
       "test/systems/livingWorld/lw6c_keepsake.test.js"
     ]

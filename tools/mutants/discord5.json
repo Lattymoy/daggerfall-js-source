@@ -100,8 +100,8 @@
   {
     "name": "D5-TORCH-BIND-toggle-key-uncurated",
     "file": "src/systems/features.js",
-    "old": "  'handheld-torches': Object.freeze([\n    'Handling.RelaxedTwoHandedWeapons',",
-    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',\n    'Handling.RelaxedTwoHandedWeapons',",
+    "old": "  'handheld-torches': Object.freeze([",
+    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',",
     "tests": [
       "test/systems/discord5.test.js"
     ]
@@ -109,8 +109,8 @@
   {
     "name": "D5-TORCH-BIND-eotb-keys-uncurated",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective",
-    "new": "    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,\n    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective",
+    "old": "    // The two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective",
+    "new": "    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,\n    // The two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective",
     "tests": [
       "test/systems/discord5.test.js"
     ]

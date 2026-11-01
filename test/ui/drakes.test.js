@@ -1,5 +1,4 @@
-// DRAKES (2026-09-29, Mac: "Can we change the name of marks to something else"; asked what to, "Drakes"; bible/06-Systems/
-// Online-Arc.md DRAKES): THE SERVER'S CURRENCY IS CALLED DRAKES WHEREVER A PLAYER READS IT. Only the words changed: the
+// DRAKES (2026-09-29, Mac: "Can we change the name of marks to something else"; asked what to, "Drakes"; DRAKES): THE SERVER'S CURRENCY IS CALLED DRAKES WHEREVER A PLAYER READS IT. Only the words changed: the
 // balances, the ledger, the routes, the switch (MARKS_OPEN) and the code's own name for them (marks, MARKS1) stand, so
 // no account's balance moved and no stored row was touched. SILVER (2026-10-02, test/net/silver.test.js) named it again:
 // the words read "silver" now, and these pins read them - the Marks never come back either way.
@@ -55,5 +54,5 @@ test('DRAKES no word a player reads says Marks any more - the account card, the 
   // and the unrelated marks stand: DFU's Mark slots, the King's Mark, the map's middle-click, the blood marks
   assert.match(src('src/ui/enhanced/enhancedInventory.js'), /\[EQUIP_SLOTS\.Mark0\]: \{ x: 44, y: 296, label: 'Mark', off: true \}/);
   assert.match(src('src/systems/loot/lootRarity.js'), /name: "King's Mark"/);
-  assert.match(src('src/systems/travel/travelOptionsText.js'), /Middle click - mark a place/);   // OWN-WORK3: our own help words
+  assert.match(src('src/systems/travel/travelOptionsText.js'), /Middle click - mark a place/);   // Our own help words
 });

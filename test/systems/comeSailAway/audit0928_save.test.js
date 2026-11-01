@@ -30,7 +30,7 @@ import { mapPixelToLongitudeLatitude, mapPixelToWorldCoord, worldCoordToMapPixel
 import { enemyRoster } from '../../../src/world/underwater/underwaterEnemies.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const src = (p) => readFileSync(new URL(`../../../src/${p}`, import.meta.url), 'utf8');
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
@@ -213,7 +213,7 @@ test('AUDIT PRE-MERGE 0928 S2: one parts item, one boat, across a load - the par
   s.setTime(10);
   s.rt.useBoatParts(entity.items[0], () => entity.items);
   assert.equal(s.rt.placing, true);
-  // F9: OnStartLoad, the save's player (a new list), the mod loop, OnLoad
+  // OnStartLoad, the save's player (a new list), the mod loop, OnLoad
   s.rt.OnStartLoad();
   restorePlayer(entity, snap, new Map());
   s.rt.restoreSaveData(JSON.parse(JSON.stringify(rec)));
@@ -268,8 +268,6 @@ const FISH = DEEP_WATERS_FISH_TEMPLATES[0].index;
 const fishRows = () => customItemsForGroup(BOAT_ITEM_GROUP).filter((t) => t === FISH);
 const keysFor = () => { const store = IA.createBindings(); IA.resetDefaults(store); setBindings(store); };
 
-// PIN MOVED (SHIPYARDS, 2026-10-11): the boat rows stand on no shelf at all now - a port town's shipyard sells every hull
-// (systems/shipyards.js) - so S4's latch is pinned by the fish rows below, the one home's other mod rows
 test('AUDIT PRE-MERGE 0928 S4 x SHIPYARDS: no shelf stocks a boat row, whatever the switch and however the game loaded it - the shipyard sells the hulls', () => {
   MS._resetModSettings();
   try {

@@ -1,6 +1,6 @@
 // GUIDE3 (2026-09-29, Mac: "How can we set the foundation and improve the quest system substantially? Like really
 // modernize it, make it more accessible", then, of the Quest Guide arc: "This is your baby. Take your time") - THE
-// HERALD (ui/quest/questHerald.js, bible/06-Systems/Quest-Guide-Arc.md): a quest's news as a notice in the enhanced stack.
+// HERALD (ui/quest/questHerald.js): a quest's news as a notice in the enhanced stack.
 // Its laws, each over the real producers:
 //
 //   WHAT IT SAYS - the kind, the title, and one line: the newest entry's opening (the date header dropped, the
@@ -29,7 +29,7 @@ import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { resetUid, ensureUidAtLeast } from '../../../src/systems/quest/quest.js';
 import { createQuestBridge } from '../../../src/scenes/quest/questBridge.js';
 import { makeWorld, seededRolls } from '../../guideWorld.mjs';   // the crafted world, the tables loaded
-import { QUEST_FILES } from '../../qlSources.mjs';   // OWN-WORDS1: the pack as the game reads it - our words where we have them
+import { QUEST_FILES } from '../../qlSources.mjs';   // The pack as the game reads it - our words where we have them
 import { getSeed, srand } from '../../../src/formats/dfRandom.js';
 import { quietLines } from '../../../src/ui/quest/questLens.js';
 import { remainWords, entryOpening, OPENING_MAX, QUEST_URGENT_SECONDS } from '../../../src/ui/quest/questRail.js';
@@ -72,7 +72,7 @@ function fakeDocument() {
   doc.getElementById = (id) => byId(doc.head, id) ?? byId(doc.body, id);
   return doc;
 }
-/** The page, the skin and the switches for one test; everything put back after. The tracker (GUIDE4) is off unless a
+/** The page, the skin and the switches for one test; everything put back after. The tracker is off unless a
  *  pin asks: it hears the same look, and these pins are the herald's. */
 function onPage(fn, { skin = 'enhanced', herald = true, tracker = false, doc = fakeDocument() } = {}) {
   const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
@@ -454,8 +454,6 @@ test('GUIDE3 ONE CALL, EVERY HOST - drawHud draws the herald on its one call, OU
   const gate = hud.indexOf("if (isEnhanced() && typeof document !== 'undefined') {\n    drawLevelNotices(");
   assert.ok(call > 0 && gate > call, 'drawHud draws the herald, before (outside) the enhanced gate');
   const bridge = rd('src/scenes/quest/questBridge.js');
-  // PIN MOVED (QL1): the questlines' layer latches what each stamped quest showed between the tick and the news, so the
-  // news it carries (an objective done) is the tick's own
   assert.match(bridge, /machine\.tick\(\);\n\s*updateTimer = 0;\n(?:\s*questlines\.look\(\);[^\n]*\n)?\s*news\(\);\n\s*return true;/, 'the news is heard after the machine\'s tick, on the tick that fired');
   assert.match(bridge, /const herald = heraldOn\(\), follow = followOn\(\);\n[\s\S]*?\n\s*if \(!herald && !follow\) \{ lookedLast = false; return; \}\n[\s\S]*?\n\s*try \{\n\s*const seen = lens\.look\(ctx\.questWhere \?\? \{\}\);/,
     'the gate stands before the look: no face listening, no look (GUIDE4 made the tracker a face, GUIDE5 the marks; AUDIT GUIDE T2 named the pair followOn)');
@@ -520,6 +518,6 @@ test('GUIDE3 THE OPENING over the corpus - every message a quest of the 265 LOGS
     }
   }
   assert.deepEqual(empty, [], 'every logged entry has words to open with');
-  assert.deepEqual({ logged, headed, cut }, { logged: 408, headed: 395, cut: 1 },   // AUDIT GUIDE W4: a stop inside a closing quote ends a sentence (P0A01L00:1015); PIN MOVED (OWN-WORDS1: 55 in DFU's words - ours open shorter); PIN MOVED (OWN-WORDS2 batch 1: -8, its 9 cut logs are 1 in ours); PIN MOVED (OWN-WORDS2 batch 9: -8, its 8 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 2: -2, C0B00Y01's 2 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 7: -3, R0C10Y00's, R0C10Y18's and R0C11Y28's cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 8: -7, the main quest's 7 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 5: -11, the merchants' and Daedra's 11 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 6: -4, A0C01Y01's, $CUREVAM's two and $CUREWER's cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batches 3 and 4: -6 and -3, their cut logs are 0 in ours)
+  assert.deepEqual({ logged, headed, cut }, { logged: 408, headed: 395, cut: 1 },   // AUDIT GUIDE W4: a stop inside a closing quote ends a sentence; PIN MOVED (OWN-WORDS1: 55 in DFU's words - ours open shorter); PIN MOVED (OWN-WORDS2 batch 1: -8, its 9 cut logs are 1 in ours); PIN MOVED (OWN-WORDS2 batch 9: -8, its 8 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 2: -2, C0B00Y01's 2 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 7: -3, R0C10Y00's, R0C10Y18's and R0C11Y28's cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 8: -7, the main quest's 7 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 5: -11, the merchants' and Daedra's 11 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 6: -4, A0C01Y01's, $CUREVAM's two and $CUREWER's cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batches 3 and 4: -6 and -3, their cut logs are 0 in ours)
     'the 408 entries the pack logs: 395 open on the %qdt header, and 1 first sentence runs past OPENING_MAX (at 100 it was 159)');
 });

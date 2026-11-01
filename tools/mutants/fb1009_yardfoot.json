@@ -93,8 +93,8 @@
   {
     "name": "FB1009-the-host-records-no-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type:",
-    "new": "pixelHomeFrames.set(homeKey, { at, box: [...box], type:",
+    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
+    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "FB1009-a-second-models-ground-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": " f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
-    "new": " f.parts?.push([cpu, local]); }",
+    "old": "            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
+    "new": "            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.parts?.push([cpu, local]); }",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "FB1009-the-host-measures-the-box",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);",
-    "new": "const rects = [[box[0], box[2], box[3], box[5]]];",
+    "old": "            const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // The ground its faces cover, never its box",
+    "new": "            const rects = [[box[0], box[2], box[3], box[5]]];   // The ground its faces cover, never its box",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]

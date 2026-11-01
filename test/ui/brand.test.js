@@ -1,8 +1,4 @@
-// BR1 - DAGGERFALL ENHANCED (2026-09-13, Mac: "I want to rebrand across
-// the board as Daggerfall Enhanced ... Daggerfall Enhanced / An
-// open-source reimplementation of The Elder Scrolls II: Daggerfall. We
-// need to tackle any javascript mention across the website, game, and
-// note this in the bible").
+// DAGGERFALL ENHANCED.
 //
 // THE NAME HAD NO PIN AT ALL. The rebrand touched nine surfaces - the
 // landing page's title, wordmark and cards, the game page, the PWA
@@ -28,7 +24,7 @@
 // tree, so each is pinned as deliberately unchanged rather than left to
 // look like an oversight.
 //
-// BR4 - DAGGERFALL ONLINE (2026-09-27, Mac: "I want to rebrand Daggerfall:
+// DAGGERFALL ONLINE (2026-09-27, Mac: "I want to rebrand Daggerfall:
 // Enhanced to Daggerfall Online across every surface of the game and
 // website. The logo attached is the new temporary logo ... (Don't forget
 // about the intro video also)"). The same surfaces again, pinned HERE
@@ -36,7 +32,7 @@
 // and the old name is swept for in both its whole and its split forms.
 // The logo is Mac's own transparent cut, drawn with no blend mode.
 //
-// BR5 - DFO ONLINE (2026-10-11, Mac: "So next up I want to replace the current
+// DFO ONLINE (2026-10-11, Mac: "So next up I want to replace the current
 // daggerfall online logo anywhere it's present with this logo. I want to
 // comprehensively scan the repo, ingame, etc for any mentions of
 // daggerfall/daggerfall online and change it to DFO Online/DFO. We are
@@ -63,7 +59,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 /** The name, its short form, its form in a file name, and the one sentence
- *  that says what it is - which names no other game (BR5). */
+ *  that says what it is - which names no other game. */
 const NAME = 'DFO Online';
 const SHORT_NAME = 'DFO';
 const FILE_NAME = 'DFO-Online';
@@ -73,11 +69,9 @@ test('BR1: every surface the player reads carries the one name', () => {
   const landing = read('index.html');
   assert.match(landing, new RegExp(`<title>${NAME}</title>`), 'the landing page\'s title');
   assert.match(landing, new RegExp(`<meta property="og:title" content="${NAME}" />`), 'and what a link preview shows');
-  // BR3 (Mac, 2026-09-14): the landing page's wordmark was TYPE - one word
-  // over a tracked sub-line - after BR2's one day as an uploaded logo.
-  // AUDIT BR5 (Mac, 2026-10-11: "Use the new logo"): it is the product's
-  // logo again, the game's own file, named by its alt.
-  // BR6 (Mac, 2026-10-26): the dragon mark, at its own 1232 x 1034. BR7 (Mac, 2026-11-01): the wordmark, 1232 x 699.
+  // The landing page's wordmark was TYPE - one word over a tracked sub-line - after BR2's one day as an uploaded
+  // logo. AUDIT BR5 (Mac, 2026-10-11: "Use the new logo"): it is the product's logo again, the game's own file,
+  // named by its alt. BR6: the dragon mark, at its own 1232 x 1034. BR7: the wordmark, 1232 x 699.
   assert.ok(landing.includes(`<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="${NAME}" width="1232" height="699" /></h1>`), 'the wordmark');
   assert.equal((landing.match(/<img\s/g) ?? []).length, 1, 'and it is the one image on the page');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency
@@ -86,7 +80,7 @@ test('BR1: every surface the player reads carries the one name', () => {
   // with `git grep 'Daggerfall JavaScript'` finding nothing. Every
   // wordmark is therefore pinned STRUCTURALLY - the sub-line's own text,
   // wherever the halves live.
-  // INTRO2 (Mac, 2026-09-18): his supplied logo replaces the in-game
+  // INTRO2: his supplied logo replaces the in-game
   // wordmark. The landing page and archived prototypes keep BR3's type.
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /mark\.append\(brandMark\(\)\)/,
     'the front door uses the same accessible mark as the cinematic');
@@ -116,7 +110,6 @@ test('BR1: every surface the player reads carries the one name', () => {
   assert.match(ds, new RegExp(`document\\.title = '${NAME} - close other game tabs to continue'`), 'the second-tab title');
   assert.match(ds, new RegExp(`<h2 style="margin-top:0">${NAME}</h2>`), 'and the second-tab panel');
 
-  // PIN MOVED (REL8): the update number leads where the build knows it (rel8_updates runs the line both ways)
   assert.match(read('src/ui/pauseWindow.js'), new RegExp(`const ver = UPDATE \\? \\\`${NAME} \\$\\{UPDATE\\} \\(\\$\\{BUILD_TAG\\}\\)\\\` : \\\`${NAME} \\$\\{BUILD_TAG\\}\\\`;`),
     'the PAUSE SCREEN\'s version line - the whole of the branding surface a player reads in game, and the working name sat on it');
   assert.match(read('README.md'), new RegExp(`^# ${NAME}\\n`), 'the repository\'s own first line');
@@ -223,16 +216,16 @@ test('BR4: the logo is Mac’s transparent cut, and nothing blends it away - BR5
   assert.doesNotMatch(introTitle, /mix-blend-mode/, 'the film draws it as it is');
   const logoRule = style.match(/\n\.brand-logo \{[^}]*\}/)[0];
   assert.doesNotMatch(logoRule, /mix-blend-mode/, 'and so do the doors');
-  // BR5: THE MARK IS 1.63:1 AND PAINTED TO ITS EDGES, where BR4's was 2.48:1
+  // THE MARK IS 1.63:1 AND PAINTED TO ITS EDGES, where BR4's was 2.48:1
   // with its last 81 of 850 rows empty canvas (which the doors pulled what
   // followed up over). Every box keeps the HEIGHT it had, so nothing above or
   // below a mark moves: its new width is the old one's height at the new
   // ratio - worked here from the file's own IHDR, so the next logo's size
-  // reddens this, not a layout. BR6's dragon mark (Mac, 2026-10-26) is the
+  // reddens this, not a layout. BR6's dragon mark is the
   // next logo: 1232 x 1034, 1.19:1, so every box below narrowed to its height.
   const png = readFileSync(join(root, 'src/assets/branding/dfo-online.png'));
   const ratio = png.readUInt32BE(16) / png.readUInt32BE(20);
-  // AUDIT BR5: the site's and the launcher's logo reserve the file's own size, so neither page moves as it loads
+  // The site's and the launcher's logo reserve the file's own size, so neither page moves as it loads
   for (const page of ['index.html', 'app/launcher/index.html']) {
     assert.match(read(page), new RegExp(`dfo-online\\.png" alt="${NAME}" width="${png.readUInt32BE(16)}" height="${png.readUInt32BE(20)}"`), `${page}: the logo's own size`);
   }
@@ -262,7 +255,7 @@ test('BR4: no surface still says the old name - whole, or split across a wordmar
     assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
   }
   // THE SURVIVORS ARE WORDS SOMEONE SAID OR WROTE DOWN AT THE TIME, each
-  // named: a player's Discord question (REL2), Mac's BR3 ruling as the
+  // named: a player's Discord question, Mac's BR3 ruling as the
   // landing test quotes it, and REL2's record of the file the release
   // actually carried. None is a surface. (The patch notes announcing the
   // rename were a fourth until REL6 took notes out of the tree. The sweep
@@ -301,8 +294,8 @@ test('BR4: what the rebrand deliberately did NOT touch, and why', () => {
   // invite are accounts outside the tree, as the domain was for BR1: the
   // tree follows them and never leads. The invite has since moved twice
   // on Discord's side - discord.gg/dfenhanced stopped resolving and the
-  // server's invite was discord.gg/daggerfallonline (2026-09-28), then Mac
-  // gave discord.gg/jM2JdwSM8w (2026-10-09) - and the pin moved with it
+  // server's invite was discord.gg/daggerfallonline, then Mac
+  // gave discord.gg/jM2JdwSM8w - and the pin moved with it
   // each time. The Patreon page keeps the old spelling.
   assert.ok(read('index.html').includes('https://www.patreon.com/c/dfenhanced'), 'the Patreon page is where it is');
   assert.ok(read('index.html').includes('https://discord.gg/jM2JdwSM8w'), 'and so is the Discord');
@@ -323,7 +316,7 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   } catch (e) {
     assert.equal(e.status, 1, `git grep failed: ${e.stderr || e.message}`);
   }
-  // AUDIT BR5: THE ONE PLACE IT STAYS, ON PURPOSE - the four download names every copy built before the rename asks
+  // THE ONE PLACE IT STAYS, ON PURPOSE - the four download names every copy built before the rename asks
   // for (app/lib/downloads.cjs LEGACY_DOWNLOAD_FILES), each line whole and only those four; the next test names them.
   const LEGACY_LINE = /^app\/lib\/downloads\.cjs:\d+: {2}(winSetup|winPortable|mac|linux): 'DaggerfallOnline-[\w.-]+',$/;
   const lines = hits ? hits.split('\n') : [];
@@ -339,7 +332,7 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   }
   assert.equal(split, '', `a wordmark still spells the old name across two elements:\n${split}`);
   assert.match(read('src/ui/enhanced/enhancedChargen.js'), new RegExp(`brand\\.append\\(el\\('div', 'sub', '${NAME}'\\)\\);`), 'the new character\'s masthead');
-  // AUDIT BR5: the launcher wears the logo too, the game's own file, named by its alt
+  // The launcher wears the logo too, the game's own file, named by its alt
   assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="1232" height="699"></h1>`), 'and the desktop launcher\'s');
   assert.match(read('src/ui/screenshot.js'), /return `dfo-\$\{d\.getFullYear\(\)\}/, 'a screenshot is named for the product');
   assert.match(read('src/ui/shotsPane.js'), /a\.download = `dfo-shot-\$\{s\.id\}\.jpg`;/, 'and so is a saved loading shot');
@@ -357,7 +350,7 @@ test('BR5: the original game is named only where it must be - in what a player r
   // kingdom, the bank). Everywhere else the reader is told "the original game"
   // or "classic". Read off the PRODUCERS, not the files, so a new row that
   // says "as Daggerfall does" reddens here wherever it is written.
-  const OTHERS = /Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;   // DEX0: a mod by its own name
+  const OTHERS = /Daggerfall Enemy Expansion|(World|Windmills|Villages|Cities) of Daggerfall/g;   // A mod by its own name
   const named = (v) => /Daggerfall/.test(String(v).replace(OTHERS, ''));
   const strings = (v, out = [], at = '') => {
     if (typeof v === 'string') out.push([at, v]);
@@ -391,7 +384,6 @@ test('BR5: the original game is named only where it must be - in what a player r
   assert.ok(said.some(([, v]) => /the original game/.test(v)), 'and reads what it is instead');
   // The doors' own words, which are drawn rather than exported.
   const menu = read('src/ui/enhanced/enhancedMenu.js');
-  // PIN MOVED (L10N4): the classic door's words said through t(), its English as BR5 left it
   assert.match(menu, /c\.append\(el\('h3', null, t\('menu\.begin\.title', 'Classic'\)\)\);\n {2}c\.append\(el\('p', 'meta', t\('menu\.begin\.blurb', 'The classic start: the original game\\u2019s own title, intro and menu/, 'the classic door');
   assert.doesNotMatch(TAGLINE, /Daggerfall|Elder Scrolls/, 'and the sentence that says what this is names only what it is');
   // WHERE IT IS OWED, it stays - pinned so a later sweep does not take it too.
@@ -407,7 +399,7 @@ test('BR5: the original game is named only where it must be - in what a player r
 
 test('AUDIT BR5: the drawn words no producer exports - the profession pages, the stats card, the decor line, the shots pane, the packs, the menu - name the original game only where it is owed', async () => {
   // The walk above reads what the settings EXPORT. These files draw their words where they are written, so the audit
-  // found "Daggerfall's own potion maker" still standing in the Professions page after BR5 (A-2). Read as code -
+  // found "Daggerfall's own potion maker" still standing in the Professions page after BR5. Read as code -
   // comments out, where the port's notes name what they port - every line that still names it must be owed: the
   // files a player brings, asked for by the game's name.
   const OTHERS = /(World|Windmills|Villages|Cities) of Daggerfall/g;
@@ -444,7 +436,7 @@ test('AUDIT BR5: the drawn words no producer exports - the profession pages, the
   assert.equal(owed.size, OWED.length, 'and every owed line is still where it was read - the walk still sees the files');
   // A-2, A-4 and A-5 as they read now: the potion maker is the classic one, the map joins the BAY's own coast (not
   // "the classic coast", which said nothing), and the cries are the ORIGINAL game's (not "the game", which is this one)
-  assert.ok(read('src/ui/professions/profPages.js').includes("Elsewhere, a potion maker earns no Provisioning experience.';"), 'A-2');   // PIN MOVED (POTION-DOOR): the maker brews at a station now - the one anywhere else says it earns nothing, the original game unnamed; PIN MOVED (PLAIN-TEXT)
+  assert.ok(read('src/ui/professions/profPages.js').includes("Elsewhere, a potion maker earns no Provisioning experience.';"), 'A-2');
   const { FEATURES } = await import('../../src/systems/features.js');
   const note = (id) => FEATURES.find((f) => f.id === id)?.note ?? '';
   assert.match(note('tamriel-map'), /joined to the Bay’s own coast\./, 'A-4');
@@ -454,14 +446,13 @@ test('AUDIT BR5: the drawn words no producer exports - the profession pages, the
 test('BR5: the keys other systems hold keep their spelling, and what moving each would break', () => {
   // Pinned as deliberately unchanged, as BR1 pinned the repository and the
   // domain: each is a name another system holds, and each moves with that
-  // system or not at all. Mac weighed them (2026-10-11): the domain and the
+  // system or not at all. Mac weighed them: the domain and the
   // servers can move together behind a new domain, a migration of its own.
   assert.match(read('src/net/online.js'), /export const DEFAULT_SERVER = 'wss:\/\/daggerfall-online\.mackcothran\.workers\.dev';/,
     'the relay\'s address - every client of every version dials it; it moves with a new hostname, not a commit');
   assert.match(read('src/net/accountClient.js'), /export const DEFAULT_ACCOUNT_SERVICE = 'https:\/\/daggerfall-accounts\.mackcothran\.workers\.dev';/,
     'the account service\'s - the same');
   assert.match(read('server/wrangler.toml'), /^name = "daggerfall-online"$/m, 'the relay Worker\'s name IS its hostname');
-  // PIN MOVED (SHOP): the sealing moved to sealed.js, shared with the shop - the salt is still Patreon's own constant
   assert.match(read('server-account/src/patreon.js'), /const PATREON_SEAL_SALT = 'daggerfall-accounts patreon-link';/,
     'a key-derivation salt - change it and every linked Patreon\'s stored secret stops opening');
   assert.match(read('.github/workflows/account-deploy.yml'), /DB_NAME: daggerfall-accounts/, 'the D1 database, by its name');
@@ -469,7 +460,7 @@ test('BR5: the keys other systems hold keep their spelling, and what moving each
   assert.ok(read('src/ui/supportAsks.js').includes("url: 'https://ko-fi.com/daggerfallonline'"), 'and the game links it there');
   assert.equal(JSON.parse(read('app/package.json')).name, 'daggerfall-js-app', 'the shell\'s package, and the User-Agent GitHub\'s API sees');
   assert.match(read('src/systems/modSettings.js'), /const STORE_KEY = 'dfjs-mod-settings';/, 'a live localStorage key, as BR1 pinned it');
-  // AUDIT BR5: the names a copy built before the rename downloads by - it asks releases/latest/download/<name> for
+  // The names a copy built before the rename downloads by - it asks releases/latest/download/<name> for
   // exactly these and can learn no other, so every release carries its downloads under them too (scripts/
   // desktopRelease.mjs alias). They go once no copy older than BR5 is left to ask; a copy from BR5 on reads its
   // download off the release (releaseAssetUrl) and will not need them.
@@ -488,8 +479,6 @@ test('LOGO-CENTRE: the mark stands on its letters\' centre, not its box\'s - mea
   const { readPng } = await import('../../tools/pngIO.mjs');
   const { BRAND_LOGO_OPTICAL_SHIFT } = await import('../../src/ui/brandMark.js');
   const { width, height, data } = readPng(readFileSync(join(root, 'src/assets/branding/dfo-online.png')));
-  // PIN MOVED (BR7, Mac 2026-11-01): the wordmark has no wing or tail - the letters are the mark, and the centre the
-  // eye takes is its paint's weight, every pixel by its alpha
   let sumX = 0, sumA = 0;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -499,7 +488,7 @@ test('LOGO-CENTRE: the mark stands on its letters\' centre, not its box\'s - mea
   }
   const shift = (sumX / sumA - width / 2) / width;
   assert.ok(Math.abs(shift - BRAND_LOGO_OPTICAL_SHIFT) < 0.005, `the paint weighs ${(shift * 100).toFixed(2)}% right of the file's centre; brandMark.js says ${BRAND_LOGO_OPTICAL_SHIFT * 100}%`);
-  const back = `translateX(${-BRAND_LOGO_OPTICAL_SHIFT * 100}%)`;   // BR7: 0, the wordmark's own centre
+  const back = `translateX(${-BRAND_LOGO_OPTICAL_SHIFT * 100}%)`;   // 0, the wordmark's own centre
   const intro = read('src/ui/intro/introScreen.js'), style = read('src/ui/enhanced/enhancedStyle.js');
   assert.ok(intro.match(/\.intro-title \.brand-logo\{[^}]*\}/)[0].includes(`transform:${back}`), 'the film\'s title');
   assert.ok(style.match(/\n\.brand-logo \{[^}]*\}/)[0].includes(`transform: ${back};`), 'the door and the masthead');

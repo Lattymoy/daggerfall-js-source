@@ -1,11 +1,10 @@
-// LAMP-KEEPER (2026-09-26, Mac: "Shop keepers are lamp posts - make only a hand full of them"): not a count - a
-// picture. Roleplay & Realism's variant keepers (RR2) re-materialise a shop or tavern keeper onto archive 197, and
-// the mod's seven 197 sprites are registered LAZY (nothing fetched at install). A lazy record is decoded only when
-// something asks for it, and getTexture's archive preload skips lazy entries by design (AUDIT-DW F1) - so nothing
-// asked, and the person's billboard uploaded the CLASSIC TEXTURE.197 record in the mod's place. Record 6 of that
-// "Kludge Town" archive is a street lamp (the mod's own XML stretches it 3 x 0.8 into a person's frame), so every
-// 182_2 keeper of a quality-13-plus shop or tavern stood as a lamp post - and a click on the lamp opened the shop.
-// The person's stand asks for its draw record's replacement before the upload now.
+// Not a count - a picture. Roleplay & Realism's variant keepers re-materialise a shop or tavern keeper onto
+// archive 197, and the mod's seven 197 sprites are registered LAZY (nothing fetched at install). A lazy record is
+// decoded only when something asks for it, and getTexture's archive preload skips lazy entries by design - so
+// nothing asked, and the person's billboard uploaded the CLASSIC TEXTURE.197 record in the mod's place. Record 6
+// of that "Kludge Town" archive is a street lamp (the mod's own XML stretches it 3 x 0.8 into a person's frame),
+// so every 182_2 keeper of a quality-13-plus shop or tavern stood as a lamp post - and a click on the lamp opened
+// the shop. The person's stand asks for its draw record's replacement before the upload now.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -18,7 +17,7 @@ import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const V = 'roleplay-realism';
-// OWN-AUDIT (2026-11-01): the keepers are composed from the player's own townspeople (rrKeepers.js), so the ask
+// The keepers are composed from the player's own townspeople (rrKeepers.js), so the ask
 // that paints one reads ARENA2 through the session's classic reader
 const ARENA2 = process.env.ARENA2_PATH && existsSync(join(process.env.ARENA2_PATH, 'TEXTURE.182')) ? process.env.ARENA2_PATH : null;
 

@@ -1,4 +1,3 @@
-// SURV-ART (2026-09-19, Mac: "the sprites aren't showing at all") -
 // CLIMATES & CALORIES' ART REACHED THE SCREEN AT NEITHER DOOR.
 //
 // The mod's sixteen PNGs were vendored, registered at boot
@@ -61,7 +60,7 @@ function installFakeIcons() {
   clearVendorTextures();
   addVendorTextures(VENDOR_ICON_FILES.map((f) => {
     const m = /^(\d+)_(\d+)-(\d+)$/.exec(f);
-    return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, standIn: true, load: async () => new Uint8Array(8) };   // SURV-TENT: the icons are the stand-in kind
+    return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, standIn: true, load: async () => new Uint8Array(8) };   // The icons are the stand-in kind
   }));
 }
 const ARCHIVES = [...new Set(VENDOR_ICON_FILES.map((f) => Number(f.split('_')[0])))];
@@ -173,7 +172,7 @@ test('SURV-ART: both doors keep the arm that reaches the vendored art', () => {
   // that cannot succeed caches the miss first
   const dom = read('src/ui/textureCanvas.js');
   const vendorAt = dom.indexOf('if (isVendorArchive(archive)) {'), classicAt = dom.indexOf('getArchive(archive).then(');
-  assert.ok(vendorAt >= 0 && classicAt >= 0 && vendorAt < classicAt, 'the vendor arm comes first');   // PIN MOVED (AUDIT C&C R21): both lines found - it passed at -1 with the arm gone
+  assert.ok(vendorAt >= 0 && classicAt >= 0 && vendorAt < classicAt, 'the vendor arm comes first');
   assert.match(dom, /const canvas = color32Canvas\(img, \{ scale \}\);/, 'and draws the decoded PNG without a palette');
 });
 
@@ -201,9 +200,6 @@ import { TENT_MODEL } from '../../src/systems/survival/camp.js';
 
 test('SURV-TENT: the tent’s art is registered, and does NOT stand in for its archive', async () => {
   assert.deepEqual([...VENDOR_TENT_FILES], ['50_7-0', '67_10-0']);
-  // PIN MOVED (NO-BETHESDA2, 2026-10-31): the two ARE TEXTURE.050 record 7 and TEXTURE.067 record 10 in PAL.PAL, so they
-  // are rebuilt from the player's files, not carried. Their sizes (32x32, 64x8) are pinned on the built pictures, with
-  // ARENA2, in nobethesda2_torchesicons.test.js.
   assert.deepEqual(VENDOR_TENT_FILES.map(derivedIconSpec), [{ from: [50, 7, 0], pal: 'PAL.PAL' }, { from: [67, 10, 0], pal: 'PAL.PAL' }]);
   assert.equal(existsSync('vendor/climates-calories'), false, 'OWN-WORK4: no copy of any of them in the tree');
 

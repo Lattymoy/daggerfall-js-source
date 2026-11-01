@@ -25,8 +25,8 @@
   {
     "name": "RATE-leg-kind-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "return !!leg && (ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, at));",
-    "new": "return !!leg;",
+    "old": "      return !!leg && (ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, at));   // ROAD-BRIDGE; DRAGON6: a flown leg runs at the road's rate wherever it goes",
+    "new": "      return !!leg;   // ROAD-BRIDGE; DRAGON6: a flown leg runs at the road's rate wherever it goes",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js"
     ]
@@ -44,8 +44,8 @@
   {
     "name": "RATE-join-at-road-rate",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (r.join) return false;\n",
-    "new": "",
+    "old": "      if (r.join) return false;\n      // The last stretch to a SPOT aims at the spot itself, off its pixel's step wherever the spot lies (the",
+    "new": "      // The last stretch to a SPOT aims at the spot itself, off its pixel's step wherever the spot lies (the",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js"
     ]
@@ -72,8 +72,8 @@
   {
     "name": "RATE-ring-ceiling-dropped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": ": st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);",
-    "new": ": travelRateOf(onRoad);",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
+    "new": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : travelRateOf(onRoad);   // The street's own town's pace",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "RATE-ground-never-followed",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (st.autopilot && ui?.isShowing) applyRate();\n",
-    "new": "",
+    "old": "      if (st.autopilot && ui?.isShowing) applyRate();\n    } else if (st.settings.roadsIntegration && !frame.inputPaused && frame.followKeyDown && frame.isPlayerOnHUD) {",
+    "new": "    } else if (st.settings.roadsIntegration && !frame.inputPaused && frame.followKeyDown && frame.isPlayerOnHUD) {",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js"
     ]
@@ -99,8 +99,8 @@
   {
     "name": "RATE-panel-never-told",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    ui?.setRate?.(rate, onRoad);\n",
-    "new": "",
+    "old": "    ui?.setRate?.(rate, onRoad);\n    setTimeScale(rate);",
+    "new": "    setTimeScale(rate);",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js",
       "test/systems/travel/to1_travelOptions.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "RATE-start-not-asked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    applyRate(true);\n    disableWeatherAndSound();",
-    "new": "    applyRate();\n    disableWeatherAndSound();",
+    "old": "    applyRate(true);",
+    "new": "    applyRate();",
     "tests": [
       "test/systems/travel/travel_speed_preference.test.js",
       "test/systems/travel/to1_travelOptions.test.js"

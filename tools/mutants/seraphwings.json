@@ -464,8 +464,8 @@
   {
     "name": "SERAPHWINGS-the-figure-never-kept",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };",
-    "new": "",
+    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form\n      // AND THE WAY THIS FRAME FACES - the picture's (portrayedYaw: the shown orientation about this frame's",
+    "new": "   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form\n      // SPRITE-FACE: AND THE WAY THIS FRAME FACES - the picture's (portrayedYaw: the shown orientation about this frame's",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -474,8 +474,8 @@
   {
     "name": "SERAPHWINGS-a-riders-figure",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "figure = last.riding || FP ? null :",
-    "new": "figure = FP ? null :",
+    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form",
+    "new": "      figure = FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "SERAPHWINGS-a-stale-figure",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;\n",
-    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;\n",
+    "old": "      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;",
+    "new": "      facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -682,8 +682,8 @@
   {
     "name": "SERAPHWINGS-a-figure-in-first-person",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "figure = last.riding || FP ? null :",
-    "new": "figure = last.riding ? null :",
+    "old": "      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form",
+    "new": "      figure = last.riding ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -691,8 +691,8 @@
   {
     "name": "SERAPHWINGS-the-camera-facing",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
-    "new": "facingDrawn = seen === null ? null : { yaw: cam.yaw, turn: turnYaw() ?? seen };",
+    "old": "      facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "      facingDrawn = seen === null ? null : { yaw: cam.yaw, turn: turnYaw() ?? seen };",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -793,8 +793,8 @@
   {
     "name": "SERAPHWINGS-a-beasts-form-lost",
     "file": "src/net/peer/peerRiders.js",
-    "old": "beast: r.form === 'beast', marks: r.marks ?? null",
-    "new": "beast: false, marks: r.marks ?? null",
+    "old": "    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast', marks: r.marks ?? null, shift: (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1) } : null; },   // ARMORY: and where the body stands in its picture - its marks, the quad's offset along its right",
+    "new": "    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: false, marks: r.marks ?? null, shift: (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1) } : null; },   // ARMORY: and where the body stands in its picture - its marks, the quad's offset along its right",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -802,8 +802,8 @@
   {
     "name": "SERAPHWINGS-a-riders-figure-read",
     "file": "src/net/peer/peerRiders.js",
-    "old": "r.px > 0 && r.form !== 'rider' ?",
-    "new": "r.px > 0 ?",
+    "old": "    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 && r.form !== 'rider' ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast', marks: r.marks ?? null, shift: (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1) } : null; },   // ARMORY: and where the body stands in its picture - its marks, the quad's offset along its right",
+    "new": "    figureOf: (id) => { const r = figs.get(id); return r?.batch && r.size && r.xml && r.px > 0 ? { base: (r.xml.y / r.xml.scale) * (r.g ?? 1), mpp: r.size.h / r.px, beast: r.form === 'beast', marks: r.marks ?? null, shift: (r.xml.x / r.xml.scale) * (r.mirror ? -1 : 1) * (r.g ?? 1) } : null; },   // ARMORY: and where the body stands in its picture - its marks, the quad's offset along its right",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -811,8 +811,8 @@
   {
     "name": "SERAPHWINGS-the-beasts-layer-figureless",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    figureOf: layer.figureOf,   // AUDIT 3 (SERAPH-WINGS): a beast's on foot - none in the saddle\n",
-    "new": "",
+    "old": "    figureOf: layer.figureOf,   // A beast's on foot - none in the saddle\n    faceOf: layer.faceOf,   // A beast's, and a rider's",
+    "new": "    faceOf: layer.faceOf,   // A beast's, and a rider's",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -1009,8 +1009,8 @@
   {
     "name": "WINGSFIT-facing-nowhere-the-cameras",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
-    "new": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? cam.yaw };",
+    "old": "      facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "      facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? cam.yaw };",
     "tests": [
       "test/net/seraphwings.test.js",
       "test/player/eyeOfTheBeholder/spriteface.test.js"

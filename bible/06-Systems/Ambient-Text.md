@@ -1,15 +1,16 @@
 # Ambient Text
 
-A 1:1 port of Regnier's Ambient Text 1.8 for Daggerfall Unity. Now and then, outdoors or underground, a line of the
-author's prose appears on the HUD about the place the player stands in: what a crypt smells of, what a village sounds
-like at night. It never speaks indoors, and after it speaks it stays quiet for longer. It is the `mod-ambient-text`
-row in "The world" group, with its settings in the Mods pane.
+A 1:1 port of the rules of Regnier's Ambient Text 1.8 for Daggerfall Unity, with our own lines. Now and then, outdoors
+or underground, a line of prose appears on the HUD about the place the player stands in: what a crypt smells of, what a
+village sounds like at night. It never speaks indoors, and after it speaks it stays quiet for longer. It is the
+`mod-ambient-text` row in "The world" group, with its settings in the Mods pane.
 
 ## How it works
 
 `src/systems/ambientText.js` holds one component for the whole game, as the mod is one object created at load; the
-host that owns the motor claims it with `setAmbientTextHost` and ticks it (`tickAmbientText`). The table is the
-author's 918 lines, vendored as `vendor/ambient-text/ambientTexts.json`, matching the table the mod's DLL builds.
+host that owns the motor claims it with `setAmbientTextHost` and ticks it (`tickAmbientText`). The table is DFO's own
+918 lines (`src/systems/ambientTextLines.json`), one for each of the mod's 918 keys. No line rewords one of
+Regnier's, and none names one place, since a key can speak anywhere in Tamriel.
 
 ### The tick
 
@@ -40,7 +41,7 @@ The index is rolled 0..9, never the one that last spoke. `lastIndex` changes onl
 ### The table is sparse
 
 233 families x 10 indices would be 2,330 keys; there are 918. A key the table lacks says nothing. The gaps are the
-author's frequency curve: a family with ten lines speaks often, one with none is silent. The port never fills them.
+mod's frequency curve: a family with ten lines speaks often, one with none is silent. The game never fills them.
 
 ### Hosts
 
@@ -51,7 +52,8 @@ call covers every mode. Weather flags come from `src/world/weather.js` `weatherF
 
 ## Rules
 
-- Ported 1:1 (Mac). The writing is the mod; the port must not lose or flatten any of the 918 lines.
+- The rules are ported 1:1 (Mac); the lines are our own (OWN-WORK, the owner), one for each of the mod's keys, within
+  PLAIN-TEXT's limits.
 - One component for the game, never one per host, so the no-repeat rule and the pace survive doors.
 - The table stays sparse; a missing key says nothing.
 - Settings are read live at every tick.
@@ -61,15 +63,18 @@ call covers every mode. Weather flags come from `src/world/weather.js` `weatherF
 The mod is `AmbientTextMod` (a MonoBehaviour) and `AmbientText` (the table), recovered from the shipped DLL by
 disassembly. Its seams: `PlayerEnterExit.IsPlayerInsideBuilding`, `DaggerfallUI.AddHUDText`, `Dice100.SuccessRoll`,
 `PlayerGPS.IsPlayerInLocationRect`, `PlayerGPS.CurrentClimateIndex`, `WorldTime.Now.IsDay` and `WeatherManager`'s
-flags. Not carried: the DLL itself, its debug logging, DFU's mod-init handshake, and the constructor's bench values.
+flags. Not carried: the DLL itself, the author's lines, its debug logging, DFU's mod-init handshake, and the
+constructor's bench values.
 
 ## Code and tests
 
 - `src/systems/ambientText.js` - the component, the key law, the settings
-- `vendor/ambient-text/` - manifest, settings and the table
+- `src/systems/ambientTextLines.json` - our 918 lines
 - `src/world/weather.js` `weatherFlags` - DFU's weather flags
-- `test/systems/ambienttext.test.js` - the key law, sparseness both ways (every table key reachable), the clock
+- `test/systems/ambienttext.test.js` - the key law, sparseness both ways (every table key reachable), the clock; the
+  shipped settings as a literal table; our table by its count, a sha256 of its keys and the plain-text limits
 
 ## Open
 
-- The permission line in `vendor/ambient-text/README.md` is a placeholder; the Mod Registry row is open.
+- The permission record for the ported rules is open (`01-Overview/Own-Work.md`); Regnier's contact per the manifest is
+  `forums.dfworkshop.net`.

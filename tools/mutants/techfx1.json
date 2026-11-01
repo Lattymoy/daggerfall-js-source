@@ -313,8 +313,8 @@
   {
     "name": "TECHFX1-the-dip-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "renderer.setScreenOffset(ox, oy + _dipPx);",
-    "new": "renderer.setScreenOffset(ox, oy);",
+    "old": "    renderer.setScreenOffset(ox, oy + _dipPx);",
+    "new": "    renderer.setScreenOffset(ox, oy);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "TECHFX1-the-offset-not-restored",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "try { return drawLayer(o); } finally { renderer.setScreenOffset(ox, oy); _dipPx = 0; }",
-    "new": "return drawLayer(o);",
+    "old": "    try { return drawLayer(o); } finally { renderer.setScreenOffset(ox, oy); _dipPx = 0; }",
+    "new": "    return drawLayer(o);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "TECHFX1-the-dip-off-the-width",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "_dipPx = dy * (cv()?.height ?? 0);",
-    "new": "_dipPx = dy * (cv()?.width ?? 0);",
+    "old": "    _dipPx = dy * (cv()?.height ?? 0);",
+    "new": "    _dipPx = dy * (cv()?.width ?? 0);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "TECHFX1-AUDIT-the-arm-on-the-offset",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    if (fpArm.active()) { _armDip = dy; try { return drawLayer(o); } finally { _armDip = 0; } }\n",
-    "new": "",
+    "old": "    if (fpArm.active()) { _armDip = dy; try { return drawLayer(o); } finally { _armDip = 0; } }\n    if (typeof renderer?.setScreenOffset !== 'function') return drawLayer(o);",
+    "new": "    if (typeof renderer?.setScreenOffset !== 'function') return drawLayer(o);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -525,8 +525,8 @@
   {
     "name": "TECHFX1-AUDIT-the-arm-transform-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (_armDip > 0) { const armsBase = fpArm.screenTransform(); fpArm.setScreenTransform((base) => techniqueDipRect(armsBase ? armsBase(base) : base, _armDip, base.h)); }\n",
-    "new": "",
+    "old": "      if (_armDip > 0) { const armsBase = fpArm.screenTransform(); fpArm.setScreenTransform((base) => techniqueDipRect(armsBase ? armsBase(base) : base, _armDip, base.h)); }\n      // Lowered out of sight, no lane draws (the arm's record stays the top's false); the gun and the clone have no slide",
+    "new": "      // Lowered out of sight, no lane draws (the arm's record stays the top's false); the gun and the clone have no slide",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"

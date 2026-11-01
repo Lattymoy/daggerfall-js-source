@@ -155,8 +155,8 @@
   {
     "name": "SWAP-BEHIND-pixel-build-under-its-own-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const pkey = `${px},${py}`, key = swap.keyFor(px, py),",
-    "new": "const pkey = `${px},${py}`, key = pkey,",
+    "old": "    const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
+    "new": "    const pkey = `${px},${py}`, key = pkey, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SWAP-BEHIND-doors-live-while-building",
     "file": "src/scenes/pixelBuild.js",
-    "old": "(key === pkey ? buildingDoors : (made.doors ??= [])).push({",
-    "new": "buildingDoors.push({",
+    "old": "              (key === pkey ? buildingDoors : (made.doors ??= [])).push({   // Staged on its ledger while it builds behind",
+    "new": "              buildingDoors.push({   // Staged on its ledger while it builds behind",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SWAP-BEHIND-a-swap-fades-in",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(",
-    "new": "if (isEnhanced() && !midRingDisabled()) stampPixelFade(",
+    "old": "    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // The stream's new pixel eases out of the middle ring's tint",
+    "new": "    if (isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // The stream's new pixel eases out of the middle ring's tint",
     "tests": [
       "test/render/midring.test.js",
       "test/scenes/swapbehind.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "SWAP-BEHIND-reskin-under-the-build-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "_reskin.mark(pkey);",
-    "new": "_reskin.mark(key);",
+    "old": "    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(pkey);   // ITS key, not the grid (IC-SWAP-BEHIND: the pixel's, never the build's behind it)",
+    "new": "    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(key);   // ITS key, not the grid (IC-SWAP-BEHIND: the pixel's, never the build's behind it)",
     "tests": [
       "test/systems/seasonsIliacBay.test.js",
       "test/scenes/swapbehind.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "SWAP-BEHIND-restride-under-the-build-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "host.restridePending.set(pkey, entry);",
-    "new": "host.restridePending.set(key, entry);",
+    "old": "      if (wantStride === 1) host.restridePending.set(pkey, entry);   // The pixel's key",
+    "new": "      if (wantStride === 1) host.restridePending.set(key, entry);   // The pixel's key",
     "tests": [
       "test/world/terrain/stream1_restride.test.js",
       "test/scenes/swapbehind.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "SWAP-BEHIND-ground-ride-unheld-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);",
-    "new": "      host.rideGround?.(t, pkey, moved, false);",
+    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);   // The pixel's own key; behind, the player on the view swapped out rides it unheld",
+    "new": "      host.rideGround?.(t, pkey, moved, false);   // The pixel's own key; behind, the player on the view swapped out rides it unheld",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

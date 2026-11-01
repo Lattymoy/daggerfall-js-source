@@ -1,6 +1,6 @@
-// CSA-A (2026-09-27) - COME SAIL AWAY 2.1 (RedRoryOTheGlen), THE REGISTRATION: the settings restated key for key, the
-// three keys the mod never read, and the switch's Features row, credit and online lane. OWN-WORK4 (2026-10-31): the
-// vendored files are retired (bible/01-Overview/Own-Work.md) - the settings the mod shipped are held here as the table
+// COME SAIL AWAY 2.1 (RedRoryOTheGlen), THE REGISTRATION: the settings restated key for key, the
+// three keys the mod never read, and the switch's Features row, credit and online lane. OWN-WORK4: the
+// vendored files are retired - the settings the mod shipped are held here as the table
 // they were, so a changed key, kind, range or default still fails; the assertions about the files' own text went.
 
 import { test } from 'node:test';
@@ -73,7 +73,7 @@ const SHIPPED = Object.freeze([
 ]);
 
 /** The shipped defaults the port moves, each a DEPARTURE recorded where it is declared (systems/modSettings.js):
- *  KEEP-BOATS (2026-09-30) keeps a boat placed in a dungeon, and her hold, when the player leaves it. */
+ *  KEEP-BOATS keeps a boat placed in a dungeon, and her hold, when the player leaves it. */
 const DEPARTED = Object.freeze({ 'Compatibility.PersistentDungeonBoats': true });
 
 test('CSA-A: every shipped key is declared - its section and name joined with a dot, its kind, range, default and options as shipped, the six descriptions the mod wrote in our own words - and nothing else is, but the port\'s Enabled', () => {
@@ -82,7 +82,7 @@ test('CSA-A: every shipped key is declared - its section and name joined with a 
   assert.equal(DEF.keys.Enabled.default, true, 'MO1: on by default');
   const shipped = [];
   let written = 0;
-  // OWN-WORK4 (2026-11-01): the six lines the mod wrote, each in our own words now - ours, exactly
+  // The six lines the mod wrote, each in our own words now - ours, exactly
   const PLAIN = {
     'Controls.PortLocationSearchRange': 'How many map squares away a port may be and still count as near you.',
     'Map.RestrictPositionReadingTime': 'The position reading works only near noon and near midnight.',

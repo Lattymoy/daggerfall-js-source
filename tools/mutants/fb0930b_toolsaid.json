@@ -20,8 +20,8 @@
   {
     "name": "TOOL-SAID-the-switch-off-offers-no-use",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  toolUse.usable = (item) => foragingOn() || !!professionToolLine(item?.templateIndex); // TOOL-SAID: online the tools are the professions' whatever the switch says (law 6)",
-    "new": "  toolUse.usable = () => foragingOn(); // TOOL-SAID: online the tools are the professions' whatever the switch says (law 6)",
+    "old": "  toolUse.usable = (item) => foragingOn() || !!professionToolLine(item?.templateIndex); // Online the tools are the professions' whatever the switch says (law 6)",
+    "new": "  toolUse.usable = () => foragingOn(); // Online the tools are the professions' whatever the switch says (law 6)",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]

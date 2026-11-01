@@ -1,7 +1,7 @@
-// NO-BETHESDA3 (2026-10-31; the owner: "Drop the rotten fish icon", "Also rebuild the rotten fish ourself"): Climates &
-// Calories' rotten cooked fish (536_1-0) was the author's re-shade of TEXTURE.211 record 10. It left the tree. In its
-// place is our own rot (systems/survival/rotPicture.js) over the player's own cooked fish, built through the classic
-// reader. Pinned on made-up pictures in CI; with ARENA2_PATH the real fish is built and held to its print.
+// Climates & Calories' rotten cooked fish (536_1-0) was the author's re-shade of TEXTURE.211 record 10. It left the
+// tree. In its place is our own rot (systems/survival/rotPicture.js) over the player's own cooked fish, built through
+// the classic reader. Pinned on made-up pictures in CI; with ARENA2_PATH the real fish is built and held to its
+// print.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -24,8 +24,6 @@ const flat = (w, h, rgb, clear = () => false) => {
 };
 const at = (p, x, y) => [...p.data.subarray((y * p.width + x) * 4, (y * p.width + x) * 4 + 4)];
 
-// PIN MOVED (OWN-AUDIT, 2026-11-01; the owner: the specks "read as bright plus-shaped sparkles"): the specks and their
-// fuzz are gone. The rot's tint and rim are pinned with no mould on (`cover: 0`); the mould is pinned by its laws below.
 test('NO-BETHESDA3 rot: a grey picture goes green-grey and its rim darker; one seed, one picture', () => {
   const pic = flat(12, 8, [100, 100, 100]);
   const before = pic.data.slice();
@@ -111,8 +109,6 @@ test('NO-BETHESDA3 rot: a clear pixel stays clear, a colour loses its saturation
   assert.ok(n >= Math.floor(1600 * MOULD_COVER) && n < 1600 * (MOULD_COVER + 0.2), `${n} of 1600 drawn pixels mouldy`);
 });
 
-// PIN MOVED (OWN-AUDIT, 2026-11-01): the mouldy cooked fish was a spec of the plain fish while every other food showed
-// mould at that stage. Both faces are our rot now; derivedIcons.json keeps the tent's two alone.
 test('NO-BETHESDA3: the rotten and the mouldy cooked fish are ours - not a file, not a spec - built from the player\'s cooked fish under our rot, never fetched (mutant: NB3-the-mouldy-fish-is-the-plain-fish)', async () => {
   assert.equal(existsSync(join(root, 'vendor/climates-calories')), false, 'the author\'s re-shade left the tree, and OWN-WORK4 the folder');
   assert.equal(Object.keys(OWN_ICONS).length, 16, 'OWN-AUDIT: our sixteen, the mouldy cooked fish among them');
@@ -150,7 +146,7 @@ test('NO-BETHESDA3 (ARENA2): our rotten and mouldy fish, built from the player\'
   assert.deepEqual([fish.width, fish.height], [29, 11], 'the cooked fish record\'s size');
   assert.equal(printOf(fish), 'c1e6fa54cd05e458', 'our rot: a change to it is a change to this print (OWN-AUDIT 2026-11-01: the mould\'s patches)');
   assert.notEqual(printOf(fish), 'f34194eea2c22305', 'not the author\'s re-shade (its print, taken before it left)');
-  // OWN-AUDIT (2026-11-01): the mouldy face is our mould, and not the plain cooked fish the release drew for it
+  // The mouldy face is our mould, and not the plain cooked fish the release drew for it
   const mouldy = await ownIconPicture('536_0-0', art);
   assert.deepEqual([mouldy.width, mouldy.height, printOf(mouldy)], [29, 11, '6b6bc8413dba55f6']);
   assert.notEqual(printOf(mouldy), 'af7fa8af9e9c3a78', 'not the plain cooked fish (its print, nobethesda2_torchesicons.test.js)');

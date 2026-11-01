@@ -1,6 +1,6 @@
 // FIELD BUGS 2026-10-28, "Wall Graphics Flicker" (#bug-reports: "The city wall at the entrance of Riften has texture
-// flicker"; bible/03-World/Town-Shapes.md WALL-FLICKER). A length's end stands in a bend tower's body, the wall's own
-// thickness (TS8): where the line runs straight through a tower its faces lay in the tower's, both drawn - Riften's gate is
+// flicker"; WALL-FLICKER). A length's end stands in a bend tower's body, the wall's own
+// thickness: where the line runs straight through a tower its faces lay in the tower's, both drawn - Riften's gate is
 // on a straight run, the tower north of it 154 m2 of faces in one plane. world/townWalls.js clearOfTowers cuts every length
 // and gate clear of the bodies; and the town's fabric lays no paving in the plane of a gate's floor (townFabricStand.js).
 // Pinned on shapes (no data), and on the game's own pieces at every twentieth walled city on the Bay and past it, at
@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as walls from '../../src/world/townWalls.js';
-import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
+import { bayRoads } from '../bayRoads.mjs';
 
 const { townWallModel, WALL_MODELS, CORNER_TOWER } = walls;
 const ARENA2 = process.env.ARENA2_PATH;
@@ -202,7 +202,6 @@ test('WALL-FLICKER the cut: a length\'s and a gate\'s faces cut clear of a bend 
   for (const frame of [0, 37]) for (const [deg, what] of [[0, 'straight'], [0.002, 'a hair off straight'], [1, 'a degree'], [3, 'three degrees, the inner face past the grown body'], [8, 'eight degrees'], [50, 'a sharp bend']]) {
     const pieces = turned(bend(deg), frame), m = townWallModel(pieces, classic), now = fights(m, 0.04);
     assert.ok(now < 1e-6, `${what}, the frame turned ${frame}: no two faces within 4 cm over each other (${now} m2)`);
-    // PIN MOVED (AUDIT FB1028): against the pieces made alone as grown - a sharp bend's grown tower alone shows 14 more
     const b = openings(whole(pieces, classic, true), [pieces[2]]), a = openings(m, [pieces[2]]);
     assert.ok(a.back <= b.back && a.none <= b.none, `${what}, the frame turned ${frame}: no opening seen (${JSON.stringify(b)} whole, ${JSON.stringify(a)} cut)`);
   }
@@ -212,7 +211,7 @@ test('WALL-FLICKER the cut: a length\'s and a gate\'s faces cut clear of a bend 
   const g = bend(1, { east: WALL_MODELS.gate, stretch: 1.012 });
   assert.ok(fights(whole(g, classic), 0.04) > 1 && fights(townWallModel(g, classic), 0.04) < 1e-6, 'the gate\'s way: its side clear of the tower\'s');
   // in the tower's body under its crown, the tower alone: its four sides whole, nothing of a length's
-  // PIN MOVED (AUDIT FB1028): the body as grown across (`thick`), its two sides along that much wider
+  // PIN MOVED: the body as grown across (`thick`), its two sides along that much wider
   const inBody = (m, th) => triangles(m).filter((t) => t.q.every((p) => Math.abs(p[0]) <= 4.8 + 1e-3 && Math.abs(p[2]) <= 4.8 * th + 1e-3 && p[1] <= CORNER_TOWER.crown + 1e-3)).reduce((s, t) => s + t.area, 0);
   const sides = (th) => 2 * 9.6 * (1 + th) * CORNER_TOWER.crown;
   assert.ok(Math.abs(inBody(townWallModel([straight[2]], classic), straight[2].thick) - sides(straight[2].thick)) < 0.01, 'the tower: its four sides');
@@ -228,8 +227,6 @@ test('WALL-FLICKER what is kept: a part no bend tower reaches handed back as it 
   // a mod's tower, a tenth larger: not a bend's body - nothing cut
   const big = modelOf([{ q: [[-9.24, 0, -9.2], [9.24, 0, -9.2], [9.24, 15, 9.2], [-9.24, 15, 9.2]], n: [0, 0, -1], tex: [317, 0] }]);
   const mod = (id) => (id === WALL_MODELS.tower ? big : len), straight = bend(0);
-  // PIN MOVED (FB1028, the Bay's walls): every length is mitred on its tower's middle line, a mod's tower too, so the pin reads
-  // what WALL-FLICKER alone cuts - a length's faces in a 444 body's place, kept beside a mod's tower
   const areaIn = (m) => triangles(m).reduce((s, t) => {
     let q = t.q;
     for (const f of [(p) => 4.801 - p[0], (p) => p[0] + 4.801, (p) => 4.801 - p[2], (p) => p[2] + 4.801, (p) => CORNER_TOWER.crown + 1e-3 - p[1]]) q = q.length > 2 ? clip(q, f) : q;
@@ -280,7 +277,7 @@ test('WALL-FLICKER with ARENA2: Daggerfall\'s own pieces at every twentieth wall
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
   const rmbOf = (n) => (isWallCarrier(n) || n === TOWN_OUTLINE_BLOCK ? null : blocks.getBlockByName(n)?.rmbBlock ?? null);
-  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // The Bay's own network
   const all = [];
   let k = 0;
   for (let r = 0; r < 62; r++) {
@@ -344,8 +341,6 @@ test('WALL-FLICKER with ARENA2: Riften as the places host stands it (Skyrim\'s f
   try { wall = walls.standTownWall(loc, template.exterior.exteriorData.blockNames, sw.io, townOutlineBlockJson); } finally { walls.setTownWallPaths(null); }
   const gates = wall.pieces.filter((p) => p.model === WALL_MODELS.gate);
   assert.equal(gates.length, 1, 'one gate, its road\'s');
-  // PIN MOVED (OWN-WORK3): the town's blocks are Daggerfall's now, not Beautiful Cities'. The line round their houses stands
-  // 6.2 m further east and turns at both of the gate's towers; with the pack the gate was at (624, 355.2), the run straight.
   const [gate] = gates, from = (p, q) => Math.hypot(p.at[0] - q.at[0], p.at[1] - q.at[1]);
   assert.deepEqual([...gate.at.map((v) => Math.round(v * 10) / 10), ...gate.out.map((v) => Math.round(v * 1000) / 1000 + 0)], [630.2, 355.2, 1, 0.018], 'facing east');
   const towers = wall.pieces.filter((p) => p.model === WALL_MODELS.tower);
@@ -410,8 +405,6 @@ test('WALL-FLICKER with ARENA2: the fabric of a city past the Bay keeps off its 
   };
   walls.setTownWallPaths(() => ({ roads: ROADS_EVERY_WAY, tracks: 0, curved: true }));
   try {
-    // PIN MOVED (OWN-WORK3): the five were found on Beautiful Cities' blocks (26, 200, 220, 320, 380). On Daggerfall's own,
-    // 116 of the 407 lay faces in their wall's: four that pave under a gate, and 240, the one whose yard fences along a length
     for (const [j, least] of [[26, 1], [42, 1], [128, 1], [380, 1], [240, 0.1]]) {
       const loc = sweepClone(sw, 'city-state', j), wall = walls.townWallOf(loc), ed = loc.exterior.exteriorData, m = townWallModel(wall.pieces, classic);
       // planned on its whole grid, as the stand planned it before (no cell of its wall's off): faces in the wall's

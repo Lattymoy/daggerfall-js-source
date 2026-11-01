@@ -56,8 +56,8 @@
   {
     "name": "PERFARENA-air-offset",
     "file": "src/render/airPass.js",
-    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0); // PERF-ARENA: a still batch's range of its arena's indices",
-    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0); // PERF-ARENA: a still batch's range of its arena's indices",
+    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0); // A still batch's range of its arena's indices",
+    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0); // A still batch's range of its arena's indices",
     "tests": [
       "test/render/perfarena.test.js"
     ]

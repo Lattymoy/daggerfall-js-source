@@ -184,8 +184,8 @@
   {
     "name": "ECOTONE1-world-slots-W-E",
     "file": "src/scenes/pixelBuild.js",
-    "old": "side: Int32Array.of(slot(3), slot(5), slot(1), slot(7)),",
-    "new": "side: Int32Array.of(slot(5), slot(3), slot(1), slot(7)),",
+    "old": "        side: Int32Array.of(slot(3), slot(5), slot(1), slot(7)),   // W, E, S, N - the 3x3's (dz + 1) * 3 + (dx + 1)",
+    "new": "        side: Int32Array.of(slot(5), slot(3), slot(1), slot(7)),   // W, E, S, N - the 3x3's (dz + 1) * 3 + (dx + 1)",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "ECOTONE1-world-neighbour-unheld",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      await Promise.all([ownSet, ...archives.map((a) => loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null))]);   // PRECIP4: the neighbours' twins\n",
-    "new": "      await Promise.all([ownSet]);\n",
+    "old": "      await Promise.all([ownSet, ...archives.map((a) => loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null))]);   // The neighbours' twins",
+    "new": "      await Promise.all([ownSet]);",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]

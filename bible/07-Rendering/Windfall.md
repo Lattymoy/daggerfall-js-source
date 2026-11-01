@@ -1,9 +1,11 @@
 # Windfall
 
-Windfall (demifiend000, version 1.0.0, Nexus 1396) is a Daggerfall Unity mod we port and ship on by default. It makes
-the wind change by the day: most days are calm with occasional gusts, some are windy, and a few bring a windstorm.
-Trees and plants sway and shiver with it, leaves blow past in a gust, snow falls off winter boughs, and wind sounds rise
-and fall. The player meets it outdoors on the enhanced lane.
+Windfall (demifiend000, version 1.0.0) is a Daggerfall Unity mod we port and ship on by default. It makes the wind
+change by the day: most days are calm with occasional gusts, some are windy, and a few bring a windstorm. Trees and
+plants sway and shiver with it, leaves blow past in a gust, snow falls off winter boughs, and wind sounds rise and
+fall. The law is ported from the assembly; the sounds, pictures and vertex wind are our own, under the mod's names,
+rates, frame counts and sizes (the release's record is in `01-Overview/Own-Work.md`). The player meets it outdoors on
+the enhanced lane.
 
 ## How it works
 
@@ -26,28 +28,37 @@ Every frame, outdoors and in, as `WindMod.Update` runs wherever the player is:
 
 - **Sound:** a windy or stormy day plays intermittent wind passages; a gust plays a gust clip; the canopy ruffles where
   there are leaves (not in snow or under a winter set). A clip is never the one before it. Indoors every source fades
-  and stops. The clips are the bundle's FSB5 Vorbis, remuxed losslessly to Ogg by `tools/environmentModsExtract.mjs`,
-  fetched when the sound is first wanted.
+  and stops. The 27 clips are synthesized from seeded noise (`src/systems/windfall/windfallSynth.js`). None clips and
+  none clicks at its ends; a 40 Hz high-pass takes out the gust's DC offset. At the mod's volumes they sit by
+  Daggerfall's own wind: a full gust at 0.44 of the 0.5 default reads -23 on `src/audio/synth/dsp.js` `loudnessOf`,
+  DAGGER.SND's wind -24 to -29.
+- **Pictures:** the leaf sheets and the snow's flake are painted (`src/systems/windfall/windfallPictures.js`).
 - **Particles:** gust leaves blow from upwind, ambient leaves drift down, and in winter under a winter set snow comes
   off the boughs. Each is the mod's emitter, drawn on the CPU as one instanced cutout draw (at most 800, 300 and 1800).
 
 ### The vertex wind (`src/render/windfallSway.js`)
 
-The billboard vertex shader adds one offset to a quad's two top corners, mostly across the view, scaled by the
-profile's strength and the record's wind mask. The mask is the record's response, none, low (89), medium (166) or full
-(255) (`windfallResponse`), for the twelve stock nature archives (500 to 511) and Seasons of the Iliac Bay's seasonal
-atlases. A batch is one record, so its mask is one number.
+Our own law, written from the effect's description. The billboard vertex shader leans a quad's two top corners in the
+card's own plane, linear in the strength: a wind along the view sways no card, one across it sways one fully, and the
+shiver shows either way. The sway's phase rolls over a wood in patches some 80 m long (`WINDFALL_TURNS`), and each
+flat's own reach is 0.7 to 1.3 of the lean. It is scaled by the record's wind mask. The mask is the record's response,
+none, low (89), medium (166) or full (255) (`windfallResponse`), for the twelve stock nature archives (500 to 511) and
+Seasons of the Iliac Bay's seasonal atlases. A batch is one record, so its mask is one number.
 
 ## Rules
 
-- On by default and part of the enhanced environments, shipped on Mac's word of permission (Mac).
+- On by default and part of the enhanced environments (Mac); the sounds, pictures and vertex wind our own (OWN-WORK,
+  the owner).
 - Enhanced sky only: the hosts build it under `sky.enhanced`. Under Daggerfall's painted sky the flora stand still.
   The mod's `Enabled` setting and `?windfall=off` (`windfallOn`) stand beside it.
 - One law, never two: while Windfall is on, its offset is the flora's sway; otherwise the outdoors' own lean stands
   (`src/render/renderer.js` `windfallLaw`). The Wind row's Sway part still switches all sway off. The shadow and air
   passes replay a record by the law it was drawn with.
 - One wind, one way: the heading is the outdoors' own wind (`src/systems/wind/windDrive.js`), with Windfall's wander
-  and gust swing about it. The mod's daily heading applies only where no wind is handed.
+  and gust swing about it. The mod's daily heading (a daily roll plus its shipped 35 degrees,
+  `WINDFALL_HEADING_OFFSET`) applies only where no wind is handed. `General.WindDirectionDegrees` is retired, since a
+  second heading for the trees alone would split them from the rain and the clouds; a saved value is let go on load
+  (`src/systems/modSettings.js` `RETIRED_KEYS`).
 - The steady wind bed (Enhanced sounds) and the mod's intermittent clips are two layers; the mod's sound has its own
   switches.
 - The sandstorm is a storm here, as Thunder is.
@@ -68,7 +79,7 @@ Departures:
 - **Noise module:** Unity's particle noise is replaced by three smooth sine channels at the module's frequency.
 - **Particle light:** the flats' light at the player. The mod's pass takes the sun's directional light alone, so its
   leaves go black looking toward the sun and at night.
-- **Snow picture:** the mod's own flake; DFU's particle prefab is not ported.
+- **Sounds, pictures and the vertex wind:** ours. DFU's particle prefab is not ported.
 - **Random:** `UnityEngine.Random` (clips, pitches, particles) is `Math.random`; `System.Random` (gusts) is exact.
 - **3D trees:** a Low Poly Trees mesh leans by the mod's law up its height, to match its far picture. In DFU the mod
   patches billboard batches only.
@@ -77,6 +88,7 @@ Departures:
 
 - `src/systems/windfall.js` - planner, weights, state machine (`createWindfall`, `windfallSettings`, `windfallOn`)
 - `src/systems/windfallEffects.js` - sound scheduling, particle flows, the clips' load
+- `src/systems/windfall/` - our clips and pictures
 - `src/render/windfallSway.js` - the vertex wind chunk, a batch's share, the anchor
 - `src/render/windfallParticles.js` - the three particle systems
 - `src/scenes/windfallHost.js` - `createWindfallHost`, built by `src/scenes/world.js` and `src/scenes/exterior.js`; ticked
@@ -84,9 +96,10 @@ Departures:
 - `test/systems/windfall1_model.test.js` - a 30,000-frame scenario whose float trace hashes to the mod's own C#
   compiled under .NET 8
 - `test/systems/windfall1_presentation.test.js` - sound, particles, the vertex wind and the hosts' wiring
+- `test/systems/ownwork4_windfall.test.js` - our clips, pictures and vertex wind
 
 ## Open
 
-- `vendor/windfall/` waits for the author's own permission line beside Mac's word.
+- The permission record for the ported law is open (`01-Overview/Own-Work.md`), beside Mac's word.
 - `src/scenes/worldModes.js` and `src/scenes/dungeonContext.js` do not wire it: their frames run inside the exterior
   hosts' indoor branch, and no flora stands there.

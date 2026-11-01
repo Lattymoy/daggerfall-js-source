@@ -1,6 +1,5 @@
-// HAZE1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be on
-// by default and integrate into our enhanced environments seamlessly") - HEAT HAZE 1.0.1 (demifiend000), ported off its
-// assembly and its compiled shader (HeatHaze.dll and its DXBC). bible/07-Rendering/Heat-Haze.md is the record.
+// HEAT HAZE 1.0.1 (demifiend000), ported off its assembly and its compiled shader (HeatHaze.dll and its DXBC).
+// bible/07-Rendering/Heat-Haze.md is the record.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -86,7 +85,7 @@ test('HAZE1 the strength: eases toward Intensity x daylight x weather with a 0.8
 test('HAZE1 the settings: the mod\'s keys, its own Enabled the port\'s switch (on by default, MO1), clamped as LoadSettings clamps them; `?haze=off` the kill door (mutants: a clamp dropped; off by default)', () => {
   assert.equal(MOD_SETTINGS[HEAT_HAZE_VENDOR].keys.Enabled.default, true);
   assert.deepEqual(Object.keys(MOD_SETTINGS[HEAT_HAZE_VENDOR].keys), ['Enabled', 'Heat Haze.AllowSubtropical', 'Heat Haze.Intensity', 'Heat Haze.FullStrengthDistance', 'Heat Haze.RingHeight', 'Heat Haze.NoiseScale', 'Heat Haze.AnimationSpeed']);
-  // OWN-WORK1 (2026-10-31): the shipped modsettings.json's one section, written out - its copy left the tree. Each key
+  // The shipped modsettings.json's one section, written out - its copy left the tree. Each key
   // but Enabled: [name, default, min, max] (a toggle has no range).
   const SHIPPED = [['AllowSubtropical', false], ['Intensity', 1.5, 0, 3], ['FullStrengthDistance', 400.4, 50, 3000], ['RingHeight', 1006, 50, 1500],
     ['NoiseScale', 4.5, 0.25, 6], ['AnimationSpeed', 4, 0, 4]];
@@ -115,7 +114,7 @@ test('HAZE1 the settings: the mod\'s keys, its own Enabled the port\'s switch (o
 });
 
 test('HAZE1 the shader: every constant the DXBC carries - the fade 25 to 70 (1/45), the two world axes, the 1.5 up, 0.0022 x 3.6 and 7.2, the drift, 1.15 and 0.85, the (0.3, 1) bend - and the cylinder 128 sides, +-70 (mutants: an axis; a scale; the drift; the bend\'s mix)', () => {
-  // OWN-WORK1 (2026-10-31): the shader's constants as its DXBC read back (Heat Haze 1.0.1), written out - the listing left the tree
+  // The shader's constants as its DXBC read back (Heat Haze 1.0.1), written out - the listing left the tree
   assert.deepEqual(HAZE_AXES, { a: [0.9239, 0.3827], b: [-0.4226, 0.9063], up: 1.5, scale: 0.0022, k1: 3.6, k2: 7.2 });
   assert.deepEqual(HAZE_DRIFT, [0.026, -0.30, -0.043, -0.48]);
   const fs = read('src/render/heatHaze.js');

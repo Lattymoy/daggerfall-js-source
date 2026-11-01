@@ -110,8 +110,8 @@
   {
     "name": "DISC28-D-rig-blind-to-speed",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) })",
-    "new": "new PlayerWeapon({})",
+    "old": "  const playerWeapon = new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) });   // The swing clock reads the live Speed (FPSWeapon.cs:431/549-556), as the body and the widget already did",
+    "new": "  const playerWeapon = new PlayerWeapon({});   // The swing clock reads the live Speed (FPSWeapon.cs:431/549-556), as the body and the widget already did",
     "tests": [
       "test/combat/disc28_speed.test.js"
     ]

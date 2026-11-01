@@ -12,8 +12,8 @@
   {
     "name": "SNOW-HOLD-queue-kept-inactive",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      if (was) {\n        B.queue.length = 0;\n        B.queued.clear();\n      }\n      // MEM-AUDIT (2026-10-23): AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so",
-    "new": "      // MEM-AUDIT (2026-10-23): AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so",
+    "old": "      if (was) {\n        B.queue.length = 0;\n        B.queued.clear();\n      }\n      // AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so",
+    "new": "      // AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so",
     "tests": [
       "test/systems/fb1021b_snowhold.test.js"
     ],

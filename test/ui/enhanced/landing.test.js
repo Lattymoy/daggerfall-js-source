@@ -1,4 +1,4 @@
-// U60 - THE DOOR IN FRONT OF THE DOOR.
+// THE DOOR IN FRONT OF THE DOOR.
 //
 // index.html at the root of the site is a page about the game: what it
 // is, how to play, credits, Play. The game is one directory down at
@@ -41,7 +41,7 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // reference into src/ - and no game file named (the data folder is
   // named, which is the point of the page; its files are not).
   assert.doesNotMatch(landing, /<script/i, 'the landing page runs no script');
-  // THE DA SITE CLEANUP (Mac, 2026-08-31) retired the pictures whole:
+  // THE DA SITE CLEANUP retired the pictures whole:
   // the U60c chain - three menu screens under public/site/, their
   // doctrine rows, tools/siteShots.mjs and the pins tying them
   // together - is gone, and the law got SIMPLER: this page carries no
@@ -49,11 +49,10 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // cup), which is the strongest shape of "a render of game data is
   // game data" a page about the game can hold.
   // FIX-D: one url() is allowed, and it is not a picture - the digit five's
-  // @font-face data URI (a 520-byte OFL glyph; see below), and since TWO
-  // (2026-10-18) the 2 and Z's beside it. Every other url()
+  // @font-face data URI (a 520-byte OFL glyph; see below), and since TWO the 2 and Z's beside it. Every other url()
   // is still forbidden. <img\s, not <img: the asks' comment SAYS "<img>"
   // while explaining why the marks are drawn in box-shadow instead of being one.
-  // BR2 (2026-09-13) had put ONE raster here - Mac's uploaded logo as the
+  // BR2 had put ONE raster here - Mac's uploaded logo as the
   // wordmark, under a whitelist of one; BR3 (Mac, 2026-09-14: "revert the
   // logo to the original Daggerfall Enhanced text") took it out again.
   // AUDIT BR5 (Mac, 2026-10-11: "Use the new logo") brings the whitelist of
@@ -61,7 +60,7 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // picture and nothing else is one. It is the GAME's own file, which the
   // build carries for the front door already - one copy, so public/brand/
   // stays untracked and the site cannot show a logo the game does not.
-  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="699" /></h1>';   // BR7: the wordmark's 1232 x 699
+  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="699" /></h1>';   // The wordmark's 1232 x 699
   assert.equal(landing.split(LOGO).length, 2, 'the wordmark is the product\'s logo, once');
   const drawn = landing.replace(LOGO, '').replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, '');
   assert.doesNotMatch(drawn, /<img\s|<canvas|<video|<picture|url\(/i, 'beyond the logo, the landing page draws nothing but CSS');
@@ -118,7 +117,7 @@ test('U63: the landing page owns no colour - every one is the SKIN\'s, token or 
   assert.ok(used.size >= 2, `the page uses the tokens (${[...used].join(', ')})`);
   for (const t of used) assert.ok(declared.has(t), `var(--${t}) is not a token the skin declares`);
   assert.doesNotMatch(css, /^\s*--[\w-]+:/m, 'the landing declares no custom property - the skin does');
-  // U63: and it is set in the PIXEL faces, which is what the menu wears.
+  // And it is set in the PIXEL faces, which is what the menu wears.
   assert.match(css, /font-family: 'Pixelify Five', 'Pixelify Sans', monospace/, 'the body face is the menu\'s list face (the five first - FIX-D)');
   // SITE1 (2026-09-15, Mac: "remove the fancy font from the site for capital
   // letters (keep the daggerfall Enhanced title unchanged)"): JACQUARD 12 IS
@@ -129,7 +128,7 @@ test('U63: the landing page owns no colour - every one is the SKIN\'s, token or 
   // means the next heading added cannot quietly pick the display face back up.
   assert.match(css, /\.wordmark \{ font-family: 'Jacquard 12', var\(--brand\)/,
     'the title keeps the wordmark face - the one thing Mac asked to leave alone');
-  // AUDIT SITE1 F10: this counted the whole <style> block, COMMENTS INCLUDED -
+  // This counted the whole <style> block, COMMENTS INCLUDED -
   // so recasing the comment above turned it red with no CSS change at all. It
   // passes today only because that comment happens to shout. The rules, not the
   // prose about them. (The count is of the STYLESHEET; index.html names the face
@@ -154,7 +153,7 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   assert.equal(style?.injectTo, 'head-prepend', 'tokens land before the page\'s own <style>');
   const fonts = out.tags.find((t) => t.tag === 'link' && t.attrs.rel === 'stylesheet');
   assert.equal(fonts?.attrs.href, LANDING_FONTS_URL, 'the fonts request is composed, not typed');
-  // U60b: the brand face. The skin's URL is unchanged by the addition -
+  // The brand face. The skin's URL is unchanged by the addition -
   // the game loads nothing it does not use - and both URLs come out of
   // the same builder over the same family strings.
   // PX1: the pixel faces (Jacquard 12 + Pixelify Sans) folded into
@@ -166,7 +165,7 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   assert.equal(ENHANCED_FONTS_URL,
     'https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400;600&family=Barlow+Semi+Condensed:wght@400;500;600&family=Jacquard+12&family=Pixelify+Sans:wght@400;500&display=swap',
     'the skin\'s request is these bytes exactly - PX1 added the two pixel faces; the landing\'s brand face still adds nothing to it');
-  // U63: the site takes THAT request, whole - one URL, one cache entry,
+  // The site takes THAT request, whole - one URL, one cache entry,
   // and no way for the site to be set in a face the game does not have.
   // It used to take a subset (brand + data), because the site was set in
   // Grenze Gotisch and the menu was not; PX1 made the menu pixel art and
@@ -176,7 +175,7 @@ test('U60: the injected block IS the skin\'s token block, and the skin still wea
   assert.match(FONT_PIXEL_BRAND, /^Jacquard\+12/);
   assert.match(FONT_PIXEL_DATA, /^Pixelify\+Sans/);
   assert.match(ENHANCED_TOKENS, /--brand: 'Grenze Gotisch'/, 'the --brand token stays as the wordmark face\'s fallback');
-  // SITE1: the --brand fallback rides the WORDMARK now, not the headings -
+  // The --brand fallback rides the WORDMARK now, not the headings -
   // the token is still the wordmark face's fallback, which is what line 154
   // holds, and this holds where the site actually spends it.
   assert.match(landing, /\.wordmark \{ font-family: 'Jacquard 12', var\(--brand\)/, 'the wordmark is the menu\'s wordmark face, with --brand behind it');
@@ -204,7 +203,7 @@ test('U60: the build stamp fills every stamp on the page, links the commit, and 
   assert.equal(bare.html, landing, 'no sha, no stamp - the page is left as written');
   assert.match(landing, /\.build:empty, \.stat:empty \{ display: none; \}/, 'and an empty stamp or figure is invisible');
 
-  // U60c: THE LEDGER STRIP. Two figures beside the sha, COUNTED from the
+  // THE LEDGER STRIP. Two figures beside the sha, COUNTED from the
   // tree: the suite's declared tests (top-of-line `test(` calls), the port by
   // tracked lines of JS under src/. Filled in every data-stat element
   // (the rail foot and the page end), grouped digits.
@@ -219,7 +218,7 @@ test('U60: the build stamp fills every stamp on the page, links the commit, and 
   assert.ok(lines > 100000, `tracked src/ JS is ${lines} lines`);
   const shown = transformLanding(landing, { stats: { tests, lines } }).html;
   const cells = [...shown.matchAll(/<span class="stat" data-stat="(\w+)">([^<]*)<\/span>/g)].map((m) => [m[1], m[2]]);
-  // U63: the door's foot is the home face's THREE ZONES - build and the
+  // The door's foot is the home face's THREE ZONES - build and the
   // test count on the left, the line count dead centre, Source on the
   // right - and the page's end carries the build alone. So the figures
   // appear once each, not twice, and the stamp is what appears twice.
@@ -227,7 +226,7 @@ test('U60: the build stamp fills every stamp on the page, links the commit, and 
     'the foot carries both figures, once each');
   assert.equal(figure(122323), '122,323');
   assert.match(landing, /\.stat\[data-stat="tests"\]::after \{ content: ' tests'; \}/);
-  assert.match(landing, /\.stat\[data-stat="lines"\]::after \{ content: ' lines of code'; \}/);   // BR1: the last JS the page said out loud
+  assert.match(landing, /\.stat\[data-stat="lines"\]::after \{ content: ' lines of code'; \}/);   // The last JS the page said out loud
 });
 
 test('U60: the plugin is wired, touches only the root document, and stamps only a build', async () => {
@@ -264,8 +263,8 @@ test('U60: every link on the landing page goes somewhere', () => {
       assert.match(h, /^https:\/\//, `${h} is neither a page here nor https`);
     }
   }
-  // CREDITS-OUT (2026-11-01, the owner: "No more credits"): the page credits nobody; it says the licence and the
-  // trademark notice, and the notices the licence requires ship in the build (test/systems/credits.test.js).
+  // The page credits nobody; it says the licence and the trademark notice, and the notices the licence
+  // requires ship in the build (test/systems/credits.test.js).
   assert.doesNotMatch(landing, /Interkarma|Daggerfall Unity|nexusmods|id="credits"/, 'no credit and no DFU');
   assert.match(landing, /Open source under the MIT licence\./);
 });
@@ -290,7 +289,7 @@ test('U60: no probe drives the root as if it were the game', () => {
     'and the one that may drive the root goes on to the game - the PIXEL home now (U63)');
   // And the tools that read the built game page read it from its home.
   assert.match(read('tools/verify-deploy.mjs'), /readFile\('dist\/play\/index\.html'/);
-  // U64: the live site is the custom domain now. The path is what this
+  // The live site is the custom domain now. The path is what this
   // pin is for - the verifier must poll the GAME, one directory down -
   // and the host follows the domain.
   assert.match(read('tools/verify-deploy.mjs'), /'https:\/\/daggerfalljs\.dev\/play\/'/);
@@ -391,7 +390,7 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(skin, /\.px-rule::before, \.px-rule::after \{ content: ''; flex: 1; height: 2px;/, '...which is the menu\'s rule');
   assert.match(css, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, 'the gem, drawn as a box-shadow cross');
   assert.match(skin, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, '...which is the menu\'s gem');
-  // AUDIT BR5: the wordmark is the product's logo again (BR3 had made it type), at the width the game's front door
+  // The wordmark is the product's logo again (BR3 had made it type), at the width the game's front door
   // gives it (src/ui/enhanced/enhancedStyle.js .px-wordmark:has(.brand-logo)), centred over the rule.
   // BR6: the dragon mark's 234px, and 46.7vw - the height BR5's 64vw gave its 1.63:1
   assert.match(css, /\.wordmark img \{ display: block; width: min\(347px, 69\.1vw\); height: auto; margin: 0 auto; transform: translateX\(0%\); \}/, 'the logo, sized as the door\'s (and LOGO-CENTRE\'s shift, 0 for BR7\'s wordmark)');
@@ -403,9 +402,8 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   // TWO PLAQUE SHAPES: the .plaque rule (worn by the door's Play/Install
   // pair - DA shipped the downloadable app and its Install stands beside
   // Play, same shape) and the asks' .ask at the top right, worn by
-  // Patreon's and Ko-fi's alike (SUPPORT1) - the same shape the About
-  // plaque has on the home face. PLUS-SITE (2026-10-07, Mac: "do the same
-  // thing for our website"): those two keep the About plaque's own edge
+  // Patreon's and Ko-fi's alike - the same shape the About
+  // plaque has on the home face. PLUS-SITE: those two keep the About plaque's own edge
   // as the page's fallback, and every OTHER box the page declares is one
   // of the game kit's roles - a section a window, a box in it a panel, a
   // numeral a well, the section links pressed slabs - whose edge carries
@@ -415,13 +413,12 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
   assert.equal(boxes, 2, 'the plaque shape and the asks\' shape - no third plaque rule, not even a second ask');
   const colourless = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/border: \d+px solid(?=;)/g)].length;
-  assert.equal(colourless, 6, 'the kit\'s boxes give their edge and no colour - a section, its columns and features, a step and its numeral, a question\'s panel, a section link');   // AUDIT PLUS-SITE S12: exact, not at least
+  assert.equal(colourless, 6, 'the kit\'s boxes give their edge and no colour - a section, its columns and features, a step and its numeral, a question\'s panel, a section link');   // Exact, not at least
   assert.match(css, /\.plaque \{/);
   assert.match(css, /\.ask \{/);
   // The door's three, exactly: Play into the browser, Install onto the
   // desk, Discord for the people, in that order, all wearing the one
-  // plaque shape (DISC1, 2026-09-15, Mac: "Can you add our discord ...
-  // Front and center").
+  // plaque shape.
   //
   // THE REGEX USED TO DEMAND `href="..."` FOLLOWED IMMEDIATELY BY `>`,
   // AND THAT WAS A HOLE THE VERY NEXT PLAQUE WALKED THROUGH. The
@@ -436,7 +433,7 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
     .map((m) => [m[1], /\bhref="([^"]*)"/.exec(m[0])?.[1] ?? null]);
   assert.deepEqual(doorPlaques, [
     ['Play', './play/'],
-    // REL5 (2026-09-29): Install lands on the desktop app's own entry, where each platform's file is
+    // Install lands on the desktop app's own entry, where each platform's file is
     // one click - it used to open a GitHub release page of eleven files, updater manifests among them
     ['Install', '#desktop'],
     ['Discord', 'https://discord.gg/jM2JdwSM8w'],
@@ -506,7 +503,7 @@ test('U64 + PATREON1 + SUPPORT1: the corner asks are Patreon then Ko-fi, each a 
   assert.match(phone, /\.askverb \{ display: none; \}/);
   // The marks are DRAWN, and they are the GAME's: the page keeps no pixel list of its own (PATREON1's .pmark and
   // U64's .cup are gone) - the build seam injects the shared block (the next test). The RULES, not the prose about
-  // them (AUDIT SITE1 F10): the comment over .ask names .supmark while saying where the marks come from.
+  // them: the comment over .ask names .supmark while saying where the marks come from.
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(rules, /\.pmark|\.cup\b|\.kofi\b|\.patreon\b|\.supmark/, 'no mark drawn in the page\'s own style');
   // EVERY ASK THE PROJECT MAKES NAMES THE SAME TWO (AUDIT BRANCH-0925 PATREON1-F1's law, two now): the repository's
@@ -585,8 +582,7 @@ test('U64: the live site is the custom domain, and the build does not care which
   assert.doesNotMatch(landing, /https?:\/\/(daggerfalljs\.dev|lattymoy\.github\.io)/, 'the page names no host of its own');
 });
 
-// ── FIX-D: THE DIGIT FIVE (2026-09-08, Mac: "the enhanced font number 5
-// looks like an 8") ───────────────────────────────────────────────
+// ── FIX-D: THE DIGIT FIVE ───────────────────────────────────────────────
 // Pixelify Sans draws its 5 with a cut top-left corner; rendered at 12,
 // 15, 26 and 36px, at 400 through 700, with and without the HUD's
 // shadow, it reads as an 8 or an S every time - the glyph, not the

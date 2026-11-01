@@ -1,5 +1,4 @@
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper
-// 1 to 1 recreation for everything"): OUR OWN PIXEL PAINTER. Each picture a retired mod's folder carried is drawn here
+// OUR OWN PIXEL PAINTER. Each picture a retired mod's folder carried is drawn here
 // from a recipe of ours - filled shapes, a ramp of light laid by ordered dither, a one-pixel dark rim - in a small
 // palette made to sit beside Daggerfall's own. Pure and deterministic: no file is read, one recipe gives one picture.
 

@@ -478,8 +478,8 @@
   {
     "name": "APPEARANCES-the-sheet-of-the-piece",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const item = drawnPiece(held);   // APPEARANCES (bible",
-    "new": "    const item = held;   // APPEARANCES (bible",
+    "old": "    const item = drawnPiece(held);   // APPEARANCES: the sheet of the look the weapon wears - its kind's, so the type and the swing are the weapon's own",
+    "new": "    const item = held;   // APPEARANCES: the sheet of the look the weapon wears - its kind's, so the type and the swing are the weapon's own",
     "tests": [
       "test/ui/appearances_render.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "APPEARANCES-the-clone-of-the-piece",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "weapon: drawnPiece(item),   // APPEARANCES: the clone's atlas",
-    "new": "weapon: item,   // APPEARANCES: the clone's atlas",
+    "old": "      renderer, canvas: c, entity, art: c ? artFor(item) : null, weapon: drawnPiece(item),   // APPEARANCES: the clone's atlas is the look's (one copy a look - the clone compares its weapon by identity)",
+    "new": "      renderer, canvas: c, entity, art: c ? artFor(item) : null, weapon: item,   // APPEARANCES: the clone's atlas is the look's (one copy a look - the clone compares its weapon by identity)",
     "tests": [
       "test/ui/appearances_render.test.js"
     ]
@@ -721,8 +721,8 @@
   {
     "name": "AUDIT-E2-the-shield-s-sprite-the-piece-s",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "templateIndex: drawn.templateIndex, nativeMaterialValue: rriNativeMaterialValue(drawn), coverTemplate: item.templateIndex,",
-    "new": "templateIndex: item.templateIndex, nativeMaterialValue: rriNativeMaterialValue(item), coverTemplate: item.templateIndex,",
+    "old": "      templateIndex: drawn.templateIndex, nativeMaterialValue: rriNativeMaterialValue(drawn), coverTemplate: item.templateIndex,",
+    "new": "      templateIndex: item.templateIndex, nativeMaterialValue: rriNativeMaterialValue(item), coverTemplate: item.templateIndex,",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]

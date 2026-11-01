@@ -329,8 +329,8 @@
   {
     "name": "AUDIT-CHAP4-C2-PIXEL",
     "file": "src/scenes/pixelBuild.js",
-    "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,",
-    "new": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, playerTravelPixel().x, playerTravelPixel().y) : undefined,",
+    "old": "          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,   // This town's own pixel",
+    "new": "          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, playerTravelPixel().x, playerTravelPixel().y) : undefined,   // This town's own pixel",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

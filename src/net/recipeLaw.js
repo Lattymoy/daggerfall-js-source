@@ -111,8 +111,8 @@ const TIN = 'metal:tin',
 const product = (id, name, kind, templateIndex, ingots, also = []) =>
   Object.freeze({ id, name, kind, templateIndex, ingots, also: Object.freeze(also.map((a) => Object.freeze(a))) });
 /** The weapons (DFU 113-128 but the Staff, a carpenter's): the ingots and the fittings 9.3 asks. SMITH-RRI: and
- *  Roleplay & Realism: Items' two (rriItems.js 513, 514), whose class online always registers (onlineLane.js). The Light
- *  Flail is the Mace's and the Flail's row; the Archer's Axe, 3 kg, half the Battle Axe's 6, takes half its 4 ingots. */
+ *  Roleplay & Realism: Items' two (rriItems.js 513, 514), whose class online always registers (onlineLane.js). The Short
+ *  Flail is the Mace's and the Flail's row; the Hatchet, 3 kg, half the Battle Axe's 6, takes half its 4 ingots. */
 export const WEAPON_PRODUCTS = Object.freeze([
   product('dagger', 'Dagger', 'weapon', 113, 1, [[TIN, 1]]),
   product('tanto', 'Tanto', 'weapon', 114, 1, [[TIN, 1]]),
@@ -162,11 +162,11 @@ export const WEAPON_PRODUCTS = Object.freeze([
     [COPPER, 1],
     [LEATHER, 1],
   ]),
-  product('lightflail', 'Light Flail', 'weapon', 514, 3, [
+  product('lightflail', 'Short Flail', 'weapon', 514, 3, [
     [COPPER, 1],
     [LEATHER, 1],
   ]), // SMITH-RRI
-  product('archersaxe', "Archer's Axe", 'weapon', 513, 2, [
+  product('archersaxe', 'Hatchet', 'weapon', 513, 2, [
     [COPPER, 1],
     [OAK, 1],
   ]), // SMITH-RRI

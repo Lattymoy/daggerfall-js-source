@@ -1,11 +1,10 @@
-// FORAGE1-FORAGE2 - FORAGING 1.7 (Harbinger451), THE TOOLS, THE FOODS, THE QUESTS (2026-09-28, Mac: "Your lead").
-// bible/06-Systems/Foraging.md is the record. The pins hold src/systems/foraging/foragingInstall.js and
-// src/systems/quest/questActionsExtension.js to the mod: a tool used where its checks pass gives its yield, its box,
-// its quest and its wear; a tool at its last point breaks with DFU's popup and the mod's line and is gone; a check
-// that fails speaks its line and gives nothing; the switch off makes every tool inert; the foods; the console
-// command (refused online); Quest Actions Extension's four actions as Foraging's quests use them (Q11 mended); every
-// Foraging quest (OWN-WORK3: our own, its mends written in) parses on the port's machine with no line left unread but
-// DFU's own ignored one; and the hosts' wiring.
+// FORAGING 1.7 (Harbinger451), THE TOOLS, THE FOODS, THE QUESTS. bible/06-Systems/Foraging.md is the record. The pins
+// hold src/systems/foraging/foragingInstall.js and src/systems/quest/questActionsExtension.js to the mod: a tool used
+// where its checks pass gives its yield, its box, its quest and its wear; a tool at its last point breaks with DFU's
+// popup and the mod's line and is gone; a check that fails speaks its line and gives nothing; the switch off makes
+// every tool inert; the foods; the console command (refused online); Quest Actions Extension's four actions as
+// Foraging's quests use them (Q11 mended); every Foraging quest (OWN-WORK3: our own, its mends written in) parses on
+// the port's machine with no line left unread but DFU's own ignored one; and the hosts' wiring.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -31,7 +30,7 @@ import { FATIGUE_MULTIPLIER } from '../../src/systems/statMods.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
-const QUESTS = join(ROOT, 'src/systems/foraging/quests');   // OWN-WORK3: our own quests
+const QUESTS = join(ROOT, 'src/systems/foraging/quests');   // Our own quests
 
 /** HUD lines and popups, as the one door hands them to a host. */
 const heard = [];

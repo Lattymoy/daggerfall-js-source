@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): OUR SMALL SHIP - Come Sail Away's hull 2 (prefab 112412), built here: the hull Mac's galleon
+// OUR SMALL SHIP - Come Sail Away's hull 2 (prefab 112412), built here: the hull Mac's galleon
 // (world/ships/galleonModel.js) stands in for, what stands when her model will not, and where she takes her small
 // things from (her anchor, her cargo, her stove, her lanterns' poles and hooks, her pennant, her wake, her Modifiers).
 // Two masts with a large lateen each; a hold, a lower deck behind a door, a main deck between a poop and a

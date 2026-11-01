@@ -30,7 +30,7 @@ shown (the latches in `qlLaw.js`). Each outcome names its pay profile. Sheet tex
 ### Branches
 
 A branch is a choice the machine keeps as a task: a choice in talk, a `prompt`, or an act (a quarry spared or slain, an
-item returned or kept). The flagship quests have hand-written branches, added as patches over the vendored scripts
+item returned or kept). The flagship quests have hand-written branches, added as patches over the quest scripts
 (`src/systems/questlines/qlPatches.js`, `patches/`); a patch adds messages and never replaces Daggerfall's. Nothing
 branches on a deadline. In a shared quest a choice in talk is the sharer's; an act is whoever does it.
 

@@ -1,8 +1,9 @@
 # The Sea
 
-The way into the sea's pages. The sea is several vendored mods ported from their assemblies, and the port's own systems
-built over them. Every mod here is on by default, registered (settings, Features, credits,
-`01-Overview/Mod-Registry.md`) and placed in the online lane (`src/systems/online/onlineLane.js`).
+The way into the sea's pages. The sea is several mods ported from their assemblies, and the port's own systems
+built over them. Every mod here is on by default, registered (settings, Features, its record in
+`01-Overview/Own-Work.md` or `01-Overview/Mod-Registry.md`) and placed in the online lane
+(`src/systems/online/onlineLane.js`).
 
 ## How it fits together
 

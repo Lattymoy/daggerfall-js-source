@@ -1,8 +1,8 @@
-// PROF8 (2026-09-30, Mac: "Continue the arc"; "XP follows your rank") - FISHING'S CLIENT: the net's act (the wind and
-// its throw, the wait and its clock, the tug, the haul's band and weight, a full net or a plain one, gentle acts, Esc);
-// the kind in the gathering host (the cast only with a net in the net's water, its key and its ground, the plan and its
-// words, Foraging's refusals, the day's schools on water and a cast landing in one, the species named, a trophy once);
-// the meter; the book's day; the page; the host's wiring. bible/06-Systems/Professions-Arc.md 5.2, 30.
+// FISHING'S CLIENT: the net's act (the wind and its throw, the wait and its clock, the tug, the haul's band and weight,
+// a full net or a plain one, gentle acts, Esc); the kind in the gathering host (the cast only with a net in the net's
+// water, its key and its ground, the plan and its words, Foraging's refusals, the day's schools on water and a cast
+// landing in one, the species named, a trophy once); the meter; the book's day; the page; the host's wiring.
+// bible/06-Systems/Professions-Arc.md 5.2, 30.
 import { actBand } from '../../../src/net/professionLaw.js';   // AUDIT GATHER F6: the net's band on its tug
 import '../../chargenDom.mjs';
 import { test } from 'node:test';
@@ -22,8 +22,8 @@ import { createProfHud } from '../../../src/ui/professions/profHud.js';
 import { accountRefusalText } from '../../../src/net/accountClient.js';
 import { WORLD_MAP_TILE_DIM } from '../../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
-import { FORAGING_ITEM_ROWS } from '../../../src/systems/foraging/foragingItems.js';   // OWN-WORK3: Foraging's rows, our own
-import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
+import { FORAGING_ITEM_ROWS } from '../../../src/systems/foraging/foragingItems.js';   // Foraging's rows, our own
+import { hostText } from '../../hostText.mjs';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WOODS = 231, OCEAN = 223;
@@ -153,11 +153,8 @@ test('PROF8 plan and words: cast the net, or what it needs - the ground\'s refus
   const base = { taken: false, counting: false, hauls: 3, rank: 12, storesFull: false };
   assert.deepEqual(fishPlan(base), { harvest: 'fish', verb: 'Cast the net', rest: 'Fishing 12', ready: true });
   assert.equal(fishPlan({ ...base, school: 'a school rises 14 m north' }).rest, 'Fishing 12 - a school rises 14 m north');
-  // PIN MOVED (ANY-HOUR, 2026-10-01, Mac: "Remove the time limit for professions. Should be available at any time"): the
-  // ground's words were the daylight's too ("the fish bite by daylight (07:00-17:59)"); now a settlement's
   assert.deepEqual(fishPlan({ ...base, where: NET_WHERE_WORDS.town }), { harvest: 'fish', verb: 'Cast the net', rest: 'not in a settlement', ready: false });
   assert.equal(NET_WHERE_WORDS.daylight, undefined, 'no hour has words');
-  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): forty hauls said 'Fishing 12 - 40 of 40 hauls today'
   assert.deepEqual(fishPlan({ ...base, hauls: 400, cap: 40 }), fishPlan(base), 'a day past the old forty: the cast as ready');
   assert.equal(fishPlan({ ...base, storesFull: true }).ready, false);
   assert.equal(fishPlan({ ...base, counting: true }).rest, 'being counted');
@@ -165,7 +162,6 @@ test('PROF8 plan and words: cast the net, or what it needs - the ground\'s refus
   assert.equal(haulLine({ qty: 2, gem: PEARL.key, extra: 'hide:slaughterfish', extraQty: 1 }, bass), '+2 Rusttail Bass, as Raw Fish, a Pearl and Slaughterfish Scales to your Stores', '5.2\'s toast: "+2 Rusttail Bass, as Raw Fish" (OWN-WORK3: our name)');
   assert.equal(haulLine({ qty: 1 }, bass), '+1 Rusttail Bass, as Raw Fish to your Stores');
   assert.equal(haulLine({ qty: 2 }, null), '+2 Raw Fish to your Stores');
-  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the service says it no more - kept, without its forty, for one not yet redeployed
   assert.match(accountRefusalText('prof-fish-cap'), /^Your account has hauled all the nets a day allows, across your characters\./);
   assert.equal(bearingWord(0, 10), 'north');
   assert.equal(bearingWord(10, 0), 'east');
@@ -242,7 +238,6 @@ test('PROF8 kind: the plan (the page\'s rank, the ground\'s words - CAP-OFF: no 
     const specs = () => ({ 50: 'angler', 100: null });
     const plan = k.plan(cast, { rank, keyLabel: () => 'E' });
     assert.deepEqual([plan.verb, plan.rest, plan.ready, plan.profession], ['Cast the net', 'Fishing 7', true, 'fishing']);
-    // PIN MOVED (ANY-HOUR): 21:00 put the daylight's words on the prompt; now the net is cast by night
     w = world({ hour: 21 });
     assert.deepEqual([k.plan(cast, { rank, keyLabel: () => 'E' }).rest, k.plan(cast, { rank, keyLabel: () => 'E' }).ready], ['Fishing 7', true], 'by night as by day');
     assert.equal(k.start(cast, plan, { entity, rank, specs, keyLabel: () => 'E' }).act?.state.kind, 'fish', 'and started');
@@ -254,7 +249,7 @@ test('PROF8 kind: the plan (the page\'s rank, the ground\'s words - CAP-OFF: no 
     assert.ok(Math.abs(a.act.state.tugS - tugWindow(true) * actBand(0)) < 1e-9, 'an Angler\'s tug - PIN MOVED (AUDIT GATHER F6): at the net\'s attribute band, FORAGE0 14.5\'s "600 ms x the band" (a character of no stats the lowest, x0.85)');
     assert.deepEqual([a.harvest, a.profession, a.label, a.ask], ['fish', 'fishing', 'E', { climate: WOODS, region: 17 }]);
     assert.equal(a.tool, NET);
-    assert.deepEqual(k.tally(), { n: 5 });   // PIN MOVED (CAP-OFF): the account's day against no cap - it was { n: 5, cap: 40 }
+    assert.deepEqual(k.tally(), { n: 5 });
     assert.equal(k.actNote({ clean: true }), ' (a full net)');
     assert.equal(k.actNote({ clean: false, why: 'missed' }), ' (the tug missed: a plain haul)');
     assert.equal(k.actNote({ clean: false, why: 'slipped' }), ' (the net slipped: a plain haul)');
@@ -285,7 +280,7 @@ test('PROF8 schools: the day\'s two stood on water (none on dry ground), their f
     assert.ok(nodes.every((n) => k.gone(n)), 'never a target');
     const [flat] = k.goneFlatsOf(nodes[0], entry);
     assert.deepEqual([flat.archive, flat.record, flat.centers.length], [...SCHOOL_PICTURE, 3], 'the Fish item\'s own picture, three on the water');
-    const fish = FORAGING_ITEM_ROWS.find((t) => t.index === 1605);   // OWN-WORK3: our own row
+    const fish = FORAGING_ITEM_ROWS.find((t) => t.index === 1605);   // Our own row
     assert.deepEqual([fish.worldTextureArchive, fish.worldTextureRecord], [...SCHOOL_PICTURE], 'Foraging\'s Fish, DFU\'s own picture');
     const [cast] = k.looseNodesOf({ entity: { items: [NET] }, dungeon: false });
     assert.match(k.plan(cast, { rank: () => 0, keyLabel: () => 'E' }).rest, /^Fishing 0 - a school rises 8 m east$/);
@@ -318,7 +313,7 @@ test('PROF8 answers: the goods\' line the kind\'s (the species named), and a tro
   // the host hooks read them
   const gh = src('src/scenes/gatherHost.js');
   assert.match(gh, /hud\.toast\(k\?\.storesLine \? k\.storesLine\(d\) : storesLine\(d\), \{ keep: true \}\);/);
-  assert.match(gh, /try \{ k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled, entity: deps\.entity\?\.\(\) \?\? null \}\); \}/);   // HAUL-CARDS (PIN MOVED): whether its card said the goods; PIN MOVED (HUNTERS-MARK): and whose pack a trophy goes to
+  assert.match(gh, /try \{ k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled, entity: deps\.entity\?\.\(\) \?\? null \}\); \}/);   // HAUL-CARDS (PIN MOVED): whether its card said the goods; PIN MOVED: and whose pack a trophy goes to
   assert.match(gh, /if \(!n \|\| n\.kind === 'body' \|\| n\.kind === 'haul'\) return;/);
 });
 
@@ -349,14 +344,14 @@ test('PROF8 book, page, words and wiring: the book keeps the account\'s hauls (t
   const pb = src('src/net/profBook.js');
   assert.match(pb, /applyHauls\(data\?\.hauls\);/);
   assert.match(pb, /applyHauls\(r\.data\?\.hauls\);/);
-  assert.doesNotMatch(pb, /'prof-fish-cap'/, 'no forty to learn');   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills")
+  assert.doesNotMatch(pb, /'prof-fish-cap'/, 'no forty to learn');
   const pp = src('src/ui/professions/profPages.js');
   assert.match(pp, /const PRACTISED = Object\.freeze\(\['herbalism', 'mining', 'hunting', 'fishing',/);
-  assert.match(pp, /t\('prof\.page\.today\.hauls', 'Today: \{hauls, plural, one \{# haul\} other \{# hauls\}\} \(shared by all your characters\)', \{ hauls \}\)/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 'of forty'; PIN MOVED (L10N4): the line through t(), its plural ICU's
+  assert.match(pp, /t\('prof\.page\.today\.hauls', 'Today: \{hauls, plural, one \{# haul\} other \{# hauls\}\} \(shared by all your characters\)', \{ hauls \}\)/);
   const w = hostText('src/scenes/world.js');
   assert.match(w, /fishKind\(\{ book: profBook, host: \{/);
   assert.match(w, /storm: \(\) => currentWeather\(\) === 'thunder',/);
   assert.match(w, /const item = createFishItem\(species\);\n\s+if \(!item\) return false;\n\s+addItem\(\(playerEntity\.items \?\?= \[\]\), item\);/);
-  assert.doesNotMatch(src('server-account/src/index.js'), /'prof-fish-cap':/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): a status for a refusal said no more
+  assert.doesNotMatch(src('server-account/src/index.js'), /'prof-fish-cap':/);
   assert.equal(utcDayOfMs(86_400_000 * 3 + 5), 3);
 });

@@ -19,7 +19,7 @@ change that adds a directory adds its row here.
 | `tools/` | Developer tools run by hand or by the suite: probes, bakes, gates, the mutation lists (`tools/mutants/`). |
 | `scripts/` | Build, release and bake scripts run by npm and CI (`buildTag`, `desktopRelease`, `updateNumber`, the `bake*` scripts). |
 | `public/` | Vite's static root, copied into the build as-is: art, sound, fonts, the mods' assets. No game data (`Port-Doctrine.md`). |
-| `vendor/` | Daggerfall Unity mods' published files, kept as handed over, for reference and for the bakes. |
+| `vendor/` | The outside work the game still carries, each folder with a README of its source and terms: Daggerfall Unity's MIT data, GrimoireUI, Kamer's and Kamer & Kab's mods, and DFO's own packs (`01-Overview/Mod-Registry.md`). |
 | `locales/` | Translations: one folder per language, string tables in DFU's format (`locales/README.md`). |
 | `play/`, `privacy/`, `terms/` | Static pages served beside the game. |
 | `*.html` at the root | The game's entry (`index.html`) and the labs: one page per prototype or viewer, each registered in `vite.config.js`. |
@@ -30,9 +30,9 @@ change that adds a directory adds its row here.
 |---|---|
 | `src/` | `main.js`, the entry point and scene router; `buildTag.js`, written by the build. |
 | `src/ai/` | Enemy behaviour: tactics, blows, the navmesh. |
-| `src/audio/` | Sound helpers above the synth (OWN-AUDIT): `layeredLoop.js` plays loops of different lengths as one sound, so a long bed comes round after hours. |
-| `src/audio/synth/` | Sound the port makes of its own (OWN-WORK4): the synth's primitives (noise, filters, envelopes, resonators) and the clips made of them for the sound mods. Pure and seeded; no recording is read. Any sound work reuses it. |
-| `src/art/` | Our own pixel painter (OWN-WORK4, `01-Overview/Own-Work.md`): shapes, dithered light and a dark rim. Each picture's recipe lives with its feature. |
+| `src/audio/` | Sound helpers above the synth: `layeredLoop.js` plays loops of different lengths as one sound, so a long bed comes round after hours. |
+| `src/audio/synth/` | Sound the game makes of its own: the synth's primitives (noise, filters, envelopes, resonators) and the clips made of them for the sound mods. Pure and seeded; no recording is read. Any sound work reuses it. |
+| `src/art/` | Our own pixel painter (`01-Overview/Own-Work.md`): shapes, dithered light and a dark rim. Each picture's recipe lives with its feature. |
 | `src/characters/` | People and creatures: bodies and rigs, outfits and dyes, enemies, NPC builders. |
 | `src/combat/` | Combat law: FormulaHelper's port, weapons, hits, spells in the hand. |
 | `src/formats/` | The readers for Daggerfall's (and Morrowind's) file formats. Exact to DFU's (`Port-Doctrine.md`, Scope). |
@@ -280,13 +280,13 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/bounty/` | The bounty board's law: the board, the journal and the reward. |
 | `src/systems/card/` | The card table's law (`11-Multiplayer/Tavern-Cards.md`): the regulars, the session at a table, a remote table, where the cards come from. |
 | `src/systems/comeSailAway/` | Come Sail Away's boats: the boat itself, its hulls, models, items and waves, the helm's actions, the map, the wire's words and the boat's menu (`03-World/Come-Sail-Away.md`). |
-| `src/systems/comeSailAway/csaSynth/` | Come Sail Away's five clips made as PCM (OWN-WORK4): the synthesizer's pieces and the clips. |
+| `src/systems/comeSailAway/csaSynth/` | Come Sail Away's five clips made as PCM: the synthesizer's pieces and the clips. |
 | `src/systems/decor/` | Decorating a home: the catalogue, placing, the rooms - the law. |
 | `src/systems/delve/` | DELVE II, the dungeons' encounters (`03-World/Delve-II.md`): their words and the vault's roll. |
 | `src/systems/deepWater/` | Deep Waters' law: the swimmer, the fish as items and as rows. |
 | `src/systems/dragon/` | The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) - where it comes down, its words, the tamed mount, and a journey flown. |
 | `src/systems/dungeon/` | A dungeon's state: its respawn, tier, echo and sense. |
-| `src/systems/dynamicSkies/` | Dynamic Skies, our own sky since OWN-WORK4 - the law. |
+| `src/systems/dynamicSkies/` | Dynamic Skies, our own sky (`07-Rendering/Dynamic-Skies.md`) - the law. |
 | `src/systems/eliteGates/` | The Elite Breach's law on this screen (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the Weir Key and its find, the Spire's kit and Vestiges, the lords' arms, the spoils, the score and its mix and echo. |
 | `src/systems/enemyExpansion/` | Daggerfall Enemy Expansion (Kamer & Kab), the mod's own (`04-Characters/Enemy-Expansion.md`): its CSV reading, its tables and art index as generated text, the tables read as BestiaryMod reads them, its pictures on the texture door, its encounter tables as it picks them, its equipment as its copy of RRI's class arm reads a class (`dexEquipment.js`), and its install - the fifty enemies on DFU's custom-enemy doors. |
 | `src/systems/faction/` | The factions' relations, reputation and standing - the law. |
@@ -309,7 +309,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/map/` | The map's tabs, directory and waypoints. |
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
 | `src/systems/online/` | The online save: checkpoints, homes, the lane, the sync - the law. |
-| `src/systems/ownTextures/` | Our own texture packs (OWN-WORK4, `01-Overview/Own-Work.md`): each pack's names and sizes, and the rules that build its pictures and the snow's masks and albedo from the player's own classic records. |
+| `src/systems/ownTextures/` | Our own texture packs (`07-Rendering/Vanilla-Enhanced.md`): each pack's names and sizes, and the rules that build its pictures and the snow's masks and albedo from the player's own classic records. |
 | `src/systems/party/` | A party: travelling, resting and walking together - the law. |
 | `src/systems/pass/` | The Battle Pass's season (`06-Systems/Battle-Pass.md`, STOREFRONT): the page's asks to the service and its notices, the season in the world's law (the tremor, the Brass Fissures, their camps and the Colossus) and its words, the Resonant Maul's record. |
 | `src/systems/professions/` | The professions' law (`06-Systems/Professions-Arc.md`): their items, templates and sounds. |
@@ -338,12 +338,12 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/town/` | A town's population, seats and watch. |
 | `src/systems/travel/` | Travel's law: the trip, routes and paths, pace, the autopilot, ports, far places and the dungeons on the way. |
 | `src/systems/upkeep/` | Upkeep: a horse's care and a wagon's wear (`06-Systems/Horse-Care.md`, `06-Systems/Wagon-Upkeep.md`) - the law. |
-| `src/systems/vanillaEnhanced/` | The Vanilla Enhanced look and the shipped packs in the texture door (`07-Rendering/Vanilla-Enhanced.md`; OWN-WORK4: ours, built by `src/systems/ownTextures/`) - the law. |
+| `src/systems/vanillaEnhanced/` | The Vanilla Enhanced look and the shipped packs in the texture door (`07-Rendering/Vanilla-Enhanced.md`), whose pictures `src/systems/ownTextures/` builds - the law. |
 | `src/systems/wagon/` | Wagons: kinds, looks, seats, ropes, the town watch (`06-Systems/Wagons.md`) - the law. |
 | `src/systems/weather/` | Weather: fronts, the field, the sim, the map - the law. |
 | `src/systems/wild/` | The Wrothgarian open zone's law (`11-Multiplayer/Wild-Zone.md`): the zone, its dungeons and giants, the cart, the drop, death and the waypoint home. |
 | `src/systems/wind/` | Wind, its drive and its sound - the law. |
-| `src/systems/windfall/` | Windfall's own sounds and pictures (OWN-WORK4, `07-Rendering/Windfall.md`): the clips' synthesizer and the painter of the leaves and the flake. The mod's law stays loose beside it (`windfall.js`, `windfallEffects.js`). |
+| `src/systems/windfall/` | Windfall's own sounds and pictures (`07-Rendering/Windfall.md`): the clips' synthesizer and the painter of the leaves and the flake. The mod's law stays loose beside it (`windfall.js`, `windfallEffects.js`). |
 
 #### `src/tools/`
 
@@ -418,7 +418,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/peaks/` | The mountains' high ground (`03-World/Peaks.md`): PEAKS1's snow caps and bare faces (`snowcap.js`), and PEAKS2's massif - its spurs, crests, summits and saddles (`massif.js`, built and pinned, not yet wired). |
 | `src/world/road/` | Roads: the network, its painter, verges and clearance - its models and assembly. |
 | `src/world/ships/` | The port's own ships: the galleon, the carrack, the large boat - its models and assembly. |
-| `src/world/ships/ownBoats/` | Come Sail Away's five hulls and seven triggers built as our own (`03-World/Come-Sail-Away.md`, OWN-WORK4): the parts, sails, effects, animators, pictures and the files they make. |
+| `src/world/ships/ownBoats/` | Come Sail Away's five hulls and seven triggers built as our own (`03-World/Come-Sail-Away.md`): the parts, sails, effects, animators, pictures and the files they make. |
 | `src/world/starfall/` | The Starfall in the world: the star's art, its crater and stone, and Starfall Glass's picture. |
 | `src/world/superDungeon/` | The Abyss Dungeon in the world: the halls, the steps, the rift, the realm and its sky, the Remnant, and their art. |
 | `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly; TESA-LANDS' zones' own land (`tamrielLands.js`) and the ground's dress (`groundDress.js`, dressed on its own worker - `groundDressWorker.js`, the page's side `groundDressClient.js`; `03-World/Tamriel-Lands.md`). |

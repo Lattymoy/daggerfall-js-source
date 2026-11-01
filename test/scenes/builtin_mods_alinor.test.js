@@ -1,4 +1,4 @@
-// BUILT-IN-MODS and BED-TURN on the player's own data (FIELD BUGS 2026-10-29e): the house a player bought in Alinor, past
+// BUILT-IN-MODS and BED-TURN on the player's own data: the house a player bought in Alinor, past
 // the Bay, and the same mod house in a Bay town. Alinor lays Beautiful Cities' RESIGL03 (world/tamrielCapitals.js), the
 // mod's rebuild of a classic block; its first house is built through the real interior builder as an owned room: its
 // furniture written as scenery is built in now, beside its props. AUDIT FB1029e H1: the furniture table is measured
@@ -24,7 +24,7 @@ installTownStandIns(() => true);
 async function world() {
   const bf = new BlocksFile(); bf.load(new Uint8Array(readFileSync(`${A}/BLOCKS.BSA`)));
   const mf = new MapsFile(); mf.load(new Uint8Array(readFileSync(`${A}/MAPS.BSA`)), new Uint8Array(readFileSync(`${A}/CLIMATE.PAK`)), new Uint8Array(readFileSync(`${A}/POLITIC.PAK`)));
-  return { bf, mf };   // OWN-WORK3: Beautiful Cities' pack, which Alinor was laid in, is retired
+  return { bf, mf };   // Beautiful Cities' pack, which Alinor was laid in, is retired
 }
 /** The player's own meshes (an alias's its classic model's; a model ARCH3D does not carry, a small stand-in). */
 function meshes() {

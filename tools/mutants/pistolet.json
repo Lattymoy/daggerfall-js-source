@@ -196,8 +196,8 @@
   {
     "name": "WR-flash-rifle-reach",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;\n",
-    "new": "? -1 : 1; entity._thunderlockFlashRange = GUN_FEEL.flashRange;\n",
+    "old": "        entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;",
+    "new": "        entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = GUN_FEEL.flashRange;",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "WR-resting-pistol-flashes",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const glow = muzzleGlow(shot.record === 1, shot.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);",
-    "new": "const glow = muzzleGlow(m.state !== 'Idle', m.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);",
+    "old": "    const glow = muzzleGlow(shot.record === 1, shot.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);   // PISTOLET: a pair's resting pistol does not flash; THUNDERLOCK-ART2: each gun's own curve",
+    "new": "    const glow = muzzleGlow(m.state !== 'Idle', m.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);   // PISTOLET: a pair's resting pistol does not flash; THUNDERLOCK-ART2: each gun's own curve",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "WR-pair-wears-one-art",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const art = artFor(playerWeapon.handItem(h));",
-    "new": "const art = artFor(playerWeapon.weapon);",
+    "old": "          const art = artFor(playerWeapon.handItem(h));",
+    "new": "          const art = artFor(playerWeapon.weapon);",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "WR-pistolet-loads-the-rifle",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      (isPistoletType(type)\n        ? loadPistoletArt(",
-    "new": "      (false\n        ? loadPistoletArt(",
+    "old": "      (isPistoletType(type)",
+    "new": "      (false",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "GLOW-design-pixels",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "art: art.native ? [art.native.w, art.native.h] : [art.unionBox.w, art.unionBox.h]",
-    "new": "art: [art.unionBox.w, art.unionBox.h]",
+    "old": "    if (elementGlow) renderer.drawScreenQuadGlow?.(tex, rect, uv, elementGlow, { art: art.native ? [art.native.w, art.native.h] : [art.unionBox.w, art.unionBox.h], view: [canvas.width, canvas.height] });   // the frame is the union box, in native pixels (AUDIT PISTOLET B4: the Pistolet's union is in design pixels, its texture native)",
+    "new": "    if (elementGlow) renderer.drawScreenQuadGlow?.(tex, rect, uv, elementGlow, { art: [art.unionBox.w, art.unionBox.h], view: [canvas.width, canvas.height] });   // the frame is the union box, in native pixels (AUDIT PISTOLET B4: the Pistolet's union is in design pixels, its texture native)",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "WR-pair-wears-the-held-glow",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const elementGlow = hand ? handGlowOf(hand) : heldGlowNow();",
-    "new": "const elementGlow = heldGlowNow();",
+    "old": "    const elementGlow = hand ? handGlowOf(hand) : heldGlowNow();   // The element's outline over the frame, the held weapon's own (PISTOLET: each pistol's)",
+    "new": "    const elementGlow = heldGlowNow();   // The element's outline over the frame, the held weapon's own (PISTOLET: each pistol's)",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
     ]

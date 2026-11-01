@@ -17,9 +17,9 @@ import { MOD_CURATED, modDials } from '../../../src/systems/features.js';
 import { TRAVEL_OPTIONS_VENDOR } from '../../../src/systems/travel/travelOptions.js';
 import { travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
 import { createLoadGovernor, travellerPace, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
-import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
+import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // ENEMY-PACE's fixed floor, which the governor calls
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
-import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // OWN-WORK3: the mod's own key names
+import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // The mod's own key names
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
@@ -30,7 +30,7 @@ test('OW-TOGGLE THE SWITCH: the port\'s own key on Travel Options\' pane - OFF b
   assert.ok(def, 'declared');
   assert.equal(def.default, false, 'OFF - the Overworld\'s journeys stay the default (Mac: "Off by default")');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - "Takes effect at once" kept (AUDIT OW5 T1: read live - the
+  // PLAIN-TEXT: the words a player reads, exactly - "Takes effect at once" kept (AUDIT OW5 T1: read live - the
   // tile's "when the world next loads" is the mod's other keys'); the note that the switch is the port's own is gone
   assert.equal(def.description, 'Makes time accelerated journeys in first person, on the ground. Off, the enhanced interface makes them in the Overworld view. Takes effect at once.');
   assert.ok(!TRAVEL_OPTIONS_1_11_KEYS.includes(KEY), 'not one of the mod\'s own keys (OWN-WORK3: travelOptionsKeys.mjs)');
@@ -71,7 +71,7 @@ function rig({ firstPerson = false, enhanced = true } = {}) {
   };
   const env = {
     travelOptions, travelView: view, isEnhanced: () => enhanced, modSetting, TRAVEL_OPTIONS_VENDOR,
-    travelViewAllowed: () => ({ ok: true }), travelViewCanGo: () => true, climbingNow: () => false, wagonRiders: null,   // AUDIT FB1007b C2: on the ground; WAGONS2 (FINAL AUDIT): seated in no one's wagon
+    travelViewAllowed: () => ({ ok: true }), travelViewCanGo: () => true, climbingNow: () => false, wagonRiders: null,   // On the ground; WAGONS2 (FINAL AUDIT): seated in no one's wagon
     tvPlaceSummary: (x, y) => ({ pixel: { x, y }, name: 'Daggerfall' }),
     travelViewRouteTo: (s) => { calls.push(['travelViewRouteTo', s.name]); return true; },
     travelViewWalkTo: (at, pixel) => { calls.push(['travelViewWalkTo', pixel.x, pixel.y]); return true; },
@@ -79,12 +79,10 @@ function rig({ firstPerson = false, enhanced = true } = {}) {
     mapPixelToWorldCoords: (x, y) => ({ x: x * 32768, z: y * 32768 }), tvSceneOf: (x, z) => [x, 10, z],
     tvWater: () => false, tvSeaY: () => 0, TV_SEA_EPS_M: 0.5, TRAVEL_VIEW_TEXT: { water: 'water' },
     locationIndex: new Map(), locationWorldRect: () => null,
-    gamePaused: () => false, modes: { modalWindowUp: () => false }, duelEnemyNear: () => false, navalHostileNear: () => false,   // TIME-DILATION: no hostile ship
-    areEnemiesNearby: () => false, exteriorFoePool: () => [], wildSeen: (foes) => foes,   // OW-RISE: the raise counts the foes the view's danger does
+    gamePaused: () => false, modes: { modalWindowUp: () => false }, duelEnemyNear: () => false, navalHostileNear: () => false,   // No hostile ship
+    areEnemiesNearby: () => false, exteriorFoePool: () => [], wildSeen: (foes) => foes,   // The raise counts the foes the view's danger does
   };
   const names = Object.keys(env);
-  // PIN MOVED (TO-ROADS): the map's fork asks tvRoutesJourneys (First-Person Travel's roads key, off in this store) -
-  // mounted beside the owner it grows from (test/systems/travel/fb0929d_toroads.test.js runs the roads key both ways)
   const body = [fnSource('tvOwnsJourneys'), fnSource('tvRoutesJourneys'), fnSource('tvMapForcesRoads'), fnSource('travelViewResume'), fnSource('beginAcceleratedTravel'), fnSource('tvJourneyUp'),
     `const onLower = ${onLowerSource()};`,
     'return { tvOwnsJourneys, travelViewResume, beginAcceleratedTravel, tvJourneyUp, onLower };'].join('\n');
@@ -149,7 +147,7 @@ test('OW-TOGGLE host: the switch is read LIVE - flipped mid-game, the next ask a
 
 /** world.js's governor, mounted from its own source (as test/systems/travel/tv_wasd.test.js mounts it): `let tvHeld` through travelViewGovern. */
 function mountGovernor(env) {
-  const from = WORLD.indexOf('  let tvHeld = null;');   // RATE-LAW: ENEMY-PACE's stepper rate is gone - its floor is travelThreat.js foePaced
+  const from = WORLD.indexOf('  let tvHeld = null;');   // ENEMY-PACE's stepper rate is gone - its floor is travelThreat.js foePaced
   const fn = WORLD.indexOf('  function travelViewGovern(dt) {', from);
   const end = WORLD.indexOf('\n  }\n', fn) + 4;
   assert.ok(from >= 0 && fn > from && end > fn, 'the governor\'s source');
@@ -162,8 +160,8 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
     resetTimeScale();
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
-      travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, foeRate, tvTownPace: () => null,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
+      travelControlUI: { isShowing: true },   // No spinner, no limit - the journey's ask is travelAsked below
+      foePaced, foeRate, tvTownPace: () => null,   /* Out of town */ travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // brought down
@@ -174,7 +172,7 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
       state: { terrainDistance: 3 }, playerTravelPixel: () => ({ x: 100, y: 200 }), tvGroundGenNow: () => 0,
       unbuiltAround, unbuiltCount, built: { has: () => true },
       tvOwnsJourneys: () => owns,
-      journeyThreatCap: () => ({ cap: Infinity }), journeySlowSaid: () => {},   // OW6: no enemy about (test/systems/travel/ow6_slowdown.test.js runs the cap)
+      journeyThreatCap: () => ({ cap: Infinity }), journeySlowSaid: () => {},   // No enemy about (test/systems/travel/ow6_slowdown.test.js runs the cap)
     });
     g.govern(1 / 60);
     assert.equal(timeScale(), want, owns ? 'the Overworld\'s journey on the ground: held at x1 until the view rises' : 'First-Person Travel: the journey\'s own x20, on the ground');

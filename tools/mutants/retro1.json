@@ -435,8 +435,8 @@
   {
     "name": "RETRO1-rig-parks-no-aspect",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": ", aspect: renderer.worldProjAspect ?? null };",
-    "new": "};",
+    "old": "    const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // And the lens's aspect",
+    "new": "    const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null};   // And the lens's aspect",
     "tests": [
       "test/render/retro1.test.js"
     ]

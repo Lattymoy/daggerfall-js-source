@@ -167,8 +167,8 @@
   {
     "name": "CLIMBHANDS2-rig-hands-no-lens",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });",
-    "new": "climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: null });",
+    "old": "      climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });",
+    "new": "      climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: null });",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "CLIMBHANDS2-rig-hands-no-look",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });",
-    "new": "climbHands.update(dt, handsClimb, { pitch: camNow?.pitch, lens: handsLens });",
+    "old": "      climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });",
+    "new": "      climbHands.update(dt, handsClimb, { pitch: camNow?.pitch, lens: handsLens });",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js"
@@ -187,8 +187,8 @@
   {
     "name": "CLIMBHANDS2-rig-lens-at-the-port-60",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "climbLens(cv(), { fov: fieldOfView(),",
-    "new": "climbLens(cv(), { fov: Math.PI / 3,",
+    "old": "      const handsLens = handsClimb || climbHands.law.present > 0 ? climbLens(cv(), { fov: fieldOfView(), viewport: renderer?.worldViewportRect ?? null, aspect: renderer?.worldProjAspect ?? null, offsetHeight: weaponOffsetHeight() }) : null;",
+    "new": "      const handsLens = handsClimb || climbHands.law.present > 0 ? climbLens(cv(), { fov: Math.PI / 3, viewport: renderer?.worldViewportRect ?? null, aspect: renderer?.worldProjAspect ?? null, offsetHeight: weaponOffsetHeight() }) : null;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js"
@@ -197,8 +197,8 @@
   {
     "name": "CLIMBHANDS2-rig-lens-forgets-the-bar",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "offsetHeight: weaponOffsetHeight() }) : null;",
-    "new": "offsetHeight: 0 }) : null;",
+    "old": "      const handsLens = handsClimb || climbHands.law.present > 0 ? climbLens(cv(), { fov: fieldOfView(), viewport: renderer?.worldViewportRect ?? null, aspect: renderer?.worldProjAspect ?? null, offsetHeight: weaponOffsetHeight() }) : null;",
+    "new": "      const handsLens = handsClimb || climbHands.law.present > 0 ? climbLens(cv(), { fov: fieldOfView(), viewport: renderer?.worldViewportRect ?? null, aspect: renderer?.worldProjAspect ?? null, offsetHeight: 0 }) : null;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js"
@@ -207,8 +207,8 @@
   {
     "name": "CLIMBHANDS2-morrowind-climbs-only-armed",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!gunSliding && !armCasts && !armsClimb && !runHands && !armsRun)) return;",
-    "new": "!gunSliding && !armCasts && !runHands && !armsRun)) return;",
+    "old": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts && !armsClimb && !runHands && !armsRun)) return;",
+    "new": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts && !runHands && !armsRun)) return;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/combat/mwcast1.test.js"
@@ -217,8 +217,8 @@
   {
     "name": "CLIMBHANDS2-the-weapon-sway-on-the-stone",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "fpArm.setScreenTransform(widgetOn() && !armsClimb ? (base) => widget.armsTransform(base) : null);",
-    "new": "fpArm.setScreenTransform(widgetOn() ? (base) => widget.armsTransform(base) : null);",
+    "old": "      fpArm.setScreenTransform(widgetOn() && !armsClimb ? (base) => widget.armsTransform(base) : null);",
+    "new": "      fpArm.setScreenTransform(widgetOn() ? (base) => widget.armsTransform(base) : null);",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/combat/mwcast1.test.js"

@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): OUR LARGE GALLEY - Come Sail Away's hull 3 (prefab 112413), built here: a war galley of
+// OUR LARGE GALLEY - Come Sail Away's hull 3 (prefab 112413), built here: a war galley of
 // three decks - her rowers' deck, her middle deck and her top deck under an awning at her stern - pulled by 108 oars in
 // three banks a side and steered by two great oars at her quarters, with one square sail on her mast. Every node the
 // runtime walks keeps the name and the place Come Sail Away 2.1 gave it (her oars' ports, her crew's and rowers'

@@ -11,7 +11,7 @@ import { createFpArm } from '../../../src/combat/fpArm.js';
 import { MW_UNITS_PER_METER as U } from '../../../src/formats/morrowind/mwFirstPerson.js';
 import { fixtureBodyDeps, countingRenderer } from '../../fixtures/mw/bodyRig.mjs';
 
-const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
+const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // Our own biped (tools/ownBiped.mjs)
 const distance = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
 const matrix = (sk, p) => skeletonSpaceMatrices(sk, p, GRAPH_ROOT);
 const posed = (sk, req) => {

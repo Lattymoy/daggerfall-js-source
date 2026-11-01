@@ -329,8 +329,8 @@
   {
     "name": "SNOWFALL1-world-promote-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    snowfall.promoted(built.get(pkey));   // SNOWFALL1:",
-    "new": "    // snowfall.promoted(built.get(pkey));   // SNOWFALL1:",
+    "old": "    snowfall.promoted(built.get(pkey));   // OnPromoteTerrainData -> DynamicSnowController.HandleTerrainPromoted - its blanket to make, the nearer tiers over it again",
+    "new": "    // snowfall.promoted(built.get(pkey));   // SNOWFALL1: OnPromoteTerrainData -> DynamicSnowController.HandleTerrainPromoted - its blanket to make, the nearer tiers over it again",
     "tests": [
       "test/render/snowfall1_runtime.test.js"
     ]

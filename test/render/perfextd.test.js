@@ -15,7 +15,7 @@
 // the skies on the uniforms the real renderers upload - against the same text with the skip taken out (the gate
 // removed; the full pass), and the two must agree to the bit; and the skipping one must not read the texture (or call
 // the noise) it is there to skip. Real-GPU equivalence and the timings are the harnesses'
-// (bible/07-Rendering/Performance-Exterior.md, cluster D).
+// (cluster D).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -75,7 +75,7 @@ const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 429496
 const f32 = (v) => v.map((x) => Math.fround(x));
 
 // ── PERF-EXT30: DYNAMIC SKIES' TWO LAYERS ─────────────────────────────────────────────────────────────────────────────
-// PIN MOVED (OWN-WORK4): the sky is our own pass now, and test/glsl.mjs runs the whole of its FS - so the layers are run
+// PIN MOVED: the sky is our own pass now, and test/glsl.mjs runs the whole of its FS - so the layers are run
 // in place, the whole frame against the same text with the two gates taken out.
 const HIGH_OPEN = '  if (uCloudHigh.y > 0.0) {\n', HIGH_CLOSE = '    col = mix(col, ch, dh * uCloudHigh.y * smoothstep(0.0, 0.2, y));';
 const LOW_OPEN = '  if (uCloudLow.y > 0.0) {\n', LOW_CLOSE = '    col = mix(col, cl, dl * uCloudLow.y * smoothstep(0.0, 0.16, y));';
@@ -110,7 +110,7 @@ function runSkyPass(src, u, dir) {
 test('PERF-EXT30: Dynamic Skies\' two layers at opacity 0 read nothing and the frame is to the bit what the ungated layers draw; at their own opacity both run whole and agree to the bit (mutants: either gate dropped, the high gated on the low\'s opacity, the gate open at 0)', () => {
   const open = ungate(ungate(DS_FS, HIGH_OPEN, HIGH_CLOSE), LOW_OPEN, LOW_CLOSE);
   let checked = 0, lit = 0;
-  // OWN-AUDIT (2026-11-01, PIN MOVED): under a lid (overcast, rain, thunder, snow, fog) the high layer is out by the
+  // Under a lid (overcast, rain, thunder, snow, fog) the high layer is out by the
   // weather's own row, so the gate is checked where both layers stand; the lid's own word is pinned below
   for (const w of ['thunder', 'rain']) {
     const own = dsUniforms(w, 12 * 60, false);
@@ -118,7 +118,7 @@ test('PERF-EXT30: Dynamic Skies\' two layers at opacity 0 read nothing and the f
   }
   for (const [weather, minute] of [['cloudy', 12 * 60], ['sunny', 7 * 60], ['partlyCloudy', 17 * 60 + 30], ['cloudy', 9 * 60]]) {
     const under = dsUniforms(weather, minute, true), own = dsUniforms(weather, minute, false);
-    assert.equal(under.uCloudLow[1], 0); assert.equal(under.uCloudHigh[1], 0);   // DS2: what the pass is handed under the clouds
+    assert.equal(under.uCloudLow[1], 0); assert.equal(under.uCloudHigh[1], 0);   // What the pass is handed under the clouds
     assert.ok(own.uCloudLow[1] > 0 && own.uCloudHigh[1] > 0, `${weather}: ?clouds=off hands the layers' own opacity`);
     assert.equal(under.uNight, 0, `${weather}: a day - no star band tapped`);
     const highOnly = { ...under, uCloudHigh: own.uCloudHigh };

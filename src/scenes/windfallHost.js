@@ -1,12 +1,11 @@
-// WINDFALL1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments
-// seamlessly") - WINDFALL IN A HOST: the one runtime both exterior hosts (scenes/world.js, scenes/exterior.js) build -
+// WINDFALL IN A HOST: the one runtime both exterior hosts (scenes/world.js, scenes/exterior.js) build -
 // WindMod's model (systems/windfall.js), its presentation (systems/windfallEffects.js) on three sources of the port's
 // bus, its particles (render/windfallParticles.js), the floating origin's anchor for its sway (render/windfallSway.js),
 // its save record and its console command. A host calls `frame` once a frame, outdoors and in (WindMod.Update runs
 // wherever the player is: indoors its gust eases out and its sources fade), hands `law` to the renderer's
 // setFlatWind beside WIND3's wind, and draws the particles once the opaque world stands.
 //
-// THE FOUR HOSTS RULE (bible/Home.md): world.js and exterior.js build it; worldModes.js (the interiors) and
+// THE FOUR HOSTS RULE: world.js and exterior.js build it; worldModes.js (the interiors) and
 // dungeonContext.js (the dungeons) do not - indoors and underground the host's own frame calls `frame` with
 // `outside: false`, which is all the mod does there (WindEnvironmentEffects: the sources fade, the particles stop).
 
@@ -38,7 +37,7 @@ const MODE_OF = Object.freeze({
   storm: DEBUG_MODE.storm,
 });
 
-// OWN-WORK4: the three pictures are our own, painted on the first outdoor frame (systems/windfall/windfallPictures.js).
+// The three pictures are our own, painted on the first outdoor frame (systems/windfall/windfallPictures.js).
 async function defaultPicture(name) {
   const { paintWindfallPicture } = await import('../systems/windfall/windfallPictures.js');
   return paintWindfallPicture(name);

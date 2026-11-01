@@ -74,8 +74,8 @@
   {
     "name": "PERF-WAGON-i-the-road-grow-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "teamVerdict({ at: position, g: scale }, cull)",
-    "new": "teamVerdict({ at: position, g: 1 }, cull)",
+    "old": "    const v = teamVerdict({ at: position, g: scale }, cull);",
+    "new": "    const v = teamVerdict({ at: position, g: 1 }, cull);",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PERF-WAGON-k-the-harness-box-unmade",
     "file": "src/scenes/horseCartPool.js",
-    "old": "const box = cull ? sphereAabb(h.gpu.bounds, WORLD_MATRIX, _harnessBox) : null;",
-    "new": "const box = null;",
+    "old": "      const box = cull ? sphereAabb(h.gpu.bounds, WORLD_MATRIX, _harnessBox) : null;",
+    "new": "      const box = null;",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PERF-WAGON-l-the-harness-off-screen-drawn",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (box && cull(box) !== DECOR_DRAW) continue;",
-    "new": "if (box && cull(box) === DECOR_SKIP) continue;",
+    "old": "      if (box && cull(box) !== DECOR_DRAW) continue;",
+    "new": "      if (box && cull(box) === DECOR_SKIP) continue;",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PERF-WAGON-m-the-harness-handed-no-test",
     "file": "src/scenes/horseCartPool.js",
-    "old": "drawHarness(r, cull);   // WAGONS3",
-    "new": "drawHarness(r, null);   // WAGONS3",
+    "old": "    drawHarness(r, cull);   // The traces and the reins; PERF-WAGON: by the same test",
+    "new": "    drawHarness(r, null);   // The traces and the reins; PERF-WAGON: by the same test",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]

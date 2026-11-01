@@ -38,8 +38,8 @@
   {
     "name": "TOUCH-HOLD-no-b-row",
     "file": "src/systems/inputActions.js",
-    "old": "  ['JoystickButton1', 'Interact'],        // B / Circle - in the world (Back in a window)\n",
-    "new": "",
+    "old": "  ['JoystickButton1', 'Interact'],        // B / Circle - in the world (Back in a window)\n  ['JoystickButton4', 'Crouch'],          // LB / L1",
+    "new": "  ['JoystickButton4', 'Crouch'],          // LB / L1",
     "tests": [
       "test/systems/fb1001_touchhold.test.js"
     ]

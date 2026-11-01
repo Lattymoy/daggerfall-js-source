@@ -85,8 +85,8 @@
   {
     "name": "INVISLOOK-rider-plain",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    layer.veil(r, hConceal(peer.id));   // INVIS-LOOK: a concealed rider (or beast) is drawn translucent",
-    "new": "    // INVIS-LOOK: a concealed rider (or beast) is drawn translucent",
+    "old": "    layer.veil(r, hConceal(peer.id));   // A concealed rider (or beast) is drawn translucent\n    // THE CLAW - the swing count moving on a beast plays EOTB's lycan swing once, forward, a LYCAN_TICK a\n    // frame; the count first seen is no swing (a peer met mid-fight does not claw at nothing). It is the local\n    // body's own rule (eotbBody playLycanAttack, IL): never in the saddle, and a swing while the claw plays does not\n    // restart it",
+    "new": "    // A concealed rider (or beast) is drawn translucent PR-WW1: THE CLAW - the swing count moving on a beast plays\n    // EOTB's lycan swing once, forward, a LYCAN_TICK a frame; the count first seen is no swing (a peer met mid-fight\n    // does not claw at nothing). It is the local body's own rule (eotbBody playLycanAttack, IL): never in the\n    // saddle, and a swing while the claw plays does not restart it",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "INVISLOOK-walker-plain",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      layer.veil(r, conceal(peer.id));   // INVIS-LOOK: a concealed walker is drawn translucent",
-    "new": "      // INVIS-LOOK: a concealed walker is drawn translucent",
+    "old": "      layer.veil(r, conceal(peer.id));   // A concealed walker is drawn translucent\n      // a new swing, shaft or cast plays its clip once - the FIRST sight of a peer is not an edge (their counters are\n      // whatever a session of swinging left them at)",
+    "new": "      // A concealed walker is drawn translucent a new swing, shaft or cast plays its clip once - the FIRST sight of a\n      // peer is not an edge (their counters are whatever a session of swinging left them at)",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "INVISLOOK-new-sprite-plain",
     "file": "src/net/peer/peerRiders.js",
-    "old": "        r.batch.conceal = r.veil ?? null;   // INVIS-LOOK: a new sprite keeps the figure's draw",
-    "new": "        // INVIS-LOOK: a new sprite keeps the figure's draw",
+    "old": "        r.batch.conceal = r.veil ?? null;   // A new sprite keeps the figure's draw",
+    "new": "        // A new sprite keeps the figure's draw",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "INVISLOOK-veil-never-lifted",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (r.batch) r.batch.conceal = r.veil;\n",
-    "new": "    if (r.batch && r.veil) r.batch.conceal = r.veil;\n",
+    "old": "    if (r.batch) r.batch.conceal = r.veil;",
+    "new": "    if (r.batch && r.veil) r.batch.conceal = r.veil;",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "INVISLOOK-lantern-on-nobody",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (r.veil) return;   // INVIS-LOOK",
-    "new": "    if (false) return;   // INVIS-LOOK",
+    "old": "    if (r.veil) return;   // Nor on a concealed walker - it would hang, lit and whole, on nobody",
+    "new": "    if (false) return;   // Nor on a concealed walker - it would hang, lit and whole, on nobody",
     "tests": [
       "test/net/invislook.test.js"
     ]

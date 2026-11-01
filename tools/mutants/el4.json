@@ -120,8 +120,8 @@
   {
     "name": "adapt-images-start-dark",
     "file": "src/render/airPass.js",
-    "old": "    const [hi, lo] = packAdapt(1); // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
-    "new": "    const [hi, lo] = [0, 0]; // LA-POST4: the multiplier 1 at sixteen bits - [128, 0]",
+    "old": "    const [hi, lo] = packAdapt(1); // The multiplier 1 at sixteen bits - [128, 0]",
+    "new": "    const [hi, lo] = [0, 0]; // The multiplier 1 at sixteen bits - [128, 0]",
     "tests": [
       "test/render/el4_frame.test.js"
     ]

@@ -11,7 +11,7 @@
   {
     "name": "AUDIT-PERFURL-A3-searchParams-read",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
+    "old": "  return pageParam('air', search) !== 'off';",
     "new": "  return new URL(`http://x/${search}`).searchParams.get('air') !== 'off';",
     "tests": [
       "test/systems/perfurl_doors.test.js"

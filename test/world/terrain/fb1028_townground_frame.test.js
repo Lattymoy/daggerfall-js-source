@@ -1,4 +1,4 @@
-// FB1028 TOWN-GROUND x THE RECORDS' FRAME (GROUND_FRAME_LAW 4; bible/03-World/Town-Shapes.md "TS2 at FB1028"). A record's
+// FB1028 TOWN-GROUND x THE RECORDS' FRAME (GROUND_FRAME_LAW 4; "TS2 at FB1028"). A record's
 // height is DFU's frame - DFU's own samples through a town's classic blend - and FB1028 moved that blend: on the Bay's
 // 3,444 town pixels 747 moved over 5 m, 147 over 20 m (Chesterbrugh +291.8 m). A record written before it is moved by its
 // town's blend's own move (scenes/groundFrameHost.js townMovedAt, world/landforms.js townGroundMovedField, TS2's law kept
@@ -46,7 +46,7 @@ function shapeOf(x0, x1, y0, y1, m) {
 }
 
 test('FB1028 the records\' frame (GROUND_FRAME_LAW 4): a record written before it rides its town\'s blend\'s move - on the Bay too, the row on or off - and one stamped 4 takes none; RELIEF-PEAKS\' move still law 3\'s and past the Bay\'s (mutants: the stamp at 3; the town\'s move by law 3; the town\'s move dropped)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, TOWN_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [5, 4, 3, 2]);   // PIN MOVED (FB1029 ACROSS-EDGE): the stamp 5, the town's move its own law TOWN_FRAME_LAW 4 (test/world/fb1029_ground.test.js)
+  assert.deepEqual([GROUND_FRAME_LAW, TOWN_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [5, 4, 3, 2]);
   assert.equal(RECORD_GROUND_STAMP.groundFrame, 5);
   const now = (x) => 100 + x, town = (x) => 30 - x / 2, relief = (x) => 7 + x;   // the lift; the town's blend's move; RELIEF-PEAKS'
   const liftAt = (x) => now(x), ground = 500, off = 3.5, x = 12;   // DFU's ground today at the spot
@@ -162,7 +162,5 @@ test('FB1028 with ARENA2: Westhead Moor\'s ground under a record moved with the 
     worst = Math.max(worst, Math.abs(m)); if (Math.abs(m) > 5) over5++;
   }
   console.log(`# FB1028 Westhead Moor: the blend moved DFU's ground up to ${worst.toFixed(1)} m, ${over5} samples over 5 m`);
-  // PIN MOVED (OWN-WORK3): Westhead Moor in Daggerfall's own layout, the packs retired - 54.9 m (Beautiful Cities' was
-  // 60.0 m, AUDIT FB1028 A2-A3; FB1028's 55 m)
   assert.ok(worst > 52 && worst < 58, `a record there was off its ground by up to ${worst.toFixed(1)} m (Daggerfall's own layout: 54.9 m)`);
 });

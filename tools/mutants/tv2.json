@@ -142,8 +142,8 @@
   {
     "name": "TV2-mod-journey-keeps-the-route",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.route = null;   // TV2: a journey of the mod's replaces the view's\n",
-    "new": "",
+    "old": "    st.route = null;   // A journey of the mod's replaces the view's\n    st.destinationName = name;",
+    "new": "    st.destinationName = name;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-TV-A3-the-ring-watch-kept",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    // AUDIT TV A3: not a ring walk - its path-crossing watch would stop this journey at the first pixel middle\n    st.circumnavigatePathsDataPt = 0;\n    st.lastCrossed = 0;\n",
-    "new": "",
+    "old": "    // AUDIT TV A3: not a ring walk - its path-crossing watch would stop this journey at the first pixel middle\n    st.circumnavigatePathsDataPt = 0;\n    st.lastCrossed = 0;\n    st.destinationName = plan.summary ? name : null;",
+    "new": "    st.destinationName = plan.summary ? name : null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-TV-A4-a-stopped-spot-lingers",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.route && !st.route.summary) st.route = null;\n",
-    "new": "",
+    "old": "    if (st.route && !st.route.summary) st.route = null;\n    deps.setMouseLookEnabled?.(true);",
+    "new": "    deps.setMouseLookEnabled?.(true);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT-DEEP-X7-quiet-fixed-at-begin",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "if (typeof quiet === 'function' ? quiet() : quiet) say(T.MsgArrived);",
-    "new": "if (quiet) say(T.MsgArrived);",
+    "old": "    if (typeof quiet === 'function' ? quiet() : quiet) say(T.MsgArrived);",
+    "new": "    if (quiet) say(T.MsgArrived);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-DEEP-T2-1-resume-over-the-sea",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "if (d < bestD && dryLine(mp, r.legs[k])) { bestD = d; best = k; }",
-    "new": "if (d < bestD) { bestD = d; best = k; }",
+    "old": "        if (d < bestD && dryLine(mp, r.legs[k])) { bestD = d; best = k; }",
+    "new": "        if (d < bestD) { bestD = d; best = k; }",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

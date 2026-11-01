@@ -56,6 +56,14 @@ owner's explicit approval, quoted in `05-Combat/Power-Ceiling.md`. `src/systems/
 
 **LOOT-GATE** (Dudey). Public text never gives the levels, factors or chances in `src/systems/loot/lootLevelGate.js`.
 
+**OWN-WORK** (the owner: "no latching onto other mod authors or needing permissions"). A feature that came from an
+outside mod keeps its switch, settings and behaviour; its pictures, sounds, models, data and words are ours, made by our
+code or by our rules over the player's ARENA2. A spec of a classic picture carries no author's pixel. What the tree
+still carries, and why, is `01-Overview/Own-Work.md`.
+
+**CREDITS-OUT** (the owner). No text a player or a site visitor reads credits a work or names Daggerfall Unity, DFU,
+Interkarma or Nexus. The licences' notices ship as plain files nothing links to (`01-Overview/Port-Doctrine.md`).
+
 **ONE DFU MEMBER, ONE EXPORT.** Before porting a DFU class or method, grep the tree for its name and its constants. If
 two files need it, one exports and the other imports.
 
@@ -116,7 +124,7 @@ number.
 
 ## Sections
 
-- `01-Overview/` - doctrine, code map, host split, desktop app, mod registry
+- `01-Overview/` - doctrine, code map, host split, desktop app, mod registry, our own work
 - `02-Formats/` - the binary readers, Morrowind's formats, world-data patches
 - `03-World/` - terrain, places, streaming, the provinces, the sea
 - `04-Characters/` - bodies, NPCs, the Morrowind look
@@ -153,8 +161,8 @@ Generated from the FLAGGED and INTERIM sites in `src/` by `node tools/regenOpenF
 - `src/scenes/dungeonContext.js` - FLAGGED (bible/12-Enhanced-AI/Feud-Arc.md 10.1, section 32): this stream carries none of the street record's z, nm, yd, ex or sp - FEUD adds its own fields alone (RVN13: so no band follower's rt either)
 - `src/scenes/exterior.js` - NOTICE-PANEL: a town's board (RMBLayout's standalone 41739) does not stand. FLAGGED: the bench stands no town panel.
 - `src/scenes/exterior.js` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
-- `src/scenes/horseCartPool.js` - FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first (bible/06-Systems/Wagons.md WAGONS3).
-- `src/scenes/horseCartPool.js` - FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest (bible/06-Systems/Wagons.md WAGONS3).
+- `src/scenes/horseCartPool.js` - FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first.
+- `src/scenes/horseCartPool.js` - FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest.
 - `src/scenes/jungleHost.js` - scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) - FLAGGED: none stands the wilderness the jungle grows in
 - `src/scenes/ketch/ketchFight.js` - BOSS-TRAITS (bible/05-Combat/Boss-Traits.md section 3; AUDIT WORLD-EVENTS L5-16) - FLAGGED: the Tonal Warden carries no boss traits; its health and blows are the ship's room's, and this deck host has no striker's half yet.
 - `src/scenes/ketch/ketchFight.js` - /** THE INTERIM WARDEN'S DARKS (KETCH-LOOK KL2, Sky-Ketch-Look.md section 10, until its baked sheets land - KL15): the Ketch's

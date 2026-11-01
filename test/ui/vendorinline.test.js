@@ -1,5 +1,4 @@
-// INLINE1 (2026-09-20, Mac: "Want to talk about overall performance
-// improvements"): NOTHING UNDER vendor/ IS EVER INLINED AS BASE64, AND THE
+// NOTHING UNDER vendor/ IS EVER INLINED AS BASE64, AND THE
 // PIN IS GENERATIVE. The rule that preceded this was an allow-list of three
 // vendor folders, and the pins that held it named the folders it held OUT
 // ("every other vendor asset keeps the default"). That is a rule enforced
@@ -55,7 +54,6 @@ test('INLINE1: every vendored file under the default inline limit is refused by 
   // and the class covers every vendor FOLDER, not just the ones with art today
   const folders = readdirSync(join(root, 'vendor')).filter((n) => statSync(join(root, 'vendor', n)).isDirectory());
   for (const f of folders) assert.equal(rule(join(root, 'vendor', f, 'x.png')), false, `vendor/${f} is not covered`);
-  // PIN MOVED (OWN-WORK4): wave 3 retired 21 folders, 19 stand; the point is more than the three a list named
   assert.ok(folders.length > 3, `${folders.length} vendor folders - the enumeration this replaced named three`);
 });
 

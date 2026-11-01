@@ -247,8 +247,8 @@
   {
     "name": "PERF-SCALE-75-by-default",
     "file": "src/systems/features.js",
-    "old": "key: 'renderScale', initial: 1, online: 'player'",
-    "new": "key: 'renderScale', initial: 0.75, online: 'player'",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 0.75, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PERF-SCALE-forced-online",
     "file": "src/systems/features.js",
-    "old": "key: 'renderScale', initial: 1, online: 'player'",
-    "new": "key: 'renderScale', initial: 1, online: true",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: true, classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "AUDIT-BRANCH-0925-PS-A1-all-off-leaves-the-scale",
     "file": "src/systems/features.js",
-    "old": "online: 'player', classic: 1, tiers: Object.freeze([[1, '100%']",
-    "new": "online: 'player', tiers: Object.freeze([[1, '100%']",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', classic: 1, tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'renderScale', initial: 1, online: 'player', tiers: Object.freeze([[1, '100%'], [0.85, '85%'], [0.75, '75%'], [0.67, '67%'], [0.5, '50%']]) }),",
     "tests": [
       "test/systems/ft18_features.test.js",
       "test/systems/perfscale.test.js"

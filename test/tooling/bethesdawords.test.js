@@ -1,5 +1,4 @@
-// OWN-WORDS1 (2026-10-31, bible/06-Systems/Own-Words.md; the owner: "We plan on moving away from arena so whatever works
-// for future proofing"). Daggerfall Unity's MIT data carries Daggerfall's own words (Own-Work.md, NO-BETHESDA): its quest
+// OWN-WORDS1. Daggerfall Unity's MIT data carries Daggerfall's own words: its quest
 // scripts' messages and TEXT.RSC's rows. tools/bethesdaWords.mjs counts what the game still reads of them, and
 // tools/bethesdaWordsBaseline.json holds the counts, which only go down: a quest in our own words lowers them, and the
 // baseline is written lower in the same change (node tools/bethesdaWords.mjs --lower).

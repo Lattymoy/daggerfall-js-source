@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// DISC23-B2 — THE SKIN, ON THE PLAYER'S PROFILE.
+// THE SKIN, ON THE PLAYER'S PROFILE.
 //
 // Mac (2026-09-24, over Gryphoth's and Scratchie's reports): "for the
 // EoTB mod, I want to utilize it and make it a choosable skin system in
@@ -28,9 +28,7 @@
 // sprite body at all, so the card says so and offers the switch rather
 // than laying out a grid that would change nothing.
 //
-// SKIN2 (2026-09-25, Mac: "Reorganize the skin selector as 2 single
-// panels for unmounted/mount that can be opened to view available
-// skins"): with Daggerfall's twenty classes beside the mod's sixteen the
+// With Daggerfall's twenty classes beside the mod's sixteen the
 // grids had grown to fifty-seven pictures down the profile. The card is
 // two panels now, ON FOOT and MOUNTED, each closed to the skin worn - its
 // picture and its name, which is what the card is asked most - and
@@ -54,7 +52,7 @@
 // opens on Layered Gearing in the character's own body until a body or Skins
 // is chosen. Turned on again, it wears the body last chosen this session, else
 // the character's own; turned off, the on-foot skin chosen before is worn
-// again (bible/04-Characters/Layered-Gearing.md).
+// again.
 //
 // Not a DFU member: Daggerfall Unity has no profile and no skins. The
 // sets are Eye Of The Beholder 2.1's, built from the player's own files.
@@ -68,15 +66,15 @@ import {
   buildDerivedSprite,
 } from '../player/eyeOfTheBeholder/eotbSprite.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
-import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js'; // LAYERED-GEAR
+import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js';
 import { t } from '../systems/textManager.js';
 
 const VENDOR = 'eye-of-the-beholder';
 const FOOT = 'Graphics.OnFoot';
 const HORSE = 'Graphics.OnHorse';
-const LAYERED = 'Graphics.LayeredGear'; // LAYERED-GEAR: 0 off, 1 female, 2 male, LAYERED_OWN the character's own (the default)
+const LAYERED = 'Graphics.LayeredGear'; // 0 off, 1 female, 2 male, LAYERED_OWN the character's own (the default)
 
-/** LAYERED-GEAR: the body Layered Gearing was last worn in this session (1 female, 2 male; 0 none yet) - what turning
+/** The body Layered Gearing was last worn in this session (1 female, 2 male; 0 none yet) - what turning
  *  it back on wears. */
 let lastBody = 0;
 /** The pins' reset: no body chosen yet this session. */
@@ -90,7 +88,7 @@ export const layeredBodyToWear = () => lastBody || LAYERED_OWN;
 /** The front-on standing view: orientation 0 of the idle table (EOTB's wheel, the record offset 0, unmirrored). */
 const FRONT = 0;
 
-/** NO-BETHESDA2: a derived sprite's `<img>` src - built from the player's own files (eotbSprite.js buildDerivedSprite),
+/** A derived sprite's `<img>` src - built from the player's own files (eotbSprite.js buildDerivedSprite),
  *  made a PNG and handed back as a blob URL, once a key. A build that fails is forgotten, so the next ask builds again. */
 const _images = new Map();
 async function pictureBlobUrl({ width, height, data }) {
@@ -153,7 +151,7 @@ export function wornSkin() {
   };
 }
 
-/** SKIN2: the on-foot picker's two shelves - the mod's own sets, then Daggerfall's classes. */
+/** The on-foot picker's two shelves - the mod's own sets, then Daggerfall's classes. */
 export const FOOT_GROUPS = Object.freeze([
   Object.freeze({ label: 'Eye of the Beholder', from: 0, to: EOTB_FOOT_SET_COUNT }),
   Object.freeze({ label: 'Original classes', from: EOTB_FOOT_SET_COUNT, to: Infinity }),
@@ -189,7 +187,7 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
           if (u) img.src = u;
         },
         () => {},
-      ); // NO-BETHESDA2: built - none where the player's data has none
+      ); // Built - none where the player's data has none
     img.alt = '';
     img.setAttribute('draggable', 'false');
     return img;
@@ -249,7 +247,7 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
     root.append(p);
   }
 
-  /** LAYERED-GEAR: the Look toggle - Skins or Layered Gearing, one radio each; a press switches the look at once. */
+  /** The Look toggle - Skins or Layered Gearing, one radio each; a press switches the look at once. */
   function lookToggle(layeredOn) {
     const row = el('div', 'skinmode');
     const word = t('skin.look', 'Look');
@@ -310,7 +308,7 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
     if (w.layered === 1 || w.layered === 2) lastBody = w.layered;
     lookToggle(layeredOn);
     if (layeredOn) {
-      // LAYERED-GEAR: the body, drawn in the armor worn - the On foot panel put away, Mounted as ever
+      // The body, drawn in the armor worn - the On foot panel put away, Mounted as ever
       root.append(
         el(
           'p',
@@ -323,7 +321,7 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
       );
       const bodyWord = t('skin.layered.body', 'Body');
       root.append(el('span', 'skingroup', bodyWord));
-      // LAYERED-GEAR-ON: the character's own body marks the tile it is; a tile pressed is that body from then on
+      // The character's own body marks the tile it is; a tile pressed is that body from then on
       const worn = own ? (layeredGenderOf(LAYERED_OWN, gender()) === 'female' ? 1 : 2) : w.layered;
       root.append(
         grid(

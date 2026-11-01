@@ -1,4 +1,4 @@
-// HT1: HANDHELD TORCHES' DROPPED LIGHTS, THROWN TORCHES AND BURNING FOES
+// HANDHELD TORCHES' DROPPED LIGHTS, THROWN TORCHES AND BURNING FOES
 // (RedRoryOTheGlen, Handheld Torches 1.4.1) - the pool one host owns,
 // as scenes/droppedLoot.js is the ground pile's. The IL it restates:
 // HandheldTorches.SpawnLightSource (0x3724), SpawnLightSourceProjectile
@@ -46,7 +46,7 @@
 // SupportChance, so the mod's Throwing.Chance reaches an effect that
 // never rolls it: the fire takes on every hit that lands. Kept.
 //
-// OWN-AUDIT: EmissionShadows off (the mod's default) marks a burning foe's light `shadowless` (magicCandle.js).
+// EmissionShadows off (the mod's default) marks a burning foe's light `shadowless` (magicCandle.js).
 // NOT CARRIED, recorded: Light.intensity's flicker on a
 // dropped torch (1.25 + sin(2t) x 0.1 - the port's lights have range,
 // no intensity, as playerTorch.js records) - the range law is kept;
@@ -55,13 +55,13 @@
 import { GLOBAL_SCALE, pickFoeHit, RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { TEMPLATES } from '../systems/useItem.js';
-import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a light named by what burns, so the shadow pass knows one that moved
+import { adoptLight } from '../render/lightId.js';   // A light named by what burns, so the shadow pass knows one that moved
 import { applySpell, renewRounds } from '../systems/effects.js';
 import { calculateSuccessfulHit, calculateStruckBodyPart } from '../combat/formulas.js';
 import { liveStat } from '../systems/statMods.js';
 import { worldMinutes } from '../systems/worldTick.js';
 import { FlatAnim } from '../render/flatAnimation.js';
-import { toColor32 } from '../formats/color32Order.js';   // TEX1: the SHAPE the upload path reads
+import { toColor32 } from '../formats/color32Order.js';   // The SHAPE the upload path reads
 import { torchRange } from '../systems/playerTorch.js';
 import {
   DROPPED_ARCHIVE, DROPPED_RECORD, CLIPS, MESSAGES, SECONDS_PER_CONDITION, THROW_HAND_OFFSET, FREE_HAND, rotateAboutAxis, readTorchSettings,
@@ -84,7 +84,7 @@ export const PROJECTILE_FIXED_DT = 0.02;
 export const PROJECTILE = Object.freeze({ gravityAccel: -9.81, restFraction: 0.2, spinRate: 20, restRaise: 0.016, audioGap: 0.2, baseSpeed: 25 });
 /** A dropped light under a dungeon's water is doused (0x3726-0x3775): its top 1.25 above the point, below the water plane. */
 export const WATER_HEAD = 1.25;
-/** AUDIT 66 F1: WHERE THE LIGHT SITS. The mod raises the CENTRED
+/** WHERE THE LIGHT SITS. The mod raises the CENTRED
  *  billboard by half its texture height so its base lands on the drop
  *  point (0x37f4), and then hangs the light half a unit above the
  *  BILLBOARD (0x38b0-0x38cf) - so the flame is at
@@ -124,7 +124,7 @@ export function createDroppedTorches({
     if (!framesLoading.has(record)) {
       framesLoading.set(record, (async () => {
         let count = 0, size = null;
-        // TEX1: the UPLOAD can throw (an image in the wrong shape), and this
+        // The UPLOAD can throw (an image in the wrong shape), and this
         // promise is only ever `.then`ed by a mount that may not have happened
         // yet - so a throw escaped as an unhandled rejection and took the page
         // down. It fails to a console line and an EMPTY record now: `build`
@@ -184,7 +184,7 @@ export function createDroppedTorches({
     if (record == null) return null;
     const d = { id: ++_nextId, template, record, pos: [pos[0], pos[1], pos[2]], time, batch: null, anim: null, size: null, loop: null,
       mirrored: rolls() > 0.5, pixelKey: inside?.() ? null : (pixelKeyAt?.(pos) ?? null), dead: false };
-    if (!dropped.length) _lastMinutes = worldMinutes();   // AUDIT 66 F2: the first light into an empty pool starts its own clock - an empty pool burns nothing, so the hours it slept are nobody's
+    if (!dropped.length) _lastMinutes = worldMinutes();   // The first light into an empty pool starts its own clock - an empty pool burns nothing, so the hours it slept are nobody's
     dropped.push(d);
     mount(d);
     if (lit(d) && template === TEMPLATES.Torch) d.loop = audio?.loop3d?.(CLIPS.burning, d.pos, s().sfxVolume, { maxDistance: 5, distanceModel: 'linear' }) ?? null;
@@ -207,7 +207,7 @@ export function createDroppedTorches({
     const speedStart = PROJECTILE.baseSpeed * (liveStat(entity, 'strength') / 100) * st.throwStrength * strength;
     const p = { template, time, record, pos: at, dirStart: d0, speedStart, speedCurrent: speedStart, gravityDrag: 0.05 * st.throwGravity,
       bounce: st.throwBounce, gravity: [0, 0, 0], batch: null, size: null, base: null, lastAudio: -Infinity, dead: false, acc: 0, loop: null };
-    // AUDIT 66 F3: the THROWN torch's billboard is set to the flight
+    // The THROWN torch's billboard is set to the flight
     // point RAW (0x3a9b) - no half-height raise, unlike the dropped
     // one - so the mod's centred quad is centred ON the flight point.
     // The port's batches are base-aligned, so the base goes half a
@@ -231,7 +231,7 @@ export function createDroppedTorches({
     return p;
   }
 
-  /** AUDIT 66 F3: the base a CENTRED quad needs to sit on the flight point. */
+  /** The base a CENTRED quad needs to sit on the flight point. */
   const flightBase = (p) => [p.pos[0], p.pos[1] - Math.abs(p.base?.h ?? 0) / 2, p.pos[2]];
 
   /** Projectile.FixedUpdate (0x47a4), one 0.02 s step. */
@@ -358,7 +358,7 @@ export function createDroppedTorches({
   function tick(dt) {
     _time += dt;
     const now = worldMinutes();
-    // AUDIT 66 F2: the world clock is the burn's clock, so every JUMP
+    // The world clock is the burn's clock, so every JUMP
     // in it burned - and a load is a jump. DFU's per-frame arm reads
     // Time.deltaTime (0x1a4c), which no load inflates, and the only
     // clock jump the mod answers is the REST window's own
@@ -391,20 +391,20 @@ export function createDroppedTorches({
       if (!lit(d)) continue;
       const t = templateByIndex(d.template);
       const full = (t?.hitPoints ?? 1) * SECONDS_PER_CONDITION;
-      // AUDIT 66 F1: over the billboard's head, as the mod hangs it.
+      // Over the billboard's head, as the mod hangs it.
       // AUDIT 66 F10: and NOT scaled by PlayerTorchLightScale - the mod
       // multiplies this range by it (0x1bb3), but the port's own lane
       // holds that setting inert for exactly this reason
       // (playerTorch.js:"this lane ships that": "it is a 0..1 BRIGHTNESS ... mapping a
       // brightness slider onto a radius would be a worse lie"). One
       // decision, one place; the dep the hosts never passed is gone.
-      out.push(adoptLight({ x: d.pos[0], y: d.pos[1] + Math.abs(d.size?.h ?? 0) / 2 + LIGHT_ABOVE_BILLBOARD, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) }, d));   // LIGHT-ID: each light the torch's own, frame to frame
+      out.push(adoptLight({ x: d.pos[0], y: d.pos[1] + Math.abs(d.size?.h ?? 0) / 2 + LIGHT_ABOVE_BILLBOARD, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) }, d));   // Each light the torch's own, frame to frame
     }
     // the thrown torch's light hangs over its quad's own centre (0x3ad0-0x3aea), and its range is the template's, flat (0x3b41)
-    for (const p of projectiles) if (lit(p)) out.push(adoptLight({ x: p.pos[0], y: p.pos[1] + LIGHT_ABOVE_BILLBOARD, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 }, p));   // LIGHT-ID: one light in flight
+    for (const p of projectiles) if (lit(p)) out.push(adoptLight({ x: p.pos[0], y: p.pos[1] + LIGHT_ABOVE_BILLBOARD, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 }, p));   // One light in flight
     const playerRange = entity?.lightSource ? torchRange(entity.lightSource) : (templateByIndex(TEMPLATES.Torch)?.capacityOrTarget ?? 14);
-    const shadowless = !s().fireLightShadows;   // OWN-AUDIT: Throwing.EmissionShadows
-    for (const [f, fl] of flames) if (!f.dead) out.push(adoptLight({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange, shadowless }, fl));   // LIGHT-ID: a burning foe's, as it walks
+    const shadowless = !s().fireLightShadows;   // Throwing.EmissionShadows
+    for (const [f, fl] of flames) if (!f.dead) out.push(adoptLight({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange, shadowless }, fl));   // A burning foe's, as it walks
     return out;
   }
   const batches = () => [...dropped.map((d) => d.batch), ...projectiles.map((p) => p.batch), ...[...flames.values()].map((fl) => fl.batch)].filter(Boolean);
@@ -418,9 +418,9 @@ export function createDroppedTorches({
     }));
   }
   const forKey = (key) => dropped.find((d) => `droppedTorch:${d.id}` === key) ?? null;
-  /** WORLD-HOVER: what the plaque calls a torch on the floor. The mod
+  /** What the plaque calls a torch on the floor. The mod
    *  has no word for one - a dropped light source is the port's own
-   *  object (HT1) - so it rides World Tooltips' extension API
+   *  object - so it rides World Tooltips' extension API
    *  (vendor .cs:228-257) instead of being wedged into its ladder.
    *  The word is the item's own template name, which is what Info mode
    *  already says about it one line below. */
@@ -453,7 +453,7 @@ export function createDroppedTorches({
 
   /** DestroyLightSources (0x403c): every transition and every load. */
   function destroyAll() {
-    _lastMinutes = worldMinutes();   // AUDIT 66 F2: the sweep is a transition - what the clock did across it is not this pool's to burn
+    _lastMinutes = worldMinutes();   // The sweep is a transition - what the clock did across it is not this pool's to burn
     for (const d of dropped) unmount(d);
     dropped.length = 0;
     for (const p of [...projectiles]) retireProjectile(p);
@@ -475,9 +475,9 @@ export function createDroppedTorches({
     for (const p of projectiles) {
       p.pos = [p.pos[0] + dx, p.pos[1] + dy, p.pos[2] + dz];
       if (p.batch) p.batch.origin = flightBase(p);
-      p.loop?.move?.(p.pos);   // AUDIT 66 F3: a recenter moves the flight's sprite and its loop, as it moves a dropped light's
+      p.loop?.move?.(p.pos);   // A recenter moves the flight's sprite and its loop, as it moves a dropped light's
     }
-    // AUDIT 66 F12: the burning foe's flame moves with the recenter -
+    // The burning foe's flame moves with the recenter -
     // its position AND its quad (AUDIT 68: the quad is the batch's
     // origin now, so moving it is a write, not a rebuild).
     for (const [, fl] of flames) {
@@ -503,7 +503,7 @@ export function createDroppedTorches({
   const snapshot = (toWorld = (p) => p) => dropped.filter((d) => d.template).map((d) => { const p = toWorld(d.pos); return { position: [p[0], p[1], p[2]], time: d.time, itemTemplateIndex: d.template }; });
   function restore(list, fromWorld = (p) => p) {
     destroyAll();
-    _lastMinutes = worldMinutes();   // AUDIT 66 F2: the save's own clock, not the outgoing session's
+    _lastMinutes = worldMinutes();   // The save's own clock, not the outgoing session's
     for (const r of list ?? []) {
       if (!r || RECORD_FOR[r.itemTemplateIndex] == null || !(r.time > 0)) continue;   // record 0 is the torch: a null test, never a truth test
       const p = fromWorld(r.position);
@@ -520,9 +520,9 @@ export function createDroppedTorches({
 }
 
 /** The default texture loader: the set's picture in the port's color32 order,
- *  in the shape `uploadTexture` reads - `{ width, height, colors }` (TEX1). */
+ *  in the shape `uploadTexture` reads - `{ width, height, colors }`. */
 async function defaultLoadTexture(record, frame) {
   if (!vendoredTexture(`${DROPPED_ARCHIVE}_${record}-${frame}.png`)) return null;   // the probe's miss, known (FIELD 2026-09-27: handheldTorches.js)
-  const pic = await torchPicture(`${DROPPED_ARCHIVE}_${record}-${frame}`);   // NO-BETHESDA2: a candle's is rebuilt from the player's TEXTURE.210; OWN-WORK4: a torch's is ours
+  const pic = await torchPicture(`${DROPPED_ARCHIVE}_${record}-${frame}`);   // A candle's is rebuilt from the player's TEXTURE.210; OWN-WORK4: a torch's is ours
   return pic && toColor32(pic);
 }

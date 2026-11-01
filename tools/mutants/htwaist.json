@@ -11,8 +11,8 @@
   {
     "name": "HT-WAIST-the-key-not-curated",
     "file": "src/systems/features.js",
-    "old": "'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length'",
-    "new": "'Handling.StowWhenSpellcasting', 'Bob.Length'",
+    "old": "    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length', 'Throwing.ShowTrajectory']),",
+    "new": "    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length', 'Throwing.ShowTrajectory']),",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HT-WAIST-loadsettings-never-reads-it",
     "file": "src/systems/handheldTorches.js",
-    "old": "    lanternsAtWaist: !!s['Handling.LanternsAtWaist'], // HT-WAIST: the port's own switch on the mod's pane (Ledger A)",
-    "new": "    lanternsAtWaist: false, // HT-WAIST: the port's own switch on the mod's pane (Ledger A)",
+    "old": "    lanternsAtWaist: !!s['Handling.LanternsAtWaist'], // The port's own switch on the mod's pane (Ledger A)",
+    "new": "    lanternsAtWaist: false, // The port's own switch on the mod's pane (Ledger A)",
     "tests": [
       "test/systems/htwaist_setting.test.js",
       "test/systems/htwaist_handlaw.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "HT-WAIST-the-throw-douses-it",
     "file": "src/systems/handheldTorches.js",
-    "old": "          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too",
-    "new": "          if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too",
+    "old": "          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null); // The waist's lantern stays lit through a throw too",
+    "new": "          if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null); // The waist's lantern stays lit through a throw too",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "HT-WAIST-the-hand-frames-a-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off",
-    "new": "      w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off",
+    "old": "      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // The waist's lantern has no hand frames - the hand slides off",
+    "new": "      w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // The waist's lantern has no hand frames - the hand slides off",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HT-WAIST-the-hand-draws-a-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (atWaist(held)) return false; // HT-WAIST: the lantern hangs at the waist - the hand holds nothing",
-    "new": "    // HT-WAIST: the lantern hangs at the waist - the hand holds nothing",
+    "old": "    if (atWaist(held)) return false; // The lantern hangs at the waist - the hand holds nothing",
+    "new": "    // The lantern hangs at the waist - the hand holds nothing",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "HT-WAIST-the-build-never-asked",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    hipLight: lanternAtWaist(entity.lightSource),",
-    "new": "    hipLight: false,",
+    "old": "    hipLight: lanternAtWaist(entity.lightSource),   // The lit lantern, hung at the hip of the third-person body",
+    "new": "    hipLight: false,   // The lit lantern, hung at the hip of the third-person body",
     "tests": [
       "test/systems/htwaist_handlaw.test.js",
       "test/combat/htwaist_mwbody.test.js"
@@ -131,8 +131,8 @@
   {
     "name": "HT-WAIST-the-ladder-opens-for-the-waist",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);",
-    "new": "        && (!fpArm.active() || fpArm.torchShown());",
+    "old": "        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);   // The gate opens only where a hand paints - a lantern at the waist is in none",
+    "new": "        && (!fpArm.active() || fpArm.torchShown());   // The gate opens only where a hand paints - a lantern at the waist is in none",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "HT-WAIST-the-arm-never-told",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        fpArm.setHipLight(lanternAtWaist(entity?.lightSource));\n",
-    "new": "",
+    "old": "        fpArm.setHipLight(lanternAtWaist(entity?.lightSource));\n        // THE SPELL IS A STANCE. spellArmed() is already the",
+    "new": "        // MW-D39: THE SPELL IS A STANCE. spellArmed() is already the",
     "tests": [
       "test/combat/htwaist_mwbody.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "HT-WAIST-the-sprite-never-told",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    hipLantern: !!entity && lanternAtWaist(entity.lightSource),",
-    "new": "    hipLantern: false,",
+    "old": "    hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // The lit lantern hangs at the sprite's hip, and swings as it walks",
+    "new": "    hipLantern: false,   // The lit lantern hangs at the sprite's hip, and swings as it walks",
     "tests": [
       "test/combat/htwaist_mwbody.test.js",
       "test/systems/htwaist_eotb.test.js"
@@ -359,8 +359,8 @@
   {
     "name": "HT-WAIST-the-sprite-never-draws-it",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs\n",
-    "new": "",
+    "old": "      if (grow === 1) drawLantern();   // The lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs\n      if (grow === 1) drawHolster(camRight); else dropHolster();   // The weapon on the back, after the body (OW-BIG's rule too)",
+    "new": "      if (grow === 1) drawHolster(camRight); else dropHolster();   // The weapon on the back, after the body (OW-BIG's rule too)",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "HT-WAIST-the-sprite-never-swings-it",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      stepLantern(dt);   // HT-WAIST: not the IL's - the lantern at the waist, after the frame the mod ran\n",
-    "new": "",
+    "old": "      stepLantern(dt);   // Not the IL's - the lantern at the waist, after the frame the mod ran\n      return { table: stateCurrent, frame: frameCurrent, clip: isAnimating ? { table: isAnimating.table, i: isAnimating.i, phase: isAnimating.phase } : null };",
+    "new": "      return { table: stateCurrent, frame: frameCurrent, clip: isAnimating ? { table: isAnimating.table, i: isAnimating.i, phase: isAnimating.phase } : null };",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "HT-WAIST-the-sprite-lantern-in-the-saddle",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": " && !last.riding && !last.transformed;",
-    "new": " && !last.transformed;",
+    "old": "  const lanternHangs = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;",
+    "new": "  const lanternHangs = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.transformed;",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "HT-WAIST-the-sprite-light-left-behind",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); dropBackShield(); }",
-    "new": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropHolster(); dropQuiver(); dropBackShield(); }",
+    "old": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); dropBackShield(); }   // The lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back",
+    "new": "      if (!activeFlag) { torchDefault(); pending.length = 0; dropHolster(); dropQuiver(); dropBackShield(); }   // The lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "HT-WAIST-the-sprite-lights-nothing",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    setPlayerWaistLightOverride(wo);\n",
-    "new": "",
+    "old": "    setPlayerWaistLightOverride(wo);\n    waistWritten = true;",
+    "new": "    waistWritten = true;",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "HT-WAIST-BACK-the-body-never-asks-the-rule",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (!isRearView(shown?.orientation)) return false;\n",
-    "new": "",
+    "old": "    if (!isRearView(shown?.orientation)) return false;\n    mintSpriteLantern(lantern, renderer).conceal = material();",
+    "new": "    mintSpriteLantern(lantern, renderer).conceal = material();",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js",
       "test/systems/htwaist_eotb.test.js"
@@ -489,8 +489,8 @@
   {
     "name": "HT-WAIST-BACK-the-body-drops-it-off-the-back",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "  function drawLantern() {\n    if (!lanternHangs()) { dropLantern(); return false; }",
-    "new": "  function drawLantern() {\n    if (!lanternShown()) { dropLantern(); return false; }",
+    "old": "    if (!lanternHangs()) { dropLantern(); return false; }",
+    "new": "    if (!lanternShown()) { dropLantern(); return false; }",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "HT-WAIST-BACK-the-swing-stops-unseen",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (!lanternHangs()) { restSpriteLantern(lantern); dropLantern(); return; }",
-    "new": "    if (!lanternShown()) { restSpriteLantern(lantern); dropLantern(); return; }",
+    "old": "    if (!lanternHangs()) { restSpriteLantern(lantern); dropLantern(); return; }   // at rest, in place",
+    "new": "    if (!lanternShown()) { restSpriteLantern(lantern); dropLantern(); return; }   // at rest, in place",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "HT-WAIST-BACK-the-walker-never-hangs-it",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      else hangLantern(r, pose, feet, view, eye, right, step, ft);\n",
-    "new": "",
+    "old": "      else hangLantern(r, pose, feet, view, eye, right, step, ft);\n      slingHolster(r, peer, g > 1 ? null : pose, feet, view, eye, right);   // OW-PEERS' rule too",
+    "new": "      slingHolster(r, peer, g > 1 ? null : pose, feet, view, eye, right);   // OW-PEERS' rule too",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "HT-WAIST-BACK-the-walker-never-asks-the-rule",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (!isRearView(view)) return;   // not seen from straight behind: it hangs, it swings, it is not drawn\n",
-    "new": "",
+    "old": "    if (!isRearView(view)) return;   // not seen from straight behind: it hangs, it swings, it is not drawn\n    if (r.veil) return;   // Nor on a concealed walker - it would hang, lit and whole, on nobody",
+    "new": "    if (r.veil) return;   // Nor on a concealed walker - it would hang, lit and whole, on nobody",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "HT-WAIST-BACK-the-walker-ignores-the-bit",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (!pose.hl) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (!pose.hl) {",
+    "new": "    if (false) {",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "HT-WAIST-BACK-the-walker-pace-unmeasured",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    r.pace = stepPeerPace(r.pace, r.paceKey === on ? r.paceFeet : null, at, dt);\n",
-    "new": "",
+    "old": "    r.pace = stepPeerPace(r.pace, r.paceKey === on ? r.paceFeet : null, at, dt);\n    const pf = r.paceFeet ?? (r.paceFeet = [0, 0, 0]);",
+    "new": "    const pf = r.paceFeet ?? (r.paceFeet = [0, 0, 0]);",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "HT-WAIST-BACK-the-walker-swing-not-stepped",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    stepSpriteLantern(l, dt, fx, fz, r.pace, stride);\n",
-    "new": "",
+    "old": "    stepSpriteLantern(l, dt, fx, fz, r.pace, stride);\n    const art = store.lantern?.ensure();",
+    "new": "    const art = store.lantern?.ensure();",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "HT-WAIST-BACK-the-walker-lantern-leaks-with-the-walker",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (r?.lantern) dropSpriteLantern(r.lantern, renderer);   // HT-WAIST-BACK: a walker's lantern goes with the walker\n",
-    "new": "",
+    "old": "    if (r?.lantern) dropSpriteLantern(r.lantern, renderer);   // A walker's lantern goes with the walker\n    if (r?.holster) dropSpriteHolster(r.holster, renderer);   // And the weapon on its back",
+    "new": "    if (r?.holster) dropSpriteHolster(r.holster, renderer);   // And the weapon on its back",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "HT-WAIST-BACK-the-recentre-leaves-it-behind",
     "file": "src/net/peer/peerRiders.js",
-    "old": "for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet])",
-    "new": "for (const o of [r.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet])",
+    "old": "        for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]) if (o) { o[0] += offset[0]; o[1] += offset[1]; o[2] += offset[2]; }   // The lantern and the pace's last feet follow the origin too; BACK-HOLSTER: the weapon",
+    "new": "        for (const o of [r.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]) if (o) { o[0] += offset[0]; o[1] += offset[1]; o[2] += offset[2]; }   // The lantern and the pace's last feet follow the origin too; BACK-HOLSTER: the weapon",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]

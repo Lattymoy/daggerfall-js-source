@@ -59,7 +59,7 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
   assert.equal(foot.labels.length, FOOT_SKINS, 'the wire\'s bound is the same count (SKIN2: the sixteen, and Daggerfall\'s classes after them)');
   assert.equal(EOTB_FOOT_SET_COUNT, 16, 'the mod\'s own sets are the first sixteen');
   // the mod's own preset titles, and the art's own rule: every even set a woman, every odd set a man
-  // OWN-WORK4 (2026-10-31): the shipped modpresets.json's titles and their Graphics.OnFoot, written out
+  // OWN-WORK4: the shipped modpresets.json's titles and their Graphics.OnFoot, written out
   const presets = [['Light Fighters (Default)', 0], ['Medium Fighters', 2], ['Heavy Fighter F', 4], ['Heavy Fighter M', 5], ['Mage F', 6], ['Mage M', 7],
     ['Thief Mage F', 8], ['Thief Mage M', 9], ['Fighter Mage F', 10], ['Fighter Mage M', 11], ['Thief F', 12], ['Thief M', 13], ['Fighter Thief F', 14], ['Fighter Thief M', 15]]
     .map(([Title, i]) => ({ Title, Values: { Graphics: { OnFoot: String(i) } } }));
@@ -77,9 +77,9 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
 
 test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, the worn one marked, a press worn at once', () => {
   _resetModSettings();
-  setModSetting(V, 'Graphics.LayeredGear', 0);   // PIN MOVED (LAYERED-GEAR-ON): Layered Gearing is on by default; these pins are the Skins look's
+  setModSetting(V, 'Graphics.LayeredGear', 0);
   const sets = skinSets();
-  assert.equal(sets.foot.length, FOOT_SKINS); assert.equal(sets.horse.length, 5);   // SKIN2: the mod's sixteen and the classes
+  assert.equal(sets.foot.length, FOOT_SKINS); assert.equal(sets.horse.length, 5);   // The mod's sixteen and the classes
   assert.deepEqual(sets.foot.map((s) => s.name), MOD_SETTINGS[V].keys['Graphics.OnFoot'].labels);
   // each tile is the set's own front-on standing sprite, out of the bundle the body draws from
   // (the URL is the build's - node has no bundle - so the pin reads the key the build indexes by, against the file;
@@ -90,7 +90,7 @@ test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, th
   assert.equal(sets.foot[7].key, `${ARCHIVE_FOOT + 7}_0-0`, 'Mage (male)\'s own archive, front on and standing');
   assert.equal(sets.horse[3].key, '112385_0-0', 'the fourth rider, front on');
   withDoc(() => {
-    // SKIN2: the grids live behind the two panels now (test/net/skin2_class_skins.test.js pins the panels themselves) -
+    // The grids live behind the two panels now (test/net/skin2_class_skins.test.js pins the panels themselves) -
     // open one to reach its tiles
     const card = skinCard(document);
     const heads = () => find(card.root, hasClass('skinhead'));
@@ -120,7 +120,7 @@ test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, th
     assert.equal(heads().length, 2);
   });
   // the profile window draws it, under the account card
-  // PIN MOVED (LAYERED-GEAR): the card is handed the character's own body, the one Layered Gearing first wears
+  // PIN MOVED: the card is handed the character's own body, the one Layered Gearing first wears
   assert.match(src('src/ui/enhanced/enhancedMenu.js'), /body\.append\(accountBody\(\)\);\s*\n\s*body\.append\(skinCard\(document, \{ gender: \(\) => playerEntity\?\.gender \}\)\.root\);/);
   _resetModSettings();
 });
@@ -163,7 +163,7 @@ const pose = (o = {}) => ({ x: 4, y: 0, z: 9, yaw: 0, pitch: 0, mv: 0, wd: 0, an
 
 test('DISC23-B: a peer on foot stands as the set they chose - their own archive, the move bit walking it, the name at its top', async () => {
   const { art } = rig();
-  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
+  const w = createPeerWalkers({ art, layeredAll: () => false });
   const peer = { id: 'p1', look: { eo: 7 }, shown: pose({ mv: 1 }) };
   w.sync([peer], toScene, { eye: [4, 1, 20], dt: 0.01 });
   assert.equal(w.isWalking('p1'), false, 'art not up yet - the class sprite still stands for them, never nothing');
@@ -184,7 +184,7 @@ test('DISC23-B: a peer on foot stands as the set they chose - their own archive,
 
 test('DISC23-B: a swing, a loosed shaft and a cast each play their clip ONCE - and first sight is no swing', async () => {
   const { art } = rig();
-  const w = createPeerWalkers({ art, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
+  const w = createPeerWalkers({ art, layeredAll: () => false });
   const at = (o) => ({ id: 'p1', look: { eo: 2 }, shown: pose(o) });
   w.sync([at({ an: 41 })], toScene, { eye: [4, 1, 20], dt: 0 });
   assert.equal(w.walkers.get('p1').table, 'Idle', 'a peer met mid-session has a swing count of their own - not a swing');
@@ -206,7 +206,7 @@ test('DISC23-B: a swing, a loosed shaft and a cast each play their clip ONCE - a
     w.sync([at(before)], toScene, { eye: [4, 1, 20], dt: 0 });
     w.sync([at(before)], toScene, { eye: [4, 1, 20], dt: 10 });
   }
-  // ONE-STROKE: the stroke a peer's swing draws is the one its count names - the count the swinger's own body read
+  // The stroke a peer's swing draws is the one its count names - the count the swinger's own body read
   // (weaponRig swingN, sent as `an`), so both screens show the same half of the swing
   const strokes = [];
   for (const an of [42, 43, 44]) {
@@ -221,7 +221,7 @@ test('DISC23-B: a swing, a loosed shaft and a cast each play their clip ONCE - a
 test('DISC23-B: who is NOT a walker - a Morrowind body on this screen, a rider, a beast, the dying, a look with no set, the card on the doll', async () => {
   const { art } = rig();
   let sprites = true;
-  const w = createPeerWalkers({ art, enabled: () => sprites, layeredAll: () => false });   // PIN MOVED (LAYERED-PEERS): a Skins viewer - one in Layered Gearing sees every walker in armor (layered_peers.test.js)
+  const w = createPeerWalkers({ art, enabled: () => sprites, layeredAll: () => false });
   const on = (o = {}, look = { eo: 1 }) => ({ id: 'p', look, shown: pose(o) });
   w.sync([on()], toScene, { eye: [0, 1, 0], dt: 0 }); await settle();
   const drawn = (peer, skip) => { w.sync([peer], toScene, { eye: [0, 1, 0], dt: 0, skip }); return w.isWalking('p'); };
@@ -242,7 +242,7 @@ test('DISC23-B: who is NOT a walker - a Morrowind body on this screen, a rider, 
 test('DISC23-B: the host - one art store, the walkers after the bodies and skipping them, their height to the name pass, swept with the rest', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /const eotbArt = createEotbArt\(\{ renderer \}\);[^\n]*\n\s*peerRiders = createPeerRiders\(\{ renderer, art: eotbArt \}\);[^\n]*\n\s*peerWalkers = createPeerWalkers\(\{ renderer, art: eotbArt, enabled: \(\) => getPref\('peerClassSprites'\) !== false \}\);/);
-  assert.match(w, /peerBodies\.sync\(afoot,[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*peerWalkers\.sync\(seen, onlineToScene, \{ eye: peerEye, right: peerRight, dt, skip: \(id\) => peerBodies\.heightOf\(id\) > 0, hurt: \(id\) => peerHurtAge\(id\) < PEER_FLINCH_S, conceal: veilOf(?:, grow: tvGrow)? \}\);/);   // PEERFX3: and a class skin's hurt pose; PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown under the Overworld
+  assert.match(w, /peerBodies\.sync\(afoot,[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*peerWalkers\.sync\(seen, onlineToScene, \{ eye: peerEye, right: peerRight, dt, skip: \(id\) => peerBodies\.heightOf\(id\) > 0, hurt: \(id\) => peerHurtAge\(id\) < PEER_FLINCH_S, conceal: veilOf(?:, grow: tvGrow)? \}\);/);   // And a class skin's hurt pose; PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown under the Overworld
   assert.match(w, /bodyHeight: \(id\) => peerRiders\.heightOf\(id\) \|\| peerBodies\.heightOf\(id\) \|\| peerWalkers\.heightOf\(id\),/);
   assert.match(w, /peerWalkers\?\.offsetAll\(r\.offset\);/);
   assert.match(w, /if \(peerWalkers\) for \(const b of peerWalkers\.batches\(\)\) \{ if \(cullOn && billboardOutside\(b\)\) \{ if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\); continue; \} allBatches\.push\(b\); \}/);

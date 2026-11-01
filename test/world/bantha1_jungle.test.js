@@ -1,7 +1,4 @@
-// BANTHA1 (2026-10-18, the owner: "Bantha, north of daggerfall is going to be the first region in the continent to
-// recieve a biome expansion. Using the attached file, populate the area in a dense jungle like format. When traveling
-// inside the area there should be a fog-like haze that reduces visability. This needs to be insanely detailed and not
-// hurt performance. No band aids"): THE JUNGLE OF BANTHA - bible/03-World/Bantha-Jungle.md is the design and the record.
+// THE JUNGLE OF BANTHA - bible/03-World/Bantha-Jungle.md is the design and the record.
 // The owner's trees read and measured off their own files, the field the layout and the haze share, the layout's laws, the
 // haze's law and its shader twin, the bound the cull reads, the hosts, the renderer's second tree slot and the door.
 // Mutants: tools/mutants/bantha1.json.
@@ -104,7 +101,7 @@ test('BANTHA1 the owner\'s trees, read: five prototypes of the rainforest\'s arc
   assert.equal(TREES.json.vertexBytes, verts.reduce((a, b) => a + b, 0) * 32);
   assert.equal(TREES.treesBin.byteLength, TREES.json.vertexBytes + tris.reduce((a, b) => a + b, 0) * 6, 'every vertex, then every index');
   assert.deepEqual(parseMtl('newmtl A\nmap_Kd a.png\nmap_d b.png\nnewmtl B\n').get('A'), { mapKd: 'a.png', mapD: 'b.png' });
-  // AUDIT BANTHA1 TREE-7: a map's file after its options, spaces and all; a comment ends a face's line; a tree is one picture
+  // A map's file after its options, spaces and all; a comment ends a face's line; a tree is one picture
   assert.deepEqual(parseMtl('newmtl A\nmap_Kd -o 0.1 0.2 0 -clamp on bark tree.png\n').get('A').mapKd, 'bark tree.png');
   assert.deepEqual(parseObj('v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3 # one\n').faces[0].corners, [[0, -1, -1], [1, -1, -1], [2, -1, -1]]);
   assert.throws(() => jungleMesh(parseObj('v 0 0 0\nv 1 0 0\nv 0 1 0\nv 1 1 0\nusemtl A\nf 1 2 3\nusemtl B\nf 2 4 3\n')), /one picture/);
@@ -175,7 +172,7 @@ test('BANTHA1 a jungle tree\'s far picture is LPT1\'s own (renderImpostor): the 
 });
 
 test('BANTHA1 the field: each pixel near Bantha its signed distance from the region\'s edge (its centre to the other side\'s nearest square, pixels), held at the reach, read only when asked; read between pixel centres it crosses zero on the shared edge and agrees across every pixel edge, the wander and all (mutants: the sign lost; an axis neighbour read as its diagonal; a ring stopped short; the wander off the world lattice)', () => {
-  // BANTHA2: the field's sides are a set of map pixels (the owner's area, world/jungle/banthaArea.js - test/world/
+  // The field's sides are a set of map pixels (the owner's area, world/jungle/banthaArea.js - test/world/
   // bantha2_area.test.js); BANTHA1's were Glenpoint's political region
   const W = 24, H = 16, inside = (x, y) => x >= 6 && x < 14 && y >= 4 && y < 11;
   let reads = 0;
@@ -260,14 +257,13 @@ test('BANTHA1 the layout, four storeys: a canopy tree a cell where the jungle is
   const trees = out.filter((f) => f.jungle != null), rest = out.filter((f) => f.jungle == null);
   const canopy = trees.filter((f) => f.js >= JUNGLE.canopyScale[0]), young = trees.filter((f) => f.js <= JUNGLE.underScale[1]);
   assert.equal(canopy.length + young.length, trees.length, 'every tree a storey');
-  // PIN MOVED (SPREAD): a canopy tree a SITE - every other cell, a quincunx - where it was a tree a cell
   const sites = (128 / JUNGLE.cell) ** 2 / 2;
   assert.ok(canopy.length > sites * 0.45 && canopy.length < sites * JUNGLE.canopy, `a closed canopy (${canopy.length} of ${sites} sites)`);
   // ...and the gaps are the canopy's own chance: no site stands its tree on a draw past JUNGLE.canopy, whatever its ground
   const C = JUNGLE.cell, cellOf = (f) => [PX * 128 + Math.floor(f.x / 6.4 / C) * C, -PY * 128 + Math.floor(f.z / 6.4 / C) * C];
   assert.deepEqual(canopy.filter((f) => tileDraw(...cellOf(f), 22) >= JUNGLE.canopy), [], 'a site\'s gap is kept at JUNGLE.canopy');
   assert.deepEqual(canopy.filter((f) => !canopySite(...cellOf(f))), [], 'every canopy tree on a site');
-  assert.ok(young.length > 400, `an understorey (${young.length})`);   // PIN MOVED (SPREAD): a cell's one young tree at most - it was 600 a tile's
+  assert.ok(young.length > 400, `an understorey (${young.length})`);
   for (const f of trees) {
     assert.equal(f.archive, 500); assert.equal(f.wood, 1);
     assert.equal(f.record, JUNGLE_SPECIES[f.jungle].record);
@@ -330,7 +326,7 @@ test('BANTHA1 every tree its own dice, and the border\'s stands: the jungle\'s f
 });
 
 test('AUDIT BANTHA1 LAY-1/2/3/7/8/9: the groves and the stands on the world\'s lattice, continuous across every pixel edge; a hillside past 34 degrees stands its floor and palms to DFU\'s 50, never a tree; a town\'s fields are open ground, never a thicket; nothing under the canopy crowds a trunk across a pixel\'s edge; the field\'s first read the float32 every later one is (mutants: the grove\'s cell off the lattice; the floor held to the trees\' slope; the fields a light gap; the neighbour\'s trunks unseen; the stands a tile\'s white noise)', () => {
-  // LAY-1 and LAY-9: the same world point read from either side of an edge
+  // The same world point read from either side of an edge
   assert.equal(128 % JUNGLE.grove.cell, 0, 'the grove\'s cell divides a pixel');
   for (const S of JUNGLE.stands.octaves) assert.equal(128 % S.cell, 0);
   for (let t = 0; t <= 128; t += 3.7) {
@@ -343,14 +339,14 @@ test('AUDIT BANTHA1 LAY-1/2/3/7/8/9: the groves and the stands on the world\'s l
   let same = 0, n = 0;
   for (let y = 0; y < 128; y++) for (let x = 0; x < 127; x++) { same += (jungleStandNoise(ecoOrigin(PX, PY), x + 0.5, y + 0.5) < 0.5) === (jungleStandNoise(ecoOrigin(PX, PY), x + 1.5, y + 0.5) < 0.5); n++; }
   assert.ok(same / n > 0.8, `a tile and its neighbour mostly one side of a half share - stands, not white noise (${(same / n).toFixed(2)})`);
-  // LAY-2: a 40-degree hillside down the pixel's middle
+  // A 40-degree hillside down the pixel's middle
   const g = pixelGround(), H = HEIGHTMAP_DIMENSION, yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, cellM = 819.2 / (H - 1);
   const rise = Math.tan(40 * Math.PI / 180) * cellM / yScale;
   for (let a = 0; a < H; a++) for (let b = 0; b < H; b++) g.hm[a * H + b] += a < 30 ? 0 : a < 60 ? (a - 30) * rise : 30 * rise;
   const onSlope = layoutOf(g, WHOLE).out.filter((f) => f.x > 34 * 6.4 && f.x < 56 * 6.4 && f.z > 10 * 6.4);
   assert.equal(onSlope.filter((f) => f.jungle != null).length, 0, 'no jungle tree up a 40-degree slope');
   assert.ok(onSlope.length > 200, `its floor and palms stand (${onSlope.length})`);
-  // LAY-3: a town's fields against the deep jungle
+  // A town's fields against the deep jungle
   const g3 = pixelGround(), town = { xMin: 20, xMax: 30, yMin: 40, yMax: 50, hide: false };
   const out3 = layoutOf(g3, WHOLE, { pois: [town] }).out;
   const young = (f) => f.jungle != null && f.js <= JUNGLE.underScale[1];
@@ -359,7 +355,7 @@ test('AUDIT BANTHA1 LAY-1/2/3/7/8/9: the groves and the stands on the world\'s l
   const ringYoung = out3.filter((f) => young(f) && ringD(f) >= 4 && ringD(f) <= 8).length;
   const deepYoung = out3.filter((f) => young(f) && tile(f)[0] >= 70 && tile(f)[0] < 98 && tile(f)[1] >= 70 && tile(f)[1] < 98).length / (28 * 28);
   assert.ok(ringYoung / 220 < deepYoung, `a town's ring stands fewer young trees a tile than the deep jungle (${(ringYoung / 220).toFixed(3)} vs ${deepYoung.toFixed(3)})`);
-  // LAY-7: two pixels side by side over flat grass - every cell at the west one's east edge whose young tree or palm a
+  // Two pixels side by side over flat grass - every cell at the west one's east edge whose young tree or palm a
   // trunk of the EAST pixel's crowds (and none of its own) stands nothing; such a cell is rare (a trunk stands 3.2 m
   // inside its site), so fifty edges are read. PIN MOVED (SPREAD): the understorey a cell's - its place in the cell and
   // its roll (salts 40-42), a light gap where no crown reaches - where it was a tile's
@@ -410,7 +406,7 @@ test('AUDIT BANTHA1 LAY-1/2/3/7/8/9: the groves and the stands on the world\'s l
   }
   assert.ok(crowded + shaded >= 3, `the edges read (${crowded} cells crowded across them, ${shaded} shaded)`);
   assert.ok(lit >= 20, `the edges' light gaps read (${lit})`);
-  // LAY-8: the field's first read is a float32
+  // The field's first read is a float32
   const field = jungleField({ width: 24, height: 16, insideAt: (x, y) => x >= 6 && x < 14 && y >= 4 && y < 11 });
   for (const [x, y] of [[4, 2], [15, 12], [5, 3]]) { const v = field.at(x, y); assert.equal(v, Math.fround(v)); assert.equal(field.at(x, y), v); }
 });
@@ -528,7 +524,7 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
     'render/eliteGates/egMistPass.js', 'render/eliteGates/egMotes.js', 'render/eliteGates/egLightPass.js', 'render/eliteGates/egLinePass.js',
     'render/superDungeon/sdBeam.js', 'render/superDungeon/sdPillarPass.js', 'render/superDungeon/sdStompWall.js', 'render/superDungeon/sdRiftPass.js',
     'render/superDungeon/sdMotes.js', 'render/superDungeon/sdHalo.js', 'render/superDungeon/sdArenaGlow.js', 'render/superDungeon/sdStepsPass.js',
-    'render/ketch/ktGaugePass.js']);   // KETCH-LOOK KL3: her gauges, drawn in the dungeon arm's frame on her decks alone
+    'render/ketch/ktGaugePass.js']);   // Her gauges, drawn in the dungeon arm's frame on her decks alone
   const fogged = [], unhazed = [], bare = [];
   for (const f of walk(join(ROOT, 'src'))) {
     const rel = f.slice(join(ROOT, 'src').length + 1).split('\\').join('/'), s = readFileSync(f, 'utf8');
@@ -543,13 +539,13 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
   for (const p of ['render/nodeGlow.js', 'render/auraRing.js', 'render/spoilsGlow.js', 'render/gate/gatePass.js', 'render/riteSmoke.js', 'render/superDungeon/sdOmenPass.js', 'render/foeTelegraph.js']) {
     assert.match(text(`src/${p}`), /if \(U\.uJungleHaze\) gl\.uniform4fv\(U\.uJungleHaze, fog\?\.haze \?\? NO_HAZE\);/, `${p} uploads it`);
   }
-  // AUDIT NODE-GLINT: the nodes' glint reads the frame's own (the renderer's), as its fog
+  // The nodes' glint reads the frame's own (the renderer's), as its fog
   assert.match(text('src/render/nodeGlint.js'), /if \(L\.uJungleHaze\) gl\.uniform4fv\(L\.uJungleHaze, r\._haze\);/, 'render/nodeGlint.js uploads it');
 });
 
 test('AUDIT BANTHA1 HAZE-1: every program a module under src/render exports compiles whole in the repo\'s GLSL reader - a block\'s uniform redeclared beside it (the Deadlands\' sea declared its own uHaze under the fog block\'s, and on the branch the Burning Court\'s sky and sea would not build) is a type error there; the jungle\'s uniform has a name of its own (mutant: the jungle\'s uniform named uHaze again)', async () => {
   const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.js') ? [join(d, e.name)] : []));
-  const PREPROCESSED = new Set([]);   // PIN MOVED (OWN-WORK4): Dynamic Skies' pass is our own and has no #define - the reader takes it whole
+  const PREPROCESSED = new Set([]);
   const bad = [];
   let n = 0;
   for (const f of walk(join(ROOT, 'src', 'render'))) {
@@ -651,7 +647,7 @@ test('AUDIT BANTHA1 HOST-1/HOST-2/HOST-3/HAZE-7: walked out of Bantha, the haze 
   const { host, sent, sky } = hostWorld();
   const fogColor = Float32Array.from([0.62, 0.7, 0.8]), fogRow = { mode: 'linear', density: 0, start: 0, end: 2400 };
   const frame = (eye, dt = 0.05) => host.haze({ fogColor, fogRow, eye, dt, minute: 13 * 60, weather: 'sunny', wind: null, sky });
-  // HOST-1: a walk east out of the block at 5 m a frame (never a jump), then a minute on
+  // A walk east out of the block at 5 m a frame (never a jump), then a minute on
   let x = 400;
   frame([x, 11.7, 400]);
   assert.equal(sent.at(-1)[4], 1, 'inside: on');
@@ -660,7 +656,7 @@ test('AUDIT BANTHA1 HOST-1/HOST-2/HOST-3/HAZE-7: walked out of Bantha, the haze 
   assert.equal(sent.at(-1), null, 'out: the renderer told none');
   assert.equal(host.uniforms[4], 0, 'and the host\'s own uniforms zeroed');
   assert.equal(host.hides([2600, 0, -10, 2700, 15, 10], [x, 0, 400]), false, 'nothing hidden 2.6 km off - nor anywhere');
-  // HOST-2: deep inside, eased to rest; a VERTICAL recentre (-600 m - the eye past 500 up) moves the scene and the eye
+  // Deep inside, eased to rest; a VERTICAL recentre (-600 m - the eye past 500 up) moves the scene and the eye
   // together: the floor the shader is sent moves with them at once, never eased from the old frame's numbers
   const { host: h2, state: s2, sky: k2, ground: g2 } = hostWorld();
   const eye2 = [400, 11.7, 400];
@@ -678,13 +674,13 @@ test('AUDIT BANTHA1 HOST-1/HOST-2/HOST-3/HAZE-7: walked out of Bantha, the haze 
   s2.compensation[0] -= PIXEL_M; eye2[0] -= PIXEL_M;
   f2();
   assert.ok(h2._state.floor < 60 + JUNGLE_HAZE.layer - 40, `still easing (${h2._state.floor.toFixed(1)})`);
-  // HOST-3: a Recall across the block (two pixels south, the scene eye moved 1.6 km) snaps the floor to its new ground
+  // A Recall across the block (two pixels south, the scene eye moved 1.6 km) snaps the floor to its new ground
   const { host: h3, state: s3, sky: k3 } = hostWorld();
   for (let i = 0; i < 200; i++) h3.haze({ fogColor, fogRow, eye: [400, 11.7, 400], dt: 0.05, minute: 13 * 60, weather: 'sunny', wind: null, sky: k3 });
   s3.compensation[1] = 250;   // the new place's ground stands 250 m higher in the scene
   h3.haze({ fogColor, fogRow, eye: [400, 261.7, 400 - 2 * PIXEL_M], dt: 0.05, minute: 13 * 60, weather: 'sunny', wind: null, sky: k3 });
   assert.ok(near(h3.uniforms[1], 260 + JUNGLE_HAZE.layer, 1e-3), `snapped to the new floor (${h3.uniforms[1]})`);
-  // HAZE-7: under the sea, off
+  // Under the sea, off
   frame([400, 11.7, 400]); frame([400, 11.7, 400]);
   host.under(sky);
   assert.equal(sent.at(-1), null); assert.equal(host.uniforms[4], 0);
@@ -762,7 +758,7 @@ test('BANTHA1 the renderer\'s two tree slots: Low Poly Trees\' frame and the jun
   const gpu = (id) => ({ vao: { id }, pointInstances: (at) => calls.push(['pointInstances', id, at]) });
   const fa = { eye: [1, 2, 3], radius: 140, band: 20, gpu: gpu('lptVao'), cut: new Set([a]), runs: [run(2)] };
   const fb = { eye: [1, 2, 3], radius: 155, band: 25, gpu: gpu('jungleVao'), cut: new Set([b]), runs: [run(3)], sunLift: JUNGLE_SUN_LIFT };
-  jFar.sunLift = JUNGLE_SUN_LIFT;   // AUDIT BANTHA1 TREE-2: the jungle's far picture and its trees read their sun at the crown
+  jFar.sunLift = JUNGLE_SUN_LIFT;   // The jungle's far picture and its trees read their sun at the crown
   r.beginFrame(PROJ, VIEW, new Float32Array([0.3, 0.8, 0.2]), WORLD_FRAME);
   r.setLowPolyTrees(fa); r.setLowPolyTrees(fb, 1);
   calls.length = 0;
@@ -845,7 +841,7 @@ test('BANTHA1 the jungle\'s door: Low Poly Trees\' own over the owner\'s files -
   await Promise.all([door.load(), door.load()]);
   assert.equal(fetched, 21, 'every file once');   // JUNGLE-ROADSIDE (PIN MOVED): the five trees' fifteen and the three roadside pairs' OBJs and MTLs
   assert.equal(door.loaded, true);
-  // AUDIT BANTHA1 TREE-6: a load that failed is asked again on BUILD-RETRY's clock, never latched for the session
+  // A load that failed is asked again on BUILD-RETRY's clock, never latched for the session
   let t = 0, drop = true, asked = 0;
   const warned = [];
   const flaky = createJungleTrees({
@@ -873,7 +869,7 @@ test('BANTHA1 the jungle\'s door: Low Poly Trees\' own over the owner\'s files -
   const [f, slot] = frames.at(-1);
   assert.equal(slot, 1);
   assert.ok(f.cut.has(h) && f.runs[0].drawCount === 1);
-  // AUDIT BANTHA1 TREE-9: the tree walked away from - its instances let go once, then a frame with none near uploads nothing
+  // The tree walked away from - its instances let go once, then a frame with none near uploads nothing
   door.frame([], 0, 0, 0, { stamp: 2 });
   calls.length = 0;
   door.frame([], 0, 0, 0, { stamp: 3 }); door.frame([], 0, 0, 0, { stamp: 4 });
@@ -882,15 +878,14 @@ test('BANTHA1 the jungle\'s door: Low Poly Trees\' own over the owner\'s files -
 
 test('BANTHA1 the hosts: world.js builds the jungle\'s host behind its switch and the trees\' host with it, hands the pixel build the jungle, sets the haze before the fog and takes its colour, culls a pixel the haze hides whole, and hands the far ring the haze; the pixel build asks the kernel for the jungle and stands its trees as far pictures held by the pixel, Logging\'s and cover\'s; the kernel lays the jungle over the pixel\'s own layout (THE FOUR HOSTS: exterior.js, worldModes.js and dungeonContext.js stand no wilderness - FLAGGED in scenes/jungleHost.js)', () => {
   const w = hostText('src/scenes/world.js'), pb = text('src/scenes/pixelBuild.js'), tg = text('src/world/terrain/terrainGen.js'), jh = text('src/scenes/jungleHost.js');
-  // PIN MOVED (TESA-BIOME): and past the Bay Cyrodiil's zones (world/tamriel/tamrielBiomes.js), their stamp its field's key
-  assert.match(w, /const jungle = jungleOn\(\) \? createJungleHost\(\{[^\n]*haze: jungleHazeOn\(\),\n\s+zoneAt: tamrielLand \? tamrielBiomeAt : null, version: tamrielLand \? biomeStamp : null \}\) : null;/);   // PIN MOVED (VALENWOOD-CANOPY): the zones whole, the jungle's and the canopy's read off them
+  assert.match(w, /const jungle = jungleOn\(\) \? createJungleHost\(\{[^\n]*haze: jungleHazeOn\(\),\n\s+zoneAt: tamrielLand \? tamrielBiomeAt : null, version: tamrielLand \? biomeStamp : null \}\) : null;/);
   assert.match(w, /const trees = createTreesHost\(\{[^\n]*jungle, breathe: \(\) => breather\.breathe\(\), yards: \(\) => yards \}\);/);
   assert.match(w, /jungle, lowPolyTrees, maps, modelFeetOf/, 'the pixel build has the jungle');
-  const fogAt = w.indexOf('const fogColor = jungle ? jungle.haze({ fogColor: sky.fogColorFor(fogNow), fogRow: fogNow, eye: mwv.eye, dt, minute, weather, wind: wd.on ? wd.windV : null, sky }) : sky.fogColorFor(fogNow);');   // AUDIT BANTHA1 HOST-7: the view's eye, as the fog's uCamPos
+  const fogAt = w.indexOf('const fogColor = jungle ? jungle.haze({ fogColor: sky.fogColorFor(fogNow), fogRow: fogNow, eye: mwv.eye, dt, minute, weather, wind: wd.on ? wd.windV : null, sky }) : sky.fogColorFor(fogNow);');   // The view's eye, as the fog's uCamPos
   assert.ok(fogAt > 0 && w.indexOf('renderer.setFog(fogNow.mode,', fogAt) - fogAt < 600, 'the haze, then the fog with its colour');
   assert.match(w, /const pixelVisible = !cullOn \|\| !\(aabbOutside\(_planes, p\._box, t\[0\], t\[1\], t\[2\]\) \|\| jungle\?\.hides\(p\._box, t\)\);/);
   assert.match(w, /haze: renderer\._haze, hazeEye: jungle\?\.eye/, 'the far ring');
-  assert.match(pb, /jungle: jungle \? jungle\.job\(px, py, FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)\) : null,/);   // PIN MOVED (GROUND-AGREE): the ground's place
+  assert.match(pb, /jungle: jungle \? jungle\.job\(px, py, FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)\) : null,/);
   assert.match(pb, /jungle\.door\.acquire\(far\); jungleHandles\.push\(far\);/);
   assert.match(pb, /made\.jungleHandles = jungleHandles;/, 'BUILD-FAIL1\'s ledger');
   assert.match(pb, /const young = f\.js <= JUNGLE\.underScale\[1\], gk = young \? `J\$\{f\.jungle\}y` : `J\$\{f\.jungle\}`;/, 'AUDIT BANTHA1 PERF-5: the young trees a group of their own');
@@ -900,7 +895,7 @@ test('BANTHA1 the hosts: world.js builds the jungle\'s host behind its switch an
   assert.match(pb, /coverItems\.push\(\.\.\.jungleCover\(c, species, own\[i\]\)\)/, 'cover');
   assert.match(pb, /f\.jungle != null \? JUNGLE_MEASURES\[f\.jungle\]\.foot \* f\.js : natureReach/, 'the road keeps clear of its foot - loaded or not (AUDIT BANTHA1 LAY-5)');
   assert.match(pb, /jungleTrees: jungleSet\.length \? \{ px, py, ox: 0, oy: 0, oz: 0, handles: jungleHandles, groups: jungleSet, trees: null, centers: null \} : null,/);
-  assert.match(tg, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(jungle && jungleWhole\(jungle\.nine\) \? \[\] : layoutNature\(samples, tilemap, natureOpts\), samples, tilemap,\n\s+\{ \.\.\.natureOpts, jungle: jungle \? \{ nine: jungle\.nine, pois: placesFor\(jungle\.hidden\), paths, net: roads, canopy: jungle\.canopy \?\? null \} : null \}\);/);   // JUNGLE-ROADSIDE (PIN MOVED): and the network, its pairs astride the roads - handed back beside the flats (AUDIT JUNGLE-ROADSIDE PERF-2); PIN MOVED (GRAHT1): and the canopy's field, its graht-oaks handed back beside them
+  assert.match(tg, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(jungle && jungleWhole\(jungle\.nine\) \? \[\] : layoutNature\(samples, tilemap, natureOpts\), samples, tilemap,\n\s+\{ \.\.\.natureOpts, jungle: jungle \? \{ nine: jungle\.nine, pois: placesFor\(jungle\.hidden\), paths, net: roads, canopy: jungle\.canopy \?\? null \} : null \}\);/);   // JUNGLE-ROADSIDE (PIN MOVED): and the network, its pairs astride the roads - handed back beside the flats; PIN MOVED: and the canopy's field, its graht-oaks handed back beside them
   assert.match(jh, /scenes\/dungeonContext\.js \(dungeons\) - FLAGGED: none stands the wilderness the jungle grows in/);
 });
 
@@ -950,7 +945,7 @@ test('AUDIT BANTHA1 DOC-5: the four storeys\' laws, on a pixel with glades - no 
     assert.equal(f.jungle, canopySpecies(origin, tx, tz, above, light, draw), `the canopy tree at ${f.x.toFixed(1)}, ${f.z.toFixed(1)}`);
     n++; if (canopySpecies(origin, tx, tz, above, 0, draw) !== f.jungle) lit++;
   }
-  assert.ok(n > 500 && lit > 20, `the light chose ${lit} of ${n}`);   // PIN MOVED (SPREAD): a site's canopy, half the cells'
+  assert.ok(n > 500 && lit > 20, `the light chose ${lit} of ${n}`);
   // the understorey (PIN MOVED, SPREAD: a cell's spot, a light gap where no canopy crown reaches it - its young trees at
   // JUNGLE.gapUnder, under a crown JUNGLE.under), read a cell inside the pixel's edge, where every crown is this pixel's
   const crowned = new Set(canopy.map((f) => `${Math.floor(f.x / S / C)},${Math.floor(f.z / S / C)}`));
@@ -971,7 +966,7 @@ test('AUDIT BANTHA1 DOC-5: the four storeys\' laws, on a pixel with glades - no 
   // the mid storey and the floor
   const palms = out.filter((f) => f.jungle == null && JUNGLE_PALMS.includes(f.record)), floor = out.filter((f) => f.jungle == null && JUNGLE_COVER.includes(f.record));
   const cells = (128 / C) ** 2;
-  assert.ok(palms.length > cells * JUNGLE.palm * 0.4 && palms.length < cells * JUNGLE.palm, `the rainforest's palms (${palms.length})`);   // PIN MOVED (SPREAD): a cell's chance, where it was a tile's
+  assert.ok(palms.length > cells * JUNGLE.palm * 0.4 && palms.length < cells * JUNGLE.palm, `the rainforest's palms (${palms.length})`);
   const planted = new Set(floor.map((f) => `${Math.floor(f.x / S)},${Math.floor(f.z / S)}`));
   let gT = 0, gF = 0, cT = 0, cF = 0;
   for (let y = 6; y < 128; y++) {

@@ -80,8 +80,8 @@
   {
     "name": "START1-node-twin-dir-dropped",
     "file": "test/qlSources.mjs",
-    "old": "  ['starts', 'src/systems/starts/quests'],",
-    "new": "",
+    "old": "  ['starts', 'src/systems/starts/quests'],   // The starts' own quests (systems/starts/starts.js)",
+    "new": "   // The starts' own quests (systems/starts/starts.js)",
     "tests": [
       "test/systems/starts/start1_bay.test.js",
       "test/systems/questlines/ql1_sheets.test.js"

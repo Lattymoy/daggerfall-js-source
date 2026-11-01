@@ -2,15 +2,15 @@
 // the player's own archives - MAPS.BSA for where the settlements are,
 // WOODS.WLD for the ground between them - and the reason roadNetwork.js
 // could stay pure. OWN-WORK2: it is the Bay's only network - roads,
-// tracks, rivers and streams, all ours (bible/03-World/Roads.md).
+// tracks, rivers and streams, all ours.
 
 import { longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { BASE_HEIGHT_SCALE, SCALED_BEACH_ELEVATION } from './terrain/terrainSampler.js';
 import { buildRoadNetwork, ROAD_TYPES, TRACK_TYPES } from './road/roadNetwork.js';
-import { VOYAGER_DIALS, RIVER_FORD, landForRoutes, landGrain } from './road/roadLand.js';   // OWN-WORK2: the land's law past the Bay, on it too
-import { linkGaps } from './road/roadGaps.js';   // OWN-WORK2: and ROAD-GAPS' links
-import { buildRiverNetwork, riverPrices } from './road/riverNetwork.js';   // OWN-WORK2: the Bay's rivers and streams
+import { VOYAGER_DIALS, RIVER_FORD, landForRoutes, landGrain } from './road/roadLand.js';   // The land's law past the Bay, on it too
+import { linkGaps } from './road/roadGaps.js';   // And ROAD-GAPS' links
+import { buildRiverNetwork, riverPrices } from './road/riverNetwork.js';   // The Bay's rivers and streams
 
 /** Water, in the small heightmap's own units: the sampler calls a
  *  height at or below the beach elevation water, and a WOODS byte
@@ -85,7 +85,7 @@ export function buildRoadsFromSettlements(locations, woods, dials = {}) {
     const gates = edgeGates(dry, W, H);
     const net = buildRoadNetwork({ locations: [...locations, ...gates], heightAt: (x, y) => heights[y * W + x], isWater: (x, y) => dry[y * W + x] === 1, dials, terrain: land });
     net.stats.linked = linkGaps(net, W, H, { blocked: (u, v) => dry[v * W + u] === 1, owns: () => true });
-    waterOffPaths(Object.assign(net, { rivers, streams }));   // CANAL-ARM: an arm a path and a water share is the path's
+    waterOffPaths(Object.assign(net, { rivers, streams }));   // An arm a path and a water share is the path's
     net.stats.ms = Math.round((globalThis.performance ?? Date).now() - t0);
     net.stats.settlements = locations.length;
     net.stats.rivers = riverStats;
@@ -97,11 +97,11 @@ export function buildRoadsFromSettlements(locations, woods, dials = {}) {
   }
 }
 
-/** OWN-WORK2: how far apart along each of the Bay's edges a road runs out to it, pixels. */
+/** How far apart along each of the Bay's edges a road runs out to it, pixels. */
 export const EDGE_GATE_SPACING = 100;
 
 /**
- * OWN-WORK2: THE BAY'S WAYS OUT. The Bay's roads join its towns, and the land goes on past its edges to the provinces,
+ * THE BAY'S WAYS OUT. The Bay's roads join its towns, and the land goes on past its edges to the provinces,
  * whose roads meet the Bay's where one reaches an edge (world/arenaRoads.js arenaJoins, TESA5). So each EDGE_GATE_SPACING
  * of an edge takes a road node: the dry edge pixel nearest the stretch's middle with three dry pixels inward of it. The
  * build joins each to the towns of its land; none stands where the edge is the sea.
@@ -129,7 +129,7 @@ export function edgeGates(water, W, H, spacing = EDGE_GATE_SPACING) {
 }
 
 /**
- * WOD2: Basic Roads' `getPathsPoint` message (BasicRoadsMod.cs, the
+ * Basic Roads' `getPathsPoint` message (BasicRoadsMod.cs, the
  * GET_PATHS_POINT arm): the ROAD mask OR the TRACK mask at a map pixel,
  * read through BasicRoadsTexturing.GetPathDataPoint's own index
  * (`x + y * MapsFile.MaxMapPixelX`). Rivers and streams are not asked -

@@ -1,11 +1,11 @@
-// EOTB3: THE PLAYER BILLBOARD - the body you see in third person
+// THE PLAYER BILLBOARD - the body you see in third person
 // when you have no Morrowind data.
 //
 // RedRoryOTheGlen's `PlayerBillboard`, read off the shipped assembly's
 // IL. This file is the LOGIC: which sprite, facing which way, on what
 // clock. The drawing is `eotbBody.js`'s.
 //
-// ═══ EOTB-IL (2026-09-17): THE ASSEMBLY, READ ══════════════════════
+// ═══ EOTB-IL: THE ASSEMBLY, READ ══════════════════════
 //
 // Mac handed the shipped archive over ("it needs to be 1:1 with the
 // uploaded file. No exceptions") and the port's own UnityFS reader
@@ -226,15 +226,13 @@ export function orientationFor(facing, toCamera) {
 }
 
 /**
- * SPRITE-FACE (2026-10-05, Mac: "For the wing aura we implemented for developers. The sprite rotation on character input
- * is a little finicky and make the aura misallign"): THE FACING A FRAME PORTRAYS - `orientationFor` run backwards. The
- * sprite is drawn from one of ORIENTATIONS pictures, ANGLE_PER_ORIENTATION apart about the line from the figure to the
- * camera, so the way it is SEEN to face is that line's bearing turned back by the picture's angle - the middle of the
- * picture's bucket, whatever facing chose it. An aura hung on the sprite (render/auraRing.js - the Seraph Wings, the
- * Shadow Cloak) faces THIS, not the facing the walk wants: that one runs up to half a bucket (22.5 degrees) off the
- * picture, and ahead of it by the mod's delayed repaint (UpdateBillboardDelayed, DELAYED_FRAMES). A yaw (forward
- * (sin, cos)) in (-pi, pi], or null with no line of sight (`toCamera` zero: signedAngleY's 0, the front picture, which
- * faces no bearing). Pure.
+ * THE FACING A FRAME PORTRAYS - `orientationFor` run backwards. The sprite is drawn from one of ORIENTATIONS pictures,
+ * ANGLE_PER_ORIENTATION apart about the line from the figure to the camera, so the way it is SEEN to face is that
+ * line's bearing turned back by the picture's angle - the middle of the picture's bucket, whatever facing chose it. An
+ * aura hung on the sprite (render/auraRing.js - the Seraph Wings, the Shadow Cloak) faces THIS, not the facing the
+ * walk wants: that one runs up to half a bucket (22.5 degrees) off the picture, and ahead of it by the mod's delayed
+ * repaint (UpdateBillboardDelayed, DELAYED_FRAMES). A yaw (forward (sin, cos)) in (-pi, pi], or null with no line of
+ * sight (`toCamera` zero: signedAngleY's 0, the front picture, which faces no bearing). Pure.
  */
 export function portrayedYaw(orientation, toCamera) {
   if (!Number.isInteger(orientation) || !toCamera || (!toCamera[0] && !toCamera[2])) return null;
@@ -306,11 +304,11 @@ export function facingFor(
       facing = animating ? cameraForward : moving();
     } else facing = moving();
   }
-  if (boatForward) facing = boatForward; // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above
+  if (boatForward) facing = boatForward; // `Instance.isSailing` - the boat's heading, over every arm above
   return [facing[0], 0, facing[2]];
 }
 
-/** CSA-J: [IL] UpdateOrientation's Come Sail Away arm (IL_471c-IL_4765) off the camera's fields - sailing, the
+/** [IL] UpdateOrientation's Come Sail Away arm (IL_471c-IL_4765) off the camera's fields - sailing, the
  *  DrivePosition's forward, else the hull's; null ashore. */
 export const boatForwardOf = ({ isSailing = false, boatDriveObject = null, boatMeshObject = null } = {}) =>
   isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null;
@@ -446,18 +444,15 @@ export const LYCAN_TICK = 0.125;
 export const DEATH_TICK = 0.5;
 
 /**
- * ONE-STROKE (2026-10-07, Mac: "can we make it where attacking plays only one animation. Like for example the base
- * sprite when attacking plays an entire 2 swing follow-through"): A BLOW PLAYS ONE STROKE. Every swing record the
- * bundle ships - the mod's sixteen sets and the class skins alike, all six frames - is TWO strokes, frames 0-2 and 3-5:
- * a slash then an overhead chop on the swords, two chops on the axes and hammers, a sweep and its return on the
- * staves, a slash then a stab on the daggers. The mod plays all six for every blow (PlayAnimationCoroutine), or under
- * PingPong and Mixed the first four forward and back (PlayAnimationPingPongCoroutine) - two movements either way. A
- * blow plays its own half now: an even blow the first stroke, an odd one the second, so a chain of blows still shows
- * the whole string, one stroke a click. `blow` is the rig's count (weaponRig `swingN`, the wire's `an`), so a peer
- * draws the stroke the swinger drew. An odd frame count gives its first stroke the shorter half; a clip under two
- * frames is one stroke. RETIRES the ping-pong (usesPingPong, pingPongFrames, pingPongTickFrames): Graphics.PingPongOffset
- * is retired with it (OWN-AUDIT), and AttackStrings' PingPong reads as None and Mixed as Mirror. A departure from the assembly, recorded in
- * the Ledger.
+ * A BLOW PLAYS ONE STROKE. Every swing record the bundle ships - the mod's sixteen sets and the class skins alike, all six frames - is TWO
+ * strokes, frames 0-2 and 3-5: a slash then an overhead chop on the swords, two chops on the axes and hammers, a sweep and its return on
+ * the staves, a slash then a stab on the daggers. The mod plays all six for every blow (PlayAnimationCoroutine), or under PingPong and
+ * Mixed the first four forward and back (PlayAnimationPingPongCoroutine) - two movements either way. A blow plays its own half now: an even
+ * blow the first stroke, an odd one the second, so a chain of blows still shows the whole string, one stroke a click. `blow` is the rig's
+ * count (weaponRig `swingN`, the wire's `an`), so a peer draws the stroke the swinger drew. An odd frame count gives its first stroke the
+ * shorter half; a clip under two frames is one stroke. RETIRES the ping-pong (usesPingPong, pingPongFrames, pingPongTickFrames):
+ * Graphics.PingPongOffset is retired with it, and AttackStrings' PingPong reads as None and Mixed as Mirror. A departure from the assembly,
+ * recorded in the Ledger.
  */
 export function meleeStrokeFrames(n, blow = 0) {
   const len = Math.max(0, n | 0);

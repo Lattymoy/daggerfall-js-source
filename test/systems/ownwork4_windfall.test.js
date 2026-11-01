@@ -1,5 +1,4 @@
-// OWN-WORK4 (2026-10-31, the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper 1
-// to 1 recreation for everything") - WINDFALL's SOUNDS AND PICTURES, OUR OWN. Windfall 1.0.0 (demifiend000) keeps its
+// WINDFALL's SOUNDS AND PICTURES, OUR OWN. Windfall 1.0.0 (demifiend000) keeps its
 // names, rates, frame counts and sizes; the clips are made by our synthesizer (systems/windfall/windfallSynth.js) and
 // the pictures by our painter (systems/windfall/windfallPictures.js), each from a seed. vendor/windfall left the tree.
 // bible/07-Rendering/Windfall.md is the record.

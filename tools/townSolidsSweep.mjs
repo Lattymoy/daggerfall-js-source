@@ -1,5 +1,5 @@
-#!/usr/bin/env node
-// FIELD BUGS 2026-10-15f TEMPLE-STEPS: THE SOLIDS THE PORT STANDS IN A TOWN'S BLOCK, SWEPT - against the author's own
+// /usr/bin/env node
+// THE SOLIDS THE PORT STANDS IN A TOWN'S BLOCK, SWEPT - against the author's own
 // models and against every exterior door's approach. The law test/world/wd3_standins.test.js holds on the player's data.
 //
 //   ARENA2_PATH=<the player's arena2> node tools/townSolidsSweep.mjs          print every finding over both packs' blocks
@@ -175,7 +175,7 @@ export function approachPoints(a) {
 export function sweepBlock(models, getModel, { drawn = drawnHillStandIn, pads = true } = {}) {
   const placed = models
     .map((m, index) => ({ index, id: m.modelIdNum, M: m.matrix, mesh: getModel(m.modelIdNum) }))
-    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id)); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)
+    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id)); // No board stands
   const solidOf = new Map();
   const solid = (p) => {
     if (!solidOf.has(p)) solidOf.set(p, placedSolid(p.mesh, p.M));
@@ -264,7 +264,7 @@ export function sweepBlock(models, getModel, { drawn = drawnHillStandIn, pads = 
 export function eachPackBlock(data, each, only = null) {
   for (const [vendor] of VENDORS) {
     const p = data.packs[vendor];
-    if (!p) continue; // OWN-WORK3: the town packs are retired
+    if (!p) continue; // The town packs are retired
     for (const file of p.names()) {
       if (!file.endsWith('.RMB.json')) continue;
       const name = file.slice(0, -5);

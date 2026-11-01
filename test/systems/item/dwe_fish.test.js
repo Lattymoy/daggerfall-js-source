@@ -1,4 +1,4 @@
-// DW-E3 (2026-09-25) - ILIAC PUDDLE NO MORE 1.2.2's PASSIVE FISH (jet082), PINNED: the species
+// ILIAC PUDDLE NO MORE 1.2.2's PASSIVE FISH (jet082), PINNED: the species
 // against PassiveFishSpeciesCatalog.All; the depth weight and the weighted pick; the school's cruise,
 // threat and water; a fish's flee, dart, school cohesion, clamp and obstacle; the spawner's placement
 // (the depth band, the deep's floor bias, the schoolmates' ring); the icon's aspect; the pulse and the
@@ -308,18 +308,18 @@ test('DW-E3: the pulse - a dozen destroys and the queued spawns every frame; the
 
 // ── the fish as items, their pictures, and the host ─────────────────
 import { readFileSync, existsSync } from 'node:fs';
-import { FISH_ART, fishPicture } from '../../../src/systems/deepWater/fishArt.js';   // OWN-WORK4: our own pictures
+import { FISH_ART, fishPicture } from '../../../src/systems/deepWater/fishArt.js';   // Our own pictures
 import { templateByIndex } from '../../../src/systems/item/itemTemplates.js';
 import { preloadTextureRecord, decodedTextureTopDown, setTextureDeriveContext, isVendorArchive } from '../../../src/systems/textureReplacement.js';
 import { DEEP_WATERS_FISH_TEMPLATES, createFishItem, normalizeFishItems, installDeepWatersFishIcons, fishIconArchive, FISH_GROUP } from '../../../src/systems/deepWater/deepWatersFishItems.js';
 import { createDeepWatersFish, createFishPictures, fishBoxDepth, FISH_CUTOFF } from '../../../src/scenes/deepWater/deepWatersFish.js';
 import { rayUprightCapsule } from '../../../src/world/passiveFish.js';
-import { SURVIVAL_TEMPLATES } from '../../../src/systems/survival/items.js';   // OWN-WORK3: the price rule reads Raw Fish's
+import { SURVIVAL_TEMPLATES } from '../../../src/systems/survival/items.js';   // The price rule reads Raw Fish's
 import { TEMPLATE } from '../../../src/systems/survival/food.js';
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
 test('DW-E3 / OWN-WORK3: the fish items are our own rows - the names one a fish, the weight and the price by their rules over the species - each drawn from an archive of its own (the treasure piles keep TEXTURE.216); TryCreateFishItem mints the template in UselessItems2; NormalizeFishItemCollection puts a stray fish back, its stack and condition kept, and renames an old catch (mutants: the remap, the group, a row, a name)', () => {
-  // OWN-WORK3 (2026-10-31): Iliac Puddle No More 1.2.2 shipped its own seven rows; ours replace them on the same indices
+  // Iliac Puddle No More 1.2.2 shipped its own seven rows; ours replace them on the same indices
   // (saves hold them). [index, name, kilos, gold, condition, rarity, not repairable]
   assert.deepEqual(DEEP_WATERS_FISH_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.basePrice, t.hitPoints, t.rarity, t.isNotRepairable]), [
     [9001, 'Gold Butterflyfish', 0.25, 7, 1, 20, true],

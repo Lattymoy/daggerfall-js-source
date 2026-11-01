@@ -26,14 +26,14 @@ import { drawRigSpriteBox, drawCharacterSprite, landAnchor } from '../../src/ren
 import { MW_WEAPON_TYPE, MW_UNITS_PER_METER, meshBounds } from '../../src/formats/morrowind/mwFirstPerson.js';
 import { HOLSTER_SLOTS } from '../../src/systems/weaponSheathing.js';
 import { multiply, perspective, lookAt, transformPoint, trs } from '../../src/world/mat4.js';
-import { leanedUp } from '../../src/player/travelCamera.js';   // AUDIT OW4 J6: the travel view's leaned up
-import { Renderer } from '../../src/render/renderer.js';   // AUDIT OW4 J6: the quad's own corners
-import { setPref } from '../../src/systems/uiPrefs.js';   // BODY-CROP: the card's laws under the Billboard Look
+import { leanedUp } from '../../src/player/travelCamera.js';   // The travel view's leaned up
+import { Renderer } from '../../src/render/renderer.js';   // The quad's own corners
+import { setPref } from '../../src/systems/uiPrefs.js';   // The card's laws under the Billboard Look
 import { bodyRec, fixtureFile as f } from '../fixtures/mw/bodyRig.mjs';
 import { weaponMesh } from '../fixtures/mw/ownGear.mjs';
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
-// OWN-WORK4: our own stand-in weapon meshes (ownGear.mjs), the old pins' sizes - a longsword running y -8..59.5
+// Our own stand-in weapon meshes (ownGear.mjs), the old pins' sizes - a longsword running y -8..59.5
 // from its grip, a long bow -38.5..46 gripped mid-stave
 const STAND_INS = { 'w_iron_longsword_sh.nif': weaponMesh({ grip: 8, guard: 4, blade: 59.5 }), 'w_longbow_sh.nif': weaponMesh({ grip: 38.5, guard: 1, blade: 46, width: 1, thick: 1 }) };
 const standIn = (n) => STAND_INS[n];
@@ -51,7 +51,7 @@ const wpdt = (id, model, type) => {
   return [...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d];
 };
 
-// The hand holds our stand-in meshes at the old _sh files' lengths (OWN-WORK4).
+// The hand holds our stand-in meshes at the old _sh files' lengths.
 const LONGSWORD = { templateIndex: 120 };   // -> LongBladeOneHand, "Weapon Bone"
 const LONG_BOW = { templateIndex: 130 };    // -> MarksmanBow, "Weapon Bone Left" (rule 8)
 
@@ -87,7 +87,7 @@ function capturingRenderer() {
     updateCharacterMesh: () => {},
     createCharacterTexture: (mips) => ({ mips }),
     renderCharacterSprite: (mesh, model, oproj, oview, pw, ph) => { cap.sprite = { model, oproj, oview, pw, ph }; return {}; },
-    drawCharacterSpriteQuad: (tex, center, halfW, halfH, right, u1, v1, hitFlash, conceal, up) => { cap.quad = { center: [...center], halfW, halfH, right, up }; },   // AUDIT OW4 J6: and its `up`
+    drawCharacterSpriteQuad: (tex, center, halfW, halfH, right, u1, v1, hitFlash, conceal, up) => { cap.quad = { center: [...center], halfW, halfH, right, up }; },   // And its `up`
     drawScreenOverlayQuad: () => {},
     createParticleEffect: () => ({}),
   };
@@ -123,7 +123,7 @@ const ndc = (m, p) => { const w = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[1
  *  on the fixture) through the sprite's ortho -> the RT's NDC -> the quad -> the main camera */
 function drawnBody({ arm, cap }, cam, grow = undefined) {
   cap.sprite = null; cap.quad = null;
-  assert.equal(arm.drawThird(canvas, { proj: cam.proj, view: cam.view, eye: cam.eye, feet: FEET, yaw: 0, grow }), true, 'the body draws');   // AUDIT OW3 J6: `grow` the travel view's
+  assert.equal(arm.drawThird(canvas, { proj: cam.proj, view: cam.view, eye: cam.eye, feet: FEET, yaw: 0, grow }), true, 'the body draws');   // `grow` the travel view's
   const pv = multiply(cam.proj, cam.view);
   const mini = multiply(multiply(cap.sprite.oproj, cap.sprite.oview), cap.sprite.model);
   const { center: c, halfW, halfH, right } = cap.quad, U = cap.quad.up ?? [0, 1, 0];
@@ -157,7 +157,7 @@ test('PR-BOW1: the body is the SAME size on screen bare-handed, with a longsword
 test('PR-BOW1: the picture is OF the body - taken along the eye\'s ray to the actor\'s own axis at the body\'s mid-height (the drawn ranges less CARRIED_SLOTS), that point drawn exactly on itself, and every point of the body drawn where it is drawn bare-handed, whatever the hand holds (unfixed: the gear-inclusive box centre placed the picture)', async () => {
   const SAMPLES = [[0, 0, 0], [0, 0, 3.2], [1.5, 0.5, 2], [-0.4, 1.8, 3.2]];   // feet, shoulder, off-axis points of the fixture body
   const bare = await standBody();
-  // BODY-CROP (2026-10-22): the card - and so its ray and its anchor - stands under the Billboard Look; by default the
+  // The card - and so its ray and its anchor - stands under the Billboard Look; by default the
   // picture is the main camera's own, cut to the body's window, and the same points land the same way
   for (const card of [true, false]) {
     setPref('mwBillboardLook', card);
@@ -175,7 +175,7 @@ test('PR-BOW1: the picture is OF the body - taken along the eye\'s ray to the ac
           const got = drawnBody(body, cam);
           const at = `${what}, ${back}/${pitch}`;
           if (card) {
-            // lookAt's third row is -forward. BODY-FLAT (2026-10-23): along the ray's LEVEL part - the Billboard Look's
+            // lookAt's third row is -forward. BODY-FLAT: along the ray's LEVEL part - the Billboard Look's
             // card is a classic flat, its picture drawn level (PIN MOVED: it was the pitched ray)
             const fwd = [-got.sprite.oview[2], -got.sprite.oview[6], -got.sprite.oview[10]];
             assert.ok(crossLen(fwd, [axis[0] - cam.eye[0], 0, axis[2] - cam.eye[2]]) < 1e-5, `${at}: the picture is taken along the eye's level ray to the body`);
@@ -185,7 +185,7 @@ test('PR-BOW1: the picture is OF the body - taken along the eye\'s ray to the ac
           const landed = got.place([0, 0, midZ]);
           assert.ok(near3(landed, axis, 1e-5), `${at}: the body's axis point draws on itself (off by ${(Math.hypot(landed[0] - axis[0], landed[1] - axis[1], landed[2] - axis[2]) * 100).toFixed(2)} cm)`);
           const ref = drawnBody(bare, cam);
-          // BODY-LEAN: half a millimetre - a drawn blade's stance moves the body's own mid-height (its anchor) a hair, and
+          // Half a millimetre - a drawn blade's stance moves the body's own mid-height (its anchor) a hair, and
           // the leaned quad carries that hair along its tilt (0.10 mm at 192/20); the bug this pins was a third of a metre
           for (const s of SAMPLES) {
             const a = got.place(s), b = ref.place(s);
@@ -203,7 +203,7 @@ test('AUDIT OW3 J6: drawThird\'s `grow` (the travel view\'s OW-BIG - the Morrowi
   const { minZ, maxZ } = meshBounds(pieces);
   const midZ = (minZ + maxZ) / 2;
   const SAMPLES = [[0, 0, 0], [0, 0, 3.2], [1.5, 0.5, 2], [-0.4, 1.8, 3.2]];
-  // BODY-CROP (2026-10-22): the card's window grows with the body under the Billboard Look; the main camera's own picture
+  // The card's window grows with the body under the Billboard Look; the main camera's own picture
   // (the default) draws every grown point where the grown mesh itself stands on the screen
   for (const card of [true, false]) {
     setPref('mwBillboardLook', card);
@@ -320,7 +320,7 @@ test('PR-BOW1: drawRigSpriteBox\'s anchor - the picture is taken along the eye\'
   const proj = perspective(Math.PI / 3, 1.6, 0.05, 500), view = lookAt(eye, [0, 1, 0], [0, 1, 0]);
   const rec = () => { const c = {}; return { c, renderCharacterSprite: (m, model, op, ov, pw, ph) => { Object.assign(c, { op, ov, pw, ph }); return {}; }, drawCharacterSpriteQuad: (t, center, hw, hh, right, u1, v1, hf, cc, up) => { Object.assign(c, { center, hw, hh, right, up }); } }; };
   const id = trs(0, 0, 0, 0, 0, 0, 1, 1, 1);
-  const place = (c, p) => { const [nx, ny] = ndc(multiply(c.op, c.ov), p); return [0, 1, 2].map((k) => c.center[k] + c.right[k] * c.hw * nx + c.up[k] * c.hh * ny); };   // BODY-LEAN: along the quad's own up
+  const place = (c, p) => { const [nx, ny] = ndc(multiply(c.op, c.ov), p); return [0, 1, 2].map((k) => c.center[k] + c.right[k] * c.hw * nx + c.up[k] * c.hh * ny); };   // Along the quad's own up
   const lookDir = (ov) => [-ov[2], -ov[6], -ov[10]];
   const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const box = { center: [0.1, 0.9, 0.4], halfW: 0.7, halfH: 0.95 };
@@ -340,7 +340,7 @@ test('PR-BOW1: drawRigSpriteBox\'s anchor - the picture is taken along the eye\'
   assert.ok(crossLen(lookDir(a1.c.ov), sub(anchor, eye)) < 1e-6, 'the picture is taken along the eye\'s ray to the anchor');
   const boxInView = transformPoint(a1.c.ov, ...box.center);
   assert.ok(Math.abs(boxInView[0]) < 1e-6 && Math.abs(boxInView[1]) < 1e-6, 'and centred on the box - the gear stays in the window');
-  // MWHEAD1: through the box's own window as THIS ray sees it - the same width; a height that holds the box pitched
+  // Through the box's own window as THIS ray sees it - the same width; a height that holds the box pitched
   // along the ray to the anchor (test/world/mwhead1_window.test.js pins the window itself)
   const tiltTo = (p) => Math.abs(sub(p, eye)[1]) / Math.hypot(...sub(p, eye));
   const winH = (t) => box.halfH * Math.sqrt(1 - t * t) + box.halfW * t;
@@ -358,7 +358,7 @@ test('PR-BOW1: drawRigSpriteBox\'s anchor - the picture is taken along the eye\'
   // (MWHEAD1: the window is the ray's own now, so the law is asserted as the law - the quad's height on screen over
   // its rows is `pixel` to the rounding - rather than as equality with another box whose ray tilts differently)
   const pv = multiply(proj, view);
-  const quadPx = Math.abs(ndc(pv, a1.c.center.map((v, k) => v + a1.c.up[k] * a1.c.hh))[1] - ndc(pv, a1.c.center.map((v, k) => v - a1.c.up[k] * a1.c.hh))[1]) * canvas.clientHeight / 2;   // BODY-LEAN: along the quad's own up
+  const quadPx = Math.abs(ndc(pv, a1.c.center.map((v, k) => v + a1.c.up[k] * a1.c.hh))[1] - ndc(pv, a1.c.center.map((v, k) => v - a1.c.up[k] * a1.c.hh))[1]) * canvas.clientHeight / 2;   // Along the quad's own up
   assert.ok(Math.abs(quadPx / a1.c.ph - 3) < 3 / a1.c.ph + 1e-9, `a texel is 3 screen pixels where the quad stands (${quadPx / a1.c.ph})`);
   assert.ok(Math.abs(a1.c.pw / a1.c.ph - a1.c.hw / a1.c.hh) < 1 / a1.c.ph + 1e-9, 'and square');
   // an anchor AT the eye has no ray: what stood
@@ -420,14 +420,13 @@ test('PR-BOW1: the per-range boxes - folded over each piece\'s posed positions i
 test('PR-BOW1: the wiring, by source - the upload folds the per-range boxes, drawThird folds only what it draws and anchors the quad, and every body reaches it: the local one in every host through mwView, the peers through PeerBodies', () => {
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /function uploadThirdMesh\(t\) \{[\s\S]*?foldRangeBoxes\(thirdMesh\.ranges\);[\s\S]*?return thirdMesh;/, 'every upload refolds the boxes');
-  const at = arm.indexOf('    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null, grow = 1, up = null, fx = null, cast = false, anchored = false, horse = null }) {');   // PIN MOVED, COATS3D: and the horse under the body   // PIN MOVED (AUDIT MWNPC16-18 A3, section 27): and whether the body never walks   // PIN MOVED (MWNPC5): and a foe's tells   // AUDIT OW3 J6: and the travel view's grow; AUDIT OW4 J6: and its up; MWNPC16: and its own shadow
+  const at = arm.indexOf('    drawThird(canvas, { proj, view, eye, feet, yaw, hitFlash = 0, conceal = null, grow = 1, up = null, fx = null, cast = false, anchored = false, horse = null }) {');
   assert.notEqual(at, -1, 'drawThird found');
   const draw = arm.slice(at, arm.indexOf('    itemIcon(item,'));
-  // PIN MOVED (MWNPC16): the box is thirdBox's - one home for the draw and the cast (castThird)
   assert.match(draw, /const box = thirdBox\(\);/, 'the box is thirdBox\'s');
   assert.match(arm.slice(arm.indexOf('  function thirdBox() {'), arm.indexOf('  const castSphere = ')), /visibleRangeBounds\(thirdMesh\.ranges, thirdDrawBox\)/, 'the box is the drawn ranges');
   assert.match(draw, /visibleRangeBounds\(thirdMesh\.ranges, thirdBodyBox, CARRIED_SLOTS\)/, 'the anchor height is the body\'s');
-  assert.match(draw, /drawBodyPicture\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks \}/, 'and the quad is anchored (AUDIT OW4 J6: and leaned by the view\'s up)');   // PIN MOVED (MWNPC5): and a foe's tells; PIN MOVED (WEAPON-GLOW1, AUDIT MW-3): and the held weapon's glow, whose outline the picture is padded for   // PIN MOVED (TWO-HANDS x WEAPON-GLOW1): the pad's looks - the held weapon's and a pair's left blade's   // PIN MOVED (BODY-CROP x MW-DETAIL, 2026-10-22): through drawBodyPicture, which hands the anchor to drawRigSpriteBox's card
-  assert.match(rd('src/player/mwView.js'), /fpArm\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet,\n\s*yaw,\n\s*grow: face\?\.grow > 1 \? face\.grow : 1,\n\s*up: face\?\.up \?\? null,\n\s*horse,\n\s*\}\)/, 'the local body, every host (AUDIT OW3 J6: grown under the travel view; AUDIT OW4 J6: leaned)');   // PIN MOVED, COATS3D: astride, its horse
-  assert.match(rd('src/net/peer/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet: b\.feet,\n\s*yaw: b\.yaw,\n\s*hitFlash: flashOf \? flashOf\(b\.id\) : 0,\n\s*conceal: b\.veil \?\? null,\n\s*grow: g,\n\s*up: this\._cam\?\.up \?\? null,\n\s*fx,\n\s*cast,\n\s*anchored,\n\s*horse,\n\s*\}\)/, 'every peer\'s body');   // PIN MOVED (MWNPC5): and its tells by id   // PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown and leaned under the Overworld   // PIN MOVED (AUDIT MWNPC16-18 A3, Morrowind-NPCs.md section 27): and whether the body never walks   // PIN MOVED (AUDIT MWNPC16-18 R1, Morrowind-NPCs.md section 27): its tells read once a body, a line above (the cast asks their dissolve)   // PIN MOVED, COATS3D: a rider's horse
+  assert.match(draw, /drawBodyPicture\(renderer, canvas, thirdMesh, model, \{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks \}/, 'and the quad is anchored (AUDIT OW4 J6: and leaned by the view\'s up)');
+  assert.match(rd('src/player/mwView.js'), /fpArm\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet,\n\s*yaw,\n\s*grow: face\?\.grow > 1 \? face\.grow : 1,\n\s*up: face\?\.up \?\? null,\n\s*horse,\n\s*\}\)/, 'the local body, every host (AUDIT OW3 J6: grown under the travel view; AUDIT OW4 J6: leaned)');
+  assert.match(rd('src/net/peer/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet: b\.feet,\n\s*yaw: b\.yaw,\n\s*hitFlash: flashOf \? flashOf\(b\.id\) : 0,\n\s*conceal: b\.veil \?\? null,\n\s*grow: g,\n\s*up: this\._cam\?\.up \?\? null,\n\s*fx,\n\s*cast,\n\s*anchored,\n\s*horse,\n\s*\}\)/, 'every peer\'s body');
 });

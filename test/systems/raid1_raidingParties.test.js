@@ -479,7 +479,7 @@ test('RAID1 the lane, the row, the record: the switch on by default, the room\'s
   assert.equal(row.group, 'world');
   assert.equal(row.title, 'World Events - Raiding Parties', 'CREDITS-OUT: the mod\'s name alone');
   assert.equal(row.effect, 'Takes effect at once.');
-  const readme = read(`vendor/${RAIDING_PARTIES_VENDOR}/README.md`);   // CREDITS-OUT: the README is the record, no screen credit
+  const readme = read(`vendor/${RAIDING_PARTIES_VENDOR}/README.md`);   // The README is the record, no screen credit
   assert.match(readme, /World Events - Raiding Parties 1\.1\*\*/);
   assert.match(readme, /\*\*Permission: granted by the author, who made the mod for this port/);
 });
@@ -495,21 +495,16 @@ test('RAID1 the picker\'s bytes: the travel map\'s own TRAV0I01 bitmap, null unt
 
 test('RAID1 the world host by source: the seams answered where GameManager would - the street\'s pool, loose and transient, on the mod\'s band; the watch\'s defender; the sea refused; the street alone; both frames; the watch kept up for a raid', () => {
   const w = read('src/scenes/world.js');
-  // PIN MOVED (WW6): the seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT) - the host's live names
-  // read there as `host.<name>`, the host constructing it where they stood
   const rh = read('src/scenes/raidHost.js');
   const at = rh.indexOf('  setRaidingPartiesHost({');
   assert.ok(at > 0);
   const body = rh.slice(at, rh.indexOf('\n  });', at));
   assert.match(w, /\n {2}createRaidHost\(\{/, 'the host constructs it');
-  assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true, eventFoe: boss \}\)/);   // PIN MOVED (STAR-MASTER-FLED): a staff event's boss asked as an event's own
-  assert.match(body, /\}, mobileType, \{ \.\.\.raidSpawnRange\(at\), reach: \(spot\) => host\.raidSites\?\.reachable\?\.\(spot, at\?\.at \?\? at\?\.near \?\? enchantFeet\(\)\) \?\? true \}\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange; PIN MOVED (RAID-REACH): and a spot on its player's streets
-  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN: never in a house or building
+  assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true, eventFoe: boss \}\)/);
+  assert.match(body, /\}, mobileType, \{ \.\.\.raidSpawnRange\(at\), reach: \(spot\) => host\.raidSites\?\.reachable\?\.\(spot, at\?\.at \?\? at\?\.near \?\? enchantFeet\(\)\) \?\? true \}\),/);
+  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // Never in a house or building
   assert.match(body, /standDefender: \(threats\) => cityGuards\.standDefender\(\{/);
-  // PIN MOVED (AUDIT CAPTAIN'S SEA G7): nor the Eltheric Ocean, whose composed politic is the isles' region's
-  // PIN MOVED (AUDIT TAMRIEL-WIDE C1): a province's politic is its region's - test/world/worldWide/audit_tamrielwide.test.js runs it
   assert.match(body, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\), pol = maps\.getPoliticIndex\(px\.x, px\.y\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && \(politicClaimed\(pol\) \|\| isProvinceRegion\(pol - 128\)\) \? _questRegionIndex\(\) : -1; \}/);
-  // PIN MOVED (STAFF-EVENT): `outdoors` (true) asks only that the player stands outdoors - an area's event; a raid's ask is the same
   assert.match(body, /townHere: \(outdoors\) => \(\(host\.modes\?\.mode \?\? 'exterior'\) !== 'exterior' \? null : outdoors \|\| \(_musicInLocationRect\(\) \? _questLoc\(\) : null\)\)/);
   assert.match(body, /picker: \(\) => travelMapPickerData\(\)/);
   assert.match(body, /defendersAllowed: \(\) => !playerEntity\.crimeCommitted && !isTransformedLycanthrope\(playerEntity\)/);

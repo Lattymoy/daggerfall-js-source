@@ -588,8 +588,8 @@
   {
     "name": "SHIPYARDS-the-people-walk-through",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (portSites?.length) carveYards(nav, portSites);",
-    "new": "        if (false) carveYards(nav, portSites);",
+    "old": "        if (portSites?.length) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse",
+    "new": "        if (false) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse",
     "tests": [
       "test/systems/shipyards1_found.test.js"
     ]

@@ -1,6 +1,5 @@
-// AUDIT ENVIRONS (2026-10-08, Mac: "Lets do a comprehensive audit on everything and ensure perfection and performance
-// doesnt take a hit") - THE FOUR ENVIRONMENT MODS AUDITED: Snowfall, Windfall, Heat Haze and Sands of the Alik'r, each
-// lens reading the port against the mods' own assemblies and shaders (bible/01-Overview/audits/Audit-Environs.md). Every fix
+// AUDIT ENVIRONS - THE FOUR ENVIRONMENT MODS AUDITED: Snowfall, Windfall, Heat Haze and Sands of the Alik'r, each
+// lens reading the port against the mods' own assemblies and shaders. Every fix
 // here carries its `AUDIT ENVIRONS <id>` in the code and is mutated in tools/mutants/audit_environs.json; the pins it
 // moved in the arcs' own files say so where they stand.
 import { test } from 'node:test';
@@ -22,8 +21,8 @@ import { hazePhase } from '../../src/render/heatHaze.js';
 import { ShadowPass } from '../../src/render/shadowPass.js';
 import { setModSetting, modSetting } from '../../src/systems/modSettings.js';
 import { SEASONS } from '../../src/systems/gameDate.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
-import { snowAlbedo } from '../../src/systems/ownTextures/ownTextureRules.js';   // OWN-WORK4: our snow's albedo
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { snowAlbedo } from '../../src/systems/ownTextures/ownTextureRules.js';   // Our snow's albedo
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const SIZE = 819.2;
@@ -234,7 +233,6 @@ test('AUDIT ENVIRONS G1 + G3 + G4: the snow\'s GL owes the renderer its seam bef
   assert.equal(log[0]?.[0], 'endUiRun');
   assert.ok(!log.some((c) => c[0] === 'pixelStorei' && c[1] === 'UNPACK_FLIP_Y_WEBGL' && c[2] === true), 'no flip asked of an ImageBitmap');
   assert.ok(log.some((c) => c[0] === 'texParameteri' && c[2] === 'TEXTURE_MIN_FILTER' && c[3] === 'NEAREST_MIPMAP_NEAREST'), 'FilterMode.Point: the nearest level');
-  // PIN MOVED (OWN-WORK4): the albedo is ours - made at runtime, no file and no decode - and uploaded as its own bytes
   assert.match(read('src/scenes/snowfallHost.js'), /const defaultAlbedo = async \(\) => snowAlbedo\(64\);/);
   log.length = 0;
   const own = snowAlbedo(64);

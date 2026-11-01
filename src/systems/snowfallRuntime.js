@@ -1,4 +1,4 @@
-// SNOWFALL1 (2026-10-08): THE SNOW, STOOD ROUND THE PLAYER - DynamicSnowController, MidDetailSnowRing, StreamedSnow-
+// THE SNOW, STOOD ROUND THE PLAYER - DynamicSnowController, MidDetailSnowRing, StreamedSnow-
 // BlanketPrototype, FarTrackMask, SnowContextData and BlanketSurfaceSamples, ported off the assembly over the law in
 // systems/snowfall.js. GL-free: it keeps the meshes and the masks as arrays and says what changed; render/snowfall-
 // Surface.js uploads and draws them, and scenes/snowfallHost.js hands it the frame and the world.
@@ -48,11 +48,11 @@ import {
 import { roundToInt } from './mathf.js';
 import { dateFromClassicMinutes, seasonValue, SEASONS } from './gameDate.js';
 import { getWorldClimateSettings, CLIMATE_BASE_TYPES } from '../formats/mapsFile.js';
-import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js'; // BAY-LEFT-GROUND: Prepare's clamp, the world's grid
+import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js'; // Prepare's clamp, the world's grid
 
 const f32 = Math.fround;
 
-/** OWN-WORK4 AUDIT: the snow's surface stands a centimetre over its bed where it lies (our value), so a thin cover never
+/** The snow's surface stands a centimetre over its bed where it lies (our value), so a thin cover never
  *  meets the ground it lies on (render/snowfallGlsl.js SNOW_LAYER does the rest). */
 export const SNOW_SURFACE_OFFSET = f32(0.01);
 // ---- the constants the assembly carries ---------------------------------------------------------------------------
@@ -173,7 +173,7 @@ export class SnowContext {
         : [];
     const reach = s?.basicRoadsIntegration ? Math.max(s.pathBoundaryFeather, s.roadBermWidth) : 0;
     const span = Math.ceil((radius + Math.max(feather, reach)) * 40) / 40;
-    const W = SNOW_WORLD_METRES; // BAY-LEFT-GROUND: the world's, where DFU's map was the Bay's (0..819200 x 0..409600)
+    const W = SNOW_WORLD_METRES; // The world's, where DFU's map was the Bay's (0..819200 x 0..409600)
     const minGX = Math.max(W.minX, gx - span),
       minGZ = Math.max(W.minZ, gz - span),
       maxGX = Math.min(W.maxX, gx + span),
@@ -531,7 +531,7 @@ export class SnowfallRuntime {
       L.fullRebuild = false;
     }
     this.settings = next;
-    this.builds?.settings(next); // SNOW-THREAD: the worker's builds read the same settings from its next build on
+    this.builds?.settings(next); // The worker's builds read the same settings from its next build on
     if (this.corpses.enabled !== next.corpseImpressionsEnabled && next.corpseImpressionsEnabled)
       this.corpseScanPending = true;
     this.corpses.enabled = next.corpseImpressionsEnabled;
@@ -603,7 +603,7 @@ export class SnowfallRuntime {
       pending: [],
       visible: false,
       job: 0,
-      fromJob: 0, // SNOW-THREAD: the recentre out on the build worker, and the worker's job whose window this is (0: none)
+      fromJob: 0, // The recentre out on the build worker, and the worker's job whose window this is (0: none)
     };
     const normal = encodeStaticSnow(1, 1);
     for (let k = 0; k < sres * sres; k++) L.statics.set(normal, k * 4);
@@ -860,7 +860,7 @@ export class SnowfallRuntime {
     L.meshCursor = 0;
     L.statCursor = 0;
     L.recentering = true;
-    L.job = this.builds?.postLocal(this) ?? 0; // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
+    L.job = this.builds?.postLocal(this) ?? 0; // Sampled on the build worker when it can be (0: on this thread)
   }
 
   // ProcessRecenter
@@ -947,7 +947,7 @@ export class SnowfallRuntime {
       dz = roundToInt(f32(f32(L.nextDyn[1] - L.dynCenter[1]) / this.maskTexel));
     if (dx !== 0 || dz !== 0) this._scrollDynamic(dx, dz);
     this._localFinish();
-    L.fromJob = 0; // SNOW-THREAD: built here - the build worker's copy of the window is not this one (_localAwait sets it)
+    L.fromJob = 0; // Built here - the build worker's copy of the window is not this one (_localAwait sets it)
     this._restorePersistentTracks(dx, dz);
     L.meshReady = true;
     L.staticReady = true;
@@ -974,7 +974,7 @@ export class SnowfallRuntime {
     L.statCenter = [...L.nextStat]; // copies: the mod's Vector2s are values, and offsetOrigin shifts each array once
     snowContactRamp(L.statics, L.sres, L.sres, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / this.staticTexel)));
   }
-  /** SNOW-THREAD: the build worker's recentre, taken the first frame it is in - committed as this thread's would be. A
+  /** The build worker's recentre, taken the first frame it is in - committed as this thread's would be. A
    *  window that could not stand (a pixel not loaded) is _cancelForRetry's; with the worker gone the recentre goes on
    *  here, from its first sample, the next frame. */
   _localAwait(f) {
@@ -1004,10 +1004,10 @@ export class SnowfallRuntime {
     const L = this.local;
     if (!L.hasCenter) return;
     this._fillContext(L.context, L.statCenter, L.sres * L.sres);
-    L.fromJob = 0; // SNOW-THREAD: the committed context is written here - the worker's copy is not it
+    L.fromJob = 0; // The committed context is written here - the worker's copy is not it
     this.dirty.localStatic = true;
     if (L.recentering) this._fillContext(L.nextContext, L.nextStat, L.statCursor);
-    if (L.recentering && L.job) L.job = this.builds.postLocal(this) ?? 0; // SNOW-THREAD: the worker's recentre asked again over the new context (this.context is prepared at its centre now)
+    if (L.recentering && L.job) L.job = this.builds.postLocal(this) ?? 0; // The worker's recentre asked again over the new context (this.context is prepared at its centre now)
   }
   _fillContext(px, center, count) {
     const s = this.settings,
@@ -1345,7 +1345,7 @@ export class SnowfallRuntime {
       completed: 0,
       cancelled: 0,
       blankets: new Map(),
-      job: 0, // SNOW-THREAD: the build out on the build worker (0: none)
+      job: 0, // The build out on the build worker (0: none)
     };
   }
   _midTick(shouldBeActive, player, f, allowBuild) {
@@ -1384,7 +1384,7 @@ export class SnowfallRuntime {
       s,
     );
     this._midStart();
-    M.job = this.builds?.postMid(this) ?? 0; // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
+    M.job = this.builds?.postMid(this) ?? 0; // Sampled on the build worker when it can be (0: on this thread)
   }
   /** The build begun round `buildCenter` over the prepared context - the half of _midBegin the build worker runs too. */
   _midStart() {
@@ -1640,7 +1640,7 @@ export class SnowfallRuntime {
     M.baseY = 0;
     snowContactRamp(M.statics, 321, 321, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / 1)));
   }
-  /** SNOW-THREAD: the build worker's ring, taken the first frame it is in and the ring may land (`allowBuild`): its
+  /** The build worker's ring, taken the first frame it is in and the ring may land (`allowBuild`): its
    *  arrays become the next ones and commit as this thread's would. A ring that could not stand (a pixel not loaded) is
    *  _midFail's; with the worker gone the build goes on here, from its first sample, the next frame. */
   _midAwait(f) {
@@ -1820,7 +1820,7 @@ export class SnowfallRuntime {
       s = this.settings;
     const was = B.active;
     B.active = shouldBeActive && s.streamedBlanketPrototype && !!handoff;
-    // FIELD BUGS 2026-10-21b SNOW-HOLD: SetActive(false) lets its queue go - standing again queues every visible tile anew
+    // SetActive(false) lets its queue go - standing again queues every visible tile anew
     // (below), and a queued tile holds its map pixel's whole entry (the host's SnowTerrain closures): an indoors, or an
     // Overworld journey under the travel view, kept every pixel the world destroyed meanwhile
     if (!B.active) {
@@ -1828,7 +1828,7 @@ export class SnowfallRuntime {
         B.queue.length = 0;
         B.queued.clear();
       }
-      // MEM-AUDIT (2026-10-23): AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so
+      // AND ITS OVERLAYS ARE PRUNED STILL. The prune below ran only while the tier was active, so
       // an indoors or a journey under the travel view kept every overlay of the last ring - and each its tile, and the
       // tile its map pixel's whole entry, long after the world destroyed it. The same prune, on the same schedule: a tile
       // still standing keeps its overlay for the door or the view coming down, as before
@@ -1870,9 +1870,9 @@ export class SnowfallRuntime {
     B.nextPrune = f.now + BLANKET.pruneSeconds;
     const live = new Set(near);
     for (const [t, o] of B.overlays) if (!live.has(t)) this._blanketDrop(o);
-    if (B.building && !live.has(B.building.t)) B.building = null; // MEM-AUDIT: _blanketProcess would skip it on its next turn
-    if (!B.active) B.live = new Set([...B.live].filter((t) => live.has(t))); // MEM-AUDIT: nothing is drawn idle; the next active frame sets it whole
-    // SNOW-HOLD: and a queued one - the queue drains only while the local tier is not recentring, and a player on the
+    if (B.building && !live.has(B.building.t)) B.building = null; // _blanketProcess would skip it on its next turn
+    if (!B.active) B.live = new Set([...B.live].filter((t) => live.has(t))); // Nothing is drawn idle; the next active frame sets it whole
+    // And a queued one - the queue drains only while the local tier is not recentring, and a player on the
     // move keeps it recentring, so every tile the world built and destroyed behind them stood in it (1.8 MB of JS heap a
     // map pixel, measured in the running game); _blanketProcess skips a tile no longer drawn, so letting it go is the same
     if (B.queue.some((t) => !live.has(t))) {
@@ -1880,7 +1880,7 @@ export class SnowfallRuntime {
       B.queued = new Set(B.queue);
     }
   }
-  /** AUDIT MEM-AUDIT M3: THE MID RING IDLE, A TILE IT SAMPLED NO LONGER STANDING - what it held of the ring's tiles goes
+  /** THE MID RING IDLE, A TILE IT SAMPLED NO LONGER STANDING - what it held of the ring's tiles goes
    *  (its tiles, its build's, its blankets' samples, the last build's source: each tile holds its map pixel's whole
    *  entry). Such a ring can never be reused (P3 copies from the very same tile), and the player is pixels from it, so the
    *  ring is built again where they next stand outside - as it would have been (`far`). */
@@ -2090,7 +2090,7 @@ export class SnowfallRuntime {
       F.center = snapToGrid(px, pz, FAR.snap, F.lattice[0], F.lattice[1]);
       F.pixels.fill(255);
       F.lastChanged = this.tracks.applyToMask(F.pixels, 641, F.center[0], F.center[1], 640);
-      F.deformed = F.lastChanged > 0; // TV-REFILL
+      F.deformed = F.lastChanged > 0;
       F.ready = true;
       this._farProjectCorpses();
       F.rebuilds++;
@@ -2109,7 +2109,7 @@ export class SnowfallRuntime {
         p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)];
       }
       F.lastChanged = this.tracks.applyToMask(F.pixels, 641, F.center[0], F.center[1], 640, p[0], p[1], p[2], p[3]);
-      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid
+      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // What the scroll kept, and what the field laid
       this._farProjectCorpses();
       F.rebuilds++;
       this.rects.far.all();
@@ -2146,11 +2146,11 @@ export class SnowfallRuntime {
     if (n > 0) {
       F.lastChanged = n;
       F.deformed = true;
-    } // TV-REFILL
+    }
   }
   _farRefill(step) {
     const F = this.far;
-    if (!F.ready || step <= 0 || !F.deformed) return; // TV-REFILL: a clean mask has nothing to fill
+    if (!F.ready || step <= 0 || !F.deformed) return; // A clean mask has nothing to fill
     let any = false;
     const p = F.pixels;
     for (let k = 0; k < p.length; k += 4) {
@@ -2161,7 +2161,7 @@ export class SnowfallRuntime {
       }
     }
     if (any) this.rects.far.all();
-    F.deformed = any; // TV-REFILL: none found, none left
+    F.deformed = any; // None found, none left
   }
   _farClear() {
     this.far.pixels.fill(255);
@@ -2225,7 +2225,7 @@ export class SnowfallRuntime {
     }
     M.source = null;
     M.reuse = null; // AUDIT ENVIRONS P3: every place the ring sampled is another number now
-    this.builds?.offset(offset); // SNOW-THREAD: and the worker's ring's too
+    this.builds?.offset(offset); // And the worker's ring's too
   }
   /** HandleTransitionInterior / HandleTransitionExterior / InvalidateSessionPresentation: the world the snow stood on
    *  is gone (a door, a load, a fast travel) - every tier is built again where the player next stands outside. */
@@ -2234,7 +2234,7 @@ export class SnowfallRuntime {
       M = this.mid,
       B = this.blanket,
       F = this.far;
-    this.builds?.reset([M.building && M.job, L.recentering && L.job]); // SNOW-THREAD: the builds out are let go
+    this.builds?.reset([M.building && M.job, L.recentering && L.job]); // The builds out are let go
     B.queue.length = 0;
     B.queued.clear();
     B.building = null;

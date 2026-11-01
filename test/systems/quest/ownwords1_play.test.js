@@ -1,8 +1,8 @@
-// OWN-WORDS1 (2026-10-31, bible/06-Systems/Own-Words.md): a quest in our own words, played end to end. M0C00Y11 (the
-// Fighters Guild's giant scorpion) is read as the game reads it - our file in place of DFU's (test/qlSources.mjs, the
-// node twin of scenes/quest/questData.js) - and run through the real bridge and machine over the crafted world
-// (test/guideWorld.mjs): the guild's offer, the answer, the journal, the kill, the questor's click and the quest's end.
-// Every box the player sees is ours, every macro expanded, and the quest ends a success as DFU's script ends it.
+// A quest in our own words, played end to end. M0C00Y11 (the Fighters Guild's giant scorpion) is read as the game reads
+// it - our file in place of DFU's (test/qlSources.mjs, the node twin of scenes/quest/questData.js) - and run through
+// the real bridge and machine over the crafted world (test/guideWorld.mjs): the guild's offer, the answer, the journal,
+// the kill, the questor's click and the quest's end. Every box the player sees is ours, every macro expanded, and the
+// quest ends a success as DFU's script ends it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

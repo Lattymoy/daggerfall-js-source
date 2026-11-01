@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-KB1-F1-the-carry-runs-before-the-defaults",
     "file": "src/systems/inputActions.js",
-    "old": "  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free\n",
-    "new": "",
+    "old": "  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free\n  const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);",
+    "new": "  const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);",
     "tests": [
       "test/ui/kb1_audit.test.js"
     ]

@@ -1,10 +1,9 @@
-// FIELD BUGS 2026-09-30 (CHOP-WAIT) - "Hardlocked in woodcutting animation after game Crash": "Was choppin wood for money
+// FIELD BUGS 2026-09-30 - "Hardlocked in woodcutting animation after game Crash": "Was choppin wood for money
 // and some quests when the game crashed and now im stuck in an endless loop of logging in, been stuck on the treecutting
 // animation and it locks up all my controls til it crashes again."
 //
 // Online the Wood-Axe's ChopWoodQuest raises time by 1:30, which is Foraging's wait page ("Woodcutting...", no
-// Escape - scenes/foragingWait.js, FORAGE4), and every quest box is held behind it; the held boxes ride the save (AUDIT
-// 28 F6). The page's end released them, and a released box is the host's showQuestBox, whose first question is the
+// Escape - scenes/foragingWait.js, FORAGE4), and every quest box is held behind it; the held boxes ride the save. The page's end released them, and a released box is the host's showQuestBox, whose first question is the
 // wait's `holds()` - true while any box is still held. With two boxes behind the page (two chops, each quest's find) the
 // first went back behind the second and the second behind the first, for ever, in one frame: the tab hung. The save
 // kept the record, so every login reopened the page and hung again when it ran out. A box the release shows is shown
@@ -96,7 +95,7 @@ function chop(m, rolls) {
     for (let i = 0; i < 8; i++) m.tick();
   } finally { console.warn = ow; console.log = ol; }
 }
-const find = (what) => ({ box: { rows: ['Under the felled tree lies a forgotten', `${what}. Its owner never came back for it.`] } });   // OWN-WORK3: our words
+const find = (what) => ({ box: { rows: ['Under the felled tree lies a forgotten', `${what}. Its owner never came back for it.`] } });   // Our words
 const line = (what) => `${what}. Its owner never came back for it.`;
 /** The character through the save and back, as a checkpoint and a login carry it (systems/save/save.js ENTITY_FIELDS). */
 function relog(entity) {

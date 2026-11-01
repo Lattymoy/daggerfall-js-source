@@ -62,8 +62,8 @@
   {
     "name": "SE-the-lab-never-started",
     "file": "src/render/precipitation.js",
-    "old": "  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS], [BETTER_FALL_VS, BETTER_FALL_FS]);\n  if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);",
-    "new": "  if (opts.enhanced) pairs.push([BETTER_FALL_VS, BETTER_FALL_FS]);\n  if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);",
+    "old": "  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS], [BETTER_FALL_VS, BETTER_FALL_FS]);",
+    "new": "  if (opts.enhanced) pairs.push([BETTER_FALL_VS, BETTER_FALL_FS]);",
     "tests": [
       "test/render/shaderease.test.js"
     ],

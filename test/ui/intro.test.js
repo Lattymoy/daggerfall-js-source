@@ -1,4 +1,4 @@
-// INTRO2: score, session ownership, transition and independent asset identity.
+// Score, session ownership, transition and independent asset identity.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -15,14 +15,12 @@ const read = (p) => readFileSync(new URL('../../' + p, import.meta.url));
 const INTRO2_THEME_SHA256 = '6954cf4c01f2a32e098a08c4ae4edb81b00823573076fd1c74c2f9c5ac24c8ec';
 
 test('INTRO2: supplied logo and Mac\u2019s remastered recording are byte-exact; timing cannot drift behind a replacement track', () => {
-  // BR4 (2026-09-27) shipped Mac's earlier cut as he supplied it
-  // (real alpha; INTRO2's JPEG had a black backing to screen away). BR5
-  // (2026-10-11): his DFO Online logo, its 800 x 600 file cut to the 526 x 322
-  // its paint covers - every pixel inside his, unchanged, and none outside
-  // with any alpha. BR6 (2026-10-26): his dragon mark - its 2000 x 1434
-  // file cut to the 1680 x 1410 its paint covers, then scaled to 1232 x 1034
-  // at his word (the same 56:47; 785 KB where the cut was 1.28 MB). BR7 (2026-11-01): his wordmark - its 1678 x 937
-  // file cut to the 1635 x 928 its paint covers, then scaled to 1232 x 699 as BR6 was (822 KB).
+  // BR4 shipped Mac's earlier cut as he supplied it (real alpha; INTRO2's JPEG had a black backing to screen away).
+  // BR5: his DFO Online logo, its 800 x 600 file cut to the 526 x 322 its paint covers - every pixel inside his,
+  // unchanged, and none outside with any alpha. BR6: his dragon mark - its 2000 x 1434 file cut to the 1680 x 1410
+  // its paint covers, then scaled to 1232 x 1034 at his word (the same 56:47; 785 KB where the cut was 1.28 MB).
+  // BR7: his wordmark - its 1678 x 937 file cut to the 1635 x 928 its paint covers, then scaled to 1232 x 699 as
+  // BR6 was (822 KB).
   assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), '14ef7beef2912014c3a12cdf6fa64f867fd6aeab4ec5345e209434704be5c654');
   const track = read('src/assets/intro/theme.mp3');
   assert.equal(createHash('sha256').update(track).digest('hex'), 'c8eb0eccf3265244c0f4424d26efee835d40cccf4e11a66744ec4b284d8392e3');
@@ -95,11 +93,11 @@ test('INTRO2: the final title never auto-dismisses, including after the entire r
   assert.equal(introFrameAt(TITLE_READY_TIME - 0.01).ready, false);
 });
 
-// CREDITS-OUT (2026-11-01, the owner: "No more credits along with removing their logos from the intro"): INTRO2's
-// test of the two logo cards' holds is RETIRED with the cards; test/systems/credits.test.js holds them gone.
+// INTRO2's test of the two logo cards' holds is RETIRED with the cards; test/systems/credits.test.js holds
+// them gone.
 
 test('INTRO2: camera is continuous, finite, and keeps the full horizontal frame on portrait screens', () => {
-  // INTRO4: the flight climbs from a dozen metres to thousands of kilometres, so "no teleport" is held against the
+  // The flight climbs from a dozen metres to thousands of kilometres, so "no teleport" is held against the
   // camera's height: no frame moves the eye more than a tenth of how high it stands (and never more than 15 m low down)
   for (const aspect of [0.47, 1, 16 / 9, 21 / 9]) {
     let previous = introCameraAt(0, aspect);
@@ -218,8 +216,8 @@ test('INTRO2: disposing during fetch prevents late audio and releases the loadin
 
 test('INTRO2: the shared logo has accessible text and its exact natural aspect ratio', () => {
   const logo = brandMark({ createElement: (tag) => ({ tag }) });
-  assert.equal(logo.tag, 'img'); assert.equal(logo.alt, 'DFO Online');   // BR5: the product's name alone - the mark names no other game
-  // BR4: the element's size is the FILE's, read from its own IHDR - a new
+  assert.equal(logo.tag, 'img'); assert.equal(logo.alt, 'DFO Online');   // The product's name alone - the mark names no other game
+  // The element's size is the FILE's, read from its own IHDR - a new
   // logo dropped in without its dimensions reddens here, not in a layout
   // (BR5's did: 2112 x 850 to 526 x 322; BR6's: to 1232 x 1034).
   const png = read('src/assets/branding/dfo-online.png');
@@ -228,7 +226,7 @@ test('INTRO2: the shared logo has accessible text and its exact natural aspect r
   assert.equal(logo.draggable, false);
 });
 
-// ═══ INTRO-FIELD (Mac, 2026-09-18) ═══════════════════════════════════
+// ═══ INTRO-FIELD ═══════════════════════════════════
 // "For the first screen where you have to touch to begin. Remove all the
 // text except the begin button."
 test('INTRO-FIELD: the gate is the BEGIN button and nothing drawn beside it - the status line is spoken, not shown (mutants: INTROFIELD-*)', () => {

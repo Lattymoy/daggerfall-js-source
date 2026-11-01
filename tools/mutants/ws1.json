@@ -173,8 +173,8 @@
   {
     "name": "prefs-sheathing-off",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: false, online: 'player' }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: false, online: 'player' }),",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "bone-axe-one-hand-addon-name",
     "file": "src/systems/weaponSheathing.js",
-    "old": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand', // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a \"Bip01 AxeOneHand\" too, at the same transform, that the reference never names)",
-    "new": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 AxeOneHand', // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a \"Bip01 AxeOneHand\" too, at the same transform, that the reference never names)",
+    "old": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand', // Weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a \"Bip01 AxeOneHand\" too, at the same transform, that the reference never names)",
+    "new": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 AxeOneHand', // Weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a \"Bip01 AxeOneHand\" too, at the same transform, that the reference never names)",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "sheathing-forced-online-again",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js",
       "test/systems/modsonline.test.js"

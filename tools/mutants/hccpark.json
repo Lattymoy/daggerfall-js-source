@@ -194,8 +194,8 @@
   {
     "name": "PARK-kept-my-own",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (e.id === (selfId?.() ?? null)) return false;\n    const slot",
-    "new": "    const slot",
+    "old": "    if (e.id === (selfId?.() ?? null)) return false;\n    const slot = `${room}|${e.k}`;",
+    "new": "    const slot = `${room}|${e.k}`;",
     "tests": [
       "test/net/hcc_park.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "PARK-D5-never-ages",
     "file": "src/scenes/horseCartPool.js",
-    "old": " || (nowMs !== null && nowMs >= e.expires)) {",
-    "new": ") {",
+    "old": "    for (const [slot, e] of [..._kept]) if (!held.has(e.room) || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }",
+    "new": "    for (const [slot, e] of [..._kept]) if (!held.has(e.room)) { _kept.delete(slot); touched.add(e.k); }",
     "tests": [
       "test/net/hcc_park.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "PARK-prune-nothing",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (!held.has(e.room) || (nowMs",
-    "new": "if (false || (nowMs",
+    "old": "    for (const [slot, e] of [..._kept]) if (!held.has(e.room) || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }",
+    "new": "    for (const [slot, e] of [..._kept]) if (false || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }",
     "tests": [
       "test/net/hcc_park.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "RIDE-latest-word",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      const pose = peer?.shown;\n      if (!pose) continue;\n      // PR-WW1: a beast",
-    "new": "      const pose = peer?.pose;\n      if (!pose) continue;\n      // PR-WW1: a beast",
+    "old": "      // and the casts all read; the latest word ran up to a whole interval ahead of the rider's own name\n      const pose = peer?.shown;",
+    "new": "      // and the casts all read; the latest word ran up to a whole interval ahead of the rider's own name\n      const pose = peer?.pose;",
     "tests": [
       "test/net/hcc_park.test.js"
     ]

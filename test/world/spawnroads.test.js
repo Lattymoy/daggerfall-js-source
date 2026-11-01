@@ -1,7 +1,6 @@
-// SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?") - no spawned ruin on a pixel a
-// road, track, river or stream crosses. The audit of the EliteDungeons drop counted 7,547 road pixels holding a
-// ruin's flattened plateau at their centre once the rate went to 40% (1,921 at 10%); every path in the network runs
-// through its pixel's centre, so the pixel's own compass byte is the whole question.
+// No spawned ruin on a pixel a road, track, river or stream crosses. The audit of the EliteDungeons drop counted
+// 7,547 road pixels holding a ruin's flattened plateau at their centre once the rate went to 40% (1,921 at 10%);
+// every path in the network runs through its pixel's centre, so the pixel's own compass byte is the whole question.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -10,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { pathFreePixel, spawnsDungeon, WORLD_SALT } from '../../src/world/spawnedDungeons.js';
 import { MAP_W, MAP_H } from '../../src/world/road/roadNetwork.js';
-import { bayRoads, BAY_SKIP } from '../bayRoads.mjs';   // OWN-WORK2: the Bay's own network, off the player's ARENA2
+import { bayRoads, BAY_SKIP } from '../bayRoads.mjs';   // The Bay's own network, off the player's ARENA2
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -53,7 +52,6 @@ test('SPAWN-ROADS: over the Bay\'s network, every spawn pixel a path crosses is 
 });
 
 test('SPAWN-ROADS by source: the world host asks the network before it mints, keeps a pre-network ruin provisional, and the roads sweep takes crossed ones back first', () => {
-  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the stand left world.js for scenes/spawnStandHost.js - read with it
   const w = `${rd('src/scenes/world.js')}\n${rd('src/scenes/spawnStandHost.js')}`;
   assert.match(w, /if \(!spawnsDungeon\(_spawnSalt, px, py\) \|\| maps\.getClimateIndex\(px, py\) === CLIMATES\.Ocean \|\| !_spawnGround\(px, py\)\) return null;\n(?:\s*\/\/[^\n]*\n)*\s*const net = terrainGen\.roads\(\);\n\s*if \(net && !pathFreePixel\(net, px, py\)\) return null;/,
     'the path gate stands before the TTL ledger and the mint');

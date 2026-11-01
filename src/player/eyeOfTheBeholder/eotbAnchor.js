@@ -1,7 +1,7 @@
 // @ts-check
-// OWN-AUDIT (2026-11-01; the owner: "no latching onto other mod authors"): WHERE A SPRITE STANDS, MEASURED ON ITS OWN
-// PICTURES - the body's centre line on the player's spot and the lowest foot on the ground, in every facing and state, a
-// sheet drawn small scaled to its view's standing figure. tools/eotbAnchors.mjs writes eotbAnchors.json from ARENA2.
+// WHERE A SPRITE STANDS, MEASURED ON ITS OWN PICTURES - the body's centre line on the player's spot and the lowest foot
+// on the ground, in every facing and state, a sheet drawn small scaled to its view's standing figure.
+// tools/eotbAnchors.mjs writes eotbAnchors.json from ARENA2.
 
 /** @typedef {{ width: number, height: number, data: ArrayLike<number> }} Picture top-down RGBA */
 /** @typedef {[number, number]} Shift a picture's move, in its own pixels: right, and up (never up past the ground) */

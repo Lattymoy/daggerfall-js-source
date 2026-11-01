@@ -1,15 +1,20 @@
 # Weapon Sheathing
 
-Greatness7's Weapon Sheathing 1.6 (an OpenMW mod, Nexus Morrowind mod 46069), ported for the Morrowind body: a
+Greatness7's Weapon Sheathing 1.6 (an OpenMW mod), ported for the Morrowind body: a
 sheathed weapon hangs at the hip or across the back in its scabbard, and a bow or crossbow carries a filled quiver. The
 player sees it in third person on their own Morrowind body and on other players' online. Vanilla Morrowind draws no
-sheathed weapon at all. The art is vendored under `vendor/weapon-sheathing/` (the mod's permission: credit and no fee).
+sheathed weapon at all. The mechanism is OpenMW's, ported; the bones and scabbards are our own, built in code
+(`src/systems/ownSheathing.js`). The release's record is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
-On OpenMW the mod is art plus a setting that turns on the engine's own mechanism. The port vendors the art (71
-scabbard meshes and three skeleton addons carrying thirteen new bones) and ports the mechanism, all in
-`src/systems/weaponSheathing.js`.
+On OpenMW the mod is art plus a setting that turns on the engine's own mechanism. The port ports the mechanism
+(`src/systems/weaponSheathing.js`) and builds its own art (`src/systems/ownSheathing.js`): `SHEATH_POINTS` hangs each
+sheath bone the mechanism names under a bone the skeleton already has, at our own place on the body, and
+`sheathingAddonBytes` writes them as a bone addon (`SHEATHING_ADDON_PATH`), each node marked "BONE". `ownScabbardBytes`
+builds a `_sh` file for the weapon in hand, sized to its own mesh - a sheath, a ring or a quiver - on the mechanism's
+file law: `Bip01 Sheath` always shown, an empty `Bip01 Weapon` where the weapon itself hangs, a quiver's `Bip01 Ammo`
+with a node a round (`QUIVER_SLOTS`).
 
 1. **The bones** (`src/formats/morrowind/mwSkin.js` `injectSkeletonNodes`, OpenMW's `injectCustomBones`). Every addon
    under `animations/<model>/` joins its bones to the skeleton: only a node marked with a "BONE" extra data joins, under
@@ -28,13 +33,16 @@ scabbard meshes and three skeleton addons carrying thirteen new bones) and ports
 not in the hand, swapping at the same animation keys as the hand's blade; the scabbard and quiver always show. Peers
 ride the same rig.
 
-**The files.** `src/systems/weaponSheathingAssets.js` serves the vendored tree as an archive ranked after the player's
-own loose files (a replacer wins) and before every `.bsa`. The switch is the Features row `mod-weapon-sheathing`, on by
+**The files.** `src/systems/weaponSheathingAssets.js` serves our bone addon as an archive ranked after the player's own
+loose files (a replacer, or the mod itself, wins) and before every `.bsa`; the scabbards are built at the holster's
+resolve (`resolveHolsterParts`). Morrowind's skeleton is the player's, never the tree's: the pins and bakes stand on our
+own biped (`tools/ownBiped.mjs`). The switch is the Features row `mod-weapon-sheathing`, on by
 default and forced on online, beside "Use Morrowind assets" on the Mods page.
 
 ## Rules
 
-- **Implemented for the Morrowind model** (Mac); OpenMW's reference source decides each law.
+- **Implemented for the Morrowind model** (Mac); OpenMW's reference source decides each law. The bones and scabbards
+  are ours (OWN-WORK, the owner).
 - Not ported: the mod's MWSE Lua half (not applicable) and its alternate draw animations (a separate slice).
 - The holstered weapon's enchantment glow is not drawn; the hand's glow is (`05-Combat/Weapon-Glow.md`).
 
@@ -47,9 +55,10 @@ Eye Of The Beholder have their own back holster (`06-Systems/Eye-Of-The-Beholder
 ## Code and tests
 
 - `src/systems/weaponSheathing.js` - bones, holster, quiver
-- `src/systems/weaponSheathingAssets.js` - the vendored archive
+- `src/systems/ownSheathing.js` - our bone addon and scabbards
+- `src/systems/weaponSheathingAssets.js` - the archive of our files
 - `src/formats/morrowind/mwSkin.js` - bone injection
-- `test/formats/morrowind/ws1_sheathing.test.js` - the vendored files through the real parser, injector and binder
+- `test/formats/morrowind/ws1_sheathing.test.js` - our files through the real parser, injector and binder
 
 ## Open
 

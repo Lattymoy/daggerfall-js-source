@@ -1,6 +1,6 @@
-// CSA-A (2026-09-27) - THE UNITY SCENE READER (tools/lib/unityScene.mjs): a mesh's channels in their streams, a clip's
-// curves in their order, the path hash, a prefab's pointers - each over data made here. OWN-WORK4 (2026-10-31): Come
-// Sail Away's vendored models and the extractor that wrote them are retired (bible/01-Overview/Own-Work.md); our boats'
+// THE UNITY SCENE READER (tools/lib/unityScene.mjs): a mesh's channels in their streams, a clip's
+// curves in their order, the path hash, a prefab's pointers - each over data made here. OWN-WORK4: Come
+// Sail Away's vendored models and the extractor that wrote them are retired; our boats'
 // files are pinned by test/systems/comeSailAway/csa_own_assets.test.js. The reader stays: World of Daggerfall's Arena
 // and the low-poly trees still read their bundles through it.
 

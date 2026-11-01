@@ -116,8 +116,8 @@
   {
     "name": "climates-and-calories-forced-online-again",
     "file": "src/systems/features.js",
-    "old": "store: 'prefs', key: 'survival', initial: 'boons', online: 'player',",
-    "new": "store: 'prefs', key: 'survival', initial: 'boons', online: true,",
+    "old": "      store: 'prefs', key: 'survival', initial: 'boons', online: 'player',   // Difficulty.js SURVIVAL_DEFAULT",
+    "new": "      store: 'prefs', key: 'survival', initial: 'boons', online: true,   // Difficulty.js SURVIVAL_DEFAULT",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the row's default is Boons.",
     "tests": [
       "test/systems/modsonline.test.js",

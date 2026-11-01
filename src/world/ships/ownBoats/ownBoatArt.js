@@ -1,10 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): THE BOATS' OWN PICTURES - what our
-// five hulls wear (world/ships/ownBoats/ownBoatFiles.js). Come Sail Away 2.1's hulls wore Daggerfall's TEXTURE records;
-// ours wear these, painted from numbers on fixed seeds under a pseudo-archive of their own (OWN_BOAT_ARCHIVE), so none
-// needs ARENA2. The fleet's painters (world/ships/galleonArt.js) paint the woods, iron, rope and canvas; the hull's
-// side, the awning, the crate and the oar's blade are painted here. Every picture is 64 x 64, RGBA top-down. Not a DFU
-// member.
+// THE BOATS' OWN PICTURES - what our five hulls wear (world/ships/ownBoats/ownBoatFiles.js). Come Sail Away 2.1's hulls
+// wore Daggerfall's TEXTURE records; ours wear these, painted from numbers on fixed seeds under a pseudo-archive of
+// their own (OWN_BOAT_ARCHIVE), so none needs ARENA2. The fleet's painters (world/ships/galleonArt.js) paint the woods,
+// iron, rope and canvas; the hull's side, the awning, the crate and the oar's blade are painted here. Every picture is
+// 64 x 64, RGBA top-down. Not a DFU member.
 import {
   C,
   picture,

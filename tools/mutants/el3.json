@@ -2,8 +2,8 @@
   {
     "name": "door-ignored",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('air', search) !== 'off'; // PERF-URL",
-    "new": "  return true; // PERF-URL",
+    "old": "  return pageParam('air', search) !== 'off';",
+    "new": "  return true;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "render-no-pending",
     "file": "src/render/airPass.js",
-    "old": "    this.pending = true; // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
+    "old": "    this.pending = true; // A bound frame is a resolve owed, whether or not the passes ran for it\n    return f.fbo;",
     "new": "    return f.fbo;",
     "tests": [
       "test/render/el3_air.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "emit-flat-without-map",
     "file": "src/render/airPass.js",
-    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
-    "new": "          if (!batchVisible(planes, b)) continue; // EL5",
+    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;",
+    "new": "          if (!batchVisible(planes, b)) continue;",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "glare-rangeless",
     "file": "src/render/airPass.js",
-    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern",
+    "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // The lightning flash (range 500..1000 over the player) is no lantern",
     "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;",
     "tests": [
       "test/render/el3_air.test.js"

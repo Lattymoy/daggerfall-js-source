@@ -1,5 +1,4 @@
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper 1
-// to 1 recreation for everything"): THE CART'S HORSE IS OURS (src/systems/horse/horseArt.js). Horse Cart and Cargo
+// THE CART'S HORSE IS OURS (src/systems/horse/horseArt.js). Horse Cart and Cargo
 // 1.0.0-rc12's 45 names, sizes, views and frames, each picture built from the player's TEXTURE.495: the rider taken off,
 // the flank under his leg filled from the hide, our saddle painted on. Pinned on made-up records so CI needs no ARENA2;
 // the last pin builds all 45 from the real data, and prints them, when ARENA2_PATH is set.

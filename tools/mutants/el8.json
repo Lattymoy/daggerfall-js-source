@@ -38,8 +38,8 @@
   {
     "name": "contact-door-ignored",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('contact', search) !== 'off'; // PERF-URL",
-    "new": "  return true; // PERF-URL",
+    "old": "  return pageParam('contact', search) !== 'off';",
+    "new": "  return true;",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "frame-depth-not-attached",
     "file": "src/render/airPass.js",
-    "old": "    f.fbo = f.fbos[f.depthIndex]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
-    "new": "    f.fbo = f.fbos[f.depthIndex ^ 1]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
+    "old": "    f.fbo = f.fbos[f.depthIndex]; // The framebuffer with this frame's depth - bound, not re-attached",
+    "new": "    f.fbo = f.fbos[f.depthIndex ^ 1]; // The framebuffer with this frame's depth - bound, not re-attached",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "prepare-prev-is-current",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) {\n      this.prevVP.set(this._vp);\n      this.prevProjInfo.set(this.projInfo);\n      this.prevValid = !!this.frame && !this._cut && !jumped;\n      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }\n    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
-    "new": "    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp);\n    this.prevProjInfo.set(this.projInfo);\n    this.prevValid = !!this.frame;",
+    "old": "    if (this.f) {\n      this.prevVP.set(this._vp);\n      this.prevProjInfo.set(this.projInfo);\n      this.prevValid = !!this.frame && !this._cut && !jumped;\n      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }\n    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // A world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "new": "    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // A world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp);\n    this.prevProjInfo.set(this.projInfo);\n    this.prevValid = !!this.frame;",
     "tests": [
       "test/render/el8_contact.test.js"
     ]

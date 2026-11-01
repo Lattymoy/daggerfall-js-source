@@ -236,8 +236,8 @@
   {
     "name": "GATE-ROADS-the-gates-never-handed",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // GATE-ROADS: its gates for the kernel to lay their roads (world/townGates.js)\n",
-    "new": "",
+    "old": "    if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // Its gates for the kernel to lay their roads (world/townGates.js)\n    if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)",
+    "new": "    if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)",
     "tests": [
       "test/world/gateroads.test.js"
     ]

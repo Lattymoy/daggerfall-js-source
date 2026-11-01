@@ -1,4 +1,3 @@
-// OWN-WORK2 (2026-10-31, the owner: "removing mods from outside authors and instead replacing them with our own work"):
 // THE BAY'S NETWORK IS OURS. Hazelnut's four arrays are retired; world/roadsProducer.js builds the Bay's roads and tracks
 // by the law the roads past the Bay take, and its rivers and streams by world/road/riverNetwork.js, from the player's own
 // MAPS.BSA and WOODS.WLD. Pinned on made-up land here, and on the player's map where ARENA2 is (test/bayRoads.mjs).
@@ -110,7 +109,7 @@ test('OWN-WORK2 the producer on made-up land: no road on the sea, a town on the 
   assert.ok(along <= 2, `the road between the valley's towns runs beside the river, not down it (${along} pixels on it)`);
   for (const k of ['roads', 'tracks', 'rivers', 'streams']) assert.equal(lonelyBits(net[k], MAP_W, MAP_H), 0, `${k}: every step a chain`);
   for (let i = 0; i < net.roads.length; i++) assert.equal((net.rivers[i] | net.streams[i]) & (net.roads[i] | net.tracks[i]), 0, 'CANAL-ARM: no arm both a path and water');
-  // the source: the network watered as it is built (CANAL-ARM)
+  // the source: the network watered as it is built
   assert.match(readFileSync(new URL('../../../src/world/roadsProducer.js', import.meta.url), 'utf8'), /waterOffPaths\(Object\.assign\(net, \{ rivers, streams \}\)\)/);
 });
 

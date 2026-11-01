@@ -62,8 +62,8 @@
   {
     "name": "OW3-J3-no-rejoin",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    r.join = rejoinPoint(r);\n",
-    "new": "    r.join = null;\n",
+    "old": "    r.join = rejoinPoint(r);",
+    "new": "    r.join = null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OW3-J3-join-never-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.join) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (r.join) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "OW3-J3-join-never-spent",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "r.join = null; startRouteLeg(); };",
-    "new": "startRouteLeg(); };",
+    "old": "      st.autopilot.onArrival = () => { if (st.route !== r) return; r.join = null; startRouteLeg(); };",
+    "new": "      st.autopilot.onArrival = () => { if (st.route !== r) return; startRouteLeg(); };",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW3-J3-join-in-the-legs-pixel",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const j = r.join, jp = worldCoordToMapPixel(j.x, j.z);",
-    "new": "const j = r.join, jp = r.legs[r.i];",
+    "old": "      const j = r.join, jp = worldCoordToMapPixel(j.x, j.z);",
+    "new": "      const j = r.join, jp = r.legs[r.i];",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "OW3-J3-open-ground-rejoined",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null;",
-    "new": "    if (!leg || !prev || leg.ring || prev.ring) return null;",
+    "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null;   // A ring's points are walked point to point - no road's lane runs between them",
+    "new": "    if (!leg || !prev || leg.ring || prev.ring) return null;   // A ring's points are walked point to point - no road's lane runs between them",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "OW3-J3-join-at-the-end",
     "file": "src/systems/travel/travelOptions.js",
-    "old": " && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2 ? j : null;",
-    "new": " ? j : null;",
+    "old": "    return Math.hypot(j.x - me.x, j.z - me.z) > P_SIZE / 2 && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2 ? j : null;",
+    "new": "    return Math.hypot(j.x - me.x, j.z - me.z) > P_SIZE / 2 ? j : null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "OW3-J3-stale-join-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // OW-TOWN-RING: a ring's point is no join\n",
-    "new": "",
+    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // A ring's point is no join\n    r.i = best;",
+    "new": "    r.i = best;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

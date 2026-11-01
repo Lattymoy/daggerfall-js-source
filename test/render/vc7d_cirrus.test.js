@@ -1,4 +1,4 @@
-// VC7d - THE ICE LAYER (2026-09-23, Mac: "improve the volumetric cloud system to be more immersive" - the high
+// THE ICE LAYER (2026-09-23, Mac: "improve the volumetric cloud system to be more immersive" - the high
 // cirrus, the last of the four chosen; "Let's do the not done yet before we merge").
 //   - a thin shell of ice cloud at CIRRUS_ALT_M, read once where each ray meets it over a round earth, so it runs
 //     out to its own horizon instead of to infinity;
@@ -102,7 +102,7 @@ test('VC7d: THE VEIL - how much, how thick, and a cover that eases with the weat
   for (const w of Object.keys(VC_PROFILE)) assert.ok(CIRRUS_COVER[w] > 0 && CIRRUS_COVER[w] < 1, `${w} carries some`);
   assert.ok(Object.isFrozen(CIRRUS_COVER));
   assert.ok(CIRRUS_COVER.sunny > CIRRUS_COVER.fog && CIRRUS_COVER.sunny > CIRRUS_COVER.sandstorm, 'a fair sky shows it; fog and dust hide the high air');
-  // OWN-WORK4 AUDIT: a lid does not hide the ice by itself (streaks through its thin places) - a lid keeps a trace
+  // A lid does not hide the ice by itself (streaks through its thin places) - a lid keeps a trace
   for (const w of ['overcast', 'rain', 'snow', 'thunder']) assert.ok(CIRRUS_COVER[w] < CIRRUS_COVER.sunny / 4, `${w}: a trace under its lid`);
   // the thickest cirrus is still a veil: under half the blue is gone through it
   assert.ok(1 - Math.exp(-CIRRUS_TAU) < 0.5, `peak opacity ${(1 - Math.exp(-CIRRUS_TAU)).toFixed(2)}`);
@@ -171,7 +171,7 @@ test('VC7d: THE ICE\'S OWN SUN - three degrees past the ground\'s horizon, in th
 
 test('VC7d: BEHIND THE SLAB - the march lays it under what it found, and uploads what it reads', () => {
   const main = MARCH_FS.slice(MARCH_FS.indexOf('void main() {', MARCH_FS.indexOf('vec4 cirrus(')));
-  const fade = main.indexOf('  if (!veiled) { col += T * back.rgb; T *= back.a; }');   // SLAB-SPAN: the slab's last word; SKY-ARC; AUDIT PRECIP SKY-5 (PIN MOVED): already in its own perspective
+  const fade = main.indexOf('  if (!veiled) { col += T * back.rgb; T *= back.a; }');   // The slab's last word; SKY-ARC; AUDIT PRECIP SKY-5 (PIN MOVED): already in its own perspective
   const rest = main.indexOf('  { float a = farA(rest); col += T * uHorizonColor * a; T *= 1.0 - a; }');   // AUDIT PRECIP SKY-1: the slab past the walk, behind all the walk found
   assert.ok(rest > fade && rest < main.indexOf('vec4 ice = cirrus(cam, dir);'), 'the slab the walk left, laid behind what it found and in front of the cirrus');
   const ice = main.indexOf('vec4 ice = cirrus(cam, dir);'), add = main.indexOf('col += T * ice.rgb;'), thru = main.indexOf('T *= ice.a;');

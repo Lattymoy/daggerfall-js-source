@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): THE STEPS, MADE. A footstep is two contacts - the heel, then the ball of the foot 60 to 110 ms
+// THE STEPS, MADE. A footstep is two contacts - the heel, then the ball of the foot 60 to 110 ms
 // on - and the ground answers each in its own way: a struck body on stone, tile and wood; a crowd of small cracks in
 // grass, gravel, sand and snow; a slap, a suck and bubbles in mud and water. Armour rides over it (a chain's rings, a
 // plate's ring, a leather creak), and the sway, the hard landing and the splash are made of the same parts. Each family

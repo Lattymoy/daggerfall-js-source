@@ -102,7 +102,7 @@ test('PAD1-B every button name the poller can synthesise is a KeyCode a mod key 
     const walk = (o) => { if (!o || typeof o !== 'object') return; if (typeof o.$type === 'string' && /TextKey$/.test(o.$type) && !/Axis$/.test(String(o.Name ?? o.name ?? ''))) { walked++; const v = String(o.Value ?? o.value ?? ''); assert.ok(v === '' || isBindableKeyCode(v), `${mod}: ${o.Name ?? o.name} = ${v}`); } for (const v of Object.values(o)) walk(v); };
     walk(j);
   }
-  // OWN-WORK4 (2026-10-31): a retired mod's TextKey defaults as its modsettings.json shipped them - its copy left the tree
+  // A retired mod's TextKey defaults as its modsettings.json shipped them - its copy left the tree
   const RETIRED_TEXT_KEYS = {
     'eye-of-the-beholder': { 'Camera.TogglePerspective': 'KeypadEnter', 'Camera.SwitchShoulder': 'Tab', 'AutoTogglePerspective.ToggleInput': 'KeypadPlus' },
     'horse-cart-and-cargo': { 'Hotkeys.QuickMountDismount': 'K', 'Hotkeys.SummonTransport': 'G' },
@@ -118,16 +118,13 @@ test('PAD1-C the pad layout: pad-only codes, one action each, none the UI dict s
   assert.equal(new Set(actions).size, actions.length, 'no action twice');
   for (const c of codes) assert.ok(PAD_CODE(c), `${c} is a pad code`);
   for (const a of actions) assert.ok(ACTIONS.includes(a), `${a} is an action`);
-  // PIN MOVED (2026-10-01 part four, TOUCH-HOLD - Mac: "Interact button + knife Use"): B's UI action is Back, which
-  // answers only in a window - in the world B is Interact's (Plus shares B the same way, its pack and Back); A, X and Y
-  // keep DFU's clicks
   const ui = new Set(DEFAULT_JOYSTICK_UI.filter(([, a]) => a !== 'Back').map(([c]) => c));
   for (const c of codes) assert.ok(!ui.has(c), `${c} is not a UI click button (A/X/Y keep DFU's clicks)`);
   assert.deepEqual(DEFAULT_SECONDARY_BINDINGS.find(([c]) => c === DEFAULT_JOYSTICK_UI.find(([, a]) => a === 'Back')[0]), ['JoystickButton1', 'Interact'], 'B: Interact in the world');
   const kb = new Set(DEFAULT_BINDINGS.map(([c]) => c));
   for (const c of codes) assert.ok(!kb.has(c), 'no keyboard default is touched');
   for (const q of QUICKSLOT_ACTIONS) {
-    if (q === 'QuickSwap') continue;   // QS6: the swap gave up its default key; the cell it is drawn in is the off hand's
+    if (q === 'QuickSwap') continue;   // The swap gave up its default key; the cell it is drawn in is the off hand's
     const row = DEFAULT_SECONDARY_BINDINGS.find(([, a]) => a === q);
     assert.ok(row && /^JoystickAxis[67]Button[01]$/.test(row[0]), `${q} is on the d-pad`);
   }
@@ -146,7 +143,7 @@ test('PAD1-C the store: a full reset and the load-time autofill both FILL the pa
   // secondary back to the pad button - so the test stopped asking what
   // it says it asks. A code no default holds, in EITHER dict, is what
   // this fixture has always meant.
-  const own = [...'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`), 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'ScrollLock']   // KB1: past the letters, which are all spoken for (CSA-D/E: and the four after them)
+  const own = [...'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`), 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight', 'ScrollLock']   // Past the letters, which are all spoken for (CSA-D/E: and the four after them)
     .find((c) => !DEFAULT_BINDINGS.some(([code]) => code === c)
       && !DEFAULT_SECONDARY_BINDINGS.some(([code]) => code === c));
   assert.ok(own, 'every candidate letter is spoken for - this fixture needs a new one');
@@ -268,10 +265,10 @@ test('PAD1-E every registry action has a consumer, or is on the recorded list of
   const walk = (d) => { for (const e of readdirSync(join(ROOT, d), { withFileTypes: true })) { const p = `${d}/${e.name}`; if (e.isDirectory()) walk(p); else if (e.name.endsWith('.js') && !EDITORS.has(p)) files.push([p, stripComments(readFileSync(join(ROOT, p), 'utf8'))]); } };
   walk('src');
   const unread = ACTIONS.filter((a) => !files.some(([, src]) => new RegExp(`(?<![A-Za-z0-9_])${a}(?![A-Za-z0-9_])`).test(src)));
-  // KB1: CenterView and PrintScreen are READ now (Mac: "build 2") - the look filter's centre and ui/screenshot.js -
+  // CenterView and PrintScreen are READ now - the look filter's centre and ui/screenshot.js -
   // and the two left are HIDDEN_ACTIONS (off the pane, unbound). The hotbar's slots are read through the one list
   // that names them (HOTBAR_SLOT_ACTIONS, beside the registry), so it is counted as their reader.
-  const hotbarRead = files.some(([, src]) => /const slotOfActions = \(acts\) => acts\.map\(\(a\) => HOTBAR_SLOT_ACTIONS\.indexOf\(a\)\)/.test(src) && /slotOfActions\(eventActions\(/.test(src));   // AUDIT KB1: the event's own read; UXB1-S: each action a shared key carries
+  const hotbarRead = files.some(([, src]) => /const slotOfActions = \(acts\) => acts\.map\(\(a\) => HOTBAR_SLOT_ACTIONS\.indexOf\(a\)\)/.test(src) && /slotOfActions\(eventActions\(/.test(src));   // The event's own read; UXB1-S: each action a shared key carries
   assert.ok(hotbarRead, 'the bar reads its ten slots through HOTBAR_SLOT_ACTIONS');
   const left = unread.filter((a) => !(hotbarRead && HOTBAR_SLOT_ACTIONS.includes(a)));
   assert.deepEqual(left.sort(), [...HIDDEN_ACTIONS].sort(), `unrouted: ${left}`);
@@ -295,7 +292,7 @@ test('PAD1-F a rebind through the controls pane changes the quickslot chip: the 
   assert.deepEqual(quickslotTag('QuickUse1', pad), { kind: 'glyph', family: 'xbox', code: 'JoystickButton5' }, 'the chip is the new button');
   assert.equal(getBinding(store, 'Jump', false), 'JoystickButton5', 'RB was Jump\'s and still is: two actions staged on one key are a SHARE since UXB1-S (the pane would have asked first - the apply writes what the set says)');
   // and on the keyboard side
-  u.primary.set('QuickUse1', 'KeyL');   // KB1: G is the torch's drop now, and an apply runs only on a clash-free set - L's holder (LogBook) cleared, as the pane's replace does
+  u.primary.set('QuickUse1', 'KeyL');   // G is the torch's drop now, and an apply runs only on a clash-free set - L's holder (LogBook) cleared, as the pane's replace does
   u.primary.set('LogBook', null);
   applyUnsavedKeybinds(store, u);
   assert.deepEqual(quickslotTag('QuickUse1', { ...pad, controller: false }), { kind: 'key', text: 'L' });

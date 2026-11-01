@@ -2,8 +2,8 @@
   {
     "name": "WWAUDIT-D1-form-under-the-ready-gate",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (entity && !paralyzed) {\n        const wolf = isMwWerewolf(entity);",
-    "new": "      if (entity && !paralyzed && fpArm.ready()) {\n        const wolf = isMwWerewolf(entity);",
+    "old": "      if (entity && !paralyzed) {",
+    "new": "      if (entity && !paralyzed && fpArm.ready()) {",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],

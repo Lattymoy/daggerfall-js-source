@@ -73,8 +73,8 @@
   {
     "name": "AUDIT-RPT1026-J2-the-build-hands-no-models",
     "file": "src/scenes/pixelBuild.js",
-    "old": "faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced:",
-    "new": "faction: bd?.factionId ?? 0, terraced:",
+    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
+    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
     "tests": [
       "test/scenes/audit_rpt1026_world.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-RPT1026-J2-the-first-model-alone",
     "file": "src/scenes/pixelBuild.js",
-    "old": "f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
-    "new": "f.rects.push(...rects); f.grounds?.push(ground); }",
+    "old": "            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
+    "new": "            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.grounds?.push(ground); }",
     "tests": [
       "test/scenes/audit_rpt1026_world.test.js"
     ],

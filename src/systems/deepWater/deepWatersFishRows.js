@@ -2,7 +2,7 @@
 // deepWatersFishItems.js's own, and that module pulls the sea's textures and the passive fish in; the item law
 // (systems/item/itemLaw.js) runs on the account service, which loads none of it, and needs only the rows. One home, two
 // readers: deepWatersFishItems.js imports and re-exports every name here and registers the rows as it always did.
-// OWN-WORK3 (2026-10-31): the rows and the names are our own, by the rules below. The indices are the ones saves hold.
+// OWN-WORK3: the rows and the names are our own, by the rules below. The indices are the ones saves hold.
 
 /** ItemGroups.UselessItems2, as the port names it. */
 export const FISH_GROUP = 'UselessItems2';

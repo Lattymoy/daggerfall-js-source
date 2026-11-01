@@ -2,8 +2,8 @@
   {
     "name": "GATE-CLEAR-a-piece-in-the-clearing-still-stands",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (boxNearGate(gateClear, px, py, box[0], box[2], box[3], box[5])) { gateLedger.refused = true; _wodOffGate++; continue; }\n",
-    "new": "",
+    "old": "        if (boxNearGate(gateClear, px, py, box[0], box[2], box[3], box[5])) { gateLedger.refused = true; _wodOffGate++; continue; }\n        gateLedger.reach.push(box[0], box[2], box[3], box[5], 0);",
+    "new": "        gateLedger.reach.push(box[0], box[2], box[3], box[5], 0);",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GATE-CLEAR-a-flat-in-the-clearing-still-stands",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (pointNearGate(gateClear, px, py, f.base[0], f.base[2], WOD_FLAT_GATE_CLEAR_M)) { gateLedger.refused = true; _wodOffGate++; continue; }",
-    "new": "        // gone",
+    "old": "        if (pointNearGate(gateClear, px, py, f.base[0], f.base[2], WOD_FLAT_GATE_CLEAR_M)) { gateLedger.refused = true; _wodOffGate++; continue; }   // And one in the gate's clearing",
+    "new": "        // gone   // GATE-CLEAR: and one in the gate's clearing",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GATE-CLEAR-the-pick-never-asks-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "wodHeld = picks.map((p) => !gateSite(p.prefabName, p.prefab, p.rect));",
-    "new": "wodHeld = picks.map(() => false);",
+    "old": "        if (picks.length && onTheBay(px, py)) { wodPicks = picks; wodHeld = picks.map((p) => !gateSite(p.prefabName, p.prefab, p.rect)); }   // The mod's sites are the Bay's",
+    "new": "        if (picks.length && onTheBay(px, py)) { wodPicks = picks; wodHeld = picks.map(() => false); }   // The mod's sites are the Bay's",
     "tests": [
       "test/world/gate/gateclear.test.js",
       "test/world/worldOfDaggerfall/roadsclear.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "GATE-CLEAR-a-build-across-the-turn-never-asked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    gateClearSweep.published(pkey, gateClear?.key);",
-    "new": "    // gone",
+    "old": "    gateClearSweep.published(pkey, gateClear?.key);   // Built against a clearing the sweep has moved on from - asked again",
+    "new": "    // gone   // GATE-CLEAR: built against a clearing the sweep has moved on from - asked again",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "GATE-CLEAR-the-placement-reads-a-newer-clearing",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (boxNearGate(gateClear, px, py, box[0], box[2], box[3], box[5]))",
-    "new": "        if (boxNearGate(_gateClearNow(), px, py, box[0], box[2], box[3], box[5]))",
+    "old": "        if (boxNearGate(gateClear, px, py, box[0], box[2], box[3], box[5])) { gateLedger.refused = true; _wodOffGate++; continue; }",
+    "new": "        if (boxNearGate(_gateClearNow(), px, py, box[0], box[2], box[3], box[5])) { gateLedger.refused = true; _wodOffGate++; continue; }",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "GATE-CLEAR-a-stood-piece-left-out-of-the-reach",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        gateLedger.reach.push(box[0], box[2], box[3], box[5], 0);\n",
-    "new": "",
+    "old": "        gateLedger.reach.push(box[0], box[2], box[3], box[5], 0);\n        unionBox(box);",
+    "new": "        unionBox(box);",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "GATE-CLEAR-the-cost-forgotten",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      gateRefused: gateLedger.refused,",
-    "new": "      gateRefused: false,",
+    "old": "      gateRefused: gateLedger.refused,   // Whether that clearing cost it a site or a piece",
+    "new": "      gateRefused: false,   // Whether that clearing cost it a site or a piece",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]

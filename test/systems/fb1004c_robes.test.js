@@ -29,7 +29,7 @@ test('WHERE-ROBES: the examination as DFU runs it - a click on the robes says 10
   assert.equal(noteCame(e), false, 'unclicked, nothing comes');
   assert.equal(sendQuestItemClick(e.robes, e.getQuest), true, 'the one home clicks the quest\'s Item');
   e.step();
-  assert.equal(noteCame(e), true, '"Paper crackles as you lift the ... hidden a note inside" - and the note');   // PIN MOVED (OWN-WORDS2): 1018 in our words
+  assert.equal(noteCame(e), true, '"Paper crackles as you lift the ... hidden a note inside" - and the note');
 });
 
 test('WHERE-ROBES: the one home answers nothing for what is not a live quest item - a plain item, a quest gone, no resolver - and never throws (C# NREs on a missing symbol)', () => {
@@ -167,7 +167,7 @@ test('WHERE-ROBES: a building\'s containers, beds and shelves and a dungeon\'s s
   // own shared 'dungeon' bucket; the street's headstones stand where no quest item can (a quest item's Place is a
   // building or a dungeon), and exterior.js stands no furniture
   const dc = readFileSync(join(ROOT, 'src/scenes/dungeonContext.js'), 'utf8');
-  assert.match(dc, /targets\.push\(\{ key: `search:\$\{i\}`, aabb: sb\.aabb, distance: RAY_DISTANCE, reach: searchReachFor\(sb\.aabb, lastPlayerFeet, [^\n]*\), surface: true \}\)/, 'the dungeon\'s searchables too');   // PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the reach is the body's to the box (searchables.js searchReachFor)
+  assert.match(dc, /targets\.push\(\{ key: `search:\$\{i\}`, aabb: sb\.aabb, distance: RAY_DISTANCE, reach: searchReachFor\(sb\.aabb, lastPlayerFeet, [^\n]*\), surface: true \}\)/, 'the dungeon\'s searchables too');
   assert.match(wm, /if \(shelvesAct\(interiorBuilding\)\) interiorCtx\.shelves\.forEach\(/, 'the shelves are targets only where they act');
   // the predicate is openShelf's three arms, asked as one question - a fourth arm added to the press must be added here
   assert.match(wm, /const shelvesAct = \(b\) => !!b && \(hallOfRecordsHere\(b\) \|\| isShop\(b\.buildingType\) \|\| isBookshelfBuilding\(b\.buildingType\)\);/);

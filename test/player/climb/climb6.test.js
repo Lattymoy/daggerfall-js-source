@@ -31,7 +31,7 @@ import { climbPoseOf, climbMoveOf } from '../../../src/player/motor.js';
 import { PeerClimbTrack, peerMove } from '../../../src/net/peer/peerClimb.js';
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
-const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
+const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // Our own biped (tools/ownBiped.mjs)
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -466,21 +466,9 @@ test('CLIMB6 C16: THE FOUR HOSTS hand the rig the snapshot (world, exterior, int
   for (const f of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) assert.match(rd(f), /player\.feetAt\(\), climbRigInput\(player, cam\.yaw\), aimView\);/, `${f}: drawFoes hands it on`);
   const fp = rd('src/combat/fpArm.js');
   assert.match(fp, /climb: thirdClimb\(climbWorld, cam\),/, 'the body\'s pose');
-  // PIN MOVED (TWO-HANDS): off the stone the same slot carries the running hands - the climb's request first, the run's
-  // only where there is none (was: `climb: held ? null : firstClimb(climbWorld, cam),`)
-  // PIN MOVED (TWO-HANDS AUDIT): the climb's request stands alone in the slot again, and the run is solved UNDER it at
-  // what the climb leaves (`run:`, poseAssembly) - choosing one dropped the other whole the frame a climb began (was:
-  // `climb: held ? null : (firstClimb(climbWorld, cam) ?? firstRun(cam)),`)
   assert.match(fp, /const fClimb = held \? null : firstClimb\(climbWorld, cam\);[^\n]*\n(?:[^\n]*\n){0,6}?\s*climb: fClimb,/, 'the arms\' pose (the sheet\'s hands are the sheet\'s)');
   assert.match(fp, /if \(climbHands && \(r\.slot === 'weapon' \|\| r\.slot === 'arrow' \|\| r\.slot === 'torch'\)\) r\.hidden = true;/, 'nothing in hands on the stone');
   assert.match(rd('src/combat/weapon/weaponRig.js'), /if \(_climbLower > 0 && !armsClimb\)/, 'posed arms stay on the screen');
   assert.match(rd('src/net/peer/peerBodies.js'), /b\.cam\.climb = \(b\.climbTrack \?\?= new PeerClimbTrack\(\)\)\.input\(peer\.shown, f, b\.yaw, this\._now\(\), this\._collider\(\)\);/, 'the peers\' bodies');
-  // PIN MOVED (TWO-HANDS AUDIT): the running hands' reach is solved between the neck and the climb, under the climb's
-  // request (`assembly.runFit`) - the climb's hook is still the last before the matrices
-  // PIN MOVED (RIFLE-STANCE, 2026-10-17): a held long gun's hands (`hold`, combat/gun/rifleStance.js) are solved in the same
-  // place, after the climb's slot and before the matrices
-  // PIN MOVED (BODY-MOTION, 2026-10-18): the third-person body's own motion (`motion`, characters/bodyMotion/) is solved
-  // after the neck and before the run - the climb's and the hold's hooks still the last before the matrices
-  // PIN MOVED (BOW-AIM, FIELD BUGS 2026-10-26c): the third person's ranged aim (`aim`, combat/spineAim.js) between the neck and the motion
   assert.match(rd('src/formats/morrowind/mwFirstPerson.js'), /applyFirstPersonNeck\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.aimFit = aim \? aim\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.motionFit = motion \? motion\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.runFit = run \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, run\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.climbFit = climb \? applyClimbRig\(skeleton, pose, GRAPH_ROOT, fns\.skelMats, climb\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.holdFit = hold \? hold\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n\s*const mats = fns\.skelMats/, 'the hook between the neck and the matrices');
 });

@@ -1,4 +1,4 @@
-// U11: THE PARCHMENT MESSAGE BOX - DFU's DaggerfallMessageBox
+// THE PARCHMENT MESSAGE BOX - DFU's DaggerfallMessageBox
 // (MIT Daggerfall Workshop), the frame every popup in the game wants
 // and the port has never had. U6's action boxes, the U10 gender
 // screen and the race description box all drew on a flat colour rect
@@ -75,12 +75,12 @@ import { shadowText } from './native/nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { clampScrollIndex, thumbSpan, drawScrollThumb } from './verticalScrollBar.js';
-import { decodePng } from '../systems/textureReplacement.js';   // RR2: a mod's button PNGs
-import { packTexture } from './packArt.js';   // OVH2: the worn UI pack's buttons
+import { decodePng } from '../systems/textureReplacement.js';   // A mod's button PNGs
+import { packTexture } from './packArt.js';   // The worn UI pack's buttons
 import { packCifRciUrl } from '../systems/uiPack.js';
-import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Yes/No dialog is Enhanced Plus's
-import { drawEnhancedDialog } from './enhanced/enhancedDialog.js';   // DLG1: a box that asks, in the enhanced skin
-import { processGrammar } from '../systems/textManager.js';   // L10N3g: MultiFormatTextLabel.AddTextLabel's grammar (:230)
+import { isEnhancedPlus } from '../systems/uiSkin.js';   // The Yes/No dialog is Enhanced Plus's
+import { drawEnhancedDialog } from './enhanced/enhancedDialog.js';   // A box that asks, in the enhanced skin
+import { processGrammar } from '../systems/textManager.js';   // MultiFormatTextLabel.AddTextLabel's grammar (:230)
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -105,13 +105,13 @@ export const SCROLL_PANEL_PAD = 9;
 export const SCROLL_BAR_W = 8;
 /** ScrollingPanel_OnMouseScrollUp/Down (:675-682) - SIX pixels. */
 export const SCROLL_WHEEL_STEP = 6;
-/** AUDIT 64 F28: MultiFormatTextLabel's own HighlightColor default,
+/** MultiFormatTextLabel's own HighlightColor default,
  *  `DaggerfallUI.DaggerfallHighlightTextColor` = Color32(219,130,40)
  *  (MultiFormatTextLabel.cs:36, DaggerfallUI.cs:54) - what a
  *  TextHighlight token paints with when no caller has run
  *  SetHighlightColor (DaggerfallMessageBox.cs:455-458). */
 export const DEFAULT_HIGHLIGHT_COLOR = Object.freeze([219 / 255, 130 / 255, 40 / 255, 1]);
-/** ROAD-Ar R14 - THE IMAGE PANEL SITS AT THE TOP MARGIN, AND THE
+/** THE IMAGE PANEL SITS AT THE TOP MARGIN, AND THE
  *  WINDOW'S Position (0,5) IS DEAD BY DRAW TIME.
  *
  *  DaggerfallInventoryWindow's painting arm (:1622-1625) does set
@@ -163,7 +163,7 @@ function buttonTex(record) {
   if (!_art) return null;
   let t = _art.buttons.get(record);
   if (t === undefined) {
-    // OVH2: a worn UI pack's button first (GrimoireUI ships BUTTONS.RCI 0-37 - its own 21-37 are Roleplay &
+    // A worn UI pack's button first (GrimoireUI ships BUTTONS.RCI 0-37 - its own 21-37 are Roleplay &
     // Realism's labels redrawn, so the pack's face wins those too). The slot draws nothing until the PNG lands; a
     // pack file that does not load hands the slot to the arms below on the next draw.
     const packUrl = _packFailed.has(record) ? null : packCifRciUrl('BUTTONS.RCI', record, 0);
@@ -175,14 +175,14 @@ function buttonTex(record) {
       });
       return null;
     }
-    // RR2: a mod's own button art (Roleplay & Realism ships BUTTONS.RCI
+    // A mod's own button art (Roleplay & Realism ships BUTTONS.RCI
     // records 21-37 as PNGs - the classic file ends at 20). Registered
     // loaders decode on first use; until the bytes land the slot draws
     // nothing, then the next draw finds it.
     const custom = _buttonArt.get(record);
     if (custom && (custom.isOn?.() ?? true)) {
       _art.buttons.set(record, null);
-      Promise.resolve(custom.load()).then((v) => (v?.width ? v : decodePng(v))).then((img) => {   // NO-BETHESDA2: or the picture, built
+      Promise.resolve(custom.load()).then((v) => (v?.width ? v : decodePng(v))).then((img) => {   // Or the picture, built
         const colors = new Uint32Array(img.data.buffer, img.data.byteOffset, img.width * img.height);
         _art.buttons.set(record, _art.renderer.uploadTexture('img', `buttons:${record}`, { width: img.width, height: img.height, colors }));
       }).catch((e) => console.warn('[messagebox] a registered button did not load:', e?.message ?? e));
@@ -195,20 +195,20 @@ function buttonTex(record) {
   }
   return t;
 }
-/** RR2: `registerButtonArt(record, load, isOn)` - `load()` answers the PNG
- *  bytes (a Promise), or (NO-BETHESDA2) the top-down RGBA picture built
+/** `registerButtonArt(record, load, isOn)` - `load()` answers the PNG
+ *  bytes (a Promise), or the top-down RGBA picture built
  *  from the player's BUTTONS.RCI; `isOn` the mod's switch. */
 const _buttonArt = new Map();
-const _packFailed = new Set();   // OVH2: the pack buttons that did not load - the classic arms answer them
+const _packFailed = new Set();   // The pack buttons that did not load - the classic arms answer them
 export function registerButtonArt(record, load, isOn = null) { if (typeof load === 'function') _buttonArt.set(record, { load, isOn }); else _buttonArt.delete(record); }
 export const buttonArtRegistered = (record) => _buttonArt.has(record);
 
 const roundUpSlice = (v) => (v > MIN_BOX_SIDE ? Math.ceil(v / SLICE) * SLICE : MIN_BOX_SIDE);
 
-/** SS5: THE WIDEST ROW A BOX HOLDS ON THE SCREEN - fourteen slices (308) on the 320-px panel, less the two margins. One
+/** THE WIDEST ROW A BOX HOLDS ON THE SCREEN - fourteen slices (308) on the 320-px panel, less the two margins. One
  *  wider rounds the parchment up to fifteen (330), past both edges. */
 export const BOX_FIT_W = 14 * SLICE - 2 * MARGIN;
-/** SS5: a box's rows as the screen can hold them. UpdatePanelSizes sizes the parchment to its widest row and never
+/** A box's rows as the screen can hold them. UpdatePanelSizes sizes the parchment to its widest row and never
  *  wraps - the rows are the caller's, and a TEXT.RSC record comes broken to fit - so a sentence the port writes at
  *  runtime and that names a long piece ("Ebony Guardian's Right Pauldron of Skill is bound to you - ...") stood past
  *  the screen's edges. Each plain row wider than `width` is word-wrapped under itself in its own alignment (the talk
@@ -271,7 +271,7 @@ export function tokenRows(tokens) {
  *  53 multi-row records are entirely LEFT while 27 mix the two, so
  *  centring everything drew 80 of 676 of them wrong.
  *
- *  L10N3g: THE LABEL'S GRAMMAR. MultiFormatTextLabel.AddTextLabel sets
+ *  THE LABEL'S GRAMMAR. MultiFormatTextLabel.AddTextLabel sets
  *  `textLabel.Text = ProcessGrammar(text)` for every label it lays out
  *  (:230) - after the caller expanded the macros, and BEFORE the label
  *  is measured - so a row here (a cell of a tab-stopped row, each its
@@ -284,7 +284,7 @@ export function tokenRows(tokens) {
 const normalizeRows = (lines) =>
   (lines ?? []).map((l) => {
     if (typeof l === 'string') return { text: processGrammar(l), center: true };
-    // AUDIT 64 F28: a TAB-STOPPED row. MultiFormatTextLabel's
+    // A TAB-STOPPED row. MultiFormatTextLabel's
     // PositionPrefix arm sets `cursorX = token.x` outright when the
     // token carries one (:346-352), which is how GetLoansLine lays its
     // four columns at 60/120/180 (DaggerfallBankingWindow.cs:559-577).
@@ -322,7 +322,7 @@ export function layoutMessageBox(font, lines, buttons = [], {
 } = {}) {
   const rowH = font?.fnt?.fixedHeight ?? 6;         // rowLeading 0
   const rows = normalizeRows(lines);
-  // AUDIT 17g F4: an input box re-measured its own live entry every
+  // An input box re-measured its own live entry every
   // frame, so the parchment GREW A SLICE as the player typed past a
   // 22px boundary. `sizingRows` measures the widest the content can
   // get (DaggerfallInputMessageBox's field is fixed at maxCharacters)
@@ -362,7 +362,7 @@ export function layoutMessageBox(font, lines, buttons = [], {
     // which is what drawFrame's shear arm exists for.
     [x, y, w, h] = rect;
   } else {
-    // AUDIT-AMAP W11: DaggerfallInputMessageBox.UpdatePanelSizes
+    // DaggerfallInputMessageBox.UpdatePanelSizes
     // (:243-252) takes the TextBox's WidthOverride as the WHOLE width
     // when it is set (the automap's note prompt: 306), else the measured
     // content plus margins - and rounds either up to the 22px slice
@@ -474,7 +474,7 @@ function drawFrame(renderer, m, box) {
 export function drawMessageBox(renderer, m, font, box, {
   textColor = undefined, image = null, highlightColor = DEFAULT_HIGHLIGHT_COLOR,
 } = {}) {
-  // DLG1: under the enhanced skin a box with buttons is a decision, and is
+  // Under the enhanced skin a box with buttons is a decision, and is
   // drawn as the enhanced dialog - the owning window still answers it.
   if (typeof document !== 'undefined' && isEnhancedPlus() && drawEnhancedDialog(renderer, m, box, { image })) return true;
   if (!_art || !font) return false;
@@ -504,7 +504,7 @@ export function drawMessageBox(renderer, m, font, box, {
     const rx = r.center ? box.x + Math.round((box.w - lw) / 2) : labelX;
     const ry = box.textY + i * box.rowH - dy;
     if (clip && (ry + box.rowH <= clip[1] || ry >= clip[1] + clip[3])) return;
-    // AUDIT 64 F28: a tab-stopped row draws one label per cell at the
+    // A tab-stopped row draws one label per cell at the
     // PositionPrefix's own x (MultiFormatTextLabel.cs:346-352), and a
     // TextHighlight row takes the label's HighlightColor (:363) - which
     // SetHighlightColor (DaggerfallMessageBox.cs:455-458) lets a caller
@@ -542,8 +542,7 @@ export function messageBoxHit(box, vx, vy) {
   return null;
 }
 
-/** BOX1 (2026-09-17, Mac: "When buying a spell, the dialouge ui Flickers
- *  between 2 seperate conversations"): A BOX READS ITS RECORD ONCE. A
+/** A BOX READS ITS RECORD ONCE. A
  *  box carrying a `textId` resolves it through the host's `rows(id)` -
  *  which is TextProvider's random-VARIANT draw (townTalk.lines ->
  *  variantLinesById) - and the windows used to resolve it in draw(),

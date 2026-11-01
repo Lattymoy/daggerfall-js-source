@@ -1,4 +1,4 @@
-// HCC (2026-09-23): WHAT IS AND IS NOT PORTED - the whole of TrailingWagon.dll, method by method.
+// HCC: WHAT IS AND IS NOT PORTED - the whole of TrailingWagon.dll, method by method.
 //
 // The mod's assembly is Horse Cart and Cargo 1.0.0-rc12's `TrailingWagon.dll`, its IL dumped by tools/ilDump.py the same
 // way Eye Of The Beholder's was (test/player/eyeOfTheBeholder/eotb_scope.test.js is this file's model). The dump carried
@@ -6,10 +6,10 @@
 // classes' bodies, the event accessors) and are struck. What is left is 398 AUTHORED methods, every one a row below:
 // `port` names the symbol carrying its arithmetic and the module it lives in, and a row with no port says WHY in a
 // sentence starting "no twin here" - the port has no Unity transform, no Harmony, no ModManager message bus, no
-// session-scoped texture release. There is no NOT DONE row. OWN-WORK4 (2026-10-31): the dump left the tree with the
+// session-scoped texture release. There is no NOT DONE row. OWN-WORK4: the dump left the tree with the
 // mod's directory; this table, checked against it until then, is the record now.
 //
-// 340 of 398 are ported; 58 have no twin (AUDIT HCC U6 ported the horse-name label's three; KB1 retired ParseConfiguredHotkey - the keys are registry actions). The bible page (06-Systems/Horse-Cart-And-Cargo.md) states
+// 340 of 398 are ported; 58 have no twin (AUDIT HCC U6 ported the horse-name label's three; KB1 retired ParseConfiguredHotkey - the keys are registry actions). The bible page states
 // these numbers and the no-twin families, and a pin below holds it to them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,7 +25,7 @@ const MOD = {
   'horseCartLaw.js': 'src/systems/horse/horseCartLaw.js',
   'horseFollow.js': 'src/systems/horse/horseFollow.js',
   'horseCart.js': 'src/systems/horse/horseCart.js',
-  'trailingPoseCache.js': 'src/systems/horse/trailingPoseCache.js',   // STALE-PARK: the trailing wagon's cached pose
+  'trailingPoseCache.js': 'src/systems/horse/trailingPoseCache.js',   // The trailing wagon's cached pose
   'wagon41214.js': 'src/systems/wagon/wagon41214.js',
   'horseCartPool.js': 'src/scenes/horseCartPool.js',
   'quat.js': 'src/world/quat.js',
@@ -33,7 +33,7 @@ const MOD = {
   'mountRig.js': 'src/player/mountRig.js',
   'inventorySession.js': 'src/systems/inventorySession.js',
   'nativeInventory.js': 'src/ui/native/nativeInventory.js',
-  'horseArt.js': 'src/systems/horse/horseArt.js',   // OWN-WORK4: the horse's pictures, ours
+  'horseArt.js': 'src/systems/horse/horseArt.js',   // The horse's pictures, ours
   'horseNameTooltip.js': 'src/ui/horseNameTooltip.js',   // AUDIT HCC U6
 };
 

@@ -97,8 +97,8 @@
   {
     "name": "FLORA-GROUND-the-pairs-fallback-off-the-law",
     "file": "src/scenes/pixelBuild.js",
-    "old": "addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });",
-    "new": "addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z, 4), t.z, { wild: JUNGLE_ARCHIVE });",
+    "old": "        addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });",
+    "new": "        addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z, 4), t.z, { wild: JUNGLE_ARCHIVE });",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -126,8 +126,8 @@
   {
     "name": "FLORA-GROUND-the-rider-off-the-law",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const groundIn = (smp, x, z) => walkGroundAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])));",
-    "new": "const groundIn = (smp, x, z) => surfaceHeightAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])), 4);",
+    "old": "      const groundIn = (smp, x, z) => walkGroundAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])));",
+    "new": "      const groundIn = (smp, x, z) => surfaceHeightAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])), 4);",
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-build-unseated",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, renderer);",
-    "new": "    void seatFlora;",
+    "old": "    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, renderer);   // And the landmarks",
+    "new": "    void seatFlora;   // And the landmarks",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-re-skin-unseated",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: the new pictures drawn on the ground the pixel draws (scenes/floraSeat.js)\n",
-    "new": "",
+    "old": "        seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: the new pictures drawn on the ground the pixel draws (scenes/floraSeat.js)\n      }",
+    "new": "      }",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-wild-unmarked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (skin?.wild != null) standsOnGround(c);",
-    "new": "      if (skin?.wild == null) standsOnGround(c);",
+    "old": "      if (skin?.wild != null) standsOnGround(c);   // FLORA-GROUND, THE RINGS: the wild's flats stand on the ground by its law - the kernel's woods and scatter, the roadside pairs' fallback",
+    "new": "      if (skin?.wild == null) standsOnGround(c);   // FLORA-GROUND, THE RINGS: the wild's flats stand on the ground by its law - the kernel's woods and scatter, the roadside pairs' fallback",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-jungle-unmarked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      g.centers.forEach(standsOnGround);",
-    "new": "      g.centers.forEach(() => {});",
+    "old": "      g.centers.forEach(standsOnGround);   // FLORA-GROUND, THE RINGS: the jungle's trees and its roadside pairs stand on the ground by its law",
+    "new": "      g.centers.forEach(() => {});   // FLORA-GROUND, THE RINGS: the jungle's trees and its roadside pairs stand on the ground by its law",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "FLORA-GROUND-RINGS-a-mounds-tree-marked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "seatNatureFlat(hillSeat, flat.x, flat.z, hillY) === hillY",
-    "new": "seatNatureFlat(hillSeat, flat.x, flat.z, hillY) >= hillY",
+    "old": "          if (hillY !== null ? seatNatureFlat(hillSeat, flat.x, flat.z, hillY) === hillY : flat.archive === natureArchive) standsOnGround(flatLog[flatLog.length - 1].c);",
+    "new": "          if (hillY !== null ? seatNatureFlat(hillSeat, flat.x, flat.z, hillY) >= hillY : flat.archive === natureArchive) standsOnGround(flatLog[flatLog.length - 1].c);",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]
@@ -514,8 +514,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-builds-warm-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, lodStride); }\n",
-    "new": "",
+    "old": "    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, lodStride); }\n    // The scaled flats - billboardSize times the object's own scale.",
+    "new": "    // WOD2: the scaled flats - billboardSize times the object's own scale.",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]

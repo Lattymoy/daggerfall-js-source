@@ -22,8 +22,8 @@
   {
     "name": "LAYERED-PEERS-setting-unread",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const all = on && layeredAll();   // LAYERED-PEERS: read once a frame",
-    "new": "    const all = on;   // LAYERED-PEERS: read once a frame",
+    "old": "    const all = on && layeredAll();   // Read once a frame",
+    "new": "    const all = on;   // Read once a frame",
     "tests": [
       "test/net/layered_peers.test.js"
     ],

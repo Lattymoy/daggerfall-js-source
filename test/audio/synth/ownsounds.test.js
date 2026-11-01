@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything") - THE SOUNDS ARE OURS.
+// THE SOUNDS ARE OURS.
 //
 // Immersive Footsteps' 210 clips and Better Ambience's 29 left the tree; in their place the synth (src/audio/synth/)
 // makes each name the two mods ask for, at the mod's length and rate. These pins hold the primitives to what they
@@ -201,7 +201,7 @@ test('OWN-WORK4: every name Better Ambience asks for is a clip of ours at its li
   assert.ok(bands(r.samples.subarray(0, 4 * RAIN_LOOP.rate), RAIN_LOOP.rate)[2] > 0.6, 'a hiss of drops, 1.5 to 5 kHz');
   assert.deepEqual(await rainLoopInTurns(), rainLoop(), 'a step a task makes the same loop');
   assert.deepEqual((await betterAmbienceClipInTurn('sfx_footstep_stone_001')).samples, betterAmbienceClip('sfx_footstep_stone_001').samples);
-  // THE EAVES' LAYER (OWN-WORK4 audit): the drips on a loop of their own 41 s, at the level they had in the bed, folded
+  // THE EAVES' LAYER: the drips on a loop of their own 41 s, at the level they had in the bed, folded
   // at the end so it runs into its start; the two come round together only after thousands of hours
   assert.deepEqual(BA_RAIN_LAYERS, ['AmbientRaining', 'AmbientRaining/eaves']);
   assert.deepEqual({ ...RAIN_EAVES }, { seconds: 41, rate: 11025, rmsDb: -36 });

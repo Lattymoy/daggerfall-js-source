@@ -133,8 +133,8 @@
   {
     "name": "GRAIN2-the-row-is-everyones-instead-of-the-players-own",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player',",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host',",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-GRAIN-the-row-leaves-the-classic-lane",
     "file": "src/systems/features.js",
-    "old": "    kinds: Object.freeze(['enhanced', 'classic']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
-    "new": "    kinds: Object.freeze(['enhanced']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
+    "old": "    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },\n    kinds: Object.freeze(['enhanced', 'classic']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
+    "new": "    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },\n    kinds: Object.freeze(['enhanced']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([tier('off', OFF), tier('default', () => t('features.groundSharpness.default', 'Default (4x)')), tier('max', () => t('features.groundSharpness.max', 'Maximum'))]) }),",
     "tests": [
       "test/render/grain1_terrainmip.test.js"
     ]

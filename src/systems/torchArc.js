@@ -1,7 +1,7 @@
-// OWN-AUDIT (2026-11-01; bible/06-Systems/Handheld-Torches.md): THE THROW'S ARC, DRAWN. Handheld Torches'
-// Throwing.ShowTrajectory fed its arc to a Unity LineRenderer; this renderer has no world-space line, so the arc is
-// dots on the screen: every few steps of throwArcPoints (handheldTorches.js, the flight's own law) taken through the
-// last frame's camera, small near the hand and growing toward the landing, which is marked larger.
+// THE THROW'S ARC, DRAWN. Handheld Torches' Throwing.ShowTrajectory fed its arc to a Unity LineRenderer; this
+// renderer has no world-space line, so the arc is dots on the screen: every few steps of throwArcPoints
+// (handheldTorches.js, the flight's own law) taken through the last frame's camera, small near the hand and growing
+// toward the landing, which is marked larger.
 
 /** Every how many of the arc's 0.02 s steps a dot is drawn, the dots' sizes in pixels at 1080 lines, and colours. */
 export const ARC_LOOK = Object.freeze({ every: 4, dotPx: 4, landPx: 9, rgba: Object.freeze([1, 0.78, 0.35, 0.85]) });

@@ -1,10 +1,8 @@
-// WINDFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be
-// on by default and integrate into our enhanced environments seamlessly") - WINDFALL 1.0.0 (demifiend000; its files left
-// the tree at OWN-WORK4), ported off its assembly: WindNaturalPlanner and WindRecordWeights whole, and WindMod's state -
-// its settings, the day's context and plan, the presentation state, the gusts and the profile the flora sway by, its
-// save record and its console command. Pure: the hosts hand it the frame, the renderer draws what it answers (render/
-// renderer.js BB_VS's Windfall law), and systems/windfallEffects.js is WindEnvironmentEffects (the sound and the
-// leaves) it drives.
+// WINDFALL 1.0.0 (demifiend000; its files left the tree at OWN-WORK4), ported off its assembly: WindNaturalPlanner and
+// WindRecordWeights whole, and WindMod's state - its settings, the day's context and plan, the presentation state, the
+// gusts and the profile the flora sway by, its save record and its console command. Pure: the hosts hand it the frame,
+// the renderer draws what it answers (render/ renderer.js BB_VS's Windfall law), and systems/windfallEffects.js is
+// WindEnvironmentEffects (the sound and the leaves) it drives.
 //
 // THE LAW (WindMod.TryUpdateEnvironmentalState, every frame):
 //   - THE DAY'S CONTEXT: StableHash(year, month, day, map x / 8, map y / 8, the climate) - a new key rebuilds the
@@ -22,7 +20,7 @@
 // Single precision as the C# runs it (Math.fround at every float operation the assembly makes in float) - pinned
 // against the reference harness's trace (test/systems/windfall1_model.test.js).
 //
-// ENHANCED ENVIRONMENTS (Mac: "integrate into our enhanced environments seamlessly"): Windfall is the enhanced
+// ENHANCED ENVIRONMENTS: Windfall is the enhanced
 // outdoors' - the hosts tick it under the enhanced sky only (sky.enhanced), as WIND1's wind and every consumer of it
 // are - and it does not stand beside the port's own sway, it IS the sway while it is on (render/renderer.js BB_VS
 // takes one law or the other, never both). ONE WIND, ONE WAY: the heading the trees lean and the leaves blow is the
@@ -319,7 +317,7 @@ function profileOf(read, section) {
     shiverFrequency: clampF(readF(read, `${section}.ShiverSpeed`), 0.5, 8),
   });
 }
-/** OWN-AUDIT (2026-11-01): General.WindDirectionDegrees as the mod ships it. The mod adds it to a heading rolled each
+/** General.WindDirectionDegrees as the mod ships it. The mod adds it to a heading rolled each
  *  day, so it never chose a direction, and the outdoors' one wind sets the heading here - the key is retired
  *  (modSettings.js RETIRED_KEYS) and its number stands in the daily heading of a frame with no wind handed. */
 export const WINDFALL_HEADING_OFFSET = 35;

@@ -1,5 +1,5 @@
-#!/usr/bin/env node
-// TESA14 (bible/03-World/Arena-Provinces.md TESA14) - THE ROADS PAST THE BAY, LAID AS THE PLAYER'S GAME LAYS THEM, LOOKED AT.
+// /usr/bin/env node
+// THE ROADS PAST THE BAY, LAID AS THE PLAYER'S GAME LAYS THEM, LOOKED AT.
 //
 // What the world host and the roads' workers do with the player's own files, here in node: the trace and the fit
 // (tools/tamrielFitProbe.mjs's way), the places past the Bay (world/arenaPlaces.js), the crossings onto Basic Roads'
@@ -50,7 +50,7 @@ import { paintRoads } from '../src/world/road/roadPainter.js';
 import { cyrodiilTrunksFor } from '../src/scenes/tamrielRoadsHost.js';
 import { CAPITALS, capitalOnPixel, capitalGates, capitalSpanPixels } from '../src/world/tamrielCapitals.js';
 import { WATER_BYTE } from '../src/world/roadsProducer.js';
-import { bayRoads } from '../test/bayRoads.mjs'; // OWN-WORK2: the Bay's own network, off the same ARENA2
+import { bayRoads } from '../test/bayRoads.mjs'; // The Bay's own network, off the same ARENA2
 import { isMainStoryDungeon } from '../src/world/dungeon/dungeonTextures.js';
 import { countryTemplates, countryCounts, bayLand as bayLandOf, countryRates } from '../src/world/tamrielCountry.js';
 import { lairTemplates, lairPools, LAIR_TYPES } from '../src/world/tamrielDungeons.js';
@@ -154,7 +154,7 @@ const nodes = [
   ...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_TYPES.TownCity })),
   ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity })),
 ];
-const trunks = process.argv.includes('--no-named') ? null : cyrodiilTrunksFor(pixels, walkable); // VOYAGER-CYRODIIL: the host's own (scenes/tamrielRoadsHost.js start)
+const trunks = process.argv.includes('--no-named') ? null : cyrodiilTrunksFor(pixels, walkable); // The host's own (scenes/tamrielRoadsHost.js start)
 const lattice = regionLattice(tamrielFrameInBay());
 const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), { x: 500, y: 250 });
 console.log(
@@ -206,7 +206,7 @@ const built = onlyList
   : regions.slice(0, arg('--regions') ? Number(arg('--regions')) : regions.length);
 const t0 = Date.now();
 let slowest = 0;
-const named = new Set(); // VOYAGER-CYRODIIL: the named roads' pixels
+const named = new Set(); // The named roads' pixels
 for (const region of built) {
   let got = null;
   worker.handle({ t: 'build', id: 1, i: region.i, j: region.j }, (m) => {
@@ -242,7 +242,7 @@ for (const j of joins) ends.add(`${j.meet[0]},${j.meet[1]}`);
 for (const [a, b] of worker.trunkLegs()) {
   ends.add(`${a[0]},${a[1]}`);
   ends.add(`${b[0]},${b[1]}`);
-} // VOYAGER-CYRODIIL: a named road's own end
+} // A named road's own end
 const dead = [],
   fords = [],
   onCapital = [];
@@ -250,7 +250,7 @@ for (const key of new Set([...layer.roads.keys(), ...layer.tracks.keys()])) {
   const bits = (layer.roads.get(key) ?? 0) | (layer.tracks.get(key) ?? 0);
   const [x, y] = beyondPixel(key);
   if (pop(bits) === 1 && !ends.has(`${x},${y}`) && !gates.some((g) => g.x === x && g.y === y)) dead.push([x, y]);
-  if (!inBay(x, y) && heightAt(x, y) <= WATER_BYTE && !ends.has(`${x},${y}`)) fords.push([x, y]); // VOYAGER1: a crossing, a ford's
+  if (!inBay(x, y) && heightAt(x, y) <= WATER_BYTE && !ends.has(`${x},${y}`)) fords.push([x, y]); // A crossing, a ford's
   if (capitalOnPixel(x, y)) onCapital.push([x, y]);
 }
 console.log(

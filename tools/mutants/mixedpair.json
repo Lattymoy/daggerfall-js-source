@@ -173,8 +173,8 @@
   {
     "name": "MIXEDPAIR-gun-guard-never",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "lowered: (h) => (playerWeapon.mixedPair && playerWeapon.strikeInFlight?.hand === otherHand(h)) ||",
-    "new": "lowered: (h) => (false && playerWeapon.strikeInFlight?.hand === otherHand(h)) ||",
+    "old": "        lowered: (h) => (playerWeapon.mixedPair && playerWeapon.strikeInFlight?.hand === otherHand(h)) || (_spellHand && fpsSpellCasting.isPlayingAnim),   // The gun lowers under its blade's blow; SPELL-HAND: and under the free hand's cast",
+    "new": "        lowered: (h) => (false && playerWeapon.strikeInFlight?.hand === otherHand(h)) || (_spellHand && fpsSpellCasting.isPlayingAnim),   // The gun lowers under its blade's blow; SPELL-HAND: and under the free hand's cast",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MIXEDPAIR-the-melee-branch",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (c && pistolsUp() && playerWeapon.mixedPair && pairUp() &&",
-    "new": "      if (c && pistolsUp() && playerWeapon.mixedPair && false &&",
+    "old": "      if (c && pistolsUp() && playerWeapon.mixedPair && pairUp() && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && (shown() || gunSliding)) {",
+    "new": "      if (c && pistolsUp() && playerWeapon.mixedPair && false && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && (shown() || gunSliding)) {",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MIXEDPAIR-fixed-order",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        for (const h of twoHands.drawOrder()) {\n          if (h !== gh)",
-    "new": "        for (const h of ['L', 'R']) {\n          if (h !== gh)",
+    "old": "        for (const h of twoHands.drawOrder()) {",
+    "new": "        for (const h of ['L', 'R']) {",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "MIXEDPAIR-sheathed-for-pellets",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    if (playerWeapon.mixedPair) {   // MIXED-PAIR: a pair's blade still fights",
-    "new": "    if (false) {   // MIXED-PAIR: a pair's blade still fights",
+    "old": "    if (playerWeapon.mixedPair) {   // A pair's blade still fights - its gun's pull falls to it (gunReady)",
+    "new": "    if (false) {   // A pair's blade still fights - its gun's pull falls to it (gunReady)",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "MIXEDPAIR-blade-held-for-pellets",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "(!pelletsOwed() || playerWeapon.mixedPair);",
-    "new": "!pelletsOwed();",
+    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && !pelletsOwed();   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "MIXEDPAIR-gun-fires-dry",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  playerWeapon.gunReady = () => !pelletsOwed();",
-    "new": "  playerWeapon.gunReady = () => true;",
+    "old": "  playerWeapon.gunReady = () => !pelletsOwed();   // A blade-and-gun pair's gun fires only with a Pellet for it - else its pull is the blade's",
+    "new": "  playerWeapon.gunReady = () => true;   // A blade-and-gun pair's gun fires only with a Pellet for it - else its pull is the blade's",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "MIXEDPAIR-pellets-of-the-blade",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const gun = playerWeapon.gunHand ? playerWeapon.handItem(playerWeapon.gunHand) : playerWeapon.weapon;",
-    "new": "    const gun = playerWeapon.weapon;",
+    "old": "    const gun = playerWeapon.gunHand ? playerWeapon.handItem(playerWeapon.gunHand) : playerWeapon.weapon;   // The pair's gun, whichever hand strikes",
+    "new": "    const gun = playerWeapon.weapon;   // The pair's gun, whichever hand strikes",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "MIXEDPAIR-held-shot-never-told",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  playerWeapon.shotHeld = () => _heldHit;",
-    "new": "  playerWeapon.shotHeld = () => false;",
+    "old": "  playerWeapon.shotHeld = () => _heldHit;   // And its shot is in flight until the arm lets its held hit go - the blade's turn waits for it",
+    "new": "  playerWeapon.shotHeld = () => false;   // And its shot is in flight until the arm lets its held hit go - the blade's turn waits for it",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "MIXEDPAIR-touch-door-dry",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "(pelletsOwed() && !playerWeapon.mixedPair)) return;",
-    "new": "pelletsOwed()) return;",
+    "old": "      if (armCannotDraw() || (pelletsOwed() && !playerWeapon.mixedPair)) return;   // Nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it (MIXED-PAIR: the pair's dry gun gives its pull to the blade - gunReady)",
+    "new": "      if (armCannotDraw() || pelletsOwed()) return;   // Nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it (MIXED-PAIR: the pair's dry gun gives its pull to the blade - gunReady)",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

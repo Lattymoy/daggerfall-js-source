@@ -290,8 +290,8 @@
   {
     "name": "LEFAY-WORLD-UNCARVED",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (lefaySpot) carveLefay(nav, lefaySpot);",
-    "new": "        if (lefaySpot) void nav;",
+    "old": "        if (lefaySpot) carveLefay(nav, lefaySpot);   // The people walk round the monument, never through it",
+    "new": "        if (lefaySpot) void nav;   // The people walk round the monument, never through it",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]

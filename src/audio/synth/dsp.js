@@ -1,8 +1,8 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): THE SYNTH'S PRIMITIVES. The sounds the
-// port makes of its own - noise, filters, envelopes and resonators - written into a Float64Array canvas at any rate, then
-// handed to the engine as Float32 PCM (audio.registerSamples). Pure and seeded: one seed, one sound, in node and in the
-// browser. No recording is read. The section and the die are the beds' own (systems/soundscape/bedDsp.js).
+// THE SYNTH'S PRIMITIVES. The sounds the port makes of its own - noise, filters, envelopes and resonators - written into
+// a Float64Array canvas at any rate, then handed to the engine as Float32 PCM (audio.registerSamples). Pure and seeded:
+// one seed, one sound, in node and in the browser. No recording is read. The section and the die are the beds' own
+// (systems/soundscape/bedDsp.js).
 import { section, mulberry32 } from '../../systems/soundscape/bedDsp.js';
 
 export { section, mulberry32 };

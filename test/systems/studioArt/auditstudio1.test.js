@@ -1,22 +1,21 @@
-// AUDIT STUDIO1 (2026-10-17, the owner: "Audit this and ensure perfection"; the record is
-// bible/01-Overview/audits/Audit-Studio1.md): five cold lanes over the studio's frozen tree, every finding reproduced
+// Five cold lanes over the studio's frozen tree, every finding reproduced
 // before it was fixed. What the fixes hold:
 //
 //   S1  the stand-in the studio covers: its picture stands in for a studio picture that will not load (A1), and gives
-//       the studio's its size, its scale and its box - a billboard stands as big, a doll piece fits (A2)
-//   S2  the boot waits for the registration alone; the port's own pictures decode after it, a few at a time (A3)
-//   S3  an archive's first load waits for the studio's listing - a bounded while (A5) - so the first area is drawn in it
-//   S4  a late picture lands only on the wear still current - a room repainted keeps its new paint (A4); a picture that
-//       answers and is not decoded is decoded and worn late (A6)
-//   S5  what the studio inherits: `lazy` (A7); a studio picture of one dye makes no dyed set of a stand-in (A8); a dye
-//       the game never asks by is refused by name (A9)
-//   S6  a listing that would not read is asked again; one not served is an answer (A11); the icons' cache keys on the
-//       studio, and the wagon's icon asks for the install itself (U2, U3)
+//       the studio's its size, its scale and its box - a billboard stands as big, a doll piece fits
+//   S2  the boot waits for the registration alone; the port's own pictures decode after it, a few at a time
+//   S3  an archive's first load waits for the studio's listing - a bounded while - so the first area is drawn in it
+//   S4  a late picture lands only on the wear still current - a room repainted keeps its new paint; a picture that
+//       answers and is not decoded is decoded and worn late
+//   S5  what the studio inherits: `lazy`; a studio picture of one dye makes no dyed set of a stand-in; a dye
+//       the game never asks by is refused by name
+//   S6  a listing that would not read is asked again; one not served is an answer; the icons' cache keys on the
+//       studio, and the wagon's icon asks for the install itself
 //   S7  the ground: a ground archive's set lays the studio's records in, the gate shut or open, at the largest
 //       picture's size (D1)
-//   S8  a ship's night twin is lit by its own emission picture where it has one (B4, D5)
+//   S8  a ship's night twin is lit by its own emission picture where it has one
 //   S9  the check's notes: clear texels on a slot drawn solid, a name no painted model's slot; and the slots counted -
-//       248, 29 of them cut-outs (D2, D6, D12)
+//       248, 29 of them cut-outs
 //
 // The pictures are the test's own (tools/pngIO.mjs): no game data (Port-Doctrine).
 import '../../modsOff.js';
@@ -123,7 +122,7 @@ test('AUDIT STUDIO1 S1: the stand-in the studio covers stands in for a studio pi
     await preloadTextureArchive(GALLEON_ARCHIVE, { decode });
     assert.deepEqual(vendorTextureStandIn(GALLEON_ARCHIVE).getBox(GALLEON_TEX.deck), { width: 64, height: 64 }, 'covered: her deck\'s box');
     assert.deepEqual(red(decodedTexture(GALLEON_ARCHIVE, GALLEON_TEX.deck)), [33, 0, 0], 'still the studio\'s picture');
-    // A2: a stand-in built at a classic record's scale (a town's clutter, a DET flat) - the studio's at twice its size
+    // A stand-in built at a classic record's scale (a town's clutter, a DET flat) - the studio's at twice its size
     reset();
     const built = { width: 16, height: 24, data: new Uint8Array(16 * 24 * 4).fill(90), scale: { width: 64, height: 64 } };
     addVendorTextures([{ archive: 39100, record: 0, standIn: true, offset: { x: 2, y: 3 }, build: async () => built }]);
@@ -194,7 +193,7 @@ test('AUDIT STUDIO1 S3: an archive\'s first load waits for the studio\'s listing
 test('AUDIT STUDIO1 S4: a late picture lands only on the wear still current - a room repainted while one was on its way keeps its new paint; a picture that answers and is not decoded is decoded and worn late', async () => {
   reset();
   try {
-    // A4: the real paintCaravanRoom - floor paint 2 has a studio picture; the room is repainted to paint 3 before it lands
+    // The real paintCaravanRoom - floor paint 2 has a studio picture; the room is repainted to paint 3 before it lands
     const floor2 = lookRecord(WAGON_TEX.roomFloor, 2);
     let open;
     const gate = new Promise((r) => { open = r; });
@@ -210,7 +209,7 @@ test('AUDIT STUDIO1 S4: a late picture lands only on the wear still current - a 
     const last = ups.filter(([r]) => r === live).at(-1)[1];
     assert.equal(last, before, 'the floor keeps paint 3: paint 2\'s studio picture landed on no wear');
     assert.ok(!ups.some(([r, c]) => r === live && c.colors[0] === 77), 'paint 2\'s picture never went up');
-    // A6: a player's loose picture of a wagon record registered after the install, never decoded: worn late
+    // A player's loose picture of a wagon record registered after the install, never decoded: worn late
     reset();
     await installStudioArt({ fetch: served({}).fetch, decode });
     setTextureReplacements([`${WAGON_ARCHIVE}_2-0.png`], async () => picture(2, 2, [5, 6, 7]));
@@ -227,7 +226,7 @@ test('AUDIT STUDIO1 S4: a late picture lands only on the wear still current - a 
 test('AUDIT STUDIO1 S5: the studio inherits `lazy`; a studio picture of one dye makes no dyed set of a stand-in; a dye the game never asks by is refused by name', async () => {
   reset();
   try {
-    // A7: over a lazy entry (Diverse Weapons' icons): the archive's preload fetches neither
+    // Over a lazy entry (Diverse Weapons' icons): the archive's preload fetches neither
     let loads = 0;
     addVendorTextures([{ archive: 39300, record: 0, lazy: true, load: async () => { loads++; return picture(2, 2, [1, 1, 1]); } }]);
     addVendorTextures([{ archive: 39300, record: 0, studio: true, load: async () => { loads++; return picture(2, 2, [2, 2, 2]); } }]);
@@ -235,13 +234,13 @@ test('AUDIT STUDIO1 S5: the studio inherits `lazy`; a studio picture of one dye 
     addVendorTextures([{ archive: 39300, record: 1, lazy: true, load: async () => { loads++; return picture(2, 2, [4, 4, 4]); } }]);
     await preloadTextureArchive(39300, { decode });
     assert.equal(loads, 0, 'lazy either way round: decoded when asked, never by the archive\'s preload');
-    // A8: the Thunderlock's way - ONE undyed stand-in picture, asked by the item's dye
+    // The Thunderlock's way - ONE undyed stand-in picture, asked by the item's dye
     addVendorTextures([{ archive: 39301, record: 0, standIn: true, load: async () => picture(2, 2, [9, 9, 9]) }]);
     assert.equal(hasTextureReplacement(39301, 0, 0, 'Albedo', 'Iron'), true);
     addVendorTextures([{ archive: 39301, record: 0, dye: 'Dwarven', studio: true, load: async () => picture(2, 2, [8, 8, 8]) }]);
     assert.equal(hasTextureReplacement(39301, 0, 0, 'Albedo', 'Iron'), true, 'an Iron ask still finds the stand-in');
     assert.equal(hasTextureReplacement(39301, 0, 0, 'Albedo', 'Dwarven'), true, 'a Dwarven ask the studio\'s');
-    // A9: only the dyes GetName prints
+    // Only the dyes GetName prints
     for (const ok of ['Iron', 'Elven', 'Daedric', 'Blue']) assert.ok(studioFile(`a/233_5-0_${ok}.png`), ok);
     for (const no of ['Silver', 'iron', 'Unchanged', 'Chain', 'SilverOrElven', 'Iorn', 'Albedo']) assert.equal(studioFile(`a/233_5-0_${no}.png`), null, no);
     const dir = mkdtempSync(join(tmpdir(), 'auditstudio1-'));
@@ -361,18 +360,18 @@ test('AUDIT STUDIO1 S10: the folder\'s plumbing - a folder git ignores is refuse
     for (const f of ['a/scratch', 'a/x']) mkdirSync(join(tree, f), { recursive: true });
     writeFileSync(join(tree, 'artists.json'), JSON.stringify({ artists: [{ folder: 'a', name: 'a', approved: 'the test' }] }));
     const put = (name, bytes) => writeFileSync(join(tree, 'a', name), bytes);
-    put('scratch/38181_2-0.png', picture(64, 64, [9, 9, 9]));   // C4: in a folder .gitignore passes over
-    put('38181_3-0--my cart #1.png', picture(64, 64, [9, 9, 9]));   // C6: the web reads `#` as no file's
-    put('38181_4-0--caf\u00e9.png', picture(64, 64, [9, 9, 9]));   // C5/C6: git quotes it
+    put('scratch/38181_2-0.png', picture(64, 64, [9, 9, 9]));   // In a folder .gitignore passes over
+    put('38181_3-0--my cart #1.png', picture(64, 64, [9, 9, 9]));   // The web reads `#` as no file's
+    put('38181_4-0--caf\u00e9.png', picture(64, 64, [9, 9, 9]));   // Git quotes it
     mkdirSync(join(tree, 'a', 'CON'), { recursive: true });
-    writeFileSync(join(tree, 'a', 'CON', '38181_5-0.png'), picture(64, 64, [9, 9, 9]));   // C6: Windows keeps the name
+    writeFileSync(join(tree, 'a', 'CON', '38181_5-0.png'), picture(64, 64, [9, 9, 9]));   // Windows keeps the name
     mkdirSync(join(tree, 'a', 'wagons.'), { recursive: true });
-    writeFileSync(join(tree, 'a', 'wagons.', '38181_10-0.png'), picture(64, 64, [9, 9, 9]));   // C6: Windows drops a name's last dot
-    put('.DS_Store', 'finder');   // C7: passed over
+    writeFileSync(join(tree, 'a', 'wagons.', '38181_10-0.png'), picture(64, 64, [9, 9, 9]));   // Windows drops a name's last dot
+    put('.DS_Store', 'finder');   // Passed over
     put('._38181_6-0.png', 'appledouble');
     put('38181_7-0.png', picture(64, 64, [9, 9, 9]));
-    symlinkSync(join(tree, 'a', '38181_7-0.png'), join(tree, 'a', '38181_8-0.png'));   // C8: a link
-    symlinkSync(join(tree, 'a', 'gone.png'), join(tree, 'a', '38181_9-0.png'));   // C8: a dangling link
+    symlinkSync(join(tree, 'a', '38181_7-0.png'), join(tree, 'a', '38181_8-0.png'));   // A link
+    symlinkSync(join(tree, 'a', 'gone.png'), join(tree, 'a', '38181_9-0.png'));   // A dangling link
     const { listing, problems } = await checkStudio(dir);
     assert.deepEqual(listing.files, ['a/38181_7-0.png', 'a/scratch/38181_2-0.png']);
     const said = (f) => problems.find((p) => p.startsWith(`${f}:`)) ?? '';
@@ -388,9 +387,9 @@ test('AUDIT STUDIO1 S10: the folder\'s plumbing - a folder git ignores is refuse
     // a dangling file the walk finds but cannot read is said, not thrown
     assert.doesNotThrow(() => studioListing(dir));
   } finally { rmSync(dir, { recursive: true, force: true }); }
-  // C4: the checkout's own pattern is anchored - an artist's folder of that name is committed
+  // The checkout's own pattern is anchored - an artist's folder of that name is committed
   assert.match(readFileSync(new URL('../../../.gitignore', import.meta.url), 'utf8'), /^\/studio-templates\/$/m);
-  // C11: a templates folder named is the caller's, relative to where they stand
+  // A templates folder named is the caller's, relative to where they stand
   const out = mkdtempSync(join(tmpdir(), 'auditstudio1-tpl-'));
   try {
     execFileSync(process.execPath, [fileURLToPath(new URL('../../../tools/studioArt.mjs', import.meta.url)), 'templates', 'mine'], { cwd: out });
@@ -398,7 +397,7 @@ test('AUDIT STUDIO1 S10: the folder\'s plumbing - a folder git ignores is refuse
   } finally { rmSync(out, { recursive: true, force: true }); }
 });
 
-// ---- AUDIT STUDIO1 lane E: the pins its survivors asked for (K1-K17), each through its real producer where one exists ----
+// ---- AUDIT STUDIO1 lane E: the pins its survivors asked for, each through its real producer where one exists ----
 
 /** A served studio of real Responses (TEST THE SHAPE THE PRODUCER MINTS: a 404 is a page, not a missing method). */
 function responses(files, { gate = null, root = undefined } = {}) {
@@ -416,7 +415,7 @@ function responses(files, { gate = null, root = undefined } = {}) {
 const topWhite = (w, h, rgb) => { const data = new Uint8Array(w * h * 4); for (let i = 0; i < w * h; i++) data.set(i < w ? [255, 255, 255, 255] : [...rgb, 255], i * 4); return writePng({ width: w, height: h, data }); };
 
 test('AUDIT STUDIO1 S11 (lane E K1-K3, K9, K10): the studio\'s own law - its URLs under the site\'s root, the install\'s answers to real responses, each name\'s frame, map and dye kept, the classic boundary, and landed waiting for the install', async () => {
-  // K1: under the site root (APP_ROOT, never the document), every segment encoded, slashes kept; a root of the caller's
+  // Under the site root (APP_ROOT, never the document), every segment encoded, slashes kept; a root of the caller's
   assert.equal(studioUrl('a b/38181_1-0--#1.png', 'http://x/game/'), 'http://x/game/art/studio/a%20b/38181_1-0--%231.png');
   assert.equal(studioUrl(STUDIO_INDEX), new URL('art/studio/index.json', APP_ROOT).href);
   reset();
@@ -426,14 +425,14 @@ test('AUDIT STUDIO1 S11 (lane E K1-K3, K9, K10): the studio\'s own law - its URL
     assert.equal(rooted.asked[0], 'http://x/game/art/studio/index.json', 'the listing under the root given');
     await studioLanded();
     assert.ok(rooted.asked.includes('http://x/game/art/studio/a/38181_1-0.png'), 'and its pictures');
-    // K2: a listing with no files, or a 404 that carries JSON, is nothing - and never a throw
+    // A listing with no files, or a 404 that carries JSON, is nothing - and never a throw
     reset();
     assert.equal(await installStudioArt({ fetch: async () => new Response('{"studio":1}', { status: 200 }), decode }), 0);
     assert.equal(await studioLanded(), 0, 'landed answers too');
     reset();
     assert.equal(await installStudioArt({ fetch: async () => new Response(JSON.stringify({ studio: 1, files: ['a/38181_1-0.png'] }), { status: 404 }), decode }), 0);
     assert.equal(hasTextureReplacement(WAGON_ARCHIVE, 1), false);
-    // K3: each name's frame, map and dye registered as it says
+    // Each name's frame, map and dye registered as it says
     reset();
     const iron = studioFile('a/233_6-0_Iron.png');
     await installStudioArt({ fetch: responses({ 'a/38181_1-2.png': picture(2, 2, [1, 1, 1]), 'a/233_5-0_Normal.png': picture(2, 2, [2, 2, 2]), 'a/233_6-0_Iron.png': picture(2, 2, [3, 3, 3]) }).fetch, decode });
@@ -445,14 +444,14 @@ test('AUDIT STUDIO1 S11 (lane E K1-K3, K9, K10): the studio\'s own law - its URL
     assert.equal(hasTextureReplacement(233, 6, 0), false);
     await studioLanded();
     assert.deepEqual(red(decodedTexture(WAGON_ARCHIVE, 1, 2)), [1, 1, 1], 'a port archive\'s frame decoded at the install');
-    // K9: TEXTURE.511 is Daggerfall's (left to its load), 512 past it (decoded at the install)
+    // TEXTURE.511 is Daggerfall's (left to its load), 512 past it (decoded at the install)
     reset();
     assert.equal(LAST_CLASSIC_TEXTURE_ARCHIVE, 511);
     await installStudioArt({ fetch: responses({ 'a/511_0-0.png': picture(2, 2, [1, 1, 1]), 'a/512_0-0.png': picture(2, 2, [2, 2, 2]) }).fetch, decode });
     await studioLanded();
     assert.equal(decodedTexture(511, 0), null);
     assert.deepEqual(red(decodedTexture(512, 0)), [2, 2, 2]);
-    // K10: landed waits for the install in flight; a late picture keeps its rows; one that will not decode is no picture
+    // Landed waits for the install in flight; a late picture keeps its rows; one that will not decode is no picture
     reset();
     let open;
     const gate = new Promise((r) => { open = r; });
@@ -475,33 +474,31 @@ test('AUDIT STUDIO1 S11 (lane E K1-K3, K9, K10): the studio\'s own law - its URL
 test('AUDIT STUDIO1 S12 (lane E K4-K8): the registry\'s merges through the real producers - the install\'s own entries hold against a ship registered after; a mod\'s record of a real archive makes no stand-in; the studio over a mod picture already decoded; an absorbed registration counted, the doll\'s place kept; two non-studio registrations, the later whole', async () => {
   reset();
   try {
-    // K4
     await installStudioArt({ fetch: responses({ [`a/${GALLEON_ARCHIVE}_${GALLEON_TEX.deck}-0.png`]: picture(4, 4, [200, 10, 10]) }).fetch, decode });
     assert.ok(registerGalleonArt(addVendorTextures) > 0);
     await preloadTextureArchive(GALLEON_ARCHIVE, { decode });
     assert.deepEqual(red(decodedTexture(GALLEON_ARCHIVE, GALLEON_TEX.deck)), [200, 10, 10]);
-    // K5: Climates & Calories' tent - one record of the real TEXTURE.050 - under the studio's (the game's order: the
+    // Climates & Calories' tent - one record of the real TEXTURE.050 - under the studio's (the game's order: the
     // mod's icons register as its module loads, the studio at the boot)
     reset();
-    // OWN-WORK4: no survival picture is a file - each is built, here through a made-up classic reader
+    // No survival picture is a file - each is built, here through a made-up classic reader
     const flatArt = { build: async () => ({ width: 2, height: 2, data: Uint8Array.from({ length: 16 }, (_, i) => [1, 2, 3, 255][i % 4]) }) };
     assert.ok(installSurvivalIcons({ art: flatArt }) > 0);
     await installStudioArt({ fetch: responses({ 'a/50_7-0.png': picture(2, 2, [5, 5, 5]) }).fetch, decode });
     assert.equal(isVendorArchive(50), false, 'TEXTURE.050 is a real file: no stand-in branch for it');
     await preloadTextureArchive(50, { decode });
     assert.deepEqual(red(decodedTexture(50, 7)), [5, 5, 5]);
-    // K6: the studio over a mod's picture already decoded (its fileName its key - Climates & Calories' icons)
+    // The studio over a mod's picture already decoded (its fileName its key - Climates & Calories' icons)
     reset();
     assert.ok(installSurvivalIcons({ art: flatArt }) > 0);
     await preloadTextureArchive(536, { decode });
-    // PIN MOVED (OWN-AUDIT, 2026-11-01): the mouldy cooked fish is our mould over the record now, not the record itself
     const ours = await ownIconPicture('536_0-0', flatArt), bottomLeft = (ours.height - 1) * ours.width * 4;
     assert.deepEqual(red(decodedTexture(536, 0)), [...ours.data.subarray(bottomLeft, bottomLeft + 3)], 'the mouldy cooked fish: our mould, built');
     await installStudioArt({ fetch: responses({ 'a/536_0-0.png': picture(2, 2, [9, 8, 7]) }).fetch, decode });
     await studioLanded();
     assert.deepEqual(red(decodedTexture(536, 0)), [9, 8, 7]);
     assert.equal(isVendorArchive(536), true);
-    // K7: the Thunderlock's icons under the studio's: the doll's place theirs; a registration the studio absorbs is
+    // The Thunderlock's icons under the studio's: the doll's place theirs; a registration the studio absorbs is
     // counted and moves the tiers' epoch, and its missing offset leaves the place as it was
     reset();
     assert.equal(installThunderlockIcons({ fetchBytes: async () => picture(2, 2, [1, 2, 3]) }), 5);
@@ -512,7 +509,7 @@ test('AUDIT STUDIO1 S12 (lane E K4-K8): the registry\'s merges through the real 
     assert.equal(addVendor([{ archive: 560, record: 0, standIn: true, fileName: 'later', load: async () => picture(2, 2, [1, 2, 3]) }]), 1, 'absorbed, and counted');
     assert.notEqual(textureTierEpoch(), epoch, 'a scene asks its archives again');
     assert.deepEqual(vendorTextureStandIn(560).getOffset(0), PAPERDOLL_OFFSET, 'the first place on the doll holds');
-    // K8: between two non-studio registrations the later replaces the earlier - mark, place and picture
+    // Between two non-studio registrations the later replaces the earlier - mark, place and picture
     reset();
     addVendor([{ archive: 562, record: 0, standIn: true, offset: { x: 1, y: 1 }, fileName: 'one', load: async () => picture(2, 2, [1, 1, 1]) }]);
     addVendor([{ archive: 562, record: 0, fileName: 'two', load: async () => picture(2, 2, [2, 2, 2]) }]);

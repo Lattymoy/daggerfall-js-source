@@ -9,7 +9,7 @@ models for them, and the cosmetic systems worn on a body. Combat itself is in `0
 - `Characters-Arc.md` - People and Foes: standing people, names, dungeon foes, the foe hosts, teams and targets
 - `Region-Names.md` - names by culture and region across Tamriel
 - `Stock-Classes.md` - the premade classes' revised skill lists
-- `Enemy-Expansion.md` - Daggerfall Enemy Expansion, ported, and MUDEX
+- `Enemy-Expansion.md` - Daggerfall Enemy Expansion, ported, and our meaner monsters beside it
 - `Meaner-Monsters.md` - Meaner Monsters, ported
 - `Morrowind-NPCs.md` - every actor in a Morrowind body: lanes, budget, wardrobe, creatures, marks
 - `Body-Motion.md` - the Morrowind body's own gait, carry and blows in third person

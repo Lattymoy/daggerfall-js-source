@@ -1,11 +1,10 @@
-// SNOWFALL1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments
-// seamlessly") - SNOWFALL IN A HOST: the one runtime both exterior hosts (scenes/world.js, scenes/exterior.js) build -
+// SNOWFALL IN A HOST: the one runtime both exterior hosts (scenes/world.js, scenes/exterior.js) build -
 // the mod's law (systems/snowfall.js), its controller (systems/snowfallRuntime.js), its surface on the GPU (render/
 // snowfallSurface.js, drawn through the renderer's snow program), its save record and its console command
 // (snow_status). A host hands it the ground it stands (`ground`, below) and calls `frame` once a frame, outdoors and in;
 // it draws the snow with the opaque world, after the ground (`draw`), and carries it across the floating origin.
 //
-// THE FOUR HOSTS RULE (bible/Home.md): world.js and exterior.js build it; indoors (worldModes.js) and underground
+// THE FOUR HOSTS RULE: world.js and exterior.js build it; indoors (worldModes.js) and underground
 // (dungeonContext.js) the host's own frame calls `frame` with `inside: true` (surfaces hidden, snowpack and refill kept).
 
 import { modSettingsGeneration, modSetting } from '../systems/modSettings.js';
@@ -25,19 +24,19 @@ import {
   SNOW_MASK_ARCHIVES,
   ROAD_KIND,
 } from '../systems/snowfall.js';
-import { arenaRoadByte, arenaJoinByte } from '../world/arenaRoads.js'; // BAY-LEFT-GROUND: TESA's roads - past the Bay, and their crossings' joins on it (TESA5)
-import { curveField, CURVE_DIM, TRACK_HALF } from '../world/road/roadCurves.js'; // BAY-LEFT-GROUND: a track's curve past the Bay (VOYAGER2)
-import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js'; // BAY-LEFT-GROUND: the world's grid, the box's clamp
+import { arenaRoadByte, arenaJoinByte } from '../world/arenaRoads.js'; // TESA's roads - past the Bay, and their crossings' joins on it
+import { curveField, CURVE_DIM, TRACK_HALF } from '../world/road/roadCurves.js'; // A track's curve past the Bay
+import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js'; // The world's grid, the box's clamp
 import { SnowfallRuntime } from '../systems/snowfallRuntime.js';
-import { SnowBuildClient } from '../systems/snowfall/snowBuildClient.js'; // SNOW-THREAD: the ring's and the window's builds on a worker
+import { SnowBuildClient } from '../systems/snowfall/snowBuildClient.js'; // The ring's and the window's builds on a worker
 import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';
 import { weatherFlags } from '../world/weather.js'; // WeatherManager.IsSnowing, from its one home
-import { classicArt } from '../systems/classicArt.js'; // OWN-WORK4: the player's own winter records, our masks' ground
+import { classicArt } from '../systems/classicArt.js'; // The player's own winter records, our masks' ground
 import { ownSnowMasks } from '../systems/ownTextures/ownTexturePacks.js';
 import { snowAlbedo } from '../systems/ownTextures/ownTextureRules.js';
-import { winterGroundSnowless, dfmodGeneration } from '../systems/dfmodTextures.js'; // SNOWLESS1
+import { winterGroundSnowless, dfmodGeneration } from '../systems/dfmodTextures.js';
 
 /** DynamicSnowMod's console command (ConsoleCommandsDatabase.RegisterCommand). */
 export const SNOWFALL_COMMAND = Object.freeze({
@@ -60,11 +59,11 @@ export const newSnowfallSaveData = () => ({
   PhaseWasSnowing: false,
 });
 
-/** OWN-WORK4 (2026-10-31): the three surface masks are ours - laid by our snow law over the player's own winter records
+/** The three surface masks are ours - laid by our snow law over the player's own winter records
  *  (systems/ownTextures/ownTexturePacks.js ownSnowMasks), 229,376 bytes each; Snowfall's own masks are retired. */
 const defaultMasks = () =>
   ownSnowMasks(SNOW_MASK_ARCHIVES, (archive, record) => classicArt().picture(archive, record, 0));
-/** OWN-WORK4: our snow's albedo (ownTextureRules.js snowAlbedo), 64 x 64 and made here - no file. */
+/** Our snow's albedo (ownTextureRules.js snowAlbedo), 64 x 64 and made here - no file. */
 const defaultAlbedo = async () => snowAlbedo(64);
 
 /**
@@ -116,7 +115,7 @@ export function createSnowfallHost({
     failed = false,
     asked = false,
     disposed = false;
-  let builds = null; // SNOW-THREAD: the build worker's client, where the ground can be copied to it
+  let builds = null; // The build worker's client, where the ground can be copied to it
   let wasInside = null,
     lastFrame = null,
     gameSecondsNow = 0,
@@ -163,7 +162,7 @@ export function createSnowfallHost({
       roads = null;
     const cs = getWorldClimateSettings(ground.climate(p));
     const winterArchive = winterArchiveOf(cs);
-    // SNOWLESS1: its winter set drawn without snow - no snow lies on it; nor on a desert's ground, which wears no winter set
+    // Its winter set drawn without snow - no snow lies on it; nor on a desert's ground, which wears no winter set
     // (climateSwaps.js groundIsSnowy) - the mod's unmasked ground counts as snowed, and laid snow over the desert's edge
     const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);
     const t = {
@@ -179,7 +178,7 @@ export function createSnowfallHost({
       height: (lx, lz) => ground.height(p, lx, lz),
       normal: (lx, lz, out) => ground.normal(p, lx, lz, out),
       bare: snowless ? () => true : ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,
-      // SNOW-THREAD: the tile as the build worker reads it - `bare` as above, the ground snowGroundLaw.js's over its data
+      // The tile as the build worker reads it - `bare` as above, the ground snowGroundLaw.js's over its data
       snapshot: ground.data
         ? () => ({
             mapX: t.mapX,
@@ -224,7 +223,7 @@ export function createSnowfallHost({
     byPixel.set(key, t);
     // OnPromoteTerrainData: its ground was rebuilt. The event is never the runtime's own frame's (DFU raises it from the
     // streaming world's), so one found while a build asked for the tile is heard when that frame is done (flushPromotions)
-    // SNOW-HOLD (FIELD BUGS 2026-10-21b): `replaced` says THAT it replaced one - the old tile goes to the runtime through
+    // SNOW-HOLD: `replaced` says THAT it replaced one - the old tile goes to the runtime through
     // `promotions` alone; held here, each tile kept the one before it, and every rebuild of a pixel stood in one chain
     if (was && was !== t) {
       t.replaced = true;
@@ -253,10 +252,10 @@ export function createSnowfallHost({
       return out;
     },
     toGlobal: (x, z) => ground.toGlobal(x, z),
-    terrainOn: (px, py) => terrainOf(ground.pixelOn?.(px, py) ?? null), // SNOW-THREAD: the tile terrainAt answers on a map pixel
+    terrainOn: (px, py) => terrainOf(ground.pixelOn?.(px, py) ?? null), // The tile terrainAt answers on a map pixel
     frame: ground.frame ? () => ground.frame() : undefined,
     settlements: (a, b, c, d) => ground.settlements(a, b, c, d),
-    footprints: (globalX, globalZ, radius) => ground.footprints?.(globalX, globalZ, radius) ?? [], // OWN-AUDIT: LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)
+    footprints: (globalX, globalZ, radius) => ground.footprints?.(globalX, globalZ, radius) ?? [], // LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)
     get terrainDistance() {
       return ground.terrainDistance ?? 3;
     }, // StreamingWorld.TerrainDistance, read when asked (a host's view distance can move)
@@ -311,7 +310,7 @@ export function createSnowfallHost({
         runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: settings0, builds });
         if (gl && renderer) {
           albedoIn = albedo;
-          snowReady = renderer.startTerrainSnow?.() ?? (() => true); // SHADER-STALL: its program started now, the surface made once it is compiled
+          snowReady = renderer.startTerrainSnow?.() ?? (() => true); // Its program started now, the surface made once it is compiled
           if (snowReady()) makeSurface();
         }
         if (pending) {
@@ -372,7 +371,7 @@ export function createSnowfallHost({
     wasInside = inside;
     const ci = f.climate ?? 0;
     if (ci !== climateNow || dfmodGeneration() !== doorNow) {
-      // SNOWLESS1: a snowless winter set stands no snow, as the desert
+      // A snowless winter set stands no snow, as the desert
       climateNow = ci;
       doorNow = dfmodGeneration();
       const cs = getWorldClimateSettings(ci);
@@ -447,7 +446,7 @@ export function createSnowfallHost({
       gameSecondsNow = Math.floor(f.seconds ?? 0);
       start();
       if (!runtime) return;
-      if (snowReady?.()) makeSurface(); // SHADER-STALL: the surface the frame its program is compiled
+      if (snowReady?.()) makeSurface(); // The surface the frame its program is compiled
       try {
         tick(f);
       } catch (e) {
@@ -534,7 +533,7 @@ const TRACK_TILE_REACH = TRACK_HALF + Math.SQRT1_2;
  * BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D3): THE ROADS PAST THE BAY, FOR THE SNOW - TESA's own
  * layer (world/arenaRoads.js arenaRoadByte, TESA14's roads at the Bay's own law and scale - the one reader the Travel
  * Options' paths read past the table too), as BasicRoadsBridge.TryReadNetwork would answer a network of them. Past the
- * Bay the roads are drawn as CURVES (VOYAGER2), whose tiles no Basic Roads arm predicts, so a tile is classified by the
+ * Bay the roads are drawn as CURVES, whose tiles no Basic Roads arm predicts, so a tile is classified by the
  * painter's own word (`painted`, the build's GRASS-PATH1 record of the tiles it wrote): a paved tile a road's, a worn one
  * within a track's reach of its curve (curveField, the painter's own field) a track's; a road's worn shoulder neither
  * (the berm lies over it). Null where the pixel's build painted nothing. Departure: the mod reads Basic Roads' network,
@@ -595,7 +594,7 @@ export function settlementsIn(at, minX, minZ, maxX, maxZ) {
   return out;
 }
 
-/** OWN-AUDIT (2026-11-01): LocationLoaderBridge's footprints - the levelled site (a camp, ruin or rock field of World
+/** LocationLoaderBridge's footprints - the levelled site (a camp, ruin or rock field of World
  *  of Daggerfall, pixelBuild.js `wodSite`, in tiles) of every built pixel a global box (metres) round (globalX, globalZ) touches,
  *  as rectangles in global metres. Any pixel of the world's grid is asked; past the Bay the mod stands none. */
 export function siteFootprintsIn(pixelOn, globalX, globalZ, radius) {

@@ -331,8 +331,8 @@
   {
     "name": "GUILD1d-door-unmeasured",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            if (hf && !hf.door) { hf.door = doorCornersOf(cpu.doors[0], local); hf.normal = doorNormalOf(cpu.doors[0], local); }   // AUDIT WITCH1 D1: and its own outward normal - a door on its box's middle line takes its face from it, never the vertices' order (systems/siegeField.js doorFaceSign)\n",
-    "new": "",
+    "old": "            if (hf && !hf.door) { hf.door = doorCornersOf(cpu.doors[0], local); hf.normal = doorNormalOf(cpu.doors[0], local); }   // AUDIT WITCH1 D1: and its own outward normal - a door on its box's middle line takes its face from it, never the vertices' order (systems/siegeField.js doorFaceSign)\n            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)",
+    "new": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]

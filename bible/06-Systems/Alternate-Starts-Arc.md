@@ -17,7 +17,10 @@ text form under `src/systems/starts/quests/`, run by DFU's machine. Every start 
 1. It ends with the commission, a quest letter whose use is watched however it reached the pack.
 2. Opening it is the player's act, at any time. Nothing of the main quest runs before it; a start runs no clock.
 3. Opened, it orders the player to the city of Daggerfall. There it starts `_BRISIEN` and ends, and `_BRISIEN` runs
-   as DFU wrote it.
+   DFU's logic in our own words (`src/systems/quest/own/_BRISIEN.txt`, `Own-Words.md`). Its journal (1010) and Lady
+   Brisienna's first letter (1020) tell of no wreck at sea, true of every start: "I hear you have reached the Iliac
+   Bay, safe and well". The port's patch on it only takes out its `say 1025`, the classic start's waking in the cave
+   (`src/systems/quest/questPatches.js`).
 
 The commission belongs to the main quest: it is filed on the main rail, never shared with a party, and protected from
 being set aside or restarted.
@@ -79,8 +82,8 @@ began is handed the commission and the curse on load; an older save that already
 
 DFU's `StartGameBehaviour` starts `_TUTOR__` and `_BRISIEN` on a new character, and `_BRISIEN` starts the main quest's
 clock at once: a player who explores for two months is reported a traitor. The port starts a start quest in
-`_BRISIEN`'s place (`GAME_START_QUESTS` in `src/scenes/quest/questBridge.js`) and runs `_BRISIEN` unchanged once the
-commission is opened in Daggerfall. Its remote tavern is then drawn in Daggerfall's region, as DFU's start draws it.
+`_BRISIEN`'s place (`GAME_START_QUESTS` in `src/scenes/quest/questBridge.js`) and runs `_BRISIEN`'s logic unchanged once
+the commission is opened in Daggerfall. Its remote tavern is then drawn in Daggerfall's region, as DFU's start draws it.
 
 ## Code and tests
 

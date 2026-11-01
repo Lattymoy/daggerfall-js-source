@@ -1,4 +1,4 @@
-// BAY-LEFT-GROUND (2026-10-26, bible/03-World/Landforms.md "BAY-LEFT-GROUND"; the audit "no system left behind in the
+// BAY-LEFT-GROUND (2026-10-26, "BAY-LEFT-GROUND"; the audit "no system left behind in the
 // Bay", D3) - THE SNOWFALL MOD PAST THE BAY. Skyrim's winter laid the snow cover and the peaks' caps, but no deep snow to
 // wade, no footprint, no track, no corpse's hollow and no berm anywhere past the Bay: the world host's snow ground
 // (scenes/snowGround.js, moved out of bootWorld) stood no pixel off the Bay's 1000 x 500 and keyed one by `px * 1000 + py`
@@ -19,7 +19,7 @@ import { beyondKey, setArenaRoads } from '../../src/world/arenaRoads.js';
 import { generatePixelTerrain } from '../../src/world/terrain/terrainGen.js';
 import { DIR, MAP_W, MAP_H } from '../../src/world/road/roadNetwork.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../../src/formats/woodsFile.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const SIZE = 819.2;
 afterEach(() => { setArenaRoads(null); });
@@ -191,7 +191,7 @@ test('BAY-LEFT-GROUND D3 the roads past the Bay under the snow: a pixel the kern
   const hosted = new BasicRoadsTerrain(px, py, o.tilemapBytes, fromHost.authored, fromHost, fromHost.rect);
   assert.deepEqual([hosted.roadTiles, hosted.pathTiles], [t.roadTiles, t.pathTiles]);
   assert.ok(snowGround.roads({ px: 500, py: 250, paths: o.paths, locationRect: null }) === null, 'the Bay without Basic Roads: none');
-  // a BEND past the Bay is a curve (VOYAGER2), and Basic Roads' arms predict its tiles nowhere near it: the painter's word
+  // a BEND past the Bay is a curve, and Basic Roads' arms predict its tiles nowhere near it: the painter's word
   // finds the road and the track the arms' prediction misses
   setArenaRoads({ roads: new Map([[beyondKey(px, py), DIR.W | DIR.NE]]), tracks: new Map([[beyondKey(px, py), DIR.S | DIR.NW]]), join: new Map() });
   const b = generatePixelTerrain({ woods: w, px, py, stride: 1, tilemap: new Uint8Array(128 * 128), locationRect: null, hasLocation: false, climateType: 302, roads: bayNet() });

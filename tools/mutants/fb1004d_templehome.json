@@ -2,7 +2,7 @@
   {
     "name": "TEMPLE-HOME-the-key-unasked",
     "file": "src/systems/layoutPins.js",
-    "old": "    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // TEMPLE-HOME: by the town's key",
+    "old": "    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // By the town's key",
     "new": "    let out = null;",
     "tests": [
       "test/systems/fb1004d_templehome.test.js"

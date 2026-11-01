@@ -1,16 +1,25 @@
 # Immersive Footsteps
 
-Kirk.O's Immersive Footsteps 1.01 for Daggerfall Unity (Nexus mod 706, MIT), ported: footstep sounds that change with
-the ground underfoot, and armour sway sounds by what the player wears. The player hears it on every step; it is a Mod
-Authored row on the Features home, on by default, with its ten keys on the Mods page. Its data (manifest, settings, the
-two C# sources and 210 clips) is vendored under `vendor/immersive-footsteps/`.
+Kirk.O's Immersive Footsteps 1.01 for Daggerfall Unity (MIT), ported: footstep sounds that change with the ground
+underfoot, and armour sway sounds by what the player wears. The player hears it on every step; it is a Mod Authored
+row on the Features home, on by default, with its ten keys on the Mods page. Every clip is our own; the release's
+record is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
 **The source.** The mod's sources are published, so the port reads the C#, not the IL, and every function in
-`src/systems/immersiveFootsteps.js` names the method and lines it restates. The clips are the repository's MP3s,
-checked name for name against the manifest. The tile and archive tables are parsed out of the vendored `.cs` by the
-pins rather than retyped.
+`src/systems/immersiveFootsteps.js` names the method and lines it restates. The tile and archive tables are held by
+the pins as literals.
+
+**Our clips** (`src/audio/synth/steps.js`). Each of the 105 names the mod's LoadAudio asks for, in each quality, is a
+clip our synth makes at runtime at its clip's length: High at 44.1 kHz, Low (Retro) at 22.05 kHz and 8 bits. Each set
+is a family of its own - a struck body for path, tile and wood, a crowd of grains for grass, gravel, sand and snow, a
+slap and bubbles for mud and water, rings and a plate's modes for armour - drawn from the name's seed, so six steps
+are six.
+
+Each clip is set by its loudness (`src/audio/synth/dsp.js` `loudnessOf`, K-weighted over its loudest 100
+ms), not its peak: a step at -32, the top of Daggerfall's own stride heard at 0.7; a sway at -38; a landing at -33 and
+a hurt one at -28 before the mod's 4. A hard floor's heel knock stands over its thud, as Daggerfall's own steps do.
 
 **Taking over the stride.** The mod mutes DFU's own footsteps. The hosts keep the classic `FootstepMachine` running
 for its water latch and landing state, and ask `ownsStride()` before playing what it returns. The mod owns nothing
@@ -53,13 +62,16 @@ its own setting (`06-Systems/Better-Ambience.md`).
 ## Daggerfall Unity
 
 The mod's two MonoBehaviours are `ImmersiveFootstepsMain` and `ImmersiveFootstepsObject`, over DFU's
-`PlayerFootsteps`, `PlayerEnterExit` transitions and `UIManager.OnWindowChange`. Not ported: the Tempered Interiors
-warning and the once-a-session exception log.
+`PlayerFootsteps`, `PlayerEnterExit` transitions and `UIManager.OnWindowChange`. The two logging keys log a caught
+error to the console, as the mod's `LogModException` does. Not ported: the Tempered Interiors warning. Departure: the
+clips are ours.
 
 ## Code and tests
 
 - `src/systems/immersiveFootsteps.js` - the whole mod, driven by the four stride hosts
-- `test/systems/if1_immersivefootsteps.test.js` - the laws against the vendored C#
+- `src/audio/synth/steps.js` - our clips
+- `test/systems/if1_immersivefootsteps.test.js` - the laws, the settings and the tables as literals
+- `test/audio/synth/ownsounds.test.js` - the clips
 - `test/systems/deckfield.test.js` - decks and bridges
 
 ## Open

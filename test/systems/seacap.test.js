@@ -13,7 +13,7 @@ import { deepWatersEnemySettings } from '../../src/scenes/deepWater/deepWatersHo
 const V = 'iliac-puddle-no-more', K = 'General.MaxLiveEnemies';
 
 test('SEA-CAP: the port stands at most 32 of the deep\'s foes by default - the mod ships 128, and its range stays', () => {
-  // OWN-WORK3 (2026-10-31): Iliac Puddle No More 1.2.2's MaxLiveEnemies, as a literal - its settings file left the tree
+  // Iliac Puddle No More 1.2.2's MaxLiveEnemies, as a literal - its settings file left the tree
   const shipped = { Value: 128, Min: 0, Max: 256 };
   const def = MOD_SETTINGS[V].keys[K];
   assert.equal(def.default, 32);

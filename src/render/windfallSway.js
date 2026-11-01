@@ -1,12 +1,11 @@
 // @ts-check
-// WINDFALL1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments
-// seamlessly") - WINDFALL's VERTEX WIND, the law the flora sway by while the mod is on. Windfall 1.0.0 swaps DFU's
+// WINDFALL's VERTEX WIND, the law the flora sway by while the mod is on. Windfall 1.0.0 swaps DFU's
 // billboard-batch shaders on every nature batch (500..511) for its own, which move each billboard's crown - its two top
 // corners; the bottom ones stand - by a slow sway and a fast shiver, each a share of the billboard's height (the
 // settings' SwayAmountPercent and ShiverAmountPercent), scaled by the profile's Strength and the record's response,
 // phased by the flat's place, in the wind's heading.
 //
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): THE SHADER IS OUR OWN, written from
+// THE SHADER IS OUR OWN, written from
 // that description, with no line of the mod's:
 //
 //   lean = right x (across x sway reach x sin(sway) + shiver reach x sin(shiver)) x (0.7 + 0.6 x own)

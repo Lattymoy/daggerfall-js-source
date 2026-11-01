@@ -30,10 +30,10 @@ much more of the canopy to open is the owner's call.
 
 **A click** (a press that moves under 6 px) is a ray from the view's own eye met with the built ground
 (`src/player/travelPick.js`). A town or a marker is reached by the roads (`src/systems/travel/travelRoute.js`
-`planRoute`, over Hazelnut's Basic Roads masks); open ground is walked straight with Travel Options' steered walk. A
-journey on a road walks the road's lane as the terrain paints it, smoothly round its curves. In a town the journey slows
-and follows the town's paths. The plan runs in slices of cells across frames (`src/systems/travel/planSlices.js`), never
-one long task.
+`planRoute`, over the Bay's road network, `03-World/Roads.md`); open ground is walked straight with Travel Options'
+steered walk. A journey on a road walks the road's lane as the terrain paints it, smoothly round its curves. In a town
+the journey slows and follows the town's paths. The plan runs in slices of cells across frames
+(`src/systems/travel/planSlices.js`), never one long task.
 
 **Pace** (`src/systems/travel/travelPace.js`). Two dials, Speed and Foe-near: `PACE_STEPS` x5 to x100; x100 only on a
 road (`ROAD_PACE_MAX`), x60 off it (`OPEN_PACE_MAX`), dropping back at once on leaving the road; the open zone caps

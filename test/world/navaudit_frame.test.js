@@ -1,4 +1,4 @@
-// AUDIT NAV1 (2026-09-29) - THE FRAME'S COST (the online audit's #11-#14): what a sea fight costs a frame, and how the
+// THE FRAME'S COST (the online audit's #11-#14): what a sea fight costs a frame, and how the
 // port's own machinery carries it - a mover's bucket in the world's collider (player/collider.js), a tree's colliders
 // indexed and asked bounds first (world/prefabColliders.js), a node's matrix kept while it reads the same
 // (world/prefabNode.js), the world's sync carrying a boat's buckets (scenes/world.js csaSyncColliders), the boats culled
@@ -284,7 +284,7 @@ test('AUDIT NAV1 (#12) THE INDEX FOLLOWS THE TREE\'S SHAPE: the stamp moves when
   const c = new PrefabNode('c', { components: [box(1)] }).setParent(b);
   const names = () => collidersOf(root).map((x) => x.node.name);
   assert.deepEqual(names(), ['a', 'c']);
-  // BOAT-STAMP (2026-10-21): the stamp is the tree's own - read off any node of it, its top node's
+  // The stamp is the tree's own - read off any node of it, its top node's
   let s = prefabShapeStamp(root);
   b.setActive(false); a.localPosition = [5, 0, 0];
   assert.equal(prefabShapeStamp(root), s, 'a switch and a move leave the shape');
@@ -302,7 +302,7 @@ test('AUDIT NAV1 (#12) THE INDEX FOLLOWS THE TREE\'S SHAPE: the stamp moves when
   assert.ok(prefabShapeStamp(root) > s, 'a component more: the shape moved');
   assert.deepEqual(names(), ['a', 'b', 'c', 'd']);
   assert.equal(prefabShapeStamp(d), prefabShapeStamp(root), 'any node of the tree reads its top node\'s stamp');
-  // BOAT-STAMP: ANOTHER TREE'S CHANGES ARE NOT THIS ONE'S - a tree built, reshaped and given a component elsewhere (a
+  // ANOTHER TREE'S CHANGES ARE NOT THIS ONE'S - a tree built, reshaped and given a component elsewhere (a
   // boat streaming in, a fitting stood on another deck) leaves this tree's stamp, and its index, as they were
   s = prefabShapeStamp(root);
   const other = new PrefabNode('other');
@@ -380,7 +380,7 @@ test('AUDIT NAV1 (#12) THE WORLD\'S SYNC CARRIES A BOAT\'S BUCKETS: three ships 
   // a crate's box on the galley's deck (no hull ships a solid box of its own): a box among her buckets
   const crate = new PrefabNode('Crate', { position: [0, 10.25, 0], components: [{ type: 'BoxCollider', m_Enabled: true, m_IsTrigger: false, m_Center: { x: 0, y: 0.5, z: 0 }, m_Size: { x: 1, y: 1, z: 1 } }] }).setParent(ships[1].MeshObject);
   let adds = 0;
-  class Counting extends Collider { addMesh(...a) { adds++; return super.addMesh(...a); } }   // SEA-DROPS: every argument handed on - the sync lays its buckets posed
+  class Counting extends Collider { addMesh(...a) { adds++; return super.addMesh(...a); } }   // Every argument handed on - the sync lays its buckets posed
   let col = new Counting();
   const geometry = (c) => (c.m_Mesh?.mesh ? pool.models.geometry(c.m_Mesh.mesh) : null);
   const scope = { colliderPoses, invertAffine, boxColliderTriangles, csaModeCollider: () => col, csaAboard: { aboard: null }, csaColliderBoats: () => ships, csaColliderMesh: geometry, _csaBoatIds: new WeakMap(), _csaBoatSerial: 0, csa: { peerBoats: [] }, modes: { mode: 'exterior' } };   // FIELD BUGS 2026-10-01b: the sync stands the peers' boats on the street too - none here
@@ -561,7 +561,7 @@ test('AUDIT NAV1 (#13) A BOAT\'S STILL PARTS AS ONE MESH: a war galley\'s parts 
   for (const n of st.nodes) assert.ok(!log.drawn.some((d) => d.mesh !== st.mesh && d.matrix === walk.mats[walk.nodes.indexOf(n)]), `${n.name}: never drawn twice`);
   // its triangles: every part's, carried by her hull's matrix where each stands
   const merged = st.mesh.model;
-  // OWN-WORK4: our oar's loom hangs under its pivot (the rowing clips turn the pivot), so the part is the pivot's child
+  // Our oar's loom hangs under its pivot (the rowing clips turn the pivot), so the part is the pivot's child
   const oar = [...st.nodes].find((n) => n.getComponent('MeshFilter') && (n.name.startsWith("T'avaTriremeOar") || n.parent?.name.startsWith("T'avaTriremeOar")));
   const oarWorld = walk.mats[walk.nodes.indexOf(oar)];
   const mf = oar.getComponent('MeshFilter');

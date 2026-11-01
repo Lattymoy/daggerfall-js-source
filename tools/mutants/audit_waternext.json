@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WATER-NEXT-P1-host-carves-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      bed: waterOn,   // AUDIT WATER-NEXT P1",
-    "new": "      bed: false,   // AUDIT WATER-NEXT P1",
+    "old": "      bed: waterOn,   // The bed under the water, carved on the worker with the grid",
+    "new": "      bed: false,   // The bed under the water, carved on the worker with the grid",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]

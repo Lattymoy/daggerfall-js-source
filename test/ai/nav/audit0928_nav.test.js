@@ -15,7 +15,7 @@
 //       readback canvases asking for willReadFrequently
 //
 // N6 is the ARENA2 bake's own loader (test/ai/nav/enhancedAI.test.js); N10 is the triage's mutation records
-// (tools/mutants/arena2triage.json). Mutants: tools/mutants/navbake.json (N1, N3) and audit0928_nav.json.
+// (tools/mutants/arena2triage.json). Mutants: tools/mutants/navbake.json and audit0928_nav.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -221,7 +221,7 @@ test('AUDIT PRE-MERGE 0928 N5: a cache hit with a dead worker does not re-cut a 
 
 // ─── N8 ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 test('AUDIT PRE-MERGE 0928 N8: the set answers every frame the release drew, and nothing past its last', async () => {
-  // OWN-WORK4 (2026-10-31): no folder to glob - the set is our recipes and the candles rebuilt from the player's files
+  // No folder to glob - the set is our recipes and the candles rebuilt from the player's files
   const { inTorchSet, SPRITE_ARCHIVE, DROPPED_ARCHIVE } = await import('../../../src/systems/handheldTorches.js');
   const admitted = (archive) => {
     const out = [];

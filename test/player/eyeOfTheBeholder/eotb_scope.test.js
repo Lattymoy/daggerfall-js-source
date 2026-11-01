@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 // is why it survived seven slices - so this file makes it checkable.
 //
 // THE INVENTORY. The mod's assembly is Eye Of The Beholder 2.1's
-// `Eye Of The Beholder.dll`, which EOTB-IL (2026-09-16) took out of the
+// `Eye Of The Beholder.dll`, which EOTB-IL took out of the
 // shipped `.dfmod` and dumped whole with `tools/ilDump.py` (dnfile +
 // dncil; `monodis` segfaults on it). These were struck as
 // compiler-generated rather than authored:
@@ -32,8 +32,7 @@ import { fileURLToPath } from 'node:url';
 // counted 62 and listed a `PlayerBillboard::InitializeTextures` that
 // does not exist - the texture walk is `PlayerBillboardState`'s alone;
 // the 33rd body on the sprite is `<FixedUpdate>b__96_0`, the one-line
-// TravelOptions handler. Every authored method is a row below. OWN-WORK4
-// (2026-10-31): the dump left the tree with the mod's directory; this
+// TravelOptions handler. Every authored method is a row below. OWN-WORK4: the dump left the tree with the mod's directory; this
 // table, checked against it until then, is the record now.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -58,62 +57,62 @@ const IL = {
   'EyeOfTheBeholder::LoadSettings': { port: 'readCameraSettings', mod: 'eotbCamera.js' },   // and loadSettings' ToggleOffset(offset) re-run
   'EyeOfTheBeholder::get_pivotLocal': { port: null, why: 'no twin: a Unity local transform. The port pivots on the host’s own feet/eye pair.' },
   'EyeOfTheBeholder::Awake': { port: null, why: 'no twin: Unity lifecycle and the mod-message receiver.' },
-  'EyeOfTheBeholder::Start': { port: 'start', mod: 'eotbCamera.js' },   // EOTB-IL: `offset = offsetDefault; ToggleOffset(offset)` (IL_0668-IL_067b) - and the fields the .ctor would seed
+  'EyeOfTheBeholder::Start': { port: 'start', mod: 'eotbCamera.js' },   // `offset = offsetDefault; ToggleOffset(offset)` (IL_0668-IL_067b) - and the fields the .ctor would seed
   'EyeOfTheBeholder::Init': { port: null, why: 'no twin: the DFU mod loader’s entry point.' },
-  'EyeOfTheBeholder::LateUpdate': { port: 'autoToggleRows', mod: 'eotbBillboard.js' },   // EOTB-IL: three "just changed" blocks and a fan-out (IL_1847-IL_1c6e), applied by eotbCamera.tick; UpdateWagon before the offset gate
-  'EyeOfTheBeholder::OnPositionUpdate': { port: 'onPositionUpdate', mod: 'eotbCamera.js' },   // EOTB-IL: the floating origin re-seeds the smoothing (IL_1cb7-IL_1ccd)
+  'EyeOfTheBeholder::LateUpdate': { port: 'autoToggleRows', mod: 'eotbBillboard.js' },   // Three "just changed" blocks and a fan-out (IL_1847-IL_1c6e), applied by eotbCamera.tick; UpdateWagon before the offset gate
+  'EyeOfTheBeholder::OnPositionUpdate': { port: 'onPositionUpdate', mod: 'eotbCamera.js' },   // The floating origin re-seeds the smoothing (IL_1cb7-IL_1ccd)
   'EyeOfTheBeholder::SetKeyFromText': { port: null, why: 'no twin: KeyCode parsing. modSettings.js declares kinds instead of guessing.' },
-  'EyeOfTheBeholder::ToggleBillboard': { port: 'toggle', mod: 'eotbBody.js' },   // EOTB-IL: the billboard shown/hidden, the FP flag, the torch, the hands (driven by toggleOffset)
+  'EyeOfTheBeholder::ToggleBillboard': { port: 'toggle', mod: 'eotbBody.js' },   // The billboard shown/hidden, the FP flag, the torch, the hands (driven by toggleOffset)
   'EyeOfTheBeholder::SpawnBillboard': { port: null, why: 'no twin: it instantiates a Unity GameObject. The port’s body is a module instance the rig attaches.' },
-  'EyeOfTheBeholder::CheckWagon': { port: 'checkWagon', mod: 'eotbWagon.js' },   // EOTB-IL: Info names it, any other mode opens the pack with the wagon (IL_224c-IL_22a4)
-  'EyeOfTheBeholder::SpawnWagon': { port: 'createEotbWagon', mod: 'eotbWagon.js' },   // EOTB-IL: model 41239 through the host's pipeline, the seed offset, the 3.2 activation (IL_1e4c-IL_1f0a)
-  'EyeOfTheBeholder::UpdateWagon': { port: 'updateWagon', mod: 'eotbWagon.js' },   // EOTB-IL: the follow, the teleport, the ground probe, LookAt and the wobble (IL_1f18-IL_223e)
-  'EyeOfTheBeholder::OnUpdateSailing': { port: 'onUpdateSailing', mod: 'eotbCamera.js' },   // CSA-J: GetBoatMeshObject, the bounds' local centre and extent, the flag and the helm among the mesh object's own children (IL_07a8-IL_0922)
+  'EyeOfTheBeholder::CheckWagon': { port: 'checkWagon', mod: 'eotbWagon.js' },   // Info names it, any other mode opens the pack with the wagon (IL_224c-IL_22a4)
+  'EyeOfTheBeholder::SpawnWagon': { port: 'createEotbWagon', mod: 'eotbWagon.js' },   // Model 41239 through the host's pipeline, the seed offset, the 3.2 activation (IL_1e4c-IL_1f0a)
+  'EyeOfTheBeholder::UpdateWagon': { port: 'updateWagon', mod: 'eotbWagon.js' },   // The follow, the teleport, the ground probe, LookAt and the wobble (IL_1f18-IL_223e)
+  'EyeOfTheBeholder::OnUpdateSailing': { port: 'onUpdateSailing', mod: 'eotbCamera.js' },   // GetBoatMeshObject, the bounds' local centre and extent, the flag and the helm among the mesh object's own children (IL_07a8-IL_0922)
   'EyeOfTheBeholder::FreeRein_GetMoveVector': { port: null, why: 'no twin: the Free Rein mod.' },
   'EyeOfTheBeholder::MeleeDamage': { port: null, why: 'no twin: the attack-from-body ray. The port’s swing and activation already start at the player’s own head (cam.pos), which the view never moves - only the drawn eye moves - so there is nothing to re-origin and Don’tOffsetAttacks has nothing to stop.' },
   'EyeOfTheBeholder::MessageReceiver': { port: null, why: 'no twin: DFU’s inter-mod message bus.' },
-  'EyeOfTheBeholder::ModCompatibilityChecking': { port: 'setComeSailAway', mod: 'eotbCamera.js' },   // CSA-J: its Come Sail Away arm (IL_0756-IL_079a), run by start(); Travel Options' flag feeds only the billboard's FixedUpdate hook and Tome of Battle is not in the port
-  'EyeOfTheBeholder::OnLoad': { port: 'onLoad', mod: 'eotbCamera.js' },   // EOTB-IL: armed, the transition row for where the player stands; disarmed, StartInThirdPerson (IL_0a08-IL_0ad0)
-  'EyeOfTheBeholder::OnNewGame': { port: 'onNewGame', mod: 'eotbCamera.js' },   // EOTB-IL: the same shape (IL_0930-IL_09f8)
-  'EyeOfTheBeholder::OnTransitionInterior': { port: 'transition', mod: 'eotbCamera.js' },   // EOTB-IL: registered on the building's doors AND the dungeon's (IL_06a2-IL_06e1)
+  'EyeOfTheBeholder::ModCompatibilityChecking': { port: 'setComeSailAway', mod: 'eotbCamera.js' },   // Its Come Sail Away arm (IL_0756-IL_079a), run by start(); Travel Options' flag feeds only the billboard's FixedUpdate hook and Tome of Battle is not in the port
+  'EyeOfTheBeholder::OnLoad': { port: 'onLoad', mod: 'eotbCamera.js' },   // Armed, the transition row for where the player stands; disarmed, StartInThirdPerson (IL_0a08-IL_0ad0)
+  'EyeOfTheBeholder::OnNewGame': { port: 'onNewGame', mod: 'eotbCamera.js' },   // The same shape (IL_0930-IL_09f8)
+  'EyeOfTheBeholder::OnTransitionInterior': { port: 'transition', mod: 'eotbCamera.js' },   // Registered on the building's doors AND the dungeon's (IL_06a2-IL_06e1)
   'EyeOfTheBeholder::OnTransitionExterior': { port: 'transition', mod: 'eotbCamera.js' },
 
   // ── PlayerBillboard: the sprite (32) ────────────────────────────
   'PlayerBillboard::InitializeStates': { port: 'STATE_TABLES', mod: 'eotbBillboard.js' },
-  'PlayerBillboard::LoopIdleBillboard': { port: 'loopIdleBillboard', mod: 'eotbBody.js' },   // EOTB-IL: the loop itself; chooseTable (eotbBillboard.js) is its table arm (IL_4328-IL_4499)
-  'PlayerBillboard::UpdateOrientation': { port: 'updateOrientation', mod: 'eotbBody.js' },   // EOTB-IL: the 0.1 s throttle and the torch modes; orientationFor (eotbBillboard.js) is its angle (IL_4779-IL_47a3)
+  'PlayerBillboard::LoopIdleBillboard': { port: 'loopIdleBillboard', mod: 'eotbBody.js' },   // The loop itself; chooseTable (eotbBillboard.js) is its table arm (IL_4328-IL_4499)
+  'PlayerBillboard::UpdateOrientation': { port: 'updateOrientation', mod: 'eotbBody.js' },   // The 0.1 s throttle and the torch modes; orientationFor (eotbBillboard.js) is its angle (IL_4779-IL_47a3)
   'PlayerBillboard::get_frameTime': { port: 'frameTime', mod: 'eotbBillboard.js' },
   'PlayerBillboard::get_sizeMod': { port: 'sizeMod', mod: 'eotbSprite.js' },
   'PlayerBillboard::get_scaleOffset': { port: null, why: 'no twin: DEAD IN THE ASSEMBLY. The getter has no caller anywhere in the IL - Animation.GlobalOffsetScale is read into a field nothing consumes. OWN-AUDIT (2026-11-01) gave the dial our own meaning in the body (eotbBody.js place scales the XML shift by it), no twin of the getter.' },
-  'PlayerBillboard::PlayFootstep': { port: 'playFootstep', mod: 'eotbBody.js' },   // EOTB-IL: the clip PlayerFootsteps would pick, at FootstepVolumeScale * (FP ? 1 : 2) (IL_55e8-IL_5928)
-  'PlayerBillboard::EnableVanillaFootsteps': { port: 'initialize', mod: 'eotbBody.js' },   // EOTB-IL: Initialize's SyncFootsteps fork (IL_3c78-IL_3c80) - off, the vanilla stride keeps its clips
-  'PlayerBillboard::DisableVanillaFootsteps': { port: 'initialize', mod: 'eotbBody.js' },   // EOTB-IL: every clip index to -1 (IL_54f8-IL_554c); `vanillaDisabled` is what `footstep().owns` answers
+  'PlayerBillboard::PlayFootstep': { port: 'playFootstep', mod: 'eotbBody.js' },   // The clip PlayerFootsteps would pick, at FootstepVolumeScale * (FP ? 1 : 2) (IL_55e8-IL_5928)
+  'PlayerBillboard::EnableVanillaFootsteps': { port: 'initialize', mod: 'eotbBody.js' },   // Initialize's SyncFootsteps fork (IL_3c78-IL_3c80) - off, the vanilla stride keeps its clips
+  'PlayerBillboard::DisableVanillaFootsteps': { port: 'initialize', mod: 'eotbBody.js' },   // Every clip index to -1 (IL_54f8-IL_554c); `vanillaDisabled` is what `footstep().owns` answers
   'PlayerBillboard::PlayMeleeAttackAnimation': { port: 'playMeleeAttack', mod: 'eotbBody.js' },
   'PlayerBillboard::PlayRangedAttackAnimation': { port: 'playRangedAttack', mod: 'eotbBody.js' },
   'PlayerBillboard::PlayRangedAttackAnimationHold': { port: 'playRangedAttackHold', mod: 'eotbBody.js' },
   'PlayerBillboard::PlaySpellAttackAnimation': { port: 'playSpellAttack', mod: 'eotbBody.js' },
   'PlayerBillboard::PlayLycanAttackAnimation': { port: 'playLycanAttack', mod: 'eotbBody.js' },
   'PlayerBillboard::PlayDeathAnimation': { port: 'playDeath', mod: 'eotbBody.js' },
-  'PlayerBillboard::PlayAnimationCoroutine': { port: 'startClip', mod: 'eotbBody.js' },   // EOTB-IL: the forward kind, stepped by advanceClip
-  'PlayerBillboard::PlayAnimationHoldCoroutine': { port: 'holdPhase', mod: 'eotbBody.js' },   // EOTB-IL: the draw then the held last frame (holdDrawFrames)
+  'PlayerBillboard::PlayAnimationCoroutine': { port: 'startClip', mod: 'eotbBody.js' },   // The forward kind, stepped by advanceClip
+  'PlayerBillboard::PlayAnimationHoldCoroutine': { port: 'holdPhase', mod: 'eotbBody.js' },   // The draw then the held last frame (holdDrawFrames)
   'PlayerBillboard::PlayAnimationPingPongCoroutine': { port: null, why: 'no twin: RETIRED by ONE-STROKE (2026-10-07, Mac: "attacking plays only one animation") - a blow plays one of the swing’s two strokes (eotbBillboard.js meleeStrokeFrames), and the ping-pong was a second movement. It was ported (forward while i < n/2 + offset, then down to 1) and is deleted, a departure in the Ledger.' },
-  'PlayerBillboard::GetMeleeAnimTickTime': { port: 'meleeAnimTickTime', mod: 'eotbBillboard.js' },   // EOTB-IL: animTime * 5 / frames
-  'PlayerBillboard::UpdateBillboard': { port: 'updateBillboard', mod: 'eotbBody.js' },   // EOTB-IL: the frame/orientation/table write the batch reads
+  'PlayerBillboard::GetMeleeAnimTickTime': { port: 'meleeAnimTickTime', mod: 'eotbBillboard.js' },   // animTime * 5 / frames
+  'PlayerBillboard::UpdateBillboard': { port: 'updateBillboard', mod: 'eotbBody.js' },   // The frame/orientation/table write the batch reads
   'PlayerBillboard::UpdateBillboardDelayed': { port: 'updateBillboardDelayed', mod: 'eotbBody.js' },
-  'PlayerBillboard::UpdateBillboardDelayedCoroutine': { port: 'runDelayed', mod: 'eotbBody.js' },   // EOTB-IL: the three-frame queue (DELAYED_FRAMES)
+  'PlayerBillboard::UpdateBillboardDelayedCoroutine': { port: 'runDelayed', mod: 'eotbBody.js' },   // The three-frame queue (DELAYED_FRAMES)
   'PlayerBillboard::AssignMeshAndMaterial': { port: null, why: 'no twin: Unity mesh/material handling. The renderer’s billboard batch is the mesh.' },
-  'PlayerBillboard::UpdateMaterial': { port: 'material', mod: 'eotbBody.js' },   // EOTB-IL: invisible / shade / blending by the concealment flags (MATERIAL)
+  'PlayerBillboard::UpdateMaterial': { port: 'material', mod: 'eotbBody.js' },   // Invisible / shade / blending by the concealment flags (MATERIAL)
   'PlayerBillboard::MakeBillboardMaterial': { port: null, why: 'no twin: Unity mesh/material handling.' },
-  'PlayerBillboard::Initialize': { port: 'initialize', mod: 'eotbBody.js' },   // EOTB-IL: states, textures, footsteps, died cleared
+  'PlayerBillboard::Initialize': { port: 'initialize', mod: 'eotbBody.js' },   // States, textures, footsteps, died cleared
   'PlayerBillboard::get_IsReady': { port: null, why: 'no twin: "my transform has a parent". The port’s ready() is its own law - the first sprite has decoded.' },
   'PlayerBillboard::Awake': { port: null, why: 'no twin: Unity lifecycle.' },
-  'PlayerBillboard::Update': { port: 'update', mod: 'eotbBody.js' },   // EOTB-IL: the death door, the loop, the footstep frames
-  'PlayerBillboard::LateUpdate': { port: 'lateUpdate', mod: 'eotbBody.js' },   // EOTB-IL: the camera read, the orientation, the placement, the material
+  'PlayerBillboard::Update': { port: 'update', mod: 'eotbBody.js' },   // The death door, the loop, the footstep frames
+  'PlayerBillboard::LateUpdate': { port: 'lateUpdate', mod: 'eotbBody.js' },   // The camera read, the orientation, the placement, the material
   'PlayerBillboard::FixedUpdate': { port: null, why: 'no twin: the TravelOptions hook (fast travel’s own clock), which the port does not carry.' },
-  'PlayerBillboard::OnLoad': { port: 'initialize', mod: 'eotbBody.js' },   // EOTB-IL: InitializeStates on the loaded game (IL_2abc-IL_2ac6) - the tables and `died` rebuilt
+  'PlayerBillboard::OnLoad': { port: 'initialize', mod: 'eotbBody.js' },   // InitializeStates on the loaded game (IL_2abc-IL_2ac6) - the tables and `died` rebuilt
 
   // ── PlayerBillboardState (1) ────────────────────────────────────
-  'PlayerBillboardState::InitializeTextures': { port: 'preload', mod: 'eotbBody.js' },   // EOTB-IL: every orientation and frame of a state, keyed off the bundle (TABLE_FRAMES is the frame count the IL loops)
+  'PlayerBillboardState::InitializeTextures': { port: 'preload', mod: 'eotbBody.js' },   // Every orientation and frame of a state, keyed off the bundle (TABLE_FRAMES is the frame count the IL loops)
 };
 
 const PORTED = Object.entries(IL).filter(([, v]) => v.port);
@@ -131,10 +130,10 @@ test('AUDIT-EOTB scope: the inventory is whole, and every row has a verdict', ()
     if (v.port) assert.ok(v.mod, `${k} claims a port, so it must name the module`);
     else assert.match(v.why ?? '', /^no twin/, `${k} claims no port, so it must say why - and EOTB-IL leaves nothing NOT DONE`);
   }
-  // EOTB-IL: there is one evidence class now. A row marked otherwise
+  // There is one evidence class now. A row marked otherwise
   // is a reading made without the assembly, and the assembly is here.
   for (const [k, v] of PORTED) assert.equal(v.evidence, undefined, `${k}: every port is read off the IL`);
-  assert.equal(PORTED.length, 46, 'forty-six of sixty-one');   // CSA-J: OnUpdateSailing and ModCompatibilityChecking's Come Sail Away arm; ONE-STROKE retired the ping-pong
+  assert.equal(PORTED.length, 46, 'forty-six of sixty-one');   // OnUpdateSailing and ModCompatibilityChecking's Come Sail Away arm; ONE-STROKE retired the ping-pong
   assert.equal(NOT.length, 15, 'fifteen with no twin here');
 });
 
@@ -149,7 +148,7 @@ test('AUDIT-EOTB scope: every row claiming a PORT names a symbol that is really 
   // The whole point. A row saying "ported" is a claim, and a claim
   // nothing checks is how "1:1" survived seven slices.
   for (const [k, v] of PORTED) {
-    const src = rd(`src/player/eyeOfTheBeholder/${v.mod}`);   // TIDY2: the arc's folder
+    const src = rd(`src/player/eyeOfTheBeholder/${v.mod}`);   // The arc's folder
     const decl = new RegExp(`(?:function|const|let|var)\\s+${v.port}\\b|\\b${v.port}\\s*\\(`);
     assert.match(src, decl, `${k} -> ${v.mod}: ${v.port} must exist`);
   }
@@ -197,7 +196,7 @@ test('AUDIT-EOTB scope: THE DEAD EXPORTS - what is ported, exported, and called 
   };
   walk('src');
   const code = new Map(files.map((f) => [f, strip(rd(f))]));
-  const arc = files.filter((f) => /\/player\/(?:eyeOfTheBeholder\/)?eotb[^/]*\.js$/.test(f));   // TIDY2: in the arc's folder
+  const arc = files.filter((f) => /\/player\/(?:eyeOfTheBeholder\/)?eotb[^/]*\.js$/.test(f));   // In the arc's folder
   assert.ok(arc.length >= 5, 'the arc has its five modules');
 
   const dead = [];

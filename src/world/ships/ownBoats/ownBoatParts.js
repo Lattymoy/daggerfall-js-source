@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): THE BOATS' OWN PARTS - every mesh our five hulls draw and stand on, made from numbers here
+// THE BOATS' OWN PARTS - every mesh our five hulls draw and stand on, made from numbers here
 // on world/ships/galleonMesh.js's bench (the fleet's), in the boat's frame (Unity's: +x starboard, +y up, +z the bow).
 // A part is the CSA geometry shape (positions, normals, uvs, indices, a sub-mesh a picture, its slots and its box);
 // world/ships/ownBoats/ownBoatFiles.js writes them as Come Sail Away's meshes were written. Nothing here is read off

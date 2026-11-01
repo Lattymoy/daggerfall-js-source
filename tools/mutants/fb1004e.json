@@ -222,8 +222,8 @@
   {
     "name": "HORSEFACE-the-moving-gate-gone",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "if (state.feet && was && !(last.forward || last.strafe) && Math.hypot(",
-    "new": "if (state.feet && was && Math.hypot(",
+    "old": "      if (state.feet && was && !(last.forward || last.strafe) && Math.hypot(state.feet[0] - was[0], state.feet[2] - was[2]) > PLACE_JUMP_M) faceYaw(Math.atan2(cam.forward[0], cam.forward[2]));",
+    "new": "      if (state.feet && was && Math.hypot(state.feet[0] - was[0], state.feet[2] - was[2]) > PLACE_JUMP_M) faceYaw(Math.atan2(cam.forward[0], cam.forward[2]));",
     "tests": [
       "test/player/eyeOfTheBeholder/fb1004e_horseface.test.js"
     ],

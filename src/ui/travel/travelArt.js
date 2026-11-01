@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31; bible/06-Systems/Travel-Options.md): THE TRAVEL STRIP AND THE PORTS BUTTON, OUR OWN. The
-// control strip (320 x 27) and the map's ports filter (45 x 11, off and on) are recipes for our painter
-// (art/ownPainter.js): carved stone like Daggerfall's own windows, our letters, every recess and button where
-// travelControlUI.js CONTROL_RECTS and travelMapOptions.js PORTS_SIZE place them. No pixel of the retired release is read.
+// THE TRAVEL STRIP AND THE PORTS BUTTON, OUR OWN. The control strip (320 x 27) and the map's ports filter (45 x 11, off
+// and on) are recipes for our painter (art/ownPainter.js): carved stone like Daggerfall's own windows, our letters, every
+// recess and button where travelControlUI.js CONTROL_RECTS and travelMapOptions.js PORTS_SIZE place them. No pixel of the
+// retired release is read.
 import { createPainter, RAMP, rect, textWidth } from '../../art/ownPainter.js';
 
 const TEXT = RAMP.gold[5];

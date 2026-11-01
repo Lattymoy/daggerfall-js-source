@@ -50,7 +50,7 @@ profile window's Skin card (**Look: Skins | Layered Gearing (WIP)**); it is the 
 - A shield is held on the free arm through a one-handed swing; sheathed, it is on the back with the weapon behind it
   (the owner).
 - The art is Port-Doctrine's third exception: the strips are drawn from Daggerfall's own sprites, approved by the owner
-  and credited to DFO (`src/ui/credits.js`). `test/tooling/doctrine.test.js` marks the folder `derived`.
+  as DFO's own work ("Layered Gear is ours"). `test/tooling/doctrine.test.js` marks the folder `derived`.
 - It is a skin, not a feature: it has no Features row.
 
 ## Daggerfall Unity

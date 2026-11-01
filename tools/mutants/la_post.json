@@ -137,8 +137,8 @@
   {
     "name": "LA-POST3-shafts-in-bytes",
     "file": "src/render/airPass.js",
-    "old": "      shaft: color(bw, bh, f16),\n      shaftRaw: color(bw, bh, f16), // VC7b: the haze march's jittered image, averaged into `shaft` by VOL1's depth-aware tile",
-    "new": "      shaft: color(bw, bh),\n      shaftRaw: color(bw, bh), // VC7b: the haze march's jittered image, averaged into `shaft` by VOL1's depth-aware tile",
+    "old": "      shaft: color(bw, bh, f16),\n      shaftRaw: color(bw, bh, f16), // The haze march's jittered image, averaged into `shaft` by VOL1's depth-aware tile",
+    "new": "      shaft: color(bw, bh),\n      shaftRaw: color(bw, bh), // The haze march's jittered image, averaged into `shaft` by VOL1's depth-aware tile",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "LA-POST6-release-kept",
     "file": "src/render/airPass.js",
-    "old": "    this._cut = true; // LA-POST6: and the frame the reopened door draws follows none - the depth it would march is from before the door shut",
-    "new": "    // LA-POST6: and the frame the reopened door draws follows none - the depth it would march is from before the door shut",
+    "old": "    this._cut = true; // And the frame the reopened door draws follows none - the depth it would march is from before the door shut",
+    "new": "    // And the frame the reopened door draws follows none - the depth it would march is from before the door shut",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "LA-POST8-depth-reattached",
     "file": "src/render/airPass.js",
-    "old": "    f.fbo = f.fbos[f.depthIndex]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
-    "new": "    f.fbo = f.fbos[0];\n    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);\n    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0); // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
+    "old": "    f.fbo = f.fbos[f.depthIndex]; // The framebuffer with this frame's depth - bound, not re-attached",
+    "new": "    f.fbo = f.fbos[0];\n    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);\n    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0); // The framebuffer with this frame's depth - bound, not re-attached",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "LA-POST8-shafts-cleared-at-night",
     "file": "src/render/airPass.js",
-    "old": "    // LA-POST8: with neither, the shafts' image is not cleared - nothing reads it: the resolve is built without its read",
-    "new": "    if (!(sun || haze)) {\n      quad(this.programs.shaft, T.shaft);\n      gl.clearColor(0, 0, 0, 1);\n      gl.clear(gl.COLOR_BUFFER_BIT);\n    }\n    // LA-POST8: with neither, the shafts' image is not cleared - nothing reads it: the resolve is built without its read",
+    "old": "    // With neither, the shafts' image is not cleared - nothing reads it: the resolve is built without its read",
+    "new": "    if (!(sun || haze)) {\n      quad(this.programs.shaft, T.shaft);\n      gl.clearColor(0, 0, 0, 1);\n      gl.clear(gl.COLOR_BUFFER_BIT);\n    }\n    // With neither, the shafts' image is not cleared - nothing reads it: the resolve is built without its read",
     "tests": [
       "test/render/la_post.test.js"
     ]

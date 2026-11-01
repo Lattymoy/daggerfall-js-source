@@ -59,7 +59,7 @@ carried past its canvas.
 
 ## Open
 
-- The stance was picked on the vendored retail skeleton, not on Morrowind's own bodies.
+- The stance was picked on a skeleton in the tree, not on Morrowind's own bodies.
 - The pistol's sounds are the gun lab's clips; a flintlock's own were never searched for.
 - The doll's placement waits on the owner's eye.
 - No Legendary of its own: it borrows The Last Lock.

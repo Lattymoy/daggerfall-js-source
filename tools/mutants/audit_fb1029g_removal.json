@@ -2,8 +2,8 @@
   {
     "name": "AFB-REMOVAL-R1-a-second-reckoning",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
-    "new": "if (isBulletinBoard(placed.modelIdNum)) { const at = multiply(originMatrix, placed.matrix); pixelBoards.push({ box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), at), local: at }); continue; }",
+    "old": "          if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
+    "new": "          if (isBulletinBoard(placed.modelIdNum)) { const at = multiply(originMatrix, placed.matrix); pixelBoards.push({ box: transformedAabb(archAabb(placed.modelIdNum, cpu.positions), at), local: at }); continue; }",
     "tests": [
       "test/systems/bulletinboard.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AFB-REMOVAL-R6-the-sweep-counts-boards",
     "file": "tools/townSolidsSweep.mjs",
-    "old": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id)); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)",
-    "new": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id]); // AUDIT FB1029g R6: no board stands (NOTICE-PANEL)",
+    "old": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id] && !isBulletinBoard(p.id)); // No board stands",
+    "new": "    .filter((p) => p.mesh?.positions?.length && !RMBRP_HILLS[p.id]); // No board stands",
     "tests": [
       "test/systems/bulletinboard.test.js"
     ],

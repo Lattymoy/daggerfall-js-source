@@ -1,4 +1,4 @@
-// AUDIT GALLEON-2 (2026-10-03): HER PREFAB, HER PICTURES, HER MESHES AND HER LOADER, read a second time (the first:
+// HER PREFAB, HER PICTURES, HER MESHES AND HER LOADER, read a second time (the first:
 // test/world/ships/auditgalleon_prefab.test.js). Each pin failed on the code as it stood (57baee705) or, where the law was right and
 // unpinned, on its mutant (tools/mutants/auditgalleon2_prefab.json); each fix carries an `AUDIT GN2-<id>` comment.
 //   PF3  her pictures painted and her glass's glow cut at the preload, never at her first draw
@@ -36,7 +36,7 @@ const { MEASURED: M, HELM } = GM;
 const { galleonArt, galleonGlow, _resetGalleonArt, GALLEON_ARCHIVE, TEX, BANDS } = GA;
 const BAKE_TEXT = readFileSync(new URL('../../../src/assets/galleon/galleon.json', import.meta.url), 'utf8');
 const BAKE = JSON.parse(BAKE_TEXT);
-const modFiles = ownFiles; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const modFiles = ownFiles; // Our boats' files (test/ownBoats.mjs)
 const near = (a, b, eps, what) => assert.ok(Math.abs(a - b) <= eps, `${what}: ${a} vs ${b}`);
 const xf = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
 const nodeNamed = (root, name) => [...root.walk()].find((n) => n.name === name) ?? null;

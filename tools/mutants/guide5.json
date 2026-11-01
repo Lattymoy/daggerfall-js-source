@@ -83,8 +83,8 @@
   {
     "name": "GUIDE5-resolved-by-the-region",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "  const index = region?.mapNameLookup?.get(name);\n  if (index === undefined || index === null) return null;",
-    "new": "  const index = region?.mapNameLookup?.get(regionName);\n  if (index === undefined || index === null) return null;",
+    "old": "  const index = region?.mapNameLookup?.get(name);",
+    "new": "  const index = region?.mapNameLookup?.get(regionName);",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "GUIDE5-row-default-off",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: false, online: 'player' }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: false, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF",
     "tests": [
       "test/ui/quest/guide5_marks.test.js",
       "test/systems/features.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "GUIDE5-row-forced-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: true }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),   // ui/quest/questMarks.js MARKS_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: true }),   // ui/quest/questMarks.js MARKS_PREF",
     "tests": [
       "test/ui/quest/guide5_marks.test.js",
       "test/systems/features.test.js"

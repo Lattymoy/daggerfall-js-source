@@ -35,7 +35,7 @@ const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const BV = 'beautiful-villages', BC = 'beautiful-cities';
 /** The two town mods' load order as the door read it (OWN-WORK3: both retired, the door's law kept) - Cities after Villages. */
 const WORLD_DATA_PRIORITY = Object.freeze({ [BV]: 10, [BC]: 20 });
-const LOC = rrKeepLocationJson();   // OWN-WORK3: our keep's location file (systems/roleplayRealism/rrWorld.js)
+const LOC = rrKeepLocationJson();   // Our keep's location file (systems/roleplayRealism/rrWorld.js)
 /** A location file: the keep's, renamed and laid out on `blockNames`. */
 const locJson = (name, blockNames = ['FIGHBM00.RMB']) => {
   const j = structuredClone(LOC);
@@ -159,7 +159,7 @@ test('WD3 the door is open ONLINE whatever Replace Game Artwork says - the groun
     if (had) Object.defineProperty(globalThis, 'location', had); else delete globalThis.location;
   }
   assert.match(src('src/formats/worldData/worldDataReplacement.js'), /export const worldDataDoorOpen = \(\) => _doorLatched \?\? \(assetInjectionOn\(\) \|\| isOnlinePage\(\)\);\nconst worldDataOn = worldDataDoorOpen;/);
-  // AUDIT WD3 P3: latched for the game, as DFU reads AssetInjection at startup - a switch turned mid-game moves nothing
+  // Latched for the game, as DFU reads AssetInjection at startup - a switch turned mid-game moves nothing
   again();
   assert.equal(latchWorldDataDoor(), false);
   setValue('Enhancements', 'AssetInjection', 'True');
@@ -312,9 +312,6 @@ test('WD3 a guild hall entry naming a guild this game carries none of (AUDIT WD3
 test('WD3 a town\'s buildings wear its LOCATION\'s climate, the terrain its pixel\'s (AUDIT WD3 G5) - DaggerfallLocation\'s ClimateUse.UseLocation; one and the same for every classic town, a world-data file\'s own for the towns it names another for', () => {
   const W = hostText('src/scenes/world.js');
   assert.match(W, /const townClimateBase = dfLocation\?\.climate\?\.climateType \?\? climateBase;/);
-  // PIN MOVED (URBANIZER U3): one is a town past the Bay's fabric (`gpuF`), Daggerfall's fence and crate in it dressed in
-  // the town's climate as its blocks' own models are. PIN MOVED (NOTICE-PANEL): four - Gothway Garden's own boards
-  // (`gpuB`) went with every town's
   assert.equal((W.match(/remapSubMeshes\([a-zA-Z]+\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\)/g) ?? []).length, 4, 'every town mesh');
   assert.match(W, /getWindmillMeshes\(townClimateBase,/);
   assert.match(W, /recordIndex: placed\.recordIndex, climateBase: townClimateBase, season: INTERIOR_SEASON,/, 'and the interiors entered from them');

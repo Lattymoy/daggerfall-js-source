@@ -272,8 +272,8 @@
   {
     "name": "SENSE1-the-row-off-by-default",
     "file": "src/systems/features.js",
-    "old": "key: 'dungeonSense', initial: 'on',",
-    "new": "key: 'dungeonSense', initial: 'off',",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'dungeonSense', initial: 'on', online: 'player', tiers: Object.freeze([['off', 'Off'], ['on', 'On'], ['secrets', 'With secrets']]) }),   // systems/dungeon/dungeonSense.js SENSE_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'dungeonSense', initial: 'off', online: 'player', tiers: Object.freeze([['off', 'Off'], ['on', 'On'], ['secrets', 'With secrets']]) }),   // systems/dungeon/dungeonSense.js SENSE_PREF",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "F1-gate-back-to-isBow",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.ranged;",
-    "new": "const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.isBow;",
+    "old": "      const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.ranged;",
+    "new": "      const armShoots = (fpArm.active() || fpArm.thirdActive()) && !!playerWeapon.machine.isBow;",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "F1-voice-fires-on-the-click-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');",
-    "new": "const trigger = (m.state !== 'Idle' && _tlState === 'Idle');",
+    "old": "    const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');",
+    "new": "    const trigger = (m.state !== 'Idle' && _tlState === 'Idle');",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "F1-voice-never-fires-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');",
-    "new": "const trigger = armShoots ? false : (m.state !== 'Idle' && _tlState === 'Idle');",
+    "old": "    const trigger = armShoots ? fired : (m.state !== 'Idle' && _tlState === 'Idle');",
+    "new": "    const trigger = armShoots ? false : (m.state !== 'Idle' && _tlState === 'Idle');",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "F1-flash-on-the-machine-frame-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "(armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE))",
-    "new": "muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE)",
+    "old": "    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : (armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE));",
+    "new": "    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE);",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "F2-muzzle-prefers-the-sprite-record-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');",
-    "new": "      if (false) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');   // A pair's shot from the hand that fired it",
+    "new": "      if (false) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');   // A pair's shot from the hand that fired it",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "F2-muzzle-first-person-only",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp()",
-    "new": "      if (fpArm.active()) return fpArm.weaponMuzzle(pairUp()",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');   // A pair's shot from the hand that fired it",
+    "new": "      if (fpArm.active()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');   // A pair's shot from the hand that fired it",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]

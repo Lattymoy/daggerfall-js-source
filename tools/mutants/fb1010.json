@@ -146,8 +146,8 @@
   {
     "name": "RFOLK-world-host-climate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "race: walkerRace(climate?.people, dfLocation.regionIndex),",
-    "new": "race: walkerRace(climate?.people, null),",
+    "old": "          race: walkerRace(climate?.people, dfLocation.regionIndex),",
+    "new": "          race: walkerRace(climate?.people, null),",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "RFOLK-rr-climate",
     "file": "src/systems/roleplayRealism/rrVariants.js",
-    "old": "      walkerRace(getWorldClimateSettings(worldClimate)?.people, region),\n    ); // AUDIT FB1010 C3: the street's own rule",
+    "old": "      walkerRace(getWorldClimateSettings(worldClimate)?.people, region),\n    ); // The street's own rule",
     "new": "      rrClimateRace(worldClimate),\n    );",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"

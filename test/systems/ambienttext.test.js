@@ -16,7 +16,7 @@ import { LOCATION_TYPES, DUNGEON_TYPES } from '../../src/formats/mapsFile.js';
 import { WEATHER_TYPES, weatherFlags } from '../../src/world/weather.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-// ═══ AMBIENT TEXT 1.8 - Regnier (AT1/AT2) ═════════════════════════
+// ═══ AMBIENT TEXT 1.8 - Regnier ═════════════════════════
 //
 // The mod is forty lines of arithmetic around a table of 918 lines,
 // DFO's own since OWN-WORK2, so the pins here are aimed at the arithmetic
@@ -48,7 +48,7 @@ function mod({ rolls, settings = SETTINGS, where = () => ({}), say = () => {}, .
 
 // ── The mod's settings, and the port's restatement of them ─────────
 
-// OWN-WORK2 (2026-10-31): Ambient Text 1.8's modsettings.json, written out when its vendored copy left the tree - one
+// Ambient Text 1.8's modsettings.json, written out when its vendored copy left the tree - one
 // section, AmbientText, and four SliderIntKeys.
 const SHIPPED = Object.freeze({
   Name: 'AmbientText',
@@ -63,7 +63,7 @@ const SHIPPED = Object.freeze({
 test('AT0: the settings entry IS the mod’s modsettings - section, names, bounds and defaults', () => {
   assert.equal(SHIPPED.Name, AMBIENT_TEXT_SECTION);
   const keys = MOD_SETTINGS[AMBIENT_TEXT_VENDOR].keys;
-  // PLAIN-TEXT (2026-10-19): the four lines said plainly for a player - their words, exactly
+  // PLAIN-TEXT: the four lines said plainly for a player - their words, exactly
   const PLAIN = {
     textChance: 'Chance, in percent, of a line at each check',
     interval: 'Real-time seconds between checks for a line',

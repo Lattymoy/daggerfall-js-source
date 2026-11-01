@@ -47,8 +47,8 @@
   {
     "name": "OW-PEERS-a-walker-never-grown",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      const g = grow ? grow(feet) : 1;   // OW-PEERS",
-    "new": "      const g = 1;   // OW-PEERS",
+    "old": "      const g = grow ? grow(feet) : 1;   // Grown under the Overworld, as the traveller is",
+    "new": "      const g = 1;   // Grown under the Overworld, as the traveller is",
     "tests": [
       "test/net/peer/fb1001_overworld.test.js"
     ]

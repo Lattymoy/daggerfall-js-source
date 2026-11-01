@@ -1,13 +1,13 @@
-// ARMORY (2026-10-28; bible/04-Characters/Aura-Armory.md section 9) - THE AURA ARMORY'S PIECES, COMPILED, LINKED AND DRAWN
-// IN A REAL BROWSER, on the two bodies the game draws them over: a stand-in rig (render/auraPreview.js's figure, posed at
-// rest) and an Eye of the Beholder sprite - its own idle picture on a card through its feet that writes depth, as the game
-// stands one. Every piece's program must link; each must light its own part and not another's (the crown over the head,
-// the heart on the chest from the front and none of it from behind, the legs' fire at the shins); nothing before it has
-// kindled; no jump at the clock's wrap; and on the sprite, nothing of the chest from behind the card (THE CARD LAW).
-// AUDIT ARMORY: and THE MORROWIND BODY - retail's own skeleton (test/fixtures/mw/retailRig.mjs) read by the game's own
-// reader (fpArm armBonesInBody, what thirdBones and a peer's bonesOf answer), a mannequin on its bones for the eye, the
-// pieces on its pose. Its mesh is Bethesda's and never ships; the bones are what the pieces hang on.
-// NO-BETHESDA2: the sprite is Daggerfall's own TEXTURE.481, built from the player's ARENA2 (tools/lib/eotbPictures.mjs).
+// ARMORY - THE AURA ARMORY'S PIECES, COMPILED, LINKED AND DRAWN IN A REAL BROWSER, on the two bodies the game draws them
+// over: a stand-in rig (render/auraPreview.js's figure, posed at rest) and an Eye of the Beholder sprite - its own idle
+// picture on a card through its feet that writes depth, as the game stands one. Every piece's program must link; each must
+// light its own part and not another's (the crown over the head, the heart on the chest from the front and none of it from
+// behind, the legs' fire at the shins); nothing before it has kindled; no jump at the clock's wrap; and on the sprite,
+// nothing of the chest from behind the card (THE CARD LAW). AUDIT ARMORY: and THE MORROWIND BODY - retail's own skeleton
+// (test/fixtures/mw/retailRig.mjs) read by the game's own reader (fpArm armBonesInBody, what thirdBones and a peer's
+// bonesOf answer), a mannequin on its bones for the eye, the pieces on its pose. Its mesh is Bethesda's and never ships;
+// the bones are what the pieces hang on. NO-BETHESDA2: the sprite is Daggerfall's own TEXTURE.481, built from the player's
+// ARENA2 (tools/lib/eotbPictures.mjs).
 //
 //     ARENA2_PATH=<arena2> node tools/armoryProbe.mjs [--shots <dir>]
 import { chromium } from 'playwright';
@@ -360,7 +360,7 @@ try {
   await shot('sprite_dagonfire_threequarter');
   await draw({ body: 'sprite', kit: 'bbbb0', eye: [1.9, 1.3, 1.9], pts: [], plain: true });
   await shot('sprite_eternal_threequarter');
-  // GUILD-SHOP: THE INSIGNIA ARMLET - the wearer's left upper arm alone, its crest the guild's arms
+  // THE INSIGNIA ARMLET - the wearer's left upper arm alone, its crest the guild's arms
   const ARMS = {
     heraldry: { field: 'crimson', border: 'gold', device: 'dragon', division: 'quarterly', field2: 'sable' },
     logo: null,

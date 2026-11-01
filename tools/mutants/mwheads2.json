@@ -42,8 +42,8 @@
   {
     "name": "MWHEADS2-the-local-player-not-asked",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    ownHeads: true,   // MW-HEADS2",
-    "new": "    ownHeads: false,   // MW-HEADS2",
+    "old": "    ownHeads: true,   // The player's body wears the port's own heads (a Breton man's) - an NPC's never does",
+    "new": "    ownHeads: false,   // The player's body wears the port's own heads (a Breton man's) - an NPC's never does",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

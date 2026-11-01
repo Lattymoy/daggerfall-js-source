@@ -1,4 +1,4 @@
-// AUDIT INSTALL, ROUND 2 (2026-09-29, Mac: "Audit this"): PR #429's
+// AUDIT INSTALL, ROUND 2: PR #429's
 // install work read again by five fresh lanes - the launcher's lifecycle,
 // security, the release pipeline and its notes, ARENA2 detection, and the
 // tests, docs and the player's eye - after round 1's fixes had landed.
@@ -6,8 +6,7 @@
 // one of them: L1-5 kept a tag's text out of the build legs' scripts, and
 // in doing so broke the Windows leg. Every finding a lane verified is
 // fixed at its root and pinned here; the record, finding by finding, is
-// bible/01-Overview/audits/Audit-Install.md ("Round 2"). Lane C's notes findings
-// (C1, C4, E-48..E-51) pinned the PATCH-NOTES-*.md reader REL6 retired -
+// bible/01-Overview/audits/Audit-Install.md ("Round 2"). Lane C's notes findings pinned the PATCH-NOTES-*.md reader REL6 retired -
 // the notes come off the pull requests now (test/tooling/rel4_release.test.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -239,12 +238,12 @@ test('R2-D5: on a Mac the privacy-guarded folders are read LAST - after ~/Games,
 });
 
 test('R2-D6/D7/D8: the doors - a refusal said where it can be seen, "cannot be read" said as such, a saved folder never lost to one launch\'s choice', () => {
-  // D7: decided once the answer is in - during the search a refusal meant for the card was dropped without a word
+  // Decided once the answer is in - during the search a refusal meant for the card was dropped without a word
   const choose = body('async function launcherChooseFolder()');
   assert.doesNotMatch(choose, /const onCard = viewOf/, 'not decided before the dialog');
   assert.match(choose, /if \(reduce\(l\.state, \{ type: 'picked-bad', \.\.\.r \}\)\.setup\.status === 'bad'\) \{ launcherDispatch\(\{ type: 'picked-bad', \.\.\.r \}\); return; \}\s*await launcherDialog\(\(\) => dialog\.showMessageBox\(l\.win,/);
   assert.equal(L.reduce(state(), { type: 'picked-bad', missing: null }).setup.status, 'looking', 'the card while looking cannot say it - so the box does');
-  // D8: a found folder whose drive went away is "could not be read", not "holds no Daggerfall files"
+  // A found folder whose drive went away is "could not be read", not "holds no Daggerfall files"
   const gone = apply(state(), { type: 'found', found: [{ dir: '/usb/ARENA2', source: 'folder' }] }, { type: 'picked-bad', missing: null, unreadable: true });
   assert.equal(L.viewOf(gone).setup.title, 'That folder cannot be read');
   assert.match(L.viewOf(gone).setup.detail, /^It could not be read - is its drive connected\?/);
@@ -252,7 +251,7 @@ test('R2-D6/D7/D8: the doors - a refusal said where it can be seen, "cannot be r
   assert.match(L.notArena2Detail(null, { unreadable: true, late: true }), /^It did not answer in time - is its drive asleep, or disconnected\?/);
   assert.match(L.notArena2Detail(null, { cut: true }), /^It holds too many folders to look through them all\./);
   assert.match(L.notArena2Detail(['MAPS.BSA'], { cut: true }), /^It has no MAPS\.BSA\./, 'a partial folder names what it lacks, cut or not');
-  // D6: the game's own picker chosen on the SAVED folder's card is this launch's alone - kept, it hid the folder for good
+  // The game's own picker chosen on the SAVED folder's card is this launch's alone - kept, it hid the folder for good
   const acts = main.slice(main.indexOf("ipcMain.on('launcher:act'"), main.indexOf('// THE NAVIGATION FENCES'));
   assert.match(acts, /saveConfig\(st\.setup\.saved \? \{ \.\.\.loadConfig\(\), arena2IngestClear: true \} : \{ \.\.\.loadConfig\(\), arena2InGame: true \}\);/);
   // D8, the shell's half: the whole answer reaches the card - unreadable and late with it
@@ -354,13 +353,13 @@ test('R2-E1: after the first run\'s card the focus is on PLAY - Enter plays (it 
   p.show(view(apply(foundOne(), { type: 'picked', dir: '/games/DF/DAGGER/ARENA2' })));
   assert.equal(p.$('setup').hidden, true);
   assert.equal(p.doc.activeElement.id, 'play', 'the answer taken, the card gone: Enter plays');
-  // the player's own control keeps the focus: Play never takes it from a switch they are on (E-13)
+  // the player's own control keeps the focus: Play never takes it from a switch they are on
   const q = bootLauncher();
   q.show(view(state({ arena2Dir: '/a', checkEnabled: true })));
   q.$('update-check').focus();
   q.show(view(apply(state({ arena2Dir: '/a', checkEnabled: true }), { type: 'check-none' })));
   assert.equal(q.doc.activeElement.id, 'update-check');
-  // and a view that changes nothing it keys on moves nothing (E-14): the card's answer is not retaken on every view
+  // and a view that changes nothing it keys on moves nothing: the card's answer is not retaken on every view
   const r = bootLauncher();
   r.show(view(foundOne()));
   r.$('update-check').focus();
@@ -398,20 +397,20 @@ test('R2-E (L5-21, L5-12): the page redraws what changed and nothing else - a bu
   assert.equal(p.$('status-actions').replaced, rebuilt, 'E-16: not rebuilt on every tick');
   assert.equal(p.$('status-actions').children[0], button);
   assert.equal(button.textContent, 'Play without updating');
-  // E-17/E-18: the bar shows while there is progress, and says how far
+  // The bar shows while there is progress, and says how far
   const track = p.doc.querySelector('#progress .track');
   assert.equal(p.$('progress').hidden, false);
   assert.equal(track.getAttribute('aria-valuenow'), '13');
   assert.equal(track.getAttribute('aria-valuetext'), '13.0 of 100.0 MB');
   p.show(view(state({ arena2Dir: '/a' })));
   assert.equal(p.$('progress').hidden, true, 'and hides when there is none');
-  // E-15: the card is not rebuilt by a view that leaves it as it was
+  // The card is not rebuilt by a view that leaves it as it was
   const q = bootLauncher();
   q.show(view(foundOne()));
   const cardBuilds = q.$('setup-actions').replaced;
   q.show(view(foundOne()));
   assert.equal(q.$('setup-actions').replaced, cardBuilds);
-  // E-19: the card and the news trade places; E-20: the switch shows the setting; E-22: the files door's own words
+  // The card and the news trade places; E-20: the switch shows the setting; E-22: the files door's own words
   assert.deepEqual([q.$('setup').hidden, q.$('news').hidden], [false, true]);
   q.show(view(state({ arena2Dir: '/games/ARENA2', checkEnabled: false, checkOnLaunch: false })));
   assert.deepEqual([q.$('setup').hidden, q.$('news').hidden], [true, false]);
@@ -446,19 +445,19 @@ test('R2-E (L5-23, E-23/24, E-25..31): the page\'s own rules - every small word 
     const c = ratio(r.color, on ?? r.background);
     assert.ok(c >= 4.5, `${sel}: ${r.color} on ${on ?? r.background} is ${c.toFixed(2)}:1 - small text needs 4.5 (WCAG AA)`);
   }
-  // the keyboard's way in: the news is a tab stop that scrolls (E-23, E-29), the switch is named by its label (E-24)
+  // the keyboard's way in: the news is a tab stop that scrolls, the switch is named by its label
   assert.match(html, /<div class="feed" tabindex="0"><\/div>/);
   assert.match(css, /\.feed \{ flex: 1 1 auto; min-height: 0; overflow-y: auto;/);
   assert.match(html, /<label class="check"><input id="update-check" type="checkbox"> Check automatically<\/label>/);
-  // a focused control shows it (E-26, E-27)
+  // a focused control shows it
   assert.match(css, /\.plaque:hover, \.plaque:focus-visible \{[^}]*border-color: var\(--brass\);/);
   assert.match(css, /\.check input:focus-visible \{ outline: none; border-color: var\(--brass\); \}/);
-  // hidden wins over every region's own display (E-25); a long path shows its END (E-28); one bar height (E-30)
+  // hidden wins over every region's own display; a long path shows its END; one bar height
   assert.match(css, /^\[hidden\] \{ display: none !important; \}$/m);
   assert.match(css, /\.path \{[^}]*direction: rtl;/);
   assert.match(css, /\.bar \{[^}]*[^-]height: 100px;/);
   assert.doesNotMatch(css, /\.bar \{[^}]*min-height/);
-  // the gem holds still for a player who asked for less motion (E-31), and the card scrolls in the brand's bar (E-7)
+  // the gem holds still for a player who asked for less motion, and the card scrolls in the brand's bar
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*body\[data-busy\] \.gem \{ animation: none; \}/);
   assert.match(css, /\.setup::-webkit-scrollbar-thumb \{ background: rgba\(125,116,96,0\.45\); \}/);
 });
@@ -469,22 +468,22 @@ test('R2-E (E-01..E-12): the launcher state\'s own laws - timings a player can r
   // E-01/E-02: "Installing" stays long enough to read, and an installer that never takes over frees Play soon after
   assert.ok(L.INSTALL_NOTICE_MS >= 1000 && L.INSTALL_NOTICE_MS <= 3000, `${L.INSTALL_NOTICE_MS} ms`);
   assert.ok(L.INSTALL_GIVEUP_MS > L.INSTALL_NOTICE_MS && L.INSTALL_GIVEUP_MS <= 30000, `${L.INSTALL_GIVEUP_MS} ms`);
-  // E-03: each source by its own name
-  assert.deepEqual(L.SOURCE_LABEL, { dfu: 'from another install', steam: 'Steam', gog: 'GOG', folder: 'on this computer' });   // CREDITS-OUT: no DFU on the launcher
-  // E-04: a download tried again starts from nothing - not the failed one's percent and megabytes
+  // Each source by its own name
+  assert.deepEqual(L.SOURCE_LABEL, { dfu: 'from another install', steam: 'Steam', gog: 'GOG', folder: 'on this computer' });   // No DFU on the launcher
+  // A download tried again starts from nothing - not the failed one's percent and megabytes
   const failed = apply(state({ arena2Dir: '/a', checkEnabled: true }), { type: 'check-available', version: '0.1.4701', total: 100e6 },
     { type: 'progress', percent: 60, transferred: 60e6, total: 100e6 }, { type: 'download-failed' });
   const again = apply(failed, { type: 'check-available', version: '0.1.4701', total: 100e6 });
   assert.deepEqual([again.update.percent, again.update.transferred], [0, 0]);
-  // E-12: before the first byte it says it is starting - never "0.0 of 0.0 MB"
+  // Before the first byte it says it is starting - never "0.0 of 0.0 MB"
   const starting = apply(state({ arena2Dir: '/a', checkEnabled: true }), { type: 'check-available', version: '0.1.4701' });
   assert.equal(view(starting).progress.label, 'Starting the download');
-  // E-05: a stray refusal never sends a player whose files are set back to the card
+  // A stray refusal never sends a player whose files are set back to the card
   assert.equal(L.reduce(state({ arena2Dir: '/a' }), { type: 'picked-bad', missing: null }).setup.status, 'ready');
-  // E-06: the news newest first, whatever order GitHub answers in (a hand re-cut of an old build is listed late)
+  // The news newest first, whatever order GitHub answers in (a hand re-cut of an old build is listed late)
   const news = L.newsFrom([{ tag_name: 'app-v0.1.4600', body: 'old' }, { tag_name: 'app-v0.1.4701', body: 'new' }, { tag_name: 'app-v0.1.4650', body: 'mid' }]);
   assert.deepEqual(news.map((n) => n.version), ['0.1.4701', '0.1.4650', '0.1.4600']);
-  // E-07: the version under Play; E-11: a stuck install says it tries again at quit, and how to run it by hand
+  // The version under Play; E-11: a stuck install says it tries again at quit, and how to run it by hand
   assert.equal(view(state({ arena2Dir: '/a' })).version, 'v0.1.4700');
   const stuck = apply(state({ arena2Dir: '/a', checkEnabled: true, installFailedFor: '0.1.4701' }), { type: 'check-available', version: '0.1.4701' }, { type: 'downloaded', version: '0.1.4701' });
   assert.match(view(stuck).detail, /^Play this version - it tries again when you quit\. Or run the installer yourself/);
@@ -494,16 +493,16 @@ test('R2-E (E-43..E-47): the places a copy of Daggerfall is installed - each one
   const root = mkdtempSync(join(tmpdir(), 'r2-roots-'));
   const whole = (d) => { fsModule.mkdirSync(d, { recursive: true }); for (const n of ['ARCH3D.BSA', 'BLOCKS.BSA', 'MAPS.BSA', 'MONSTER.BSA', 'WOODS.WLD', 'TEXT.RSC', 'ART_PAL.COL']) writeFileSync(join(d, n), 'x'); return d; };
   try {
-    // E-43: Daggerfall Unity's settings on Windows are in LocalLow (Unity's persistentDataPath), never Roaming
+    // Daggerfall Unity's settings on Windows are in LocalLow (Unity's persistentDataPath), never Roaming
     const home = join(root, 'win');
     const dfu = whole(join(root, 'dfu-data', 'arena2'));
     fsModule.mkdirSync(join(home, 'AppData', 'LocalLow', 'Daggerfall Workshop', 'Daggerfall Unity'), { recursive: true });
     writeFileSync(join(home, 'AppData', 'LocalLow', 'Daggerfall Workshop', 'Daggerfall Unity', 'settings.ini'), `[Daggerfall]\nMyDaggerfallPath = ${join(root, 'dfu-data')}\n`);
     assert.deepEqual(detectArena2({ platform: 'win32', home, env: { USERPROFILE: home }, regQuery: () => [] }).map((f) => [f.source, f.dir]), [['dfu', fsModule.realpathSync(dfu)]]);
-    // E-44: the registry's HKCU (Steam's own key) is read as HKEY_CURRENT_USER
+    // The registry's HKCU (Steam's own key) is read as HKEY_CURRENT_USER
     const reg = 'Windows Registry Editor Version 5.00\r\n\r\n[HKEY_CURRENT_USER\\Software\\Valve\\Steam]\r\n"SteamPath"="d:/games/steam"\r\n';
     assert.deepEqual(createRequire(import.meta.url)('../../app/lib/arena2Detect.cjs').regFileValues(reg, 'HKCU\\Software\\Valve\\Steam', 'SteamPath'), ['d:/games/steam']);
-    // E-45/E-47: Flatpak's Steam and Heroic's GOG, on Linux
+    // Flatpak's Steam and Heroic's GOG, on Linux
     const lin = join(root, 'lin');
     const flat = join(lin, '.var', 'app', 'com.valvesoftware.Steam', '.local', 'share', 'Steam', 'steamapps');
     fsModule.mkdirSync(flat, { recursive: true });
@@ -512,7 +511,7 @@ test('R2-E (E-43..E-47): the places a copy of Daggerfall is installed - each one
     const heroicA2 = whole(join(lin, 'Games', 'Heroic', 'Daggerfall', 'ARENA2'));
     const linFound = detectArena2({ platform: 'linux', home: lin, env: {}, regQuery: () => [] });
     assert.deepEqual(linFound.map((f) => [f.source, f.dir]), [['steam', fsModule.realpathSync(steamA2)], ['gog', fsModule.realpathSync(heroicA2)]]);
-    // E-46: on Windows a folder reached down two spellings of one path is offered once (the disk ignores case)
+    // On Windows a folder reached down two spellings of one path is offered once (the disk ignores case)
     const winHome = join(root, 'w2');
     for (const pf of ['ProgramFiles', 'programfiles']) {
       const lib = join(root, pf, 'Steam', 'steamapps');
@@ -526,29 +525,29 @@ test('R2-E (E-43..E-47): the places a copy of Daggerfall is installed - each one
 });
 
 test('R2-E (E-32..E-42, E-52..E-54): the shell\'s and the workflow\'s wiring the suite never read', () => {
-  // E-32: Play is heard once - the launch is marked before the game's window is built, or the next event opens another
+  // Play is heard once - the launch is marked before the game's window is built, or the next event opens another
   assert.match(body('function launchGame()'), /^function launchGame\(\) \{\s*launcherDispatch\(\{ type: 'launching' \}\);/);
-  // E-33: the launcher is shown (built hidden, shown when ready)
+  // The launcher is shown (built hidden, shown when ready)
   assert.match(body('function openLauncherWindow()'), /win\.once\('ready-to-show', \(\) => \{ if \(!win\.isDestroyed\(\)\) win\.show\(\); \}\);/);
-  // E-36: the version last played reaches the state - the NEW marks and "Updated to" read it
+  // The version last played reaches the state - the NEW marks and "Updated to" read it
   assert.match(body('function runLauncher()'), /lastPlayed: cfg\.lastPlayed,/);
-  // E-37: the saves folder exists before it is opened - a fresh install has none
+  // The saves folder exists before it is opened - a fresh install has none
   assert.match(body('function openSavesFolder()'), /fs\.mkdirSync\(dir, \{ recursive: true \}\);\s*shell\.openPath\(dir\);/);
-  // E-38: the menu's checkbox follows the launcher's switch (the macOS menu bar outlives it)
+  // The menu's checkbox follows the launcher's switch (the macOS menu bar outlives it)
   assert.match(body('function setCheckOnLaunch('), /saveConfig\(\{ \.\.\.loadConfig\(\), updateCheck: !!on \}\);\s*buildMenu\(\);/);
-  // E-41/E-42: the news asks GitHub for ten seconds at most, and a refusal (a 403 rate limit) never overwrites the kept news
+  // The news asks GitHub for ten seconds at most, and a refusal (a 403 rate limit) never overwrites the kept news
   const news = body('async function fetchNews()');
   assert.match(news, /signal: AbortSignal\.timeout\(10000\),/);
   assert.ok(news.indexOf("if (!res.ok) throw new Error(`HTTP ${res.status}`);") >= 0 && news.indexOf("if (!res.ok) throw new Error(`HTTP ${res.status}`);") < news.indexOf('saveNews(items);'));
-  // E-52: no ${{ }} text reaches ANY script in the release workflow - multi-line blocks included (L1-5's pin read one line)
+  // No ${{ }} text reaches ANY script in the release workflow - multi-line blocks included (L1-5's pin read one line)
   const wf = rd('.github/workflows/release-desktop.yml');
   const pasted = jobsOf(wf).flatMap((j) => stepsOf(j.text).map((s) => [nameOf(s), runOf(s)])).filter(([, run]) => run && /\$\{\{/.test(run));
   assert.deepEqual(pasted, [], 'every value a script reads comes through its env');
-  // E-53: an artifacts-only run stamps nothing - `npm version ""` would fail the leg
+  // An artifacts-only run stamps nothing - `npm version ""` would fail the leg
   const build = jobsOf(wf).find((j) => j.name === 'build');
   assert.match(stepsOf(build.text).find((s) => nameOf(s) === 'Stamp the version'), /\n {8}if: needs\.version\.outputs\.version != ''\n/);
-  // E-54: no signing identity is hunted for on the Mac leg
+  // No signing identity is hunted for on the Mac leg
   assert.match(build.text, /\n {4}env:\n(?: {6}#[^\n]*\n)* {6}CSC_IDENTITY_AUTO_DISCOVERY: 'false'\n/);
-  // REL9: every leg builds the site with a 4GB heap - the Mac runner's default (~2GB) died in vite build and no release published
+  // Every leg builds the site with a 4GB heap - the Mac runner's default (~2GB) died in vite build and no release published
   assert.match(build.text, /\n {4}env:\n(?: {6}[^\n]*\n)*? {6}NODE_OPTIONS: --max-old-space-size=4096\n(?: {6}[^\n]*\n)* {4}steps:\n/);
 });

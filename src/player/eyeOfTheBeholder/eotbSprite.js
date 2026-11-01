@@ -1,4 +1,4 @@
-// EOTB5: THE SPRITE ON SCREEN - the loading and the sizing that turn
+// THE SPRITE ON SCREEN - the loading and the sizing that turn
 // EOTB3's table into a body the world can draw.
 //
 // The logic lives in `eotbBillboard.js` (which table, which record,
@@ -8,7 +8,7 @@
 // sizing and offset arithmetic (EOTB-IL, off the IL of Eye Of The
 // Beholder 2.1's assembly).
 //
-// OWN-WORK4 (2026-10-31): no sprite is carried. 2869 of the mod's 3035
+// No sprite is carried. 2869 of the mod's 3035
 // are Daggerfall's own records, built from the player's ARENA2
 // (eotbDerived.json, NO-BETHESDA2); the death the author drew is ours
 // (eotbDeath.js), and the class skins are built too (classSkinArt.js).
@@ -18,20 +18,20 @@
 // this module through its seams rather than through the bundle.
 
 import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount, ARCHIVE_LYCAN } from './eotbBillboard.js';
-import { layeredSprite, isLayeredKey, decodeLayered } from './layeredArmor.js';   // WORN-ARMOUR: the on-foot body in the armour it wears
-import { classSkinOf, classRecord, classFrame, classRecordScale, classSkinKeyOf, CLASS_SPRITE_COUNT } from '../classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
-import { toColor32, toColor32OrderInPlace } from '../../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
-import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../systems/horse/horseCoats.js';   // COATS1: the mount's look
-import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
-import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
-import EOTB_ANCHORS from './eotbAnchors.json' with { type: 'json' };   // OWN-AUDIT: where each sprite stands, measured by our law
-import { anchorShift, anchorScale } from './eotbAnchor.js';   // OWN-AUDIT: and the law's reader
-import EOTB_DERIVED from './eotbDerived.json' with { type: 'json' };   // NO-BETHESDA2: the pictures that are Daggerfall's own
-import { classicArt } from '../../systems/classicArt.js';   // NO-BETHESDA2: and the one reader that builds them from the player's files
-import { deathSpec, ownDeathKeys, layDown } from './eotbDeath.js';   // OWN-WORK4: the death, ours
+import { layeredSprite, isLayeredKey, decodeLayered } from './layeredArmor.js';   // The on-foot body in the armour it wears
+import { classSkinOf, classRecord, classFrame, classRecordScale, classSkinKeyOf, CLASS_SPRITE_COUNT } from '../classSkins.js';   // Daggerfall's classes, past the mod's sixteen
+import { toColor32, toColor32OrderInPlace } from '../../formats/color32Order.js';   // The ONE row-order door a PNG crosses on its way to a world billboard
+import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../systems/horse/horseCoats.js';   // The mount's look
+import { decodePng } from '../../systems/textureReplacement.js';   // The one PNG decoder the world's other PNG billboards take
+import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // And its decode workers
+import EOTB_ANCHORS from './eotbAnchors.json' with { type: 'json' };   // Where each sprite stands, measured by our law
+import { anchorShift, anchorScale } from './eotbAnchor.js';   // And the law's reader
+import EOTB_DERIVED from './eotbDerived.json' with { type: 'json' };   // The pictures that are Daggerfall's own
+import { classicArt } from '../../systems/classicArt.js';   // And the one reader that builds them from the player's files
+import { deathSpec, ownDeathKeys, layDown } from './eotbDeath.js';   // The death, ours
 
 const IN_BROWSER = typeof window !== 'undefined';
-/** OWN-WORK4: the death sprites that are ours (eotbDeath.js), by key. */
+/** The death sprites that are ours (eotbDeath.js), by key. */
 const OWN_DEATH = Object.freeze(ownDeathKeys(EOTB_DERIVED));
 
 // NAMED `eotbSpriteUrl`, not `spriteUrl`: `systems/handheldTorches.js`
@@ -40,7 +40,7 @@ const OWN_DEATH = Object.freeze(ownDeathKeys(EOTB_DERIVED));
 // duplicate-declaration ratchet caught the collision - ONE DFU
 // MEMBER, ONE EXPORT - and these two are genuinely different things,
 // so the answer is a distinct name rather than a shared home.
-export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : IN_BROWSER ? derivedSpriteUrl(key) ?? classSpriteUrl(key) : null);   // WORN-ARMOUR: a worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
+export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : IN_BROWSER ? derivedSpriteUrl(key) ?? classSpriteUrl(key) : null);   // A worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
 /** How many sprites the build can draw - for the probes, and
  *  so "the art is wired" is a number rather than a hope. AUDIT 68
  *  S15-eotb-spritecount-hot: counted once - the table never changes, and
@@ -48,7 +48,7 @@ export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : IN_BROWSER ? de
 const SPRITE_COUNT = IN_BROWSER ? Object.keys(EOTB_DERIVED).length + OWN_DEATH.length + CLASS_SPRITE_COUNT : 0;
 export const spriteCount = () => SPRITE_COUNT;
 
-// ── NO-BETHESDA2 (2026-10-31, the owner): A SPRITE THAT IS DAGGERFALL'S OWN ────────────────────────────────────────
+// ── NO-BETHESDA2: A SPRITE THAT IS DAGGERFALL'S OWN ────────────────────────────────────────
 // 2869 of the bundle's 3035 are TEXTURE records exactly. They are not carried: eotbDerived.json names each one's record
 // and palette, and the picture is built from the player's own ARENA2 (systems/classicArt.js). OWN-WORK4: the other 166,
 // the author's death, are ours - the class's struck record and that record laid down (eotbDeath.js deathSpec).
@@ -62,7 +62,7 @@ export const derivedSpriteUrl = (key) => (specOf(key) ? `${DERIVED_MARK}${key}` 
 /** The spec a marker (or a bare key) names - `{ from, pal }` (formats/derivedTexture.js), with `laid` for a body laid
  *  down - or null. */
 export const derivedSpriteSpec = (url) => specOf(isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url) ?? null;
-/** OWN-WORK4 (2026-10-31): a class skin's frame is ours, painted on the player's own class sheet (player/classSkinArt.js,
+/** A class skin's frame is ours, painted on the player's own class sheet (player/classSkinArt.js,
  *  loaded on the first one) - the same marker, the same paced builds. Pure, browser or not. */
 export const classSpriteUrl = (key) => (classSkinKeyOf(key) ? `${DERIVED_MARK}${key}` : null);
 const buildClassFrame = (own) => import('../classSkinArt.js').then((art) => art.classSkinPicture(own));
@@ -79,12 +79,12 @@ async function drainBuilds() {
   }
   _building = false;
 }
-/** OWN-WORK4: a spec built - a body laid down is its struck record built, then turned onto the ground by our code. */
+/** A spec built - a body laid down is its struck record built, then turned onto the ground by our code. */
 const buildSpec = async (spec, build) => (spec.laid == null ? build(spec) : layDown(await build({ from: spec.from, pal: spec.pal }), spec.laid));
 /** A derived sprite's picture, top row first, built from the player's own record (`build` the pins' door). Rejects
  *  where the player's file is missing, as a PNG's failed fetch does. */
 export function buildDerivedSprite(url, build = (spec) => classicArt().build(spec)) {
-  const own = classSkinKeyOf(isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url);   // OWN-WORK4: a class frame, ours
+  const own = classSkinKeyOf(isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url);   // A class frame, ours
   const spec = own ? null : derivedSpriteSpec(url);
   if (!own && !spec) return Promise.reject(new Error(`${url}: no spec in eotbDerived.json`));
   return new Promise((resolve, reject) => {
@@ -107,7 +107,7 @@ export const sizeMod = ({ riding = false, transformed = false, scale = 1 } = {})
 /**
  * A SPRITE'S PLACE, `{ scale, x, y }`, in the shape `UpdateBillboard` read the mod's XML (IL_4a1a-IL_4bd1): metres in
  * the billboard's frame, X along the view's right (negated for a mirrored state), Y up, each divided by `scale`.
- * OWN-AUDIT (2026-11-01): the author's per-record table is gone. The shift is our law's (eotbAnchor.js, eotbAnchors.json):
+ * OWN-AUDIT: the author's per-record table is gone. The shift is our law's (eotbAnchor.js, eotbAnchors.json):
  * the body's centre line on the player's spot and the lowest foot on the ground, per canvas, so `frame` matters only
  * where a record's frames are drawn on two. The scale is the record's art scale. A sprite the law has not measured (a
  * class sheet, a worn look) stands as drawn.
@@ -123,16 +123,16 @@ export function spriteOffset(/** @type {number} */ archive, /** @type {number} *
 /** A RECORD'S ART SCALE: its pixels a set's pixel - 1 for the sets. What spriteOffset scales a record by, and the rows a
  *  picture's marks are read at (render/armoryPose.js spriteMarks' `art`). Pure. */
 export function spriteArtScale(/** @type {number} */ archive, /** @type {number} */ record) {
-  // ACRO-SHORT: a class sheet's record drawn at another scale carries its own (player/classSkins.js classRecordScale)
+  // A class sheet's record drawn at another scale carries its own (player/classSkins.js classRecordScale)
   const k = classRecordScale(archive, record);
-  const s = k * eotbRecordScale(archive, record);   // RPT1026-MISC SPELL-SHORT: and a set's sheet drawn small (our law measures it)
+  const s = k * eotbRecordScale(archive, record);   // And a set's sheet drawn small (our law measures it)
   return s;
 }
 
 /**
  * RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting).
  * Set 10's spell sheets (archive 112374, records 45-59) draw the woman 80 pixels from hood to boot against her idle's
- * 110. OWN-AUDIT (2026-11-01): the scale is measured, not typed: our law scales a sheet drawn short of its view's
+ * 110. OWN-AUDIT: the scale is measured, not typed: our law scales a sheet drawn short of its view's
  * standing figure (eotbAnchor.js SHORT_SHEET), and over every set it finds these fifteen records alone, at 80/110.
  */
 export function eotbRecordScale(/** @type {number} */ archive, /** @type {number} */ record) {
@@ -163,7 +163,7 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
   const st = stateFor(table, orientation);
   if (!st) return null;
   const mirror = st.mirror !== !!flip;
-  // SKIN2: an on-foot table of a CLASS skin reads the class sheet's own record and frame (player/classSkins.js); the
+  // An on-foot table of a CLASS skin reads the class sheet's own record and frame (player/classSkins.js); the
   // mounted and the beast tables are the mod's whatever is worn on foot
   // WORN-ARMOUR (player/eyeOfTheBeholder/layeredArmor.js): with the option on, an on-foot table draws the armour the
   // body wears - its helmet, chest and legs pieces in their families and metals - over whatever skin is chosen; an
@@ -179,7 +179,7 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
     return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}`, view: st.record - STATE_TABLES[table].base };
   }
   const archive = tableArchive(table, look);
-  // COATS1: a mounted table's horse wears the rider's horse's look (`look.horse`, its code - systems/horse/horseCoats.js) -
+  // A mounted table's horse wears the rider's horse's look (`look.horse`, its code - systems/horse/horseCoats.js) -
   // the same picture dyed (lookedPixels), under its own record; the bay as drawn keeps the record it always had
   const horse = table.endsWith('Horse') ? horseLookCode(horseLookOfCode(look.horse ?? 0)) : 0;
   return {
@@ -197,12 +197,12 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
   };
 }
 
-/** COATS1: a sprite's pixels as its state draws them - its horse's look dyed in (systems/horse/horseCoats.js recolorHorse;
+/** A sprite's pixels as its state draws them - its horse's look dyed in (systems/horse/horseCoats.js recolorHorse;
  *  none but a mounted table's ever has one), on the world's rows (bottom first, worldOrderColors) - before the mirror,
  *  so a mirrored view is the other flank. AUDIT-STOREFRONT: its rider spared (`riders`, ridersReady's answer), its view said. */
 export const lookedPixels = (s, image, riders = null) => (s?.horse ? recolorHorse(image, s.horse, { spare: riderSpareOf(riders, s.key, image.width, image.height), view: s.view }) : image);
 
-/** AUDIT-STOREFRONT: THE MOUNTED PICTURES' RIDERS (eotbRiderMasks.js, baked by tools/bakeEotbRiders.mjs from the five
+/** THE MOUNTED PICTURES' RIDERS (eotbRiderMasks.js, baked by tools/bakeEotbRiders.mjs from the five
  *  sets), loaded once, on the first dye of a mounted picture - never at boot. `load` the import (a test hands its own). */
 let _riders = /** @type {Promise<Readonly<Record<string, string>>|null>|null} */ (null);
 const loadRiders = () => import('./eotbRiderMasks.js');
@@ -259,13 +259,13 @@ export function tableKeys(table, frame, look = {}) {
  * @returns {{width:number,height:number,colors:Uint32Array}} the world billboard's order, bottom row first
  */
 export function worldOrderColors(image, { owned = false } = {}) {
-  // PERF-PEERS5: a raster the caller owns (a PNG it has just decoded) is turned in its own bytes - the same answer
+  // A raster the caller owns (a PNG it has just decoded) is turned in its own bytes - the same answer
   if (owned) { const { width, height, data } = toColor32OrderInPlace(image); return { width, height, colors: new Uint32Array(data.buffer, data.byteOffset, data.byteLength / 4) }; }
   const { width, height, colors } = toColor32(image);
   return { width, height, colors: new Uint32Array(colors.buffer, colors.byteOffset, colors.byteLength / 4) };
 }
 
-/** LAYERED-GLOW: a composed worn-armour picture in the world's row order, with its weapon's own px (`held`, top row
+/** A composed worn-armour picture in the world's row order, with its weapon's own px (`held`, top row
  *  first - eotbGlow.js heldGlowPx). */
 export function worldOrderLayered(image) {
   const held = image.held ?? null;
@@ -279,11 +279,11 @@ export function worldOrderLayered(image) {
  * fetches and decodes. NO-BETHESDA2: a derived sprite is built (`build` the pins' door) and takes the same turn.
  */
 export async function decodeSprite(url, { build = undefined } = {}) {
-  if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng, { picture: decodeServedPng }));   // WORN-ARMOUR: composed from its strip
+  if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng, { picture: decodeServedPng }));   // Composed from its strip
   if (isDerivedSprite(url)) return decodeDerivedSprite(url, build);
-  return worldOrderColors(await decodeServedPng(url), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
+  return worldOrderColors(await decodeServedPng(url), { owned: true });   // The decode is this door's alone - turned in its own bytes
 }
-/** NO-BETHESDA2: a derived sprite on the world's rows - its build is a fresh raster, so it is turned in its own bytes. */
+/** A derived sprite on the world's rows - its build is a fresh raster, so it is turned in its own bytes. */
 export const decodeDerivedSprite = async (url, build = undefined) => worldOrderColors(await buildDerivedSprite(url, build), { owned: true });
 
 /**

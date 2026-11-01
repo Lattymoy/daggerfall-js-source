@@ -212,8 +212,8 @@
   {
     "name": "DFLOOK-the-night-remap-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);",
-    "new": "    if (cityLights) void nightRemapOf;",
+    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);   // THE STERN WINDOWS LIT: her glass whole and glowing",
+    "new": "    if (cityLights) void nightRemapOf;   // THE STERN WINDOWS LIT: her glass whole and glowing",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "DFLOOK-worn-by-day",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);",
-    "new": "    if (!cityLights) texRemap = nightRemapOf(texRemap);",
+    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);   // THE STERN WINDOWS LIT: her glass whole and glowing",
+    "new": "    if (!cityLights) texRemap = nightRemapOf(texRemap);   // THE STERN WINDOWS LIT: her glass whole and glowing",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "DFLOOK-the-twin's-glow-unuploaded",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night,",
-    "new": "    if (!(lit || glow)) renderer?.uploadEmissionTexture?.(archive, night,",
+    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
+    "new": "    if (!(lit || glow)) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js",
       "test/world/ships/auditgalleon2_prefab.test.js"

@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): THE CART'S HORSE, FOR THE TOOLS AND THE PINS. The 45 pictures are ours, built from the
+// THE CART'S HORSE, FOR THE TOOLS AND THE PINS. The 45 pictures are ours, built from the
 // player's ARENA2 (src/systems/horse/horseArt.js). A tool or a pin reads one by its name here.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

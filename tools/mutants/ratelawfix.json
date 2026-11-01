@@ -2,8 +2,8 @@
   {
     "name": "RLFIX-spot-host",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();\n",
-    "new": "",
+    "old": "      if (r.point && r.i >= r.legs.length - 1) return !!deps.onRoad?.();\n      const at = Math.min(r.i, r.legs.length - 1);",
+    "new": "      const at = Math.min(r.i, r.legs.length - 1);",
     "tests": [
       "test/systems/travel/ratelawfix.test.js",
       "test/systems/travel/travel_speed_preference.test.js"

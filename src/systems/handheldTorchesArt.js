@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31; bible/06-Systems/Handheld-Torches.md): THE TORCHES' PICTURES, OUR OWN. The hand holding a lit
-// torch (112359 record 0, 90 x 205) and a lantern (record 1, 110 x 138), the torch on the floor (112358 record 0,
-// 31 x 34) and doused (record 10): recipes for our painter (art/ownPainter.js) at the sizes, records and four frames
-// the game reads; and the two candles doused, by our rule over the player's own. No pixel of the release is read.
+// THE TORCHES' PICTURES, OUR OWN. The hand holding a lit torch (112359 record 0, 90 x 205) and a lantern (record 1,
+// 110 x 138), the torch on the floor (112358 record 0, 31 x 34) and doused (record 10): recipes for our painter
+// (art/ownPainter.js) at the sizes, records and four frames the game reads; and the two candles doused, by our rule
+// over the player's own. No pixel of the release is read.
 import { createPainter, RAMP, ellipse, poly, stroke, rect, union } from '../art/ownPainter.js';
 
 /** The flame's sway and reach by frame: four frames, as the hand's loop and the floor's flat play them. */

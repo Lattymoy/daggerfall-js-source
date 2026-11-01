@@ -1,5 +1,4 @@
-// TOWN-DRESS (OWN-WORK3, 2026-10-31; the owner: "removing mods from outside authors and instead replacing them with our
-// own work"): a town dressed by our own law (world/townDress.js) in place of Beautiful Villages' and Beautiful Cities'
+// A town dressed by our own law (world/townDress.js) in place of Beautiful Villages' and Beautiful Cities'
 // edits, which are retired. Held here: the law's pieces and where each may stand - never on a road, before a door, in a
 // wall or on a home's lot; our stall; the dressed copy of a block and the walkers kept off the stalls; the wiring; the
 // retired layouts' records asleep. With ARENA2_PATH: a village, a town and a city of the Bay and a hamlet past it,

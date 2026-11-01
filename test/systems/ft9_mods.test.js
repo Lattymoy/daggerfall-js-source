@@ -1,4 +1,4 @@
-// FT9 - THE FIVE PACKS WITH A SWITCH (2026-09-14, the Features arc; Mac:
+// THE FIVE PACKS WITH A SWITCH (2026-09-14, the Features arc; Mac:
 // "Mod Authored is dedicated to ... the mods we ported 1:1 so far",
 // and 2026-09-08 "place each creator's name in the mod title").
 //
@@ -13,9 +13,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FEATURES, checkFeatures, featureForControl, filterFeatures } from '../../src/systems/features.js';
-import '../../src/world/landView.js';   // RF4: the condensed rows' lanes register themselves; checkFeatures reads them
+import '../../src/world/landView.js';   // The condensed rows' lanes register themselves; checkFeatures reads them
 import '../../src/world/outdoors.js';
-import '../../src/systems/featureLanes.js';   // FT18: the wind, the quick slots and the blood lanes register themselves too
+import '../../src/systems/featureLanes.js';   // The wind, the quick slots and the blood lanes register themselves too
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 
 const rows = FEATURES.filter((f) => f.control.store === 'mods');
@@ -31,13 +31,13 @@ test('FT9: every vendored mod with a switch has exactly one row over it, and eve
   for (const f of rows) assert.ok(MOD_SETTINGS[f.control.vendor]?.keys?.[f.control.key], `${f.id} names a real switch`);
   assert.deepEqual(checkFeatures(FEATURES), []);
   assert.equal(rows.length, 35, 'thirty-five direct rows (OWN-WORK3: Beautiful Villages and Beautiful Cities retired, two rows out; DEX0 Daggerfall Enemy Expansion; RSH1 Readied Spellcasting Hands; HAZE1 Heat Haze; WINDFALL1 Windfall; SNOWFALL1 Snowfall; PI1 Physical Items; LEGACY1 Project Legacy; LPT1 Low Poly Trees; IT1 Immersive Travel; WD3 Beautiful Villages and Beautiful Cities; FORAGE1 Foraging; RAID1 World Events - Raiding Parties; CSA-A Come Sail Away; OH-A There\'s a Hole in the Bottom of the Ocean; DW-D Iliac Puddle No More; WA1 Warm Ashes - Ships; DW1 Diverse Weapons, RRI1 Roleplay & Realism: Items, RR1 Roleplay & Realism; HCC added Horse Cart and Cargo; Dynamic Skies rides the outdoors row through `also`; WW1 added Weapon Widget, HT1 Handheld Torches, AT0 Ambient Text, EOTB0 Eye Of The Beholder, IF1 Immersive Footsteps, BA1 Better Ambience, TO1 Travel Options, ORL1 Oblivion Remaster Like Leveling, SW1 Shield Widget, WORLD-HOVER World Tooltips, WOD1 World of Daggerfall)');
-  // WM3: the Mod Authored tag is worn by the mods-store rows PLUS
+  // The Mod Authored tag is worn by the mods-store rows PLUS
   // exactly two that are not mods-store rows - the outdoors row, which
   // Dynamic Skies rides through `also`, and Windmills, whose row is a
   // PREF because the pack ships no settings file to carry an Enabled
   // key.
   //
-  // EOTB0: this was a TYPED number beside a sentence that counted
+  // This was a TYPED number beside a sentence that counted
   // differently ("NINE wear the tag - the seven direct rows..." over
   // an assertion of 10, with `rows` at eight). Three numbers in one
   // paragraph, none of them checkable, and every new mod moved all
@@ -64,7 +64,7 @@ test('FT9: a mod row is the mod\'s own - its name alone as the title (CREDITS-OU
     assert.match(f.effect, /^Takes effect /, `${f.id} says when`);
   }
   assert.deepEqual(rows.map((f) => f.id), ['mod-seasons-iliac-bay', 'mod-low-poly-trees', 'mod-heat-haze', 'mod-windfall', 'mod-snowfall', 'mod-roads-hazelnut', 'mod-travel-options', 'mod-immersive-travel', 'mod-world-of-daggerfall', 'mod-warm-ashes-ships', 'mod-world-events-raiding-parties', 'mod-iliac-puddle-no-more', 'mod-ocean-holes', 'mod-come-sail-away', 'mod-foraging', 'mod-meanermonsters', 'mod-daggerfall-enemy-expansion', 'mod-pcaao', 'mod-unleveledloot', 'mod-weapon-widget', 'mod-shield-widget', 'mod-readied-spellcasting-hands', 'mod-diverse-weapons', 'mod-roleplay-realism-items', 'mod-roleplay-realism', 'mod-handheld-torches', 'mod-ambient-text', 'mod-eye-of-the-beholder', 'mod-immersive-footsteps', 'mod-world-tooltips', 'mod-better-ambience', 'mod-horse-cart-and-cargo', 'mod-physical-items', 'mod-oblivion-remaster-leveling', 'mod-project-legacy'], 'the Mods pane\'s order');
-  // KG3: a pref row is titled the same way - the mod's name alone (CREDITS-OUT); no mod row names an author
+  // A pref row is titled the same way - the mod's name alone; no mod row names an author
   const kg = FEATURES.find((f) => f.id === 'mod-kings-gambit');
   assert.equal(kg.title, 'The King\u2019s Gambit');
   for (const f of FEATURES.filter((r) => r.kinds.includes('mod'))) assert.doesNotMatch(f.title, / by /, `${f.id}: no by-line`);
@@ -74,7 +74,7 @@ test('FT9: when each switch lands, as the port knows it', () => {
   const effect = (v) => featureForControl('mods', 'Enabled', v).effect;
   assert.equal(effect('seasons-iliac-bay'), 'Takes effect when the world next loads.', 'read at the world host\'s mount');
   assert.equal(effect('roads-hazelnut'), 'Takes effect when the world next loads.', 'the network is built at mount (ROADS 24 / BR3)');
-  assert.equal(effect('meanerMonsters'), 'Takes effect on monsters that appear after the change. With Daggerfall Enemy Expansion on, it takes effect when the game next loads.');   // PIN MOVED: MUDEX1 - beside DEX the switch loads the meaner monsters made for it (ours since OWN-WORK2), latched at the load
+  assert.equal(effect('meanerMonsters'), 'Takes effect on monsters that appear after the change. With Daggerfall Enemy Expansion on, it takes effect when the game next loads.');
   assert.ok(!/Takes effect/.test(MOD_SETTINGS.meanerMonsters.keys.Enabled.description), 'the effect line left the description - one sentence, one place');
   assert.equal(effect('pcaao'), 'Takes effect at once.', 'the registered arms read the switches live (pcaao.js)');
   assert.equal(effect('unleveledLoot'), 'Takes effect on the next drop or shop restock.');

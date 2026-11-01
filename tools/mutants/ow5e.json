@@ -92,8 +92,8 @@
   {
     "name": "OW5b-E1-stop-keeps-walking",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const route = st.route;   // AUDIT OW4 J2: held before the panel's Camp - a spot's route dies in interruptTravel\n    ui?.closeWindow();",
-    "new": "    const route = st.route;   // AUDIT OW4 J2: held before the panel's Camp - a spot's route dies in interruptTravel",
+    "old": "    ui?.closeWindow();\n    if (st.destinationCautious) return attemptAvoidEncounter(route);",
+    "new": "    if (st.destinationCautious) return attemptAvoidEncounter(route);",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ],

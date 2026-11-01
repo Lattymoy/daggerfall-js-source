@@ -1,6 +1,4 @@
-// SHIP-LIVERY, CABIN-LOOK and DECK-PROPS (2026-10-17, the owner: "Letting players customize the exterior and interior
-// textures of the ship. Allowing prop placement on the ship itself and inside if not already enabled."; bible/03-World/
-// Naval-Refit.md SHIP-LIVERY, DECK-PROPS).
+// SHIP-LIVERY, CABIN-LOOK and DECK-PROPS.
 //
 // A ship's paint (systems/naval/shipLivery.js), her port-built pictures repainted by their families (world/ships/
 // shipLiveryArt.js), the paint shop and the remap a boat is drawn by (scenes/comeSailAway/shipLiveryPaint.js, the real
@@ -67,8 +65,6 @@ test('SHIP-LIVERY the law: fourteen paints and none; the port-built hulls take s
   const l = { strake: 4, accent: 11, sail: 3, stain: 14 };
   assert.equal(liveryCode(l), 4 | (11 << 4) | (3 << 8) | (14 << 12));
   assert.deepEqual(liveryOfCode(liveryCode(l)), l);
-  // PIN MOVED: GUILD-SHOP - the sailcloth's byte rides over the four nibbles (systems/naval/sailCloth.js), so a number past
-  // them is refused at 1 << 24, and a byte that is no sailcloth with it
   assert.deepEqual([liveryCode(null), liveryOfCode(0), liveryOfCode(-3), liveryOfCode((1 << 24) | 4), liveryOfCode((8 << 16) | 4), liveryOfCode(15), liveryOfCode(2 ** 32 + 4)], [0, null, null, null, null, null, null], 'a nibble past the last paint refused');
 });
 
@@ -165,7 +161,7 @@ test('SHIP-LIVERY the paint shop: a boat drawn as built while her paint is made,
   const galley = liveryCode({ stain: 3, sail: 7 });
   shop.remapOf(3, galley, false, null); await tick(); await tick(); await tick();
   const g = shop.remapOf(3, galley, false, null);
-  // OWN-WORK4: our hulls' woods (ownBoatArt.js OWN_WOOD_RECORDS), where Come Sail Away 2.1's were records 0-2
+  // Our hulls' woods (ownBoatArt.js OWN_WOOD_RECORDS), where Come Sail Away 2.1's were records 0-2
   assert.deepEqual([...g.keys()].sort(), [...OWN_WOOD_RECORDS.map((r) => `${PLANK_ARCHIVE}_${r}`), `${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`].sort());
 });
 
@@ -205,12 +201,11 @@ test('SHIP-LIVERY and DECK-PROPS over the real pool: my boat drawn by her paint 
   renderer.draws.length = 0;
   pool.draw(renderer);
   assert.ok(renderer.draws.some((r) => r?.get?.(`${GALLEON_ARCHIVE}_${GTEX.hullSide0}`)), 'a peer\'s by her word, whatever her number is in my ledger');
-  const own = pool.spawnSeaNow(Object.assign(new Boat(2, 0), { livery: liveryCode({ strake: 4 }) }));   // SEA-COLOURS: her own, the naval host's (seaColours.js)
+  const own = pool.spawnSeaNow(Object.assign(new Boat(2, 0), { livery: liveryCode({ strake: 4 }) }));   // Her own, the naval host's (seaColours.js)
   renderer.draws.length = 0;
   pool.draw(renderer);
   assert.ok(renderer.draws.some((r) => r?.get?.(`${GALLEON_ARCHIVE}_${GTEX.hullSide0}`)), 'a sea ship in her own colours');
   pool.remove(own);
-  // DECK-PROPS
   const deck = pool.deckOf(2);
   let spot = null;
   for (let z = -2; z <= 2 && !spot; z += 0.5) for (let x = -1; x <= 1 && !spot; x += 0.5) if (deck.walkable(x, z)) spot = [x, z];
@@ -470,11 +465,11 @@ test('SHIP-LIVERY and DECK-PROPS on the boats\' word: `l` a number a boat and `d
   assert.notEqual(csaRecordKey(csaWireRecord([at({ livery: { strake: 5 } })])), csaRecordKey(csaWireRecord([at({ livery: { strake: 4 } })])));
   assert.notEqual(csaRecordKey(csaWireRecord([at({ fittings: [{ m: 41812, x: 1, z: 2, yaw: 4 }] })])), csaRecordKey(csaWireRecord([at({ fittings: [{ m: 41812, x: 1, z: 2, yaw: 3 }] })])));
   const peers = rd('src/scenes/comeSailAway/comeSailAwayPeers.js');
-  assert.match(peers, /s\.boat\.livery = flownLivery\(owner, w\.livery\);/);   // PIN MOVED (AUDIT GUILD-SHOP S2): her sailcloth flown only where her owner's token says it is theirs
+  assert.match(peers, /s\.boat\.livery = flownLivery\(owner, w\.livery\);/);
   assert.match(peers, /s\.boat\.fittings = w\.fittings \?\? \[\];/);
   const world = rd('src/scenes/world.js');
   assert.match(world, /livery: b\.uid \? fleetShip\(b\.uid\)\?\.livery \?\? null : null, fittings: b\.uid \? fleetShip\(b\.uid\)\?\.deck \?\? \[\] : \[\],/);
-  assert.match(world, /liveryOf: \(boat\) => \(boat\.uid \? fleetShip\(boat\.uid\)\?\.livery \?\? null : null\), fittingsOf: \(boat\) => \(boat\.uid \? fleetShip\(boat\.uid\)\?\.deck \?\? \[\] : \[\]\),/);   // PIN MOVED (SHIP-PLAQUE: the pool's `plaqueOf` follows)
+  assert.match(world, /liveryOf: \(boat\) => \(boat\.uid \? fleetShip\(boat\.uid\)\?\.livery \?\? null : null\), fittingsOf: \(boat\) => \(boat\.uid \? fleetShip\(boat\.uid\)\?\.deck \?\? \[\] : \[\]\),/);
 });
 
 // ── her cabin ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -498,7 +493,7 @@ test('CABIN-LOOK her cabin stained: none as built; each picture her room wears (
   assert.match(rd('src/scenes/interiorContext.js'), /if \(typeof opts\.restyle === 'function'\) await opts\.restyle\(texRemap, \[\.\.\.pending\.keys\(\)\]\.map\(\(id\) => cpuModels\.get\(id\)\?\.subMeshes \?\? \[\]\), \{ renderer, getTexture, palette \}\);/);
   const ic = rd('src/scenes/interiorContext.js');
   assert.ok(ic.indexOf('await opts.restyle(') < ic.indexOf('const drawList = [];'), 'before the room\'s batch is made');
-  assert.match(rd('src/scenes/sailingCabin.js'), /sailingCabin: cabin,\n\s*restyle: cabinRestyle\(guest \? 0 : \(fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\)\),\n\s*\};/);   // PIN MOVED (AUDIT 2: another's cabin as built)
+  assert.match(rd('src/scenes/sailingCabin.js'), /sailingCabin: cabin,\n\s*restyle: cabinRestyle\(guest \? 0 : \(fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\)\),\n\s*\};/);
   assert.match(rd('src/scenes/worldModes.js'), /restyle: hit\.restyle \?\? null,/);
 });
 

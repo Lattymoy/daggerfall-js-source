@@ -39,7 +39,7 @@ function pairOf(right, left, { lead = 'R' } = {}) {
   return pw;
 }
 /** AUDIT MIXED-PAIR L1-2: a pair in the GAME's own swing - the rig's `swingCtx` over an entity wearing the hands, at its
- *  live Speed (combat/weapon/weaponRig.js:"playerWeapon.animCtx = () =>") - never a bare hand's heft. */
+ *  live Speed (combat/weapon/weaponRig.js:"playerWeapon.animCtx =") - never a bare hand's heft. */
 const fighter = (speed = 50) => ({ isPlayer: true, level: 1, skills: new Array(35).fill(30), skillUses: new Array(35).fill(0), armor: 0, stats: { strength: 50, agility: 50, luck: 50, speed, endurance: 50, willpower: 50, intelligence: 50, personality: 50 } });
 function realPair(right, left, { lead = 'R', speed = 50 } = {}) {
   const ent = fighter(speed);

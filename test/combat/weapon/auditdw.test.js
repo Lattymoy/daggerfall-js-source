@@ -1,5 +1,4 @@
-// AUDIT-DW (2026-09-23, Mac: "a proper audit of your previous work") -
-// the audit of DW1 (the law and the two first-person lanes), DW2 (the
+// The audit of DW1 (the law and the two first-person lanes), DW2 (the
 // shipped sprites) and DW3 (the icons and the dye in the ask), three
 // lenses: DFU's law re-read (FPSWeapon.cs, WeaponBasics.cs, ItemHelper.cs,
 // TextureReplacement.cs), the port's own seams (the rig, the widget
@@ -86,16 +85,14 @@ test('AUDIT-DW F1: the list drawer decodes THE RECORD it draws before the upload
   assert.match(rd('src/ui/item/itemScroller.js'), /const ask = icons\?\.preloadRecord \?\? \(\(archive, record, dye\) => preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\)\);/);
   assert.match(rd('src/ui/textureCanvas.js'), /\? preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\)/, 'the DOM door');
   assert.match(rd('src/ui/paperDoll.js'), /await preloadTextureRecord\(archive, record, 0, 'Albedo', dye\);[^\n]*\n\s+const swap = decodedTextureTopDown/, 'the doll');
-  assert.match(rd('src/combat/diverseWeapons/diverseWeaponsIcons.js'), /gate: moddedWeaponHUDAnimsEnabled,\s+lazy: true/, 'the mod\'s icons are lazy');   // PIN MOVED (OWN-WORK4): built, one key a line
-  // PIN MOVED (AUDIT VE R1): the preload decodes each key from the one entry that answers it now - a lazy one is still skipped
-  // (AUDIT DEX B5: and a readOnly one the GPU holds alone)
+  assert.match(rd('src/combat/diverseWeapons/diverseWeaponsIcons.js'), /gate: moddedWeaponHUDAnimsEnabled,\s+lazy: true/, 'the mod\'s icons are lazy');
   assert.match(rd('src/systems/textureReplacement.js'), /if \(entry && !entry\.lazy && !decodedFrom\(key, entry\) && !releasedFrom\(key, entry\)\) todo\.push\(\[key, entry\]\);/, 'and the archive preload skips them');
 });
 
 // ── the widget clone's bench, the WW1 suite's shape ───────────────────
 function settingsOf(over = {}) {
   _resetModSettings();
-  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on now - the clone's own numbers are the bench's subject
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // The preset defaults on now - the clone's own numbers are the bench's subject
   const base = modSettingsOf(WEAPON_WIDGET_VENDOR);
   return () => readWidgetSettings(() => ({ ...base, ...over }));
 }
@@ -151,8 +148,6 @@ test('AUDIT-DW F3: under DoubleScaleTextures a `w_` hit draws into the doubled b
 
 test('AUDIT-DW F4 (named, not changed): DFU keeps the first template\'s custom frames within a class and metal; the port keys the atlas by the name it is asked by', () => {
   const rig = rd('src/combat/weapon/weaponRig.js');
-  // PIN MOVED (WEAPON-GLOW1, bible/05-Combat/Weapon-Glow.md): the name the atlas is asked by is the PLAIN set's while the
-  // weapon's element shows - still the asked name, so the key still carries it
   assert.match(rig, /const key = `\$\{type\}:\$\{item\?\.material \?\? 0\}:\$\{thunderlock \? \(gilded \? 'gilded' : ''\) : atlasFileName\(item, WEAPON_FILE\[type\] \?\? '', undefined, plain \? false : undefined\)\}`;/);
   assert.match(rig, /WHICH IS WHAT DFU DOES \(AUDIT-DW\n\s+\/\/ F4, a named departure\): FPSWeapon reloads its atlas only when\n\s+\/\/ WeaponType or MetalType change \(FPSWeapon\.cs:138\)/, 'the departure is named where the key is');
 });
@@ -164,7 +159,7 @@ test('AUDIT-DW: checked and standing - the set, the index, the door order, the d
   assert.match(door, /if \(!enabled \|\| !hasDiverseWeaponsSprite\(name\)\) return null;/);
   // the icon install sits at the scene boot, after the survival pair and before the archives load
   // PIN MOVED (AUDIT VE R2): the store's one registration follows the installs - the seam's own copy of it is gone
-  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+installEnemyExpansion\(\);[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+const textures = registerTextureStore\(\)/);   // PIN MOVED (DEX1): Daggerfall Enemy Expansion's Start after the Inits, before the archives load too
+  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+installEnemyExpansion\(\);[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+const textures = registerTextureStore\(\)/);
   // GetName's dye arm and its one exception, in one home
   assert.match(rd('src/characters/dyes.js'), /if \(!Number\.isFinite\(v\) \|\| v === DYE_COLORS\.Unchanged\) return '';/);
 });
@@ -189,7 +184,7 @@ test('DW-CLIP: under the Diverse Weapons preset (DoubleScaleTextures + TrueTextu
   cw.customCache.set([...cw.customCache.keys()].find((n) => n.startsWith('w_')), { tex: 'double', width: 100, height: 80, doubled: true });
   c.frame();
   assert.deepEqual(cw.offset, [0.5, 0.5]);
-  // DISC14-C: the gate is one helper now, shared with the doubled idle's bob - the shift and the centred bob ride the same doubling
+  // The gate is one helper now, shared with the doubled idle's bob - the shift and the centred bob ride the same doubling
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /function doubledIdleNow\(\) \{\s*\n\s*if \(!w\.s\.doubleScale \|\| w\.s\.trueSize \|\| !w\.art\) return false;/);
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /return record != null && !!customTexture\(record, Math\.max\(0, w\.currentFrame\)\)\?\.doubled;/);
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /if \(\(w\.weaponState === S\.Idle \|\| \(w\.currentWeaponType === T\.Bow && w\.currentFrame === 0\)\) && doubledIdleNow\(\)\) \{\n\s*w\.offset =/);

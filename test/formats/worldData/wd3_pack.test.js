@@ -7,7 +7,7 @@
 // is carried whole); the reader (a file rebuilt from a classic block, a node shared, a classic node referenced with
 // the author's edits to it, rows, runs, the run op; a file based on another, kept once; the shipped form - every entry
 // and node JSON text - read the same; what it lets go); its refusals, each by name; the gzip and the hash the loader
-// reads a pack through. OWN-WORK3 (2026-10-31): both town mods are retired and their packs left the tree, so the
+// reads a pack through. OWN-WORK3: both town mods are retired and their packs left the tree, so the
 // vendored packs' form and their sha256 rebuild over ARENA2 went with them; the format and its reader are held here.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

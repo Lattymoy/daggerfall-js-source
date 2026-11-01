@@ -1,8 +1,7 @@
-// QL1 (bible/06-Systems/Questlines-Arc.md section 2.5): THE QUEST PACK AS THE GAME READS IT, OFF THE DISK - the node
-// twin of scenes/quest/questData.js (browser-only: Vite's glob), for the sheets' and the branches' pins. The same order
-// of reads: DFU's vendored quests (ours in their place, OWN-WORDS1) with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests
-// (Foraging's our own, FORAGE-FIX written in - OWN-WORK3), and - while the questlines' switch is on - a flagship quest's branch (qlPatches.js). And a
-// machine that knows every line the pack says: DFU's 82, Jagget's four (Foraging's quests), the questlines' six (AUDIT QUESTLINES DOC-29: said three; AUDIT STAR8 S1: `ql gone`).
+// THE QUEST PACK AS THE GAME READS IT, OFF THE DISK - the node twin of scenes/quest/questData.js (browser-only: Vite's glob), for the sheets' and the branches' pins. The same
+// order of reads: DFU's vendored quests (ours in their place, OWN-WORDS1) with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests (Foraging's our own,
+// FORAGE-FIX written in - OWN-WORK3), and - while the questlines' switch is on - a flagship quest's branch (qlPatches.js). And a machine that knows every line the pack says:
+// DFU's 82, Jagget's four (Foraging's quests), the questlines' six (AUDIT QUESTLINES DOC-29: said three; AUDIT STAR8 S1: `ql gone`).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,14 +19,14 @@ const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
 /** Where each quest's file is: DFU's pack, then each mod's folder (its QuestList- files are tables, not quests). */
 export const QUEST_DIRS = Object.freeze([
   ['dfu', 'vendor/dfu-quests/Quests'],
-  ['roleplay-realism', 'src/systems/roleplayRealism/quests'],   // OWN-WORK3: Roleplay & Realism's quests in our own words
+  ['roleplay-realism', 'src/systems/roleplayRealism/quests'],   // Roleplay & Realism's quests in our own words
   ['warm-ashes-ships', 'vendor/warm-ashes-ships/Quests'],
-  ['foraging', 'src/systems/foraging/quests'],   // OWN-WORK3: Foraging's quests in our own words
+  ['foraging', 'src/systems/foraging/quests'],   // Foraging's quests in our own words
   ['questlines', 'src/systems/questlines/quests'],
-  ['starts', 'src/systems/starts/quests'],   // START1: the starts' own quests (systems/starts/starts.js)
+  ['starts', 'src/systems/starts/quests'],   // The starts' own quests (systems/starts/starts.js)
 ]);
 
-/** OWN-WORDS1 (bible/06-Systems/Own-Words.md): DFU's quests in DFO's own words, read in place of DFU's file of the name. */
+/** DFU's quests in DFO's own words, read in place of DFU's file of the name. */
 export const OWN_QUEST_DIR = 'src/systems/quest/own';
 
 /** Every quest file the pack holds: upper-case name -> { name, dir, path }. A mod's quest of a DFU name is the mod's. A DFU

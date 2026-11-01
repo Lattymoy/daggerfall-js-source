@@ -119,7 +119,7 @@
   {
     "name": "SNOW-THREAD-runtime-ring-left-on-this-thread",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    M.job = this.builds?.postMid(this) ?? 0; // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)",
+    "old": "    M.job = this.builds?.postMid(this) ?? 0; // Sampled on the build worker when it can be (0: on this thread)",
     "new": "    M.job = 0;",
     "tests": [
       "test/systems/snowthread.test.js"

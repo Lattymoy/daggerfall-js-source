@@ -322,8 +322,8 @@
   {
     "name": "WOD7-oid-index-unminted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
-    "new": "const n = 0;",
+    "old": "          const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
+    "new": "          const n = 0;",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "WOD7-fresh-promote-remembers",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (!wodKept.life) wodForgetPeerSites(pkey);   // AUDIT WOD7: a fresh promote's markers are its own again\n",
-    "new": "",
+    "old": "    if (!wodKept.life) wodForgetPeerSites(pkey);   // A fresh promote's markers are its own again\n    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // The stream's new pixel eases out of the middle ring's tint",
+    "new": "    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // The stream's new pixel eases out of the middle ring's tint",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]

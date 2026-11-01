@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): OUR LARGE BOAT - Come Sail Away's hull 1 (prefab 112411), built here: the hull Mac's large
+// OUR LARGE BOAT - Come Sail Away's hull 1 (prefab 112411), built here: the hull Mac's large
 // boat (world/ships/largeBoatModel.js) stands in for, and what stands when his model will not. Its seven sail plans
 // are the mod's own by their names and their order (`Variants`, the player cycling them at the VariantTrigger), each
 // sail ours; the nodes its runtime walks keep the names and places Come Sail Away 2.1 gave them. Not a DFU member.

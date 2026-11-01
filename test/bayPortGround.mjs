@@ -1,6 +1,6 @@
 // A BAY PORT'S PLACING GROUND AS THE WORLD HOST BUILDS IT (scenes/world.js townPlacesFor, scenes/pixelBuild.js),
 // off the player's own ARENA2, in Daggerfall's layout (OWN-WORK3: the town packs are retired, so the old `packs`
-// option is gone): the pixel's terrain job, the yards' walk shut (TS7) and
+// option is gone): the pixel's terrain job, the yards' walk shut and
 // measures, the yards placed, and the sea's field. `ground()` answers a fresh ground each call - a ground is placed on once.
 // Built as test/world/fb1028_walls.test.js placedYards builds it.
 import { join } from 'node:path';
@@ -34,7 +34,7 @@ export async function bayPortGround(arena2, readFileSync, name) {
   const { BUILDING_TYPES } = await R('world/buildingNames.js');
   const { isWaterPixel } = await R('ui/overworldModel.js');
   const bytes = (f) => new Uint8Array(readFileSync(join(arena2, f)));
-  const { bayRoads } = await import('./bayRoads.mjs');   // OWN-WORK2: the Bay's own network, off the same ARENA2
+  const { bayRoads } = await import('./bayRoads.mjs');   // The Bay's own network, off the same ARENA2
   const { roads: roadsB, tracks: tracksB } = bayRoads();
   walls.setTownWallPaths(walls.townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));

@@ -1,4 +1,4 @@
-// OWN-WORK2 (2026-10-31): THE BAY'S NETWORK AS THE WORLD HOST BUILDS IT - scenes/world.js's boot repair of the heights
+// THE BAY'S NETWORK AS THE WORLD HOST BUILDS IT - scenes/world.js's boot repair of the heights
 // (smoothLocationNeighbourhood), then world/roadsProducer.js buildRoadsFromSettlements over MAPS.BSA's places - off the
 // player's own ARENA2. Kept on disk outside the tree (a render of game data is game data), keyed by the generator's
 // cache key and its sources, so a run's test files pay the build once. `bayRoads()` is null without ARENA2.

@@ -176,8 +176,8 @@
   {
     "name": "AUDIT-INSTALL-R2-A8-installing-said-while-it-waits",
     "file": "app/lib/launcherState.cjs",
-    "old": "    v.progress = { percent: 100, label: 'Downloaded' };\n    if (!SETUP_DONE.has(st.status)) {",
-    "new": "    v.progress = { percent: 100, label: 'Downloaded' };\n    if (SETUP_WAITING.has(st.status)) {",
+    "old": "    if (!SETUP_DONE.has(st.status)) {",
+    "new": "    if (SETUP_WAITING.has(st.status)) {",
     "tests": ["test/tooling/audit_install2.test.js"]
   },
   {
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-INSTALL-R2-D3-cut-said-as-no-daggerfall-files",
     "file": "app/lib/launcherState.cjs",
-    "old": "  if (cut) return `It holds too many folders to look through them all. ${where}`;\n",
-    "new": "",
+    "old": "  if (cut) return `It holds too many folders to look through them all. ${where}`;\n  return `It holds no Daggerfall files. ${where}`;",
+    "new": "  return `It holds no Daggerfall files. ${where}`;",
     "tests": ["test/tooling/audit_install2.test.js"]
   },
   {
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-INSTALL-R2-E5-a-mac-is-sent-to-steam",
     "file": "app/lib/launcherState.cjs",
-    "old": "  const where = platform === 'darwin'\n    ? 'Choose the arena2 folder inside the unpacked DaggerfallGameFiles.zip.'\n    : ",
-    "new": "  const where = ",
+    "old": "  const where = platform === 'darwin'\n    ? 'Choose the arena2 folder inside the unpacked DaggerfallGameFiles.zip.'\n    : 'Choose the ARENA2 folder inside your Daggerfall install - on Steam it is under DF/DAGGER/ARENA2, on GOG it is in the game\\'s own folder.';",
+    "new": "  const where = 'Choose the ARENA2 folder inside your Daggerfall install - on Steam it is under DF/DAGGER/ARENA2, on GOG it is in the game\\'s own folder.';",
     "tests": ["test/tooling/audit_install2.test.js"]
   },
   {
@@ -448,16 +448,16 @@
   {
     "name": "AUDIT-INSTALL-R2-E-05-a-refusal-lands-on-a-folder-already-taken",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (SETUP_WAITING.has(st.status)) {\n        st.status = 'bad';",
-    "new": "      if (true) {\n        st.status = 'bad';",
+    "old": "    case 'picked-bad':\n      if (SETUP_WAITING.has(st.status)) {",
+    "new": "    case 'picked-bad':\n      if (true) {",
     "tests": ["test/tooling/audit_install2.test.js", "test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js", "test/tooling/audit_install.test.js"],
     "note": "a picked-bad arriving after the files were set (a stale use-found) throws the player back to the card"
   },
   {
     "name": "AUDIT-INSTALL-R2-E-06-the-news-keeps-githubs-order",
     "file": "app/lib/launcherState.cjs",
-    "old": "    .sort((a, b) => cmpV(b.v, a.v))\n    .map((r) => ({ version: r.v.join",
-    "new": "    .map((r) => ({ version: r.v.join",
+    "old": "    .sort((a, b) => cmpV(b.v, a.v))\n    .map((r) => ({ version: r.v.join('.'), date: r.date, text: r.text, ...(r.update ? { update: r.update } : {}) }));",
+    "new": "    .map((r) => ({ version: r.v.join('.'), date: r.date, text: r.text, ...(r.update ? { update: r.update } : {}) }));",
     "tests": ["test/tooling/audit_install2.test.js", "test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js", "test/tooling/audit_install.test.js"],
     "note": "a hand re-cut of an old build (listed first by GitHub) heads the news and pushes the newest past NEWS_MAX"
   },
@@ -480,8 +480,8 @@
   {
     "name": "AUDIT-INSTALL-R2-E-12-the-download-hides-its-megabytes",
     "file": "app/lib/launcherState.cjs",
-    "old": "label: u.total ? `${mb(u.transferred)} of ${mb(u.total)} MB` : 'Starting the download' };",
-    "new": "label: `${mb(u.transferred)} of ${mb(u.total)} MB` };",
+    "old": "    v.progress = { percent: u.percent, label: u.total ? `${mb(u.transferred)} of ${mb(u.total)} MB` : 'Starting the download' };",
+    "new": "    v.progress = { percent: u.percent, label: `${mb(u.transferred)} of ${mb(u.total)} MB` };",
     "tests": ["test/tooling/audit_install2.test.js", "test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js", "test/tooling/audit_install.test.js"],
     "note": "before the first byte the bar reads \"0.0 of 0.0 MB\""
   },

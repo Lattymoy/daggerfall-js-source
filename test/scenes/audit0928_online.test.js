@@ -15,7 +15,7 @@ import * as peersMod from '../../src/scenes/comeSailAway/comeSailAwayPeers.js';
 import * as wireMod from '../../src/systems/comeSailAway/comeSailAwayWire.js';
 import * as boatMod from '../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
-import { quietFoesGate } from '../../src/net/foesQuiet.js';   // SCALE2c
+import { quietFoesGate } from '../../src/net/foesQuiet.js';
 import { rendererModel, bundleSlots } from '../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { FOES_MS, FOES_FULL_MS } from '../../src/net/online.js';
 import { isCellRoom, isWorldRoom, FOES_HZ_MAX } from '../../src/net/wire.js';
@@ -90,7 +90,7 @@ function mount(scope, code, name) {
 // ── O1 ──────────────────────────────────────────────────────────────────────
 
 test('AUDIT PRE-MERGE 0928 O1: the variants each hull\'s prefab carries - read off the vendored prefabs, the table the door bounds a word by; the Large Boat\'s seven and none on the rest', () => {
-  const prefabs = ownFile('prefabs.json').prefabs; // OWN-WORK4: our boats' prefabs
+  const prefabs = ownFile('prefabs.json').prefabs; // Our boats' prefabs
   const counts = boatMod.HULL_NAMES.map((_, h) => {
     let n = 0;
     (function walk(node) { if (node.name === 'Variants' && node.active) n = node.children.length; else for (const c of node.children) walk(c); })(prefabs[String(boatMod.FIRST_HULL_MODEL_ID + h)]);
@@ -241,14 +241,14 @@ function sail(speed) {
     isCellRoom, isWorldRoom, FOES_MS, FOES_FULL_MS, _foesSentAt: -Infinity, _foesFullAt: -Infinity, modes: { mode: 'exterior' },
     _foesQuiet: quietFoesGate(),   // SCALE2c (PIN MOVED): the host's memory of what its cell last heard - a full frame that says nothing, said once
     exteriorFoes: foesPool(clock), _hccDirty: false, camps: { wireRecords: () => [] }, hcc: { wireRecord: () => null }, duelRingWord: () => {}, raidWireWord: () => null, raidObjWord: () => null,   // THE MERGE: RAID2's word rides the same line - no raid here (RAID5: nor its objective's)
-    portalWord: () => {},   // PORTAL1: nor a portal
+    portalWord: () => {},   // Nor a portal
     campToWire: (p) => [...p], csaRuntime: { AllBoats: [boat], isSailing: () => true, state: { CurrentBoat: boat } }, csaOn: () => true,
     csaWireRecord, csaRecordKey, csaAnimatorOf: boatMod.animatorOf, _csaWordKey: null,
-    shipFlags: { wireFlag: () => null },   // PIN MOVED (SHIP-COLOURS: the boats' word asks each boat's flag - none flown here)
-    bandWord: () => false,   // TV7b: no band chases on this sea
-    seaRaidWord: () => false,   // OW6: nor raider chases
-    csaAboardWord: () => false,   // CSA-K: aboard nobody's boat - the stream's second word says nothing
-    navalOn: () => false, naval: null, navalRecordKey: () => '', _navalWordKey: null,   // NAV-G: the sea's word rides the same stream - off here, this pin is the boats'
+    shipFlags: { wireFlag: () => null },
+    bandWord: () => false,   // No band chases on this sea
+    seaRaidWord: () => false,   // Nor raider chases
+    csaAboardWord: () => false,   // Aboard nobody's boat - the stream's second word says nothing
+    navalOn: () => false, naval: null, navalRecordKey: () => '', _navalWordKey: null,   // The sea's word rides the same stream - off here, this pin is the boats'
   };
   scope.csaWord = mount(scope, cut(WORLD, 'function csaWord(frame, full) {', '\n  }\n'), 'csaWord');
   scope.navalWord = mount(scope, cut(WORLD, 'function navalWord(frame, full) {', '\n  }\n'), 'navalWord');
@@ -306,7 +306,7 @@ test('AUDIT PRE-MERGE 0928 O4: the owner\'s look is their boat\'s (AUDIT 0927 I-
   assert.ok(pool.batches().every((b) => b.conceal == null), 'the look gone: every flat plain');
   assert.equal(moored.GameObject.activeSelf, true);
   // the host hands the look over as it hands the cart pool's
-  assert.match(WORLD, /csaPeers\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\)(?: \|\| !gateCrowd\.shows\(id\))? \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/);   // PIN MOVED (AUDIT CROWD-WIDE B1): and one the crowd's count leaves undrawn (test/systems/gatecrowd.test.js)
+  assert.match(WORLD, /csaPeers\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\)(?: \|\| !gateCrowd\.shows\(id\))? \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/);
 });
 
 // ── O6 ──────────────────────────────────────────────────────────────────────

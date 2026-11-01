@@ -4,7 +4,7 @@
 // world clock's own file - the rig's curve, the hour gates; this one is
 // the arc's.)
 //
-// CLK1: the sky's PRESENTATION - the weather ease, the front's stretch
+// The sky's PRESENTATION - the weather ease, the front's stretch
 // of it, the cloud drift integral and the cloud profile's ease - walks
 // on GAME MINUTES, the one clock the sun, the moons, the stars and the
 // wind model already read, and never again on the wall's seconds the
@@ -42,10 +42,10 @@ test('CLK1: the constants - the ease is 14 real seconds at the default scale, sa
 test('CLK1: the controller - the presentation differences the host\'s classicMinutes, never the wall; the stretch has no time scale in it; the mod keeps its real frame', () => {
   const shared = read('src/scenes/shared.js');
   const use = shared.slice(shared.indexOf('use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {'), shared.indexOf('let frame = params.has(\'window\')'));
-  // TIME1: the feed takes TWO minutes - the event clock it walks (dt, here) and the sky it dates the moons by (`skyNow`)
+  // The feed takes TWO minutes - the event clock it walks (dt, here) and the sky it dates the moons by (`skyNow`)
   assert.match(use, /const nowMin = extra\?\.classicMinutes \?\? 0;[\s\S]{0,800}?const skyNow = extra\?\.skyMinutes \?\? nowMin;\s*\n\s*const dt = lastMin === null \|\| nowMin < lastMin \? 0 : nowMin - lastMin;   \/\/ GAME MINUTES\s*\n\s*lastMin = nowMin;/, 'dt is the clock\'s delta, in minutes; a clock that went backwards costs none');
   assert.match(use, /const dtReal = weatherAt === null \? 0 : Math\.min\(MAX_DELTA_SECONDS, Math\.max\(0, seconds - weatherAt\)\);/, 'the wall\'s delta survives for one reader, clamped as Time.deltaTime is (MODS AUDIT)');
-  assert.match(use, /dynamic\.tick\(\{\s*\n\s*minuteOfDay, classicMinutes: skyNow, weather: skyWord, seconds, dt: dtReal,/, 'the mod (1:1) takes it - BLBSkybox reads Time.deltaTime');   // TIME1: its date (the moons) the sky's
+  assert.match(use, /dynamic\.tick\(\{\s*\n\s*minuteOfDay, classicMinutes: skyNow, weather: skyWord, seconds, dt: dtReal,/, 'the mod (1:1) takes it - BLBSkybox reads Time.deltaTime');   // Its date (the moons) the sky's
   assert.equal((use.match(/dtReal/g) || []).length, 2, 'and nothing else does');
   assert.match(use, /const easeDt = windModel\.inLead\(\) \? dt \* \(WEATHER_EASE_MINUTES \/ windModel\.leadMinutes\(\)\) : dt;/, 'minutes over minutes');
   assert.doesNotMatch(use, /60 \/ 12|\* 12\b/, 'no time scale hard-coded in the presentation');
@@ -58,7 +58,7 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   assert.match(lab, /const dtMin = still \? 0 : Math\.min\(1, \(nowReal - labLast\) \/ 1000\) \/ WIND_SECONDS_PER_MINUTE;/);
   assert.match(lab, /labDrift\[0\] \+= rowWind\[0\] \* dtMin \* WIND_SECONDS_PER_MINUTE;/);
   assert.match(lab, /clouds\.setState\(cst, \{ cover: cst\.cloudCover, soft: cst\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0, \[0, 0, 0\]\);/);
-  // VC7a: the lab hands its own game minute too, the clock the clouds live on
+  // The lab hands its own game minute too, the clock the clouds live on
   assert.match(lab, /skyState\(\{ minuteOfDay, weather: \$\('weather'\)\.value, classicMinutes: labClock, phases, seconds, drift: labDrift \}\)/);
   // the seconds-named constant is gone from the tree's readers
   for (const f of ['src/render/enhancedSky.js', 'src/render/volumetricClouds.js', 'src/scenes/shared.js', 'src/world/windmills.js']) assert.doesNotMatch(read(f), /WEATHER_EASE_SECONDS/, `${f}: no reader of the old constant`);
@@ -93,7 +93,7 @@ import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
 const zonesNow = () => ZONE_CLIMATES.map((c) => weatherForClimate(c));
 
 test('CLK2: the evolution - hourly, seeded on the hour and the zone, replayable; a day of it turns most zones at least once; the classic lane never sees it', () => {
-  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
+  resetWeatherSim(); setWeatherMapLaw(false);   // The day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   setWeatherEvolution(true);
   assert.equal(weatherEvolutionOn(), true);
   const day0 = 100 * MINUTES_PER_DAY;
@@ -134,7 +134,7 @@ test('CLK2: the evolution - hourly, seeded on the hour and the zone, replayable;
 test('CLK2: the change lands through DFU\'s own drain - live under the sky it is a front, out of sight it is a jump; a jump of days walks only the last 24 hours; a load re-anchors', () => {
   const day0 = 200 * MINUTES_PER_DAY;
   // find an hour that changes the Woodlands zone, from sunny
-  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // The day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   let hourOfChange = null;
   for (let h = 1; h <= 24 * 20 && hourOfChange === null; h++) {
@@ -243,10 +243,10 @@ test('CLK3: the moon\'s phase is continuous on the clock for the dome - no 45-de
   assert.equal(lunarPhase(dateFromClassicMinutes(base), { masser: true }) >= 0, true, 'the ladder itself is untouched');
   // the systems keep the step: the dome alone takes the fraction, a caller's own phases go in whole
   const dome = read('src/render/enhancedSky.js');
-  assert.match(dome, /const ph = phases \?\? lunarPhaseFractionsFromMinutes\(skyMinutes\);/);   // TIME1: the moons' date is the sky's (`skyMinutes`, the one clock when unhanded)
+  assert.match(dome, /const ph = phases \?\? lunarPhaseFractionsFromMinutes\(skyMinutes\);/);   // The moons' date is the sky's (`skyMinutes`, the one clock when unhanded)
   assert.doesNotMatch(dome, /lunarPhasesFromMinutes/, 'the ladder is not the dome\'s to read any more');
   // the systems keep the step - the readers the page names (the enchant ctx's moon arms, the lycanthrope's full
-  // moon), unconditionally: a file that stops reading DFU's step goes red, not quiet. PIN MOVED (OWN-WORK4): Dynamic
+  // moon), unconditionally: a file that stops reading DFU's step goes red, not quiet. PIN MOVED: Dynamic
   // Skies is our own sky now, and a sky takes the dome's fraction - its moons stand where the dome puts them
   assert.match(read('src/systems/dynamicSkies/dynamicSkies.js'), /const fractions = lunarPhaseFractionsFromMinutes\(classicMinutes\);/);
   for (const f of ['src/scenes/hostEnchant.js', 'src/systems/lycanthropy.js']) {
@@ -280,7 +280,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   // (1) THE PLAYER'S ZONE'S STAMP: the day rolls at midnight while the player is inside; a DISTANT zone turns at
   // 03:00; the player steps out at 03:10 - the drain is stale (the day roll's three hours), not live (the distant turn)
   const day0 = 300 * MINUTES_PER_DAY;
-  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // The day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   rollClimateWeathersForDay(day0 - MINUTES_PER_DAY, () => 0.0); evolveClimateWeathers(day0 - MINUTES_PER_DAY + 1);
   tickWeather(day0 - MINUTES_PER_DAY + 1, CLIMATES.Woodlands);
   setWeather('rain');   // the sky the player stands under
@@ -352,7 +352,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   assert.match(dome, /float hash21\(vec2 p\) \{ p = mod\(p, \$\{DECK_LATTICE\}\.0\);/, 'the shader\'s lattice, the same period');
   assert.doesNotMatch(dome, /2\.03/, 'the octave is exactly two');
   // (6) THE REST IS A VEIL on the enhanced skin; DFU's opaque black on the classic one.
-  // REST-VEIL2 (2026-09-19) took the per-state test OUT: CLK4 veiled the RESTING page
+  // REST-VEIL2 took the per-state test OUT: CLK4 veiled the RESTING page
   // only, so the page the key actually opens still blacked the world out whole and
   // picking a rest brought it back three keystrokes later. One skin, one answer.
   const rest = read('src/ui/restWindow.js');
@@ -380,7 +380,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
 // "in case of loaded savegame", every time.
 test('CLK2 / AUDIT 65 SL-1: an IN-SESSION load lowers the evolution guard - the loaded sky survives a day of hourly evolution in a session that had already rolled', () => {
   const day0 = 300 * MINUTES_PER_DAY;
-  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // The day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   // the OUTGOING session's boot roll: a real, valid six-zone array (all Sunny)
   tickWeather(day0 - 200, CLIMATES.Woodlands, () => 0.0);
   assert.equal(currentWeather(), 'sunny', 'the outgoing session stands under its own rolled sky');

@@ -25,11 +25,10 @@ import {
 } from '../../src/systems/textureReplacement.js';
 import { getBool, setValue } from '../../src/systems/settings/settings.js';
 
-// ═══ SURV2 (2026-09-18): THE SURVIVAL ITEMS ═════════════════════════
+// ═══ SURV2: THE SURVIVAL ITEMS ═════════════════════════
 //
 // The mod's eleven templates as the port's own custom rows above DFU's
-// 288, plus the campfire kit (Mac: "a new campfire item players can
-// buy and place"); a waterskin that weighs its water; rations that
+// 288, plus the campfire kit; a waterskin that weighs its water; rations that
 // stack; food that spoils by stage and shows the mod's own spoiled
 // face; the use handlers on useItem's ladder; the general store's
 // provisions shelf; the starting kit; the corpse's meat.
@@ -46,12 +45,12 @@ test('SURV2: the twelve templates register above DFU\'s 288 and answer through t
   assert.equal(apple.custom, true);
   assert.deepEqual([apple.worldTextureArchive, apple.worldTextureRecord, apple.baseWeight, apple.hitPoints, apple.basePrice], [213, 1, 0.25, 90, 2], 'our own row (OWN-WORK3: Climates & Calories 1.7.1 shipped 0.1 kilos and 1 gold)');
   assert.equal(templateByIndex(TEMPLATE.Rations).stackable, true);
-  assert.equal(templateByIndex(TEMPLATE.Campfire).name, 'Campfire');   // REST2: the Campfire, a tool rather than a kit of matches
+  assert.equal(templateByIndex(TEMPLATE.Campfire).name, 'Campfire');   // The Campfire, a tool rather than a kit of matches
   assert.equal(templateByIndex(TEMPLATE.Campfire).hitPoints, CAMPFIRE_USES, 'REST2: eight nights of fuel');
   assert.equal(templateByIndex(TEMPLATE.CampingEquipment).hitPoints, CAMPING_USES);
   assert.equal(templateByIndex(5).name, 'Turquoise', 'DFU\'s own table is untouched');
   assert.equal(templateByIndex(300), null, 'a hole stays a hole');
-  // OWN-WORK3: the names and the pictures 530-540 stand on, as literals (the vendored rows left the tree)
+  // The names and the pictures 530-540 stand on, as literals (the vendored rows left the tree)
   assert.deepEqual([530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540].map((i) => [i, templateByIndex(i).name, templateByIndex(i).worldTextureArchive, templateByIndex(i).worldTextureRecord]), [
     [530, 'Camping Equipment', 204, 8], [531, 'Rations', 205, 17], [532, 'Apple', 213, 1], [533, 'Orange', 213, 0], [534, 'Bread', 211, 31],
     [535, 'Raw Fish', 211, 9], [536, 'Cooked Fish', 211, 10], [537, 'Meat', 211, 40], [538, 'Raw Meat', 538, 2], [539, 'Waterskin', 539, 0],
@@ -186,7 +185,7 @@ test('SURV2: the camp gear hands itself to the host, the skillet explains itself
 test('SURV2: the general store shelves provisions (no horse or cart since MERCHANT-YARDS), and a new character sets out with the kit', () => {
   const items = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 10 }, { level: 1 }, { rolls: () => 0.5 });
   const idx = (t) => items.findIndex((i) => i.templateIndex === t);
-  assert.ok(idx(TEMPLATE.Rations) >= 0 && idx(94) === -1, 'rations on it; no horse');   // PIN MOVED (MERCHANT-YARDS, 2026-10-10): the horse and the cart are the town's Stable's and Wagon Yard's now - the provisions stand where they did, after DFU's draws
+  assert.ok(idx(TEMPLATE.Rations) >= 0 && idx(94) === -1, 'rations on it; no horse');
   for (const t of [TEMPLATE.Bread, TEMPLATE.Waterskin, TEMPLATE.Campfire, TEMPLATE.CampingEquipment, TEMPLATE.Skillet]) assert.ok(idx(t) >= 0, `a quality-10 store carries ${templateByIndex(t).name}`);
   assert.ok(items.find((i) => i.templateIndex === TEMPLATE.Waterskin).water === 0, 'sold empty');
   assert.ok(items.every((i) => i.name && i.value != null), 'every row minted with a name and a value');
@@ -236,15 +235,13 @@ test('SURV2: the dead leave food - animals raw meat by kind (half of it turning)
 });
 
 test('SURV2: the sixteen icons are rebuilt (NO-BETHESDA2) or our own (OWN-WORK4), and ride the texture pipeline as the port\'s own art through a stand-in archive', async () => {
-  // PIN MOVED (NO-BETHESDA2, then OWN-WORK4, 2026-10-31): a picture that is Daggerfall's own is a spec rebuilt from the
-  // player's files (derivedIcons.json); every other one is ours (OWN_ICONS) - each of the eighteen one or the other
   for (const f of [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES]) {
     assert.equal([derivedIconSpec(f) != null, ownIconSpec(f) != null].filter(Boolean).length, 1, `${f}: a spec or ours - exactly one`);
   }
   assert.equal(existsSync(join(root, 'vendor/climates-calories')), false, 'no file of the release\'s is carried');
   clearVendorTextures();
   const bytes = new Uint8Array([7]);
-  const n = addVendorTextures([{ archive: 539, record: 0, fileName: '539_0-0', standIn: true, load: async () => new Uint8Array(bytes) }]);   // SURV-TENT: an archive that is ONLY this art
+  const n = addVendorTextures([{ archive: 539, record: 0, fileName: '539_0-0', standIn: true, load: async () => new Uint8Array(bytes) }]);   // An archive that is ONLY this art
   assert.equal(n, 1);
   assert.equal(isVendorArchive(539), true);
   assert.equal(isVendorArchive(538), false);
@@ -262,7 +259,7 @@ test('SURV2: the sixteen icons are rebuilt (NO-BETHESDA2) or our own (OWN-WORK4)
   assert.ok(decodedTexture(539, 0), 'a user pick replacing the index does not lose the port\'s own');
   clearVendorTextures();
   assert.equal(vendorTextureCount(), 0);
-  // SURV-TENT: eighteen now - the sixteen icons plus the tent's two
+  // Eighteen now - the sixteen icons plus the tent's two
   // reskins, which are the OTHER kind of vendored file
   assert.equal(installSurvivalIcons(), 18, 'the boot registers all eighteen');
   assert.equal(installSurvivalIcons(), 0, 'once');
@@ -277,28 +274,24 @@ test('SURV2: the sixteen icons are rebuilt (NO-BETHESDA2) or our own (OWN-WORK4)
 
 test('SURV2: by source - the pipeline stands a vendor archive in, the weight law adds water, the ladder\'s first arm is ours, the shelf and the kit are gated by the one switch', () => {
   const pipe = read('src/scenes/dataPipeline.js');
-  // PIN MOVED (AUDIT VE R1): the epoch the archive's pictures are current with is read before, and kept after, the preload
   assert.match(pipe, /if \(isVendorArchive\(archive\)\) \{\s*\n\s*const epoch = textureTierEpoch\(\);[^\n]*\n\s*await preloadTextureArchive\(archive\)\.catch\(\(\) => \{\}\);\s*\n\s*preloadedAt\.set\(archive, epoch\);\s*\n\s*const v = vendorTextureStandIn\(archive\);/, 'no TEXTURE file is fetched for the port\'s own archives');
   assert.match(read('src/systems/inventory.js'), /if \(Number\.isFinite\(item\.water\) && item\.water > 0\) base \+= item\.water;/);
-  assert.match(read('src/systems/useItem.js'), /if \(isSurvivalItem\(item\)\) out = useSurvivalItem\(item, collection, \{ entity, now: nowMinute, rolls, currentDay: Math\.trunc\(nowMinute \/ 1440\), inflict: inflictDisease, rules: survivalRules\(\) \?\? SURVIVAL_RULES\.casual, offMeal: survivalRules\(\) == null \}\);[^\n]*\n[\s\S]*?else if \(isBook\(item\)\)/);   // PIN MOVED (ENDLESS PROVISIONS): Off, offMeal   // SURV-TIERS: the live tier decides the meal's sickness (AUDIT SURV-TIERS: Off eats as Casual - never sickened)
+  assert.match(read('src/systems/useItem.js'), /if \(isSurvivalItem\(item\)\) out = useSurvivalItem\(item, collection, \{ entity, now: nowMinute, rolls, currentDay: Math\.trunc\(nowMinute \/ 1440\), inflict: inflictDisease, rules: survivalRules\(\) \?\? SURVIVAL_RULES\.casual, offMeal: survivalRules\(\) == null \}\);[^\n]*\n[\s\S]*?else if \(isBook\(item\)\)/);
   assert.match(read('src/systems/shopStock.js'), /if \(survivalOn\(\)\) for \(const it of provisionsStock\(quality, rolls, \{ campfires: shelfIndex === 0 \}\)\) items\.push\(it\);/);   // AUDIT REST II H8 (PIN MOVED): the Campfires on the counter's shelf alone
   assert.match(read('src/systems/equip.js'), /if \(survivalOn\(\)\) for \(const it of startingProvisions\(entity\)\) entity\.items\.push\(it\);/);   // AUDIT C&C I7 (PIN MOVED): the kit takes the character - its wardrobe for the start's shoes and cloak
-  // CORPSE-FOOD (2026-09-23, Mac: "It needs to be accessible with people with it on"): offline the one switch; online
-  // the body's food is the room's (survival/switch.js corpseFoodOn - survtiers3 drives it)
+  // Offline the one switch; online the body's food is the room's (survival/switch.js
+  // corpseFoodOn - survtiers3 drives it)
   assert.match(read('src/systems/worldTick.js'), /installSurvivalIcons\(\);[^\n]*\n\s*installSurvivalLoot\(\{ enabled: corpseFoodOn \}\);/, 'the corpse\'s food is off with the one switch - offline');
-  // SURV-TIERS: the one switch reads a TIER now - on is anything but Off, and a value that is no tier reads as the default
+  // The one switch reads a TIER now - on is anything but Off, and a value that is no tier reads as the default
   assert.match(read('src/systems/survival/switch.js'), /export const survivalTier = \(\) => tierOfStored\(getPref\(SURVIVAL_PREF\)\);\nexport const survivalOn = \(\) => survivalTier\(\) !== SURVIVAL_OFF;/);
-  // MODS-ONLINE-3 (2026-09-22, Mac): `online: true` became `'player'`.
-  // Climates & Calories is a MOD ROW under Ralzar's name and it was the
-  // last one still locked online, kept there only because the port
-  // wrote the system itself and so carries it on the prefs shelf - a
-  // distinction no player can see. What this pin owns is unchanged:
-  // the row declares the key and the default, once (RF4).
+  // `online: true` became `'player'`. Climates & Calories is a MOD ROW under Ralzar's name and it was the last one still
+  // locked online, kept there only because the port wrote the system itself and so carries it on the prefs shelf - a
+  // distinction no player can see. What this pin owns is unchanged: the row declares the key and the default, once.
   // SURV-TIERS: the default is a tier now - on - and the player still owns the switch, Off included. BOONS-DEFAULT: Boons
-  assert.match(read('src/systems/features.js'), /key: 'survival', initial: 'boons', online: 'player',/, 'the row owns the key and the default: on (Boons), and the player owns the switch');   // PIN MOVED
+  assert.match(read('src/systems/features.js'), /key: 'survival', initial: 'boons', online: 'player',/, 'the row owns the key and the default: on (Boons), and the player owns the switch');
 });
 
-// ═══ AUDIT VC6 (2026-09-18): THE DROP ROLLS ON THE POOL'S OWN STREAM ══
+// ═══ AUDIT VC6: THE DROP ROLLS ON THE POOL'S OWN STREAM ══
 // Chased down from a pin that failed one run in eight: the three pools
 // that raise a death (cityGuards, exteriorFoes, dungeonContext) handed
 // `raiseEnemyDeath` an entity and nothing else, so this handler - which
@@ -326,7 +319,7 @@ test('AUDIT VC6: the corpse\'s food rolls on the roll it is HANDED, and on the l
   // stays where its spawn loot's already is - but its luck is real.
   assert.match(src('src/scenes/cityGuards.js'), /raiseEnemyDeath\(g\.entity, \{ rolls: rand, luck: liveStat\(playerEntity, 'luck'\) \}\);/);
   assert.match(src('src/scenes/exteriorFoes.js'), /raiseEnemyDeath\(f\.entity, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\)/);
-  assert.match(src('src/scenes/dungeonContext.js'), /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\), by: foe\._killedBy \?\? null \}\)/);   // PIN MOVED (EG-E3): and the striker the foes stream names - a joiner's kill is the joiner's find
+  assert.match(src('src/scenes/dungeonContext.js'), /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\), by: foe\._killedBy \?\? null \}\)/);
   for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
     assert.doesNotMatch(src(f), /raiseEnemyDeath\([a-zA-Z.]+\);/, `${f}: no raiser hands an entity alone any more`);
   }

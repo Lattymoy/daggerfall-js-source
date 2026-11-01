@@ -11,7 +11,7 @@
   {
     "name": "SWING-LABEL-the-table-is-skipped-and-MOUSE1-is-back",
     "file": "src/systems/controlsConfig.js",
-    "old": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // SWING-LABEL: never \"MOUSE1\"\n  let t = code;",
+    "old": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // Never \"MOUSE1\"\n  let t = code;",
     "new": "  let t = code;",
     "tests": [
       "test/systems/swinglabel.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "SWING-LABEL-the-full-form-is-served-short",
     "file": "src/systems/controlsConfig.js",
-    "old": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // SWING-LABEL: never \"MOUSE1\"",
-    "new": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][0]; // SWING-LABEL: never \"MOUSE1\"",
+    "old": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // Never \"MOUSE1\"",
+    "new": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][0]; // Never \"MOUSE1\"",
     "tests": [
       "test/systems/swinglabel.test.js"
     ]

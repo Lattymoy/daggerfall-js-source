@@ -415,8 +415,8 @@
   {
     "name": "CSA-B-daggerfall-light-first-frame-silent",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (dl.lastCityLightsFlag == null) dl.lastCityLightsFlag = !cityLightsOn;",
-    "new": "if (dl.lastCityLightsFlag == null) dl.lastCityLightsFlag = cityLightsOn;",
+    "old": "    if (dl.lastCityLightsFlag == null) dl.lastCityLightsFlag = !cityLightsOn;   // ReadyCheck: \"force first update to set lights\"",
+    "new": "    if (dl.lastCityLightsFlag == null) dl.lastCityLightsFlag = cityLightsOn;   // ReadyCheck: \"force first update to set lights\"",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "CSA-B-handler-reach-counts-height",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "light.enabled = !(Math.hypot(p[0] - playerPosition[0], p[2] - playerPosition[2]) > LANTERN_HANDLER_REACH);",
-    "new": "light.enabled = !(Math.hypot(p[0] - playerPosition[0], p[1] - playerPosition[1], p[2] - playerPosition[2]) > LANTERN_HANDLER_REACH);",
+    "old": "      light.enabled = !(Math.hypot(p[0] - playerPosition[0], p[2] - playerPosition[2]) > LANTERN_HANDLER_REACH);",
+    "new": "      light.enabled = !(Math.hypot(p[0] - playerPosition[0], p[1] - playerPosition[1], p[2] - playerPosition[2]) > LANTERN_HANDLER_REACH);",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "CSA-B-flat-emission-never-off",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "b.emissionOff = !!(r.emissionColor && r.emissionColor[0] === 0 && r.emissionColor[1] === 0 && r.emissionColor[2] === 0);",
-    "new": "b.emissionOff = false;",
+    "old": "        b.emissionOff = !!(r.emissionColor && r.emissionColor[0] === 0 && r.emissionColor[1] === 0 && r.emissionColor[2] === 0);",
+    "new": "        b.emissionOff = false;",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "CSA-B-flat-stood-on-its-centre",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "b.origin[0] = m[12]; b.origin[1] = m[13] - b.size.h / 2; b.origin[2] = m[14];",
-    "new": "b.origin[0] = m[12]; b.origin[1] = m[13]; b.origin[2] = m[14];",
+    "old": "        b.origin[0] = m[12]; b.origin[1] = m[13] - b.size.h / 2; b.origin[2] = m[14];",
+    "new": "        b.origin[0] = m[12]; b.origin[1] = m[13]; b.origin[2] = m[14];",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "CSA-B-lights-uncapped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "return out.slice(0, CSA_LIGHTS_MAX).map(",
-    "new": "return out.map(",
+    "old": "    return out.slice(0, CSA_LIGHTS_MAX).map(({ _d, _src, ...l }) => adoptLight(l, _src));   // Each lantern her own, as she sails",
+    "new": "    return out.map(({ _d, _src, ...l }) => adoptLight(l, _src));   // Each lantern her own, as she sails",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "CSA-B-lights-unsorted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  out.sort((a, b) => a._d - b._d);\n",
-    "new": "",
+    "old": "    out.sort((a, b) => a._d - b._d);\n    return out.slice(0, CSA_LIGHTS_MAX).map(({ _d, _src, ...l }) => adoptLight(l, _src));   // Each lantern her own, as she sails",
+    "new": "      return out.slice(0, CSA_LIGHTS_MAX).map(({ _d, _src, ...l }) => adoptLight(l, _src));   // Each lantern her own, as she sails",
     "tests": [
       "test/systems/comeSailAway/csa_pool.test.js"
     ]

@@ -1,10 +1,9 @@
-// OWN-WORK4 (2026-10-31, the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper 1
-// to 1 recreation for everything.") - THE TEXTURE PACKS, OUR OWN. Vanilla Enhanced, Sands of the Alik'r and Snowfall's
+// THE TEXTURE PACKS, OUR OWN. Vanilla Enhanced, Sands of the Alik'r and Snowfall's
 // winter ground are retired with their directories; each picture is built at runtime from the player's own classic
 // record under our rule (src/systems/ownTextures/ownTextureRules.js), and the snow's masks and albedo are ours too.
 // Here: each rule's own law on made-up pictures (no picture of Daggerfall's or of an author's is in a pin), the specs a
 // pack's names resolve to, the masks, and - with ARENA2 - the rules over the player's real records.
-// bible/07-Rendering/Vanilla-Enhanced.md, Sands-Of-The-Alikr.md and bible/03-World/Snowfall.md are the records; the
+// bible/07-Rendering/Vanilla-Enhanced.md, and bible/03-World/Snowfall.md are the records; the
 // mutants are tools/mutants/ownwork4_textures.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

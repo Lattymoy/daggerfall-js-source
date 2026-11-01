@@ -240,7 +240,7 @@
   {
     "name": "DW3-2-a-gated-vendor-entry-answers-while-off",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (v) return !v.gate || v.gate() === true ? decodedFrom(key, liveEntry(key)) : null; // SURV2: the port's own, ungated - DW3: unless its registration gates it",
+    "old": "  if (v) return !v.gate || v.gate() === true ? decodedFrom(key, liveEntry(key)) : null; // The port's own, ungated - DW3: unless its registration gates it",
     "new": "  if (v) return decodedFrom(key, liveEntry(key));",
     "tests": [
       "test/systems/dw3_icons.test.js"

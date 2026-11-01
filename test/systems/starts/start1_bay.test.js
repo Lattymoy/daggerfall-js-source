@@ -1,12 +1,10 @@
-// START1 (2026-10-24, bible/06-Systems/Alternate-Starts-Arc.md; Mac: "allow for the main quest to be started on the
-// player's watch", "Keep privateers hold, give it a new quest", "A letter they open"): THE BAY'S START AND ITS
-// COMMISSION, on the machine whole. A new character starts the Bay's start quest in _BRISIEN's place; nothing of the main
-// quest runs until the commission the tide carried into Privateer's Hold is found and opened; opened, it sends the
-// player to the city of Daggerfall, and there _BRISIEN begins as DFU wrote it - its start-up's waking popup taken out
-// (quest/questPatches.js). The contract every start keeps (systems/starts/starts.js) is held for each name in
-// START_QUESTS, so a province's start is held to it the day it joins. The world here is a synthetic Bay (Privateer's
-// Hold's one block with its item and spawn markers at their real places, and the city of Daggerfall); the game's own
-// data, where ARENA2_PATH names it, resolves the same places and Lady Brisienna's tavern in the last test.
+// THE BAY'S START AND ITS COMMISSION, on the machine whole. A new character starts the Bay's start quest in _BRISIEN's
+// place; nothing of the main quest runs until the commission the tide carried into Privateer's Hold is found and opened;
+// opened, it sends the player to the city of Daggerfall, and there _BRISIEN begins as DFU wrote it - its start-up's
+// waking popup taken out (quest/questPatches.js). The contract every start keeps (systems/starts/starts.js) is held for
+// each name in START_QUESTS, so a province's start is held to it the day it joins. The world here is a synthetic Bay
+// (Privateer's Hold's one block with its item and spawn markers at their real places, and the city of Daggerfall); the
+// game's own data, where ARENA2_PATH names it, resolves the same places and Lady Brisienna's tavern in the last test.
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -100,7 +98,7 @@ const textOf = (q, id) => q.getMessage(id).getTextTokens(-1, () => 0).map((t) =>
 
 test('START1 the start\'s place: a new character starts the curse and the Bay\'s start quest - never _BRISIEN, which a start\'s commission starts; the start is the main quest\'s own (its family, protected, never shared) (mutants: _BRISIEN back in the list, the start out of the protected list, out of the main quest\'s name test)', () => {
   assert.equal(BAY_START_QUEST, '_STARTIB');
-  // START2: the provinces' starts and the commission in hand beside it (test/systems/starts/start2_provinces.test.js)
+  // The provinces' starts and the commission in hand beside it (test/systems/starts/start2_provinces.test.js)
   assert.deepEqual([...START_QUESTS], ['_STARTIB', '_STARTSK', '_STARTMW', '_STARTIC', '_STARTBM', '_STARTEL', '_STARTVW', '_STARTSU', '_STARTHD']);
   assert.equal(MAIN_QUEST_OPENER, '_BRISIEN');
   assert.deepEqual([...GAME_START_QUESTS], ['S0000977', BAY_START_QUEST]);
@@ -169,7 +167,7 @@ for (const name of START_QUESTS) {
     const starters = [...quest.tasks.values()].flatMap((t) => t.actions.filter((a) => a.typeName === 'StartQuest' || a.typeName === 'RunQuest').map(() => t.symbol?.name));
     assert.deepEqual(starters, ['reported']);
     assert.deepEqual([...quest.resources.values()].filter((r) => r.isClock).map((r) => r.symbol.name), [], 'no clock: the player\'s watch');
-    // its words fit the classic skin's box, and are written in American spelling (bible/10-UI/Voice.md rule 8) - a
+    // its words fit the classic skin's box, and are written in American spelling - a
     // rumor is a talk line the window wraps, never a box's row
     const qrc = lines.slice(0, lines.findIndex((l) => /^\s*QBN:/i.test(l))).filter((l) => !l.trimStart().startsWith('--'));
     let rumor = false;
@@ -290,7 +288,7 @@ test('START1 the sheet: what the Quests page shows at each step - the find marke
   assert.equal(outcomeNow(q, sheet), null, 'no outcome before Daggerfall');
   // _BRISIEN's sheet tells the days between: the wait for her letter
   const bs = sheetFor('_BRISIEN');
-  assert.deepEqual(bs.objectives.map((o) => o.id), ['wait', 'meet']);   // PIN MOVED (AUDIT STARTS Q2): no cave's escape - the start's own; _BRISIEN begins in Daggerfall's streets, where it read as done at once
+  assert.deepEqual(bs.objectives.map((o) => o.id), ['wait', 'meet']);
   assert.equal(bs.objectives.find((o) => o.id === 'wait').text, 'Wait for the Emperor\'s agent in Daggerfall to send for you');
 });
 
@@ -347,7 +345,7 @@ test('START1 the patch: _BRISIEN as the pack reads it is our own file (OWN-WORDS
   const message = (from, to) => patched.slice(patched.indexOf(from), patched.indexOf(to));
   const entry = message('QuestLogEntry:  [1010]', 'Message:  1011'), letter = message('Message:  1020', 'Message:  1021');
   assert.doesNotMatch(entry + letter, /storm|ship|cave|accident|\bsea\b/i, 'no wreck told as every player\'s');
-  assert.match(letter, /I hear you have reached the Iliac Bay,\n safe and well\./, 'her letter true of every start');   // PIN MOVED (OWN-WORDS2): our words for AUDIT STARTS Q3's
+  assert.match(letter, /I hear you have reached the Iliac Bay,\n safe and well\./, 'her letter true of every start');
   assert.match(patched, /^Message:\s+1025$/m, 'its words kept: nothing else reads them');
   assert.deepEqual(questSource('_BRISIEN'), patched.split(/\r?\n/), 'and the node twin of the pack reads it so');
 });
@@ -356,7 +354,7 @@ test('START1 the patch: _BRISIEN as the pack reads it is our own file (OWN-WORDS
 
 test('START1 the welcome tour says the main story waits on the commission (bible/10-UI/Voice.md rule 7: the capital unnamed) - START2: whichever start the character chose, so it names none', () => {
   const body = tutorialById('welcome').body.join(' ');
-  assert.match(body, /Your story begins with the Emperor's sealed orders, your commission\. When you hold them, open them from your pack: they name the city where the main story begins\./);   // PIN MOVED (AUDIT STARTS U9): true of the commission in hand, and of where the story begins
+  assert.match(body, /Your story begins with the Emperor's sealed orders, your commission\. When you hold them, open them from your pack: they name the city where the main story begins\./);
   assert.doesNotMatch(body, /cave|shipwreck|Privateer/i, 'no one start\'s words');
   assert.doesNotMatch(body, /daggerfall/i);
 });

@@ -1,8 +1,7 @@
-// AUDIT 68 (2026-09-24, Mac: "a deep comprehensive audit across the entirety of the codebase"), cluster systems_a -
-// src/systems audio..chargen. The behavioural fixes are pinned by execution on the real producers; the
-// single-sourcing items by the ONE DFU MEMBER, ONE EXPORT law they broke (one binding, and no second body left in
-// the files that had one). Namespace imports and a dynamic import where the base had no such export, so each pin
-// fails on its own on the base rather than the whole file failing to link.
+// AUDIT 68, cluster systems_a - src/systems audio..chargen. The behavioural fixes are pinned by execution on the
+// real producers; the single-sourcing items by the ONE DFU MEMBER, ONE EXPORT law they broke (one binding, and no
+// second body left in the files that had one). Namespace imports and a dynamic import where the base had no such
+// export, so each pin fails on its own on the base rather than the whole file failing to link.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -38,7 +37,7 @@ function rainRig({ holdRain = false, engineRunning = true } = {}) {
     loop: (k, v, o) => mk(k, v, { o }), loop3d: (k, pos, v, o) => mk(k, v, { pos, o }),
   };
   const makeClip = async (name) => {
-    if (holdRain && name === AMBIENT_RAIN_CLIP) await held;   // OWN-WORK4: the rain loop, still being made (a step a task)
+    if (holdRain && name === AMBIENT_RAIN_CLIP) await held;   // The rain loop, still being made (a step a task)
     return ({ samples: new Float32Array(1), rate: 22050 });
   };
   const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, makeClip, snowFree: () => false });
@@ -118,7 +117,7 @@ test('AUDIT 68 S24-string-hash-duplicate: C#\'s string.GetHashCode has one home 
   for (const f of ['src/systems/answerPipeline.js', 'src/systems/betterAmbience.js']) {
     const s = rd(f);
     assert.doesNotMatch(s, /\(h << 5\) - h/, `${f} carries no copy of the hash`);
-    assert.match(s, /import \{[^}]*\bstringHash\b[^}]*\} from '\.\.\/formats\/netRuntime\.js';/, `${f} imports it`);   // HAZE1: Better Ambience imports System.Random from the same home
+    assert.match(s, /import \{[^}]*\bstringHash\b[^}]*\} from '\.\.\/formats\/netRuntime\.js';/, `${f} imports it`);   // Better Ambience imports System.Random from the same home
   }
 });
 

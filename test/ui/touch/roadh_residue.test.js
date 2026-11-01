@@ -1,4 +1,4 @@
-// ROAD-H - THE RESIDUE AND THE PINS (2026-09-07).
+// THE RESIDUE AND THE PINS.
 //
 // AUDIT 62 closed with a list under "What was left, and by whose
 // decision". Three of its rows are code, not judgement calls, and this
@@ -7,7 +7,7 @@
 //   H5   world.js's keydown ladder carried TWO byte-identical
 //        `act === 'Rest'` arms in one block. The second could never
 //        run. Deleted, its comment's substance folded into the first.
-//   H7b  retired with the retired flash routine (OWN-WORK4 AUDIT)
+//   H7b  retired with the retired flash routine
 //   H8   the touch layer's HELD controls learned not to lift a key
 //        another live control still owns (AUDIT 62 F8's review); its
 //        MOMENTARY (tap) controls never did, and a tap's keyup does not
@@ -21,7 +21,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dfuFile, missingDfu } from '../../dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
+import { dfuFile, missingDfu } from '../../dfuRoot.mjs';   // DFU_PATH, then the in-tree sparse clone
 import { attachTouch } from '../../../src/ui/touch/touch.js';
 import { setBindings } from '../../../src/ui/input.js';
 import {
@@ -32,7 +32,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 // ---------------------------------------------------------------
-// H5 - THE DEAD REST ARM
+// THE DEAD REST ARM
 // ---------------------------------------------------------------
 
 test('ROAD-H H5: no host\'s keydown ladder carries the same action arm twice (mutant: paste any `if (act === ...)` line back a second time)', () => {
@@ -82,7 +82,7 @@ test('ROAD-H H5: no host\'s keydown ladder carries the same action arm twice (mu
   // outdoor host (the two ladders; the interior and dungeon hosts
   // reach the action through routeAction's `case 'Rest'`)
   assert.equal((read('src/scenes/exterior.js').match(/if \(act === 'Rest'\)/g) ?? []).length, 1);
-  // KB1: the arm answers FALSE with no door - `true` swallowed a key that did nothing (hudlarge.test.js has the law)
+  // The arm answers FALSE with no door - `true` swallowed a key that did nothing (hudlarge.test.js has the law)
   assert.match(read('src/ui/input.js'), /case 'Rest': return ctx\.toggleRest \? \(ctx\.toggleRest\(\), true\) : false;/);
 });
 
@@ -105,15 +105,14 @@ test('ROAD-H H5: the reference the folded comment names - R is Rest, and the dis
 });
 
 // ---------------------------------------------------------------
-// H7b - RETIRED (OWN-WORK4 AUDIT, 2026-11-01): it pinned the retired
-// Dynamic Skies routine's own Time.timeScale arithmetic. The storm's
-// flash is ours now (systems/dynamicSkies/dynamicSkies.js StormFlash),
-// on the frame's real seconds, and test/systems/dynamicSkies.test.js
-// pins its law.
+// RETIRED: it pinned the retired Dynamic Skies routine's own
+// Time.timeScale arithmetic. The storm's flash is ours now
+// (systems/dynamicSkies/dynamicSkies.js StormFlash), on the frame's
+// real seconds, and test/systems/dynamicSkies.test.js pins its law.
 // ---------------------------------------------------------------
 
 // ---------------------------------------------------------------
-// H8 - THE TOUCH CODE-LIFT GUARD (a TI1 departure; DFU has no touch)
+// THE TOUCH CODE-LIFT GUARD (a TI1 departure; DFU has no touch)
 // ---------------------------------------------------------------
 //
 // The layer is DOM, so it is driven against a STUB document, the shape
@@ -155,7 +154,7 @@ function defaultStore() {
   for (const [c, a] of [['Escape', 'Escape'], ['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackwards'],
     ['KeyA', 'MoveLeft'], ['KeyD', 'MoveRight'], ['Space', 'Jump'], ['ShiftLeft', 'Run'],
     ['KeyZ', 'ReadyWeapon'], ['Mouse0', 'ActivateCenterObject'],
-    ['Tab', 'QuickDial']]) setBinding(b, c, a);   // KB1: the dial's default row
+    ['Tab', 'QuickDial']]) setBinding(b, c, a);   // The dial's default row
   return b;
 }
 const btn = (h, label) => h.el.children.find((c) => c.textContent === label);

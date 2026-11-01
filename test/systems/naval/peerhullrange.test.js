@@ -1,4 +1,4 @@
-// PEER-HULL-RANGE (2026-10-11) - ANOTHER'S SHIP FAR OFF STANDS NO HULL HERE. Every peer in the room says their sea in
+// ANOTHER'S SHIP FAR OFF STANDS NO HULL HERE. Every peer in the room says their sea in
 // their word, so a client held every player's ships wherever they sailed, and Come Sail Away's pool walked and baked
 // each one every frame - 30-40 hulls, most of them 80-700 km off, a third of the main thread (scenes/naval/navalHost.js
 // PEER_HULL_NEAR_M). Her record is kept as ever; only her hull waits for the eye to come near. The sea of
@@ -43,12 +43,12 @@ test('PEER-HULL-RANGE another\'s ship within PEER_HULL_NEAR_M of the eye stands 
   assert.deepEqual(h.pool.seaBoats, []);
 });
 
-// AUDIT PEER-HULL-RANGE (2026-10-11, Mac: "Audit it. Ensure it doesnt kill fidelity") - THE PICTURE UNMOVED. The first
-// cut's edges (3,000 / 3,500 m) stood INSIDE the fog: the enhanced lane's linear fog ends at 2400 x Land View / 3 - 4,000 m
-// at its default 5, 4,800 m at 6 (world/weather.js scaleFogForDistance) - so a ship came into being 75% fogged and went
-// out at 87%. And a hull built AGAIN wore her first hull's past rather than her record: her sails by height, colours and
-// wake were remembered on her record against the hull given back, so she came back under full canvas, a struck ship
-// flying her colours, a ship under way with no wake - at full strength in one frame, and her fires hung where she was.
+// THE PICTURE UNMOVED. The first cut's edges (3,000 / 3,500 m) stood INSIDE the fog: the enhanced lane's linear fog ends at
+// 2400 x Land View / 3 - 4,000 m at its default 5, 4,800 m at 6 (world/weather.js scaleFogForDistance) - so a ship came
+// into being 75% fogged and went out at 87%. And a hull built AGAIN wore her first hull's past rather than her record: her
+// sails by height, colours and wake were remembered on her record against the hull given back, so she came back under full
+// canvas, a struck ship flying her colours, a ship under way with no wake - at full strength in one frame, and her fires
+// hung where she was.
 import { FOG_SETTINGS, scaleFogForDistance } from '../../../src/world/weather.js';
 import { LAND_VIEW_MAX } from '../../../src/world/landView.js';
 import { fogSettingsFromPresets, FOG_LOOK } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
@@ -59,7 +59,7 @@ const seenThrough = (f, d) => (f.mode === 'linear' ? Math.max(0, Math.min(1, (f.
 
 test('AUDIT PEER-HULL-RANGE a hull is built and given back only where every lane\'s fog has closed: past the enhanced lane\'s linear fog at its widest Land View, past each of DFU\'s rows and past each of Dynamic Skies\' presets at their lightest density (mutant: the first cut\'s 3,000 m)', () => {
   const dfu = Object.entries(FOG_SETTINGS).filter(([k]) => k !== 'interior' && k !== 'dungeon').map(([k, f]) => [`DFU ${k}`, scaleFogForDistance(f, LAND_VIEW_MAX)]);
-  const ds = Object.entries(fogSettingsFromPresets(FOG_LOOK, 1)).map(([k, f]) => [`Dynamic Skies ${k}`, f]);   // PIN MOVED (OWN-WORK4): our sky's own rows
+  const ds = Object.entries(fogSettingsFromPresets(FOG_LOOK, 1)).map(([k, f]) => [`Dynamic Skies ${k}`, f]);
   assert.equal(scaleFogForDistance(FOG_SETTINGS.sunny, LAND_VIEW_MAX).end, 4800, 'the widest linear fog this port draws');
   for (const [name, f] of [...dfu, ...ds]) assert.ok(seenThrough(f, PEER_HULL_NEAR_M) < 0.01, `${name}: ${seenThrough(f, PEER_HULL_NEAR_M).toFixed(3)} seen at the near edge`);
 });

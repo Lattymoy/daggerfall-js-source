@@ -30,7 +30,7 @@ import { scene, MODELS } from '../../csaScene.mjs';
 import { sweepRig } from '../../shipSweep.mjs';
 import { ownFile } from '../../ownBoats.mjs';
 
-// OWN-WORK4: our boats' files (test/ownBoats.mjs) - the base the port's ship copies her small things out of
+// Our boats' files (test/ownBoats.mjs) - the base the port's ship copies her small things out of
 const csa = ownFile('prefabs.json');
 const modMeshes = ownFile('meshes.json');
 const bin = ownFile('meshes.bin');

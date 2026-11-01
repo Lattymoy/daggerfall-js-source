@@ -167,8 +167,8 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
   // it (avoided).
   const occupied = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const l of locations) if (inMap(l) && !ROAD_TYPES.has(l.type)) occupied[l.y * MAP_WIDTH + l.x] = 1;
-  for (const o of obstacles ?? []) if (inMap(o)) occupied[o.y * MAP_WIDTH + o.x] = 1;   // TESA14
-  // TESA14: whose edges these are - every one, unless a region says which nodes are its own
+  for (const o of obstacles ?? []) if (inMap(o)) occupied[o.y * MAP_WIDTH + o.x] = 1;
+  // Whose edges these are - every one, unless a region says which nodes are its own
   const owned = (n) => !owns || owns(n);
   const firstOf = (a, b) => (a.y < b.y || (a.y === b.y && a.x <= b.x) ? a : b);
 
@@ -198,7 +198,7 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
       if (owned(firstOf(roadNodes[i], roadNodes[o.j]))) addEdge(i, o.j);
     }
   }
-  // TESA14: a region's thousands of towns are millions of pairs to sort - its tree is Prim's, the Bay's Kruskal's as ever.
+  // A region's thousands of towns are millions of pairs to sort - its tree is Prim's, the Bay's Kruskal's as ever.
   // A tree edge that is a neighbours' edge is the first end's, as above; a longer one (a bridge between two webs) either
   // end's, so no region strands a town for want of the other's view - the one pair two regions may both route.
   // OWN-WORK2: the Bay's tree is one a land - an edge across the sea strands the towns its own land would have joined
@@ -209,12 +209,12 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
   // ROUTE the road edges, shortest first, so later routes find and
   // merge into earlier ones through the discount.
   const routed = [...edges.values()].sort((a, b) => dist(roadNodes[a[0]], roadNodes[a[1]]) - dist(roadNodes[b[0]], roadNodes[b[1]]));
-  // AUDIT 45 F7: `unrouted` is a LIST of the pairs that found no path,
+  // `unrouted` is a LIST of the pairs that found no path,
   // each end as {x, y, region}, so the boot log can say WHICH town has
   // no road rather than how many do. `stats.unrouted` stays a count for
   // the log line; `stats.unroutedPairs` carries the names.
   const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [], islands: 0, trackLinks: 0 };
-  if (trunks) { stats.trunkLegs = 0; stats.trunkPath = []; }   // VOYAGER-CYRODIIL: the named roads' pixels, x then y (the map's, the tools'); the Bay's stats as they were
+  if (trunks) { stats.trunkLegs = 0; stats.trunkPath = []; }   // The named roads' pixels, x then y (the map's, the tools'); the Bay's stats as they were
   const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region, name: a.name ?? null }, { x: b.x, y: b.y, region: b.region, name: b.name ?? null }]); };
   for (const [i, j] of routed) {
     if (!sameLand(roadNodes[i], roadNodes[j])) { stats.islands++; miss(roadNodes[i], roadNodes[j]); continue; }
@@ -222,7 +222,7 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
     yield;   // AUDIT TESA II R8: a step
   }
-  // VOYAGER-CYRODIIL: THE NAMED ROADS AFTER THE TOWNS' ROADS, each leg whole to its end (no merge short of it): a leg takes
+  // THE NAMED ROADS AFTER THE TOWNS' ROADS, each leg whole to its end (no merge short of it): a leg takes
   // the towns' roads at half price where they run its way, so a named road threads the towns on its course as a road
   // between cities does, where laid first it cut a ruler-straight line across a plain and the towns' roads merged into it
   for (const [a, b] of trunks ?? []) {
@@ -279,7 +279,7 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
     yield;   // AUDIT TESA II R8: a step
   }
   for (const t of trackNodes) {
-    if (!owned(t)) continue;   // TESA14: another region's
+    if (!owned(t)) continue;   // Another region's
     // ROADS 15: A TRACK JOINS THE ROAD WHERE THE ROAD PASSES, not at the
     // next town. Measured on the hand-drawn network, a track dead-end
     // sits within 9 pixels of a road at the 95th percentile - his spurs
@@ -357,7 +357,7 @@ export function drainSteps(it) {
 function inMap(l) { return l.x >= 0 && l.x < MAP_WIDTH && l.y >= 0 && l.y < MAP_HEIGHT; }
 
 /**
- * TESA14: each node's `k` nearest others within `reach`, nearest first, ties in the nodes' own order - the very lists the
+ * Each node's `k` nearest others within `reach`, nearest first, ties in the nodes' own order - the very lists the
  * brute force answered (every pair's distance, the ones in reach, a stable sort) - over a grid of cells `reach` wide, each
  * node asking the nine about it: a region's ten thousand villages were a hundred million pairs.
  * @param {Array<{x:number,y:number}>} nodes @param {number} reach @param {number} k
@@ -387,7 +387,7 @@ export function nearestWithin(nodes, reach, k) {
   });
 }
 
-/** TESA14: a minimum spanning tree over the nodes by Prim's walk from the first - O(n^2) time and O(n) room, no list of
+/** A minimum spanning tree over the nodes by Prim's walk from the first - O(n^2) time and O(n) room, no list of
  *  pairs to sort. Of equal edges it takes the one the walk meets first. */
 export function primEdges(nodes) {
   const n = nodes.length;
@@ -567,7 +567,7 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, s
       // diagonal seams.
       if (dx && dy && (isBlockedAt(cx + dx, cy) || isBlockedAt(cx, cy + dy))) continue;
       let cost = (dx && dy) ? Math.SQRT2 : 1;
-      if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // VOYAGER1: the land's law (world/road/roadLand.js landStep) - OWN-WORK2: on the Bay too
+      if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // The land's law (world/road/roadLand.js landStep) - OWN-WORK2: on the Bay too
       else {
         const hn = heightAt(nx, ny);
         const rise = hn - hc;
@@ -589,7 +589,7 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, s
     }
   }
   if (end < 0) return null;
-  if (cost) cost.g = g[end];   // VOYAGER1: what it cost, for route()'s wider box
+  if (cost) cost.g = g[end];   // What it cost, for route()'s wider box
   const path = [];
   for (let c = end; c >= 0; c = came[c]) {
     const cell = (c / 8) | 0;

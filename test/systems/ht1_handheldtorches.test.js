@@ -1,5 +1,4 @@
-// HT1 - HANDHELD TORCHES 1.4.1 (RedRoryOTheGlen), THE MOD, 1:1 (2026-09-14,
-// Mac: "Next mod to integrate 1:1 is this").
+// HANDHELD TORCHES 1.4.1 (RedRoryOTheGlen), THE MOD, 1:1.
 //
 // The mod's script is a compiled DLL (four MonoBehaviours) read off the
 // IL and restated in systems/handheldTorches.js (the component: the
@@ -32,13 +31,13 @@ import {
   createDroppedTorches, ENEMY_LIGHT_EFFECT_KEY, ENEMY_FIRE_KIND, PUFF, ENEMY_LIGHT_LOCAL, PICKUP_REACH, PROJECTILE_FIXED_DT, PROJECTILE,
   WATER_HEAD,
 } from '../../src/scenes/droppedTorches.js';
-import { TORCH_ART } from '../../src/systems/handheldTorchesArt.js';   // OWN-WORK4: our own pictures
+import { TORCH_ART } from '../../src/systems/handheldTorchesArt.js';   // Our own pictures
 import { domCodeForKeyCode, keyCodeForDomCode, isBindableKeyCode, KEYCODE_NONE } from '../../src/systems/keyCodes.js';
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey, modSettingsOf, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { BOB_SHAPE as WW_BOB_SHAPE, STEP_CONDITION as WW_STEP_CONDITION } from '../../src/combat/weapon/weaponWidget.js';
 import { FEATURES } from '../../src/systems/features.js';
-import { DEFAULT_BINDINGS, DEFAULT_SHARES, PORT_ACTIONS, MOD_ACTIONS } from '../../src/systems/inputActions.js';   // HT4: the keys DFU already answers; KB1: and the mods' own, which are actions now
-import { shortcutBinding } from '../../src/systems/dialogShortcuts.js';   // KB1: DFU's world shortcuts
+import { DEFAULT_BINDINGS, DEFAULT_SHARES, PORT_ACTIONS, MOD_ACTIONS } from '../../src/systems/inputActions.js';   // The keys DFU already answers; KB1: and the mods' own, which are actions now
+import { shortcutBinding } from '../../src/systems/dialogShortcuts.js';   // DFU's world shortcuts
 import { TEMPLATES } from '../../src/systems/useItem.js';
 import { WEAPONS } from '../../src/characters/weapons.js';
 import { EQUIP_SLOTS, ITEM_HANDS, getItemHands } from '../../src/systems/equip.js';
@@ -50,7 +49,7 @@ import { playerTorchOffsetOverride, setPlayerTorchOffsetOverride, playerTorchLig
 import { isTransformedLycanthrope } from '../../src/systems/lycanthropy.js';
 import { templateByIndex } from '../../src/systems/item/itemTemplates.js';
 
-/** KB1: action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
+/** Action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
 const DEFAULT_CODE = Object.fromEntries(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -93,7 +92,7 @@ function rig(over = {}, deps = {}) {
     castPlaying: false, spellArmed: false, thirdPerson: false, climbing: false, swimming: false, transformedLycanthrope: false,
     motion: { grounded: true, standing: true, speedRatio: 1, baseSpeed: 1, localVel: [0, 0, 0] }, look: [0, 0], swingHeld: false, cursorActive: false,
     camera: () => ({ pos: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, forward: [0, 0, 1], right: [1, 0, 0], up: [0, 1, 0] }),
-    collider: () => deps.collider ?? null, actionDown: (a) => keys.has(DEFAULT_CODE[a]),   // KB1: the registry's three actions, on their default keys (O, G, X)
+    collider: () => deps.collider ?? null, actionDown: (a) => keys.has(DEFAULT_CODE[a]),   // The registry's three actions, on their default keys (O, G, X)
     sheathWeapons: () => { ctx.sheathed = true; sheathes.push(1); },
   };
   const frame = (dt = 0.016) => { h.update(dt, ctx); h.lateUpdate(dt, ctx); };
@@ -108,7 +107,7 @@ function rig(over = {}, deps = {}) {
 test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pinned as literals) - every key, its kind (TextKey and the two Tuple kinds new for it), its range or options, its default, a description for each; the manifest\'s facts, our pictures, the row, the credit, the page, the coercions and the pane', () => {
   const m = MOD_SETTINGS[V];
   assert.ok(m, 'the vendor entry');
-  // OWN-WORK4 (2026-10-31): the release's manifest and settings left the tree; their facts are pinned here as literals
+  // The release's manifest and settings left the tree; their facts are pinned here as literals
   assert.deepEqual([HANDHELD_TORCHES_MOD.guid, HANDHELD_TORCHES_MOD.title, HANDHELD_TORCHES_MOD.version, HANDHELD_TORCHES_MOD.author], ['5922796c-9fa0-4e2f-8aaa-7c9702015813', 'Handheld Torches', '1.4.1', 'RedRoryOTheGlen']);
   assert.equal(m.title, HANDHELD_TORCHES_MOD.title); assert.equal(m.author, HANDHELD_TORCHES_MOD.author);
   assert.deepEqual(Object.keys(TORCH_ART).sort(), [...[0, 1, 2, 3].flatMap((f) => [`${DROPPED_ARCHIVE}_0-${f}`, `${DROPPED_ARCHIVE}_0-${f}_Emission`]), `${DROPPED_ARCHIVE}_10-0`, ...[0, 1].flatMap((r) => [0, 1, 2, 3].map((f) => `${SPRITE_ARCHIVE}_${r}-${f}`))].sort(), 'the 17 pictures the release drew itself are our own recipes; of the 22 candles 20 are rebuilt and the doused two ours over the lit (nobethesda2_torchesicons.test.js)');
@@ -122,14 +121,12 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
     ['Step.Length', 'SliderIntKey', 1, 1, 10], ['Step.Condition', 'MultipleChoiceKey', 0, ['Sheathe/Attack Only', 'All Transforms']], ['Compatibility.TextureScaleFactor', 'SliderIntKey', 1, 0, 8]];
   // the keys the release described (the pane keeps a description for every key; PLAIN below holds our words for each)
   const DESCRIBED = new Set(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Handling.OnStow', 'Handling.OnPick', 'Handling.RelaxedTwoHandedWeapons', 'Handling.RelaxedLanterns', 'Presentation.Tint', 'Presentation.Ambidexterity', 'Presentation.PlayerTorchAudio', 'Bob.Length', 'Bob.Offset', 'Bob.SizeX', 'Bob.SizeY', 'Bob.SpeedMove', 'Bob.SpeedState', 'Bob.Shape', 'Bob.BobWhileIdle', 'Inertia.Scale', 'Inertia.Speed', 'Inertia.ForwardDepth', 'Inertia.ForwardSpeed', 'Step.Length', 'Step.Condition']);
-  // MODS-ON (2026-09-14, Mac: "all mods should be on by default"): the
-  // keys whose default the port sets against the bundle's, listed here
-  // rather than by loosening the compare - so this pin still holds
-  // every OTHER key to the shipped value, and a departure that arrives
-  // without a decision behind it fails right here.
+  // The keys whose default the port sets against the bundle's, listed
+  // here rather than by loosening the compare - so this pin still
+  // holds every OTHER key to the shipped value, and a departure that
+  // arrives without a decision behind it fails right here.
   //
-  // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
-  // for the menu"): the second one. The mod ships Tab for the manual
+  // The second one. The mod ships Tab for the manual
   // drop and in Daggerfall Unity that is free; PX15 spent Tab on the
   // port's own pixel dial, so the shipped default landed on a key this
   // port had already answered and one press did both things. G is free
@@ -137,28 +134,23 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
   // pinned below ("no vendored mod ships a key the port has already
   // spent") so the next mod folded in cannot repeat it quietly.
   //
-  // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
-  // in the world upon encountering them by pressing F on their body"): the
-  // THIRD one, and the same class as HT4 exactly one key over. The mod ships
-  // F for the ignite/douse toggle and DFU leaves F free; SOC5 spends it on
-  // the port's own SocialInteract, so the shipped default would light a
-  // torch on the same press that opens the F-menu on a player - and online
-  // forces every vendored mod on, so it would do it for everyone by
-  // default. O is free in DFU's defaults, in this mod's other two keys and
-  // in every other vendored mod. The class pin below is what caught it.
-  // HT5: and Bob - the widget ships its Bob on, so the torch hand's follows (the third departure, stated in the table).
+  // The THIRD one, and the same class as HT4 exactly one key over. The mod ships F for the ignite/douse toggle and DFU
+  // leaves F free; SOC5 spends it on the port's own SocialInteract, so the shipped default would light a torch on the
+  // same press that opens the F-menu on a player - and online forces every vendored mod on, so it would do it for
+  // everyone by default. O is free in DFU's defaults, in this mod's other two keys and in every other vendored mod. The
+  // class pin below is what caught it. HT5: and Bob - the widget ships its Bob on, so the torch hand's follows (the
+  // third departure, stated in the table).
   //
-  // HT7 (2026-09-17, Mac: "Take care of both"): the FOURTH, and the first
-  // that is not about a key. The mod ships `OnStow = Drop` and HT6
-  // recorded what that means now that the hand law runs at the equip
-  // moment: equipping a shield with your weapon drawn puts the lit torch
-  // on the floor, in front of the player, while the window is open. The
-  // port defaults it to Unequip - the light goes back to the pack and
-  // RememberLastLightSource lights it again when a hand comes free -
-  // and the mod's own value is one click away on the dial, which is
-  // pinned below with both options in the shipped order.
+  // The FOURTH, and the first that is not about a key. The mod ships
+  // `OnStow = Drop` and HT6 recorded what that means now that the hand
+  // law runs at the equip moment: equipping a shield with your weapon
+  // drawn puts the lit torch on the floor, in front of the player, while
+  // the window is open. The port defaults it to Unequip - the light goes
+  // back to the pack and RememberLastLightSource lights it again when a
+  // hand comes free - and the mod's own value is one click away on the
+  // dial, which is pinned below with both options in the shipped order.
   const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O', 'Handling.OnStow': 0, 'Handling.RelaxedTwoHandedWeapons': false });   // 3ARMS: the relaxed switch ships off - a held two-hander takes both hands, HT7's own reasoning
-  // OWN-WORK4 (2026-11-01): every line the release wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly
+  // Every line the release wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly
   const PLAIN = {
     'Handling.ToggleLightInput': 'The key that lights your torch, candle or lantern, or puts it out.',
     'Handling.ManualDropInput': 'The key that drops the light from your hand.',
@@ -166,7 +158,7 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
     'Handling.OnPick': 'What happens when you pick up a light. Store packs it, Equip holds it if a hand is free, and Force Equip sheathes your weapon to hold it.',
     'Handling.RelaxedTwoHandedWeapons': 'A two-handed weapon leaves your light alone until you swing it. A bow still needs both hands.',
     'Handling.RelaxedLanterns': 'A lantern stays lit even when both your hands are full.',
-    'Presentation.Tint': 'The hand with the light is shaded by the room, as your weapon is. Off keeps it bright.',   // OWN-AUDIT: live (draw's tint)
+    'Presentation.Tint': 'The hand with the light is shaded by the room, as your weapon is. Off keeps it bright.',   // Live (draw's tint)
     'Presentation.Ambidexterity': 'The light is drawn in whichever hand is free, left or right.',
     'Presentation.PlayerTorchAudio': 'A torch in your hand crackles as it burns.',
     'Bob.Length': 'How quickly the light sways as you walk.',
@@ -196,7 +188,7 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
       if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def) && !isTextKey(def) && !isTupleKey(def), name); }
       else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
-      else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, name); }   // HT7: the OPTIONS are always the mod's, in its order - only the chosen one may depart, and only by being named above
+      else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, name); }   // The OPTIONS are always the mod's, in its order - only the chosen one may depart, and only by being named above
       else if (kind === 'TextKey') { assert.ok(isTextKey(def), `${name} is a text key`); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, `${name} defaults to the shipped KeyCode name`); assert.ok(isBindableKeyCode(def.default), `${name}'s default parses`); }
       else if (kind === 'TupleIntKey' || kind === 'TupleFloatKey') {
         assert.ok(isTupleKey(def), `${name} is a tuple`); assert.equal(def.tuple, kind === 'TupleIntKey' ? 'int' : 'float', name);
@@ -209,9 +201,9 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
     }
   }
   assert.equal(n, 52, 'the eight sections carry 52 keys');
-  // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist"): the port's OWN key on
-  // this pane, beside the port's Enabled - named here, as ORL1 names primarySkillsImpact, so a third arrives
-  // only with a decision behind it (test/systems/htwaist_setting.test.js holds its default and its words).
+  // The port's OWN key on this pane, beside the port's Enabled - named here, as ORL1 names
+  // primarySkillsImpact, so a third arrives only with a decision behind it
+  // (test/systems/htwaist_setting.test.js holds its default and its words).
   const shippedNames = new Set(SHIPPED.map(([name]) => name));
   assert.deepEqual(Object.keys(m.keys).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'Handling.LanternsAtWaist'], 'plus the port\'s Enabled and its lantern-at-the-waist switch, and nothing else');
   assert.equal(Object.keys(m.keys).length, 54);
@@ -228,13 +220,12 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /handheld-torches/);
   assert.equal(row.effect, 'Takes effect at once.', 'the component reads its switches every frame');
   assert.equal(existsSync(join(root, 'vendor/handheld-torches')), false, 'OWN-WORK4: the release\'s folder is retired');
-  assert.match(rd('bible/06-Systems/Handheld-Torches.md'), /\*\*OWN-WORK4 \(2026-10-31, the owner\)\.\*\*/, 'the page records it');
   // a text key coerces: trimmed, an empty one reads as the default; a tuple: a pair, ints truncated, floats to a thousandth, anything else the default
   _resetModSettings();
   setModSetting(V, 'Handling.ToggleLightInput', ' Q ');
   assert.equal(modSettingsOf(V)['Handling.ToggleLightInput'], 'Q');
   setModSetting(V, 'Handling.ToggleLightInput', '   ');
-  assert.equal(modSettingsOf(V)['Handling.ToggleLightInput'], 'O', 'an empty name reads as the default');   // SOC5: the default is O - the port spends F on SocialInteract now
+  assert.equal(modSettingsOf(V)['Handling.ToggleLightInput'], 'O', 'an empty name reads as the default');   // The default is O - the port spends F on SocialInteract now
   setModSetting(V, 'Throwing.Magnitude', [3.7, 9]);
   assert.deepEqual([...modSettingsOf(V)['Throwing.Magnitude']], [3, 9]);
   setModSetting(V, 'Throwing.Magnitude', [1, 2, 3]);
@@ -246,7 +237,7 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
   _resetModSettings();
   const pane = rd('src/ui/enhanced/enhancedMenu.js');
   assert.match(pane, /\} else if \(isTextKey\(def\)\) \{/, 'the pane has a key capture');
-  assert.match(pane, /b\.textContent = t\('mods\.pane\.pressKey', 'press a key'\);/);   // L10N4: in the player's language
+  assert.match(pane, /b\.textContent = t\('mods\.pane\.pressKey', 'press a key'\);/);   // In the player's language
   assert.match(pane, /const name = e\.code === 'Escape' \? null : keyCodeForDomCode\(e\.code\);/, 'the capture spells the key as Unity would; Escape cancels');
   assert.match(pane, /\} else if \(isTupleKey\(def\)\) \{/, 'the pane has a pair of steppers');
   assert.match(pane, /const stepOf = def\.tuple === 'int' \? 1 : \(def\.step \?\? 0\.1\);/);
@@ -270,10 +261,10 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   _resetModSettings();
   const s = readTorchSettings();
   assert.equal(s.enabled, true);
-  // KB1: the three KeyCodes are not settings any more - they are the registry's TorchToggleLight/TorchDrop/TorchThrow
+  // The three KeyCodes are not settings any more - they are the registry's TorchToggleLight/TorchDrop/TorchThrow
   // (HT4 pins their defaults: O, G, X), so LoadSettings carries no key field for anything to read by mistake.
   assert.deepEqual([s.toggleKey, s.dropKey, s.throwKey], [undefined, undefined, undefined], 'no key fields');
-  // HT7: the port's default is Unequip - the mod ships Drop and the dial
+  // The port's default is Unequip - the mod ships Drop and the dial
   // still offers it, which the pane pin above holds in the mod's own
   // order. LoadSettings reads whatever the store says, so what is pinned
   // here is that it reads it, and that the DEFAULT store says Unequip.
@@ -281,7 +272,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   assert.deepEqual([s.stowOnSpellcasting, s.stowOnClimbing, s.stowOnSwimming, s.twoHandedRelaxed, s.lanternRelaxed], [true, true, true, false, false], '3ARMS: relaxed two-handers ship OFF');
   assert.deepEqual([s.throwStrength, s.throwAngle, s.throwSpread, s.throwGravity, s.throwBounce, s.throwScale, s.throwDrawTrajectory], [1, 15, 1, 1, 0.5, 1, true]);
   assert.deepEqual([s.fire, s.fireAccuracy, s.fireDuration, s.fireChance, s.fireDamageRange, s.fireLight, s.fireLightShadows], [true, 50, 3, 50, [1, 2], true, false]);
-  // MODS-ON: the SPRITE is the port's own default now (the mod's whole
+  // The SPRITE is the port's own default now (the mod's whole
   // subject, invisible without it - see the HT2 audit); the other three
   // are presentation and stay as the bundle ships them.
   assert.deepEqual([s.showSprite, s.bob, s.inertia, s.stepTransforms], [true, true, false, false], 'the sprite is ON by the port\'s decision, and Bob with it (HT5: in step with Weapon Widget\'s shipped Bob); Inertia and Step ship OFF as the widget\'s do');
@@ -297,7 +288,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   assert.equal(r.moveSmoothSpeed, 1); assert.equal(r.bobSmoothSpeed, 1000); assert.equal(r.bobShape, 1);
   assert.equal(r.inertiaScale, 50); assert.equal(r.inertiaSpeed, 1000); near(r.inertiaForwardScale, 0.1); near(r.inertiaForwardSpeed, 0.4);
   assert.equal(r.scaleTextureFactor, 1, 'a zero factor would divide the sprite by nothing; floored at 1');
-  // KB1: the mod's "Detected an invalid key code" is the carry's to judge now - a stored name that parses to no code
+  // The mod's "Detected an invalid key code" is the carry's to judge now - a stored name that parses to no code
   // leaves the registry's default standing (test/ui/kb1_keybinds.test.js).
   assert.deepEqual(r.fireDamageRange, [2, 5]); assert.equal(r.onStow, ON_STOW.Unequip);
   assert.equal(torchItemWords(torch()), 'new torch', 'Condition().ToLower() + " " + LongName.ToLower()');
@@ -336,16 +327,16 @@ test('HT1: UpdateFreeHand - the table over the two slots: a bare hand in use, a 
   delete slots[EQUIP_SLOTS.RightHand]; r.ctx.usingRightHand = false; r.frame(); assert.deepEqual(hands(), [false, true], 'a shield alone, the right not in use: the right'); assert.equal(r.h.freeHand, FREE_HAND.Right);
   r.ctx.usingRightHand = true;
   slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Long_Bow); r.frame(); assert.deepEqual(hands(), [false, false], 'a bow in the left takes both');
-  // HT7: sheathed, a bow in the left slot now takes BOTH hands, as it does
+  // Sheathed, a bow in the left slot now takes BOTH hands, as it does
   // drawn - the mod's sheathed arm cleared the left alone and is gone.
   r.ctx.sheathed = true; r.frame(); assert.deepEqual(hands(), [false, false], 'HT7: sheathed, the bow takes both hands, as drawn');
-  // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEPARTURE FROM
-  // THIS ARM. The mod clears a hand while sheathed only for a BOW, so a
-  // shield or a dagger in the left slot took nothing and a lit torch
-  // stayed in that hand with the weapon on your back. HT6 recorded that
-  // and defended it (a Daggerfall shield is armour, strapped rather than
-  // gripped) and flagged it for Mac, whose ORIGINAL report was that very
-  // case. A hand holding something is not free, sheathed or drawn.
+  // THE ONE DEPARTURE FROM THIS ARM. The mod clears a hand while
+  // sheathed only for a BOW, so a shield or a dagger in the left slot
+  // took nothing and a lit torch stayed in that hand with the weapon on
+  // your back. HT6 recorded that and defended it (a Daggerfall shield is
+  // armour, strapped rather than gripped) and flagged it for Mac, whose
+  // ORIGINAL report was that very case. A hand holding something is not
+  // free, sheathed or drawn.
   slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Dagger); r.frame();
   assert.deepEqual(hands(), [false, true], 'HT7: sheathed, a dagger in the left slot takes the left hand too');
   slots[EQUIP_SLOTS.LeftHand] = shield(); r.frame();
@@ -546,12 +537,12 @@ test('HT1: PickupLightSource\'s pack half - Store stows with the clip, Equip lig
 // ═══ the sprite ═════════════════════════════════════════════════════════
 
 /** The mod's textures, as the loader hands them over: the torch hand 90x205 x4, the lantern 110x138 x4. */
-const loadSprite = async (record, frame) => (frame < 4 ? (record === 0 ? { width: 90, height: 205, colors: null } : record === 1 ? { width: 110, height: 138, colors: null } : null) : null);   // TEX1: `colors`, the shape the real door answers and uploadTexture reads
+const loadSprite = async (record, frame) => (frame < 4 ? (record === 0 ? { width: 90, height: 205, colors: null } : record === 1 ? { width: 110, height: 138, colors: null } : null) : null);   // `colors`, the shape the real door answers and uploadTexture reads
 const fakeRenderer = () => { const r = { uploads: [], quads: [], uploadTexture: (a, k, img) => { const t = { a, k, img }; r.uploads.push(t); return t; }, drawScreenQuad: (tex, rect, uv) => r.quads.push({ tex, rect, uv }) }; return r; };
 
 test('HT1: InitializeTextures, the three placements and GetSpriteRect - the guard by Offset over the screen, the attack at the corner, the sheathe a height below it, the slide at offsetSpeedLive (thrice off), the lantern\'s frames at 4, a candle without a sprite, the frame clock, Scale, the Step snap, third person and the module off drawing nothing', async () => {
   const renderer = fakeRenderer();
-  const r = rig({ 'Modules.Sprite': true, 'Modules.Bob': false }, { renderer, loadSprite });   // HT5: Bob ships on now; this pin measures the placements alone
+  const r = rig({ 'Modules.Sprite': true, 'Modules.Bob': false }, { renderer, loadSprite });   // Bob ships on now; this pin measures the placements alone
   const t = torch(); r.entity.items = [t]; r.entity.lightSource = t;
   r.frame(); await r.h._w.texturesLoading;
   assert.equal(r.h._w.textures.length, 8); assert.deepEqual([r.h._w.animTorchLength, r.h._w.animLanternLength], [4, 4]);
@@ -705,7 +696,7 @@ test('HT1: SpawnLightSource - the billboard of the mod\'s record at the point (a
   near(lights[1].range, 1 + 8 * (90 / (16 * 20)));
   near(lights[1].y, 19 * GLOBAL_SCALE / 2 + 0.5, 1e-9, 'the candle is shorter, so its flame sits lower');
   assert.equal(templateByIndex(T.Torch).hitPoints, 50); assert.equal(templateByIndex(T.Torch).capacityOrTarget, 14);
-  // AUDIT 66 F10: no PlayerTorchLightScale term - the mod multiplies this range by it, the port's own lane holds that setting inert for a radius (playerTorch.js), and no host could feed the dep anyway
+  // No PlayerTorchLightScale term - the mod multiplies this range by it, the port's own lane holds that setting inert for a radius (playerTorch.js), and no host could feed the dep anyway
   assert.ok(!/torchLightScale/.test(rd('src/scenes/droppedTorches.js')), 'the dep no host passed is gone');
   assert.ok(!/DROPPED_LIGHT_INTENSITY/.test(rd('src/scenes/droppedTorches.js')), 'and the constant nothing read');
   // a rest of an hour: the candle (90 s left) dies, the torch burns 300 s
@@ -816,7 +807,7 @@ test('HT1: a foe struck - hostile, the to-hit roll with Accuracy, ContinuousDama
   assert.deepEqual(fire, { kind: ENEMY_FIRE_KIND, key: ENEMY_LIGHT_EFFECT_KEY, roundsRemaining: 3 }); assert.equal(ENEMY_LIGHT_EFFECT_KEY, 'HandheldTorchesEnemyLight');
   assert.equal(q.p.foeBurning(foe), true);
   assert.deepEqual(q.shots.at(-1)[0], CLIPS.ignite, 'the ignite clip at the point');
-  fire.roundsRemaining = 1; q.p.igniteFoe(foe); assert.equal(fire.roundsRemaining, 3, 'a re-hit renews its rounds, never stacks them');   // PIN MOVED (STACK-CAP): AddState stacked them (6)
+  fire.roundsRemaining = 1; q.p.igniteFoe(foe); assert.equal(fire.roundsRemaining, 3, 'a re-hit renews its rounds, never stacks them');
   await settle(); q.p.tick(0.016);
   assert.deepEqual(uploads.slice(0, 6).map((u) => u.join(':')), ['375:0:0', '375:0:1', '375:0:2', '375:0:3', '375:0:4', '375:0:5']);
   const flame = q.p.batches().find((b) => b.archive === PUFF.archive);
@@ -843,19 +834,19 @@ test('HT1: a foe struck - hostile, the to-hit roll with Accuracy, ContinuousDama
 
 test('HT1: the rig runs the component beside the widget - one per rig, the pool bound to it, Update then LateUpdate with the frame\'s inputs (the machine, the sheathe, the hand, the cast, the third person, the climb, the swim, the lycanthrope, the motion, the look, the camera, the collider, the raw keys, the sheathe door), the draw seam after the arms and before the widget', () => {
   const rig = rd('src/combat/weapon/weaponRig.js');
-  assert.match(rig, /import \{ createHandheldTorches, isHeldLight \} from '\.\.\/\.\.\/systems\/handheldTorches\.js';/);   // TORCH-VIS: and the mod's own light test, so the ladder asks it in the mod's words
+  assert.match(rig, /import \{ createHandheldTorches, isHeldLight \} from '\.\.\/\.\.\/systems\/handheldTorches\.js';/);   // And the mod's own light test, so the ladder asks it in the mod's words
   assert.match(rig, /const handheld = createHandheldTorches\(\{ audio, say, torches(?:, dropRefusal)? \}\);/);
   assert.match(rig, /const handheldOn = \(\) => modSetting\('handheld-torches', 'Enabled'\);/);
   assert.match(rig, /pool\.setOnPickedUp\?\.\(\(item\) => handheld\.receivePickedUp\(item\)\);/, 'the pool hands a picked-up light to the component');
-  // SW1b: the shield opens this block too - it was a third consumer inside a gate written for the other two,
+  // The shield opens this block too - it was a third consumer inside a gate written for the other two,
   // so a profile with only Shield Widget on never got a frame at all (bible SW1b.1)
-  // PIN MOVED (MIXED-PAIR): the gate's gun leg is `gunUp()` - a Pistolet in either hand, a blade's partner included (was:
+  // PIN MOVED: the gate's gun leg is `gunUp()` - a Pistolet in either hand, a blade's partner included (was:
   // `thunderlockHeld()`, the right hand's alone)
   assert.match(rig, /const _torchesOn = handheldOn\(\);\s*(?:\/\/[^\n]*\n\s*)*if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);[^\n]*\n\s*_handheldWasOn = _torchesOn;[\s\S]{0,3000}?if \(widgetOn\(\) \|\| _torchesOn \|\| shieldOn\(\) \|\| gunUp\(\)\) \{/);
-  // AUDIT-EOTB2: the torch hand's third-person gate asks the sprite body too (Eye Of The Beholder's ToggleBillboard hides the FPV hand)
+  // The torch hand's third-person gate asks the sprite body too (Eye Of The Beholder's ToggleBillboard hides the FPV hand)
   assert.match(rig, /if \(_torchesOn\) \{\s*bindTorches\(\);\s*const tctx = \{\s*renderer, canvas: c, entity, machine: playerWeapon\.machine, sheathed: playerWeapon\.sheathed, usingRightHand: playerWeapon\.usingRightHand,\s*castPlaying: fpsSpellCasting\.isPlayingAnim, spellArmed: spellArmed\(\), thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\),[^\n]*\n\s*climbing: !!cam\?\.climbing, swimming: !!mv\.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope\(entity\),/);
   assert.match(rig, /look: lookAxes, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk, collider: \(\) => collider\?\.\(\) \?\? null,\s*actionDown: \(action\) => !!actionDown\?\.\(action\), sheathWeapons: \(\) => \{ if \(!playerWeapon\.sheathed\) playerWeapon\.toggleSheath\(\); \},\s*\};\s*handheld\.update\(dt, tctx\);\s*handheld\.lateUpdate\(dt, tctx\);/);
-  // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
+  // Every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
   // the ORDER and the returns are what this pin holds, and neither moved.
   // SW1: the shield draws between the arms' return and the torch hand -
   // the OFF hand, behind both the torch and the weapon.
@@ -864,7 +855,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   // MAP-WEAPON: one more rung between the arms and the shield - a map
   // holding the screen stops the classic body's four painters, the torch
   // hand among them (hands holding a map hold no torch either).
-  // PIN MOVED (SPELL-HAND): the clone's draw passes the spell hand's guard, under its own comment (was:
+  // PIN MOVED: the clone's draw passes the spell hand's guard, under its own comment (was:
   // `widget.draw(renderer, c, fpTint)`); the order did not move
   assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\) && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const tlArt = c && thunderlockHeld\(\) \? artFor\(playerWeapon\.weapon\) : null;\s*if \(tlArt\?\.anchor && tlArt\.unionBox\) \{ drawThunderlock\(tlArt, c, fpTint\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(gunSliding && !shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _spellGuard\.weapon > 0 \? \{ transform: \(r\) => \(\{ \.\.\.r, y: r\.y \+ guardDrop\(_spellGuard\.weapon, r\.h\) \}\) \} : undefined\)\) return;/, 'the arms return first (no classic hand under the Morrowind arms), the shield behind the torch hand, the torch hand under the weapon');
   assert.match(rig, /actionDown = null, torches = \(\) => null, sheetWindowUp = \(\) => false(?:, dropRefusal = \(\) => null)?(?:, actTool = \(\) => null)?(?:, technique = null)? \}\)/, 'KB1: the registry\'s held read (it was the raw key set) and the pool - the two deps the hosts feed, and MAP-WEAPON\'s third - defaulted so a host that never heard of it draws what it always drew');
@@ -872,7 +863,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
   assert.match(rig, /handheld,\s*\/\/ HT1/);
   assert.match(rd('src/systems/lycanthropy.js'), /export const isTransformedLycanthrope = \(entity\) => isTransformedNow\(entity\);/);
-  assert.match(rd('src/systems/playerTorch.js'), /const o = lanternAtWaist\(entity\?\.lightSource\) \? \(_waistOverride \?\? LANTERN_HIP\) : \(_offsetOverride \?\? TORCH_OFFSET\);/);   // HT-WAIST: a lantern at the waist lights from the hip
+  assert.match(rd('src/systems/playerTorch.js'), /const o = lanternAtWaist\(entity\?\.lightSource\) \? \(_waistOverride \?\? LANTERN_HIP\) : \(_offsetOverride \?\? TORCH_OFFSET\);/);   // A lantern at the waist lights from the hip
   assert.match(rd('src/systems/features.js'), /modFeature\('handheld-torches', \(\) => t\('features\.effect\.atOnce', 'Takes effect at once\.'\), '\w+'\)/);
 });
 
@@ -896,23 +887,23 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(world, /droppedTorches\.offsetAll\(r\.offset\);/, 'world: the recenter');
   // AUDIT LANDFORMS C1 MOVED THIS PIN: the height compensation-free and in DFU's frame (groundFrameHeight)
   assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, groundFrameHeight\(pos\[1\] - state\.compensation\[1\], pos\[0\], pos\[2\]\), wc\.z\]; \}\),/, 'world: the save data in world coordinates');
-  assert.match(world, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\), \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');   // TERRAIN-SCALE1: stood again on today's ground first
-  assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches\.map\(/, 'world: the F9 envelope too');   // TERRAIN-SCALE1: stood again on today's ground
+  assert.match(world, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\), \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');   // Stood again on today's ground first
+  assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches\.map\(/, 'world: the F9 envelope too');   // Stood again on today's ground
   // the interior mode
   assert.match(wm, /const interiorTorches = createDroppedTorches\(\{/);
   assert.match(wm, /\.\.\.interiorTorches\.lights\(\)(?:, \.\.\.\(host\.modeLights\?\.\(\) \?\? \[\]\))?\);/); assert.match(wm, /interiorTorches\.tick\(dt\);/); assert.match(wm, /const _torches = interiorTorches\.batches\(\);/);
   assert.match(wm, /targets\.push\(\.\.\.interiorTorches\.targets\(\)\);/);
   assert.match(wm, /if \(key\.startsWith\('droppedTorch:'\)\) \{ interiorTorches\.activate\(key, getInteractionMode\(\)\); return true; \}/);
-  // AUDIT 66 F4: the sweep runs with the TRANSITION, before the scene cache puts the room's own torches back - it used to sit at the foot of the same function and destroyed what the restore had just spawned
+  // The sweep runs with the TRANSITION, before the scene cache puts the room's own torches back - it used to sit at the foot of the same function and destroyed what the restore had just spawned
   assert.match(wm, /dismountPlayer\('ToBuildingInterior'\);\s*transitioning = true;\s*try \{\s*(?:\/\/[^\n]*\n\s*)*interiorTorches\.destroyAll\(\);/, 'the way in: before the build, not after the restore');
   const _wmEnter = wm.indexOf("interiorTorches.destroyAll();");
   assert.ok(_wmEnter > 0 && _wmEnter < wm.indexOf('restoreInteriorScene();'), 'and it lands ABOVE the restore in the file, as it does in the frame');
   assert.equal((wm.match(/interiorTorches\.destroyAll\(\);/g) ?? []).length, 3, 'the way in, the way out, and AUDIT 66 F6 the quest-teleport / load exit');
   assert.match(wm, /interiorDropped\.restorePiles\(null\);[^\n]*\n\s*interiorTorches\.destroyAll\(\);[^\n]*\n\s*interiorHitEffects\.clear\(\);/, 'AUDIT 66 F6: in the teardown list with its siblings');
-  // TERRAIN-SCALE1: measured from the building, and placed on this visit's origin
+  // Measured from the building, and placed on this visit's origin
   assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\(p\) => \[p\[0\] - o\[0\], p\[1\] - o\[1\], p\[2\] - o\[2\]\]\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches, place\);/);
   assert.match(wm, /key\.startsWith\('droppedTorch:'\)\) \{/, 'the dungeon arm\'s loot ladder takes the key');
-  assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)(?:\.map\(_dgTint\))?(?:, \.\.\.\(dungeonCtx\.sdEndLights\?\.\(\) \?\? \[\]\))?(?:, \.\.\.\(host\.modeLights\?\.\(\) \?\? \[\]\))?\)/);   // AUDIT DISC19: the dungeon's colour on each, the candle alone white assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
+  assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)(?:\.map\(_dgTint\))?(?:, \.\.\.\(dungeonCtx\.sdEndLights\?\.\(\) \?\? \[\]\))?(?:, \.\.\.\(host\.modeLights\?\.\(\) \?\? \[\]\))?\)/);   // The dungeon's colour on each, the candle alone white assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
   // the dungeon context and the standalone dungeon
   assert.match(dc, /droppedTorches, torchBatches: \(\) => droppedTorches\.batches\(\), torchLights: \(\) => droppedTorches\.lights\(\),/);
   assert.match(dc, /targets\.push\(\.\.\.droppedTorches\.targets\(\)\);/); assert.match(dc, /if \(kind === 'droppedTorch'\) return droppedTorches\.activate\(key, mode\) \? 1 : 0;/);
@@ -920,11 +911,10 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(dc, /delete w\.droppedLoot;\s*delete w\.droppedTorches;/, 'the shared world carries nothing of the player\'s own');
   assert.match(dc, /waterLevel: \(\) => \(_fpFeet \? blockWaterLevelAt\(/, 'the dungeon\'s water plane for the douse');
   assert.match(dc, /droppedTorches\.destroyAll\(\);\s*weaponRig\.dispose\?\.\(\);/, 'AUDIT 66 F5/F8: the pool and the rig\'s component leave with the dungeon, beside the foes\' batches and the wall torches\' loops');
-  assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\) \|\| key\.startsWith\('hearth:'\)(?: \|\| key\.startsWith\('search:'\))?(?: \|\| key\.startsWith\('delve:'\))?(?: \|\| key\.startsWith\('aurum:'\))?\)\) \{/);   // PIN MOVED (DELVE II, DLV2): and a vault's `delve:` after them; PIN MOVED (AURUM-CACHES): and today's Aurum coffer's `aurum:`. AUDIT-WH2 L2-F1/F2: the fires joined this ladder (SEARCH1: and the searchables after them) - ?dungeon stood and NAMED camp:/hearth: and answered neither
+  assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\) \|\| key\.startsWith\('hearth:'\)(?: \|\| key\.startsWith\('search:'\))?(?: \|\| key\.startsWith\('delve:'\))?(?: \|\| key\.startsWith\('aurum:'\))?\)\) \{/);
   assert.match(dj, /actionDown: \(action\) => held\(keys, action\)/);
 });
 
-// HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved for the menu"):
 // A VENDORED MOD'S KEY MAY NOT LAND ON A KEY THE PORT HAS ALREADY SPENT.
 //
 // Handheld Torches ships Handling.ManualDropInput = "Tab". In Daggerfall Unity
@@ -967,12 +957,11 @@ test('HT4 (re-aimed by KB1): no action ships on a key another action, DFU\'s wor
   assert.doesNotMatch(rd('src/systems/handheldTorches.js'), /domCodeForKeyCode\(s\['(Handling|Throwing)\./, 'the three keys are not parsed off the store');
 });
 
-// HT5 (2026-09-16, Mac: "the torch when being held isn't affected by the
-// weapon bob like everything else"). The mod ships its motion modules off
-// and leaves matching them to the weapon's to the player; the port ships
-// Weapon Widget's Bob ON, so the torch hand stood still beside a swaying
-// weapon. The three modules the two mods share ship with the SAME answer
-// here - one walk, two hands - and the mod's own file is untouched.
+// HT5. The mod ships its motion modules off and leaves matching them to
+// the weapon's to the player; the port ships Weapon Widget's Bob ON, so
+// the torch hand stood still beside a swaying weapon. The three modules
+// the two mods share ship with the SAME answer here - one walk, two hands
+// - and the mod's own file is untouched.
 test('HT5: the torch hand moves as the weapon does - every motion module the two mods share ships with the same default (mutant: one hand\u2019s module flipped alone)', async () => {
   const { MOD_SETTINGS } = await import('../../src/systems/modSettings.js');
   const torchKeys = MOD_SETTINGS['handheld-torches'].keys;
@@ -1016,7 +1005,7 @@ test('TORCH-VIS (the law): the Morrowind rig already says a SHEATHED stance keep
   }
   // ...and the case that must keep hiding it, which is why the fix does not simply drop the gate
   assert.equal(carriedLeftVisible(animWeaponType(1, false, true)), false, 'a readied spell hides the carried left - the reference\'s own case');
-  // the mod's half of it: a free hand is what lets a weaponless player carry a light at all (HT7)
+  // the mod's half of it: a free hand is what lets a weaponless player carry a light at all
   const { isHeldLight } = await import('../../src/systems/handheldTorches.js');
   const { TEMPLATES } = await import('../../src/systems/useItem.js');
   assert.equal(isHeldLight({ templateIndex: TEMPLATES.Torch }), true);
@@ -1039,12 +1028,11 @@ test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon
   // the sheathed case, and a readied spell, a cast in flight and an equip countdown all still hide the torch
   assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\)\s*\n\s*&& !lanternAtWaist\(entity\?\.lightSource\);/,
     'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for - HT-WAIST: and a lantern at the waist, which no hand holds');
-  // PIN MOVED (TWO-HANDS): the running hands - the sprite lane's and the Morrowind arms' - beside the six (was: ending at `!armsClimb`)
   assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts && !armsClimb && !runHands && !armsRun\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s, SW1b the shield\'s, FIELD-GUN13 the gun still sliding out of frame, MW-CAST1 the Morrowind arm\'s casting hands, CLIMB-HANDS II its hands on the stone, TWO-HANDS the running hands - the same law, eight things that are not a drawn weapon)');
   // and the weapon stays hidden: the return sits AFTER the torch hand and BEFORE the clone and the sprite
   const draw = rig.slice(rig.indexOf('const torchOnly ='));
   const torchAt = draw.indexOf('handheld.draw(renderer, c, fpTint)');
-  const stopAt = draw.indexOf('if (torchOnly && !gunSliding) return;');   // FIELD-GUN13: the gun mid-slide is the one thing that comes back with the hand
+  const stopAt = draw.indexOf('if (torchOnly && !gunSliding) return;');   // The gun mid-slide is the one thing that comes back with the hand
   const cloneAt = draw.indexOf('widget.draw(renderer, c, fpTint');   // FIELD-GUN6 added the Thunderlock's rect delta after the tint
   const spriteAt = draw.indexOf('drawFpsWeapon(');
   assert.ok(torchAt > 0 && stopAt > 0 && cloneAt > 0 && spriteAt > 0, 'all four are in the ladder');

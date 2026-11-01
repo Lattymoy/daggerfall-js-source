@@ -12,8 +12,8 @@
  {
   "name": "F-siege-market-boards-dropped",
   "file": "src/scenes/pixelBuild.js",
-  "old": "gates: pixelGates.map((g) => ({ box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit, centre:",
-  "new": "gates: pixelGates.map((g) => ({ box: g.entry?._box })), centre:",
+  "old": "      gates: pixelGates.map((g) => ({ box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit, centre: townCentreOf(pixelHomeFrames),",
+  "new": "      gates: pixelGates.map((g) => ({ box: g.entry?._box })), centre: townCentreOf(pixelHomeFrames),",
   "tests": [
    "test/scenes/fb1029g_townpanel.test.js"
   ]

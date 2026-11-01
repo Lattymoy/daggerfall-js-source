@@ -1,7 +1,6 @@
-// IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1"): IMMERSIVE TRAVEL 1.5, by
-// kkgobkk - carriages at the city gates, a driver's Fast Travel, a ship captain's passage. The port's law is the
-// release's assembly's IL (Immersive Travel 1.5's, IL_xxxx); every pin here names the offsets it holds the port to, and
-// the mod's own bugs are pinned as it ships them (bible/06-Systems/Immersive-Travel.md).
+// IMMERSIVE TRAVEL 1.5, by kkgobkk - carriages at the city gates, a driver's Fast Travel, a ship captain's passage. The
+// port's law is the release's assembly's IL (Immersive Travel 1.5's, IL_xxxx); every pin here names the offsets it
+// holds the port to, and the mod's own bugs are pinned as it ships them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -25,7 +24,7 @@ import { TravelPopUpWindow } from '../../../src/ui/travel/travelPopUp.js';
 import { staticNpcRoute } from '../../../src/systems/guild/guildServiceFlow.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-/** OWN-WORK2 (2026-10-31): Immersive Travel 1.5's modsettings.json, written out - its copy left the tree. Each key:
+/** Immersive Travel 1.5's modsettings.json, written out - its copy left the tree. Each key:
  *  [section.name, the shipped value, the author's description as shipped, a slider's [min, max]]. */
 const SHIPPED = [
   ['General.DisableNormalTravel', true, 'If this option is eabled, you will no longer be able to travel from the map and you will have to use ONLY carriages and ships.'],
@@ -61,7 +60,7 @@ test('IT1 the record: the settings as the release ships them, every key restated
   const keys = MOD_SETTINGS[IMMERSIVE_TRAVEL_VENDOR].keys;
   const restated = Object.keys(keys).filter((k) => k !== 'Enabled');
   assert.deepEqual(restated, SHIPPED.map(([n]) => n), 'every key, in the file\'s order');
-  // OWN-WORK4 (2026-11-01): every line the author wrote, in our own words - ours, exactly
+  // Every line the author wrote, in our own words - ours, exactly
   const PLAIN = {
     'General.DisableNormalTravel': 'Turns off travel from the map. Carriages and ships become your only fast travel.',
     'General.DailyCarriageFee': 'Gold a carriage driver charges for each day on the road.',

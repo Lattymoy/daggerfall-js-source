@@ -36,18 +36,18 @@ import { TUTORIALS } from '../../src/systems/tutorialCatalogue.js';
 import { rulesOf } from '../sheetRules.mjs';
 import { withDom } from '../invdrag.mjs';
 
-// ═══ AUDIT C&C - THE SURFACES (2026-10-12) ═══════════════════════════════
+// ═══ AUDIT C&C - THE SURFACES ═══════════════════════════════
 //
 // Lens S (what the player sees) and lens R (the records and the pins) of AUDIT C&C, the comprehensive audit of the
 // Climates & Calories arc, each finding reproduced in Chromium or through the real producers before it was fixed: the
-// pack's Felt plaque stood on the R-Weapon panel (S1); the HUD's plate ran off the screen at legal HUD scales, went with
-// the compass's X, stayed compact after a scale came back and stood under the FPS read-out (S3, S10, S12); the Grimoire
-// dress framed every plate in the one wood and wrote every plaque in the red of a cost (S4); Hard's costing Tired, Warm
-// and Stiff were amber and a Drenched that costs nothing of its own was red (S5); the strip read the record and the
-// plate the live air (S9); an unidentified piece's comparison counted its hidden power (S6); the credits said Boons
-// takes nothing (S8); the Status page read the tier a minute late (S11); the first-need tutorial's words (S13); a cost
-// said in colour alone (S14); a red thermometer on the comfortable reading (D6); the hearth's glyph misnamed (R11); and
-// the pins that did not fail (R5, R6, R7). Every fixture is a real producer's - chargen's own character and kit, the
+// pack's Felt plaque stood on the R-Weapon panel; the HUD's plate ran off the screen at legal HUD scales, went with
+// the compass's X, stayed compact after a scale came back and stood under the FPS read-out; the Grimoire
+// dress framed every plate in the one wood and wrote every plaque in the red of a cost; Hard's costing Tired, Warm
+// and Stiff were amber and a Drenched that costs nothing of its own was red; the strip read the record and the
+// plate the live air; an unidentified piece's comparison counted its hidden power; the credits said Boons
+// takes nothing; the Status page read the tier a minute late; the first-need tutorial's words; a cost
+// said in colour alone; a red thermometer on the comfortable reading; the hearth's glyph misnamed; and
+// the pins that did not fail. Every fixture is a real producer's - chargen's own character and kit, the
 // real feed and minute law, the real pack, HUD, menu and sheet builders - and every number a literal (A PIN MUST FAIL).
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -223,7 +223,7 @@ test('AUDIT C&C S3: THE PLATE IS A HUD PIECE OF ITS OWN, INSIDE ANOTHER (UI-CALM
     const e = realPlayer('casual');
     minute(e, MOUNTAIN_NIGHT, 1001);
     drawEnhancedHud(e, 0, 0, {});
-    const plate = doc.querySelector('.hud .hud-temp'), compass = doc.querySelector('.hud .hud-quick');   // UI-CALM: the outer piece is the quick block
+    const plate = doc.querySelector('.hud .hud-temp'), compass = doc.querySelector('.hud .hud-quick');   // The outer piece is the quick block
     assert.equal(plate.parentNode?.parentNode, compass, 'in the page, inside the quick block (its caption)');
     const sweep = (layout) => { setPref(HUD_LAYOUT_PREF, layout); sweepHudLayout(doc); };
     sweep({ quick: { off: true } });
@@ -386,7 +386,7 @@ test('AUDIT C&C S6 (decision D4): AN UNIDENTIFIED PIECE\'S COMPARISON IS AS ITS 
 // ═══ S8, S13 - THE WORDS ════════════════════════════════════════════════
 
 test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the Features comment says Boons\' neglect costs nothing (the drink still swings the attributes in Boons: "nothing taken" was false); the first-need page opens on the first need of any kind and says where the tiles stand (the left edge, not beside the bars), in TUT1\'s sixty words', () => {
-  // CREDITS-OUT (2026-11-01): the credit that said it left with ui/credits.js
+  // The credit that said it left with ui/credits.js
   const features = read('src/systems/features.js');
   assert.match(features, /\/\/ \(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus\),/);
   assert.doesNotMatch(features, /nothing taken, a need met/);
@@ -467,7 +467,7 @@ test('AUDIT C&C S14: A COST IS SAID WITHOUT ITS COLOUR - a need\'s tile and the 
     drawEnhancedHud(f, 0, 0, {});
     const tile = tempTile(doc);
     const reading = temperatureReadout(f, feltNow(f).felt);
-    // STATUS-TIPS (2026-10-20): the tile's level is said on its label and in its hover card (ui/hud/statusTips.js) - the
+    // The tile's level is said on its label and in its hover card (ui/hud/statusTips.js) - the
     // browser's own title stands down, as the pack's does under its card
     assert.deepEqual([tile.word, tile.cell.classList.contains('hst-cost'), tile.cell.title, tile.cell.getAttribute('aria-label')], [reading.label, true, '', `${reading.label} - it costs you`]);
     const plate = doc.querySelector('.hud .hud-temp');
@@ -495,7 +495,6 @@ test('AUDIT C&C D6, R11: THE COMFORTABLE THERMOMETER IS NEUTRAL - its column the
     assert.ok(Math.max(r, g, b) - Math.min(r, g, b) <= 52, `${c}: no hue to speak of`);
   }
   for (const f of ['src/systems/survival/status.js', 'src/ui/hud/hudStatus.js']) assert.doesNotMatch(read(f), /the campfire for the hearth/, f);
-  // PIN MOVED (AUDIT C&C, lens S): REST1's tile is Next night now
   assert.match(read('src/systems/survival/status.js'), /a flame for the hearth \(its own - REST1's Next night is the campfire\)/);
   assert.match(read('src/ui/hud/hudStatus.js'), /a flame of its own for the hearth \(REST1's\n\/\/ {5}Next night is the campfire\)/);
 });
@@ -506,7 +505,7 @@ test('AUDIT C&C R7 (TEMP-UI): A WEAR\'S READING TAKES THE WEAR\'S WARDROBE - a l
   setPref(LOOT_RARITY_KEY, true);
   const e = realPlayer('casual');
   minute(e, MOUNTAIN_NIGHT, 1001);
-  const lined = applyRarity(garment(155), 'magic', seq(0, 0.7, 0.96, 0.7));   // PIN MOVED (AFFIX-LINES): the pick drawn over the garment's 43 lines - warmth, one of them, at 0.96 (0.7 lands on a skill now)
+  const lined = applyRarity(garment(155), 'magic', seq(0, 0.7, 0.96, 0.7));
   assert.deepEqual([lined.name, lined.affixes], ['Lined Formal Cloak', [{ id: 'warmth', value: 4 }]]);
   e.items.push(lined);
   const w = temperatureWear(e, lined, wearComparison(e, lined));

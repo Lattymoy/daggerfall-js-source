@@ -192,8 +192,8 @@
   {
     "name": "P2-body-set-change-not-preloaded",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse || was.wornArmour !== cfg.wornArmour || was.layeredGender !== cfg.layeredGender)) preload();\n",
-    "new": "",
+    "old": "    if (renderer && (was.onFoot !== cfg.onFoot || was.onHorse !== cfg.onHorse || was.wornArmour !== cfg.wornArmour || was.layeredGender !== cfg.layeredGender)) preload();\n    return cfg;",
+    "new": "    return cfg;",
     "tests": [
       "test/net/profile2_pause_profile.test.js"
     ]

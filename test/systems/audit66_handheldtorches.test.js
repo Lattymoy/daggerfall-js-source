@@ -1,4 +1,4 @@
-// AUDIT 66 - HANDHELD TORCHES (HT1) RE-READ AGAINST ITS OWN IL, 2026-09-14.
+// HANDHELD TORCHES RE-READ AGAINST ITS OWN IL, 2026-09-14.
 //
 // HT1 shipped the mod 1:1 with 19 pins and a green gate. This audit read
 // the four MonoBehaviours' IL again method by method against the two
@@ -8,8 +8,7 @@
 // again is the only kind worth making. The twelfth was found by a pin in
 // this file, written to certify a fix for another - pins pay twice.
 //
-// The twelve, in the order the record tells them
-// (bible/01-Overview/audits/Audit-66.md):
+// The twelve, in the order the record tells them:
 //
 //   F1  the dropped light sat half a torch too low
 //   F2  a world-clock JUMP burned the torches - and a load is a jump
@@ -48,8 +47,8 @@ import {
   createDroppedTorches, LIGHT_ABOVE_BILLBOARD, PROJECTILE, PROJECTILE_FIXED_DT, PUFF, ENEMY_FIRE_KIND, ENEMY_LIGHT_LOCAL,
 } from '../../src/scenes/droppedTorches.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
-import { DEFAULT_BINDINGS } from '../../src/systems/inputActions.js';   // KB1: the three keys are the registry's actions
-import { raceActivation } from '../../src/player/activationRace.js';   // HARD2: F7's law, where it lives now
+import { DEFAULT_BINDINGS } from '../../src/systems/inputActions.js';   // The three keys are the registry's actions
+import { raceActivation } from '../../src/player/activationRace.js';   // F7's law, where it lives now
 import { TEMPLATES } from '../../src/systems/useItem.js';
 import { WEAPONS } from '../../src/characters/weapons.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
@@ -58,7 +57,7 @@ import { GLOBAL_SCALE } from '../../src/player/activate.js';
 import { playerTorchOffsetOverride, setPlayerTorchOffsetOverride } from '../../src/systems/playerTorch.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-/** KB1: action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
+/** Action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
 const DEFAULT_CODE = Object.fromEntries(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => hostText(p);
@@ -127,7 +126,7 @@ function rig(over = {}, deps = {}) {
     castPlaying: false, spellArmed: false, thirdPerson: false, climbing: false, swimming: false, transformedLycanthrope: false,
     motion: { grounded: true, standing: true, speedRatio: 1, baseSpeed: 1, localVel: [0, 0, 0] }, look: [0, 0], swingHeld: false, cursorActive: false,
     camera: () => ({ pos: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, forward: [0, 0, 1], right: [1, 0, 0], up: [0, 1, 0] }),
-    collider: () => deps.collider ?? null, actionDown: (a) => keys.has(DEFAULT_CODE[a]),   // KB1: the registry's three actions, on their default keys (O, G, X)
+    collider: () => deps.collider ?? null, actionDown: (a) => keys.has(DEFAULT_CODE[a]),   // The registry's three actions, on their default keys (O, G, X)
     sheathWeapons: () => { ctx.sheathed = true; },
   };
   const frame = (dt = 0.016) => { h.update(dt, ctx); h.lateUpdate(dt, ctx); };
@@ -222,10 +221,8 @@ test('AUDIT 66 F4/F6/F5/F11: the four host lifetimes - the interior sweep runs w
 test('AUDIT 66 F7: a dropped torch loses the click to a door, a board and a static NPC as it loses it to a pile - the ray\'s nearest hit takes it, in both exterior hosts', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = rd(host);
-    // HARD2: the fix moved from two hand-written copies into one law.
-    // The host now feeds the door's distance to the race and reads the
-    // answer; the LAW itself is tested below, against the module.
-    // PIN MOVED (ALLY-YIELDS, bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): the door goes in as its pick, reach and all
+    // The fix moved from two hand-written copies into one law. The host now feeds the door's distance to the race and reads
+    // the answer; the LAW itself is tested below, against the module. PIN MOVED: the door goes in as its pick, reach and all
     // (`door:`); the race reads its distance off it - still one pick of the door set a press
     assert.match(src, /door: modes\.exteriorActivationHit\(cam\.pos, useFwd\),/, `${host}: the door's pick goes into the race`);
     assert.match(src, /const _torchNearest = _race\.torchWins;/, `${host}: and the torch arm reads the race's answer`);
@@ -277,7 +274,7 @@ test('AUDIT 66 F9: DrawTrajectory is a law - the arc integrates from the free ha
   const wall = throwArcPoints({ origin: [0, 1, 0], bodyStrength: 100, collider: { raycast: () => 0.25 } });
   assert.equal(wall.length, 2, 'the first step meets it');
   near(Math.hypot(wall[1][0] - wall[0][0], wall[1][1] - wall[0][1], wall[1][2] - wall[0][2]), 0.25, 1e-9, 'and the arc stops AT the hit, not past it');
-  // OWN-AUDIT (2026-11-01): the switch says what it does now that the arc is drawn
+  // The switch says what it does now that the arc is drawn
   const def = MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys['Throwing.ShowTrajectory'];
   assert.equal(def.description, 'While you wind up a throw, dots show where the torch will fly and land.');
 });
@@ -328,7 +325,7 @@ test('AUDIT 66 pins: the burning loop is the TORCH\'s alone - a candle and a hol
 test('AUDIT 66 pins: the ignite ladder and the drop ladder are ORDERED - lantern, torch, candle, holy candle to light; torch, candle, holy candle to drop, a lantern never', () => {
   const ig = rig();
   ig.entity.items = [holy(), candle()];
-  ig.tap('KeyO');   // SOC5: the ignite key is O - the mod ships F, which the port now spends on SocialInteract
+  ig.tap('KeyO');   // The ignite key is O - the mod ships F, which the port now spends on SocialInteract
   assert.equal(ig.entity.lightSource?.templateIndex, T.Candle, 'the candle before the holy candle');
   ig.entity.lightSource = null; ig.store['Handling.RememberLastLightSource'] = false;
   ig.entity.items = [holy()];
@@ -336,9 +333,9 @@ test('AUDIT 66 pins: the ignite ladder and the drop ladder are ORDERED - lantern
   assert.equal(ig.entity.lightSource?.templateIndex, T.Holy_candle, 'and the holy candle last');
   const dr = rig();
   dr.entity.items = [holy(), candle(), torch(), lantern()];
-  dr.tap('KeyG');   // HT4: the drop key is G - Tab is the port's pixel dial
-  dr.tap('KeyG');   // HT4: the drop key is G - Tab is the port's pixel dial
-  dr.tap('KeyG');   // HT4: the drop key is G - Tab is the port's pixel dial
+  dr.tap('KeyG');   // The drop key is G - Tab is the port's pixel dial
+  dr.tap('KeyG');   // The drop key is G - Tab is the port's pixel dial
+  dr.tap('KeyG');   // The drop key is G - Tab is the port's pixel dial
   assert.deepEqual(dr.spawned.map((a) => a[0]), [T.Torch, T.Candle, T.Holy_candle], 'the drop ladder in its own order, and the lantern still in the pack');
   assert.deepEqual(dr.entity.items.map((i) => i.templateIndex), [T.Lantern]);
 });

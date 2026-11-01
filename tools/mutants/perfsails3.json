@@ -2,8 +2,8 @@
   {
     "name": "PERF-SAILS3-plan-past-other-nodes",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
-    "new": "if (p && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
+    "old": "    if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
+    "new": "    if (p && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PERF-SAILS3-plan-past-a-component",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
-    "new": "if (p && p.ver === w.ver && p.frame === boat.MeshObject) return p;",
+    "old": "    if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
+    "new": "    if (p && p.ver === w.ver && p.frame === boat.MeshObject) return p;",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PERF-SAILS3-sweep-keeps-unmarked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    for (const [n, b] of flats) if (b._csaSweep !== sweep) {",
-    "new": "    for (const [n, b] of flats) if (b._csaSweep !== sweep && b._csaSweep < 0) {",
+    "old": "    for (const [n, b] of flats) if (b._csaSweep !== sweep) { renderer?.destroyBillboardBatch?.(b); flats.delete(n); crew.delete(n); }",
+    "new": "    for (const [n, b] of flats) if (b._csaSweep !== sweep && b._csaSweep < 0) { renderer?.destroyBillboardBatch?.(b); flats.delete(n); crew.delete(n); }",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PERF-SAILS3-size-kept",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "{ b.size.w = sw; b.size.h = sh; }",
-    "new": "{ }",
+    "old": "        if (b._csaSize !== null && b.size === b._csaSize) { b.size.w = sw; b.size.h = sh; }",
+    "new": "        if (b._csaSize !== null && b.size === b._csaSize) { }",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PERF-SAILS3-bones-past-another-list",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (k.bonesOf !== skinnedNode || k.bonesList !== smr.m_Bones || k.bonesStamp !== shape) {",
-    "new": "if (k.bonesOf !== skinnedNode || k.bonesStamp !== shape) {",
+    "old": "    if (k.bonesOf !== skinnedNode || k.bonesList !== smr.m_Bones || k.bonesStamp !== shape) {",
+    "new": "    if (k.bonesOf !== skinnedNode || k.bonesStamp !== shape) {",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PERF-SAILS3-key-past-other-materials",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (e.key === null || e.mesh !== mesh || e.mats !== mats || e.bundle !== bundle || e.bundleN !== bn) {",
-    "new": "if (e.key === null || e.mesh !== mesh || e.bundle !== bundle || e.bundleN !== bn) {",
+    "old": "    if (e.key === null || e.mesh !== mesh || e.mats !== mats || e.bundle !== bundle || e.bundleN !== bn) {",
+    "new": "    if (e.key === null || e.mesh !== mesh || e.bundle !== bundle || e.bundleN !== bn) {",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PERF-SAILS3-pose-position",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "pose.position[0] = sw[12]; pose.position[1] = sw[13]; pose.position[2] = sw[14];",
-    "new": "pose.position[0] = sw[12]; pose.position[1] = sw[14]; pose.position[2] = sw[13];",
+    "old": "    pose.position[0] = sw[12]; pose.position[1] = sw[13]; pose.position[2] = sw[14];",
+    "new": "    pose.position[0] = sw[12]; pose.position[1] = sw[14]; pose.position[2] = sw[13];",
     "tests": [
       "test/systems/comeSailAway/perfsails3.test.js"
     ]

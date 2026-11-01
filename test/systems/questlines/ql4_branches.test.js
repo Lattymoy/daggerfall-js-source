@@ -1,11 +1,11 @@
-// QL4 (bible/06-Systems/Questlines-Arc.md sections 2.3 and 3): A FLAGSHIP QUEST'S BRANCH, RUN. M0B50Y09 (the Fighters
-// Guild's gargoyle) carries the hand-in branch (tools/qlPatchKit.mjs): with the switch on, the questor asks how the
-// player takes their pay, and the two answers end it differently - the fee as agreed, or the fee waived for the Guild's
-// name (its standing, its outcome, no gold, the choice of gear still). With the switch off the script is DFU's: no
-// question, the fee paid. Driven through the real bridge over the pack as the game reads it (test/qlSources.mjs).
-// AUDIT QUESTLINES: every patched branch's ways run to their ends here too - what each answer gives (the knights' gold,
-// DFU's own box kept where it pays nothing, the story said where the box was the story), the kit that cuts a hand-in
-// (tools/qlPatchKit.mjs), and the sheets' ends the lanes found settling wrong (LAW-1, LAW-7, LAW-8, LAW-9).
+// A FLAGSHIP QUEST'S BRANCH, RUN. M0B50Y09 (the Fighters Guild's gargoyle) carries the hand-in branch
+// (tools/qlPatchKit.mjs): with the switch on, the questor asks how the player takes their pay, and the two answers end
+// it differently - the fee as agreed, or the fee waived for the Guild's name (its standing, its outcome, no gold, the
+// choice of gear still). With the switch off the script is DFU's: no question, the fee paid. Driven through the real
+// bridge over the pack as the game reads it (test/qlSources.mjs). AUDIT QUESTLINES: every patched branch's ways run to
+// their ends here too - what each answer gives (the knights' gold, DFU's own box kept where it pays nothing, the story
+// said where the box was the story), the kit that cuts a hand-in (tools/qlPatchKit.mjs), and the sheets' ends the lanes
+// found settling wrong.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -71,7 +71,7 @@ test('QL4 the branch, the fee: asked in the quest\'s own words, the fee paid, th
   assert.equal(r.asked[0].message.id, 1900);
   assert.deepEqual(r.asked[0].choices.map((c) => c.id), [1901, 1902]);
   assert.equal(r.rewards.length, 1, 'the fee, through RW1\'s door');
-  assert.ok(r.popups.some((p) => /clerk's pay/.test(p)), 'the script\'s own QuestComplete box over its fee');   // PIN MOVED (OWN-WORDS1: M0B50Y09 speaks our words, src/systems/quest/own/)
+  assert.ok(r.popups.some((p) => /clerk's pay/.test(p)), 'the script\'s own QuestComplete box over its fee');
   assert.equal(r.quest.ql.choices.payment, 'keep');
   assert.equal(r.quest.ql.outcome, 'fee');
   assert.deepEqual(r.rep, [[FIGHTERS_GUILD, 5]], 'DFU\'s +5 alone - the fee moves no standing');
@@ -84,7 +84,7 @@ test('QL4 the branch, waived: no gold, the Guild\'s standing raised by the outco
   assert.equal(r.quest.ql.choices.payment, 'alt');
   assert.equal(r.quest.ql.outcome, 'waived');
   assert.ok(r.quest.questComplete && r.quest.questSuccess, 'ended a success - `ql paid`');
-  assert.ok(!r.popups.some((p) => /clerk's pay/.test(p)), 'and quietly: no QuestComplete box paying a fee the player waived');   // PIN MOVED (OWN-WORDS1)
+  assert.ok(!r.popups.some((p) => /clerk's pay/.test(p)), 'and quietly: no QuestComplete box paying a fee the player waived');
   assert.deepEqual(r.rep.sort(), [[FIGHTERS_GUILD, 5], [FIGHTERS_GUILD, 5]].sort(), 'DFU\'s +5 and the outcome\'s +5');
   assert.equal(r.offers.length, 1, 'the questlines pay their choice of gear either way');
   assert.equal(r.offers[0].outcome, 'waived');
@@ -148,7 +148,7 @@ test('QL4 BRANCH-4 M0B50Y09: the fee waived keeps DFU\'s map - the second answer
     const t = quest.getTask({ name: task });
     assert.ok(t?.getTriggerValue(), `${task} ran`);
     assert.ok(t.actions.find((a) => a.typeName === 'RevealLocation')?.isComplete, 'the second dungeon revealed');
-    assert.ok(rec.popups.some((p) => /map to .* makes up for the pay/.test(p)), 'and the script\'s 1080 said');   // PIN MOVED (OWN-WORDS1)
+    assert.ok(rec.popups.some((p) => /map to .* makes up for the pay/.test(p)), 'and the script\'s 1080 said');
   }
 });
 
@@ -166,7 +166,7 @@ test('QL4 BRANCH-5 / REWARD-4 the knights\' hand-ins: "take it" gives the gold i
 });
 
 test('QL4 BRANCH-6 a refusal whose DFU box was the story says the story in its own words (19xx), in the quest\'s voice (mutants: a refusal\'s `say 1903` dropped)', () => {
-  for (const [name, words] of [['L0A01L00', /You are one of us, and in any town/], ['P0A01L00', /Welcome to the family/], ['B0B70Y14', /duped by a rogue mage/], ['A0C01Y03', /Kindness\. So that is why/], ['B0B70Y16', /dragonslayer/], ['B0B50Y11', /A well it shall be/]]) {   // PIN MOVED (OWN-WORDS2): L0A01L00's 1903 echoes our 1004   // PIN MOVED (OWN-WORDS2 sweep): A0C01Y03's 1903 had DFU's words, now ours
+  for (const [name, words] of [['L0A01L00', /You are one of us, and in any town/], ['P0A01L00', /Welcome to the family/], ['B0B70Y14', /duped by a rogue mage/], ['A0C01Y03', /Kindness\. So that is why/], ['B0B70Y16', /dragonslayer/], ['B0B50Y11', /A well it shall be/]]) {
     const { quest, rec } = answer(name, 1);
     assert.ok(quest.questSuccess, `${name}: a success`);
     assert.ok(rec.popups.some((p) => words.test(p)), `${name}: ${words} said - ${JSON.stringify(rec.popups)}`);

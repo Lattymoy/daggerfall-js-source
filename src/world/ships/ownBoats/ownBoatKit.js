@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): THE BOATS' OWN BENCH - what our five hulls' prefabs are put together with: one component table
+// THE BOATS' OWN BENCH - what our five hulls' prefabs are put together with: one component table
 // and one mesh table for all twelve prefabs (Come Sail Away's data shape, systems/comeSailAway/comeSailAwayModels.js),
 // a node drawing a part, and the small things every hull carries by the names Come Sail Away's runtime walks: its
 // Modifiers, wake, pennant, lanterns, crew, oars and rudder effects, the water plane its drops land on, its triggers.
@@ -162,7 +162,7 @@ export function waterPlane(k) {
     ],
   });
 }
-/** A hull's water mask: a plate over her plan wearing the mask's material, never drawn (CSA-F). */
+/** A hull's water mask: a plate over her plan wearing the mask's material, never drawn. */
 export function waterCull(k, name, key, w, z0, z1, opts = {}) {
   k.mesh(key, P.plateGeometry(w, z0, z1));
   return nodeOf(name, {

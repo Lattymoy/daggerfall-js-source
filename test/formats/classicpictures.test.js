@@ -1,4 +1,4 @@
-// NO-BETHESDA2 (2026-10-31): a mod's picture that is Daggerfall's own is built from the player's TEXTURE file in the
+// A mod's picture that is Daggerfall's own is built from the player's TEXTURE file in the
 // palette its spec names (formats/classicPictures.js), and tools/classicDerive.mjs writes that spec. Pinned on a
 // TEXTURE file, an RCI file, a CIF file and two palettes made here, so CI needs no ARENA2. NO-BETHESDA3: a CIF or RCI
 // spec names its file in one field, `file`.

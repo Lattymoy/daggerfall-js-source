@@ -84,8 +84,8 @@
   {
     "name": "resolve-ao-unit",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform1i(PR.uAO, 3); // EL6",
-    "new": "    gl.uniform1i(PR.uAO, 0); // EL6",
+    "old": "    gl.uniform1i(PR.uAO, 3);",
+    "new": "    gl.uniform1i(PR.uAO, 0);",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "measured-at-prepare",
     "file": "src/render/airPass.js",
-    "old": "    this.measured = false; // AUDIT-EL F10: set at the resolve, by whether the world drew",
-    "new": "    this.measured = true; // AUDIT-EL F10: set at the resolve, by whether the world drew",
+    "old": "    this.measured = false; // Set at the resolve, by whether the world drew",
+    "new": "    this.measured = true; // Set at the resolve, by whether the world drew",
     "tests": [
       "test/render/el6_field.test.js"
     ]

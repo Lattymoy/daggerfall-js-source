@@ -1,10 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions"): THE CLASS
-// SKINS' PICTURES, OURS. A frame is the player's own classic sheet frame (player/classSkins.js `from`), dyed and marked
-// by its class's scheme below: the cloth, drape and metal ramps of ART_PAL remapped to our colours, then a trim, a
-// pattern, a sash, a belt, an insignia or a shield drawn on the frame's own regions. Nothing of a retired pack is read.
-// Built on first ask, one frame at a time (eotbSprite.js's build queue). The palette's tables and each scheme's colours
-// are kept; a built frame is kept by whoever drew it (the body, the peers' one store, the Skin card).
+// THE CLASS SKINS' PICTURES, OURS. A frame is the player's own classic sheet frame (player/classSkins.js `from`), dyed
+// and marked by its class's scheme below: the cloth, drape and metal ramps of ART_PAL remapped to our colours, then a
+// trim, a pattern, a sash, a belt, an insignia or a shield drawn on the frame's own regions. Nothing of a retired pack
+// is read. Built on first ask, one frame at a time (eotbSprite.js's build queue). The palette's tables and each
+// scheme's colours are kept; a built frame is kept by whoever drew it (the body, the peers' one store, the Skin card).
 import { RAMP, hex, createPainter, ellipse, minus } from '../art/ownPainter.js';
 import { classicArt } from '../systems/classicArt.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -41,13 +40,13 @@ export const CLASS_INSIGNIA = Object.freeze({
 export const OUTER_SLOT = Object.freeze({ 477: CLOTH, 479: DRAPE, 480: DRAPE, 482: DRAPE, 483: DRAPE, 484: DRAPE, 485: CLOTH, 486: CLOTH, 488: DRAPE, 489: CLOTH, 490: DRAPE });
 
 /**
- * THE SCHEMES, one a class (both sexes share theirs; bible/06-Systems/Eye-Of-The-Beholder.md OWN-WORK4 gives each one's
+ * THE SCHEMES, one a class (both sexes share theirs; OWN-WORK4 gives each one's
  * reason). `outer` and `inner` dye the two cloths and `metal` the metal; `trim` edges a cloth's hems and cuffs;
  * `pattern` lays motley, stripes or patches on cloths; `sash` crosses the chest (`studs` along it); `belt` rings the
  * waist; `sign` is an insignia on the breast and the back; `shield` a round shield on the left arm.
  */
 const look = (scheme) => Object.freeze(scheme);
-/** OWN-AUDIT: the sheets whose figure is bare to the waist (TEXTURE.482's), where a class's `garment` is painted on. */
+/** The sheets whose figure is bare to the waist (TEXTURE.482's), where a class's `garment` is painted on. */
 export const BARE_SHEETS = Object.freeze([482]);
 const WRAP = ownRamp('#09090c', '#121217', '#1c1c23', '#282831', '#363642', '#474756');
 export const CLASS_LOOKS = Object.freeze({
@@ -79,7 +78,7 @@ const rgbKey = (red, green, blue) => (red << 16) | (green << 8) | blue;
 /** A cloth ramp's last steps (13-15 of 16) are near-black and alike in every ramp, so a sheet shades one garment in
  *  another's: TEXTURE.486 darkens its teal robe's hem with the olive's. Such a pixel joins the garment nearest it. */
 export const CLOTH_TAIL_STEP = 13;
-/** OWN-AUDIT: the ramps a bare figure's flesh is painted in - the skin (2, 4) and the reds and lights that shade it (11,
+/** The ramps a bare figure's flesh is painted in - the skin (2, 4) and the reds and lights that shade it (11,
  *  14, 15) - and 13's brown half beside them. */
 export const FLESH_RAMPS = Object.freeze([2, 4, 11, 14, 15]);
 /** How much nearer (px) the other garment must be before a near-black pixel joins it. */
@@ -209,11 +208,11 @@ export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view =
   return { width, height: rows, data: out };
 }
 
-/** OWN-AUDIT: a bare torso's half-width a view, in figure heights, at the waist and at the shoulders. */
+/** A bare torso's half-width a view, in figure heights, at the waist and at the shoulders. */
 export const TORSO_HALF = Object.freeze({ 0: [0.11, 0.14], 1: [0.1, 0.125], 2: [0.08, 0.1], 3: [0.1, 0.125], 4: [0.11, 0.14] });
 
 /**
- * OWN-AUDIT: a bare figure's torso - from the waist (the top of its loincloth, slot `loin`) up to its neck (two rows
+ * A bare figure's torso - from the waist (the top of its loincloth, slot `loin`) up to its neck (two rows
  * under the helmet, the highest compact piece of metal), about the line from the hips' middle to the neck, as wide as
  * the view's TORSO_HALF (wider for a body that leans). Answers each row's [from, to] or null, its top and its waist.
  */

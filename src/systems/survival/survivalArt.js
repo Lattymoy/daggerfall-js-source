@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31; bible/06-Systems/Climates-Calories.md): THE SURVIVAL PICTURES WE PAINT. Raw meat (538 record
-// 2, 47 x 24) and the waterskin (539 record 0, 23 x 26) have no classic picture to start from, so they are recipes for
-// our painter (art/ownPainter.js). The spoiled faces are our rot (rotPicture.js) over a fresh picture - the player's
-// own food, or this raw meat (itemIcons.js OWN_ICONS). No pixel of the retired release is read.
+// THE SURVIVAL PICTURES WE PAINT. Raw meat (538 record 2, 47 x 24) and the waterskin (539 record 0, 23 x 26) have no
+// classic picture to start from, so they are recipes for our painter (art/ownPainter.js). The spoiled faces are our
+// rot (rotPicture.js) over a fresh picture - the player's own food, or this raw meat (itemIcons.js OWN_ICONS). No
+// pixel of the retired release is read.
 import { createPainter, RAMP, ellipse, stroke, union } from '../../art/ownPainter.js';
 
 function rawMeat() {

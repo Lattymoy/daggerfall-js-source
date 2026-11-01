@@ -1,4 +1,4 @@
-// AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"; bible/06-Systems/Horse-Coats.md RIDERS): EYE OF
+// AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"; RIDERS): EYE OF
 // THE BEHOLDER'S RIDERS SPARED. Its mounted sets are one horse under five riders, so each picture's rider is what the
 // other four disagree on (tools/bakeEotbRiders.mjs, baked into eotbRiderMasks.js); the dye never takes a pixel of his -
 // his skin was a bay's warm and his hair a mane's black, and a coat or a mount look dyed them in every view.
@@ -14,7 +14,7 @@ import { MOUNT_LOOKS } from '../../../src/net/effectLaw.js';
 import { eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-// NO-BETHESDA2 (2026-10-31): the five mounted sets are Daggerfall's own TEXTURE.491-495, rebuilt from the player's ARENA2
+// The five mounted sets are Daggerfall's own TEXTURE.491-495, rebuilt from the player's ARENA2
 // (tools/lib/eotbPictures.mjs). A pin on their pixels runs where ARENA2_PATH is set; the derived path's own pins run in
 // CI (nobethesda2_eotb.test.js: a derived mounted picture keeps its rider spared).
 const NEEDS_ARENA2 = { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' };

@@ -1,4 +1,4 @@
-// OWS2 (2026-09-28) - THE CROSSING'S SCENE: Come Sail Away's own runtime on open water (csa_sailing's scripted scene,
+// THE CROSSING'S SCENE: Come Sail Away's own runtime on open water (csa_sailing's scripted scene,
 // trimmed), and the Overworld's hand sailing it to a mark through the helm's keys alone (systems/seaHelm.js - the rudder
 // held, the sail key's edge, the autorun's oars), as scenes/world.js tvSeaSail presses them. Moved here whole from
 // test/systems/travel/ows2_crossing.test.js by FB1020c OAR-RUNG, which sails it too (test/systems/comeSailAway/fb1020c_oarrung.test.js):
@@ -12,7 +12,7 @@ import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_ACTIONS, HANDLING } fro
 import { quatRotate } from '../src/world/quat.js';
 import { ownFile } from './ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 export const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
 const openWater = () => ({ mapPixelX: 10, mapPixelY: 20, position: [0, 0, 0], tileMap: new Uint8Array(128 * 128), sampleHeight: () => 20 });

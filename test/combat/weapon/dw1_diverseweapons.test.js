@@ -1,11 +1,11 @@
-// DW1 - DIVERSE WEAPONS 1.7.3 (2026-09-23, Mac: "Its a mod integration",
+// DIVERSE WEAPONS 1.7.3 (2026-09-23, Mac: "Its a mod integration",
 // with the shipped zip over a Drive link).
 //
 // THE MOD IS ONE LINE OF CODE AND 12,624 SPRITES. The line is
 // `FPSWeapon.moddedWeaponHUDAnimsEnabled = true` and everything it
 // switches on is Daggerfall Unity's own - so what is pinned here is a
 // port OF DFU, gated on the mod's switch, and a door that reads a
-// player's own copy of the bundle. OWN-WORK4 (2026-10-31): the sprites
+// player's own copy of the bundle. OWN-WORK4: the sprites
 // that come with the game are our own (ownwork4_dwart.test.js); the door
 // is driven here on its loose-PNG arm, its refusals and our arm.
 import { test } from 'node:test';
@@ -110,21 +110,19 @@ test('DW1: the atlas asks by the per-template name under the flag, and by the cl
   // keeps the classic record's width and height (:398-399), and the
   // widget clone asks through the same door
   const fp = src('src/combat/fpsWeapon.js');
-  assert.match(fp, /const askName = atlasFileName\(item, fileName, undefined, plain \? false : undefined\);/);   // PIN MOVED (WEAPON-GLOW1): the plain set asked while an element shows (bible/05-Combat/Weapon-Glow.md)
+  assert.match(fp, /const askName = atlasFileName\(item, fileName, undefined, plain \? false : undefined\);/);
   assert.match(fp, /export const frameName = \(askName, record, frame, metal\) => `\$\{askName\}_\$\{record\}-\$\{frame\}\$\{metal \? `_\$\{metal\}` : ''\}`;/, 'GetNameCifRci’s spelling, one home (AUDIT-DW)');
   assert.match(fp, /const name = frameName\(askName, r, f, metal\);/);
   assert.match(fp, /const customs = await customFrames\(askName, metal, cif, customImage\);/, 'AUDIT-DW F2: every frame asked together');
   assert.match(fp, /const custom = customs\[r\]\[f\];/);
   assert.match(fp, /records\.push\(\{ width: size\.width, height: size\.height, frames \}\);/, 'the record keeps the classic box');
   const ww = src('src/combat/weapon/weaponWidget.js');
-  assert.match(ww, /const file = atlasFileName\(w\.specificWeapon, classic, undefined, ctx\?\.glow \? false : undefined\);/);   // PIN MOVED (WEAPON-GLOW1): the plain set asked while an element shows, as the loader asks it
+  assert.match(ww, /const file = atlasFileName\(w\.specificWeapon, classic, undefined, ctx\?\.glow \? false : undefined\);/);
   assert.match(ww, /for \(const name of customTextureNames\(file, record, frame, metal, w\.s\.doubleScale\)\) \{/);
   assert.match(ww, /customWeaponImage\(name\)\n\s*\.then/);
   // and the rig's art cache carries the name the atlas is asked by, or
   // a longsword and a broadsword share the first one's frames
   const rig = src('src/combat/weapon/weaponRig.js');
-  // PIN MOVED (WEAPON-GLOW1, bible/05-Combat/Weapon-Glow.md): the name asked is the plain set's while the weapon's
-  // element shows, and the loader is told so - still the asked name in the key, still SpecificWeapon at the loader
   assert.match(rig, /const key = `\$\{type\}:\$\{item\?\.material \?\? 0\}:\$\{thunderlock \? \(gilded \? 'gilded' : ''\) : atlasFileName\(item, WEAPON_FILE\[type\] \?\? '', undefined, plain \? false : undefined\)\}`;/);
   assert.match(rig, /loadFpsWeaponArt\(fetchBytes, palette, renderer, type, item\?\.material \?\? 0, item, \{ plain \}\)/, 'SpecificWeapon reaches the loader');
 });
@@ -159,7 +157,7 @@ test('DW1: the door - the mod’s bundle and its spellings from the pick, nothin
   assert.equal(await diverseWeaponsBundle(), null, 'a loader answering nothing: no bundle, no throw');
   assert.deepEqual(loads, ['dfmod/Diverse Weapons.dfmod', 'dfmod/diverseweapons.dfmod'], 'each bundle asked once');
   assert.equal(await diverseWeaponsTexturesAttached(), false);
-  // OWN-WORK4: NOTHING ATTACHED - our set answers, built from the player's
+  // NOTHING ATTACHED - our set answers, built from the player's
   // files, and a name outside it is a miss that costs no work at all
   clearDiverseWeaponsSources();
   const built = [];
@@ -249,9 +247,8 @@ test('DW1: the Weapon Widget preset the bundle ships, restated exactly, laid ove
 // ── the wiring ────────────────────────────────────────────────────────
 
 test('DW1: the pick reaches the door at BOTH of its sites', () => {
-  // PIN MOVED (AUDIT VE R2): the two sites are one registration now - the store's, which the boot seam calls
   assert.match(src('src/scenes/dataSource.js'), /setDiverseWeaponsSources\(names, loadTextureFile\);/, 'the store\'s registration fans the pick out to the door');
   assert.match(src('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/, 'and the boot reaches it');
   assert.match(src('src/scenes/dataSource.js'), /<b>Diverse Weapons<\/b> comes with the game\.\s+A folder with a newer version's <b>\.dfmod<\/b> uses that version's\s+art instead\./, 'and the pick says so (DW2: the shipped set, the attached one winning)');
-  // OWN-WORK4: the vendored record left the tree (bible/01-Overview/Own-Work.md holds its facts; CREDITS-OUT took the credit)
+  // The vendored record left the tree ( holds its facts; CREDITS-OUT took the credit)
 });

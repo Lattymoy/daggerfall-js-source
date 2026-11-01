@@ -1,10 +1,10 @@
 # Deep Waters
 
-A port of jet082's **Iliac Puddle No More 1.2.2** (Nexus 1304; its assembly calls itself Deep Waters), read off its
-compiled assembly (`vendor/iliac-puddle-no-more/`). Vanilla Daggerfall's sea is a flat sheet of water over a flat bed;
-the mod carves it out into a real sea with a shelving coast, a deep floor, seafloor life, fish, foes, sunken loot and
-swimming. The continent's sea past the Bay is carved by the same rules. It is the required dependency of Ocean Holes
-(`Ocean-Holes.md`).
+A port of jet082's **Iliac Puddle No More 1.2.2** (its assembly calls itself Deep Waters), its law read off the compiled
+assembly; the release's record is in `01-Overview/Own-Work.md`. Vanilla Daggerfall's sea is a flat sheet of water over a
+flat bed; the mod carves it out into a real sea with a shelving coast, a deep floor, seafloor life, fish, foes, sunken
+loot and swimming. The continent's sea past the Bay is carved by the same rules. It is the required dependency of Ocean
+Holes (`Ocean-Holes.md`).
 
 ## How it works
 
@@ -25,9 +25,17 @@ swimming. The continent's sea past the Bay is carved by the same rules. It is th
   and the ear under water.
 - **Seafloor life** (`src/world/underwater/underwaterDecorations.js`, `src/scenes/deepWater/deepWatersDecor.js`). Weed,
   coral, rock and dead sea life, placed per pixel and paced.
-- **Fish** (`src/world/passiveFish.js`, `src/scenes/deepWater/deepWatersFish.js`). Seven species, each one of the mod's
-  items (templates 9001-9007), in schools by biome and depth; caught as loot and stocked on shop shelves through the
-  custom-group table.
+- **Fish** (`src/world/passiveFish.js`, `src/scenes/deepWater/deepWatersFish.js`). Seven species at the mod's
+  templates 9001-9007, in schools by biome and depth; caught as loot and stocked on shop shelves through the
+  custom-group table. The rows are ours (`src/systems/deepWater/deepWatersFishRows.js`): one name a fish, its item's
+  and its species' (the Gold Butterflyfish, the Rusttail Bass, the Pale Grouper), the mark a fisher sees and the kind,
+  no place in it. A fish weighs Raw Fish's kilo at the Grey Mackerel's height, by the cube of its own, and costs its
+  meat at Raw Fish's price plus 60 over its spawn weight. A catch saved under an old name takes its new one
+  (`normalizeFishItems`).
+- **The fish's pictures** are ours (`src/systems/deepWater/fishArt.js`, by `src/art/ownPainter.js`), each under the
+  texture name its species reads and at the power-of-two size the sea samples. A fish is drawn in the shape it shows,
+  so `restoreIconAspect` gives its icon that shape. The sea's billboards take them through
+  `createFishPictures({ picture })`, the icons through `installDeepWatersFishIcons`.
 - **Foes** (`src/world/underwater/underwaterEnemies.js`, `src/scenes/deepWater/deepWatersEncounters.js`). Eleven types
   by depth band, from Slaughterfish in the shallows to the Lich past 0.85 of the depth, a rare boss in the deep, and
   treasure guards.
@@ -40,7 +48,8 @@ swimming. The continent's sea past the Bay is carved by the same rules. It is th
 
 ## Rules
 
-- Mods attached are made compatible and implemented 1:1 (Mac).
+- Mods attached are made compatible and implemented 1:1 (Mac); the fish's rows, words and pictures are ours (OWN-WORK,
+  the owner). Every setting's description is ours; the defaults stay the sea's ported tuning.
 - Coastlines have sand and dirt and arc into the deep, with water slightly see-through to show the depth (the owner).
 - The coastline is rebuilt on the player's machine, never carried: the mod's bake is derived from Daggerfall's data,
   which never enters the repository.
@@ -50,11 +59,11 @@ swimming. The continent's sea past the Bay is carved by the same rules. It is th
 
 ## Daggerfall Unity
 
-The mod's assembly is the reference. Departures, among them: the coastline built on the player's machine rather than carried (it differs at the
-coast by the port's Perlin noise); fog per fragment; the water column drawn twice; the recentre carries the schools; the
-world's fog on the top; the whole stream carved; the unload takes the mod's children; surfacing restores the sky's fog
-colour; the swim is handed to the motor directly instead of borrowing DFU's dungeon flag; and the continent's sea past
-the Bay.
+The mod's assembly is the reference. Departures, among them: our own fish rows and pictures; the coastline built on the
+player's machine rather than carried (it differs at the coast by the port's Perlin noise); fog per fragment; the water
+column drawn twice; the recentre carries the schools; the world's fog on the top; the whole stream carved; the unload
+takes the mod's children; surfacing restores the sky's fog colour; the swim is handed to the motor directly instead of
+borrowing DFU's dungeon flag; and the continent's sea past the Bay.
 
 ## Code and tests
 
@@ -65,3 +74,4 @@ the Bay.
 - `test/world/deepWater/dwb_world.test.js`, `dwe_decorations.test.js`, `dwe_runtime.test.js`, `dwf_farsea.test.js` -
   floor, decorations, runtime and the far sea
 - `test/world/deepWater/tamriel_deep.test.js` - the continent's sea
+- `test/systems/item/dwe_fish.test.js`, `test/systems/ownwork4_pictures.test.js` - the fish's rows and pictures

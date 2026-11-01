@@ -1,4 +1,4 @@
-// FB1028 (Discord #bug-reports, after #1184, "Daggerfall City Walls are Janky"; bible/03-World/Town-Shapes.md FB1028):
+// FB1028 (Discord #bug-reports, after #1184, "Daggerfall City Walls are Janky"; FB1028):
 //  - DOORS IN WALLS: Daggerfall's wall pieces carry doors (445 one, 446 two) into the ring blocks' Town23 interiors; a wall
 //    on its outline opens into none, and at a bend each length's door stood in its tower. Laid in the face's own stone.
 //  - PARTS CLIPPING INTO ITSELF: at a bend two lengths ran on through each other and out of the tower's faces. Each is cut
@@ -15,8 +15,8 @@ import { layGateRoads, takeUpArms, GATE_BLOCK } from '../../src/world/road/gateR
 import { townGateRoads } from '../../src/world/townGates.js';
 import { TOWN_OUTLINE_BLOCK, townOutlineBlockJson } from '../../src/world/townOutline.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
-import * as walls from '../../src/world/townWalls.js';   // AUDIT FB1028
-import * as ys from '../../src/world/merchantYards/merchantYardSites.js';   // AUDIT FB1028 B5
+import * as walls from '../../src/world/townWalls.js';
+import * as ys from '../../src/world/merchantYards/merchantYardSites.js';
 import { stepsBreathing } from '../../src/world/puddleMask.js';
 import { yardRoads } from '../../src/world/road/gateRoads.js';
 import { hostText } from '../hostText.mjs';
@@ -24,7 +24,7 @@ import { ringAsWas } from '../../src/world/terrain/terrainGen.js';   // FB1028 Y
 import { townRoadRing, townGroundMask } from '../../src/world/terrain/terrainTiles.js';
 import { townGroundMaskBefore } from '../../src/world/terrain/townBlendBefore.js';
 import { blockFromJson } from '../../src/formats/worldData/worldDataReplacement.js';
-import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
+import { bayRoads } from '../bayRoads.mjs';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !['BLOCKS.BSA', 'MAPS.BSA', 'ARCH3D.BSA', 'WOODS.WLD'].every((f) => existsSync(join(ARENA2 ?? '', f))) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
@@ -269,7 +269,7 @@ async function freeware() {
   const { dfMeshToModel } = await import('../../src/world/meshReader.js');
   const { installTownOutline } = await import('../../src/world/townOutline.js');
   const { installArena } = await import('../../src/world/arena/arenaCity.js');
-  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // The Bay's own network
   setTownWallPaths(townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));   // every wall made on its roads, as the game makes it
   const bytes = (f) => new Uint8Array(readFileSync(join(ARENA2, f)));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
@@ -370,7 +370,7 @@ test('FB1028 with ARENA2: every eighth Bay walled city\'s pixel as the game lays
       }
       // every gate on a road: a tile a step out of its opening a road's, joined by road tiles to the painter's off its ground
       const road = (i) => !!job.paths[i] || paving(i), ground = job.townGround;
-      if (!roadsB[py * 1000 + px]) continue;   // OWN-WORK2: a city on the sea's own pixel (Antelibuton) has no road out
+      if (!roadsB[py * 1000 + px]) continue;   // A city on the sea's own pixel (Antelibuton) has no road out
       for (const g of openings) {
         gates++;
         const from = [8, 10, 12].map((t) => { const tx = Math.floor((g.at[0] + g.out[0] * t) / 6.4 + o.x), ty = Math.floor((g.at[1] + g.out[1] * t) / 6.4 + o.y); return tx + ty * D; }).find((i) => i >= 0 && i < D * D && road(i));
@@ -386,12 +386,11 @@ test('FB1028 with ARENA2: every eighth Bay walled city\'s pixel as the game lays
       }
     }
   }
-  // PIN MOVED (OWN-WORK2): over 150 gates on Basic Roads' arrays; 108, every one on a road out, on the Bay's own network
   assert.ok(gates > 100 && onRoad / gates > 0.97, `${onRoad} of ${gates} gates on a road out (${streetsNear} street tiles within two lengths of a gate)`);
 });
 
 /** a779c9c29's yards (the bare law: townGroundOf with no measures, yardSitesOn and craftYardSitesOn) - kind, gx, gy, turn.
- *  PIN MOVED (OWN-WORK2): on the Bay's own network - Aldhope's, Mogandaton's and Newcester's stables moved with its roads. */
+ *  PIN MOVED: on the Bay's own network - Aldhope's, Mogandaton's and Newcester's stables moved with its roads. */
 const YARDS_1184 = {
   Agogurana: ['stable 316 276 0', 'transport 125 171 3', 'carpenter 167 129 2'],
   Aldhope: ['stable 56 152 1', 'transport 119 274 0', 'carpenter 120 286 1'],
@@ -420,13 +419,12 @@ test('FB1028 YARDS with ARENA2: every yard where #1184 stood it - placed on the 
   for (const loc of cities.filter((c) => YARDS_1184[c.name])) {
     n++;
     const gr = townGateRoads(loc, maps, blocks), job = lay(loc, gr), was = lay(loc, gr.yard);
-    // PIN MOVED (FB1028 YARDS Y2): and today's ring off the yards' ground, as #1184's ran
     assert.deepEqual(job.yardPaths, ringAsWas(was.paths, townRoadRing(job.townGround), job.yardGround), `${loc.name}: the yards' paths #1184's`);
     const wall = wallOf(loc), yl = layoutLocation(loc, maps, blocks), { width: w, height: h } = loc.exterior.exteriorData;
     assert.ok(wall.yardPieces.every((p) => p.thick === 1), `${loc.name}: no tower grown`);
     assert.equal(wall.yardPieces.filter((p) => p.model === WALL_MODELS.gate).length, wall.pieces.filter((p) => p.model === WALL_MODELS.gate).length - wall.streetWays.length, `${loc.name}: no street's gate`);
     const place = (shut) => { const g = Y.townGroundOf(yl, {}, shut); return g ? [...Y.yardSitesOn(g), ...Y.craftYardSitesOn(g)].map((q) => `${q.kind} ${q.gx} ${q.gy} ${q.turn}`) : []; };
-    assert.deepEqual(place(townWalkShut(loc, job.yardGround, job.yardPaths, true)), YARDS_1184[loc.name], `${loc.name}: every yard where #1184 stood it`);   // PIN MOVED (Y2): on the yards' ground
+    assert.deepEqual(place(townWalkShut(loc, job.yardGround, job.yardPaths, true)), YARDS_1184[loc.name], `${loc.name}: every yard where #1184 stood it`);
     const nav = (yards) => { const m = { width: w * 64, height: h * 64, grid: new Uint8Array(w * 64 * h * 64).fill(0xf0) }; townWalkShut(loc, null, null, yards)(m); return m.grid; };
     const a = nav(true), b = nav(false), cells = townWallCells({ pieces: wall.yardPieces }, w, h);
     assert.deepEqual(townWallYardCellsOf(loc), cells, `${loc.name}: its yards' wall cells #1184's`);
@@ -434,7 +432,6 @@ test('FB1028 YARDS with ARENA2: every yard where #1184 stood it - placed on the 
   }
   assert.equal(n, 8, 'every city of the sample');
   assert.ok(differ > 0, `the yards' wall is not the walkers' (${differ} of ${n})`);
-  // PIN MOVED (AUDIT FB1028 YARDS): the host's wiring is read in the unskipped "the host" test below
 });
 
 test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed again - Berbemijet\'s Wagon Yard on the new ground (PIN MOVED (OWN-WORK2): Chesterbeth\'s on Basic Roads\' arrays) stands again by its law clear of the new roads and wall and of its town\'s other yards, which keep a779c9c29\'s cells (mutant: a broken yard kept)', { skip: skipReal, timeout: 1_800_000 }, async () => {

@@ -1,8 +1,7 @@
-// TOWN-SHAPES TS7 (2026-10-25, the owner: "Do all the open items"; bible/03-World/Town-Shapes.md TS7): the Bay's walled
-// cities walled on their outline as the door reads them (their ring open, their wall's carrier in its corner, every
-// building kept), the places past the Bay cloning them as they were; what stood at Daggerfall's gates - the two bulletin
-// boards, Immersive Travel's carriage and driver - carried to each new gate and stood clear of its towers; a town's yards
-// on its own ground.
+// The Bay's walled cities walled on their outline as the door reads them (their ring open, their wall's carrier in its
+// corner, every building kept), the places past the Bay cloning them as they were; what stood at Daggerfall's gates - the
+// two bulletin boards, Immersive Travel's carriage and driver - carried to each new gate and stood clear of its towers; a
+// town's yards on its own ground.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -139,7 +138,7 @@ test('TS7 stood clear: a gate\'s things inside it moved further in together, tho
 
 test('TS7 the carriages and the boards on the carrier: the mod\'s records on a gate while it is loaded, none else; a city walled on its outline a carriage town; the carrier\'s JSON its markers, then what stands at its gates (mutants: the switch unread; the carrier no carriage town; the furniture unlaid)', () => {
   let on = false;
-  installImmersiveTravelGates(() => on);   // OWN-WORK2: our stand, on every gate
+  installImmersiveTravelGates(() => on);   // Our stand, on every gate
   assert.equal(carriageRecordsOf('WALLAA08.RMB'), null, 'the mod not loaded');
   on = true;
   assert.equal(carriageRecordsOf('wallaa08.rmb').Misc3dObjectRecords[0].ModelIdNum, 41214);
@@ -149,7 +148,6 @@ test('TS7 the carriages and the boards on the carrier: the mod\'s records on a g
   // the carrier: its markers first, then the gates' things
   const src = rd('src/world/townWalls.js');
   assert.match(src, /json\.RmbBlock\.MiscFlatObjectRecords = \[\.\.\.markers\.map\([^\n]+\), \.\.\.\(furniture\?\.flats \?\? \[\]\)\];/);
-  // PIN MOVED (AUDIT CAPITAL-CARRIAGES L2): and its things outside each gate on its ground, off its roads (townGateOutside)
   assert.match(src, /return townWallBlockJson\(name, modelId, wall\?\.markers \?\? \[\], open, wall \? gateFurniture\(wall, classicOf, carriageRecordsOf, townBlockedCells\(dfLocation, wall, rmbOf\), townGateOutside\(dfLocation, wall, townPaths\(dfLocation\), rmbOf\)\) : null\);/);
 });
 
@@ -177,8 +175,8 @@ test('TS7 the ground under a carrier never read for the terrain (its wall made w
   const g = townGroundOf(layout, {}, (n) => { shut++; n.grid.fill(0); });
   assert.equal(shut, 1);
   assert.ok(g.blocked.every((v) => v === 1), 'nothing left to place on');
-  assert.match(rd('src/scenes/pixelBuild.js'), /townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\)/);   // PIN MOVED (IC-STUTTER): and the build's breather   // PIN MOVED (FB1028): the yards' own shut
-  assert.match(rd('src/scenes/world.js'), /const g = await stepsBreathing\(townGroundSteps\(yl, measures, shut, townYardsOf\(dfLocation\)\), breathe\);/);   // PIN MOVED (IC-PROPS): and what the town tells its yards' law - its fabric's ways, a capital's own yards; PIN MOVED (IC-STUTTER): a step at a time
+  assert.match(rd('src/scenes/pixelBuild.js'), /townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\)/);
+  assert.match(rd('src/scenes/world.js'), /const g = await stepsBreathing\(townGroundSteps\(yl, measures, shut, townYardsOf\(dfLocation\)\), breathe\);/);
   assert.equal(typeof registerTownWall, 'function');
 });
 
@@ -188,7 +186,7 @@ test('TS7 with ARENA2: every one of the Bay\'s walled cities walled on its outli
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
-  installImmersiveTravelGates(() => true);   // OWN-WORK2: our stand
+  installImmersiveTravelGates(() => true);   // Our stand
   const classicOf = (n) => { const i = blocks.getBlockIndex(blocks.checkName(n)); return i < 0 ? null : blocks.readClassicBlock(i); };
   const rmbOf = (n) => (isWallCarrier(n) || n === TOWN_OUTLINE_BLOCK ? null : blocks.getBlockByName(n)?.rmbBlock ?? null);
   let n = 0;

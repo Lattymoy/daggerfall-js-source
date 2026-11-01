@@ -1,4 +1,4 @@
-// RR3a - Roleplay & Realism 1.8 (Hazelnut): the Master Armorer quest
+// Roleplay & Realism 1.8 (Hazelnut): the Master Armorer quest
 // line's registrations (RoleplayRealism.cs:41-53, :241-311, :414-484,
 // :659-706) - the quest list and its three quests, the two table
 // additions, the three custom factions, the custom armor service, the
@@ -45,7 +45,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
 const V = 'roleplay-realism';
 const on = (key, v = true) => setModSetting(V, key, v);
-const QUESTS = 'src/systems/roleplayRealism/quests';   // OWN-WORK3: our own words on the release's logic
+const QUESTS = 'src/systems/roleplayRealism/quests';   // Our own words on the release's logic
 const questLines = (name) => rd(`${QUESTS}/${name}.txt`).replace(/^﻿/, '').split(/\r?\n/);
 const tableSources = () => {
   const sources = {};
@@ -57,7 +57,7 @@ const tableSources = () => {
 _resetModSettings();
 installRoleplayRealism();
 
-/** OWN-WORK3: the three quests' QBN - Roleplay & Realism 1.8's logic, verbatim (MIT) - by its sha256, and each message's
+/** The three quests' QBN - Roleplay & Realism 1.8's logic, verbatim (MIT) - by its sha256, and each message's
  *  macro set, the release's own (held to it message by message when the words were written, with tools/ownQuestCheck.mjs
  *  checkText). A changed QBN or a lost macro is a change to the quest, made on purpose. */
 const RR_QBN_SHA256 = Object.freeze({
@@ -168,7 +168,7 @@ test('RR3 the three factions: the registry, the records verbatim, the dictionary
   const dict = new Map([[0, { id: 0, name: 'root', parent: 0, children: null }]]);
   const nameToId = new Map();
   assert.equal(addCustomFactions(dict, nameToId), true, 'a parented faction asks the relink');
-  assert.equal(dict.size, 4 + PROVINCE_FACTION_IDS.length);   // PIN MOVED (PROVINCE-COURTS): the door adds the provinces' own courts and people first (systems/faction/provinceFactions.js)
+  assert.equal(dict.size, 4 + PROVINCE_FACTION_IDS.length);
   // DFU's quirk, kept: RelinkChildren (FactionFile.cs:879-893) ADDS to every children list without clearing it, so the
   // lord's own [1021] gains the relinked 1021 - and every parented faction in the dictionary is listed under its parent
   // twice after a custom faction with a parent lands. The port's relinkChildren is the same walk.
@@ -354,7 +354,6 @@ test('RR3 the fort\'s tracks and the armorer\'s discovery: nine pixels, the comp
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(rrEnabled\(\)\) \{ const _px = playerTravelPixel\(\); for \(const line of rrFortProximityLines\(_px\.x, _px\.y\)\) townTalk\.say\(line, 5\); \}/, 'OnMapPixelChanged: AddHUDText(text, 5)');
   assert.match(w, /if \(dfLocation\) setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);/);
-  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the town's book by the one key-maker
   assert.match(w, /const arm = rrMasterArmorerDiscovery\(_musicLoc, getBuildingVariant\);\s*const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s*if \(arm && armRec\) discoverBuilding\(townBookOf\(_musicLoc\), armRec, arm\.name\);/, 'OnEnterLocationRect: DiscoverBuilding(key, name) - and nothing without the directory\'s record (AUDIT-RR F36, PlayerGPS.cs:932-933)');
 });
 
@@ -411,7 +410,7 @@ test('RR3 the merchant service: the registry, the gate, the route, the popup\'s 
   assert.equal(getCustomMerchantServiceLabel(1022), 'Commission Armor');
   assert.equal(typeof getCustomMerchantService(1022), 'function');
   assert.equal(registerMerchantService(1022, () => {}, 'x'), false, 'a faction with one is refused');
-  assert.equal(hasCustomMerchantService(1023), false); assert.equal(getCustomMerchantService(1023), null); assert.equal(getCustomMerchantServiceLabel(1023), '?');   // AUDIT-RR2 G17: Services.cs:173-179
+  assert.equal(hasCustomMerchantService(1023), false); assert.equal(getCustomMerchantService(1023), null); assert.equal(getCustomMerchantServiceLabel(1023), '?');   // Services.cs:173-179
   on('Enabled', false);
   assert.equal(hasCustomMerchantService(1022), false, 'the gate: the mod off is DFU\'s mod not loaded');
   assert.equal(getCustomMerchantService(1022), null);

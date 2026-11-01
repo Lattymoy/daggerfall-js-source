@@ -1,4 +1,4 @@
-// PERF-SNOW bench (2026-10-10, Dudey: "snowfall and snow in general is pretty demanding"): THE SNOW'S CPU, A WALK.
+// PERF-SNOW bench: THE SNOW'S CPU, A WALK.
 // systems/snowfallRuntime.js over test/render/snowfall1_runtime.test.js's synthetic world (planes of 128 x 128 tiles a map
 // pixel), with Basic Roads on every pixel (a network of roads and tracks, predicted as the classifier predicts them), the
 // player walking east at a run for FRAMES frames at 60 fps. Prints the frames' snow time (mean, p95, worst), the
@@ -8,7 +8,7 @@
 import { SnowCoverage, predictRoadTile, BasicRoadsTerrain, roadCorners } from '../src/systems/snowfall.js';
 import { SnowfallRuntime } from '../src/systems/snowfallRuntime.js';
 import { snowPixelBox } from '../src/scenes/snowfallHost.js';
-import { MASKS } from '../test/snowMasks.mjs'; // OWN-WORK4: our snow law's masks over the pins' made-up winter set
+import { MASKS } from '../test/snowMasks.mjs'; // Our snow law's masks over the pins' made-up winter set
 
 const FRAMES = Number(process.argv[2] || 1800);
 const BUDGET = process.argv[3] === 'inf' ? Infinity : Number(process.argv[3] ?? 2);

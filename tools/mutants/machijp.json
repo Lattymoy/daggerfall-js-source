@@ -2,7 +2,7 @@
   {
     "name": "MAC-H-the-hand-draws-whatever-texture-it-last-had",
     "file": "src/systems/handheldTorches.js",
-    "old": "    const held = light();\n    if (!held || !(isTorch(held) || isLantern(held))) return false; // MAC-H: nothing in the hand, nothing on the screen",
+    "old": "    const held = light();\n    if (!held || !(isTorch(held) || isLantern(held))) return false; // Nothing in the hand, nothing on the screen",
     "new": "",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "MAC-H-a-candle-borrows-the-torchs-sprite",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (!held || !(isTorch(held) || isLantern(held))) return false; // MAC-H: nothing in the hand, nothing on the screen",
-    "new": "    if (!held) return false; // MAC-H: nothing in the hand, nothing on the screen",
+    "old": "    if (!held || !(isTorch(held) || isLantern(held))) return false; // Nothing in the hand, nothing on the screen",
+    "new": "    if (!held) return false; // Nothing in the hand, nothing on the screen",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "MAC-I-the-weapon-sprite-drops-the-tint",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop",
-    "new": "drawFpsWeapon(renderer, c, art, m.state, m.frame, { offsetHeight: offsetHeight - spellDrop",
+    "old": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
+    "new": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]

@@ -1,9 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): COME SAIL AWAY'S FIVE CLIPS, OURS,
-// made as PCM from synth.js on fixed seeds - the five ComeSailAway.Start loads (comeSailAwayBoat.js AUDIO_CLIPS): the
-// boat at rest (water lapping, a slap, a creak), under way (the rush, the spray, the canvas's thump), and a stroke's
-// catch, pull and lift that the rowing clips' events play (comeSailAway.js OarEvent_In/Sweep/Out). Each keeps its
-// clip's rate, the strokes their lengths; the loops are seamless. Made once, at the first boat heard. Not a DFU member.
+// COME SAIL AWAY'S FIVE CLIPS, OURS, made as PCM from synth.js on fixed seeds - the five ComeSailAway.Start loads
+// (comeSailAwayBoat.js AUDIO_CLIPS): the boat at rest (water lapping, a slap, a creak), under way (the rush, the spray,
+// the canvas's thump), and a stroke's catch, pull and lift that the rowing clips' events play (comeSailAway.js
+// OarEvent_In/Sweep/Out). Each keeps its clip's rate, the strokes their lengths; the loops are seamless. Made once, at
+// the first boat heard. Not a DFU member.
 import * as synth from './synth.js';
 import { loudnessTo } from '../../../audio/synth/dsp.js';
 
@@ -58,7 +58,7 @@ function dripsInto(out, rate, { from, to, count, gain = 0.3, seed }) {
   }
 }
 
-/** How loud each is made. A loop by its RMS, at the mod's own loops' -24 dBFS at the helm (bible/08-Audio/Audio.md
+/** How loud each is made. A loop by its RMS, at the mod's own loops' -24 dBFS at the helm (
  *  SEA-AIR, AUDIT SOUNDSCAPE S6: the sea's beds were set under that); a stroke by its loudness (dsp.js loudnessOf) near
  *  DAGGER.SND's large splash heard at 0.7 (-15.5). */
 export const CSA_CLIP_LEVEL = Object.freeze({ loopRmsDb: -24, strokeLoudness: -17 });

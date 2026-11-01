@@ -1,11 +1,11 @@
 # Climates & Calories
 
 Survival: a felt temperature, hunger, thirst, sleep and wetness, the food and water that answer them, camps and the
-world's own fires, where a rest is worth what, and regional tavern menus. It is an overhaul, not a port, of Ralzar's
-DFU mod **Climates & Calories** 1.7.1, made with the author's permission (`vendor/climates-calories/`, its README
-carrying it); the mod's rules are read off its DLL and rebuilt as the port's own. It is played at a tier: Off, Boons
-(the default), Casual or Hard. The player meets it on the HUD's needs strip and temperature plate, in food, waterskins
-and campfire kits, at fires and beds, and at the tavern.
+world's own fires, where a rest is worth what, and regional tavern menus. It is an overhaul, not a port, of Ralzar's DFU
+mod **Climates & Calories** 1.7.1, made with the author's permission (`01-Overview/Own-Work.md` holds the record); the
+mod's rules are read off its DLL and rebuilt as our own, and its items, pictures and words are ours. It is played at a
+tier: Off, Boons (the default), Casual or Hard. The player meets it on the HUD's needs strip and temperature plate, in
+food, waterskins and campfire kits, at fires and beds, and at the tavern.
 
 ## How it works
 
@@ -45,7 +45,19 @@ at each minute's own hour offline, capped at two days. Fatigue at nought brings 
 **The items** (`src/systems/survival/items.js`, templates 530 up): Camping Equipment, Rations, Apple, Orange, Bread, Raw
 and Cooked Fish, Meat and Raw Meat, the Waterskin (its water weighs what it is), the Skillet and the port's Campfire.
 Food spoils by stage on a heat-driven clock. Corpses of humanoids may carry food, rolled on the pool's own stream. General
-stores sell provisions; the starting kit carries some.
+stores sell provisions; the starting kit carries some. The rows follow our rules: a name is the plain word for the
+thing; a weight is one in life, to the nearest of 0.1, 0.25, 0.5 or a half kilo (a fruit a quarter, a loaf or a meal of
+rations a half, a skillet two); a food costs two gold an hour of its worth, four for meat, half again for rations
+(`foodPrice`). The tent costs a fifth of a Campfire's night for each of its fifty uses; the skin the classic Decanter's
+7. A food's condition is its keeping; rarity is 1, since nothing rolls these.
+
+**The pictures** (`src/systems/survival/itemIcons.js` `OWN_ICONS`). The icons are ours, at the mod's keys and sizes.
+Raw meat and the waterskin are painted by our painter (`src/systems/survival/survivalArt.js`). A spoiled face is our
+rot (`src/systems/survival/rotPicture.js`; `MOULDY` for the first stage) over the fresh food: the player's own apple,
+orange, bread, fish or meat, or our raw meat. The mould is soft, irregular patches (`mouldField`): seeded noise,
+thicker toward the rim and in the hollows of the food's own shading, grey-green to white, lit as the food is lit, and
+never brighter than the food's highlight. The tent's canvas and pole are the classic records, built from specs
+(`src/systems/survival/derivedIcons.json`).
 
 **Camps** (`src/systems/survival/camp.js`, pool `src/scenes/camps.js`). A tent and fire are placed objects with a menu
 under the activation ray at `CAMP_REACH`: rest here, cook raw food (faster with a skillet), stoke, pack up. Water
@@ -113,3 +125,10 @@ counter, camping, a hunting pop-up and a replacement tavern window. Departures:
   `test/systems/survival/auditcc_items.test.js`, `test/systems/survival/auditcc_tavern.test.js`,
   `test/systems/survival/auditsurv.test.js` - the audits
 - `test/systems/survival/fb1015f_wetfall.test.js` - rain by how hard it falls
+- `test/systems/surv2_items.test.js`, `test/systems/survival/nobethesda3_rotfish.test.js`,
+  `test/systems/nobethesda2_torchesicons.test.js`, `test/systems/ownwork4_pictures.test.js` - the rows and the pictures
+
+## Open
+
+- About 100 dish and drink names in `src/systems/survival/tavernMenu.js` and the meal and camp lines
+  (`SURVIVAL_USE_TEXT`, `CAMP_TEXT`) are still the mod's words (`01-Overview/Own-Work.md`).

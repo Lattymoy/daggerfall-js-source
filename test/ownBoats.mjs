@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): OUR BOATS' FILES FOR THE SUITES - what the five Come Sail Away files were read off the disk
+// OUR BOATS' FILES FOR THE SUITES - what the five Come Sail Away files were read off the disk
 // as (prefabs.json, meshes.json, meshes.bin, materials.json, animation.json), now built by our own builders
 // (src/world/ships/ownBoats/ownBoatFiles.js). Each ask is a copy of its own, so a suite may change what it is given.
 import { ownBoatFiles } from '../src/world/ships/ownBoats/ownBoatFiles.js';

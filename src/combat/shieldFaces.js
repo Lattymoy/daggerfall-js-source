@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): OUR OWN FIRST-PERSON SHIELDS, painted in code for Shield Widget's 600 slots (the mod's
+// OUR OWN FIRST-PERSON SHIELDS, painted in code for Shield Widget's 600 slots (the mod's
 // pictures are retired). A slot is a kind (its archive), a material group and a wear tier (its record), and one of
 // the five frames the Animation module plays, from the guard (0) to the shield turned out of the way (4).
 import { createPainter, ellipse, poly, stroke, minus, and, RAMP, hex, grain, rampShade } from '../art/ownPainter.js';

@@ -98,7 +98,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from '../native/nativePanel.js';
 import { OVERWORLD_ROAD, OVERWORLD_TRACK, OVERWORLD_RIVER, OVERWORLD_STREAM } from '../overworldModel.js';   // ROADS 13/24: the relief's colours
-// TO1: Travel Options' own additions to this window - the ports
+// Travel Options' own additions to this window - the ports
 // filter, the five-texel region page with the road network on it, the
 // I key's location information, the resume prompt and the teleport
 // charge (ui/travel/travelMapOptions.js, TravelOptionsMapWindow.cs).
@@ -108,22 +108,22 @@ import {
 } from './travelMapOptions.js';
 import { DOT_SCALE } from './travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../../systems/travel/travelOptionsText.js';
-import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from '../partyMapMarks.js';   // SOC6: the party's marks, the one reading both maps share
-import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from '../gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, on the open province's page
-import { readBountyMarks, bountyMarksKey, bountyRingTexels, BOUNTY_DOT_RGB, REVENANT_DOT_RGB, REVENANT_LEGEND_TEXT } from '../bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles on the region page
-import { LODE_DOT_RGB, LODE_LEGEND_TEXT } from '../lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's Motherlodes, the same circle in aqua
-import { POI_DOT_RGB, POI_MARKS_MAX, poiLegendText } from '../poi/poiMapMark.js';   // POI-2: the approved POIs, the same circle in violet
-import { readVendorMark, vendorMarkKey, vendorRingTexels, VENDOR_DOT_RGB } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's gold ring
+import { readPartyMarks, partyMarksKey, PARTY_DOT_RGB, PARTY_OFFLINE_DOT_RGB } from '../partyMapMarks.js';   // The party's marks, the one reading both maps share
+import { readGateMark, gateRingKey, gateRingTexels, GATE_DOT_RGB } from '../gate/gateMapMark.js';   // The Oblivion Gate's ring, on the open province's page
+import { readBountyMarks, bountyMarksKey, bountyRingTexels, BOUNTY_DOT_RGB, REVENANT_DOT_RGB, REVENANT_LEGEND_TEXT } from '../bounty/bountyMapMark.js';   // Held bounties' black circles on the region page
+import { LODE_DOT_RGB, LODE_LEGEND_TEXT } from '../lodeMapMark.js';   // A Motherlode Sense's Motherlodes, the same circle in aqua
+import { POI_DOT_RGB, POI_MARKS_MAX, poiLegendText } from '../poi/poiMapMark.js';   // The approved POIs, the same circle in violet
+import { readVendorMark, vendorMarkKey, vendorRingTexels, VENDOR_DOT_RGB } from '../vendor/vendorMapMark.js';   // The trader's waypoint's gold ring
 import { MAP_WIDTH, MAP_HEIGHT } from '../../formats/woodsFile.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded, fitBoxRows } from '../messageBox.js';
 import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from '../listPicker.js';
-import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';  import { classicScope } from '../enhanced/enhancedScope.js';   // PORT0: the classic map keeps its own boxes and lists
-import { TeleportPopUpWindow, preloadTeleportPopUpArt } from '../teleportPopUp.js';   // G5
+import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';  import { classicScope } from '../enhanced/enhancedScope.js';   // The classic map keeps its own boxes and lists
+import { TeleportPopUpWindow, preloadTeleportPopUpArt } from '../teleportPopUp.js';
 import { drawText } from '../text.js';
 import { bindings } from '../input.js';
-import { InputMessageBoxWindow } from '../inputMessageBox.js';   // CM8: Find is a pushed DaggerfallInputMessageBox
-import { firstHotkey } from '../../systems/dialogShortcuts.js';   // AUDIT 64 F23: the DaggerfallShortcut table, IsUpWith's modifier mask and all
-import { codeMeans } from '../../systems/inputActions.js';   // UXB1-S: its own key, shared or not
+import { InputMessageBoxWindow } from '../inputMessageBox.js';   // Find is a pushed DaggerfallInputMessageBox
+import { firstHotkey } from '../../systems/dialogShortcuts.js';   // The DaggerfallShortcut table, IsUpWith's modifier mask and all
+import { codeMeans } from '../../systems/inputActions.js';   // Its own key, shared or not
 import { ImgFile } from '../../formats/imgFile.js';
 import { DFPalette } from '../../formats/dfPalette.js';
 import { TextRsc } from '../../formats/textRsc.js';
@@ -131,15 +131,15 @@ import { REGION_NAMES, LOCATION_TYPES, longitudeLatitudeToMapPixel, getPixelFrom
 import { locationSummaryAt } from '../../systems/map/mapDirectory.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../../systems/editDistance.js';
 import { hasDiscoveredLocationId } from '../../systems/discovery.js';
-import { pastBayOnMap } from '../map/mapSkin.js';   // START3: the map the player opens, for a place past the Bay
+import { pastBayOnMap } from '../map/mapSkin.js';   // The map the player opens, for a place past the Bay
 import { getBool } from '../../systems/settings/settings.js';
-import { registerCommand, consoleLog, HELP_COMMAND } from '../../systems/consoleCommands.js';   // E3: the console command database
+import { registerCommand, consoleLog, HELP_COMMAND } from '../../systems/consoleCommands.js';   // The console command database
 import { travelMapFilters, freshTravelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData, travelMapMarkedMapId, setTravelMapMarkedMapId } from '../../systems/travel/travelMapState.js';
 import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
-import { localizedText, formatText, getLocalizedLocationName, getLocalizedRegionName } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
-import { IT_POPUP, IT_TEXT, itMapRefusal, itMapPaths, carriageLocationLarge, seafarerLocationLarge, seafarerDiscovered } from '../../systems/immersiveTravel.js';   // IT1: Immersive Travel's CarriageMap and SeafarersMap
-import { travelPicture } from './travelArt.js';   // OWN-WORK4: the PORTS button, our own
+import { localizedText, formatText, getLocalizedLocationName, getLocalizedRegionName } from '../../systems/textManager.js';   // DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
+import { IT_POPUP, IT_TEXT, itMapRefusal, itMapPaths, carriageLocationLarge, seafarerLocationLarge, seafarerDiscovered } from '../../systems/immersiveTravel.js';   // Immersive Travel's CarriageMap and SeafarersMap
+import { travelPicture } from './travelArt.js';   // The PORTS button, our own
 
 // --- DFU's fields (:38-63) ---
 export const BETONY_INDEX = 19;
@@ -158,7 +158,7 @@ export const MAX_MATCHING_RESULTS = 1000;
 /** regionTextureOverlayPanelRect (:121) - the region page. */
 export const REGION_RECT = Object.freeze([0, REGION_PANEL_OFFSET, 320, 160]);
 export const REGION_W = 320, REGION_H = 160;
-/** SOC6: how often this window asks the host for its party, in seconds.
+/** How often this window asks the host for its party, in seconds.
  *  Not DFU's - DFU has no party. Slower than the enhanced map's poll
  *  because the answer here costs a whole dots-buffer rebuild, and a
  *  member's dot is a pixel: half a second of lag on one pixel is
@@ -307,7 +307,7 @@ export function flipTravelMapFilter(filters, which) {
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 const packRGBA = (r, g, b, a) => (((a << 24) >>> 0) | (b << 16) | (g << 8) | r) >>> 0;
-/** packRGBA read back, its own byte order (MAP-KEY). */
+/** packRGBA read back, its own byte order. */
 const unpackRGB = (c) => ({ r: c & 0xff, g: (c >>> 8) & 0xff, b: (c >>> 16) & 0xff });
 
 // map_reveallocations / map_hidelocations (:1788-1884). E3 gave them
@@ -341,7 +341,7 @@ let _art = null;
 /** The window's whole art bundle: the overworld, the picker BITMAP
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
-/** TO1: one of our travel pictures (OWN-WORK4, travelArt.js), in the shape `drawImg`
+/** One of our travel pictures (OWN-WORK4, travelArt.js), in the shape `drawImg`
  *  reads. The precedent is systems/handheldTorches.js:"async function defaultLoadSprite" -
  *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
  *  quad and the flip would stand it on its head. A picture that cannot be
@@ -349,7 +349,7 @@ let _art = null;
 async function loadVendorPng(deps, name) {
   try {
     const { toScreenOrder } = await import('../../formats/color32Order.js');
-    // AUDIT-TO1 E2: toScreenOrder answers `{ width, height, colors }` -
+    // toScreenOrder answers `{ width, height, colors }` -
     // what uploadTexture EATS - and the precedent this loader cited
     // (handheldTorches.js) uploads it before drawing. Stored as-is, the
     // pair reached drawImg with no `tex` and the PORTS button painted
@@ -406,17 +406,17 @@ export async function preloadTravelMapArt(deps) {
   // no-ops rather than a half-drawn window. preloadListPickerArt
   // swallows its own failure, which is why it is not caught here.
   await preloadTravelPopUpArt(deps).catch((e) => console.warn('[travelmap] TRAV0I04.IMG unavailable:', e?.message ?? e));
-  await preloadTeleportPopUpArt(deps);   // G5: TELE00I0 - its own loader swallows an absent file
+  await preloadTeleportPopUpArt(deps);   // TELE00I0 - its own loader swallows an absent file
   await preloadListPickerArt(deps);
   return _art;
 }
 export const travelMapArtLoaded = () => !!_art;
-/** MAP-KEY: the location dots' colours as this window paints them (locationPixelColors, :253-269 - FMAP_PAL.COL
+/** The location dots' colours as this window paints them (locationPixelColors, :253-269 - FMAP_PAL.COL
  *  entries, read off the player's own file by the preload above), one {r, g, b} per bucket for the held map's ink;
  *  null until the art has loaded, and the held map inks in the plain pen until then. The palette is ARENA2 data, so
  *  no colour of it is written anywhere in the port - this is the one door to it. */
 export const travelMapDotColors = () => _art?.locationPixelColors?.map(unpackRGB) ?? null;
-/** RAID1: the region picker's bytes (TRAV0I01.IMG - a pixel is 128 + its region), which World Events - Raiding
+/** The region picker's bytes (TRAV0I01.IMG - a pixel is 128 + its region), which World Events - Raiding
  *  Parties' SelectRaids reads through DaggerfallUI.GetImgBitmap [IL_04b5]; null until the art has loaded. */
 export const travelMapPickerData = () => _art?.pickerBitmap?.data ?? null;
 /** Tests mount a hand-built bundle through the same door. */
@@ -522,7 +522,7 @@ export class TravelMapWindow {
     this.borderEnabled = false;
     // sub-windows and boxes, in the order they take input
     this.popUp = null;
-    // G5: the TELEPORT popup is its OWN field, and that is DFU's own
+    // The TELEPORT popup is its OWN field, and that is DFU's own
     // structure rather than tidiness. CreatePopUpWindow (:1705-1730)
     // keeps the travel popup in the `popUp` FIELD and the teleport
     // popup in a LOCAL - it is pushed on the UI stack and the map
@@ -534,7 +534,7 @@ export class TravelMapWindow {
     this.telePopUp = null;
     this.picker = null;
     this.top = null;            // 'find' | 'notfound' | 'confirm'
-    // G5: teleportationTravel (:148). A ONE-SHOT arm: the guild's
+    // teleportationTravel (:148). A ONE-SHOT arm: the guild's
     // teleport service sets it before the map is pushed and DFU
     // clears it in OnPop (:368), so it lasts exactly one visit -
     // closing the map without picking loses it, and the next M press
@@ -545,7 +545,7 @@ export class TravelMapWindow {
     // consumes it (:443-455) and DFU's OnPop clears it (:370), so it
     // lasts exactly one visit the way teleportationTravel above does.
     this._gotoPlace = null;
-    this.findBox = null;   // CM8: the pushed find box while `top` is 'find'
+    this.findBox = null;   // The pushed find box while `top` is 'find'
     this._box = null;
     // the generated textures
     this._dotsKey = null;
@@ -559,23 +559,22 @@ export class TravelMapWindow {
     this._dotsBuf = new Uint32Array(REGION_W * REGION_H);
     this._outlineBuf = new Uint32Array(REGION_W * REGION_H);
     this._identifyBuf = new Uint32Array(REGION_W * REGION_H);
-    // WW-C2: the open zone's layer (WILD1: a fog over the Wrothgarian Mountains' page and the province map) retired with
+    // The open zone's layer (WILD1: a fog over the Wrothgarian Mountains' page and the province map) retired with
     // the mountains' zone - Cyrodiil lies past the Bay, on no page of this map (the held map's continent draws it)
     this._dotsDirty = true;
     this._identifyDirty = true;
-    // SOC6 (Mac: "Party members should be able to be seen on the world
-    // map, regardless of their location"): the party's last drawn
-    // signature and the seconds left until this window asks the host
-    // again. The classic page has no per-frame overlay to hang a marker
-    // on, so a member IS a dot in the dots buffer - and a buffer is
-    // rebuilt, never nudged, so the rebuild has to be earned: it runs
-    // only when a member's pixel, floor, name or presence changed.
+    // The party's last drawn signature and the seconds left until this
+    // window asks the host again. The classic page has no per-frame
+    // overlay to hang a marker on, so a member IS a dot in the dots
+    // buffer - and a buffer is rebuilt, never nudged, so the rebuild
+    // has to be earned: it runs only when a member's pixel, floor, name
+    // or presence changed.
     this._partyKey = '';
     this._partyPoll = 0;
-    this._gateKey = '';   // WB1: the ring the page last drew (its place alone - the page draws no words)
-    this._bountiesKey = '';   // BOUNTY1: the circles the page last drew
-    this._vendorKey = '';   // HOME-VENDOR: the trader's waypoint the page last drew
-    // TO1: Travel Options' own state on this window. `_to` is the mod
+    this._gateKey = '';   // The ring the page last drew (its place alone - the page draws no words)
+    this._bountiesKey = '';   // The circles the page last drew
+    this._vendorKey = '';   // The trader's waypoint the page last drew
+    // Travel Options' own state on this window. `_to` is the mod
     // itself (null when it is off), read ONCE per open the way DFU
     // reads `TravelOptionsMod.Instance` in the constructor
     // (TravelOptionsMapWindow.cs:115-146). `portsFilter` is the mod's
@@ -585,7 +584,7 @@ export class TravelMapWindow {
     // this is the one place the two shapes differ and the bible says so.
     this._to = deps.travelOptions?.() ?? null;
     this.portsFilter = false;
-    // AUDIT-TO1 G4: :102's `markedLocationId` is a field on the SAME
+    // 102's `markedLocationId` is a field on the SAME
     // persistent window the eight filters ride, so it outlives an
     // open/close as they do - the whole point of a mark is to steer to
     // it on the junction map AFTER closing the map. It lives in
@@ -601,8 +600,8 @@ export class TravelMapWindow {
     this._teleportChargeDone = false;
     this._distance = null;
     this._distanceRegionName = null;
-    this._shownNames = null;   // L10N3e: localizedMapNameLookup, and the region it was built for
-    // IT1: IMMERSIVE TRAVEL. `_it` is a driver's or a captain's map - `{ kind, settings }`, the mod's CarriageMap built
+    this._shownNames = null;   // localizedMapNameLookup, and the region it was built for
+    // IMMERSIVE TRAVEL. `_it` is a driver's or a captain's map - `{ kind, settings }`, the mod's CarriageMap built
     // CreatedByNPC (CarriageTravelService IL_059c-05b3) or its SeafarersMap (ShipTravelService IL_05e8-05fe);
     // `_itSettings` the mod's settings while it is on, read as the window opens; `_carriageMap` whether this window IS
     // the mod's CarriageMap - a driver's, a captain's, or the player's own while Travel Options is off (Init
@@ -674,7 +673,7 @@ export class TravelMapWindow {
   /** checkLocationDiscovered (:1121-1131) - the instance door onto the
    *  module member below, which is where the law lives. */
   checkLocationDiscovered(summary) {
-    // AUDIT IT1 C4: the mod's maps are DFU's window under the mod, never Travel Options' (no ports filter), and the
+    // The mod's maps are DFU's window under the mod, never Travel Options' (no ports filter), and the
     // captain's is SeafarersMap.checkLocationDiscovered (IL_17a0-17ee) - ShowOnlyDocks - for the dots, the hover, the
     // click and the find alike, as the one virtual all four ask
     if (this._it) return this._it.kind === IT_POPUP.seafarer ? seafarerDiscovered(summary, checkLocationDiscovered(summary), this._it.settings) : checkLocationDiscovered(summary);
@@ -688,7 +687,7 @@ export class TravelMapWindow {
   /** CanFindPlace (:1134-1146) - likewise. The journal's click-through
    *  asks this question from a host that has no map window open yet, so
    *  the member cannot live only on an instance. */
-  canFindPlace(regionName, name, site = null) { return canFindPlace(this.deps.maps, this.deps.mapDict, regionName, name, placePixelOf, site); }   // START3: the site past the Bay
+  canFindPlace(regionName, name, site = null) { return canFindPlace(this.deps.maps, this.deps.mapDict, regionName, name, placePixelOf, site); }   // The site past the Bay
 
   // --- the region page (:651-809) ---
 
@@ -785,11 +784,10 @@ export class TravelMapWindow {
         this._dotsBuf[offset] = colors[index] ?? 0;
       }
     }
-    // SOC6 (Mac: "Party members should be able to be seen on the world
-    // map, regardless of their location"): THE PARTY, LAST - over the
-    // roads and over the location dots, because a member standing in a
-    // town is the thing the player opened the map to find, and a town
-    // is on the page whether or not anyone is standing in it.
+    // THE PARTY, LAST - over the roads and over the location dots,
+    // because a member standing in a town is the thing the player
+    // opened the map to find, and a town is on the page whether or not
+    // anyone is standing in it.
     //
     // The page's own two laws are kept exactly as the dots above keep
     // them: the texel is `originX + x, originY + y` off OFFSET_LOOKUP,
@@ -833,42 +831,42 @@ export class TravelMapWindow {
       const offset5 = Math.trunc((((height - y - 1) * sc * width5) + (x * sc)) * this.scale);
       for (let yy = 1; yy < 4; yy++) for (let xx = 1; xx < 4; xx++) this._dotsBuf[offset5 + (yy * width5) + xx] = px;
     };
-    // WB1: THE GATE'S RING, under the party - its edge band, the size of the places it stands among
+    // THE GATE'S RING, under the party - its edge band, the size of the places it stands among
     const gate = readGateMark(this.deps.gate, { width: MAP_WIDTH, height: MAP_HEIGHT });
     this._gateKey = gateRingKey(gate);
     if (gate) {
       const gatePx = packRGBA(GATE_DOT_RGB[0], GATE_DOT_RGB[1], GATE_DOT_RGB[2], 255);
       for (const [x, y] of gateRingTexels(gate, originX, originY, width, height)) plot(x, y, gatePx);
     }
-    // BOUNTY1: each held bounty's black circle, under the party as the gate's ring is
+    // Each held bounty's black circle, under the party as the gate's ring is
     const bounties = readBountyMarks(this.deps.bounties, { width: MAP_WIDTH, height: MAP_HEIGHT });
     this._bountiesKey = bountyMarksKey(bounties);
     if (bounties.length) {
       const bountyPx = packRGBA(BOUNTY_DOT_RGB[0], BOUNTY_DOT_RGB[1], BOUNTY_DOT_RGB[2], 255);
       for (const [x, y] of bountyRingTexels(bounties, originX, originY, width, height)) plot(x, y, bountyPx);
     }
-    // RVN7c: each revenant lair heard of - the same circle, in blood red
+    // Each revenant lair heard of - the same circle, in blood red
     const lairs = readBountyMarks(this.deps.revenants, { width: MAP_WIDTH, height: MAP_HEIGHT }, REVENANT_LEGEND_TEXT);
     this._revenantsKey = bountyMarksKey(lairs);
     if (lairs.length) {
       const lairPx = packRGBA(REVENANT_DOT_RGB[0], REVENANT_DOT_RGB[1], REVENANT_DOT_RGB[2], 255);
       for (const [x, y] of bountyRingTexels(lairs, originX, originY, width, height)) plot(x, y, lairPx);
     }
-    // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the same circle, in the compass's aqua
+    // A Motherlode Sense's day's Motherlodes - the same circle, in the compass's aqua
     const lodes = readBountyMarks(this.deps.lodes, { width: MAP_WIDTH, height: MAP_HEIGHT }, LODE_LEGEND_TEXT);
     this._lodesKey = bountyMarksKey(lodes);
     if (lodes.length) {
       const lodePx = packRGBA(LODE_DOT_RGB[0], LODE_DOT_RGB[1], LODE_DOT_RGB[2], 255);
       for (const [x, y] of bountyRingTexels(lodes, originX, originY, width, height)) plot(x, y, lodePx);
     }
-    // POI-2: the approved POIs - the same circle, in violet
+    // The approved POIs - the same circle, in violet
     const pois = readBountyMarks(this.deps.pois, { width: MAP_WIDTH, height: MAP_HEIGHT }, poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7: every marked POI, past the bounty's eight
     this._poisKey = bountyMarksKey(pois);
     if (pois.length) {
       const poiPx = packRGBA(POI_DOT_RGB[0], POI_DOT_RGB[1], POI_DOT_RGB[2], 255);
       for (const [x, y] of bountyRingTexels(pois, originX, originY, width, height)) plot(x, y, poiPx);
     }
-    // HOME-VENDOR: the trader's waypoint's gold ring, under the party as the bounties' are
+    // The trader's waypoint's gold ring, under the party as the bounties' are
     const vendor = readVendorMark(this.deps.vendor, { width: MAP_WIDTH, height: MAP_HEIGHT });
     this._vendorKey = vendorMarkKey(vendor);
     if (vendor) {
@@ -880,7 +878,7 @@ export class TravelMapWindow {
     for (const m of marks) plot(m.px - originX, m.py - originY, m.online ? partyPx : partyOffPx);
   }
 
-  /** TO1: UpdateMapLocationDotsTextureWithPaths (:593-662) - the mod's
+  /** UpdateMapLocationDotsTextureWithPaths (:593-662) - the mod's
    *  own region page. The walk itself is ui/travel/travelMapOptions.js; this
    *  is the window's half: which flags are on, which colours, and the
    *  four reads it hands over. */
@@ -916,7 +914,7 @@ export class TravelMapWindow {
     });
   }
 
-  /** IT1: CarriageMap.UpdateMapLocationDotsTextureWithPaths (IL_0ecc-114c) - Travel Options' routine as the mod copied
+  /** CarriageMap.UpdateMapLocationDotsTextureWithPaths (IL_0ecc-114c) - Travel Options' routine as the mod copied
    *  it: its roads and tracks (no water), each by the mod's own switch with Basic Roads loaded and never the shared
    *  store's chips (the mod has no path buttons); no politic containment, as Travel Options' has none; no middle-click
    *  mark (CarriageMap has no handler, its markedLocationId stays -1). The dot's size is the mod's IsLocationLarge -
@@ -932,7 +930,7 @@ export class TravelMapWindow {
     }, {
       politicAt: (x, y) => maps.getPoliticIndex(x, y),
       summaryAt: (x, y) => locationSummaryAt(this.deps.mapDict, x, y),
-      discovered: (summary) => this.checkLocationDiscovered(summary),   // AUDIT IT1 C4: the captain's ShowOnlyDocks rides the instance test
+      discovered: (summary) => this.checkLocationDiscovered(summary),   // The captain's ShowOnlyDocks rides the instance test
       colorIndexOf: (t) => getPixelColorIndex(t, this.filters),
       colors,
       pathsAt: (x, y, type) => {
@@ -947,7 +945,7 @@ export class TravelMapWindow {
     });
   }
 
-  /** SOC6: the party moves while the page is up, so the page asks the
+  /** The party moves while the page is up, so the page asks the
    *  host for it on a timer and repaints only on a CHANGE. The rebuild
    *  is the whole dots buffer (the buffer's own idiom - the filter
    *  chips pay the same price), which is why the signature gate is not
@@ -962,10 +960,10 @@ export class TravelMapWindow {
     if (partyMarksKey(readPartyMarks(this.deps.party, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._partyKey
       && gateRingKey(readGateMark(this.deps.gate, { width: MAP_WIDTH, height: MAP_HEIGHT })) === this._gateKey
       && bountyMarksKey(readBountyMarks(this.deps.bounties, { width: MAP_WIDTH, height: MAP_HEIGHT })) === (this._bountiesKey ?? '')
-      && bountyMarksKey(readBountyMarks(this.deps.lodes, { width: MAP_WIDTH, height: MAP_HEIGHT }, LODE_LEGEND_TEXT)) === (this._lodesKey ?? '')   // MINE-PERKS: or a Motherlode Sense's Motherlode rose, went or was spent
-      && bountyMarksKey(readBountyMarks(this.deps.pois, { width: MAP_WIDTH, height: MAP_HEIGHT }, poiLegendText(), POI_MARKS_MAX)) === (this._poisKey ?? '')   // POI-2: or a POI was approved, moved or retired
+      && bountyMarksKey(readBountyMarks(this.deps.lodes, { width: MAP_WIDTH, height: MAP_HEIGHT }, LODE_LEGEND_TEXT)) === (this._lodesKey ?? '')   // Or a Motherlode Sense's Motherlode rose, went or was spent
+      && bountyMarksKey(readBountyMarks(this.deps.pois, { width: MAP_WIDTH, height: MAP_HEIGHT }, poiLegendText(), POI_MARKS_MAX)) === (this._poisKey ?? '')   // Or a POI was approved, moved or retired
       && bountyMarksKey(readBountyMarks(this.deps.revenants, { width: MAP_WIDTH, height: MAP_HEIGHT }, REVENANT_LEGEND_TEXT)) === (this._revenantsKey ?? '')
-      && vendorMarkKey(readVendorMark(this.deps.vendor, { width: MAP_WIDTH, height: MAP_HEIGHT })) === (this._vendorKey ?? '')) return false;   // WB1: or the ring came, went or moved; BOUNTY1: or a circle came or went; HOME-VENDOR: or the trader's waypoint moved
+      && vendorMarkKey(readVendorMark(this.deps.vendor, { width: MAP_WIDTH, height: MAP_HEIGHT })) === (this._vendorKey ?? '')) return false;   // Or the ring came, went or moved; BOUNTY1: or a circle came or went; HOME-VENDOR: or the trader's waypoint moved
     this._updateMapLocationDotsTexture();
     return true;
   }
@@ -1337,7 +1335,7 @@ export class TravelMapWindow {
   }
 
   _confirmRows() {
-    // L10N3e: :1695 - the place by its map id, over the name as shown
+    // 1695 - the place by its map id, over the name as shown
     const name = getLocalizedLocationName(this.locationSummary?.mapID, this._shownLocationNameInCurrentRegion());
     const rows = _art?.textRsc?.linesById?.(31) ?? [{ text: 'Do you wish to travel to %tcn?', center: true }];
     return rows.map((r) => {
@@ -1352,7 +1350,7 @@ export class TravelMapWindow {
   _createPopUpWindow() {
     const pos = getPixelFromPixelID(this.locationSummary.id);
     if (this.teleportationTravel) {
-      // L10N3e: the popup SHOWS DestinationName (:1712, the name as
+      // The popup SHOWS DestinationName (:1712, the name as
       // shown); the host is handed the canonical one, its key
       const name = this._getLocationNameInCurrentRegion();
       this.telePopUp = new TeleportPopUpWindow({ pixel: pos, name: this._shownLocationNameInCurrentRegion() }, {
@@ -1372,7 +1370,7 @@ export class TravelMapWindow {
       });
       return;
     }
-    // IT1: a driver's or a captain's map asks the mod first (CarriageMap.CreatePopUpWindow IL_08f9-0a49,
+    // A driver's or a captain's map asks the mod first (CarriageMap.CreatePopUpWindow IL_08f9-0a49,
     // SeafarersMap's IL_1677-1792) - a refusal is a box with an OK over the map, and the map stays
     if (this._it) {
       const refusal = itMapRefusal(this._it.kind, this._itSettings, {
@@ -1380,11 +1378,11 @@ export class TravelMapWindow {
       });
       if (refusal) { this._itRefusal = IT_TEXT[refusal]; this.top = 'itRefusal'; return; }
     }
-    // IT1: the popup the mod makes - over its own maps, ImmersiveTravelPopUp or SeafarersPopUp (IL_09e5, IL_16e6);
+    // The popup the mod makes - over its own maps, ImmersiveTravelPopUp or SeafarersPopUp (IL_09e5, IL_16e6);
     // over the player's own map while DisableNormalTravel registers ImmersiveTravelPopUp in DFU's (IL_03d7-03f9)
     const itKind = this._it?.kind ?? (this._itSettings?.disableNormalTravel ? IT_POPUP.player : null);
     this.popUp = new TravelPopUpWindow(pos, {
-      // IT1: the mod's popup, its settings beside it - null for DFU's (or Travel Options') own
+      // The mod's popup, its settings beside it - null for DFU's (or Travel Options') own
       immersive: itKind ? { kind: itKind, settings: this._itSettings } : null,
       // TravelTimeCalculator.cs:163's Knightly Order consult, the
       // host's online word, TP1's entity for GuildManager.FastTravel
@@ -1406,7 +1404,7 @@ export class TravelMapWindow {
         this.closeTravelWindows(true);
       },
     });
-    // IT1: the mod's popups are each a NEW one (`newobj`) with their own OnPush, never the persistent popup the map
+    // The mod's popups are each a NEW one (`newobj`) with their own OnPush, never the persistent popup the map
     // reuses - nothing remembered rides into them, and Travel Options' ports guard is not theirs
     if (itKind) { this.popUp.refresh(); return; }
     // The three toggles DFU's persistent popup would still be
@@ -1415,7 +1413,7 @@ export class TravelMapWindow {
     // pick (IL_0870-0885), so DFU's base builds a NEW one on its own three (Cautious, By ship, At inns). What it
     // chooses is still remembered (_rememberPopUpState): GetTravelMapSaveData reads the last popup.
     if (!this._carriageMap) Object.assign(this.popUp, travelMapPopUpState());
-    // AUDIT-TO1 D2: ...and THEN the mod's OnPush guard (TravelOptionsPopUp.cs
+    // ...and THEN the mod's OnPush guard (TravelOptionsPopUp.cs
     // :53-67), which was ported and never called: with the ports
     // restriction on, a trip that cannot sail does not START on the
     // ship toggle. Every popup opened on SHIP before this.
@@ -1447,7 +1445,7 @@ export class TravelMapWindow {
       },
     });
     Object.assign(this.popUp, travelMapPopUpState());
-    this.popUp.enforceShipRestriction();   // AUDIT-TO1 D2: OnPush's guard, here too
+    this.popUp.enforceShipRestriction();   // OnPush's guard, here too
     this.popUp.refresh();
   }
 
@@ -1486,7 +1484,7 @@ export class TravelMapWindow {
    *  `highlight`), so on a classic page the mark is remembered and not
    *  seen, which is what the mod does without its roads integration. */
   _markLocationHandler() {
-    if (this._it) return;   // AUDIT IT1 C1: CarriageMap has no MarkLocationHandler - its markedLocationId stays -1
+    if (this._it) return;   // CarriageMap has no MarkLocationHandler - its markedLocationId stays -1
     if (!(this.regionSelected && this.locationSelected && !this.mouseOverOtherRegion)) return;
     const id = this.locationSummary?.mapID ?? this.locationSummary?.mapId ?? -1;
     this.markedMapId = this.markedMapId === id ? -1 : id;
@@ -1543,7 +1541,7 @@ export class TravelMapWindow {
       // the ship button refused at Daggerfall's own quay.
       currentLocationMapId: this.deps.currentLocationMapId,
       isOnShip: this.deps.isOnShip,
-      // AUDIT-TO1 I5: the popup's own I (:69-80) - the map draws the box
+      // The popup's own I (:69-80) - the map draws the box
       // ABOVE the popup (see draw / input / click below).
       displayLocationInfo: () => this._displayLocationInfo(),
     };
@@ -1552,7 +1550,7 @@ export class TravelMapWindow {
   /** The popup is minted per trip here where DFU keeps one; its three
    *  toggles go back to the module store as it closes. */
   _rememberPopUpState() {
-    if (!this.popUp || this.popUp.itKind) return;   // IT1: the mod's popups are new each time - nothing of theirs is the map's to keep
+    if (!this.popUp || this.popUp.itKind) return;   // The mod's popups are new each time - nothing of theirs is the map's to keep
     setTravelMapPopUpState(this.popUp);
   }
 
@@ -1638,7 +1636,7 @@ export class TravelMapWindow {
     this._updateCrosshair();
   }
 
-  /** FilterButtonClickHandler (:1024-1070) - the flip is flipTravelMapFilter, the one both skins press (MAP-KEY). */
+  /** FilterButtonClickHandler (:1024-1070) - the flip is flipTravelMapFilter, the one both skins press. */
   _filterButtonClick(which) {
     if (!flipTravelMapFilter(this.filters, which)) return;
     this._updateMapLocationDotsTexture();
@@ -1646,7 +1644,7 @@ export class TravelMapWindow {
 
   // --- the host seam ---
 
-  /** D4: THE KEY-UP EDGE. A DFU Button with an OnKeyboardEvent handler
+  /** THE KEY-UP EDGE. A DFU Button with an OnKeyboardEvent handler
    *  is raised on BOTH edges of its Hotkey (Button.cs:79-92), and this
    *  window's travel popup is the one place in the port that needs the
    *  release: EXIT plays its click on the press and pops on the
@@ -1672,7 +1670,7 @@ export class TravelMapWindow {
       if (this.telePopUp?.done) this.telePopUp = null;
       return;
     }
-    // AUDIT-TO1 I5: the info box the popup's own I raised is dismissed
+    // The info box the popup's own I raised is dismissed
     // ABOVE the popup (ClickAnywhereToClose), or it could never go.
     if (this.popUp && this.infoBox) { this.infoBox = null; return; }
     if (this.popUp) {
@@ -1694,7 +1692,7 @@ export class TravelMapWindow {
       return;
     }
     if (this.top === 'notfound') { this.top = null; return; }     // ClickAnywhereToClose
-    // IT1: the mod's refusal - AddButton(OK, true) and an OnButtonClick of CloseWindow (IL_09a8-09cd, IL_0a1f-0a44,
+    // The mod's refusal - AddButton(OK, true) and an OnButtonClick of CloseWindow (IL_09a8-09cd, IL_0a1f-0a44,
     // IL_1720-1745, IL_1768-178d): Return presses the default button, O is OK's own key, nothing else closes it
     if (this.top === 'itRefusal') {
       if (code === 'Enter' || code === 'NumpadEnter' || code === 'KeyO') { this._click(); this.top = null; this._itRefusal = null; }
@@ -1754,7 +1752,7 @@ export class TravelMapWindow {
       return;
     }
     if (this.regionSelected) {
-      // AUDIT 64 F23 - Update (:418, :427) asks the SHORTCUT TABLE, not
+      // Update (:418, :427) asks the SHORTCUT TABLE, not
       // a key code: `DaggerfallShortcut.GetBinding(Buttons.TravelMapList)
       // .IsUpWith(keyModifiers)` and the same for TravelMapFind, with
       // keyModifiers taken at :388. IsUpWith (HotkeySequence.cs:169-172)
@@ -1788,7 +1786,7 @@ export class TravelMapWindow {
     }
   }
 
-  /** ROAD-E E1: the release edge, forwarded to the teleport list the
+  /** The release edge, forwarded to the teleport list the
    *  way `hover` is - the thumb latches on the press, and until the
    *  hosts routed pointer UP nothing dropped it but the next move. */
   release() { this.picker?.release(); }
@@ -1796,7 +1794,7 @@ export class TravelMapWindow {
   hover(vx, vy, e = null) {
     if (this.telePopUp) return;   // a yes/no box has nothing to hover
     if (this.popUp) { this.popUp.hover(vx, vy); return; }
-    if (this.picker) { this.picker.hover(vx, vy, e); return; }   // ROAD-A7: the teleport list's own hover
+    if (this.picker) { this.picker.hover(vx, vy, e); return; }   // The teleport list's own hover
     if (this.top) return;
     if (vx === this.lastMousePos[0] && vy === this.lastMousePos[1]) return;
     this.lastMousePos = [vx, vy];
@@ -1814,7 +1812,7 @@ export class TravelMapWindow {
     // the middle button marks the place under the cursor and does
     // nothing else - it never reaches a sub-window or the bar.
     if (middle) {
-      // AUDIT IT1 C6: only while the map is the top window - under a popup or a box the native panel hears nothing,
+      // Only while the map is the top window - under a popup or a box the native panel hears nothing,
       // and a mark re-aimed `locationSummary` under the popup that would travel off it
       if (this.popUp || this.telePopUp || this.picker || this.top || this.infoBox) return true;
       this.lastMousePos = [vx, vy];
@@ -1827,7 +1825,7 @@ export class TravelMapWindow {
       if (this.telePopUp?.done) this.telePopUp = null;
       return true;
     }
-    if (this.popUp && this.infoBox) { this.infoBox = null; return true; }   // AUDIT-TO1 I5
+    if (this.popUp && this.infoBox) { this.infoBox = null; return true; }
     if (this.popUp) {
       this.popUp.click(vx, vy);
       if (this.popUp?.done) this.popUp = null;
@@ -1838,7 +1836,7 @@ export class TravelMapWindow {
       if (this.picker?.done) this.picker = null;
       return true;
     }
-    if (this.top === 'itRefusal') {   // IT1: the OK button alone answers
+    if (this.top === 'itRefusal') {   // The OK button alone answers
       if (this._box && messageBoxHit(this._box, vx, vy) === MB_BUTTONS.OK) this.input('KeyO');
       return true;
     }
@@ -1848,7 +1846,7 @@ export class TravelMapWindow {
       else if (hit === MB_BUTTONS.No) this.input('KeyN');
       return true;
     }
-    // TO1: the two ClickAnywhereToClose boxes - the mod's own info box
+    // The two ClickAnywhereToClose boxes - the mod's own info box
     // (:449) and the "not enough gold" (:500).
     if (this.top === 'teleportpoor') { this.input('KeyN'); return true; }
     if (this.infoBox) { this.infoBox = null; return true; }
@@ -1950,11 +1948,11 @@ export class TravelMapWindow {
       // journal's - both call it on the same SiteDetails (:450).
       this.mouseOverRegion = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');
       this._openRegionPanel(this.mouseOverRegion);
-      // L10N3e: :447 - the find searches the names as shown, so it is
+      // 447 - the find searches the names as shown, so it is
       // handed the place's own (by its map id, else the canonical)
       this._handleLocationFindEvent(getLocalizedLocationName(site.mapId, site.locationName ?? ''));
     }
-    // SOC6: ABOVE the sub-window returns. A popup, a box or the picker
+    // ABOVE the sub-window returns. A popup, a box or the picker
     // freezes the map's own animation (DFU's "only the top window
     // updates"), but the party is not this window's animation - it is
     // another player walking - and the page behind the box must still
@@ -1999,7 +1997,7 @@ export class TravelMapWindow {
     this._renderer = renderer;
     if (this._dotsDirty) {
       const prevDots = this._dotsKey, prevOutline = this._outlineKey;
-      const dots = this._upload(renderer, 'dots', this._dotsBuf, REGION_W * this._dotsScale, REGION_H * this._dotsScale);   // TO1: five times the page with roads integration on
+      const dots = this._upload(renderer, 'dots', this._dotsBuf, REGION_W * this._dotsScale, REGION_H * this._dotsScale);   // Five times the page with roads integration on
       const outline = this._upload(renderer, 'outline', this._outlineBuf);
       this._dotsKey = dots.key; this._dotsTex = dots.tex;
       this._outlineKey = outline.key; this._outlineTex = outline.tex;
@@ -2058,7 +2056,7 @@ export class TravelMapWindow {
             dx * DOTS_OUTLINE_THICKNESS / m.s, dy * DOTS_OUTLINE_THICKNESS / m.s, { blend: true });
         }
       }
-      if (this._dotsTex) this._drawPage(renderer, m, this._dotsTex, REGION_W * this._dotsScale, REGION_H * this._dotsScale, 0, 0);   // TO1: _cropRect already scales by the texture's own size
+      if (this._dotsTex) this._drawPage(renderer, m, this._dotsTex, REGION_W * this._dotsScale, REGION_H * this._dotsScale, 0, 0);   // _cropRect already scales by the texture's own size
     }
     if (this.identifying && this.identifyState && this._identifyTex) {
       this._drawPage(renderer, m, this._identifyTex, REGION_W, REGION_H, 0, 0);
@@ -2108,7 +2106,7 @@ export class TravelMapWindow {
     if (this.telePopUp) { this.telePopUp.draw(renderer, canvas, font); return; }
     if (this.popUp) {
       this.popUp.draw(renderer, canvas, font);
-      // AUDIT-TO1 I5: the mod's info box is pushed OVER the popup
+      // The mod's info box is pushed OVER the popup
       // (TravelOptionsPopUp.cs:69-80 raises it from the popup's Update)
       if (this.infoBox) {
         this._box = layoutMessageBox(font, this.infoBox.rows, []);
@@ -2126,7 +2124,7 @@ export class TravelMapWindow {
       this._box = layoutMessageBox(font, _art?.textRsc?.linesById?.(13) ?? ['That place does not exist.'], []);
       this._drawBox(renderer, m, font);
     } else if (this.top === 'itRefusal') {
-      // IT1: SetText(text) and one OK (the mod's own words, ui's own wrap)
+      // SetText(text) and one OK (the mod's own words, ui's own wrap)
       this._box = layoutMessageBox(font, fitBoxRows(font, [this._itRefusal ?? '']), [MB_BUTTONS.OK]);   // SS5's wrap: the mod's lines are longer than the screen
       this._drawBox(renderer, m, font);
     } else if (this.top === 'confirm') {
@@ -2210,7 +2208,7 @@ export function registerTravelMapConsoleCommands(deps = {}) {
   }
 }
 
-// PORT0: THE CLASSIC MAP STAYS CLASSIC. A player who chose DFU's own
+// THE CLASSIC MAP STAYS CLASSIC. A player who chose DFU's own
 // travel map in the settings (ui/map/mapSkin.js heldMapChosen) chose its
 // prompts and lists with it, so its draw - and the popups and pickers
 // drawn inside it - runs in the classic scope, where the enhanced

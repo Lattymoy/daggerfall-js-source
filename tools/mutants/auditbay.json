@@ -1027,8 +1027,8 @@
   {
     "name": "BAY-A13-pool-light-unfaded",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // AUDIT BAY A13",
-    "new": "      if (false) continue;   // AUDIT BAY A13",
+    "old": "      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // AUDIT BAY A13: her lanterns' light goes with her lantern flats (syncFlats)",
+    "new": "      if (false) continue;   // AUDIT BAY A13: her lanterns' light goes with her lantern flats (syncFlats)",
     "tests": [
       "test/scenes/naval/auditbay_render.test.js"
     ]

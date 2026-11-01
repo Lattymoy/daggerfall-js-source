@@ -3,8 +3,8 @@
 // Eye of the Beholder mod's set 10 draws its spell sheets (records 45-59) with the woman 80 pixels hood to boot, where
 // her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the art itself,
 // sized through the real door (eotbSprite.js spriteOffset + spriteSize) every caller that draws the body uses.
-// OWN-AUDIT (2026-11-01): the author's XML is gone; the scale and the shift are our law's (eotbAnchor.js).
-// NO-BETHESDA2 (2026-10-31): set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
+// OWN-AUDIT: the author's XML is gone; the scale and the shift are our law's (eotbAnchor.js).
+// NO-BETHESDA2: set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
 // player's ARENA2 (tools/lib/eotbPictures.mjs), so the measure runs where ARENA2_PATH is set; the scale table runs in CI.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,9 +54,6 @@ test('RPT1026-MISC SPELL-SHORT: the Fighter Mage (female) stands as tall with a 
   assert.ok(asDrawn / idle < 0.8, `at the XML's scale 1 the cast stands ${(asDrawn / idle).toFixed(2)} of her height`);
 });
 
-// PIN MOVED (OWN-AUDIT, 2026-11-01): the scale was typed (EOTB_RECORD_SCALE) beside the author's XML offset (x 0.52).
-// Both are measured now: our law finds set 10's three spell sheets drawn short and no other sheet of any set, at the
-// 80/110 SPELL-SHORT found by eye, and the shift is the law's own.
 test('RPT1026-MISC SPELL-SHORT: set 10\'s spell sheets carry the scale they were drawn at, measured by our law, their shift its own; no other set or record moves (mutants: rpt1026-misc-spell-short-unscaled, rpt1026-misc-spell-short-unread, rpt1026-misc-spell-short-xml-lost)', () => {
   const set10 = ARCHIVE_FOOT + 10;
   const [right, up] = EOTB_ANCHORS.shift[`${set10}_45`];

@@ -175,8 +175,8 @@
   {
     "name": "TACT1-pixel-unstood",
     "file": "src/scenes/pixelBuild.js",
-    "old": "collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);",
-    "new": "collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE));",
+    "old": "      collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);",
+    "new": "      collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE));",
     "tests": [
       "test/scenes/tact1.test.js"
     ]

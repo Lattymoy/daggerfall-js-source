@@ -1,9 +1,8 @@
 // @ts-check
-// OWN-WORK3 (2026-10-31, the owner: "removing mods from outside authors and instead replacing them with our own work"):
 // THE FORAGING ITEMS, OURS. A leaf: the item law (systems/item/itemLaw.js) reads these rows on the account service.
 // What is a fact keeps its value: the ids 1600-1611 (saves, quests, recipes), the group, the names every minted item
 // carries, and the pictures (the seven archives the art is filed under, and Daggerfall's own five records). The rest
-// is our design (bible/06-Systems/Foraging.md, OWN-WORK3): weights, durability, prices and which ones a shop shelves.
+// is our design: weights, durability, prices and which ones a shop shelves.
 
 /** A tool lasts as many uses as a Standard tool the professions make (net/recipeLaw.js TOOL_LIFE) and the Skinning Knife. */
 export const FORAGING_TOOL_USES = 50;

@@ -1,10 +1,10 @@
-// AMBIENT TEXT 1.8 - Regnier (AT1). The mod's rules ported 1:1, read off
+// AMBIENT TEXT 1.8 - Regnier. The mod's rules ported 1:1, read off
 // its compiled scripts (the shipped release's AmbientText.dll); IL offsets
 // below are into that assembly's own methods.
 //
 // The whole mod is: a clock that ticks in REAL time, a percentage roll,
 // and a key built out of where and when you are. The lines the key
-// reaches are DFO's own (OWN-WORK2, 2026-10-31): ambientTextLines.json,
+// reaches are DFO's own: ambientTextLines.json,
 // written for this game over the mod's 918 keys. The author's table is
 // no longer carried, and no line of ours rewords one of his.
 //

@@ -1,5 +1,4 @@
-// IMMERSIVE FOOTSTEPS 1.01 (Kirk.O), THE MOD, 1:1 (IF1, 2026-09-16,
-// Mac: "Next mod we will be adding 1:1").
+// IMMERSIVE FOOTSTEPS 1.01 (Kirk.O), THE MOD, 1:1.
 //
 // "Adds New Footsteps Sounds That Change Based On What Terrain Is
 // Being Walked On, Also Armor Sway Sounds Based On What Type Of Armor
@@ -42,12 +41,12 @@ import { SEASON } from '../world/climateSwaps.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
-import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js'; // DISC29-B: the class's NativeMaterialValue, the port's one reader
+import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js'; // The class's NativeMaterialValue, the port's one reader
 import { isRiding } from './transport.js';
-import { modSettingsOf, modSettingIfDeclared } from './modSettings.js'; // BA1: ModCompatibilityChecking reads Better Ambience's switch
+import { modSettingsOf, modSettingIfDeclared } from './modSettings.js'; // ModCompatibilityChecking reads Better Ambience's switch
 import { audio as defaultAudio } from './audio.js';
 import { SOUND } from './soundClips.js';
-import { immersiveFootstepsClipInTurn } from '../audio/synth/clips.js'; // OWN-WORK4: the clips our synth makes
+import { immersiveFootstepsClipInTurn } from '../audio/synth/clips.js'; // The clips our synth makes
 
 export const IMMERSIVE_FOOTSTEPS_VENDOR = 'immersive-footsteps';
 export const IMMERSIVE_FOOTSTEPS_MOD = Object.freeze({
@@ -64,7 +63,7 @@ export const REFRESH_SLOTS_TICKS = 250; // Object.cs:71
 export const MAX_TICKS_PER_FRAME = 5; // the hosts' 0.1 s dt cap, in ticks
 export const SOUND_CLIP_QUALITY = Object.freeze({ Low: 0, High: 1 }); // SoundClipQuality: 0 'Low-Quality (Retro)', 1 'High-Quality'
 export const FLOOR_TYPE = Object.freeze({ Tile: 0, Stone: 1, Wood: 2 }); // Main.CurrInteriorFloorType
-/** SHIP-DECK: no tile's index (a tile is a byte, off the terrain -1) - stepping off a floor re-reads the ground. */
+/** No tile's index (a tile is a byte, off the terrain -1) - stepping off a floor re-reads the ground. */
 const FLOOR_LEFT = -2;
 export const LANDING_VOLUME_SCALE = 4; // Object.cs:504/512/519 - 4f * FootstepVolumeMulti
 /** UpdateSwayMaterialWeights (Main.cs:571-603): "0 = Head, 1 = Right-Arm,
@@ -123,12 +122,12 @@ export function clipTable(quality) {
 /** Every name LoadAudio asks for at one quality (the `success &=` chain). */
 export const clipNames = (quality) => Object.values(clipTable(quality)).flat();
 
-// OWN-WORK4 (2026-10-31): THE CLIPS ARE OURS. Each name LoadAudio asks for is a clip our synth makes
+// THE CLIPS ARE OURS. Each name LoadAudio asks for is a clip our synth makes
 // (audio/synth/clips.js): the mod's name, length and rate, our own sound. One is made a task, so a set never stalls a
 // frame. Node has no AudioContext to hold one (the engine's registerSamples answers false there), so it makes none.
 const CAN_PLAY = typeof window !== 'undefined';
 export const makeFootstepClip = (name) => (CAN_PLAY ? immersiveFootstepsClipInTurn(name) : null);
-export const soundKey = (name) => `if:${name}`; // the audio engine's registered-buffer key (MW-D40)
+export const soundKey = (name) => `if:${name}`; // the audio engine's registered-buffer key
 
 // --- The tile and archive tables (Object.cs:365-467) ---------------------
 
@@ -347,7 +346,7 @@ export function rollRandomAudioClip(clips, last, random) {
  *  Sounds, UpdateSwayMaterialWeights): NativeMaterialValue >= Iron is
  *  plate, >= Chain is chain, else leather.
  *
- *  DISC29-B: the PROPERTY, not the field - `boots.NativeMaterialValue`
+ *  The PROPERTY, not the field - `boots.NativeMaterialValue`
  *  (ImmersiveFootstepsMain.cs:502-532, :614) is the virtual a custom class
  *  overrides, and Roleplay & Realism: Items overrides it: brigandine boots
  *  answer leather, a mail hauberk chain. The raw `item.material` walked
@@ -431,7 +430,7 @@ export function createImmersiveFootsteps({
     lastClimateIndex = CLIMATES.Ocean,
     lastTileMapIndex = 0;
   let isInside = false;
-  let lastFloor = null; // SHIP-DECK: the floor the last determine stood on ('deck' | 'floor' | null)
+  let lastFloor = null; // The floor the last determine stood on ('deck' | 'floor' | null)
   // --- the port's own ---
   let acc = 0; // the fixed-step accumulator
   let lastM = null; // the last frame's place, for the out-of-band handlers
@@ -455,14 +454,14 @@ export function createImmersiveFootsteps({
   async function loadAudio(quality) {
     const gen = ++loadGen;
     const names = clipNames(quality);
-    // AUDIT-IF F3: every clip in flight at once (the first draft awaited them one by one - 105 round trips
+    // Every clip in flight at once (the first draft awaited them one by one - 105 round trips
     // in series before the mod owned the stride); each failure is its own, the AND across them is LoadAudio's
     const results = await Promise.all(
       names.map(async (name) => {
         if (registered.has(name)) return true;
         let ok = false;
         try {
-          const clip = await makeClip(name); // OWN-WORK4: { samples, rate }, our own
+          const clip = await makeClip(name); // { samples, rate }, our own
           ok = !!clip?.samples?.length && !!audio.registerSamples(soundKey(name), clip.samples, clip.rate);
         } catch {
           ok = false;
@@ -763,14 +762,14 @@ export function createImmersiveFootsteps({
       leatherSwayTimer += FIXED_DELTA_TIME;
       volumeScale = 1;
     }
-    if (isRiding(m.transportMode)) footstepTimer = 0; // DRAGON5: a rider of any mount, the dragon too
+    if (isRiding(m.transportMode)) footstepTimer = 0; // A rider of any mount, the dragon too
     if (!s.AllowFootstepSounds) footstepTimer = 0;
     if (!s.AllowArmorSwaySounds) {
       plateSwayTimer = 0;
       chainSwayTimer = 0;
       leatherSwayTimer = 0;
     }
-    // SHIP-DECK: the mod's noted IsOnShip bug is answered by the host's `deck` (determineExteriorClimateFootstep)
+    // The mod's noted IsOnShip bug is answered by the host's `deck` (determineExteriorClimateFootstep)
     if (playerSwimming) {
       // GetHorizontalPosition (Object.cs:526-529) - despite the name, all three axes
       const position = [m.pos[0], m.pos[1], m.pos[2]];
@@ -851,7 +850,7 @@ export function createImmersiveFootsteps({
      *  are the combined mesh's material names in order (unityMaterialName). */
     onTransitionInterior: guarded(1, ({ buildingType = null, materials = [] } = {}) => {
       lastM = lastM ? { ...lastM, inside: true, inDungeon: false } : { inside: true, inDungeon: false };
-      // AUDIT-IF F4: only BuildingTypes.None (-1) skips the walk. A building with no discovery record hands DFU
+      // Only BuildingTypes.None (-1) skips the walk. A building with no discovery record hands DFU
       // default(DiscoveredBuilding), whose buildingType is 0 - the walk runs; the first draft skipped it on null.
       currInteriorFloorType = buildingType === -1 ? FLOOR_TYPE.Tile : interiorFloorType(materials);
       updateInteriorArmorFootstepSounds();
@@ -984,7 +983,7 @@ export const COMPAT_WARNING_LOG = Object.freeze([
   'Immersive Footsteps settings can turn this warning off.',
 ]);
 /** ReportModCompatibilityIssues (:424-449), raised by OnStartGame and OnLoad (:400-422): the log lines and the
- *  message box, in our own words (OWN-WORK4), when the mod is on, AllowModCompatWarnings is on, and Better
+ *  message box, in our own words, when the mod is on, AllowModCompatWarnings is on, and Better
  *  Ambience's module is on.
  *  `showText(lines)` is the host's DaggerfallUI.MessageBox; `log` is Debug.Log. Answers whether it fired. */
 export function reportModCompatibilityIssues(

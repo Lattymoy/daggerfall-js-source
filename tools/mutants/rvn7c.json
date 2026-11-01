@@ -254,8 +254,8 @@
   {
     "name": "RVN7c-page-unrepainted",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "\n      && bountyMarksKey(readBountyMarks(this.deps.revenants, { width: MAP_WIDTH, height: MAP_HEIGHT }, REVENANT_LEGEND_TEXT)) === (this._revenantsKey ?? '')",
-    "new": "",
+    "old": "      && bountyMarksKey(readBountyMarks(this.deps.revenants, { width: MAP_WIDTH, height: MAP_HEIGHT }, REVENANT_LEGEND_TEXT)) === (this._revenantsKey ?? '')\n      && vendorMarkKey(readVendorMark(this.deps.vendor, { width: MAP_WIDTH, height: MAP_HEIGHT })) === (this._vendorKey ?? '')) return false;   // Or the ring came, went or moved; BOUNTY1: or a circle came or went; HOME-VENDOR: or the trader's waypoint moved",
+    "new": "      && vendorMarkKey(readVendorMark(this.deps.vendor, { width: MAP_WIDTH, height: MAP_HEIGHT })) === (this._vendorKey ?? '')) return false;   // Or the ring came, went or moved; BOUNTY1: or a circle came or went; HOME-VENDOR: or the trader's waypoint moved",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ],

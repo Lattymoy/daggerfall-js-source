@@ -1,4 +1,4 @@
-// PR-BOW1b (2026-09-24): PR-BOW1's three follow-ups, from the review that
+// PR-BOW1's three follow-ups, from the review that
 // shipped it ("Equipping a bow enlarges your character").
 //
 // (1) THE SECOND WALK. PR-BOW1 folded a box per drawn range by walking
@@ -40,7 +40,7 @@ const { createFpArm, fpSkeletonPath, FP_CLIP_PATH, foldRangeBoxes, packFpArm, po
 const { MW_WEAPON_TYPE, meshBounds, foldPieceBounds, bindPartsInto } = mwFirstPerson;
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
-// OWN-WORK4: our own stand-in weapon meshes (ownGear.mjs), the old pins' sizes - a longsword running y -8..59.5
+// Our own stand-in weapon meshes (ownGear.mjs), the old pins' sizes - a longsword running y -8..59.5
 // from its grip, a long bow -38.5..46 gripped mid-stave
 const STAND_INS = { 'w_iron_longsword_sh.nif': weaponMesh({ grip: 8, guard: 4, blade: 59.5 }), 'w_longbow_sh.nif': weaponMesh({ grip: 38.5, guard: 1, blade: 46, width: 1, thick: 1 }) };
 const standIn = (n) => STAND_INS[n];
@@ -55,7 +55,7 @@ function boxMesh([x0, y0, z0], [x1, y1, z1]) {
 // The upper-arm bone stands at (0.4, 0.45, 3.2) on the fixture skeleton and turns only about z: this slab, placed
 // there (and mirrored onto the left one, rule 13), is a 41 x 17 x 128-unit figure, the hands about its middle.
 const STANDIN_BODY = new Uint8Array(meshToNif(boxMesh([-0.4, -8, -63.2], [19.6, 8, 64.8])));
-// An unlit torch, far off the body: the portrait hides it (MW-D51), so it must not move the portrait's frame.
+// An unlit torch, far off the body: the portrait hides it, so it must not move the portrait's frame.
 const FAR_TORCH = new Uint8Array(meshToNif(boxMesh([150, -40, 90], [170, 40, 260])));
 
 /** a WEAP record (mwarrow.test.js's wpdt: mType at byte 8 of WPDT) */
@@ -340,7 +340,6 @@ test('PR-BOW1b: the wiring, by source - poseAssembly folds through foldPieceBoun
   assert.match(pose, /assembly\.bounds = pieces\.length \? foldPieceBounds\(pieces\) : null;/, 'the one walk');
   const arm = rd('src/combat/fpArm.js');
   const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    status() {'));
-  // PIN MOVED (PROFILE-SLOTS): the flags are posePortrait's, which figure() runs before it frames
   const posed = arm.slice(arm.indexOf('  function posePortrait() {'), arm.indexOf('  function portraitModel(yaw) {'));
   const flags = fig.indexOf('if (!posePortrait()) return null;');
   const frame = fig.indexOf('const win = portraitWindow(thirdMesh.ranges, model, figureBodyBox);');
@@ -350,6 +349,6 @@ test('PR-BOW1b: the wiring, by source - poseAssembly folds through foldPieceBoun
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
     assert.match(rd(host), /mwViewDrawBody\(canvas, \{ proj, view, eye(: mwv\.eye)?, feet: player\.bodyFeetAt\(\), yaw: player\.bodyYawFor\(cam\.yaw\), viewYaw: cam\.yaw(, face: tvFace)? \}\)/, `${host} draws the body through mwView`);
   }
-  assert.match(rd('src/player/mwView.js'), /return fpArm\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet,\n\s*yaw,\n\s*grow: face\?\.grow > 1 \? face\.grow : 1,\n\s*up: face\?\.up \?\? null,\n\s*horse,\n\s*\}\);/);   // PIN MOVED, COATS3D: astride, the horse in the body's picture   // AUDIT OW3 J6: grown under the travel view; AUDIT OW4 J6: leaned by its up
-  assert.match(rd('src/net/peer/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet: b\.feet,\n\s*yaw: b\.yaw,\n\s*hitFlash: flashOf \? flashOf\(b\.id\) : 0,\n\s*conceal: b\.veil \?\? null,\n\s*grow: g,\n\s*up: this\._cam\?\.up \?\? null,\n\s*fx,\n\s*cast,\n\s*anchored,\n\s*horse,\n\s*\}\)/);   // PIN MOVED (OW-PEERS, FIELD BUGS 2026-10-01 #11): grown and leaned under the Overworld   // PIN MOVED (MWNPC5): and its tells by id   // PIN MOVED (AUDIT MWNPC16-18 A3, Morrowind-NPCs.md section 27): and whether the body never walks   // PIN MOVED (AUDIT MWNPC16-18 R1, Morrowind-NPCs.md section 27): its tells read once a body, a line above (the cast asks their dissolve)   // PIN MOVED, COATS3D: a rider's horse
+  assert.match(rd('src/player/mwView.js'), /return fpArm\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet,\n\s*yaw,\n\s*grow: face\?\.grow > 1 \? face\.grow : 1,\n\s*up: face\?\.up \?\? null,\n\s*horse,\n\s*\}\);/);
+  assert.match(rd('src/net/peer/peerBodies.js'), /b\.rig\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet: b\.feet,\n\s*yaw: b\.yaw,\n\s*hitFlash: flashOf \? flashOf\(b\.id\) : 0,\n\s*conceal: b\.veil \?\? null,\n\s*grow: g,\n\s*up: this\._cam\?\.up \?\? null,\n\s*fx,\n\s*cast,\n\s*anchored,\n\s*horse,\n\s*\}\)/);
 });

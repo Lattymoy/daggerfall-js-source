@@ -776,8 +776,8 @@
   {
     "name": "MENUORDER-portrait-sails-unbaked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        holderAsks.set(c, (holderAsks.get(c) ?? 0) + 1);\n        lateUpdateHolder(c, node, 1);\n",
-    "new": "        holderAsks.set(c, (holderAsks.get(c) ?? 0) + 1);\n",
+    "old": "        lateUpdateHolder(c, node, 1);\n      }",
+    "new": "      }",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "MENUORDER-portrait-unwaited",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (!gpu) { waiting = true; continue; }\n      const m = w.mats[i];",
-    "new": "      if (!gpu) continue;\n      const m = w.mats[i];",
+    "old": "      if (!gpu) { waiting = true; continue; }",
+    "new": "      if (!gpu) continue;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "MENUORDER-portrait-built-each-ask",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      portraitBoats.set(hull, b);\n",
-    "new": "",
+    "old": "      portraitBoats.set(hull, b);\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "MENUORDER-portrait-on-the-water",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      b = new Boat(hull, 0);\n      spawnBoat(b, ",
-    "new": "      b = new Boat(hull, 0);\n      peerBoats.push(b);\n      spawnBoat(b, ",
+    "old": "      b = new Boat(hull, 0);\n      spawnBoat(b, { models, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });",
+    "new": "      b = new Boat(hull, 0);\n      peerBoats.push(b);\n      spawnBoat(b, { models, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

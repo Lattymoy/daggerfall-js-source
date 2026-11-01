@@ -110,8 +110,8 @@
   {
     "name": "TESA4-the-epoch-read-late",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with\n",
-    "new": "",
+    "old": "    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // The Arena roads' layer this job is built with\n    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({",
+    "new": "    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TESA4-in-flight-unasked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (built.has(pkey) && arenaRoadsStale(built.get(pkey), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(pkey);   // TESA4: posted before a layer that landed while it built\n",
-    "new": "",
+    "old": "    if (built.has(pkey) && arenaRoadsStale(built.get(pkey), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(pkey);   // Posted before a layer that landed while it built\n    // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the",
+    "new": "    // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the",
     "tests": [
       "test/tesa4_roads.test.js"
     ]

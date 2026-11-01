@@ -182,8 +182,8 @@
   {
     "name": "PROP-BODIES-the-stream-s-groups-unbodied",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands\n",
-    "new": "",
+    "old": "      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // The record's own, whichever picture stands\n      // Skyrim ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss",
+    "new": "      // Skyrim ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PROP-BODIES-the-jungle-s-trunks-unbodied",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // PROP-BODIES: its trunk, whichever picture stands\n",
-    "new": "",
+    "old": "      g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // Its trunk, whichever picture stands\n      const pic = await speciesPic(species);",
+    "new": "      const pic = await speciesPic(species);",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PROP-BODIES-the-scaled-flats-unbodied",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      coverItems.push(...flatBodies(t, archive, record, size, centers, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // PROP-BODIES\n",
-    "new": "",
+    "old": "      coverItems.push(...flatBodies(t, archive, record, size, centers, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));\n    }",
+    "new": "    }",
     "tests": [
       "test/player/propbodies.test.js"
     ]

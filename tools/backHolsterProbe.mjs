@@ -1,4 +1,4 @@
-// BACK-HOLSTER (bible/06-Systems/Eye-Of-The-Beholder.md): the weapon on a sprite's back in the REAL renderer, from all
+// The weapon on a sprite's back in the REAL renderer, from all
 // eight views, on a skin's idle (112364) and on Layered Gearing's (male, leather). Each weapon's picture is read from the
 // player's ARENA2 (ARENA2_PATH) and stood up by the game's own law. Each view is drawn with and without the weapon; what
 // changed must lean to the right shoulder from behind, stand upright from the side and hide behind the body in front.
@@ -47,7 +47,7 @@ tf207.load(new Uint8Array(readFileSync(join(A2, texName(207)))), texName(207), p
 const ac = tf207.getColor32(changeMask(tf207.getDFBitmap(16, 0)), 0);
 const ap0 = uprightWeaponPicture({ width: ac.width, height: ac.height, colors: new Uint8Array(ac.colors.buffer, ac.colors.byteOffset, ac.colors.byteLength) });
 const arrowPic = { width: ap0.width, height: ap0.height, colors: Buffer.from(ap0.colors).toString('base64') };
-// NO-BETHESDA2: the skin's five views are Daggerfall's own TEXTURE.481, built from the player's ARENA2 as the game builds them
+// The skin's five views are Daggerfall's own TEXTURE.481, built from the player's ARENA2 as the game builds them
 const EOTB = eotbPictures({ arena2: A2 });
 const skinUrls = Object.fromEntries(await Promise.all([0, 1, 2, 3, 4].map(async (rec) => [rec, await EOTB.dataUrl(`112364_${rec}-0`)])));
 
@@ -181,9 +181,9 @@ const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, ar
       const x = (xml.x / xml.scale) * (mirror ? -1 : 1), base = xml.y / xml.scale;
       const fig = { base, mpp: size.h / pic.height, marks: ap.spriteMarks(new Uint32Array(pic.colors.buffer), pic.width, pic.height, { arms: o % 4 !== 2, art }), shift: x };
       const origin = [right[0] * x, base, right[2] * x];
-      const near = [eye[0] / 3, 0, eye[2] / 3];   // AUDIT A2: another wearer a third of the way to the eye
+      const near = [eye[0] / 3, 0, eye[2] / 3];   // Another wearer a third of the way to the eye
       const frame = ({ back = false, look = null, hand = null, cape = false, other = false, fog = false } = {}) => {
-        r.setFog(fog ? 'linear' : 'off', 0, 0.2, 0.5, new Float32Array([0.5, 0.5, 0.5]));   // AUDIT A7: fog all the way, short of the sprite
+        r.setFog(fog ? 'linear' : 'off', 0, 0.2, 0.5, new Float32Array([0.5, 0.5, 0.5]));   // Fog all the way, short of the sprite
         r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
         const bodyBatch = r.createBillboardBatch('probe-body', key, size, [[0, 0, 0]]);
         bodyBatch.origin = origin.slice();
@@ -191,7 +191,7 @@ const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, ar
         let l = null;
         if (back) { l = Hs.hangSpriteHolster(Hs.createSpriteHolster(), fig, o, [0, 0, 0], eye, right, arts.claymore); Hs.mintSpriteHolster(l, r); r.drawBillboards(l.list, l.right, l.up); }
         const backGlow = () => { if (look && l) r.drawBillboardGlow(`${l.archive}_${l.mirror ? 1 : 0}`, LOOKS[look], { origin: l.origin, right: l.right, up: l.up, w: l.w, h: l.h, art: [l.cellW, l.cellH] }); };
-        if (cape || other) {   // the aura host's order (AUDIT A2): farthest first, each wearer's back straight after its own aura
+        if (cape || other) {   // the aura host's order: farthest first, each wearer's back straight after its own aura
           const wearer = (at) => {
             const w = { at: at.slice(), seed: 0.37, kindle: 1, aura: 'shadowcloak', torn: -1, yaw: 0 };
             ar.auraCapeStep(w, { feet: at, yaw: bb.portrayedYaw(o, [eye[0], 0, eye[2]]), bones: ar.auraSpriteBones(fig) });
@@ -216,7 +216,7 @@ const { out: shots, glowOut, quiverOut } = await page.evaluate(async ({ pics, ar
       const shock2 = frame({ back: true, look: 'shock' }), brand = frame({ back: true, look: 'brand' });
       const caped = frame({ back: true, cape: true }), capedGlow = frame({ back: true, cape: true, look: 'shock' });
       const handGlow = frame({ hand: 'shock' });
-      // AUDIT A2: a nearer wearer's cape over this one's weapon; A7: in full fog the glow is fogged to nothing; A8: culled
+      // A nearer wearer's cape over this one's weapon; A7: in full fog the glow is fogged to nothing; A8: culled
       const otherOnly = frame({ other: true }), both = frame({ back: true, cape: true, other: true });
       const wornFog = frame({ back: true, fog: true }), shockFog = frame({ back: true, look: 'shock', fog: true });
       r.setFog('off', 0, 0, 1, null);

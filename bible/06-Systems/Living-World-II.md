@@ -15,8 +15,8 @@ chance, range and pace. Travellers walk from 07:00 to 19:00 and camp or take an 
 
 **The wagon train** (`wagons.js` `teamOf`). A merchant's caravan draws one wagon, two from a great house's town (36
 blocks or more); a noble's procession draws a baggage wagon; a pedlar or carter leads a pack horse. The wagon is model
-41214 read from the player's own ARCH3D, the horse the Horse Cart and Cargo sprites under `vendor/`. A caravan draws
-its wagon whatever the Horse Cart and Cargo switch says.
+41214 read from the player's own ARCH3D, the horse Horse Cart and Cargo's, ours (`src/systems/horse/horseArt.js`). A
+caravan draws its wagon whatever the Horse Cart and Cargo switch says.
 
 **The caravan's door** (`caravanDoor.js`, `src/scenes/caravanHost.js`). A party's leader who keeps a counter asks the
 player what they want first. A merchant or carter keeps a general store's counter on the road, a pedlar a pawnbroker's,

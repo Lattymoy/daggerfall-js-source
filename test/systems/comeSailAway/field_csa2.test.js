@@ -100,13 +100,13 @@ test('FIELD-CSA2: the host\'s Terrain (world.js csaTerrainOf, mounted) answers S
     const h = t.sampleHeight([o[0] + lx, 34 - 501, o[2] + lz]);
     assert.ok(h < WATER_LEVEL, `the sea at (${lx}, ${lz}) reads ${h}: water (it read 34.000001, land)`);
   }
-  // past the terrain's edge: the edge's height (CSA-J), still the sea
+  // past the terrain's edge: the edge's height, still the sea
   assert.ok(t.sampleHeight([o[0] - 50, 0, o[2] + TERRAIN_SIZE + 50]) < WATER_LEVEL);
 });
 
 // ── the runtime over the vendored hulls ────────────────────────────────────────
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 
 /** A helm over one built pixel, Iliac Puddle No More on, its Terrain the host's own (mounted). */
@@ -189,7 +189,7 @@ test('FIELD-CSA2: on the open sea, Iliac Puddle No More on - every deed\'s hull 
       s.frame({ press: [BOAT_ACTIONS.toggleSail] });   // stowed again, for the oars
     }
     const start = [...boat.GameObject.position];
-    s.frame({ press: ['MoveForwards'] });   // HELM-LADDER: a rung up - her oars pulling ahead
+    s.frame({ press: ['MoveForwards'] });   // A rung up - her oars pulling ahead
     for (let i = 0; i < 7; i++) s.frame();
     const moved = Math.hypot(boat.GameObject.position[0] - start[0], boat.GameObject.position[2] - start[2]);
     assert.ok(s.rt.state.MoveVectorCurrent[2] > 0, `hull ${hull}: under way (a beached boat's move is zeroed each frame)`);
@@ -224,12 +224,7 @@ test('FIELD-CSA2 on the retail data: the open Bay south of Daggerfall (209, 216)
   smoothLocationNeighbourhood(mapDict, woods);   // the boot's own repair (world.js), before any pixel streams
   // world.js's own csaIsPortTown, mounted: Daggerfall (207, 213) is a port by its byte
   const { hasPortFor } = await import('../../../src/systems/travel/travelPorts.js');
-  // PIN MOVED (THE CAPTAIN'S SEA, ETHER-PORTS - found by AUDIT CAPTAIN'S SEA's touched run with the data): an isle's port
-  // is a port past the Veil (`etherSea && inEther(x, y)` first), so the sea, its law and an isle's port stand in scope - the
-  // sea on, and an isle's port answering every pixel it is asked of, so a Bay pixel that asked it would read a port
   const { inEther } = await import('../../../src/world/ethericSea.js');
-  // PIN MOVED (TESA6, at the merge of main into TESA): past the Bay an Arena port answers (`onTheBay` the Bay's frame,
-  // world/tamriel/tamrielFrame.js inBay) - the Bay's pixels ask the Bay's table as before, and a port past it would read one
   const { inBay } = await import('../../../src/world/tamriel/tamrielFrame.js');
   const isPortTown = new Function('travelLocationSummaryAt', 'mapDict', 'maps', 'hasPortFor', 'etherSea', 'inEther', 'etherPortAt', 'onTheBay', 'arenaPortAt', `${constOf('  const csaIsPortTown = (x, y) => {')}\nreturn csaIsPortTown;`)(locationSummaryAt, mapDict, maps, hasPortFor, true, inEther, () => ({}), inBay, () => ({}));
   assert.equal(isPortTown(207, 213), true, 'Daggerfall is a port');

@@ -1,4 +1,4 @@
-// SNOW-THREAD (2026-10-26) - THE SNOW'S BUILDS ON A WORKER. The middle ring's rebuild and the local window's recentre
+// THE SNOW'S BUILDS ON A WORKER. The middle ring's rebuild and the local window's recentre
 // run on systems/snowfall/snowBuildWorker.js over a copy of the ground (snowBuildKernel.js); the main thread posts them
 // and takes the finished arrays (snowBuildClient.js). The claim pinned here is the one the change rests on: for the same
 // inputs the worker makes the very bytes the main thread's own build makes. The world is snowfallHost.js's own adapter
@@ -16,7 +16,7 @@ import { SnowBuildClient, snowThreadDisabled } from '../../src/systems/snowfall/
 import { snowThreadVerify } from '../../src/systems/snowfall/snowBuildVerify.js';
 import { snowGroundHeight, snowGroundNormal, snowGroundBare, snowGroundSnapshot, snowPixelX, snowPixelY, snowGlobalOf } from '../../src/systems/snowfall/snowGroundLaw.js';
 import { VERTEX_GRID_SIZE } from '../../src/world/deepWater/deepWaterFloor.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const SIZE = 819.2;
 const bytesOf = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
@@ -40,13 +40,13 @@ function entry(px, py) {
     tilemapBytes[i] = track >= 0 ? track : (((i * 7 + px * 13 + py * 5) % 56) << 2) | (i & 3);
   }
   const p = { px, py, samples, _stride: stride, groundNormals, tilemapBytes, net, rect, stamp: 1 };
-  if (px === 501 && py === 250) {   // WATER-NEXT 2: a shore's bed carved under the drawn ground
+  if (px === 501 && py === 250) {   // A shore's bed carved under the drawn ground
     const g = 129;
     const depths = new Float32Array(g * g);
     for (let i = 0; i < g * g; i++) depths[i] = (i % 17) * 0.05;
     p._bed = { depths };
   }
-  if (px === 500 && py === 251) {   // DW-B: a carved sea - its floor where the cells are carved (holes 0), bare under the snow
+  if (px === 500 && py === 251) {   // A carved sea - its floor where the cells are carved (holes 0), bare under the snow
     const holes = new Uint8Array(128 * 128).fill(1);
     for (let z = 40; z < 90; z++) for (let x = 20; x < 100; x++) holes[z * 128 + x] = 0;
     const vertexLocalY = new Float32Array(VERTEX_GRID_SIZE * VERTEX_GRID_SIZE);

@@ -1,4 +1,4 @@
-// MODS AUDIT (2026-09-08): THE VENDORED MODS, BYTE FOR BYTE. Three mods
+// MODS AUDIT: THE VENDORED MODS, BYTE FOR BYTE. Three mods
 // ship files that are the authors' own, carried verbatim with their
 // permission - Hazelnut's four path arrays, Kamer's five Collada
 // exports, and Dynamic Skies' shader, includes, presets, settings and
@@ -19,10 +19,10 @@ import { createHash } from 'node:crypto';
 
 const sha256 = (rel) => createHash('sha256').update(readFileSync(new URL(`../../vendor/${rel}`, import.meta.url))).digest('hex');
 
-// OWN-WORK2 (2026-10-31): Hazelnut's four path arrays are retired - their hashes are their Own-Work.md row's record now,
-// and the Bay's network is the port's own (test/world/road/ownwork2_bayroads.test.js). OWN-WORK4 (2026-10-31): so are
+// Hazelnut's four path arrays are retired - their hashes are their Own-Work.md row's record now,
+// and the Bay's network is the port's own (test/world/road/ownwork2_bayroads.test.js). OWN-WORK4: so are
 // Dynamic Skies' eighteen files - the sky is the port's own (test/systems/dynamicSkies.test.js).
-// OWN-WORK4 (2026-10-31): Travel Options' three UI textures are retired - their hashes are their Own-Work.md row's
+// OWN-WORK4: Travel Options' three UI textures are retired - their hashes are their Own-Work.md row's
 // record now, and the pictures are our own (test/systems/ownwork4_pictures.test.js pins their prints).
 const WINDMILLS = {
   'windmills-kamer/Blade.dae': 'c373edf569f43334f5e17ab9f65409705bca62c597f529022bcbbcb427eebae9',

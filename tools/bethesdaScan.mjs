@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-// NO-BETHESDA (2026-10-31; the owner: "ensuring they are not implemented"): is any of Bethesda's Daggerfall data in the
-// tree? The doctrine gate (test/tooling/doctrine.test.js) checks names and listings; this reads the bytes against the
-// player's own ARENA2.
+// /usr/bin/env node
+// Is any of Bethesda's Daggerfall data in the tree? The doctrine gate (test/tooling/doctrine.test.js) checks names
+// and listings; this reads the bytes against the player's own ARENA2.
 //
 //   node tools/bethesdaScan.mjs --arena2 <ARENA2> [--json out.json] [--no-pictures]
 //
@@ -35,7 +34,7 @@ export const NEAR_DIFF = 48;
 
 /** Port-Doctrine's approved exceptions to A RENDER OF GAME DATA IS GAME DATA, by directory. */
 export const EXCEPTION_DIRS = Object.freeze([
-  // OWN-WORK4: the first two exceptions' packs are retired, their looks built from the player's own records
+  // The first two exceptions' packs are retired, their looks built from the player's own records
   'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/',
 ]);
 export const inException = (path) => EXCEPTION_DIRS.some((d) => path.startsWith(d));

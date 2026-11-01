@@ -110,8 +110,8 @@
   {
     "name": "TOLIVE-boot-bag-whole",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];",
-    "new": "  if (boot) return boot;",
+    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];   // The restart half, as the world loaded it",
+    "new": "  if (boot) return boot;   // The restart half, as the world loaded it",
     "tests": [
       "test/systems/to_live.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TOLIVE-restart-half-afresh",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];",
-    "new": "  void TRAVEL_OPTIONS_RESTART_KEYS;",
+    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];   // The restart half, as the world loaded it",
+    "new": "  void TRAVEL_OPTIONS_RESTART_KEYS;   // The restart half, as the world loaded it",
     "tests": [
       "test/systems/to_live.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TOLIVE-inns-off-tile",
     "file": "src/systems/features.js",
-    "old": "'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',",
-    "new": "'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',",
+    "old": "    'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',",
+    "new": "    'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',",
     "tests": [
       "test/systems/to_live.test.js"
     ]

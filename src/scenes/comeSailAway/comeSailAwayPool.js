@@ -1,6 +1,6 @@
 // @ts-check
-// CSA-B (2026-09-27): COME SAIL AWAY'S BOATS, DRAWN - what Unity draws of a
-// built boat (systems/comeSailAway/comeSailAwayBoat.js), drawn through the port's renderer:
+// COME SAIL AWAY'S BOATS, DRAWN - what Unity draws of a built boat
+// (systems/comeSailAway/comeSailAwayBoat.js), drawn through the port's renderer:
 //
 // - every ACTIVE object's switched-on MeshRenderer over its MeshFilter's mesh,
 //   each submesh in the Daggerfall texture its slot settled on
@@ -30,45 +30,44 @@
 // Not drawn here, and whose: the hull's WaterMask (never - CSA-F: it writes
 // colour alone before any opaque thing and the sea or the hull always draws
 // over it), the particle systems (render/comeSailAwayRender.js, CSA-F), the
-// colliders the player stands on and the triggers the ray answers (CSA-C /
-// CSA-D).
+// colliders the player stands on and the triggers the ray answers.
 //
 // deps = { renderer, pipeline: scenes/dataPipeline.js's { getTexture, uploadRecord, getGpuMesh, gpuMeshes, cpuModels,
 //          textureFiles, markClassicArt, isClassicArt }, fetchFn (the port ships' bakes' fetch), log }
 
 import { loadComeSailAwayModels, rendererModel, rendererModelKey, bundleSlots, PORT_SHIPS } from '../../systems/comeSailAway/comeSailAwayModels.js';
-import { createLiveryPaint } from './shipLiveryPaint.js';   // SHIP-LIVERY: a boat's paint, painted once and drawn by a remap
-import { warmLiveryArt } from '../../world/ships/shipLiveryArt.js';   // AUDIT 2: the painter's base pictures, while the world loads
-import { fitBoats } from './deckFittingsHost.js';   // DECK-PROPS: her fittings, stood in her tree
+import { createLiveryPaint } from './shipLiveryPaint.js';   // A boat's paint, painted once and drawn by a remap
+import { warmLiveryArt } from '../../world/ships/shipLiveryArt.js';   // The painter's base pictures, while the world loads
+import { fitBoats } from './deckFittingsHost.js';   // Her fittings, stood in her tree
 import { liveryCode } from '../../systems/naval/shipLivery.js';
-import { ownGuildArms, guildArmsOf } from '../../net/guild/guildArmsBook.js';   // GUILD-SHOP: the arms a sailcloth flies
+import { ownGuildArms, guildArmsOf } from '../../net/guild/guildArmsBook.js';   // The arms a sailcloth flies
 import { spawnBoat, boatAssetNeeds, DUNGEON_LIGHT_HANDLER, HULL_NAMES, setBoatVariant, Boat, FIRST_HULL_MODEL_ID, meshLocalBounds, worldBounds } from '../../systems/comeSailAway/comeSailAwayBoat.js';
 import { resolveNodePointer, instantiatePrefab, prefabShapeStamp } from '../../world/prefabNode.js';
 import { StaticBatchBuilder } from '../../render/staticBatch.js';   // AUDIT NAV1 (#13): a boat's still parts merged as a town's statics are
 import { instanceParticleSystems } from '../../world/unityParticles.js';
 import { bakeSkinnedMesh, recalculateNormals, fixDeformationsTick } from '../../world/skinnedBake.js';
 import { billboardSize } from '../../world/rmbFlats.js';
-import { isNpcFlat } from '../../world/npcFlatArchives.js';   // STAND-FLAT: a prefab's person - her crew, for the host's people lane
+import { isNpcFlat } from '../../world/npcFlatArchives.js';   // A prefab's person - her crew, for the host's people lane
 import { GLOBAL_SCALE } from '../../world/meshReader.js';
 import { multiply, identity } from '../../world/mat4.js';
 import { spherePlanes, sphereInPlanes, transformSphere } from '../../render/bounds.js';   // AUDIT NAV1 (#13): the boats culled as the world's meshes are
 import { cullDisabled } from '../../render/frustum.js';
 import { mat4FromQuatPosScale, quatRotateInto } from '../../world/quat.js';
-import { colliderPoses, boxColliderTriangles, invertAffine, BUILTIN_COLLIDER_MESHES } from '../../world/prefabColliders.js';   // DECK-WALK: a hull's colliders at rest
-import { farLife, farTreeStep } from './farLife.js';   // BOAT-FAR: a boat's life by her range, navalHost's law (BOAT-OWN: her tree's, the switches' rule one with her Animators')
-import { buildDeck } from '../../systems/naval/navalDeck.js';   // DECK-WALK: her walkable deck
-import { hullBuild, setGalleonStanding, setShipStanding } from '../../systems/naval/navalShips.js';   // AUDIT GN-G4: and hull 2's build follows the hull that stands (SHIPS-2: hull 4's and hull 1's)
+import { colliderPoses, boxColliderTriangles, invertAffine, BUILTIN_COLLIDER_MESHES } from '../../world/prefabColliders.js';   // A hull's colliders at rest
+import { farLife, farTreeStep } from './farLife.js';   // A boat's life by her range, navalHost's law (BOAT-OWN: her tree's, the switches' rule one with her Animators')
+import { buildDeck } from '../../systems/naval/navalDeck.js';   // Her walkable deck
+import { hullBuild, setGalleonStanding, setShipStanding } from '../../systems/naval/navalShips.js';   // And hull 2's build follows the hull that stands (SHIPS-2: hull 4's and hull 1's)
 import { registerGalleonArt, GALLEON_ARCHIVE, galleonCut, galleonGlow, GALLEON_NIGHT } from '../../world/ships/galleonArt.js';   // GALLEON: the new galleon's own pictures, on the texture door before her meshes ask
-import { registerCarrackArt, CARRACK_ARCHIVE, carrackCut, carrackGlow, CARRACK_NIGHT } from '../../world/ships/carrackArt.js';   // SHIPS-2: and the new carrack's,
+import { registerCarrackArt, CARRACK_ARCHIVE, carrackCut, carrackGlow, CARRACK_NIGHT } from '../../world/ships/carrackArt.js';   // And the new carrack's,
 import { registerLargeBoatArt, LARGE_BOAT_ARCHIVE } from '../../world/ships/largeBoatArt.js';   // and the new large boat's
-import { registerOwnBoatArt, OWN_BOAT_ARCHIVE } from '../../world/ships/ownBoats/ownBoatArt.js';   // OWN-WORK4: and every hull's own pictures
+import { registerOwnBoatArt, OWN_BOAT_ARCHIVE } from '../../world/ships/ownBoats/ownBoatArt.js';   // And every hull's own pictures
 import { toColor32 } from '../../formats/color32Order.js';
-import { createShipPlaques, BLOCK_LETTERS, fntLetters } from './shipPlaque.js';   // SHIP-PLAQUE: her name on her bows
-import { FntFile } from '../../formats/fntFile.js';   // SHIP-PLAQUE: FONT0003, the boards' lettering
+import { createShipPlaques, BLOCK_LETTERS, fntLetters } from './shipPlaque.js';   // Her name on her bows
+import { FntFile } from '../../formats/fntFile.js';   // FONT0003, the boards' lettering
 import { createFigureheads } from './shipFigurehead.js';   // FIGUREHEAD: a carving at her stem
 import { carvingPaint, figureheadOfCode } from '../../systems/naval/figurehead.js';
 import { addVendorTextures, decodedTexture } from '../../systems/textureReplacement.js';
-import { adoptLight } from '../../render/lightId.js';   // LIGHT-ID: a lantern's light named by its lantern
+import { adoptLight } from '../../render/lightId.js';   // A lantern's light named by its lantern
 
 /** DungeonLightHandler.CheckLight's reach: UnscaledBlockRange x MeshReader.GlobalScale. */
 export const LANTERN_HANDLER_REACH = DUNGEON_LIGHT_HANDLER.unscaledBlockRange * GLOBAL_SCALE;
@@ -77,7 +76,7 @@ export const LANTERN_HANDLER_REACH = DUNGEON_LIGHT_HANDLER.unscaledBlockRange * 
 export const CSA_LIGHTS_MAX = 8;
 /** AUDIT NAV1 (the presentation): the hull whose FlagObject a flagless sea ship is given (the Small Ship - graftColours). */
 export const FLAG_DONOR_HULL = 2;
-/** SHIPS-2: THE PORT'S OWN SHIPS' PICTURES - each standing ship's archive, how it is put on the texture door, which
+/** THE PORT'S OWN SHIPS' PICTURES - each standing ship's archive, how it is put on the texture door, which
  *  of its records hold glass to see through (DF-LOOK, DF-ART II kept - Mac: "windows should always be see through" -
  *  uploaded cut-outs), each of those records' NIGHT TWIN and the twin's glow (DF-ART III kept - Mac, of the stern
  *  windows: "See-through by day, lit at night" - world/ships/galleonArt.js NIGHT_RECORD_OFFSET; the glow cut while the world
@@ -153,7 +152,7 @@ export function lanternLightUpdate(light, { dt, cityLightsOn, playerPosition }) 
   }
 }
 
-/** SHIP-FADE: under this share of a fading ship, her flats (her crew, her lanterns) stand down. */
+/** Under this share of a fading ship, her flats (her crew, her lanterns) stand down. */
 export const FADE_FLATS = 0.5;
 /** AUDIT NAV1 (the frame's cost, #13): a boat's mesh narrower on the screen than this (pixels, its sphere's width at the
  *  drawing buffer's height) is not drawn. */
@@ -162,7 +161,7 @@ export const CULL_DETAIL_PX = 1;
  *  frames running a part's chain reads the same before it is merged. */
 export const STILL_MIN = 2;
 export const STILL_FRAMES = 20;
-/** AUDIT GN2-RG1: how far (metres; a rotation column's unit) an every-frame holder's bone may stand from where it stood
+/** How far (metres; a rotation column's unit) an every-frame holder's bone may stand from where it stood
  *  at its last bake and the bake still stand - a millimetre, under the float noise of a ship 2 km off and a twenty-eighth
  *  of her rope's radius. */
 export const RIG_STILL_M = 0.001;
@@ -180,11 +179,11 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   /** @type {any} */ let models = null;
   let modelsLoading = null, modelsFailed = false;
   /** @type {any[]} */ const boats = [];
-  /** CSA-J: the peers' boats (scenes/comeSailAway/comeSailAwayPeers.js) - drawn, baked and lit as mine, but never in `boats`, so
+  /** The peers' boats (scenes/comeSailAway/comeSailAwayPeers.js) - drawn, baked and lit as mine, but never in `boats`, so
    *  the host's rays and activations (which read `boats`) meet them only where CSA-K asks by name - another's boat's own
    *  ray (scenes/comeSailAway/comeSailAwayAboard.js); its collider stands every one (FIELD BUGS 2026-10-01b: world.js csaSyncColliders). */
   /** @type {any[]} */ const peerBoats = [];
-  /** NAV-C: the sea's ships (scenes/naval/navalHost.js) - the Iliac Bay's pirates, merchantmen and navies, built on these same
+  /** The sea's ships (scenes/naval/navalHost.js) - the Iliac Bay's pirates, merchantmen and navies, built on these same
    *  hulls: drawn, baked and lit as mine, never in `boats` (no helm is taken on one, no deed places one); the naval host
    *  poses them, and stands the near ones in the world's collider itself. */
   /** @type {any[]} */ const seaBoats = [];
@@ -200,12 +199,12 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (boat._liveryRec !== rec || boat._liveryCode == null) { boat._liveryRec = rec; boat._liveryCode = liveryCode(rec); }
     return boat._liveryCode;
   };
-  /** GUILD-SHOP: the arms her sailcloth flies, where it flies them - mine my guild's, a peer's its owner's guild's (the tag
+  /** The arms her sailcloth flies, where it flies them - mine my guild's, a peer's its owner's guild's (the tag
    *  their token carries), a sea ship's none. */
   const sailArmsOf = (boat, code) => {
     if (!((code >> 16) & 128)) return null;
     const arms = mineBoats.has(boat) ? ownGuildArms() : boat.guildTag ? guildArmsOf(boat.guildTag) : null;
-    return arms && (arms.heraldry || arms.logo) ? arms : null;   // AUDIT GUILD-SHOP N5: a guild with no arms flies no blank shield
+    return arms && (arms.heraldry || arms.logo) ? arms : null;   // A guild with no arms flies no blank shield
   };
   // SHIP-PLAQUE (scenes/comeSailAway/shipPlaque.js): her name on her bows - laid on her planking (hullSurface, below),
   // lettered in FONT0003 once its bytes are in (the block letters where they are not to be had)
@@ -228,23 +227,23 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   const _cullPv = new Float32Array(16), _cullPlanes = new Float32Array(24), _cullSphere = new Float32Array(4), _cullBox = new Float32Array(6);
   const meshes = new Map();      // rendererModelKey -> gpu mesh | null
   const meshLoads = new Map();   // in flight
-  const bakes = new Map();       // FixDeformations script -> { gpu, positions, normals, loading, rig? (AUDIT GN2-RG1) }
+  const bakes = new Map();       // FixDeformations script -> { gpu, positions, normals, loading, rig? }
   const _rigV = [0, 0, 0], _rigBack = [0, 0, 0, 1];
   const flats = new Map();       // billboard object -> batch
-  const crew = new Map();        // STAND-FLAT: billboard object -> its person ({ piece }), for a flat of a person's archive
+  const crew = new Map();        // Billboard object -> its person ({ piece }), for a flat of a person's archive
   const warned = new Set();
   const warnOnce = (k, ...a) => { if (warned.has(k)) return; warned.add(k); log?.warn?.(...a); };
-  // AUDIT PRE-MERGE 0928 R5: ONE WALK A FRAME. Each drawn boat's active objects and their world matrices, walked once by
+  // ONE WALK A FRAME. Each drawn boat's active objects and their world matrices, walked once by
   // `frame` into storage kept per node and reused frame to frame (activeObjects' order and arithmetic, none of its
   // allocations) - the holders, the flats and the draw read it. A walk made outside a frame (a draw with no frame
   // before it) is made where it is read and never kept; a boat re-dressed or moved by the origin is walked again.
   /** boat -> { stamp, nodes, mats } */
   const walks = new Map();
-  /** A node's world matrix, kept - and (PERF-SAILS1) what it was made from: `l` the node's local rotation, position
+  /** A node's world matrix, kept - and what it was made from: `l` the node's local rotation, position
    *  and scale as they read when it was made, and `pver` the `ver` of the parent's matrix it was made under (ROOT_MADE
    *  for a boat's root). `ver` names this making: every making of every matrix takes the next of one count, so no two
    *  makings share one - a part hung under another parent reads another parent's `ver`, whatever either was made. */
-  // PERF-SAILS2: the record rides the node (`_walkRec`, as PrefabNode keeps its own worldMatrix's `_w`) - a WeakMap's ask
+  // The record rides the node (`_walkRec`, as PrefabNode keeps its own worldMatrix's `_w`) - a WeakMap's ask
   // a node a frame was a sixth of the walk
   const _walkStack = [], _walkRecs = [];
   const _local = new Float32Array(16);
@@ -255,12 +254,12 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     let r = n._walkRec;
     if (!r) {
       const l = new Float64Array(10).fill(NaN);
-      r = { m: new Float32Array(16), ver: 0, pver: -1, pend: false, under: null, l, lq: l.subarray(0, 4), lt: l.subarray(4, 7), ls: l.subarray(7, 10), at: null };   // BOAT-FAR: `at` the matrix a held boat's draw stands it at (placed)
+      r = { m: new Float32Array(16), ver: 0, pver: -1, pend: false, under: null, l, lq: l.subarray(0, 4), lt: l.subarray(4, 7), ls: l.subarray(7, 10), at: null };   // `at` the matrix a held boat's draw stands it at (placed)
       n._walkRec = r;
     }
     return r;
   };
-  /** PERF-SAILS1: does the node read the local values its matrix was last made from? (And, when not, they are taken.) */
+  /** Does the node read the local values its matrix was last made from? (And, when not, they are taken.) */
   function localSame(r, n) {
     const q = n.localRotation, t = n.localPosition, sc = n.localScale, l = r.l;
     if (l[0] === q[0] && l[1] === q[1] && l[2] === q[2] && l[3] === q[3] && l[4] === t[0] && l[5] === t[1] && l[6] === t[2]
@@ -288,12 +287,12 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   // counts the walks whose nodes were other than the last's - a boat's plan (planOf) stands while it does.
   function walkBoat(boat, stamp) {
     let w = walks.get(boat);
-    if (!w) { w = { stamp: -1, nodes: [], mats: [], recs: [], ver: 0, plan: null, heldAt: -1, draws: { at: -1, alone: [], still: [] } }; walks.set(boat, w); }   // BOAT-FAR: `heldAt` the frame that held her; BOAT-OWN: `draws` what the draw found of this walk (draw)
+    if (!w) { w = { stamp: -1, nodes: [], mats: [], recs: [], ver: 0, plan: null, heldAt: -1, draws: { at: -1, alone: [], still: [] } }; walks.set(boat, w); }   // `heldAt` the frame that held her; BOAT-OWN: `draws` what the draw found of this walk (draw)
     w.stamp = stamp;
     const nodes = w.nodes, mats = w.mats, wrecs = w.recs;
     let at = 0, moved = false;
     const root = boat.GameObject;
-    const seen = root?.parent === null ? stamp : -1;   // PERF-SAILS4: a root hung under something walks a frame of its own - never read for her nodes' worldMatrix
+    const seen = root?.parent === null ? stamp : -1;   // A root hung under something walks a frame of its own - never read for her nodes' worldMatrix
     if (root?.activeSelf) {
       const rr = recOf(root);
       if (!localSame(rr, root) || rr.pend || rr.pver !== ROOT_MADE) { rr.pend = true; rr.under = null; }
@@ -303,7 +302,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       while (stack.length) {
         const n = stack.pop(), pr = recs.pop();
         if (nodes[at] !== n) { nodes[at] = n; moved = true; }
-        mats[at] = pr.m; wrecs[at] = pr; pr.seen = seen; at++;   // PERF-SAILS4: walked by this frame's walk (worldOf)
+        mats[at] = pr.m; wrecs[at] = pr; pr.seen = seen; at++;   // Walked by this frame's walk (worldOf)
         for (let i = n.children.length - 1; i >= 0; i--) {
           const c = n.children[i];
           if (!c.activeSelf) continue;
@@ -317,14 +316,14 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (moved) w.ver++;
     return w;
   }
-  /** PERF-SAILS3: A BOAT'S PLAN - what of her walk the frame, the flats and the draw read, found once: each holder (a
+  /** A BOAT'S PLAN - what of her walk the frame, the flats and the draw read, found once: each holder (a
    *  FixDeformations, with its node), each billboard's node and its components, each MeshRenderer's node and its
    *  filter, its holder and (made as it is first asked) its model key and still chain. Made again when her walk's
    *  nodes are others (`ver`), her tree's shape changed (a part hung elsewhere, a component added - BOAT-STAMP: her own
    *  tree's stamp, never another boat's build) or her MeshObject is another; what can change frame to frame (a
    *  renderer switched off, a material, a mesh) is still read every frame. */
   function planOf(boat, w) {
-    const stamp = prefabShapeStamp(boat.GameObject);   // BOAT-STAMP: her own tree's
+    const stamp = prefabShapeStamp(boat.GameObject);   // Her own tree's
     let p = w.plan;
     if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;
     p = { ver: w.ver, stamp, frame: boat.MeshObject, holders: [], flats: [], parts: [] };
@@ -333,13 +332,13 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       for (const c of n.components) if (c.type === 'FixDeformations') p.holders.push(c, n);
       const mr = n.getComponent('MeshRenderer');
       const bb = n.getComponent('DaggerfallBillboard');
-      if (bb) p.flats.push({ i, node: n, bb, r: mr, at: -1, sx: 0, sy: 0 });   // BOAT-OWN: `sx`/`sy` its scale as the frame that walked her (`at`) found it (syncFlats)
+      if (bb) p.flats.push({ i, node: n, bb, r: mr, at: -1, sx: 0, sy: 0 });   // `sx`/`sy` its scale as the frame that walked her (`at`) found it (syncFlats)
       if (mr) p.parts.push({ i, node: n, mr, mf: n.getComponent('MeshFilter'), fix: n.getComponent('FixDeformations'), mesh: null, mats: null, bundle: null, bundleN: -1, slots: null, key: null, gpu: null, chain: undefined, rec: null });
     }
     w.plan = p;
     return p;
   }
-  /** PERF-SAILS3: a part's model key (rendererModelKey) and slots - made again only when its mesh, its materials or its
+  /** A part's model key (rendererModelKey) and slots - made again only when its mesh, its materials or its
    *  bundle's materials are other arrays (every writer assigns a new one - comeSailAwayModels.js applyMaterials,
    *  comeSailAwayBoat.js applyGameTextures), so the string is the one the frame before made of the same slots. */
   function partKey(e, mesh) {
@@ -351,7 +350,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     }
     return e.key;
   }
-  /** PERF-SAILS4: a node's matrix in its boat's frame - the one this frame's walk keeps (made as it is read) when the
+  /** A node's matrix in its boat's frame - the one this frame's walk keeps (made as it is read) when the
    *  walk went through it, else the node's own (PrefabNode.worldMatrix). The two are one product of the same values
    *  (a boat's root hangs under nothing: the walk's root matrix is her worldMatrix), to the bit; the walk's makes each
    *  matrix once a frame for every reader and into its own storage, where the node's asks its whole chain each time. */
@@ -359,7 +358,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     const r = n._walkRec;
     return r !== undefined && walkStamp > 0 && r.seen === walkStamp ? made(r) : n.worldMatrix();
   };
-  /** PERF-SAILS2: a walked node's matrix, made now if it is due - its parent's first. */
+  /** A walked node's matrix, made now if it is due - its parent's first. */
   function made(r) {
     if (!r.pend) return r.m;
     const p = r.under;
@@ -371,7 +370,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   /** This frame's walk of a boat - the frame's own (BOAT-FAR: or, for a boat the frame held, her last frame's - held, so
    *  the flats and the draw never walk her again), or one made now and kept for nobody. */
   const walkOf = (boat) => { const w = walks.get(boat); return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1); };
-  /** PERF-SAILS2: the same walk with every matrix made - a probe's reading (the pool's own readers make what they read). */
+  /** The same walk with every matrix made - a probe's reading (the pool's own readers make what they read). */
   const walkMade = (boat) => { const w = walkOf(boat); for (const r of w.recs) made(r); return w; };
 
   // BOAT-FAR (2026-10-21, a player's profile online: the boats' pool frame 11% of the frame, 6% with the peers' boats
@@ -387,7 +386,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   let _lifeSeq = 0;
   /** @type {ArrayLike<number> | null} */ let _lifeEye = null;
   /** @type {Float32Array | null} */ let _shift = null;   // the boat being read's held shift (heldShift), or null
-  /** BOAT-FAR: a boat's frame of the law - the time her walk, bakes and lanterns step by, or null: held. One with no
+  /** A boat's frame of the law - the time her walk, bakes and lanterns step by, or null: held. One with no
    *  frame's walk to hold - none yet, or one dropped (a re-dress, the origin's move: walks.delete) - or whose tree was
    *  reshaped since it (a fitting stood, a part hung) is walked whatever her range. AUDIT (2026-10-21, a far Carrack
    *  switched off drew her 18 meshes up to three frames more, and switched on drew nothing for as many): and so is one
@@ -404,7 +403,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (lived === null) w.heldAt = walkStamp;
     return lived;
   }
-  /** BOAT-FAR: a held boat's move since her held walk - her hull's matrix now times the inverse of the one her walk made
+  /** A held boat's move since her held walk - her hull's matrix now times the inverse of the one her walk made
    *  (her root's, where the walk did not reach her hull), which stands every matrix of that walk where she is now; null
    *  for a boat walked this frame, or one that stands where her walk left her (its own matrices are where she is). */
   function heldShift(boat, w) {
@@ -422,10 +421,10 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (inv) life.shift = multiply(now, inv, (life.m ??= new Float32Array(16)));
     return life.shift;
   }
-  /** BOAT-FAR: a walked node's matrix where it is read - its walk's (made), carried by the boat's held shift into the
+  /** A walked node's matrix where it is read - its walk's (made), carried by the boat's held shift into the
    *  node's own second matrix (`at`) while she is held. */
   const placed = (r) => (_shift === null ? made(r) : multiply(_shift, made(r), (r.at ??= new Float32Array(16))));
-  /** BOAT-OWN: placed(r)'s place alone - its translation, the very floats placed() makes (mat4.js multiply's column 3:
+  /** placed(r)'s place alone - its translation, the very floats placed() makes (mat4.js multiply's column 3:
    *  the same products summed in the same order, rounded to a float as its scratch rounds them), into a scratch's
    *  [12..14]; the rest of the product is not made. A held flat's stand (syncFlats). */
   const _placedAt = new Float32Array(16);
@@ -451,7 +450,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
         art.register(addVendorTextures);
         pipeline?.markClassicArt?.(art.archive);
       }
-      if (m) { setGalleonStanding(m.galleon); setShipStanding(4, m.carrack); setShipStanding(1, m.largeBoat); }   // AUDIT GN-G4: each hull's numbers are the hull that stands
+      if (m) { setGalleonStanding(m.galleon); setShipStanding(4, m.carrack); setShipStanding(1, m.largeBoat); }   // Each hull's numbers are the hull that stands
       models = m; modelsFailed = !m; return m;
     });
     return modelsLoading;
@@ -466,7 +465,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   const modelBoundsOf = (id) => vertexBox(pipeline?.cpuModels?.get(id)?.positions);
   /** A classic model the pipeline will not load, said once (a hull's ModelHelper, DECK-PROPS a fitting). */
   const modelWontLoad = (id, e) => warnOnce(`model:${id}`, `[come-sail-away] model ${id} will not load`, e);
-  /** DECK-PROPS: what the fitting-out reads - the spawn's context, her hull's deck, and a fitting's model asked once. One
+  /** What the fitting-out reads - the spawn's context, her hull's deck, and a fitting's model asked once. One
    *  for the pool (AUDIT 2026-10-17: made again every frame), its context's models the pool's as they stand. */
   const _fitLoads = new Set();
   const _fitDeps = {
@@ -496,13 +495,13 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     await prepare(boat.hull);
     return spawnNow(boat, player);
   }
-  /** CSA-C: every hull's needs loaded once, so SpawnBoat can run straight through when the C# calls it. */
+  /** Every hull's needs loaded once, so SpawnBoat can run straight through when the C# calls it. */
   let preloaded = false, preloading = null;
   function preload() {
     preloading ??= (async () => {
       if (!(await ensureModels())) return false;
       for (let hull = 0; hull < HULL_NAMES.length; hull++) await prepare(hull);
-      // AUDIT GN2-PF3: her pictures painted (her archive's first ask builds all twenty-five on the vendor door - DF-LOOK:
+      // Her pictures painted (her archive's first ask builds all twenty-five on the vendor door - DF-LOOK:
       // her stern gallery's two night twins with them) and her glass's glow cut while the world loads - they were her
       // first mesh's ask (meshFor) or a sail bake's, at the first draw of a hull 2: a 50-120 ms stall the first time she
       // came into view
@@ -512,10 +511,10 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
         try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }
         catch (e) { warnOnce(`tex:${art.archive}`, `[come-sail-away] TEXTURE.${art.archive} will not load - the boats' faces in it draw nothing`, e); }
       }
-      try { await pipeline.getTexture(OWN_BOAT_ARCHIVE); }   // OWN-WORK4: our boats' pictures, painted while the world loads
+      try { await pipeline.getTexture(OWN_BOAT_ARCHIVE); }   // Our boats' pictures, painted while the world loads
       catch (e) { warnOnce(`tex:${OWN_BOAT_ARCHIVE}`, `[come-sail-away] TEXTURE.${OWN_BOAT_ARCHIVE} will not load - the boats' faces in it draw nothing`, e); }
-      for (let hull = 0; hull < HULL_NAMES.length; hull++) deckOf(hull, 0);   // DECK-WALK: baked while the world loads (10-50 ms a hull), never mid-voyage (AUDIT NAV2 F57: every rig's deck, one a hull)
-      // AUDIT 2: and, the same way, each hull's planking and bows read for her name boards (SHIP-PLAQUE: 10-50 ms a hull, the
+      for (let hull = 0; hull < HULL_NAMES.length; hull++) deckOf(hull, 0);   // Baked while the world loads (10-50 ms a hull), never mid-voyage (AUDIT NAV2 F57: every rig's deck, one a hull)
+      // And, the same way, each hull's planking and bows read for her name boards (SHIP-PLAQUE: 10-50 ms a hull, the
       // pool's draw's the first time a named ship of it was seen) and the livery painter's base pictures
       for (let hull = 0; hull < HULL_NAMES.length; hull++) plaques.prime(hull);
       for (let hull = 0; hull < HULL_NAMES.length; hull++) figureheads.prime(hull);   // FIGUREHEAD: her stem read and the carving fitted (20-100 ms a hull)
@@ -525,28 +524,28 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     })();
     return preloading;
   }
-  /** CSA-C: SpawnBoat as the C# runs it - at once, on what `preload` brought in; null before that. */
+  /** SpawnBoat as the C# runs it - at once, on what `preload` brought in; null before that. */
   function spawnNow(boat, player) {
     if (!models) return null;
     boats.push(boat); mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does
     spawnBoat(boat, { models, player: () => player, billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });
     return boat;
   }
-  /** CSA-H: SetBoatVariant (1304-1308) on the pool's own context - a reinitialize instances nothing, so the player's
+  /** SetBoatVariant (1304-1308) on the pool's own context - a reinitialize instances nothing, so the player's
    *  pose (ImportCustomGameobject's matrix) is never read. The variants stand in the same instance, so every mesh,
    *  bake and flat already made is the same one. */
   function setVariant(boat, variant) {
     setBoatVariant(boat, variant, { models, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });
-    walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: other objects active now - walked again
+    walks.delete(boat);   // Other objects active now - walked again
   }
-  /** CSA-J: a peer's boat, built as SpawnBoat builds one (at the origin - its owner's word poses it) and drawn. */
+  /** A peer's boat, built as SpawnBoat builds one (at the origin - its owner's word poses it) and drawn. */
   function spawnPeerNow(boat) {
     if (!models) return null;
     spawnBoat(boat, { models, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });
     peerBoats.push(boat);
     return boat;
   }
-  /** NAV-C: a sea ship, built as SpawnBoat builds one (at the origin - the naval host poses it) and drawn - with her
+  /** A sea ship, built as SpawnBoat builds one (at the origin - the naval host poses it) and drawn - with her
    *  colours whatever her hull (graftColours). */
   function spawnSeaNow(boat) {
     if (!models) return null;
@@ -582,7 +581,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     boat.FlagEmitter = flag.getComponentInChildren('ParticleSystem')?.particleSystem ?? null;
     boat.FlagEmitterMain = boat.FlagEmitter?.main ?? null;
   }
-  /** OWS2: A HULL'S RIG, read off a boat SpawnBoat builds once a hull on the pool's context and never places or draws -
+  /** A HULL'S RIG, read off a boat SpawnBoat builds once a hull on the pool's context and never places or draws -
    *  its five nodes in its own frame (Center, Fore, Aft and the beams off its hull collider's bounds: the Overworld's
    *  launch asks where each would stand before it puts a boat on the water), its sails, its crew, its packing and its
    *  Cargo modifier (whether it crosses a sea at all). Null before the models are in, or for a hull the mod has none of. */
@@ -598,7 +597,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     }
     return rig;
   }
-  /** MENU-ORDER (bible/10-UI/Menu-Order.md): A HULL'S PORTRAIT - the shipmaster's card's picture of her (scenes/
+  /** A HULL'S PORTRAIT - the shipmaster's card's picture of her (scenes/
    *  shipPortraits.js). A boat of the hull built once as hullRig's is (at the origin, standing), never placed and never
    *  in the drawn lists; her sails baked once as they stand. Her parts - each drawn mesh and its matrix, as the draw
    *  finds them - and her box (the parts' boxes, joined), once every part has come; null until then (asked again a
@@ -663,7 +662,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     const i = list.indexOf(boat);
     if (i < 0) return;
     list.splice(i, 1);
-    walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5
+    walks.delete(boat);
     const st = stills.get(boat);   // AUDIT NAV1 (#13): her still parts' batch with her
     if (st?.mesh) renderer?.destroyMesh?.(st.mesh);
     stills.delete(boat);
@@ -684,7 +683,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (night == null) return;
     pipeline.uploadRecord(archive, night, { opaque: true });
     const glow = artOf(archive).glow(night);
-    // STUDIO1: a night picture's own light - an emission picture of the twin (`38131_106-0_Emission.png`, the studio's
+    // A night picture's own light - an emission picture of the twin (`38131_106-0_Emission.png`, the studio's
     // or a pack's) - lights it where its artist put the glass; without one, the painted glass's glow does
     const lit = decodedTexture(archive, night, 0, 'Emission');
     if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });
@@ -724,10 +723,10 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (!g?.bindPoses) return;
     let k = bakes.get(script);
     if (!k) { k = { gpu: null, positions: new Float32Array(g.vertexCount * 3), normals: new Float32Array(g.vertexCount * 3), loading: false }; bakes.set(script, k); }
-    // PERF-SAILS3: an every-frame holder (a galleon's running rope) asked its bones, their matrices and its pose every
+    // An every-frame holder (a galleon's running rope) asked its bones, their matrices and its pose every
     // frame, each a new array - the bones are found once a tree's shape (resolveNodePointer reads the instance's own
     // paths), the matrices and the pose written into the holder's own record; the same nodes, the same numbers
-    const shape = prefabShapeStamp(skinnedNode);   // BOAT-STAMP: its own tree's
+    const shape = prefabShapeStamp(skinnedNode);   // Its own tree's
     if (k.bonesOf !== skinnedNode || k.bonesList !== smr.m_Bones || k.bonesStamp !== shape) {
       k.bones = smr.m_Bones.map((b) => resolveNodePointer(skinnedNode, b));
       k.bonesOf = skinnedNode; k.bonesList = smr.m_Bones; k.bonesStamp = shape;
@@ -735,7 +734,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       k.pose = { position: [0, 0, 0], rotation: [0, 0, 0, 1] };
     }
     const bones = k.bones, boneWorld = k.boneWorld;
-    for (let b = 0; b < bones.length; b++) boneWorld[b] = bones[b] ? worldOf(bones[b]) : null;   // PERF-SAILS4: the walk's, where it went
+    for (let b = 0; b < bones.length; b++) boneWorld[b] = bones[b] ? worldOf(bones[b]) : null;   // The walk's, where it went
     const pose = k.pose, sw = worldOf(skinnedNode), sq = skinnedNode._rotationKept();
     pose.position[0] = sw[12]; pose.position[1] = sw[13]; pose.position[2] = sw[14];
     pose.rotation[0] = sq[0]; pose.rotation[1] = sq[1]; pose.rotation[2] = sq[2]; pose.rotation[3] = sq[3];
@@ -758,14 +757,14 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     })().catch((e) => warnOnce('bake', '[come-sail-away] a sail bake failed to upload', e));
   }
 
-  /** AUDIT GN2-RG1: does an every-frame holder's every bone stand against its renderer (its matrix with the renderer's
+  /** Does an every-frame holder's every bone stand against its renderer (its matrix with the renderer's
    *  position and rotation undone, the bake's own frame) within RIG_STILL_M of where it stood at the holder's last bake?
    *  Not: this frame's is kept, for the bake it asks. */
   function rigStill(k, boneWorld, pose) {
     const n = boneWorld.length * 12;
     if (!k.rig || k.rig.length !== n) { k.rig = new Float64Array(n); k.rigNow = new Float64Array(n); k.rigBaked = false; }
     const q = pose.rotation, p = pose.position, back = _rigBack, v = _rigV, now = k.rigNow;
-    back[0] = -q[0]; back[1] = -q[1]; back[2] = -q[2]; back[3] = q[3];   // PERF-SAILS3: the undoing turn, in one kept array
+    back[0] = -q[0]; back[1] = -q[1]; back[2] = -q[2]; back[3] = q[3];   // The undoing turn, in one kept array
     let still = k.rigBaked;
     for (let b = 0; b < boneWorld.length; b++) {
       const m = boneWorld[b];
@@ -789,60 +788,59 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   function frame(gameDt, world = {}) {
     const playerPosition = world.playerPosition ?? [0, 0, 0];
     cityLights = !!world.cityLightsOn;   // THE STERN WINDOWS LIT: the draw's night twins (NIGHT_REMAP)
-    walkStamp++;   // AUDIT PRE-MERGE 0928 R5: this frame's one walk, read below and by the draw
+    walkStamp++;   // This frame's one walk, read below and by the draw
     const lit = _lanternFrame;
     lit.dt = gameDt; lit.cityLightsOn = !!world.cityLightsOn; lit.playerPosition = playerPosition;
     // DECK-PROPS (scenes/comeSailAway/deckFittingsHost.js): mine by my ledger, a peer's by its owner's word - before her walk
     if (models) { fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); fitBoats(peerBoats, (b) => b.fittings, _fitDeps); }
-    _lifeEye = world.playerPosition ?? null;   // BOAT-FAR: the eye a boat's range is read from (none: every boat near)
+    _lifeEye = world.playerPosition ?? null;   // The eye a boat's range is read from (none: every boat near)
     for (const boat of drawn()) {
-      const dt = lifeOf(boat, gameDt);   // BOAT-FAR: the time she lives by this frame - null: held, her last walk kept
+      const dt = lifeOf(boat, gameDt);   // The time she lives by this frame - null: held, her last walk kept
       if (dt === null) continue;
-      const holders = planOf(boat, walkBoat(boat, walkStamp)).holders;   // PERF-SAILS3: her holders, in the walk's order
+      const holders = planOf(boat, walkBoat(boat, walkStamp)).holders;   // Her holders, in the walk's order
       for (let k = 0; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], dt);
       lit.dt = dt;
       for (const l of boat.Lights) lanternLightUpdate(l, lit);
     }
     syncFlats();
   }
-  /** PERF-SAILS3: the lanterns' frame, one record a frame rather than one a lantern (lanternLightUpdate reads it). */
+  /** The lanterns' frame, one record a frame rather than one a lantern (lanternLightUpdate reads it). */
   const _lanternFrame = { dt: 0, cityLightsOn: false, playerPosition: [0, 0, 0] };
 
   /** The billboards: a batch per active, drawn flat, its centre on its object. */
-  // PERF-SAILS3: a frame's flats marked with its sweep (a batch not marked is gone), and a flat's size written into the
+  // A frame's flats marked with its sweep (a batch not marked is gone), and a flat's size written into the
   // one record the pool gave it - a Set, a size and a scale a flat a frame were the flats' garbage
   let _flatSweep = 0;
   const _flatScale = [0, 0, 0];
   function syncFlats() {
     const sweep = ++_flatSweep;
     for (const boat of drawn()) {
-      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // SHIP-FADE: a ship half faded stands no flat - her crew and lanterns go first
-      const walk = walkOf(boat);   // AUDIT PRE-MERGE 0928 R5
-      _shift = heldShift(boat, walk);   // BOAT-FAR: a held boat's flats where she stands now
-      const recs = walk.recs, list = planOf(boat, walk).flats;   // PERF-SAILS3: her billboards, found once
+      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // A ship half faded stands no flat - her crew and lanterns go first
+      const walk = walkOf(boat);
+      _shift = heldShift(boat, walk);   // A held boat's flats where she stands now
+      const recs = walk.recs, list = planOf(boat, walk).flats;   // Her billboards, found once
       for (let f = 0; f < list.length; f++) {
         const e = list[f], { i, node: n, bb, r } = e;
         if (!r || r.m_Enabled === false) continue;
         const size = bb.Summary.Size, w = size[0], h = size[1];
         if (!(w > 0 && h > 0)) continue;
-        // BOAT-OWN (bible/07-Rendering/Performance-Priority.md): held, a flat she stood when she was walked keeps the scale
-        // that frame found and only its place is made (placedAt: placed()'s own translation, to the bit) - neither the
-        // whole product nor its world rotation's climb, a flat a frame. Its place and its size are both her held walk's:
-        // an Animator of hers may step on a frame that holds her (mine on createBoatLives' stride, a peer's on
-        // comeSailAwayPeers.js's, neither this walk's) and move or scale a node, and her flat takes neither until her next
-        // life - as its place never did
+        // Held, a flat she stood when she was walked keeps the scale that frame found and only its place is made
+        // (placedAt: placed()'s own translation, to the bit) - neither the whole product nor its world rotation's climb, a
+        // flat a frame. Its place and its size are both her held walk's: an Animator of hers may step on a frame that
+        // holds her (mine on createBoatLives' stride, a peer's on comeSailAwayPeers.js's, neither this walk's) and move or
+        // scale a node, and her flat takes neither until her next life - as its place never did
         const kept = e.at === walk.stamp;
-        const m = kept ? placedAt(recs[i]) : placed(recs[i]);   // PERF-SAILS2: a flat's matrix made as it is read
+        const m = kept ? placedAt(recs[i]) : placed(recs[i]);   // A flat's matrix made as it is read
         let b = flats.get(n);
         if (!b) {
           if (!renderer?.createBillboardBatch) continue;
-          b = renderer.createBillboardBatch(bb.Summary.Archive, bb.Summary.Record, { w, h }, [[0, 0, 0]]);   // AUDIT PRE-MERGE 0928 R6: its centre stands still - the origin moves it, which SC1's origin test sees; a batch built dynamic is replayed by every lantern near it every frame
+          b = renderer.createBillboardBatch(bb.Summary.Archive, bb.Summary.Record, { w, h }, [[0, 0, 0]]);   // Its centre stands still - the origin moves it, which SC1's origin test sees; a batch built dynamic is replayed by every lantern near it every frame
           b.origin = [0, 0, 0];
           b._csaSweep = 0; b._csaSize = null;
           flats.set(n, b);
-          // STAND-FLAT (bible/04-Characters/Morrowind-NPCs.md section 28): one of her crew - a person's flat - is a person
-          // the host's people lane can stand a body for, read as a placed figure is; her deed's uid (or her hull) and the
-          // flat's place in her walk name them, so a boat's crew is the same people on every machine
+          // One of her crew - a person's flat - is a person the host's people lane can stand a body for, read as a placed
+          // figure is; her deed's uid (or her hull) and the flat's place in her walk name them, so a boat's crew is the
+          // same people on every machine
           if (isNpcFlat(bb.Summary.Archive)) crew.set(n, { piece: { id: `csa:${boat.uid || `h${boat.hull}`}:${i}`, flat: [bb.Summary.Archive, bb.Summary.Record] } });
         }
         if (!kept) { const s = n.lossyScaleOf(m, _flatScale); e.sx = Math.abs(s[0]); e.sy = Math.abs(s[1]); e.at = walk.stamp; }
@@ -851,7 +849,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
         else b.size = b._csaSize = { w: sw, h: sh };
         b.origin[0] = m[12]; b.origin[1] = m[13] - b.size.h / 2; b.origin[2] = m[14];
         b.emissionOff = !!(r.emissionColor && r.emissionColor[0] === 0 && r.emissionColor[1] === 0 && r.emissionColor[2] === 0);
-        b.conceal = boat.conceal ?? null;   // AUDIT PRE-MERGE 0928 O4: a concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)
+        b.conceal = boat.conceal ?? null;   // A concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)
         b._csaSweep = sweep;
       }
     }
@@ -859,7 +857,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     for (const [n, b] of flats) if (b._csaSweep !== sweep) { renderer?.destroyBillboardBatch?.(b); flats.delete(n); crew.delete(n); }
   }
   const batches = () => [...flats.values()];
-  /** STAND-FLAT: each of the crews standing this frame - `fn(person, batch)`, the batch's origin their feet (its base),
+  /** Each of the crews standing this frame - `fn(person, batch)`, the batch's origin their feet (its base),
    *  its `conceal` their owner's look. */
   function people(fn) {
     for (const [n, f] of crew) { const b = flats.get(n); if (b) fn(f, b); }
@@ -886,7 +884,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     const pxPerM = cull && eye ? r._proj[5] * (r.gl?.drawingBufferHeight ?? 0) / 2 : 0;   // a metre's pixels a metre off
     let n = 0;
     const one = (gpu, m, texRemap = drawRemap) => {
-      if (texRemap !== drawRemap) texRemap = paints.remapFor(gpu, texRemap, drawRemap);   // AUDIT 2: her paint only on a mesh it repaints - the renderer's picture cache keys on the remap
+      if (texRemap !== drawRemap) texRemap = paints.remapFor(gpu, texRemap, drawRemap);   // Her paint only on a mesh it repaints - the renderer's picture cache keys on the remap
       if (cull && gpu.bounds && gpu.bounds[3] > 0) {
         const sp = transformSphere(m, gpu.bounds, _cullSphere);
         if (pxPerM > 0 && 2 * sp[3] * pxPerM < CULL_DETAIL_PX * Math.hypot(sp[0] - eye[0], sp[1] - eye[1], sp[2] - eye[2])) return;   // under a pixel
@@ -900,30 +898,30 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       r.drawMesh(gpu, m, texRemap); n++;
     };
     for (const boat of drawn()) {
-      // SHIP-FADE (2026-10-02): a ship fading in or out of the world draws her share of her fragments (the renderer's
+      // A ship fading in or out of the world draws her share of her fragments (the renderer's
       // dissolve), put back whole after her; one faded away draws nothing
       const fade = Math.max(0, Math.min(1, boat.fade ?? 1));
       if (fade <= 0) continue;
       if (fade < 1) r.setDissolve?.(fade);
       const code = liveryCodeOf(boat);
-      const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));   // SHIP-LIVERY: her paint over the host's remap; GUILD-SHOP: her sails' arms
-      const walk = walkOf(boat);   // AUDIT PRE-MERGE 0928 R5
-      _shift = heldShift(boat, walk);   // BOAT-FAR: a held boat's walk, carried to where she stands now
-      const recs = walk.recs, parts = planOf(boat, walk).parts;   // PERF-SAILS3: her renderers, found once
-      // BOAT-OWN (bible/07-Rendering/Performance-Priority.md): A HELD BOAT'S PARTS ARE THE ONES HER WALK'S DRAW FOUND.
-      // Between her lives nothing a part is read for here moves - her switches and her shape end a hold (lifeOf), her
-      // bakes step as she lives, a part's meshes and materials are her build's - so which of her parts draw, with which
-      // mesh, alone or in her hull's frame, are what the draw over this walk found (`walk.draws`), and only where each
-      // stands is made again (placed); her still batch is asked every frame, as before. A mesh still loading when she
-      // was walked is drawn from her next life, up to FAR_LIFE_EVERY - 1 frames later.
+      const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));   // Her paint over the host's remap; GUILD-SHOP: her sails' arms
+      const walk = walkOf(boat);
+      _shift = heldShift(boat, walk);   // A held boat's walk, carried to where she stands now
+      const recs = walk.recs, parts = planOf(boat, walk).parts;   // Her renderers, found once
+      // A HELD BOAT'S PARTS ARE THE ONES HER WALK'S DRAW FOUND. Between her lives nothing a part is read for here moves
+      // - her switches and her shape end a hold (lifeOf), her bakes step as she lives, a part's meshes and materials
+      // are her build's - so which of her parts draw, with which mesh, alone or in her hull's frame, are what the draw
+      // over this walk found (`walk.draws`), and only where each stands is made again (placed); her still batch is
+      // asked every frame, as before. A mesh still loading when she was walked is drawn from her next life, up to
+      // FAR_LIFE_EVERY - 1 frames later.
       const list = walk.draws;
       const still = list.still;   // AUDIT NAV1 (#13): this frame's parts that hang in her hull's frame
       if (walk.heldAt === walkStamp && list.at === walk.stamp) {
-        for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint);   // BOAT-OWN: held - her parts drawn on their own, as that draw found them
+        for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint);   // Held - her parts drawn on their own, as that draw found them
       } else {
         list.alone.length = 0; still.length = 0;
         for (let p = 0; p < parts.length; p++) {
-          const e = parts[p], node = e.node, rec = recs[e.i], mr = e.mr;   // PERF-SAILS2: its matrix made where it is drawn on its own
+          const e = parts[p], node = e.node, rec = recs[e.i], mr = e.mr;   // Its matrix made where it is drawn on its own
           if (mr.m_Enabled === false || mr.materials?.[0]?.billboard) continue;
           let gpu = null, key = null;
           if (mr.classicModel != null) gpu = pipeline?.gpuMeshes?.get(mr.classicModel) ?? null;
@@ -932,25 +930,25 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
             if (mf?.baked) gpu = bakes.get(e.fix)?.gpu ?? null;
             else if (mf?.m_Mesh?.mesh) {
               key = partKey(e, mf.m_Mesh.mesh);
-              gpu = meshes.has(key) ? meshes.get(key) : meshFor(key, () => rendererModel(models.geometry(e.mesh), e.slots));   // PERF-SAILS3: no builder made for a mesh already in
+              gpu = meshes.has(key) ? meshes.get(key) : meshFor(key, () => rendererModel(models.geometry(e.mesh), e.slots));   // No builder made for a mesh already in
             }
           }
           if (!gpu) continue;
           e.gpu = gpu;   // what it is drawn with this frame - the still list's, and (BOAT-FAR's audit) how a probe tells which part a draw is
-          if (key && boat.MeshObject && e.chain === undefined) e.chain = stillChain(boat, node);   // PERF-SAILS3: asked once a plan (its own cache keys on the shape and the frame, as the plan does)
+          if (key && boat.MeshObject && e.chain === undefined) e.chain = stillChain(boat, node);   // Asked once a plan (its own cache keys on the shape and the frame, as the plan does)
           const chain = key && boat.MeshObject ? e.chain : null;
-          if (chain) { e.rec = rec; still.push(e); continue; }   // PERF-SAILS3: the part's own record is the still list's entry
+          if (chain) { e.rec = rec; still.push(e); continue; }   // The part's own record is the still list's entry
           list.alone.push(e);
           one(gpu, placed(rec), paint);
         }
         list.at = walk.stamp;
       }
       const batch = stillBatch(boat, still);
-      const hullRec = batch ? boat.MeshObject?._walkRec ?? null : null;   // PERF-SAILS1: the record's matrix
-      const frame = hullRec ? (_shift !== null ? boat.MeshObject.worldMatrix() : made(hullRec)) : null;   // PERF-SAILS2: made as it is read - BOAT-FAR: held, her batch at her hull's matrix as it stands now
+      const hullRec = batch ? boat.MeshObject?._walkRec ?? null : null;   // The record's matrix
+      const frame = hullRec ? (_shift !== null ? boat.MeshObject.worldMatrix() : made(hullRec)) : null;   // Made as it is read - BOAT-FAR: held, her batch at her hull's matrix as it stands now
       if (batch && frame) one(batch.mesh, frame, paint);
       for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, placed(c.rec), paint);
-      const shown = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? plaqueNameOf(boat) : null;   // SHIP-PLAQUE: her name boards, in her hull's frame - AUDIT 2: only where she is drawn (a hidden peer's boat - her look 'hidden' - sailed two boards with her name across the water; mine, off while I am indoors, hung them in the room)
+      const shown = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? plaqueNameOf(boat) : null;   // Her name boards, in her hull's frame - AUDIT 2: only where she is drawn (a hidden peer's boat - her look 'hidden' - sailed two boards with her name across the water; mine, off while I am indoors, hung them in the room)
       if (shown) for (const mesh of plaques.meshesFor(boat, shown)) one(mesh, frame ?? worldOf(boat.MeshObject), paint);
       const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat))) : null;   // FIGUREHEAD: her carving, in her trim paint
       if (carved) one(carved.mesh, multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, boat._figureM ??= new Float32Array(16)), paint);   // her own matrix: the shadow pass keeps it
@@ -977,7 +975,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   /** The nodes from `node`'s boat's MeshObject's child down to it (none: it is the MeshObject), or null when it does
    *  not hang in that frame - kept per tree shape. */
   function stillChain(boat, node) {
-    const stamp = prefabShapeStamp(node), frame = boat.MeshObject;   // BOAT-STAMP: its own tree's
+    const stamp = prefabShapeStamp(node), frame = boat.MeshObject;   // Its own tree's
     const had = _stillChains.get(node);
     if (had && had.stamp === stamp && had.frame === frame) return had.chain;
     let chain = [];
@@ -1050,7 +1048,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       }
     }
     out.sort((a, b) => a._d - b._d);
-    return out.slice(0, CSA_LIGHTS_MAX).map(({ _d, _src, ...l }) => adoptLight(l, _src));   // LIGHT-ID: each lantern her own, as she sails
+    return out.slice(0, CSA_LIGHTS_MAX).map(({ _d, _src, ...l }) => adoptLight(l, _src));   // Each lantern her own, as she sails
   }
 
   /** FloatingOrigin moved the world: every boat's root follows (CSA-C restates OnPositionUpdate's boat arm whole). */
@@ -1058,7 +1056,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     for (const boat of boats) {
       const p = boat.GameObject.localPosition;
       boat.GameObject.localPosition = [p[0] + offset[0], p[1] + offset[1], p[2] + offset[2]];
-      walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: moved - walked again
+      walks.delete(boat);   // Moved - walked again
     }
   }
   function destroyAll() { for (const b of [...boats, ...peerBoats, ...seaBoats]) remove(b); }
@@ -1077,7 +1075,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
    *  deck keeps the walls it stands shut, never a floor of it (the new galleon's two hatch covers and the Carrack's two
    *  cargo doors are holes when open; every door's leaf is a wall across its doorway shut, as before). */
   const decks = new Map();
-  /** AUDIT GN-D7: whether a collider's node is a part that opens - a door, a hatch's cover (a DoorTrigger under it). */
+  /** Whether a collider's node is a part that opens - a door, a hatch's cover (a DoorTrigger under it). */
   const opens = (node) => !!node?.children?.some((k) => k.name === 'DoorTrigger');
   function deckOf(hull, variant = 0) {
     if (!models) return null;
@@ -1089,7 +1087,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     for (const { node, collider: c, world } of colliderPoses(probe.GameObject)) {
       if (c.m_IsTrigger || c.m_Enabled === false) continue;
       const m = frame ? multiply(frame, world, new Float32Array(16)) : world;
-      const cpu = c.classicModel != null ? pipeline?.cpuModels?.get(c.classicModel) : null;   // AUDIT NAV2 F39: its triangles, once the pipeline holds them
+      const cpu = c.classicModel != null ? pipeline?.cpuModels?.get(c.classicModel) : null;   // Its triangles, once the pipeline holds them
       const g = c.type === 'BoxCollider' ? boxColliderTriangles(c) : c.classicModel != null ? (cpu?.positions && cpu.indices ? cpu : null)
         : c.m_Mesh?.mesh ? models.geometry(c.m_Mesh.mesh) : c.m_Mesh?.builtin ? BUILTIN_COLLIDER_MESHES[c.m_Mesh.builtin] : null;
       if (!g) continue;
@@ -1108,7 +1106,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     return deck;
   }
 
-  /** SHIP-PLAQUE: a hull's drawn surface at rest in her MeshObject's frame - each still mesh she wears (her planking, her
+  /** A hull's drawn surface at rest in her MeshObject's frame - each still mesh she wears (her planking, her
    *  transom, her rails: a MeshFilter's mesh, a classic model's once the pipeline holds it; a sail baked as it fills, a
    *  flag, and a billboard are none) - `[{ positions, indices, name }]`, or null with no models. Her colliders are the
    *  deck's (deckOf) and stand a hull's walls coarsely; her name board is laid on what is seen. */
@@ -1142,16 +1140,16 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   }
 
   return {
-    hullSurface,   // SHIP-PLAQUE
+    hullSurface,
     figureheads,   // FIGUREHEAD: each hull's mount (a probe's reading)
     ensureModels, spawn, spawnNow, preload, ready: () => preloaded, remove, setVariant, frame, batches, people, draw, lights, offsetAll, destroyAll,
-    deckOf,   // DECK-WALK
-    hullRig,   // OWS2
-    portrait,   // MENU-ORDER: a hull's picture for the shipmaster's card
+    deckOf,
+    hullRig,
+    portrait,   // A hull's picture for the shipmaster's card
     spawnPeerNow, spawnSeaNow,
-    /** BOAT-FAR: the eye the last frame read the boats' range from (its playerPosition), or null - the peers' boats' law. */
+    /** The eye the last frame read the boats' range from (its playerPosition), or null - the peers' boats' law. */
     lifeEye: () => _lifeEye,
-    /** AUDIT PRE-MERGE 0928 R5: a boat's walk as this frame made it (its nodes and world matrices) - a probe's reading. */
+    /** A boat's walk as this frame made it (its nodes and world matrices) - a probe's reading. */
     walkOf: walkMade,
     /** AUDIT NAV1 (#13): a boat's batch of still parts as the last draw left it ({ nodes, mesh }), or null - a probe's reading. */
     stillOf: (boat) => { const st = stills.get(boat); return st?.mesh ? { nodes: st.nodes, mesh: st.mesh } : null; },
@@ -1164,7 +1162,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   };
 }
 
-/** A boat's root pose as SetBoatPositionAndDirection leaves it (CSA-C): position and a heading about Y. */
+/** A boat's root pose as SetBoatPositionAndDirection leaves it: position and a heading about Y. */
 export function boatRootMatrix(position, yawRadians) {
   return mat4FromQuatPosScale([0, Math.sin(yawRadians / 2), 0, Math.cos(yawRadians / 2)], position, [1, 1, 1]);
 }

@@ -2,18 +2,18 @@
 // reach the player's classic files (systems/classicArt.js), which a Worker never holds (NO-BETHESDA2/3, test/server/
 // accountdeploy.test.js walks the bundle).
 import { addVendorTextures, vendorTextureCount } from '../textureReplacement.js';
-import { rebuiltPicture } from '../rebuiltPicture.js';   // NO-BETHESDA2: a picture that is Daggerfall's own, built from the player's files
+import { rebuiltPicture } from '../rebuiltPicture.js';   // A picture that is Daggerfall's own, built from the player's files
 import { rotPicture, MOULDY } from './rotPicture.js';
-import { survivalPicture } from './survivalArt.js';   // OWN-WORK4: the pictures we paint
+import { survivalPicture } from './survivalArt.js';   // The pictures we paint
 import { VENDOR_ICON_FILES } from './food.js';
 import DERIVED_ICONS from './derivedIcons.json' with { type: 'json' };
 
-/** SURV-TENT: the tent's two reskins - records of REAL archives (TEXTURE.050 record 7, the canvas; TEXTURE.067 record
+/** The tent's two reskins - records of REAL archives (TEXTURE.050 record 7, the canvas; TEXTURE.067 record
  *  10, the pole), so they register WITHOUT `standIn` and the pipeline swaps only these two records. */
 export const VENDOR_TENT_FILES = Object.freeze(['50_7-0', '67_10-0']);
-/** NO-BETHESDA2 (2026-10-31): the pictures that are Daggerfall's own records alone - the tent's two (TEXTURE.050
+/** The pictures that are Daggerfall's own records alone - the tent's two (TEXTURE.050
  *  record 7, TEXTURE.067 record 10; derivedIcons.json). OWN-WORK4 took out the mouldy bread, whose spec carried the
- *  author's mould, and OWN-AUDIT (2026-11-01) the mouldy cooked fish, which was the plain fish. Or null. */
+ *  author's mould, and OWN-AUDIT the mouldy cooked fish, which was the plain fish. Or null. */
 export const derivedIconSpec = (name) => (Object.hasOwn(DERIVED_ICONS, name) ? DERIVED_ICONS[name] : null);
 const own = (spec) => Object.freeze({ ...spec, ...(spec.from ? { from: Object.freeze(spec.from) } : {}) });
 const FOOD = (archive, from) => [
@@ -30,7 +30,7 @@ export const OWN_ICONS = Object.freeze(
     ...FOOD(533, [213, 0, 0]),
     ...FOOD(534, [211, 31, 0]),
     ...FOOD(535, [211, 9, 0]),
-    ...FOOD(536, [211, 10, 0]),   // OWN-AUDIT (2026-11-01): the mouldy cooked fish is our mould too, not the plain fish
+    ...FOOD(536, [211, 10, 0]),   // The mouldy cooked fish is our mould too, not the plain fish
     ...FOOD(537, [211, 40, 0]),
     ['538_0-0', own({ paint: '538_2-0', seed: 5380, mouldy: true })],
     ['538_1-0', own({ paint: '538_2-0', seed: 538 })],

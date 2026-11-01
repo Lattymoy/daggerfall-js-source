@@ -1,4 +1,4 @@
-// A MORROWIND NIF, WRITTEN - the portable half of tools/nifWrite.mjs, moved here (OWN-WORK4, 2026-10-31) so the game
+// A MORROWIND NIF, WRITTEN - the portable half of tools/nifWrite.mjs, moved here so the game
 // can write one in the browser: our own scabbards and sheathing bones are built at runtime (systems/ownSheathing.js).
 // The tool re-exports every name below, so each bake writes the bytes it always did. The record writers are keyed as
 // mwNifFile.js's READERS are, and follow the reader's field order exactly; the pins parse what this writes.
@@ -214,7 +214,7 @@ export const WRITERS = {
     out.u32(rec.drawMode ?? 0);
   },
 
-  // MW-STEEL2: A SKIN. The reader's field order exactly (mwNifFile.js NiSkinInstance / NiSkinData): the instance
+  // A SKIN. The reader's field order exactly (mwNifFile.js NiSkinInstance / NiSkinData): the instance
   // names its data, its skeleton root and its bones; the data carries the skin's own transform, the bone count, the
   // 4.0.0.2 partition ref, and per bone its inverse bind, a bounding sphere and its (vertex, weight) list.
   NiSkinInstance(out, rec) {
@@ -223,7 +223,7 @@ export const WRITERS = {
     out.refList(rec.bones ?? []);
   },
 
-  // MW-CAST1: AN EXTERNAL .KF. The helper is a bare NiObjectNET whose extra chain is the text keys and then one bone
+  // AN EXTERNAL .KF. The helper is a bare NiObjectNET whose extra chain is the text keys and then one bone
   // name per controller, and whose controller chain is the keyframe controllers in the same order.
   NiSequenceStreamHelper(out, rec) {
     objectNET(out, rec);
@@ -268,7 +268,7 @@ export const WRITERS = {
     keyGroup(out, rec.scales, 1);
   },
 
-  // MW-BOW1: a bow's limbs and string - the reader's NiGeomMorpherController and NiMorphData.
+  // A bow's limbs and string - the reader's NiGeomMorpherController and NiMorphData.
   NiGeomMorpherController(out, rec) {
     out.ref(rec.next ?? -1)
       .u16(rec.flags ?? 8)
@@ -316,7 +316,7 @@ export const WRITERS = {
   },
 };
 
-/** MW-CAST1: a KeyGroup<T> as the reader takes it (mwNifFile.js readKeyGroupOf): the count, then - only when there
+/** A KeyGroup<T> as the reader takes it (mwNifFile.js readKeyGroupOf): the count, then - only when there
  *  are keys - the interpolation type and the keys. `dim` is 1 for a float group, 3 for a vector. */
 function keyGroup(out, group, dim) {
   const keys = group?.keys ?? [];

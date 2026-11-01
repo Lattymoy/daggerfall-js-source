@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// DW-E3 (2026-09-25): ILIAC PUDDLE NO MORE'S FISH AS ITEMS (jet082,
+// ILIAC PUDDLE NO MORE'S FISH AS ITEMS (jet082,
 // 1.2.2) - the seven templates the mod registers (DeepWaters.Init's
 // RegisterCustomItem, UselessItems2), the pictures its PassiveFishResources
 // gives them, and the item a fish carries (TryCreateFishItem).
@@ -21,16 +21,16 @@
 // powers of two). OWN-WORK4: the pictures are our own (fishArt.js).
 // ═══════════════════════════════════════════════════════════════════
 
-import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES, FISH_NAMES } from './deepWatersFishRows.js'; // INT1: the rows' leaf - the item law reads them headless
+import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES, FISH_NAMES } from './deepWatersFishRows.js'; // The rows' leaf - the item law reads them headless
 import {
   registerCustomTemplates,
   setItemFields,
   mintCondition,
   registerCustomItemGroup,
-} from '../item/itemTemplates.js'; // CSA-H: DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
+} from '../item/itemTemplates.js'; // DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
 import { modSetting, modLatchedOn } from '../modSettings.js';
 import { addVendorTextures } from '../textureReplacement.js';
-import { fishPicture } from './fishArt.js'; // OWN-WORK4: our own seven pictures
+import { fishPicture } from './fishArt.js'; // Our own seven pictures
 import {
   PASSIVE_FISH_SPECIES,
   isFishTemplateIndex,
@@ -145,7 +145,7 @@ export function normalizeFishItems(items) {
   for (let i = 0; i < (items?.length ?? 0); i++) {
     const it = items[i];
     if (it && isFishTemplateIndex(it.templateIndex) && it.name !== FISH_NAMES[it.templateIndex])
-      it.name = FISH_NAMES[it.templateIndex]; // OWN-WORK3: a catch from before the rename, renamed by its index
+      it.name = FISH_NAMES[it.templateIndex]; // A catch from before the rename, renamed by its index
     if (!it || it.group === FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;
     const { stackCount, currentCondition, maxCondition } = it;
     const fresh = createFishItem(speciesOfTemplate(it.templateIndex));

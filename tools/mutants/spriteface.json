@@ -2,8 +2,8 @@
   {
     "name": "SPRITEFACE-the-walks-facing-hung",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
-    "new": "facingDrawn = seen === null ? null : { yaw: turnYaw() ?? seen, turn: turnYaw() ?? seen };",
+    "old": "      facingDrawn = seen === null ? null : { yaw: seen, turn: turnYaw() ?? seen };",
+    "new": "      facingDrawn = seen === null ? null : { yaw: turnYaw() ?? seen, turn: turnYaw() ?? seen };",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SPRITEFACE-read-before-the-repaint",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "const seen = FP ? null : portrayedYaw(shown.orientation, ",
-    "new": "const seen = FP ? null : portrayedYaw(pending.length ? pending[pending.length - 1].orientation : shown.orientation, ",
+    "old": "      const seen = FP ? null : portrayedYaw(shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);",
+    "new": "      const seen = FP ? null : portrayedYaw(pending.length ? pending[pending.length - 1].orientation : shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SPRITEFACE-the-saddles-facing-dropped",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "const seen = FP ? null : portrayedYaw(",
-    "new": "const seen = FP || last.riding ? null : portrayedYaw(",
+    "old": "      const seen = FP ? null : portrayedYaw(shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);",
+    "new": "      const seen = FP || last.riding ? null : portrayedYaw(shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SPRITEFACE-first-person-faced",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "const seen = FP ? null : portrayedYaw(",
-    "new": "const seen = portrayedYaw(",
+    "old": "      const seen = FP ? null : portrayedYaw(shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);",
+    "new": "      const seen = portrayedYaw(shown.orientation, [cam.pos[0] - cam.feet[0], 0, cam.pos[2] - cam.feet[2]]);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteface.test.js"
     ],

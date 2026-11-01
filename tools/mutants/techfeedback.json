@@ -82,8 +82,8 @@
   {
     "name": "TECH-CANCEL-arm-uncut",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (!playerWeapon.techniqueStrike(s)) return false; fpArm.cutAttack?.(); fpAttack(s, _techDt);",
-    "new": "if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt);",
+    "old": "        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpArm.cutAttack?.(); fpAttack(s, _techDt); return true; },   // The arm's blow cut once the strike began",
+    "new": "        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt); return true; },   // The arm's blow cut once the strike began",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "TECH-KEY2-rig-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      tc.held2 = !!actionDown?.(SIGNATURE_ACTION) || touchHeld(SIGNATURE_ACTION);",
-    "new": "      tc.held2 = false;",
+    "old": "      tc.held2 = !!actionDown?.(SIGNATURE_ACTION) || touchHeld(SIGNATURE_ACTION);   // The martial path's own key - or its touch button",
+    "new": "      tc.held2 = false;   // The martial path's own key - or its touch button",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TECH-KEY2-row-missing",
     "file": "src/systems/inputActions.js",
-    "old": "    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // TECH-KEY2: the held path's signature\n",
-    "new": "",
+    "old": "    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // The held path's signature\n    ['ShotCycle', 'Shot (aboard)'],   // The guns' load at a helm, stepped on",
+    "new": "    ['ShotCycle', 'Shot (aboard)'],   // The guns' load at a helm, stepped on",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F3-rig-door",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        cutSwing: () => { if (playerWeapon.cutSwing()) fpArm.cutAttack?.(); },",
-    "new": "        cutSwing: () => {},",
+    "old": "        cutSwing: () => { if (playerWeapon.cutSwing()) fpArm.cutAttack?.(); },   // A flight's launch",
+    "new": "        cutSwing: () => {},   // A flight's launch",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ],

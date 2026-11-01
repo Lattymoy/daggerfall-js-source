@@ -1,7 +1,7 @@
-// OWN-AUDIT (2026-11-01; the owner: "no latching onto other mod authors"): EYE OF THE BEHOLDER'S SPRITES PLACED BY OUR
-// OWN LAW (src/player/eyeOfTheBeholder/eotbAnchor.js). The law runs on made-up pictures here, each case aimed at a
-// mutant in tools/mutants/ownaudit_eotb_anchors.json. With ARENA2_PATH set, eotbAnchors.json is held to what the law
-// measures on the player's own frames, and the jitter it leaves is measured (bible/06-Systems/Eye-Of-The-Beholder.md).
+// EYE OF THE BEHOLDER'S SPRITES PLACED BY OUR OWN LAW (src/player/eyeOfTheBeholder/eotbAnchor.js). The law runs on
+// made-up pictures here, each case aimed at a mutant in tools/mutants/ownaudit_eotb_anchors.json. With ARENA2_PATH
+// set, eotbAnchors.json is held to what the law measures on the player's own frames, and the jitter it leaves is
+// measured.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

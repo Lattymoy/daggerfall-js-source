@@ -92,7 +92,7 @@
   {
     "name": "PERFORDER-unseen-drawn",
     "file": "src/render/airPass.js",
-    "old": "          if (!batchVisible(planes, b)) continue; // EL5\n          const tex = f.textures.get(key);",
+    "old": "          if (!batchVisible(planes, b)) continue;\n          const tex = f.textures.get(key);",
     "new": "          const tex = f.textures.get(key);",
     "tests": [
       "test/render/perfvol.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "PERFORDER-sphere-first",
     "file": "src/render/airPass.js",
-    "old": "          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
-    "new": "          if (!batchVisible(planes, b)) continue; // EL5\n          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;",
+    "old": "          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;",
+    "new": "          if (!batchVisible(planes, b)) continue;\n          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PERFORDER-picture-first",
     "file": "src/render/airPass.js",
-    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5\n          const tex = f.textures.get(key);",
-    "new": "          const tex = f.textures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
+    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;\n          const tex = f.textures.get(key);",
+    "new": "          const tex = f.textures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;",
     "tests": [
       "test/render/perfvol.test.js"
     ]

@@ -2,7 +2,7 @@
 // the light source" - a tavern lamp at head height, the shadows gone as the player walks under it): THERE IS NO
 // CAMERA-DISTANCE RULE ANY MORE.
 //
-// F3 (2026-09-17) kept the light in the hand out of the caster slots by a proxy - "within 1.5 of the eye"
+// F3 kept the light in the hand out of the caster slots by a proxy - "within 1.5 of the eye"
 // (SHADOW_CASTER_MIN_DISTANCE, and AIR_GLARE_MIN_DISTANCE for the glare, pinned to be the same number) - and
 // MAC-T1 replaced that proxy with the fact BY NAME: the torch and candle records say `carried`, every host with
 // a player light composes through withPlayerLights, and the caster pick, the contact march (-2 in the caster
@@ -106,10 +106,10 @@ test('LIGHT-NEAR1: by source - the two constants are gone, the shader\'s contact
   assert.doesNotMatch(air, /export const AIR_GLARE_MIN_DISTANCE/);
   assert.doesNotMatch(el, /SHADOW_CASTER_MIN_DISTANCE|uCamPos\) < /, 'the lit block reads no camera distance for a shadow');
   assert.match(EL_MESH_FS, /float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n\s*: \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0/, 'the fallback: the hand by name, the range share, nothing else');
-  assert.match(sp, /const casters = reserveSelfCasters\(pickShadowCasters\(f\.pointLights, f\.eye, SHADOW_POINT_CASTERS, f\.carried, this\._heldCasters, this\._heldCasterN\),/);   // DISC6: and last frame's casters (the keep margin); AUDIT PRE-MERGE 0929 E3: the card's two lamps reserved among them - no distance clause
+  assert.match(sp, /const casters = reserveSelfCasters\(pickShadowCasters\(f\.pointLights, f\.eye, SHADOW_POINT_CASTERS, f\.carried, this\._heldCasters, this\._heldCasterN\),/);   // And last frame's casters (the keep margin); AUDIT PRE-MERGE 0929 E3: the card's two lamps reserved among them - no distance clause
   assert.doesNotMatch(sp, /d < minDist/);
   assert.doesNotMatch(air, /Math\.hypot\(L\[i \* 4\] - eye\[0\]/, 'no glare skip by distance to the eye');
-  assert.match(air, /if \(f\.carried && f\.carried\[i\] === CARRIED_IN_HAND\) continue; \/\/ OWN-AUDIT: a shadowless light keeps its glare\. MAC-T1/);   // OWN-AUDIT: the hand's byte alone
+  assert.match(air, /if \(f\.carried && f\.carried\[i\] === CARRIED_IN_HAND\) continue; \/\/ OWN-AUDIT: a shadowless light keeps its glare\. MAC-T1/);   // The hand's byte alone
 });
 
 test('LIGHT-NEAR1: the hosts - every host that composes a player light does it through withPlayerLights (the mask is the whole of the hand\'s exclusion now), and the standalone interior scene, which has no player light, is the one bare setPointLights', () => {

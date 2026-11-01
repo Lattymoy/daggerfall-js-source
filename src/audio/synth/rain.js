@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): RAIN, MADE. A hiss of a thousand far drops (noise in a broad band about 2.5 kHz), a low body
+// RAIN, MADE. A hiss of a thousand far drops (noise in a broad band about 2.5 kHz), a low body
 // of the heavier ones on a roof, and the near drops one by one - a tick each, a bubble's ping where one falls in a
 // puddle - and, in a layer of its own (rainEaves), now and then a slow drip from an eave. The level breathes with a slow
 // gust. It loops without a seam: the hiss's filters run over the noise twice and the second pass is kept (the beds'

@@ -2,7 +2,7 @@
   {
     "name": "SPRITE-FLICKER-the-walk-clock-repaints-the-view-on-screen",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "        updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER: the IL's lastOrientation",
+    "old": "        updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // The IL's lastOrientation",
     "new": "        updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "SPRITE-FLICKER-the-table-change-repaints-the-view-on-screen",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER",
+    "old": "    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);",
     "new": "    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
@@ -20,7 +20,7 @@
   {
     "name": "SPRITE-FLICKER-the-mirror-revert-repaints-the-view-on-screen",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "          updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER",
+    "old": "          updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);",
     "new": "          updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
@@ -29,7 +29,7 @@
   {
     "name": "SPRITE-FLICKER-the-choice-never-recorded",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    orientationChosen = o;   // SPRITE-FLICKER",
+    "old": "    orientationChosen = o;",
     "new": "    ;",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"

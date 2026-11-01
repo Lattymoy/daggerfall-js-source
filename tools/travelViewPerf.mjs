@@ -1,5 +1,4 @@
-// PERF-TV (2026-09-28, Mac: "I also want to ensure performance is golden"; bible/06-Systems/Travel-View.md
-// PERF-TV): THE OVERWORLD'S OWN FRAME COST, MEASURED IN A REAL BROWSER.
+// THE OVERWORLD'S OWN FRAME COST, MEASURED IN A REAL BROWSER.
 //
 // What the view adds to a frame on top of the world it draws: the readout (the traveller's ring, the compass and the
 // route line in the DOM; every keyed mark - plates, far places, travellers - drawn on its one canvas since PERF-TV,
@@ -43,10 +42,10 @@ import { projectToScreen } from '../src/player/tapRay.js';
 import { perspective, lookAt, mirrorProjectionX } from '../src/world/mat4.js';
 import { StreamingWorldState, mapPixelToWorldCoords } from '../src/world/streamingWorld.js';
 
-/** FB0929: a journey's line as the readout is handed it, frame by frame - the traveller 3 m further along its first leg
+/** A journey's line as the readout is handed it, frame by frame - the traveller 3 m further along its first leg
  *  each frame, the camera behind them at the view's defaults turned `turn`, the frame's lens (DFU's 65 degrees). */
 function routeFrames({ from, goal, spot = null, turn = 0, frames = 120, w = 1366, h = 768 }) {
-  const net = bayRoads(); // OWN-WORK2: the Bay's own network (ARENA2_PATH)
+  const net = bayRoads(); // The Bay's own network (ARENA2_PATH)
   const plan = planRoute(from, goal, { roads: net.roads, tracks: net.tracks });
   const mid = (p) => {
     const o = mapPixelToWorldCoords(p.x, p.y);
@@ -189,7 +188,7 @@ try {
     r.canvas === 84 && r.nodes === 0 && r.hits === 20,
     `every mark on the canvas (${r.canvas} handed, ${r.nodes} DOM nodes), the 20 places taking clicks (${r.hits} boxes)`,
   );
-  // FB0929: the route line by its frames - paint and raster included
+  // The route line by its frames - paint and raster included
   const from = { x: 195, y: 172 },
     o = mapPixelToWorldCoords(from.x, from.y);
   const lines = {

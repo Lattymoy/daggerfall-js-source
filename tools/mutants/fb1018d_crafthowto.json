@@ -293,8 +293,8 @@
   {
     "name": "CRAFT-HOWTO-controls-row-stores",
     "file": "src/systems/inputActions.js",
-    "old": "['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')]",
-    "new": "['Professions', t('input.action.professions', 'Open your Professions and Stores (online)')]",
+    "old": "    ['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')],   // The pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)",
+    "new": "    ['Professions', t('input.action.professions', 'Open your Professions and Stores (online)')],   // The pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)",
     "why": "AUDIT FB1018D L1-7: the key's Controls row keeps the claim the tutorial dropped - it lands on the Professions page",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"

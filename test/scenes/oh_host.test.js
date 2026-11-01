@@ -1,4 +1,4 @@
-// OH-B / OH-C (2026-09-26) - THERE'S A HOLE IN THE BOTTOM OF THE OCEAN IN THE
+// THERE'S A HOLE IN THE BOTTOM OF THE OCEAN IN THE
 // STREAMED WORLD (src/scenes/oceanHolesHost.js) against the assembly's
 // OceanHoles tile work: the gates in ProcessTerrain's order and their
 // diagnostics, the wait for Iliac Puddle No More's floor (RequestSeafloorRefresh
@@ -97,10 +97,6 @@ test('OH-B ProcessTerrain: a pixel the hash does not pick is rejected at once, b
   assert.deepEqual(r.deepWaters.log, [], 'no floor asked for');
 });
 
-// PIN MOVED (PITS-WORLD, 2026-10-27, bible/03-World/World-Wide.md WORLD-LANES): ETHER-DEEP held the pits to the Bay's map
-// because an abyss was named by its pit pixel's id's low twenty bits, the Bay's alone apart; past the Bay an abyss is named
-// in the world's abyss lane now (world/oceanHoles.js getAbyssMapId), so a pixel past the Veil and one west of the Bay are cut
-// as the Bay's are, and off the world's grid is still off the map
 test('OH-B ProcessTerrain (ETHER-DEEP, then PITS-WORLD): a pixel past the Veil - the Eltheric Ocean\'s carved floor - and one of the continent west of the Bay are cut as the Bay\'s, each abyss its own; a pixel off the world\'s grid is never (mutants: the hold the Bay\'s, the box\'s alone, none)', () => {
   const r = rig();
   let pit = null;
@@ -111,7 +107,7 @@ test('OH-B ProcessTerrain (ETHER-DEEP, then PITS-WORLD): a pixel past the Veil -
   r.oh.promoted(e);
   r.oh.update();
   assert.equal(r.oh.stateOf(e).diagnostic, 'built', 'past the Veil a pit stands');
-  // AUDIT ETHER-OW T-14: the continent's west of the map too - the world's grid is the hold, the box or not
+  // The continent's west of the map too - the world's grid is the hold, the box or not
   let west = null;
   for (let x = -1; x > -1000 && !west; x--) if (isPitPixel(x, 250, 0.5)) west = [x, 250];
   assert.ok(west, 'a pixel west of the Bay the hash picks');
@@ -321,7 +317,7 @@ test('OH-B ApplySettings off the declared keys: the midpoint\'s values, as the C
   assert.equal(s.dungeonVisualIntensity, 0.5);
   assert.deepEqual(Object.keys(MOD_SETTINGS['ocean-holes'].keys), ['Enabled', 'General.PitSpawnRate', 'General.SurfaceHoleSize', 'General.SeafloorHoleSize',
     'General.MiasmaParticleCount', 'General.MiasmaHeight', 'General.DungeonVisualIntensity', 'General.DungeonVisualDarkness'], 'the shipped order');
-  // OWN-WORK1 (2026-10-31): the shipped modsettings.json's General section, written out - its copy left the tree. Seven
+  // The shipped modsettings.json's General section, written out - its copy left the tree. Seven
   // 0..1 sliders, each 0.5 by default, in the file's order, with the words the port shows: our own (PLAIN-TEXT 2026-10-19,
   // OWN-WORK4 2026-11-01) - ours, exactly.
   const SHIPPED = {
@@ -351,7 +347,7 @@ test('OH-B Iliac Puddle No More\'s half of the API: OnSeafloorBuilt before OnFlo
   assert.match(src, /if \(!force && this\.isSeafloorCurrent\(entry\)\) return;/);
   const world = hostText('src/scenes/world.js');
   assert.match(world, /onSeafloorBuilt: \(e\) => oceanHoles\?\.seafloorBuilt\(e\)/);
-  assert.match(world, /if \(host\.oceanHoles\) host\.oceanHoles\.promoted\(built\.get\(pkey\)\);/, 'OnTerrainPromoted after the sea\'s own promote');   // PIN MOVED (IC-SWAP-BEHIND): the entry under the pixel's own key
+  assert.match(world, /if \(host\.oceanHoles\) host\.oceanHoles\.promoted\(built\.get\(pkey\)\);/, 'OnTerrainPromoted after the sea\'s own promote');
   assert.match(world, /if \(oceanHoles\) oceanHoles\.destroyed\(p\);/);
 });
 
@@ -402,7 +398,7 @@ test('OH-C the pit\'s programs take their attributes where the buffers put them:
   assert.match(src, /gl\.vertexAttribPointer\(0, 3, gl\.FLOAT, false, 28, 0\);\n\s*gl\.enableVertexAttribArray\(1\);\n\s*gl\.vertexAttribPointer\(1, 2, gl\.FLOAT, false, 28, 12\);\n\s*gl\.enableVertexAttribArray\(2\);\n\s*gl\.vertexAttribPointer\(2, 2, gl\.FLOAT, false, 28, 20\);/, 'the stream\'s three, in that order');
 });
 
-// AUDIT OH-F A1/A3 (2026-09-26): LoadSettings is a callback DFU raises in any mode, and indoors every terrain is
+// AUDIT OH-F A1/A3: LoadSettings is a callback DFU raises in any mode, and indoors every terrain is
 // inactive (DisableAllParents) - so FindObjectsOfType finds none and ProcessTerrain waits toward its timeout.
 test('AUDIT OH-F A1/A3 indoors: a settings change applies at once (the abyss\'s dials live) and re-cuts nothing; it is not replayed on the way out', async () => {
   let s = { surfaceHoleRadius: 20, seafloorHoleScale: 1, pitSpawnRate: 0.5, miasmaParticleCount: 72, miasmaHeight: 300, dungeonVisualIntensity: 0.5, dungeonVisualDarkness: 0.5 };

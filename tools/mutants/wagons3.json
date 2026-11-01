@@ -185,8 +185,8 @@
   {
     "name": "WAGONS3-the-pair-on-the-hitch",
     "file": "src/scenes/horseCartPool.js",
-    "old": "const q = [hitch[0] + fwd[2] * x, hitch[1], hitch[2] - fwd[0] * x];",
-    "new": "const q = [hitch[0], hitch[1], hitch[2]];",
+    "old": "    const q = [hitch[0] + fwd[2] * x, hitch[1], hitch[2] - fwd[0] * x];",
+    "new": "    const q = [hitch[0], hitch[1], hitch[2]];",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "WAGONS3-the-carts-horse-drawn",
     "file": "src/scenes/horseCartPool.js",
-    "old": ": [drivenHorse(hitch, fwd, 0, walk, f.g, false)];",
-    "new": ": [drivenHorse(hitch, fwd, 0, walk, f.g, true)];",
+    "old": "      return pair ? teamSidesOf(w.model).map((x) => drivenHorse(hitch, fwd, x * f.g, walk, f.g, true)) : [drivenHorse(hitch, fwd, 0, walk, f.g, false)];",
+    "new": "      return pair ? teamSidesOf(w.model).map((x) => drivenHorse(hitch, fwd, x * f.g, walk, f.g, true)) : [drivenHorse(hitch, fwd, 0, walk, f.g, true)];",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "WAGONS3-the-mate-unstood",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (mine && pair && w?.kind === HCC_WIRE_KIND.Deployed && (horses?.() ?? 1) >= 2) out.push(parkedPairHorse(w, parts));",
-    "new": "",
+    "old": "    if (mine && pair && w?.kind === HCC_WIRE_KIND.Deployed && (horses?.() ?? 1) >= 2) out.push(parkedPairHorse(w, parts));",
+    "new": "    ",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "WAGONS3-the-count-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "w?.kind === HCC_WIRE_KIND.Deployed && (horses?.() ?? 1) >= 2) out.push",
-    "new": "w?.kind === HCC_WIRE_KIND.Deployed) out.push",
+    "old": "    if (mine && pair && w?.kind === HCC_WIRE_KIND.Deployed && (horses?.() ?? 1) >= 2) out.push(parkedPairHorse(w, parts));",
+    "new": "    if (mine && pair && w?.kind === HCC_WIRE_KIND.Deployed) out.push(parkedPairHorse(w, parts));",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "WAGONS3-the-seat-unturned",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const off = quatRotate(f.rotation, local), fwd = quatRotate(f.rotation, [0, 0, 1]);\n    const feet = [",
-    "new": "    const off = local, fwd = quatRotate(f.rotation, [0, 0, 1]);\n    const feet = [",
+    "old": "    const local = pitchedPoint(parts, seat.feet, f.hitched ? parts.hitchPitch ?? 0 : 0).map((v) => v * f.g);\n    const off = quatRotate(f.rotation, local), fwd = quatRotate(f.rotation, [0, 0, 1]);\n    const feet = [f.at[0] + off[0], f.at[1] + off[1], f.at[2] + off[2]];",
+    "new": "    const local = pitchedPoint(parts, seat.feet, f.hitched ? parts.hitchPitch ?? 0 : 0).map((v) => v * f.g);\n    const off = local, fwd = quatRotate(f.rotation, [0, 0, 1]);\n    const feet = [f.at[0] + off[0], f.at[1] + off[1], f.at[2] + off[2]];",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "WAGONS3-the-shift-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "const lag = driven ? renderShift?.() ?? null : null;",
-    "new": "const lag = null;",
+    "old": "      const lag = driven ? renderShift?.() ?? null : null;",
+    "new": "      const lag = null;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "WAGONS3-a-seat-while-parked",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!w || w.kind !== HCC_WIRE_KIND.Trailing) return null;\n    const f = drawnFrameOf(owner, grows, owner === '' ? s : undefined);",
-    "new": "    if (!w) return null;\n    const f = drawnFrameOf(owner, grows, owner === '' ? s : undefined);",
+    "old": "    const w = owner === '' ? s?.wagon : _peers.get(owner)?.wagon;\n    if (!w || w.kind !== HCC_WIRE_KIND.Trailing) return null;",
+    "new": "    const w = owner === '' ? s?.wagon : _peers.get(owner)?.wagon;\n    if (!w) return null;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "WAGONS3-the-reins-from-the-hips",
     "file": "src/scenes/horseCartPool.js",
-    "old": "ends.push({ kind: 'rein', a: drv.hands[h.side < 0 ? 0 : 1],",
-    "new": "ends.push({ kind: 'rein', a: drv.feet,",
+    "old": "    if (drv) team.forEach((h) => { if (h.hitched && h.drawn) ends.push({ kind: 'rein', a: drv.hands[h.side < 0 ? 0 : 1], b: horsePoint(h, [TEAM.bit[0], TEAM.bit[1], TEAM.bit[2]]), g: f.g }); });",
+    "new": "    if (drv) team.forEach((h) => { if (h.hitched && h.drawn) ends.push({ kind: 'rein', a: drv.feet, b: horsePoint(h, [TEAM.bit[0], TEAM.bit[1], TEAM.bit[2]]), g: f.g }); });",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "WAGONS3-a-trace-on-the-bodys-frame",
     "file": "src/scenes/horseCartPool.js",
-    "old": "b: transformPoint(onBogie ? bogie : body, q[0], q[1], q[2])",
-    "new": "b: transformPoint(body, q[0], q[1], q[2])",
+    "old": "      ends.push({ kind: 'trace', a: horsePoint(h, [side * TEAM.collar[0], TEAM.collar[1], TEAM.collar[2]]), b: transformPoint(onBogie ? bogie : body, q[0], q[1], q[2]), g: f.g });",
+    "new": "      ends.push({ kind: 'trace', a: horsePoint(h, [side * TEAM.collar[0], TEAM.collar[1], TEAM.collar[2]]), b: transformPoint(body, q[0], q[1], q[2]), g: f.g });",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "WAGONS3-the-mesh-made-each-frame",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (h.gpu) renderer.updateMeshVertices?.(h.gpu, model.positions, model.normals);\n      else {",
-    "new": "      {",
+    "old": "      if (h.gpu) renderer.updateMeshVertices?.(h.gpu, model.positions, model.normals);\n      else { ensureWagonArt(); h.gpu = renderer.createMesh({ ...model, positions: model.positions.slice(), normals: model.normals.slice() }); }",
+    "new": "      { ensureWagonArt(); h.gpu = renderer.createMesh({ ...model, positions: model.positions.slice(), normals: model.normals.slice() }); }",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "WAGONS3-the-harness-casts-a-shadow",
     "file": "src/scenes/horseCartPool.js",
-    "old": "r.drawMesh(h.gpu, WORLD_MATRIX, null, NO_SHADOW);",
-    "new": "r.drawMesh(h.gpu, WORLD_MATRIX, null, undefined);",
+    "old": "      r.drawMesh(h.gpu, WORLD_MATRIX, null, NO_SHADOW); n++;",
+    "new": "      r.drawMesh(h.gpu, WORLD_MATRIX, null, undefined); n++;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "WAGONS3-the-capsule-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "standWagonCollider(parked && !capsuleInBox(parked, myParts) && !_held.has('') ? parked : null, myParts);",
-    "new": "standWagonCollider(parked && !_held.has('') ? parked : null, myParts);",
+    "old": "    standWagonCollider(parked && !capsuleInBox(parked, myParts) && !_held.has('') ? parked : null, myParts);   // Never round my capsule; WARDEN1: nor while the watch carries it",
+    "new": "    standWagonCollider(parked && !_held.has('') ? parked : null, myParts);   // Never round my capsule; WARDEN1: nor while the watch carries it",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "WAGONS3-the-skin-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r - CAPSULE_BOX_SKIN;",
-    "new": "const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r;",
+    "old": "    const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r - CAPSULE_BOX_SKIN;",
+    "new": "    const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "WAGONS3-the-wall-unturned",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const lo = [m[0] * t[0] + m[1] * t[1] + m[2] * t[2], m[4] * t[0] + m[5] * t[1] + m[6] * t[2], m[8] * t[0] + m[9] * t[1] + m[10] * t[2]];\n    const ld =",
-    "new": "    const lo = t;\n    const ld =",
+    "old": "    const lo = [m[0] * t[0] + m[1] * t[1] + m[2] * t[2], m[4] * t[0] + m[5] * t[1] + m[6] * t[2], m[8] * t[0] + m[9] * t[1] + m[10] * t[2]];",
+    "new": "    const lo = t;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "WAGONS3-inside-taken-for-a-hit",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (!(t0 <= t1) || t0 < 0 || t0 > max) return Infinity;",
-    "new": "if (!(t0 <= t1) || t0 > max) return Infinity;",
+    "old": "    if (!(t0 <= t1) || t0 < 0 || t0 > max) return Infinity;",
+    "new": "    if (!(t0 <= t1) || t0 > max) return Infinity;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "WAGONS3-the-cameras-radius-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "return Math.max(0, t0 - radius);",
-    "new": "return Math.max(0, t0);",
+    "old": "    return Math.max(0, t0 - radius);",
+    "new": "    return Math.max(0, t0);",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "WAGONS3-the-drivers-mount-kept",
     "file": "src/scenes/horseCartPool.js",
-    "old": "st: seatTopByte(seat.top), rd: 0, bench: 2,",
-    "new": "st: seatTopByte(seat.top), rd: d.shown.rd, bench: 2,",
+    "old": "      drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], yaw: seat.yaw, st: seatTopByte(seat.top), rd: 0, bench: 2, deck: [0, 0, -1], deckKey: `wagon:${d.id}:driver` } };",
+    "new": "      drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], yaw: seat.yaw, st: seatTopByte(seat.top), rd: d.shown.rd, bench: 2, deck: [0, 0, -1], deckKey: `wagon:${d.id}:driver` } };",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "WAGONS3-the-glued-entry-written",
     "file": "src/scenes/horseCartPool.js",
-    "old": "drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], yaw: seat.yaw, st: seatTopByte(seat.top), rd: 0, bench: 2, deck: [0, 0, -1], deckKey: `wagon:${d.id}:driver` } };",
-    "new": "d.shown = { ...d.shown, x: w[0], y: w[1], z: w[2], yaw: seat.yaw, st: seatTopByte(seat.top), rd: 0, bench: 2, deck: [0, 0, -1], deckKey: `wagon:${d.id}:driver` };",
+    "old": "      drawable[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], yaw: seat.yaw, st: seatTopByte(seat.top), rd: 0, bench: 2, deck: [0, 0, -1], deckKey: `wagon:${d.id}:driver` } };",
+    "new": "      d.shown = { ...d.shown, x: w[0], y: w[1], z: w[2], yaw: seat.yaw, st: seatTopByte(seat.top), rd: 0, bench: 2, deck: [0, 0, -1], deckKey: `wagon:${d.id}:driver` };",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "WAGONS3-the-team-ungrown",
     "file": "src/scenes/horseCartPool.js",
-    "old": "teamSidesOf(w.model).map((x) => drivenHorse(hitch, fwd, x * f.g, walk, f.g, true))",
-    "new": "teamSidesOf(w.model).map((x) => drivenHorse(hitch, fwd, x, walk, f.g, true))",
+    "old": "      return pair ? teamSidesOf(w.model).map((x) => drivenHorse(hitch, fwd, x * f.g, walk, f.g, true)) : [drivenHorse(hitch, fwd, 0, walk, f.g, false)];",
+    "new": "      return pair ? teamSidesOf(w.model).map((x) => drivenHorse(hitch, fwd, x, walk, f.g, true)) : [drivenHorse(hitch, fwd, 0, walk, f.g, false)];",
     "tests": [
       "test/player/wagons3.test.js"
     ]

@@ -1,9 +1,9 @@
-// NO-BETHESDA3 (2026-10-31; the owner: "Rebuild DW's 7 daggers"): twelve of Diverse Weapons' magic-dagger frames were
-// 60% or more Daggerfall's own hand (WEAPON02.CIF) and left the tree as specs, the author's blades riding as edits.
-// OWN-WORK4 (the same day): every frame of the set is ours now, these twelve with the rest - the specs are gone, no
-// edit and no pixel of the author's read. In CI: the twelve are names of our set, built from the magic dagger's own
-// file through our reader and never fetched, and no source reads a spec. With ARENA2_PATH: each builds at the classic
-// magic frame's size, the hand Daggerfall's own pixel for pixel, the blade our own - broadened, grooved, our metal.
+// Twelve of Diverse Weapons' magic-dagger frames were 60% or more Daggerfall's own hand (WEAPON02.CIF) and left the
+// tree as specs, the author's blades riding as edits. OWN-WORK4 (the same day): every frame of the set is ours now,
+// these twelve with the rest - the specs are gone, no edit and no pixel of the author's read. In CI: the twelve are
+// names of our set, built from the magic dagger's own file through our reader and never fetched, and no source reads
+// a spec. With ARENA2_PATH: each builds at the classic magic frame's size, the hand Daggerfall's own pixel for pixel,
+// the blade our own - broadened, grooved, our metal.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -63,7 +63,7 @@ test('NO-BETHESDA3 / OWN-WORK4 (ARENA2): each of the twelve at the classic magic
     const pic = await art.frame(n), bm = cif.getDFBitmap(record, frame), lut = metalLut(pal, METAL_RAMPS[metal]);
     assert.deepEqual([pic.width, pic.height], [bm.width, bm.height], `${n}: the box it is drawn into`);
     const own = heldBladeMask(bm.data, bm.width, bm.height) ?? new Uint8Array(bm.data.length);
-    // OWN-WORK4 AUDIT: the groove's floor, its shadowed wall and its lit wall are our blade too
+    // The groove's floor, its shadowed wall and its lit wall are our blade too
     const light = METAL_RAMPS[metal][2];
     const ours = new Set(lut.flatMap((c) => [c, c.map((v) => Math.round(v * FULLER_SHADE)), c.map((v) => Math.round(v * FULLER.WALL)), c.map((v, k) => Math.round(v + (light[k] - v) * FULLER.LIT))].map((x) => x.join())));
     let hand = 0, classicBlade = 0, blade = 0, grooved = 0;

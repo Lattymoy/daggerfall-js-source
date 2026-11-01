@@ -2,8 +2,7 @@
 // SKIN2 (Mac, 2026-09-25: "Implement these as new skin options"): DAGGERFALL'S OWN CLASSES, AS SKINS - on-foot sets 16
 // onward. A class sheet is Daggerfall's enemy-class shape, five orientations a group: 0-4 walk, 5-9 swing, 10-14 hurt,
 // 15-19 idle, 20-24 ranged or spell, 25-29 bow where the sheet has one, in the mod's orientation order. This file maps
-// a body table to a class record for `spriteFor` (bible/06-Systems/Eye-Of-The-Beholder.md SKIN2). OWN-WORK4
-// (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): the pictures are ours. Each skin names its
+// a body table to a class record for `spriteFor`. OWN-WORK4: the pictures are ours. Each skin names its
 // classic sheet (`from`, in the player's ARENA2); player/classSkinArt.js dyes and marks each frame.
 
 /** The mod's own on-foot sets (Graphics.OnFoot 0..15); a class skin is an index past them. */
@@ -25,7 +24,7 @@ const sheetFrames = (/** @type {number} */ from) =>
   );
 
 /** @typedef {{archive:number, name:string, gender:string|null, from:number, bow:boolean, scale?:Readonly<Record<string, number>>, frames:ReadonlyArray<number>}} ClassSkin */
-/** ACRO-SHORT: a classic record drawn at another scale than its group - TEXTURE.483's front three-quarter idle is a
+/** A classic record drawn at another scale than its group - TEXTURE.483's front three-quarter idle is a
  *  whole figure 81 pixels tall where the idle's other views are 110. Every skin painted on that sheet carries it. */
 const SHEET_SCALE = Object.freeze({ 483: Object.freeze({ 16: 81 / 110 }) });
 /** One skin: its key (`archive`, the port's own number, never read from ARENA2), its name and sex, and `from`, the classic
@@ -91,7 +90,7 @@ export const classSkinOf = (onFoot) =>
 /** The label a class skin is shown under: "Healer (female)", "Dark Acolyte". */
 export const classSkinLabel = (skin) => (skin.gender ? `${skin.name} (${skin.gender})` : skin.name);
 
-/** OWN-WORK4: the class frame a sprite key names (`<archive>_<record>-<frame>` of a class skin), or null. */
+/** The class frame a sprite key names (`<archive>_<record>-<frame>` of a class skin), or null. */
 export function classSkinKeyOf(key) {
   const match = /^(\d+)_(\d+)-(\d+)$/.exec(typeof key === 'string' ? key : '');
   const skin = match ? CLASS_SKINS.find((s) => s.archive === Number(match[1])) : null;

@@ -62,8 +62,8 @@
   {
     "name": "OW-ROADSIDE-join-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": ": leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
-    "new": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
+    "new": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OW-ROADSIDE-join-dropped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring",
-    "new": "'open', ...(l.ring",
+    "old": "    const legs = (plan.legs ?? []).map((l) => ({ x: l.x, y: l.y, kind: l.kind ?? 'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring ? { ring: true } : {}), ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));   // The painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
+    "new": "    const legs = (plan.legs ?? []).map((l) => ({ x: l.x, y: l.y, kind: l.kind ?? 'open', ...(l.ring ? { ring: true } : {}), ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));   // The painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

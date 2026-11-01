@@ -1,9 +1,8 @@
-// BR3 - THE SHIPPED DATA, END TO END (2026-09-13, Mac: "can you do an
-// audit on basic roads, I dont think its working").
+// THE SHIPPED DATA, END TO END.
 //
 // EVERY ROADS TEST BEFORE THIS ONE USED A SYNTHETIC MASK. This file runs
 // the REAL network through the REAL kernel and counts what lands in the
-// tilemap the GPU reads. OWN-WORK2 (2026-10-31): the real network is the
+// tilemap the GPU reads. OWN-WORK2: the real network is the
 // port's own, built from the player's ARENA2 (test/bayRoads.mjs) - Hazelnut's
 // arrays are retired - so the file runs where that data is.
 import { test } from 'node:test';

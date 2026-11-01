@@ -33,8 +33,9 @@ coat a little off any other (`shadeOf`). The look worn is the ridden horse's, th
 A look is the same pictures dyed as they upload (`recolorHorse`), never new art written anywhere. It reaches:
 
 - the riding sprite (`src/systems/riding.js`, `src/player/mountRig.js`); the cart's sprite is never dyed;
-- Horse Cart and Cargo's standing views and walk frames (`src/scenes/horseCartPool.js`), dyed a few pictures a frame
-  and the least-used looks let go;
+- Horse Cart and Cargo's standing views and walk frames (`src/scenes/horseCartPool.js`), our horse built from
+  Daggerfall's rider records (`src/systems/horse/horseArt.js`), dyed a few pictures a frame and the least-used looks
+  let go;
 - Eye Of The Beholder's riders, the player's own and other players' (`src/net/peer/peerRiders.js`);
 - the road's strangers (`src/world/road/roadTeams.js`), each on `strangerHorseLook(key)` so every client sees the same.
 

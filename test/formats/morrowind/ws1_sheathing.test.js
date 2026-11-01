@@ -1,7 +1,7 @@
 // WS1 (2026-09-17, Mac: "Can we implement this for the morrowind model" -
 // Greatness7's Weapon Sheathing 1.6): the bone addon joins the skeleton,
 // the scabbard's subtrees, the holster's decisions, the quiver's count,
-// the hide law - and the wiring, by source. OWN-WORK4 (2026-10-31): the
+// the hide law - and the wiring, by source. OWN-WORK4: the
 // mod's files are retired; the addon and the scabbards are our own
 // (systems/ownSheathing.js), on our own biped (tools/ownBiped.mjs).
 import { test } from 'node:test';
@@ -83,7 +83,7 @@ test('WS1: the sheathing-bone column names our addon\'s nodes for the twelve wea
   assert.deepEqual(HOLSTER_SLOTS, ['holster', 'sheath', 'quiver']);
   assert.equal(holsterHidden('holster', true), true); assert.equal(holsterHidden('holster', false), false);
   assert.equal(holsterHidden('sheath', true), false); assert.equal(holsterHidden('quiver', true), false); assert.equal(holsterHidden('weapon', true), null);
-  // AUDIT-WS F4: a round on the string empties the LAST quiver slot, and only that one
+  // A round on the string empties the LAST quiver slot, and only that one
   assert.equal(holsterHidden('quiver', true, { arrowShown: true, tag: { i: 6, n: 7 } }), true);
   assert.equal(holsterHidden('quiver', true, { arrowShown: true, tag: { i: 5, n: 7 } }), false);
   assert.equal(holsterHidden('quiver', true, { arrowShown: false, tag: { i: 6, n: 7 } }), false);
@@ -250,7 +250,7 @@ test('WS1: the holster\'s decisions - the player\'s own scabbard first, then our
   // a SHAPE named as the weapon node is not found (findNodeByName's recorded delta on geometry): the file stands whole
   const geomNode = { records: sh.records.map((r) => (String(r?.name).toLowerCase() === 'bip01 weapon' ? { ...r, type: 'NiTriShape' } : r)), roots: sh.roots };
   assert.equal(resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: SWORD, find, hasBone: hasAll, parseNif: () => geomNode }).info.weaponNode, false);
-  // AUDIT-WS F3: thrown - showHolsteredWeapons forced off (actoranimation.cpp:333-336): no bare mesh, none of ours, and a scabbard that exists stands with its weapon node masked
+  // Thrown - showHolsteredWeapons forced off (actoranimation.cpp:333-336): no bare mesh, none of ours, and a scabbard that exists stands with its weapon node masked
   const dart = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.MarksmanThrown, weaponModel: 'w\\w_dart.nif', weaponBytes: SWORD, find, hasBone: hasAll, parseNif, ...ours });
   assert.deepEqual(dart.parts, []); assert.equal(dart.info.thrown, true); assert.equal(dart.info.bone, 'Bip01 MarksmanThrown');
   const dartSh = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.MarksmanThrown, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: SWORD, find, hasBone: hasAll, parseNif });
@@ -333,7 +333,7 @@ test('WS1: the whole assembly - our addon in, the scabbard and the holster place
   // an addon that will not parse is a note, not a refusal
   const arm3 = await assembleFirstPersonArm({ skeletonBytes: RETAIL_SKELETON_BYTES, parts: sword.parts, boneSources: [...addon, { name: 'bad.nif', bytes: new Uint8Array([1, 2]) }] });
   assert.ok(arm3.ok, 'a bad addon is not a refusal'); assert.match(arm3.notes.find((n) => n.startsWith('bones: bad.nif')), /bad\.nif/);
-  // OWN-WORK4 AUDIT: the player's own scabbard, its weapon node full - the sheath binds without that node, the holster
+  // The player's own scabbard, its weapon node full - the sheath binds without that node, the holster
   // with it alone (ours keeps the node empty, so only this case can see the binder's subtree)
   const players = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: SWORD, find: playersFind({ players: true }), hasBone: hasAll, parseNif, ...ours });
   const arm4 = await assembleFirstPersonArm({ skeletonBytes: RETAIL_SKELETON_BYTES, parts: players.parts, boneSources: addon });
@@ -402,7 +402,7 @@ test('WS1: the archive duck and its canonical paths; the bone-source listing; th
   assert.equal(a, b); assert.deepEqual(fetched, ['u1'], 'one fetch for two loads in flight');
   assert.equal(arc.loaded('meshes/w/w_saber_sh.nif'), true); assert.equal(arc.get('meshes/w/w_saber_sh.nif'), a);
   assert.equal(await arc.load('meshes/w/nope.nif'), null);
-  // OWN-WORK4: our door - the one addon, built in code, the same in node as in the browser
+  // Our door - the one addon, built in code, the same in node as in the browser
   assert.deepEqual(WEAPON_SHEATHING_URLS, { [SHEATHING_ADDON_PATH]: 'own:sheathing-bones' });
   assert.equal(SHEATHING_ADDON_PATH, 'animations/xbase_anim/dfo_sheathing.nif');
   assert.equal(weaponSheathingArchive().has('meshes/w/w_saber_sh.nif'), false, 'no scabbard file: ours are built per weapon');
@@ -422,10 +422,7 @@ test('WS1: the archive duck and its canonical paths; the bone-source listing; th
 test('WS1: the wiring, by source - the third-person build takes the addons and the holster, the swap re-resolves it, the three hide sites, the options, the pref, the card, the data path, the build', () => {
   const fp = rd('src/combat/fpArm.js');
   assert.match(fp, /const boneSourcePaths = werewolf \? \[\] : boneSourcesFor\(TP_BASE_MODEL, skeletonPath, archives\);/);
-  // PIN MOVED (MWNPC3): the binder takes the shared parse too
-  // PIN MOVED (TWO-HANDS AUDIT): and asks for the left hand's weapon bone - made by the mirror after the addons, where the
-  // skeleton (with them) has none
-  assert.match(fp, /let arm = await assembleFirstPersonArm\(\{ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce, offWeaponBone: true \}\);/);   // PIN MOVED (HEAD-HELD, FIELD BUGS 2026-10-12b): `let` - a helm that bound nothing assembles it again
+  assert.match(fp, /let arm = await assembleFirstPersonArm\(\{ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce, offWeaponBone: true \}\);/);
   assert.match(fp, /hasBone: boneProbe\(skeletonBytes, boneSources\), parseNif: parseNifOnce,/);
   assert.match(fp, /ammoCount: ammoCount \?\? \(hasAmmo \? Number\.MAX_SAFE_INTEGER : 0\),/g);
   assert.equal((fp.match(/ammoCount: ammoCount \?\? \(hasAmmo \? Number\.MAX_SAFE_INTEGER : 0\),/g) || []).length, 2, 'the build and the swap');
@@ -433,7 +430,7 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.match(fp, /bindPartsInto\(t\.arm, \[\.\.\.tResolved\.parts, \.\.\.tHolster\.parts\]\);/);
   assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, weaponShown, \{ arrowShown, tag: r\.piece\?\.tag \}\);/g) || []).length, 1, 'the world draw, with the round on the string');
   assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, true, \{ arrowShown, tag: r\.piece\?\.tag \}\);/g) || []).length, 1, 'the portrait: the weapon is in the hand');
-  // OWN-WORK4: the door serves our own addon, built in code - no glob, no file
+  // The door serves our own addon, built in code - no glob, no file
   assert.doesNotMatch(rd('src/systems/weaponSheathingAssets.js'), /import\.meta\.glob/);
   assert.match(fp, /parseNif: parseNifOnce, ownScabbard: ownScabbardBytes,/, 'the build asks our scabbard where the player\'s data has none');
   assert.match(fp, /sheathing = true, ammoCount = null,/);
@@ -441,19 +438,19 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: ammoCountFor\(entity\.items, worn\),/);
   const feat = rd('src/systems/features.js');
   assert.match(feat, /id: 'mod-weapon-sheathing',/);
-  // MODS-ONLINE-3 (2026-09-22, Mac): the online answer is the PLAYER's
-  // now. It was forced "so every body a peer sees wears its blade the
-  // same way" - a claim about how MY machine DRAWS someone else, which
-  // is `peerClassSprites`'s category and has always been the player's.
-  // A scabbard stands no object, rolls nothing and never reaches the
-  // wire; the pose's `wd` carries a peer's drawn weapon either way.
+  // The online answer is the PLAYER's now. It was forced "so every
+  // body a peer sees wears its blade the same way" - a claim about how
+  // MY machine DRAWS someone else, which is `peerClassSprites`'s
+  // category and has always been the player's. A scabbard stands no
+  // object, rolls nothing and never reaches the wire; the pose's `wd`
+  // carries a peer's drawn weapon either way.
   assert.match(feat, /control: Object\.freeze\(\{ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' \}\),/, 'RF4: the switch declared once, on its row, on by default, and the player\'s online');
   assert.ok(!/mwSheathing: (true|false),/.test(rd('src/systems/uiPrefs.js')), 'and not on the shelf');
-  // FT18: the card's own row drew NOTHING since FT13 (a moved key's prefRow answers null, and the bare append printed
+  // The card's own row drew NOTHING since FT13 (a moved key's prefRow answers null, and the bare append printed
   // "null" on the card) - the switch is the tile, and the tile's write rebuilds the standing body, as the row did
   const menu = rd('src/ui/enhanced/enhancedMenu.js');
   assert.doesNotMatch(menu, /prefRow\('mwSheathing'/, 'no second switch, and no null on the card');
-  // MW-STEEL1: the rebuild is one helper now, the Steel Helm's tile beside the sheathing's
+  // The rebuild is one helper now, the Steel Helm's tile beside the sheathing's
   assert.match(menu, /const rebuildMorrowindBody = async \(\) => \{\s*\n\s*if \(!morrowindDataCount\(\) \|\| !playerEntity\?\.chargenDone\) return;[^\n]*\n\s*const \{ buildArmsFor \} = await import\('\.\.\/\.\.\/combat\/weapon\/weaponRig\.js'\);\s*\n\s*await buildArmsFor\(playerEntity\);/, 'the tile rebuilds the holster into a standing body');
   assert.match(menu, /\n  mwSheathing: rebuildMorrowindBody,\n/, 'the sheathing tile takes that rebuild');
   assert.match(menu, /set: \(i\) => \{ setPref\(c\.key, i === 1\); TILE_AFTER\[c\.key\]\?\.\(\); \} \};/, 'through the prefs switch\'s one write');
@@ -463,7 +460,7 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   const bsaPush = ds.indexOf('archives.push(await MwBsaFile.open(blob));');
   assert.ok(loosePush > 0 && vendPush > loosePush && bsaPush > vendPush, 'loose, then ours, then the .bsa archives');
   assert.match(ds, /'animations\/'\]/);
-  // INLINE1 (2026-09-20): this pin matched the allow-list's literal text, the
+  // This pin matched the allow-list's literal text, the
   // enumeration INLINE1 retired. Re-aimed at what it MEANS: a vendored mod's art is
   // never inlined, through the real rule; and a folder no list has ever named
   // is refused too, so the pin goes red if the enumeration ever comes back.

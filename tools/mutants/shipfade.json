@@ -167,8 +167,8 @@
   {
     "name": "POOL-flats-kept",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // SHIP-FADE: a ship half faded stands no flat",
-    "new": "      if (false) continue;   // SHIP-FADE: a ship half faded stands no flat",
+    "old": "      if ((boat.fade ?? 1) < FADE_FLATS) continue;   // A ship half faded stands no flat - her crew and lanterns go first",
+    "new": "      if (false) continue;   // A ship half faded stands no flat - her crew and lanterns go first",
     "tests": [
       "test/render/shipfade.test.js"
     ]

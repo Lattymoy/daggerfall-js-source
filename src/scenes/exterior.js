@@ -1240,7 +1240,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   //     re-running the pass idempotently when its bridge lands - and it
   //     can only do that because it keeps the NPC flats OUT of the
   //     pixel's billboard batches on purpose (`if (npcFlatSet.has(flat))
-  //     continue;`, pixelBuild.js:"exactly the same reason") and stands them in batches of their
+  //     continue;`, pixelBuild.js:"exactly the same") and stands them in batches of their
   //     own over the ACTIVE set. The away arm's entire observable half
   //     is `SetActive(false)` - the home copy of an individual a live
   //     quest has placed elsewhere leaving the draw AND the activation

@@ -137,8 +137,8 @@
   {
     "name": "HOLD-key-unbound",
     "file": "src/systems/inputActions.js",
-    "old": "  ['F4', 'ShipHold'],   // CARGO-ANYWHERE: the ship's hold, from anywhere\n",
-    "new": "",
+    "old": "  ['F4', 'ShipHold'],   // The ship's hold, from anywhere\n  // The mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's",
+    "new": "  // The mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

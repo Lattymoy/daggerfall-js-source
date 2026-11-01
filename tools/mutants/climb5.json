@@ -382,8 +382,8 @@
   {
     "name": "CLIMB5-walker-stands-a-walk-on-the-wall",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const standing = (pose) => chooseTable({ stopped: !peerMoving(pose)",
-    "new": "const standing = (pose) => chooseTable({ stopped: !pose.mv",
+    "old": "  const standing = (pose) => chooseTable({ stopped: !peerMoving(pose), ...walkerHands(pose) });   // On the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one",
+    "new": "  const standing = (pose) => chooseTable({ stopped: !pose.mv, ...walkerHands(pose) });   // On the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one",
     "tests": [
       "test/net/climb5.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "CLIMB5-walker-faces-the-camera",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs",
-    "new": "const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // CLIMB5: facing the wall it climbs",
+    "old": "      const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // Facing the wall it climbs",
+    "new": "      const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // Facing the wall it climbs",
     "tests": [
       "test/net/climb5.test.js"
     ],
@@ -401,8 +401,8 @@
   {
     "name": "CLIMB5-walker-strides-on-the-wall",
     "file": "src/net/peer/peerRiders.js",
-    "old": "spriteStride(peerMoving(pose) && !r.shot,",
-    "new": "spriteStride(!!pose.mv && !r.shot,",
+    "old": "    const stride = spriteStride(peerMoving(pose) && !r.shot, r.pace, r.frame, r.clock, ft, frameCount(r.table));",
+    "new": "    const stride = spriteStride(!!pose.mv && !r.shot, r.pace, r.frame, r.clock, ft, frameCount(r.table));",
     "tests": [
       "test/net/climb5.test.js"
     ]

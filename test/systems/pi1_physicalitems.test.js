@@ -2,7 +2,7 @@
 // for both morrowind and the sprite system, and should also included the rarity treatment (like we do for the world
 // boss)"): PHYSICAL ITEMS 0.1.29, by demifiend000 - a body's items thrown out round it, a shift-drop laid ahead of the
 // player, each item its own picture, taken on a press. The port's law is the shipped assembly's IL (Physical Items
-// 0.1.29's PhysicalItems.dll); every pin names the offsets it holds the port to (bible/06-Systems/Physical-Items.md).
+// 0.1.29's PhysicalItems.dll); every pin names the offsets it holds the port to.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -27,7 +27,7 @@ import { CANNOT_REMOVE_ITEM_TEXT } from '../../src/systems/createItem.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-// OWN-WORK1 (2026-10-31): the shipped modsettings.json, written out here - its copy left the tree. Each key in the file's
+// The shipped modsettings.json, written out here - its copy left the tree. Each key in the file's
 // order: [section.name, default, min, max] (a toggle has no range). The Interaction section is the four names below it.
 const SHIPPED = [
   ['Enemy Loot.Physical Enemy Drops', true], ['Enemy Loot.Impulse Strength', 200, 0, 400],
@@ -55,7 +55,7 @@ test('PI1 the record: the manifest\'s title and author, and every key the port r
   assert.deepEqual([MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].title, MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].author], ['Physical Items', 'demifiend000']);
   const keys = MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].keys;
   assert.deepEqual(Object.keys(keys).filter((k) => k !== 'Enabled'), SHIPPED.map(([n]) => n));
-  // PLAIN-TEXT (2026-10-19): the author's lines spoke of artwork dimensions, detection volumes and a slider's midpoint; each is said plainly for a player - their words, exactly
+  // PLAIN-TEXT: the author's lines spoke of artwork dimensions, detection volumes and a slider's midpoint; each is said plainly for a player - their words, exactly
   const PLAIN = {
     'Enemy Loot.Physical Enemy Drops': 'Shows a fallen enemy’s loot on the ground around it, for the kinds of item turned on below. What the body holds stays the same.',
     'Enemy Loot.Impulse Strength': 'How hard a fallen enemy’s loot is thrown out, in percent. 400 is twice the default, and at 0 the items just fall. Your own throws are not affected.',

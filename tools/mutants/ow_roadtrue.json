@@ -121,8 +121,8 @@
   {
     "name": "ORT-first-leg-from-nowhere",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const leg = r.legs[i], prev = r.legs[i - 1];\n    if (!leg || !prev ||",
-    "new": "    const leg = r.legs[i], prev = r.legs[i - 1] ?? leg;\n    if (!leg || !prev ||",
+    "old": "    const leg = r.legs[i], prev = r.legs[i - 1];",
+    "new": "    const leg = r.legs[i], prev = r.legs[i - 1] ?? leg;",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "ORT-last-leg-unlaned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "path: finalPath(r, rectCentre(rect), true), cornerTurn",
-    "new": "path: null, cornerTurn",
+    "old": "          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, path: finalPath(r, rectCentre(rect), true), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // Up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle); ROAD-SMOOTH: the same body's walk",
+    "new": "          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, path: null, cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // Up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle); ROAD-SMOOTH: the same body's walk",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]

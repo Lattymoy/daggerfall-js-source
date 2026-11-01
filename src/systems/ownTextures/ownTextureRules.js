@@ -1,9 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31; the owner: "A proper 1 to 1 recreation for everything") - OUR OWN TEXTURE TREATMENTS. Each
-// rule makes a new picture from the player's own classic record (formats/classicPictures.js); no author's picture is
-// read, sampled or measured. Pure, no DOM: the page and the build worker run the same code. enhance: an edge-aware
-// upscale, our grain, a gentle grade. road: enhance with the paving's stones raised. desert: the Alik'r's sand, pale and
-// rippled. snow: snow laid by slope and exposure. And the snow runtime's masks (snowMask) and albedo (snowAlbedo).
+// OUR OWN TEXTURE TREATMENTS. Each rule makes a new picture from the player's own classic record
+// (formats/classicPictures.js); no author's picture is read, sampled or measured. Pure, no DOM: the page and the build
+// worker run the same code. enhance: an edge-aware upscale, our grain, a gentle grade. road: enhance with the paving's
+// stones raised. desert: the Alik'r's sand, pale and rippled. snow: snow laid by slope and exposure. And the snow
+// runtime's masks (snowMask) and albedo (snowAlbedo).
 
 /** @typedef {{ width: number, height: number, data: Uint8Array | Uint8ClampedArray }} Rgba */
 

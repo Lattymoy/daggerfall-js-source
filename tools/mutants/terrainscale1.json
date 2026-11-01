@@ -488,8 +488,8 @@
   {
     "name": "BF1-ledger-never-opened",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry\n    _building.set(key, made);\n",
-    "new": "    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry\n",
+    "old": "    _building.set(key, made);\n    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;   // An empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)",
+    "new": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;   // An empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "BF1-ledger-never-closed",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here\n",
-    "new": "",
+    "old": "    if (_building.get(key) === made) _building.delete(key);   // The entry owns them from here\n    swap.publish(px, py, key, made, {   // Published - behind, the old view down and this one's woken in the same step",
+    "new": "    swap.publish(px, py, key, made, {   // Published - behind, the old view down and this one's woken in the same step",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "BF1-terrain-unledgered",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    made.terrain = terrain; made.water = water;   // BUILD-FAIL1\n",
-    "new": "",
+    "old": "    made.terrain = terrain; made.water = water;\n    // The pixel's presentation bounds, pixel-local - seeded by the",
+    "new": "    // The pixel's presentation bounds, pixel-local - seeded by the",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "BF1-batches-unledgered",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    made.batches = batches;   // BUILD-FAIL1\n",
-    "new": "",
+    "old": "    made.batches = batches;\n    const forestGroups = new Map();   // The nature groups' batches, by group - where a felled tree is sunk",
+    "new": "    const forestGroups = new Map();   // The nature groups' batches, by group - where a felled tree is sunk",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]

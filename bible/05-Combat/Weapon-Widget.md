@@ -3,7 +3,9 @@
 RedRoryOTheGlen's DFU mod Weapon Widget 1.6, ported 1:1 from its DLL's IL, and extended to move the Morrowind arms. It
 draws the classic first-person weapon itself, beside DFU's `FPSWeapon`, with nine modules: Swings, Ambidexterity,
 Offset, Bob, Inertia, Step, DoubleScaleTextures, TrueTextureSize and Recoil. It is on by default; its 41 settings are
-under its card on the Mods page. The vendored record is `vendor/weapon-widget/`.
+under its card on the Mods page. Our code is the record: `test/combat/weapon/ww1_weaponwidget.test.js` holds the 41
+shipped keys and the manifest's 173 texture names as literals, and the release's provenance is in
+`01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -32,7 +34,7 @@ under its card on the Mods page. The vendored record is `vendor/weapon-widget/`.
 
 - Integrated 1:1, and working with the Morrowind first-person view (Mac).
 - Every default is the mod's shipped default (Mac); Diverse Weapons' preset is off by default.
-- The settings restate the shipped `modsettings.json` under `weapon-widget` (`src/systems/modSettings.js`), including
+- The settings restate the mod's shipped settings under `weapon-widget` (`src/systems/modSettings.js`), including
   float sliders; the widget reads its switches every frame.
 - A StrikeUp of anything but a dagger recovers in reverse at half the tick (the mod's `VanillaRecoveryOverride`, on);
   the reverse is latched to run once.

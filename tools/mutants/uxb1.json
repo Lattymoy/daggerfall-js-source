@@ -146,8 +146,8 @@
   {
     "name": "UXB1-S-a-dict-walk-forgets-the-sharers",
     "file": "src/systems/inputActions.js",
-    "old": "    for (const a of shared?.get(code) ?? NO_SHARERS) yield [code, a];\n",
-    "new": "",
+    "old": "    for (const a of shared?.get(code) ?? NO_SHARERS) yield [code, a];\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "UXB1-S-a-share-takes-the-key-from-its-owner",
     "file": "src/systems/inputActions.js",
-    "old": "  if (!dict.has(code)) { dict.set(code, action); return; }\n  const list = shared.get(code) ?? [];",
-    "new": "  dict.set(code, action); return;\n  const list = shared.get(code) ?? [];",
+    "old": "  if (!dict.has(code)) { dict.set(code, action); return; }",
+    "new": "  dict.set(code, action); return;",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "UXB1-S-the-autofill-puts-a-shared-actions-default-back",
     "file": "src/systems/inputActions.js",
-    "old": "  for (const [, a] of dictEntries(store, primary)) if (a === action) return;   // UXB1-S: an action on a shared key is not missing",
+    "old": "  for (const [, a] of dictEntries(store, primary)) if (a === action) return;   // An action on a shared key is not missing",
     "new": "  for (const a of dict.values()) if (a === action) return;",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
@@ -374,8 +374,8 @@
   {
     "name": "AUDIT-UXB1-F3-the-load-seats-a-newer-builds-key",
     "file": "src/systems/inputActions.js",
-    "old": "    if (!dict.has(code) && unknown.has(code)) { if (list.length) carried.set(code, { owner: unknown.get(code), names: list }); continue; }\n",
-    "new": "",
+    "old": "    if (!dict.has(code) && unknown.has(code)) { if (list.length) carried.set(code, { owner: unknown.get(code), names: list }); continue; }\n    const kept = [];",
+    "new": "    const kept = [];",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-UXB1-F3-a-full-reset-keeps-the-carried-shares",
     "file": "src/systems/inputActions.js",
-    "old": "    store.sharedUnknown?.clear();   // AUDIT UXB1 F3/F8: ...and the ones it carried for a newer build\n",
-    "new": "",
+    "old": "    store.sharedUnknown?.clear();   // ...and the ones it carried for a newer build\n    store.removedPrimary.clear();",
+    "new": "    store.removedPrimary.clear();",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
     ]

@@ -266,7 +266,7 @@ test('WAY-ROUND with ARENA2: every tavern the towns lay (OWN-WORK3: Daggerfall\'
     // of one hall keep one of 22 cells); WALK-WHOLE's tables cut off up to 72 square metres (DARKAB00 #1: 7,228 of
     // 10,934 cells), and 82 layouts with the packs and 65 without lost more than a fifth of a square metre
     const sliver = ({ cuts }) => cuts.every(([, cut]) => cut <= 25) || cuts.filter(([, c]) => c > 25).map(([k, c]) => `${k} ${c}`).join(', ');
-    // OWN-WORK3: the town packs are retired - the Discord's two taverns (the Gold Dungeon, the Dancing Castle) stood in
+    // The town packs are retired - the Discord's two taverns (the Gold Dungeon, the Dancing Castle) stood in
     // their layout, and Daggerfall's own taverns are every tavern now
     const off = await sweep(false);
     assert.equal(sliver(off), true, 'without the packs: no floor cut off');

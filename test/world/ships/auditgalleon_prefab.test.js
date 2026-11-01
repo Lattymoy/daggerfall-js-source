@@ -1,4 +1,4 @@
-// AUDIT GALLEON (2026-10-02, Mac: "Audit this. It must be perfect") - HER PREFAB AND ITS ART: what stands in her tree,
+// AUDIT GALLEON - HER PREFAB AND ITS ART: what stands in her tree,
 // where it stands, what it is drawn in and how it is lit, held to the final bake (eac64ad59). Each pin failed on the code
 // as it stood (64e27ef97, the final bake merged under it).
 //   P1  her helmsman pinned by his capsule's centre (DrivePosition half a capsule over her roof), his view to the bow clear
@@ -47,7 +47,7 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 /** Her prefab tree, fresh (the prefab's root is her frame: her hull's node stands at its origin, unturned). */
 const herTree = () => instantiatePrefab(MODELS.prefab(GM.GALLEON_PREFAB_ID), MODELS.components);
 const nodeNamed = (root, name) => [...root.walk()].find((n) => n.name === name) ?? null;
-/** OWN-WORK4: a node's mesh key (our boats' meshes are keyed apart from their nodes' names). */
+/** A node's mesh key (our boats' meshes are keyed apart from their nodes' names). */
 const meshKeyOf = (n) => n?.getComponent('MeshFilter')?.m_Mesh?.mesh ?? null;
 const meshOf = (node) => { const mf = node.components.find((c) => c.type === 'MeshFilter'); return mf ? MODELS.geometry(mf.m_Mesh.mesh) : null; };
 const pointsIn = (g, m) => { const out = []; for (let i = 0; i < g.positions.length; i += 3) out.push(xf(m, [g.positions[i], g.positions[i + 1], g.positions[i + 2]])); return out; };
@@ -109,7 +109,7 @@ const halfBreadth = (y, z, s = 1) => xOver(HULL_TRIS, y, z, s, true);
 let _old = null;
 const OLD = () => {
   if (_old) return _old;
-  _old = comeSailAwayModels(ownFiles()); // OWN-WORK4: our own small ship (test/ownBoats.mjs)
+  _old = comeSailAwayModels(ownFiles()); // Our own small ship (test/ownBoats.mjs)
   return _old;
 };
 
@@ -221,7 +221,7 @@ test('AUDIT GALLEON P3: both anchors - weighed (ActiveObject\'s, shown as she sa
     const n = nodeNamed(root, name);
     assert.equal(n.parent.name, parent, `${name} under ${parent}`);
     let inside = 0, least = Infinity, measured = 0;
-    for (const p of pointsIn(MODELS.geometry(meshKeyOf(n)), n.worldMatrix())) {   // OWN-WORK4: by its mesh's key
+    for (const p of pointsIn(MODELS.geometry(meshKeyOf(n)), n.worldMatrix())) {   // By its mesh's key
       assert.ok(p[0] > 0, `${name}: on her starboard bow`);
       const side = halfBreadth(p[1], p[2], 1);
       if (side == null) continue;

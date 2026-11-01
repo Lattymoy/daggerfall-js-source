@@ -324,8 +324,8 @@
   {
     "name": "TEMPUI-no-part",
     "file": "src/systems/features.js",
-    "old": "      parts: Object.freeze([Object.freeze({ key: 'survivalTempHud', get label() { return t('features.mod.climatesCalories.tempHud', 'Temperature on the HUD'); } })]),\n",
-    "new": "",
+    "old": "      parts: Object.freeze([Object.freeze({ key: 'survivalTempHud', get label() { return t('features.mod.climatesCalories.tempHud', 'Temperature on the HUD'); } })]),\n    }),",
+    "new": "    }),",
     "why": "the plate has no part in the drawer",
     "tests": [
       "test/systems/survival/tempui.test.js"

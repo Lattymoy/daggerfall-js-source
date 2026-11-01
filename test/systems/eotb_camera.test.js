@@ -26,7 +26,7 @@ const r6 = (n) => Number(n.toFixed(6)) + 0;
 const r3 = (n) => Number(n.toFixed(3)) + 0;
 const r4 = (n) => Number(n.toFixed(4)) + 0;
 
-// OWN-WORK4 (2026-10-31): the shipped modsettings.json's camera values, written out - its copy left the tree. A literal
+// The shipped modsettings.json's camera values, written out - its copy left the tree. A literal
 // table, so a changed default still fails here.
 const SHIPPED = {
   Camera: { StartInThirdPerson: true, FrontalPlaneOffset: { First: 0.0, Second: 0.5 }, LongitudinalDistance: 2.0, MinimumDistance: 0.8, RidingOffset: 1.0, Speed: 10.0, Dampen: 1.0, 'Auto-Switch': true, SwitchResetTime: 3.0 },
@@ -143,7 +143,7 @@ test('EOTB2: posOffset’s four arms, in the order the IL tests them', () => {
     'Camera.LongitudinalDistance': 2, 'Camera.RidingOffset': 0,
   })[k];
   const c = createEotbCamera(); c.loadSettings(get);
-  // CSA-J: the boat arm reads the camera's OWN field, raised by Come Sail Away's OnUpdateSailing (IL_07a8) - a hull at
+  // The boat arm reads the camera's OWN field, raised by Come Sail Away's OnUpdateSailing (IL_07a8) - a hull at
   // the origin with a unit extent, so the boat's target adds nothing and the eye's z is still the arm's offset
   let sail = null;
   const hull = new PrefabNode('Hull');
@@ -199,7 +199,7 @@ test('EOTB2: the obstacle cast is per axis, skipped when the offset is zero, and
   c.loadSettings((v, k) => ({ 'Camera.FrontalPlaneOffset': [0, 0], 'Camera.LongitudinalDistance': 2, 'Camera.MinimumDistance': 0 })[k]);
   c.toggleOffset(true);
   c.eye({ fpEye: [0, 1.6, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, dt: 1, raycast });
-  // EOTB-WALL: the port adds ONE line-of-sight cast after the mod's, along the head-to-eye line - with x and y zero
+  // The port adds ONE line-of-sight cast after the mod's, along the head-to-eye line - with x and y zero
   // and the eye straight back it points the same way as the z cast, so it is told from the mod's by its LENGTH
   // (the eye's own distance plus the clearance, not |offset * 2| + eyeRadius)
   const modCasts = casts.filter((k) => k.len === r4(Math.abs(-2 * 2) + EYE_RADIUS));
@@ -465,7 +465,7 @@ test('AUDIT-EOTB F5b: the SHIPPED offset puts the camera above the feet, not bel
   assert.equal(r4(r.eye[2]), -2, '...and at the base distance behind');
 });
 
-// ═══ EOTB-IL (2026-09-16): THE CAMERA, AGAINST THE ASSEMBLY ═════════
+// ═══ EOTB-IL: THE CAMERA, AGAINST THE ASSEMBLY ═════════
 //
 // The shipped `.dfmod` was opened (Eye Of The Beholder 2.1's IL). These
 // pin the places where EOTB2's reading of the camera was wrong or

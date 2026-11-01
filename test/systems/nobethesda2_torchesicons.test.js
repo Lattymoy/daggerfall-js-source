@@ -1,8 +1,8 @@
-// NO-BETHESDA2 (2026-10-31; the owner: "ensuring they are not implemented"): HANDHELD TORCHES' AND CLIMATES & CALORIES'
-// PICTURES THAT ARE DAGGERFALL'S OWN ARE REBUILT, NOT CARRIED. Each one's spec (tools/classicDerive.mjs; OWN-WORK4 moved
-// the two listings beside their readers) is built by systems/rebuiltPicture.js from the player's TEXTURE file in the
-// spec's palette. In CI: every picture is a spec or ours, never both and never neither, and none is fetched. With
-// ARENA2_PATH: every spec builds the pixels the mod's PNG gave, as the browser decoded it.
+// HANDHELD TORCHES' AND CLIMATES & CALORIES' PICTURES THAT ARE DAGGERFALL'S OWN ARE REBUILT, NOT CARRIED. Each one's
+// spec (tools/classicDerive.mjs; OWN-WORK4 moved the two listings beside their readers) is built by
+// systems/rebuiltPicture.js from the player's TEXTURE file in the spec's palette. In CI: every picture is a spec or
+// ours, never both and never neither, and none is fetched. With ARENA2_PATH: every spec builds the pixels the mod's PNG
+// gave, as the browser decoded it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -22,12 +22,12 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
-// OWN-WORK4 (2026-10-31): the two folders are retired; their spec listings moved beside the code that reads them
+// The two folders are retired; their spec listings moved beside the code that reads them
 const HT = 'src/systems/handheldTorchesDerived.json', CC = 'src/systems/survival/derivedIcons.json';
 const listing = (path) => JSON.parse(read(path));
 
 test('NO-BETHESDA2: every picture Handheld Torches drew is a spec or ours - never both, never neither', () => {
-  // OWN-WORK4: the 39 the release's manifest named, as a literal - its manifest left the tree with its folder
+  // The 39 the release's manifest named, as a literal - its manifest left the tree with its folder
   const lit = (r, n) => [0, 1, 2, 3, 4].slice(0, n).flatMap((f) => [`${DROPPED_ARCHIVE}_${r}-${f}`, `${DROPPED_ARCHIVE}_${r}-${f}_Emission`]);
   const names = [...lit(0, 4), ...lit(1, 5), ...lit(2, 5), ...[10, 11, 12].map((r) => `${DROPPED_ARCHIVE}_${r}-0`), ...[0, 1].flatMap((r) => [0, 1, 2, 3].map((f) => `112359_${r}-${f}`))];
   assert.equal(names.length, 39);
@@ -49,13 +49,11 @@ test('NO-BETHESDA2: every picture Handheld Torches drew is a spec or ours - neve
 
 test('NO-BETHESDA2: every picture Climates & Calories draws is a spec or ours - one of them, never two, never none', () => {
   const drawn = [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES];
-  // OWN-WORK3 (2026-10-31): the twenty pictures Climates & Calories 1.7.1's manifest named, as a literal - the manifest left the tree
+  // The twenty pictures Climates & Calories 1.7.1's manifest named, as a literal - the manifest left the tree
   const names = ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_0-0', '536_1-0', '537_0-0', '537_1-0',
     '538_0-0', '538_1-0', '538_2-0', '539_0-0', '50_7-0', '67_10-0', 'RALZARTAVERN', 'BLANKMENU_TAVERN'];
   assert.deepEqual(names.filter((n) => !drawn.includes(n)), ['RALZARTAVERN', 'BLANKMENU_TAVERN'], 'the port draws all but the two tavern menus');
-  // PIN MOVED (NO-BETHESDA3, then OWN-WORK4, 2026-10-31): every picture not Daggerfall's own is ours (itemIcons.js OWN_ICONS)
   for (const n of drawn) assert.equal([derivedIconSpec(n) != null, ownIconSpec(n) != null].filter(Boolean).length, 1, `${n}: a spec or ours - exactly one`);
-  // PIN MOVED (OWN-AUDIT, 2026-11-01): the mouldy cooked fish was a spec of the plain fish - it is our mould now
   assert.deepEqual(drawn.filter((n) => ownIconSpec(n)), ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_0-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0'], 'ours: the spoiled faces, raw meat and the waterskin');
   const specs = listing(CC);
   assert.deepEqual(Object.keys(specs).sort(), ['50_7-0', '67_10-0'], 'the tent\'s two (OWN-WORK4: the mouldy bread carried the author\'s mould; OWN-AUDIT: the mouldy fish was the plain fish - both ours)');
@@ -162,7 +160,6 @@ test('NO-BETHESDA2 (ARENA2): every spec builds, from the player\'s own files, th
     assert.equal(printOf(pic), PRINTS[n.replace(/_Emission$/, '')], `${n}: the picture the PNG gave`);
   }
   assert.equal(Object.keys(specs).length, 22, 'OWN-AUDIT (2026-11-01): less the mouldy cooked fish, ours');
-  // PIN MOVED (SURV-TENT, survart_icons.test.js): the canvas and the pole are the sizes the bundle's Texture2Ds carry
   assert.deepEqual(sizes['50_7-0'], [32, 32], 'the canvas');
   assert.deepEqual(sizes['67_10-0'], [64, 8], 'the pole');
   assert.deepEqual([sizes['112358_1-0'], sizes['112358_2-0']], [[9, 19], [15, 21]], 'the candle 9x19, the holy candle 15x21 (the vendor README)');

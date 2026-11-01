@@ -1,5 +1,4 @@
-// BA1 - BETTER AMBIENCE 0.1.4 (Joshua Steinhauer), THE MOD, 1:1 (2026-09-16,
-// Mac: "Next mod to integrate 1:1 ensuring compatibility").
+// BETTER AMBIENCE 0.1.4 (Joshua Steinhauer), THE MOD, 1:1.
 //
 // Six modules whose sixteen sources ride INSIDE the shipped bundle (OWN-WORK4:
 // the vendored copy is retired, its clips our own), restated in systems/betterAmbience.js
@@ -32,7 +31,7 @@ import {
   baClipNames, baClipName, baSoundKey, makeAmbienceClip, BA_SETTING_KEYS, BA_WALK_STEP_INTERVAL, BA_RUN_STEP_INTERVAL, BA_FOOTSTEP_VOLUME_SCALE, SHALLOW_ENTER, SHALLOW_LEAVE,
   TRANSITION_WAIT_FRAMES, BETTER_AMBIENCE_VENDOR, BETTER_AMBIENCE_MOD, classicFootstepAllowed, betterAmbience,
 } from '../../src/systems/betterAmbience.js';
-import { stringHash } from '../../src/formats/netRuntime.js';   // AUDIT 68: the fog seed's string.GetHashCode, one home
+import { stringHash } from '../../src/formats/netRuntime.js';   // The fog seed's string.GetHashCode, one home
 import { REVERB_PRESET, reverbImpulseSamples, mbToGain } from '../../src/systems/reverbPresets.js';
 import { modCompatibilityChecking, reportModCompatibilityIssues, COMPAT_WARNING_LINES, COMPAT_WARNING_LOG, BETTER_AMBIENCE_GUID, immersiveFootsteps } from '../../src/systems/immersiveFootsteps.js';
 import { MOD_SETTINGS, isFloatKey, isChoiceKey, isIntKey, isTextKey, isTupleKey, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
@@ -87,7 +86,7 @@ const armor = (material) => ({ group: 'Armor', templateIndex: 102, material });
 
 // ═══ the settings, the assets, the seams ═════════════════════════════════
 
-// OWN-WORK4 (2026-10-31): vendor/better-ambience is retired. Its manifest and modsettings.json, as they read at
+// vendor/better-ambience is retired. Its manifest and modsettings.json, as they read at
 // cc44705af, are written here so a changed default, range or word still fails the pins below.
 const SHIPPED_MANIFEST = Object.freeze({
   ModTitle: 'Better Ambience', ModVersion: '0.1.4', ModAuthor: 'Joshua Steinhauer', GUID: 'd5655077-ba38-4dbc-a41f-2b358cb1d680',
@@ -128,7 +127,7 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   assert.equal(manifest.scripts, 16, 'the sixteen sources the manifest names');
   assert.equal(manifest.clips, 51, 'the 51 clips the manifest names, 29 of them asked for - each now a clip of ours');
   const PORT_DEFAULT = Object.freeze({ 'Better Footsteps.enable': false, 'Dungeon Lighting.enableFogAmbientEffect': false });   // the two departures (modSettings.js says why; BA2 the second)
-  // PLAIN-TEXT (2026-10-19) and OWN-WORK4 (2026-11-01): every line the mod wrote, in our own words - ours, exactly
+  // PLAIN-TEXT and OWN-WORK4: every line the mod wrote, in our own words - ours, exactly
   const PLAIN = {
     'Better Footsteps.enable': 'Plays Better Ambience’s own footstep sounds',
     'Dungeon Fog.enableFog': 'Gives each dungeon its own random fog',
@@ -179,10 +178,10 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   const row = FEATURES.find((f) => f.id === 'mod-better-ambience');
   assert.ok(row); assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(row.effect, /^Takes effect at once/); assert.equal(row.group, 'world');
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k}`);
-  // CREDITS-OUT (2026-11-01): no credit on a screen; the MIT notice our code owes travels in LICENSE
+  // No credit on a screen; the MIT notice our code owes travels in LICENSE
   assert.match(rd('LICENSE'), /Better Ambience 0\.1\.4's by Joshua Steinhauer[\s\S]*MIT License\n\nCopyright \(c\) 2020 Josh Steinhauer\n/);
   assert.equal(BETTER_AMBIENCE_MOD.nexusFile, '0.1.5', 'the Nexus label');
-  // OWN-WORK4: the vendor README's text pins and the registry row left with it.
+  // The vendor README's text pins and the registry row left with it.
 });
 
 test('BA1: TryImportAudioClips\' names - wood 4, stone 4, armour 11, crunchy-grass 4, water 6 asked and FIVE present (water_001 never existed), the rain loop - every present name a clip our synth makes (OWN-WORK4); the two classic lists; the per-list volumes and pitch ranges', () => {
@@ -206,7 +205,7 @@ test('BA1: TryImportAudioClips\' names - wood 4, stone 4, armour 11, crunchy-gra
   assert.deepEqual(CLIP_LISTS.FootstepsArmor.pitch, [1, 1.2]); assert.deepEqual(CLIP_LISTS.FootstepSoundWood?.pitch ?? CLIP_LISTS.FootstepSoundBuilding.pitch, [0.8, 1.2]);
   assert.deepEqual(LIST_VOLUME.FootstepSoundOutside, ['footstepVolume', 0.15]); assert.deepEqual(LIST_VOLUME.FootstepsArmor, ['armorVolume', 0.4]); assert.deepEqual(LIST_VOLUME.FootstepSoundDungeon, ['footstepVolume', 0.3]);
   assert.equal(baSoundKey('x'), 'ba:x'); assert.equal(AMBIENT_RAIN_LOWPASS_HZ, 4236);
-  // OWN-WORK4: the rain loop is ours - the mod's length, mono at 22.05 kHz (both of its plays pass the 4,236 Hz low-pass)
+  // The rain loop is ours - the mod's length, mono at 22.05 kHz (both of its plays pass the 4,236 Hz low-pass)
   assert.deepEqual({ ...RAIN_LOOP }, { seconds: 29.546, rate: 22050, rmsDb: -22.2 });
 });
 
@@ -315,7 +314,7 @@ test('BA1: the stride\'s gates - levitating or mounted off water zeroes the dist
 
 test('BA1: DisableBuiltInFootsteps [verbatim] nulls Dungeon1 twice and Outside1 twice - Stone2 and Outside2 stay, so the classic component plays every second step under the mod\'s; the one gate answers for both mods', () => {
   assert.deepEqual([...CLASSIC_CLIPS_KEPT].sort(), [FOOTSTEP.Stone2, FOOTSTEP.Outside2].sort());
-  // OWN-WORK4: the source's own two lines left with the vendored copy; the kept pair above is the slip, as a literal
+  // The source's own two lines left with the vendored copy; the kept pair above is the slip, as a literal
   // neither mod owns: every clip; Immersive Footsteps owns: none; Better Ambience owns: the two
   _resetModSettings();
   setModSetting('immersive-footsteps', 'Enabled', false);
@@ -414,7 +413,7 @@ test('BA1: System.Random is the .NET reference (seed 42 opens 0.6681064659115423
 });
 
 test('BA1: the component - a dungeon transition owes the four-frame wait, then the fog and trilight stand for the frames the host draws (and a castle clears them), the reverb bus takes the level\'s preset on the inside-dungeon edge and comes off outside, the rain source is 2D and low-passed in a building and 3D at the dungeon exit, follows the weather word, and stops on the transition; Enabled off takes everything down', async () => {
-  const r = rig({ 'Dungeon Lighting.enableFogAmbientEffect': true }, { weather: 'sunny' });   // BA2: the ambient module on, as the mod ships it - this pin is the mod's behaviour
+  const r = rig({ 'Dungeon Lighting.enableFogAmbientEffect': true }, { weather: 'sunny' });   // The ambient module on, as the mod ships it - this pin is the mod's behaviour
   await r.boot();
   const d = { regionName: 'Daggerfall', name: 'Privateer\'s Hold', inCastle: () => false, exitPos: [1, 2, 3] };
   r.c.onTransition({ dungeon: d });
@@ -478,7 +477,7 @@ test('BA1: the reverb presets are the I3DL2 numbers Unity\'s AudioReverbPreset c
     void at;
     let peak = 0; for (const v of l) peak = Math.max(peak, Math.abs(v));
     assert.ok(peak < 1, `${name}: under full scale`);
-    // AUDIT-BA F1: the whole impulse carries the LEVEL's energy and no more - a wet signal never louder than the dry
+    // The whole impulse carries the LEVEL's energy and no more - a wet signal never louder than the dry
     let energy = 0; for (const v of l) energy += v * v;
     const tailGain = mbToGain(p.reverb) * mbToGain(p.room), reflGain = mbToGain(p.reflections) * mbToGain(p.room);
     near(energy, tailGain * tailGain + reflGain * reflGain * (1 + 0.75 ** 2 + 0.75 ** 4 + 0.75 ** 6 + 0.75 ** 8), 1e-2, `${name}: energy ${energy.toFixed(4)} is the tail's gain squared plus the five taps' (the first draft carried ${name === 'Cave' ? '134' : 'hundreds'})`);
@@ -501,7 +500,6 @@ test('AUDIT-BA F2 + F3: the floating origin\'s rebase is IsRepositioningPlayer -
   assert.equal(r.shots.length, 0, 'F2: the landing after a reposition is swallowed (StreamingWorld.IsRepositioningPlayer -> ignoreLostGrounding)');
   r.walk(3, r.outdoors({ pos: m.pos, grounded: false })); r.c.frame(0.016, r.outdoors({ pos: m.pos }));
   assert.equal(r.shots.length, 1, 'and the one after plays');
-  // F3
   r.c.removeHealth(50, 100);
   r.c.frame(0.1, r.outdoors({ pos: m.pos, paused: true }));
   r.c.frame(0.1, r.outdoors({ pos: m.pos, paused: true }));
@@ -522,7 +520,7 @@ test('BA1 + IF1: ModCompatibilityChecking reads Better Ambience\'s switch throug
   assert.equal(modCompatibilityChecking().betterAmbienceFootstepsModuleCheck, true);
   assert.equal(reportModCompatibilityIssues({ showText: (l) => boxes.push(l), log: (l) => logs.push(l) }), true, 'both strides on: the warning');
   assert.deepEqual(boxes[0], [...COMPAT_WARNING_LINES]); assert.equal(logs.length, 3); assert.deepEqual(logs, [...COMPAT_WARNING_LOG]);
-  assert.equal(COMPAT_WARNING_LINES[0], 'Footsteps play twice'); assert.match(COMPAT_WARNING_LINES[5], /Turn off Better Footsteps in Better Ambience's settings/);   // OWN-WORK4: our own words
+  assert.equal(COMPAT_WARNING_LINES[0], 'Footsteps play twice'); assert.match(COMPAT_WARNING_LINES[5], /Turn off Better Footsteps in Better Ambience's settings/);   // Our own words
   setModSetting('immersive-footsteps', 'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings', false);
   assert.equal(reportModCompatibilityIssues({ showText: (l) => boxes.push(l), log: () => {} }), false, 'AllowModCompatWarnings off');
   setModSetting('immersive-footsteps', 'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings', true);
@@ -543,14 +541,14 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   for (const [name, src] of [['world', world], ['exterior', ext], ['worldModes', wm], ['dungeon', dj]]) {
     assert.match(src, /if \(_step && classicFootstepAllowed\(_step\.clip\)\) audio\.playOneShot\(_step\.clip, _step\.volume\);/, `${name}: the one gate`);
     assert.equal((src.match(/betterAmbience\.frame\(dt, \{/g) ?? []).length, 1, `${name}: one frame`);
-    assert.equal((src.match(/betterAmbience\.view\(lookAt\(/g) ?? []).length, name === 'worldModes' ? 2 : 1, `${name}: the view fold`);   // PIN MOVED (EG-ZN, Elite-Gates.md section 11.8): the mode machine folds the shake into a second view too - over a shaft's ledge the camera's own leaned view replaces the drawn one AFTER the aim view is taken, so each of the two views is shaken once
+    assert.equal((src.match(/betterAmbience\.view\(lookAt\(/g) ?? []).length, name === 'worldModes' ? 2 : 1, `${name}: the view fold`);
     assert.match(src, /import \{ betterAmbience, classicFootstepAllowed \} from '\.\.\/systems\/betterAmbience\.js'/, name);
     assert.match(src, /swimming: !!player\.isPlayerSwimming, motorSwimming: !!player\.swimming,/, `${name}: PlayerEnterExit.IsPlayerSwimming AND playerMotor.IsSwimming, the two the source reads`);
   }
   for (const src of [world, ext]) assert.match(src, /onExteriorWater: _onWater, onExteriorWaterAny: _onWater, onExteriorPath: !!_surf\.path, onStaticGeometry: !!_surf\.staticGeometry, onFoot: isOnFoot\(player\.transportMode\),/);
   assert.match(world, /loadInProgress: false, paused: _overlayHeld \|\| _seasonHeld,/, 'AUDIT-BA F2/F3: no debug key is a load; a held frame is paused');
   assert.match(ext, /paused: _overlayHeld,/); assert.match(wm, /paused: overlayHeld,/); assert.match(dj, /paused: overlayHeld,/);
-  // OH-E: the world's dungeon hands the same two, through the abyss's arm (its darkened ambient, the Trilight's sky)
+  // The world's dungeon hands the same two, through the abyss's arm (its darkened ambient, the Trilight's sky)
   assert.match(wm, /const _dgAmbient = _abyss \? _abyss\.renderAmbient\.slice\(0, 3\) : dungeonCtx\.ambient;\n\s*const _dgTrilight = abyssTrilight\(betterAmbience\.dungeonAmbient\(\), _abyss\);/, 'worldModes: the trilight and the ambient it hands are Better Ambience\'s and the selector\'s outside the abyss');
   for (const [name, src] of [['worldModes', wm], ['dungeon', dj]]) {
     assert.match(src, /const _fog = dungeonFog\((?:lightingOn|!!renderer\.lightingLane), betterAmbience\.dungeonFog\(\) \?\? DUNGEON_FOG\); applyFog\(renderer, [a-zA-Z]+\.underwaterFogSettings\?\.\(cam\.pos\[1\], player\.pos, _fog\) \?\? _fog\);/, `${name}: the fog base (AUDIT-EL F6: through the lane's dark)`);
@@ -561,7 +559,7 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   // teleport, a load) - the Respawner raises the same exterior transition.
   assert.equal((wm.match(/betterAmbience\.onTransition\(null\);/g) ?? []).length, 3, 'the two exits and the forced exit');
   assert.equal((wm.match(/betterAmbience\.onTransition\(\{ building: true \}\);/g) ?? []).length, 1);
-  // ENH-NOTICE3: the compatibility box names its KIND and the seam
+  // The compatibility box names its KIND and the seam
   // finds the live host's slot (systems/notify.js). Still a push -
   // that is the seam's default and B5's law for every
   // DaggerfallUI.MessageBox - and still on BOTH of DFU's own raises.
@@ -578,7 +576,7 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   // the engine seams
   const audio = rd('src/systems/audio.js');
   assert.match(audio, /setReverb\(preset\) \{/); assert.match(audio, /loop\(index, volume = 1, \{ lowpass = 0 \} = \{\}\)/); assert.match(audio, /send\.connect\(conv\)\.connect\(wet\)\.connect\(this\._listenerIn\);/, 'wet beside dry, off the send (DW-D: through the listener, as the dry master is)');
-  // AUDIT-BA F4: the zone takes the music too - the send every bus feeds, both song players
+  // The zone takes the music too - the send every bus feeds, both song players
   assert.match(audio, /this\._master\.connect\(this\._reverbIn\);/, 'the sound master feeds the send'); assert.match(audio, /reverbSend\(\) \{ return this\._out\(\) \? this\._reverbIn : null; \}/);
   const music = rd('src/systems/music.js');
   assert.match(music, /new SongPlayer\(audio\.ctx, audio\.listenerBus\?\.\(\) \?\? null, audio\.reverbSend\?\.\(\) \?\? null\)/, 'the MIDI player hands its master to the send (DW-D: and its dry path to the listener, as every bus)');

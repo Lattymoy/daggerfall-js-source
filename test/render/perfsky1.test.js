@@ -1,11 +1,6 @@
 // PERF-SKY1 (2026-10-10, the stars' part of the perf pass v5's slice - bible/07-Rendering/Performance-Crowd.md): THE
 // STARS ARE A NIGHT'S. The Dynamic Skies pass weighs its stars by the night, and by day the night is 0 - so every sky
 // pixel's star work would be multiplied by nothing. It runs under a night above 0 alone.
-//
-// PIN MOVED (OWN-WORK4, 2026-10-31): the sky is our own pass now - its stars hashed from cube-face cells and one tap
-// of our noise for the river of stars. ONE: every tap and both star layers are inside the night's branch. TWO: the
-// night is a uniform, the frame's - the same in every fragment, so the branch is dynamically uniform and the tap's
-// implicit derivatives stay defined. THREE: by day the stars add nothing, run in test/glsl.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FS } from '../../src/render/dynamicSkiesRenderer.js';

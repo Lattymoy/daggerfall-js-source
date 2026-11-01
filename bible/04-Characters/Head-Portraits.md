@@ -58,5 +58,5 @@ shown only with Morrowind's data attached; without it every door is DFU's.
 ## Open
 
 - A party seat, a family member and an escort wear their bare face: no record carries what they wear.
-- Not seen on retail Morrowind data here; probed only on the vendored retail skeleton with the port's own heads and
-  helms.
+- Not seen on retail Morrowind data here; probed only on our own biped (`tools/ownBiped.mjs`) with the port's own heads
+  and helms.

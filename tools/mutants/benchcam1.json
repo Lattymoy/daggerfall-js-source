@@ -12,8 +12,8 @@
   {
     "name": "BENCH-CAM-the-wall-reads-no-shell",
     "file": "src/scenes/horseCartPool.js",
-    "old": "const parts = partsOf(w.model), box = parts?.shell;",
-    "new": "const parts = partsOf(w.model), box = parts?.cabin;",
+    "old": "    const parts = partsOf(w.model), box = parts?.shell;",
+    "new": "    const parts = partsOf(w.model), box = parts?.cabin;",
     "tests": [
       "test/player/benchcam1.test.js",
       "test/player/wagons3.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "BENCH-CAM-the-clearance-dropped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "return top + SHELL_CLEAR_M;",
-    "new": "return top;",
+    "old": "    return top + SHELL_CLEAR_M;",
+    "new": "    return top;",
     "tests": [
       "test/player/benchcam1.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "BENCH-CAM-the-roof-read-level",
     "file": "src/scenes/horseCartPool.js",
-    "old": "top = Math.max(top, transformPoint(m, x, y, z)[1]);",
-    "new": "top = Math.max(top, m[13] + y);",
+    "old": "    for (const x of [box.min[0], box.max[0]]) for (const y of [box.min[1], box.max[1]]) for (const z of [box.min[2], box.max[2]]) top = Math.max(top, transformPoint(m, x, y, z)[1]);",
+    "new": "    for (const x of [box.min[0], box.max[0]]) for (const y of [box.min[1], box.max[1]]) for (const z of [box.min[2], box.max[2]]) top = Math.max(top, m[13] + y);",
     "tests": [
       "test/player/benchcam1.test.js"
     ]

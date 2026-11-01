@@ -1,7 +1,7 @@
-// OWN-AUDIT (2026-11-01; the owner: "no latching onto other mod authors"): EYE OF THE BEHOLDER'S SPRITES PLACED BY OUR
-// OWN LAW. Runs src/player/eyeOfTheBeholder/eotbAnchor.js measureSet over every set's pictures, built from the player's
-// ARENA2 (tools/lib/eotbPictures.mjs), and writes src/player/eyeOfTheBeholder/eotbAnchors.json. Never read from the
-// author's table: the shifts and scales are what the law measures on Daggerfall's own frames and our death.
+// EYE OF THE BEHOLDER'S SPRITES PLACED BY OUR OWN LAW. Runs src/player/eyeOfTheBeholder/eotbAnchor.js measureSet over
+// every set's pictures, built from the player's ARENA2 (tools/lib/eotbPictures.mjs), and writes
+// src/player/eyeOfTheBeholder/eotbAnchors.json. Never read from the author's table: the shifts and scales are what the
+// law measures on Daggerfall's own frames and our death.
 //
 //   ARENA2_PATH=... node tools/eotbAnchors.mjs           write the table
 //   ARENA2_PATH=... node tools/eotbAnchors.mjs --check   exit 1 if the table is not what the law measures

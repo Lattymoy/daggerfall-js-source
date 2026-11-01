@@ -1,9 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): WINDFALL'S PICTURES, PAINTED HERE. The
-// three pictures Windfall 1.0.0's particles wear keep its names and sizes: two 64 x 64 sheets of 8 x 8 leaves (spring and
-// summer green, fall's reds and golds) and a 16 x 16 snowflake. Each is painted from a seed by the rules below; no pixel
-// of the mod's is read. A leaf keeps its shape on both sheets and only its colour turns. A pixel is whole or empty, as
-// the particles cut them out at a half (render/windfallParticles.js). Pure: top row first, RGBA.
+// WINDFALL'S PICTURES, PAINTED HERE. The three pictures Windfall 1.0.0's particles wear keep its names and sizes: two 64
+// x 64 sheets of 8 x 8 leaves (spring and summer green, fall's reds and golds) and a 16 x 16 snowflake. Each is painted
+// from a seed by the rules below; no pixel of the mod's is read. A leaf keeps its shape on both sheets and only its
+// colour turns. A pixel is whole or empty, as the particles cut them out at a half (render/windfallParticles.js). Pure:
+// top row first, RGBA.
 import { mulberry32 } from '../soundscape/bedDsp.js';
 
 /** Each picture's side, in pixels, by its name (render/windfallParticles.js WINDFALL_PICTURES). */

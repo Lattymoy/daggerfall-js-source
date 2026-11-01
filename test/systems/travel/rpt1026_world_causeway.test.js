@@ -6,7 +6,7 @@
 // by (73, 131), across the inlet's east arm. Through the real planner (systems/travel/travelRoute.js planRoute) on his
 // vendored bytes, the ground the host hands it (world.js tvRouteGround: routeGround over the player's WOODS.WLD and
 // MAPS.BSA), and the tiles the terrain kernel paints there (world/terrain/terrainGen.js generatePixelTerrain).
-// OWN-WORK2 (2026-10-31): his arrays are retired and the Bay's own network lays no road on the sea. The law stands - a
+// OWN-WORK2: his arrays are retired and the Bay's own network lays no road on the sea. The law stands - a
 // road over the water is the road's - and is pinned on a road of the test's own over the same inlet.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -78,7 +78,7 @@ test('CAUSEWAY: the inlet\'s pixel as the terrain kernel builds it with a road o
   const { MapsFile: Maps } = await import('../../../src/formats/mapsFile.js');
   const maps = new Maps(); maps.load(...['MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].map((f) => new Uint8Array(readFileSync(join(ARENA2, f)))));
   const bake = new DeepWatersBake({ woods, global: buildGlobal(woods) }), n = HOLES_RESOLUTION, H = 129;
-  for (const [px, py, wide] of [[INLET.x, INLET.y, 256]]) {   // OWN-WORK2: Sentinel's coast road (421, 374) was his arrays' alone
+  for (const [px, py, wide] of [[INLET.x, INLET.y, 256]]) {   // Sentinel's coast road (421, 374) was his arrays' alone
     const tilemap = new Uint8Array(128 * 128);
     const out = generatePixelTerrain({ woods, px, py, tilemap, climateType: 0, roads: { ...NET, smooth: true } });
     let road = 0, water = 0, paving = 0;

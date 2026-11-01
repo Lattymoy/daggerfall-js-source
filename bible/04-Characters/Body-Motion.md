@@ -64,7 +64,7 @@ character controller. Departures from them, with the switch on and a `base_anim`
 
 ## Open
 
-- Tuned on the vendored male retail biped only, never on the female or beast rest, a skinned body or the retail
+- Tuned on our own biped (`tools/ownBiped.mjs`) only, never on the female or beast rest, a skinned body or the retail
   clips: how it reads on Morrowind's own bodies waits for Mac's eye on his data.
 - The solve turns each arm bone by the least rotation, so a forearm's roll stays the clip's and the wrist takes the
   turn, which a skinned wrist shows (the two-hander's haft hand at a run turns past the forearm's range). The fix is to

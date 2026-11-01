@@ -2,8 +2,8 @@
   {
     "name": "L10N3d2-combat-weaponRig-1418-usingRightHand",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      else say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : localizedText('usingLeftHand', 'Using weapon in left hand.'));",
-    "new": "      else say(line === USING_RIGHT_HAND_TEXT ? 'Using weapon in right hand.' : localizedText('usingLeftHand', 'Using weapon in left hand.'));",
+    "old": "      else say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : localizedText('usingLeftHand', 'Using weapon in left hand.'));   // WeaponManager.cs:709/711, in the player's language",
+    "new": "      else say(line === USING_RIGHT_HAND_TEXT ? 'Using weapon in right hand.' : localizedText('usingLeftHand', 'Using weapon in left hand.'));   // WeaponManager.cs:709/711, in the player's language",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "L10N3d2-combat-weaponRig-1418-usingLeftHand",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      else say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : localizedText('usingLeftHand', 'Using weapon in left hand.'));",
-    "new": "      else say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : 'Using weapon in left hand.');",
+    "old": "      else say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : localizedText('usingLeftHand', 'Using weapon in left hand.'));   // WeaponManager.cs:709/711, in the player's language",
+    "new": "      else say(line === USING_RIGHT_HAND_TEXT ? localizedText('usingRightHand', 'Using weapon in right hand.') : 'Using weapon in left hand.');   // WeaponManager.cs:709/711, in the player's language",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"

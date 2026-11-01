@@ -137,8 +137,8 @@
   {
     "name": "CAPE-the-frame-tick-on-the-raw-table",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));",
-    "new": "fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));",
+    "old": "        if (entity) fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));   // The table as the body is drawn",
+    "new": "        if (entity) fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));   // The table as the body is drawn",
     "tests": [
       "test/ui/capetoggle.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CAPE-the-arm-built-on-the-raw-table",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "armor: dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM),",
-    "new": "armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),",
+    "old": "    armor: dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM),   // Built as the frame tick dresses it",
+    "new": "    armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),   // Built as the frame tick dresses it",
     "tests": [
       "test/ui/capetoggle.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CAPE-the-sprite-on-the-raw-table",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "slots = drawnEquipTable(playerEntity);",
-    "new": "slots = equipTableOf(playerEntity);",
+    "old": "  try { slots = drawnEquipTable(playerEntity); } catch { slots = null; }   // A hidden cloak is not drawn",
+    "new": "  try { slots = equipTableOf(playerEntity); } catch { slots = null; }   // A hidden cloak is not drawn",
     "tests": [
       "test/ui/capetoggle.test.js"
     ]

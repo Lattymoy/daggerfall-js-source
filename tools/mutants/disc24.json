@@ -234,8 +234,8 @@
   {
     "name": "D24C-eotb-card-unflagged",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "          batch.selfCard = grow === 1;",
-    "new": "          batch.selfCard = false;",
+    "old": "          batch.selfCard = grow === 1;   // The player's own body - it casts as drawn, into the maps redrawn every frame (render/shadowPass.js SELF CARD); OW-BIG: a grown one casts no giant's shadow",
+    "new": "          batch.selfCard = false;   // The player's own body - it casts as drawn, into the maps redrawn every frame (render/shadowPass.js SELF CARD); OW-BIG: a grown one casts no giant's shadow",
     "tests": [
       "test/render/disc24c_self_shadow.test.js",
       "test/render/sc1_shadowcache.test.js",

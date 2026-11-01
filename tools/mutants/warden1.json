@@ -326,8 +326,8 @@
   {
     "name": "WARDEN-held-drawn",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (_held.has(owner)) return null;   // WARDEN1: on the watch's shoulders\n",
-    "new": "",
+    "old": "    if (_held.has(owner)) return null;   // On the watch's shoulders\n    if (owner === '') {",
+    "new": "    if (owner === '') {",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "WARDEN-held-pressed",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (_held.has(owner)) continue;   // WARDEN1\n",
-    "new": "",
+    "old": "      if (_held.has(owner)) continue;\n      const theirs = p.wagon && p.shownWagon ? partsOf(p.wagon.model) : null;",
+    "new": "      const theirs = p.wagon && p.shownWagon ? partsOf(p.wagon.model) : null;",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "WARDEN-held-team-stands",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (held?.lone) { _teamWalk.delete(owner); return []; }\n",
-    "new": "",
+    "old": "    if (held?.lone) { _teamWalk.delete(owner); return []; }\n    const mine = owner === '';",
+    "new": "    const mine = owner === '';",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WARDEN-kept-unmoved",
     "file": "src/scenes/horseCartPool.js",
-    "old": "validHccRecord(thrown ? thrownRecord(e.r) : e.r);",
-    "new": "validHccRecord(e.r);",
+    "old": "    const v = e.r == null ? null : validHccRecord(thrown ? thrownRecord(e.r) : e.r);",
+    "new": "    const v = e.r == null ? null : validHccRecord(e.r);",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "WARDEN-word-unsaid",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});",
-    "new": "    if (false) Object.assign(r, wardenWord?.(a) ?? {});",
+    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
+    "new": "    if (false) Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "WARDEN-lone-horse-stamped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});",
-    "new": "    Object.assign(r, wardenWord?.(a) ?? {});",
+    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
+    "new": "    Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]

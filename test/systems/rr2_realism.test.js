@@ -1,4 +1,4 @@
-// RR2 - Roleplay & Realism 1.8 (Hazelnut): the NPC sprite variants
+// Roleplay & Realism 1.8 (Hazelnut): the NPC sprite variants
 // (RoleplayRealism.cs:775-1077), EnhancedRiding.cs and
 // GuildServiceTrainingRR.cs - each law against the C#, each behind the
 // mod's own switch, and the seam it hangs on in the port.
@@ -17,8 +17,8 @@ import {
   RR_NPC_XML_SCALE, RR_KEEPER_OF, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
   rrClimateRace, rrResidentVariant, rrVariantPerson, installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED,
 } from '../../src/systems/roleplayRealism/rrVariants.js';
-import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4: our own week button
-import { rrKeeperPicture, RR_KEEPER_SIZE, RR_KEEPERS, composeKeeper } from '../../src/systems/roleplayRealism/rrKeepers.js';   // OWN-WORK4 AUDIT: our keepers, the player's own people
+import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // Our own week button
+import { rrKeeperPicture, RR_KEEPER_SIZE, RR_KEEPERS, composeKeeper } from '../../src/systems/roleplayRealism/rrKeepers.js';   // Our keepers, the player's own people
 import { createClassicPictures } from '../../src/formats/classicPictures.js';
 import { installRoleplayRealism, setRrHostSeams, rrHostSeams } from '../../src/systems/roleplayRealism/rrInstall.js';
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, MobilePerson } from '../../src/characters/mobile/mobilePerson.js';
@@ -49,7 +49,7 @@ const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
 const ARENA2 = process.env.ARENA2_PATH && existsSync(join(process.env.ARENA2_PATH, 'TEXTURE.197')) ? process.env.ARENA2_PATH : null;
 const V = 'roleplay-realism';
 const on = (key, v = true) => setModSetting(V, key, v);
-// MO1: every vendored mod's Enabled defaults TRUE, so "off" is said, not assumed
+// Every vendored mod's Enabled defaults TRUE, so "off" is said, not assumed
 const reset = () => { _resetModSettings(); _resetFlatFaceOverrides(); };
 const off = () => { reset(); on('Enabled', false); };
 
@@ -68,7 +68,7 @@ test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stand
       assert.deepEqual(RR_NPC_XML_SCALE[r], [r3((k.width * f) / v.width), r3((k.height * f) / v.height)], `197_${r}-0`);
     }
   }
-  // OWN-WORK4 (2026-10-31): the release's listing left with its folder - its GUID and version, and its 24 pictures, as literals
+  // The release's listing left with its folder - its GUID and version, and its 24 pictures, as literals
   assert.deepEqual([RR_MOD.guid, RR_MOD.version], ['d828b782-46e9-40e7-8ae6-19cde308032e', '1.8']);
   const ours = Object.keys(RR_KEEPER_SIZE).map((r) => `197_${r}-0.png`);
   const rebuilt = Object.keys(RR_DERIVED).map((n) => `${n}.png`);
@@ -87,7 +87,7 @@ test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stand
     'RefinedTraining.variableTrainingPrice', 'RefinedTraining.intensiveTraining']) assert.ok(keys[k], k);
   assert.equal(RR_RIDING.lookPitchRatio, 2.6); assert.equal(RR_RIDING.samples, 16); assert.equal(RR_RIDING.pitchMaxOffset, 18);
   assert.equal(RR_RIDING.chargeKnockback, 100); assert.equal(RR_RIDING.chargeFatigueMultiplier, 15);
-  // OWN-WORK3: the training lines are ours
+  // The training lines are ours
   assert.deepEqual({ ...RR_TRAINING_LINES }, {
     trainingSkill1: 'One session of {0} costs %a gold.', trainingSkill2: 'Or train hard for five days, a session each day,',
     trainingSkill3: 'for {0} gold in all.', trainingSkill4: 'Shall we work on your {0}?',
@@ -199,7 +199,7 @@ test('RR2 the decision per person: the two switches, the face override for the b
   // the interior context asks per person and draws the answer; identity keeps the born flat
   const ic = rd('src/scenes/interiorContext.js');
   assert.match(ic, /const v = opts\.variantPerson\?\.\(pn\) \?\? null;/);
-  // NUDE-FLATS: the answer reaches the draw through drawnFlat (a dressed variant is itself), and a variant always draws
+  // The answer reaches the draw through drawnFlat (a dressed variant is itself), and a variant always draws
   assert.match(ic, /const \[da, dr\] = drawnFlat\(v\?\.textureArchive \?\? pn\.textureArchive, v\?\.textureRecord \?\? pn\.textureRecord\);/);
   assert.match(ic, /const redrawn = v \|\| da !== pn\.textureArchive \|\| dr !== pn\.textureRecord;[^\n]*\n[^\n]*\.\.\.\(redrawn \? \{ drawArchive: da, drawRecord: dr \} : \{\}\)/);
   // AUDIT 68 S21-person-hide-noop: the build's stand and the late one are one stand now - four reads, every one a draw
@@ -351,7 +351,7 @@ test('RR2 riding seams: CanRun through the host reads, the axes clamped, the loo
 test('RR2 the trample and the charge on the hosts: the contacts each frame, the walker retired, the watchman minted where they stood, the installs', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(rrRidingOn\(\) && player\.riding && player\.isRunning && !rideOnTheRoad\(\)\) rrRidingContacts\(\);/, 'TrampleCivilians && IsRiding && IsRunning, after the rig\'s frame - PIN MOVED (RPT1026-MISC JOURNEY-TRAMPLE): never under a journey');
-  // AUDIT-RR F15: the contacts live in systems/roleplayRealism/rrRidingHost.js now and BOTH outdoor hosts stand one on their own reads
+  // The contacts live in systems/roleplayRealism/rrRidingHost.js now and BOTH outdoor hosts stand one on their own reads
   const rh = rd('src/systems/roleplayRealism/rrRidingHost.js');
   assert.match(rh, /latch\.pickpocketAttempted = true;/, 'PickpocketByPlayerAttempted, the latch (AUDIT-RR2 G24: the pickpocket\'s own)');
   assert.match(rh, /f\.ai\.knockbackSpeed = RR_RIDING\.chargeKnockback; f\.ai\.knockbackDir = \[\.\.\.direction\];/);
@@ -360,7 +360,7 @@ test('RR2 the trample and the charge on the hosts: the contacts each frame, the 
   assert.match(rh, /if \(isGuardRecord\(f\)\) hurtGuard\(f, damage, at\);\s*else damageFoe\(f, damage, at\);/, 'AUDIT-RR F17: DamageHealthFromSource - no knock direction handed to the weapon path');
   assert.match(rh, /const out = rrTrampleOutcome\(\{ isGuard: !!person\.guard, female: person\.gender === GENDERS\.Female \}\);/);
   assert.match(rh, /if \(out\.clip\) playClip\(SOUND\[out\.clip\], ridingVolumeScale\(\)\);/, 'AUDIT-RR F16: RidingVolumeScale');
-  assert.match(rh, /spawnCityGuard\(\[\.\.\.seat\.pos\], person\.facingYaw \?\? yaw\(\), \[\.\.\.at\]\)\)\.then\(\(g\) => \{ if \(g\) \{ g\.livingFrom = from; chargeFoe\(g, fwd\); \} \}\)/, 'SpawnCityGuard + HandleCharge');   // LW-FIX2: the guard marks whom it stands for (the living world's turned watch - LW-FIX5: the struck body's identity, read before the spawn)
+  assert.match(rh, /spawnCityGuard\(\[\.\.\.seat\.pos\], person\.facingYaw \?\? yaw\(\), \[\.\.\.at\]\)\)\.then\(\(g\) => \{ if \(g\) \{ g\.livingFrom = from; chargeFoe\(g, fwd\); \} \}\)/, 'SpawnCityGuard + HandleCharge');   // The guard marks whom it stands for (the living world's turned watch - LW-FIX5: the struck body's identity, read before the spawn)
   assert.match(rh, /if \(out\.remove\) \{ person\.trampled = true; retire\(person\); \}/);
   for (const h of ['world', 'exterior']) {
     const s = rd(`src/scenes/${h}.js`);
@@ -381,7 +381,7 @@ test('RR2 the trample and the charge on the hosts: the contacts each frame, the 
   assert.match(inst, /setCanRunOverride\(\(mode\) => \(rrRidingOn\(\)\s*\? rrCanRunRiding\(\{ mode, riding: !!_host\.riding\?\.\(\), inTown: !!_host\.inTown\?\.\(\), gallopingInTowns: rrRidingSetting\('GallopingInTowns'\) === true \}\)\s*: null\)\);/);
   assert.match(inst, /setAxisLimitsProvider\(\(\) => \(rrRidingOn\(\) && rrRidingSetting\('RealisticMovement'\) === true\s*\? rrRidingInputLimits\(\{ riding: !!_host\.riding\?\.\(\), mode: _host\.transportMode\?\.\(\) \?\? 'Foot' \}\)\s*: null\)\);/);
   assert.match(inst, /installRoleplayRealismArt\(\);/);
-  assert.match(rd('src/systems/transport.js'), /export const canRunUnlessRiding = \(mode\) => \{\n\s*const mods = _canRun\?\.\(mode\) \?\? null;\n\s*return _gallop\?\.\(mode, mods\) \?\? mods \?\? !isRiding\(mode\);/);   // PIN MOVED (STEED1): horse care's word after the mod's
+  assert.match(rd('src/systems/transport.js'), /export const canRunUnlessRiding = \(mode\) => \{\n\s*const mods = _canRun\?\.\(mode\) \?\? null;\n\s*return _gallop\?\.\(mode, mods\) \?\? mods \?\? !isRiding\(mode\);/);
   assert.match(rd('src/player/lookFilter.js'), /Math\.max\(-pitchFloor\(\), Math\.min\(PITCH_LIMIT, cam\.pitch \+ this\.residualPitch\)\)/);
   assert.ok(typeof rrHostSeams().spawnFoe !== 'undefined');
   // the walker leaves the street at once and its slot is free

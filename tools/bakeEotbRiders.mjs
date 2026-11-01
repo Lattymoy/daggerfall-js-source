@@ -1,4 +1,4 @@
-// AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"; bible/06-Systems/Horse-Coats.md RIDERS):
+// AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"; RIDERS):
 // EACH MOUNTED PICTURE'S RIDER, FOUND BY THE OTHER FOUR SETS.
 //
 //     ARENA2_PATH=<arena2> node tools/bakeEotbRiders.mjs           write src/player/eyeOfTheBeholder/eotbRiderMasks.js
@@ -10,7 +10,7 @@
 // horse's pixels agree in three sets or more and a rider's in none: a pixel of a set that agrees with fewer than two
 // others, and with no other set's sure horse there, is its rider's. Speckles of shading smaller than RIDER_SPECK are the horse's, and gaps in a rider smaller than
 // RIDER_HOLE are his. The masks are runs, packed as below, read by eotbSprite.js riderSpareOf.
-// NO-BETHESDA2 (2026-10-31): the five sets are Daggerfall's own TEXTURE.491-495, carried as specs, so the pictures are
+// NO-BETHESDA2: the five sets are Daggerfall's own TEXTURE.491-495, carried as specs, so the pictures are
 // built from the player's ARENA2 (tools/lib/eotbPictures.mjs).
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';

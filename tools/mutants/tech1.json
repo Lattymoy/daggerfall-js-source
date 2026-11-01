@@ -496,8 +496,8 @@
   {
     "name": "TECH1-the-key-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "tc.held = !!actionDown?.(TECHNIQUE_ACTION);",
-    "new": "tc.held = false;",
+    "old": "      tc.held = !!actionDown?.(TECHNIQUE_ACTION);",
+    "new": "      tc.held = false;",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "TECH1-the-rig-hold-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "tc.holding = !!_heldHit;",
-    "new": "tc.holding = false;",
+    "old": "      tc.holding = !!_heldHit;   // A shot's hit held for the Morrowind arm's release - the loose is still to come",
+    "new": "      tc.holding = false;   // A shot's hit held for the Morrowind arm's release - the loose is still to come",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -514,8 +514,8 @@
   {
     "name": "TECH1-the-claim-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "return claimShot(held.evs, _techCtx);",
-    "new": "return held.evs;",
+    "old": "      return claimShot(held.evs, _techCtx);",
+    "new": "      return held.evs;",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "TECH1-AUDIT-the-gesture-in-the-air",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!armLoosing && !techniqueFlying()\n",
-    "new": "!armLoosing\n",
+    "old": "      const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying()",
+    "new": "      const strike = !paralyzed && c && canAttack && !armLoosing",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "TECH1-AUDIT-the-touch-in-the-air",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (techniqueFlying()) return;   // AUDIT TECH1: nor a touch swing while a technique's leap or dash is in the air - its strike is the landing's\n",
-    "new": "",
+    "old": "      if (techniqueFlying()) return;   // Nor a touch swing while a technique's leap or dash is in the air - its strike is the landing's\n      const strike = playerWeapon.clickAttack();",
+    "new": "      const strike = playerWeapon.clickAttack();",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -778,8 +778,8 @@
   {
     "name": "TECH1-AUDIT-the-rig-paralysis-untold",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      tc.paralyzed = !!paralyzed;",
-    "new": "      tc.paralyzed = false;",
+    "old": "      tc.paralyzed = !!paralyzed;   // A held body's machine is frozen - and so is its technique's clock",
+    "new": "      tc.paralyzed = false;   // A held body's machine is frozen - and so is its technique's clock",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "TECH1-AUDIT-the-rig-window-untold",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      tc.blocked = !!technique?.blocked?.();",
-    "new": "      tc.blocked = false;",
+    "old": "      tc.blocked = !!technique?.blocked?.();   // A window holds the world (the host's gamePaused) - and the key",
+    "new": "      tc.blocked = false;   // A window holds the world (the host's gamePaused) - and the key",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "TECH1-AUDIT-the-held-hit-ungated",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!armLoosing && !_heldHit && !!camNow?.pos",
-    "new": "!armLoosing && !!camNow?.pos",
+    "old": "      tc.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow?.pos && !!camNow?.feet;   // And no plain shot's hit still held for the arm - the click path's own gate",
+    "new": "      tc.ready = !paralyzed && !!c && canAttack && !armLoosing && !!camNow?.pos && !!camNow?.feet;   // And no plain shot's hit still held for the arm - the click path's own gate",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]

@@ -203,7 +203,7 @@ test('JUNGLE-ROADSIDE the jungle\'s door carries the pairs: two near-only protot
   assert.deepEqual([0, 1, 2].map((k) => lost.door.pairProto(k, 0) != null), [true, true, false], 'the sunk pair alone gone');
   assert.equal(warned.length, 1);
   assert.match(warned[0], /the roadside pair pine2 will not read: pine2\.mtl: 503/);
-  // each pair read a breath of its own, after the five (AUDIT JUNGLE-ROADSIDE PERF-3)
+  // each pair read a breath of its own, after the five
   assert.match(text('src/systems/jungleTreesAssets.js'), /for \(const \[k, p\] of JUNGLE_PAIRS\.entries\(\)\) \{\n\s+if \(breathe\) await breathe\(\);/);
   assert.match(text('src/systems/jungleTreesAssets.js'), /if \(breathe\) await breathe\(\);\n\s+trees = packJungleTrees\(species, halves\);/, 'and a breath before the pack');
 });
@@ -322,7 +322,6 @@ test('JUNGLE-ROADSIDE where it asks: both trunks\' tiles of the jungle\'s tree l
   assert.deepEqual([5, 6, 7, 8].map((y) => ok(9, y)), [true, true, true, true], 'each its own tile (x, y), never its transpose');
   g2[9 * T + 7] = Math.tan(33.5 * Math.PI / 180) ** 2;
   assert.ok(ok(7, 9), '33.5 degrees stands');
-  // PIN MOVED (GRAHT1): the tile law off a graht-oak's foot where they stand (world/jungle/grahtOaks.js grahtFootMask)
   assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: onFoot\n\s*\? \(\n\s*\(ok\) => \(tx, ty\) =>\n\s*ok\(tx, ty\) && !onFoot\[ty \* tDim \+ tx\]\n\s*\)\(pairTile\(share, groundOf, g2Of, openOf\)\)\n\s*: pairTile\(share, groundOf, g2Of, openOf\), \/\/ GRAHT1: never on a graht-oak's foot\n\s*trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
   // EVERY STATION of every arm, slid either way, every pair, turn and the two extreme scales: a trunk EDGE_MIN inside
   let nearest = Infinity;
@@ -473,13 +472,11 @@ test('JUNGLE-ROADSIDE the worker reads the roads by Basic Roads\' one port: worl
   assert.equal(PATH_HALF_M, 6.4);
   const band = text('src/world/road/roadBand.js');
   assert.match(band, /export const PATH_HALF_M = PATH_HALF_WIDTH \/ UNITS_PER_METRE;/);
-  // PIN MOVED (TESA4/TESA5, at the merge of main into TESA): the map's pixels ask the network (and a crossing's join past it), every other pixel Arena's roads;
-  // PIN MOVED (VOYAGER2): every other pixel the curves of Arena's roads and tracks (world/road/roadCurves.js curveDistance)
   assert.match(band, /const onMap = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H;/);
   assert.match(band, /Math\.min\(r \? curveDistance\(r, tx, tz\) : Infinity, t \? curveDistance\(t, tx, tz\) : Infinity\) \* TILE_M -\n\s*PATH_HALF_M;/);
   assert.match(band, /const bits = pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\);/);
   assert.match(band, /import \{ pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW \} from '\.\/pathData\.js';/);
-  // OWN-WORK2: a network of its own here - a track on every 211th pixel, a road on every 3rd of those
+  // A network of its own here - a track on every 211th pixel, a road on every 3rd of those
   const net = { roads: new Uint8Array(MAP_W * MAP_H), tracks: new Uint8Array(MAP_W * MAP_H) };
   for (let i = 0; i < net.tracks.length; i += 211) { net.tracks[i] = 0x88; if (i % 3 === 0) net.roads[i] = 0x22; }
   let tracks = 0;
@@ -517,8 +514,8 @@ test('JUNGLE-ROADSIDE in the layout: the pairs handed beside the flats, never am
   assert.ok(kept.length > off.flats.length / 2);
   assert.deepEqual(on.flats.filter(far), kept, 'the jungle away from them as it stood');
   const gen = text('src/world/terrain/terrainGen.js');
-  assert.match(gen, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(/);   // PIN MOVED (GRAHT1): and the graht-oaks
-  assert.match(gen, /pois: placesFor\(jungle\.hidden\), paths, net: roads, canopy: /, 'the kernel hands the jungle its network');   // PIN MOVED (GRAHT1): and the canopy's field after it
+  assert.match(gen, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(/);
+  assert.match(gen, /pois: placesFor\(jungle\.hidden\), paths, net: roads, canopy: /, 'the kernel hands the jungle its network');
   assert.match(gen, /\n\s+roadside,   \/\/ JUNGLE-ROADSIDE/, 'and the pairs back beside the flats');
 });
 
@@ -581,7 +578,7 @@ test('JUNGLE-ROADSIDE the build stands each pair whole, a tree\'s half at its ow
   const pb = text('src/scenes/pixelBuild.js');
   assert.match(pb, /const pairs = keptPairs\(roadside, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\);/, 'kept by the gate\'s clearing and the rocks, as every flat');
   const fallback = pb.slice(pb.indexOf('    if (!jungleOk) {\n      for (const t of pairs.flatMap('), pb.indexOf('    // WOD4: THE CAMP AT PRIVATEER\'S HOLD'));
-  assert.match(fallback, /addFlat\(archive, t\.record, t\.x, walkGroundAt\(samples, t\.x, t\.z\), t\.z, \{ wild: JUNGLE_ARCHIVE \}\);/, 'the door unloaded, its Tree records at their own ground');   // PIN MOVED (FLORA-GROUND): the ground's one law, walkGroundAt
+  assert.match(fallback, /addFlat\(archive, t\.record, t\.x, walkGroundAt\(samples, t\.x, t\.z\), t\.z, \{ wild: JUNGLE_ARCHIVE \}\);/, 'the door unloaded, its Tree records at their own ground');
   assert.doesNotMatch(fallback, /pixelTrees|tree:/, 'never Logging\'s, whatever the door (AUDIT JUNGLE-ROADSIDE GAME-2)');
   assert.doesNotMatch(pb, /f\.pair\b/, 'no pair among the flats');
   assert.match(pb, /if \(jungleOk && pairs\.length\) \{\n\s+await standRoadside\(\{\n\s+door: jungle\.door, pairs, speciesPic, groups: jungleGroups, handles: jungleHandles, set: jungleSet,/);

@@ -1,5 +1,4 @@
-// WINDFALL1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments seamlessly")
-// - WINDFALL's PRESENTATION AND ITS LAW ON THE FLATS: WindEnvironmentEffects (the sounds and the particle flows), the
+// WINDFALL's PRESENTATION AND ITS LAW ON THE FLATS: WindEnvironmentEffects (the sounds and the particle flows), the
 // AudioSource the port gives it (systems/audio.js source), the particle systems (render/windfallParticles.js), the
 // vertex wind (render/windfallSway.js, run in BB_VS through the GLSL evaluator), and the hosts' wiring.
 // bible/07-Rendering/Windfall.md is the record.
@@ -45,7 +44,7 @@ test('WINDFALL1 the clips: the pools WindMod.CreateEnvironmentalEffects loads - 
   assert.equal(WINDFALL_CLIPS.gust[4].length, 6);
   near(WINDFALL_CLIPS.ambient[3].length, 13.8545, 1e-3);
   assert.equal(windfallClipKey('leaf_ruffle_01'), 'windfall:leaf_ruffle_01');
-  // OWN-WORK4: the table the pools read, pinned as a literal (the mod's 27 clips: rate, frames; the length is frames over rate)
+  // The table the pools read, pinned as a literal (the mod's 27 clips: rate, frames; the length is frames over rate)
   const TABLE = { wind_gust_01: [22050, 61740], wind_gust_02: [22050, 79380], wind_gust_03: [22050, 97020], wind_gust_04: [22050, 114660], wind_gust_05: [22050, 132300], wind_gust_06: [22050, 68355], wind_gust_07: [22050, 85995], wind_gust_08: [22050, 103635], wind_gust_09: [22050, 121275], wind_gust_10: [22050, 138915], wind_gust_11: [22050, 90405], wind_gust_12: [22050, 127890],
     wind_blowing_01_ultrasoft: [44100, 793800], wind_blowing_02_ultrasoft: [44100, 793800], wind_blowing_03_ultrasoft: [44100, 793800], whistling_wind_01_ultrasoft: [44100, 610986], whistling_wind_02_ultrasoft: [44100, 610986], whistling_wind_03_ultrasoft: [44100, 610986], open_wind_01_ultrasoft: [44100, 633381], open_wind_02_ultrasoft: [44100, 633381], open_wind_03_ultrasoft: [44100, 633381],
     leaf_ruffle_01: [22050, 30870], leaf_ruffle_02: [22050, 37485], leaf_ruffle_03: [22050, 44100], leaf_ruffle_04: [22050, 35280], leaf_ruffle_05: [22050, 48510], leaf_ruffle_06: [22050, 41895] };

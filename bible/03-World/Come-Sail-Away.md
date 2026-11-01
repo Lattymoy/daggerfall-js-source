@@ -1,22 +1,32 @@
 # Come Sail Away
 
-A port of RedRoryOTheGlen's **Come Sail Away 2.1** (Nexus 1131), read off its compiled assembly
-(`vendor/come-sail-away/`): boats the player buys, puts in the water near a port and sails under oars or under sails the
-wind fills, with waves, wake, cargo weight, sounds and a position reading. The port adds sailing together online, an
-Enhanced Plus helm panel, a responsive helm, sailing into the wind, cabins on owned ships, three new hull models and the
-Overworld's crossings. The player meets it at the shipyard, the helm and the Fleet page.
+A port of RedRoryOTheGlen's **Come Sail Away 2.1**, its law read off the compiled assembly: boats the player buys, puts
+in the water near a port and sails under oars or under sails the wind fills, with waves, wake, cargo weight, sounds and
+a position reading. The port adds sailing together online, an Enhanced Plus helm panel, a responsive helm, sailing into
+the wind, cabins on owned ships, three new hull models and the Overworld's crossings. The boats, pictures and sounds are
+our own, under the mod's names, places, rates and lengths (OWN-WORK, the owner); the release's record is in
+`01-Overview/Own-Work.md`. The player meets it at the shipyard, the helm and the Fleet page.
 
 ## How it works
 
-- **Registration** (`src/systems/comeSailAway/comeSailAway.js`). The vendored manifest, settings (fifty keys), item
-  templates and assembly; Features, credits, the mod registry and the online lane. The bundle's meshes, prefabs,
-  animations, textures and audio are extracted by the port's tool; pictures of Daggerfall's own records are never
-  carried.
+- **Registration** (`src/systems/comeSailAway/comeSailAway.js`). The mod's settings and item templates as our own
+  tables; a Features row and the online lane.
+- **Our boats** (`src/world/ships/ownBoats/`), built at the load under the mod's names and places: helms, triggers,
+  oarlocks, lanterns, crew, Modifiers, colliders, controllers and event times, painted in our archive 38176
+  (`OWN_BOAT_ARCHIVE`). The galley's top deck and the carrack's poop and forecastle are climbed by ladders.
+- **Our pictures** (`src/systems/comeSailAway/csaPictures.js`): the wind arrow, the splash and the breakers. The 32
+  breaker frames alternate two paints, eight a second; both lay the same fronts and only the crests' teeth trade
+  places, so the foam churns as the frames turn (`wavePaint`). The breakers lie over our own foam.
+- **Our sounds** (`src/systems/comeSailAway/csaSynth/`): the five clips at the mod's rates and lengths. Each of the two
+  loops is three layers (`CSA_LAYERS`, `src/audio/layeredLoop.js`): the bed, and each kind of event on its own loop,
+  29, 41 and 37 s at rest and 31, 43 and 47 s under way, so they come round together only after 12 and 17 hours. The
+  layers together sit at the mod's own loops' -24 dBFS at the helm, and a stroke at -17 (`src/audio/synth/dsp.js`
+  `loudnessOf`), by Daggerfall's large splash heard at 0.7.
 - **The boats built** (`src/systems/comeSailAway/comeSailAwayModels.js`, `comeSailAwayHulls.js`). Five hulls: Rowboat
   (0), Large Boat (1), Small Ship (2), Large Galley (3), Carrack (4). The prefab is instanced and walked by name
   (variants, sails, lanterns, crew, trigger boxes), every face in the player's own textures, the sails baked and checked.
   The Small Ship is Mac's galleon model; the Carrack and Large Boat are Mac's New Ship 2 and Tiny Ship
-  (`src/world/ships/`), with doors, a wheel, rigging and gunports.
+  (`src/world/ships/`), with doors, a wheel, rigging and gunports, for hulls 2, 4 and 1.
 - **Placed, kept, saved.** The placement ray's five arms (sea, a deed's reposition, a dungeon's water, the terrain's
   water tile, the water plane); kept by nodes, visibility and the floating origin; saved in the mod's save data. A
   boat left in a dungeon is kept.
@@ -36,6 +46,13 @@ Overworld's crossings. The player meets it at the shipyard, the helm and the Fle
   player's boat is seen, boarded, stood on and carried while it moves, and left.
 - **The helm on screen** (`src/ui/enhanced/enhancedHelm.js`). An Enhanced Plus helm panel and a pad's d-pad at the helm;
   the classic skin keeps the mod's keys. The arrow keys and W and S share one ladder.
+- **Two keys the mod shipped and never read** are ours (`src/systems/comeSailAway/sailAssist.js`, read by the
+  runtime). `Handling.BadTack`: under either helm her way under sail shrinks past a beam reach, in a line to
+  `BadTackMultiplier` of it close-hauled (135 degrees off her run) and beyond; a gale lays her on her quarter and takes
+  none. It ships off. `SailingAssist.AutoStowGaffSails`: under the classic helm a gaff sail the wind would lay aback
+  (past 150 degrees) is not raised, is stowed while the wind stays foul and is set again when it frees.
+  `Compatibility.AnimatedWaterVertexWaves` named a mod the game has not got and is retired (`src/systems/modSettings.js`
+  `RETIRED_KEYS`).
 - **The responsive helm** (`src/systems/helmWay.js`). Under the Responsive handling a ship gathers way, turns and
   stops faster, and sails free: every sail at its best, a share by point of sail from 0.9 running to 0.55 in the
   wind's eye, never astern, with no tacking. The Classic handling is the mod to the letter.
@@ -57,18 +74,22 @@ Overworld's crossings. The player meets it at the shipyard, the helm and the Fle
 
 ## Daggerfall Unity
 
-The mod's assembly is the reference. Departures: packing every hull, the responsive helm and free sailing, sailing
-together, the helm panel, the new hull models, cabins, the Overworld's crossing, no time dial online, water foes kept
-off the deck, a jump leaving the helm, and the position reading past the Bay.
+The mod's assembly is the reference. Departures: our own boats, pictures and sounds, the breakers over our own foam,
+ladders on the galley and the carrack, BadTack and AutoStowGaffSails made live, packing every hull, the responsive helm
+and free sailing, sailing together, the helm panel, the new hull models, cabins, the Overworld's crossing, no time dial
+online, water foes kept off the deck, a jump leaving the helm, and the position reading past the Bay.
 
 ## Code and tests
 
 - `src/systems/comeSailAway/` - runtime, hulls, models, items, map, waves, wire
 - `src/scenes/comeSailAway/` - pool, peers, aboard, deck fittings, livery, plaque, figurehead
-- `src/world/ships/` - the galleon, carrack and large boat models and art
+- `src/world/ships/` - the galleon, carrack and large boat models and art; `src/world/ships/ownBoats/` - our boats
+- `src/systems/comeSailAway/csaPictures.js`, `src/systems/comeSailAway/csaSynth/` - our pictures and clips
 - `test/systems/comeSailAway/csa_boats.test.js`, `csa_placing.test.js`, `csa_sailing.test.js`, `csa_wind.test.js`,
   `csa_animator.test.js`, `csa_waves.test.js`, `csa_effects.test.js`, `csa_time_audio.test.js`, `csa_map.test.js`,
-  `csa_close.test.js`, `csa_online.test.js`, `csa_pool.test.js` - the mod, slice by slice
+  `csa_close.test.js`, `csa_online.test.js`, `csa_pool.test.js` - the mod, part by part
+- `test/systems/comeSailAway/csa_own_assets.test.js` - our boats, pictures and clips; 
+  `test/systems/comeSailAway/ownaudit_csa_keys.test.js` - the two live keys
 - `test/systems/comeSailAway/sailingcabins.test.js`, `shippack.test.js`, `boatmenu.test.js` - cabins, packing, the
   boat's menu
 - `test/systems/auditships_sail.test.js` - the galleon's handling under free sailing

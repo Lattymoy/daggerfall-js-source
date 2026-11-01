@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): THE SNOW'S SURFACE MASKS THE PINS STAND ON. Snowfall's own three masks are retired with
+// THE SNOW'S SURFACE MASKS THE PINS STAND ON. Snowfall's own three masks are retired with
 // vendor/snowfall/, and ours are laid at runtime by our snow law over the player's own winter records
 // (src/systems/ownTextures/ownTexturePacks.js ownSnowMasks), which no pin may carry. So the pins lay the same law over a
 // made-up winter set drawn from the ground's own layout: snow, with water where the marching squares put a record's

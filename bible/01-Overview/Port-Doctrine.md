@@ -55,6 +55,21 @@ byte-exact. Structure may be simpler; behaviour may not change unless the change
 3. Runtime: browser, Vite, Node ESM. Desktop first, with a touch layer for phones (Mac): an analog stick, a
    height-normalised look, gyro aim, haptics, fullscreen and a home-screen manifest, each a pref of our own.
 
+## Our own work (OWN-WORK)
+
+The owner: "Our goal is no latching onto other mod authors or needing permissions. A proper 1 to 1 recreation for
+everything." A feature that came from an outside mod keeps its switch, settings and behaviour, but its pictures,
+sounds, models, data and words are DFO Online's own:
+
+- **Made by our code.** The painter (`src/art/ownPainter.js`), the synth (`src/audio/synth/`) and the mesh builders.
+- **Or by our rules over the player's ARENA2.** A picture that is a classic record is a spec: the record and its
+  palette, never a pixel (`src/systems/classicArt.js`, `src/formats/classicPictures.js`). A spec carries no edits, since
+  an edit is an author's pixel (`test/tooling/doctrine.test.js`). Texture packs are our rules over the player's records
+  (`src/systems/ownTextures/`).
+- **What stays.** Daggerfall Unity's MIT data (the six `dfu-` folders under `vendor/`), GrimoireUI, Layered Gearing and
+  Kamer's and Kamer & Kab's work stay by the owner's word. `Own-Work.md` lists the outside work the tree carries, why,
+  and the record of each folder that left.
+
 ## Non-negotiables
 
 - Original game data (ARENA2) is freeware but not redistributable. It never enters the repo; `.gitignore` blocks it.
@@ -62,11 +77,21 @@ byte-exact. Structure may be simpler; behaviour may not change unless the change
 - **A render of game data is game data.** A screenshot, gallery frame, derived raster or re-shaded sprite that keeps
   the original's silhouette falls under the rule above. `test/tooling/doctrine.test.js` enforces it, since
   `.gitignore` cannot recognise a PNG of the same art. Probe galleries are generated locally and gitignored.
-  **THE ONE EXCEPTION - VANILLA ENHANCED (Mac: "Approved and yes", "Put it in the codebase").** carademono's repaints of Daggerfall's textures (the Base, Masked Roads, and Snowless Swamps and Jungles) ship under `public/art/vanilla-enhanced/`, written byte for byte by `tools/vanillaEnhancedVendor.mjs` from the mod's repository at a pinned commit. On by default (Mac); Classic is one choice away on the Texture Overhaul card. The exception covers that directory only.
-  **THE SECOND EXCEPTION - THE DESERT'S AND THE WINTER'S GROUND (Mac: "We have permission to use and implement everything into the codebase. These should be on by default").** Sands of the Alik'r (TEXTURE.002) ships under `public/art/sands-of-the-alikr/`; demifiend000's Snowfall winter records (TEXTURE.103, .303, .403) ship under `public/art/snowfall/`. `tools/environmentModsExtract.mjs` writes both. On by default, each a switch of its own. Those two directories only.
-  **THE THIRD EXCEPTION - LAYERED GEARING (the owner: "Approve as an exception", credited to DFO).** The armour strips, cloak layer and hood fixes follow Daggerfall's class sprites and enemy frames. They ship under `vendor/layered-armor/`, listed with each file's sha256 by `tools/layered-armor/listing.mjs`. On by default (the owner); the profile's Skin card turns it off. That directory only.
-  **THE FOURTH EXCEPTION - THE ENEMIES' AND THE CLASS SKINS' REPAINTED SPRITES (Mac: "Approve 3rd exception", "Yes, cover all of them").** Daggerfall Enemy Expansion's repaints ship under `public/art/daggerfall-enemy-expansion-repainted/`; the class skins stay under `vendor/class-skins/Textures/`. `tools/dexExtract.mjs` refuses any picture that is a TEXTURE record exactly (those are rebuilt from the player's files by `src/formats/derivedTexture.js`) or follows a record's outline outside these directories. Those two directories only.
-  `test/tooling/doctrine.test.js` holds every row in each directory to its own exception's mark, so a new pack needs
+
+  **THE THIRD EXCEPTION - LAYERED GEARING, `vendor/layered-armor/` (the owner: "Approve as an exception").** The
+  armour strips, cloak layer and hood fixes were drawn for the game over Daggerfall's class sprites and enemy frames,
+  DFO's own work (the owner: "Layered Gear is ours"). Each file is listed with its sha256 by
+  `tools/layered-armor/listing.mjs`. On by default (the owner); the profile's Skin card turns it off. That directory
+  only.
+
+  **THE FOURTH EXCEPTION - THE ENEMIES' REPAINTED SPRITES, `public/art/daggerfall-enemy-expansion-repainted/`** (Mac:
+  "Approve 3rd exception", "Yes, cover all of them"). Daggerfall Enemy Expansion's repaints, Kamer & Kab's, ship there.
+  `tools/dexExtract.mjs` refuses any picture that is a TEXTURE record exactly (those are built from the player's files
+  by `src/formats/derivedTexture.js`) or follows a record's outline outside that directory. That directory only.
+
+  The first and second exceptions are retired: our own rules build Vanilla Enhanced's, the desert's and the winter's
+  looks from the player's records, so no repaint ships for them. The two left keep their numbers, which every row of
+  their art carries. `test/tooling/doctrine.test.js` holds each row to its own exception's mark, so a new pack needs
   its own approval written here.
 - **Arena's data (TESA1).** The Elder Scrolls: Arena is freeware and not redistributable either. The player attaches
   their own ARENA folder (the owner) and the game keeps only the files it reads (`src/scenes/dataSource.js`
@@ -77,6 +102,14 @@ byte-exact. Structure may be simpler; behaviour may not change unless the change
 
 ## Attribution
 
-Format knowledge and game logic derive from Daggerfall Unity (MIT, Interkarma and contributors) and the UESP and
-dfworkshop format documentation. Arena's formats derive from OpenTESArena (MIT, The OpenTESArena Developers). LICENSE
-and README credit both.
+Format knowledge and game logic derive from Daggerfall Unity (MIT) and the UESP and dfworkshop format documentation.
+Arena's formats derive from OpenTESArena (MIT). `LICENSE` carries the notice of every MIT work the tree ships or
+ports, and the build ships it as LICENSE.txt, beside Silkscreen's licence as OFL-Silkscreen.txt (`vite.config.js`
+`licenceFiles`).
+
+**No credits (CREDITS-OUT, the owner).** "Remove all mentions of DFU, Interkarma and the nexus community. No more
+credits." Nothing a player or a site visitor reads credits a work or names Daggerfall Unity, DFU, Interkarma or Nexus:
+not the game, the site, the desktop app or the Discord bot. A licence's notice is not a credit, and the two licence
+files are shown and linked nowhere. DFU stays the engineering reference in comments, cites and this bible (Scope
+above). `test/systems/credits.test.js` holds every language free of the four names, and every `vendor/` folder to a
+README of its source and terms.

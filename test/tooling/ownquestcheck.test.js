@@ -1,8 +1,8 @@
-// OWN-WORDS1 (2026-10-31, bible/06-Systems/Own-Words.md): DFU's quests in DFO's own words. A file in
-// src/systems/quest/own/ is read in place of DFU's of its name; tools/ownQuestCheck.mjs holds it to DFU's logic - the
-// same QBN, header, message ids, layouts, variants, macros, pronoun and journal bindings, letter signers and patches -
-// and to our rules for the words (PLAIN-TEXT, TAMRIEL-WIDE, no run of DFU's words). Every own quest is checked here, and
-// each rule is pinned on made-up data, so a rewrite can never break a quest.
+// DFU's quests in DFO's own words. A file in src/systems/quest/own/ is read in place of DFU's of its name;
+// tools/ownQuestCheck.mjs holds it to DFU's logic - the same QBN, header, message ids, layouts, variants, macros,
+// pronoun and journal bindings, letter signers and patches - and to our rules for the words (PLAIN-TEXT, TAMRIEL-WIDE,
+// no run of DFU's words). Every own quest is checked here, and each rule is pinned on made-up data, so a rewrite can
+// never break a quest.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -30,8 +30,6 @@ test('OWN-WORDS1 every own quest holds: DFU\'s logic, our words, and every rule 
 test('OWN-WORDS1 the loader reads our file in place of DFU\'s - the browser\'s pack and its node twin (mutants: the glob dropped; DFU\'s text read first)', () => {
   const pack = read('src/scenes/quest/questData.js');
   assert.match(pack, /import\.meta\.glob\('\.\.\/\.\.\/systems\/quest\/own\/\*\.txt'/);
-  // PIN MOVED (OWN-WORDS2): every quest with messages is ours, so the pack globs DFU's files by name - only those with
-  // nothing to rewrite - and no DFU message is bundled; a DFU quest is ours or on that list, never dropped
   const left = [...pack.matchAll(/vendor\/dfu-quests\/Quests\/([^'*]+)\.txt'/g)].map((m) => m[1]);
   assert.deepEqual(left, ['__DEMO01'], 'the DFU files the pack still reads');
   assert.doesNotMatch(pack, /vendor\/dfu-quests\/Quests\/\*\.txt/, 'DFU\'s quest text is not bundled');
@@ -45,7 +43,6 @@ test('OWN-WORDS1 the loader reads our file in place of DFU\'s - the browser\'s p
     assert.equal(f.dir, 'dfu', `${n} stays DFU's quest`);
     assert.equal(f.path.replace(/\\/g, '/').endsWith(`${OWN_DIR}/${n}.txt`), true, `${n} is read from ${OWN_DIR}`);
   }
-  // PIN MOVED (OWN-WORDS2): N0B00Y06 has our words now; __DEMO01 has no messages, so it never gets an own file
   assert.equal(QUEST_FILES.get('__DEMO01').path.replace(/\\/g, '/').endsWith(`${DFU_DIR}/__DEMO01.txt`), true, 'a quest with no own file is DFU\'s');
 });
 
@@ -56,8 +53,6 @@ test('OWN-WORDS1 the port\'s patches still find their text in ours: M0B11Y18\'s 
     assert.ok(QL_PATCHES.has(n), `${n} carries a branch`);
     assert.ok(applyQuestlinePatches(n, read(`${OWN_DIR}/${n}.txt`)).includes('Message:  1900'), `${n}'s branch applies to our file`);
   }
-  // PIN MOVED (OWN-WORDS2): C0B00Y02's SHAM-TRAIL patch reads none of DFU's messages now (its entry goes in before
-  // `QBN:`), and it applies to our file; an own file that moves the reveal's lines its QBN half reads is told so
   assert.ok(applyQuestPatches('C0B00Y02', read(`${OWN_DIR}/C0B00Y02.txt`)).includes('Message:  1027'), 'SHAM-TRAIL\'s entry in our file');
   const moved = scaffold('C0B00Y02').replace('\tplace npc _hooker_ at _tavern_ \n', '\tplace npc _hooker_ at _tavern_\n');
   assert.ok(checkText('C0B00Y02', moved, read(`${DFU_DIR}/C0B00Y02.txt`)).some((p) => /^QUEST-PATCH: C0B00Y02 holds/.test(p)));

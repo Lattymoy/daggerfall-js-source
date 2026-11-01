@@ -337,8 +337,8 @@
   {
     "name": "armsDrawn-from-active",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // MAP3: the two lines below draw the arm exactly when this is true\n",
-    "new": "",
+    "old": "      _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // The two lines below draw the arm exactly when this is true\n      if (eotbHidesWeapon()) return;",
+    "new": "      if (eotbHidesWeapon()) return;",
     "tests": [
       "test/combat/map3_heldpose.test.js"
     ]
@@ -656,7 +656,7 @@
   {
     "name": "holder-asks-did-it-draw",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    available: () => !!rig()?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet",
+    "old": "    available: () => !!rig()?.armsAvailable?.(),   // WOULD it draw - the arm is sheathed until it takes the sheet",
     "new": "    available: () => !!rig()?.armsDrawn?.(),",
     "tests": [
       "test/ui/town/mwmap1.test.js"

@@ -1,4 +1,4 @@
-// RR3b - Roleplay & Realism 1.8 (Hazelnut): the Master Armorer quest line's WORLD DATA - a new location in the
+// Roleplay & Realism 1.8 (Hazelnut): the Master Armorer quest line's WORLD DATA - a new location in the
 // Wrothgarian Mountains, its block and the armorer's shop as the quest rebuilds it - through WorldDataReplacement.cs,
 // ported whole as formats/worldData/worldDataReplacement.js: the door MapsFile and BlocksFile ask (MapsFile.cs:984, :999,
 // :1027; BlocksFile.cs:214, :273, :385, :850), the converters, RMBLayout's replacement arm and the save's variants.
@@ -32,7 +32,7 @@ import { BlocksFile } from '../../../src/formats/blocksFile.js';
 import { hostText } from '../../hostText.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const rd = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js (STAR0)
+const rd = (p) => hostText(p);   // HOST-SPLIT 2: a host read whole - the town map's door lives in scenes/exteriorAutomapToggle.js
 const ARENA2 = process.env.ARENA2_PATH && existsSync(join(process.env.ARENA2_PATH, 'BLOCKS.BSA')) ? process.env.ARENA2_PATH : null;
 // a made-up palace and smithy in DFU's world-data shape - no record of Daggerfall's
 const tiles = Array.from({ length: 256 }, (_, i) => ({ TileBitfield: i & 0xff, TextureRecord: i % 56, IsRotated: (i & 1) === 1, IsFlipped: (i & 2) === 2 }));
@@ -345,7 +345,7 @@ test('RR3b the readers ask the door: MapsFile\'s three asks and BlocksFile\'s fo
   const bf = rd('src/formats/blocksFile.js');
   assert.match(bf, /return worldDataDoor\(\)\?\.getNewDFBlockName\(block\) \?\? \(block < this\.count \? this\._bsa\.getRecordName\(block\) : null\);/, 'GetBlockName (:214)');
   assert.match(bf, /const assigned = worldDataDoor\(\)\?\.getNewDFBlockIndex\(name\) \?\? -1;\s*if \(assigned !== -1\) return assigned;/, 'GetBlockIndex (:273)');
-  assert.match(bf, /const replacement = block >= 0 \? worldDataDoor\(\)\?\.getDFBlockReplacementData\(block, this\.getBlockName\(block\)\) : null;\n\s*if \(replacement\) \{\n\s*if \(this\._blocks && this\._blocks\.length > block\)\n\s*this\._blocks\[block\] = \{ name: replacement\.name, bytes: null, view: null, dfBlock: replacement \};\n\s*return dryBlock\(replacement\);/, 'GetBlock (:385)');   // PIN MOVED (PUDDLE-DRY): the replacement served through the one door that dries a town's puddles
+  assert.match(bf, /const replacement = block >= 0 \? worldDataDoor\(\)\?\.getDFBlockReplacementData\(block, this\.getBlockName\(block\)\) : null;\n\s*if \(replacement\) \{\n\s*if \(this\._blocks && this\._blocks\.length > block\)\n\s*this\._blocks\[block\] = \{ name: replacement\.name, bytes: null, view: null, dfBlock: replacement \};\n\s*return dryBlock\(replacement\);/, 'GetBlock (:385)');
   assert.match(bf, /const replacement = door\?\.getBuildingReplacementData\(rec\.name, rec\.dfBlock\.index, i\);\s*if \(replacement\) \{\s*subRecords\[i\] = \{ \.\.\.replacement\.rmbSubRecord \};/, 'ReadRmbBlockData (:850)');
   assert.match(bf, /if \(replacement\.nameSeed > 0\) h\.buildingDataList\[i\]\.nameSeed = replacement\.nameSeed;\s*door\.applyBuildingReplacementAutoMapData\(replacement, h\.autoMapData\);/);
   assert.match(bf, /position \+= h\.blockDataSizes\[i\];\s*r\.pos = position;/, 'the step by the header\'s sizes stands on both arms');
@@ -393,7 +393,6 @@ test('RR3b the hosts and the save: the four hosts bind the reader and await the 
     assert.match(s, /const blocks = new BlocksFile\(\);\s*blocks\.load\(blocksBytes\);\s*bindWorldDataBlocks\(blocks\);[^\n]*\n\s*await loadModWorldData\(\);/, `${h}: before the first region`);
   }
   const ld = rd('src/scenes/modWorldData.js');
-  // PIN MOVED (OWN-WORK3): no vendored mod ships whole WorldData files any more, so the loader globs patches alone
   assert.doesNotMatch(ld, /vendor\/\*\/WorldData\/\*\.json/);
   assert.match(ld, /import\.meta\.glob\('\.\.\/\.\.\/vendor\/\*\/WorldDataPatches\/\*\.json', \{ import: 'default' \}\)/);
   assert.match(ld, /registerWorldDataPatch\(await load\(\), \(\) => modSetting\(vendor, 'Enabled'\) === true\)/, 'a mod that is off is a mod DFU never loaded');

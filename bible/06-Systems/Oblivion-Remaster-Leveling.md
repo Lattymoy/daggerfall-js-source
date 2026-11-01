@@ -1,11 +1,13 @@
 # Oblivion Remaster Like Leveling
 
 An alternative leveling system a new character can choose at creation, ported from the OpenMW Lua mod
-**OblivionRemasterLikeLeveling** 0.5.3 (Nexus Morrowind 56569), vendored whole in `vendor/oblivion-remaster-leveling/`.
-Every skill level-up fills a bar toward the next level; at 100 the character levels up and spends a purse of virtue
-points on attributes. The player meets it as a question after character creation (`src/ui/levelingChoice.js`) and as
-the virtue level-up window (`src/ui/virtueLevelUp.js`). Offline only: online, new characters level the Daggerfall way.
-It is the first vendored mod that is not a Daggerfall Unity one; the Lua in `vendor/` is the source of truth.
+**OblivionRemasterLikeLeveling** 0.5.3: five scripts, 1,314 lines of Lua, and one GMST in its `.omwaddon`. Every skill
+level-up fills a bar toward the next level; at 100 the character levels up and spends a purse of virtue points on
+attributes. The player meets it as a question after character creation (`src/ui/levelingChoice.js`) and as the virtue
+level-up window (`src/ui/virtueLevelUp.js`). Offline only: online, new characters level the Daggerfall way. The mod is
+Morrowind's, not Daggerfall Unity's. Our code is the record: `test/systems/orl1_leveling.test.js` holds
+the GMST, the seven settings, the two caps, the window's strings, the version and the Lua's line count as literals, and
+a `.lua:` cite names a file of the 0.5.3 release. The release's record is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -106,6 +108,6 @@ health on every commit, and the handler reading the skill's outgoing value.
 
 - Level feeds skill speed (`skillUsesForAdvancement` multiplies by `1.04^level`), so the two systems do not pace
   skills identically at the same level.
-- The author's name and the permission record are still open (`01-Overview/Mod-Registry.md`).
+- The author's name and the permission record are still open (`01-Overview/Own-Work.md`).
 - The tier defaults (primary and major both 8) are the structural match; a ladder (8/6/4/2) is the other reading, a
   settings change for Mac.

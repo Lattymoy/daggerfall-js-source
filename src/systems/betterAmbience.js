@@ -1,5 +1,4 @@
-// BETTER AMBIENCE 0.1.4 (Joshua Steinhauer / joshcamas), THE MOD, 1:1
-// (BA1, 2026-09-16, Mac: "Next mod to integrate 1:1 ensuring compatibility").
+// BETTER AMBIENCE 0.1.4 (Joshua Steinhauer / joshcamas), THE MOD, 1:1.
 //
 // "Adds camera shaking, better footsteps, and dungeon fog + reverb." Six
 // modules, sixteen sources - every one of them carried INSIDE the shipped
@@ -33,7 +32,7 @@
 // so a player who turns both on is told exactly what a DFU player is told.
 // Every other module is on, as the mod ships it.
 //
-// THE CLIPS ARE OURS (OWN-WORK4, 2026-10-31). Each name TryImportAudioClips
+// THE CLIPS ARE OURS. Each name TryImportAudioClips
 // asks for is a clip our synth makes (audio/synth/clips.js: the boards, the
 // flags, the light armour's clank, the dry grass, the wade and the rain
 // loop) at the mod's name, length and rate. The water list asks for six and
@@ -44,20 +43,20 @@
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
-import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js'; // DISC29-B: the class's NativeMaterialValue, the port's one reader
+import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js'; // The class's NativeMaterialValue, the port's one reader
 import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
 import { multiply, trs } from '../world/mat4.js';
-import { heardWeather, heardRainGain } from './weather/weatherSim.js'; // DISC9: the weather the player HEARS outdoors, not the sim's word; DISC11: and its level
-import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js'; // DISC11: the street's rain and its through-the-walls law
+import { heardWeather, heardRainGain } from './weather/weatherSim.js'; // The weather the player HEARS outdoors, not the sim's word; DISC11: and its level
+import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js'; // The street's rain and its through-the-walls law
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
 import { stringHash, NetRandom as SystemRandom } from '../formats/netRuntime.js'; // string.GetHashCode's one home; HAZE1: and System.Random's
 import { perlinNoise } from '../world/perlin.js'; // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
 import { setRemoveHealthListener } from '../ui/damageFlash.js'; // the SendMessage("RemoveHealth", amount) edge
 import { playerEntity } from '../characters/playerEntity.js';
-import { betterAmbienceClipInTurn, BA_RAIN_LAYERS } from '../audio/synth/clips.js'; // OWN-WORK4: the clips our synth makes
+import { betterAmbienceClipInTurn, BA_RAIN_LAYERS } from '../audio/synth/clips.js'; // The clips our synth makes
 import { layeredLoop } from '../audio/layeredLoop.js'; // OWN-WORK4 audit: the rain loop and its eaves, as one
 
 export const BETTER_AMBIENCE_VENDOR = 'better-ambience';
@@ -166,7 +165,7 @@ export function baClipNames() {
   return out;
 }
 export const MISSING_CLIPS = Object.freeze(['sfx_footstep_water_001']); // the mod's list asks for it, and it never was
-// OWN-WORK4: each clip ours, one a task; node has no AudioContext to hold one (registerSamples answers false), so it makes none
+// Each clip ours, one a task; node has no AudioContext to hold one (registerSamples answers false), so it makes none
 const CAN_PLAY = typeof window !== 'undefined';
 export const makeAmbienceClip = (name) => (CAN_PLAY ? betterAmbienceClipInTurn(name) : null);
 export const baSoundKey = (name) => `ba:${name}`;
@@ -410,7 +409,7 @@ export function createBetterFootsteps({ audio = defaultAudio, random = Math.rand
     applyFootsteps,
     loadSettings,
     update,
-    /** EV1: the floating origin moved the world, not the feet (footsteps.js rebase). AUDIT-BA F2: that shift
+    /** The floating origin moved the world, not the feet (footsteps.js rebase). AUDIT-BA F2: that shift
      *  IS StreamingWorld.IsRepositioningPlayer (:66-70), which the mod answers with ignoreLostGrounding = true -
      *  the next landing step is swallowed, as after a load; the first draft only dropped the anchor. */
     rebase() {
@@ -676,7 +675,7 @@ export function createBetterAmbience({
       [...baClipNames(), ...BA_RAIN_LAYERS.slice(1)].map(async (name) => {
         if (present.has(name)) return;
         try {
-          const clip = await makeClip(name); // OWN-WORK4: { samples, rate }, our own
+          const clip = await makeClip(name); // { samples, rate }, our own
           if (clip?.samples?.length && audio.registerSamples(baSoundKey(name), clip.samples, clip.rate))
             present.add(name);
         } catch {
@@ -701,9 +700,8 @@ export function createBetterAmbience({
 
   // ReverbMod.Update: on the inside-dungeon edge, UpdateReverbZone
   function updateReverb(inDungeon) {
-    // EG-ZH (bible/11-Multiplayer/Elite-Gates.md section 11.9): A HELD ZONE IS ITS HOLDER'S - the Spire's halls hold the
-    // reverb (audio.holdReverb) and this component yields, its cache forgotten: the zone it last set is gone, so the first
-    // frame after the release asserts its wish again
+    // A HELD ZONE IS ITS HOLDER'S - the Spire's halls hold the reverb (audio.holdReverb) and this component yields, its
+    // cache forgotten: the zone it last set is gone, so the first frame after the release asserts its wish again
     if (audio.reverbHeld?.() != null) {
       reverbOn = null;
       return;
@@ -721,15 +719,15 @@ export function createBetterAmbience({
     }
     rainWeather = null;
   }
-  // DISC11 (Mac: "ITS LOUDER ON THE INSIDE COMPARED TO THE OUTSIDE"): THE MOD'S RAIN IS THE STREET'S RAIN, HEARD
-  // FROM INSIDE. InteriorAmbientSoundSource plays the AmbientRaining clip at the AudioSource's own volume, 1 - whatever
-  // falls outside. The street's loop plays DAGGER.SND's rain at the front's level (a light shower 0.15), so a tavern
-  // under a drizzle played a full downpour through its walls, in a louder recording. The mod's source now takes the
-  // street's level (`rainLevel`, the heard seam), matched to the street's recording by measured RMS (`clipLevel`),
-  // and in a building the street's own through-the-walls factor on top (INDOOR_RAIN_GAIN), the mod's low-pass after
-  // it: indoors it is never louder than the street it comes from. At a dungeon's exit it is the street at the door.
-  // Set when the source is made: indoors the street's level cannot move (the front does not tick there), and every
-  // door, load and weather change remakes the source at the level of that moment.
+  // THE MOD'S RAIN IS THE STREET'S RAIN, HEARD FROM INSIDE. InteriorAmbientSoundSource plays the AmbientRaining clip at
+  // the AudioSource's own volume, 1 - whatever falls outside. The street's loop plays DAGGER.SND's rain at the front's
+  // level (a light shower 0.15), so a tavern under a drizzle played a full downpour through its walls, in a louder
+  // recording. The mod's source now takes the street's level (`rainLevel`, the heard seam), matched to the street's
+  // recording by measured RMS (`clipLevel`), and in a building the street's own through-the-walls factor on top
+  // (INDOOR_RAIN_GAIN), the mod's low-pass after it: indoors it is never louder than the street it comes from. At a
+  // dungeon's exit it is the street at the door. Set when the source is made: indoors the street's level cannot move
+  // (the front does not tick there), and every door, load and weather change remakes the source at the level of that
+  // moment.
   function rainTarget() {
     const street = audio.clipLevel?.(AMBIENT_RAIN_LOOP);
     const levels = rainLayers().map((n) => audio.clipLevel?.(baSoundKey(n)));
@@ -760,7 +758,7 @@ export function createBetterAmbience({
         // (a kind of 'exit' means settle4 read a dungeon with an exit, and BA-CRASH1 makes onTransition drop the kind with
         // the place - so `place.dungeon.exitPos` is there whenever this branch runs; a guard here would only hide the
         // next stale kind instead of crashing on it)
-        const level = rainTarget(); // DISC11: the street's level, not 1
+        const level = rainTarget(); // The street's level, not 1
         rainLoop = layeredLoop(rainLayers().map(baSoundKey), (key) =>
           rainKind === 'interior'
             ? audio.loop(key, level, { lowpass: AMBIENT_RAIN_LOWPASS_HZ })
@@ -822,7 +820,7 @@ export function createBetterAmbience({
       syncSettings();
       if (s.Enabled) damageShake(shaker, s, amount, maxHealth);
     },
-    /** FIELD-GUN6: a shake that is not a wound. DamageShaker is the
+    /** A shake that is not a wound. DamageShaker is the
      *  mod's only producer and it prices a blow by how much of you it
      *  took; the Dwarven Thunderlock going off is neither damage nor
      *  the mod's, but the camera it wants to move is this one - the
@@ -885,7 +883,7 @@ export function createBetterAmbience({
     settle,
     footsteps,
     shaker,
-    /** DISC11: whether the mod's rain - in a building OR at a dungeon's exit - is what the player hears inside; the
+    /** Whether the mod's rain - in a building OR at a dungeon's exit - is what the player hears inside; the
      *  street's carried loop stands down for either, so the two never stack. */
     rainPlaying() {
       return !!rainLoop;

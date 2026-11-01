@@ -1,6 +1,6 @@
 # Unleveled Loot
 
-A port of Ralzar's Unleveled Loot v1.1.2 for Daggerfall Unity (MIT; Nexus mod 135): weapon and armour materials in loot,
+A port of Ralzar's Unleveled Loot v1.1.2 for Daggerfall Unity (MIT): weapon and armour materials in loot,
 shops and foe loadouts follow the place and the player's Luck, not the player's level. Players meet it as Orcish gear
 near Orsinium and Orc Strongholds, better metal in deadlier dungeons, and Daedric or Orcish drops from Daedra and Orcs.
 It is on by default; its switches and `Enabled` are in the Mods pane. It is ported 1:1 apart from the departures below.
@@ -49,8 +49,8 @@ Daedric source. Without the keep, every granted drop from level 20 would be Daed
 ## Code and tests
 
 - `src/systems/unleveledLoot.js` - the overrides, the selectors, the death handler, `rampMetal`
-- `vendor/unleveledLoot/` - the manifest, modsettings and README
-- `test/systems/unleveledLoot.test.js` - the tables, the transitions, the corpse drops, the dead hook, the seams
+- `test/systems/unleveledLoot.test.js` - the tables, the transitions, the corpse drops, the dead hook, the seams; the
+  shipped settings as literals (the release's record is in `01-Overview/Own-Work.md`)
 - `test/systems/daedricrare.test.js` - the Daedric keep and its Ebony
 
 ## Open

@@ -38,8 +38,8 @@
   {
     "name": "CSA-A-bad-tack-misdescribed",
     "file": "src/systems/modSettings.js",
-    "old": "            'mods.comeSailAway.Handling.BadTack.description',\n            'The sails lose speed the closer you sail to the wind.',",
-    "new": "            'mods.comeSailAway.Handling.BadTack.description',\n            'Tack badly.',",
+    "old": "            'The sails lose speed the closer you sail to the wind.',",
+    "new": "            'Tack badly.',",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]

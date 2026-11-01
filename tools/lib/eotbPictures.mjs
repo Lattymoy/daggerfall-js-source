@@ -1,7 +1,7 @@
-// NO-BETHESDA2 (2026-10-31, the owner: "ensuring they are not implemented"): EYE OF THE BEHOLDER'S PICTURES, FOR THE
-// TOOLS AND THE PINS. 2869 of the mod's 3035 are Daggerfall's own records and are not carried: eotbDerived.json names
-// each one's record and palette (tools/classicDerive.mjs). OWN-WORK4: the other 166, the author's death, are ours
-// (player/eyeOfTheBeholder/eotbDeath.js). A tool reads a sprite by its name here, built from the player's ARENA2.
+// EYE OF THE BEHOLDER'S PICTURES, FOR THE TOOLS AND THE PINS. 2869 of the mod's 3035 are Daggerfall's own records and
+// are not carried: eotbDerived.json names each one's record and palette (tools/classicDerive.mjs). OWN-WORK4: the
+// other 166, the author's death, are ours (player/eyeOfTheBeholder/eotbDeath.js). A tool reads a sprite by its name
+// here, built from the player's ARENA2.
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';

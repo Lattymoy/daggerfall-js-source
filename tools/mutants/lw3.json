@@ -491,8 +491,8 @@
   {
     "name": "LW3-host-tripless-town",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
-    "new": "          // LW3",
+    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // Its travellers away and armed, its visitors - LW-LOOKS: its still pictures\n          familyNews: (t) => host.legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // What the town says of the line",
+    "new": "          familyNews: (t) => host.legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // What the town says of the line",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]

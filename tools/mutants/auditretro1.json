@@ -379,8 +379,8 @@
   {
     "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",
     "file": "src/render/airPass.js",
-    "old": "        this.prevValid = false;\n      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
-    "new": "      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
+    "old": "        this.prevValid = false;\n      } // The other slot's image - its previous depth is not this frame's previous",
+    "new": "      } // The other slot's image - its previous depth is not this frame's previous",
     "tests": [
       "test/render/auditretro1.test.js"
     ]

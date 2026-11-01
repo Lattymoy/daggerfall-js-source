@@ -113,8 +113,8 @@
   {
     "name": "SIGN-PASS-the-world-host-stands-the-whole-sign",
     "file": "src/scenes/pixelBuild.js",
-    "old": "sight: sightMarksOf(placed.modelIdNum, cpu) });",
-    "new": "sight: null });",
+    "old": "            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: sightMarksOf(placed.modelIdNum, cpu) });   // The same; PERF-COL2: riding the floating origin; SIGN-PASS: a sign's board met by every ray, by no body",
+    "new": "            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: null });   // The same; PERF-COL2: riding the floating origin; SIGN-PASS: a sign's board met by every ray, by no body",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]

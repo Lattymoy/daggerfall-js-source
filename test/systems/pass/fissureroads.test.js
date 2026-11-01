@@ -1,4 +1,4 @@
-// STOREFRONT, AUDIT LANE 5 (2026-10-29; bible/06-Systems/Battle-Pass.md section 6): A BRASS FISSURE KEEPS OFF THE ROADS.
+// STOREFRONT, AUDIT LANE 5: A BRASS FISSURE KEEPS OFF THE ROADS.
 // Seven of the season's 344 fissures stood within 12 m of a road's or a track's band on the player's map - one a Heart
 // Fissure, 1.2.43.0 by Rhaniriza - their solid slabs across it. A draw whose heart reaches the Bay's network (the room's,
 // Basic Roads forced on online) is passed over as a draw too near a fissure is (systems/pass/seasonWorld.js), the same on
@@ -22,7 +22,7 @@ import { HEART_T, SCAN, settle } from '../../scenes/seasonRig.mjs';
 /** A network of the test's own: a road east-west along every seventh row. */
 const NET = { roads: new Uint8Array(500_000), tracks: new Uint8Array(500_000) };
 for (let i = 0; i < NET.roads.length; i++) if (Math.floor(i / 1000) % 7 === 0) NET.roads[i] = 0x22;
-const NEAR_BAY = 5, HEARTS_BAY = 1;   // OWN-WORK2: measured on the freeware's map, 2026-10-31
+const NEAR_BAY = 5, HEARTS_BAY = 1;   // Measured on the freeware's map, 2026-10-31
 const onRoad = (net, f) => pointNearPath(net, f.px, f.py, f.spot[0] * UNITS_PER_METRE, f.spot[1] * UNITS_PER_METRE, FISSURE_ROAD_M * UNITS_PER_METRE);
 
 test('AUDIT LANE 5 (10): a fissure\'s draw that reaches a road is passed over - none stands on one, the rest where they stood, the same every run (mutants: the roads unread; the margin dropped)', () => {
@@ -75,7 +75,7 @@ test('AUDIT LANE 5 (10): the host stands no fissure before the terrain\'s networ
   try {
     const host = createSeasonHost({ state: { pixelTranslation: (px, py, out) => out }, gateScanOf: () => SCAN, get online() { return {}; }, _sharedOffsetMs: 0, relayNowS: () => 1, bindPass: false, storage: null, terrainRoads: () => landed });
     assert.deepEqual([host.mapMarks(), host.fissureClears()], [[], []], 'the roads unread: none');
-    landed = { ...NET, rivers: null, streams: null, source: 'basic-roads' };   // OWN-WORK2: the network lands on the terrain
+    landed = { ...NET, rivers: null, streams: null, source: 'basic-roads' };   // The network lands on the terrain
     await settle();
     assert.deepEqual(host.mapMarks().map((m) => m.key), stageFissures(1, 2, SCAN, NET).map((f) => f.key));
     assert.deepEqual(host.fissureClears().map((c) => [c.px, c.py]), stageFissures(1, 2, SCAN, NET).map((f) => [f.px, f.py]));

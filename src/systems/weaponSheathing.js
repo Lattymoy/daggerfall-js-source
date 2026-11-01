@@ -33,7 +33,7 @@
 // Third person only: the first-person skeleton has no addon (ours is
 // the base model's alone) and the reference draws no holster
 // there either. The pieces are rigid parts through the same binder the
-// weapon takes (bindPartsInto), but BARE (AUDIT-WS F6): the reference's
+// weapon takes (bindPartsInto), but BARE: the reference's
 // attachMesh is a plain getInstance under the bone, so no BoneOffset and
 // no mirror ride a holstered mesh - and no sheathing bone is "Left".
 
@@ -50,7 +50,7 @@ export const SHEATHING_BONE = Object.freeze({
   [MW_WEAPON_TYPE.BluntTwoClose]: 'Bip01 BluntTwoClose',
   [MW_WEAPON_TYPE.BluntTwoWide]: 'Bip01 BluntTwoWide',
   [MW_WEAPON_TYPE.SpearTwoWide]: 'Bip01 SpearTwoWide',
-  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand', // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a "Bip01 AxeOneHand" too, at the same transform, that the reference never names)
+  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand', // Weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a "Bip01 AxeOneHand" too, at the same transform, that the reference never names)
   [MW_WEAPON_TYPE.AxeTwoHand]: 'Bip01 AxeTwoClose',
   [MW_WEAPON_TYPE.MarksmanBow]: 'Bip01 MarksmanBow',
   [MW_WEAPON_TYPE.MarksmanCrossbow]: 'Bip01 MarksmanCrossbow',
@@ -129,7 +129,7 @@ export function holsterPartPaths({ weaponModel }) {
  * `find(path)` answers the archive holding a loaded path, `hasBone`
  * asks the skeleton AFTER its addons. `parseNif` is passed in so this
  * module stays a leaf of the format layer's parser; `ownScabbard` builds
- * ours (OWN-WORK4) where the player's data has no `_sh` file.
+ * ours where the player's data has no `_sh` file.
  *
  * @returns {{ parts: object[], info: object|null, notes: string[] }}
  */
@@ -150,14 +150,14 @@ export function resolveHolsterParts({
     return { parts, info: null, notes };
   const bone = SHEATHING_BONE[mwType];
   if (!bone) return { parts, info: null, notes };
-  const showHolstered = holsters(mwType); // AUDIT-WS F3: thrown - the scabbard alone
+  const showHolstered = holsters(mwType); // Thrown - the scabbard alone
   if (!hasBone(bone)) {
     notes.push(`holster: this skeleton has no "${bone}" - no bone addon (animations/xbase_anim/) was found`);
     return { parts, info: { bone, reason: 'no sheathing bone' }, notes };
   }
   const shPath = sheathedMeshPath(`meshes/${weaponModel}`);
   const shArc = find(shPath);
-  const own = shArc ? null : (ownScabbard?.({ mwType, weaponBytes, parseNif }) ?? null); // OWN-WORK4: ours, sized to this weapon
+  const own = shArc ? null : (ownScabbard?.({ mwType, weaponBytes, parseNif }) ?? null); // Ours, sized to this weapon
   if (!shArc && !own) {
     // No scabbard: the weapon's own mesh hangs at the bone while sheathed
     // (:352-360) - and for a thrown weapon nothing at all.
@@ -221,7 +221,7 @@ export function resolveHolsterParts({
       for (let i = 0; i < n; i++) {
         const child = /** @type {any} */ (deref(shNif, slots[i]));
         const name = child?.name || `${SHEATH_AMMO_NODE} ${i}`;
-        // AUDIT-WS F4: the tag is the slot's index and the count, so the
+        // The tag is the slot's index and the count, so the
         // rig can empty the LAST slot while a round is on the string
         // (updateQuiver's `ammoCount--` when isArrowAttached, :441-443,
         // re-run at every attach, release and detach - npcanimation.cpp

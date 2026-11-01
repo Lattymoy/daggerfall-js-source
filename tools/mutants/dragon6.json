@@ -110,8 +110,8 @@
   {
     "name": "DRAGON6-the-open-grounds-rate",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "(ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, at))",
-    "new": "(ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, at))",
+    "old": "      return !!leg && (ROAD_LEG_KINDS.includes(leg.kind) || flownLeg(leg) || bridgedRoadLeg(r.legs, at));   // ROAD-BRIDGE; DRAGON6: a flown leg runs at the road's rate wherever it goes",
+    "new": "      return !!leg && (ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, at));   // ROAD-BRIDGE; DRAGON6: a flown leg runs at the road's rate wherever it goes",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DRAGON6-the-ocean-stop",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "!deps.atSea?.() && !flownNow()) { stopTravelWithMessage(T.MsgOcean)",
-    "new": "!deps.atSea?.()) { stopTravelWithMessage(T.MsgOcean)",
+    "old": "      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) { stopTravelWithMessage(T.MsgOcean); return { drive, handled: true, stopped: 'ocean' }; }   // Nor one flown over it",
+    "new": "      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !deps.atSea?.()) { stopTravelWithMessage(T.MsgOcean); return { drive, handled: true, stopped: 'ocean' }; }   // Nor one flown over it",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DRAGON6-the-cruise-unasked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    setDragonCruise(flownNow());",
-    "new": "    void flownNow;",
+    "old": "    setDragonCruise(flownNow());   // A flown leg cruises the dragon; its end brings it down",
+    "new": "    void flownNow;   // A flown leg cruises the dragon; its end brings it down",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]

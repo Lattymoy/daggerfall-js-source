@@ -1,6 +1,4 @@
-// WW1 - WEAPON WIDGET 1.6 (RedRoryOTheGlen), THE MOD, 1:1 (2026-09-14,
-// Mac: "This is our next mod I want to add 1:1 while also having it
-// work with morrowind's first person view").
+// WEAPON WIDGET 1.6 (RedRoryOTheGlen), THE MOD, 1:1.
 //
 // The mod's script is a compiled DLL (FPSWeaponClone) read off the IL
 // and restated in combat/weapon/weaponWidget.js method by method; the pins
@@ -42,7 +40,7 @@ const rd = (p) => hostText(p);
 const T = WEAPON_TYPES, S = STATE_INDEX;
 const near = (a, b, eps = 1e-6, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
 
-// OWN-WORK1 (2026-10-31): vendor/weapon-widget is retired. Its manifest and modsettings.json, as they read at
+// vendor/weapon-widget is retired. Its manifest and modsettings.json, as they read at
 // 1b97b3a8f, are written here so a changed default, range or word still fails the pins below.
 const METALS = ['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'];
 const TEXTURE_FILES = ['WEAPON00', 'WEAPON01', 'WEAPON02', 'WEAPON03', 'WEAPON04', 'WEAPON05', 'WEAPON06', 'WEAPON07', 'WEAPON08', 'WEAPON09',
@@ -112,7 +110,7 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
   assert.equal(manifest.textures.length, 173, 'the 173 double-scale textures the manifest names, none vendored');
   assert.match(manifest.script, /FPSWeaponClone\.cs$/, 'the one script the manifest names and the bundle does not carry');
-  // OWN-WORK4 (2026-11-01): every line the mod wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly
+  // Every line the mod wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly
   const PLAIN = {
     'Swings.VanillaRecoveryOverride': 'After a thrust, some of the game’s own weapons pull back by playing the thrust in reverse.',
     'Swings.NoDaggerMirroredStrikes': 'A dagger slashes from one side only, the side drawn for the hand that holds it.',
@@ -162,8 +160,8 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.ok(row, 'FT9: a Mod Authored row over the switch');
   assert.deepEqual([row.control.store, row.control.vendor ?? row.control.mod ?? row.control.key], ['mods', row.control.vendor ?? row.control.mod ?? row.control.key]);
   assert.match(JSON.stringify(row.control), /weapon-widget/);
-  // OWN-WORK1: the vendor README's four text pins left with it.
-  // a float key coerces: clamped to its range, rounded to a thousandth; the pane steps it
+  // The vendor README's four text pins left with it. a float key coerces: clamped to its
+  // range, rounded to a thousandth; the pane steps it
   _resetModSettings();
   setModSetting(WEAPON_WIDGET_VENDOR, 'Swings.Speed', 7.7);
   assert.equal(modSettingsOf(WEAPON_WIDGET_VENDOR)['Swings.Speed'], 5);
@@ -177,7 +175,7 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
 });
 
 test('WW1: LoadSettings - the fields carry the mod\'s own multipliers (Offset x10, Bob.Length /100, Size x2, SpeedMove x4, SpeedState x500, Shape x0.5, Inertia x500, Forward x0.2, Chance /100)', () => {
-  _resetModSettings(); setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on
+  _resetModSettings(); setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // The preset defaults on
   const s = readWidgetSettings();
   assert.equal(s.enabled, true);
   assert.deepEqual([s.swing, s.ambidexterity, s.offset, s.bob, s.inertia, s.stepTransforms, s.doubleScale, s.trueSize, s.recoil], [true, true, true, true, false, false, false, false, false], 'the nine modules as shipped');
@@ -228,7 +226,7 @@ test('WW1: Unity\'s pieces - MoveTowards (scalar and Vector2), Mathf.Round half 
 /** A store the widget reads: the shipped defaults with overrides. */
 function settingsOf(over = {}) {
   _resetModSettings();
-  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on now - the clone's own numbers are the bench's subject
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // The preset defaults on now - the clone's own numbers are the bench's subject
   const base = modSettingsOf(WEAPON_WIDGET_VENDOR);
   return () => readWidgetSettings(() => ({ ...base, ...over }));
 }
@@ -563,7 +561,7 @@ test('WW1: Offset, Bob and Inertia - the channels the frame publishes: the sheat
   const tgt = [(-1 + Math.sin(w.time * rate)) * -size[0], (1 - Math.sin(w.time * rate * 2)) * size[1]];
   near(w.bobSmooth[0], tgt[0], 1e-6, 'x: the U\'s sideways term'); near(w.bobSmooth[1], tgt[1], 1e-6, 'y: twice the rate');
   assert.ok(w.bobSmooth[1] >= 0, 'the U never rises above the rest');
-  // WW2: STANDING STILL - the slight idle stride (BobWhileIdle: s = 0.1, a tenth of the size and of the rate), never
+  // STANDING STILL - the slight idle stride (BobWhileIdle: s = 0.1, a tenth of the size and of the rate), never
   // the walking one (the world-hosted dungeon lane left `standing` unsent and the full stride played at rest)
   { const idle = bench({ over: { 'Modules.Offset': false, 'Modules.Inertia': false } }); idle.ctx.motion.standing = true;
     let maxX = 0, maxY = 0;
@@ -643,8 +641,6 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   const rig = rd('src/combat/weapon/weaponRig.js');
   assert.match(rig, /const widget = createWeaponWidget\(\{\s*audio, envHit: envCast, missEffect,/);
   assert.match(rig, /const widgetOn = \(\) => modSetting\('weapon-widget', 'Enabled'\);/);
-  // PIN MOVED (TWO-HANDS): the recoil is the STRIKING hand's clone - a pair's left hand's blow recoils the left's (was:
-  // `=> widget.onAttackDamageCalculated(...)`, the one clone)
   assert.match(rig, /playerWeapon\.onAttackResult = \(\{ foe, damage \}\) => \(pairUp\(\) && playerWeapon\.activeHand === 'L' \? twoHands\.offWidget : widget\)\.onAttackDamageCalculated\(\{ damage, parrySounds: !!foe\?\.basics\?\.parrySounds, pos: foe\?\.pos \?\? foe\?\.ai\?\.pos \?\? null, isEnemy: true \}\);/);
   // SW1 widened the inner span from 2800: the shield widget's own frame
   // feed now sits inside it, between the torch component's and this one's.
@@ -655,15 +651,15 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   // Widget's step is counted at the gate, just above it, with its reason.
   // What the pin holds is the ORDER - the machine steps, then the clone's
   // LateUpdate - and that is untouched.
-  // PIN MOVED (MIXED-PAIR): the gate's gun leg is `gunUp()` - a Pistolet in either hand, a blade's partner included
+  // PIN MOVED: the gate's gun leg is `gunUp()` - a Pistolet in either hand, a blade's partner included
   // (was: `thunderlockHeld()`, the right hand's alone)
   assert.match(rig, /playerWeapon\.update\(dt\);[\s\S]{0,4800}?if \(widgetOn\(\) \|\| _torchesOn \|\| shieldOn\(\) \|\| gunUp\(\)\) \{[\s\S]{0,5200}if \(widgetOn\(\)\) widget\.lateUpdate\(dt, \{/, 'LateUpdate after the machine\'s Update (HT1: the torch component shares the frame\'s inputs; SW1b: the shield opens the block too)');
   assert.match(rig, /const look = takeFrameLook\(\);/, 'the look read once a frame'); assert.match(rig, /look: lookAxes, swingHeld: _held, cursorActive: cursorActive\(\), camera: camThunk,/, 'WIDGET-LOOK: as DFU\'s look axes (test/combat/weapon/fb1003_widgetlook.test.js)');
-  // SW1: the shield's coroutines resume on the same edge, in the same finally
-  // PIN MOVED (TWO-HANDS): and the left hand's clone resumes on it too (was: the right's and the shield's alone)
+  // The shield's coroutines resume on the same edge, in the same finally
+  // PIN MOVED: and the left hand's clone resumes on it too (was: the right's and the shield's alone)
   assert.match(rig, /try \{ return onUiScreen\(renderer, cv\(\), \(\) => drawInner\(\{ paralyzed \}\)\); \} finally \{ widget\.endOfFrame\(\); twoHands\.offWidget\.endOfFrame\(\); shield\.endOfFrame\(\); \}/, 'WaitForEndOfFrame resumes after the draw (RETRO-UI: drawn on the UI screen)');
-  assert.match(rig, /fpArm\.setScreenTransform\(widgetOn\(\) && !armsClimb \? \(base\) => widget\.armsTransform\(base\) : null\);/);   // PIN MOVED (CLIMB-HANDS II): not on arms whose hands are on the stone
-  // MAC-I: every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
+  assert.match(rig, /fpArm\.setScreenTransform\(widgetOn\(\) && !armsClimb \? \(base\) => widget\.armsTransform\(base\) : null\);/);
+  // Every sprite in this seam takes the frame's TINT now (FPSWeapon.Tint, off the room's light);
   // the ORDER and the returns are what this pin holds, and neither moved.
   // SW1b: the shield's verdict moved ABOVE the gate (its poses live in the frames `shown()` calls hidden), so the
   // step here is the one line, and `if (!shown()) return;` stops a shield-only frame before the clone and the sprite
@@ -672,7 +668,7 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   // (the arm's branch has returned above it, so the held-sheet pose is
   // untouched). The ORDER of the four is what this pin holds, and it did
   // not move.
-  // PIN MOVED (SPELL-HAND): the clone's draw passes the spell hand's guard, under its own comment (was:
+  // PIN MOVED: the clone's draw passes the spell hand's guard, under its own comment (was:
   // `widget.draw(renderer, c, fpTint)`); the order did not move
   assert.match(rig, /if \(fpArm\.active\(\)\) \{[^}]*fpArm\.draw\(c\);[^}]*return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(sheetWindowUp\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(shieldRect\) shield\.draw\(\(index, rect, uv\) => drawShieldSprite\(index, rect, uv, fpTint\)\);\s*if \(handheldOn\(\) && c\) handheld\.draw\(renderer, c, fpTint\);\s*if \(torchOnly && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*if \(!shown\(\) && !gunSliding\) return;[^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const tlArt = c && thunderlockHeld\(\) \? artFor\(playerWeapon\.weapon\) : null;\s*if \(tlArt\?\.anchor && tlArt\.unionBox\) \{ drawThunderlock\(tlArt, c, fpTint\); return; \}\s*(?:\/\/[^\n]*\n\s*)*if \(gunSliding && !shown\(\)\) return;\s*(?:\/\/[^\n]*\n\s*)*if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _spellGuard\.weapon > 0 \? \{ transform: \(r\) => \(\{ \.\.\.r, y: r\.y \+ guardDrop\(_spellGuard\.weapon, r\.h\) \}\) \} : undefined\)\) return;/, 'the arms first, MAP-WEAPON\\u2019s map gate, SW1\\u2019s shield (the off hand, behind both), the torch, the clone, the classic sprite last');
   assert.match(rig, /const envCast = envHit \?\? \(\(reach\) => \{/, 'CheckForEnvDamage\'s cast from the host\'s collider');
@@ -681,10 +677,9 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /setScreenTransform\(fn\) \{ screenTransform = typeof fn === 'function' \? fn : null; \}/);
   assert.match(arm, /const rect = screenTransform \? screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\) : null;/, 'the composite\'s whole rect through the transform');
-  // PIN MOVED (MW-DETAIL, 2026-10-22): against the sprite target's edge as it stands (renderer.js charSpriteRoom)
   assert.match(arm, /const win = rect \? fpFrameWindow\(rect, W, H, pw, ph, edge\) : null;/, 'DISC13-C: the frame window the moved rect shows on the screen');
   assert.match(arm, /renderer\.drawScreenQuad\(tex, win\.dst, \{ u0: 0, v0: fh \/ edge, u1: fw \/ edge, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv (DISC13-C: laid where the frame window says, at the rect\'s own sub-pixel place)');
-  // WW2: the motor's words for the bob ride ONE bag (motionBagOf) at every site - a per-file grep let a second, partial
+  // The motor's words for the bob ride ONE bag (motionBagOf) at every site - a per-file grep let a second, partial
   // site in worldModes.js (the world-hosted dungeon lane) ship without `standing`, and the walking bob played at rest
   for (const [host, sites] of [['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/dungeon.js', 1]]) {
     const s = rd(host);
@@ -744,7 +739,7 @@ test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and 
   assert.match(rd('src/combat/weapon/weaponWidgetAssets.js'), /import \{ DFMOD_KEY_PREFIX \} from '\.\.\/\.\.\/systems\/seasonsIliacBayAssets\.js';/);
   // the atlas asks the door by that name and, until it lands, draws the classic frame at the classic size.
   // DW1: WHICH file is FPSWeapon.cs:637-644's choice - Diverse Weapons is on
-  // by default (MO1), so a longsword asks LONGSWORD.CIF (WeaponBasics.cs
+  // by default, so a longsword asks LONGSWORD.CIF (WeaponBasics.cs
   // GetModdedWeaponFilename); with the mod off it is WEAPON04.CIF as before.
   const b = bench({ over: { 'Modules.DoubleScaleTextures': true } }); b.frame();
   assert.equal(b.draws.at(-1).tex, 'tex:0:0:0');
@@ -778,7 +773,7 @@ test('WW4 (Mac\'s curated fix): a clone that chooses silence OWNS the draw seam 
   const none = bench({ weaponType: T.None }); none.frame();
   assert.equal(none.widget.draw(none.renderer, none.ctx.canvas), false, 'no weapon type: not the clone\'s');
   // and the rig's seam reads the answer exactly that way
-  // PIN MOVED (SPELL-HAND): the seam passes the spell hand's guard as a transform (was: `widget.draw(renderer, c, fpTint)`)
+  // PIN MOVED: the seam passes the spell hand's guard as a transform (was: `widget.draw(renderer, c, fpTint)`)
   assert.match(rd('src/combat/weapon/weaponRig.js'), /if \(widgetOn\(\) && c && widget\.draw\(renderer, c, fpTint, _spellGuard\.weapon > 0 \? \{ transform: \(r\) => \(\{ \.\.\.r, y: r\.y \+ guardDrop\(_spellGuard\.weapon, r\.h\) \}\) \} : undefined\)\) return;/);
 });
 

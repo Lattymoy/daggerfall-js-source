@@ -14,8 +14,8 @@ it through the Features home's assets card (**Attach** and **Remove data**); it 
    character made or loaded while files are attached gets one. **Remove data** turns it off.
 2. **Count** (`registerMorrowindData`): counts the set and stamps an attach fingerprint, built from names and sizes,
    that the rig's caches key on. Re-attaching a different file under the same name invalidates them.
-3. **Open** (`loadMorrowindArchives`). Archives are ranked: one loose archive first, then Weapon Sheathing's vendored
-   scabbards (`src/systems/weaponSheathingAssets.js`, fetched on first ask), then expansion and mod `.bsa` files, then
+3. **Open** (`loadMorrowindArchives`). Archives are ranked: one loose archive first, then our own sheathing
+   bones (`src/systems/weaponSheathingAssets.js`, built in code), then expansion and mod `.bsa` files, then
    `Morrowind.bsa`. `MwBsaFile.open(blob)` reads only the header and directory by range. An entry's bytes are read
    by range when a reader `load`s it and cached; a second load of an entry in flight joins the first. `get` stays
    synchronous and throws, by name, for an entry nobody loaded.

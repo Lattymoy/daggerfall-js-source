@@ -1,5 +1,5 @@
 // @ts-check
-// SNOWFALL1 (2026-10-08) - THE SNOW SURFACE, OUR OWN (OWN-WORK4; the vertex law our design, OWN-WORK4 AUDIT,
+// THE SNOW SURFACE, OUR OWN (OWN-WORK4; the vertex law our design, OWN-WORK4 AUDIT,
 // bible/03-World/Snowfall.md). One program draws the runtime's three tiers (the window, the ring, the blanket). A
 // vertex stands on the ground, raised by the snow's depth times its coverage and what the tracks left (a narrow track
 // kept by the deepest press across its cell), eased out at the tier's edges; the ring lands on the blanket three
@@ -199,7 +199,7 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
-/** OWN-WORK4 AUDIT: the albedo's second read - a turn (column-major mat2), a scale of 1 / phi^2 (no whole number of
+/** The albedo's second read - a turn (column-major mat2), a scale of 1 / phi^2 (no whole number of
  *  tiles is a whole number of its own), a shift, and its share of the colour. */
 export const SNOW_ALBEDO_SECOND = Object.freeze({
   turn: Object.freeze([0.8, 0.6, -0.6, 0.8]),
@@ -278,7 +278,7 @@ const DECODE_FROM = '  vec2 unwrapped = vLocalXZ / uTileSize;\n';
 const DECODE_TO = '  vec3 n = normalize(vNormal);\n';
 
 /**
- * SNOWFALL1: a ground fragment program's SNOW variant - the same program, its tile decode (the tile array, the tilemap,
+ * A ground fragment program's SNOW variant - the same program, its tile decode (the tile array, the tilemap,
  * the ecotone, the bed) swapped for our snow, so `tex` is the snow and every light after it is the ground's.
  * Made from either lane's terrain shader (TERRAIN_FS, EL_TERRAIN_FS: the lane decodes its pictures with elDecode).
  * @param {string} fs - a terrain fragment shader

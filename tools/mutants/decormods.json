@@ -174,8 +174,8 @@
   {
     "name": "DECORMODS-bed-unfiled",
     "file": "src/systems/decor/decorMods.js",
-    "old": "    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: bed.model }; // AUDIT 05b A3: its classic bed by the table, never by a switch",
-    "new": "    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: id }; // AUDIT 05b A3: its classic bed by the table, never by a switch",
+    "old": "    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: bed.model }; // Its classic bed by the table, never by a switch",
+    "new": "    if (bed) return { base: `${capital(TOWN_BED_COLOURS[bed.colour].name)} bed`, as: id }; // Its classic bed by the table, never by a switch",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],

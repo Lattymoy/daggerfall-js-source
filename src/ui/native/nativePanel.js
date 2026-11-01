@@ -1,4 +1,4 @@
-// U8a: the NATIVE PANEL idiom - real ARENA2 UI art on DFU's virtual
+// The NATIVE PANEL idiom - real ARENA2 UI art on DFU's virtual
 // 320x200 screen (DaggerfallUI/NativePanel semantics, MIT Daggerfall
 // Workshop). Classic windows author in VIRTUAL pixels; the screen
 // mapping is integer scale + centered letterbox (the hud.js scaling
@@ -18,7 +18,7 @@
 import { ImgFile } from '../../formats/imgFile.js';
 import { bitmapToColor32 } from '../../formats/color32Order.js';
 import { drawText, measureText, sdfOf, SDF_SHADOW_SCALE } from '../text.js';
-import { packImgTexture } from '../packArt.js';   // OVH2: the worn UI pack's picture
+import { packImgTexture } from '../packArt.js';   // The worn UI pack's picture
 
 export const NATIVE_W = 320;
 export const NATIVE_H = 200;
@@ -53,7 +53,7 @@ export async function loadImg({ renderer, fetchBytes, palette }, name) {
   const img = new ImgFile();
   img.load(await fetchBytes(name), name, palette);
   const bmp = img.getDFBitmap();
-  const packed = await packImgTexture(renderer, name, { fetchBytes, palette });   // OWN-WORK4: the data door, for a screen painted from its own picker
+  const packed = await packImgTexture(renderer, name, { fetchBytes, palette });   // The data door, for a screen painted from its own picker
   return { tex: packed ?? renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
 }
 
@@ -101,13 +101,13 @@ export function drawRect(renderer, m, x, y, w, h, color) {
  *  the law ListBox's selected row rides.
  *  Returns the text's virtual width. */
 export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0, shadow = DEFAULT_SHADOW_COLOR, scale = 1, shadowOffset = 1 } = {}) {
-  // UI6: TextLabel.TextScale - the glyphs shrink and the SHADOW OFFSET
+  // TextLabel.TextScale - the glyphs shrink and the SHADOW OFFSET
   // stays one native pixel, as DFU's shadow is a position in the
   // label's own space rather than a scaled one.
   const tw = measureText(font.fnt, text) * scale;
   const ax = align === 'center' ? x + (w - tw) / 2 : x;
   if (shadowOffset !== 0) {
-    const so = sdfOf(font.fnt) ? shadowOffset * SDF_SHADOW_SCALE : shadowOffset;   // OVH2: an SDF face's shadow stands 0.4 away (DaggerfallFont :221)
+    const so = sdfOf(font.fnt) ? shadowOffset * SDF_SHADOW_SCALE : shadowOffset;   // An SDF face's shadow stands 0.4 away (DaggerfallFont :221)
     drawText(renderer, font, text, m.ox + (ax + so) * m.s, m.oy + (y + so) * m.s, m.s * scale, shadow);
   }
   drawText(renderer, font, text, m.ox + ax * m.s, m.oy + y * m.s, m.s * scale, color);

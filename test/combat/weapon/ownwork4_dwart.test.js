@@ -1,9 +1,9 @@
-// OWN-WORK4 (2026-10-31; the owner: "A proper 1 to 1 recreation for everything"): OUR OWN DIVERSE WEAPONS ART,
-// combat/diverseWeapons/diverseWeaponsArt.js. Each frame is the player's classic frame reshaped by our look and coloured
-// by our metal law, the hand and arm left as Daggerfall's. Pins on made-up frames: the metal law as a literal table and
-// its mapping by light, each shape rule (a blade shortened, lengthened, widened, bent, chiselled and grooved; one bit
-// of an axe; a staff's rings), Scale2x, the name reader and the file reader. With ARENA2_PATH: every name of the set
-// builds at the box the game draws it in, the unshaped looks keep every non-metal pixel Daggerfall's, and the icons.
+// OUR OWN DIVERSE WEAPONS ART, combat/diverseWeapons/diverseWeaponsArt.js. Each frame is the player's classic frame
+// reshaped by our look and coloured by our metal law, the hand and arm left as Daggerfall's. Pins on made-up frames: the
+// metal law as a literal table and its mapping by light, each shape rule (a blade shortened, lengthened, widened, bent,
+// chiselled and grooved; one bit of an axe; a staff's rings), Scale2x, the name reader and the file reader. With
+// ARENA2_PATH: every name of the set builds at the box the game draws it in, the unshaped looks keep every non-metal
+// pixel Daggerfall's, and the icons.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

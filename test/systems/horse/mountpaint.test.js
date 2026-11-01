@@ -1,6 +1,5 @@
-// AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"; bible/06-Systems/Storefront.md section 7): THE
-// LOOKS BY THE HORSE'S SHAPE (systems/horse/mountPaint.js) where the shop's side view does not reach - the mane seen from
-// the saddle, the views from the front and behind, the 3D horse's legs and chest.
+// THE LOOKS BY THE HORSE'S SHAPE (systems/horse/mountPaint.js) where the shop's side view does not reach - the mane seen
+// from the saddle, the views from the front and behind, the 3D horse's legs and chest.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -58,7 +57,7 @@ test('AUDIT-STOREFRONT the mane seen from the saddle: every strand of it the loo
 });
 
 test('AUDIT-STOREFRONT the views: the automaton\'s heart at its chest from the side and the front quarter; none from behind, and none from the front, where its head stands before it; seen from the front or behind its plates never seamed as a flank\'s (mutants: the heart from behind; the view ignored for its face)', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
-  const raw = await horsePictures().picture(MOUNT_PREVIEW_FILE);   // OWN-WORK4: the shop's side view, ours, built from ARENA2
+  const raw = await horsePictures().picture(MOUNT_PREVIEW_FILE);   // The shop's side view, ours, built from ARENA2
   const img = { width: raw.width, height: raw.height, colors: new Uint8Array(raw.data) }, W = img.width;
   const heart = (view) => { const c = recolorHorse(img, withMountLook(0, 'automaton'), { bottomFirst: false, view }).colors; let n = 0; for (let i = 0; i < W * img.height; i++) { const [h, s, v] = hsv(c[i * 4], c[i * 4 + 1], c[i * 4 + 2]); if (c[i * 4 + 3] && h > 190 && h < 215 && s > 0.5 && v > 0.5) n++; } return n; };
   assert.ok(heart(undefined) > 6 && heart(VIEW_SIDE) > 6 && heart(1) > 6, 'seen from the side');

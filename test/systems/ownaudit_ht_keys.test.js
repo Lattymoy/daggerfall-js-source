@@ -1,7 +1,7 @@
-// OWN-AUDIT (2026-11-01; bible/06-Systems/Handheld-Torches.md): HANDHELD TORCHES' THREE INERT KEYS, MADE LIVE -
-// Throwing.ShowTrajectory (the wind-up's arc drawn as dots, systems/torchArc.js), Throwing.EmissionShadows (a burning
-// foe's light casts a shadow only with it on - the carried mask's CARRIED_SHADOWLESS) and Presentation.Tint (the hand
-// takes the room's light only with it on). Mutants: tools/mutants/ownaudit_keys.json.
+// HANDHELD TORCHES' THREE INERT KEYS, MADE LIVE - Throwing.ShowTrajectory (the wind-up's arc drawn as dots,
+// systems/torchArc.js), Throwing.EmissionShadows (a burning foe's light casts a shadow only with it on - the carried
+// mask's CARRIED_SHADOWLESS) and Presentation.Tint (the hand takes the room's light only with it on). Mutants:
+// tools/mutants/ownaudit_keys.json.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

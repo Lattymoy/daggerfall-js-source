@@ -1,7 +1,4 @@
-// TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation to
-// properly route around objects and stopping before running into
-// buildings. Currently it could be so much better") - THE WALK GOES ROUND,
-// AND STOPS SHORT.
+// THE WALK GOES ROUND, AND STOPS SHORT.
 //
 // Travel Options' autopilot beelines: one bearing, latched a pixel at a
 // time, and a force pushed along it at up to a hundred times walking pace -
@@ -24,7 +21,7 @@ import { readFileSync } from 'node:fs';
 import {
   createTravelSteer, steerDrive, travelFrameReach, createColliderProbe, TRAVEL_STEER, FEELER_HEIGHT, WALKABLE_NY,
 } from '../../../src/systems/travel/travelSteer.js';
-import * as STEER from '../../../src/systems/travel/travelSteer.js';   // TRAVEL-NAV2: read by name, so a pin on a constant the base lacks fails as an assertion
+import * as STEER from '../../../src/systems/travel/travelSteer.js';   // Read by name, so a pin on a constant the base lacks fails as an assertion
 import { TravelAutopilot, calculateYaw, rectDistance, ARRIVAL_BUFFER } from '../../../src/systems/travel/travelAutopilot.js';
 import { readTravelOptionsSettings, createTravelOptions } from '../../../src/systems/travel/travelOptions.js';
 import { TRAVEL_OPTIONS_TEXT, TRAVEL_NAV_TEXT } from '../../../src/systems/travel/travelOptionsText.js';
@@ -35,7 +32,7 @@ import { FIXED_DT, MAX_FRAME_DT, CAPSULE_RADIUS, STEP_OFFSET, SLOPE_LIMIT_DEG, D
 import { MOD_SETTINGS, modSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { MOD_CURATED, modDials } from '../../../src/systems/features.js';
 import { mapPixelToWorldCoords, worldCoordToMapPixel, SCENE_MAP_RATIO } from '../../../src/world/streamingWorld.js';
-import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // OWN-WORK3: the mod's own key names
+import { TRAVEL_OPTIONS_1_11_KEYS } from './travelOptionsKeys.mjs';   // The mod's own key names
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DEG = Math.PI / 180;
@@ -584,7 +581,7 @@ test('AUDIT TRAVEL-STRAFE 3 THE WAY THE DETOUR BEGAN IS SEEN PAST WHAT IT MET: a
   assert.ok(Math.abs(held(4.5, -1) - 5.7) < 1e-9, 'REF met 5.7 along the line, past the first face: the one to get past now');
   assert.equal(held(0, -1), 5, 'REF met nearer than the first face: the first is still the one to get past');
   assert.equal(held(4.5, 7), 5, 'the heading along the face (90 degrees) met something: no face on the line');
-  // AUDIT TRAVEL-STRAFE2 1: a REF at an angle to the line. At 70 degrees the
+  // A REF at an angle to the line. At 70 degrees the
   // face met 1.2 m on stands 1.2 cos 70 = 0.41 m up the line from the body -
   // the face to get past is there, not 1.2 m on (as if REF ran up the line),
   // and a REF this far round still moves it
@@ -669,7 +666,7 @@ test('AUDIT TRAVEL-STRAFE 1 THE FRAME THE KEY IS LET GO: the host hands the stra
     return s.output.forward;
   };
   assert.ok(Math.abs(hand(7, P.standoff + 0.2) - 0.2 / 0.75) < 1e-9, 'stopped the stand-off short of the edge\'s face');
-  // AUDIT TRAVEL-STRAFE2 1: ...and when the centre's own face is near too -
+  // ...and when the centre's own face is near too -
   // closer than a step past the stand-off, 1.3 m - the edge's nearer face,
   // 1.05, is still the cap: a corridor cut short on the centre gave 0.3 m
   // where there was 0.05
@@ -862,7 +859,7 @@ test('TRAVEL-NAV1 THE DOOR: steerDrive speaks meters to the steer, leaves an ope
   steerDrive(createTravelSteer(), d2, 20, 0, new TravelAutopilot({ x: 500, y: 250 }, { xMin: -20, xMax: 60, zMin: 40000, zMax: 40040 }, 1), fast, wall);
   assert.notEqual(d2.yaw, 0, 'turned off a way that is not open');
   assert.ok(d2.forward > 0 && d2.forward <= 1);
-  // TRAVEL-STRAFE: the host's strafe is the steer's `manual` (mutants: the door drops it)
+  // The host's strafe is the steer's `manual` (mutants: the door drops it)
   const hand = createTravelSteer();
   steerDrive(hand, { yaw: 0, pitch: 0, forward: 1, arrived: false }, 20, 0, ap, { ...frame, strafe: -1 }, open);
   assert.equal(hand.input.manual, true, 'a strafe held: the hand steers');
@@ -1124,7 +1121,7 @@ test('TRAVEL-NAV1 THE SWITCH: the port\'s own key on the mod\'s pane - on by def
   assert.ok(def, 'declared');
   assert.equal(def.default, true, 'ON - the improvement Mac asked for is the default');
   assert.equal(typeof def.default, 'boolean', 'a toggle');
-  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - the note that the switch is the port's own is gone
+  // PLAIN-TEXT: the words a player reads, exactly - the note that the switch is the port's own is gone
   assert.equal(def.description, 'Steers time accelerated travel around buildings, walls and rocks, and pauses the journey before walking into something it can\u2019t get round.');
   assert.ok(!TRAVEL_OPTIONS_1_11_KEYS.includes(KEY), 'not one of the mod\'s own keys (OWN-WORK3: travelOptionsKeys.mjs)');
   assert.ok(MOD_CURATED['travel-options'].includes(KEY) && modDials('travel-options').includes(KEY), 'reachable: on the tile');
@@ -1147,7 +1144,7 @@ test('TRAVEL-NAV1 THE HOST: the steering rides the mod\'s own frame with THIS ho
   const askedAt = w.indexOf('travelNavFrame.asked = _travelDrive && !_overlayHeld && !_seasonHeld && !paralyzed', updAt);
   assert.ok(motorAt > 0 && askedAt > motorAt && askedAt - motorAt < 400, 'the travel really asked, written after the motor ran');
   assert.match(w, /\? axes\.forward \* player\.speed \* worldTimeScale\(\) \* Math\.min\(dt, MAX_FRAME_DT\) : 0;/, 'after the ground gate wrote axes.forward');
-  // TRAVEL-STRAFE: and the strafe the motor was given, beside it, gated as it is (mutants: the host drops it)
+  // And the strafe the motor was given, beside it, gated as it is (mutants: the host drops it)
   const strafeAt = w.indexOf('travelNavFrame.strafe = _travelDrive && !_overlayHeld && !_seasonHeld && !paralyzed ? axes.strafe : 0;', updAt);
   assert.ok(strafeAt > askedAt && strafeAt - askedAt < 400, 'the strafe the motor was given, after it ran');
 });

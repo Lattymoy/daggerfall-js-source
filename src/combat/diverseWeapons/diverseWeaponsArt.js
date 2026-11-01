@@ -1,6 +1,6 @@
-// OWN-WORK4 (2026-10-31; the owner: "no latching onto other mod authors"): OUR OWN DIVERSE WEAPONS ART. Every frame is
-// the player's own classic WEAPON*.CIF frame, reshaped by our look (diverseWeaponsIndex.js LOOKS) and coloured by our
-// metal law; the hand and arm stay Daggerfall's. No picture ships and no outside author's pixel is read.
+// OUR OWN DIVERSE WEAPONS ART. Every frame is the player's own classic WEAPON*.CIF frame, reshaped by our look
+// (diverseWeaponsIndex.js LOOKS) and coloured by our metal law; the hand and arm stay Daggerfall's. No picture ships
+// and no outside author's pixel is read.
 import { CifRciFile } from '../../formats/cifRciFile.js';
 import { TextureFile, texName } from '../../formats/textureFile.js';
 import { DFPalette } from '../../formats/dfPalette.js';

@@ -1,7 +1,7 @@
-// IT1 (2026-10-04): IMMERSIVE TRAVEL'S THREE TABLES - the 40 capitals, the 15 large docks and the 382 dock pixels. They
+// IMMERSIVE TRAVEL'S THREE TABLES - the 40 capitals, the 15 large docks and the 382 dock pixels. They
 // are facts of Daggerfall's map, first read out of Immersive Travel 1.5's assembly (the int32 arrays its static
 // constructors fill with RuntimeHelpers.InitializeArray, CarriageMap::.cctor IL_15b0-15c2, SeafarersMap::.cctor
-// IL_1957-1983). OWN-WORK2 (2026-10-31): this module states them and is their record; the assembly left the tree, and
+// IL_1957-1983). OWN-WORK2: this module states them and is their record; the assembly left the tree, and
 // test/systems/guild/it1_immersivetravel.test.js holds every value as a literal digest.
 //
 // A leaf: numbers alone, so the laws (systems/immersiveTravel.js) and a test can read them without the world.

@@ -92,8 +92,8 @@
   {
     "name": "AUDITFB1029F-D1-useHand-toggles",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (playerWeapon.usingRightHand !== (slot === EQUIP_SLOTS.RightHand)) this.switchHand(); },",
-    "new": "this.switchHand(); },",
+    "old": "        useHand: (slot) => { syncWorn(); if (playerWeapon.usingRightHand !== (slot === EQUIP_SLOTS.RightHand)) this.switchHand(); },",
+    "new": "        useHand: (slot) => { syncWorn(); this.switchHand(); },",
     "tests": [
       "test/combat/quickslotfollow.test.js"
     ]

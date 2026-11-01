@@ -1,5 +1,5 @@
-// RRI1 - ROLEPLAY & REALISM: ITEMS 1.3 (Hazelnut & Ralzar), THE ITEMS,
-// 1:1 (2026-09-23). The fourteen custom item classes as the release's
+// ROLEPLAY & REALISM: ITEMS 1.3 (Hazelnut & Ralzar), THE ITEMS,
+// 1:1. The fourteen custom item classes as the release's
 // scripts write them, the template rows and patches (OWN-WORK3: ours,
 // by RRI_ROW_RULE), the 280 sprites with their <rect>s, and the mod's
 // switches (our words). The pins execute the classes
@@ -44,7 +44,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
 const M = ARMOR_MATERIAL;
-/** OWN-WORK4: a classic reader for the pins - every record one small picture, every ask written down. */
+/** A classic reader for the pins - every record one small picture, every ask written down. */
 const fakeArt = (loads) => ({ picture: async (archive, record) => { loads.push(`${archive}_${record}`); return { width: 2, height: 2, data: new Uint8Array([1, 1, 1, 255, 2, 2, 2, 255, 3, 3, 3, 255, 4, 4, 4, 255]) }; } });
 
 function fresh({ enabledAtBoot = true } = {}) {
@@ -302,7 +302,7 @@ test('RRI1 the art: 280 pictures by DFU\'s names with their <rect>s, registered 
     assert.equal(hasTextureReplacement(520, 10, 0, 'Albedo', DYE_COLORS.Iron), false, 'gated on the mod');
     assert.equal(decodedTexture(520, 10, 0, 'Albedo', DYE_COLORS.Iron), null);
   } finally { done(); }
-  // OWN-WORK4: every picture is ours - never a file, never a spec over the authors' pixels
+  // Every picture is ours - never a file, never a spec over the authors' pixels
   assert.deepEqual(Object.keys(RRI_SPRITES).filter((n) => !rriArtRecipe(n)), [], 'index names with no recipe of ours');
   assert.deepEqual(tracked('public/art/roleplay-realism-items'), [], 'no picture of the release is carried');
   assert.deepEqual(tracked('src/systems/roleplayRealismItems').filter((f) => f.endsWith('.json')), [], 'no derived spec either');
@@ -318,7 +318,7 @@ test('RRI1 the random makers: CreateRandomWeapon rolls over 19 + the registered 
     assert.equal(createRandomWeapon(1, at(18, 21)).templateIndex, 131, 'slot 18: arrows, as before');
     const hauberk = createRandomArmor(1, at(11, 23));
     assert.equal(hauberk.templateIndex, 515, 'slot 11 of 23: the Coat');
-    if (hauberk.material >= M.Iron) assert.equal(hauberk.name, 'Chain Coat'); else assert.equal(hauberk.name, 'Coat');   // AUDIT-RR F6: the ctor's template name, then the class's prefix
+    if (hauberk.material >= M.Iron) assert.equal(hauberk.name, 'Chain Coat'); else assert.equal(hauberk.name, 'Coat');   // The ctor's template name, then the class's prefix
     assert.ok(Number.isFinite(hauberk.value), 'priced at the mint, at the rolled material');
     assert.equal(createRandomArmor(1, at(22, 23)).templateIndex, 526);
     assert.equal(createRandomArmor(1, at(10, 23)).templateIndex, 112, 'slot 10: the tower shield, as before');
@@ -332,7 +332,7 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);/);
   const row = FEATURES.find((f) => f.id === 'mod-roleplay-realism-items');
   assert.ok(row); assert.equal(row.control.vendor, RRI_VENDOR); assert.equal(row.group, 'loot');
-  // OWN-WORK4: the directory is retired - the pictures are ours (rriArt.js)
+  // The directory is retired - the pictures are ours (rriArt.js)
   assert.deepEqual(tracked('vendor/roleplay-realism-items'), []);
   assert.match(rd('LICENSE'), /Roleplay & Realism: Items 1\.3\n\nMIT License\n\nCopyright \(C\) 2020 Hazelnut\nCopyright \(C\) 2020 \(Authors: Hazelnut & Ralzar\)/, 'our JS restates the release\'s MIT scripts: the notice travels in LICENSE');
   // the dispatch, one line at each law site
@@ -347,6 +347,6 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   assert.match(rd('src/systems/enchanting.js'), /if \(cls\?\.enchantmentPower\)\n\s*return cls\.enchantmentPower\(item, \{ enchantmentPoints: basePower, armorEnchantmentMultiplier \}\);/);
   assert.match(rd('src/systems/armorMaterials.js'), /const custom = _customArmorValue\?\.\(item\);\n\s+if \(custom != null\) return custom;/);
   assert.match(rd('src/systems/roleplayRealismItems/rriItems.js'), /^import /m);
-  // TIDY2: by the file's name, at any depth - a spelled path stops meaning anything when either file moves
+  // By the file's name, at any depth - a spelled path stops meaning anything when either file moves
   assert.ok(!/from '(?:\.\.?\/)+(?:\w+\/)*(?:itemTemplates|equip|equipTable|soundClips)\.js'/.test(rd('src/systems/roleplayRealismItems/rriItems.js')), 'the law is a leaf of the systems it feeds');
 });

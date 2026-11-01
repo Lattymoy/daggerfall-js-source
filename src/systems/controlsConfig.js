@@ -1,4 +1,4 @@
-// I4 - THE CONTROLS STAGING LAW: ControlsConfigManager.cs (MIT,
+// THE CONTROLS STAGING LAW: ControlsConfigManager.cs (MIT,
 // Daggerfall Workshop). The controls window edits a STAGED copy of
 // both binding dicts; nothing reaches the live registry until the
 // window closes on a valid configuration (SetAllKeyBindValues on
@@ -39,14 +39,14 @@ import {
   dropBinding,
   clearBinding,
 } from './inputActions.js';
-import { shortcutBinding, MOD } from './dialogShortcuts.js'; // UXB1-F: the keys this page names and cannot move
-import { localizedText, formatText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { shortcutBinding, MOD } from './dialogShortcuts.js'; // The keys this page names and cannot move
+import { localizedText, formatText } from './textManager.js'; // DFU's Internal_Strings, read in the player's language
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
  *  inside the shown dict, the blue for one across the two. */
 export const INTERNAL_DUPE_COLOR = Object.freeze([1, 0, 0, 1]);
 export const CROSS_DUPE_COLOR = Object.freeze([0, 0.58, 1, 1]);
-/** UXB1-S: the port's own third colour - a key shared by choice (sharedStagedCodes), which blocks nothing. Green, so
+/** The port's own third colour - a key shared by choice (sharedStagedCodes), which blocks nothing. Green, so
  *  it reads as neither of DFU's two clashes. */
 export const SHARED_KEY_COLOR = Object.freeze([0.44, 0.81, 0.54, 1]);
 
@@ -177,7 +177,7 @@ export const internalDuplicatesExist = (u) => getDuplicates([...currentDict(u).v
  *  passes no `yield` at all and sees DFU's law byte for byte. */
 export function checkDuplicates(u, { yield: yielded = [] } = {}) {
   if (yielded.length) yieldDuplicates(u, yielded);
-  // UXB1-S: DFU's law over each set's DISTINCT codes. The same key on two actions is a SHARE now - chosen, kept, and
+  // DFU's law over each set's DISTINCT codes. The same key on two actions is a SHARE now - chosen, kept, and
   // answered by both (inputActions.js shareBinding) - so what the law still finds is the kind of clash no press can
   // resolve: a combo against its own modifier bound bare (Shift+T and Shift), a combo'd key heading another combo.
   const internal = getDuplicates(distinct(currentDict(u).values()));
@@ -186,7 +186,7 @@ export function checkDuplicates(u, { yield: yielded = [] } = {}) {
 }
 const distinct = (codes) => [...new Set([...codes].filter((c) => c != null))];
 
-/** UXB1-S: THE SHARED KEYS in the staged sets - every code more than one ACTION holds, across both dicts (an action
+/** THE SHARED KEYS in the staged sets - every code more than one ACTION holds, across both dicts (an action
  *  on one key in both of its slots is the same action twice, not a share). The pages mark them. */
 export function sharedStagedCodes(u) {
   const by = new Map();
@@ -196,7 +196,7 @@ export function sharedStagedCodes(u) {
   }
   return new Set([...by].filter(([, actions]) => actions.size > 1).map(([code]) => code));
 }
-/** UXB1-S: ...and who else a row's key answers - every OTHER action staged on `code`, in either dict, for the row's
+/** ...and who else a row's key answers - every OTHER action staged on `code`, in either dict, for the row's
  *  "Also:" line. [] for a key that is not shared. */
 export function keySharers(u, action, code) {
   if (code == null) return [];
@@ -220,7 +220,7 @@ function yieldDuplicates(u, yielded) {
     for (const [action, code] of dict) if (code != null && !give.has(action)) kept.add(code);
     for (const action of give) {
       const code = dict.get(action);
-      // UXB1-S: a SHARE blocks nothing, so it is never given up - only a combo clash, which still blocks the exit
+      // A SHARE blocks nothing, so it is never given up - only a combo clash, which still blocks the exit
       if (code != null && [...kept].some((k) => k !== code && clashes(code, k))) dict.set(action, null);
     }
   }
@@ -263,12 +263,12 @@ export function applyUnsavedKeybinds(store, u) {
       const cur = before.get(`${primary}:${action}`);
       if (cur !== code) {
         if (primary && code == null) addRemovedPrimaryAction(store, action);
-        if (!primary && code == null) addRemovedSecondaryAction(store, action); // PAD1: a cleared pad row stays cleared
+        if (!primary && code == null) addRemovedSecondaryAction(store, action); // A cleared pad row stays cleared
         if (code == null) {
           clearBinding(store, action, primary);
           continue;
         }
-        // UXB1-S: SetBinding's steal, kept for everyone the staged picture does NOT keep on this key - a holder staged
+        // SetBinding's steal, kept for everyone the staged picture does NOT keep on this key - a holder staged
         // elsewhere lets go of it here (whatever order the walk meets the two in), and one staged on it too keeps it:
         // that is a share, and the bind lands beside it rather than taking it.
         for (const p of [true, false]) {
@@ -292,7 +292,7 @@ export function resetUnsavedToDefaults(store, u) {
   u.secondary = fresh.secondary;
 }
 
-/** KB1: DEFAULTS, STAGED. The enhanced pane says "Nothing is saved until you press Continue", and its Defaults
+/** DEFAULTS, STAGED. The enhanced pane says "Nothing is saved until you press Continue", and its Defaults
  *  reset the LIVE registry and saved it on the spot - DFU's window does (SetDefaults, :229-238), the pane's own
  *  sentence did not. This is the reset run on a COPY of the live store (so the secondary dict's keep-what-you-chose
  *  law reads the player's own pad rows), staged; the pane commits it with the live reset on Continue. */
@@ -334,8 +334,7 @@ const CLASSIC_NAMES = Object.freeze({
   Backslash: '\\',
 });
 
-/** SWING-LABEL (2026-09-22, Mac: "why some players arent able to
- *  attack and ensure this isnt an issue with keybindings"): THE THREE
+/** THE THREE
  *  MOUSE BUTTONS BY WHAT THEY ARE, NOT BY UNITY'S NUMBER.
  *
  *  DFU names a button by its KeyCode - Mouse0, Mouse1, Mouse2 - and
@@ -360,7 +359,7 @@ const MOUSE_NAMES = Object.freeze({
   Mouse2: ['M CLICK', 'MIDDLE CLICK'],
 });
 
-/** SWING-LABEL: ...and the one row where the button alone is not the
+/** ...and the one row where the button alone is not the
  *  whole answer. In the default swing style (Gesture, 0) a CLICK does
  *  nothing - WeaponManager tracks the drag, and a press with no travel
  *  is no swing - and a sheathed weapon swings at nothing either. The
@@ -385,7 +384,7 @@ export function swingHint(code, mode, readyCode) {
  *  such as jump+swim-up?"): THE TWO ROWS WHOSE KEY IS NOT THE ONLY ONE THAT MOVES YOU. LevitateMotor.Update rises on
  *  Jump OR FloatUp and sinks on Crouch OR FloatDown (LevitateMotor.cs:86-89), and every host passes the pair
  *  (`up: jumpHeld || held(keys, 'FloatUp')`) - so the swim-up a player wanted Space for is already Space's. Since
- *  UXB1-S a key CAN carry both (Use for both, Controls.md law 3); this line is why this pair never needs to (AUDIT
+ *  UXB1-S a key CAN carry both (Use for both, law 3); this line is why this pair never needs to (AUDIT
  *  UXB1 F10: it still said the key could not). Null for every other row, and when the partner action is unbound.
  *  `dict` is the shown set. */
 const FLOAT_PARTNERS = Object.freeze({
@@ -399,7 +398,7 @@ export function floatHint(action, dict) {
   return `${f.name} (${buttonText(code, true)}) ${f.verb} too while you swim or levitate.`;
 }
 
-/** UXB1-D: ...and the replace prompt's answer for that pair. Binding Jump's key onto Float up (Crouch's onto Float
+/** ...and the replace prompt's answer for that pair. Binding Jump's key onto Float up (Crouch's onto Float
  *  down) asks like any held key, but the honest answer is "you need neither": the key already does both. Every holder
  *  must be the partner - a key someone else also holds is an ordinary clash - and the line names the key.
  *  AUDIT UXB1 F10: the prompt has a third answer beside it now, and the line says that one is not needed either -
@@ -413,8 +412,8 @@ export function sharedFloatNote(action, holders, usingPrimary = true) {
 /** GetButtonText + FormatButtonText. `full` skips the length cap
  *  (the tooltip/full-string arm). */
 export function buttonText(code, full = false) {
-  if (code == null) return 'NONE'; // KeyCode.None.ToString(), through the classic-font ToUpper tail (NT3 F082)
-  // A8: the COMBO arm (:509-513). Each half goes through GetButtonText
+  if (code == null) return 'NONE'; // KeyCode.None.ToString(), through the classic-font ToUpper tail
+  // The COMBO arm (:509-513). Each half goes through GetButtonText
   // ITSELF, at its DEFAULT fullString - so a combo reads in the classic
   // names, "LSHIFT + T" - and only the JOINED string meets
   // FormatButtonText, whose ten-character cap most combos overrun into
@@ -424,7 +423,7 @@ export function buttonText(code, full = false) {
     return formatButtonText(`${buttonText(mod)} + ${buttonText(key)}`, full);
   }
   if (CLASSIC_NAMES[code]) return CLASSIC_NAMES[code];
-  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // SWING-LABEL: never "MOUSE1"
+  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // Never "MOUSE1"
   let t = code;
   const digit = /^Digit(\d)$/.exec(code);
   if (digit) t = `A${digit[1]}`; // Alpha0..Alpha9 -> A0..A9
@@ -433,7 +432,7 @@ export function buttonText(code, full = false) {
     t = `KPAD${pad[1]}`; // Keypad0.. -> KPAD0..
   else if (/^Key([A-Z])$/.test(code))
     t = code.slice(3); // KeyW -> W
-  // NT3 (F082): the arrows fall past the classic table to the friendly
+  // The arrows fall past the classic table to the friendly
   // switch, which names them "Left"/"Right"/"Up"/"Down" (:468-479) -
   // not "Left Arrow" - and the classic-font tail UPPERCASES everything
   // (`SDFFontRendering ? text : text.ToUpper()`, :521; the port draws
@@ -455,7 +454,7 @@ function formatButtonText(text, full) {
   return ELONGATED_TEXT;
 }
 
-// ── the two helpers both rebinding windows need (ROAD-G G6) ─────────
+// ── the two helpers both rebinding windows need ─────────
 //
 // They were private to ui/controlsWindow.js until the ADVANCED tab's
 // destination - ui/mouseControlsWindow.js, the other window that
@@ -500,7 +499,7 @@ export const splitCamel = (s) => s.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 /** PromptRemoveKeybindMessage's text (:298-302): the "removeKeybind"
  *  record formatted with the camel-split action name and the FULL
  *  button text of the code being removed - read in the player's
- *  language (L10N3d). DFU's box word-wraps the one line (:295's
+ *  language. DFU's box word-wraps the one line (:295's
  *  wrapText); the port's takes rows, so the record breaks before the
  *  word that leads into the action's name, where the English always
  *  has, and each row is formatted. */
@@ -557,7 +556,7 @@ export function stageReplace(u, action, code, holders) {
   currentDict(u).set(action, code);
 }
 
-/** UXB1-S: THE THIRD ANSWER - "use it for both". Offered when every holder holds exactly this key (a combo against its
+/** THE THIRD ANSWER - "use it for both". Offered when every holder holds exactly this key (a combo against its
  *  own modifier is a clash no press resolves, still DFU's) and none of them is the action itself (its own other slot
  *  is the key moving, AUDIT KB1 F6). */
 export function canShareKey(u, action, code, holders) {
@@ -626,12 +625,12 @@ export function fixedKeyRows(transport) {
   ];
 }
 
-/** UXB1-F: a vendored mod's keys, named for its Features tile - read-only there, because they are BOUND in Controls
+/** A vendored mod's keys, named for its Features tile - read-only there, because they are BOUND in Controls
  *  (KB1: one registry, where a clash can be seen). Each row is the action's own label on the Controls page, and the
  *  key that answers it now (codeForAction: the primary, else the secondary - the order actionForCode resolves in). */
 export function modKeyRows(vendor, store) {
   const labels = new Map(ACTION_GROUPS.flatMap((g) => g.rows.map((r) => [r.action, r.label])));
-  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((row) => row.action), ...(MOD_TILE_ACTIONS[vendor] ?? [])]; // OWN-AUDIT: and the game's own a mod's tile shows
+  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((row) => row.action), ...(MOD_TILE_ACTIONS[vendor] ?? [])]; // And the game's own a mod's tile shows
   return actions.map((action) => {
     const code = codeForAction(store, action);
     return { action, label: labels.get(action) ?? actionLabel(action), key: buttonText(code, true) };
@@ -639,7 +638,7 @@ export function modKeyRows(vendor, store) {
 }
 
 /**
- * AUDIT KB1 F3: THE CARRY'S REPORT, in the player's words - one HUD line per action the one-time carry of a v1
+ * THE CARRY'S REPORT, in the player's words - one HUD line per action the one-time carry of a v1
  * keybinding file (inputActions.js migrateKeyBinds) could not keep on its key. A mod's line only while its mod is
  * on: a key for a mod the player does not run is nothing to be told about at the door.
  */

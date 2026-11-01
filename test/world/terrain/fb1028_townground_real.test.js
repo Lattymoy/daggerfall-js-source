@@ -1,4 +1,4 @@
-// FB1028 TOWN-GROUND on the game's own towns (ARENA2; bible/03-World/Town-Shapes.md TS2, FB1028). The Bay's towns as the
+// FB1028 TOWN-GROUND on the game's own towns (ARENA2; TS2, FB1028). The Bay's towns as the
 // stream builds them online - both town packs on the world-data door, the Landforms row, Basic Roads' network, the
 // gates' roads - against the same pixel built wild (no town: the land's own steps are never the blend's):
 //   Westhead Moor (Daggerfall, a port): TS2 stood a 46 m step at its shore and 769 crops off the plane, up to 47 m;
@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { bayRoads } from '../../bayRoads.mjs';   // OWN-WORK2
+import { bayRoads } from '../../bayRoads.mjs';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
@@ -34,7 +34,7 @@ async function openOnline() {
   const classic = rows.map((row) => (maps.locationReplaced(row.regionIndex, row.locationIndex) ? maps.readClassicLocation(row.regionIndex, row.locationIndex) : row)).filter(Boolean);
   const sites = landformSites(classic.map((loc) => { const p = pixelOf(loc); return { px: p.x, py: p.y, loc }; }));
   const climates = landformClimates((x, y) => maps.getClimateIndex(x, y));
-  const bay = bayRoads();   // OWN-WORK2: the Bay's own network
+  const bay = bayRoads();   // The Bay's own network
   const roads = { roads: bay.roads, tracks: bay.tracks, rivers: bay.rivers, streams: bay.streams, water: false, smooth: true };
   const byPixel = new Map();
   for (const loc of rows) { const p = pixelOf(loc); if (!byPixel.has(p.y * 1000 + p.x)) byPixel.set(p.y * 1000 + p.x, loc); }

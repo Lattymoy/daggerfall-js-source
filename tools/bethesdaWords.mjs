@@ -1,6 +1,6 @@
-#!/usr/bin/env node
-// OWN-WORDS1 (2026-10-31; bible/06-Systems/Own-Words.md): THE RATCHET ON BETHESDA'S WORDS. Daggerfall Unity's MIT data
-// carries Daggerfall's own text (Own-Work.md, NO-BETHESDA). This counts what the game still reads of it: DFU's quest
+// /usr/bin/env node
+// THE RATCHET ON BETHESDA'S WORDS. Daggerfall Unity's MIT data
+// carries Daggerfall's own text. This counts what the game still reads of it: DFU's quest
 // scripts read with DFU's messages, those messages, and Internal_RSC.csv's rows (TEXT.RSC). The counts are held to
 // tools/bethesdaWordsBaseline.json, which only goes down (test/tooling/bethesdawords.test.js).
 //   node tools/bethesdaWords.mjs           report what is past the baseline, and what could be lowered

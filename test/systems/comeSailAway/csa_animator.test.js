@@ -1,4 +1,4 @@
-// CSA-E (2026-09-27) - UNITY'S ANIMATOR AS COME SAIL AWAY DRIVES IT (world/unityAnimator.js): the clip's curves
+// UNITY'S ANIMATOR AS COME SAIL AWAY DRIVES IT (world/unityAnimator.js): the clip's curves
 // (constant, streamed Hermite, dense), the binding hash, Quaternion.Euler's order, the two blend trees the mod's
 // controllers use, the pose blend, the state machine's clock, its transitions and the script's CrossFade - and, on the
 // vendored data, a sail stowed and raised and the rudder's oars rowing.
@@ -16,7 +16,7 @@ import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAw
 import { Boat, spawnBoat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const ANIMATION = json('animation.json');
 const near = (a, b, eps = 1e-5, what = '') => assert.ok(Math.abs(a - b) <= eps, `${what} ${a} is not ${b}`);
 const nearV = (a, b, eps = 1e-5, what = '') => { assert.equal(a.length, b.length); a.forEach((v, i) => near(v, b[i], eps, `${what}[${i}]`)); };
@@ -266,7 +266,7 @@ test('CSA-E: disabled it stands still; enabled again it starts over - the defaul
 });
 
 test('CSA-E: an override controller is its base with its clips swapped; a reference naming nothing resolves to null', () => {
-  // OWN-WORK4: our large boat's lateen's override (world/ships/ownBoats/ownBoatSails.js) over the Sail Controller
+  // Our large boat's lateen's override (world/ships/ownBoats/ownBoatSails.js) over the Sail Controller
   const r = resolveController(ANIMATION, 'own/skiff/SkiffLargeLateenSail');
   assert.equal(r.controller, ANIMATION.controllers['Sail Controller']);
   assert.equal(r.clipOf('Sail Unstowed Right'), ANIMATION.clips['own/skiff/SkiffLargeLateenSail Right']);

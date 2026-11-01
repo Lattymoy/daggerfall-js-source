@@ -1,10 +1,9 @@
-// NO-BETHESDA2 (2026-10-31; the owner: "ensuring they are not implemented"): A MOD'S PICTURE THAT IS DAGGERFALL'S OWN,
-// REBUILT FROM THE PLAYER'S FILES. tools/classicDerive.mjs writes a spec for each such picture (formats/derivedTexture.js:
-// the record, where it lands, the author's own pixels as edits, and `pal`, the palette the author's copy was drawn in).
-// This reads the record out of the player's TEXTURE file in that palette and builds the picture, for any reader that
-// is not a world pipeline (the texture door has its own context, scenes/dataPipeline.js, in ART_PAL alone). A spec with
-// `file` names a CIF or RCI file instead, `from: [record, frame]` (NO-BETHESDA3: Roleplay & Realism's buttons over
-// BUTTONS.RCI, Diverse Weapons' daggers over WEAPON02.CIF).
+// A MOD'S PICTURE THAT IS DAGGERFALL'S OWN, REBUILT FROM THE PLAYER'S FILES. tools/classicDerive.mjs writes a spec for
+// each such picture (formats/derivedTexture.js: the record, where it lands, the author's own pixels as edits, and `pal`,
+// the palette the author's copy was drawn in). This reads the record out of the player's TEXTURE file in that palette and
+// builds the picture, for any reader that is not a world pipeline (the texture door has its own context,
+// scenes/dataPipeline.js, in ART_PAL alone). A spec with `file` names a CIF or RCI file instead, `from: [record, frame]`
+// (NO-BETHESDA3: Roleplay & Realism's buttons over BUTTONS.RCI, Diverse Weapons' daggers over WEAPON02.CIF).
 import { TextureFile } from './textureFile.js';
 import { CifRciFile } from './cifRciFile.js';
 import { DFPalette } from './dfPalette.js';
@@ -60,7 +59,7 @@ export function createClassicPictures(getBytes) {
     const pal = spec.pal ?? DEFAULT_PALETTE;
     return buildDerivedPicture(spec, spec.file ? (r, f) => cifRciPicture(spec.file, r, f, pal) : (a, r, f) => picture(a, r, f, pal));
   };
-  /** OWN-WORK4 AUDIT: the record's frame as palette indices ({ width, height, data }), for a rule that works in the
+  /** The record's frame as palette indices ({ width, height, data }), for a rule that works in the
    *  palette's own ramps (systems/roleplayRealism/rrKeepers.js) - null where the player's data has none. */
   async function bitmap(archive, record, frame = 0) {
     const textureFile = await texture(archive);

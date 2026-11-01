@@ -1,4 +1,4 @@
-// OWN-WORK1 (2026-10-31): the keys bible/01-Overview/Own-Work.md records as retired from vendor/ - the rows of its
+// The keys bible/01-Overview/Own-Work.md records as retired from vendor/ - the rows of its
 // "Retired from vendor/" table. Shared by the registry gate and the provenance gate (credits.test.js).
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';

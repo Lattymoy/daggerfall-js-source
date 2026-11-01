@@ -38,8 +38,8 @@
   {
     "name": "VIEW-TOGGLE-unbound",
     "file": "src/systems/inputActions.js",
-    "old": "  ['Mouse4', 'TogglePerspective'],\n",
-    "new": "",
+    "old": "  ['Mouse4', 'TogglePerspective'],\n  // THE NUMBER ROW, which is the one place a Souls player's hand already",
+    "new": "  // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already",
     "tests": [
       "test/player/viewtoggle.test.js"
     ]

@@ -1,4 +1,3 @@
-// SNOWFALL1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments seamlessly") -
 // THE CONTROLLER AND ITS HOSTS. systems/snowfallRuntime.js is DynamicSnowController's frame over the port's world (the
 // local window, the middle ring, the streamed blanket, the far track mask, the stamps, the refill, the snowpack's
 // clock); scenes/snowfallHost.js stands it on a host's ground (the tiles, a rebuilt tile replacing its old one, the
@@ -13,14 +12,14 @@ import { SnowfallRuntime, MID, BLANKET, FAR, SNOW_GUARD_BAND, SNOW_FRAME_BUDGET_
 import { createSnowfallHost, snowfallNetwork, settlementsIn, snowPixelBox, authoredTiles, newSnowfallSaveData, SNOWFALL_COMMAND, snowfallOn } from '../../src/scenes/snowfallHost.js';
 import { SNOW_VS, snowTerrainFs, SNOW_ATTR, SNOW_UNITS, SNOW_ALBEDO_SECOND } from '../../src/render/snowfallGlsl.js';
 import { snowAlbedo } from '../../src/systems/ownTextures/ownTextureRules.js';
-import { glslFunctions } from '../glsl.mjs';   // OWN-WORK4 AUDIT: the vertex law run as written
+import { glslFunctions } from '../glsl.mjs';   // The vertex law run as written
 import { EL_LANE } from '../../src/render/enhancedLighting.js';
 import { classicShadowLane } from '../../src/render/classicShadowLane.js';
 import { setModSetting, modSetting } from '../../src/systems/modSettings.js';
 import { buildTerrainGrid, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt } from '../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const SIZE = 819.2;
 
@@ -291,8 +290,8 @@ test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment progr
     const tail = fs.slice(fs.indexOf('  vec3 n = normalize(vNormal);\n'));
     assert.ok(snow.endsWith(tail), `${name}: the light after the decode is the ground's own, unchanged`);
     assert.ok(!snow.slice(snow.indexOf('void main() {')).includes('unwrapped'), `${name}: the tile decode is gone`);
-    assert.match(snow, /SNOWFALL1 \/ OWN-WORK4: OUR SNOW IN PLACE OF THE TILE/);   // PIN MOVED (OWN-WORK4): the look is ours
-    // OWN-WORK4: our look - a path's snow trodden 5% grey, a track packed darker as the snow it pressed was deep
+    assert.match(snow, /SNOWFALL1 \/ OWN-WORK4: OUR SNOW IN PLACE OF THE TILE/);
+    // Our look - a path's snow trodden 5% grey, a track packed darker as the snow it pressed was deep
     assert.match(snow, /\* \(1\.0 - clamp\(pathW, 0\.0, 1\.0\) \* 0\.05\);\n\s*float packed = \(1\.0 - remain\) \* smoothstep\(0\.0, 0\.75, depth\) \* uSnowDarkening;\n\s*vec3 tex = albedo \* \(1\.0 - packed\) \* mix\(vec3\(1\.0\), vec3\(0\.94, 0\.97, 1\.03\), clamp\(packed \* 4\.0, 0\.0, 1\.0\)\);/, `${name}: our packed snow`);
     assert.match(snow, /in vec4 vSnow;/);
     if (fs.includes('elDecode(')) assert.match(snow, /elDecode\(textureGrad\(uSnowAlbedo, albedoUV, albedoDx, albedoDy\)/, `${name}: the albedo decoded as the lane decodes its pictures`);
@@ -321,8 +320,6 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
     assert.match(s, /const snowfall = createSnowfallHost\(\{ gl: renderer\.gl, renderer, enhanced: !!sky\.enhanced, ground: /, `${host}: built on the lane, over its ground`);
     // AUDIT PRECIP GROUND-9 (PIN MOVED): the world host's winter is whether snow lies about the player on the snow lane
     assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: true, player: null, weather, seconds: worldMinutes\(\) \* 60, winter: (?:snowCover\.winterNear\()?season === SEASON\.Winter\)?, /, `${host}: ticked indoors`);
-    // PIN MOVED (PRECIP4, 2026-10-19): the streamed world's winter is the snow under the player on the snow lane
-    // (scenes/snowCoverHost.js winterAt - the season off it)
     assert.match(s, /snowfall\.frame\(\{ now: now \/ 1000, inside: false, player: snowPlayer\(\), weather, seconds: worldMinutes\(\) \* 60, winter: (?:season === SEASON\.Winter|snowCover\.winterNear\(season === SEASON\.Winter\)), [^\n]*npcs: snowNpcs, corpses: snowBodies \}\);/, `${host}: ticked outdoors, the walkers and the bodies handed`);
     const draw = s.search(/^ {4}(if \(!tvf\) )?snowfall\.draw\(/m), ground = s.indexOf('renderer.drawTerrain(', draw), deck = s.lastIndexOf('renderer.setCloudShadow(sky?.cloudShadow ?? null);', draw);
     assert.ok(draw > 0 && deck > 0 && deck < draw && ground > draw, `${host}: the snow under the frame's cloud deck, before the ground under it`);
@@ -335,16 +332,12 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
   }
   const w = hostText('src/scenes/world.js');
   assert.match(w, /snowfall\.offsetOrigin\(r\.offset\);/);
-  assert.match(w, /^ {4}snowfall\.promoted\(built\.get\(pkey\)\);/m, 'OnPromoteTerrainData');   // PIN MOVED (IC-SWAP-BEHIND): the entry under the pixel's own key (`key` the build's, behind a standing view)
+  assert.match(w, /^ {4}snowfall\.promoted\(built\.get\(pkey\)\);/m, 'OnPromoteTerrainData');
   assert.match(w, /if \(!tvf\) snowfall\.draw\(cullOn \? snowOutside : null\);/, 'never under the travel view, its blanket culled to the frustum');
   assert.match(w, /const snowOutside = \(box, x, y, z\) => aabbOutside\(_planes, box, x, y, z\);/, 'by the frame\'s own planes');
   assert.match(w, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground the snow reads is the one surfaceAt answers');
-  // PIN MOVED (SNOW-THREAD, 2026-10-26): the drawn ground's laws are systems/snowfall/snowGroundLaw.js's, which the snow's
-  // build worker reads too - scenes/snowGround.js hands its entries to them; the laws are pinned by behaviour in test/systems/snowthread.test.js
   assert.match(w, /bare: \(p, lx, lz\) => snowGroundBare\(p, lx, lz\),/, 'the carved sea is bare');
   assert.match(w, /height: \(p, lx, lz\) => snowGroundHeight\(p, !!host\.deepWaters, lx, lz\),/, 'the floor drawn there, the bed carved under a shore');
-  // PIN MOVED (BAY-LEFT-GROUND, D3): on the Bay Basic Roads' own network, or none; past the Bay TESA's own roads, by the
-  // painter's word (test/render/bayleftground_snow.test.js)
   assert.match(w, /const net = !inBay\(p\.px, p\.py\)\n\s*\? snowfallNetworkBeyond\(p\.px, p\.py, p\.paths\)\n\s*: raw\?\.source === 'basic-roads'\n\s*\? snowfallNetwork\(raw, p\.px, p\.py\)\n\s*: null;/, 'Basic Roads\' own network, or none');
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(host), /createSnowfallHost/, `${host}: none`);
 });
@@ -385,7 +378,7 @@ test('SNOWFALL1 the renderer\'s snow draw: the installed set\'s snow program, th
   assert.deepEqual(binds, ['d', 's', 'c', 'f', 'a'], 'dynamic, static, context, far, albedo');
   const order = log.map((c) => c[0] === 'enable' || c[0] === 'disable' ? `${c[0]}:${[...ids].find(([, v]) => v === c[1])?.[0]}` : c[0] === 'polygonOffset' ? `offset:${c[1]},${c[2]}` : c[0] === 'drawElements' ? 'draw' : null).filter(Boolean);
   // AUDIT ENVIRONS: the snow's own offset (SNOW_LAYER) round the draw and nothing else switched - its back faces culled
-  // as the ground's are; PIN MOVED (OWN-WORK4 AUDIT): our -0.5, -1 in place of the retired shader's -0.25, -0.25
+  // as the ground's are; PIN MOVED: our -0.5, -1 in place of the retired shader's -0.25, -0.25
   assert.deepEqual(order.slice(0, 4), ['enable:POLYGON_OFFSET_FILL', 'offset:-0.5,-1', 'draw', 'disable:POLYGON_OFFSET_FILL'], 'a step over the ground, the offset handed back');
   assert.ok(!order.includes('disable:CULL_FACE'), 'the cull left on');
   const generic = calls('vertexAttrib4f');

@@ -1,4 +1,4 @@
-// CSA-G (2026-09-27) - COME SAIL AWAY'S TIME AND SOUNDS: systems/comeSailAway/comeSailAway.js's time scale (the helm's three keys,
+// COME SAIL AWAY'S TIME AND SOUNDS: systems/comeSailAway/comeSailAway.js's time scale (the helm's three keys,
 // IncreaseTimeScale, DecreaseTimeScale, the enemies' gates, Update's unpause reset and Travel Options' isTravelActive),
 // the oars' three animation events through the rudder's listener, the two loops as Unity keeps them, UpdateAudioSource,
 // the sails' and the door's DFU clips - over the vendored hulls - and world/unityAnimator.js's clip events,
@@ -22,7 +22,7 @@ import { _setTimeScaleForTest } from '../../../src/systems/timeScale.js';
 import { logarithmicRolloff, plainSourceGain } from '../../../src/systems/audio.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const near = (a, b, eps = 1e-6, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b}`);
@@ -75,7 +75,7 @@ function scene(opts = {}) {
     cargoWeight: () => 0, sphereCastAll: () => [], enemies: () => [], messageBox: () => {},
     enemiesNearby: () => world.enemies,
     travelOptionsActive: () => world.travelling,
-    timeLocked: () => !!world.online,   // HELM-TIME-ONLINE
+    timeLocked: () => !!world.online,
     timeScale: () => world.timeScale,
     setTimeScale: (s) => { world.timeScale = s; out.timeScales.push(s); },
     soundVolume: () => opts.soundVolume ?? 1,
@@ -262,7 +262,7 @@ test('CSA-G: the oars\' events on the vendored Rowboat - rowing, its Rudder Rowi
   assert.ok(boat.OarParticles.every((p) => !p.isPlaying));
   calls.length = 0;
   s.rt.StartSailing(boat);
-  for (let i = 0; i < 60; i++) s.frame(i ? {} : { press: ['MoveForwards'] });   // HELM-LADDER: a rung up, her oars pulling ahead
+  for (let i = 0; i < 60; i++) s.frame(i ? {} : { press: ['MoveForwards'] });   // A rung up, her oars pulling ahead
   const names = calls.map((c) => c[0]);
   assert.ok(names.length >= 6, `${names}`);
   const cycle = ['OarEvent_Sweep', 'OarEvent_Out', 'OarEvent_In'];
@@ -287,7 +287,7 @@ test('CSA-G: the Trireme\'s strokes are heard - its rudder\'s own AudioSource (s
   assert.deepEqual([src.m_Volume, src.m_Pitch, src.MinDistance, src.MaxDistance], [1, 1.5, 1, 500]);
   assert.equal(src.panLevelCustomCurve.m_Curve[0].value, f(0.9), 'the spatial blend the port plays fully positional');
   s.rt.StartSailing(boat);
-  for (let i = 0; i < 40; i++) s.frame(i ? {} : { press: ['MoveForwards'] });   // HELM-LADDER: a rung up, her oars pulling ahead
+  for (let i = 0; i < 40; i++) s.frame(i ? {} : { press: ['MoveForwards'] });   // A rung up, her oars pulling ahead
   const heard = s.out.audio.filter((e) => e[0] === 'oneShot');
   assert.ok(heard.length >= 3, `${heard.length}`);
   for (const e of heard) {
@@ -422,9 +422,8 @@ test('CSA-G: the boat\'s bed is Roleplay Realism\'s - the Small Ship\'s and the 
   // the host's pick and arm (scenes/world.js), the modes' door (scenes/worldModes.js)
   const src = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   const pick = src.slice(src.indexOf('function csaActivationPick('), src.indexOf('const csaHoverName'));
-  const own = src.slice(src.indexOf('function csaActivationPick('), src.indexOf('function csaPeerActivationPick('));   // CSA-K: my boats' own pick, before another's (which reads the bed the same way)
+  const own = src.slice(src.indexOf('function csaActivationPick('), src.indexOf('function csaPeerActivationPick('));   // My boats' own pick, before another's (which reads the bed the same way)
   assert.match(own, /const bed = modelId == null && bedSleepingOn\(\) && csaCustomModelOf\(best\.hit\.node\?\.name, BED_MODELS\) != null;/);
-  // PIN MOVED (AUDIT PR478 C2): the helm's box under Steal keys its own ':steal' after the part - the bed's key unchanged
   assert.match(own, /:\$\{modelId \?\? \(bed \? 'bed' : 'hull'\)\}\$\{modelId === CSA_TRIGGER_MODEL\.drive && getInteractionMode\(\) === 'steal' \? ':steal' : ''\}`/);
   assert.match(own, /reach: bed \? DEFAULT_ACTIVATION_DISTANCE : CSA_ACTIVATION_DISTANCE,/);
   // CSA-J (the audit): the bed's press says it is one - BedActivation is the gate less its GiveOffer rung
@@ -451,7 +450,7 @@ test('CSA-G (the live probe): a crewed boat\'s helm borrows a ship (AssignShipTo
   assert.match(src, /const _sceneCache = \(\) => \(playerEntity\.sceneCache \?\?= createSceneCache\(\)\);/);
 });
 
-// ── HELM-TIME-ONLINE (2026-10-04, Mac: "Remove the time dial from ships online") ──────────────────────────────────────
+// ── HELM-TIME-ONLINE ──────────────────────────────────────
 
 test('HELM-TIME-ONLINE: online the helm\'s time dial is retired - each of the three keys says why and moves nothing, and the panel\'s state says there is no dial; offline the keys walk the steps as ever (mutants: the gate dropped, the line unsaid, the state\'s flag wrong)', () => {
   assert.deepEqual([...BOAT_TIME_ACTIONS], [BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);
@@ -466,7 +465,7 @@ test('HELM-TIME-ONLINE: online the helm\'s time dial is retired - each of the th
   assert.equal(on.rt.helmPanelState().timeDial, false, 'no dial to draw');
   const said = on.out.mid.length;
   on.frame();
-  assert.equal(on.out.mid.length, said, 'no key, no new line');   // AUDIT-A1: counted - the last line alone was the same line said every frame
+  assert.equal(on.out.mid.length, said, 'no key, no new line');   // Counted - the last line alone was the same line said every frame
   const off = scene();
   off.rt.StartSailing(off.place());
   off.frame({ press: [BOAT_ACTIONS.timeScaleUp] });
@@ -476,7 +475,7 @@ test('HELM-TIME-ONLINE: online the helm\'s time dial is retired - each of the th
 test('HELM-TIME-ONLINE: what ResetTimeScale is for besides the key stands online - another mod\'s scale (a journey\'s) is still put back when the helm\'s own reasons ask (mutant: the reset gated with the keys)', () => {
   const on = scene({ online: true });
   on.rt.StartSailing(on.place());
-  on.world.timeScale = 60;   // a journey's x60 under the boat (RATE-LAW), set by another mod
+  on.world.timeScale = 60;   // a journey's x60 under the boat, set by another mod
   on.rt.ResetTimeScale(false);
   assert.equal(on.world.timeScale, 1, 'the reset itself is not the dial');
 });

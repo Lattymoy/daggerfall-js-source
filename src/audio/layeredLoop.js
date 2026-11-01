@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 sound audit (2026-11-01): A BED IN LAYERS. One long bed played as two or three loops of lengths that share
+// OWN-WORK4 sound audit: A BED IN LAYERS. One long bed played as two or three loops of lengths that share
 // no factor - the bed itself and its events (a boat's slaps and creaks, the rain's eave drips) - started together, so
 // the whole comes round only after hours, in less memory than one loop of a minute. Not a DFU member.
 

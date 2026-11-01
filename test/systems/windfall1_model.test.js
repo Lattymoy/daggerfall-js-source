@@ -1,9 +1,6 @@
-// WINDFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be
-// on by default and integrate into our enhanced environments seamlessly") - WINDFALL 1.0.0 (demifiend000), ported off
-// its assembly (OWN-WORK4: its files left the tree; the settings it shipped are a literal below). THE MODEL: WindNaturalPlanner, WindRecordWeights and WindMod's state machine, pinned
-// against a C# reference that runs the decompiled method bodies themselves (the session's harness: WindCore.cs, the
-// planner's and the weights' own sources, System.Random) - two trace hashes and a table hash, float bits and all.
-// bible/07-Rendering/Windfall.md is the record.
+// WINDFALL 1.0.0 (demifiend000), ported off its assembly (OWN-WORK4: its files left the tree; the settings it shipped are a literal below). THE MODEL: WindNaturalPlanner,
+// WindRecordWeights and WindMod's state machine, pinned against a C# reference that runs the decompiled method bodies themselves (the session's harness: WindCore.cs, the planner's
+// and the weights' own sources, System.Random) - two trace hashes and a table hash, float bits and all. bible/07-Rendering/Windfall.md is the record.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -125,7 +122,7 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
   assert.equal(wild.windy.strength, 1.5);
   // every key the mod ships, under its section, with the mod's default and range, and our words; the mod's own
   // General.Enabled is the port's switch. OWN-WORK4: Windfall 1.0.0's modsettings.json as it shipped, held here as a
-  // literal - [default, min, max], a switch [default]. OWN-AUDIT (2026-11-01): the heading's offset is retired (below).
+  // literal - [default, min, max], a switch [default]. OWN-AUDIT: the heading's offset is retired (below).
   const SHIPPED = {
     'General.WindDirectionDegrees': [35, 0, 360], 'General.OverallWindyPeriodFrequency': [100, 0, 200],
     'General.NaturalWindstormFrequency': [100, 0, 200], 'General.GustFrequency': [100, 0, 200],
@@ -156,7 +153,7 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
     'Presentation.LeafAmount': [2.4, 0, 3], 'Presentation.AmbientLeafAmount': [1, 0, 3],
     'Presentation.SnowFlurriesEnabled': [true], 'Presentation.SnowFlurryAmount': [1, 0, 3],
   };
-  // PLAIN-TEXT (2026-10-19): the mod's lines spoke of crown displacement, billboard height and windy-period frequencies; each is said plainly for a player - their words, exactly
+  // PLAIN-TEXT: the mod's lines spoke of crown displacement, billboard height and windy-period frequencies; each is said plainly for a player - their words, exactly
   const PLAIN = {
     'General.OverallWindyPeriodFrequency': 'How often windy spells come overall. 100% is the mod’s normal rate.',
     'General.NaturalWindstormFrequency': 'How often a windy spell turns into a windstorm of 1 to 3 hours. At 100%, 8% of them do.',
@@ -214,7 +211,7 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
     'Presentation.SnowFlurryAmount': 'How much snow blows off the trees.',
   };
   let n = 0;
-  // OWN-AUDIT: General.WindDirectionDegrees retired - added to a heading rolled each day it chose no direction, and the
+  // General.WindDirectionDegrees retired - added to a heading rolled each day it chose no direction, and the
   // one wind sets the heading here; its shipped 35 stands in the daily heading (WINDFALL_HEADING_OFFSET), a stale save let go
   assert.equal(MOD_SETTINGS[WINDFALL_VENDOR].keys['General.WindDirectionDegrees'], undefined, 'retired');
   assert.ok(RETIRED_KEYS.some((r) => r.vendor === WINDFALL_VENDOR && r.key === 'General.WindDirectionDegrees'), 'and let go from a saved file');

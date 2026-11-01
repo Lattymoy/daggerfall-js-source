@@ -1,6 +1,4 @@
-// PCO1 - PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44, THE MOD, 1:1
-// (2026-09-12, Mac: "I want to implement this as our next integrated
-// mod. The goal is 1:1 with complete parity").
+// PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44, THE MOD, 1:1.
 //
 // What is pinned: the module ladder InitMod decides; Unity's half-to-
 // even round; every hit helper against a hand-worked cell of the C#;
@@ -35,19 +33,19 @@ import {
 import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, weaponAttackDamage } from '../../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
-import { weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipment.js';   // TWO-HANDS-SHIELD: the pieces as the builder mints them
+import { weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipment.js';   // The pieces as the builder mints them
 import { EQUIP_SLOTS, equipTableOf, _wearScaleForTests } from '../../src/systems/equip.js';
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../../src/systems/roleplayRealism/rrRealism.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { newMods } from '../../src/systems/entityMods.js';   // AUDIT SET P-M1: the port's points, as the fold writes them
 
-// BALANCE1: this file pins DFU's / the mod's own wear verbatim, so it runs the port's wear scale at 1 (test/systems/balance1.test.js pins the scale)
+// This file pins DFU's / the mod's own wear verbatim, so it runs the port's wear scale at 1 (test/systems/balance1.test.js pins the scale)
 _wearScaleForTests(1);
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ALL_ON = { Enabled: true, equipmentDamageEnhanced: true, fadingEnchantedItems: true, fixedStrengthDamageModifier: true, armorHitFormulaRedone: true, criticalStrikesIncreaseDamage: true, conditionBasedEffectiveness: true, softMaterialRequirements: true };
-// MM1: the OTHER mods' switches, as DFU's ModManager answers them - none loaded unless a test says so
+// The OTHER mods' switches, as DFU's ModManager answers them - none loaded unless a test says so
 const others = (o = {}) => (vendor, key) => o[`${vendor}/${key}`];
 const modsOf = (over = {}, other = others()) => pcaaoModules((k) => ({ ...ALL_ON, ...over })[k], other);
 const M = modsOf();
@@ -68,7 +66,7 @@ test('PCO1: InitMod\'s ladder - the dependent modules stand down with their pare
   assert.equal(modsOf({ equipmentDamageEnhanced: false }).fadingEnchantedItems, false, 'fading rides enhanced wear');
   const off = modsOf({ Enabled: false });
   assert.ok(Object.entries(off).every(([k, v]) => v === false), `nothing on: ${JSON.stringify(off)}`);
-  // MM1: the two arms Awake derives from OTHER mods read those mods' own switches - no compatibility switch of this mod's
+  // The two arms Awake derives from OTHER mods read those mods' own switches - no compatibility switch of this mod's
   assert.equal(modsOf({}, others({ 'meanerMonsters/Enabled': true })).meanerMonsters, true, 'Meaner Monsters on: the edit arm');
   assert.equal(modsOf({}, others({ 'roleplay-realism/Enabled': true, 'roleplay-realism/advancedArchery': true })).rolePlayRealismArchery, true, 'Roleplay Realism with advancedArchery: the archery arm');
   assert.equal(modsOf({}, others({ 'roleplay-realism/advancedArchery': true })).rolePlayRealismArchery, false, 'AUDIT 68: the switch of a mod that is not loaded is not read');
@@ -113,7 +111,6 @@ test('PCO1: the hit\'s helpers - armour, adrenaline, stat diffs, skills, adjustm
   const critter = mkPlayer({ skills: skillsAll(90) });
   assert.equal(pcaaoSkillsToHit(critter, dodger, fixed(0.1), modsOf({ criticalStrikesIncreaseDamage: false })), -25 + 30, 'without the module: the player rolls crit/3 (30) for +crit/3');
   const critMon = monster(0); critMon.skills = skillsAll(90);
-  // PIN MOVED (BAL2, bible/05-Combat/Balance-Arc.md section 4): one roll for every striker - a monster rolls the player's crit/3 for +crit/3
   assert.equal(pcaaoSkillsToHit(critMon, dodger, fixed(0.29), modsOf({ criticalStrikesIncreaseDamage: false })), -25 + 30, 'a monster rolls crit/3 (30) for +crit/3, as the player does');
   assert.equal(pcaaoSkillsToHit(critMon, dodger, fixed(0.3), modsOf({ criticalStrikesIncreaseDamage: false })), -25, 'and misses it over');
   assert.equal(pcaaoAdjustmentsToHit(mkPlayer({ biographyAvoidHitMod: 5 })), -55);
@@ -158,7 +155,6 @@ test('PCO1: CriticalStrikeHandler - luck bends the divisor, the clamp is discard
   assert.equal(pcaaoCriticalStrike(plain, fixed(0.24)), true, '50 luck: 100 / 4 = 25%');
   assert.equal(pcaaoCriticalStrike(plain, fixed(0.25)), false);
   const mon = monster(0); mon.skills = skillsAll(90); mon.stats = stats({ luck: 100 });
-  // PIN MOVED (BAL2, bible/05-Combat/Balance-Arc.md section 4): a monster rolls the player's divisor
   assert.equal(pcaaoCriticalStrike(mon, fixed(0.44)), true, 'a monster: 90 / (4 - 2) = 45%, as the player');
   assert.equal(pcaaoCriticalStrike(mon, fixed(0.45)), false);
 });
@@ -488,28 +484,28 @@ test('PCO1: the Meaner Monsters edit rides the row a foe is minted from, only un
   assert.equal(on.minHealth, 15); assert.equal(on.maxHealth, 35); assert.equal(on.armorValue, 6); assert.equal(on.maleTexture, base.maleTexture, 'the rest is the base row\'s');
   assert.equal(meanerMonstersRow(128 + 17, ENEMY_BASICS[128 + 17], true), ENEMY_BASICS[128 + 17], 'a class enemy is untouched');
   _resetModSettings();
-  setModSetting('pcaao', 'Enabled', true); setModSetting('meanerMonsters', 'Enabled', true);   // MM1: the other mod's OWN switch is the arm's condition
+  setModSetting('pcaao', 'Enabled', true); setModSetting('meanerMonsters', 'Enabled', true);   // The other mod's OWN switch is the arm's condition
   const rat = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(rat.basics.minHealth, 15, 'a minted rat carries the edit');
   assert.equal(rat.basics.maxHealth, 35, 'the overhaul\'s 35 over Ralzar\'s 25 - PCAAO Awakes after its dependency');
   assert.equal(rat.maxHealth, 25, 'Range(15, 36) at a half roll');
   setModSetting('meanerMonsters', 'Enabled', false);
   assert.equal(makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5).basics.maxHealth, ENEMY_BASICS[0].maxHealth, 'Meaner Monsters off: the overhaul\'s edit has no mod to edit');
-  _resetModSettings(); setModSetting('meanerMonsters', 'Enabled', false); setModSetting('pcaao', 'Enabled', false);   // MO1: both on by default now - "plain" is both off
+  _resetModSettings(); setModSetting('meanerMonsters', 'Enabled', false); setModSetting('pcaao', 'Enabled', false);   // Both on by default now - "plain" is both off
   const plain = makeEnemyEntity(0, ENEMY_BASICS[0], career(), 5, () => 0.5);
   assert.equal(plain.basics.minHealth, ENEMY_BASICS[0].minHealth);
 });
 
 test('PCO1: the seams - the Mods pane entry, the record, the shipped manifest and settings, worldTick\'s install, the bow\'s draw timer', () => {
   const m = MOD_SETTINGS.pcaao;
-  // OWN-WORK1 (2026-10-31): the shipped manifest's author and version and its modsettings' one section, `Modules` -
+  // The shipped manifest's author and version and its modsettings' one section, `Modules` -
   // the seven ToggleKeys, name and Value in order - written out when vendor/pcaao left the tree
   assert.equal(m.author, 'Kirk.O', 'the manifest\'s ModAuthor'); assert.equal(PCAAO_VERSION, '1.44', 'the manifest\'s ModVersion');
   const shipped = [
     ['equipmentDamageEnhanced', true], ['fadingEnchantedItems', true], ['fixedStrengthDamageModifier', true], ['armorHitFormulaRedone', true],
     ['criticalStrikesIncreaseDamage', true], ['conditionBasedEffectiveness', true], ['softMaterialRequirements', true],
   ].map(([Name, Value]) => ({ Name, Value }));
-  // PLAIN-TEXT (2026-10-19): the seven module lines (Title Case, "!!!!", a DFU version number) said plainly for a player - their words, exactly
+  // PLAIN-TEXT: the seven module lines (Title Case, "!!!!", a DFU version number) said plainly for a player - their words, exactly
   const PLAIN = {
     'equipmentDamageEnhanced': 'Your equipment wears out much faster, depending on its material, what hit it and more.',
     'fadingEnchantedItems': 'Enchanted weapons and armor are destroyed when they break in combat. Needs Equipment Damage Enhanced.',
@@ -532,7 +528,7 @@ test('PCO1: the seams - the Mods pane entry, the record, the shipped manifest an
   const pw = rd('src/combat/playerWeapon.js');
   // AUDIT 68 S08-bow-draw-time-wallclock: the draw is the machine's held ticks (GetAnimTime), written at every
   // release - the behaviour is pinned in audit68_combat_bf.test.js; here only that the three bow doors read it
-  assert.equal((pw.match(/this\.lastDrawMs = this\._bowAnimTimeMs\(\);/g) || []).length, 4, 'the drawn release, the instant shot, the touch button and a technique\'s loose');   // PIN MOVED (TECH1): techniqueStrike, a Volley's or a Piercing Shot's StrikeDown, writes it as the instant shot does
+  assert.equal((pw.match(/this\.lastDrawMs = this\._bowAnimTimeMs\(\);/g) || []).length, 4, 'the drawn release, the instant shot, the touch button and a technique\'s loose');
   assert.match(rd('src/combat/arrowFlight.js'), /weaponAnimTime: playerWeapon\?\.lastDrawMs \?\? 0,/, 'the arrow hands it to the formula');
   assert.match(rd('src/combat/formulas.js'), /const core = _overrides\.get\('calculateAttackDamage'\);/, 'the core is the registry\'s');
   assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{ const i = removeFrom\.indexOf\(item\); if \(i >= 0\) removeFrom\.splice\(i, 1\); \}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');
@@ -547,7 +543,7 @@ test('OWN-WORK1: the record of the retired vendor/pcaao is Own-Work.md\'s row - 
   assert.match(rd('bible/01-Overview/Own-Work.md'), /^\| `pcaao` \|.*1\.44.*Kirk\.O/m);
 });
 
-// ═══ AUDIT PCO1 (2026-09-12) - the 1:1 audit, method for method against
+// ═══ AUDIT PCO1 - the 1:1 audit, method for method against
 // the decompiled 1.44. Two findings, both pinned here.
 test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod registers AdjustWeaponHitChanceMod/AdjustWeaponAttackDamage whatever the armour module says (mutant: the hooks missing from formulas.js, or gated on armorHitFormulaRedone)', () => {
   uninstallPcaao();
@@ -559,7 +555,7 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   assert.equal(adjustWeaponAttackDamage(p, rat, 20, 100, bow), 20);
   // the mod on, its archery arm on, the REDONE FORMULA OFF: the stock core still bends the bow by its draw
   let read = { ...ALL_ON, armorHitFormulaRedone: false };
-  let rr = true;   // MM1: Roleplay Realism's own advancedArchery, read off the vendored mod (AUDIT 68)
+  let rr = true;   // Roleplay Realism's own advancedArchery, read off the vendored mod
   installPcaao({ read: (k) => read[k], other: (v, k) => (v === RR_VENDOR ? (k === 'Enabled' ? true : k === 'advancedArchery' ? rr : undefined) : undefined) });
   assert.equal(formulaOverride('calculateAttackDamage')(p, rat, {}), undefined, 'the redone core declines');
   assert.equal(adjustWeaponHitChanceMod(p, rat, 30, 100, bow), -10, 'a snap shot: -40');

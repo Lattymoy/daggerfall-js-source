@@ -7,7 +7,7 @@
 // the chest alone (MW-CAPE-RIGID, 2026-10-14 - it rode the spine and clavicles and hung over the thighs); worn by a
 // garment's name and dye, claiming no slot. And the two fits a body takes once it is assembled (formats/morrowind/mwCloakFit.js):
 // the cloak eased back over the armour under it, and stowed gear against it - slung gear over it, hip gear pitched
-// under it - pinned on our own scabbards (OWN-WORK4).
+// under it - pinned on our own scabbards.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -82,7 +82,7 @@ test('MW-CAPE-RIGID: the cloak is its object in the scene\'s placement (smoothed
   const rig = [{ name: 'P', from: [0, 0, 0], to: [0, 0, 10] }, { name: 'L', parent: 'P', from: [0, 0, 0], to: [0, 0, -40] }, { name: 'R', parent: 'P', from: [4, 0, 0], to: [4, 0, -40] }];
   assert.deepEqual(jointWeights([0, 0, -0.5], rig, { hang: { mode: 'over', root: 'P', legs: ['L', 'R'], top: -10, bottom: -40, share: 1, centre: 2 } }), [[['P', 1]]]);
   assert.deepEqual(jointWeights([0, 0, -0.5], rig).map((l) => l.map(([n]) => n).sort()), [['L', 'P']], 'the joint law alone blends into the leg there');
-  // AUDIT MW-CLOAK: nor as a parent's blend - a bone hung under a leg (a calf) takes the vertex at its own origin, and
+  // Nor as a parent's blend - a bone hung under a leg (a calf) takes the vertex at its own origin, and
   // the leg comes in by the hang alone, once: its weight the hang's share exactly
   const deep = [...rig, { name: 'LC', parent: 'L', from: [-3, 0, -40], to: [-3, 0, -80] }];
   const [list] = jointWeights([-3, 0, -40.5], deep, { hang: { mode: 'over', root: 'P', legs: ['L', 'R'], top: -10, bottom: -60, share: 0.5, centre: 2 } });
@@ -177,7 +177,7 @@ test('MW-CAPE-RIGID: through the binder on retail\'s rig the cloak moves with th
 test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauldrons through its shoulders, then behind it in every pose; the cloak\'s batch replaced, never written into', async () => {
   const asm = await body(ARMOR_MATERIAL.Ebony);
   const before = through(asm, isUnder);
-  assert.ok(before > 0.05, `the ebony pauldrons stand ${before.toFixed(2)} through the cloak as baked`);   // PIN MOVED (MW-CAPE-RIGID): 2.6 hung over the spine and clavicles, 1.3 on the chest alone; OWN-WORK4: 0.1 on our biped, its shoulders let down and forward
+  assert.ok(before > 0.05, `the ebony pauldrons stand ${before.toFixed(2)} through the cloak as baked`);
   const cloak = asm.pieces.find(isCloak);
   const baked = cloak.batch.positions; const copy = Float32Array.from(baked);
   const fit = fitCloakOver(asm, { isCloak, isUnder });
@@ -209,7 +209,7 @@ test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauld
   const skin = { ...b.skin, bones: b.skin.bones.map((x) => ({ ...x, indices: [...x.indices, ...Array.from(x.indices, (i) => i + n)], weights: [...x.weights, ...x.weights] })) };
   c.batch = { ...b, positions: pos, indices: idx, skin, normals: null }; c.indices = idx; c.positions = new Float32Array(pos.length); c.normals = null;
   poseAssembly(folded);
-  assert.ok(through(folded, isUnder) > 0.05, 'the folded cloak\'s front layer as pierced as the plain one');   // PIN MOVED (MW-CAPE-RIGID): 1.3, as the plain one; OWN-WORK4: 0.1 on our biped
+  assert.ok(through(folded, isUnder) > 0.05, 'the folded cloak\'s front layer as pierced as the plain one');
   fitCloakOver(folded, { isCloak, isUnder });
   poseAssembly(folded);
   assert.ok(through(folded, isUnder) <= 0, 'both layers behind the pauldrons');
@@ -219,12 +219,12 @@ test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauld
 });
 
 test('MW-CLOAK1: stowed gear against the cloak, on our own scabbards - the greatsword and the bow slung OVER it, the longsword pitched UNDER it, the dagger left as it hangs; none through it', async () => {
-  const GEAR = ['claymore', 'bow', 'glassLongsword', 'dagger'];   // OWN-WORK4: the long glass blade, whose tip reaches the cloak's side
+  const GEAR = ['claymore', 'bow', 'glassLongsword', 'dagger'];   // The long glass blade, whose tip reaches the cloak's side
   const asm = await body(ARMOR_MATERIAL.Steel, GEAR);
   fitCloakOver(asm, { isCloak, isUnder });
   poseAssembly(asm);
   const gearAt = (bone) => asm.pieces.filter((p) => isGear(p) && p.bone === bone);
-  // OWN-WORK4: our greatsword lies against the back, wholly under the cloak; our bow comes through it (32 edges)
+  // Our greatsword lies against the back, wholly under the cloak; our bow comes through it (32 edges)
   assert.equal(crossings(asm, (p) => gearAt('Bip01 LongBladeTwoClose').includes(p)), 0, 'the greatsword under the cloak as ours slings it');
   assert.ok(crossings(asm, (p) => gearAt('Bip01 MarksmanBow').includes(p)) > 20, 'the bow through the cloak as ours slings it');
   assert.ok(crossings(asm, (p) => gearAt('Bip01 LongBladeOneHand').includes(p)) > 0, 'the longsword\'s tip through its side');
@@ -238,7 +238,7 @@ test('MW-CLOAK1: stowed gear against the cloak, on our own scabbards - the great
   ]);
   assert.ok(by['Bip01 LongBladeTwoClose'].by < 10 && Math.abs(by['Bip01 LongBladeTwoClose'].deg) <= SLUNG_PITCH_LIMIT, `the greatsword lies along the cloak - ${by['Bip01 LongBladeTwoClose'].by.toFixed(1)} back, turned ${by['Bip01 LongBladeTwoClose'].deg}`);
   assert.ok(by['Bip01 MarksmanBow'].by < 10);
-  assert.ok(by['Bip01 LongBladeOneHand'].by >= 2 && by['Bip01 LongBladeOneHand'].by <= 10, `the longsword nearer plumb by ${by['Bip01 LongBladeOneHand'].by} degrees`);   // OWN-WORK4: 3 on ours
+  assert.ok(by['Bip01 LongBladeOneHand'].by >= 2 && by['Bip01 LongBladeOneHand'].by <= 10, `the longsword nearer plumb by ${by['Bip01 LongBladeOneHand'].by} degrees`);   // 3 on ours
   assert.equal(gearAt('Bip01 ShortBladeOneHand')[0].source, dagger, 'the dagger untouched');
   assert.deepEqual(Array.from(sword), Array.from(swordCopy), 'a moved source is replaced, never written into');
   // the pitched sword's normals turned with it: each still meets its vertex's edges at the angle it did

@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31; the owner: "A proper 1 to 1 recreation for everything"): Roleplay & Realism: Items' pictures
-// are ours (systems/roleplayRealismItems/rriArt.js) - every name, size and doll place the release used, the picture
-// drawn by our recipes over Daggerfall's matching paper-doll record, the Short Flail painted whole. CI has no ARENA2, so
-// the painter is pinned on made-up records; with ARENA2_PATH every picture is built from the player's own files.
+// Roleplay & Realism: Items' pictures are ours (systems/roleplayRealismItems/rriArt.js) - every name, size and doll
+// place the release used, the picture drawn by our recipes over Daggerfall's matching paper-doll record, the Short Flail
+// painted whole. CI has no ARENA2, so the painter is pinned on made-up records; with ARENA2_PATH every picture is built
+// from the player's own files.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

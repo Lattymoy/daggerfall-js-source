@@ -304,8 +304,8 @@
   {
     "name": "HOME-LOOK-the-home-merged",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
-    "new": "          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
+    "old": "          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { addStatic(cpu, local, climateFree); entry._batched = true; }   // The remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out",
+    "new": "          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { addStatic(cpu, local, climateFree); entry._batched = true; }   // The remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out",
     "tests": [
       "test/net/homelook.test.js"
     ]
@@ -671,8 +671,8 @@
   {
     "name": "HOME-LOOK-the-builds-version-spent",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (homeTown) host._homeLookV = -1;",
-    "new": "    if (homeTown) void 0;",
+    "old": "    if (homeTown) host._homeLookV = -1;   // A town's pixel stood after the registry moved is painted by the next refresh",
+    "new": "    if (homeTown) void 0;   // A town's pixel stood after the registry moved is painted by the next refresh",
     "tests": [
       "test/net/homelook.test.js"
     ]

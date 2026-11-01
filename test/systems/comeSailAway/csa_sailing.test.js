@@ -1,4 +1,4 @@
-// CSA-D (2026-09-27) - COME SAIL AWAY'S HELM: systems/comeSailAway/comeSailAway.js's sailing half - StartSailing, StopSailing and
+// COME SAIL AWAY'S HELM: systems/comeSailAway/comeSailAway.js's sailing half - StartSailing, StopSailing and
 // its delayed coroutine, Update's oar arm and LateUpdate's move, CheckCollision's two sweeps, the cargo's weight, the
 // beaching and the turns, FixedUpdate's enemies riding a hull, the seven activations and the events that end a sail.
 // The runtime runs over the vendored hulls (the real SpawnBoat) and a scripted scene; every expectation is worked out
@@ -15,12 +15,12 @@ import {
   mathfMoveTowards, mathfClamp, yawOfForward, PASSENGERS_ABOARD_TEXT, NICE_BOAT_TEXT, boardPlaceOf, carriedPoint, yawDelta,
   IRONS_TELL_DEG, IRONS_TELL_WAY, IRONS_TELL_S, IRONS_TEXT, OAR_RUNG_TEXT, OAR_ASTERN_TEXT,
 } from '../../../src/systems/comeSailAway/comeSailAway.js';
-import { helmButtons, helmHint, helmSpeedText, KNOTS_PER_MPS } from '../../../src/ui/enhanced/enhancedHelm.js';   // HELM-LADDER: the sails' button is the toggle, the line the ladder - HELM-SPEED: her way
+import { helmButtons, helmHint, helmSpeedText, KNOTS_PER_MPS } from '../../../src/ui/enhanced/enhancedHelm.js';   // The sails' button is the toggle, the line the ladder - HELM-SPEED: her way
 import { animatorOf } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { quatRotate, quatAngleAxis } from '../../../src/world/quat.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
@@ -66,7 +66,7 @@ function scene(opts = {}) {
     playerTerrain: () => terrains[0],
     terrainAt: (x, y) => terrains.find((t) => t.mapPixelX === x && t.mapPixelY === y) ?? null,
     terrains: () => terrains,
-    heightMapValue: opts.heightMapValue ?? (() => 255),   // CSA-F: WOODS.WLD all land - the waves lay nothing, and cast no ray
+    heightMapValue: opts.heightMapValue ?? (() => 255),   // WOODS.WLD all land - the waves lay nothing, and cast no ray
     worldCompensation: () => [0, 0, 0],
     hudText: (t) => out.hud.push(t),
     midScreenText: (t, s) => out.mid.push([t, s]),
@@ -76,7 +76,7 @@ function scene(opts = {}) {
     persistentDungeonBoats: () => false,
     packedItems: { serialize: (items) => items.map((it) => ({ ...it })), deserialize: (records) => records.map((it) => ({ ...it })) },
     dt: () => 0.25,
-    setting: (key) => ({ 'Waves.Enable': false, ...opts.settings })[key],   // CSA-F: the helm measured with no current - FixedUpdate writes none with the waves off (csa_waves pins it)
+    setting: (key) => ({ 'Waves.Enable': false, ...opts.settings })[key],   // The helm measured with no current - FixedUpdate writes none with the waves off (csa_waves pins it)
     input,
     helm: {
       setPlayerPosition: (p) => { player.position = [...p]; },
@@ -97,7 +97,7 @@ function scene(opts = {}) {
     timeScale: () => timeScale,
     setTimeScale: (s) => { timeScale = s; out.timeScales.push(s); },
     messageBox: (t) => out.boxes.push(t),
-    // CSA-H: PackBoat is the runtime's now - its parts item minted here and handed to the pack
+    // PackBoat is the runtime's now - its parts item minted here and handed to the pack
     items: { create: (templateIndex) => ({ group: 'UselessItems2', templateIndex, name: templateIndex === 1320 ? 'Parts of' : 'Deed to', message: 0, UID: 900 + out.packed.length }), addToPlayer: (item) => out.packed.push(item) },
   };
   const rt = createComeSailAwayRuntime(deps);
@@ -256,7 +256,7 @@ test('CSA-D: the turns - right is TurnTarget 1 at turnSpeedOar 20 by turnAccelOa
   s.terrains[0].tileMap.fill(0);
   s.held.clear(); s.held.add('MoveForwards');
   s.rt.state.CurrentBoat.NodeTileMapIndices = n;
-  // HELM-LADDER: the oars' rung the keys name - pulling ahead, backing water, else at rest
+  // The oars' rung the keys name - pulling ahead, backing water, else at rest
   const target = (nodes, keys) => { s.held.clear(); for (const k of keys) s.held.add(k); s.rt.state.oarThrottle = keys.includes('MoveForwards') ? 1 : keys.includes('MoveBackwards') ? -1 : 0; s.rt.state.lastBoatPosition = boat.GameObject.position; s.rt.state.lastBoatDirection = forwardOf(boat.GameObject); n.splice(0, 5, ...nodes); s.rt.update(); return [...s.rt.state.MoveVectorTarget]; };
   assert.deepEqual(target([1, 0, 0, 0, 0], ['MoveForwards']), [0, 0, 0], 'the centre off water refuses forward');
   assert.deepEqual(target([0, 1, 0, 0, 0], ['MoveForwards']), [0, 0, 1], '...the bow does not');
@@ -288,7 +288,7 @@ test('CSA-D: CheckCollision - two sweeps of the half-beam along the hull; each c
   other = boat.GameObject;
   s.rt.StartSailing(boat);
   // the sweep: from the hull collider's world centre, radius its mesh's half-beam, the length between the ends' spheres
-  const local = MODELS.meshes['own:skiff:hull:collider'].aabb; // OWN-WORK4: our large boat's hull collider
+  const local = MODELS.meshes['own:skiff:hull:collider'].aabb; // Our large boat's hull collider
   const c0 = s.out.casts[0];
   assert.ok(close(c0.r, local.extent[0], 1e-6), 'radius = sharedMesh.bounds.extents.x');
   assert.ok(close(c0.dist, local.extent[2] - local.extent[0], 1e-4), 'length = extents.z - x: her own end (FIELD BUGS 2026-10-02b ROCK-REACH, a departure - the C#\'s reached twice that, half a hull past her end)');
@@ -916,8 +916,7 @@ test('CSA-K: the laws another player\'s boat shares with mine, one export each -
   assert.equal(yawDelta(before, turned), 90);
 });
 
-// ── HELM-KEYS (2026-09-29, the player: "Arrow keys should not only control your ship, but also setting and raising your
-// sails. I also want to find a way to make the ship controls more intuitive") ─────────────────────────────────────────
+// ── HELM-KEYS ─────────────────────────────────────────
 
 const stowed = (sail) => animatorOf(sail).GetBool('Stowed');
 
@@ -1001,15 +1000,12 @@ test('HELM-LADDER the world\'s seam by source: W and S are pressed through the f
   const keyOf = (a) => ({ MoveForwards: 'W', MoveBackwards: 'S', MoveLeft: 'A', MoveRight: 'D', BoatSailUp: '↑', BoatSailDown: '↓', TurnLeft: '←', TurnRight: '→' })[a] ?? '';
   assert.equal(helmHint({ hasSails: true }, { keyOf, mouseFree: true }), 'Oars & sails W S ↑ ↓ · Steer A D ← →');
   assert.equal(helmHint({ hasSails: false }, { keyOf, mouseFree: true }), 'Oars W S ↑ ↓ · Steer A D ← →', 'a rowboat\'s ladder is her oars');
-  // PIN MOVED (FIELD BUGS 2026-10-21d PASSAGE-HANDS): the panel's and the pad's taps stand down with them - the journey's are its hand's
   assert.match(w, /started: \(action\) => !\(travelView\?\.active && \[CSA_BOAT_ACTIONS\.sailUp, CSA_BOAT_ACTIONS\.sailDown, CSA_BOAT_ACTIONS\.toggleSail, 'MoveForwards', 'MoveBackwards'\]\.includes\(action\)\) && \(pressed\(latch\.edge, keys, action\) \|\| csaHelmInput\.edges\.has\(action\)\),/);
 });
 
 test('HELM-KEYS in irons: her sails up, her bow within IRONS_TELL_DEG of the wind\'s eye and her way under IRONS_TELL_WAY for IRONS_TELL_S running - the helm is told once how she comes out, again only after she has been out of them; the panel says it while it lasts; a sail just raised is not lying in irons (mutants: told every frame, told at once, the wind\'s sense reversed, the way unread)', () => {
-  // PIN MOVED (AUDIT NAV2 F15): under the mod's own default waves, the sea's current never forced away - it rides in her
-  // velocity (half the wind), and her way through the water is what is read
   const s = scene({ settings: { 'Waves.Enable': true } });
-  // AUDIT FB1029d B4: a hull with a hold - the Classic helm's Carrack has none (her mod nought), a dead hull no oar or
+  // A hull with a hold - the Classic helm's Carrack has none (her mod nought), a dead hull no oar or
   // rudder moves, so she is never told to row out of irons
   const boat = s.place(4, 0);
   boat.modifierCargoThreshold = 3;
@@ -1018,7 +1014,7 @@ test('HELM-KEYS in irons: her sails up, her bow within IRONS_TELL_DEG of the win
   const lie = (seconds) => { for (let t = 0; t < seconds; t += 0.25) { s.rt.state.windVectorCurrent = ahead; s.frame(); } };
   const told = () => s.out.hud.filter((t) => t === IRONS_TEXT).length;
   s.rt.state.windVectorCurrent = ahead;
-  s.frame({ press: [BOAT_ACTIONS.toggleSail] });   // HELM-LADDER: the toggle raises her sails from her oars at rest
+  s.frame({ press: [BOAT_ACTIONS.toggleSail] });   // The toggle raises her sails from her oars at rest
   assert.equal(s.out.hud.at(-1), 'Sail raised!', 'a sail just raised into the wind: not yet in irons');
   assert.equal(s.rt.helmPanelState().inIrons, false);
   lie(IRONS_TELL_S - 0.5);

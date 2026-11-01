@@ -322,7 +322,7 @@ test('DOOR-VOID with ARENA2: every house a player can own in Daggerfall\'s own b
     for (let i = 0; i < blocks.count; i++) { const n = blocks.getBlockName(i); if (/\.RMB$/i.test(n ?? '')) classic.push(n); }
     await sweep('classic', classic, (n) => blocks.getBlock(blocks.getBlockIndex(n)));
   });
-  assert.deepEqual({ rooms, doors }, { rooms: 5898, doors: 20800 });   // OWN-WORK3: Daggerfall's own blocks alone (both packs' and Daggerfall's were 10,439 and 30,831)
+  assert.deepEqual({ rooms, doors }, { rooms: 5898, doors: 20800 });   // Daggerfall's own blocks alone (both packs' and Daggerfall's were 10,439 and 30,831)
   assert.deepEqual(sealed.filter((s) => !s.startsWith('classic:')), [], 'OWN-WORK3: no town pack is swept now');
   // Daggerfall's own: fifty, every one in a block no location of MAPS.BSA places
   assert.deepEqual(sealed.filter((s) => s.startsWith('classic:')).map((s) => s.slice('classic:'.length)), [

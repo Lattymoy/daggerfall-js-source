@@ -1,10 +1,10 @@
 // @ts-check
-// OWN-WORK2 (2026-10-31, bible/03-World/Roads.md): THE BAY'S RIVERS AND STREAMS, our own law. The land drains: every
-// pixel's water runs to the sea or off the map's edge by the least climb (a priority flood over the heights), and a
-// pixel that gathers the water of `riverArea` pixels carries a river, of `streamArea` a stream. A byte of WOODS.WLD is
-// 8 m, so a terrace drains along the folds of a smooth noise under one byte (`relief`). Pure and in one order: every
-// client draws the same rivers from the same heights. Basic Roads' compass (roadNetwork.js DIR_DELTA): each step's two
-// pixels carry the bit toward the other, as the roads' do.
+// THE BAY'S RIVERS AND STREAMS, our own law. The land drains: every pixel's water runs to the sea or off the map's
+// edge by the least climb (a priority flood over the heights), and a pixel that gathers the water of `riverArea`
+// pixels carries a river, of `streamArea` a stream. A byte of WOODS.WLD is 8 m, so a terrace drains along the folds of
+// a smooth noise under one byte (`relief`). Pure and in one order: every client draws the same rivers from the same
+// heights. Basic Roads' compass (roadNetwork.js DIR_DELTA): each step's two pixels carry the bit toward the other, as
+// the roads' do.
 import { DIR_DELTA } from './roadNetwork.js';
 
 export const RIVER_DIALS = Object.freeze({

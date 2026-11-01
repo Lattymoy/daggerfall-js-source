@@ -1,8 +1,9 @@
 # Meaner Monsters
 
 Ralzar's DFU mod Meaner Monsters 1.5.2 (MIT), ported 1:1: it buffs many monsters and weakens rats, bats and zombies,
-and rescales some monster sprites. The player meets it as tougher foes; it is on by default in the Mods pane. The
-vendored data and provenance are under `vendor/meanerMonsters/`.
+and rescales some monster sprites. The player meets it as tougher foes; it is on by default in the Mods pane. Our
+code is the record: `test/characters/enemy/meanerMonsters.test.js` holds the forty-six scales as a literal table, and
+the release's provenance is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -17,12 +18,12 @@ vendored data and provenance are under `vendor/meanerMonsters/`.
   doors: mobile units and street people through the mobile door, which scales every record; static billboards
   (corpses, loot, flats) through the static door, which scales only a record with an imported texture, as DFU does.
 - **With other mods.** With the Physical Combat overhaul (PCAAO) on, its edit is applied over Meaner Monsters' row, so
-  its values win wherever both write. With Daggerfall Enemy Expansion loaded, MUDEX stands in for this mod and its own
-  rows and scales stand aside (`meanerMonstersAlone`, `Enemy-Expansion.md`).
+  its values win wherever both write. With Daggerfall Enemy Expansion loaded, our own meaner monsters for it stand in
+  for this mod and its own rows and scales stand aside (`meanerMonstersAlone`, `Enemy-Expansion.md`).
 
 ## Rules
 
-- Integrated 1:1, and there are no compatibility switches between mods: a mod reads another vendored mod's own switch
+- Integrated 1:1, and there are no compatibility switches between mods: a mod reads another mod's own switch
   (`modSettingIfDeclared`) (Mac).
 - Every mod is enabled by default (Mac).
 - Kept bug for bug: four rows carry id 35, so the last (the Ice row) is what the Fire Atronach ends with and 36-38 are

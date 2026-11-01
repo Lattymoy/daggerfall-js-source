@@ -427,8 +427,8 @@
   {
     "name": "GUIDE4-row-default-off",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: false, online: 'player' }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),   // ui/quest/questTracker.js TRACKER_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: false, online: 'player' }),   // ui/quest/questTracker.js TRACKER_PREF",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js",
       "test/systems/features.test.js"
@@ -437,8 +437,8 @@
   {
     "name": "GUIDE4-row-forced-online",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: true }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),   // ui/quest/questTracker.js TRACKER_PREF",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: true }),   // ui/quest/questTracker.js TRACKER_PREF",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js",
       "test/systems/features.test.js"

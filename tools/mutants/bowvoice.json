@@ -20,8 +20,8 @@
   {
     "name": "BOWVOICE-the-arms-twang-at-the-click",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        if (ev === 'bowSound') { _heldSound = true; continue; }\n",
-    "new": "        if (ev === 'bowSound') { out.push(ev); continue; }\n",
+    "old": "        if (ev === 'bowSound') { _heldSound = true; continue; }",
+    "new": "        if (ev === 'bowSound') { out.push(ev); continue; }",
     "tests": [
       "test/systems/bowvoice.test.js"
     ]

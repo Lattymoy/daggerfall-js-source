@@ -74,8 +74,8 @@
   {
     "name": "VC6a-the-zones-variation-is-never-uploaded",
     "file": "src/render/volumetricClouds.js",
-    "old": "    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a",
-    "new": "    gl.uniform1f(u.uDark, p.dark);   // VC6a",
+    "old": "    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);",
+    "new": "    gl.uniform1f(u.uDark, p.dark);",
     "tests": [
       "test/render/weather2c_cloudcells.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "VC6a-the-variation-is-dropped-from-the-eased-profile",
     "file": "src/render/volumetricClouds.js",
-    "old": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];",
-    "new": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];",
+    "old": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];   // `vary` eases with the rest",
+    "new": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];   // `vary` eases with the rest",
     "tests": [
       "test/render/volumetricClouds.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "VC6b-the-controller-hands-the-light-no-slab",
     "file": "src/render/volumetricClouds.js",
-    "old": "    const light = cloudLight(s, p);   // VC6b:",
-    "new": "    const light = cloudLight(s);   // VC6b:",
+    "old": "    const light = cloudLight(s, p);   // The slab it falls on decides how far past the horizon it reaches",
+    "new": "    const light = cloudLight(s);   // The slab it falls on decides how far past the horizon it reaches",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "VC6b-the-tint-turns-the-exposure-up-instead-of-the-hue",
     "file": "src/render/volumetricClouds.js",
-    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
-    "new": "vec3 hue(vec3 c) { return c * 2.0; }",
+    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
+    "new": "vec3 hue(vec3 c) { return c * 2.0; }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "VC6b-the-zenith-never-reaches-the-march",
     "file": "src/render/volumetricClouds.js",
-    "old": "      gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b:",
-    "new": "      gl.uniform3fv(u.uSkyTint, s.horizon);   // VC6b:",
+    "old": "      gl.uniform3fv(u.uSkyTint, s.zenith);   // The sky that lights the side the sun does not",
+    "new": "      gl.uniform3fv(u.uSkyTint, s.horizon);   // The sky that lights the side the sun does not",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "VC6c-a-missing-deck-uploads-an-amount-that-shadows",
     "file": "src/render/airPass.js",
-    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]); // VC6c: no cloud field - amount 0, full sun",
-    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]); // VC6c: no cloud field - amount 0, full sun",
+    "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]); // No cloud field - amount 0, full sun",
+    "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]); // No cloud field - amount 0, full sun",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "VC6d-the-band-gate-is-taken-on-the-clamped-height-so-it-never-fires",
     "file": "src/render/volumetricClouds.js",
-    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n",
-    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n",
+    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);",
+    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "VC6d-the-march-never-strides-over-empty-air",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }",
-    "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }",
+    "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }   // VC7c: a stride only on a zero that holds for one",
+    "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }   // VC7c: a stride only on a zero that holds for one",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "VC6b-the-dusk-weight-is-taken-off-the-LIGHTs-direction-not-the-suns",
     "file": "src/render/volumetricClouds.js",
-    "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b:",
-    "new": "      gl.uniform1f(u.uDusk, duskWeight(light.dir[1], light.day));   // VC6b:",
+    "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // The SUN's own angle and weight - zero at night, so the whole slice is off",
+    "new": "      gl.uniform1f(u.uDusk, duskWeight(light.dir[1], light.day));   // The SUN's own angle and weight - zero at night, so the whole slice is off",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "VC6b-a-colour-with-no-light-in-it-lends-a-BLACK-tint",
     "file": "src/render/volumetricClouds.js",
-    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
-    "new": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(0.0); }",
+    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
+    "new": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(0.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "VC6b-the-dusk-weight-never-reaches-the-march",
     "file": "src/render/volumetricClouds.js",
-    "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off\n",
-    "new": "",
+    "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // The SUN's own angle and weight - zero at night, so the whole slice is off\n      gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);",
+    "new": "      gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]

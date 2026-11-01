@@ -1,4 +1,4 @@
-// L10N5 (2026-10-03): SAVES HOLD THE GAME'S OWN WORDS, AND EACH LANGUAGE READS ITS OWN AGAIN AFTER A LOAD. DFU saves
+// SAVES HOLD THE GAME'S OWN WORDS, AND EACH LANGUAGE READS ITS OWN AGAIN AFTER A LOAD. DFU saves
 // what a translation replaced - a quest begun in French is saved in French and stays French in English (L10N3c recorded
 // it as owed). The port saves the source and renders the language when the text is read:
 //   - A QUEST'S MESSAGES (quest/message.js localize, quest/quest.js getMessage): a translation's lines are read in
@@ -24,7 +24,6 @@ const V = join(ROOT, 'vendor/dfu-quests/Tables');
 const tables = {};
 for (const f of readdirSync(V)) if (f.endsWith('.txt')) tables[f.replace('.txt', '')] = readFileSync(join(V, f), 'utf8').replace(/^﻿/, '');
 loadQuestTables(tables);
-// PIN MOVED (OWN-WORDS2): the quest as the pack reads it - S0000977 speaks our own words now (test/qlSources.mjs)
 const questLines = (name) => baseText(name).split(/\r?\n/);
 
 const LOC = ['Quest: S0000977', 'DisplayName: La Malédiction de Daggerfall', 'QRC:', '',
@@ -77,7 +76,7 @@ test('L10N5 a quest saved in French loads in each language\'s words: its own Dis
   quest.localizeDisplayName('');
   assert.equal(quest.displayName, 'Curse of Daggerfall', 'no translated name: its own');
   quest.localizeDisplayName('La Malédiction de Daggerfall');
-  assert.match(saved.messages.find((x) => x.id === 1005).lines.join('\n'), /The dead walk in Daggerfall's streets after dark\./, 'its own words in the save');   // PIN MOVED (OWN-WORDS2)
+  assert.match(saved.messages.find((x) => x.id === 1005).lines.join('\n'), /The dead walk in Daggerfall's streets after dark\./, 'its own words in the save');
   assert.doesNotMatch(JSON.stringify(saved), /spectres|Malédiction/, 'no French anywhere in the quest\'s save');
 
   const restoreIn = (code) => {
@@ -88,7 +87,7 @@ test('L10N5 a quest saved in French loads in each language\'s words: its own Dis
   };
   const en = restoreIn('en');
   assert.equal(en.displayName, 'Curse of Daggerfall');
-  assert.match(text(en.getMessage(1005)), /The dead walk in Daggerfall/);   // PIN MOVED (OWN-WORDS2)
+  assert.match(text(en.getMessage(1005)), /The dead walk in Daggerfall/);
   const fr = restoreIn('fr');
   assert.equal(fr.displayName, 'La Malédiction de Daggerfall', 'loaded in French: named in French again');
   assert.match(text(fr.getMessage(1005)), /Des spectres errent/);

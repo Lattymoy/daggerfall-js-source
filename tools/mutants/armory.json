@@ -544,8 +544,8 @@
   {
     "name": "ARMORY-the-world-body-reads-at-the-sets-scale",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "{ arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }",
-    "new": "{ arms: spriteArmsSeen(s.view) }",
+    "old": "      return { w: width, h: height, marks: spriteMarks(withoutShield(px, img.shield, width, height, s.mirror), width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, img.held, width, height, s.mirror), heldOff: heldGlowPx(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)",
+    "new": "      return { w: width, h: height, marks: spriteMarks(withoutShield(px, img.shield, width, height, s.mirror), width, height, { arms: spriteArmsSeen(s.view) }), held: heldGlowPx(px, img.held, width, height, s.mirror), heldOff: heldGlowPx(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)",
     "tests": [
       "test/render/armory.test.js"
     ]

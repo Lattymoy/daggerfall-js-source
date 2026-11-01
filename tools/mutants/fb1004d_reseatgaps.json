@@ -52,8 +52,8 @@
   {
     "name": "RESEAT-GAPS-the-pin-forgets-it",
     "file": "src/systems/layoutPins.js",
-    "old": "    const s = site?.unseated ? { ...site, ...site.unseated } : site; // FIELD BUGS 2026-10-04d RESEAT-GAPS: an unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)",
-    "new": "    const s = site; // FIELD BUGS 2026-10-04d RESEAT-GAPS: an unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)",
+    "old": "    const s = site?.unseated ? { ...site, ...site.unseated } : site; // An unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)",
+    "new": "    const s = site; // An unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)",
     "tests": [
       "test/systems/quest/fb1004d_reseatgaps.test.js"
     ],

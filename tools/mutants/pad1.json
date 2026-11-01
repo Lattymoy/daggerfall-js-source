@@ -47,7 +47,7 @@
   {
     "name": "PAD1-C-cleared-row-resurrected",
     "file": "src/systems/inputActions.js",
-    "old": "  if (!primary && store.removedSecondary.has(action)) return;   // PAD1",
+    "old": "  if (!primary && store.removedSecondary.has(action)) return;",
     "new": "",
     "tests": [
       "test/ui/pad1.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "PAD1-C-full-reset-keeps-the-mark",
     "file": "src/systems/inputActions.js",
-    "old": "    store.removedSecondary.clear();   // PAD1: a full reset forgets the pad marks too, and refills below",
+    "old": "    store.removedSecondary.clear();   // A full reset forgets the pad marks too, and refills below",
     "new": "",
     "tests": [
       "test/ui/pad1.test.js"
@@ -65,7 +65,7 @@
   {
     "name": "PAD1-C-mark-not-saved",
     "file": "src/systems/inputActions.js",
-    "old": "    removedSecondaryActions: [...store.removedSecondary],   // PAD1",
+    "old": "    removedSecondaryActions: [...store.removedSecondary],",
     "new": "    removedSecondaryActions: [],",
     "tests": [
       "test/ui/pad1.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "PAD1-C-mark-loads-on-the-primary-law",
     "file": "src/systems/inputActions.js",
-    "old": "      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;\n      if (!bound) store.removedSecondary.add(action);",
-    "new": "      for (const [, a] of dictEntries(store, true)) if (a === action) bound = true;\n      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;\n      if (!bound) store.removedSecondary.add(action);",
+    "old": "      let bound = false;\n      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;",
+    "new": "      let bound = false;\n      for (const [, a] of dictEntries(store, true)) if (a === action) bound = true;\n      for (const [, a] of dictEntries(store, false)) if (a === action) bound = true;",
     "tests": [
       "test/ui/pad1.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "PAD1-C-rebind-keeps-the-mark",
     "file": "src/systems/inputActions.js",
-    "old": "    else store.removedSecondary.delete(action);   // PAD1",
+    "old": "    else store.removedSecondary.delete(action);",
     "new": "",
     "tests": [
       "test/ui/pad1.test.js",
@@ -93,7 +93,7 @@
   {
     "name": "PAD1-C-screens-do-not-mark-a-cleared-pad-row",
     "file": "src/systems/controlsConfig.js",
-    "old": "        if (!primary && code == null) addRemovedSecondaryAction(store, action); // PAD1: a cleared pad row stays cleared",
+    "old": "        if (!primary && code == null) addRemovedSecondaryAction(store, action); // A cleared pad row stays cleared",
     "new": "",
     "tests": [
       "test/ui/pad1.test.js"

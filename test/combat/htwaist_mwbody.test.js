@@ -1,5 +1,4 @@
-// HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at
-// the waist ... a separate animated item on movement"). THE MORROWIND BODY.
+// HT-WAIST. THE MORROWIND BODY.
 //
 // A lit lantern at the waist is drawn on the third-person Morrowind body:
 // a carriable LIGH record named lantern (pickLanternRecord, the torch
@@ -28,11 +27,11 @@ import {
   HIP_LIGHT_BONE, HIP_LIGHT_SLOT, HIP_LANTERN_HOOK,
 } from '../../src/combat/fpArm.js';
 import { HIP_LANTERN_SPRITE } from '../../src/player/eyeOfTheBeholder/eotbLantern.js';
-import { fixtureFile, countingRenderer, hipLanternBodyDeps } from '../fixtures/mw/bodyRig.mjs';   // HT-WAIST-NET: the lantern body lives there once - the peers' pin builds the same rig
+import { fixtureFile, countingRenderer, hipLanternBodyDeps } from '../fixtures/mw/bodyRig.mjs';   // The lantern body lives there once - the peers' pin builds the same rig
 import { createLanternSwing, lanternSwingMatrix, HIP_LANTERN_HEIGHT } from '../../src/systems/lanternSwing.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const SKEL = RETAIL_SKELETON_BYTES;   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
+const SKEL = RETAIL_SKELETON_BYTES;   // Our own biped (tools/ownBiped.mjs)
 const light = (id, flags = MW_LIGHT_CARRY, model = `l/${id}.nif`) => ({ id, model, name: id, carry: !!(flags & MW_LIGHT_CARRY), fire: false, flags });
 const bbox = (pos) => {
   const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
@@ -94,7 +93,7 @@ async function hungOnRetailSkeleton() {
   const mesh = fixtureFile('weapon.nif');   // any rigid mesh stands in for the lantern's
   const res = resolveHipLanternPart({ hipLight: true, allLights: [light('lantern_01')], find: (p) => (p === 'meshes/l/lantern_01.nif' ? { get: () => mesh } : null), skeletonBytes: SKEL });
   assert.deepEqual(res.notes, [], 'our biped\'s Bip01 chain carries the pelvis');
-  const arm = await assembleFirstPersonArm({ skeletonBytes: SKEL, parts: res.parts, boneSources: OWN_BONES });   // OWN-WORK4: our sheathing bones, the scabbard's at the left
+  const arm = await assembleFirstPersonArm({ skeletonBytes: SKEL, parts: res.parts, boneSources: OWN_BONES });   // Our sheathing bones, the scabbard's at the left
   assert.equal(arm.ok, true);
   const hang = hangHipLight(arm);
   assert.ok(hang, 'the bound hang is found and measured');

@@ -34,7 +34,7 @@ import { bodyRec, retailBodyDeps, shippedArchive } from '../fixtures/mw/bodyRig.
 import { readPng } from '../../tools/pngIO.mjs';
 import { readFbx } from '../../tools/fbxRead.mjs';
 import { stripFbx, meshModelNames } from '../../tools/fbxStrip.mjs';
-import { S, I, dArr, iArr, writeFbx } from '../../tools/fbxWrite.mjs';   // AUDIT MW-FOLK1: the cut's refusals, on files written here
+import { S, I, dArr, iArr, writeFbx } from '../../tools/fbxWrite.mjs';   // The cut's refusals, on files written here
 import { bakeMesh, objectMaterials } from '../../tools/fbxMesh.mjs';
 import { objectTree, plateBind, RETAIL_SKELETON, HELM_LIFT, SCENE_BODY } from '../../tools/bakeSteelPlate.mjs';
 import { SOURCE, PAINTINGS, OBJECTS, OUTFITS, RECOLOURS, CUT, PACK_ARM_FALL, HANG_TOP, HANG_SHARE, HANG_CENTRE, KNEE_BLEND, HIP_JOINTS, ARM_REACH, ARM_FADE, RIGS,
@@ -136,7 +136,7 @@ test('MW-FOLK1: every outfit and painting re-made from the committed export, its
   assert.throws(() => bakeTownsfolk({ source: raw(SOURCE), pngs: {}, skeleton: null }), /no skeleton to skin the outfits in/);
   assert.throws(() => bakeTownsfolk({ source: raw(SOURCE), pngs: {}, skeleton: SKELETON }), /no painting for tunic_bretonnpc/);
   assert.throws(() => checkObject(tree, 'Breton_Male.003'), /no object "Breton_Male\.003" is read for an outfit/);
-  // AUDIT MW-FOLK1 L3-F5: A RE-EXPORT THAT RESHAPED OR RE-PAINTED ONE IS REFUSED BY NAME - 385 less its hose stands short
+  // A RE-EXPORT THAT RESHAPED OR RE-PAINTED ONE IS REFUSED BY NAME - 385 less its hose stands short
   // of the box it was read at; a material renamed in place (same length, so the file still reads) names another picture
   const short = readFbx(stripFbx(raw(SOURCE), { cut: [{ object: 'Breton_Male.018', material: 0 }] }).bytes);
   assert.throws(() => checkObject(short, 'Breton_Male.018'), /"Breton_Male\.018" stands at .* not where it was read/);
@@ -200,7 +200,7 @@ test('MW-FOLK1: a cut takes one material\'s polygons out of an object that stays
   assert.deepEqual([7, 2].map((m) => { try { return bakeMesh(objectTree(both, 'Breton_Male.018'), { placement: 'scene', forward: '+y', up: '+z', material: m }).bake.polygons; } catch { return 0; } }), [0, 0], 'neither slot keeps a polygon');
   for (const m of [0, 1]) assert.equal(bake(both, 'Breton_Male.018', m), bake(tree, 'Breton_Male.018', m), `material ${m} bakes as it did`);
   assert.throws(() => stripFbx(src, { cut: [{ object: 'Breton_Male.018', material: 7 }, { object: 'Breton_Male.018', material: 7 }] }), /"Breton_Male\.018": material 7 named twice/);
-  // A VERTEX NO POLYGON USES WAS NEVER THE CUT'S (AUDIT MW-FOLK1 L1-F9): Redguard_Male.010's two loose ones stay
+  // A VERTEX NO POLYGON USES WAS NEVER THE CUT'S: Redguard_Male.010's two loose ones stay
   const red = stripFbx(src, { cut: [{ object: 'Redguard_Male.010', material: 2 }] });
   assert.deepEqual(red.cut, [{ object: 'Redguard_Male.010', materials: [2], polygons: [178], vertices: 197 }]);
   const loose = (t) => { const a = arrays(t, 'Redguard_Male.010'); return a.verts.length / 3 - new Set(Array.from(a.pvi, (v) => (v < 0 ? ~v : v))).size; };
@@ -230,7 +230,7 @@ test('MW-FOLK1: a cut takes one material\'s polygons out of an object that stays
 });
 
 /**
- * AUDIT MW-FOLK1 (L3-F8): A CUT'S GEOMETRY, WRITTEN HERE - a quad and two triangles over five positions and one loose
+ * A CUT'S GEOMETRY, WRITTEN HERE - a quad and two triangles over five positions and one loose
  * one, the quad wearing material 1: its own corner the only one on UV entry 0 and position 0 its alone; normals Direct
  * with their W. `geo` changes one record of the Geometry, `objects` and `links` add to the file.
  */
@@ -394,7 +394,7 @@ test('MW-FOLK1: each garment piece weighted by what it is - its island\'s class 
           const lift = c === 'hood' ? HELM_LIFT : 0;
           assert.ok(Math.abs(mesh.positions[v * 3 + 2] - scene.positions[v * 3 + 2] - lift) < 1e-6, `${o.archive} ${c} vertex ${v}: raised ${lift}`);
           if (RIGS[c].hang) {
-            // ONE LAW OF POSITION (AUDIT MW-FOLK1 L1-F6, L2-F1): the legs' share by height alone - the whole of it from
+            // ONE LAW OF POSITION: the legs' share by height alone - the whole of it from
             // the hip joints down, never a piece's own hem - split left and right by the middle, the calves' past the knees
             const [x, , z] = [0, 1, 2].map((k) => scene.positions[v * 3 + k]);
             const sm = (q) => (q <= 0 ? 0 : q >= 1 ? 1 : q * q * (3 - 2 * q));
@@ -405,7 +405,7 @@ test('MW-FOLK1: each garment piece weighted by what it is - its island\'s class 
             for (const [n, x0] of Object.entries(want)) assert.ok(Math.abs(got(n) - x0) < 2e-3, `${o.archive} ${s.paint} vertex ${v} (z ${z.toFixed(1)}): ${n} ${got(n)}, the law's ${x0}`);
           }
           if (c === 'torso' || c === 'skirt') {
-            // AUDIT MW-FOLK1 L1-F5: past the arm bones' reach and its fade, the body's side is the ribcage's - no arm bone
+            // Past the arm bones' reach and its fade, the body's side is the ribcage's - no arm bone
             const far = ['R', 'L'].every((S) => [['Clavicle', 'UpperArm'], ['UpperArm', 'Forearm']].every(([a, b2]) => segmentDistance(lifted(scene, v), pack.get(`Bip01 ${S} ${a}`).t, pack.get(`Bip01 ${S} ${b2}`).t) >= ARM_REACH + ARM_FADE));
             if (far) for (const S of ['r', 'l']) assert.ok(!w.has(`bip01 ${S} clavicle`) && !w.has(`bip01 ${S} upperarm`), `${o.archive} ${s.paint} vertex ${v}: an arm bone past its reach`);
           }
@@ -418,7 +418,7 @@ test('MW-FOLK1: each garment piece weighted by what it is - its island\'s class 
     381: [{ hip: 1, 'leg:L': 1, 'leg:R': 1 }, { 'arm:L': 1, 'arm:R': 1, skirt: 2 }],
     382: [{ 'arm:L': 1, 'arm:R': 1, hip: 1, 'leg:L': 1, 'leg:R': 1, skirt: 3, torso: 1 }],   // its pouch, 1.9 below the hip joints, hangs
     383: [{ hip: 1, 'leg:L': 1, 'leg:R': 1 }, { 'arm:L': 1, 'arm:R': 1, skirt: 2 }],
-    384: [{ hip: 1, 'leg:L': 1, 'leg:R': 1, skirt: 2, torso: 1 }],   // AUDIT MW-FOLK1 L1-F4: its side flap hangs
+    384: [{ hip: 1, 'leg:L': 1, 'leg:R': 1, skirt: 2, torso: 1 }],   // Its side flap hangs
     385: [{ 'leg:L': 1, 'leg:R': 1 }, { skirt: 1, torso: 1 }, { 'arm:L': 1, 'arm:R': 1 }, { hip: 1 }],
     386: [{ 'arm:L': 1, 'arm:R': 1, skirt: 1, torso: 1 }, { 'leg:L': 1, 'leg:R': 1 }, { hip: 1 }, { 'leg:L': 1, 'leg:R': 1 }],
     387: [{ 'leg:L': 1, 'leg:R': 1, skirt: 1 }, { hip: 1 }, { 'arm:L': 1, 'arm:R': 1 }, { 'arm:L': 1, 'arm:R': 1, torso: 1 }],
@@ -509,7 +509,7 @@ test('MW-FOLK1: what each outfit hides is the skin it covers all round - every r
         continue;
       }
       const [r, l] = [coverage(tris, R[part]), coverage(tris, L[part])];
-      // AUDIT MW-FOLK1 L2-F1: BOTH LEGS IN ONE SKIRT. Each leg's rays crossed to the other inside it and met nothing, so
+      // BOTH LEGS IN ONE SKIRT. Each leg's rays crossed to the other inside it and met nothing, so
       // the dress closing round both hid neither; out of the line between them, reaching past either, every ray meets it
       const both = LEGS.includes(part) ? coverage(tris, [lerp(R[part][0], L[part][0], 0.5), lerp(R[part][1], L[part][1], 0.5), BOTH_REACH]) : 0;
       seen[a][part] = Math.min(r, l);
@@ -558,9 +558,9 @@ test('MW-FOLK1: a walker whose sprite has an outfit wears it - each of the eleve
     }
   }
   assert.deepEqual(all.filter((a) => townsfolkOutfitOf(a)).sort(), ARCHIVES, 'every outfit a walker\'s sprite');
-  // AUDIT MW-FOLK1 (L3-F1): EVERY WALKER OF ONE PICTURE DRESSES ALIKE AND THEIR FACES DIFFER - a street of 385's Breton
+  // EVERY WALKER OF ONE PICTURE DRESSES ALIKE AND THEIR FACES DIFFER - a street of 385's Breton
   // men, read as the build reads them (the look's hint through peerBuildOpts to the walk), reaches every one of the
-  // heads-and-hairs. PIN MOVED (MW-HEADS2 - the owner: "only the player Britons should recieve the new heads, not npcs"):
+  // heads-and-hairs. PIN MOVED:
   // the data's, four heads and four hairs - the port's own nine are a player's
   const recs = [];
   for (let i = 0; i < 4; i++) for (const [slot, part] of [['head', 0], ['hair', 1]]) recs.push(bodyRec(`b_n_breton_m_${slot}_0${i}`, `b\\b_n_breton_m_${slot}_0${i}.nif`, 'Breton', part));
@@ -570,7 +570,7 @@ test('MW-FOLK1: a walker whose sprite has an outfit wears it - each of the eleve
     return playerBodyRows(dataFaces, 'Breton', false, { walk: o.npcFace }).filter((r) => r.slot === 'head' || r.slot === 'hair').map((r) => r.record.id).join();
   }));
   assert.equal(street.size, 16, 'four heads times four hairs');
-  // AUDIT MW-FOLK1 (L3-F18): EVERY DOOR THAT STANDS A PICTURE'S PERSON IN A BODY mints the look through folkLookOf - the
+  // EVERY DOOR THAT STANDS A PICTURE'S PERSON IN A BODY mints the look through folkLookOf - the
   // street's walkers (folkBodies.js spawnOf), the residents (rosterBodies.js residentLook), the shipyard's and the
   // lighthouse's people (portHost.js) and the stable and wagon yards' keepers (merchantYardsHost.js): an outfit's picture
   // wears its outfit wherever it is drawn. A new door is named here
@@ -620,12 +620,12 @@ test('MW-FOLK1: the look to the body - an outfit is a worn piece of its own kind
   assert.deepEqual(ownOutfitFor('townsfolk_385'), TOWNSFOLK_OUTFITS[385]);
   assert.equal(ownOutfitFor('townsfolk_391'), null);
   assert.deepEqual(ownOutfitModelPaths(), ARCHIVES.map((a) => `meshes/townsfolk_${a}.nif`), 'every outfit\'s mesh, and no other (AUDIT MW-FOLK1 L3-F10)');
-  // AUDIT MW-FOLK1 (L2-F8): a look is data to the body - a beast's carries no outfit there either, whatever it says
+  // A look is data to the body - a beast's carries no outfit there either, whatever it says
   for (const race of ['Khajiit', 'Argonian']) {
     assert.deepEqual(peerBuildOpts({ ...look, race }).armor, [], `${race}: no boots on digitigrade feet`);
     assert.equal(outfitKeyOf({ ...look, race }), '');
   }
-  // AUDIT MW-FOLK1 (L3-F3): AT CLOTHING'S PRIORITY, FIRST AS A ROBE IS - armour over it takes its slots (strictly
+  // AT CLOTHING'S PRIORITY, FIRST AS A ROBE IS - armour over it takes its slots (strictly
   // greater: the own steel cuirass and its skirt over the tunic's hidden chest and groin), and a garment after it at
   // clothing's priority takes none (the tie keeps the first claimant: the outfit's hidden chest, no shirt over it)
   const plate = composeWornArmor({ pieces: [...opts.armor, { kind: 'armor', templateIndex: ARMOR_ENUM.Cuirass, material: ARMOR_MATERIAL.Steel }], armors: [], clothes: [], bodyPool: [] });
@@ -651,12 +651,12 @@ test('MW-FOLK1: the hooded woman wears no modesty shirt - her bodice covers her 
   assert.deepEqual(worn.adds.map((a) => a.slot), ['outfit (townsfolk_398)']);
   assert.deepEqual(worn.notes, [], 'the weld never asked for a shirt');
   assert.deepEqual(worn.covers, ['chest']);
-  assert.deepEqual(worn.shadows, ['hair', 'groin', 'foot:right', 'foot:left', 'upperleg:right', 'upperleg:left']);   // AUDIT MW-FOLK1 L2-F1: the thighs her dress closes round
+  assert.deepEqual(worn.shadows, ['hair', 'groin', 'foot:right', 'foot:left', 'upperleg:right', 'upperleg:left']);   // The thighs her dress closes round
   // the weld itself still stands: a bare chest with Show Nudity off asks for the plainest shirt (here no CLOT record
   // answers, and says so)
   const bare = composeWornModest({ pieces: [], armors: [], clothes: [], bodyPool: [], female: true }, false);
   assert.deepEqual(bare.notes, ['Short Shirt: no MW clothing of type 2 in these archives - the classic sprite stands']);
-  // HEAD-HELD over a hood - the piece the producer mints for 388's walker (AUDIT MW-FOLK1 L3-F19)
+  // HEAD-HELD over a hood - the piece the producer mints for 388's walker
   const hooded = composeWornArmor({ pieces: peerBuildOpts(folkLookOf({ archive: 388, gender: GENDERS.Male, personFaceRecordId: 3 }, 'Nord', 4)).armor, armors: [], bodyPool: [] });
   assert.ok(hooded.shadows.includes('hair') && !hooded.shadows.includes('head'), 'the hair under the hood; the face its own');
   const ROWS = [{ slot: 'head', record: { id: 'b_n_nord_m_head_01', model: 'b/head.nif' } }, { slot: 'hair', record: { id: 'b_n_nord_m_hair_01', model: 'b/hair.nif' } }];
@@ -738,7 +738,7 @@ test('MW-FOLK1: through the binder - every outfit the producer composes a skinne
 });
 
 /**
- * AUDIT MW-FOLK1 (L2-F1, L1-F4, L1-F5, L1-F6): THE RIG, MEASURED ON ITS BODY. Each outfit alone through the binder on
+ * THE RIG, MEASURED ON ITS BODY. Each outfit alone through the binder on
  * retail's skeleton, posed by local turns of its bones; the leg the body under the cloth - 385's hose, the leg mesh
  * itself skinned by the leg's rig - posed alike.
  */
@@ -749,7 +749,7 @@ test('MW-FOLK1 (AUDIT): striding, the leg stays inside the cloth that hangs roun
     const sk = asm.skeleton; const rest = Array.from(sk.nodes.get(sk.byName.get(name)).rest.rotation);
     const g = deg * Math.PI / 180; const rz = [Math.cos(g), -Math.sin(g), 0, Math.sin(g), Math.cos(g), 0, 0, 0, 1];
     const m = [0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => rest[r * 3] * rz[c] + rest[r * 3 + 1] * rz[3 + c] + rest[r * 3 + 2] * rz[6 + c]));
-    // OWN-WORK4: Shepperd's, any angle - our biped's thigh turns near 180 degrees off its parent, where 1 + trace is 0
+    // Shepperd's, any angle - our biped's thigh turns near 180 degrees off its parent, where 1 + trace is 0
     const tr = m[0] + m[4] + m[8];
     if (tr > 0) { const q = Math.sqrt(tr + 1) * 2; return [q / 4, (m[7] - m[5]) / q, (m[2] - m[6]) / q, (m[3] - m[1]) / q]; }
     if (m[0] > m[4] && m[0] > m[8]) { const q = Math.sqrt(1 + m[0] - m[4] - m[8]) * 2; return [(m[7] - m[5]) / q, q / 4, (m[1] + m[3]) / q, (m[2] + m[6]) / q]; }
@@ -758,7 +758,7 @@ test('MW-FOLK1 (AUDIT): striding, the leg stays inside the cloth that hangs roun
   };
   /** A pose: [bone, degrees] turns over the idle. */
   const pose = (asm, turns) => { const rows = turns.map(([n, d]) => [n, turn(asm, n, d)]); poseAssembly(asm, { tracks: new Map(rows.map(([n], i) => [n, i + 1])), sampleTrack: (t) => ({ rotation: rows[t - 1][1] }) }); };
-  // OWN-WORK4: a stride is measured from upright - our biped's right thigh already stands STANCE.step ahead at rest
+  // A stride is measured from upright - our biped's right thigh already stands STANCE.step ahead at rest
   const fromUp = (side, deg) => deg - (side === 'r' ? STANCE.step : 0);
   const STRIDE = (deg, knee = 0, fwd = 'r') => { const back = fwd === 'r' ? 'l' : 'r'; return [[`bip01 ${fwd} thigh`, fromUp(fwd, deg)], [`bip01 ${back} thigh`, fromUp(back, -deg)], ...(knee ? [[`bip01 ${back} calf`, knee]] : [])]; };
   const at = (asm, n) => asm.mats.get(asm.skeleton.byName.get(n)).t;

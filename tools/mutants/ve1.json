@@ -284,8 +284,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "          return b.version ? `Attached, version ${b.version}` : 'Attached'; // CREDITS-OUT: no author",
-    "new": "          return 'Attached'; // CREDITS-OUT: no author"
+    "old": "          return b.version ? `Attached, version ${b.version}` : 'Attached'; // No author",
+    "new": "          return 'Attached'; // No author"
   },
   {
     "name": "VE3-packs-card-loses-the-switch",

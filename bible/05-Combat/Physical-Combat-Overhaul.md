@@ -3,7 +3,8 @@
 Kirk.O's DFU mod Physical Combat And Armor Overhaul 1.44, ported from its shipped DLL: armour reduces the damage taken
 instead of the chance to be hit, plus critical strikes that add damage, condition-based effectiveness, soft-material
 requirements and a strength fix. It is on by default in the Mods pane; while on, the player and foes both fight by its
-formulas. The vendored record is `vendor/pcaao/`.
+formulas. Our code is the record: `test/systems/pcaao.test.js` holds the seven shipped module switches as a literal
+table, and the release's provenance is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
@@ -48,8 +49,8 @@ formulas. The vendored record is `vendor/pcaao/`.
 
 ## Daggerfall Unity
 
-DFU's own formulas are `FormulaHelper.cs`; the mod overrides them. The port reads the shipped 1.44 decompiled, with the
-v1.40 source naming what the decompiler numbered.
+DFU's own formulas are `FormulaHelper.cs`; the mod overrides them. Our formulas restate the shipped 1.44, decompiled,
+with the v1.40 source naming what the decompiler numbered.
 
 ## Code and tests
 

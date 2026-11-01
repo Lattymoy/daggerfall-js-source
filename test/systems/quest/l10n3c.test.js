@@ -1,4 +1,4 @@
-// L10N3c (2026-09-27): A QUEST IN A TRANSLATION'S OWN WORDS. Parser.ParseLocalized's law over a -LOC file (the
+// A QUEST IN A TRANSLATION'S OWN WORDS. Parser.ParseLocalized's law over a -LOC file (the
 // DisplayName, fixed and numbered messages, an author's empty line kept as ' ', QBN ignored, and the throws where the
 // C# throws); ParseLocalizedQuestText filling the language's Internal_Quests only where it has no entry; GetMessage
 // reading the translation into the same Message every time it is asked (ReplaceMessage); ParseQuest's tail taking the
@@ -22,7 +22,6 @@ const V = join(ROOT, 'vendor/dfu-quests/Tables');
 const tables = {};
 for (const f of readdirSync(V)) if (f.endsWith('.txt')) tables[f.replace('.txt', '')] = readFileSync(join(V, f), 'utf8').replace(/^﻿/, '');
 loadQuestTables(tables);
-// PIN MOVED (OWN-WORDS2): the quest as the pack reads it - S0000977 speaks our own words now (test/qlSources.mjs)
 const questLines = (name) => baseText(name).split(/\r?\n/);
 
 beforeEach(() => tm._resetTextManagerForTests());
@@ -69,7 +68,7 @@ test('L10N3c the quest in French: GetMessage reads the -LOC message into the sam
   const english = new QuestMachine({ nowSeconds: () => 0, showPopup: () => {} }).scheduleQuest(questLines('S0000977'), 0, { rolls: () => 0 });
   const enRumor = english.getMessage(1005).getTextTokens(0, false).map((t) => t.text).join('|');
   assert.equal(english.displayName, 'Curse of Daggerfall');
-  assert.match(enRumor, /The dead walk in Daggerfall's streets after dark\./);   // PIN MOVED (OWN-WORDS2): our words
+  assert.match(enRumor, /The dead walk in Daggerfall's streets after dark\./);
   tm.setLocaleDocuments('fr', [[`${QUEST_DOCUMENT}:S0000977`, LOC]]);
   tm.patchLocaleTable('fr', 'Internal_Quests', [['S0000977.1008', 'Le spectre est tombé. (une ligne du tableau)']]);
   tm.setLocale('fr');
@@ -119,6 +118,6 @@ test('L10N3c by source: both parse doors take the -LOC DisplayName, GetMessage a
   const machine = rd('src/systems/quest/machine.js');
   assert.match(machine, /localizeDisplayName\(quest\); \/\/ L10N3c\n\s*this\.questsToInvoke\.push\(quest\);/, 'scheduleQuest');
   assert.match(machine, /return localizeDisplayName\(\n\s*this\.parser\.parse\(lines, factionId,/, 'parseQuestForLists');
-  assert.match(rd('src/systems/quest/quest.js'), /const lines = localizedQuestMessage\(this\.questName, messageID\);\n\s*if \(lines\)\n\s*result\.localize\(lines\);/);   // L10N5: read in place, the quest's own kept
+  assert.match(rd('src/systems/quest/quest.js'), /const lines = localizedQuestMessage\(this\.questName, messageID\);\n\s*if \(lines\)\n\s*result\.localize\(lines\);/);   // Read in place, the quest's own kept
   assert.match(rd('src/scenes/quest/questBridge.js'), /getLocalizedQuestDisplayName: \(questName\) => localizedQuestDisplayName\(questName\),/);
 });

@@ -1,4 +1,4 @@
-// HOST-SPLIT: moved verbatim out of src/scenes/world.js's bootWorld (bible/01-Overview/Host-Split.md) by tools/hostMove.mjs.
+// HOST-SPLIT: moved verbatim out of src/scenes/world.js's bootWorld by tools/hostMove.mjs.
 // The host constructs it where the code stood. What it reads of the host's scope comes through `host`: the
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
@@ -9,7 +9,7 @@ import {
   snowfallNetwork,
   snowfallNetworkBeyond,
 } from './snowfallHost.js';
-import { worldPixelKey, inWorldGrid } from '../world/worldWide/worldGrid.js'; // BAY-LEFT-GROUND: a pixel's one key over the world
+import { worldPixelKey, inWorldGrid } from '../world/worldWide/worldGrid.js'; // A pixel's one key over the world
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import {
   snowGroundHeight,
@@ -19,24 +19,23 @@ import {
   snowPixelX,
   snowPixelY,
   snowGlobalOf,
-} from '../systems/snowfall/snowGroundLaw.js'; // SNOW-THREAD: one law for the frame and the build worker
+} from '../systems/snowfall/snowGroundLaw.js'; // One law for the frame and the build worker
 import { nearestFirstFrom } from '../world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 
 /** @param {any} host */
 export function createSnowGround(host) {
   const { blocks, locationIndex, maps, terrainGen } = host;
-  // SNOWFALL1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): SNOWFALL -
-  // the enhanced outdoors' snow (scenes/snowfallHost.js) on the streamed ground as it is DRAWN: each pixel's own
-  // surface at its stride and its TileMap (the cap's, where Deep Waters patched one), the sea it carved bare, the roads
-  // Basic Roads'. Ticked on every frame, outdoors and in; told each pixel published (OnPromoteTerrainData); drawn after
-  // the ground by the ground's own program - its sun, its shadows, its lights and its fog. The adapter reads the
-  // stream's bindings when it is asked, never here (they are declared below).
-  // BAY-LEFT-GROUND (bible/03-World/Landforms.md "BAY-LEFT-GROUND", the snow's part; the audit "no system left behind in
-  // the Bay", D3): THE SNOW ON THE WHOLE WORLD'S GROUND. A pixel off the Bay's 1000 x 500 stood no ground for the snow
-  // (pixelOn's bound, and its `px * 1000 + py` key aliased two pixels a thousand apart past it), so Skyrim's winter laid
-  // its cover and its caps but no snow to wade, no footprint, no track and no berm. Every pixel of the world's grid now,
-  // by its world key; past the Bay the roads are TESA's (snowfallHost.js snowfallNetworkBeyond).
+  // SNOWFALL - the enhanced outdoors' snow (scenes/snowfallHost.js) on the streamed ground as it is DRAWN: each pixel's
+  // own surface at its stride and its TileMap (the cap's, where Deep Waters patched one), the sea it carved bare, the
+  // roads Basic Roads'. Ticked on every frame, outdoors and in; told each pixel published (OnPromoteTerrainData); drawn
+  // after the ground by the ground's own program - its sun, its shadows, its lights and its fog. The adapter reads the
+  // stream's bindings when it is asked, never here (they are declared below). BAY-LEFT-GROUND ( "BAY-LEFT-GROUND", the
+  // snow's part; the audit "no system left behind in the Bay", D3): THE SNOW ON THE WHOLE WORLD'S GROUND. A pixel off
+  // the Bay's 1000 x 500 stood no ground for the snow (pixelOn's bound, and its `px * 1000 + py` key aliased two pixels
+  // a thousand apart past it), so Skyrim's winter laid its cover and its caps but no snow to wade, no footprint, no
+  // track and no berm. Every pixel of the world's grid now, by its world key; past the Bay the roads are TESA's
+  // (snowfallHost.js snowfallNetworkBeyond).
   const _snowPixels = new Map(); // worldPixelKey -> the built entry, this frame (cleared at the frame: a publish lands between frames)
   const _snowIds = new WeakMap();
   const _snowNextId = { n: 0 }; // HOST-SPLIT: a holder, so the snow's ground moves out whole (scenes/snowGround.js)
@@ -64,7 +63,7 @@ export function createSnowGround(host) {
     },
     pixelOn(px, py) {
       // StreamingWorld.GetTerrainFromPixel: the built entry standing there, its ground published
-      if (!inWorldGrid(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500
+      if (!inWorldGrid(px, py)) return null; // The world's grid, not the Bay's 1000 x 500
       const k = worldPixelKey(px, py);
       let p = _snowPixels.get(k);
       if (p === undefined) {
@@ -83,7 +82,7 @@ export function createSnowGround(host) {
       return out.sort(nearestFirstFrom(cur));
     },
     translation: (p, out) => host.state.pixelTranslation(p.px, p.py, out),
-    // SNOW-THREAD: the drawn ground's laws live in systems/snowfall/snowGroundLaw.js, which the snow's build worker reads
+    // The drawn ground's laws live in systems/snowfall/snowGroundLaw.js, which the snow's build worker reads
     // off `data`'s snapshot of the same entry - DW-B's floor, WATER-NEXT 2's bed, the stride's surface and normals
     height: (p, lx, lz) => snowGroundHeight(p, !!host.deepWaters, lx, lz),
     normal: (p, lx, lz, out) => snowGroundNormal(p, lx, lz, out),
@@ -96,7 +95,7 @@ export function createSnowGround(host) {
     bare: (p, lx, lz) => snowGroundBare(p, lx, lz),
     roads(p) {
       const raw = terrainGen.roads();
-      // BAY-LEFT-GROUND: past the Bay TESA's own roads, classified by the painter's word (the build's `paths`); on the Bay
+      // Past the Bay TESA's own roads, classified by the painter's word (the build's `paths`); on the Bay
       // the Basic Roads switch's network, as the mod reads it
       const net = !inBay(p.px, p.py)
         ? snowfallNetworkBeyond(p.px, p.py, p.paths)
@@ -128,10 +127,10 @@ export function createSnowGround(host) {
       host.state.compensation[0],
       host.state.compensation[2],
       TERRAIN_SIZE,
-    ], // SNOW-THREAD: toGlobal's and pixelAt's inputs, for the worker's copy of the world
+    ], // toGlobal's and pixelAt's inputs, for the worker's copy of the world
     settlements: (minX, minZ, maxX, maxZ) =>
       settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
-    // OWN-AUDIT (2026-11-01): Snowfall's Location Loader keys - World of Daggerfall's sites on the built pixels
+    // Snowfall's Location Loader keys - World of Daggerfall's sites on the built pixels
     footprints: (globalX, globalZ, radius) =>
       siteFootprintsIn((x, y) => snowGround.pixelOn(x, y), globalX, globalZ, radius),
   };

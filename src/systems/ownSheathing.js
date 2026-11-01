@@ -1,10 +1,10 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions"): OUR OWN
-// SHEATHING, in place of Weapon Sheathing's retired files. SHEATH_POINTS hangs each bone weaponSheathing.js names
-// under a bone the game's skeleton already has, at our own place on the body; sheathingAddonBytes() writes them as a
-// bone addon, each node marked "BONE" (mwSkin.js injectSkeletonNodes). ownScabbardBytes() builds a `_sh` file for the
-// weapon in hand, sized to its own mesh - a sheath, a ring or a quiver - on the mechanism's file law: "Bip01 Sheath"
-// always shown, an empty "Bip01 Weapon" where the weapon itself hangs, a quiver's "Bip01 Ammo" with a node a round.
+// OUR OWN SHEATHING, in place of Weapon Sheathing's retired files. SHEATH_POINTS hangs each bone weaponSheathing.js
+// names under a bone the game's skeleton already has, at our own place on the body; sheathingAddonBytes() writes them
+// as a bone addon, each node marked "BONE" (mwSkin.js injectSkeletonNodes). ownScabbardBytes() builds a `_sh` file
+// for the weapon in hand, sized to its own mesh - a sheath, a ring or a quiver - on the mechanism's file law: "Bip01
+// Sheath" always shown, an empty "Bip01 Weapon" where the weapon itself hangs, a quiver's "Bip01 Ammo" with a node a
+// round.
 import { MW_WEAPON_TYPE } from '../formats/morrowind/mwFirstPerson.js';
 import { flattenNif } from '../formats/morrowind/mwNifMesh.js';
 import { parseNif } from '../formats/morrowind/mwNifFile.js';

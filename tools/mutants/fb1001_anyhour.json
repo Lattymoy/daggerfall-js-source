@@ -2,8 +2,8 @@
   {
     "name": "ANY-HOUR-the-act-asks-the-daylight",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "export const foragingActRefusal = (templateIndex, skip = null) =>\n  foragingRefusal(templateIndex, worldNow(), skip ? [...skip, ...ACT_KEEPS_NO_HOURS] : ACT_KEEPS_NO_HOURS); // PROF2: a dungeon vein skips the surface's checks",
-    "new": "export const foragingActRefusal = (templateIndex, skip = null) => foragingRefusal(templateIndex, worldNow(), skip); // PROF2: a dungeon vein skips the surface's checks",
+    "old": "export const foragingActRefusal = (templateIndex, skip = null) =>\n  foragingRefusal(templateIndex, worldNow(), skip ? [...skip, ...ACT_KEEPS_NO_HOURS] : ACT_KEEPS_NO_HOURS); // A dungeon vein skips the surface's checks",
+    "new": "export const foragingActRefusal = (templateIndex, skip = null) => foragingRefusal(templateIndex, worldNow(), skip); // A dungeon vein skips the surface's checks",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js"
     ]
@@ -34,8 +34,8 @@
   {
     "name": "ANY-HOUR-the-net-line-by-daylight",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    `Fishing is done in water: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`, // ANY-HOUR: at any hour",
-    "new": "    `Fishing is done in water by daylight: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`, // ANY-HOUR: at any hour",
+    "old": "    `Fishing is done in water: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`, // At any hour",
+    "new": "    `Fishing is done in water by daylight: stand or swim in it, or be at sea, until its acts show, then press ${k} (or use the Fishing-Net).`, // At any hour",
     "tests": [
       "test/scenes/fb1001_anyhour.test.js",
       "test/systems/fb0930b_toolsaid.test.js"

@@ -1,7 +1,4 @@
-// OVH1 (2026-09-24, Mac: "A new option on the main menu that opens to show 3 large panels. These panels will have
-// directional arrows allowing you to switch being different feature sets ... 1. Texture Overhaul 2. Sound Overhaul
-// 3. UI Overhaul ... Our first overhaul option will be the file attached. Along with this classic options and
-// enhanced options should be in") - THE OVERHAULS: three panels, each ONE choice out of a set.
+// THE OVERHAULS: three panels, each ONE choice out of a set.
 //
 // An option is a WHOLE LOOK, not a new switch. Texture holds the texture packs - Classic, and Vanilla Enhanced (VE3,
 // systems/vanillaEnhanced/vanillaEnhanced.js), which ships with the port since VE4 (systems/vanillaEnhanced/vanillaEnhancedPack.js; Port-Doctrine
@@ -34,7 +31,7 @@ import {
   customTextureNote,
 } from './vanillaEnhanced/vanillaEnhanced.js'; // VE3; VE4: its add-ons; AUDIT VE R10: a loose pack's say
 
-/** The game's own name, as a look's maker: the Enhanced Plus skin, and (OWN-WORK4) the shipped texture pack. */
+/** The game's own name, as a look's maker: the Enhanced Plus skin, and the shipped texture pack. */
 const OUR_NAME = 'DFO Online';
 
 const row = (id) => {
@@ -109,7 +106,7 @@ export const SOUND_ROWS = Object.freeze(['enhanced-sounds', 'mod-immersive-foots
  *  (SKIN-CARRY's law, for the pack too). */
 export function uiChoiceUrl(skin, pack, href = globalThis.location?.href ?? 'http://localhost/') {
   const url = new URL(href);
-  // PLUS-ONLY: `plus` is dropped with the others - a retired instruction left on the address means nothing now
+  // `plus` is dropped with the others - a retired instruction left on the address means nothing now
   url.searchParams.delete('skin');
   url.searchParams.delete('uipack');
   url.searchParams.delete('plus');
@@ -117,7 +114,7 @@ export function uiChoiceUrl(skin, pack, href = globalThis.location?.href ?? 'htt
   if (skin === 'classic' && setUiPack(pack) === false) url.searchParams.set('uipack', pack);
   return url.toString();
 }
-/** GRIM1: the dress an enhanced look wears over the skin - 'none' (Enhanced Plus) or 'grimoire' (DFO Grimoire,
+/** The dress an enhanced look wears over the skin - 'none' (Enhanced Plus) or 'grimoire' (DFO Grimoire,
  *  ui/grimoireDress.js). Read off the shelf here rather than through the dress's module, which carries a stylesheet. */
 const dressWorn = (search = globalThis.location?.search ?? '') => {
   const url = pageParam('dress', search);
@@ -135,16 +132,16 @@ const uiOption = (id, name, skin, pack, { by, blurb, dress = 'none', vendor = nu
     vendor,
     isOn: () =>
       uiSkin() === skin && (skin !== 'classic' ? dressWorn() === dress : (activeUiPack()?.id ?? UI_PACK_NONE) === pack),
-    // GRIM1: an enhanced look sets its dress on the shelf before the reload (the dress is the page's from its first frame)
+    // An enhanced look sets its dress on the shelf before the reload (the dress is the page's from its first frame)
     apply: () => {
       const url = new URL(uiChoiceUrl(skin, pack));
       url.searchParams.delete('dress');
-      if (skin === 'enhanced' && setPref('plusDress', dress) === false) url.searchParams.set('dress', dress); // SKIN-CARRY
+      if (skin === 'enhanced' && setPref('plusDress', dress) === false) url.searchParams.set('dress', dress);
       return { reload: true, url: url.toString() };
     },
   });
 
-/** VE3: a texture look - the texture mods switched on or off as one (systems/vanillaEnhanced/vanillaEnhanced.js). VE4: `addons` lists
+/** A texture look - the texture mods switched on or off as one (systems/vanillaEnhanced/vanillaEnhanced.js). VE4: `addons` lists
  *  the look's optional mods, which the card offers as switches while the look is worn; `vendor` names the vendor/
  *  folder of the pack it wears (the credits' way to it). AUDIT VE R10: `blocked` says what stands in its way now (the
  *  card offers no Use while it does), or null. */
@@ -168,9 +165,8 @@ const textureOption = (id, name, { by, blurb, isOn, wear, addons = null, vendor 
 
 const G = UI_PACKS.grimoire;
 export const OVERHAUL_PANELS = Object.freeze([
-  // OVH1b (2026-09-24, Mac: "Currently there are no texture packs, it should be empty"): the panel stood empty until the
-  // first texture pack - it is a pack's door, not a second face on the Features switches. VE3 (2026-10-05): Vanilla
-  // Enhanced is that pack, beside Classic.
+  // The panel stood empty until the first texture pack - it is a pack's door, not a second face on the Features
+  // switches. VE3: Vanilla Enhanced is that pack, beside Classic.
   Object.freeze({
     id: 'texture',
     title: 'Texture Overhaul',
@@ -188,11 +184,11 @@ export const OVERHAUL_PANELS = Object.freeze([
         blocked: classicBlocked,
       }),
       textureOption('vanilla-enhanced', 'Vanilla Enhanced', {
-        // OWN-WORK4: the shipped pack is our own work; a copy the player attaches over it is theirs
+        // The shipped pack is our own work; a copy the player attaches over it is theirs
         by: () => {
           const b = veBase();
           if (!b || b.shipped) return OUR_NAME;
-          return b.version ? `Attached, version ${b.version}` : 'Attached'; // CREDITS-OUT: no author
+          return b.version ? `Attached, version ${b.version}` : 'Attached'; // No author
         },
         blurb:
           'The original game\u2019s own textures, remastered and sharper: the ground, trees, rocks, city walls and dungeons.',
@@ -229,7 +225,7 @@ export const OVERHAUL_PANELS = Object.freeze([
         by: 'The original game',
         blurb: 'The original game\u2019s own interface, for the classic feel.',
       }),
-      // PLUS1 (2026-09-25): the enhanced screens in the refreshed dress. PLUS-ONLY (2026-09-26): and the only enhanced
+      // The enhanced screens in the refreshed dress. PLUS-ONLY: and the only enhanced
       // option - plain Enhanced, which stood beside it, is retired (systems/uiSkin.js isEnhancedPlus).
       uiOption('enhanced-plus', SKIN_NAMES.enhanced, 'enhanced', UI_PACK_NONE, {
         by: OUR_NAME,
@@ -237,7 +233,7 @@ export const OVERHAUL_PANELS = Object.freeze([
           'A modern interface built for mouse and keyboard, controller or phone. You can adjust some settings and the controller bindings.',
       }),
       uiOption(G.id, G.title, 'classic', G.id, {
-        by: `Version ${G.version}`, // CREDITS-OUT: no author
+        by: `Version ${G.version}`, // No author
         blurb:
           'The classic interface with improvements: 3 times the detail, a new font, a spellbook for all your spells, and parchment and wood in place of the original stone.',
       }),

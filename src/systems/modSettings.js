@@ -3,19 +3,19 @@
 // mod's switches are not DFU's - in DFU they live in the mod's own
 // modsettings, under the Mods menu. So they live here: one small store,
 // keyed by the vendor folder, with the mod's own names and defaults,
-// each described in our own words (OWN-WORK4). localStorage-
+// each described in our own words. localStorage-
 // backed through the port's ONE storage seam where there is storage,
 // in-memory where there is not, so the worker and node both read
 // defaults without a DOM.
 
 import { appStorage } from './appStorage.js'; // the one storage seam - localStorage lives there alone
-import { onlineForcedModSetting, onlineWholeModKey } from './online/onlineLane.js'; // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's; REALM P0.2: and the balance mods whole
-import { FOOT_SKIN_COUNT, CLASS_SKINS, classSkinLabel } from '../player/classSkins.js'; // SKIN2: the class skins past the mod's sixteen
-import { t, localizedText } from './textManager.js'; // L10N4: every setting's description and option names in the player's language, read when they are read; DFU's own key where it has the same word
+import { onlineForcedModSetting, onlineWholeModKey } from './online/onlineLane.js'; // Online, the room's ground is forced and every other switch is the player's; REALM P0.2: and the balance mods whole
+import { FOOT_SKIN_COUNT, CLASS_SKINS, classSkinLabel } from '../player/classSkins.js'; // The class skins past the mod's sixteen
+import { t, localizedText } from './textManager.js'; // Every setting's description and option names in the player's language, read when they are read; DFU's own key where it has the same word
 
 const STORE_KEY = 'dfjs-mod-settings';
 
-/** L10N4: A LIST OF WORDS, READ IN THE PLAYER'S LANGUAGE. A MultipleChoiceKey's option names (and a slider's labels)
+/** A LIST OF WORDS, READ IN THE PLAYER'S LANGUAGE. A MultipleChoiceKey's option names (and a slider's labels)
  *  are indexed by the value a setting stores, so the list stays one frozen array whose length and order are the
  *  mod's; each entry is a getter over its own text-core call - read when the pane reads it, never at module load - and
  *  a plain string (a key's own name) stands as it is. */
@@ -45,36 +45,36 @@ const EOTB_VIEWS = lazyWords(
 );
 
 /** Every vendored mod that has switches, by vendor key. Names and defaults
- *  are the mod's own; the descriptions are ours (OWN-WORK4, 2026-11-01).
+ *  are the mod's own; the descriptions are ours.
  *  `author` is the manifest's ModAuthor (Basic Roads: its README's),
  *  and the Mods pane puts it IN THE TITLE (Mac, 2026-09-08: "place each
  *  creator's name in the mod title").
  *  L10N4: every key's `description` is a getter over `t('mods.<vendor>.<Key>.description', ...)` and every list of
  *  option names (or labels) a `lazyWords`, so each reads in the player's language at the moment it is read - the
  *  English is DFO's own words. Titles and authors are names, and stay as they are.
- *  PLAIN-TEXT (2026-10-19, the owner: "Remove overexplaining text and replace it with proper palatable descriptions"):
+ *  PLAIN-TEXT:
  *  a description that read as a note to a developer (the port's codes, "INERT", engine terms, a typo, "|| Default =
  *  True") is reworded for a player - an inert key says "Has no effect" and why. OWN-WORK4 rewrote every description still
  *  in an author's words; the tests pin each one by its words. */
 export const MOD_SETTINGS = Object.freeze({
-  // DS1: DYNAMIC SKIES 2.3.4 (BadLuckBurt and carademono). Its own two
+  // DYNAMIC SKIES 2.3.4 (BadLuckBurt and carademono). Its own two
   // sections, names as modsettings.json ships them, our own descriptions
   // (FogDensity/densitySetting; SnowSizeAndNumberOfParticles/*), plus
   // `Enabled`, which is the port's: DFU enables a mod by listing it, and
   // the port has no mod list, so the whole sky is one switch here. A
   // key with `min`/`max` is a SliderIntKey and reads as an integer.
-  // VC1 (2026-09-07, Mac: "remove the pixelated sky look"): OFF by
+  // VC1: OFF by
   // default. The mod's look - 512-pixel cloud sheets drawn nearest and
   // its own colour posterise - is the pixelation Mac named, and it is
   // the mod's to keep; the port's own dome is the enhanced lane's sky
   // and the mod is a choice in the Mods pane (Ledger row DS1).
-  // MO1 (2026-09-12, Mac: "All mods should be enabled by default"):
+  // MO1:
   // every mod's `Enabled` defaults TRUE - this one, Meaner Monsters,
   // the Physical Combat And Armor Overhaul and Unleveled Loot alike -
   // and the Mods pane is where a player turns one off. While this one
   // is on the mod's skybox is the enhanced lane's sky, as DS1 shipped
-  // it - with the volumetric clouds over it (DS2) and the Pixelated sky
-  // switch on it (PS2); the port's own dome draws while it is off.
+  // it - with the volumetric clouds over it and the Pixelated sky
+  // switch on it; the port's own dome draws while it is off.
   'dynamic-skies': Object.freeze({
     title: 'Dynamic Skies',
     author: 'BadLuckBurt and carademono',
@@ -124,7 +124,7 @@ export const MOD_SETTINGS = Object.freeze({
           return t('mods.dynamicSkies.MaxParticleSize.description', 'Size of the largest square snowflake.');
         },
       }),
-      // AUDIT 61 / OWN-AUDIT (2026-11-01): the mod read this and never applied it; ours caps the pixel snow by it.
+      // The mod read this and never applied it; ours caps the pixel snow by it.
       MaxParticles: Object.freeze({
         default: 20,
         min: 15,
@@ -135,11 +135,11 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // WORLD-HOVER: WORLD TOOLTIPS 1.1 (jefetienne). The mod ships exactly
+  // WORLD TOOLTIPS 1.1 (jefetienne). The mod ships exactly
   // ONE key, and its description is the author's own word for word -
   // it exists so the main quest's puzzles are not given away by a
   // label on the thing you are meant to find for yourself.
-  // `Enabled` is the port's, as it is for every vendored mod (MO1).
+  // `Enabled` is the port's, as it is for every vendored mod.
   'world-tooltips': Object.freeze({
     title: 'World Tooltips',
     author: 'jefetienne',
@@ -166,7 +166,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // RSH1: READIED SPELLCASTING HANDS 1.3 (jefetienne, the World Tooltips author). The mod ships no modsettings - it is
+  // READIED SPELLCASTING HANDS 1.3 (jefetienne, the World Tooltips author). The mod ships no modsettings - it is
   // on when it is listed - so `Enabled` is the port's alone (MO1: on by default), and its description is written here.
   'readied-spellcasting-hands': Object.freeze({
     title: 'Readied Spellcasting Hands',
@@ -196,9 +196,9 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // LPT1 (2026-10-05): LOW POLY TREES 5 (SquidKamer). No modsettings of its own - 253 prefabs - so one switch: the
+  // LOW POLY TREES 5 (SquidKamer). No modsettings of its own - 253 prefabs - so one switch: the
   // port's Enabled, read once when the world loads (a flip reaches it as it next loads). The player's own online: it
-  // changes how the trees are drawn, never where they stand (bible/07-Rendering/Low-Poly-Trees.md).
+  // changes how the trees are drawn, never where they stand.
   'low-poly-trees': Object.freeze({
     title: 'Low Poly Trees',
     author: 'SquidKamer',
@@ -211,8 +211,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // AUDIT BASIC ROADS (BR3, 2026-09-13, Mac: "can you do an audit on
-  // basic roads, I dont think its working"). THIS MOD HAD NO `Enabled`
+  // AUDIT BASIC ROADS. THIS MOD HAD NO `Enabled`
   // AND NO GATE - the only one of the six. MO1 gave every mod the
   // switch and defaulted it TRUE; this one was missed, so Basic Roads
   // was not enabled-by-default, it was UNCONDITIONAL: world.js called
@@ -251,7 +250,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // WOD1: WORLD OF DAGGERFALL 2.0 (Kamer). No modsettings of its own -
+  // WORLD OF DAGGERFALL 2.0 (Kamer). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it), the Meaner
   // Monsters precedent. Read once, at the world's mount: the loader's
   // instance list is built for the life of the world (LocationLoader.cs
@@ -282,10 +281,10 @@ export const MOD_SETTINGS = Object.freeze({
     }),
   }),
   // WD3's BEAUTIFUL VILLAGES 1.4.2 and BEAUTIFUL CITIES 0.5.0 (carademono) are
-  // retired (OWN-WORK3, 2026-10-31): their switches went with them, and a
+  // retired: their switches went with them, and a
   // stored value for either is let go on load (migrate, below). The towns are
   // Daggerfall's, dressed by our own law with no switch (world/townDress.js).
-  // WA1 (2026-09-25): WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
+  // WA1: WARM ASHES - SHIPS 1.1 (Kamer). No modsettings of its
   // own - a travel hook, a quest action and six world-data variants - so
   // one switch.
   'warm-ashes-ships': Object.freeze({
@@ -304,7 +303,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // RAID1 (2026-09-27): WORLD EVENTS - RAIDING PARTIES 1.1 (Kamer, made for
+  // WORLD EVENTS - RAIDING PARTIES 1.1 (Kamer, made for
   // this port). No modsettings of its own - one script - so one switch.
   'world-events-raiding-parties': Object.freeze({
     title: 'World Events - Raiding Parties',
@@ -322,7 +321,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // FORAGE1 (2026-09-28): FORAGING 1.7 (Harbinger451). No modsettings of
+  // FORAGING 1.7 (Harbinger451). No modsettings of
   // its own - six tools, five foods, a quest pack - so one switch.
   'foraging': Object.freeze({
     title: 'Foraging',
@@ -342,11 +341,11 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // DW-A (2026-09-25): ILIAC PUDDLE NO MORE 1.2.2 (jet082). Its one section,
+  // ILIAC PUDDLE NO MORE 1.2.2 (jet082). Its one section,
   // General, restated flat with the section in front of each name (the
   // Immersive Footsteps convention), in the shipped order with the shipped
   // defaults and ranges - the sea's tuning, ported. OWN-WORK3: every
-  // description is our own words. Plus the port's `Enabled` (MO1: on). The
+  // description is our own words. Plus the port's `Enabled`. The
   // steppers are the Mods pane's: a metre for the depth, a twentieth on
   // the 0..1 sliders, a quarter on the swim multiplier (its floor).
   'iliac-puddle-no-more': Object.freeze({
@@ -628,12 +627,12 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // OH-A (2026-09-26): THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0
+  // THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0
   // (jet082). Listed AFTER Iliac Puddle No More, its one non-optional
   // dependency (DFU Awakes a dependency first). Its one section, General,
   // restated flat in the shipped order with the shipped defaults, ranges
   // and our own descriptions - seven 0..1 sliders, a twentieth a step - plus the
-  // port's `Enabled` (MO1: on). With the sea's own switch off it has no
+  // port's `Enabled`. With the sea's own switch off it has no
   // sea to open (oceanHoles.js reads that switch, as DFU asks ModManager).
   'ocean-holes': Object.freeze({
     title: 'There’s a Hole in the Bottom of the Ocean',
@@ -740,19 +739,16 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // CSA-A (2026-09-27): COME SAIL AWAY 2.1 (RedRoryOTheGlen). Its ten
-  // sections as the shipped modsettings.json carries them, section and
-  // name joined with a dot, the shipped defaults and ranges; the four
-  // unnamed spacer sections ("---", "----", "-", "--") carry no keys and
-  // fall between Controls and WindDirectionWidget, Waves and Cargo, Cargo
-  // and Audio, Audio and Handling. Every description is the port's
-  // (OWN-WORK4 rewrote the six the mod wrote), each saying what
-  // ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY NEVER READS - Handling.BadTack,
-  // Handling.BadTackMultiplier and SailingAssist.AutoStowGaffSails - are ours since OWN-AUDIT (2026-11-01,
-  // comeSailAway/sailAssist.js); Compatibility.AnimatedWaterVertexWaves named a mod the game has not got and
-  // is retired (RETIRED_KEYS). The nine Controls keys are Unity KeyCode names (`text`);
-  // each becomes a registry action (systems/inputActions.js MOD_ACTIONS)
-  // with the slice that reads it. Plus the port's `Enabled` (MO1: on).
+  // COME SAIL AWAY 2.1 (RedRoryOTheGlen). Its ten sections as the shipped modsettings.json carries them,
+  // section and name joined with a dot, the shipped defaults and ranges; the four unnamed spacer sections
+  // ("---", "----", "-", "--") carry no keys and fall between Controls and WindDirectionWidget, Waves and
+  // Cargo, Cargo and Audio, Audio and Handling. Every description is the port's (OWN-WORK4 rewrote the six
+  // the mod wrote), each saying what ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY
+  // NEVER READS - Handling.BadTack, Handling.BadTackMultiplier and SailingAssist.AutoStowGaffSails - are
+  // ours since OWN-AUDIT (2026-11-01, comeSailAway/sailAssist.js); Compatibility.AnimatedWaterVertexWaves
+  // named a mod the game has not got and is retired (RETIRED_KEYS). The nine Controls keys are Unity KeyCode
+  // names (`text`); each becomes a registry action (systems/inputActions.js MOD_ACTIONS) with the slice that
+  // reads it. Plus the port's `Enabled`.
   'come-sail-away': Object.freeze({
     title: 'Come Sail Away',
     author: 'RedRoryOTheGlen',
@@ -774,14 +770,14 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t('mods.comeSailAway.Controls.Disembark.description', 'Leave the helm (the Transport key does too).');
         },
-      }), // CSA-D / KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Controls.ToggleSail': Object.freeze({
         default: 'Space',
         text: true,
         get description() {
           return t('mods.comeSailAway.Controls.ToggleSail.description', 'Raise or stow the sails at the helm.');
         },
-      }), // CSA-E / KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Controls.ToggleLight': Object.freeze({
         default: 'Period',
         text: true,
@@ -791,7 +787,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Light or douse the boat’s lanterns at the helm.',
           );
         },
-      }), // CSA-D / KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Controls.IncreaseTimeScale': Object.freeze({
         default: 'KeypadPlus',
         text: true,
@@ -822,7 +818,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Hold to trim the sails to the right (with Sailing Assist’s auto trimming off).',
           );
         },
-      }), // CSA-E / KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Controls.TrimLeft': Object.freeze({
         default: 'LeftBracket',
         text: true,
@@ -832,7 +828,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Hold to trim the sails to the left (with Sailing Assist’s auto trimming off).',
           );
         },
-      }), // CSA-E / KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Controls.TrimModifier': Object.freeze({
         default: 'Backslash',
         text: true,
@@ -842,7 +838,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Hold with a trim key to trim the square sails instead; hold with Toggle Sail to raise or stow the square sails alone.',
           );
         },
-      }), // CSA-E / KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Controls.PortLocationSearchRange': Object.freeze({
         default: 3,
         min: 1,
@@ -1222,7 +1218,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
+  // MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
   // the overhaul because the overhaul names it as a dependency and so
   // Awakes after it in DFU.
@@ -1243,11 +1239,10 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // PCO1: PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
+  // PHYSICAL COMBAT AND ARMOR OVERHAUL 1.44 (Kirk.O). Its seven
   // Modules keys, names and descriptions as modsettings.json ships them
   // (all seven on, as shipped), plus the port's `Enabled` (DFU enables
-  // a mod by listing it). MM1 (Mac: "there shouldn't be compatibility
-  // switches between mods"): the two arms DFU derives from OTHER mods
+  // a mod by listing it). MM1: the two arms DFU derives from OTHER mods
   // being loaded - Roleplay Realism's advancedArchery and the presence
   // of Meaner Monsters - are no longer switches here; combat/pcaao.js
   // reads the other mod's own switch, as DFU asks ModManager.
@@ -1336,7 +1331,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // UL1: UNLEVELED LOOT 1.1.2 (Ralzar). Its one section, MaterialSwitching,
+  // UNLEVELED LOOT 1.1.2 (Ralzar). Its one section, MaterialSwitching,
   // ten MultipleChoiceKeys named for the ten materials, each defaulting
   // to itself, as modsettings.json ships them, plus the port's `Enabled`.
   // Listed AFTER the overhaul: its manifest orders it after Roleplay
@@ -1362,7 +1357,7 @@ export const MOD_SETTINGS = Object.freeze({
             name,
             Object.freeze({
               default: i,
-              // L10N4: the names are Daggerfall's own materials, DFU's keys; the key names in front stay the mod's
+              // The names are Daggerfall's own materials, DFU's keys; the key names in front stay the mod's
               options: lazyWords(
                 () => localizedText('iron', 'Iron'),
                 () => localizedText('steel', 'Steel'),
@@ -1387,22 +1382,20 @@ export const MOD_SETTINGS = Object.freeze({
       ),
     }),
   }),
-  // WW1 (2026-09-14, Mac: "This is our next mod I want to add 1:1 while
-  // also having it work with morrowind's first person view"): WEAPON
-  // WIDGET 1.6 (RedRoryOTheGlen). Its nine sections as modsettings.json
-  // ships them - Modules' nine toggles, then each module's own knobs -
-  // the key named section-dot-name because four names repeat across
-  // sections (Speed, Length, Offset, Condition). A key with `float`
-  // is a SliderFloatKey and reads as a number on its range; `step` is
-  // the Mods pane's stepper for it. Descriptions are the mod's own where
-  // it wrote one. Plus the port's `Enabled` (MO1: on).
-  // SW1 (2026-09-19) - SHIELD WIDGET 1.6, RedRoryOTheGlen. The mod's own
-  // eight sections restated flat, section and name joined with a dot, in
-  // the bundle's own order with the bundle's own defaults, ranges and
-  // descriptions. The six keys the mod ships with no description carry
-  // the port's words instead. Plus the port's `Enabled` (MO1: on).
-  // DW1: Diverse Weapons 1.7.3 (RealAKP) ships no settings of its own -
-  // its one script sets FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
+  // WEAPON WIDGET 1.6 (RedRoryOTheGlen). Its nine sections as
+  // modsettings.json ships them - Modules' nine toggles, then each
+  // module's own knobs - the key named section-dot-name because four
+  // names repeat across sections (Speed, Length, Offset, Condition). A
+  // key with `float` is a SliderFloatKey and reads as a number on its
+  // range; `step` is the Mods pane's stepper for it. Descriptions are
+  // the mod's own where it wrote one. Plus the port's `Enabled`. SW1 -
+  // SHIELD WIDGET 1.6, RedRoryOTheGlen. The mod's own eight sections
+  // restated flat, section and name joined with a dot, in the bundle's
+  // own order with the bundle's own defaults, ranges and descriptions.
+  // The six keys the mod ships with no description carry the port's
+  // words instead. Plus the port's `Enabled`. DW1: Diverse Weapons 1.7.3
+  // (RealAKP) ships no settings of its own - its one script sets
+  // FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
   // (DiverseWeaponsMain.cs:37, in the 1.7.3 release). `Enabled` IS that
   // flag. The second key is the port's rendering of the mod's readme -
   // "For Weapon Widget users, select Diverse Weapons settings preset in
@@ -1428,7 +1421,7 @@ export const MOD_SETTINGS = Object.freeze({
         },
       }),
       WeaponWidgetPreset: Object.freeze({
-        default: false, // DISC16-B (2026-09-24, Mac: "I just want it how it was before diverse weapons"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP ("mod should be defaulted on") had it on, DISC14-B off with two departures of its own
+        default: false, // OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP ("mod should be defaulted on") had it on, DISC14-B off with two departures of its own
         get description() {
           return t(
             'mods.diverseWeapons.WeaponWidgetPreset.description',
@@ -1439,7 +1432,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // RRI1: Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar) - eleven
+  // Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar) - eleven
   // modules, each a bool in the mod's [Modules] section; OWN-WORK3: the
   // words are ours. `Enabled` is the mod being loaded at all: the
   // fourteen custom items and the template patches ride it.
@@ -1570,7 +1563,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // OWN-WORK3: the descriptions are ours
+      // The descriptions are ours
       bedSleeping: Object.freeze({
         default: true,
         get description() {
@@ -1642,7 +1635,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t('mods.roleplayRealism.equipDamage.description', 'Armor wears five times faster from blows.');
         },
-      }), // WEAR-VANILLA (2026-10-01): the mod ships it ON (armour x5), the port OFF - see the overhaul's wear modules above; the room's too (onlineLane.js)
+      }), // The mod ships it ON (armour x5), the port OFF - see the overhaul's wear modules above; the room's too (onlineLane.js)
       enemyAppearance: Object.freeze({
         default: true,
         get description() {
@@ -1694,7 +1687,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // fightersTeachHandToHand RETIRED (FGH2H-R, 2026-09-24, Mac: "retire it") - see RETIRED_KEYS below
+      // fightersTeachHandToHand RETIRED - see RETIRED_KEYS below
       loanAmountPerLevel: Object.freeze({
         default: 4,
         options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']),
@@ -1705,7 +1698,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // EnhancedRiding (RR2)
+      // EnhancedRiding
       'EnhancedRiding.enhancedRiding': Object.freeze({
         default: true,
         get description() {
@@ -1749,7 +1742,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t('mods.roleplayRealism.EnhancedRiding.GallopingInTowns.description', 'You can gallop in towns.');
         },
-      }), // TOWN-GALLOP (2026-10-13, Mac: "Remove forced horse walking in towns"): the mod ships this OFF, the port ships it ON - off, the mod's CanRun refused the run in every town, and horse care's horse walked there with Run held (HORSE-WALK); the room's too (onlineLane.js ONLINE_WHOLE_MODS reads this default); no tile ever reached the switch (FT14), so no saved off stands to reset; TrampleCivilians, the mod's own, rides with it; recorded on the RR page
+      }), // The mod ships this OFF, the port ships it ON - off, the mod's CanRun refused the run in every town, and horse care's horse walked there with Run held; the room's too (onlineLane.js ONLINE_WHOLE_MODS reads this default); no tile ever reached the switch, so no saved off stands to reset; TrampleCivilians, the mod's own, rides with it; recorded on the RR page
       'EnhancedRiding.TrampleCivilians': Object.freeze({
         default: true,
         get description() {
@@ -1759,7 +1752,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // RefinedTraining (RR2)
+      // RefinedTraining
       'RefinedTraining.refinedTraining': Object.freeze({
         default: true,
         get description() {
@@ -2269,7 +2262,7 @@ export const MOD_SETTINGS = Object.freeze({
             'DoubleScaleTextures: draws the idle pose at double size from the mod’s own textures. Add the mod’s .dfmod under Your own textures.',
           );
         },
-      }), // DISC16-B: the mod's own again (DISC14-B had it on)
+      }), // The mod's own again (DISC14-B had it on)
       'Modules.TrueTextureSize': Object.freeze({
         default: false,
         get description() {
@@ -2473,7 +2466,7 @@ export const MOD_SETTINGS = Object.freeze({
             'How far the weapon trails behind when you look around or move.',
           );
         },
-      }), // DISC16-B: the mod's own again (DISC14-B had it at 0)
+      }), // The mod's own again (DISC14-B had it at 0)
       'Inertia.Speed': Object.freeze({
         default: 1.0,
         min: 0.0,
@@ -2621,7 +2614,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // HT1 (2026-09-14): HANDHELD TORCHES 1.4.1 (RedRoryOTheGlen), ported
+  // HANDHELD TORCHES 1.4.1 (RedRoryOTheGlen), ported
   // 1:1 - the shipped release's modsettings.json (no longer carried,
   // OWN-WORK4) key for key, section and name joined with a dot. Two kinds are new
   // here: a TextKey (a Unity KeyCode name - `text`), and the two Tuple
@@ -2642,18 +2635,15 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // SOC5 (2026-09-16, Mac: "Players should be able to interact with others
-      // in the world upon encountering them by pressing F on their body"): THE
-      // SECOND DEPARTURE FROM THE MOD'S SHIPPED KEYS, and the same shape as
-      // HT4's below. Handheld Torches ships F, and in Daggerfall Unity that is
-      // free. It is not free here any more: SOC5 spends F on the port's own
-      // SocialInteract action (systems/inputActions.js DEFAULT_BINDINGS), the
-      // key Mac named, and online forces every vendored mod ON
-      // (systems/online/onlineLane.js) - so one press would both open the F-menu on a
-      // player and light a torch, for every player online, by default. O is
-      // unbound in DFU's own defaults and unused by this mod's other two keys
-      // and by every other vendored mod, and it says what it does: on and off.
-      // The player may still bind it wherever they like; this is about what
+      // THE SECOND DEPARTURE FROM THE MOD'S SHIPPED KEYS, and the same shape as HT4's
+      // below. Handheld Torches ships F, and in Daggerfall Unity that is free. It is
+      // not free here any more: SOC5 spends F on the port's own SocialInteract action
+      // (systems/inputActions.js DEFAULT_BINDINGS), the key Mac named, and online
+      // forces every vendored mod ON (systems/online/onlineLane.js) - so one press
+      // would both open the F-menu on a player and light a torch, for every player
+      // online, by default. O is unbound in DFU's own defaults and unused by this mod's
+      // other two keys and by every other vendored mod, and it says what it does: on
+      // and off. The player may still bind it wherever they like; this is about what
       // SHIPS. test/systems/ht1_handheldtorches.test.js HT4 is the gate that caught it.
       'Handling.ToggleLightInput': Object.freeze({
         default: 'O',
@@ -2664,7 +2654,7 @@ export const MOD_SETTINGS = Object.freeze({
             'The key that lights your torch, candle or lantern, or puts it out.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Handling.RememberLastLightSource': Object.freeze({
         default: true,
         get description() {
@@ -2674,8 +2664,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
-      // for the menu"): THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
+      // THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
       // Handheld Torches ships Tab, and in Daggerfall Unity that is free.
       // It is not free here: PX15 gave Tab to the port's own pixel dial
       // (ui/input.js, the radial menu DFU has not got), so the mod's
@@ -2693,9 +2682,9 @@ export const MOD_SETTINGS = Object.freeze({
             'The key that drops the light from your hand.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
-      // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEFAULT THIS
-      // PORT MOVES, and it is an owner decision rather than a misread.
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      // THE ONE DEFAULT THIS PORT MOVES, and it is an owner decision
+      // rather than a misread.
       //
       // Handheld Torches ships `OnStow = Drop` (1), and the port kept it
       // with every other shipped default. HT6 recorded the consequence:
@@ -2818,7 +2807,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Hold to wind up a throw, release to throw a torch.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({
         default: 1.0,
         min: 0.0,
@@ -2958,13 +2947,12 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // MODS-ON (2026-09-14, Mac: "all mods should be on by default"): the
-      // shipped modsettings.json carries `Sprite = False`, so the mod itself
-      // ships its first-person hand switched off - and the hand is the mod's
-      // whole subject. The HT2 audit measured what that costs: everything
-      // works (all eight sprites decode and upload, the hand is free, the
-      // torch is lit) and `draw()` still answers false, so a player lights a
-      // torch and sees nothing. This ONE default departs; Ledger A row MODS-ON.
+      // The shipped modsettings.json carries `Sprite = False`, so the mod
+      // itself ships its first-person hand switched off - and the hand is the
+      // mod's whole subject. The HT2 audit measured what that costs: everything
+      // works (all eight sprites decode and upload, the hand is free, the torch
+      // is lit) and `draw()` still answers false, so a player lights a torch
+      // and sees nothing. This ONE default departs; Ledger A row MODS-ON.
       'Modules.Sprite': Object.freeze({
         default: true,
         get description() {
@@ -2974,18 +2962,17 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // HT5 (2026-09-16, Mac: "the torch when being held isn't affected by
-      // the weapon bob like everything else"): THE THIRD DEPARTURE FROM THE
-      // MOD'S SHIPPED KEYS. The mod ships its three motion modules OFF -
-      // they restate Weapon Widget's Bob, Inertia and Step laws so the hand
-      // can move WITH the weapon, and the mod leaves it to the player to
-      // switch on whichever the widget has on (its Bob.Offset says so: "For
-      // use with weapon bob"). This port ships Weapon Widget with Bob ON
-      // (its own shipped default), so a torch hand that shipped still beside
-      // a weapon that sways is the two mods disagreeing about one walk. Bob
-      // follows the widget's shipped default; Inertia and Step stay off, as
-      // the widget ships them. The player may still turn any of the three
-      // either way; this is about what SHIPS.
+      // THE THIRD DEPARTURE FROM THE MOD'S SHIPPED KEYS. The mod ships its
+      // three motion modules OFF - they restate Weapon Widget's Bob, Inertia
+      // and Step laws so the hand can move WITH the weapon, and the mod
+      // leaves it to the player to switch on whichever the widget has on
+      // (its Bob.Offset says so: "For use with weapon bob"). This port ships
+      // Weapon Widget with Bob ON (its own shipped default), so a torch hand
+      // that shipped still beside a weapon that sways is the two mods
+      // disagreeing about one walk. Bob follows the widget's shipped
+      // default; Inertia and Step stay off, as the widget ships them. The
+      // player may still turn any of the three either way; this is about
+      // what SHIPS.
       'Modules.Bob': Object.freeze({
         default: true,
         get description() {
@@ -3268,7 +3255,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // AT0: AMBIENT TEXT 1.8 (Regnier). Its one section, `AmbientText`,
+  // AMBIENT TEXT 1.8 (Regnier). Its one section, `AmbientText`,
   // and its four SliderIntKeys, names, bounds and defaults exactly as
   // modsettings.json ships them, plus the port's own `Enabled`.
   // `interval` keeps the mod's own name and not the field's
@@ -3329,8 +3316,7 @@ export const MOD_SETTINGS = Object.freeze({
   // RedRoryOTheGlen's third-person camera and player sprite, every key
   // the bundle's modsettings.json ships, under its own section name, as
   // it ships them - plus the port's own `Enabled`. Mac's ruling on why
-  // a port that already has third person carries a second one
-  // (2026-09-15): "This is moreso for those who opt out of using
+  // a port that already has third person carries a second one: "This is moreso for those who opt out of using
   // morrowind." The Morrowind body needs Morrowind data; this one does
   // not, and `player/mwView.js` says in its own head that a player
   // without it "has no third person at all". Three defaults depart from
@@ -3441,8 +3427,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // EOTB4 (Mac: "I want it scrollable like how we handle morrowind") put the view on the wheel. OWN-AUDIT
-      // (2026-11-01): the mod's Camera.TogglePerspective key is the game's TogglePerspective action, bound in
+      // EOTB4 put the view on the wheel. OWN-AUDIT: the mod's Camera.TogglePerspective key is the game's TogglePerspective action, bound in
       // Controls and shown on this mod's tile (inputActions.js MOD_TILE_ACTIONS) - retired here (RETIRED_KEYS).
       // HT4's finding again, same author, same key: the mod ships Tab,
       // which is free in Daggerfall Unity and SPENT here - PX15 gave it
@@ -3458,7 +3443,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Moves the camera to your other shoulder.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'CameraOverrideWeapon.Enable': Object.freeze({
         default: false,
         get description() {
@@ -3573,7 +3558,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // OWN-AUDIT (2026-11-01): CameraScrolling.ScrollableZOffsetAxis named a Unity input axis ("Mouse ScrollWheel"),
+      // CameraScrolling.ScrollableZOffsetAxis named a Unity input axis ("Mouse ScrollWheel"),
       // which a browser has not got - the wheel is the page's own. Retired (RETIRED_KEYS).
       'AutoTogglePerspective.ToggleInput': Object.freeze({
         default: 'KeypadPlus',
@@ -3584,7 +3569,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Key that turns the automatic view changes below on or off.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'AutoTogglePerspective.OnFoot': Object.freeze({
         default: 0,
         options: EOTB_VIEWS,
@@ -3689,7 +3674,7 @@ export const MOD_SETTINGS = Object.freeze({
       // Heavy Fighter F 4 and M 5, Mage F 6 and M 7, Thief Mage 8/9, Fighter Mage 10/11, Thief 12/13, Fighter Thief
       // 14/15), and the art says the rest: every even set is a woman and every odd set a man, and the five riders are
       // the fighters by their helms and boots (green-booted women, cyan-booted men - the on-foot sets' own colours).
-      // SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): Daggerfall's own classes follow the mod's
+      // SKIN2: Daggerfall's own classes follow the mod's
       // sixteen as 16 onwards (player/classSkins.js) - the mod's range kept as its own, the port's past it.
       'Graphics.OnFoot': Object.freeze({
         default: 0,
@@ -3717,7 +3702,7 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.eyeOfTheBeholder.skin.fighterThiefMale', 'Fighter Thief (male)'),
           ...CLASS_SKINS.map((skin) => () => classSkinLabel(skin)),
         ),
-      }), // L10N4: the class skins' names read when they are read, as the mod's are
+      }), // The class skins' names read when they are read, as the mod's are
       'Graphics.OnHorse': Object.freeze({
         default: 0,
         min: 0,
@@ -3771,9 +3756,8 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // TURN-FREE (2026-10-31, the owner: "Allow players to view all rotations of their character when idle or moving in a
-      // direction with the camera facing another direction"): the bundle ships 2, When Weapon Readied, and a readied body
-      // only ever showed its back. The port ships 1: it faces the camera only while a blow or a cast plays.
+      // The bundle ships 2, When Weapon Readied, and a readied body only ever showed its back. The port ships 1: it faces
+      // the camera only while a blow or a cast plays.
       'Graphics.TurnToView': Object.freeze({
         default: 1,
         options: lazyWords(
@@ -3816,7 +3800,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // OWN-AUDIT (2026-11-01): Graphics.PingPongOffset tuned the ping-pong that ONE-STROKE retired (a blow plays one
+      // Graphics.PingPongOffset tuned the ping-pong that ONE-STROKE retired (a blow plays one
       // stroke, eotbBillboard.js meleeStrokeFrames). Retired (RETIRED_KEYS).
       'Graphics.FirstPersonBillboard': Object.freeze({
         default: 1,
@@ -3959,14 +3943,14 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // IF1 (2026-09-16, Mac: "Next mod we will be adding 1:1"): IMMERSIVE
-  // FOOTSTEPS 1.01 (Kirk.O). The shipped modsettings.json's four sections
-  // and ten keys, section and name joined with a dot, the port's own
-  // `Enabled` in front (MO1: on by default). The mod ships its clips in
-  // two qualities and LoadAudio picks by SoundClipQuality; the two
-  // ErrorLogging keys and the compat-warning key are declared so the pane
-  // matches the mod's, though the port has no log file to spam and no
-  // Better Ambience / Tempered Interiors / Travel Options to warn about.
+  // IMMERSIVE FOOTSTEPS 1.01 (Kirk.O). The shipped modsettings.json's
+  // four sections and ten keys, section and name joined with a dot, the
+  // port's own `Enabled` in front (MO1: on by default). The mod ships its
+  // clips in two qualities and LoadAudio picks by SoundClipQuality; the
+  // two ErrorLogging keys and the compat-warning key are declared so the
+  // pane matches the mod's, though the port has no log file to spam and
+  // no Better Ambience / Tempered Interiors / Travel Options to warn
+  // about.
   'immersive-footsteps': Object.freeze({
     title: 'Immersive Footsteps',
     author: 'Kirk.O',
@@ -4092,11 +4076,10 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // BA1 (2026-09-16, Mac: "Next mod to integrate 1:1 ensuring compatibility"):
   // BETTER AMBIENCE 0.1.4 (Joshua Steinhauer). The shipped modsettings.json's
   // six sections and twenty keys, section and name joined with a dot (the
   // section names carry spaces, as the mod wrote them: 'Better Footsteps.enable'),
-  // the port's own `Enabled` in front (MO1). ONE DEPARTURE FROM THE SHIPPED
+  // the port's own `Enabled` in front. ONE DEPARTURE FROM THE SHIPPED
   // KEYS: `Better Footsteps.enable` ships OFF. The mod ships it on, and so
   // does Immersive Footsteps ship its own stride on - and Immersive Footsteps'
   // author wrote the ruling (ImmersiveFootstepsMain.cs:424-449): with both
@@ -4105,9 +4088,7 @@ export const MOD_SETTINGS = Object.freeze({
   // disabled", and it posts a warning box at every game start until you do.
   // This port ships the pair the way that author says a player should run
   // them, and ports his warning for the player who turns both on anyway.
-  // BA2 (2026-09-17, Mac: "before any lighting work/the ambient mod that was
-  // introduced I really liked how the dungeons were properly dark ... is
-  // there any way to reintroduce that properly?"): THE SECOND DEPARTURE.
+  // BA2: THE SECOND DEPARTURE.
   // `Dungeon Lighting.enableFogAmbientEffect` ships OFF. The mod ships it
   // on, and on it replaces DFU's flat 0.12 dungeon ambient with a Trilight
   // grey of ~0.40 tinted toward the dungeon's fog colour - three times the
@@ -4307,7 +4288,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Lights each dungeon in the color of its fog',
           );
         },
-      }), // BA2: ships off (see above)
+      }), // Ships off (see above)
       'Dungeon Lighting.dungeonDarkness': Object.freeze({
         default: 1.0,
         min: 0.0,
@@ -4354,7 +4335,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING 0.5.3 - the
+  // OBLIVION-REMASTER-LIKE LEVELING 0.5.3 - the
   // first MORROWIND mod in this store, and the only one whose switches
   // come out of OpenMW `I.Settings.registerGroup` calls rather than a
   // `modsettings.json`. The mod's own two groups are `levelUpSettings`
@@ -4376,8 +4357,7 @@ export const MOD_SETTINGS = Object.freeze({
   'oblivion-remaster-leveling': Object.freeze({
     title: 'Oblivion Remaster Like Leveling',
     // The archive names no author (no LICENCE, no script header, an
-    // empty `.omwaddon` author field). Its row in Own-Work.md
-    // (OWN-WORK1) carries the open record; until Mac fills it in,
+    // empty `.omwaddon` author field). Its row in Own-Work.md carries the open record; until Mac fills it in,
     // the pane says what is true rather than inventing a name.
     author: 'Nexus Morrowind 56569',
     keys: Object.freeze({
@@ -4477,12 +4457,10 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
-  // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections,
-  // the key named section-dot-name (a saved setting's own name). OWN-WORK3
-  // (2026-10-31): the descriptions and choices are our own words, the
-  // defaults our decisions (bible/06-Systems/Travel-Options.md). The mod's
-  // five spacer sections carry no keys. Plus the port's `Enabled` (MO1: on).
+  // TRAVEL OPTIONS 1.11 (Hazelnut). Its twelve sections,
+  // the key named section-dot-name (a saved setting's own name). OWN-WORK3: the descriptions and choices are our own words, the
+  // defaults our decisions. The mod's
+  // five spacer sections carry no keys. Plus the port's `Enabled`.
   //
   // A key with `color` is a ColorKey - DFU has the kind natively
   // (ModSettings.ColorKey) and the port did not until this mod, which
@@ -4650,9 +4628,7 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // TRAVEL-NAV1 (2026-09-25, Mac: "Improving travel options navigation
-      // to properly route around objects and stopping before running into
-      // buildings"): THE PORT'S OWN KEY on the mod's pane, as HT-WAIST's is
+      // THE PORT'S OWN KEY on the mod's pane, as HT-WAIST's is
       // on Handheld Torches' - Travel Options 1.11's settings do not carry
       // it and its words say so. ON: a journey steers round buildings,
       // walls and rocks and pauses short of what it cannot pass
@@ -4728,12 +4704,12 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // AUDIT-TO1 I1: the mod ships index 1, "F" - and F is the key SOC5
+      // The mod ships index 1, "F" - and F is the key SOC5
       // spent on SocialInteract (inputActions.js DEFAULT_BINDINGS), the
       // same collision HT4 moved Handheld Torches' light toggle off.
       // One press did both: the friends card opened AND a road leg
       // began. Of the mod's own six: F is SOC5's, G is Handheld
-      // Torches' light toggle (HT4), O its ignite and X its throw
+      // Torches' light toggle, O its ignite and X its throw
       // (Throwing.ThrowTorchInput above) - so K, index 3, is the one
       // letter nothing in the port or a vendored mod answers. The
       // player may still pick F from the list; this is about what
@@ -4758,7 +4734,7 @@ export const MOD_SETTINGS = Object.freeze({
             'The key that starts a sped-up journey along the road or track you stand on.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({
         default: '',
         text: true,
@@ -4768,7 +4744,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Your own key for following a road, used when the setting above asks for it.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'RoadsIntegration.EnableWaterways': Object.freeze({
         default: false,
         get description() {
@@ -5077,9 +5053,8 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1"): IMMERSIVE TRAVEL - kkgobkk's
-  // carriages outside the city gates, 1.5, its three sections restated (the release's modsettings.json), in our own
-  // words (OWN-WORK4), a null or empty description carried as empty. Read live: the map reads them
+  // IMMERSIVE TRAVEL - kkgobkk's carriages outside the city gates, 1.5, its three sections restated (the release's
+  // modsettings.json), in our own words, a null or empty description carried as empty. Read live: the map reads them
   // as it opens (systems/immersiveTravel.js readImmersiveTravelSettings), the calculator as it bills - where the mod's
   // static constructors read four of them once a session (the bible's page records it).
   'immersive-travel': Object.freeze({
@@ -5092,7 +5067,7 @@ export const MOD_SETTINGS = Object.freeze({
           'Carriage drivers wait outside the gates of the walled cities. Talk to one and pay the fare to fast ' +
           'travel to a town or village; with Disable Normal Travel on, a carriage is the only fast travel there is.',
       }),
-      // IT1: DEPARTURE FROM THE MOD'S SHIPPED DEFAULT (it ships true), on the owner's word that the carriage is instant
+      // DEPARTURE FROM THE MOD'S SHIPPED DEFAULT (it ships true), on the owner's word that the carriage is instant
       // travel "as an option" - TO-FIELD2's shape. On, the travel map refuses every trip to a place (the mod's
       // ImmersiveTravelPopUp in DFU's) and Travel Options' walked journeys from the map go with it; online the room
       // holds it off (systems/online/onlineLane.js). The key is still a key: turning it on restores the mod's own default.
@@ -5167,7 +5142,7 @@ export const MOD_SETTINGS = Object.freeze({
   // (Physical Items 0.1.29's modsettings.json), the author's own words. Read live by the layer (systems/physicalItems.js
   // readPhysicalItemsSettings, again whenever this store changes) - the mod reads them at its load and on a settings
   // change (ApplySettings). NOT DECLARED: the Interaction section's four keys (the placement keys P, O and LeftControl,
-  // and Character Item Collision) - their placement is not ported (bible/06-Systems/Physical-Items.md), and a key the
+  // and Character Item Collision) - their placement is not ported, and a key the
   // port never reads is a switch that does nothing.
   'physical-items': Object.freeze({
     title: 'Physical Items',
@@ -5617,14 +5592,12 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // HAZE1 / WINDFALL1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the
-  // codebase. These should be on by default and integrate into our enhanced environments seamlessly"): demifiend000's
-  // three environment mods, their modsettings restated (Heat Haze 1.0.1's, Windfall 1.0.0's and
-  // Snowfall 1.0.5's modsettings.json) - every name, default and range the mod's, the words ours, section and name joined
-  // with a dot. Each mod's own Enabled (Heat Haze's in its one section, Windfall's and Snowfall's in General) IS the
-  // port's `Enabled`, the mod's switch, on by default (MO1), with the port's words for the Features row; a slider's
-  // `step` is the port's (the pane's grain), chosen so the mod's default sits on it. The three ride the enhanced
-  // outdoors (systems/heatHaze.js, systems/windfall.js, systems/snowfall.js say how).
+  // demifiend000's three environment mods, their modsettings restated (Heat Haze 1.0.1's, Windfall 1.0.0's and Snowfall
+  // 1.0.5's modsettings.json) - every name, default and range the mod's, the words ours, section and name joined with a
+  // dot. Each mod's own Enabled (Heat Haze's in its one section, Windfall's and Snowfall's in General) IS the port's
+  // `Enabled`, the mod's switch, on by default, with the port's words for the Features row; a slider's `step` is the
+  // port's (the pane's grain), chosen so the mod's default sits on it. The three ride the enhanced outdoors
+  // (systems/heatHaze.js, systems/windfall.js, systems/snowfall.js say how).
   'heat-haze': Object.freeze({
     title: 'Heat Haze',
     author: 'demifiend000',
@@ -5689,7 +5662,7 @@ export const MOD_SETTINGS = Object.freeze({
         description:
           'Wind in the enhanced outdoors that changes by the day. Trees and plants sway, some days turn windy or stormy, gusts come with their own sound, and leaves and snow blow off the trees.',
       }),
-      // OWN-AUDIT (2026-11-01): General.WindDirectionDegrees retired - the mod added it to a heading rolled each day, and
+      // General.WindDirectionDegrees retired - the mod added it to a heading rolled each day, and
       // the outdoors' one wind sets the heading here (windfall.js WINDFALL_HEADING_OFFSET, RETIRED_KEYS).
       'General.OverallWindyPeriodFrequency': Object.freeze({
         default: 100.0,
@@ -6243,7 +6216,7 @@ export const MOD_SETTINGS = Object.freeze({
         step: 0.5,
         description: 'How many meters the snow takes to deepen past the edge of a town.',
       }),
-      // OWN-AUDIT (2026-11-01): the three Location Loader keys read World of Daggerfall's sites (snowfallHost.js
+      // The three Location Loader keys read World of Daggerfall's sites (snowfallHost.js
       // siteFootprintsIn) - the camps, ruins and rock fields its loader levels in the wilds
       'Context.LocationLoaderIntegration': Object.freeze({
         default: true,
@@ -6412,24 +6385,22 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // HCC (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also
-  // enhance its online integration functionality"): HORSE CART AND CARGO -
-  // demifiend000's persistent horse and wagon, 1.0.0-rc12, its five
-  // sections restated (the 1.0.0-rc12 release's modsettings.json), in our words.
-  // The two TextKeys are Unity KeyCode names. THE PORT SHIPS THEM ON 5 AND 6
-  // (Alpha5 / Alpha6), NOT THE MOD'S K AND G (HCC-KEYS, a recorded departure
-  // on HT4's own law): K is Travel Options' FollowPathsKey and G is Handheld
-  // Torches' ManualDropInput here, both vendored before this mod, and every
-  // letter is spent - DFU's bindings, the port's own, the other mods'.
-  // AUDIT HCC K1: the first departure shipped F7 and F10 and neither was
-  // free. F10 is DFU's own LargeHUDToggle and Shift-F10 its HUDToggle
-  // (DialogShortcuts.txt, systems/dialogShortcuts.js) - the HUD shortcuts
-  // are world keys, not a window's, so one press flipped the HUD AND
-  // summoned the team - and F7 is the browser's caret-browsing prompt.
-  // The digits past the four quick slots are free on every count: DFU's
-  // bindings, its world shortcuts, every vendored mod, and the browser.
-  // The notes say the port's control, not the mod's text box: the Mods
-  // pane captures a key, and its clear writes `None`, which disables one.
+  // HCC: HORSE CART AND CARGO - demifiend000's persistent horse and wagon,
+  // 1.0.0-rc12, its five sections restated (the 1.0.0-rc12 release's
+  // modsettings.json), in our words. The two TextKeys are Unity KeyCode names.
+  // THE PORT SHIPS THEM ON 5 AND 6 (Alpha5 / Alpha6), NOT THE MOD'S K AND G
+  // (HCC-KEYS, a recorded departure on HT4's own law): K is Travel Options'
+  // FollowPathsKey and G is Handheld Torches' ManualDropInput here, both
+  // vendored before this mod, and every letter is spent - DFU's bindings, the
+  // port's own, the other mods'. AUDIT HCC K1: the first departure shipped F7
+  // and F10 and neither was free. F10 is DFU's own LargeHUDToggle and Shift-F10
+  // its HUDToggle (DialogShortcuts.txt, systems/dialogShortcuts.js) - the HUD
+  // shortcuts are world keys, not a window's, so one press flipped the HUD AND
+  // summoned the team - and F7 is the browser's caret-browsing prompt. The
+  // digits past the four quick slots are free on every count: DFU's bindings,
+  // its world shortcuts, every vendored mod, and the browser. The notes say the
+  // port's control, not the mod's text box: the Mods pane captures a key, and
+  // its clear writes `None`, which disables one.
   'horse-cart-and-cargo': Object.freeze({
     title: 'Horse Cart and Cargo',
     author: 'demifiend000',
@@ -6512,7 +6483,7 @@ export const MOD_SETTINGS = Object.freeze({
             'Mounts your last-used horse or wagon if it’s in reach, or dismounts if you’re riding. Click it and press a key to change it; \u2715 clears it.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Hotkeys.SummonTransport': Object.freeze({
         default: 'Alpha6',
         text: true,
@@ -6522,17 +6493,15 @@ export const MOD_SETTINGS = Object.freeze({
             'Brings your horse and wagon to you when you’re outdoors. Click it and press a key to change it; \u2715 clears it.',
           );
         },
-      }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      }), // Not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
     }),
   }),
-  // LEGACY1 (2026-10-05, bible/06-Systems/Legacy-Arc.md, Mac: "this is actually my DFU mod that I want to integrate"):
   // PROJECT LEGACY 0.4.1 (Lattymoy, Ghð§† and Positronico). The mod's own "Family" section, its names and descriptions
   // as modsettings.json ships them (vendor/project-legacy/modsettings.json) - but B14: the mod shipped Max Siblings 0
   // and Siblings Probability 0, so a fresh install never rolled a sibling; the port ships 2 and 50. Its "Input" section
   // (the G key and the second key) is the keybinding registry's (KB1, inputActions.js MOD_ACTIONS: LegacyFamily). The
   // "Legacy" section is the port's own: the model a family founded without the chargen's answer takes, Arkay's toll in
-  // an Enduring family, the heirloom's chance at a Bloodline death, and whether the family stands in the world
-  // (LEGACY-HOME). `Enabled` is the port's (MO1: on).
+  // an Enduring family, the heirloom's chance at a Bloodline death, and whether the family stands in the world. `Enabled` is the port's.
   'project-legacy': Object.freeze({
     title: 'Project Legacy',
     author: 'Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico',
@@ -6581,14 +6550,14 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
-  // DEX0: DAGGERFALL ENEMY EXPANSION 1.3.4 (Kamer & Kab). Its one section and key as modsettings.json ships them
+  // DAGGERFALL ENEMY EXPANSION 1.3.4 (Kamer & Kab). Its one section and key as modsettings.json ships them
   // (vendor/daggerfall-enemy-expansion/modsettings.json: Cheat.DisableTrollRespawn, a ToggleKey, off), read by the
   // troll's corpse each frame it counts down (BestiaryMod.LoadSettings, :136-139 - the mod reads it at load and on a
-  // settings change). `Enabled` is the port's (MO1: on) - the whole mod: its enemies, its tables, its art.
+  // settings change). `Enabled` is the port's - the whole mod: its enemies, its tables, its art.
   'daggerfall-enemy-expansion': Object.freeze({
     get title() {
       return t('mods.daggerfallEnemyExpansion.title', 'Daggerfall Enemy Expansion');
-    }, // the manifest's ModTitle (L10N4)
+    }, // the manifest's ModTitle
     author: 'Kamer & Kab',
     keys: Object.freeze({
       Enabled: Object.freeze({
@@ -6636,8 +6605,7 @@ export const KEY_MIGRATIONS = Object.freeze([
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
 ]);
-/** DISC20-E (2026-09-24, Mac: "The weapon widget default toggle under diverse weapons should be set to off by
- *  default"): A SWITCH WHOSE DEFAULT MOVED, RESET ONCE. Diverse Weapons' Weapon Widget Preset has shipped off since
+/** A SWITCH WHOSE DEFAULT MOVED, RESET ONCE. Diverse Weapons' Weapon Widget Preset has shipped off since
  *  DISC16-B, but a default only answers for a player who never touched the switch, and every player who turned it on
  *  while DW-CLIP shipped it on (or tried it) holds a SAVED value and still sees it on. So a stored value WITHOUT this
  *  entry's stamp is let go on load and the file written back, and the shipped off applies. setModSetting stamps the
@@ -6645,19 +6613,19 @@ export const KEY_MIGRATIONS = Object.freeze([
  *  KEY_MIGRATIONS, which can only match a value. A file that never mentioned the mod is not grown one. */
 export const SWITCH_RESETS = Object.freeze([
   Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC20' }),
-  // WEAR-VANILLA (2026-10-01): the three wear switches that moved to off
+  // The three wear switches that moved to off
   Object.freeze({ vendor: 'pcaao', key: 'equipmentDamageEnhanced', stamp: 'equipmentDamageEnhanced@WEAR-VANILLA' }),
   Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),
   Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),
 ]);
-/** FGH2H-R (2026-09-24, Mac: "retire it"): A SWITCH TAKEN OFF THE PANE. Roleplay & Realism's
+/** A SWITCH TAKEN OFF THE PANE. Roleplay & Realism's
  *  fightersTeachHandToHand swapped Giantish for HandToHand in the Fighters Guild's lists; FGH2H put HandToHand in the
  *  base lists beside Giantish, which left the switch one effect - taking Giantish away - so it is retired whole (the
  *  Port-Ledger's FGH2H row). A player who turned it on holds a SAVED true for a key nothing declares, so the stored
  *  value is let go on load, once, and the file written back; a file that never mentioned the key is not touched. */
 export const RETIRED_KEYS = Object.freeze([
   Object.freeze({ vendor: 'roleplay-realism', key: 'fightersTeachHandToHand' }),
-  // OWN-AUDIT (2026-11-01): keys that could mean nothing here - a mod the game has not got (Animated Water), a Unity
+  // Keys that could mean nothing here - a mod the game has not got (Animated Water), a Unity
   // input axis, the ping-pong ONE-STROKE retired, a heading the one wind sets; the view's key is Controls' now
   Object.freeze({ vendor: 'come-sail-away', key: 'Compatibility.AnimatedWaterVertexWaves' }),
   Object.freeze({ vendor: 'eye-of-the-beholder', key: 'Camera.TogglePerspective' }),
@@ -6714,38 +6682,38 @@ function save() {
   }
 }
 
-/** DS1: a SliderIntKey (declared with min/max) reads as an integer
+/** A SliderIntKey (declared with min/max) reads as an integer
  *  clamped to its range; every other key is a ToggleKey and reads as a
  *  boolean, exactly as before. */
 export function isIntKey(def) {
   return def && typeof def.min === 'number' && typeof def.max === 'number' && !def.float;
 }
-/** WW1: a SliderFloatKey (Weapon Widget's speeds and sizes) - `float`
+/** A SliderFloatKey (Weapon Widget's speeds and sizes) - `float`
  *  declared, min/max its range, `step` the pane's stepper. */
 export function isFloatKey(def) {
   return def && def.float === true && typeof def.min === 'number' && typeof def.max === 'number';
 }
-/** UL1: a MultipleChoiceKey - `options` is the list, the value its index. */
+/** A MultipleChoiceKey - `options` is the list, the value its index. */
 export function isChoiceKey(def) {
   return def && Array.isArray(def.options);
 }
-/** HT1: a TextKey (Handheld Torches' three key bindings) - a Unity
+/** A TextKey (Handheld Torches' three key bindings) - a Unity
  *  KeyCode name, `text` declared; the pane captures a key for it. */
 export function isTextKey(def) {
   return def && def.text === true;
 }
-/** HT1: a TupleIntKey / TupleFloatKey - `tuple` names the pair's kind,
+/** A TupleIntKey / TupleFloatKey - `tuple` names the pair's kind,
  *  the value `[first, second]`. */
 export function isTupleKey(def) {
   return def && (def.tuple === 'int' || def.tuple === 'float');
 }
-/** TO1: a ColorKey (DFU's ModSettings.ColorKey - Travel Options has
+/** A ColorKey (DFU's ModSettings.ColorKey - Travel Options has
  *  seventeen) - `color` declared, the value an `#rrggbbaa` string. */
 export function isColorKey(def) {
   return def && def.color === true;
 }
 
-/** TO1: the eight hex digits of a ColorKey, in either of the two
+/** The eight hex digits of a ColorKey, in either of the two
  *  spellings the mod itself uses - `#rrggbbaa` as this store writes it
  *  and `RRGGBBAA` as its own presets write it (modpresets.json:
  *  "D77727FF") - as `[r, g, b, a]` 0..255. Three or six digits are
@@ -6803,14 +6771,14 @@ function coerce(def, v) {
   }
   if (isFloatKey(def)) {
     const f = Number(v);
-    return Number.isFinite(f) ? Math.max(def.min, Math.min(def.max, Math.round(f * 1000) / 1000)) : def.default; // WW1: on its range, to a thousandth
+    return Number.isFinite(f) ? Math.max(def.min, Math.min(def.max, Math.round(f * 1000) / 1000)) : def.default; // On its range, to a thousandth
   }
   if (!isIntKey(def)) return !!v;
   const n = Math.trunc(Number(v));
   return Number.isFinite(n) ? Math.max(def.min, Math.min(def.max, n)) : def.default;
 }
 
-/** MM1: a read across mods - `ModManager.GetMod(...)` / another mod's
+/** A read across mods - `ModManager.GetMod(...)` / another mod's
  *  ModSettings - that answers undefined for a mod the port has not
  *  vendored (DFU: the mod is not loaded) instead of throwing. */
 export function modSettingIfDeclared(vendor, key) {
@@ -6818,7 +6786,7 @@ export function modSettingIfDeclared(vendor, key) {
 }
 
 /**
- * MODS-ONLINE-2: A DECLARED KEY IS AN OWN KEY. The three doors below
+ * A DECLARED KEY IS AN OWN KEY. The three doors below
  * read `MOD_SETTINGS[vendor].keys[key]` and treated anything truthy as
  * a declaration - so every name on Object.prototype was one. A read of
  * `toString`, `constructor` or `valueOf` sailed past "is not a declared
@@ -6851,14 +6819,14 @@ export function onlineModSetting(vendor, key, search) {
 export function modSetting(vendor, key) {
   const def = declaredKey(vendor, key);
   if (!def) throw new Error(`modSetting: ${vendor}/${key} is not a declared switch`);
-  const forced = onlineModSetting(vendor, key); // MODS-ONLINE-2: online, a key the room's ground depends on reads the room's value and the store is not written; REALM P0.2: and a balance mod's every key its shipped default
+  const forced = onlineModSetting(vendor, key); // Online, a key the room's ground depends on reads the room's value and the store is not written; REALM P0.2: and a balance mod's every key its shipped default
   if (forced !== undefined) return forced;
   const v = load()[vendor]?.[key];
   return v === undefined ? def.default : coerce(def, v);
 }
 
 /**
- * AUDIT PRE-MERGE 0928 S4: A MOD LOADED FOR THE GAME. A mod whose tile says it takes effect when the game (or the world)
+ * A MOD LOADED FOR THE GAME. A mod whose tile says it takes effect when the game (or the world)
  * next loads is loaded or not for the game, as DFU's mods are: the host that builds it reads its switch once, at its
  * mount, and latches the answer here. The mod's other doors - a shelf's row, its keys, an effect's restore - ask the
  * latch, so a switch flipped mid-game reaches none of them before the next load. A vendor no host latched answers
@@ -6871,9 +6839,9 @@ export function latchModLoaded(vendor, on) {
 }
 export const modLatchedOn = (vendor) => _loadedForGame.get(vendor);
 
-/** DS1: every key of one vendored mod, resolved - what a mod reads its
+/** Every key of one vendored mod, resolved - what a mod reads its
  *  ModSettings as, in one object. */
-/** KB1: the value a player SAVED for a key, raw, or undefined when they never touched it - the keybinding registry's
+/** The value a player SAVED for a key, raw, or undefined when they never touched it - the keybinding registry's
  *  one-time carry of the mods' old TextKeys (systems/inputActions.js migrateKeyBinds) needs "chose" from "shipped". */
 export function storedModSetting(vendor, key) {
   if (!declaredKey(vendor, key)) return undefined;
@@ -6901,14 +6869,14 @@ export function setModSetting(vendor, key, value) {
   const m = load();
   const v = coerce(def, value);
   (m[vendor] ??= {})[key] = v;
-  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true; // DISC20-E: chosen after the reset - kept
+  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true; // Chosen after the reset - kept
   save();
   _generation++;
   return v;
 }
 
 /**
- * DW1: A DFU ModSettings PRESET, flattened to this store's keys.
+ * A DFU ModSettings PRESET, flattened to this store's keys.
  *
  * A mod's presets ship as `{ Values: { Section: { Key: "string" } } }`
  * (ModSettingsData.cs's Preset, every value a string - "True", "142",

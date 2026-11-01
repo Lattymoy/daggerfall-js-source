@@ -1,16 +1,16 @@
 # Immersive Travel
 
-A port of kkgobkk's Immersive Travel 1.5 (Nexus 986): fast travel by carriage. A carriage, its team and a driver stand
+A port of kkgobkk's Immersive Travel 1.5: fast travel by carriage. A carriage, its team and a driver stand
 outside the gates of walled cities; talking to the driver opens the driver's map, and a trip there is Daggerfall's fast
 travel with a daily carriage fee on top of the inn nights. Online it is the way to fast travel over land, at a fare. The
-port carries the mod 1:1, its bugs included, with the departures below. Its vendored record is
-`vendor/immersive-travel/README.md`.
+port carries the mod 1:1, its bugs included, with the departures below. The carriage stand is our own; the release's
+record is in `01-Overview/Own-Work.md`.
 
 ## How it works
 
 ### The mod (`src/systems/immersiveTravel.js`)
 
-Read off the shipped DLL's IL (`vendor/immersive-travel/il/ImmersiveTravel.il.txt`), cited by offset in the module.
+Read off the shipped DLL's IL, cited by offset in the 1.5 assembly in the module.
 
 - **Init** registers two factions, Carriage Drivers (8642) and Sailors (8643), as merchants with a Fast Travel service.
   The mod is latched for the game when Init runs; a switch flipped mid-game waits for the next start.
@@ -29,11 +29,11 @@ Read off the shipped DLL's IL (`vendor/immersive-travel/il/ImmersiveTravel.il.tx
 
 ### The gates
 
-The mod's records are added to Daggerfall's four gate blocks (`WALLAA08` to `WALLAA11`). Its gate edits are WD1 patches
-(`bible/02-Formats/World-Data-Patches.md`) rebuilt from the player's own BLOCKS.BSA and checked by sha256
-(`tools/immersiveTravelPatches.mjs`). The carriage records are also a layer on the world-data door
-(`registerWorldDataLayer`, `src/world/immersiveTravelGates.js`), laid onto whichever gate block is served, so Beautiful
-Cities' gates carry drivers too.
+A gate needs one thing for Fast Travel: a driver in faction 8642 outside it, on open ground and off its way out. Our
+own stand (`src/world/immersiveTravelGates.js` `CARRIAGE_STAND`) puts a carriage, two horses, hay, a signpost and the
+driver 26 m along each gate's wall, set in the gate's frame (`IT_GATE_FRAMES`). No gate block is edited. Every Bay
+city is walled on its outline (`03-World/Town-Shapes.md`), and the walls carry the stand to their gates
+(`src/world/townWalls.js` `gateFurniture`), as they carry it to a city's past the Bay and a capital's.
 
 ### Past the Bay
 
@@ -59,7 +59,7 @@ refuses them.
 ## Rules
 
 - Instant travel online is an option with a cost: the carriage (the owner).
-- Carriages are laid onto whichever gate block a town is served with, Beautiful Cities' too (the owner).
+- Every walled city has carriages at its gates (the owner); the stand is our own (OWN-WORK, the owner).
 - A driver's trip is Daggerfall's fast travel online, with the fare paid (the owner).
 - How travel works in the Bay is how it works everywhere (the owner): every capital and city past the Bay has carriages
   at its gates.
@@ -69,24 +69,23 @@ refuses them.
 ## Daggerfall Unity
 
 The mod's classes (`CarriageMap`, `SeafarersMap`, `ImmersiveTravelPopUp`) extend DFU's travel map and popup. Departures:
-Disable Normal Travel off by default; the gate layer over Beautiful Cities; settings read when a map opens; Disable
-Normal Travel refuses the popup for a place only; the enhanced card names the ride; refusal boxes wrap; a street
+Disable Normal Travel off by default; our own stand at every gate, no gate block edited; settings read when a map opens;
+Disable Normal Travel refuses the popup for a place only; the enhanced card names the ride; refusal boxes wrap; a street
 merchant's popup in the street; online refusal by day for the sun-averse; the WALLAA09 driver given a face
 (`IT_DRIVER_FACE`); towns and capitals past the Bay.
 
 ## Code and tests
 
 - `src/systems/immersiveTravel.js`, `src/systems/immersiveTravelTables.js` - the mod
-- `src/world/immersiveTravelGates.js` - the gate layer
+- `src/world/immersiveTravelGates.js` - the stand at the gates
 - `src/world/capitalCarriages.js` - carriages at the provincial capitals
-- `tools/immersiveTravelPatches.mjs` - the gate patches from the shipped bundle
 - `test/systems/auditit1.test.js` - the mod's laws
 - `test/systems/it1_classicmap.test.js` - the classic map
-- `test/formats/worldData/it1_worlddata.test.js` - the gate patches against BLOCKS.BSA (with `ARENA2_PATH`)
+- `test/formats/worldData/it1_worlddata.test.js` - the stand at every gate;
+  `test/systems/guild/it1_immersivetravel.test.js` - the tables by literal digests
 - `test/ui/travel_everywhere.test.js` - a driver's trip past the Bay
 - `test/systems/fb1009b_driverface.test.js` - the WALLAA09 driver's face
 
 ## Open
 
-- The permission line in `vendor/immersive-travel/README.md` is open (`bible/01-Overview/Mod-Registry.md`).
-- How the carriages sit among Beautiful Cities' own gate furniture has not been seen in play.
+- The permission record for the ported law is open (`01-Overview/Own-Work.md`).

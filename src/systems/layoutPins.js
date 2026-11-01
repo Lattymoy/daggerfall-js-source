@@ -1,4 +1,4 @@
-// WD3 (2026-10-01): LAYOUT PINS - A TOWN KEEPS THE LAYOUT A SAVE'S THINGS WERE MADE IN.
+// LAYOUT PINS - A TOWN KEEPS THE LAYOUT A SAVE'S THINGS WERE MADE IN.
 //
 // Mac, 2026-10-01, handing over Beautiful Villages and Beautiful Cities: "ensure this doesn't conflict or regress
 // anything (For example housing customization)". The two mods do not edit Daggerfall's towns, they REPLACE them:
@@ -31,12 +31,12 @@ import {
 } from '../formats/worldData/worldDataReplacement.js';
 
 /** The world-data mods that MOVE BUILDINGS in towns - the only ones a pin speaks for. A mod that adds scenery to a
- *  dungeon or a ship's deck moves no building a save keeps by key. OWN-WORK3 (2026-10-31): both are retired and no
+ *  dungeon or a ship's deck moves no building a save keeps by key. OWN-WORK3: both are retired and no
  *  pack of theirs is loaded; they stay named so a save's stamps still read, and a record stamped with one sleeps. */
 export const LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-cities']);
 
 /**
- * WD3 (AUDIT WD3 B5): THE VERSIONS EVERY STAMP WAS MADE AGAINST. Two stamps are one layout whatever versions they
+ * THE VERSIONS EVERY STAMP WAS MADE AGAINST. Two stamps are one layout whatever versions they
  * name (layoutsMatch) - true while each mod ships one version. A pack of another version may move buildings, and every
  * stamped house, room, site and home would name another one with nothing to say so: updating a vendored pack is a
  * layout migration (records stamped with the old version re-keyed, or their towns kept in the old pack), and
@@ -44,7 +44,7 @@ export const LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-citie
  */
 export const LAYOUT_MOD_VERSIONS = Object.freeze({ 'beautiful-villages': '1.4.2', 'beautiful-cities': '0.5.0' });
 
-/** AUDIT WD3 B6: said when a town a save holds could not be stood in the layout it was left in - OWN-WORK3: a retired
+/** Said when a town a save holds could not be stood in the layout it was left in - OWN-WORK3: a retired
  *  town mod's, the one layout no pack stands now. */
 export const PINS_DROPPED_LINE =
   'Some of your places stood in a town layout this game no longer has, so they cannot be used.';
@@ -65,9 +65,9 @@ let _gridOf = () => null; // a location key -> the block names its town is laid 
 let _keyOfTown = () => null; // (regionIndex, town name) -> its location key (the discovery store's town id)
 let _typeOf = () => null; // a location key -> its MapTable LocationType, or null
 let _pins = new Map(); // locationKey -> { out:Set, in:Set, stamp, why }
-let _heldBack = new Set(); // QUEST-AUDIT II PIN-SLEEP: locationKeys whose pin this session could not honour
-let _missingVendors = new Set(); // AUDIT QA2: the layout mods switched on whose packs did not load this session
-let _displaced = () => false; // ARENA1: a record whose building the port itself took away (world/arena/arenaCity.js)
+let _heldBack = new Set(); // locationKeys whose pin this session could not honour
+let _missingVendors = new Set(); // The layout mods switched on whose packs did not load this session
+let _displaced = () => false; // A record whose building the port itself took away (world/arena/arenaCity.js)
 
 /** The hosts' half: which layout mods are loaded for the game (the latch) and their versions (the world-data loader,
  *  scenes/modWorldData.js), and where a town is (the world host, which holds the map). Each is kept until replaced. */
@@ -132,24 +132,21 @@ export function stampVendors(stamp) {
 }
 
 /**
- * WD3 (AUDIT WD3 G2, Mac: "Fix anything. This needs to be perfect"): THE PORT'S CURATION - a town a mod would leave
- * without what it IS. Beautiful Villages rebuilds TVRNAS00 and TVRNAS06 as houses, no tavern among them (the classic
- * blocks hold three each), and leaves the 274 roadside taverns standing on them (142 and 132, their location files not
- * replaced) with no tavern: no room to rent, no innkeeper, no tavern quest. The mod is kept out of a TAVERN location
- * whose grid names one of them - Daggerfall's own tavern stands, as a pin would stand it, and its records are stamped
- * so; the villages that lay those blocks out among their own are the author's. A save's own pin on the town wins.
+ * THE PORT'S CURATION - a town a mod would leave without what it IS. Beautiful Villages rebuilds TVRNAS00 and TVRNAS06
+ * as houses, no tavern among them (the classic blocks hold three each), and leaves the 274 roadside taverns standing
+ * on them (142 and 132, their location files not replaced) with no tavern: no room to rent, no innkeeper, no tavern
+ * quest. The mod is kept out of a TAVERN location whose grid names one of them - Daggerfall's own tavern stands, as a
+ * pin would stand it, and its records are stamped so; the villages that lay those blocks out among their own are the
+ * author's. A save's own pin on the town wins.
  *
- * FIELD BUGS 2026-10-04d TEMPLE-HOME: and a TEMPLE WITH NO HOUSE. Beautiful Villages replaces the location files of 34
- * of Arkay's standalone temples (ReligionTemple) with its TEMPASA2 alone - the temple and 25 House5, none a house a
- * quest seats anyone in (Place.cs's validHouseTypes, House1-4) - where Daggerfall's TEMPAAA0 stands its houses round
- * the temple. A quest person given no scope has a home in the town it is set up in half the time (Person.cs
- * AssignHomeTown, `Place _x_home_ local house`); there that finds no house and throws, the quest is never made
- * (QuestListsManager.SelectQuest answers none) and the temple's questor answers "You're too late..." (TEXT.RSC 600,
- * ShowFailGetQuestMessage) - C0B00Y01 fifteen times in sixteen, C0B00Y03 one in two. DFU does the same with the mod. The 34 are kept Daggerfall's own BY THEIR
- * KEYS, never by a grid: the mod replaces their location files, so the grid a host holds for one is the mod's or
- * Daggerfall's by when it was read (world.js fills its index before the pins can ask a town's type or grid), and the
- * town's key alone answers alike either way - and is asked by the door from the first read. The twelve villages that
- * lay TEMPASA2 out among their own houses are the author's.
+ * And a TEMPLE WITH NO HOUSE. Beautiful Villages replaces the location files of 34 of Arkay's standalone temples (ReligionTemple) with its TEMPASA2 alone -
+ * the temple and 25 House5, none a house a quest seats anyone in (Place.cs's validHouseTypes, House1-4) - where Daggerfall's TEMPAAA0 stands its houses round
+ * the temple. A quest person given no scope has a home in the town it is set up in half the time (Person.cs AssignHomeTown, `Place _x_home_ local house`);
+ * there that finds no house and throws, the quest is never made (QuestListsManager.SelectQuest answers none) and the temple's questor answers "You're too
+ * late..." (TEXT.RSC 600, ShowFailGetQuestMessage) - C0B00Y01 fifteen times in sixteen, C0B00Y03 one in two. DFU does the same with the mod. The 34 are kept
+ * Daggerfall's own BY THEIR KEYS, never by a grid: the mod replaces their location files, so the grid a host holds for one is the mod's or Daggerfall's by
+ * when it was read (world.js fills its index before the pins can ask a town's type or grid), and the town's key alone answers alike either way - and is asked
+ * by the door from the first read. The twelve villages that lay TEMPASA2 out among their own houses are the author's.
  */
 export const CURATED_CLASSIC = Object.freeze([
   Object.freeze({
@@ -168,7 +165,7 @@ export const CURATED_CLASSIC = Object.freeze([
     ]),
   }),
 ]);
-/** TEMPLE-HOME: the towns the curation names by key (worldDataVariants.js makeLocationKey) -> the mods kept out. */
+/** The towns the curation names by key (worldDataVariants.js makeLocationKey) -> the mods kept out. */
 const CURATED_TOWNS = new Map();
 for (const c of CURATED_CLASSIC)
   for (const k of c.locations ?? []) (CURATED_TOWNS.get(k) ?? CURATED_TOWNS.set(k, []).get(k)).push(c.vendor);
@@ -178,7 +175,7 @@ export function curatedOut(locationKey) {
   if (locationKey == null || locationKey < 0 || _curating) return null;
   _curating = true;
   try {
-    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // TEMPLE-HOME: by the town's key
+    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // By the town's key
     const type = _typeOf(locationKey);
     if (type == null) return out;
     for (const c of CURATED_CLASSIC) {
@@ -223,7 +220,7 @@ export function layoutsMatch(a, b) {
   return va.size === vb.size && [...va].every((v) => vb.has(v));
 }
 /**
- * WD3 (AUDIT WD3 H1/S5): WHETHER A RECORD KEYED BY BUILDING NAMES ITS BUILDING HERE. A record stamped in one layout of
+ * WHETHER A RECORD KEYED BY BUILDING NAMES ITS BUILDING HERE. A record stamped in one layout of
  * its town names a building only in that layout; where its town stands in another all the same (offline, a pack that
  * could not be loaded for it; online, a record of the player's own from before the mods, which no home of the
  * service's pins) its key names another building, or none. A record naming no town, or one the host cannot place,
@@ -231,7 +228,7 @@ export function layoutsMatch(a, b) {
  */
 export function recordStands(rec) {
   if (!rec?.mapId || layoutLocationKeyOfMapId(rec.mapId) == null) return true;
-  // ARENA1: a building the arena took (Daggerfall's cell 4,3, in every layout) is no building at all - a room rented
+  // A building the arena took (Daggerfall's cell 4,3, in every layout) is no building at all - a room rented
   // there is honoured at any inn of the city, a ticket at any smith, a quest site chosen again (place.js
   // reseatMovedSite); a house deed is moved before it is ever asked (systems/arena/arenaMove.js)
   if (_displaced(rec)) return false;
@@ -253,7 +250,7 @@ export function stampLayout(rec, stamp) {
   return rec;
 }
 /**
- * QUEST-AUDIT II PIN-SLEEP: WHETHER A RECORD'S TOWN IS ONE WHOSE PIN THIS SESSION COULD NOT HONOUR - a pack the pin
+ * WHETHER A RECORD'S TOWN IS ONE WHOSE PIN THIS SESSION COULD NOT HONOUR - a pack the pin
  * lets in did not load (offline, Replace Game Artwork off or a pack missing; online, a fetch that failed), so the town
  * stands in a layout its records were not made in for this session only. Such a record SLEEPS: the house's deed does
  * (banking.js deedStands), and the player is told (PINS_DROPPED_LINE). A quest's site was CHOSEN AGAIN instead and
@@ -308,7 +305,7 @@ export function pinsFrom(records) {
     const out = new Set(),
       inn = new Set();
     for (const v of LAYOUT_MODS) {
-      const on = servesUnpinned(v, key); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own
+      const on = servesUnpinned(v, key); // A curated town's baseline is Daggerfall's own
       if (on && !want.has(v) && layoutModTouches(v, key)) out.add(v); // a mod that changes nothing here needs no pin
       if (!on && want.has(v)) inn.add(v); // the stamp names it only where it changed the town
     }
@@ -344,7 +341,7 @@ export function setLayoutPins(pins, { heldBack = null, missing = null } = {}) {
   return changed;
 }
 
-/** QUEST-AUDIT II PIN-SLEEP: each pin's packs put on the door (`ensure`: vendor -> whether its pack is on the door now -
+/** Each pin's packs put on the door (`ensure`: vendor -> whether its pack is on the door now -
  *  scenes/modWorldData.js ensureWorldDataPack), BEFORE the pins answer for them - a pin into a pack that will not load is
  *  dropped from its pin, and its town stands as the mods loaded for the game serve it, held back: its records sleep
  *  (recordHeldBack). Lifted out of the world host's applyLayoutPins (AUDIT QA2: a closure no test runs, pinned by its
@@ -399,7 +396,7 @@ export function layoutRecordsOf(
     if (r && r.buildingKey > 0 && r.mapId)
       out.push({ locationKey: locationKeyOfMapId(r.mapId), stamp: r.layout, kind: 'room' });
   for (const site of sites ?? []) {
-    const s = site?.unseated ? { ...site, ...site.unseated } : site; // FIELD BUGS 2026-10-04d RESEAT-GAPS: an unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)
+    const s = site?.unseated ? { ...site, ...site.unseated } : site; // An unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)
     if (s && s.buildingKey > 0 && s.mapId)
       out.push({ locationKey: locationKeyOfMapId(s.mapId), stamp: s.layout, kind: 'quest' });
   }

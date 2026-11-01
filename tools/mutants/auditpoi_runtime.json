@@ -183,8 +183,8 @@
   {
     "name": "AUDITPOI-R7-the-region-page-under-the-bountys-cap",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7",
-    "new": "poiLegendText());   // AUDIT POI R7",
+    "old": "    const pois = readBountyMarks(this.deps.pois, { width: MAP_WIDTH, height: MAP_HEIGHT }, poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7: every marked POI, past the bounty's eight",
+    "new": "    const pois = readBountyMarks(this.deps.pois, { width: MAP_WIDTH, height: MAP_HEIGHT }, poiLegendText());   // AUDIT POI R7: every marked POI, past the bounty's eight",
     "tests": [
       "test/poi/auditpoi_runtime.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "DA12-1-the-switch-is-another-word",
     "file": "app/lib/launcherState.cjs",
-    "old": "const PLAY_SWITCH = '--play';\n",
-    "new": "const PLAY_SWITCH = '-play';\n",
+    "old": "const PLAY_SWITCH = '--play';",
+    "new": "const PLAY_SWITCH = '-play';",
     "tests": [
       "test/tooling/da12_directplay.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DA12-2-the-first-run-skips-its-card",
     "file": "app/lib/launcherState.cjs",
-    "old": "  if (cfg?.arena2InGame === true) return '';\n  return null;\n",
-    "new": "  return '';\n",
+    "old": "  if (cfg?.arena2InGame === true) return '';\n  return null;",
+    "new": "  return '';",
     "tests": [
       "test/tooling/da12_directplay.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DA12-3-any-truthy-picker-choice",
     "file": "app/lib/launcherState.cjs",
-    "old": "  if (cfg?.arena2InGame === true) return '';\n",
-    "new": "  if (cfg?.arena2InGame) return '';\n",
+    "old": "  if (cfg?.arena2InGame === true) return '';",
+    "new": "  if (cfg?.arena2InGame) return '';",
     "tests": [
       "test/tooling/da12_directplay.test.js"
     ]

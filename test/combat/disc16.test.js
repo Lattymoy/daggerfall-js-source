@@ -1,4 +1,4 @@
-// DISC16 (2026-09-24, Mac). bible/01-Overview/bugs/Field-Bugs-2026-09-23.md, DISC16.
+// DISC16. bible/01-Overview/bugs/Field-Bugs-2026-09-23.md, DISC16.
 //
 // ── DISC16-A: "I notice my character is sunken into the ground on hills" ──
 // DFU's body is Unity's CharacterController, a capsule, and a capsule on a slope rests on its rounded bottom: the
@@ -84,7 +84,7 @@ test('DISC16-B: the weapons move as they did before Diverse Weapons - the mod on
   _resetModSettings();
   assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'Diverse Weapons on: its sprites (MO1 - every mod ships on)');
   assert.equal(diverseWeaponsPresetOn(), false, 'and no preset laid over Weapon Widget');
-  // OWN-WORK1 (2026-10-31): Weapon Widget 1.6's modsettings.json values, as they read before vendor/weapon-widget was retired
+  // Weapon Widget 1.6's modsettings.json values, as they read before vendor/weapon-widget was retired
   const shipped = {
     'Modules.Swings': true, 'Modules.Ambidexterity': true, 'Modules.Offset': true, 'Modules.Bob': true, 'Modules.Inertia': false,
     'Modules.Step': false, 'Modules.DoubleScaleTextures': false, 'Modules.TrueTextureSize': false, 'Modules.Recoil': false,

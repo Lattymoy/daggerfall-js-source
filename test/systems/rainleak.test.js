@@ -7,8 +7,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PrecipitationRenderer, PRECIP_REST_S, PRECIP_CLOCK_MAX_S, BETTER_FALL, BETTER_FALL_VS, LAB_WX_VS, LAB_COUNTS, betterFallSwitches } from '../../src/render/precipitation.js';
-import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';   // OWN-WORK4 AUDIT: Better Ambience's switches
-import { glslFunctions } from '../glsl.mjs';   // OWN-WORK4 AUDIT: our fall's vertex stage, run as written
+import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';   // Better Ambience's switches
+import { glslFunctions } from '../glsl.mjs';   // Our fall's vertex stage, run as written
 import { AudioEngine, releaseNodes } from '../../src/systems/audio.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -66,7 +66,7 @@ test('RAIN-CLOCK: the fall counts from its own origin, not the page\'s uptime - 
   assert.deepEqual(drawOnce(r, ups, 'rain', 100.016).w, [0.25, -0.5], 'a steady fall keeps its travel');
   r.windOff[0] += 1e4;
   assert.deepEqual(drawOnce(r, ups, 'rain', 100.016 + PRECIP_REST_S + 1).w, [0, 0], 'and a rest drops it with the clock');
-  // the pixel snow (DS1) reads the same clock
+  // the pixel snow reads the same clock
   r.pixelSnow = { minParticleSize: 0.001, maxParticleSize: 0.003 }; r.pixelTex = {};
   assert.equal(drawOnce(r, ups, 'snow', 5000).t, 0, 'the pixel snow: a new spell at 0');
   assert.equal(drawOnce(r, ups, 'snow', 5000.25).t, 0.25);
@@ -134,14 +134,14 @@ test('RAIN-LEAK: both exterior hosts hand the falling weather (the sand, the rai
     const i = s.indexOf(from), j = s.indexOf(to, i);
     assert.ok(i > 0 && j > i, `${host}: the falling weather's block`);
     const block = s.slice(i, j);
-    for (const call of ['dryFall.draw(', 'precip.drawFall(', 'wisps.draw(']) {   // PRECIP1: the fall at the air's snow share   // PIN MOVED (ASHFALL1, 2026-10-27): the sand's renderer is the dry falls' (render/dryFall.js), the ash's with it
+    for (const call of ['dryFall.draw(', 'precip.drawFall(', 'wisps.draw(']) {   // The fall at the air's snow share   // PIN MOVED: the sand's renderer is the dry falls' (render/dryFall.js), the ash's with it
       const line = block.includes(call) ? block.slice(block.indexOf(call)).split('\n')[0] : '';
       assert.ok(line.includes(`, ${scratch}, `) && !line.includes('new Float32Array('), `${host}: ${call} takes ${scratch}, and mints no array`);
     }
   }
 });
 
-// OWN-WORK4 AUDIT (2026-11-01): BETTER AMBIENCE'S RAIN AND SNOW, OURS - its two switches pick our fall on the enhanced
+// BETTER AMBIENCE'S RAIN AND SNOW, OURS - its two switches pick our fall on the enhanced
 // lane; off, the lab's program draws exactly as before.
 test('OWN-WORK4 AUDIT Better Ambience\'s fall: the switches pick our program on the enhanced lane, the mod\'s own switch over both; off, the lab\'s draws; a storm denser than rain (mutants: the switch unread; the master switch unread; the storm no denser)', () => {
   const reads = (vals) => (vendor, key) => vals[key];

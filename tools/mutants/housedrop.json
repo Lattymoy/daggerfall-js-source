@@ -101,7 +101,7 @@
   {
     "name": "HOUSE-torch-drops-anyway",
     "file": "src/systems/handheldTorches.js",
-    "old": "    const no = dropRefusal?.() ?? null; // HOUSE-DROP: a floor that refuses a light - said, and the light stays in hand\n    if (no) {\n      say(no);\n      return;\n    }",
+    "old": "    const no = dropRefusal?.() ?? null; // A floor that refuses a light - said, and the light stays in hand\n    if (no) {\n      say(no);\n      return;\n    }",
     "new": "    const no = null;",
     "tests": [
       "test/systems/housedrop.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "HOUSE-torch-thrown-anyway",
     "file": "src/systems/handheldTorches.js",
-    "old": "    const no = dropRefusal?.() ?? null; // HOUSE-DROP: and a thrown one lands on the same floor\n    if (no) {\n      say(no);\n      return;\n    }",
+    "old": "    const no = dropRefusal?.() ?? null; // And a thrown one lands on the same floor\n    if (no) {\n      say(no);\n      return;\n    }",
     "new": "    const no = null;",
     "tests": [
       "test/systems/housedrop.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "HOUSE-rig-drops-word",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "createHandheldTorches({ audio, say, torches, dropRefusal });",
-    "new": "createHandheldTorches({ audio, say, torches });",
+    "old": "  const handheld = createHandheldTorches({ audio, say, torches, dropRefusal });   // The host's word against a light on its floor",
+    "new": "  const handheld = createHandheldTorches({ audio, say, torches });   // The host's word against a light on its floor",
     "tests": [
       "test/systems/housedrop.test.js"
     ]

@@ -1,8 +1,8 @@
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything") - COME SAIL AWAY'S ASSETS, OURS: the
-// twelve prefabs, their meshes, materials and animation built by world/ships/ownBoats/ (no file of them in the tree),
-// the pictures systems/comeSailAway/csaPictures.js paints and the five clips csaSynth/csaClips.js makes. Each is the
-// same to the byte every time it is made; each hull walks as Come Sail Away's runtime reads it - its lanterns, sails by
-// their names and order, triggers, effects - and nothing of Come Sail Away 2.1's author is left in the tree.
+// COME SAIL AWAY'S ASSETS, OURS: the twelve prefabs, their meshes, materials and animation built by
+// world/ships/ownBoats/ (no file of them in the tree), the pictures systems/comeSailAway/csaPictures.js paints and the
+// five clips csaSynth/csaClips.js makes. Each is the same to the byte every time it is made; each hull walks as Come
+// Sail Away's runtime reads it - its lanterns, sails by their names and order, triggers, effects - and nothing of Come
+// Sail Away 2.1's author is left in the tree.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

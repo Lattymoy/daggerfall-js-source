@@ -146,8 +146,8 @@
   {
     "name": "DISC20-C-no-grounding",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      groundPeer(p);   // DISC20-C: a parked wagon and a standing horse, on MY ground\n",
-    "new": "",
+    "old": "      groundPeer(p);   // A parked wagon and a standing horse, on MY ground\n      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs",
+    "new": "      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DISC20-C-no-retry",
     "file": "src/scenes/horseCartPool.js",
-    "old": "g.due = missing ? now() + GROUND_RETRY_SECONDS : null;",
-    "new": "g.due = null;",
+    "old": "    g.due = missing ? now() + GROUND_RETRY_SECONDS : null;",
+    "new": "    g.due = null;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DISC20-C-a-walking-horse-grounded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (h && !h.walking && g.dh === null) {",
-    "new": "if (h && g.dh === null) {",
+    "old": "    if (h && !h.walking && g.dh === null) {",
+    "new": "    if (h && g.dh === null) {",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DISC20-C-a-moving-wagon-grounded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (w?.kind === HCC_WIRE_KIND.Deployed && !g.dw) {",
-    "new": "if (w && !g.dw) {",
+    "old": "    if (w?.kind === HCC_WIRE_KIND.Deployed && !g.dw) {",
+    "new": "    if (w && !g.dw) {",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "DISC20-C-the-stand-not-applied-to-the-horse",
     "file": "src/scenes/horseCartPool.js",
-    "old": "if (p.horse && g.dh !== null) { const q = p.horse.position; p.horse.position = [q[0], q[1] + g.dh, q[2]]; }",
-    "new": "",
+    "old": "    if (p.horse && g.dh !== null) { const q = p.horse.position; p.horse.position = [q[0], q[1] + g.dh, q[2]]; }",
+    "new": "    ",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "DISC20-C-the-re-stand-never-reaches-the-runtime",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    runtime?.regroundStanding?.(within);\n",
-    "new": "",
+    "old": "    runtime?.regroundStanding?.(within);\n    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;",
+    "new": "    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "DISC20-C-the-peers-not-re-stood",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;\n",
-    "new": "",
+    "old": "    for (const p of _peers.values()) if (p.ground && (within(p.wagon?.position) || within(p.horse?.position))) p.ground = null;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DISC20-C-the-margin-dropped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const M = 6;\n",
-    "new": "    const M = 0;\n",
+    "old": "    const M = 6;",
+    "new": "    const M = 0;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "DISC20-C-the-orphaned-box",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (_bucketKey) collider()?.removeBucket?.(WAGON_BUCKET);\n",
-    "new": "",
+    "old": "    if (_bucketKey) collider()?.removeBucket?.(WAGON_BUCKET);\n    _bucketKey = null;",
+    "new": "    _bucketKey = null;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -290,7 +290,7 @@
   {
     "name": "DISC20-E-the-stamp-never-written",
     "file": "src/systems/modSettings.js",
-    "old": "  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true; // DISC20-E: chosen after the reset - kept\n  save();",
+    "old": "  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true; // Chosen after the reset - kept\n  save();",
     "new": "  save();",
     "tests": [
       "test/systems/disc20.test.js"

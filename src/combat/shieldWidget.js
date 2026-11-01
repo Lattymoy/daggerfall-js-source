@@ -1,5 +1,4 @@
 // @ts-check
-// SW1 (2026-09-19, Mac: "This is the next mod I want to integrate 1:1"):
 // SHIELD WIDGET 1.6 by RedRoryOTheGlen - ported 1:1.
 //
 // The sibling of WW1 (combat/weapon/weaponWidget.js), by the same author and
@@ -60,7 +59,7 @@ import { shieldProtectedBodyParts } from './enemyEquipment.js';
 // the classic 320x200 the sprite's scale is measured against (SetGuard
 // IL 0x0d / 0x3b) - one home, the weapon sprite's
 import { NATIVE_W, NATIVE_H } from './fpsWeapon.js';
-// SW1: the large HUD's height, the sprite's floor. Read HERE and not in
+// The large HUD's height, the sprite's floor. Read HERE and not in
 // the rig: weaponWidget.js reads it the same way, and importing
 // ui/hud/hudLarge.js into weaponRig.js directly reorders that module graph
 // enough to break the rig's own boot (the unsheathe went silent).
@@ -338,7 +337,7 @@ export function createShieldWidget({
     flipped: false,
     conditionPrevious: 0,
     lastStep: -1,
-    stale: false, // SHIELD-OUT: the last of the widgets' shared steps this one took, and whether it missed any
+    stale: false, // The last of the widgets' shared steps this one took, and whether it missed any
     attackDelayTimer: 0,
     attackDelayTime: 0.1,
     isInThirdPerson: false,
@@ -688,7 +687,7 @@ export function createShieldWidget({
    *            isStandingStill, moveDirectionLocal: [x, y, z] }
    *    look  { x, y, cursorActive, swingAction } */
   function lateUpdate(next) {
-    // SHIELD-OUT: another rig's widget stepped since this one last did - its sprite may be of a shield since repaired
+    // Another rig's widget stepped since this one last did - its sprite may be of a shield since repaired
     // (or battered); kept until a frame gets as far as reading the shield
     const step = ++_widgetSteps;
     if (w.lastStep !== step - 1) w.stale = true;
@@ -738,7 +737,7 @@ export function createShieldWidget({
       w.attacked = false;
       w.sheathed = false;
       w.spelled = false;
-    } else if (w.stale) updateShieldTextures(item); // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it
+    } else if (w.stale) updateShieldTextures(item); // The same shield, read again - its condition tier may have moved while another rig drew it
     w.stale = false;
     // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than
     // sliding into it from the screen's origin. Awake ran before any
@@ -949,7 +948,7 @@ export function createShieldWidget({
     );
   }
 
-  /** AUDIT 27h S3: a rig frame with the Shield Widget switched OFF is a step every widget misses - the switch "takes
+  /** A rig frame with the Shield Widget switched OFF is a step every widget misses - the switch "takes
    *  effect at once" (features.js), and a shield repaired or battered while it was off stood at its old sprite when it
    *  came back on, since no widget had stepped to mark this one stale. */
   function offFrame() {

@@ -1,6 +1,6 @@
-// AUDIT-STOREFRONT II, lane C (2026-10-29): the profile's previews. A character stage started again (its canvas back
+// AUDIT-STOREFRONT II, lane C: the profile's previews. A character stage started again (its canvas back
 // on the page) was told the kit and the aura but not the effect the open slot plays, so it stood bare while the picker
-// said one was on (C5). The Mount slot's horse read less motion once, as it was made, and kept that choice (C6).
+// said one was on. The Mount slot's horse read less motion once, as it was made, and kept that choice.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -78,7 +78,7 @@ test('AUDIT-STOREFRONT II C6 the Mount slot\'s horse follows less motion as it c
   g.matchMedia = (/** @type {string} */ q) => ({ matches: q.includes('reduce') && calm });
   Date.now = () => ms;   // the shared read (systems/hitFlash.js prefersReducedMotion) asks again after a second
   try {
-    const m = mountPreview(/** @type {any} */ ({ createElement: canvas }), { picture: async () => ({ width: 40, height: 30, data: new Uint8Array(40 * 30 * 4) }) });   // OWN-WORK4: the side view built, here a blank one
+    const m = mountPreview(/** @type {any} */ ({ createElement: canvas }), { picture: async () => ({ width: 40, height: 30, data: new Uint8Array(40 * 30 * 4) }) });   // The side view built, here a blank one
     m.set('warhorse');
     for (let i = 0; i < 4; i++) await new Promise((r) => setImmediate(r));
     clock.frames(40);

@@ -122,8 +122,8 @@
   {
     "name": "SD-ONLINE-the-world-row-left-to-the-player",
     "file": "src/systems/features.js",
-    "old": "key: 'worldDungeonSizes', initial: false, online: true }",
-    "new": "key: 'worldDungeonSizes', initial: false, online: 'player' }",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: true }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: 'player' }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes",
     "tests": [
       "test/systems/sdonline.test.js",
       "test/systems/online/uxb1e_onlinesync.test.js"

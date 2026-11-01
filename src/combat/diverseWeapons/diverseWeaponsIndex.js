@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): THE NAMES OUR DIVERSE WEAPONS SET
-// ANSWERS, AND WHAT EACH IS BUILT FROM. A rule, not a file list: every frame is built at runtime from the player's own
-// classic WEAPON*.CIF and TEXTURE records (combat/diverseWeapons/diverseWeaponsArt.js), so no picture ships.
-// The names are the ones Diverse Weapons 1.7.3 answered (RealAKP; the interface only - names, counts, records).
+// THE NAMES OUR DIVERSE WEAPONS SET ANSWERS, AND WHAT EACH IS BUILT FROM. A rule, not a file list: every frame is
+// built at runtime from the player's own classic WEAPON*.CIF and TEXTURE records
+// (combat/diverseWeapons/diverseWeaponsArt.js), so no picture ships. The names are the ones Diverse Weapons 1.7.3
+// answered (RealAKP; the interface only - names, counts, records).
 
 /** MetalTypes' names in order (itemInfo.js MATERIAL_NAMES; a leaf here, the weapon's import cycle kept out) - a stem's
  *  bit `i` is metal `i`; bit 10 is the bare stem. */

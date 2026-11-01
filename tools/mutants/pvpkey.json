@@ -2,8 +2,8 @@
   {
     "name": "PVP-KEY-default-dropped",
     "file": "src/systems/inputActions.js",
-    "old": "  ['CapsLock', 'PvpFlag'],\n",
-    "new": "",
+    "old": "  ['CapsLock', 'PvpFlag'],\n]);",
+    "new": "]);",
     "tests": [
       "test/net/pvpkey.test.js"
     ],

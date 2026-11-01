@@ -1,4 +1,4 @@
-// EOTB2: THE EYE OF THE BEHOLDER CAMERA.
+// THE EYE OF THE BEHOLDER CAMERA.
 //
 // RedRoryOTheGlen's `EyeOfTheBeholder` MonoBehaviour, read out of the
 // shipped assembly's IL (`Eye Of The Beholder.dll`, 2.1) - method by
@@ -6,7 +6,7 @@
 // is how a "1:1" port quietly stops being one. `monodis` segfaults on
 // this assembly; it was read with dncil/dnfile.
 //
-// EOTB-IL (2026-09-17): READ AGAIN, AGAINST THE ASSEMBLY'S DUMP, and
+// READ AGAIN, AGAINST THE ASSEMBLY'S DUMP, and
 // fourteen readings corrected - each cites its offset where it lands.
 // The ones a player meets: the auto-toggle table was DISARMED by the
 // mod's own LoadSettings whenever every row is Don'tChange (the sum of
@@ -30,7 +30,7 @@
 //
 // WHY THE PORT CARRIES A SECOND THIRD-PERSON CAMERA. Mac, 2026-09-15:
 // "This is moreso for those who opt out of using morrowind." The
-// port's own third person (MW-D24/MW-D25) draws a MORROWIND body and
+// port's own third person draws a MORROWIND body and
 // cannot exist without Morrowind data - `player/mwView.js` says so in
 // its own head. This one draws the mod's sprite and needs nothing.
 //
@@ -160,7 +160,7 @@ export function readCameraSettings(get) {
     scrollable: !!g('CameraScrolling.ScrollableZOffset'),
     increment: g('CameraScrolling.ScrollIncrement') ?? 0,
     boatTarget: g('CameraOverrideBoat.Target') ?? 0,
-    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective
+    // The two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective
     // actions (systems/inputActions.js MOD_ACTIONS), read by the rig - not settings of the camera's
     auto,
     /** [IL] `autoPOVSwitch` is DERIVED (IL_10e1-IL_112d): the nine rows
@@ -199,7 +199,7 @@ export function eyeBasis(yaw, pitch) {
     sp = Math.sin(pitch);
   const forward = [Math.sin(yaw) * cp, sp, Math.cos(yaw) * cp];
   const right = [Math.cos(yaw), 0, -Math.sin(yaw)];
-  // AUDIT-EOTB F5: `forward x right`, NOT `right x forward`. The other
+  // `forward x right`, NOT `right x forward`. The other
   // way round gives up = [0,-1,0] at rest, so FrontalPlaneOffset's Y -
   // shipped at 0.5, described by the mod as "Moves the camera position
   // on the X and Y axes" - pushed the camera DOWN instead of up.
@@ -271,7 +271,7 @@ export function createEotbCamera() {
   let billboard = null;
   /** DaggerfallUI.PopupMessage, as the rig hands it in */
   let popup = null;
-  /** CSA-J: [IL] ModCompatibilityChecking's Come Sail Away (IL_0756-IL_079a) - the mod its GUID found, as its message
+  /** [IL] ModCompatibilityChecking's Come Sail Away (IL_0756-IL_079a) - the mod its GUID found, as its message
    *  door `{ send(message, data, callBack), colliderBounds(gameObject) -> { center, extents } }` (null: not loaded) - and the fields
    *  OnUpdateSailing keeps (IL_07a8-IL_0922). */
   let ComeSailAway = null;
@@ -292,7 +292,7 @@ export function createEotbCamera() {
   let loaded = null;
 
   /**
-   * CSA-J: [IL] `OnUpdateSailing(bool)` (IL_07a8-IL_0922), Come Sail Away's event. Setting sail asks the mod for the
+   * [IL] `OnUpdateSailing(bool)` (IL_07a8-IL_0922), Come Sail Away's event. Setting sail asks the mod for the
    * boat's mesh object (GetBoatMeshObject, answered at once - `<OnUpdateSailing>b__120_0`'s cast), takes its first
    * collider's bounds - the centre as a vector in the object's own frame, the extent the largest half-size - and looks
    * among the object's own children for the flag and the helm, stopping once both are found; no flag, the object
@@ -340,7 +340,7 @@ export function createEotbCamera() {
   function posOffset(state) {
     const m = mirror ? -1 : 1;
     const o = cfg.overrides;
-    if (o.Boat.enabled && isSailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's
+    if (o.Boat.enabled && isSailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // The camera's own field, OnUpdateSailing's
     if (o.Mount.enabled && state.riding) return [m * o.Mount.x, o.Mount.y, o.Mount.z - offsetScroll];
     if (o.Weapon.enabled && state.weaponReady) return [m * o.Weapon.x, o.Weapon.y, o.Weapon.z - offsetScroll];
     const r = state.riding ? cfg.riding : 0; // get_offsetRidingMod
@@ -505,7 +505,7 @@ export function createEotbCamera() {
 
   return {
     /** mwCamera's own vocabulary, so `mwView` can route to whichever
-     *  body answers without learning a second language (EOTB4). */
+     *  body answers without learning a second language. */
     mode: () => (offset ? 'third' : 'first'),
     thirdPerson: () => offset,
     scroll: () => offsetScroll,
@@ -523,12 +523,12 @@ export function createEotbCamera() {
     setPopup(fn) {
       popup = typeof fn === 'function' ? fn : null;
     },
-    /** CSA-J: Debug.Log's seam. */
+    /** Debug.Log's seam. */
     setLog(fn) {
       log = typeof fn === 'function' ? fn : null;
     },
     /**
-     * CSA-J: [IL] ModCompatibilityChecking's Come Sail Away arm (IL_0756-IL_079a) - the mod found by its GUID
+     * [IL] ModCompatibilityChecking's Come Sail Away arm (IL_0756-IL_079a) - the mod found by its GUID
      * (dbe3e8ff-9059-45f1-a8be-732bb6000df7) and OnUpdateSailing handed to its receiver. Its other two arms stay
      * unported: Travel Options' flag feeds only the billboard's FixedUpdate hook, and Tome of Battle is not in the port.
      * The port's camera outlives a host boot where the mod's component is the session's, so the host hands each
@@ -545,7 +545,7 @@ export function createEotbCamera() {
       boatMeshObjectExtent = 0;
       if (started && ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);
     },
-    /** CSA-J: OnUpdateSailing's fields - PlayerBillboard reads three off `EyeOfTheBeholder.Instance` (UpdateOrientation,
+    /** OnUpdateSailing's fields - PlayerBillboard reads three off `EyeOfTheBeholder.Instance` (UpdateOrientation,
      *  IL_471c-IL_4765). */
     sailing: () => ({
       isSailing,
@@ -574,7 +574,7 @@ export function createEotbCamera() {
     start() {
       if (started) return offset; // Unity's Start runs once; a second rig is not a second boot
       started = true;
-      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null); // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call
+      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null); // ModCompatibilityChecking (IL_053d), Start's first call
       mirror = false;
       mirrorOriginal = mirror;
       mirrorTimer = 0;
@@ -610,7 +610,7 @@ export function createEotbCamera() {
       if (row === undefined || !autoPOVSwitch) return offset;
       return applyRow(row);
     },
-    /** AUDIT OW5 V3: whether a door's row DECIDES the POV - the table armed, the row first or third person (never
+    /** Whether a door's row DECIDES the POV - the table armed, the row first or third person (never
      *  Don'tChange). The travel view's hold then hands the body back as the row left it (player/mwView.js). */
     transitionDecides(kind) {
       const row = cfg.auto[`OnTransition${kind}`];
@@ -709,12 +709,12 @@ export function createEotbCamera() {
       // FIELD BUGS 2026-09-29 (the sea) #3: AT A HELM THE FAR END IS THE HULL'S REACH (player/seaZoom.js) - past the
       // mod's own MAX_Z a notch is a ratio, one a frame and by its sign as the mod reads a notch, down to MAX_Z coming
       // in; the mod's own boat override (CameraOverrideBoat) keeps its own ladder, scaled by the hull already
-      // HELM-ZOOM (Mac: "increase the sensitivity ... when on the wheel"): at a helm the ratio runs from the offset's own
+      // HELM-ZOOM: at a helm the ratio runs from the offset's own
       // base distance out - the mod's 0.2 a notch took forty notches from it to MAX_Z - and below the base the mod's own
       // ladder takes her in to first person
       const far = seaReach > -MAX_Z && !(cfg.overrides.Boat.enabled && isSailing) ? -seaReach : MAX_Z;
       const baseDist = -(z + offsetScroll); // the offset at no scroll
-      // AUDIT HELM-ZOOM E3: out by the ratio from the base up - below it the mod's own ladder both ways (out from there
+      // Out by the ratio from the base up - below it the mod's own ladder both ways (out from there
       // leapt to the base in one notch, in stepped it by 0.2)
       if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || (clicks < 0 && -z >= baseDist - 1e-6))) {
         offsetScroll += z + seaZoomStep(-z, clicks > 0 ? 1 : -1, Math.min(baseDist, -MAX_Z), -far);
@@ -754,7 +754,7 @@ export function createEotbCamera() {
       revertMirror(headLocal, feet, state, yaw, raycast);
       checkBounds(origin, state, yaw, pitch, raycast);
 
-      // CSA-J: [IL] IL_1612-IL_16c5 - sailing under the boat override, the target is the boat's: the masthead (Target 1)
+      // [IL] IL_1612-IL_16c5 - sailing under the boat override, the target is the boat's: the masthead (Target 1)
       // or the hull's position plus its local centre, and the offset scaled by the hull's extent
       if (isSailing && cfg.overrides.Boat.enabled) {
         const off = setVectorBounds(posOffset(state), state);
@@ -782,18 +782,17 @@ export function createEotbCamera() {
         if (local[2] > minZ) local[2] = minZ;
         posCurrent = add(feet, bodyVector(local, yaw));
       }
-      // EOTB-WALL (2026-09-17, Mac: "3rd person clips through walls and ceilings allowing you to see outside wall
-      // bounds. Morrowind 3rd person doesnt have this issue"): THE PORT'S OWN LINE-OF-SIGHT CAST, after the mod's.
-      // CheckBounds stands as the IL has it - one cast per AXIS of the eye's basis, from the head - and that is
-      // exactly how the eye ends up inside a wall: the three axis casts never measure the DIAGONAL the camera
-      // actually stands on (a wall at the back-right corner is missed by the "right" cast and by the "back" cast
-      // alike, a ceiling at the back-up diagonal by the "up" and the "back"), and posCurrent LAGS the pulled-in
-      // target by MoveTowards, so a turn against a wall leaves the eye in the wall for as many frames as the
-      // smoothing takes. The Morrowind camera (mwCamera.js, camera.cpp:200-206) casts ONE ray from the focal along
-      // the eye's own direction and pulls in, which is why it never clips. That cast is added here, on the SMOOTHED
-      // position, with the mod's own clearance (2 * eyeRadius, what CheckBounds keeps off an axis hit) so a wall
-      // straight behind answers exactly as the mod's own cast does; the target is untouched, so the smoothing
-      // walks the camera back out when the wall is gone. A departure from the assembly, recorded in the Ledger.
+      // THE PORT'S OWN LINE-OF-SIGHT CAST, after the mod's. CheckBounds stands as the IL has it - one cast per AXIS
+      // of the eye's basis, from the head - and that is exactly how the eye ends up inside a wall: the three axis
+      // casts never measure the DIAGONAL the camera actually stands on (a wall at the back-right corner is missed
+      // by the "right" cast and by the "back" cast alike, a ceiling at the back-up diagonal by the "up" and the
+      // "back"), and posCurrent LAGS the pulled-in target by MoveTowards, so a turn against a wall leaves the eye
+      // in the wall for as many frames as the smoothing takes. The Morrowind camera (mwCamera.js,
+      // camera.cpp:200-206) casts ONE ray from the focal along the eye's own direction and pulls in, which is why
+      // it never clips. That cast is added here, on the SMOOTHED position, with the mod's own clearance (2 *
+      // eyeRadius, what CheckBounds keeps off an axis hit) so a wall straight behind answers exactly as the mod's
+      // own cast does; the target is untouched, so the smoothing walks the camera back out when the wall is gone. A
+      // departure from the assembly, recorded in the Ledger.
       if (raycast) {
         const d = [posCurrent[0] - origin[0], posCurrent[1] - origin[1], posCurrent[2] - origin[2]];
         const len = Math.hypot(d[0], d[1], d[2]);

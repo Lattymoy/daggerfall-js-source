@@ -308,8 +308,8 @@
   {
     "name": "LW-LOOKS-host-flats",
     "file": "src/scenes/pixelBuild.js",
-    "old": "armOf: livingArmOf, flatOf: livingFlatOf,",
-    "new": "armOf: livingArmOf,",
+    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // Its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
+    "new": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // Its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]

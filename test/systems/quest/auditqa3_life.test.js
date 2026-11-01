@@ -1,5 +1,5 @@
-// AUDIT QA3 (2026-10-23, the owner: "Audit this", of QUEST-AUDIT III; bible/01-Overview/audits/Quest-Audit-III.md): the
-// quest's life, its actions and its stands, held to what the audit found. Each pin is red on the change it audited:
+// The quest's life, its actions and its stands, held to what the audit found. Each pin is red on the change it
+// audited:
 //
 // - A2: RESTART-PAID refused quests that had paid nothing a restart could pay again - four quests from their first tick
 //   (A0C00Y11, K0C00Y08 and A0C41Y18's start-up gold, M0B00Y16's `make _magic_ permanent` on the giant's loot). Gold is
@@ -317,8 +317,8 @@ function diAfterLoad(name, who, msg, roll) {
 }
 
 test('QA3 C2: %di with nothing referenced reads a remote contact\'s home - V0C00Y00\'s "If you go %di of here in __contact_" and P0B01L02\'s rumor name the way; a questor is never read (they are where the player is) (mutants: the dialog place, the questor test)', () => {
-  assert.match(diAfterLoad('V0C00Y00', 'contact', 1012, 0.99), /^Go northeast to The Wily Fox/);   // PIN MOVED (OWN-WORDS2): DFU's "If you go %di of here in", now our words
-  assert.match(diAfterLoad('P0B01L02', 'vampire', 1010, 0), /lodges northeast of here, at The Wily Fox/);   // PIN MOVED (OWN-WORDS2): DFU's "is %di of here in", now our words
+  assert.match(diAfterLoad('V0C00Y00', 'contact', 1012, 0.99), /^Go northeast to The Wily Fox/);
+  assert.match(diAfterLoad('P0B01L02', 'vampire', 1010, 0), /lodges northeast of here, at The Wily Fox/);
   const sited = (locationName) => ({ scope: 'remote', siteDetails: { locationName, buildingKey: 0 } });
   const q = {
     uid: 1, lastPlaceReferenced: null,

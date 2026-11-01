@@ -1,6 +1,4 @@
-// GATE-ROADS (2026-10-28, the owner: "With cities, roads still do not like up properly with gates and pathways in the
-// town. Gates can lead to a bunch of buildings and it just doesnt make any sense"; "No band aids or half assed work";
-// bible/03-World/Town-Shapes.md GATE-ROADS).
+// GATE-ROADS.
 //  - EVERY GATE ON ITS ROAD (world/road/gateRoads.js, the terrain kernel's): from the town's nearest street inside, through
 //    the gate, out to the nearest road the painter laid - round every house, never over water or the wall, along the
 //    town's own paving where it leads out; the painter's tiles and the town's paving kept as they lie.
@@ -17,7 +15,7 @@ import { gatesOnStreets, opensOntoStreet, townStreets, townHouses, townWall, sta
 import { townGateRoads, blockGates } from '../../src/world/townGates.js';
 import { TOWN_OUTLINE_BLOCK, townOutlineBlockJson } from '../../src/world/townOutline.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
-import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
+import { bayRoads } from '../bayRoads.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const D = 128, TD = 129;
@@ -260,7 +258,7 @@ test('GATE-ROADS a wall on its outline hands its gates\' openings as it stands t
 test('GATE-ROADS the wiring: the pixel\'s build hands the town\'s gates on its rect, and the kernel lays their roads after the painter and its smoothing - Basic Roads\' tiles and the ground\'s heights their own; the worker\'s reach under world/ (mutants: the gates never handed; the roads never laid; laid before the painter)', () => {
   assert.match(rd('src/scenes/pixelBuild.js'), /\n {4}if \(groundLocation\) locationRect = setLocationTiles\(groundLocation, maps, blocks, seedTilemap\);\n {4}if \(locationRect\) locationRect\.gateRoads = townGateRoads\(groundLocation, maps, blocks\);/);
   const gen = rd('src/world/terrain/terrainGen.js');
-  const paint = gen.indexOf('paintRoads(tileData, tilemap'), smooth = gen.indexOf('if (roads.smooth !== false && classic) smoothRoadHeights('), lay = gen.indexOf('layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask)');   // PIN MOVED (FB1028): and the town's ground
+  const paint = gen.indexOf('paintRoads(tileData, tilemap'), smooth = gen.indexOf('if (roads.smooth !== false && classic) smoothRoadHeights('), lay = gen.indexOf('layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask)');
   assert.ok(paint > 0 && smooth > paint && lay > smooth, 'after the painter and its smoothing');
   assert.match(gen, /\n {4}if \(hasLocation && locationRect\?\.gateRoads\) layGateRoads\(tilemap, paths, tileData, locationRect\.gateRoads, locationRect\.mask\);/);
   assert.doesNotMatch(rd('src/world/road/gateRoads.js'), /from '\.\.\/\.\.\/(scenes|render|ui|systems)\//, 'the worker\'s: no scene, renderer or system');
@@ -280,7 +278,7 @@ test('GATE-ROADS with ARENA2: the Bay\'s walled cities on their outline - their 
   const { BlocksFile } = await import('../../src/formats/blocksFile.js');
   const { MapsFile } = await import('../../src/formats/mapsFile.js');
   const { isWallCarrier } = await import('../../src/world/townShape.js');
-  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // The Bay's own network
   const pixelOf = (loc) => ({ px: Math.trunc(loc.mapTableData.longitude / 128), py: 499 - Math.trunc(loc.mapTableData.latitude / 128) });
   // the Bay's cities walled on their outline, their gates where their roads come in and onto a street
   const blocks = new BlocksFile(); blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
@@ -305,7 +303,6 @@ test('GATE-ROADS with ARENA2: the Bay\'s walled cities on their outline - their 
       }
     }
   }
-  // PIN MOVED (OWN-WORK2): over 400 gates, 85% and more on a street, on Basic Roads' arrays; 241 of 284 on the Bay's own network
   assert.ok(gates > 250 && onStreet / gates > 0.8 && crossingOnStreet / crossings < 0.25, `on their outline: ${onStreet} of ${gates} gates on a street, where ${crossingOnStreet} of ${crossings} crossings were`);
   const { openSweep, sweepClone, ROADS_EVERY_WAY } = await import('../../tools/townBoardsSweep.mjs');
   const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
@@ -327,15 +324,11 @@ test('GATE-ROADS with ARENA2: the Bay\'s walled cities on their outline - their 
       const { px, py } = pixelOf(loc), [roads, tracks] = roadsOf(px, py), gr = townGateRoads(loc, sw.maps, sw.blocks);
       if (!gr) continue;
       const plain = lay(loc, px, py, roads, tracks, null), laid = lay(loc, px, py, roads, tracks, gr);
-      if (!plain.paths || !roads[py * 1000 + px]) continue;   // OWN-WORK2: a city on the sea's own pixel (Antelibuton) has no road to join
+      if (!plain.paths || !roads[py * 1000 + px]) continue;   // A city on the sea's own pixel (Antelibuton) has no road to join
       for (const g of gr.gates) { n.gates++; if (onRoad(plain, plain.paths, g)) n.before++; if (onRoad(laid, plain.paths, g)) n.after++; }
     }
     return n;
   };
-  // PIN MOVED (OWN-WORK3): online the Bay stood Beautiful Cities' rings, every sixth one's 250 gates and more on the road where
-  // a third were. With the packs retired every Bay city is walled on its outline (the sweep's rows, TS7), its gates where its
-  // roads come in (the host's reader). A wall is registered once a city (townWalls.js), so none of those read above: every
-  // fourth of the rest.
   const bay = sw.rows.filter((l) => l.outline?.bay && l.locationIndex % 3 !== 0).filter((_, k) => k % 4 === 0);
   setTownWallPaths(townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));
   let b;

@@ -1,10 +1,10 @@
 # Mod Support
 
-The port runs Daggerfall Unity mods by porting each one into the tree, not by loading `.dfmod` bundles. A mod's own
-files (manifest, settings, data, text, and its assets where the author allows) are vendored under `vendor/<mod>/`, its
-code is restated in `src/`, and its assets come in through the same injection doors DFU uses. The player meets mods in
-the Mods pane, where each has its switches, and in the credits. Every vendored mod is listed in
-`bible/01-Overview/Mod-Registry.md`.
+The port runs Daggerfall Unity mods by porting each one into the tree, not by loading `.dfmod` bundles. A mod's code is
+restated in `src/`, and its pictures, sounds, models, data and words are our own (OWN-WORK, the owner;
+`bible/01-Overview/Own-Work.md`), coming in through the same injection doors DFU uses. The player meets mods in the
+Mods pane, where each has its switches. The outside work the tree still carries is under `vendor/<mod>/`, each listed
+in `bible/01-Overview/Mod-Registry.md`; the record of every mod whose files left is in `Own-Work.md`.
 
 ## How it works
 
@@ -42,7 +42,8 @@ A mod's art is extracted by a tool into `public/art/` when its terms allow, or r
 - No compatibility switches between mods; each reads the other's own switch.
 - A suite that pins Daggerfall Unity's own numbers runs with every mod off: it imports `test/modsOff.js` first.
 - A mod's bugs are reproduced as it ships them, and named where they stand, unless a departure is recorded.
-- Every vendored mod has a row in `bible/01-Overview/Mod-Registry.md` naming its author, version, permission and page.
+- Every vendored mod has a row in `bible/01-Overview/Mod-Registry.md` naming its author, version, permission and page;
+  a mod whose files left the tree has its row in `bible/01-Overview/Own-Work.md`.
 
 ## Daggerfall Unity
 

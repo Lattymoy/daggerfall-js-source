@@ -347,8 +347,8 @@
   {
     "name": "TWOHANDS-rig-light-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "playerWeapon.leftBusy = lightInHand();",
-    "new": "playerWeapon.leftBusy = false;",
+    "old": "    playerWeapon.leftBusy = lightInHand();   // A light in a hand takes it - one fist beside it",
+    "new": "    playerWeapon.leftBusy = false;   // A light in a hand takes it - one fist beside it",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "TWOHANDS-rig-pair-not-drawn",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (pairUp() && shown()) twoHands.drawPair(",
-    "new": "if (false) twoHands.drawPair(",
+    "old": "        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // Each hand's own element",
+    "new": "        if (false) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // Each hand's own element",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "TWOHANDS-rig-sheathed-run-not-drawn",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });",
-    "new": "if (runDrawn && shown()) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });",
+    "old": "        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // The running fists in their wraps' glow",
+    "new": "        if (runDrawn && shown()) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // The running fists in their wraps' glow",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "TWOHANDS-rig-left-clone-frozen",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "widget.endOfFrame(); twoHands.offWidget.endOfFrame(); shield.endOfFrame();",
-    "new": "widget.endOfFrame(); shield.endOfFrame();",
+    "old": "      try { return onUiScreen(renderer, cv(), () => drawInner({ paralyzed })); } finally { widget.endOfFrame(); twoHands.offWidget.endOfFrame(); shield.endOfFrame(); }   // WaitForEndOfFrame resumes after the frame's draw (TWO-HANDS: the left hand's clone's too); RETRO-UI: in the pillarbox",
+    "new": "      try { return onUiScreen(renderer, cv(), () => drawInner({ paralyzed })); } finally { widget.endOfFrame(); shield.endOfFrame(); }   // WaitForEndOfFrame resumes after the frame's draw (TWO-HANDS: the left hand's clone's too); RETRO-UI: in the pillarbox",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "TWOHANDS-rig-dfu-line-for-a-pair",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (twoHanded(playerWeapon.handsMode)) say(",
-    "new": "if (false) say(",
+    "old": "      if (twoHanded(playerWeapon.handsMode)) say(line === USING_RIGHT_HAND_TEXT ? t('combat.leadRightHand', 'Leading with the right hand.') : t('combat.leadLeftHand', 'Leading with the left hand.'));",
+    "new": "      if (false) say(line === USING_RIGHT_HAND_TEXT ? t('combat.leadRightHand', 'Leading with the right hand.') : t('combat.leadLeftHand', 'Leading with the left hand.'));",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "TWOHANDS-AUDIT-eye-in-the-gate",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      keepEye(cam?.pos);\n",
-    "new": "      if (widgetOn() || handheldOn() || shieldOn()) keepEye(cam?.pos);\n",
+    "old": "      keepEye(cam?.pos);",
+    "new": "      if (widgetOn() || handheldOn() || shieldOn()) keepEye(cam?.pos);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "TWOHANDS-AUDIT-run-over-the-punch",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow\n        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element",
-    "new": "        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element\n        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow",
+    "old": "        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // The running fists in their wraps' glow\n        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // Each hand's own element",
+    "new": "        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // Each hand's own element\n        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // The running fists in their wraps' glow",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -815,8 +815,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-run-hands-with-a-spell",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (spellArmed() || fpsSpellCasting.isPlayingAnim || actTool() || sheetWindowUp()) return false;",
-    "new": "if (actTool() || sheetWindowUp()) return false;",
+    "old": "    if (spellArmed() || fpsSpellCasting.isPlayingAnim || actTool() || sheetWindowUp()) return false;",
+    "new": "    if (actTool() || sheetWindowUp()) return false;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -824,8 +824,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-run-hands-mid-swap",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "return (entity.equipCountdown ?? 0) <= 0;",
-    "new": "return true;",
+    "old": "    return (entity.equipCountdown ?? 0) <= 0;",
+    "new": "    return true;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -833,8 +833,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-run-hands-for-the-beast",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (lightInHand() || racialFpsWeapon(entity)) return false;",
-    "new": "if (lightInHand()) return false;",
+    "old": "    if (lightInHand() || racialFpsWeapon(entity)) return false;",
+    "new": "    if (lightInHand()) return false;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-pair-rises-on-the-climb",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height) };",
-    "new": "tint: fpTint, offsetHeight: weaponOffsetHeight() + climbDrop(_climbLower, c.height) };",
+    "old": "        const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height) };   // Lowered for the climb, as the one sprite is",
+    "new": "        const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight() + climbDrop(_climbLower, c.height) };   // Lowered for the climb, as the one sprite is",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -851,8 +851,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-one-hand-says-the-lead-line",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (twoHanded(playerWeapon.handsMode)) say(",
-    "new": "if (true) say(",
+    "old": "      if (twoHanded(playerWeapon.handsMode)) say(line === USING_RIGHT_HAND_TEXT ? t('combat.leadRightHand', 'Leading with the right hand.') : t('combat.leadLeftHand', 'Leading with the left hand.'));",
+    "new": "      if (true) say(line === USING_RIGHT_HAND_TEXT ? t('combat.leadRightHand', 'Leading with the right hand.') : t('combat.leadLeftHand', 'Leading with the left hand.'));",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -896,8 +896,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-waist-lantern-takes-the-hand",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "&& !lanternAtWaist(entity.lightSource)\n",
-    "new": "\n",
+    "old": "  const lightInHand = () => !!entity && isHeldLight(entity.lightSource) && !lanternAtWaist(entity.lightSource)",
+    "new": "  const lightInHand = () => !!entity && isHeldLight(entity.lightSource) ",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1130,8 +1130,8 @@
   {
     "name": "TWOHANDS-GLOW-rig-arm-the-striking-item",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);",
-    "new": "fpArm.setWeaponGlow?.(meshGlow(playerWeapon.weapon), playerWeapon.weapon);",
+    "old": "        fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);",
+    "new": "        fpArm.setWeaponGlow?.(meshGlow(playerWeapon.weapon), playerWeapon.weapon);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1139,8 +1139,8 @@
   {
     "name": "TWOHANDS-GLOW-clone-the-held-glow",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "glow: item ? glowOf(item) : handGlowOf(hand),",
-    "new": "glow: heldGlowNow(),",
+    "old": "      weaponType: heldType(item), material: drawnPiece(item)?.material ?? -1, glow: item ? glowOf(item) : handGlowOf(hand),   // The set the art is - the plain one while an element shows - and its outline: each hand's own item's (HAND-WRAPS: a bare fist its wraps')",
+    "new": "      weaponType: heldType(item), material: drawnPiece(item)?.material ?? -1, glow: heldGlowNow(),   // The set the art is - the plain one while an element shows - and its outline: each hand's own item's (HAND-WRAPS: a bare fist its wraps')",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1401,8 +1401,8 @@
   {
     "name": "TWOHANDS-SPRITE2-clock-not-handed",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "shown: pair && spriteShown(), clockOf: widget, ...gunClone('L') });",
-    "new": "shown: pair && spriteShown(), ...gunClone('L') });",
+    "old": "        if (widgetOn() && (pair || !twoHands.offWidget.settledHidden)) twoHands.offWidget.lateUpdate(dt, { ...cloneFrame(playerWeapon.handItem('L'), 'L', cf), sheathed: false, shown: pair && spriteShown(), clockOf: widget, ...gunClone('L') });   // AUDIT: never while it rests hidden; AUDIT 2: on the right clone's clock",
+    "new": "        if (widgetOn() && (pair || !twoHands.offWidget.settledHidden)) twoHands.offWidget.lateUpdate(dt, { ...cloneFrame(playerWeapon.handItem('L'), 'L', cf), sheathed: false, shown: pair && spriteShown(), ...gunClone('L') });   // AUDIT: never while it rests hidden; AUDIT 2: on the right clone's clock",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1455,8 +1455,8 @@
   {
     "name": "TWOHANDS-SPRITE2-run-over-a-picture",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const runDrawn = runHands && (handsEmpty() || !(shown() || torchOnly || !!shieldRect || gunSliding || spellHandsDrawn));",
-    "new": "const runDrawn = runHands;",
+    "old": "      const runDrawn = runHands && (handsEmpty() || !(shown() || torchOnly || !!shieldRect || gunSliding || spellHandsDrawn));",
+    "new": "      const runDrawn = runHands;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1482,8 +1482,8 @@
   {
     "name": "TWOHANDS-SPRITE2-arm-holds-the-lead",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const armItem = pairUp() ? playerWeapon.handItem('R') : playerWeapon.weapon;\n    fpArm.setWeapon(armItem,",
-    "new": "    const armItem = playerWeapon.weapon;\n    fpArm.setWeapon(armItem,",
+    "old": "    const armItem = pairUp() ? playerWeapon.handItem('R') : playerWeapon.weapon;",
+    "new": "    const armItem = playerWeapon.weapon;",
     "tests": [
       "test/combat/twohands.test.js"
     ]

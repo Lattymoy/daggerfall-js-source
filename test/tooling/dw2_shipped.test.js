@@ -1,10 +1,9 @@
-// DW2 - THE SET COMES WITH THE GAME (2026-09-23, Mac: "this needs to be in the codebase, not an attachable file").
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): the set is our own. No picture
-// ships: every name DFU asks for is built at runtime from the player's classic files by our looks
-// (combat/diverseWeapons/diverseWeaponsArt.js), and the vendored sprites are gone. Pins: our coverage as a literal
-// table (the looks, the files, the counts), the decoder over every grammar, the door executed with an injected reader
-// (a hit, a name outside the set never built, the switch off, a failed build said once, an attached copy winning),
-// the PNG helpers the other extractors share, and nothing of the mod's left in the tree.
+// THE SET COMES WITH THE GAME. OWN-WORK4: the set is our own. No picture ships: every name DFU asks for is built at
+// runtime from the player's classic files by our looks (combat/diverseWeapons/diverseWeaponsArt.js), and the vendored
+// sprites are gone. Pins: our coverage as a literal table (the looks, the files, the counts), the decoder over every
+// grammar, the door executed with an injected reader (a hit, a name outside the set never built, the switch off, a
+// failed build said once, an attached copy winning), the PNG helpers the other extractors share, and nothing of the
+// mod's left in the tree.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -25,7 +24,7 @@ import { readPng, writePng, writeIndexedPng, encodeSprite, sameOnScreen } from '
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tracked = (...p) => execFileSync('git', ['ls-files', ...p], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
 
-/** Our looks, as designed (OWN-WORK4): the classic file each is built from and the rule that reshapes it. */
+/** Our looks, as designed: the classic file each is built from and the rule that reshapes it. */
 const OUR_LOOKS = {
   DAGGER: { plain: 'WEAPON02.CIF', magic: 'WEAPO102.CIF', blade: { width: 1.3, fuller: true, only: true } },
   TANTO: { plain: 'WEAPON04.CIF', magic: 'WEAPO104.CIF', blade: { length: 0.45, width: 0.95, curve: 0.03, tip: 'chisel' } },

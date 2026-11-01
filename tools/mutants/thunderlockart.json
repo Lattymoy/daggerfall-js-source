@@ -2,8 +2,8 @@
   {
     "name": "THUNDERLOCK-ART-the-dye-kept",
     "file": "src/systems/textureReplacement.js",
-    "old": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
-    "new": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;",
+    "old": "      return dye; // A studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "      return dye; // A studio picture of one dye makes no dyed set of a stand-in\n  return dye;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "THUNDERLOCK-ART-every-record-undyed",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values())\n    if (\n      e.archive === bare.archive &&\n      e.record === bare.record &&\n      e.frame === bare.frame &&\n      e.map === bare.map &&\n      e.dye != null &&\n      !e.studio\n    )\n      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "old": "  for (const e of _vendor.values())\n    if (\n      e.archive === bare.archive &&\n      e.record === bare.record &&\n      e.frame === bare.frame &&\n      e.map === bare.map &&\n      e.dye != null &&\n      !e.studio\n    )\n      return dye; // A studio picture of one dye makes no dyed set of a stand-in\n  return null;",
     "new": "  return null;",
     "tests": [
       "test/systems/thunderlockart.test.js"

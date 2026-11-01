@@ -42,8 +42,8 @@
   {
     "name": "QS2-two-pane-rows-name-the-same-slot",
     "file": "src/systems/inputActions.js",
-    "old": "    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar6', 'Hotbar slot 6'],",
-    "new": "    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar5', 'Hotbar slot 6'],",
+    "old": "    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar6', 'Hotbar slot 6'], ['Hotbar7', 'Hotbar slot 7'], ['Hotbar8', 'Hotbar slot 8'],",
+    "new": "    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar5', 'Hotbar slot 6'], ['Hotbar7', 'Hotbar slot 7'], ['Hotbar8', 'Hotbar slot 8'],",
     "tests": [
       "test/systems/qs2_inputs.test.js",
       "test/ui/kb1_keybinds.test.js",

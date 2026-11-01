@@ -1,5 +1,5 @@
-// ARENA1: the player's data as the arena tests read it - MAPS.BSA, BLOCKS.BSA and ARCH3D.BSA out of ARENA2_PATH. The town
-// packs that gave the city its other layout are retired (OWN-WORK3). Null without ARENA2.
+// The player's data as the arena tests read it - MAPS.BSA, BLOCKS.BSA and ARCH3D.BSA out of ARENA2_PATH. The town
+// packs that gave the city its other layout are retired. Null without ARENA2.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { MapsFile } from '../src/formats/mapsFile.js';

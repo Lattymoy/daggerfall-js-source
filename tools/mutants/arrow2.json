@@ -2,8 +2,8 @@
   {
     "name": "ARROW2-release-not-hidden",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (playerWeapon.machine.isBow && evs.includes('done')) _bowReleaseHidden = true;",
-    "new": "      if (false) _bowReleaseHidden = true;",
+    "old": "      if (playerWeapon.machine.isBow && evs.includes('done')) _bowReleaseHidden = true;   // FPSWeapon.cs:529-531",
+    "new": "      if (false) _bowReleaseHidden = true;   // FPSWeapon.cs:529-531",
     "tests": [
       "test/systems/arrow2_bowhide.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARROW2-classic-sprite-ignores-the-hide",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (art && spriteShown()) drawFpsWeapon(",
-    "new": "      if (art) drawFpsWeapon(",
+    "old": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
+    "new": "      if (art) drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
     "tests": [
       "test/systems/arrow2_bowhide.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARROW2-widget-fed-the-latched-shown",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "sheathed: playerWeapon.sheathed, shown: spriteShown(),",
-    "new": "sheathed: playerWeapon.sheathed, shown: shown(),",
+    "old": "          sheathed: playerWeapon.sheathed, shown: spriteShown(), ...gunClone('R'),",
+    "new": "          sheathed: playerWeapon.sheathed, shown: shown(), ...gunClone('R'),",
     "tests": [
       "test/systems/arrow2_bowhide.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARROW2-hide-never-lifts",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    _bowReleaseHidden = false;   // ARROW2: the first Update past the cooldown writes ShowWeapons again\n",
-    "new": "",
+    "old": "    _bowReleaseHidden = false;   // The first Update past the cooldown writes ShowWeapons again\n    let v = true;",
+    "new": "    let v = true;",
     "tests": [
       "test/systems/arrow2_bowhide.test.js"
     ]

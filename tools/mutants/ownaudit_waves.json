@@ -11,8 +11,8 @@
   {
     "name": "OWNAUDIT-waves-teeth-alike",
     "file": "src/systems/comeSailAway/csaPictures.js",
-    "old": "front.churn + paintIndex * Math.PI",
-    "new": "front.churn",
+    "old": "        WAVE_TOOTH * Math.sin((2 * Math.PI * WAVE_TEETH * x) / size + front.churn + paintIndex * Math.PI),",
+    "new": "        WAVE_TOOTH * Math.sin((2 * Math.PI * WAVE_TEETH * x) / size + front.churn),",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]

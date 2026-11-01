@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): THE BOATS' ANIMATORS - the five controllers Come Sail Away 2.1's runtime drives (its
+// THE BOATS' ANIMATORS - the five controllers Come Sail Away 2.1's runtime drives (its
 // parameters, states, blends and timings: the interface the C# reads, kept as the mod plays them) and the clips our own
 // boats play over them. world/unityAnimator.js plays them; systems/comeSailAway/comeSailAway.js asks them only through
 // CrossFade, SetBool, SetFloat and the rowing clips' three events. Every clip's curves are ours: a pose held, or an

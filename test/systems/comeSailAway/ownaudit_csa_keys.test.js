@@ -1,7 +1,6 @@
-// OWN-AUDIT (2026-11-01; bible/03-World/Come-Sail-Away.md): THE THREE KEYS COME SAIL AWAY SHIPPED AND NEVER READ, MADE
-// OURS - the bad tack (Handling.BadTack, BadTackMultiplier) and the gaff sails' assist (SailingAssist.AutoStowGaffSails),
-// comeSailAway/sailAssist.js under the runtime - and the fourth, Compatibility.AnimatedWaterVertexWaves, retired.
-// Mutants: tools/mutants/ownaudit_keys.json.
+// THE THREE KEYS COME SAIL AWAY SHIPPED AND NEVER READ, MADE OURS - the bad tack (Handling.BadTack, BadTackMultiplier)
+// and the gaff sails' assist (SailingAssist.AutoStowGaffSails), comeSailAway/sailAssist.js under the runtime - and the
+// fourth, Compatibility.AnimatedWaterVertexWaves, retired. Mutants: tools/mutants/ownaudit_keys.json.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

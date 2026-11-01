@@ -77,7 +77,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: THE SEA\'S STACK IN WINDOW DEPTH - the
   // layer of this stack - a quarter step over the ground it lies on, under the film (the constant terms' order)
   const offsets = RENDERER.match(/gl\.polygonOffset\([^)]*\)/g) ?? [];
   assert.deepEqual(offsets.sort(), ['gl.polygonOffset(0, WATER_LAYER_UNITS.surface)', 'gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units)'], 'no other offset in the world renderer to agree with it');
-  assert.deepEqual({ ...SNOW_LAYER }, { factor: -0.5, units: -1 });   // PIN MOVED (OWN-WORK4 AUDIT): our offset, not the retired shader's -0.25, -0.25
+  assert.deepEqual({ ...SNOW_LAYER }, { factor: -0.5, units: -1 });
   assert.ok(Object.isFrozen(SNOW_LAYER));
   assert.ok(WATER_LAYER_UNITS.surface < SNOW_LAYER.units && SNOW_LAYER.units < 0, 'the snow over the ground and under the film');
 });
@@ -111,7 +111,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: ILIAC PUDDLE NO MORE\'S TOP IS THE FIL
 });
 
 test('FIELD BUGS 2026-09-29 (the sea) #4: the breakers are drawn BEFORE the film - with the ground, written - so the film tests against their depth, lifted in the stack; the world keeps that order (mutants: the waves after the film)', () => {
-  const waves = WORLD.indexOf('    if (!tvf) csaDrawWaves();');   // FIELD BUGS 2026-09-30b TV-SURF: gated on the travel view (PIN MOVED)
+  const waves = WORLD.indexOf('    if (!tvf) csaDrawWaves();');   // Gated on the travel view (PIN MOVED)
   const water1 = WORLD.indexOf('      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);');
   const top = WORLD.indexOf('    if (deepWaters) drawDeepWatersSurfaces(now);');
   assert.ok(waves > 0 && water1 > waves && top > waves, 'the breakers before WATER1 and before the top');
@@ -147,7 +147,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: A PAINT\'S CHAIN - level 0 the paint i
   assert.deepEqual([...tiny[0].data], [200, 100, 50, 128, 255, 0, 255, 255], 'level 0 the paint itself');
   assert.deepEqual([...tiny[1].data], [(100 + 240) / 2, (50 + 244) / 2, Math.floor((25 + 250) / 2 + 0.5), Math.floor((128 + 255) / 2 + 0.5)], 'past it the frame\'s mean, premultiplied, the key the snow\'s mean');
   assert.deepEqual(wavePictureMean({ width: 2, height: 1, data: new Uint8Array([200, 100, 0, 255, 100, 51, 10, 0]) }), [150, 76, 5], 'a picture\'s mean colour');
-  // OWN-WORK4: our two paints (systems/comeSailAway/csaPictures.js), as the author's were checked
+  // Our two paints (systems/comeSailAway/csaPictures.js), as the author's were checked
   for (const name of [0, 1]) {
     const pic = wavePaint(name);
     const snow = [236, 238, 245];

@@ -1,4 +1,4 @@
-// DYNAMIC SKIES - OUR OWN PICTURES (OWN-WORK4). Nothing is loaded: the sky's one texture and the pixel snow's flake
+// DYNAMIC SKIES - OUR OWN PICTURES. Nothing is loaded: the sky's one texture and the pixel snow's flake
 // are painted here, at runtime, by our own code - tileable value noise and a drawn six-armed crystal. The tables the
 // instance takes are dynamicSkies.js's own.
 
@@ -60,7 +60,7 @@ export const SKY_NOISE_CHANNELS = Object.freeze([
   Object.freeze({ seed: 37, cells: 3, octaves: 4, billow: true }),
 ]);
 
-/** OWN-WORK4 AUDIT (2026-11-01): each octave's lattice turned by a whole-number matrix [turnA, turnB, turnC, turnD] (so the texture
+/** Each octave's lattice turned by a whole-number matrix [turnA, turnB, turnC, turnD] (so the texture
  *  still tiles) and shifted by its own fraction of a cell. Value noise is flat along its lattice lines, and with every
  *  octave's lines on one grid the lit clouds showed them as long streaks under an overcast deck. */
 export const OCTAVE_TURNS = Object.freeze([

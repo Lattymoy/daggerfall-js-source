@@ -1,6 +1,5 @@
-// HT1 (2026-09-14, Mac: "Next mod to integrate 1:1 is this"): HANDHELD
-// TORCHES 1.4.1 by RedRoryOTheGlen - the HandheldTorches MonoBehaviour,
-// ported 1:1.
+// HANDHELD TORCHES 1.4.1 by RedRoryOTheGlen - the HandheldTorches
+// MonoBehaviour, ported 1:1.
 //
 // The mod's own description: "Auto-extinguishes torches and candles
 // when drawing weapons with no free hand." What it is: a HAND LAW over
@@ -30,7 +29,7 @@
 // (the mod runs both; the rig calls them in that order), draw() is
 // OnGUI's repaint. The keys are read as KeyCode names the way the
 // mod parses them (systems/keyCodes.js). The hand law has ONE other
-// caller than Update - the equip change (HT6 below), because a window
+// caller than Update - the equip change, because a window
 // that is open has stopped the frames the law would otherwise run on.
 //
 // NOT CARRIED, recorded: the cross-mod seams (Vanilla Combat Event
@@ -48,20 +47,20 @@ import { liveStat } from './statMods.js';
 import { TEMPLATES, isLightSource } from './useItem.js';
 import { getItem, addItem } from './inventory.js';
 import { conditionWord, itemLongName } from './item/itemInfo.js';
-import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from './equip.js'; // HT6: the worn set's own door - the hand law runs at the equip moment too
+import { getItemHands, EQUIP_SLOTS, ITEM_HANDS, addEquipChangeListener } from './equip.js'; // The worn set's own door - the hand law runs at the equip moment too
 import { weaponTypeForItem, WEAPON_TYPES, NATIVE_W, NATIVE_H } from '../combat/fpsWeapon.js';
 import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';
 import { SOUND } from './soundClips.js';
-import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weapon/weaponWidget.js'; // WW1: Unity's pieces and the two choice tables, one home
+import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../combat/weapon/weaponWidget.js'; // Unity's pieces and the two choice tables, one home
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
-import { beltLanternOf } from './beltLantern.js'; // BELT-WAIST: a press lights the lantern slot's lantern first
-import { toScreenOrder } from '../formats/color32Order.js'; // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
-import { rebuiltPicture } from './rebuiltPicture.js'; // NO-BETHESDA2: a picture that is Daggerfall's own, built from the player's files
-import DERIVED_TEXTURES from './handheldTorchesDerived.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader (OWN-WORK4)
-import { ownTorchPicture, TORCH_ART, TORCH_OVER, dousedCandle } from './handheldTorchesArt.js'; // OWN-WORK4: our own pictures
-import { setLightSource, addLightSourceListener } from './lightSource.js'; // DISC7: the light in hand's one door
-import { drawArc } from './torchArc.js'; // OWN-AUDIT: the throw's arc, drawn
-import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { beltLanternOf } from './beltLantern.js'; // A press lights the lantern slot's lantern first
+import { toScreenOrder } from '../formats/color32Order.js'; // A SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
+import { rebuiltPicture } from './rebuiltPicture.js'; // A picture that is Daggerfall's own, built from the player's files
+import DERIVED_TEXTURES from './handheldTorchesDerived.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader
+import { ownTorchPicture, TORCH_ART, TORCH_OVER, dousedCandle } from './handheldTorchesArt.js'; // Our own pictures
+import { setLightSource, addLightSourceListener } from './lightSource.js'; // The light in hand's one door
+import { drawArc } from './torchArc.js'; // The throw's arc, drawn
+import { noteFirstUse } from './tutorials.js'; // The first touch of a system pops its tutorial page
 
 export const HANDHELD_TORCHES_VENDOR = 'handheld-torches';
 export const HANDHELD_TORCHES_MOD = Object.freeze({
@@ -135,7 +134,7 @@ export const SECONDS_PER_CONDITION = 20;
 const T = TEMPLATES;
 const isTorch = (it) => it?.templateIndex === T.Torch;
 const isLantern = (it) => it?.templateIndex === T.Lantern;
-/** TORCH-VIS: the mod's own "is this a light you HOLD" - the two templates its hand law and its sprite both ask
+/** The mod's own "is this a light you HOLD" - the two templates its hand law and its sprite both ask
  *  about. Exported because the weapon rig's draw ladder must ask the SAME question to know a lit hand from an
  *  empty one, and a second spelling of it there is how the sprite and the ladder drift apart. */
 export const isHeldLight = (it) => isTorch(it) || isLantern(it);
@@ -159,7 +158,7 @@ export function readTorchSettings(read = () => modSettingsOf(HANDHELD_TORCHES_VE
     stowOnSwimming: !!s['Handling.StowWhenSwimming'],
     twoHandedRelaxed: !!s['Handling.RelaxedTwoHandedWeapons'],
     lanternRelaxed: !!s['Handling.RelaxedLanterns'],
-    lanternsAtWaist: !!s['Handling.LanternsAtWaist'], // HT-WAIST: the port's own switch on the mod's pane (Ledger A)
+    lanternsAtWaist: !!s['Handling.LanternsAtWaist'], // The port's own switch on the mod's pane (Ledger A)
     throwStrength: Number(s['Throwing.ThrowStrength']),
     throwAngle: Number(s['Throwing.ThrowAngleOffset']),
     throwSpread: Number(s['Throwing.ThrowDispersion']),
@@ -209,7 +208,7 @@ export function readTorchSettings(read = () => modSettingsOf(HANDHELD_TORCHES_VE
  *  message spells its item (`Condition().ToLower() + " " + LongName.ToLower()`). */
 export const torchItemWords = (item) => `${conditionWord(item).toLowerCase()} ${itemLongName(item).toLowerCase()}`;
 
-/** NO-BETHESDA2 (2026-10-31): the pictures that are Daggerfall's own - the candle's and the holy candle's lit flats
+/** The pictures that are Daggerfall's own - the candle's and the holy candle's lit flats
  *  and their emission twins, TEXTURE.210 records 3 and 4 (handheldTorchesDerived.json). The spec for `name`
  *  (`archive_record-frame`, no extension), or null where the picture is not rebuilt. */
 export const derivedTorchSpec = (name) => (Object.hasOwn(DERIVED_TEXTURES, name) ? DERIVED_TEXTURES[name] : null);
@@ -223,7 +222,7 @@ export const inTorchSet = (file) => {
 /** Whether the set carries `file`. */
 export const vendoredTexture = (file) => inTorchSet(file);
 /** The picture `name`, top-down RGBA: rebuilt from the player's files where the specs name it (`art`, a test's
- *  reader), a doused candle our rule over the player's lit one, else our own (OWN-WORK4). Null where none. */
+ *  reader), a doused candle our rule over the player's lit one, else our own. Null where none. */
 export async function torchPicture(name, { art = undefined } = {}) {
   const spec = derivedTorchSpec(name);
   if (spec) return rebuiltPicture(spec, art);
@@ -231,7 +230,7 @@ export async function torchPicture(name, { art = undefined } = {}) {
   return ownTorchPicture(name);
 }
 
-/** HT6: THE LIVE COMPONENT - the one whose Update ran last, and the
+/** THE LIVE COMPONENT - the one whose Update ran last, and the
  *  only one the equip change may reach. The hosts build a rig EACH
  *  (worldModes' interior rig, dungeonContext's), so a component that is
  *  not being given frames still holds its last `ctx` - stale `sheathed`
@@ -253,7 +252,7 @@ addEquipChangeListener((entity) => _liveHandLaw?.(entity));
  *   torches()      the host's dropped-torch pool (scenes/droppedTorches.js) or null
  *   handedness()   Settings Controls/Handedness == 1
  *   loadSprite(record, frame) -> Promise<{width, height, colors} | null>   the mod's texture, in the port's
- *                  color32 shape and order - what `renderer.uploadTexture` reads (TEX1)
+ *                  color32 shape and order - what `renderer.uploadTexture` reads
  */
 export function createHandheldTorches({
   settings = readTorchSettings,
@@ -313,7 +312,7 @@ export function createHandheldTorches({
     inertiaForwardTarget: [0, 0],
     throwTimer: 0,
     throwTime: 1,
-    arc: null, // OWN-AUDIT: the wind-up's arc this frame (throwArcPoints), drawn by drawArc - null while no throw winds up
+    arc: null, // The wind-up's arc this frame (throwArcPoints), drawn by drawArc - null while no throw winds up
     keysLast: new Set(),
     loop: null,
     loopVolume: 0,
@@ -322,7 +321,7 @@ export function createHandheldTorches({
   };
   let ctx = null;
   let lightOffsetSet = null; // the PlayerTorch position the mod last wrote (its transform keeps it)
-  // DISC7: THE LOOP ANSWERS THE TORCH, NOT THE RIG'S CLOCK. The update below still starts it (a lit torch in the rig
+  // THE LOOP ANSWERS THE TORCH, NOT THE RIG'S CLOCK. The update below still starts it (a lit torch in the rig
   // that ticks), but a light that goes out - doused, stowed, dropped or burnt out from inside an open window, where the
   // host holds this rig's frame - stops it on the change itself (systems/lightSource.js), not on the next tick.
   // AUDIT DISC7 C1: subscribed by the UPDATE, as HT6's hand law is re-armed there - the mod's switch off disposes the
@@ -352,13 +351,13 @@ export function createHandheldTorches({
   const oneShot = (clip, volume = 1, pitch = 1) => audio?.playOneShot?.(clip, volume, pitch);
   const setLight = (it) => {
     if (ctx?.entity) setLightSource(ctx.entity, it);
-  }; // DISC7: the one door
-  /** HT-WAIST: a lantern hung at the waist - the port's own switch (systems/playerTorch.js lanternAtWaist says
+  }; // The one door
+  /** A lantern hung at the waist - the port's own switch (systems/playerTorch.js lanternAtWaist says
    *  why; this is the same question off the component's own settings frame, so a pin's store drives it). It
    *  takes no hand, so the hand law never stows it, the no-hand refusals let it through, and the first-person
    *  hand never holds it. With the switch off every line below reads exactly as it did. */
-  const atWaist = (it) => isLantern(it) && (!!w.s.lanternsAtWaist || it.beltLantern === true); // BELT-LANTERN: and one in the lantern slot
-  /** BELT-WAIST: the lantern a press lights is the one in the lantern slot, while one hangs there - never another
+  const atWaist = (it) => isLantern(it) && (!!w.s.lanternsAtWaist || it.beltLantern === true); // And one in the lantern slot
+  /** The lantern a press lights is the one in the lantern slot, while one hangs there - never another
    *  lantern ahead of it in the pack (which lit beside the hung one, and the slot stood dark). */
   const lanternFirst = () => beltLanternOf(ctx?.entity) ?? firstOf('UselessItems2', T.Lantern);
 
@@ -387,7 +386,7 @@ export function createHandheldTorches({
       w.animLanternLength = lanternLen;
       w.currentTexture = list[0] ?? null;
       refreshSprite();
-    })().catch((e) => console.warn('[handheld torches] the sprites would not load', e)); // TEX1: nothing awaits this promise, so a throw inside it was an UNHANDLED REJECTION that took the page down (Mac's crash) - the load fails to a console line and the mod runs without its sprite, as it does when the files are missing
+    })().catch((e) => console.warn('[handheld torches] the sprites would not load', e)); // Nothing awaits this promise, so a throw inside it was an UNHANDLED REJECTION that took the page down (Mac's crash) - the load fails to a console line and the mod runs without its sprite, as it does when the files are missing
   };
 
   // ---- RefreshSprite (0x26b8) and the three placements ----
@@ -398,7 +397,7 @@ export function createHandheldTorches({
       w.offsetFrame = -1;
       setSheathe();
       return;
-    } // HT-WAIST: nothing in the hand - the hand goes off the screen
+    } // Nothing in the hand - the hand goes off the screen
     if (l) w.offsetFrame = isLantern(l) ? 4 : 0; // the lantern frames sit at index 4 - the torch's four (0x26f4)
     w.currentTexture = w.textures[w.currentFrame + w.offsetFrame] ?? w.currentTexture;
     if (w.s.lanternRelaxed && l && isLantern(l) && !hasFreeHand()) {
@@ -478,7 +477,7 @@ export function createHandheldTorches({
     const slots = ctx?.entity?.equip?.slots ?? {}; // the table as it stands - read, never minted here (the rig's worn-item sync reads the same slot and must not see one appear)
     const left = slots[EQUIP_SLOTS.LeftHand] ?? null,
       right = slots[EQUIP_SLOTS.RightHand] ?? null; // slot 21, slot 19
-    // HT7: `isShield` stood here for the mod's sheathed arm alone, and
+    // `isShield` stood here for the mod's sheathed arm alone, and
     // that arm is gone - what is WORN takes a hand now, shield or not.
     const isBow = (it) => weaponTypeForItem(it) === WEAPON_TYPES.Bow;
     // WeaponManager.Sheathed (ldfld 0x2c8a) and UsingRightHand (0x2cfc,
@@ -486,9 +485,8 @@ export function createHandheldTorches({
     // those are the edge detectors below in Update, written after this
     const sheathedNow = !!ctx?.sheathed,
       usingRightNow = ctx?.usingRightHand !== false;
-    // HT7 (2026-09-17, Mac: "Take care of both") - THE PORT'S ONE DEPARTURE
-    // FROM UpdateFreeHand, and it is about DAGGERFALL rather than about
-    // the mod.
+    // THE PORT'S ONE DEPARTURE FROM UpdateFreeHand, and it is about
+    // DAGGERFALL rather than about the mod.
     //
     // The mod's sheathed arm (0x2c91-0x2cb8) clears a hand only for a BOW
     // in the left slot, on the premise that a sheathed weapon is away and
@@ -589,7 +587,7 @@ export function createHandheldTorches({
    *  centre, then 145 down from there; the light lands there with its
    *  condition's seconds; the pack loses it; the drop clip at the spot. */
   function dropLightSource(item) {
-    const no = dropRefusal?.() ?? null; // HOUSE-DROP: a floor that refuses a light - said, and the light stays in hand
+    const no = dropRefusal?.() ?? null; // A floor that refuses a light - said, and the light stays in hand
     if (no) {
       say(no);
       return;
@@ -618,7 +616,7 @@ export function createHandheldTorches({
   }
   /** ThrowLightSource (0x3150): the projectile from the body's centre along the camera's look. */
   function throwLightSource(item, strength) {
-    const no = dropRefusal?.() ?? null; // HOUSE-DROP: and a thrown one lands on the same floor
+    const no = dropRefusal?.() ?? null; // And a thrown one lands on the same floor
     if (no) {
       say(no);
       return;
@@ -643,7 +641,7 @@ export function createHandheldTorches({
     if (cam?.feet) return [cam.feet[0], cam.feet[1] + 0.9, cam.feet[2]];
     return cam?.pos ? [cam.pos[0], cam.pos[1] - 0.8, cam.pos[2]] : [0, 0, 0];
   }
-  /** OWN-AUDIT (2026-11-01): the arc a release now would fly, with Throwing.ShowTrajectory on - the flight's own law at
+  /** The arc a release now would fly, with Throwing.ShowTrajectory on - the flight's own law at
    *  the wind-up's strength, without the throw's random spread - or null. */
   function aimArc() {
     const cam = ctx?.camera?.();
@@ -689,7 +687,7 @@ export function createHandheldTorches({
     }
     say(MESSAGES.dropTorchless);
   }
-  /** QS4 - THE TOGGLE KEY'S OWN ARM, AS A DOOR. The mod's key presses
+  /** THE TOGGLE KEY'S OWN ARM, AS A DOOR. The mod's key presses
    *  this (0x17e1's first branch) and so does the port's own
    *  `QuickOffHand` action, which is the quickslot diamond's off-hand
    *  cell - the free-hand guard and the relaxed-lantern carve-out are
@@ -697,7 +695,7 @@ export function createHandheldTorches({
    *  would drift. Answers whether it acted; a refusal has already said
    *  why. */
   function toggleLightPress() {
-    // HT-WAIST: with no hand free the press reaches the WAIST - the lit lantern douses, or the pack's lantern
+    // With no hand free the press reaches the WAIST - the lit lantern douses, or the pack's lantern
     // lights - and nothing else. The ladder below would take a stowed or remembered torch first, light it and
     // have the hand law stow it again the next frame: a press that visibly did nothing (the same quirk Relaxed
     // Lanterns has in the mod, which is the mod's to keep; this switch is the port's).
@@ -719,7 +717,7 @@ export function createHandheldTorches({
 
   /** ToggleLightSourceAction (0x33b8): douse the lit light; else the last stowed one; else the remembered kind; else a lantern, a torch, a candle, a holy candle. */
   function toggleLightSourceAction() {
-    noteFirstUse('torches'); // TUT1
+    noteFirstUse('torches');
     const l = light();
     if (l) {
       w.lastLightTemplateIndex = l.templateIndex;
@@ -736,7 +734,7 @@ export function createHandheldTorches({
     w.lastLightSource = null;
     if (w.s.lastLight && w.lastLightTemplateIndex) {
       if (w.lastLightTemplateIndex === T.Lantern && contains('UselessItems2', T.Lantern))
-        setLight(lanternFirst()); // BELT-WAIST
+        setLight(lanternFirst());
       else if (contains('UselessItems2', w.lastLightTemplateIndex))
         setLight(firstOf('UselessItems2', w.lastLightTemplateIndex));
       else if (contains('ReligiousItems', w.lastLightTemplateIndex))
@@ -744,7 +742,7 @@ export function createHandheldTorches({
     }
     if (!light()) {
       if (contains('UselessItems2', T.Lantern))
-        setLight(lanternFirst()); // BELT-WAIST: the slot's lantern first
+        setLight(lanternFirst()); // The slot's lantern first
       else if (contains('UselessItems2', T.Torch)) setLight(firstOf('UselessItems2', T.Torch));
       else if (contains('UselessItems2', T.Candle)) setLight(firstOf('UselessItems2', T.Candle));
       else if (contains('ReligiousItems', T.Holy_candle)) setLight(firstOf('ReligiousItems', T.Holy_candle));
@@ -763,7 +761,7 @@ export function createHandheldTorches({
       refreshSprite();
     }
   }
-  /** HT-WAIST: the toggle with no hand free - the waist's lantern and nothing else. Answers whether it acted;
+  /** The toggle with no hand free - the waist's lantern and nothing else. Answers whether it acted;
    *  false falls through to the mod's own refusal. Lighting the waist's lantern forgets a stowed light - the
    *  hand law's first line, on the next frame, as it does for a lantern lit through Use or a quickslot. */
   function waistPress() {
@@ -773,7 +771,7 @@ export function createHandheldTorches({
       toggleLightSourceAction();
       return true;
     } // douse
-    // BELT-WAIST: the slot's lantern first (with the switch off a press reaches here only while one hangs there)
+    // The slot's lantern first (with the switch off a press reaches here only while one hangs there)
     const lantern = lanternFirst();
     if (!lantern) return false;
     setLight(lantern);
@@ -808,10 +806,10 @@ export function createHandheldTorches({
 
   /** THE HAND LAW (Update 0x15c6-0x1689), the mod's own block, lifted
    *  out of Update as a function so the EQUIP MOMENT can run the SAME
-   *  code (HT6 below) instead of a second copy of the rule. `l` is the
+   *  code instead of a second copy of the rule. `l` is the
    *  light Update read at the top of the frame. */
   function handLaw(l) {
-    // HT-WAIST: a lantern lit at the waist - by the key, Use or a quickslot - IS the light, so a light stowed before
+    // A lantern lit at the waist - by the key, Use or a quickslot - IS the light, so a light stowed before
     // it is forgotten, as the mod's own stow arm forgets it when a lantern takes its place (switch off); left
     // remembered, the third arm below lit it over the lantern the moment a hand freed
     if (atWaist(l)) {
@@ -837,9 +835,7 @@ export function createHandheldTorches({
     }
   }
 
-  /** HT6 (2026-09-17, Mac: "When equipping a shield or other offhand
-   *  item, the torch in the inventory isnt shown unequipped and
-   *  replaced"): THE HAND LAW AT THE EQUIP MOMENT.
+  /** THE HAND LAW AT THE EQUIP MOMENT.
    *
    *  The law above is Update's, and the rig only runs Update on a frame
    *  the host is not holding for an overlay (weaponRig's frame, gated
@@ -875,8 +871,8 @@ export function createHandheldTorches({
    */
   function update(dt, c) {
     ctx = c;
-    offLight ??= addLightSourceListener(onLight); // AUDIT DISC7 C1: (re)armed with the frame
-    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change
+    offLight ??= addLightSourceListener(onLight); // (re)armed with the frame
+    _liveHandLaw = applyHandLaw; // This host has the player, so this component answers the equip change
     w.s = settings();
     w.time += dt;
     if (!w.textures.length) loadTextures(c.renderer);
@@ -912,7 +908,7 @@ export function createHandheldTorches({
     // the sprite's frames (0x1689-0x175a): a torch's or a lantern's, a candle has none
     if (w.s.showSprite) {
       const cur = light();
-      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off
+      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // The waist's lantern has no hand frames - the hand slides off
       if (w.offsetFrame !== -1) {
         if (w.animationTimer > ANIMATION_TIME) {
           w.animationTimer = 0;
@@ -956,13 +952,13 @@ export function createHandheldTorches({
           // AUDIT (pre-merge) I-D: a floor that refuses the throw keeps the light lit - the release says why (throwLightSource)
           const lit = light();
           // the wind-up douses the lit light - a relaxed lantern excepted (0x18d9-0x1904)
-          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too
+          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null); // The waist's lantern stays lit through a throw too
         }
       } else say(MESSAGES.throwTorchless);
     }
     if (down('TorchThrow') && contains('UselessItems2', T.Torch) && hasFreeHand()) {
       w.throwTimer += dt * w.s.throwScale;
-      // OWN-AUDIT (2026-11-01): DrawTrajectory's arc (0x1e4a-0x1e60), drawn as dots on the screen - this renderer has no
+      // DrawTrajectory's arc (0x1e4a-0x1e60), drawn as dots on the screen - this renderer has no
       // world-space line for the mod's LineRenderer (systems/torchArc.js)
       w.arc = aimArc();
     } else w.arc = null;
@@ -1107,9 +1103,7 @@ export function createHandheldTorches({
   /** OnGUI (IL 0x114c): the sprite, while the module shows it and the
    *  view is first person.
    *
-   *  MAC-H (2026-09-17, Mac: "On the classic sprite, when a torch is
-   *  unequipped, a random sprite is shown on the left middle of the
-   *  screen"). THE HAND HOLDS NOTHING, SO IT DRAWS NOTHING. The only
+   *  MAC-H. THE HAND HOLDS NOTHING, SO IT DRAWS NOTHING. The only
    *  gates here were the module's switch and "is there a texture at
    *  all" - and `w.currentTexture` is set ONCE, to `list[0]`, the
    *  moment InitializeTextures finishes (:234), and is never cleared
@@ -1127,7 +1121,7 @@ export function createHandheldTorches({
    *  frames for the torch (record 0) and the lantern (record 1), and
    *  for nothing else.
    *
-   *  MAC-I: the tint is the room's now, not white. FPSWeapon.Tint is
+   *  The tint is the room's now, not white. FPSWeapon.Tint is
    *  First-Person Lighting's own channel and DFU core never writes it
    *  (FPSWeapon.cs:108, :182) - the port writes it from the light the
    *  scene's flats take, so the hand goes dark with the room it is in.
@@ -1136,14 +1130,14 @@ export function createHandheldTorches({
     if (!w.s.showSprite || !ctx || !renderer || !canvas) return false;
     if (ctx.thirdPerson || w.isInThirdPerson) return false;
     const held = light();
-    if (!held || !(isTorch(held) || isLantern(held))) return false; // MAC-H: nothing in the hand, nothing on the screen
-    if (atWaist(held)) return false; // HT-WAIST: the lantern hangs at the waist - the hand holds nothing
+    if (!held || !(isTorch(held) || isLantern(held))) return false; // Nothing in the hand, nothing on the screen
+    if (atWaist(held)) return false; // The lantern hangs at the waist - the hand holds nothing
     if (!w.currentTexture?.tex) return false;
-    if (!w.s.tintSprite) tint = null; // OWN-AUDIT (2026-11-01): Presentation.Tint off - the hand keeps its own colours
+    if (!w.s.tintSprite) tint = null; // Presentation.Tint off - the hand keeps its own colours
     renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);
     return true;
   }
-  /** OWN-AUDIT: the wind-up's arc over the frame (torchArc.js), first or third person - the dots drawn. */
+  /** The wind-up's arc over the frame (torchArc.js), first or third person - the dots drawn. */
   const drawThrowArc = (renderer) => (w.arc ? drawArc(renderer, w.arc) : 0);
 
   /** DISC6 (Discord, 2026-09-23: "sometimes even when putting it away it still makes the torch sound"): THE LOOP GOES
@@ -1168,7 +1162,7 @@ export function createHandheldTorches({
       lightOffsetSet = null;
     }
     if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;
-  } // HT6: a torn-down component stops answering the equip change
+  } // A torn-down component stops answering the equip change
 
   return {
     update,
@@ -1208,10 +1202,10 @@ export function createHandheldTorches({
     },
     get throwStrength() {
       return clampStrength(w.throwTimer / w.throwTime);
-    }, // AUDIT 66 F9: the wind-up the arc is drawn at
+    }, // The wind-up the arc is drawn at
     get arc() {
       return w.arc;
-    }, // OWN-AUDIT: the arc drawThrowArc draws, for the pins
+    }, // The arc drawThrowArc draws, for the pins
     get burning() {
       return !!w.loop;
     },
@@ -1221,9 +1215,9 @@ export function createHandheldTorches({
 
 /** The default sprite loader: our picture, in the port's color32 order. */
 async function defaultLoadSprite(record, frame) {
-  if (!vendoredTexture(`${SPRITE_ARCHIVE}_${record}-${frame}.png`)) return null; // the probe's miss, known (FIELD 2026-09-27)
+  if (!vendoredTexture(`${SPRITE_ARCHIVE}_${record}-${frame}.png`)) return null; // the probe's miss, known
   const pic = await torchPicture(`${SPRITE_ARCHIVE}_${record}-${frame}`);
-  return pic && toScreenOrder(pic); // TEX1: `{ width, height, colors }` - the shape uploadTexture reads; HT3: and the rows as the PNG has them, because this one is drawn on a SCREEN quad (toColor32's flip put the flame under the hand)
+  return pic && toScreenOrder(pic); // `{ width, height, colors }` - the shape uploadTexture reads; HT3: and the rows as the PNG has them, because this one is drawn on a SCREEN quad (toColor32's flip put the flame under the hand)
 }
 
 /**

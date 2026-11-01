@@ -255,8 +255,8 @@
   {
     "name": "CSA-J-eotb-offset-host-word",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    if (o.Boat.enabled && isSailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's",
-    "new": "    if (o.Boat.enabled && state.sailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's",
+    "old": "    if (o.Boat.enabled && isSailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // The camera's own field, OnUpdateSailing's",
+    "new": "    if (o.Boat.enabled && state.sailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // The camera's own field, OnUpdateSailing's",
     "tests": [
       "test/systems/eotb_camera.test.js",
       "test/systems/comeSailAway/csa_close.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "CSA-J-eotb-start-no-send",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null); // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call",
-    "new": "      // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call",
+    "old": "      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null); // ModCompatibilityChecking (IL_053d), Start's first call",
+    "new": "      // ModCompatibilityChecking (IL_053d), Start's first call",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "CSA-J-bb-boat-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
-    "old": "  if (boatForward) facing = boatForward; // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above",
-    "new": "  // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above",
+    "old": "  if (boatForward) facing = boatForward; // `Instance.isSailing` - the boat's heading, over every arm above",
+    "new": "  // `Instance.isSailing` - the boat's heading, over every arm above",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "CSA-J-body-no-boat",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      boatForward: boatForwardOf(eotbCamera.sailing()),",
-    "new": "",
+    "old": "      boatForward: boatForwardOf(eotbCamera.sailing()),   // EyeOfTheBeholder.Instance's boat fields",
+    "new": "   // EyeOfTheBeholder.Instance's boat fields",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "CSA-J-pool-peers-undrawn",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "const drawn = () => (peerBoats.length || seaBoats.length ? boats.concat(peerBoats, seaBoats) : boats);",
-    "new": "const drawn = () => (seaBoats.length ? boats.concat(seaBoats) : boats);",
+    "old": "  const drawn = () => (peerBoats.length || seaBoats.length ? boats.concat(peerBoats, seaBoats) : boats);",
+    "new": "  const drawn = () => (seaBoats.length ? boats.concat(seaBoats) : boats);",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "CSA-J-pool-peer-mine",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    peerBoats.push(boat);\n    return boat;",
-    "new": "    boats.push(boat);\n    return boat;",
+    "old": "    peerBoats.push(boat);",
+    "new": "    boats.push(boat);",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -679,8 +679,8 @@
   {
     "name": "CSA-J-pool-teardown-mine",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "function destroyAll() { for (const b of [...boats, ...peerBoats, ...seaBoats]) remove(b); }",
-    "new": "function destroyAll() { for (const b of [...boats, ...seaBoats]) remove(b); }",
+    "old": "  function destroyAll() { for (const b of [...boats, ...peerBoats, ...seaBoats]) remove(b); }",
+    "new": "  function destroyAll() { for (const b of [...boats, ...seaBoats]) remove(b); }",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -1086,8 +1086,8 @@
   {
     "name": "CSA-J-pool-ghost-unstood",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    boats.push(boat); mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built",
-    "new": "    mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built",
+    "old": "    boats.push(boat); mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does",
+    "new": "    mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]

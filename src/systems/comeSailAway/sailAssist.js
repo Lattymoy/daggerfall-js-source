@@ -1,8 +1,7 @@
-// OWN-AUDIT (2026-11-01; bible/03-World/Come-Sail-Away.md): two of the mod's keys LoadSettings never read, made ours.
-// Handling.BadTack: a boat sailed closer to the wind than a beam reach loses way, down to BadTackMultiplier of it
-// close-hauled. SailingAssist.AutoStowGaffSails: a gaff sail the wind would lay aback is stowed, and set again when the
-// wind frees - the gaff's half of the square sails' assist. The runtime (comeSailAway.js) asks both where it reads its
-// handling.
+// Two of the mod's keys LoadSettings never read, made ours. Handling.BadTack: a boat sailed closer to the wind than a
+// beam reach loses way, down to BadTackMultiplier of it close-hauled. SailingAssist.AutoStowGaffSails: a gaff sail the
+// wind would lay aback is stowed, and set again when the wind frees - the gaff's half of the square sails' assist. The
+// runtime (comeSailAway.js) asks both where it reads its handling.
 
 /** Degrees between her bow and where the wind blows to: on a beam reach (90) the bad tack begins, close-hauled (135) it
  *  takes its whole share; between them it grows in a line. 0 is a run, 180 in irons. */

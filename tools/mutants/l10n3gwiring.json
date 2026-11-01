@@ -200,8 +200,8 @@
   {
     "name": "L10N3g-messageBox-typed-field-processed",
     "file": "src/ui/messageBox.js",
-    "old": "text: l.field ? (l.text ?? '') : processGrammar(l.text ?? '')",
-    "new": "text: processGrammar(l.text ?? '')",
+    "old": "    const row = { text: l.field ? (l.text ?? '') : processGrammar(l.text ?? ''), center: l.center !== false };",
+    "new": "    const row = { text: processGrammar(l.text ?? ''), center: l.center !== false };",
     "tests": [
       "test/ui/l10n3g_wiring.test.js"
     ]

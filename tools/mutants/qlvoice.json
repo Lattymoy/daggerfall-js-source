@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-QL-VOICE-each-one-finished-offers",
     "file": "src/systems/features.js",
-    "old": "'Every quest shows its objectives, some let you choose how they end, some offer a piece of gear '\n      + 'fitted to you when done, and questlines lead",
-    "new": "'Every quest shows its objectives, some let you choose how they end, and each one finished offers a piece of gear '\n      + 'fitted to you; questlines lead",
+    "old": "    get note() { return t('features.questlines.note', 'Every quest shows its objectives, some let you choose how they end, some offer a piece of gear '\n      + 'fitted to you when done, and questlines lead to the Breaches, the Battlespire and the Abyss. Off is the classic journal '",
+    "new": "    get note() { return t('features.questlines.note', 'Every quest shows its objectives, some let you choose how they end, and each one finished offers a piece of gear '\n      + 'fitted to you; questlines lead to the Breaches, the Battlespire and the Abyss. Off is the classic journal '",
     "tests": [
       "test/systems/questlines/qlvoice.test.js"
     ]

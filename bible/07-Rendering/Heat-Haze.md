@@ -1,8 +1,8 @@
 # Heat Haze
 
-Heat Haze (demifiend000, version 1.0.1, Nexus 1397) is a Daggerfall Unity mod we port and ship on by default. By day in
-the desert, the far land and the sky shimmer: the player sees the view beyond a ring round them bend a little, as if
-over hot sand. The near world does not move.
+Heat Haze (demifiend000, version 1.0.1) is a Daggerfall Unity mod we port and ship on by default. By day in the desert,
+the far land and the sky shimmer: the player sees the view beyond a ring round them bend a little, as if over hot
+sand. The near world does not move. Our code is the record (the release's is in `01-Overview/Own-Work.md`).
 
 ## How it works
 
@@ -32,7 +32,8 @@ over hot sand. The near world does not move.
   weather and hour the room shares.
 - The noise is the mod's own: `System.Random(1212701233)` on an 8 x 8 lattice smoothstepped to 64 x 64, rounded as
   `Mathf.RoundToInt` (`src/systems/heatHaze.js` `hazeNoise`). The test holds its SHA-256 to the mod's C#.
-- The shader follows `vendor/heat-haze/shaders/HeatHaze.glsl`, every constant as the mod's DXBC carries it.
+- The shader (`src/render/heatHaze.js`) is the translation of the mod's own, every constant as its DXBC carries it;
+  `test/systems/haze1_heatHaze.test.js` holds the constants and the shipped settings as literals.
 
 ## Daggerfall Unity
 
@@ -55,6 +56,6 @@ The mod is one MonoBehaviour (`HeatHazeMod`), its rules (`HeatHazeEligibility`) 
 
 ## Open
 
-- `vendor/heat-haze/README.md` waits for the author's own permission line beside Mac's word.
+- The permission record for the ported code is open (`01-Overview/Own-Work.md`), beside Mac's word.
 - `src/scenes/worldModes.js` and `src/scenes/dungeonContext.js` do not wire it: there is no desert sky indoors or
   underground.

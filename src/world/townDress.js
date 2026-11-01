@@ -1,6 +1,5 @@
 // @ts-check
-// TOWN-DRESS (OWN-WORK3, 2026-10-31; the owner: "removing mods from outside authors and instead replacing them with
-// our own work") - A TOWN DRESSED BY OUR OWN LAW, in place of Beautiful Villages' and Beautiful Cities' retired edits:
+// A TOWN DRESSED BY OUR OWN LAW, in place of Beautiful Villages' and Beautiful Cities' retired edits:
 // lamps along its streets, trade goods at its shops, taverns and temples, the zone's plants round its wells, and a market
 // of our own stalls near its middle. Every piece keeps off a road, a door's step and the four metres before it, every
 // wall, model and flat, a home's lot, and what the town already stood (the walk grid it is handed: its wall, its fabric,
@@ -11,7 +10,7 @@ import { BUILDING_TYPES } from './buildingNames.js';
 import { NAV_CELL, NAV_CELLS_PER_BLOCK, ROAD_WEIGHT } from './city/cityNavigation.js';
 import { RMB_SIDE } from './locationLayout.js';
 import { miscModelMatrix } from './rmbLayout.js';
-import { stepsDone } from './puddleMask.js';   // IC-STUTTER: OW-HITCH's runner
+import { stepsDone } from './puddleMask.js';   // OW-HITCH's runner
 import { isPortCell, FABRIC_KIND } from './urban/townFabric.js';
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art } from './capitalShapes.js';

@@ -1,9 +1,8 @@
-// RSH1 (2026-10-11, Mac: "can we implement this mod into the source") - READIED SPELLCASTING HANDS 1.3 (jefetienne,
-// MIT): while a spell that is not CasterOnly is readied and the cast is not
-// playing, the element's casting hands stand at frame 0 (Modded_FPSSpellCasting_Ready.cs AnimateSpellCast). Driven
-// through the REAL weapon rig over a synthetic six-record casting CIF, whose records differ in width so a drawn quad
-// names its own frame; and the one condition the port reads, as the mod's source read (OWN-WORK1 retired the
-// vendored copy).
+// READIED SPELLCASTING HANDS 1.3 (jefetienne, MIT): while a spell that is not CasterOnly is readied and the cast is
+// not playing, the element's casting hands stand at frame 0 (Modded_FPSSpellCasting_Ready.cs AnimateSpellCast).
+// Driven through the REAL weapon rig over a synthetic six-record casting CIF, whose records differ in width so a
+// drawn quad names its own frame; and the one condition the port reads, as the mod's source read (OWN-WORK1 retired
+// the vendored copy).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -113,8 +112,6 @@ test('RSH1: the rig reads the readied hands under the cast hands\' own two lane 
   const block = rig.slice(at, end);
   assert.ok(at > 0 && end > at);
   assert.ok(block.indexOf('drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element)') < block.indexOf('readiedHandsFrame('), 'the cast first, then the readied hands');
-  // PIN MOVED (FIELD BUGS 2026-10-22c SPELL-CLIMB): and they yield to the fists on the wall
-  // (test/combat/weapon/fb1022c_spellclimb.test.js drives it)
   assert.match(block, /if \(readiedHandsOn\(\) && !fpsSpellCasting\.isPlayingAnim && !climbHands\.showing\(\)\) \{/);
   assert.match(rig, /const readiedHandsOn = \(\) => modSetting\('readied-spellcasting-hands', 'Enabled'\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
@@ -124,7 +121,7 @@ test('RSH1: the rig reads the readied hands under the cast hands\' own two lane 
 });
 
 test('RSH1: the mod\'s one condition, its frame and the cast\'s layout, as its source read (mutants: a leg of the condition dropped, the inset moved)', () => {
-  // OWN-WORK1 (2026-10-31): vendor/readied-spellcasting-hands is retired. Modded_FPSSpellCasting_Ready.cs, at 1b97b3a8f:
+  // vendor/readied-spellcasting-hands is retired. Modded_FPSSpellCasting_Ready.cs, at 1b97b3a8f:
   //   if (pef.HasReadySpell && pef.ReadySpell.Settings.TargetType != TargetTypes.CasterOnly && !psc.IsPlayingAnim)
   //     currentFrame = 0;
   // and `const float smallFrameAdjust = 0.134f;`, the cast's own layout.
@@ -146,7 +143,7 @@ test('RSH1: registered as every vendored mod is - its switch on by default, its 
   const row = featureForControl('mods', 'Enabled', 'readied-spellcasting-hands');
   assert.equal(row.group, 'combat');
   assert.equal(row.effect, 'Takes effect at once.');
-  // CREDITS-OUT (2026-11-01): no credit on a screen; the MIT notice our code owes travels in LICENSE
+  // No credit on a screen; the MIT notice our code owes travels in LICENSE
   assert.match(String(read('LICENSE')), /Readied Spellcasting Hands 1\.3 \(both by\njefetienne\)[\s\S]*Copyright \(c\) 2009-2018 jefetienne\n/);
   assert.ok(ONLINE_PLAYERS_OWN_MODS.includes('readied-spellcasting-hands'), 'hands on my own screen - the room shares nothing of it');
 });

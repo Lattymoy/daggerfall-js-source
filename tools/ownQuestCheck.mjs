@@ -1,8 +1,8 @@
-#!/usr/bin/env node
+// /usr/bin/env node
 // OWN-WORDS1 (2026-10-31; the owner, asked whether quest text should come from the player's ARENA2: "We plan on moving
 // away from arena so whatever works for future proofing"). A quest in DFO's own words is src/systems/quest/own/NAME.txt,
 // read in place of DFU's file of its name: DFU's QBN verbatim, our own messages. This holds each one to DFU's logic, so
-// a rewrite can never break a quest (bible/06-Systems/Own-Words.md).
+// a rewrite can never break a quest.
 //   node tools/ownQuestCheck.mjs [NAME ...]        check every own quest, or the named ones
 //   node tools/ownQuestCheck.mjs --scaffold NAME   start one: DFU's header and QBN, each message's id and what it keeps
 //   node tools/ownQuestCheck.mjs --wrap NAME       wrap each message's lines to the width of DFU's message
@@ -22,7 +22,7 @@ export const OWN_DIR = 'src/systems/quest/own';
 export const DFU_DIR = 'vendor/dfu-quests/Quests';
 const TABLES_DIR = 'vendor/dfu-quests/Tables';
 /** The header line every own quest carries: whose logic it runs, whose words it speaks. */
-// CREDITS-OUT (Mac, 2026-11-01): the header names no one; the MIT notice ships in LICENSE.txt
+// The header names no one; the MIT notice ships in LICENSE.txt
 export const OWN_CREDIT = '-- OWN-WORDS: the QBN is MIT-licensed (its notice ships in LICENSE.txt), verbatim. The messages are DFO Online\'s own words.';
 /** A run of this many words that DFU's quest text also has is a kept sentence. */
 export const SHARED_RUN = 6;
@@ -149,7 +149,7 @@ function dfuRuns() {
   return _dfuRuns;
 }
 
-/** OWN-WORDS2: the runs of SHARED_RUN words `text` shares with DFU's quest messages (and ARENA2's QRC files, where
+/** The runs of SHARED_RUN words `text` shares with DFU's quest messages (and ARENA2's QRC files, where
  *  ARENA2_PATH is set) - the questline patches' own messages are held to it beside the own files. */
 export function sharedRunsIn(text) {
   const runs = dfuRuns(), words = text.split(/\s+/).map(normWord).filter(Boolean), out = [];
@@ -241,10 +241,10 @@ export function ownQuestNames(root = ROOT) {
   return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.txt')).map((f) => f.slice(0, -4)).sort() : [];
 }
 
-/** OWN-WORDS2: a port fix of DFU's words that an own file carries itself, its patch gone from questPatches.js
- *  (Own-Words.md, "The next batches"). DFU's file is read with the fix, so the rewrite keeps the fixed macro. */
+/** A port fix of DFU's words that an own file carries itself, its patch gone from questPatches.js
+ *  ("The next batches"). DFU's file is read with the fix, so the rewrite keeps the fixed macro. */
 export const CARRIED_FIXES = Object.freeze({
-  // QUEST-AUDIT III DUEL-TOWN: the duel's journal (1003) names the inn's own town, not the questor's
+  // The duel's journal (1003) names the inn's own town, not the questor's
   A0C00Y10: [{ old: ' _inn_ in ___giver_ in six hours.', new: ' _inn_ in ___inn_ in six hours.', count: 1 }],
 });
 

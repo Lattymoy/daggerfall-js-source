@@ -65,8 +65,8 @@
   {
     "name": "SHIELD-OUT-no-reread",
     "file": "src/combat/shieldWidget.js",
-    "old": "    } else if (w.stale) updateShieldTextures(item); // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
-    "new": "    } // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
+    "old": "    } else if (w.stale) updateShieldTextures(item); // The same shield, read again - its condition tier may have moved while another rig drew it",
+    "new": "    } // The same shield, read again - its condition tier may have moved while another rig drew it",
     "tests": [
       "test/combat/shieldout.test.js"
     ]

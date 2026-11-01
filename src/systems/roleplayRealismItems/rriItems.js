@@ -1,9 +1,9 @@
-// RRI1 - ROLEPLAY & REALISM: ITEMS 1.3 (Hazelnut & Ralzar, MIT) - THE
+// ROLEPLAY & REALISM: ITEMS 1.3 (Hazelnut & Ralzar, MIT) - THE
 // ITEMS: fourteen custom item classes, the template rows they ride, the
 // patches to classic rows, and the mod's switches. The classes restate
 // the release's scripts (each class named beside the law it restates;
 // LICENSE carries the MIT notice). OWN-WORK3: the rows, the patches and
-// the words are DFO's own (bible/06-Systems/Roleplay-Realism-Items.md).
+// the words are DFO's own.
 //
 // WHAT A CUSTOM ITEM IS IN DFU. `ItemHelper.RegisterCustomItem(index,
 // group, type)` puts a template row past the classic 288 and a CLASS
@@ -42,7 +42,7 @@ export const rriModule = (key) => rriEnabled() && modSetting(RRI_VENDOR, key) ==
 
 // ---- the templates ---------------------------------------------------
 
-/** OWN-WORK3: OUR RULE FOR A ROW. Each piece answers to the classic piece of its slot (a weapon to the classic weapon
+/** OUR RULE FOR A ROW. Each piece answers to the classic piece of its slot (a weapon to the classic weapon
  *  it is a lighter kind of) by four factors - weight, hit points, price and enchantment points - and a rarity of
  *  its set's own. Weight rounds to 0.05 kg, the rest to a whole number. The paper-doll order, the world picture and
  *  the body's archive and record are the classic slot's (facts of the art); the index is the save format's. */
@@ -354,7 +354,7 @@ export const RRI_TEMPLATES = Object.freeze(
   ].map(Object.freeze),
 );
 
-/** OWN-WORK3: our patches to classic rows, merged by index while the mod is on at boot (ItemHelper.cs:1494
+/** Our patches to classic rows, merged by index while the mod is on at boot (ItemHelper.cs:1494
  *  TextAssetReader.Merge). One rule: what a player carries by the dozen weighs what it would - an arrow, paper, a
  *  bandage, oil and a torch. Every other classic row stands as Daggerfall's. */
 export const RRI_TEMPLATE_PATCHES = Object.freeze(
@@ -439,7 +439,7 @@ export function chainmailMaterialArmorValue(material) {
 
 // ---- the classes -----------------------------------------------------
 
-/** OWN-WORK3: the three words a variant setter puts before the name - the chain set's metal build, the light set's
+/** The three words a variant setter puts before the name - the chain set's metal build, the light set's
  *  fur and its metal build. DFO's own. */
 export const RRI_TEXT = Object.freeze({ mail: 'Chain ', fur: 'Fur-lined ', brig: 'Plated ' });
 
@@ -518,7 +518,7 @@ function lightVariant(item, { jerkin = false } = {}) {
   if (raw(item) === ARMOR_MATERIAL.Chain) {
     out.material = ARMOR_MATERIAL.Leather;
     out.message = 1;
-    // AUDIT-RR F5: weightInKg is a stored field ApplyArmorMaterial left at the template's for Chain (ItemBuilder.cs:495-497:
+    // weightInKg is a stored field ApplyArmorMaterial left at the template's for Chain (ItemBuilder.cs:495-497:
     // only Leather halves it) and the fold does not touch; the jerkin alone takes 2 kg off (ItemJerkin.cs:43). Written
     // here so the port's derived read (which would halve a Leather piece) answers the stored number instead.
     const stored = Number.isFinite(item.weightInKg)
@@ -639,13 +639,13 @@ export function customItemClass(templateIndex) {
   return cls;
 }
 
-/** AUDIT-RR F7: the class's NativeMaterialValue virtual (ItemHauberk.cs:31-34, ItemJerkin.cs:65-68) - what
+/** The class's NativeMaterialValue virtual (ItemHauberk.cs:31-34, ItemJerkin.cs:65-68) - what
  *  DaggerfallInventoryWindow's forbidden-armor test reads (:1352); a classic item answers its own material. */
 export function rriNativeMaterialValue(item) {
   const cls = item ? customItemClass(item.templateIndex) : null;
   return cls?.nativeMaterialValue ? cls.nativeMaterialValue(item) : (item?.material ?? 0);
 }
-/** AUDIT-RR F8: the class's GetEquipSound virtual (ItemJerkin.cs:82-85 - EquipLeather whatever the material),
+/** The class's GetEquipSound virtual (ItemJerkin.cs:82-85 - EquipLeather whatever the material),
  *  by the clip's NAME (this law is a leaf; the equip system owns the clip table); null for a classic item. */
 export function rriEquipSound(item) {
   const cls = item ? customItemClass(item.templateIndex) : null;
@@ -661,7 +661,7 @@ export function rriCustomItemsForGroup(group) {
     .map((c) => c.index);
 }
 
-/** AUDIT-RR2 G7: the weight the fold STORED for a fur piece (message 1: the template's, the jerkin's 2 kg off -
+/** The weight the fold STORED for a fur piece (message 1: the template's, the jerkin's 2 kg off -
  *  ItemJerkin.cs:43), for an item folded before the field was written; null for anything else. */
 export function rriStoredWeight(item) {
   const cls = customItemClass(item?.templateIndex);
@@ -678,7 +678,7 @@ export function rriVariantFields(item) {
   if (!cls?.onVariantSet) return null;
   return cls.onVariantSet(item);
 }
-/** DISC29-B: the word the class's CurrentVariant setter puts before the template's name (RRI_TEXT) -
+/** The word the class's CurrentVariant setter puts before the template's name (RRI_TEXT) -
  *  or '' (a classic item, the two weapons, a leather piece, the mod off). A name built again from the TEMPLATE's
  *  (lootRarity.js rarityName: "Sentinel's Helmet of the Bear") asks here, so the piece still says what it is made as:
  *  a brigandine helmet is leather to the class check (NativeMaterialValue, above), and a name that read "Iron ...

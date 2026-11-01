@@ -12,8 +12,8 @@
 //     which a look at the row in a body's list fires (a menu closed unused, a take refused).
 //   - QUEST-MARK: the enhanced pack says which heart is the quest's, as DFU's green cell does.
 //   - AUDIT FB1025i: HEART-KEPT (B1, the report's likely cause) - a heart taken off one kind's body stays the player's
-//     when a second kind is hurt; S0000503's hoard by the item held (B3); a save from before reads its mended lines
-//     afresh, once (B4); the trade rows' word (B6). The rig reads the host's own law for its item hooks (B2).
+//     when a second kind is hurt; S0000503's hoard by the item held; a save from before reads its mended lines
+//     afresh, once; the trade rows' word. The rig reads the host's own law for its item hooks.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -73,8 +73,8 @@ function rig({ on = true, name = 'Q0C4XY04', factionId = 0 } = {}) {
     classicSeconds: () => now, nowSeconds: () => now, worldSeconds: () => now,
     playerEntity: { name: 'Hero', level: 12, gender: 'female', career: { weaponArmorShieldsBitfield: 0, forbiddenMaterialsFlags: 0 }, skills: new Array(35).fill(30), stats: { strength: 60, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 }, items: pack },
     giveItemToPlayer: (it) => addItem(pack, it),
-    // AUDIT FB1025i B2: the host's own two reads (scenes/world.js `_heldItemIndex`, the law itemTransfer.js keeps) - a
-    // hand-built `pack.includes` could not see the heart pulled out of the pack onto a second kind (HEART-KEPT)
+    // The host's own two reads (scenes/world.js `_heldItemIndex`, the law itemTransfer.js keeps) - a
+    // hand-built `pack.includes` could not see the heart pulled out of the pack onto a second kind
     removeItemFromPlayer: (it) => { const i = heldQuestRecordIndex(pack, it, { clones: true }); if (i >= 0) pack.splice(i, 1); },
     playerHasItem: (it) => heldQuestRecordIndex(pack, it, { clones: false }) >= 0,
     carriesQuestItem: (res) => keepsQuestItem({ items: pack }, res),
@@ -150,7 +150,7 @@ test('FIELD BUGS 2026-10-25i: Q0C4XY04 runs to its end - the four come in waves 
   r.tick(2, 1);
   assert.equal(r.take(fire, held[0]), null, 'taken');
   r.tick(2, 1);
-  assert.ok(r.rec.popups.some((p) => /heart comes free in your hand/.test(p)), '`clicked item _heart_ say 1040`');   // PIN MOVED (OWN-WORDS2): 1040 in our words (quest/own/Q0C4XY04.txt)
+  assert.ok(r.rec.popups.some((p) => /heart comes free in your hand/.test(p)), '`clicked item _heart_ say 1040`');
   r.leave();
   r.tick(2);
   r.quest.getPerson({ name: 'questgiver' }).setPlayerClicked();   // Elyzabyth clicked (machine.setLastNPCClicked's sweep)
@@ -223,10 +223,10 @@ test('FIELD BUGS 2026-10-25i HEART-TAKEN: a press on the quest\'s heart that tak
       me.stats.strength = 0;   // a pack that cannot carry it: the window's own refusal, after the quest's click (:2027-2037)
       assert.equal(r.take(fire, heart)?.reason, 'cannotCarry');
       me.stats.strength = strength;
-    } else sendQuestItemClick(heart, r.getQuest);   // the right click's menu: the quest's click first (WHERE-ROBES), and nothing taken
+    } else sendQuestItemClick(heart, r.getQuest);   // the right click's menu: the quest's click first, and nothing taken
     r.tick(2, 1);
     assert.equal(r.quest.getTask({ name: 'S.01' }).getTriggerValue(), true, `${look}: DFU's click fired (its popup 1040 said)`);
-    assert.ok(r.rec.popups.some((p) => /heart comes free in your hand/.test(p)));   // PIN MOVED (OWN-WORDS2): 1040 in our words
+    assert.ok(r.rec.popups.some((p) => /heart comes free in your hand/.test(p)));
     assert.ok(fire.entity.items.includes(heart), `${look}: the heart is on the body still`);
     assert.deepEqual(r.objectives(), { heart: 'open' }, `${look}: not "taken", and nothing to bring`);
     if (look === 'menu') continue;
@@ -346,7 +346,6 @@ test('FIELD BUGS 2026-10-25i QUEST-MARK: the enhanced pack says which heart is t
     const e = { items: [plain, quest], stats: {}, level: 12 };
     const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, getQuest: r.getQuest, onExit: () => {} });
     let rows = dom.doc.querySelectorAll('.itemrow');
-    // PIN MOVED (PACK-SORT): the walk skips the pack's Sort too - pressed, it put the quest's heart first
     for (const b of dom.doc.querySelectorAll('button')) { if (rows.length) break; if (/\b(statflip-btn|sortbtn)\b/.test(b.className ?? '')) continue; b.onclick?.({}); rows = dom.doc.querySelectorAll('.itemrow'); }
     assert.equal(rows.length, 2, 'two rows - a quest\'s item never stacks (IsStackable)');
     const subs = rows.map((row) => row.querySelectorAll('small').map((n) => n.textContent).join(' '));
@@ -359,7 +358,7 @@ test('FIELD BUGS 2026-10-25i QUEST-MARK: the enhanced pack says which heart is t
     assert.equal(plainLines.some((l) => /Quest item/.test(l)), false, 'a plain heart\'s card names none');
     view.unmount();
   });
-  // AUDIT FB1025i B5: a quest's item no quest of this world holds (its quest set aside elsewhere, a host with no machine)
+  // A quest's item no quest of this world holds (its quest set aside elsewhere, a host with no machine)
   // is still a quest's - the row's word and the card's bare line
   withDom((dom) => {
     const host = dom.mk('div'); dom.body.append(host);
@@ -422,7 +421,7 @@ const SIBLINGS = [
     handInNow: (r) => { r.at.clear(); r.tick(2); r.quest.getPerson({ name: 'qgfriend' }).setPlayerClicked(); r.tick(4, 1); },
   },
   {
-    // AUDIT FB1025i B3: the hoard by the item held alone - `_S.30_` asks on DFU's click (`when _S.05_ and not _S.16_`), so
+    // The hoard by the item held alone - `_S.30_` asks on DFU's click (`when _S.05_ and not _S.16_`), so
     // its answers come to a look and a walk out as well as to a take; a party copy has the latch by the merge (qlState.js
     // mergeSharedState)
     name: 'S0000503', item: 'item', look: 'S.05', line: 'hoard', next: null, handIn: 'S.28', party: false,

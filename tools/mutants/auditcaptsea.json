@@ -1108,8 +1108,8 @@
   {
     "name": "ACS-G8-wod-pick",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (wod && onTheBay(px, py) && await wodOpened) {",
-    "new": "if (wod && await wodOpened) {",
+    "old": "    if (wod && onTheBay(px, py) && await wodOpened) {   // AUDIT CAPTAIN'S SEA G8: the mod's sites are the Bay's - its pick never run off it (off the map its pixel walk is a whole-list scan, 1.3 ms a pixel, thrown away)",
+    "new": "    if (wod && await wodOpened) {   // AUDIT CAPTAIN'S SEA G8: the mod's sites are the Bay's - its pick never run off it (off the map its pixel walk is a whole-list scan, 1.3 ms a pixel, thrown away)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2466,8 +2466,8 @@
   {
     "name": "ACS-S14-removed-gate",
     "file": "src/systems/inputActions.js",
-    "old": " || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;",
-    "new": " || getBinding(store, action, false) != null)) continue;",
+    "old": "    if (autofill && (getBinding(store, action, true) != null || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;",
+    "new": "    if (autofill && (getBinding(store, action, true) != null || getBinding(store, action, false) != null)) continue;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

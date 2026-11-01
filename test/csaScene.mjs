@@ -7,15 +7,15 @@ import { spawnBoat } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL, WEATHER_TYPE } from '../src/systems/comeSailAway/comeSailAway.js';
 import { ownFile } from './ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
-// GALLEON (2026-10-01): hull 2 the new galleon over the mod's, as the game's loader stands her (comeSailAwayModels.js) -
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
+// GALLEON: hull 2 the new galleon over the mod's, as the game's loader stands her (comeSailAwayModels.js) -
 // the pool's own models (navalSea.mjs, a file fetch) and these are one ship
 const GALLEON = JSON.parse(readFileSync(new URL('../src/assets/galleon/galleon.json', import.meta.url), 'utf8'));
-// SHIPS-2 (2026-10-07): and hull 4 the new carrack, hull 1 the new large boat, as the loader stands them
+// And hull 4 the new carrack, hull 1 the new large boat, as the loader stands them
 const ship = (f) => JSON.parse(readFileSync(new URL(`../src/assets/ships/${f}`, import.meta.url), 'utf8'));
 export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON, carrack: ship('carrack.json'), largeBoat: ship('largeBoat.json') });
 export const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
-/** SHIPS-2: our own Carrack and Large Boat (OWN-WORK4: once the mod's) under the galleon - hulls 4 and 1 as the game stands them when the new
+/** Our own Carrack and Large Boat (OWN-WORK4: once the mod's) under the galleon - hulls 4 and 1 as the game stands them when the new
  *  ships' models do not load (test/navalSea.mjs modShipsPool's) - and a context over them. */
 export const MOD_MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON });
 export const modCtxFor = (player) => ({ ...ctxFor(player), models: MOD_MODELS });
@@ -41,7 +41,7 @@ export function scene(opts = {}) {
   };
   let timeScale = opts.timeScale ?? 1;
   const deps = {
-    // SHIPS-2: `opts.mod` - our own Carrack and Large Boat (MOD_MODELS), as the game stands them when the new ships' models do not load
+    // `opts.mod` - our own Carrack and Large Boat (MOD_MODELS), as the game stands them when the new ships' models do not load
     pool: { models: opts.mod ? MOD_MODELS : MODELS, ready: () => true, spawnNow: (boat, p) => { spawnBoat(boat, (opts.mod ? modCtxFor : ctxFor)(p)); return boat; }, remove: () => {} },
     player: () => ({ position: [...player.position], rotation: [0, Math.sin((player.yaw * Math.PI / 180) / 2), 0, Math.cos((player.yaw * Math.PI / 180) / 2)] }),
     camera: () => ({ position: [0, 50, 0], forward: [0, -1, 0] }),
@@ -53,7 +53,7 @@ export function scene(opts = {}) {
     playerTerrain: () => terrains[0],
     terrainAt: (x, y) => terrains.find((t) => t.mapPixelX === x && t.mapPixelY === y) ?? null,
     terrains: () => terrains,
-    heightMapValue: opts.heightMapValue ?? (() => 255),   // CSA-F: WOODS.WLD all land - the waves lay nothing, and cast no ray
+    heightMapValue: opts.heightMapValue ?? (() => 255),   // WOODS.WLD all land - the waves lay nothing, and cast no ray
     worldCompensation: () => [0, 0, 0],
     hudText: (t) => out.hud.push(t),
     midScreenText: (t, s) => out.mid.push([t, s]),
@@ -68,7 +68,7 @@ export function scene(opts = {}) {
     persistentDungeonBoats: () => false,
     packedItems: { serialize: (items) => items.map((it) => ({ ...it })), deserialize: (records) => records.map((it) => ({ ...it })) },
     dt: () => 0.25,
-    setting: (key) => ({ 'Waves.Enable': false, ...opts.settings })[key],   // CSA-F: the helm measured with no current - FixedUpdate writes none with the waves off (csa_waves pins it)
+    setting: (key) => ({ 'Waves.Enable': false, ...opts.settings })[key],   // The helm measured with no current - FixedUpdate writes none with the waves off (csa_waves pins it)
     input,
     helm: {
       setPlayerPosition: (p) => { player.position = [...p]; }, setFacing: (yaw) => { player.yaw = yaw; }, turnPlayer: (d) => { player.yaw += d; },
@@ -87,7 +87,7 @@ export function scene(opts = {}) {
   };
   const rt = createComeSailAwayRuntime(deps);
   rt.on('OnUpdateWind', (v) => out.wind.push(v));
-  // HELM-LADDER: a key that goes down is a press that frame (the world's latch edge) - and one held as the helm is taken
+  // A key that goes down is a press that frame (the world's latch edge) - and one held as the helm is taken
   // is pressed at the helm, so a held W puts her oars to pulling ahead, one rung (test/systems/comeSailAway/csa_sailing.test.js's own)
   let downBefore = new Set();
   const frame = ({ press = [] } = {}) => {

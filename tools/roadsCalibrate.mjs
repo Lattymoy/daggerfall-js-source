@@ -1,8 +1,7 @@
 // ROADS 14: THE ANSWER KEY, MEASURED. The network's shape as numbers the
 // generator's dials control: how often a road bends, by how much, how many
 // steps are diagonal, how many ends dead, how many junctions. ROADS 14-21
-// measured Basic Roads' hand-drawn arrays here beside ours; OWN-WORK2
-// (2026-10-31) retired them, and their numbers stay recorded in
+// measured Basic Roads' hand-drawn arrays here beside ours; OWN-WORK2 retired them, and their numbers stay recorded in
 // bible/03-World/Roads.md. This prints OUR network on the player's map -
 // the Bay's own build (world/roadsProducer.js) - so a dial is turned
 // toward a measurement rather than a feeling.

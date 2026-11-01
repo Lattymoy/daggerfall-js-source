@@ -20,8 +20,8 @@
   {
     "name": "cart-not-gated",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "    if (isRiding(m.transportMode)) footstepTimer = 0; // DRAGON5: a rider of any mount, the dragon too",
-    "new": "    if (m.transportMode === 'Horse') footstepTimer = 0; // DRAGON5: a rider of any mount, the dragon too",
+    "old": "    if (isRiding(m.transportMode)) footstepTimer = 0; // A rider of any mount, the dragon too",
+    "new": "    if (m.transportMode === 'Horse') footstepTimer = 0; // A rider of any mount, the dragon too",
     "note": "Re-aimed by content (DRAGON5): every mount silences the feet (isRiding), the cart among them.",
     "tests": [
       "test/systems/if1_immersivefootsteps.test.js"

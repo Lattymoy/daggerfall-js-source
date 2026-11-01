@@ -242,8 +242,8 @@
   {
     "name": "rpt1026-misc-cast-pace-unasked",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate))",
-    "new": "fpArm.castSpell(rangeType, rate, 0, castEndS(rate))",
+    "old": "      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate)) && (fpArm.active() || fpArm.thirdActive());",
+    "new": "      const armCasts = fpArm.castSpell(rangeType, rate, 0, castEndS(rate)) && (fpArm.active() || fpArm.thirdActive());",
     "tests": [
       "test/combat/rpt1026_misc_cast.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "rpt1026-misc-spell-short-unread",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  const s = k * eotbRecordScale(archive, record);",
-    "new": "  const s = k;",
+    "old": "  const s = k * eotbRecordScale(archive, record);   // And a set's sheet drawn small (our law measures it)",
+    "new": "  const s = k;   // And a set's sheet drawn small (our law measures it)",
     "tests": [
       "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
     ],

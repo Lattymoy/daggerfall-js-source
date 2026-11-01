@@ -102,8 +102,8 @@
   {
     "name": "OW-BIG-giant-shadow",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "          batch.noShadow = grow > 1;",
-    "new": "          batch.noShadow = false;",
+    "old": "          batch.noShadow = grow > 1;   // AUDIT OW5 R2: OW-BIG's giant casts NOTHING - selfCard off was never that (render/shadowPass.js: it only keeps the card out of the lamps' maps when it is not the player's own; the sun's cascades drew the tenfold card, a fifty-metre shadow at a low sun, and the lamps' maps baked it)",
+    "new": "          batch.noShadow = false;   // AUDIT OW5 R2: OW-BIG's giant casts NOTHING - selfCard off was never that (render/shadowPass.js: it only keeps the card out of the lamps' maps when it is not the player's own; the sun's cascades drew the tenfold card, a fifty-metre shadow at a low sun, and the lamps' maps baked it)",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "OW-BIG-self-card",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "          batch.selfCard = grow === 1;",
-    "new": "          batch.selfCard = true;",
+    "old": "          batch.selfCard = grow === 1;   // The player's own body - it casts as drawn, into the maps redrawn every frame (render/shadowPass.js SELF CARD); OW-BIG: a grown one casts no giant's shadow",
+    "new": "          batch.selfCard = true;   // The player's own body - it casts as drawn, into the maps redrawn every frame (render/shadowPass.js SELF CARD); OW-BIG: a grown one casts no giant's shadow",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "OW-BIG-lantern-adrift",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (grow === 1) drawLantern();",
-    "new": "      drawLantern();",
+    "old": "      if (grow === 1) drawLantern();   // The lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs",
+    "new": "      drawLantern();   // The lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],

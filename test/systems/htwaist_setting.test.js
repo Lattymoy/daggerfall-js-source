@@ -36,7 +36,7 @@ test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, ON by def
   assert.equal(def.default, true, 'ON by default - HT-WAIST-ON (2026-09-24, Mac: "Have the lantern change on by default"); a player turns it off');
   assert.equal(typeof def.default, 'boolean', 'a ToggleKey, not a slider or a choice');
   assert.equal(def.options, undefined); assert.equal(def.min, undefined); assert.equal(def.text, undefined);
-  // PLAIN-TEXT (2026-10-19): the words a player reads, exactly - in the mod's own voice (RelaxedLanterns' "If enabled, ..."),
+  // PLAIN-TEXT: the words a player reads, exactly - in the mod's own voice (RelaxedLanterns' "If enabled, ..."),
   // and no longer a note that the switch is the port's: the pane says what it does
   assert.equal(def.description, 'If enabled, lanterns hang at your waist instead of being held, so they never need a free hand and are never put away. Torches and candles are still held.');
   // the vendored file is the mod's: the port adds its key on its own pane, never to the author's json

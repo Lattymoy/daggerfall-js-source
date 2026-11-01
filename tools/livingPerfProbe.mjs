@@ -1,4 +1,3 @@
-// LW-PERF (2026-10-05, Mac: "how is performance after we integrate this?"; bible/06-Systems/Living-World.md "LW-PERF"):
 // THE LIVING WORLD'S OWN COST, MEASURED - the script time it adds to a frame, on the engine the game runs on (V8), with
 // no GPU: the synthetic towns and map the tests stand (test/lwTown.mjs, test/lwRoads.mjs) and, where ARENA2_PATH is,
 // the Bay's own network (test/bayRoads.mjs, OWN-WORK2). What a frame pays for:
@@ -23,8 +22,8 @@
 // Usage: node tools/livingPerfProbe.mjs        (prints the table; exits 1 on a blown budget)
 import { readFileSync } from 'node:fs';
 import { synthTown } from '../test/lwTown.mjs';
-import { hideoutsOf, bandTrouble, outlawBandAt } from '../src/systems/livingWorld/outlaws.js'; // LW12
-import { createHideouts, bandChest } from '../src/scenes/hideouts.js'; // AUDIT LW-II-2 C5: a hideout stood, its chest a slice a frame
+import { hideoutsOf, bandTrouble, outlawBandAt } from '../src/systems/livingWorld/outlaws.js';
+import { createHideouts, bandChest } from '../src/scenes/hideouts.js'; // A hideout stood, its chest a slice a frame
 import { stockShopShelf } from '../src/systems/shopStock.js';
 import { goldStack } from '../src/systems/inventory.js';
 import { livingMap, partiesOver } from '../test/lwRoads.mjs';
@@ -49,7 +48,7 @@ import {
   NEWS_DAYS,
   TRIP_REACH_PX,
 } from '../src/systems/livingWorld/trips.js';
-import { carriedNews } from '../src/systems/livingWorld/carried.js'; // LW16
+import { carriedNews } from '../src/systems/livingWorld/carried.js';
 import { createLivingRoads } from '../src/scenes/livingWorld/livingRoads.js';
 import { createLivingIndoors } from '../src/scenes/livingWorld/livingIndoors.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
@@ -150,7 +149,7 @@ function fill(blocks, hour) {
 }
 
 /**
- * LW-DAWN: THE GREAT CITY CARRIED ACROSS THE DAY'S TURN - built at ten to four, the clock half a minute a frame and the
+ * THE GREAT CITY CARRIED ACROSS THE DAY'S TURN - built at ten to four, the clock half a minute a frame and the
  * census read every frame (the morning's first two hours in 250 frames), the player at the square: the plans made and the
  * roads asked a frame from five past four to six (WATCH-DAY's morning walk out, read off the day before), and the frames.
  */
@@ -238,7 +237,7 @@ console.log("THE DAY'S TURN (the great city carried across four, its census read
 
 console.log('THE ROADS');
 {
-  const { bayRoads } = await import('../test/bayRoads.mjs'); // OWN-WORK2: the Bay's own network - the planner's half wants ARENA2_PATH
+  const { bayRoads } = await import('../test/bayRoads.mjs'); // The Bay's own network - the planner's half wants ARENA2_PATH
   const { roads, tracks } = bayRoads() ?? {
     roads: new Uint8Array(1000 * 500).fill(0x22),
     tracks: new Uint8Array(1000 * 500),
@@ -453,7 +452,7 @@ console.log("THE OUTLAWS (LW12: the bands of the map's region, their hideouts, t
     );
     check(f.max <= 6, `the roads' layer at a hideout, any frame <= 6 ms (${ms(f.max)})`);
   }
-  // AUDIT LW-II-2 C5: A HIDEOUT STOOD - its camp, its people and its chest (hideouts.js bandChest: its take, a fortnight
+  // A HIDEOUT STOOD - its camp, its people and its chest (hideouts.js bandChest: its take, a fortnight
   // of its leg's two towns' trips, cold but today's, as the roads' layer leaves them; the shops' roll warm, as the game's
   // is) - every frame from the one that stood it, THAT ONE COUNTED: the chest read in it cost it 25-110 ms, and the
   // measure above dropped its first frame and stood no camp

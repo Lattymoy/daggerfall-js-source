@@ -1,17 +1,18 @@
 # Ocean Holes
 
-A port of jet082's **There's a Hole in the Bottom of the Ocean 1.1.0** (Nexus 1313), read off its compiled assembly
-(`vendor/ocean-holes/`). On about one open-ocean map pixel in 48, a black hole opens in the seafloor under a plume of
-purple miasma. Swimming down into it leads to a drowned dungeon: a real Daggerfall dungeon borrowed from a region,
-flooded to its ceiling, stripped of its lights and filled with the deep's own foes. It requires Iliac Puddle No More
-(`Deep-Waters.md`): the pits are cut into that mod's carved seafloor through its own API.
+A port of jet082's **There's a Hole in the Bottom of the Ocean 1.1.0**, its law read off the compiled assembly. Our code
+is the record (`01-Overview/Own-Work.md` holds the release's). On about one open-ocean map pixel in 48, a black hole
+opens in the seafloor under a plume of purple miasma. Swimming down into it leads to a drowned dungeon: a real
+Daggerfall dungeon borrowed from a region, flooded to its ceiling, stripped of its lights and filled with the deep's own
+foes. It requires Iliac Puddle No More (`Deep-Waters.md`): the pits are cut into that mod's carved seafloor through its
+own API.
 
 ## How it works
 
 - **Settings** (`src/scenes/oceanHolesHost.js` `oceanHolesSettings`). Seven sliders, 0 to 1 and 0.5 by default, read as
   the mod's ApplySettings reads them: spawn rate (one pixel in 48 at 0.5, one in 24 at 1, none at 0), surface hole size,
-  seafloor hole size, miasma puffs and height, the abyss's fog, and more. Registered in Features, credits and the
-  online lane.
+  seafloor hole size, miasma puffs and height, the abyss's fog, and more. Registered in Features and the online lane;
+  `test/scenes/oh_host.test.js` holds the shipped settings as a literal table.
 - **Where a pit is** (`src/world/oceanHoles.js`). `StableHash` is Int32 arithmetic with logical shifts;
   `IsPitPixel` takes the first `rate x 2` of 48 buckets, so lower rates pick a subset of higher; `PlacementFraction`
   keeps the pit at least 28% in from the pixel's edge. A pixel is queued when its terrain is promoted, one a frame,

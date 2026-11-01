@@ -47,8 +47,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-bound",
     "file": "src/scenes/snowGround.js",
-    "old": "      if (!inWorldGrid(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500",
-    "new": "      if (!inBay(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500",
+    "old": "      if (!inWorldGrid(px, py)) return null; // The world's grid, not the Bay's 1000 x 500",
+    "new": "      if (!inBay(px, py)) return null; // The world's grid, not the Bay's 1000 x 500",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]

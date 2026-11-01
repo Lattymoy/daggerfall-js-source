@@ -1,8 +1,7 @@
-// ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads") - World of Daggerfall's
-// sites and pieces, and the wilderness camps, stand off the painted road network. The mod's own test
-// (LocationLoader.cs:146-151) asks only the site's own pixel for a road or track; the shipped layouts reach far
-// past it (mountains ~1.9 km, large rock fields ~500 m: 41,349 of 114,087 sites spill into the next pixel), and a
-// camp is pitched wherever its ring lands. world/road/roadClearance.js asks the footprint instead.
+// World of Daggerfall's sites and pieces, and the wilderness camps, stand off the painted road network. The mod's
+// own test (LocationLoader.cs:146-151) asks only the site's own pixel for a road or track; the shipped layouts
+// reach far past it (mountains ~1.9 km, large rock fields ~500 m: 41,349 of 114,087 sites spill into the next
+// pixel), and a camp is pitched wherever its ring lands. world/road/roadClearance.js asks the footprint instead.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -16,7 +15,7 @@ import { LocationSession, pickLocations } from '../../../src/world/worldOfDagger
 import { decodeRegionPack } from '../../../src/world/worldOfDaggerfall/wodLocationPack.js';
 import { loadLocationPrefab } from '../../../src/world/worldOfDaggerfall/wodLocationData.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
-import { bayRoads, BAY_SKIP } from '../../bayRoads.mjs';   // OWN-WORK2: the Bay's own network, off the player's ARENA2
+import { bayRoads, BAY_SKIP } from '../../bayRoads.mjs';   // The Bay's own network, off the player's ARENA2
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);
@@ -110,7 +109,7 @@ test('ROADS-CLEAR over the shipped lists and the Bay\'s network: WoD pieces DO l
   for (const [, [x, y]] of pixels) {
     for (const p of pickLocations({ mapPixelX: x, mapPixelY: y, hasLocation: false, mapRegionIndex: -1, worldHeight: 10 }, session, (n) => prefabs.get(n) ?? null, (a, b) => pathsDataPoint(net, a, b))) {
       for (const o of p.prefab.obj) {
-        if (Math.abs(o.pos.y) > 1000) continue;   // the mountains' inert giant, 83 km down (World-Of-Daggerfall.md B1)
+        if (Math.abs(o.pos.y) > 1000) continue;   // the mountains' inert giant, 83 km down
         const lx = (p.rect.x * 6.4 + o.pos.x) * UNITS_PER_METRE, lz = (p.rect.y * 6.4 + o.pos.z) * UNITS_PER_METRE;
         if (pointNearPath(net, x, y, lx, lz, WOD_PIECE_ROAD_CLEAR)) { near++; if (!wodPiecewise(session.prefab[p.index])) nearWhole++; }
       }

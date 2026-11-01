@@ -1,10 +1,11 @@
 # Physical Items
 
-A port of the DFU mod **Physical Items** 0.1.29 by demifiend000 (Nexus 1411): an item in the world is drawn as itself,
-its inventory picture on a billboard, not as a loot bag. When a foe dies its items are thrown out round its body;
-Shift and a click on a pack item drops it on the ground; pressing an item takes it straight into the pack. The
-vendored record is `vendor/physical-items/README.md`, with the mod's IL dump beside it, which is the law the port
-reads (`01-Overview/Mod-Registry.md`).
+A port of the DFU mod **Physical Items** 0.1.29 by demifiend000: an item in the world is drawn as itself, its
+inventory picture on a billboard, not as a loot bag. When a foe dies its items are thrown out round its body; Shift and
+a click on a pack item drops it on the ground; pressing an item takes it straight into the pack. The mod's IL is the
+law, and an `[IL_xxxx]` names an offset in the 0.1.29 assembly. Our code is the record:
+`test/systems/pi1_physicalitems.test.js` holds the shipped settings as a literal table, and the release's record is in
+`01-Overview/Own-Work.md`.
 
 ## How it works
 

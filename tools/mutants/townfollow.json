@@ -112,7 +112,7 @@
   {
     "name": "TF-the-walkers-unshut",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        walkShut?.(nav);   // TS6: and only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)",
+    "old": "        walkShut?.(nav);   // And only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)",
     "new": "",
     "tests": [
       "test/world/townfollow.test.js"

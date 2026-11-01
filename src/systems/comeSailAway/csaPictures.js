@@ -1,10 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): COME SAIL AWAY'S PICTURES, OURS,
-// painted from numbers on fixed seeds at their first ask: the wind widget's arrow (frame i turned i steps clockwise
-// from ahead, comeSailAway.js windWidgetFrameOf's), the wake's splash (WakeMaterial's), and the coasts' breakers - two
-// paints of surf, the foam their key lays and the 32 frames' recipes render/comeSailAwayRender.js composes. Come Sail
-// Away 2.1 laid its breakers over Daggerfall's snow; ours lay our own foam. Each picture is `{ width, height, data }`,
-// RGBA top-down. Not a DFU member. Ledger A (OWN-WORK4).
+// COME SAIL AWAY'S PICTURES, OURS, painted from numbers on fixed seeds at their first ask: the wind widget's arrow
+// (frame i turned i steps clockwise from ahead, comeSailAway.js windWidgetFrameOf's), the wake's splash
+// (WakeMaterial's), and the coasts' breakers - two paints of surf, the foam their key lays and the 32 frames' recipes
+// render/comeSailAwayRender.js composes. Come Sail Away 2.1 laid its breakers over Daggerfall's snow; ours lay our own
+// foam. Each picture is `{ width, height, data }`, RGBA top-down. Not a DFU member. Ledger A.
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { WAVE_FRAME_COUNT } from './comeSailAwayWaves.js';
 import { windWidgetFrameCount } from './comeSailAway.js';

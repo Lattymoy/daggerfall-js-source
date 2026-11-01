@@ -1,5 +1,4 @@
-// QUEST-AUDIT III (2026-10-23, the owner: "Can you do a detailed quest audit, fix any and all outstanding issues. Do not
-// worry about DFU parity."; bible/01-Overview/audits/Quest-Audit-III.md). The quest's life - its end, its children, its
+// QUEST-AUDIT III. The quest's life - its end, its children, its
 // questions, its restart, its shelf - each fix pinned here by its law:
 //
 // - END-GRACE: a quest saved inside its `end quest`'s two ticks of grace (a reward box holds the tick) ends after the
@@ -243,11 +242,6 @@ test('PROMPT-HELD: a party\'s resync, which rebuilds every action, finds the box
   assert.match(bridge, /showPromptMulti: \(q, message, buttons, respond\) => \(ctx\.showPromptMulti \? ctx\.showPromptMulti\(q, message, buttons, respond\) \?\? true : false\),/);
 });
 
-// PIN MOVED (AUDIT QA3 A2/B3): "paid" is narrowed to what a restart cannot take back and would pay again - a trainer's
-// lesson, or an item handed over (a `give pc` that is no `give pc nothing`, a `get item`) that is not gold and is the
-// player's for good (made permanent, or released: its item no quest item). Gold is not (restartQuest carries the old
-// copy's goldPaid marks to the new copy - auditqa3_life.test.js A2), standing is not (P0B00L01's errand), the
-// QuestComplete box alone is not (A0C41Y18's `give pc nothing`), a permanent item nobody handed over is not (M0B00Y16).
 test('RESTART-PAID: questPaidOut\'s arms - a trainer, an item handed over (given or got) that is the player\'s for good, made permanent or released; never gold, standing, the box alone, `give pc nothing`, a `make permanent` of an item nobody handed over, an action not yet run, a quest item handed over (mutants: each arm)', () => {
   const m = rig();
   const parsed = m.parseQuestShape('__END');
@@ -287,8 +281,6 @@ test('RESTART-PAID: questPaidOut\'s arms - a trainer, an item handed over (given
   assert.equal(questPaidOut(null), false);
 });
 
-// PIN MOVED (AUDIT QA3 A2/B3/B1): gold got, the box alone and standing gained restart now (their verdicts null); a
-// `make permanent` with no hand-over restarts; a quest whose `start quest` has run refuses 'started', after 'paid'.
 test('RESTART-PAID: a running quest that paid its player - a reward box\'s item, an item made permanent, a trainer - refuses the journal\'s Restart (\'paid\', in words) and runs on; one that paid only gold, the box alone or standing, handed only a quest item, made permanent an item it never handed over, lost standing, or has not paid yet restarts; one whose `start quest` ran refuses \'started\' (mutants: the rung)', () => {
   const PAY = {
     __GOLD: ['\tget item _gold_'], __GIVE: ['\tgive pc _letter_'], __NOTHING: ['\tgive pc nothing'], __PERM: ['\tget item _letter_', '\tmake _letter_ permanent'],
@@ -340,9 +332,6 @@ test('SHELF-TWIN: a quest item is never taken while another copy of it is kept -
   assert.equal(holdsQuestTwin([null, [qi(7, 'letter')]], item), true);
 });
 
-// PIN MOVED (AUDIT QA3 B8): the host's carriesQuestItem is the pack again (main's expression) - `toting` and `have` read
-// it, and widened, the wagon's dust ran S0000022's step - and its own keepsQuestItem dep serves the reclaim (machine.js
-// reclaimQuest); the share's relay keeps every keeping. The behaviour is auditqa3_life.test.js B8's.
 test('SHELF-TWIN: keepsQuestItem - the reclaim\'s "is it kept" - reads every keeping: the pack, the wagon, the Materials Bag, a repairer\'s hands; never a permanent copy; the host hands it to the machine as keepsQuestItem and to the share\'s relay, its carriesQuestItem the pack alone (mutants: each keeping, the quest test; source pins: the host\'s three seams)', () => {
   const res = { parentQuest: { uid: 7 }, symbol: { name: 'letter' } };
   const kept = { questItem: true, questUID: 7, questSymbol: { name: 'letter' } };
@@ -371,8 +360,6 @@ test('RESTART-WORDS: a questline step the journal restarted is no stall - its en
     };
     const clock = { s: 1000 };
     const runner = createLineRunner({ machine: m, ctx: { level: () => 2, online: () => false, nowSeconds: () => clock.s, outcomeText: () => 'ok' } });
-    // PIN MOVED (QL-OFFERED): the line taken - and the refused case stands at its second step (a save's), for a first
-    // step that will not begin is no take at all (its line stays on offer)
     if (refuse) runner.restore({ introTables: { step: 1, outcomes: {}, done: false, wait: 0, claims: {}, taken: true } });
     else runner.takeLine('introTables');
     runner.look(); m.tick();
@@ -472,8 +459,6 @@ test('NO-ASKS-AGAIN\'s clearing No, in play: after each No the next click - and 
   assert.equal(more.m.seen.boxes.length, 1, 'a No that does more: DFU\'s, asked once');
 });
 
-// PIN MOVED (OWN-WORDS2): the journal's words are our own file's (quest/own/A0C00Y10.txt), which names `___inn_` itself.
-// The patch had no QBN half, so it is gone, and the pin reads the words the player is shown.
 test('DUEL-TOWN: A0C00Y10\'s journal names the inn\'s own town - its duel at the nearest town\'s inn is sent there, not to the questor\'s town; our own words carry it, and no patch is left (mutants: our words name the questor\'s town)', () => {
   const raw = read(join(VENDOR, 'Quests', 'A0C00Y10.txt'));
   const own = src('src/systems/quest/own/A0C00Y10.txt');

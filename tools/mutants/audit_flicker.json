@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-FLICKER-R1-a-new-batch-each-frame",
     "file": "src/net/peer/peerRiders.js",
-    "old": "        r.batch.archive = s.archive; r.batch.record = s.rec; r.batch.size = size;\n",
-    "new": "        renderer?.destroyBillboardBatch?.(r.batch); r.batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]); r.batch.origin = [0, 0, 0]; r.batch.conceal = r.veil ?? null;\n",
+    "old": "        r.batch.archive = s.archive; r.batch.record = s.rec; r.batch.size = size;",
+    "new": "        renderer?.destroyBillboardBatch?.(r.batch); r.batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]); r.batch.origin = [0, 0, 0]; r.batch.conceal = r.veil ?? null;",
     "tests": [
       "test/net/invislook.test.js"
     ]

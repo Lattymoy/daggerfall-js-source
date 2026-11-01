@@ -1,4 +1,4 @@
-// AUDIT 68 (2026-09-24), cluster systems_d - src/systems (equip's one
+// AUDIT 68, cluster systems_d - src/systems (equip's one
 // act, Horse Cart and Cargo's runtime and pool, the ammunition registry,
 // the item info readers, Immersive Footsteps' loads, the one weight law).
 // Each pin drives the producer's own output and failed on the base.
@@ -119,7 +119,7 @@ test('AUDIT 68 S27-hcc-changed-every-frame: an idle runtime (nothing owned, noth
 test('AUDIT 68 S27-hcc-walk-fetch-storm: a walk set that failed to load is not fetched again every frame - one batch, one warning', async () => {
   const fetched = [];
   const warned = [];
-  const horsePicture = async (file) => {   // OWN-WORK4: the pictures are built; here a walk frame's build fails
+  const horsePicture = async (file) => {   // The pictures are built; here a walk frame's build fails
     fetched.push(String(file));
     if (/Walk\./.test(String(file))) throw new Error(`${file}: not built`);
     return { width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4) };

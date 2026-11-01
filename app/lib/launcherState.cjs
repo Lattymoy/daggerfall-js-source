@@ -1,11 +1,8 @@
-// DA8 (2026-09-29, Mac: "How can we drastically improve the install
-// experience? Is there anyway to send a notification that a new update is
-// available ... A launcher? I really want to make it AAA grade"):
 // THE LAUNCHER'S PURE HALF - what the first window is doing, what it says,
 // and what happens next.
 //
 // WHY A LAUNCHER, AND WHY THIS ONE. The shell opened straight into the
-// game and updated on QUIT (DA7). With a release on every merge - eleven
+// game and updated on QUIT. With a release on every merge - eleven
 // on 2026-09-28 alone - a player launched into the build before the last
 // one nearly every time, and online that means a client a protocol behind
 // the relay it is talking to (world117 to world125 in three days). They
@@ -19,15 +16,15 @@
 // reopening itself), says what changed, finds the player's Daggerfall
 // files, and hands over to the game.
 //
-// DA13 (2026-10-14, Mac: "B only: per-file channel"): AND THE GAME'S UPDATE
-// IS ONLY THE FILES THAT CHANGED. DA8 counted on the installer's blockmap
-// delta being small (~4.5 MB of a 208 MB installer, measured then); DA11 put
-// the site in one archive and it stopped being so - ~130 MB an update,
-// measured off the published blockmaps. A release the game's own channel
-// carries (app/lib/gameChannel.cjs) is `kind: 'game'` here: fetched before
-// play like an installer, the files that changed and no more, and played by
-// Play at once - no install, no restart (`game-applied`). A release it
-// cannot carry is the installer's, as before (`game-failed` hands it back).
+// AND THE GAME'S UPDATE IS ONLY THE FILES THAT CHANGED. DA8 counted on the
+// installer's blockmap delta being small (~4.5 MB of a 208 MB installer,
+// measured then); DA11 put the site in one archive and it stopped being so -
+// ~130 MB an update, measured off the published blockmaps. A release the
+// game's own channel carries (app/lib/gameChannel.cjs) is `kind: 'game'`
+// here: fetched before play like an installer, the files that changed and no
+// more, and played by Play at once - no install, no restart
+// (`game-applied`). A release it cannot carry is the installer's, as before
+// (`game-failed` hands it back).
 //
 // DA10 (2026-09-29, Mac: "So this is an actual launcher now? Like
 // warframe?" - and to the offer of one that stays open with a Play
@@ -93,7 +90,7 @@ const DOWNLOAD_STALL_MS = 45000;
 
 /** Where a found ARENA2 came from, in the player's words. */
 const SOURCE_LABEL = Object.freeze({
-  dfu: 'from another install',   // CREDITS-OUT: found through another game's settings, not named
+  dfu: 'from another install',   // Found through another game's settings, not named
   steam: 'Steam',
   gog: 'GOG',
   folder: 'on this computer',
@@ -208,7 +205,7 @@ const clampPercent = (p) => Math.max(0, Math.min(100, Number(p) || 0));
 /** Play can be pressed: nothing is being decided for the player, and the
  *  game has files - a configured folder, or the in-page picker. */
 const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);
-/** GPU-BACKEND-LAUNCHER: the launcher may restart the app - not after Play, nor over a download or an install. */
+/** The launcher may restart the app - not after Play, nor over a download or an install. */
 const canRestart = (s) => !s.launch && s.update.status !== 'downloading' && s.update.status !== 'installing';
 
 /** The launcher's state after one event. Events that do not apply to the
@@ -264,14 +261,14 @@ function reduce(state, ev) {
       if (u.status === 'downloading') u.status = 'failed';
       break;
     case 'play-now':
-      // "Play without updating": the download goes on and installs when the game quits (DA7)
+      // "Play without updating": the download goes on and installs when the game quits
       if (u.status === 'downloading') {
         u.status = 'background';
         if (canPlay(s)) s.launch = 'requested';
       }
       break;
     case 'game-available':
-      // DA13: the game's own channel carries it - the files that changed, fetched before play as an installer is
+      // The game's own channel carries it - the files that changed, fetched before play as an installer is
       if (s.launch || !MAY_FIND.has(u.status)) break;
       u.kind = 'game';
       u.version = ev.version ?? null;
@@ -279,13 +276,13 @@ function reduce(state, ev) {
       u.percent = 0; u.transferred = 0; u.total = Number(ev.total) || 0;
       break;
     case 'game-applied':
-      // DA13: the version this copy plays is the one the channel brought - Play runs it, nothing installs or restarts
+      // The version this copy plays is the one the channel brought - Play runs it, nothing installs or restarts
       if (s.launch || !parseVersion(ev.version)) break;
       s.current = String(ev.version).trim();
       if (u.kind === 'game') { u.status = 'current'; u.kind = null; u.percent = 100; } else if (u.status === 'checking' || u.status === 'offline') u.status = 'current';
       break;
     case 'game-failed':
-      // DA13: the channel could not bring it - the shell asks the installer's path next, from a check
+      // The channel could not bring it - the shell asks the installer's path next, from a check
       if (u.kind === 'game' && (u.status === 'downloading' || u.status === 'background')) { u.status = 'checking'; u.kind = null; u.version = null; }
       break;
     case 'install-failed':
@@ -293,7 +290,7 @@ function reduce(state, ev) {
       if (u.status === 'installing') u.status = 'stuck';
       break;
     case 'saved-judged':
-      // the saved folder, looked at: whole it is the one; not whole it is NAMED on the card (L4-5), and the search runs
+      // the saved folder, looked at: whole it is the one; not whole it is NAMED on the card, and the search runs
       if (st.status === 'checking') {
         if (typeof ev.dir === 'string' && ev.dir) { st.status = 'ready'; st.dir = ev.dir; break; }
         st.saved = { dir: st.dir, missing: Array.isArray(ev.missing) ? ev.missing : null, unreadable: !!ev.unreadable };
@@ -309,7 +306,7 @@ function reduce(state, ev) {
       }
       break;
     case 'found-more':
-      // R2-D4: a find after the deadline - offered, while the card still waits on the player
+      // A find after the deadline - offered, while the card still waits on the player
       if (SETUP_WAITING.has(st.status) && typeof ev.found?.dir === 'string' && !st.found.some((f) => f.dir === ev.found.dir)) {
         st.found = [...st.found, ev.found];
         if (st.status === 'none') st.status = 'found';
@@ -451,9 +448,9 @@ function newsFrom(releases) {
     .map((r) => ({ version: r.v.join('.'), date: r.date, text: r.text, ...(r.update ? { update: r.update } : {}) }));
 }
 
-/** REL8: a release's name that is a player's update - `Update 0.0.1` - and its number; anything else names none. */
+/** A release's name that is a player's update - `Update 0.0.1` - and its number; anything else names none. */
 const UPDATE_NAME_RE = /^Update (\d+\.\d+\.\d+)$/;
-/** REL8: an update number as news.json keeps one. */
+/** An update number as news.json keeps one. */
 const UPDATE_NUMBER_RE = /^\d+\.\d+\.\d+$/;
 function updateOfName(name) {
   return UPDATE_NAME_RE.exec(String(name ?? '').trim())?.[1] ?? null;
@@ -521,7 +518,7 @@ function installAttemptFor(saved, current) {
  *  not answer in time (`late`) or whose search ran out of budget (`cut`) is
  *  never told it "holds no Daggerfall files" (AUDIT INSTALL R2-D3). On a
  *  Mac the whole one is in DaggerfallGameFiles.zip - Steam and GOG sell
- *  Daggerfall for Windows only (L5-3, R2-E5). */
+ *  Daggerfall for Windows only. */
 function notArena2Detail(missing, { unreadable = false, late = false, cut = false, platform = 'win32' } = {}) {
   // Steam's is DF/DAGGER/ARENA2; GOG's sits in the game's own folder, beside FALL.EXE (AUDIT INSTALL L4-6)
   const where = platform === 'darwin'
@@ -567,7 +564,7 @@ function setupView(st, platform) {
   }
   const zip = { id: 'open', arg: 'zip', label: 'Get DaggerfallGameFiles.zip' };
   if (st.status === 'none') {
-    // R2-D4: a search still going on past its deadline says so - it has not concluded the files are not here
+    // A search still going on past its deadline says so - it has not concluded the files are not here
     const still = st.searching ? 'Still looking on slower drives - they are added here if they turn up. ' : '';
     if (platform === 'darwin') {
       return {
@@ -588,12 +585,12 @@ function setupView(st, platform) {
     title: st.unreadable ? 'That folder cannot be read' : 'That folder is not a whole ARENA2',
     detail: notArena2Detail(st.missing, { ...st, platform }),
     found,
-    // R2-E5: a Mac's refusal keeps the one door to the files a Mac can get
+    // A Mac's refusal keeps the one door to the files a Mac can get
     actions: platform === 'darwin' ? [{ ...choose, primary: true }, zip, skip] : [{ ...choose, primary: true }, skip],
   };
 }
 
-/** GPU-BACKEND-LAUNCHER: the Graphics option - `on` is the backend the next start uses. While that differs from this
+/** The Graphics option - `on` is the backend the next start uses. While that differs from this
  *  launch, Restart is offered, or the note says when it starts. A launch the guard held alone on the default offers no
  *  Restart: the player changed nothing. One line at most under the box: the column is full. */
 function graphicsView(s) {
@@ -703,8 +700,7 @@ function viewOf(s) {
   return v;
 }
 
-/** DA12 (2026-10-08, Mac: "some game managers, like PlayNite, don't reconigze the launcher as a game and also I
- *  can't control the Launcher with a controller"): THE SWITCH PAST THE FRONT DOOR. A copy started with `--play`
+/** THE SWITCH PAST THE FRONT DOOR. A copy started with `--play`
  *  goes straight into the game - for a game manager or a couch (Playnite, Steam's Big Picture), which start a
  *  game and watch its process, and read an install-and-reopen before play as the game having quit. Updates are
  *  the game's then, as they always were after Play: checked at launch and hourly, told on the HUD, installed at

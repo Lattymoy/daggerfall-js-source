@@ -1,7 +1,7 @@
-// NO-BETHESDA2 (2026-10-31; the owner: "ensuring they are not implemented"): a vendored mod's picture that is
-// Daggerfall's own (its derived.json names it, tools/classicDerive.mjs) is built from the player's files here, never
-// fetched. It comes back as the browser's decode of the mod's PNG gave it: a clear pixel reads 0,0,0,0, as a canvas
-// decode zeroes it, whatever colour the author's file kept under it - so a texture's filtering sees what it saw before.
+// A vendored mod's picture that is Daggerfall's own (its derived.json names it, tools/classicDerive.mjs) is built from
+// the player's files here, never fetched. It comes back as the browser's decode of the mod's PNG gave it: a clear pixel
+// reads 0,0,0,0, as a canvas decode zeroes it, whatever colour the author's file kept under it - so a texture's
+// filtering sees what it saw before.
 import { classicArt } from './classicArt.js';
 
 /** The spec's picture, top-down RGBA `{ width, height, data }`. `art` is a classicPictures reader (the session's

@@ -1,4 +1,4 @@
-// OWN-WORK4 (2026-10-31): OUR ROWBOAT - Come Sail Away's hull 0 (prefab 112410), built here. The nodes its runtime
+// OUR ROWBOAT - Come Sail Away's hull 0 (prefab 112410), built here. The nodes its runtime
 // walks keep the names and the places Come Sail Away 2.1 gave them (its helm, its triggers, its oarlocks, its lantern,
 // its Modifiers - the interface its C# reads); the boat itself is ours: a lofted clinker hull with its floorboards and
 // three thwarts, a pair of oars, a lantern on a short pole at her stem. Not a DFU member.

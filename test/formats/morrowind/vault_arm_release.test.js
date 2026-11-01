@@ -1,4 +1,4 @@
-// VAULT-HANDS: the third-person arms must stop chasing a hold the rising body cannot reach.
+// The third-person arms must stop chasing a hold the rising body cannot reach.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RETAIL_SKELETON_BYTES } from '../../fixtures/mw/retailRig.mjs';
@@ -11,7 +11,7 @@ import { Collider } from '../../../src/player/collider.js';
 import { PeerClimbTrack } from '../../../src/net/peer/peerClimb.js';
 import { MW_UNITS_PER_METER as U } from '../../../src/formats/morrowind/mwFirstPerson.js';
 
-const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
+const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // Our own biped (tools/ownBiped.mjs)
 const distance = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
 const plus = (a, b) => a.map((v, i) => v + b[i]);
 const mats = (sk, pose) => skeletonSpaceMatrices(sk, pose, GRAPH_ROOT);

@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-GALLEON-2-RG1-the-pool-on-the-tenth",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (script.everyFrame ? !(dt > 0) : !fixDeformationsTick(script, dt)) return;",
-    "new": "if (!fixDeformationsTick(script, dt)) return;",
+    "old": "    if (script.everyFrame ? !(dt > 0) : !fixDeformationsTick(script, dt)) return;",
+    "new": "    if (!fixDeformationsTick(script, dt)) return;",
     "tests": [
       "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-GALLEON-2-RG1-every-frame-even-paused",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "script.everyFrame ? !(dt > 0) :",
-    "new": "script.everyFrame ? false :",
+    "old": "    if (script.everyFrame ? !(dt > 0) : !fixDeformationsTick(script, dt)) return;",
+    "new": "    if (script.everyFrame ? false : !fixDeformationsTick(script, dt)) return;",
     "tests": [
       "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-GALLEON-2-RG1-a-still-rope-baked-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "if (script.everyFrame && rigStill(k, boneWorld, pose)) return;",
-    "new": "if (false && rigStill(k, boneWorld, pose)) return;",
+    "old": "    if (script.everyFrame && rigStill(k, boneWorld, pose)) return;",
+    "new": "    if (false && rigStill(k, boneWorld, pose)) return;",
     "tests": [
       "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],

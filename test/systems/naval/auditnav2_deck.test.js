@@ -1,4 +1,4 @@
-// AUDIT NAV2 (2026-09-30) - THE DECK: the deep audit of the naval second pass, its deck, frame and online lenses'
+// THE DECK: the deep audit of the naval second pass, its deck, frame and online lenses'
 // findings F4, F11, F32-F34, F36, F38, F39, F57, F58, F60 and F61, pinned over the real code - Come Sail Away's own
 // hulls through the real pool (test/navalSea.mjs, test/csaScene.mjs) and buildDeck, the real exterior foe pool, the
 // naval host through real frames, Immersive Footsteps' component, and world.js's deck doors, leash and carry lifted
@@ -171,7 +171,7 @@ test('AUDIT NAV2 F32 A SMALL HULL\'S DECK: kept off her walls and her open side,
     assert.equal(lb.walkable(1.1, -0.24), false, 'either side');
   } finally { mod.restore(); }
   // the big three as they are: PIN MOVED (GALLEON, 2026-10-01) - the Small Ship is the new galleon, her main deck's 736
-  // cells and her castle's two flights and roof over them (F34); the Carrack's forecastle joined up its stair (a flight
+  // cells and her castle's two flights and roof over them; the Carrack's forecastle joined up its stair (a flight
   // finer than a cell, navalDeck.js `linked`): her 515, the stair's foot at her main deck and the 33 cells up it; the
   // Large Galley's every cell as it was. PIN MOVED (AUDIT GALLEON D7, 2026-10-02): a part that opens is no floor of
   // hers - the galleon's two hatchways (her covers' 44 cells at 6.378 and the inset's margin round them, 82) and the
@@ -187,9 +187,7 @@ test('AUDIT NAV2 F32 A SMALL HULL\'S DECK: kept off her walls and her open side,
   const small = pool.deckOf(2, 0);
   assert.equal(cellsOf(small).filter((c) => Math.abs(c[1] - mainLevel(small)) <= DECK_STEP).length, 664, 'the Small Ship\'s main deck, 664');
   assert.equal(small.count, 838, 'the Small Ship\'s 838, her castle with it');
-  // PIN MOVED (OWN-WORK4, 2026-10-31): the Large Galley is our own - her top deck's 4527 (Come Sail Away 2.1's tent's 4016)
   assert.equal(pool.deckOf(3, 0).count, 4527, 'the Large Galley\'s 4527');
-  // PIN MOVED (SHIPS-2, 2026-10-07): the Carrack is Mac's carrack - her open deck one level, 1087 cells
   const carrack = pool.deckOf(4, 0);
   assert.equal(carrack.count, 1087, 'the Carrack\'s 1087');
   assert.equal(cellsOf(carrack).filter((c) => Math.abs(c[1] - mainLevel(carrack)) <= DECK_STEP).length, 1087, 'her main deck\'s every one');
@@ -282,12 +280,12 @@ test('AUDIT NAV2 F34 RAISED DECKS, JOINED AND KEPT: PIN MOVED (GALLEON, 2026-10-
   assert.ok(Math.abs(back[1] - 11.018) < 0.05 && back[0] < 7.5, `back on her castle: ${back.map((v) => v.toFixed(2))}`);
   // her great cabin under her castle: a piece of hers, never her open deck
   assert.ok(d.pieceAt(0, -14, 6.2) > 0, 'her cabin a piece of its own');
-  // AUDIT GALLEON T1 (2026-10-02): the leash ON A PIECE OF ITS OWN - the new galleon's castle and flights are her open
+  // AUDIT GALLEON T1: the leash ON A PIECE OF ITS OWN - the new galleon's castle and flights are her open
   // deck (piece 0), so every case above stood on piece 0 and the leash's piece went unread (four records survived): a
   // foe in her great cabin (piece 1, under her castle at 6.2) stepping out through her castle's front (z -10, no floor
   // of hers) is put back on his cabin's edge at z -11.41 - never onto her main deck before it, nor her castle's roof
   // over him - and one standing in it keeps his floor (his own height read: her roof is the cabin cell's open deck).
-  // PIN MOVED (AUDIT GALLEON-2 DK3, 2026-10-03): through her front at x 1.5, beside her door - her doorway at x 0 is a
+  // PIN MOVED: through her front at x 1.5, beside her door - her doorway at x 0 is a
   // way through it now (navalDeck.js `ajar`), the point this pin stepped him to (0, -10) a floor of it
   const inCabin = stand([0, 6.2, -14]), stays = stand([0.5, 6.2, -15]);
   for (let i = 0; i < 2; i++) { w.navalCarry(); w.navalLeash(); }
@@ -316,7 +314,6 @@ test('AUDIT NAV2 F36 ABOARD IS STANDING ON HER: a floor of hers under the feet -
   assert.equal(at(...deck.nearest(0, 0)), true, 'her waist');
   const rail = deck.rail(1, 0);
   assert.equal(at(rail[0] + 0.7, rail[1], rail[2]), true, 'by her rail, past her deck\'s inset edge');
-  // PIN MOVED (GALLEON, 2026-10-01): the new galleon's castle at 11.02 and her gun deck at 1.08, her stem at 21.9
   assert.equal(at(0.5, 11.02, -16), true, 'her castle');
   assert.equal(at(0.8, 1.09, -2), true, 'her gun deck');
   for (const [p, what] of [[[8.5, 1.5, 17], 'a quay beside her bow'], [[9, 1.5, -21], 'a quay beside her stern'], [[6, 0.5, 19], 'a beach under her bow quarter'], [[0, 1.5, 23.5], 'the water off her stem'], [[11, 1.5, 0], 'a quay off her side']]) {
@@ -328,10 +325,8 @@ test('AUDIT NAV2 F36 ABOARD IS STANDING ON HER: a floor of hers under the feet -
   for (let x = rail[0] + deck.cell; x < rail[0] + 4 && !ramp; x += deck.cell / 4) if (!deck.under(x, rail[2], rail[1] + 0.3, 0) && deck.under(x, rail[2], rail[1] + 0.3, 1)) ramp = [x, rail[1] + 0.3, rail[2]];
   assert.ok(ramp, 'a point by her rail over no floor, her deck in reach');
   assert.equal(at(...ramp), true, `by her rail over no floor of hers: ${ramp.map((v) => v.toFixed(2))}`);
-  // PIN MOVED (GALLEON-2, 2026-10-02): her keel 4.64 m down on Mac's second export (3.89 on his first) - the floor inside
-  // her V lies within a step of -4.6, so the swimmer is taken 0.76 m under her keel
   assert.equal(at(0, -5.4, 0), false, 'a swimmer under her keel');
-  // AUDIT GALLEON D-wall (2026-10-02): a quay against her port quarter at 1.5 m, 0.3 m off her side under her main deck
+  // AUDIT GALLEON D-wall: a quay against her port quarter at 1.5 m, 0.3 m off her side under her main deck
   // - her floors looking up now (her flare's underside no floor), it is a metre's reach of her gun deck that would read
   // it aboard (the body's own reads none of the points round her hull, AUDIT GALLEON D3)
   assert.equal(at(-5.61, 1.5, -15), false, 'a quay against her port quarter, under her main deck');

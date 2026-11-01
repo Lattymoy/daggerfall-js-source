@@ -56,7 +56,7 @@ multiplier on every foe's health. Each law below removes a measured cause or ext
 
 ## Daggerfall Unity
 
-Departures from DFU and the vendored overhaul: the shared to-hit and crit rule, the condition bands' gate, the place
+Departures from DFU and the ported overhaul: the shared to-hit and crit rule, the condition bands' gate, the place
 and hero scaling, offline elites, the curse changes, the gauntlet claws, the vampire's hood, the bows' damage and the
 shaft's speed. DFU's foes never scale past their row.
 

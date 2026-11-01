@@ -14,7 +14,7 @@ import { groundWearsSnow, groundIsSnowy, getTerrainGroundArchive, SEASON } from 
 import { resetWeatherSim, setSnowGroundLaw, overGround, mapGround, WEATHER_ENUM } from '../../src/systems/weather/weatherSim.js';
 import { CLIMATES, getWorldClimateSettings } from '../../src/formats/mapsFile.js';
 import { createSnowfallHost } from '../../src/scenes/snowfallHost.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const SNOWLESS = 'dfmod/vanilla enhanced - snowless swamps and jungles.dfmod';
 const WINTER = 0;

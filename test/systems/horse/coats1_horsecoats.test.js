@@ -1,7 +1,7 @@
-// COATS1 (2026-10-11): THE HORSE'S LOOK (bible/06-Systems/Horse-Coats.md, systems/horse/horseCoats.js) - the law (coat,
-// pattern, legs and the horse's own seed), its birth, the dye and its markings, the item's fields, the wire's three
-// doors (the pool's word, the parked word, the pose), the pictures that wear it (the riding sprite, the pool's
-// billboards, Eye Of The Beholder's rider - mine and the others', the road's strangers), their letting go, and the Stable.
+// THE HORSE'S LOOK (systems/horse/horseCoats.js) - the law (coat, pattern, legs and the horse's own seed), its birth, the
+// dye and its markings, the item's fields, the wire's three doors (the pool's word, the parked word, the pose), the
+// pictures that wear it (the riding sprite, the pool's billboards, Eye Of The Beholder's rider - mine and the others', the
+// road's strangers), their letting go, and the Stable.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -23,7 +23,7 @@ import { createHorseCartPool, horseStillRecord, horseWalkRecord, HORSE_ARCHIVE, 
 import { HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT, HORSE_VIEWS, HORSE_WALK_FRAMES } from '../../../src/systems/horse/horseCartLaw.js';
 import { createEotbArt, RIDER_LOOKS_KEPT, RIDER_LOOK_IDLE_MS } from '../../../src/net/peer/peerRiders.js';
 import { stableProviderFor } from '../../../src/ui/holdingsPages.js';
-import { horsePictures } from '../../../tools/lib/horsePictures.mjs';   // OWN-WORK4: our horse, built from ARENA2
+import { horsePictures } from '../../../tools/lib/horsePictures.mjs';   // Our horse, built from ARENA2
 
 const horseItem = (extra = {}) => ({ templateIndex: TRANSPORT_HORSE, group: 'Transportation', name: 'Horse', ...extra });
 const cartItem = (extra = {}) => ({ templateIndex: TRANSPORT_SMALL_CART, group: 'Transportation', name: 'Small cart', ...extra });
@@ -244,7 +244,7 @@ test('COATS1 the dye, on our own horse (OWN-WORK4: horseArt.js): the flank goes 
     const [r, g, bl] = [a[o], a[o + 1], a[o + 2]];
     const max = Math.max(r, g, bl), min = Math.min(r, g, bl), s = max ? (max - min) / max : 0;
     const same = b[o] === r && b[o + 1] === g && b[o + 2] === bl;
-    if (isCoatPixel(r, g, bl, false) && !isCoatPixel(r, g, bl, true)) { leather++; if (same) leatherKept++; }   // AUDIT COATS3D A13: the tack rule's own pixels, warm hide but for it
+    if (isCoatPixel(r, g, bl, false) && !isCoatPixel(r, g, bl, true)) { leather++; if (same) leatherKept++; }   // The tack rule's own pixels, warm hide but for it
     if (isCoatPixel(r, g, bl)) { hide++; if (Math.max(b[o], b[o + 1], b[o + 2]) - Math.min(b[o], b[o + 1], b[o + 2]) <= 12) greyed++; }
     else if (s >= 0.2) { tack++; if (same) tackKept++; }
     else { dark++; if (same) darkKept++; }
@@ -253,7 +253,7 @@ test('COATS1 the dye, on our own horse (OWN-WORK4: horseArt.js): the flank goes 
   assert.ok(greyed / hide > 0.97, `nearly all of it greyed (${greyed}/${hide} - the rest are lit specks too small to be the horse)`);
   assert.ok(tack > 300 && tackKept === tack, `every coloured pixel the hide is not (our saddle cloth) kept (${tackKept}/${tack})`);
   assert.equal(darkKept, dark, 'the mane, the tail, the hooves and our leather kept');
-  // AUDIT COATS3D A13: the two above hold by construction (both sets are the gate's own complement) - these do not: the
+  // The two above hold by construction (both sets are the gate's own complement) - these do not: the
   // pixels the tack rule spares (on our horse the hooves' rims; a dye that dropped the rule would grey them), and the mane's count
   assert.ok(leather >= 40 && leatherKept === leather, `the hooves' rims the tack rule spares, every pixel of it kept (${leatherKept}/${leather})`);
   assert.ok(dark >= 1000, `the mane, tail, hooves and seat are a thousand pixels (${dark}) - none taken into the hide`);
@@ -347,7 +347,7 @@ function poolWith(look) {
   return { pool, uploads, evicted, batches };
 }
 
-/** PERF-DYE: the frames a look's every picture takes to be dyed, HORSE_DYE_PICTURES a frame (the views, then the walk set). */
+/** The frames a look's every picture takes to be dyed, HORSE_DYE_PICTURES a frame (the views, then the walk set). */
 const FRAMES_A_LOOK = Math.ceil(HORSE_VIEWS * (1 + HORSE_WALK_FRAMES) / HORSE_DYE_PICTURES);
 
 test('COATS1 the pool: my horse posed in my look once its pictures are dyed - PERF-DYE: HORSE_DYE_PICTURES a frame, each once - the bay\'s until', async () => {
@@ -389,8 +389,6 @@ test('COATS1 the pool: past HORSE_LOOKS_KEPT looks, the one longest undrawn is l
   assert.ok(evicted.every((k) => k.endsWith(`~${first}`)), 'that look alone');
 });
 
-// PIN MOVED (AUDIT FB1022d D1): a look is let go by the store's once-a-frame sweep (createEotbArt sweep, the riders'
-// settle), never inside a draw - so each ensure here is a frame, swept
 test('COATS1 the others\' riders: each rider\'s horse look is its own dyed pictures, let go once RIDER_LOOKS_KEPT others were drawn since', async () => {
   const evicted = [], uploads = [];
   let now = 0;
@@ -442,13 +440,13 @@ test('COATS1 the Stable: the horse born before the card reads it; a row a part, 
 test('COATS1 the wiring: both exterior hosts bear the horses each frame; the rig\'s record carries the look to the body, the pose to the others, the pool\'s seam to both pools', () => {
   const rd = (p) => readFileSync(new URL(`../../../src/${p}`, import.meta.url), 'utf8');
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) assert.match(rd(host), /const hccTick = \(dt, nowMs\) => \{\n {4}birthHorses\(playerEntity\.items\);/, host);
-  assert.match(rd('combat/weapon/weaponRig.js'), /horseLook: entity \? ownMountLook\(riddenHorseLook\(entity\.items \?\? \[\]\)\) : 0/);   // PIN MOVED (STOREFRONT: my mount look over it)
+  assert.match(rd('combat/weapon/weaponRig.js'), /horseLook: entity \? ownMountLook\(riddenHorseLook\(entity\.items \?\? \[\]\)\) : 0/);
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /horse: last\.horseLook \?\? 0/);
-  assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, img, riders\)/);   // PIN MOVED (AUDIT-STOREFRONT: its rider spared)
+  assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, img, riders\)/);
   assert.match(rd('player/eyeOfTheBeholder/eotbBody.js'), /renderer\?\.evictTexture\?\.\(k\.replace\(':', '_'\)\)/, 'a look left behind on my own rider is let go');
-  assert.match(rd('net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);   // PIN MOVED (STOREFRONT: the rider's mount look over it; the wire audit: where it stands, for the Others' effects choice)
-  assert.match(rd('net/peer/peerRiders.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, raw, riders\)/);   // PIN MOVED (AUDIT-STOREFRONT: its rider spared)
-  assert.match(rd('scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : dragonRideLook\(\) \|\| undefined/);   // PIN MOVED (DRAGON5): a tamed dragon's look on its own ride; PIN MOVED (DRAGON-BLUE): an Admin's ride's look off a horse (was: `: undefined`)
+  assert.match(rd('net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);
+  assert.match(rd('net/peer/peerRiders.js'), /const riders = s\.horse \? await ridersReady\(\) : null;[\s\S]*lookedPixels\(s, raw, riders\)/);
+  assert.match(rd('scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : dragonRideLook\(\) \|\| undefined/);
   assert.match(rd('world/wagonModels.js'), /horseLook: \(\) => riddenHorseLook\(items\(\)\)/, 'THE ONE CONSTRUCTION SEAM: both hosts\' pools');
   assert.match(rd('scenes/world.js'), /horseArt: \(look = 0\) => !!hcc\.presentation\.horseArt\.ensureLook\(look\)/, 'the town watch\'s throw in its look');
 });

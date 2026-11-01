@@ -1,4 +1,4 @@
-// CSA-H (2026-09-27) - COME SAIL AWAY'S ITEMS, SHELVES, CARGO AND PORTS: systems/comeSailAway/comeSailAwayItems.js (the two
+// COME SAIL AWAY'S ITEMS, SHELVES, CARGO AND PORTS: systems/comeSailAway/comeSailAwayItems.js (the two
 // template rows, the mint, the names, AssignVariantsToShopItems) and systems/comeSailAway/comeSailAway.js over the real SpawnBoat
 // (IsNearPort's square, PackBoat and the packed cargo, the cargo box, the variant picker, giveboat, the two classes'
 // UseItem), the shelf's custom loop (systems/shopStock.js through itemTemplates.js's one GetCustomItemsForGroup) and the
@@ -20,7 +20,7 @@ import { setModSetting, latchModLoaded, modLatchedOn } from '../../src/systems/m
 import { effectKindLoaded, WATER_WALKING_SILENT_KIND } from '../../src/systems/effects.js';
 import { ownFile } from '../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }), particleRandom: () => 0.5 });
@@ -69,7 +69,6 @@ function scene(opts = {}) {
     cargoWeight: (items) => items.reduce((a, i) => a + (i.weightInKg ?? 0) * (i.stackCount ?? 1), 0),
     sphereCastAll: () => [], enemies: () => [], messageBox: () => {},
     enemiesNearby: () => false, travelOptionsActive: () => null, timeScale: () => 1, setTimeScale: () => {}, soundVolume: () => 1,
-    // CSA-H
     isPortTown: (x, y) => { out.portAsks.push([x, y]); return world.ports.has(`${x},${y}`); },
     items: { create: (templateIndex) => mintBoatItem(templateIndex, uid++), addToPlayer: (item) => out.pack.push(item) },
     closeInventory: () => { out.closed++; },
@@ -85,7 +84,7 @@ function scene(opts = {}) {
 
 // ── the rows, the mint, the shelf ─────────────────────────────────────────────
 
-/** OWN-WORK4: the two rows as Come Sail Away 2.1's ItemTemplates.json held them, kept as the table they are (the file
+/** The two rows as Come Sail Away 2.1's ItemTemplates.json held them, kept as the table they are (the file
  *  is retired): a changed field still fails here. */
 const SHIPPED_TEMPLATES = Object.freeze([
   { index: 1320, name: 'Parts of', baseWeight: 120, hitPoints: 1400, capacityOrTarget: 400, basePrice: 4000, enchantmentPoints: 1250, rarity: 1, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 0, worldTextureRecord: 0, playerTextureArchive: 212, playerTextureRecord: 11, hasNoEncumbrance: false },
@@ -105,8 +104,6 @@ test('CSA-H: the two rows are Come Sail Away 2.1\'s ItemTemplates field for fiel
   assert.throws(() => boatItemName('Deed to', 0, 10), /IndexOutOfRangeException/, 'variantNames[10]');
 });
 
-// PIN MOVED (SHIPYARDS, 2026-10-11, Mac: "Shipyard only"): RegisterCustomItem's group no longer stocks the two - a port
-// town's shipyard sells every hull and buys them back (systems/shipyards.js), a DECLARED departure (Ledger A, SHIPYARDS)
 test('CSA-H x SHIPYARDS: the two rows stand on no shelf - GetCustomItemsForGroup answers neither, the mod on or off; the one home\'s Contains guard and the fish\'s rows stand', () => {
   try {
     setModSetting('come-sail-away', 'Enabled', true);
@@ -329,7 +326,7 @@ test('CSA-H: the host\'s seams - the two use handlers on the item-use door (the 
   assert.match(w, /if \(modes\?\.mountWindow\?\.\(win\)\) _csaPicker = win;/);
   assert.match(w, /const csaShelfStocked = \(items\) => \{ if \(csaOn\(\) && Array\.isArray\(items\)\) assignVariantsToShopItems\(mintShelfBoatUids\(items, csaNewItemUid\), \(min, max\) => min \+ Math\.floor\(Math\.random\(\) \* \(max - min\)\)\); return items; \};/);
   // SHIP-PACK (PIN MOVED): and the pack itself, which a ship's deed is found in and taken from as she is picked up
-  // PIN MOVED (HOLDINGS, bible/03-World/Holdings.md): the items' seam carries the Fleet's book after the pack (titles, retitle) -
+  // PIN MOVED (HOLDINGS): the items' seam carries the Fleet's book after the pack (titles, retitle) -
   // the pin reads the three the mod's own laws use, up to the pack, and test/systems/naval/fleet.test.js pins the two it added
   assert.match(w, /items: \{ create: \(templateIndex\) => mintBoatItem\(templateIndex, csaNewItemUid\(\)\), addToPlayer: \(item\) => addItem\(\(playerEntity\.items \?\?= \[\]\), item\), player: \(\) => \(playerEntity\.items \?\?= \[\]\),/);
   const m = src('scenes/worldModes.js');

@@ -67,8 +67,8 @@
   {
     "name": "FIELD-GUN17-8-the-screen-y-flip-is-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,",
-    "new": "    up: (((py - r.y) / r.h) * 2 - 1) * tanY * forward,",
+    "old": "    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP",
+    "new": "    up: (((py - r.y) / r.h) * 2 - 1) * tanY * forward,   // screen y counts DOWN, camera up counts UP",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],

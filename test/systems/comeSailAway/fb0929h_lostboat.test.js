@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-09-29h (LOST-BOAT) - "Boat Noises at Kinging Court: it seems that my previous attempts at spawning in
+// FIELD BUGS 2026-09-29h - "Boat Noises at Kinging Court: it seems that my previous attempts at spawning in
 // large boat deeds (before today's patch) may have left the large boats floating underneath the town. When i travel to
 // the town i can hear very loud boat noises but no boats to be seen. two of them are layered over one another so it's
 // probably two boats. They'll likely need to be de-spawned somehow."
@@ -17,7 +17,7 @@ import { spawnBoat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js
 import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE, LOST_UNDER_M } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
 
@@ -84,7 +84,7 @@ test('LOST-BOAT: a boat afloat stays, a crewed hull stays (its deed calls it), a
   beach.rt.update();
   assert.equal(beach.rt.AllBoats.length, 1, 'a keel on a beach is no lost boat');
   // a Small Ship under the ground: her deed repositions her at a port (useBoatDeed) - never packed into parts too. Her
-  // deed in the pack, as a deed ship's is (SHIP-PACK): with none PackBoat itself refuses her, and could not tell the skip
+  // deed in the pack, as a deed ship's is: with none PackBoat itself refuses her, and could not tell the skip
   const deed = { templateIndex: BOAT_DEED_TEMPLATE, UID: 42 }, held = [deed];
   const crewed = scene({ terrains: [terrain(10, 20, 60)], held });
   restore(crewed.rt, [saved(2, 100, 34, 100)]);

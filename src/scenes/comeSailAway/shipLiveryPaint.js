@@ -1,9 +1,9 @@
 // @ts-check
-// SHIP-LIVERY (2026-10-17; bible/03-World/Naval-Refit.md SHIP-LIVERY) - THE PAINT SHOP: a livery's pictures painted and
-// uploaded the first time a boat wears it, and the remap she is drawn by (scenes/comeSailAway/comeSailAwayPool.js draw -
-// the one draw every host's boats go through, so a painted ship is painted on the street, on a dungeon's water and in a
-// peer's sight alike). The wagons' paint's own shape (scenes/horseCartPool.js lookRemap): the remap maps each record her
-// paint changes to its painted twin, under LIVERY_ARCHIVE; a boat whose paint is still being made is drawn as built.
+// THE PAINT SHOP: a livery's pictures painted and uploaded the first time a boat wears it, and the remap she is drawn by
+// (scenes/comeSailAway/comeSailAwayPool.js draw - the one draw every host's boats go through, so a painted ship is
+// painted on the street, on a dungeon's water and in a peer's sight alike). The wagons' paint's own shape
+// (scenes/horseCartPool.js lookRemap): the remap maps each record her paint changes to its painted twin, under
+// LIVERY_ARCHIVE; a boat whose paint is still being made is drawn as built.
 //
 // WHAT IS PAINTED, by the hull's own pictures:
 //   - a port-built hull (PORT_SHIPS: the Large Boat, the Small Ship, the Carrack) - her strake, accent and canvas
@@ -21,7 +21,7 @@ import {
   SAIL_TINT,
   liveryOfCode,
 } from '../../systems/naval/shipLivery.js';
-import { sailEmblemOf, sailEmblemKey } from './sailEmblem.js'; // GUILD-SHOP: her guild's arms on her canvas
+import { sailEmblemOf, sailEmblemKey } from './sailEmblem.js'; // Her guild's arms on her canvas
 import { logoVersion } from '../../ui/guild/guildLogoImages.js';
 import { liveryArtOf } from '../../world/ships/shipLiveryArt.js';
 import { cutGlass } from '../../world/ships/galleonArt.js';
@@ -29,9 +29,9 @@ import { dfLook, lookSeed } from '../../world/dfLook.js';
 import { toColor32 } from '../../formats/color32Order.js';
 import { OWN_BOAT_ARCHIVE, OWN_TEX, OWN_WOOD_RECORDS, ownBoatArt } from '../../world/ships/ownBoats/ownBoatArt.js';
 
-/** OWN-WORK4: our boats' plank archive, stained (its wood records, OWN_WOOD_RECORDS). */
+/** Our boats' plank archive, stained (its wood records, OWN_WOOD_RECORDS). */
 export const PLANK_ARCHIVE = OWN_BOAT_ARCHIVE;
-/** OWN-WORK4: our boats' sailcloth - their canvas record (each sail's ApplyGameTextures child names it). */
+/** Our boats' sailcloth - their canvas record (each sail's ApplyGameTextures child names it). */
 export const CLASSIC_SAIL = Object.freeze([OWN_BOAT_ARCHIVE, OWN_TEX.canvas]);
 /** Our boats' pictures as painted (before Daggerfall's look), made once at the first paint that needs them. */
 let _own = null;
@@ -42,7 +42,7 @@ const ownPicture = (record) => (_own ??= new Map(ownBoatArt())).get(record) ?? n
  *   the archive of the port's ship standing for a hull (null: the mod's own model)
  */
 export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = console }) {
-  /** GUILD-SHOP: each pair of arms a sail has flown, its slot (1 up) - a paint's key carries it beside her code */
+  /** Each pair of arms a sail has flown, its slot (1 up) - a paint's key carries it beside her code */
   const armsSlots = new Map();
   /** @type {WeakMap<any, { n: number, lv: number }>} a pair of arms' slot, as last asked */
   const slotOfArms = new WeakMap();
@@ -104,7 +104,7 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
         night.set(`${PLANK_ARCHIVE}_${r}`, key);
       }
     }
-    // AUDIT GUILD-SHOP N1: the classic sail is tinted alone - its cloth's picture is tiled dozens of times over a sail, so
+    // The classic sail is tinted alone - its cloth's picture is tiled dozens of times over a sail, so
     // a sailcloth (a pattern, the arms) is a port hull's whole canvas only (shipLivery.js clothHull)
     const sail = SHIP_PAINTS[lv.sail]?.rgb;
     if (sail) {
@@ -123,7 +123,7 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     }
     return { day, night };
   }
-  /** GUILD-SHOP: her paint with her guild's arms on her canvas - her paint as made without them (`base`), its canvas alone
+  /** Her paint with her guild's arms on her canvas - her paint as made without them (`base`), its canvas alone
    *  painted again with the emblem (AUDIT GUILD-SHOP N2: every other record is the same picture, never painted twice). */
   function paintArmed(hull, code, own, base, arms) {
     const lv = liveryOfCode(code),
@@ -204,9 +204,9 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     }
     return j;
   }
-  /** GUILD-SHOP: a pair of arms' slot, 1 to 255 - kept on the arms object for as long as no logo comes in (AUDIT GUILD-SHOP
+  /** A pair of arms' slot, 1 to 255 - kept on the arms object for as long as no logo comes in (AUDIT GUILD-SHOP
    *  N7: no string made a frame). Past 255, the slot least lately drawn is given again, its paints made again under a
-   *  new generation, so a making still out for the old arms lands as nothing (N6). */
+   *  new generation, so a making still out for the old arms lands as nothing. */
   function armsSlotOf(arms) {
     const lv = logoVersion(),
       held = slotOfArms.get(arms);
@@ -220,7 +220,7 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
       n = armsSlots.size < 255 ? armsSlots.size + 1 : leastUsedSlot();
       for (const [old, m] of armsSlots) if (m === n) armsSlots.delete(old);
       for (const key of made.keys()) if (Math.floor(key / 0x1000000) % 256 === n) made.delete(key);
-      // AUDIT GUILD-SHOP D3: and its pictures let go - put's key is the same for the new arms, and the renderer keeps a key it has
+      // And its pictures let go - put's key is the same for the new arms, and the renderer keeps a key it has
       for (const [key, rec] of records)
         if (Math.floor(Number(key.split('|')[1]) / 0x1000000) % 256 === n) {
           renderer.releaseTexture?.(LIVERY_ARCHIVE, rec);
@@ -238,12 +238,12 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     for (let n = 2; n <= 255; n++) if ((slotUsed[n] ?? 0) < (slotUsed[best] ?? 0)) best = n;
     return best;
   };
-  /** AUDIT 2: a joined remap -> the paint's own keys in it. */
+  /** A joined remap -> the paint's own keys in it. */
   const ownOf = new WeakMap();
-  /** AUDIT 2: mesh -> (own map -> whether any of its sub-meshes' pictures is one the paint repaints). */
+  /** Mesh -> (own map -> whether any of its sub-meshes' pictures is one the paint repaints). */
   const touched = new WeakMap();
   /**
-   * AUDIT 2: the remap `mesh` is drawn by - her paint's (`remap`) only where it repaints one of its pictures, else the
+   * The remap `mesh` is drawn by - her paint's (`remap`) only where it repaints one of its pictures, else the
    * host's `base`. The renderer caches each sub-mesh's picture by its remap's identity, and Daggerfall's models are
    * shared by every boat that hangs them: two boats of one hull in two paints (SEA-COLOURS: most of a sea) missed that
    * cache on every sub-mesh of every shared model every frame, and made its key's string again each time.

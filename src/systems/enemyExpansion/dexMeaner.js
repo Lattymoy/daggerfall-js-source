@@ -1,10 +1,9 @@
 // @ts-check
-// OWN-WORK2 (2026-10-31, the owner: "removing mods from outside authors and instead replacing them with our own work") -
-// MEANER MONSTERS BESIDE DAGGERFALL ENEMY EXPANSION, OUR OWN DESIGN (bible/04-Characters/Enemy-Expansion.md section 13).
-// Two tables in DEX's own formats, read by DEX's reader after its own when Meaner Monsters is on beside it
-// (dexSwitches.js): monster lines over the rows as DEX leaves them, and dungeon courts beside DEX's defaults. No line
-// moves a level, so every table's order, the provinces' wild (tamrielFauna.js) and the progression share stay DEX's.
-// Every row is the rule's answer (meanerStats); test/systems/enemyExpansion/dexmeaner.test.js proves each one.
+// MEANER MONSTERS BESIDE DAGGERFALL ENEMY EXPANSION, OUR OWN DESIGN. Two tables in DEX's own formats, read by DEX's
+// reader after its own when Meaner Monsters is on beside it (dexSwitches.js): monster lines over the rows as DEX leaves
+// them, and dungeon courts beside DEX's defaults. No line moves a level, so every table's order, the provinces' wild
+// (tamrielFauna.js) and the progression share stay DEX's. Every row is the rule's answer (meanerStats);
+// test/systems/enemyExpansion/dexmeaner.test.js proves each one.
 
 import { FOE_SHARE_FLOOR } from '../skillSoftcap.js';
 import { MONSTER_SPELL_LISTS } from '../enemySpells.js';

@@ -22,7 +22,7 @@ import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { CLIMATES } from '../../../src/formats/mapsFile.js';
 import { RACES } from '../../../src/systems/races.js';
 
-// ═══ AUDIT C&C (2026-10-12), THE ITEMS: lens I's findings on the food, the kit, the shelf and the camp menu ═══
+// ═══ AUDIT C&C, THE ITEMS: lens I's findings on the food, the kit, the shelf and the camp menu ═══
 //
 // Every fixture is the real producers' (createSurvivalItem, the minute law's rot, the chargen assigner and its fallback,
 // the provisions shelf and the general store's, the camp pool's own placing) and every number is a LITERAL (A PIN MUST
@@ -77,9 +77,9 @@ test('AUDIT C&C I5: FOOD THAT SPOILS IN THE PACK IS DRESSED AT EVERY STAGE - the
   assert.deepEqual([look(createSurvivalItem(TEMPLATE.Bread, { foodStage: 4 })), look(corpse)], [[4, 'Putrid Bread', 534, 1], [2, 'Mouldy Raw Fish', 535, 0]]);
   // the card: putrid cannot be eaten (it read "Nourishes for 36 minutes (putrid)"); a raw one can still be cooked
   assert.deepEqual(pack.map((it) => survivalInfoTokens(it).map((t) => t.text)), [
-    ['Putrid Bread', 'Weight: 0.50 kilograms', 'Putrid. Too disgusting to force down.'],   // PIN MOVED: OWN-WORK3, a loaf (1.5)
-    ['Putrid Raw Fish', 'Weight: 1.00 kilograms', 'Putrid. Too disgusting to force down.', 'Raw. Cook it at a fire.'],   // PIN MOVED: CRAFT-PAYS, a raw fish a kilo (2)
-    ['Putrid Apple', 'Weight: 0.25 kilograms', 'Putrid. Too disgusting to force down.'],   // PIN MOVED: OWN-WORK3, a fruit (0.1)
+    ['Putrid Bread', 'Weight: 0.50 kilograms', 'Putrid. Too disgusting to force down.'],
+    ['Putrid Raw Fish', 'Weight: 1.00 kilograms', 'Putrid. Too disgusting to force down.', 'Raw. Cook it at a fire.'],
+    ['Putrid Apple', 'Weight: 0.25 kilograms', 'Putrid. Too disgusting to force down.'],
   ]);
   assert.equal(survivalInfoTokens(createSurvivalItem(TEMPLATE.Bread, { foodStage: 3 }))[2].text, 'Nourishes for 45 minutes (rotten)', 'a stage short of putrid still feeds, by its stage');
   // and the Use names what it is: the real door (useItem.js), which refuses it
@@ -89,8 +89,8 @@ test('AUDIT C&C I5: FOOD THAT SPOILS IN THE PACK IS DRESSED AT EVERY STAGE - the
 
 test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY TIER WITH THE ARC ON - Boons, Casual and Hard: two sacks of rations, a full skin, the Formal cloak drawn hood up and the Shoes of their own wardrobe at a quarter of their condition, in the pack and not worn, worn camping gear (25 uses) and the port\'s Campfire - on the wizard\'s mint and on the fallback; Off sets out with DFU\'s bag alone', () => {
   const BAG = {
-    male: [[132, 'Spellbook'], [165, 'Short Shirt'], [151, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [155, 'Formal Cloak'], [147, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet'], [577, 'Portal Book']],   // PIN MOVED (PORTAL-BOOK): the book after the wallet
-    female: [[132, 'Spellbook'], [206, 'Short Shirt'], [190, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [192, 'Formal Cloak'], [186, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet'], [577, 'Portal Book']],   // PIN MOVED (PORTAL-BOOK): the book after the wallet
+    male: [[132, 'Spellbook'], [165, 'Short Shirt'], [151, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [155, 'Formal Cloak'], [147, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet'], [577, 'Portal Book']],
+    female: [[132, 'Spellbook'], [206, 'Short Shirt'], [190, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [192, 'Formal Cloak'], [186, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet'], [577, 'Portal Book']],
   };
   /** The start's clothes as minted: [template, group, variant, dye, condition, of, value, worn slot, hood up]. */
   const CLOTHES = {
@@ -107,7 +107,7 @@ test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY 
       assert.deepEqual(added.map((i) => [i.templateIndex, i.name]), BAG[gender], `${tier}, ${gender}: the mod's start after DFU's bag, in the order it adds them`);
       assert.deepEqual(clothesOf(added), CLOTHES[gender], `${tier}, ${gender}: the cloak hooded and the shoes, Blue, a quarter of their condition, carried`);
       assert.deepEqual(equipTableOf(e).filter(Boolean).map((i) => i.templateIndex).sort((a, b) => a - b), gender === 'male' ? [151, 165] : [190, 206], 'only DFU\'s own shirt and pants are worn');
-      const kit = added.filter((i) => i.group === 'UselessItems2' && i.templateIndex !== 580 && i.templateIndex !== 577);   // PIN MOVED (PORTAL-BOOK): nor the book
+      const kit = added.filter((i) => i.group === 'UselessItems2' && i.templateIndex !== 580 && i.templateIndex !== 577);
       assert.deepEqual(kit.map((i) => [i.templateIndex, i.stackCount, i.currentCondition, i.maxCondition, i.water ?? null]),
         [[531, 2, 10, 10, null], [539, 1, 10, 10, 2], [530, 1, 25, 50, null], [541, 1, 8, 8, null]], 'two sacks, a full skin, the gear at 25 of 50, a full Campfire');
       const fallback = { gender, items: [] };
@@ -118,7 +118,7 @@ test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY 
   }
   _resetForTests(); setPref(SURVIVAL_PREF, SURVIVAL_STORED.off);
   const off = { gender: 'female', items: [], stats: { ...STATS } };
-  assert.deepEqual(assignStartingGear(off, { classIndex: 0, rolls: () => 0.3, torchesFromItems: false }).map((i) => i.templateIndex), [132, 206, 190, 116, 580, 577], 'Off: DFU\'s bag and the wallet (Mac: "No, not off")');   // PIN MOVED (PORTAL-BOOK): and the book
+  assert.deepEqual(assignStartingGear(off, { classIndex: 0, rolls: () => 0.3, torchesFromItems: false }).map((i) => i.templateIndex), [132, 206, 190, 116, 580, 577], 'Off: DFU\'s bag and the wallet (Mac: "No, not off")');
   const offFallback = { gender: 'female', items: [] };
   seedStartingEquipment(offFallback);
   assert.deepEqual(offFallback.items.map((i) => i.templateIndex), [113]);
@@ -127,7 +127,7 @@ test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY 
 test('AUDIT C&C I10 / OWN-WORK3: no camp word that nothing says - "Turn Climates & Calories on to make camp." went with the gate it named (ENDLESS PROVISIONS); and the rows are our own, pinned as literals, the food prices by their rule', () => {
   assert.equal(Object.values(CAMP_TEXT).includes('Turn Climates & Calories on to make camp.'), false);
   assert.equal(Object.hasOwn(CAMP_TEXT, 'arcOff'), false);
-  // OWN-WORK3 (2026-10-31): Climates & Calories 1.7.1 shipped its own rows for 530-540; ours stand on the same indices
+  // Climates & Calories 1.7.1 shipped its own rows for 530-540; ours stand on the same indices
   // and pictures. [name, kilos, gold, condition, rarity, archive, record]
   assert.deepEqual(SURVIVAL_TEMPLATES.map((t) => [t.index, t.name, t.baseWeight, t.basePrice, t.hitPoints, t.rarity, t.worldTextureArchive, t.worldTextureRecord]), [
     [530, 'Camping Equipment', 5, 50, 50, 1, 204, 8],
@@ -149,7 +149,7 @@ test('AUDIT C&C I10 / OWN-WORK3: no camp word that nothing says - "Turn Climates
     assert.equal(foodPrice(t), Math.max(1, Math.round((f.satiety / 60) * (meat ? 4 : 2) * (f.keeps == null ? 1.5 : 1))), `${f.name}: the price rule`);
     if (f.keeps != null) assert.equal(SURVIVAL_TEMPLATES.find((r) => r.index === t).hitPoints, f.keeps, `${f.name}: its condition is its keeping`);
   }
-  // OWN-WORK4 (2026-10-31): the folder is retired - the four rebuilt pictures' specs moved beside their reader, the rest are ours
+  // The folder is retired - the four rebuilt pictures' specs moved beside their reader, the rest are ours
   assert.equal(existsSync(new URL('../../../vendor/climates-calories', import.meta.url)), false);
   assert.deepEqual(Object.keys(JSON.parse(readFileSync(new URL('../../../src/systems/survival/derivedIcons.json', import.meta.url), 'utf8'))).sort(), ['50_7-0', '67_10-0'], 'the edit-free specs; the mouldy bread is ours, and (OWN-AUDIT 2026-11-01) the mouldy cooked fish');
 });

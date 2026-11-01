@@ -146,8 +146,8 @@
   {
     "name": "OWN4-better-storm-no-faster",
     "file": "src/render/precipitation.js",
-    "old": "* (1.0 + 0.15 * uStorm);",
-    "new": "* (1.0 + 0.0 * uStorm);",
+    "old": "    float fall = uFall * (0.8 + 0.4 * size) * (1.0 + 0.15 * uStorm);",
+    "new": "    float fall = uFall * (0.8 + 0.4 * size) * (1.0 + 0.0 * uStorm);",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OWN4-cirrus-through-the-lid",
     "file": "src/render/volumetricClouds.js",
-    "old": "overcast: 0.1, fog: 0.3, rain: 0.08,",
-    "new": "overcast: 0.5, fog: 0.3, rain: 0.08,",
+    "old": "export const CIRRUS_COVER = Object.freeze({ sunny: 0.45, cloudy: 0.5, overcast: 0.1, fog: 0.3, rain: 0.08, snow: 0.08, thunder: 0.06, sandstorm: 0.15, ashfall: 0.15 });",
+    "new": "export const CIRRUS_COVER = Object.freeze({ sunny: 0.45, cloudy: 0.5, overcast: 0.5, fog: 0.3, rain: 0.08, snow: 0.08, thunder: 0.06, sandstorm: 0.15, ashfall: 0.15 });",
     "tests": [
       "test/render/vc7d_cirrus.test.js"
     ]

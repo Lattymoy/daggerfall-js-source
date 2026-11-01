@@ -1,5 +1,5 @@
 // @ts-check
-// VC3 (2026-09-07): THE VOLUMETRIC CLOUDS. VC4: AND THEIR SHADOW.
+// THE VOLUMETRIC CLOUDS. VC4: AND THEIR SHADOW.
 //
 // Mac: "true volumetric clouds that move across the sky, build during
 // weather... on top of real cloud shadows that reflect on the ground".
@@ -27,7 +27,7 @@
 // sky * T + cloud). The stars and the sun's disc show through the gaps
 // by construction.
 //
-// THE SHADOW (VC4) is the SAME FIELD seen from the ground: a world-
+// THE SHADOW is the SAME FIELD seen from the ground: a world-
 // space map, a square of SHADOW_EXTENT metres snapped to the streaming
 // world's 819.2-metre pixel grid around the camera, each texel the
 // transmittance along the sun's ray from that ground point up through
@@ -57,12 +57,12 @@
 import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
-import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
-import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
+import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // A cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
+import { DREAD_GLSL } from '../world/dreadSky.js';   // The live event's grade, the sky's last word
 import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
-import { HAZE_SKY_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js)
+import { HAZE_SKY_GLSL } from './hazeGlsl.js';   // The jungle's haze over the sky (render/hazeGlsl.js)
 
-/** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
+/** A JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
 const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
 /** The streaming world's pixel, in metres (terrainSampler.js TERRAIN_SIZE). */
 export const PIXEL_METRES = 819.2;
@@ -73,18 +73,16 @@ export const QUALITY = Object.freeze({
   default: Object.freeze({ width: 1024, height: 256, steps: 56, light: 5, shadow: 512, shadowSteps: 12, cells: 8 }),
   hi: Object.freeze({ width: 2048, height: 512, steps: 80, light: 6, shadow: 1024, shadowSteps: 16, cells: 8 }),
 });
-/** WEATHER2c: the most cells the field takes (the shader's arrays);
+/** The most cells the field takes (the shader's arrays);
  *  a tier may cap lower (`cells`). */
 export const MAX_CELLS = 8;
-/** WEATHER2c: a cell's rim, as a fraction of its radius - the band over
+/** A cell's rim, as a fraction of its radius - the band over
  *  which its profile blends into the zone's. */
 export const CELL_EDGE = 0.35;
 /** A full sweep of either map takes this many frames - a fair sky's; a heavier one takes more (sweepFramesFor). */
 export const SWEEP_FRAMES = 8;
 // ═══════════════════════════════════════════════════════════════════
-// RAIN-FPS (2026-09-25, Mac: "some ... are reporting fps drops. I myself
-// have flawless performance. One user said they turned off the rain and it
-// fixed it"): THE SWEEP TAKES AS MANY FRAMES AS THE SKY COSTS.
+// THE SWEEP TAKES AS MANY FRAMES AS THE SKY COSTS.
 //
 // Measured in the sky lab and the game on a software GPU (the stand-in for
 // a weak one): with the clouds off, rain costs what a clear day costs - the
@@ -121,7 +119,7 @@ export function sweepFramesFor(cover, cells) {
   const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));
   return Math.min(SWEEP_FRAMES_MAX, SWEEP_FRAMES * 2 ** k);
 }
-/** VC6d: the steps a ray may take BEYOND its tier's budget. Empty-space
+/** The steps a ray may take BEYOND its tier's budget. Empty-space
  *  skipping normally finishes a ray early, but a ray that enters and
  *  leaves cloud several times pays one step for each stride it backs
  *  out of; this is what keeps such a ray reaching the end of its slab
@@ -129,14 +127,14 @@ export function sweepFramesFor(cover, cells) {
  *  the most transitions a slab this deep can hold and leaves every tier
  *  (32, 56, 80) inside the loop's own hard cap of 96. */
 export const MARCH_SLACK = 12;
-/** VC6b: mean Earth radius, metres - the ONE number behind the whole
+/** Mean Earth radius, metres - the ONE number behind the whole
  *  golden hour. A cloud at height h sees over the ground's horizon by
  *  sqrt(2h/R) radians, which for this slab is a degree and a half: the
  *  sun sets for the player a full ninety seconds before it sets for the
  *  cloud deck above them. That gap IS the sunset, and the field did not
  *  have it. */
 export const EARTH_RADIUS_M = 6371000;
-/** VC6b: how far a point at height `h` metres sees past the ground's
+/** How far a point at height `h` metres sees past the ground's
  *  horizon, in radians. Pure. */
 export const horizonDip = (h) => Math.sqrt(2 * Math.max(0, h) / EARTH_RADIUS_M);
 /** One unit of the WIND2 drift integral is this many world metres -
@@ -148,8 +146,7 @@ export const WORLD_PER_DRIFT = 1 / 0.0038;
  *  ambient's mottle every 5) - a recenter is answered by uShift, not
  *  by the periods; these keep the shadow square's texel grid exact.
  *
- *  VC6a (2026-09-18, Mac: "clouds repeat pretty consistently when its
- *  partly cloudy"): the variation was SIXTEEN pixels, 13107 m, against
+ *  The variation was SIXTEEN pixels, 13107 m, against
  *  the shape volume's 12288 m - two grids within seven per cent of each
  *  other, so they walked in step and the same bank came round every
  *  twelve kilometres, which is well inside the march's own 24 km reach.
@@ -162,7 +159,7 @@ export const SHAPE_METRES = PIXEL_METRES * 15;
 export const DETAIL_METRES = PIXEL_METRES;
 export const VARIATION_METRES = PIXEL_METRES * 80;
 export const MOTTLE_METRES = PIXEL_METRES * 5;
-/** VC6a: how far the domain WARP bends a sample's position, in metres.
+/** How far the domain WARP bends a sample's position, in metres.
  *  The warp is read from the variation sample's own spare channels, so
  *  it costs no texture read; it bends the shape volume's lattice so the
  *  eye cannot find the tile's straight edges even where the tile does
@@ -179,7 +176,7 @@ export const MOTTLE_METRES = PIXEL_METRES * 5;
  *  not under the field it is bending. Seen in the lab, against the same
  *  shot on the tree before this change. */
 export const WARP_METRES = PIXEL_METRES * 1;
-/** CLK1: the field's COMMON PERIOD - the least common multiple of the
+/** The field's COMMON PERIOD - the least common multiple of the
  *  four periods above (15, 1, 80 and 5 pixels: 240), so a position
  *  moved by a whole number of it samples the same cloud. The drift and
  *  the recenter shift are both unbounded integrals (a year of game
@@ -191,7 +188,7 @@ export const FIELD_PERIOD_METRES = PIXEL_METRES * 240;
 export const wrapField = (v) => v - Math.floor(v / FIELD_PERIOD_METRES) * FIELD_PERIOD_METRES;
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
-/** VC7e (2026-09-23, Mac: "Whatever is the most visually detailed and immersive"): THE LIGHT THROUGH A THICK DECK.
+/** THE LIGHT THROUGH A THICK DECK.
  *  Beer's law alone is single scattering: a storm deck's optical depth ran 5.1 to 6.3 along the sun (the arc's
  *  measurement; an overcast's 0.56 to 0.80), and exp(-5.1) and exp(-6.3) are both black, so every point under a
  *  storm got the same nothing, and the overcast's narrow range the same grey - the deck was one
@@ -206,11 +203,11 @@ export const MS_OCTAVES = 3;
 export const MS_A = 0.5;
 export const MS_B = 0.35;
 export const MS_C = 0.5;
-/** VC7e: the octaves' total share at zero depth - the light is divided by it, so no depth takes more than an unshadowed path. */
+/** The octaves' total share at zero depth - the light is divided by it, so no depth takes more than an unshadowed path. */
 export const msSum = () => { let a = 1, t = 0; for (let o = 0; o < MS_OCTAVES; o++) { t += a; a *= MS_A; } return t; };
 export const AMBIENT_THROUGH_K = 0.35;
 export const AMBIENT_FLOOR = 0.15;
-/** VC7e: the deck's cells (density()): the Worley threshold band a cell's edge is drawn across, the cover band a
+/** The deck's cells (density()): the Worley threshold band a cell's edge is drawn across, the cover band a
  *  sky becomes a deck over, how far (in the band's height) a lane's base lifts, and how much of the column a lane
  *  loses at the top. */
 export const CELL_EDGE_LO = 0.35;
@@ -227,29 +224,29 @@ export const CELL_THIN = 0.55;
  *  fall - rain, the storm's heavier, snow lighter and paler (kind 1); a sandstorm is already a wall on the ground,
  *  and fog and cloud do not fall. ASHFALL1: the ash hangs its own veil, in its pall's colour (CELL_TINT). */
 export const CURTAIN_SHARE = 0.55;
-/** VC7c: rain's own extinction, per metre at a fall of one - Koschmieder's 3.0 over moderate rain's five-kilometre
+/** Rain's own extinction, per metre at a fall of one - Koschmieder's 3.0 over moderate rain's five-kilometre
  *  visibility. The first cut took a fifth of it and a storm's curtain was a faint smear at the horizon: a real shaft
  *  a few kilometres across is near opaque, which is why one reads from thirty kilometres off. */
 export const CURTAIN_EXT = 0.0006;
 export const CURTAIN_STREAKS = 40;
-/** VC7c: the fibres - a second, finer octave of streaks (three to each), and the share of a streak's weight it takes. */
+/** The fibres - a second, finer octave of streaks (three to each), and the share of a streak's weight it takes. */
 export const CURTAIN_FIBRE = 0.4;
-/** VC7c: THE RAGGED FOOT - toward its rim a curtain's streaks stop short of the ground (the rain evaporates on the
+/** THE RAGGED FOOT - toward its rim a curtain's streaks stop short of the ground (the rain evaporates on the
  *  way down: virga), each by its own amount - at the rim this share of the base on the average, half as much again
  *  at the most (0.9); the core reaches the ground. */
 export const CURTAIN_VIRGA = 0.6;
-/** VC7c: how many sky-map texels a streak must span before it is drawn at full contrast - under it, a far curtain's
+/** How many sky-map texels a streak must span before it is drawn at full contrast - under it, a far curtain's
  *  streaks would alias to shimmer as they cross the map's texels, so they fade to the curtain's mean. */
 export const CURTAIN_STREAK_TEXELS = 3;
-/** VC7c: how far up INTO its cell a curtain reaches, a share of the cell's depth, thinning to nothing at the top -
+/** How far up INTO its cell a curtain reaches, a share of the cell's depth, thinning to nothing at the top -
  *  a cloud's visible underside sits above its nominal base (the height ramp, VC7e's lifted lanes), and a curtain cut
  *  at the base left a strip of sky between the rain and the cloud it falls from. */
 export const CURTAIN_INTO = 0.12;
-/** VC7c: the veils' own aerial perspective, metres - the slab's 14 km is the far lid's, and at a storm's 20 km it
+/** The veils' own aerial perspective, metres - the slab's 14 km is the far lid's, and at a storm's 20 km it
  *  handed three quarters of a curtain to the horizon: a storm that far off stands out plainly in clear air. */
 export const CURTAIN_FADE_M = 40000;
 export const CURTAIN_FALL = Object.freeze({ rain: Object.freeze([1, 0]), thunder: Object.freeze([1.3, 0]), snow: Object.freeze([0.7, 1]), ashfall: Object.freeze([0.9, 0]) });
-/** VC7c: how far under the coverage cut the shape must read before the sky march may stride past it, where the
+/** How far under the coverage cut the shape must read before the sky march may stride past it, where the
  *  column's profile can move within a stride - the margin that measured the same picture as no stride at all (the
  *  arc's AUDIT-VC7 table: under a rain cell 50 pixels off by more than 8 levels and none by 24, the dither's own
  *  jitter at a cloud's edge; every other sky none). */
@@ -271,12 +268,12 @@ export const CIRRUS_ACROSS = 1;
 export const CIRRUS_FIBRE_ALONG = 48;
 export const CIRRUS_FIBRE_ACROSS = 1;
 export const CIRRUS_FIBRE = 0.35;
-/** VC7d: where the high air holds ice at all - a round, slow field CIRRUS_PATCH shape tiles across (the field's own
+/** Where the high air holds ice at all - a round, slow field CIRRUS_PATCH shape tiles across (the field's own
  *  period), so a fair sky has streaks in places and clear blue in others, not a sheet; and how far across the jet
  *  a medium field (CIRRUS_BEND shape tiles) bends the streaks, so they curve like mare's tails. The first cut was a
  *  sheet of parallel stripes from horizon to horizon, its fibres aliasing to a dotted grain. */
 export const CIRRUS_PATCH = 16;
-/** VC7d: THE WISPS - where the smooth fbm of the stretched volume stands above a threshold the cover lowers, a soft
+/** THE WISPS - where the smooth fbm of the stretched volume stands above a threshold the cover lowers, a soft
  *  elongated wisp; the rest of the patch is blue. CIRRUS_WISP_TOP is the threshold with no cover, CIRRUS_WISP_COVER
  *  how far a full cover lowers it, CIRRUS_WISP_SOFT the width of a wisp's edge. (Two cuts drew the sky as a sheet:
  *  the Perlin-Worley cut by the cover crazed by its cell borders into dark contour lines, and the fbm's ridge, which
@@ -286,12 +283,12 @@ export const CIRRUS_WISP_COVER = 0.24;
 export const CIRRUS_WISP_SOFT = 0.18;
 export const CIRRUS_BEND = 16;
 export const CIRRUS_BEND_M = 2500;
-/** VC7d: a jet runs about five times the surface wind under it; the fair day's surface drift is the clouds' own
+/** A jet runs about five times the surface wind under it; the fair day's surface drift is the clouds' own
  *  integral (WIND2: the row's wind, on game minutes, in world metres), so the jet is five of those. */
 export const CIRRUS_JET_RATIO = 5;
 export const CIRRUS_JET_M_PER_MINUTE = CIRRUS_JET_RATIO * Math.hypot(...WEATHER_SKY.sunny.wind) * WIND_SECONDS_PER_MINUTE * WORLD_PER_DRIFT;
 export const CIRRUS_FADE_M = 120000;
-/** VC7d: ice crystals scatter hard forward - the sun's side of a cirrus veil is its brightest - but a crystal cloud
+/** Ice crystals scatter hard forward - the sun's side of a cirrus veil is its brightest - but a crystal cloud
  *  scatters white light many times over, so from ANY side it is brighter than the clear sky behind it. The first cut
  *  lit it by the forward lobe alone and away from the sun it came out darker than the blue: dark contour lines round
  *  every streak. CIRRUS_FWD of the sun's share follows the lobe, the rest is isotropic; CIRRUS_AMB of the lit cloud
@@ -300,11 +297,11 @@ export const CIRRUS_G = 0.7;
 export const CIRRUS_SUN = 0.8;
 export const CIRRUS_FWD = 0.6;
 export const CIRRUS_AMB = 0.45;
-/** VC7d: how much of the sky carries cirrus under each word (eased with the weather). A fair sky shows it most.
- *  OWN-WORK4 AUDIT (2026-11-01): a lid's own cloud did not hide it - through the lid's thin places the ice drew long
+/** How much of the sky carries cirrus under each word (eased with the weather). A fair sky shows it most.
+ *  OWN-WORK4 AUDIT: a lid's own cloud did not hide it - through the lid's thin places the ice drew long
  *  bright streaks running to the jet's vanishing point (the sky lab, overcast at noon) - so a lid keeps a trace. */
 export const CIRRUS_COVER = Object.freeze({ sunny: 0.45, cloudy: 0.5, overcast: 0.1, fog: 0.3, rain: 0.08, snow: 0.08, thunder: 0.06, sandstorm: 0.15, ashfall: 0.15 });
-/** VC7e: how full a column is on the average (the shape noise past its coverage cut) - columnAbove's estimate. */
+/** How full a column is on the average (the shape noise past its coverage cut) - columnAbove's estimate. */
 export const COLUMN_FILL = 0.5;
 /** The shadow map's square, in metres: SIXTEEN pixels a side, the
  *  camera's pixel in the middle, so the near edge stands 6144 m out -
@@ -325,7 +322,7 @@ export const SHADOW_AMOUNT = 1.0;
  *  `vary`, how much the cloud's TYPE changes from one part of the sky
  *  to the next.
  *
- *  VC6a: `vary` is the answer to the second half of Mac's report. Every
+ *  `vary` is the answer to the second half of Mac's report. Every
  *  cloud in a sunny sky used to be the same cloud - one flatness, one
  *  ceiling, for the whole zone - so even a field that never repeated
  *  its noise would still have read as repetitive, because it only had
@@ -342,23 +339,23 @@ export const VC_PROFILE = Object.freeze({
   rain:     Object.freeze({ base: 600,  top: 2600, density: 0.90, dark: 0.50, flat: 0.70, shear: 0.30, vary: 0.25 }),
   snow:     Object.freeze({ base: 600,  top: 2000, density: 0.80, dark: 0.30, flat: 0.85, shear: 0.20, vary: 0.20 }),
   thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50, vary: 0.40 }),
-  sandstorm: Object.freeze({ base: 0,   top: 900,  density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05, vary: 0.00 }),   // WEATHER2d: a wall on the ground, a lid 900 m up
-  ashfall:  Object.freeze({ base: 450,  top: 3400, density: 0.95, dark: 0.60, flat: 0.80, shear: 0.25, vary: 0.15 }),   // ASHFALL1: the plume's pall - low, deep and dark, a deck that rolls a little
+  sandstorm: Object.freeze({ base: 0,   top: 900,  density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05, vary: 0.00 }),   // A wall on the ground, a lid 900 m up
+  ashfall:  Object.freeze({ base: 450,  top: 3400, density: 0.95, dark: 0.60, flat: 0.80, shear: 0.25, vary: 0.15 }),   // The plume's pall - low, deep and dark, a deck that rolls a little
 });
-/** AUDIT-VC7 (B3): the type variation at which a sky is wholly a deck's - the least any varying row takes, so every
+/** The type variation at which a sky is wholly a deck's - the least any varying row takes, so every
  *  row that varies at all is (overcast's 0.15), and fog and a sandstorm (0: one thing everywhere) are not, with a
  *  cell's rim easing between them instead of snapping. */
 export const DECK_VARY_FULL = Math.min(...Object.values(VC_PROFILE).map((r) => r.vary).filter((v) => v > 0));
-/** WEATHER2d: a cell's TINT on the zone's cloud colours - the sandstorm's
+/** A cell's TINT on the zone's cloud colours - the sandstorm's
  *  tan; ASHFALL1: the ash's brown-grey, its veil's too; every other word
  *  takes the row's colours unchanged. */
 export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46]), ashfall: Object.freeze([0.66, 0.60, 0.56]) });
-const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];   // VC6a: `vary` eases with the rest
+const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];   // `vary` eases with the rest
 /** AUDIT PRECIP FALL-5: what a wet cell walks from its warm side to the snow's by its share - the profile, its sky row's
  *  cover and grey, and its curtain's weight (PRECIP1: its tint is the share itself). */
 const SHARE_KEYS = [...PROFILE_KEYS, 'cover', 'grey', 'fall'];
 
-// ═══ VC7a (2026-09-23): LIVING CLOUDS ════════════════════════════════
+// ═══ VC7a: LIVING CLOUDS ════════════════════════════════
 // Mac: "improve the volumetric cloud system to be more immersive". The
 // field was a fixed noise volume slid across the land by the wind: a bank
 // was the same bank from the horizon to the horizon. Three clocks now
@@ -418,7 +415,7 @@ export function convectCell(cell, conv) {
   if (!cell || !conv || !FAIR_WEATHERS.includes(cell.word)) return cell;
   return { ...cell, top: cell.base + (cell.top - cell.base) * conv.depth };
 }
-/** AUDIT-VC7 (R3): the zone's slab under the day's convection `conv`, weighed in by `fair` - how much of a fair
+/** The zone's slab under the day's convection `conv`, weighed in by `fair` - how much of a fair
  *  weather's the zone is by now (1 all, 0 none: a deck, a front, fog and a sandstorm keep their own tops). Pure. */
 export function convectZone(profile, conv, fair) {
   if (!conv) return { base: profile.base, top: profile.top };
@@ -434,7 +431,7 @@ export const GROWTH_FLOOR = Object.freeze({ cover: 0.5, depth: 0.45, density: 0.
 export function grownCell(cell, env) {
   if (!cell || env == null || env >= 1) return cell;
   const e = Math.max(0, env), at = (floor) => floor + (1 - floor) * e;
-  return { ...cell, cover: cell.cover * at(GROWTH_FLOOR.cover), top: cell.base + (cell.top - cell.base) * at(GROWTH_FLOOR.depth), density: cell.density * at(GROWTH_FLOOR.density), fall: (cell.fall ?? 0) * e };   // VC7c: a young system's rain is young too
+  return { ...cell, cover: cell.cover * at(GROWTH_FLOOR.cover), top: cell.base + (cell.top - cell.base) * at(GROWTH_FLOOR.depth), density: cell.density * at(GROWTH_FLOOR.density), fall: (cell.fall ?? 0) * e };   // A young system's rain is young too
 }
 /** The three clocks at a game minute and a drift (world metres, already
  *  wrapped): the shape's and the detail's reading offsets (metres, each
@@ -446,14 +443,14 @@ export function cloudClocks(minutes, driftWorld) {
   return {
     evolve: [wrap(minutes * EVOLVE_M_PER_MINUTE, SHAPE_METRES), wrap(minutes * DETAIL_EVOLVE_M_PER_MINUTE, DETAIL_METRES), wrap(minutes * COVER_EVOLVE_PER_MINUTE, 1)],
     coverDrift: [wrapField(driftWorld[0] * COVER_DRIFT_SHARE), wrapField(driftWorld[1] * COVER_DRIFT_SHARE)],
-    cirrus: wrapField(minutes * CIRRUS_JET_M_PER_MINUTE),   // VC7d: the jet's offset east, wrapped to the field's period - every tile the ice reads divides it
+    cirrus: wrapField(minutes * CIRRUS_JET_M_PER_MINUTE),   // The jet's offset east, wrapped to the field's period - every tile the ice reads divides it
     // AUDIT 68 S17-cirrus-boil-wrap: the ice boils at half the slab's rate on its OWN clock, a share (0..1) of the
     // shape volume wrapped to a whole volume - half of evolve[0] jumped half a volume at each of its wraps
     cirrusBoil: wrap(minutes * EVOLVE_M_PER_MINUTE * 0.5, SHAPE_METRES) / SHAPE_METRES,
   };
 }
 
-// ═══ WEATHER2c (2026-09-14): CLOUD TYPES BY PLACE ═══════════════════
+// ═══ WEATHER2c: CLOUD TYPES BY PLACE ═══════════════════
 // Mac: "different generative cloud types, like being able to see a
 // thunderhead in the distance with the weather happening elsewhere."
 // The field had ONE profile for the whole sky - the zone's word, eased.
@@ -476,11 +473,11 @@ export function cloudClocks(minutes, driftWorld) {
 export function cellOf(weather, x, z, r) {
   const p = VC_PROFILE[weather];
   if (!p) return null;
-  const fall = CURTAIN_FALL[weather];   // VC7c: what falls under it, and what kind
-  return { x, z, r, edge: r * CELL_EDGE, ...p, word: weather, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, fall: fall ? fall[0] : 0, fallKind: fall ? fall[1] : 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };   // VC7a: the word it is, for the day's convection
+  const fall = CURTAIN_FALL[weather];   // What falls under it, and what kind
+  return { x, z, r, edge: r * CELL_EDGE, ...p, word: weather, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, fall: fall ? fall[0] : 0, fallKind: fall ? fall[1] : 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };   // The word it is, for the day's convection
 }
 
-/** WEATHER3c/3g: a world weather map cell (weatherMap.js skyCells, in
+/** A world weather map cell (weatherMap.js skyCells, in
  *  field metres) as a cloud cell in the host's metres - `toHost(x, z)`
  *  the host's own frame change - carrying its importance and rank to the
  *  pick, and a storm cell's `clip`: the disc it paints within (its front's
@@ -503,15 +500,15 @@ export function cellOfField(c, toHost) {
   } else {
     own = cellOf(c.word, x, z, c.r);
   }
-  const cell = grownCell(own, c.env);   // VC7a: as grown as its system
+  const cell = grownCell(own, c.env);   // As grown as its system
   if (!cell || c.imp == null) return cell;
   const out = { ...cell, imp: c.imp, rank: c.rank };
-  if (c.shape) out.shape = c.shape;   // WEATHER3h: its outline; a frame change is a translation, the shape rides it
+  if (c.shape) out.shape = c.shape;   // Its outline; a frame change is a translation, the shape rides it
   if (c.clip) out.clip = [...toHost(c.clip[0], c.clip[1]), c.clip[2], c.clip[3] ?? null];
   return out;
 }
 
-/** AUDIT-VC7 (R4): HOW FAST A SHAPE'S OUTLINE TURNS - the most its reach m(theta) = n (1 + sum a_k cos k(theta -
+/** HOW FAST A SHAPE'S OUTLINE TURNS - the most its reach m(theta) = n (1 + sum a_k cos k(theta -
  *  phi_k)) can change a radian of bearing: n sum k a_k, the bound of |m'| (each harmonic's slope at most k a_k). The
  *  sky march asks it whether a stride's disc can meet a rim (resolveAt's rimReach). 0 for a circle. Pure. */
 export function shapeTurn(sh) {
@@ -528,13 +525,13 @@ export function shapeTurn(sh) {
  *  ordered). Pure over the arrays it is handed. */
 export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4) }) {
   const n = Math.min(cells?.length ?? 0, cap, MAX_CELLS);
-  out.t ??= new Float32Array(MAX_CELLS * 4);   // WEATHER2d: the tints
-  out.k ??= new Float32Array(MAX_CELLS * 4);   // WEATHER3g: the clips
-  for (const key of ['s', 'u', 'ks', 'ku']) out[key] ??= new Float32Array(MAX_CELLS * 4);   // WEATHER3h: the shapes
-  out.f ??= new Float32Array(MAX_CELLS * 4);   // VC7c: the fall under each
+  out.t ??= new Float32Array(MAX_CELLS * 4);   // The tints
+  out.k ??= new Float32Array(MAX_CELLS * 4);   // The clips
+  for (const key of ['s', 'u', 'ks', 'ku']) out[key] ??= new Float32Array(MAX_CELLS * 4);   // The shapes
+  out.f ??= new Float32Array(MAX_CELLS * 4);   // The fall under each
   const shape = (sh, a, b, o) => {
     a[o] = sh ? sh[0] : 1; a[o + 1] = sh ? sh[1] : 0; a[o + 2] = sh ? sh[2] : 0; a[o + 3] = sh ? sh[3] : 0;
-    b[o] = sh ? sh[4] : 0; b[o + 1] = sh ? sh[5] : 0; b[o + 2] = sh ? sh[6] : 0; b[o + 3] = shapeTurn(sh);   // AUDIT-VC7 (R4): the spare w
+    b[o] = sh ? sh[4] : 0; b[o + 1] = sh ? sh[5] : 0; b[o + 2] = sh ? sh[6] : 0; b[o + 3] = shapeTurn(sh);   // The spare w
   };
   for (let i = 0; i < n; i++) {
     const c = cells[i], o = i * 4;
@@ -542,18 +539,18 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
     out.a[o] = c.base; out.a[o + 1] = c.top; out.a[o + 2] = c.density; out.a[o + 3] = c.flat;
     out.b[o] = c.dark; out.b[o + 1] = c.shear; out.b[o + 2] = c.cover; out.b[o + 3] = c.grey ?? 0;
     const t = c.tint ?? [1, 1, 1];
-    out.t[o] = t[0]; out.t[o + 1] = t[1]; out.t[o + 2] = t[2]; out.t[o + 3] = c.vary ?? 0;   // VC6a: the spare w is the cell's own type variation
-    // WEATHER3g: a storm cell's clip - its front's core - with the cell's own rim, so the cloud stands where the word is
+    out.t[o] = t[0]; out.t[o + 1] = t[1]; out.t[o + 2] = t[2]; out.t[o + 3] = c.vary ?? 0;   // The spare w is the cell's own type variation
+    // A storm cell's clip - its front's core - with the cell's own rim, so the cloud stands where the word is
     if (c.clip) { out.k[o] = c.clip[0]; out.k[o + 1] = c.clip[1]; out.k[o + 2] = c.clip[2]; out.k[o + 3] = out.c[o + 3]; } else { out.k[o] = 0; out.k[o + 1] = 0; out.k[o + 2] = -1; out.k[o + 3] = 1; }
     shape(c.shape, out.s, out.u, o);
     shape(c.clip?.[3], out.ks, out.ku, o);
-    out.f[o] = c.fall ?? 0; out.f[o + 1] = c.fallKind ?? 0; out.f[o + 2] = 0; out.f[o + 3] = 0;   // VC7c
+    out.f[o] = c.fall ?? 0; out.f[o + 1] = c.fallKind ?? 0; out.f[o + 2] = 0; out.f[o + 3] = 0;
   }
   out.count = n;
   return out;
 }
 
-/** WEATHER3c: THE CELLS THE SLOTS HOLD, IN THE ORDER THEY ARE DRAWN.
+/** THE CELLS THE SLOTS HOLD, IN THE ORDER THEY ARE DRAWN.
  *  Cells that carry an `imp` (the world weather map's) are chosen by it
  *  - the `cap` that matter most to the eye - and then ordered by their
  *  word's `rank` from the lowest priority to the highest (a larger disc
@@ -568,10 +565,10 @@ export function pickCells(cells, cap) {
     .sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0) || b.r - a.r);
 }
 
-/** WEATHER3d: the height a distant strike's light is aimed at - a
+/** The height a distant strike's light is aimed at - a
  *  thunderhead's middle (VC_PROFILE.thunder's slab, 500 m to 4200 m). */
 export const BOLT_HEIGHT = (VC_PROFILE.thunder.base + VC_PROFILE.thunder.top) / 2;
-/** WEATHER3d: a strike at (x, z), its cloud `r` across, seen from the
+/** A strike at (x, z), its cloud `r` across, seen from the
  *  camera at `cam` ([x, z]): the unit direction to the cloud's middle and
  *  the cosine of the cone the cloud fills (a little wider, for the glow
  *  about it). Pure. */
@@ -613,9 +610,9 @@ export function easeProfile(from, to, dt, span = WEATHER_EASE_MINUTES) {
 /** The light the clouds take: the sun while it is up, else the
  *  brighter visible moon (EV5's colour, dimmed), else none. `profile`
  *  is the slab the light falls on - its mid-height sets how far past
- *  the ground's horizon the deck can still see the sun (VC6b). Pure. */
+ *  the ground's horizon the deck can still see the sun. Pure. */
 export function cloudLight(state, profile = null) {
-  // VC6b: THE SUN SETS FOR THE CLOUD LAST. The weight used to be
+  // THE SUN SETS FOR THE CLOUD LAST. The weight used to be
   // `(sunDir.y + 0.02) / 0.08` - a window fitted by eye that put the
   // light out by the time the sun reached two and a half degrees, which
   // is the exact half hour Mac is describing. It is not a matter of
@@ -635,7 +632,7 @@ export function cloudLight(state, profile = null) {
   return { dir: m ? m.dir : [0, 1, 0], color: moon, day: 0 };
 }
 
-/** VC7d: the light on the ice layer - cloudLight at CIRRUS_ALT_M (it sees three degrees past the ground's horizon),
+/** The light on the ice layer - cloudLight at CIRRUS_ALT_M (it sees three degrees past the ground's horizon),
  *  and the sun in the colour the palette gives it at the elevation the ICE sees it at: the player's elevation plus
  *  that dip. So when the sun has set for the player and gone to ember for the deck, the cirrus is still gold - the
  *  last colour in a sunset sky - and it goes out three degrees after the ground. Pure. */
@@ -647,7 +644,7 @@ export function cirrusLight(state) {
   return { dir: L.dir, color: [0, 1, 2].map((i) => sun[i] * w + (L.color[i] - state.sun[i] * w)), day: w };
 }
 
-/** VC6b: HOW MUCH OF THE LOW-SUN LOOK THIS FRAME TAKES, 0..1 - the one
+/** HOW MUCH OF THE LOW-SUN LOOK THIS FRAME TAKES, 0..1 - the one
  *  weight behind all three of VC6b's terms. Pure.
  *
  *  It lives here, on the CPU, and not as a smoothstep on uLightDir in
@@ -668,7 +665,7 @@ export function duskWeight(sunY, dayWeight) {
   return dayWeight * t * t * (3 - 2 * t);
 }
 
-/** VC4: the shadow map's square for a camera at (x, z): its corner,
+/** The shadow map's square for a camera at (x, z): its corner,
  *  snapped to the pixel grid with the camera's pixel in the middle.
  *  Pure - the seam that keeps a recenter from moving the map. */
 export function shadowOrigin(camX, camZ, extent = SHADOW_EXTENT, pixel = PIXEL_METRES) {
@@ -678,7 +675,7 @@ export function shadowOrigin(camX, camZ, extent = SHADOW_EXTENT, pixel = PIXEL_M
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vNdc;
-void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;   // PERF2: at the far plane for the composite's depth test; the marches test nothing
+void main() { vNdc = aPos; gl_Position = vec4(aPos, 1.0, 1.0); }`;   // At the far plane for the composite's depth test; the marches test nothing
 
 /** THE FIELD: the density at a world point, and everything both
  *  marches share. Declared with its own uniforms and interpolated into
@@ -1325,7 +1322,7 @@ void main() {
   outColor = vec4(front.rgb + front.a * col, T * front.a);   // VC7c: the veil before the slab's start stands in front of all of it
 }`;
 
-/** VC4: the shadow map - one ground texel per fragment, the
+/** The shadow map - one ground texel per fragment, the
  *  transmittance along the sun's ray up through the slab. */
 export const SHADOW_FS = `#version 300 es
 precision highp float;
@@ -1363,7 +1360,7 @@ void main() {
   outColor = vec4(T, T, T, 1.0);
 }`;
 
-/** DSH1: how far BELOW the horizon the lid is carried, radians. The
+/** How far BELOW the horizon the lid is carried, radians. The
  *  number to clear is Unity's SKY_GROUND_THRESHOLD (0.01 in sine, the
  *  width of the strip Dynamic Skies lerps its sky to its ground over);
  *  this is that with a little room, and small enough that a clear sky's
@@ -1453,15 +1450,15 @@ uniform sampler2D uMap;
 out vec4 outColor;
 void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
 
-/** BOOT-COMPILE: the pass's four programs - the march, the shadow march, the composite and the lab's viewer - as its
+/** The pass's four programs - the march, the shadow march, the composite and the lab's viewer - as its
  *  constructor builds them: what the boot starts ahead of the build (render/bootPrograms.js). */
 export const CLOUD_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, MARCH_FS], [VS, SHADOW_FS], [VS, COMPOSITE_FS], [VS, SHADOW_VIEW_FS]]));
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
-export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // uSkyTint, uDusk; VC7c: the falls
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
-export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos', 'uDread', 'uBrass', 'uHazeSky'];   // BANTHA1: the jungle's haze   // EVENT1: the live event's grade   // WEATHER3d: the distant strike
+export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos', 'uDread', 'uBrass', 'uHazeSky'];   // The jungle's haze   // EVENT1: the live event's grade   // WEATHER3d: the distant strike
 
 export class VolumetricClouds {
   /** `quality` a QUALITY key; `viewport` the caller's rect to restore
@@ -1502,18 +1499,18 @@ export class VolumetricClouds {
     this.shift = [0, 0];      // the floating origin's recenters, accumulated (metres)
     this.cam = [0, 0];        // the camera's world XZ
     this.flash = 0;
-    /** EVENT1: the live event's grade over the clouds, 0..1 (world/dreadSky.js) - the host's. */
+    /** The live event's grade over the clouds, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
     /** AUDIT SD III (V8): the brass air's grade over them, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
-    this.hazeSky = new Float32Array(4);   // BANTHA1: the jungle's haze in front of the clouds (render/hazeGlsl.js uHazeSky) - the host's, w 0 none
-    this.bolt = null;   // WEATHER3d: a distant strike's light, or none
-    this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count
-    this.testCellSpec = null; // WEATHER2c: `?cloudcell=` as handed by the controller; resolved against the first camera position seen
+    this.hazeSky = new Float32Array(4);   // The jungle's haze in front of the clouds (render/hazeGlsl.js uHazeSky) - the host's, w 0 none
+    this.bolt = null;   // A distant strike's light, or none
+    this.cells = [];          // This frame's cells, in the host's world metres, capped at the tier's count
+    this.testCellSpec = null; // `?cloudcell=` as handed by the controller; resolved against the first camera position seen
     this.testCell = null;
     this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4), s: new Float32Array(MAX_CELLS * 4), u: new Float32Array(MAX_CELLS * 4), ks: new Float32Array(MAX_CELLS * 4), ku: new Float32Array(MAX_CELLS * 4), count: 0 };
     this.stripe = 0;
-    this.pace = SWEEP_FRAMES;        // RAIN-FPS: this sky sweep's frames, taken at its first stripe
+    this.pace = SWEEP_FRAMES;        // This sky sweep's frames, taken at its first stripe
     this.shadowPace = SWEEP_FRAMES;  // ...and the shadow sweep's, at its own
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     /** CLOUD-COMPILE option D (`?cloudsweep=whole`, off by default): march the first sweep whole, in the clouds' first
@@ -1536,7 +1533,7 @@ export class VolumetricClouds {
     this.cam[0] += offset[0]; this.cam[1] += offset[2];
     if (this.origin) { this.origin[0] += offset[0]; this.origin[1] += offset[2]; }
     if (this.mapOrigin) { this.mapOrigin[0] += offset[0]; this.mapOrigin[1] += offset[2]; }
-    if (this.testCell) { this.testCell.x += offset[0]; this.testCell.z += offset[2]; }   // WEATHER2c: the test cell keeps its place over the land
+    if (this.testCell) { this.testCell.x += offset[0]; this.testCell.z += offset[2]; }   // The test cell keeps its place over the land
   }
 
   /** Per frame, from the controller: the dome's state, the eased row,
@@ -1544,24 +1541,24 @@ export class VolumetricClouds {
    *  drift integral, the lightning flash, the camera's world position. */
   setState(state, row, weather, easeDt, drift, flash = 0, pos = null, cells = null) {
     this.state = state; this.row = row;
-    // WEATHER2c: the field's cells for this frame - the controller's, else the test door's one
+    // The field's cells for this frame - the controller's, else the test door's one
     if (this.testCellSpec && !this.testCell && pos) this.testCell = parseCloudCellDoor(this.testCellSpec, pos);
-    // VC7a: the day's convection at the sky's own minute, on the fair cells and the fair zone
+    // The day's convection at the sky's own minute, on the fair cells and the fair zone
     this.conv = convection(state.minuteOfDay ?? ((((state.minutes ?? 0) % 1440) + 1440) % 1440));
-    // WEATHER3c: the map's cells by importance, drawn by rank. AUDIT-VC7: the door's cell joins them - the hosts always
+    // The map's cells by importance, drawn by rank. AUDIT-VC7: the door's cell joins them - the hosts always
     // hand a list (the map's, empty in clear air), so a cell taken only in its place never stood in the game
     const host = cells ?? [];
     this.cells = pickCells(this.testCell ? [...host, this.testCell] : host, this.q.cells ?? MAX_CELLS).map((c) => convectCell(c, this.conv));
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
-    // VC7d: the ice layer's cover eases with the weather, on the profile's own span
+    // The ice layer's cover eases with the weather, on the profile's own span
     this.cirrusCover = easeOnWeatherSpan(this.cirrusCover, CIRRUS_COVER[weather] ?? CIRRUS_COVER.sunny, easeDt);
-    // AUDIT-VC7 (R3): and so does how FAIR the zone is - the day's convection takes the eased profile's tops, so it
+    // And so does how FAIR the zone is - the day's convection takes the eased profile's tops, so it
     // is weighed in as the profile turns, not all at once when the word does (a kilometre's jump at a front)
     this.fair = easeOnWeatherSpan(this.fair, FAIR_WEATHERS.includes(weather) ? 1 : 0, easeDt);
-    this.drift = [wrapField(drift[0] * WORLD_PER_DRIFT), wrapField(drift[1] * WORLD_PER_DRIFT)];   // CLK1: wrapped to the field's period
-    this.clocks = cloudClocks(state.minutes ?? 0, [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT]);   // VC7a: the boil and the cover's own wind
+    this.drift = [wrapField(drift[0] * WORLD_PER_DRIFT), wrapField(drift[1] * WORLD_PER_DRIFT)];   // Wrapped to the field's period
+    this.clocks = cloudClocks(state.minutes ?? 0, [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT]);   // The boil and the cover's own wind
     this.flash = flash;
     if (pos) { this.cam[0] = pos[0]; this.cam[1] = pos[2]; }
     const o = shadowOrigin(this.cam[0], this.cam[1]);
@@ -1584,7 +1581,7 @@ export class VolumetricClouds {
     if (Math.abs(dx) >= n || Math.abs(dz) >= n) { this.shadowFull = true; this.pendingShift = null; return; }
     const dst = this.shadowScratch, src = this.shadowMap;
     withTarget(gl, dst, viewport, () => {});   // attached, if it never was
-    // SKY-CAP: the strips the blit will not cover are MARCHED in this same update (update's shadow block, before its
+    // The strips the blit will not cover are MARCHED in this same update (update's shadow block, before its
     // stripe) - never left all light for a sweep: the haze reads the square's edge for every ray whose sun foot is
     // past it, so a white strip there lit the whole far haze at dusk after every pixel crossing
     this.shadowStrips = [];
@@ -1596,7 +1593,7 @@ export class VolumetricClouds {
     const sx0 = Math.max(0, dx), sx1 = Math.min(n, n + dx), sy0 = Math.max(0, dz), sy1 = Math.min(n, n + dz);
     gl.blitFramebuffer(sx0, sy0, sx1, sy1, sx0 - dx, sy0 - dz, sx1 - dx, sy1 - dz, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, frameTarget());   // EL4: the frame, or the canvas
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, frameTarget());   // The frame, or the canvas
     this.shadowMap = dst; this.shadowScratch = src;
     this.mapOrigin = [this.origin[0], this.origin[1]];
     this.pendingShift = null;
@@ -1608,17 +1605,17 @@ export class VolumetricClouds {
    *  into the new one. */
   jump() { this.profile = null; this.cirrusCover = null; this.fair = null; this.stripe = 0; this.shadowFull = true; }
 
-  /** WEATHER3d: a distant storm's strike this frame - `{ x, z, r,
+  /** A distant storm's strike this frame - `{ x, z, r,
    *  strength }` in the host's world metres, or null. Its cloud is lit
    *  in the direction of its middle (boltOf); the storm overhead is the
    *  whole-sky `flash`, as before. */
   setBolt(b) { this.bolt = b ? boltOf(b, this.cam) : null; }
 
-  /** VC4: what the ground samples - the map and its square, for the
+  /** What the ground samples - the map and its square, for the
    *  deck the controller hands the renderer. */
   get shadow() {
     if (!this.mapOrigin || !this.shadowMarched) return null;
-    // VC7b: and the SKY map, once a sweep has filled it - its alpha is the transmittance by direction (the slab's, the
+    // And the SKY map, once a sweep has filled it - its alpha is the transmittance by direction (the slab's, the
     // curtains' and the ice's, AUDIT-VC7), which
     // is what cuts the sun's beams into spokes (airPass.js SHAFT_FS); null before, and the mask is the sky's alone
     return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: this.sweeps > 0 ? this.map.tex : null };
@@ -1628,18 +1625,18 @@ export class VolumetricClouds {
     const gl = this.gl, r = this.row, p = this.profile;
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, this.noise.shape.tex); gl.uniform1i(u.uShape, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, this.noise.detail.tex); gl.uniform1i(u.uDetail, 1);
-    // VC7a: the zone convects as a fair cell does, by how fair it is by now (AUDIT-VC7 R3)
+    // The zone convects as a fair cell does, by how fair it is by now
     const zone = convectZone(p, this.conv, this.fair ?? 0);
     gl.uniform1f(u.uCover, r.cover); gl.uniform1f(u.uSoft, r.soft);
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, zone.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
-    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a
-    // WEATHER2c: the cells (SLAB-SPAN: each ray finds its own slab among them)
+    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);
+    // The cells (SLAB-SPAN: each ray finds its own slab among them)
     const k = packCells(this.cells, this.q.cells ?? MAX_CELLS, this._packed);
     gl.uniform1i(u.uCellCount, k.count);
     if (k.count > 0) { gl.uniform4fv(u.uCell, k.c); gl.uniform4fv(u.uCellA, k.a); gl.uniform4fv(u.uCellB, k.b); gl.uniform4fv(u.uCellC, k.t); gl.uniform4fv(u.uCellK, k.k); gl.uniform4fv(u.uCellS, k.s); gl.uniform4fv(u.uCellU, k.u); gl.uniform4fv(u.uCellKS, k.ks); gl.uniform4fv(u.uCellKU, k.ku); }
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
-    gl.uniform2f(u.uShift, wrapField(this.shift[0]), wrapField(this.shift[1]));   // CLK1: wrapped to the field's period
+    gl.uniform2f(u.uShift, wrapField(this.shift[0]), wrapField(this.shift[1]));   // Wrapped to the field's period
     gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);
     const ck = this.clocks ?? cloudClocks(0, [0, 0]);
     gl.uniform3f(u.uEvolve, ck.evolve[0], ck.evolve[1], ck.evolve[2]);
@@ -1652,14 +1649,14 @@ export class VolumetricClouds {
   update(viewport) {
     if (!this.state || !this.profile) return;
     const gl = this.gl, q = this.q, s = this.state, p = this.profile;
-    const light = cloudLight(s, p);   // VC6b: the slab it falls on decides how far past the horizon it reaches
+    const light = cloudLight(s, p);   // The slab it falls on decides how far past the horizon it reaches
     gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
     gl.bindVertexArray(this.vao);
     if (this.pendingShift) this._shiftShadowMap(this.pendingShift[0], this.pendingShift[1], viewport);
     // the sky map, a stripe at a time from the first frame on
     {
       const u = this.mu;
-      // RAIN-FPS: the pace is the sky's at a sweep's start and holds to its end - a sweep never changes stripe midway
+      // The pace is the sky's at a sweep's start and holds to its end - a sweep never changes stripe midway
       if (this.stripe === 0) this.pace = sweepFramesFor(this.row?.cover, this.cells.length);
       const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);
       const y0 = this.stripe * rows;
@@ -1669,13 +1666,13 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uLightDir, light.dir); gl.uniform3fv(u.uLightColor, light.color);
       gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
       gl.uniform3fv(u.uHorizonColor, s.horizon);
-      gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b: the sky that lights the side the sun does not
-      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off
+      gl.uniform3fv(u.uSkyTint, s.zenith);   // The sky that lights the side the sun does not
+      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // The SUN's own angle and weight - zero at night, so the whole slice is off
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
       if (this._packed?.count > 0) gl.uniform4fv(u.uCellF, this._packed.f);
-      const ice = cirrusLight(s);   // VC7d
+      const ice = cirrusLight(s);
       gl.uniform4f(u.uCirrus, this.cirrusCover ?? 0, CIRRUS_TAU, this.clocks?.cirrus ?? 0, this.clocks?.cirrusBoil ?? 0);
-      gl.uniform3fv(u.uCirrusLight, ice.color); gl.uniform3fv(u.uCirrusDir, ice.dir);   // VC7c: the curtains' falls, packed with the cells this frame
+      gl.uniform3fv(u.uCirrusLight, ice.color); gl.uniform3fv(u.uCirrusDir, ice.dir);   // The curtains' falls, packed with the cells this frame
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1683,10 +1680,10 @@ export class VolumetricClouds {
       this.stripe++;
       if (this.stripe * rows >= q.height) { this.stripe = 0; this.sweeps++; }
     }
-    // the shadow map (VC4)
+    // the shadow map
     {
       const u = this.su;
-      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;   // RAIN-FPS: the sky's pace, at the shadow sweep's own start
+      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;   // The sky's pace, at the shadow sweep's own start
       const rows = this.shadowFull ? q.shadow : Math.ceil(q.shadow / this.shadowPace);
       const y0 = this.shadowFull ? 0 : this.shadowStripe * rows;
       gl.useProgram(this.shadowProgram);
@@ -1697,7 +1694,7 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uLightDir, s.sunDir);   // the SUN's: the moon casts none
       gl.uniform1i(u.uSteps, q.shadowSteps);
       withTarget(gl, this.shadowMap, viewport, () => {
-        if (!this.shadowFull && this.shadowStrips) for (const [x, y, w, h] of this.shadowStrips) { gl.viewport(x, y, w, h); gl.drawArrays(gl.TRIANGLES, 0, 3); }   // SKY-CAP: a crossing's new strips, now
+        if (!this.shadowFull && this.shadowStrips) for (const [x, y, w, h] of this.shadowStrips) { gl.viewport(x, y, w, h); gl.drawArrays(gl.TRIANGLES, 0, 3); }   // A crossing's new strips, now
         gl.viewport(0, y0, q.shadow, Math.min(rows, q.shadow - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       });
@@ -1720,24 +1717,24 @@ export class VolumetricClouds {
     if (this.sweeps === 0) return;
     const gl = this.gl, u = this.cu;
     gl.useProgram(this.compositeProgram);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(false); gl.disable(gl.CULL_FACE);   // PERF2: only the sky's own pixels
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.depthMask(false); gl.disable(gl.CULL_FACE);   // Only the sky's own pixels
     gl.enable(gl.BLEND);
     gl.blendFuncSeparate(gl.ONE, gl.SRC_ALPHA, gl.ZERO, gl.ONE);   // sky * T + cloud; the buffer's alpha untouched (ONE, SRC_ALPHA on both would leave it 2T)
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.map.tex); gl.uniform1i(u.uMap, 0);
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uFlash, this.flash);
-    gl.uniform1f(u.uDread, this.dread);   // EVENT1
+    gl.uniform1f(u.uDread, this.dread);
     gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)
-    gl.uniform4fv(u.uHazeSky, this.hazeSky);   // BANTHA1
-    const b = this.bolt;   // WEATHER3d
+    gl.uniform4fv(u.uHazeSky, this.hazeSky);
+    const b = this.bolt;
     gl.uniform4f(u.uBolt, b ? b.dir[0] : 0, b ? b.dir[1] : 1, b ? b.dir[2] : 0, b ? b.strength : 0); gl.uniform1f(u.uBoltCos, b ? b.cos : 1);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.disable(gl.BLEND);
-    gl.depthFunc(gl.LESS); gl.depthMask(true); gl.enable(gl.CULL_FACE);   // PERF2
+    gl.depthFunc(gl.LESS); gl.depthMask(true); gl.enable(gl.CULL_FACE);
   }
 
   /** DRAW PATH, the lab's: the shadow map as a picture over the frame. */

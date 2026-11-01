@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31): THE TWO SOUND MODS' CLIPS, OURS. Immersive Footsteps 1.01 asks for 105 clips by name in each of
+// THE TWO SOUND MODS' CLIPS, OURS. Immersive Footsteps 1.01 asks for 105 clips by name in each of
 // two qualities and Better Ambience 0.1.4 for 29; each name here answers with a clip our synth makes (steps.js, rain.js)
 // - the same name, the same length, the same rate as the clip it stands for, and nothing of that clip but its name and
 // its length. The two mods' laws (systems/immersiveFootsteps.js, systems/betterAmbience.js) are unchanged.

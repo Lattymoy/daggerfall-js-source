@@ -77,8 +77,8 @@
     "tests": [
       "test/ui/grim1_dress.test.js"
     ],
-    "old": "      if (skin === 'enhanced' && setPref('plusDress', dress) === false) url.searchParams.set('dress', dress); // SKIN-CARRY",
-    "new": "      if (skin === 'enhanced' && false) url.searchParams.set('dress', dress); // SKIN-CARRY"
+    "old": "      if (skin === 'enhanced' && setPref('plusDress', dress) === false) url.searchParams.set('dress', dress);",
+    "new": "      if (skin === 'enhanced' && false) url.searchParams.set('dress', dress);"
   },
   {
     "name": "GRIM1-theme-worn-under-dress",

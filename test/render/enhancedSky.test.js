@@ -1,4 +1,4 @@
-// ES1 - THE ENHANCED SKY (2026-08-27, Mac's call: "for the enhanced
+// THE ENHANCED SKY (2026-08-27, Mac's call: "for the enhanced
 // version of the game, I want us to develop our own take on the
 // procedural sky system mod from DFU").
 //
@@ -234,13 +234,13 @@ test('ES1 seam: enhanced skin only, one renderer field, the classic pass untouch
   // Both hosts hand the weather and the classic clock through (SEA-EVENTS: world.js the Aether Storm's first, at sea -
   // scenes/seaVenturesHost.js seaStormShown, shown as the Sun Baby's clear day is).
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /\{ weather, violence: weatherOverride \?\? (?:seaStormShown\(\) \?\? )?currentWeatherRaw\(\), classicMinutes: playerTicker\.classicMinutes, skyMinutes: skyMinutes\(\), sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);\s*\/\/ WEATHER2a[^\n]*ES1/, `${host} feeds the sky`);   // TIME1: two minutes
+    assert.match(read(host), /\{ weather, violence: weatherOverride \?\? (?:seaStormShown\(\) \?\? )?currentWeatherRaw\(\), classicMinutes: playerTicker\.classicMinutes, skyMinutes: skyMinutes\(\), sun: wxNow\.sun, flash: flash - 1, pos: [^}]+ \}\);\s*\/\/ WEATHER2a[^\n]*ES1/, `${host} feeds the sky`);   // Two minutes
   }
   // The lab is a page like the other prototypes, built as one.
   assert.match(read('vite.config.js'), /sky: 'sky\.html',/);
 });
 
-// ── ES1c: THE POLISH (2026-08-27, Mac: "how can we improve this") ──
+// ── ES1c: THE POLISH ──
 // Four of five taken: the banding, the clouds, the weather's snap, the
 // stars standing still. (The fifth - cloud shadow on the world - is a
 // world change, not a sky one, and stays on the board.)
@@ -294,7 +294,7 @@ test('ES1c stars: the field wheels about a pole, one turn a day, on the same clo
   const fs = read('src/render/enhancedSky.js');
   assert.match(fs, /float ca = cos\(uStarAngle\), sa = sin\(uStarAngle\);/, 'the turn is the CLOCK\'s angle - a constant here is a field that stands still');
   assert.match(fs, /vec3 d = dir \* ca \+ cross\(axis, dir\) \* sa \+ axis \* dot\(axis, dir\) \* \(1\.0 - ca\);/, 'Rodrigues about the pole');
-  // EE2 F2: cubeSnap is no longer called for the STARS - its integer
+  // cubeSnap is no longer called for the STARS - its integer
   // cell made fract() a constant and ruled the field into rows. The
   // laws this pin holds are unchanged: sampled in the TURNED frame
   // (d, not dir), cast on the cube's equi-angular faces.
@@ -308,7 +308,7 @@ test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither 
   const fs = read('src/render/enhancedSky.js');
   // Two decks: a high one and a low one, the low occluding the high.
   assert.match(fs, /vec2 deck\(vec3 dir, float scale, vec2 drift, float cover, float soft, float bias\)/);
-  // WIND2: the decks move by an integrated DRIFT, not wind * time.
+  // The decks move by an integrated DRIFT, not wind * time.
   assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uDrift \* 0\.55,/, 'the high deck is smaller and slower');
   assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uDrift,/, 'the low one larger and faster - so they move against each other');
   assert.match(fs, /float covHi = hi\.x \* \(1\.0 - lo\.x\) \* 0\.7;/, 'the low deck covers the high one where it is');
@@ -323,7 +323,7 @@ test('ES1c clouds and dither: two decks lit by the sun, and a triangular dither 
   // one, and where.)
   assert.match(fs, /vec3 out3 = mix\(clamp\(color, 0\.0, 1\.0\), uFogColor, uFogMix\);/);
   assert.match(fs, /out3 \+= \(ign - 0\.5\) \/ 255\.0;/, 'a sub-quantisation step, never more');
-  assert.match(fs, /outColor = vec4\(brassGrade\(dreadGrade\(out3, uDread\), uBrass\), 1\.0\);/);   // EVENT1: the live event's grade, out3 itself without one; AUDIT SD III (V8, PIN MOVED): the brass air's after it
+  assert.match(fs, /outColor = vec4\(brassGrade\(dreadGrade\(out3, uDread\), uBrass\), 1\.0\);/);   // The live event's grade, out3 itself without one; AUDIT SD III (V8, PIN MOVED): the brass air's after it
 });
 
 // ── ES1d: THE CLOUD IN FRONT OF THE SUN ───────────────────────────
@@ -351,7 +351,7 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
   // sky says it should not, so the two texts are pinned against each other.
   const fs = read('src/render/enhancedSky.js');
   assert.match(fs, /vec2 hi = deck\(dir, 0\.95, uDrift \* 0\.55, uCloudCover \* 0\.75, uCloudSoft \* 1\.5, 0\.0\);/);
-  // WIND2: the JS twin reads the same integrated drift the shader does -
+  // The JS twin reads the same integrated drift the shader does -
   // the pair still cannot disagree, which is this pin's whole point.
   assert.match(fs, /const hi = deckCover\(d, 0\.95, \[dr\[0\] \* 0\.55, dr\[1\] \* 0\.55\], state\.cloudCover \* 0\.75, state\.cloudSoft \* 1\.5\);/);
   assert.match(fs, /vec2 lo = deck\(dir, 1\.9, uDrift, uCloudCover, uCloudSoft, 0\.0\);/);
@@ -371,28 +371,27 @@ test('ES1d shadow: the sun dims under the cloud the SHADER draws, and the two ca
   assert.match(read('src/scenes/shared.js'), /return 1 - CLOUD_SHADOW \* occ;/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(host);
-    // WX2: the weather's sun scale reaches the light as `wxNow.sun` - the
+    // The weather's sun scale reaches the light as `wxNow.sun` - the
     // row's own number under the classic sky, the front's under the enhanced
     assert.match(src, /sunScale\(minute\) \* wxNow\.sun \* flash \* sky\.sunFactor\(\)/, `${host} dims the key light`);
     assert.doesNotMatch(src, /exteriorAmbient\(minute, 1, (weatherSun|wxNow\.sun) \* sky\.sunFactor/, `${host} does NOT dim the ambient`);
   }
 });
 
-// ── ES1e / ES1f / ES1g: THE RETRO PASS - REMOVED (FT3, 2026-09-14, Mac:
-// "Remove our version of pixelated sky"). The pins went with the pass.
+// ── ES1e / ES1f / ES1g: THE RETRO PASS - REMOVED. The pins went with the pass.
 
 // ═══ EE2: the sky's four fixes, from the Enhanced Environments lab ═══
 test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has its band', async () => {
   const { paletteAt, SKY_KEYS } = await import('../../src/render/enhancedSky.js');
   const fs = read('src/render/enhancedSky.js');
-  // F1: the projection is capped, or the horizon has no cloud
+  // The projection is capped, or the horizon has no cloud
   assert.match(fs, /vec2 p = dir\.xz \* min\(1\.0 \/ \(dir\.y \+ 0\.18\), 9\.0\) \* scale \+ drift;/);
-  // F2: the star field takes no position from a cell id
+  // The star field takes no position from a cell id
   const stars = fs.slice(fs.indexOf('float stars('), fs.indexOf('float stars(') + 3200)
     .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
   assert.ok(!/cubeSnap/.test(stars), 'the stars must not take their position from an integer cell');
   assert.match(stars, /vec2 g = atan\(raw2\) \* 1\.27323954 \* scale \+ vec2\(face2 \* 977\.0/);
-  // F3: the band is four keys wide where it was two
+  // The band is four keys wide where it was two
   const band = SKY_KEYS.filter((k) => k.elev >= -4 && k.elev <= 7).map((k) => k.elev);
   assert.deepEqual(band, [-4, -2, 0, 2, 4, 7]);
   const h = [-2, 0, 2].map((e) => paletteAt(e).horizon);
@@ -402,7 +401,7 @@ test('EE2: the deck reaches the horizon, the stars are not rows, the sunset has 
   assert.ok(z[2] > z[1] && z[1] > z[0], 'at -2 the zenith is deep blue-violet');
   assert.ok(paletteAt(0).glowAmount > paletteAt(-2).glowAmount && paletteAt(2).glowAmount < paletteAt(0).glowAmount,
     'the glow swings warm then cools as the sun clears the haze');
-  // F4: cover means cover to the horizon, on both sides
+  // Cover means cover to the horizon, on both sides
   assert.match(fs, /cloud = mix\(cov, cov \* mix\(uCloudCover, 1\.0, 0\.75\), near\);/);
   assert.match(fs, /const thin = state\.cloudCover \+ \(1 - state\.cloudCover\) \* 0\.75;/);
 });
@@ -417,7 +416,7 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
     const ti = r.indexOf(name); const tj = r.indexOf('`;', ti);
     assert.match(r.slice(ti, tj), /\$\{CLOUD_SHADOW_GLSL\}/, `${name} interpolates the block`);
   }
-  // VC6c: the block's text moved to its own leaf when the air pass's
+  // The block's text moved to its own leaf when the air pass's
   // shafts became its second reader - the renderer imports it, and the
   // import must stand ABOVE the first shader that interpolates it for
   // the same reason the const did (a template literal is evaluated at
@@ -425,14 +424,13 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
   const cs = read('src/render/cloudShadow.js');
   assert.match(cs, /export const CLOUD_SHADOW_GLSL = `/, 'one home for the text');
   assert.doesNotMatch(r, /const CLOUD_SHADOW_GLSL = `/, 'and only one - the renderer keeps no copy');
-  const imp = r.indexOf("import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js'");   // PIN MOVED (OW-HORIZON, 2026-10-20): and the deck's far law beside it
+  const imp = r.indexOf("import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js'");
   assert.ok(imp >= 0 && imp < r.indexOf('const FS = `'), 'imported before the first shader that reads it');
   assert.match(read('src/render/airPass.js'), /import \{ CLOUD_SHADOW_GLSL \} from '\.\/cloudShadow\.js';/, 'VC6c: the shafts read the same field the ground does');
   assert.equal((r.match(/diff \*= cloudShadowAt\(vWorldPos\);/g) || []).length, 3, 'the mesh, the character and the terrain: a cloud dims the SUN and leaves the ambient alone');
   assert.match(r, /uBBSun \* cloudShadowAt\(vBBWorld\)/, 'the flats: the sun\u2019s half of the tint, shadowed');
   // OFF is free and cannot change classic: the amount 0 returns before the sample
   assert.match(cs, /if \(uCloudShadowRect\.w <= 0\.0\) return 1\.0;/);
-  // PIN MOVED (OW-HORIZON, 2026-10-20): outside the square the far law - in a program never told it (0, 0), full sun as before
   assert.match(cs, /float far = told \? uCloudShadowFar\.x : 1\.0;\n\s*if \(uv\.x < 0\.0 \|\| uv\.y < 0\.0 \|\| uv\.x > 1\.0 \|\| uv\.y > 1\.0\) return far;/, 'outside the square, no shadow');
   assert.match(r, /this\._cloudShadow = null;/);
   assert.match(r, /setCloudShadow\(d\) \{ d = d \?\? null; if \(d !== this\._cloudShadow\) \{ this\._cloudShadow = d; this\._csStamp\+\+; \} \}/, 'numbers and handles only - it binds nothing');
@@ -448,7 +446,7 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
   assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
   assert.match(sky, /time: state\.seconds \?\? 0,/);
   const sharedSrc = read('src/scenes/shared.js');
-  assert.match(sharedSrc, /if \(cloudsShown\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, cloudsShown\.shadow, \{ far: farCoverSun\(\) \}\);/, 'the deck carries the map and its square');   // PIN MOVED (OW-HORIZON, 2026-10-20): and the far law past it
+  assert.match(sharedSrc, /if \(cloudsShown\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, cloudsShown\.shadow, \{ far: farCoverSun\(\) \}\);/, 'the deck carries the map and its square');
   assert.match(sharedSrc, /if \(cloudsShown\) return 1;   \/\/ VC4/, 'no global dim on top of the per-surface shadow');
   // both hosts hand it over immediately before the terrain draw, and
   // hand over NOTHING when there is no enhanced sky
@@ -542,7 +540,7 @@ test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab pr
 
   const enhanced = spy();
   const ep = new PrecipitationRenderer(enhanced.gl, { enhanced: true, countCap: 4000 });
-  // OWN-AUDIT (2026-11-01, PIN MOVED): and Better Ambience's fall beside it (render/precipitation.js BETTER_FALL)
+  // And Better Ambience's fall beside it (render/precipitation.js BETTER_FALL)
   assert.equal(enhanced.seen.programs, 3, 'the enhanced lane builds the lab\u2019s programs in the CONSTRUCTOR - a shader fault stays a constructor fault');
   assert.ok(ep.labProgram && ep.betterProgram, 'and keeps them');
   assert.ok(enhanced.seen.uploads.includes(LAB_COUNTS.rain * 4),
@@ -565,7 +563,7 @@ test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab pr
 test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, and the wind law is the lab\u2019s', async () => {
   const { LAB_WX_VS, LAB_WX_FS, LAB_BOX, LAB_COUNTS, LAB_FALL } = await import('../../src/render/precipitation.js');
   const lab = read('grass-proto.html');
-  // BYTE-EXACT: the shader bodies are the lab's text, sliced from the
+  // The shader bodies are the lab's text, sliced from the
   // page at test time and compared as strings
   const vsStart = lab.indexOf('layout(location=0) in vec2 aCorner;\nlayout(location=1) in vec4 aSeed;      // x,y,z in the box + phase');
   const vsEnd = lab.indexOf('}`, HEAD + `', vsStart) + 1;

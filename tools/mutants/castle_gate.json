@@ -47,8 +47,8 @@
   {
     "name": "CASTLE-GATE-doors-ungathered",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)\n",
-    "new": "",
+    "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)\n            for (const door of staticDoors) {",
+    "new": "            for (const door of staticDoors) {",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CASTLE-GATE-every-tier",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const castleGate = seatTier === 'crown' ? castleEntranceOf(pixelDungeonDoors) : null;",
-    "new": "    const castleGate = castleEntranceOf(pixelDungeonDoors);",
+    "old": "    const castleGate = seatTier === 'crown' ? castleEntranceOf(pixelDungeonDoors) : null;   // A crown city's castle entrance",
+    "new": "    const castleGate = castleEntranceOf(pixelDungeonDoors);   // A crown city's castle entrance",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CASTLE-GATE-field-unhanded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      tier: seatTier, castle: castleGate,\n",
-    "new": "      tier: seatTier,\n",
+    "old": "      tier: seatTier, castle: castleGate,",
+    "new": "      tier: seatTier,",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CASTLE-GATE-banners-unhanded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      frames: pixelHomeFrames, palaceKeys: seatPalaceKeys, castle: castleGate,\n",
-    "new": "      frames: pixelHomeFrames, palaceKeys: seatPalaceKeys,\n",
+    "old": "      frames: pixelHomeFrames, palaceKeys: seatPalaceKeys, castle: castleGate,",
+    "new": "      frames: pixelHomeFrames, palaceKeys: seatPalaceKeys,",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CASTLE-GATE-G1-normal-ungathered",
     "file": "src/scenes/pixelBuild.js",
-    "old": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });",
-    "new": "pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, arena: b.blockName === ARENA_BLOCK });",
+    "old": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)",
+    "new": "            if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]

@@ -56,8 +56,8 @@
   {
     "name": "OW4-J2-route-not-held",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const route = st.route;   // AUDIT OW4 J2",
-    "new": "    const route = null;   // AUDIT OW4 J2",
+    "old": "    const route = st.route;   // Held before the panel's Camp - a spot's route dies in interruptTravel",
+    "new": "    const route = null;   // Held before the panel's Camp - a spot's route dies in interruptTravel",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "OW4-J2-not-resumed",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (route) { st.route = route; resumeRoute(); }",
-    "new": "      if (false) { st.route = route; resumeRoute(); }",
+    "old": "      if (route) { st.route = route; resumeRoute(); }   // The view's own journey, on from where it stood",
+    "new": "      if (false) { st.route = route; resumeRoute(); }   // The view's own journey, on from where it stood",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -257,8 +257,8 @@
   {
     "name": "OW4-J7-no-guard",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "if (ui?.isShowing) ui.closeWindow(); if (st.autopilot) interruptTravel(); deps.showHealthStatus?.();",
-    "new": "if (ui?.isShowing) ui.closeWindow(); deps.showHealthStatus?.();",
+    "old": "        if (dc > st.diseaseCount) { if (ui?.isShowing) ui.closeWindow(); if (st.autopilot) interruptTravel(); deps.showHealthStatus?.(); }",
+    "new": "        if (dc > st.diseaseCount) { if (ui?.isShowing) ui.closeWindow(); deps.showHealthStatus?.(); }",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ],

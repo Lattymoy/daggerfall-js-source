@@ -39,7 +39,7 @@ mod.
   picture it covers. Over a stand-in it takes the stand-in's size, scale and box, so a billboard stands as big as the
   one it replaces at any resolution.
 - So a studio picture draws over the painted ship and hanging stand-ins, over every texture mod (shipped or attached),
-  over the mods' vendored art, and on the ground (`src/systems/dfmodTextures.js` `dfmodGroundLayers` lays its records
+  over the mods' art, and on the ground (`src/systems/dfmodTextures.js` `dfmodGroundLayers` lays its records
   into the tile set). It draws with Replace Game Artwork off and on Classic: it is the game's own art.
 - A player's own loose texture pack still answers first. The spectral archives take no replacement.
 - An artist's picture is worn as drawn; the palette look laid on pictures painted from numbers is not laid on it.

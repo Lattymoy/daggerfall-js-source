@@ -347,8 +347,8 @@
   {
     "name": "WR-flash-always-right",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1;",
-    "new": "entity._thunderlockFlashSide = 1;",
+    "old": "        entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;",
+    "new": "        entity._thunderlockFlashSide = 1; entity._thunderlockFlashRange = feel.flashRange;",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "WR-flash-handedness-ignored",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1;",
-    "new": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), false) ? -1 : 1;",
+    "old": "        entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;",
+    "new": "        entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), false) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -367,8 +367,8 @@
   {
     "name": "WR-flash-off-the-lead",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1;",
-    "new": "entity._thunderlockFlashSide = pistols.flipOf(p, p.lead, handedFlip()) ? -1 : 1;",
+    "old": "        entity._thunderlockFlashSide = pistols.flipOf(p, pistols.brightest(p), handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;",
+    "new": "        entity._thunderlockFlashSide = pistols.flipOf(p, p.lead, handedFlip()) ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange;",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -377,8 +377,8 @@
   {
     "name": "WR-pistol-shot-silent",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "for (const _h of armShoots ? (fired ? [playerWeapon.strike?.hand ?? 'R'] : []) : shot) {",
-    "new": "for (const _h of armShoots ? (fired ? [playerWeapon.strike?.hand ?? 'R'] : []) : []) {",
+    "old": "      for (const _h of armShoots ? (fired ? [playerWeapon.strike?.hand ?? 'R'] : []) : shot) {",
+    "new": "      for (const _h of armShoots ? (fired ? [playerWeapon.strike?.hand ?? 'R'] : []) : []) {",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js",
@@ -388,8 +388,8 @@
   {
     "name": "WR-pistol-reload-silent",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (!_heldHit) pistols.voice(p, feel, (k, gain) =>",
-    "new": "      if (!_heldHit) void ((k, gain) =>",
+    "old": "      if (!_heldHit) pistols.voice(p, feel, (k, gain) => audio.playOneShot(sfx[k], feel.sfxVolume * gain, gunPitch(undefined, feel)));",
+    "new": "      if (!_heldHit) void ((k, gain) => audio.playOneShot(sfx[k], feel.sfxVolume * gain, gunPitch(undefined, feel)));",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -406,8 +406,8 @@
   {
     "name": "WR-pistols-pop-on-sheath",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    if (pistolsUp()) return pistols.sliding(playerWeapon.pistols, heldFeel());",
-    "new": "",
+    "old": "    if (pistolsUp()) return pistols.sliding(playerWeapon.pistols, heldFeel());   // Any drawn pistol still on its way out",
+    "new": "   // Any drawn pistol still on its way out",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -416,8 +416,8 @@
   {
     "name": "WR-pair-drawn-in-a-fixed-order",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "for (const h of pistols.order(playerWeapon.pistols)) {",
-    "new": "for (const h of ['R', 'L']) {",
+    "old": "        for (const h of pistols.order(playerWeapon.pistols)) {",
+    "new": "        for (const h of ['R', 'L']) {",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -426,8 +426,8 @@
   {
     "name": "WR-arm-kick-off-the-right",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "armGunPose(-pistols.hands[h].kick.y, share)",
-    "new": "armGunPose(-pistols.hands.R.kick.y, share)",
+    "old": "      fpArm.setGunFeel(playerWeapon.sheathed ? null : armGunPose(-pistols.hands[h].kick.y, share));",
+    "new": "      fpArm.setGunFeel(playerWeapon.sheathed ? null : armGunPose(-pistols.hands.R.kick.y, share));",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -436,8 +436,8 @@
   {
     "name": "WR-single-on-the-thunderlock-path",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "hand = pistolsUp() ? playerWeapon.pistols.lead : null",
-    "new": "hand = null",
+    "old": "  function drawThunderlock(art, canvas, tint, hand = pistolsUp() ? playerWeapon.pistols.lead : null) {",
+    "new": "  function drawThunderlock(art, canvas, tint, hand = null) {",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "WR-muzzle-of-the-right",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "pistols.hands[playerWeapon.gunPair ? playerWeapon.activeHand : playerWeapon.pistols.lead]?.drawn",
-    "new": "pistols.hands.R?.drawn",
+    "old": "      if (pistolsUp()) return muzzleRay(pistols.hands[playerWeapon.gunPair ? playerWeapon.activeHand : playerWeapon.pistols.lead]?.drawn ?? null, fovRad, forward);",
+    "new": "      if (pistolsUp()) return muzzleRay(pistols.hands.R?.drawn ?? null, fovRad, forward);",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -455,8 +455,8 @@
   {
     "name": "WR-muzzle-record-shared",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "if (ph) ph.drawn = drawn; else _tlDrawn = drawn;",
-    "new": "_tlDrawn = drawn;",
+    "old": "    if (ph) ph.drawn = drawn; else _tlDrawn = drawn;   // PISTOLET: each pistol keeps its own muzzle record   // TECH-FX: where a technique's dip drew it (drawInner) - the UI layer's pixels are the canvas's (ui/uiScreen.js uiCanvas offsets, never scales)",
+    "new": "    _tlDrawn = drawn;   // PISTOLET: each pistol keeps its own muzzle record   // TECH-FX: where a technique's dip drew it (drawInner) - the UI layer's pixels are the canvas's (ui/uiScreen.js uiCanvas offsets, never scales)",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -465,8 +465,8 @@
   {
     "name": "WR-player-switches-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "feel, switches: readWidgetSettings(), frame,",
-    "new": "feel, switches: null, frame,",
+    "old": "        feel, switches: readWidgetSettings(), frame, leftHanded: handedFlip(), sheathed: !!playerWeapon.sheathed,",
+    "new": "        feel, switches: null, frame, leftHanded: handedFlip(), sheathed: !!playerWeapon.sheathed,",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "WR-single-reload-no-pump",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const share = !playerWeapon.gunPair && !playerWeapon.mixedPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;",
-    "new": "const share = null;",
+    "old": "      const share = !playerWeapon.gunPair && !playerWeapon.mixedPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;   // A pair's gun pumps nothing over the whole viewmodel - its blade swings through the reload",
+    "new": "      const share = null;   // A pair's gun pumps nothing over the whole viewmodel - its blade swings through the reload",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"

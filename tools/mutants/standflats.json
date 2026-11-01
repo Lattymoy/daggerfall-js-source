@@ -92,8 +92,8 @@
   {
     "name": "STAND-FLAT-block-grouped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push(",
-    "new": "          if (false) { pixelStandFlats.push(",
+    "old": "          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y + lift, z: fz }); continue; }",
+    "new": "          if (false) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y + lift, z: fz }); continue; }",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "STAND-FLAT-site-grouped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (f.scale.x === 1 && f.scale.y === 1 && isStandFlat(f.archive, f.record)) pixelStandFlats.push(",
-    "new": "        if (false) pixelStandFlats.push(",
+    "old": "        if (f.scale.x === 1 && f.scale.y === 1 && isStandFlat(f.archive, f.record)) pixelStandFlats.push({ archive: f.archive, record: f.record, x: f.base[0], y: f.base[1], z: f.base[2] });   // A site's horse or person, a batch of its own",
+    "new": "        if (false) pixelStandFlats.push({ archive: f.archive, record: f.record, x: f.base[0], y: f.base[1], z: f.base[2] });   // A site's horse or person, a batch of its own",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STAND-FLAT-nude",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const [archive, record] = horse ? [sf.archive, sf.record] : drawnFlat(sf.archive, sf.record);",
-    "new": "const [archive, record] = [sf.archive, sf.record];",
+    "old": "      const [archive, record] = horse ? [sf.archive, sf.record] : drawnFlat(sf.archive, sf.record);",
+    "new": "      const [archive, record] = [sf.archive, sf.record];",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "STAND-FLAT-crew-unnamed",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          if (isNpcFlat(bb.Summary.Archive)) crew.set(n,",
-    "new": "          if (false) crew.set(n,",
+    "old": "          if (isNpcFlat(bb.Summary.Archive)) crew.set(n, { piece: { id: `csa:${boat.uid || `h${boat.hull}`}:${i}`, flat: [bb.Summary.Archive, bb.Summary.Record] } });",
+    "new": "          if (false) crew.set(n, { piece: { id: `csa:${boat.uid || `h${boat.hull}`}:${i}`, flat: [bb.Summary.Archive, bb.Summary.Record] } });",
     "tests": [
       "test/world/standflats.test.js"
     ]

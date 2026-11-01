@@ -218,8 +218,8 @@
   {
     "name": "GLOW-B-a-sheathed-body-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "const drawn = grow === 1 && !FP && !last.sheathed && ",
-    "new": "const drawn = grow === 1 && !FP && ",
+    "old": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();",
+    "new": "      const drawn = grow === 1 && !FP && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "GLOW-B-no-back-glow",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (look) glowList.push(setSpriteGlow(backGlow,",
-    "new": "    if (false) glowList.push(setSpriteGlow(backGlow,",
+    "old": "    if (look) glowList.push(setSpriteGlow(backGlow, holster.archive, holster.mirror ? 1 : 0, look, holster.origin, holster.right, holster.up, holster.w, holster.h, holster.cellW, holster.cellH));",
+    "new": "    if (false) glowList.push(setSpriteGlow(backGlow, holster.archive, holster.mirror ? 1 : 0, look, holster.origin, holster.right, holster.up, holster.w, holster.h, holster.cellW, holster.cellH));",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "GLOW-B-the-rig-hand-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "const handItemNow = () => (holsterItem ? holsterItem() : last.handItem !== undefined ? last.handItem : handWeapon());",
-    "new": "const handItemNow = () => (holsterItem ? holsterItem() : handWeapon());",
+    "old": "  const handItemNow = () => (holsterItem ? holsterItem() : last.handItem !== undefined ? last.handItem : handWeapon());",
+    "new": "  const handItemNow = () => (holsterItem ? holsterItem() : handWeapon());",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "GLOW-B-concealed-back-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    const look = material() ? null : glowNow(item);",
-    "new": "    const look = glowNow(item);",
+    "old": "    const look = material() ? null : glowNow(item);   // a concealed body's weapon glows for nobody",
+    "new": "    const look = glowNow(item);   // a concealed body's weapon glows for nobody",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "GLOW-B-concealed-hand-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!died && !last.died && !material();",
-    "new": "!died && !last.died;",
+    "old": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();",
+    "new": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "GLOW-B-a-beast-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.toolInHand && !last.riding && !last.transformed && !died",
-    "new": "!last.toolInHand && !last.riding && !died",
+    "old": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();",
+    "new": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !died && !last.died && !material();",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GLOW-B-a-rider-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.toolInHand && !last.riding && !last.transformed",
-    "new": "!last.toolInHand && !last.transformed",
+    "old": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();",
+    "new": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.transformed && !died && !last.died && !material();",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "GLOW-B-the-list-kept-when-put-away",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "holsterDrawn = false; glowList.length = 0; unlist(holster); };",
-    "new": "holsterDrawn = false; unlist(holster); };",
+    "old": "  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; glowList.length = 0; unlist(holster); };",
+    "new": "  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; unlist(holster); };",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "GLOW-P-the-walkers-never-glow",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (g === 1) glowInHand(r, peer, pose, right);   // BACK-HOLSTER GLOW\n",
-    "new": "\n",
+    "old": "      if (g === 1) glowInHand(r, peer, pose, right);   // BACK-HOLSTER GLOW",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "GLOW-P-the-hand-in-use-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "holsterItemOfLook(peer.look?.items, false), peer.ak ?? null);",
+    "old": "    const look = peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) : holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "new": "    const look = peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) : holsterItemOfLook(peer.look?.items, false), peer.ak ?? null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "GLOW-P-the-kit-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "holsterItemOfLook(peer.look?.items, !!pose.lh), null);",
+    "old": "    const look = peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) : holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "new": "    const look = peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) : holsterItemOfLook(peer.look?.items, !!pose.lh), null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "GLOW-P-a-gathering-hand-glows",
     "file": "src/net/peer/peerRiders.js",
-    "old": "if (!pose.wd || gatherActOf(pose) || r.veil ||",
-    "new": "if (!pose.wd || r.veil ||",
+    "old": "    if (!pose.wd || gatherActOf(pose) || r.veil || !r.batch || !r.size || r.form !== 'walker' || !(r.px > 0)) return;",
+    "new": "    if (!pose.wd || r.veil || !r.batch || !r.size || r.form !== 'walker' || !(r.px > 0)) return;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "GLOW-P-a-veiled-hand-glows",
     "file": "src/net/peer/peerRiders.js",
-    "old": "if (!pose.wd || gatherActOf(pose) || r.veil || !r.batch",
-    "new": "if (!pose.wd || gatherActOf(pose) || !r.batch",
+    "old": "    if (!pose.wd || gatherActOf(pose) || r.veil || !r.batch || !r.size || r.form !== 'walker' || !(r.px > 0)) return;",
+    "new": "    if (!pose.wd || gatherActOf(pose) || !r.batch || !r.size || r.form !== 'walker' || !(r.px > 0)) return;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "GLOW-P-a-veiled-back-glows",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const look = r.veil ? null : peerWeaponGlow(item);",
-    "new": "    const look = peerWeaponGlow(item);",
+    "old": "    const look = r.veil ? null : peerWeaponGlow(item);   // BACK-HOLSTER GLOW: a concealed walker's glows for nobody",
+    "new": "    const look = peerWeaponGlow(item);   // BACK-HOLSTER GLOW: a concealed walker's glows for nobody",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "GLOW-P-no-back-glow",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (look) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id),",
-    "new": "    if (false) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id),",
+    "old": "    if (look) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id), l.archive, l.mirror ? 1 : 0, look, l.origin, l.right, l.up, l.w, l.h, l.cellW, l.cellH));",
+    "new": "    if (false) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id), l.archive, l.mirror ? 1 : 0, look, l.origin, l.right, l.up, l.w, l.h, l.cellW, l.cellH));",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "GLOW-W-the-rig-says-the-right",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    handItem: playerWeapon.handItem(playerWeapon.leadHand),",
-    "new": "    handItem: playerWeapon.handItem('R'),",
+    "old": "    handItem: playerWeapon.handItem(playerWeapon.leadHand),   // The weapon of the hand in use - on the sprite's back sheathed, its glow round the sprite drawn",
+    "new": "    handItem: playerWeapon.handItem('R'),   // The weapon of the hand in use - on the sprite's back sheathed, its glow round the sprite drawn",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-A5-keyed-to-the-picture-asked",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look,",
-    "new": "setSpriteGlow(handGlow, s.archive, held ?? s.rec, look,",
+    "old": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));",
+    "new": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, s.archive, held ?? s.rec, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]

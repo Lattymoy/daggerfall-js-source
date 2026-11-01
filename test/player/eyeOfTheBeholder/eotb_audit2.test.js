@@ -1,4 +1,4 @@
-// ═══ AUDIT-EOTB2 (2026-09-16) → EOTB-IL (2026-09-17): THE INTEGRATION ═══
+// ═══ AUDIT-EOTB2 → EOTB-IL: THE INTEGRATION ═══
 //
 // Mac: "Do an audit on eye of the beholder. Ensure its integrated 1:1.
 // No half assed work." Then, with the shipped archive in hand: "it
@@ -31,7 +31,7 @@ import { FootstepMachine, FOOTSTEP_VOLUME } from '../../../src/systems/footsteps
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { createWeaponRig } from '../../../src/combat/weapon/weaponRig.js';
 import { domCodeForKeyCode } from '../../../src/systems/keyCodes.js';
-import { held, setBindings } from '../../../src/ui/input.js';   // KB1: the rig reads the registry's actions
+import { held, setBindings } from '../../../src/ui/input.js';   // The rig reads the registry's actions
 import { createBindings, resetDefaults } from '../../../src/systems/inputActions.js';
 import { motionBagOf } from '../../../src/player/motor.js';
 
@@ -115,7 +115,7 @@ test('EOTB-IL: THE STATUE WALKS - through the seam, the rig\'s record drives the
 
 test('EOTB-IL: the rig registers the WHOLE record - the motion bag and what LateUpdate polls off DFU - and the bag carries what PlayerMotor is read for', () => {
   const rig = rd('src/combat/weapon/weaponRig.js');
-  const reg = /const eotbState = \(\) => \(\{([\s\S]*?)\}\);\s*\n\s*const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/.exec(rig);   // MAC-O3: the thunk is named so the frame can re-claim it
+  const reg = /const eotbState = \(\) => \(\{([\s\S]*?)\}\);\s*\n\s*const bindBody = \(\) => eotbBody\.attach\(renderer, eotbState\);/.exec(rig);   // The thunk is named so the frame can re-claim it
   assert.ok(reg, 'the one registration');
   for (const f of ['weaponReady:', 'sheathed: playerWeapon.sheathed', 'spellcasting: spellArmed()', 'usingBow: !!playerWeapon.machine.isBow',
     'transformed: !!entity && isTransformedLycanthrope(entity)', 'lycanthropyType:', 'died: !!entity && (entity.health ?? 1) <= 0', 'motion: camera?.()?.move ?? null',
@@ -278,7 +278,7 @@ test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and
   assert.equal(b.state().shown.frame, 1, 'the last frame stays');
   assert.equal(b.state().clip, null);
   assert.equal(b.state().died, true);
-  // DEATH-BODY1 - AND THIS IS WHERE THIS PIN USED TO DEFEND THE BUG.
+  // AND THIS IS WHERE THIS PIN USED TO DEFEND THE BUG.
   // It read `ticks(b, 12, walk({ died: false }))` and then asserted the
   // table was STILL 'Idle', on the IL's own authority: LateUpdate does
   // return while `died` holds, and Initialize is the only thing that
@@ -320,7 +320,6 @@ test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and
 // ─────────────────────────────────────────────────────────────────
 
 test('EOTB-IL: UpdateOrientation runs ten times a second, keeps the last FACING while stopped, and turns to the view with a weapon up', async (t) => {
-  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
   setModSetting(MOD, 'Graphics.TurnToView', 2);
   t.after(() => setModSetting(MOD, 'Graphics.TurnToView', 1));
   const { b } = await liveBody();
@@ -398,12 +397,10 @@ test('EOTB-IL: the hides - the FPV weapon and horse behind their keys, the spell
   // shape fpsspellcasting.test.js pins (WeaponManager.cs:247)
   // AUDIT 68 S09-eotb-canvas-null: the hide is the HANDS' alone - nulling the canvas took Don'tHideWeapon's weapon with it
   assert.match(rig, /const c = cv\(\);/);
-  // PIN MOVED (SPELL-HAND): the gate opens on the hands' one draw, which picks the free hand or DFU's two (was: the gate
-  // straight onto `drawSpellCastHands(`)
   assert.match(rig, /if \(c && !fpArm\.active\(\) && !eotbHidesSpellHands\(\)\) \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*const side = _spellHand \? spellHandSide\(\) : null;\n\s*const castHands = \(art, f\) => \(side \? drawSpellHand\(renderer, c, art, f, \{ side, tint: fpTint, guard: fpsSpellCasting\.isPlayingAnim \? 0 : _spellGuard\.hand \}\) : drawSpellCastHands\(renderer, c, art, f, \{ tint: fpTint \}\)\);\n\s*castHands\(/, 'the hands\' picture goes in third person');
   assert.equal((rig.match(/thirdPerson: fpArm\.thirdActive\(\) \|\| eotbHidesWeapon\(\)/g) ?? []).length, 2, 'the widget and the torch hand');
   assert.match(rig, /if \(eotbHidesWeapon\(\)\) return;\s*\n\s*if \(fpArm\.active\(\)\) \{ fpArm\.draw\(c\); return; \}/, 'the picture goes before any first-person draw');
-  assert.match(rd('src/player/mountRig.js'), /if \(art && isHorseRide\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
+  assert.match(rd('src/player/mountRig.js'), /if \(art && isHorseRide\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -458,14 +455,14 @@ test('EOTB-IL: AutoTogglePerspective ships DISARMED - the sum of nine Don\'tChan
   closeLane();
   assert.equal(mwViewTransition('Interior'), false, 'off the lane the door does nothing');
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /setMode\('interior'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);   // AUDIT-WH2 L1-F5: the flip is setMode now - the ORDER this pin holds is unchanged
+  assert.match(wm, /setMode\('interior'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);   // The flip is setMode now - the ORDER this pin holds is unchanged
   assert.match(wm, /setMode\('dungeon'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/, 'OnTransitionDungeonInterior (IL_06bf)');
   assert.equal((wm.match(/mwViewTransition\('Exterior'\)/g) ?? []).length, 2, 'the building\'s exit and the dungeon\'s (IL_06e1)');
 });
 
 test('EOTB-IL: OnNewGame and OnLoad - a transition row when armed and nothing else; StartInThirdPerson through ToggleOffset when not', () => {
   const cam = createEotbCamera();
-  cam.loadSettings((m, k) => (k === 'Camera.StartInThirdPerson' ? true : undefined));   // FP-START: ships off now - the player who turns it on
+  cam.loadSettings((m, k) => (k === 'Camera.StartInThirdPerson' ? true : undefined));   // Ships off now - the player who turns it on
   assert.equal(cam.start(), true, 'Start: ToggleOffset(StartInThirdPerson), turned on');
   cam.toggleOffset(false);
   assert.equal(cam.onLoad(false), true, 'disarmed: OnLoad takes StartInThirdPerson');
@@ -484,7 +481,7 @@ test('EOTB-IL: OnNewGame and OnLoad - a transition row when armed and nothing el
   assert.match(w, /mwViewRebase\(r\.offset\);/, 'and the floating origin re-seeds the camera');
   openLane();
   try {
-    eotbCamera.loadSettings((m, k) => (k === 'Camera.StartInThirdPerson' ? true : undefined));   // FP-START: ships off now - the player who turns it on
+    eotbCamera.loadSettings((m, k) => (k === 'Camera.StartInThirdPerson' ? true : undefined));   // Ships off now - the player who turns it on
     eotbCamera.toggleOffset(false);
     mwViewLoadPose(null, false);
     assert.equal(eotbCamera.thirdPerson(), true, 'the load door re-seeds the sprite camera from the setting');
@@ -504,7 +501,7 @@ test('EOTB-IL: the SwitchShoulder and ToggleInput keys on their RELEASE edge (Ge
   _resetModSettings();
   setModSetting(MOD, 'Enabled', true);
   setModSetting(MOD, 'Camera.FrontalPlaneOffset', [0.5, 0.5]);   // "if it is non-zero" - the shipped X of 0 makes the switch a no-op
-  // KB1: the mod's two keys are the registry's ShoulderSwitch and AutoPerspective actions; their defaults are the
+  // The mod's two keys are the registry's ShoulderSwitch and AutoPerspective actions; their defaults are the
   // mod's own B and KeypadPlus, and the rig reads them through the host's held read, so a rebind moves them.
   assert.equal(domCodeForKeyCode('B'), 'KeyB');
   assert.equal(domCodeForKeyCode('KeypadPlus'), 'NumpadAdd');
@@ -577,7 +574,7 @@ test('EOTB-FLIP: a decoded PNG is turned into the world billboard\'s row order O
   const m = flipRows(out.colors, w, h);
   assert.deepEqual([m[0] & 0xff, (m[0] >> 8) & 0xff], [1, 2], 'mirrored: x swapped, y kept');
   assert.deepEqual([...out.colors], [...new Uint32Array(toColor32({ width: w, height: h, data }).colors.buffer)], 'toColor32, byte for byte');
-  // PERF-PEERS5: an OWNED raster is turned in its own bytes - the same answer, no second raster (odd and even heights)
+  // An OWNED raster is turned in its own bytes - the same answer, no second raster (odd and even heights)
   for (const hh of [3, 4, 1]) {
     const d = new Uint8Array(w * hh * 4).map((_, i) => (i * 37 + hh) & 255);
     const own = worldOrderColors({ width: w, height: hh, data: d.slice() }, { owned: true });
@@ -589,10 +586,8 @@ test('EOTB-FLIP: a decoded PNG is turned into the world billboard\'s row order O
 });
 
 test('EOTB-FLIP: the body\'s decode is the dropped torch\'s door - decodePng, then the converter - and never a canvas of its own', () => {
-  // PIN MOVED (PROFILE-SLOTS): the door is eotbSprite.js's, the body's (and the profile's stage's) one decode
   const body = rd('src/player/eyeOfTheBeholder/eotbSprite.js');
   assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /decode = decodeSprite/);
-  // PIN MOVED (NO-BETHESDA2): a sprite that is Daggerfall's own is built from the player's file, then takes the same turn
   assert.match(body, /export async function decodeSprite\(url, \{ build = undefined \} = \{\}\) \{\s*(?:if \(isLayeredKey\(url\)\)[^\n]*\s*)?if \(isDerivedSprite\(url\)\) return decodeDerivedSprite\(url, build\);\s*return worldOrderColors\(await decodeServedPng\(url\), \{ owned: true \}\);[^\n]*\s*\}/,
     'FIRST-VISIT: the decode workers\' fetch and decode (vanillaEnhancedPack.js decodeServedPng - decodePng\'s own, off this thread), then worldOrderColors');
   assert.match(body, /export const decodeDerivedSprite = async \(url, build = undefined\) => worldOrderColors\(await buildDerivedSprite\(url, build\), \{ owned: true \}\);/);

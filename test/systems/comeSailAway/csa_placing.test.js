@@ -1,11 +1,11 @@
-// CSA-C (2026-09-27) - COME SAIL AWAY'S BOATS PLACED, KEPT AND SAVED:
-// world/prefabColliders.js (Physics.Raycast over a prefab's BoxColliders and
-// MeshColliders, the convex ones as their hull) and systems/comeSailAway/comeSailAway.js
-// (StartPlacing .. PlaceBoatAtRayHit's five arms, SetBoatPositionAndDirection,
-// the nodes, the visibility, OnPositionUpdate's kept bug, the four console
-// commands, ComeSailAwaySaveData). The runtime runs over the vendored hulls
-// (the real SpawnBoat) and a scripted scene: each ray's answer, the terrains,
-// the player's pixel - every expectation worked out here from the C#'s rules.
+// COME SAIL AWAY'S BOATS PLACED, KEPT AND SAVED: world/prefabColliders.js
+// (Physics.Raycast over a prefab's BoxColliders and MeshColliders, the convex ones as
+// their hull) and systems/comeSailAway/comeSailAway.js (StartPlacing ..
+// PlaceBoatAtRayHit's five arms, SetBoatPositionAndDirection, the nodes, the visibility,
+// OnPositionUpdate's kept bug, the four console commands, ComeSailAwaySaveData). The
+// runtime runs over the vendored hulls (the real SpawnBoat) and a scripted scene: each
+// ray's answer, the terrains, the player's pixel - every expectation worked out here
+// from the C#'s rules.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,7 +23,7 @@ import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { quatRotate } from '../../../src/world/quat.js';
 import { ownFile } from '../../ownBoats.mjs';
 
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const geometry = (c) => (c.m_Mesh?.mesh ? MODELS.geometry(c.m_Mesh.mesh) : c.m_Mesh?.builtin ? BUILTIN_COLLIDER_MESHES[c.m_Mesh.builtin] : null);
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
@@ -66,7 +66,7 @@ function scene(opts = {}) {
     playerTerrain: () => terrains.find((t) => t.mapPixelX === pixel.X && t.mapPixelY === pixel.Y) ?? null,
     terrainAt: (x, y) => terrains.find((t) => t.mapPixelX === x && t.mapPixelY === y) ?? null,
     terrains: () => terrains,
-    heightMapValue: opts.heightMapValue ?? (() => 255),   // CSA-F: WOODS.WLD all land - the waves lay nothing, and cast no ray
+    heightMapValue: opts.heightMapValue ?? (() => 255),   // WOODS.WLD all land - the waves lay nothing, and cast no ray
     worldCompensation: () => opts.compensation?.() ?? [0, 0, 0],
     hudText: (t, s) => out.hud.push(s == null ? t : [t, s]),
     midScreenText: (t, s) => out.mid.push([t, s]),

@@ -2,8 +2,8 @@
   {
     "name": "glare-slack-half",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SLACK = 0.25; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
-    "new": "export const AIR_GLARE_SLACK = 0.5; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "old": "export const AIR_GLARE_SLACK = 0.25; // A QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "new": "export const AIR_GLARE_SLACK = 0.5; // A QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "glare-size-ball",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SIZE = 0.25; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
-    "new": "export const AIR_GLARE_SIZE = 0.35; // EL7: a glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "old": "export const AIR_GLARE_SIZE = 0.25; // A glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
+    "new": "export const AIR_GLARE_SIZE = 0.35; // A glare the size of a flame, not a ball (0.35 was a unit and a half across at a lantern's range)",
     "tests": [
       "test/render/el7_polish.test.js"
     ]

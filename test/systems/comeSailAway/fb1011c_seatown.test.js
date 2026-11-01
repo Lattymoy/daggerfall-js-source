@@ -1,12 +1,12 @@
-// SEA-TOWN (FIELD BUGS 2026-10-11c, bible/01-Overview/bugs/Field-Bugs-2026-10-11c.md). A Discord report: frames fell in a
-// crowded inland town (Chesterwark) with the World tab's "The sea & ships" mods on, and came back with them off - online,
-// where the room holds three of the five on, so the switch that moved was Come Sail Away's. Measured in the real game
-// (tools/frameProbe.mjs over the freeware ARENA2): with no boat owned the mods cost nothing there; with five boats owned,
-// the world frame's JavaScript rose 12.9 -> 17.9 ms and its garbage 1.2 -> 3.3 MB a frame. The largest single part:
-// every boat's Animators were found by walking her whole tree (a galleon is 1,228 nodes) on every frame - for every boat
-// the player had ever placed, wherever it lay, and for every other player's boat. The step itself stays: an Animator asked
-// while its boat stands nowhere returns at its first test, and that ask is how it starts over when she stands again. And
-// the sea's two HUDs made their key names every frame ashore for windows that were not shown. Pinned here:
+// SEA-TOWN. A Discord report: frames fell in a crowded inland town (Chesterwark) with the World tab's "The sea & ships"
+// mods on, and came back with them off - online, where the room holds three of the five on, so the switch that moved was
+// Come Sail Away's. Measured in the real game (tools/frameProbe.mjs over the freeware ARENA2): with no boat owned the mods
+// cost nothing there; with five boats owned, the world frame's JavaScript rose 12.9 -> 17.9 ms and its garbage 1.2 -> 3.3
+// MB a frame. The largest single part: every boat's Animators were found by walking her whole tree (a galleon is 1,228
+// nodes) on every frame - for every boat the player had ever placed, wherever it lay, and for every other player's boat.
+// The step itself stays: an Animator asked while its boat stands nowhere returns at its first test, and that ask is how it
+// starts over when she stands again. And the sea's two HUDs made their key names every frame ashore for windows that were
+// not shown. Pinned here:
 //
 //   CACHE    boatAnimators answers the walk's own list, the same Animators in the same order, walking no tree again
 //            while every tree's shape stands - and a new one when a shape changes (a node hung, a component added)
@@ -31,7 +31,7 @@ import { passengerCard } from '../../../src/scenes/naval/passageHelm.js';
 import { ownFile } from '../../ownBoats.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const json = ownFile; // Our boats' files (test/ownBoats.mjs)
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 
 const fileFetch = async (url) => {
@@ -212,10 +212,8 @@ test('SEA-TOWN HUDS: the naval HUD with no ship near (or the HUD covered) is han
     enhancedHudBottom: () => { made.rects++; return null; }, enhancedHudQuick: () => { made.rects++; return null; },
     isEnhanced: () => true, hudArt: null, classicCompassBox: () => { made.rects++; return null; }, touch: null,
     drawNavalHud: (m, opts) => drawn.push({ m, opts }),
-    // PIN MOVED (THE CAPTAIN'S SEA, SPYGLASS - at the merge of main): the plate is handed the glass's state too (its
-    // Glass brass while the glass is up), so the host's glass stands in its scope
     spyglass: { up: false },
-    travelView: null,   // PIN MOVED (FIELD BUGS 2026-10-21d PASSAGE-PLATE): the plate goes under the Overworld's controls
+    travelView: null,
   };
   const navalHud = mount(scope, cut(WORLD, 'function navalHud(dt = 0) {', '\n  }\n'), 'navalHud');
   navalHud(0.25);
@@ -244,13 +242,13 @@ test('SEA-TOWN HUDS: the naval HUD with no ship near (or the HUD covered) is han
   let labels = 0;
   const hs = {
     csaRuntime: { helmPanelState: () => hs.helm }, helm: null, csaOn: () => true, isEnhancedPlus: () => true, document: { pointerLockElement: null }, walkMode: true,
-    enhancedHelmMounted: () => false, hideEnhancedHelm() {}, csaHelmInput: { held: new Set() }, csaCall: (fn) => fn(), navalOn: () => true, holdsCargo: (hull) => hull > 0,   // PIN MOVED (CARGO-ANYWHERE)
+    enhancedHelmMounted: () => false, hideEnhancedHelm() {}, csaHelmInput: { held: new Set() }, csaCall: (fn) => fn(), navalOn: () => true, holdsCargo: (hull) => hull > 0,
     csaAboard: { aboard: null }, peerName: (id) => id,
     townTalk: { hudCovered: false }, modes: null, gamePaused: () => false, hudRenderEnabled: () => true, travelView: null, _travelUIHolder: { ui: null },
     touch: null, cursorActive: () => false, pointerSurfaces: new Set(), csaHelmHooks: { hooks: true },
     csaKeyLabel: (a) => { labels++; return `[${a}]`; },
     drawEnhancedHelm: (state, hooks) => helmDrawn.push({ state, hooks }),
-    passengerCard,   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the real card law (no charter here)
+    passengerCard,   // The real card law (no charter here)
   };
   const csaDrawHelmPanel = mount(hs, cut(WORLD, 'function csaDrawHelmPanel() {', '\n  }\n'), 'csaDrawHelmPanel');
   csaDrawHelmPanel();

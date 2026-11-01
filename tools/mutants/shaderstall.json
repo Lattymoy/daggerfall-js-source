@@ -137,7 +137,7 @@
   {
     "name": "SS-the-snow-surface-never-made-after",
     "file": "src/scenes/snowfallHost.js",
-    "old": "      if (snowReady?.()) makeSurface(); // SHADER-STALL: the surface the frame its program is compiled",
+    "old": "      if (snowReady?.()) makeSurface(); // The surface the frame its program is compiled",
     "new": "",
     "tests": [
       "test/systems/audit_environs.test.js"

@@ -42,7 +42,7 @@ const S1 = passSeasonById('s1');
 const HEART_T = S1.stages[2].fromMs + 30 * 60_000;   // mid-hour in the third stage: no tremor
 const U = UNITS_PER_METRE;
 const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setImmediate(r)); };
-/** OWN-WORK2: a network of the test's own on the Bay (Basic Roads' arrays are retired) - a road east-west along every
+/** A network of the test's own on the Bay (Basic Roads' arrays are retired) - a road east-west along every
  *  seventh row; the Bay's draws keep off it as the old law's did. */
 const NET = { roads: new Uint8Array(500_000), tracks: new Uint8Array(500_000) };
 for (let i = 0; i < NET.roads.length; i++) if (Math.floor(i / 1000) % 7 === 0) NET.roads[i] = 0x22;

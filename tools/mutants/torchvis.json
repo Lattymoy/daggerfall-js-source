@@ -11,8 +11,8 @@
   {
     "name": "TORCHVIS-an-empty-hand-draws-as-if-it-held-a-light",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)\n        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);",
-    "new": "        && (entity?.equipCountdown ?? 0) <= 0\n        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(entity?.lightSource);",
+    "old": "        && (entity?.equipCountdown ?? 0) <= 0 && isHeldLight(entity?.lightSource)",
+    "new": "        && (entity?.equipCountdown ?? 0) <= 0",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TORCHVIS-the-weapon-comes-back-with-the-torch",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (torchOnly && !gunSliding) return;   // TORCH-VIS: the lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite (FIELD-GUN13: unless the gun is still on its way out, which the hand is drawn behind)\n",
-    "new": "",
+    "old": "      if (torchOnly && !gunSliding) return;   // The lit hand ALONE - a sheathed stance still draws no weapon, clone or sprite (FIELD-GUN13: unless the gun is still on its way out, which the hand is drawn behind)\n      // And the shield ALONE is no more a weapon than the torch",
+    "new": "      // And the shield ALONE is no more a weapon than the torch",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TORCHVIS-the-morrowind-arm-loses-its-veto",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        && (!fpArm.active() || fpArm.torchShown())\n        && !lanternAtWaist(",
-    "new": "        && true\n        && !lanternAtWaist(",
+    "old": "        && (!fpArm.active() || fpArm.torchShown())",
+    "new": "        && true",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js"
     ]

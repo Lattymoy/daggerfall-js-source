@@ -43,7 +43,7 @@ function moduleFacts(text) {
 }
 
 test('WEBKIT-TLA: no module the game imports awaits at its top level - only an entry nothing imports may (mutant: firstVisitStore.js awaiting its pins again)', () => {
-  const files = [...walk(join(root, 'src')), ...walk(join(root, 'vendor'))];   // AUDIT FB1029g TLA-1: the vendor code src imports ships too
+  const files = [...walk(join(root, 'src')), ...walk(join(root, 'vendor'))];   // The vendor code src imports ships too
   const text = new Map(files.map((f) => [f, readFileSync(f, 'utf8')]));
   const facts = (f) => moduleFacts(text.get(f));
   // only a file that says `await` can await, and only one that names an awaiting file's name can import it
@@ -57,7 +57,7 @@ test('WEBKIT-TLA: no module the game imports awaits at its top level - only an e
     }
   }
   assert.deepEqual(bad, []);
-  assert.ok(files.length > 1000, 'the tree was walked');   // AUDIT FB1029g TLA-5: no tie to the entries that happen to await today
+  assert.ok(files.length > 1000, 'the tree was walked');   // No tie to the entries that happen to await today
 });
 
 test('WEBKIT-TLA: the scan sees a top-level await, a top-level for await, and not an await inside a function', () => {
@@ -81,5 +81,5 @@ test('WEBKIT-TLA (AUDIT FB1029g TLA-1): the build refuses a chunk another import
   assert.throws(() => plugin.generateBundle.call({ error: (m) => { throw new Error(m); } }, {}, bundle), /WEBKIT-TLA: a chunk another imports awaits at its top level - assets\/enhancedBook-x\.js \(line 1\)/);
   assert.doesNotThrow(() => plugin.generateBundle.call({ error: (m) => { throw new Error(m); } }, {}, { b: bundle.b, c: bundle.c }));
   const cfg = readFileSync(join(root, 'vite.config.js'), 'utf8');
-  assert.match(cfg, /plugins: \[[^\]]*noImportedTopLevelAwait\(\), licenceFiles\(\)\]/, 'the game\'s build runs it');   // CREDITS-OUT: the licences' plugin after it
+  assert.match(cfg, /plugins: \[[^\]]*noImportedTopLevelAwait\(\), licenceFiles\(\)\]/, 'the game\'s build runs it');   // The licences' plugin after it
 });

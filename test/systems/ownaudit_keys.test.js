@@ -1,4 +1,4 @@
-// OWN-AUDIT (2026-11-01): THE MODS' INERT KEYS, EACH LIVE OR RETIRED - the ones this file holds: Travel Options'
+// THE MODS' INERT KEYS, EACH LIVE OR RETIRED - the ones this file holds: Travel Options'
 // AllowRealGrass (a sped-up journey holds our grass back), Snowfall's three Location Loader keys (the snow kept shallow on
 // World of Daggerfall's sites), Eye Of The Beholder's offset scales and three retired keys, and every retired key let go
 // from a saved file. Come Sail Away's and Handheld Torches' are ownaudit_csa_keys and ownaudit_ht_keys; Windfall's

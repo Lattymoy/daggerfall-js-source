@@ -1,7 +1,7 @@
 # The Settings screen
 
 One Settings screen holds every option in the game: Daggerfall Unity's settings keys, the Features rows (the port's
-own systems and the vendored mods), the port's own preference rows, and a few cards. It is the same screen under both
+own systems and the ported mods), the port's own preference rows, and a few cards. It is the same screen under both
 skins, opened from the front door's Settings plaque and the pause window. Tabs are by subject, not by where a value
 is stored.
 

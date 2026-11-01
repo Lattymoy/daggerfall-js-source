@@ -41,10 +41,11 @@ hook, so the panel imports no conversation law. The fixed-city bench runs no liv
   what a thing does and what to do with it, once.
 - No AI-like prose and no over-explaining: the event, then what to do, then stop; no dash asides; numbers as
   numerals; every fact a player needs is kept (the owner).
-- The mods' own setting descriptions are rewritten plainly (`src/systems/modSettings.js`); the vendored
-  `modsettings.json` files are untouched, and each settings test holds a `PLAIN` map of the rewritten keys while every
-  other key must equal its author's text. A key that does nothing here says "Has no effect".
-- Credits say what each mod or library does for the player and keep every author, mod, version and license.
+- The mods' setting descriptions are our own words (`src/systems/modSettings.js`); each settings test holds them as
+  literals. A key that did nothing here either works or is retired (`RETIRED_KEYS`), so no description says "Has no
+  effect".
+- No screen credits anyone, and no player string names Daggerfall Unity, DFU, Interkarma or Nexus (CREDITS-OUT, the
+  owner).
 
 Left as written: Daggerfall's and DFU's own text and names; in-world voice (taunts, omens, greetings, letters); the
 Code of Conduct, whose wording is versioned (`CONDUCT_VERSION`); machine-read text (command syntax, save words,

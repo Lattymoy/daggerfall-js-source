@@ -1,6 +1,6 @@
-// MW-CLOAK2 (2026-10-09, Mac: "I dont like how the cloak isnt smooth around the shoulders"): THE CLOAK SMOOTHED - two
-// levels of Loop subdivision at bake time (tools/meshSubdivide.mjs), and the fit over the armour eased round each
-// point that comes through rather than moving a triangle's three corners (src/formats/morrowind/mwCloakFit.js).
+// THE CLOAK SMOOTHED - two levels of Loop subdivision at bake time (tools/meshSubdivide.mjs), and the fit over
+// the armour eased round each point that comes through rather than moving a triangle's three corners
+// (src/formats/morrowind/mwCloakFit.js).
 //
 // The export is 140 vertices about five units apart. Over the shoulders a face stood up to 35 degrees off its corners'
 // normals, the outline turned as sharply as 82 degrees at a vertex, and the fit left a facet over each pauldron's edge.
@@ -61,7 +61,7 @@ test('MW-CLOAK2: one level of Loop subdivision - every triangle in four, an edge
   // the normals are the result's own: a fresh area-weighted pass over its positions agrees
   const fresh = vertexNormals(s.positions, s.indices);
   for (let k = 0; k < fresh.length; k++) assert.ok(near(fresh[k], s.normals[k], 1e-5));
-  // AUDIT MW-CLOAK: on a net with no symmetry to hide behind, an interior edge's vertex is 3/8 its ends and 1/8 its far
+  // On a net with no symmetry to hide behind, an interior edge's vertex is 3/8 its ends and 1/8 its far
   // corners - not its middle: a quad (0,0) (4,0) (4,4) (0,4) split on its diagonal, the far corners lifted unequally
   const quad = { positions: Float32Array.from([0, 0, 0, 4, 0, 1, 4, 4, 0, 0, 4, 3]), indices: Uint16Array.from([0, 1, 2, 0, 2, 3]) };
   const sq = loopSubdivideOnce(quad);
@@ -132,7 +132,7 @@ test('MW-CLOAK2: the fit over the armour eases the cloak round each point that c
     poseAssembly(asm);
     const A = c.positions; const I = c.indices;
     const push = (v) => Math.hypot(A[v * 3] - before[v * 3], A[v * 3 + 1] - before[v * 3 + 1], A[v * 3 + 2] - before[v * 3 + 2]);
-    // AUDIT MW-CLOAK: and how it lands - each vertex's push in this pose straight back (carried into the bind through
+    // And how it lands - each vertex's push in this pose straight back (carried into the bind through
     // its own blend, which the bind-to-rest turn is not), and its mean over the vertices eased
     let side = 0; let sum = 0; let moved = 0;
     for (let v = 0; v < A.length / 3; v++) {
@@ -149,16 +149,13 @@ test('MW-CLOAK2: the fit over the armour eases the cloak round each point that c
   };
   const eased = await slope(CLOAK_EASE_RADIUS);
   assert.equal(CLOAK_EASE_RADIUS, 8);
-  // PIN MOVED (MW-CAPE-RIGID): on the chest alone the cloak sits at rest where the chest carries it, the ebony
-  // pauldrons 1.3 through it (2.6 hung over the spine and clavicles) - 720 vertices eased, the furthest 2.3 (it was 3.6)
-  // OWN-WORK4: on our biped, its shoulders let down and forward - 625 eased, the furthest 1.1
   assert.ok(eased.fit.pushed > 500 && eased.fit.most > 0.9 && eased.fit.most < 1.4, `${eased.fit.pushed} vertices eased, the furthest ${eased.fit.most.toFixed(2)}`);
   assert.ok(eased.steepest < 0.8, `the push slopes at most ${eased.steepest.toFixed(2)} a unit`);
   assert.ok(eased.side < 1e-3, `pushed straight back - ${eased.side.toFixed(4)} aside`);
   // the falloff (1 - (d / 8)^2)^2: the mean push over the eased vertices 0.74 (a falloff of (1 - (d / 8)^2) alone, 0.96)
-  assert.ok(eased.mean > 0.25 && eased.mean < 0.3, `the eased vertices' mean push ${eased.mean.toFixed(3)}`);   // PIN MOVED (MW-CAPE-RIGID): 1.66, and 1.90 alone, on the old rig; OWN-WORK4: 0.28 on our biped (0.74 on retail's)
+  assert.ok(eased.mean > 0.25 && eased.mean < 0.3, `the eased vertices' mean push ${eased.mean.toFixed(3)}`);
   const stepped = await slope(1e-3);
-  assert.ok(stepped.steepest > 0.9 && stepped.steepest > eased.steepest, `a triangle's corners alone step ${stepped.steepest.toFixed(1)} a unit - the facet over the pauldron`);   // PIN MOVED (MW-CAPE-RIGID): 4.1 (9.6 on the old rig); OWN-WORK4: 1.1 on our biped, the pauldrons barely through
+  assert.ok(stepped.steepest > 0.9 && stepped.steepest > eased.steepest, `a triangle's corners alone step ${stepped.steepest.toFixed(1)} a unit - the facet over the pauldron`);
   // its normals are its new shape's, facing as before
   const fresh = vertexNormals(eased.batch.positions, eased.batch.indices);
   let agree = 0; let facing = 0;

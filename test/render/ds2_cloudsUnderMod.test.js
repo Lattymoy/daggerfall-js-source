@@ -1,5 +1,4 @@
-// DS2 (2026-09-08, Mac: "The procedural sky mod doesn't apply our enhanced
-// clouds"). VC3's design decision 1 stood the volumetric clouds on the
+// DS2. VC3's design decision 1 stood the volumetric clouds on the
 // port's dome ONLY - "the new clouds do not draw under it" - and the
 // controller built them off `enhancedSky &&`, so under Dynamic Skies the
 // player got the mod's two textured sheets and none of the port's field.
@@ -11,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cloudsStateUnderMod, dynamicMoonState } from '../../src/render/dynamicSkiesBridge.js';
-import { skyState, WEATHER_SKY } from '../../src/render/enhancedSky.js';   // DSH1: the row's greyness
+import { skyState, WEATHER_SKY } from '../../src/render/enhancedSky.js';   // The row's greyness
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -23,7 +22,7 @@ test('DS2: the clouds’ state under the mod - the port’s colours, the MOD’s
   const base = skyState({ minuteOfDay, weather, seconds: 10, drift: [1, 2] });
   assert.deepEqual(s.sunDir, st.sunDir, 'the sun is the mod’s (SunlightManager’s direction)');
   assert.deepEqual(s.masser, moons.masser); assert.deepEqual(s.secunda, moons.secunda);
-  // DSH1: the horizon the clouds fade into is the mod's fog colour GREYED
+  // The horizon the clouds fade into is the mod's fog colour GREYED
   // BY THE WEATHER, toward the deck's own shade - `cloudy` is grey 0.25,
   // so a quarter of the way. Verbatim at grey 0 (sunny) is pinned below.
   const g = WEATHER_SKY.cloudy.grey;
@@ -50,7 +49,7 @@ test('DS2: the clouds’ state under the mod - the port’s colours, the MOD’s
   }
   assert.deepEqual(t.masser, base.masser);
   // and the moon state the world's moonlight takes is the same object the clouds get
-  const dyn = { _sunDir: [0, -0.5, 0], phases: null, moonDirection: (w) => (w === 'masser' ? [0, 0.7, 0.7] : [0, -1, 0]) };   // PIN MOVED (OWN-WORK4): our sky's instance, its moons by name
+  const dyn = { _sunDir: [0, -0.5, 0], phases: null, moonDirection: (w) => (w === 'masser' ? [0, 0.7, 0.7] : [0, -1, 0]) };
   const m = dynamicMoonState(dyn, 23 * 60, 0.5);
   assert.ok(m.masser.vis > 0 && m.secunda.vis === 0);
   assert.deepEqual(cloudsStateUnderMod(st, m, { minuteOfDay: 23 * 60, weather }).masser, m.masser);
@@ -58,11 +57,11 @@ test('DS2: the clouds’ state under the mod - the port’s colours, the MOD’s
 
 test('DS2: the seam - built on the lane, the mod’s sheets stand down, the clouds and the deck under the mod', () => {
   const shared = read('src/scenes/shared.js');
-  assert.match(shared, /const cloudArrival = enhancedLane && cloudsDoor !== 'off' \? createCloudsArrival\(/);   // CLOUD-COMPILE: built once their programs are done
-  assert.match(shared, /if \(dynamicSky\) dynamicSky\.cloudsExternal = !!cloudsShown;/);   // CLOUD-COMPILE: once the clouds stand (test/render/cloudsarrival.test.js)
+  assert.match(shared, /const cloudArrival = enhancedLane && cloudsDoor !== 'off' \? createCloudsArrival\(/);   // Built once their programs are done
+  assert.match(shared, /if \(dynamicSky\) dynamicSky\.cloudsExternal = !!cloudsShown;/);   // Once the clouds stand (test/render/cloudsarrival.test.js)
   assert.match(shared, /const cb = dreadW > 0 \? \{ word: skyWord, row: weatherRowNow \} : cloudBaseOf\(extra, weatherName, weatherRowNow\);[^\n]*\n\s*clouds\.setState\(cloudsStateUnderMod\(st, dynamicMoons, \{ minuteOfDay, weather: cb\.word, classicMinutes: nowMinutes, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb\.row, skyRow: weatherRowNow \}\),[^\n]*\n\s*cb\.row, cb\.word, easeDt, driftXZ, \(extra\?\.flash \?\? 0\) \+ dreadGlow, extra\?\.pos \?\? null, extra\?\.cells \?\? null\);/, 'the same row, dt, drift, flash and position the dome path hands them (WEATHER3c: the row and word the clouds stand on - the eased worn row off the map\'s lane, clear air on it; AUDIT PRECIP SKY-1: the far fade the SKY\'s own row)');
   assert.match(shared, /if \(cloudsShown\?\.shadow\) Object\.assign\(dynamicDeck, cloudsShown\.shadow\);/, 'the ground takes the shadow map under the mod');
-  // AUDIT 65 MC-3: and the THIRD export with them - the mod's moon term
+  // And the THIRD export with them - the mod's moon term
   // is the bridge's, not a second copy of its body in the controller.
   assert.match(shared, /import \{ cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight \} from '\.\.\/render\/dynamicSkiesBridge\.js';/);
   assert.doesNotMatch(shared, /^function dynamicMoonState/m, 'the moon state moved to the bridge, with the clouds’ state');

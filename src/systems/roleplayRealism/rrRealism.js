@@ -1,14 +1,14 @@
-// RR1 - ROLEPLAY & REALISM 1.8 (Hazelnut, MIT; the release's RoleplayRealism.cs and the four small classes beside it):
+// ROLEPLAY & REALISM 1.8 (Hazelnut, MIT; the release's RoleplayRealism.cs and the four small classes beside it):
 // the laws InitMod (:108-258) registers, hooks or replaces under each module switch, one function per C# member - the
 // formula overrides (archery, climbing, weapon speed, weapon materials, equipment damage, the classic strength bonus,
 // the bank loan), the ship gate, the encumbrance penalty, the douse on leaving a dungeon, the purification potion, the
 // class enemies' appearance, the underworld guilds' expulsion and the bed (the Fighters' hand-to-hand is RETIRED,
 // FGH2H-R). RR2 is the variant sprites, riding and training; RR3 the Master Armorer line. OWN-WORK3: the player's lines
-// are DFO's own (bible/06-Systems/Roleplay-Realism.md). A leaf: rrInstall.js registers the seams.
+// are DFO's own. A leaf: rrInstall.js registers the seams.
 import { modSetting } from '../modSettings.js';
 import { WEAPONS, weaponMaterialModifier } from '../../characters/weapons.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
-import { swingFrameSeconds, swingHandling, swingHeft } from '../../characters/weaponStates.js'; // SWING-LAW: the port's swing law answers the mod's Speed
+import { swingFrameSeconds, swingHandling, swingHeft } from '../../characters/weaponStates.js'; // The port's swing law answers the mod's Speed
 
 export const RR_VENDOR = 'roleplay-realism';
 export const RR_MOD = Object.freeze({
@@ -66,8 +66,8 @@ export function rrAdjustWeaponAttackDamage(damage, weaponAnimTime, weapon) {
  *  so mid-screen; otherwise DFU's own formula, restated (skill + 30 for
  *  a Khajiit, x2 under the Climbing effect, clamped 5..95; Lerp(base,
  *  100, skill%) + Lerp(0, 10, luck%), the C# int cast). */
-export const NO_CLIMB_HOLDING_WEAPON = 'Put your weapon away to climb.'; // OWN-WORK3: our line for the release's noClimbHoldingWeapon
-/** AUDIT CLIMB1 F10: the same rule for the port's enhanced climb (player/parkour.js registerParkourGate) - a mantle
+export const NO_CLIMB_HOLDING_WEAPON = 'Put your weapon away to climb.'; // Our line for the release's noClimbHoldingWeapon
+/** The same rule for the port's enhanced climb (player/parkour.js registerParkourGate) - a mantle
  *  or a clamber over a thin top is a climb, and the mod's own row promises "no climbing with a weapon out": a drawn
  *  weapon that is not bare hands answers the mod's line, anything else null. (A vault is a leap and is not asked.) */
 export function rrParkourRefusal({ weaponDrawn = false, weaponMelee = true } = {}) {
@@ -105,7 +105,7 @@ export function rrClimbingChance(
  *  ItemHands ('Both' for a two-hander); `weaponType` DFU's WeaponTypes
  *  (Dagger 4, Dagger_Magic 5, Melee 15). Registered only when Roleplay &
  *  Realism: Items' weaponBalance is off (:171).
- *  SWING-LAW (2026-09-28, Mac: "swing speed is insane"): the blend is the
+ *  SWING-LAW: the blend is the
  *  Speed the swing is read at, and the port's law turns it into time -
  *  its bounded curve and the weapon's handling (characters/weaponStates.js
  *  swingFrameSeconds) - where the mod's `3 * (115 - blend)` over the
@@ -211,7 +211,7 @@ export function rrEncumbranceEffect({
   permanentSpeed = 50,
   currentFatigue = 0,
 } = {}) {
-  // AUDIT-RR F7: the C# is float arithmetic (:590-595) - fround at every step, or a band edge lands one off
+  // The C# is float arithmetic (:590-595) - fround at every step, or a band edge lands one off
   const encPc = Math.fround(Math.min(maxEncumbrance > 0 ? Math.fround(carriedWeight / maxEncumbrance) : 0, 1.2));
   const encOver = Math.fround(Math.fround(Math.max(Math.fround(encPc - 0.75), 0)) * ENC_EFFECT_SCALE_FACTOR);
   if (!(encOver > 0)) return null;
@@ -367,7 +367,7 @@ export function applyEnemyAppearance(basics) {
       if (target)
         console.warn(`[rr] enemyAppearance: ENEMY_BASICS row ${id} is frozen - the mod's appearance cannot be written`);
       continue;
-    } // AUDIT-RR F10
+    }
     const saved = {};
     for (const k of Object.keys(row)) saved[k] = Object.hasOwn(target, k) ? target[k] : undefined;
     _appearanceOriginals.set(id, saved);
@@ -397,7 +397,7 @@ export const enemyAppearanceApplied = () => _appearanceOriginals.size > 0;
  *  DarkBrotherhood.cs:132-135); Join floors the reputation at 2 ("a 1
  *  quest failure buffer"); Leave sends the death squad
  *  (`CreateFoeSpawner(false, type, count, min, max)`); TokensExpulsion
- *  is DFO's own text (OWN-WORK3). */
+ *  is DFO's own text. */
 export const RR_UNDERWORLD = Object.freeze({
   ThievesGuild: Object.freeze({
     joinReputationFloor: 2,
@@ -438,7 +438,7 @@ export const rrUnderworldRule = (guildName) =>
   rrModule('underworldExpulsion') ? (RR_UNDERWORLD[guildName] ?? null) : null;
 
 // ---- fightersTeachHandToHand (FightersGuildRR.cs) - RETIRED -------------------------
-// FGH2H-R (2026-09-24, Mac: "retire it"): FGH2H put HandToHand in the Fighters Guild's
+// FGH2H-R: FGH2H put HandToHand in the Fighters Guild's
 // base lists beside Giantish, so this module's lists (HandToHand in Giantish's place)
 // only took Giantish away. The switch is off the pane (modSettings.js RETIRED_KEYS) and
 // the guild reads its own lists; the Port-Ledger's FGH2H row records the departure.
@@ -452,7 +452,7 @@ export const isBedModel = (modelIdNum) => BED_MODELS.includes(modelIdNum);
 export const bedSleepingOn = () => rrModule('bedSleeping');
 
 // ======================================================================
-// RR2 - the laws past the rule modules: enhanced riding (EnhancedRiding.cs)
+// The laws past the rule modules: enhanced riding (EnhancedRiding.cs)
 // and the refined training service (GuildServiceTrainingRR.cs). The NPC
 // sprite variants are systems/roleplayRealism/rrVariants.js (they read tables this leaf
 // must not import).
@@ -508,7 +508,7 @@ export const rrRidingYAdj = (pitchDegrees, terrainAngle) =>
  *  `extX .. extX + extW` across, `width - 14` wide. */
 export function rrRidingNeckBand(yAdj) {
   const yAdjNeck = yAdj / 100;
-  // AUDIT-RR F14: `Rect(extX, 0.2 - yAdjNeck, extW, yAdjNeck)` is in Unity texcoords, v = 0 at the BOTTOM row (DFBitmap
+  // `Rect(extX, 0.2 - yAdjNeck, extW, yAdjNeck)` is in Unity texcoords, v = 0 at the BOTTOM row (DFBitmap
   // .GetColor32 flips rows on upload) - the band is the bottom fifth of the sprite, the neck and chest. The port's
   // screen quad samples v = 0 at the TOP row, so the same rows are 0.8 .. 0.8 + yAdjNeck here.
   return { u0: RR_RIDING.extX, u1: RR_RIDING.extX + RR_RIDING.extW, v0: 0.8, v1: 0.8 + yAdjNeck, widthTrim: 14 };
@@ -550,14 +550,14 @@ export const rrRefinedTrainingOn = () => rrEnabled() && rrSetting('RefinedTraini
  *  max` under variableTrainingPrice - a raw skill trains for half. */
 export function rrTrainingCost(baseCost, skillValue, trainingMax, variable = true) {
   if (!variable || !(trainingMax > 0)) return baseCost;
-  const skillOfMax = Math.fround(1 - Math.fround(skillValue / trainingMax)); // AUDIT-RR F26: float32, as the C#'s `(float)skillValue / trainingMax`
+  const skillOfMax = Math.fround(1 - Math.fround(skillValue / trainingMax)); // float32, as the C#'s `(float)skillValue / trainingMax`
   return baseCost - Math.trunc(Math.fround((baseCost * skillOfMax) / 2));
 }
 /** `intensiveCost = (trainingCost + (Level * 8) + 72) * 5` (:71). */
 export const rrIntensiveCost = (trainingCost, level) => (trainingCost + level * 8 + 72) * 5;
 /** The week button is offered `if (intensive && skillValue < trainingMax - 4)` (:86). */
 export const rrIntensiveOffered = (intensive, skillValue, trainingMax) => !!intensive && skillValue < trainingMax - 4;
-/** OWN-WORK3: the training window's lines, DFO's own; `{0}` the skill
+/** The training window's lines, DFO's own; `{0}` the skill
  *  name or the five days' cost, `%a` the session's cost. */
 export const RR_TRAINING_LINES = Object.freeze({
   trainingSkill1: 'One session of {0} costs %a gold.',

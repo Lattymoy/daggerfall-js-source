@@ -1,7 +1,7 @@
-// OWN-WORK4 (2026-10-31; the owner: "A proper 1 to 1 recreation for everything"): OUR PICTURES FOR THE FOURTEEN
-// ITEMS, at the names, sizes and doll places rriIndex.js keeps. The armour and the Hatchet are our variations of
-// Daggerfall's matching paper-doll record, read from the player's ARENA2: its shape and light kept, our leather,
-// fur, plates, wood and metals laid on. The Short Flail is drawn whole by our painter. No release pixel is read.
+// OUR PICTURES FOR THE FOURTEEN ITEMS, at the names, sizes and doll places rriIndex.js keeps. The armour and the
+// Hatchet are our variations of Daggerfall's matching paper-doll record, read from the player's ARENA2: its
+// shape and light kept, our leather, fur, plates, wood and metals laid on. The Short Flail is drawn whole by our
+// painter. No release pixel is read.
 import { RAMP, ditherAt, grain, hex, createPainter, stroke, ellipse, poly, minus } from '../../art/ownPainter.js';
 import { classicArt } from '../classicArt.js';
 import { RRI_SPRITES } from './rriIndex.js';

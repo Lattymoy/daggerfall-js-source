@@ -119,8 +119,8 @@
   {
     "name": "A0928-D2-the-pane-renames-a-row",
     "file": "src/systems/inputActions.js",
-    "old": "['BoatTrimLeft', 'Trim the sails left']",
-    "new": "['BoatTrimLeft', 'Trim the sails to port']",
+    "old": "    ['BoatToggleSail', 'Raise or stow the sails'], ['BoatTrimRight', 'Trim the sails right'], ['BoatTrimLeft', 'Trim the sails left'],",
+    "new": "    ['BoatToggleSail', 'Raise or stow the sails'], ['BoatTrimRight', 'Trim the sails right'], ['BoatTrimLeft', 'Trim the sails to port'],",
     "tests": [
       "test/systems/audit0928_input.test.js"
     ]

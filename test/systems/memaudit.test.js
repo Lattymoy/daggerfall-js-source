@@ -1,8 +1,7 @@
-// MEM-AUDIT (2026-10-23, the owner: "a comprehensive performance audit, looking for memory leaks"): what a place, a map
-// pixel, a menu or a session online left standing after its life (bible/07-Rendering/Performance-Priority.md MEM-AUDIT).
-// Each pin drives the module that owned the leak; where the owner is a host's or a window's wiring (setMode, the menu's
-// account card and foot, the item menu's timer, the classic sky's bound) it reads that one line. Each names its mutants
-// (tools/mutants/memaudit.json). AUDIT MEM-AUDIT (01-Overview/audits/Audit-Mem-Audit.md) widened them.
+// What a place, a map pixel, a menu or a session online left standing after its life. Each pin drives the module that
+// owned the leak; where the owner is a host's or a window's wiring (setMode, the menu's account card and foot, the item
+// menu's timer, the classic sky's bound) it reads that one line. Each names its mutants (tools/mutants/memaudit.json).
+// AUDIT MEM-AUDIT widened them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -25,7 +24,7 @@ import { fishKind } from '../../src/scenes/fishHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { WORLD_MAP_TILE_DIM } from '../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
-import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { MASKS } from '../snowMasks.mjs';   // Our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const rd = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const w = console.warn; console.warn = () => {}; try { return fn(); } finally { console.warn = w; } };
@@ -57,7 +56,7 @@ test('MEM-AUDIT the static batch: the merge spends its inputs - the builder a ho
 
 test('MEM-AUDIT the cover index: held at its size - COVER-COMPACT (2026-10-26): a proxy is a slot in its set\'s typed columns and a cell a slot in sorted typed lists, so 100,000 proxies a cell each cost under 64 B a proxy (~118 B as arrays held at their size, ~246 pushed from []); every proxy born with its mark, last of its keys (AUDIT C1/C2, P4) (mutants: a maker without the mark; tools/mutants/coverCompact.json holds the lists\' order)', () => {
   // every maker, fresh, the same keys in the same order - one shape a proxy (the index no longer reads `_mark`: cover.js COVER-COMPACT)
-  const COVER_KEYS = ['c', 'r', 'h', 'lift', '_mark'], BODY_KEYS = ['c', 'r', 'h', 'lift', 'body', 'nature', '_mark'];   // TRUNK-FOES: `nature`, the foes' clamp's word
+  const COVER_KEYS = ['c', 'r', 'h', 'lift', '_mark'], BODY_KEYS = ['c', 'r', 'h', 'lift', 'body', 'nature', '_mark'];   // `nature`, the foes' clamp's word
   for (const p of [coverProxy([0, 0, 0], { w: 2, h: 2 }), ...coverProxies([0, 0, 0], { w: 2, h: 9 }, { tree: true }), ...jungleCover([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), COVER_KEYS, 'a cover proxy');
   for (const p of [...flatBodies(null, 504, 3, { w: 3, h: 9 }, [[0, 0, 0]], { tree: true }), jungleBody([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), BODY_KEYS, 'a body');
   // a proxy in a cell of its own: measured on the heap - 100,000 of them, as `add` leaves them (built, never waiting for a first read), their stores counted with the heap - in the measuring child
@@ -125,13 +124,13 @@ test('MEM-AUDIT the snow\'s blanket: idle (the travel view up, a door), its over
   assert.equal(rt.blanket.active, false);
   assert.ok(laid.every((o) => rt.blanket.overlays.get(o.t) === o && !o.dead), 'a tile still standing keeps its overlay for the door');
   assert.ok(rt.mid.tiles.length > 0, 'the mid ring laid on its tiles');
-  // AUDIT P3: a tile's ground rebuilt - its old overlay goes, holding nothing, its GPU half queued for the sync
+  // A tile's ground rebuilt - its old overlay goes, holding nothing, its GPU half queued for the sync
   const tile = laid[0].t, old = rt.blanket.overlays.get(tile), fresh = { ...tile, stamp: 2 };
   rt.dirty.blanket.clear();   // the surface's sync took what was laid
   rt.terrainPromoted(fresh, st.now, tile);
   assert.ok(old.dead && old.t === null && old.pos === null && rt.dirty.blanket.has(old), 'the replaced tile\'s overlay dropped whole and queued for its GPU free');
   rt.terrainPromoted(tile, st.now, fresh);   // and back, so the world's own tile stands again
-  // the view comes up mid-build: the blanket's overlay of that tile part-made (AUDIT P3), then a mid rebuild begun (M3)
+  // the view comes up mid-build: the blanket's overlay of that tile part-made, then a mid rebuild begun
   quiet(() => { for (let i = 0; i < 400 && !(rt.blanket.building?.cursor > 0 && !rt.mid.building); i++) { st.now += 1 / 30; frame(standing()); } });
   assert.ok(rt.blanket.building?.cursor > 0, 'a blanket overlay under way');
   rt.mid.rebuildPending = true;
@@ -222,7 +221,7 @@ test('MEM-AUDIT the menus\' sky: the same bytes as PX1\'s every draw, its image 
   const ctx = { createImageData: (w, h) => { made++; return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }; }, putImageData(img) { last = img.data; } };
   let w = 300, h = 150;
   const canvas = { get width() { return w; }, set width(v) { sized++; w = v; }, get height() { return h; }, set height(v) { sized++; h = v; }, getContext: () => ctx };
-  for (const [vw, vh] of [[1280, 720], [390, 844], [1280, 720], [1280, 900], [1600, 900]]) {   // AUDIT P9: one side at a time too
+  for (const [vw, vh] of [[1280, 720], [390, 844], [1280, 720], [1280, 900], [1600, 900]]) {   // One side at a time too
     for (const t of [0, 0.125, 41.2, 1234.5]) {
       drawPixelGround(canvas, vw, vh, t);
       assert.deepEqual(last, oldSky(w, h, t), `${vw}x${vh} at ${t}: PX1's bytes`);
@@ -248,7 +247,7 @@ test('MEM-AUDIT the market\'s reads: the cache keeps MARKET_CACHE_KEPT, the olde
   assert.equal(reads.length, MARKET_CACHE_KEPT + 1, 'the newest answered from the cache, inside its minute');
   await book.read('materials', { region: 17, page: 0 });
   assert.equal(reads.length, MARKET_CACHE_KEPT + 2, 'the oldest gone - asked again');
-  // AUDIT U3: a view asked again is the newest - the one a player comes back to stays past the cap
+  // A view asked again is the newest - the one a player comes back to stays past the cap
   const n0 = reads.length;
   await book.read('materials', { region: 17, page: 3 });   // a hit: page 3 the newest now
   assert.equal(reads.length, n0, 'a hit');

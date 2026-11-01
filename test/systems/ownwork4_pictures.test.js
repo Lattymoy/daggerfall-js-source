@@ -1,5 +1,4 @@
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper 1
-// to 1 recreation for everything"): THE SIX RETIRED FOLDERS' PICTURES ARE OUR OWN. Each is a recipe for our painter
+// THE SIX RETIRED FOLDERS' PICTURES ARE OUR OWN. Each is a recipe for our painter
 // (src/art/ownPainter.js), drawn at the size, record and frame count the game read. These pins hold the painter's
 // primitives, every recipe's size and print (sha256 of `WxH:` and its RGBA, 16 hex digits: a change to a recipe is a
 // change here), the frame counts, and that no picture is read from a file.
@@ -16,7 +15,7 @@ import { TORCH_ART, TORCH_OVER, FLAME_FRAMES, dousedCandle } from '../../src/sys
 import { FISH_ART } from '../../src/systems/deepWater/fishArt.js';
 import { TRAVEL_ART } from '../../src/ui/travel/travelArt.js';
 import { SURVIVAL_ART } from '../../src/systems/survival/survivalArt.js';
-import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4 AUDIT: the keepers are our rule over the player's people (rr2_realism.test.js)
+import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // The keepers are our rule over the player's people (rr2_realism.test.js)
 import { OWN_ICONS, ownIconPicture } from '../../src/systems/survival/itemIcons.js';
 import { rotPicture, MOULDY } from '../../src/systems/survival/rotPicture.js';
 import { ANIMATION_TIME, torchPicture } from '../../src/systems/handheldTorches.js';
@@ -131,7 +130,7 @@ test('OWN-WORK4: the torches keep the release\'s frames - four of the torch, fou
 });
 
 test('OWN-WORK4: the spoiled faces are our rot over the fresh food - mouldy lighter than rotten - and raw meat and the waterskin are painted', async () => {
-  assert.deepEqual({ ...MOULDY }, { mix: 0.3, cover: 0.38 });   // OWN-AUDIT (2026-11-01): a share of the food, not a speck count
+  assert.deepEqual({ ...MOULDY }, { mix: 0.3, cover: 0.38 });   // A share of the food, not a speck count
   const flat = { width: 12, height: 8, data: new Uint8Array(12 * 8 * 4) };
   for (let i = 0; i < 96; i++) flat.data.set([180, 60, 40, 255], i * 4);
   const mouldy = rotPicture(flat, { seed: 5, ...MOULDY }), rotten = rotPicture(flat, { seed: 5 });
@@ -170,8 +169,6 @@ test('OWN-WORK4: a candle doused by our rule - the flame above the wax goes clea
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
-// PIN MOVED (OWN-AUDIT, 2026-11-01): the mould is soft patches now, not specks, so every spoiled face has a new print;
-// and the mouldy cooked fish (536_0-0) is ours, the sixteenth.
 const ICONS = Object.freeze({
   '532_0-0': [17, 13, '6264fc9abe60abe0'], '532_1-0': [17, 13, 'fcdedad732357ea9'], '533_0-0': [16, 13, '40f4b74853de446f'],
   '533_1-0': [16, 13, 'e5fd8e744e13e205'], '534_0-0': [34, 27, 'a74fb3e995f9eb9c'], '534_1-0': [34, 27, '20f981050395e130'], '535_0-0': [22, 11, 'c0ebf8fa8c1397b6'],

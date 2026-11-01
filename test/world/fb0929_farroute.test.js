@@ -1,7 +1,6 @@
 // FB0929 (2026-09-29, the Discord's #bug-reports, SylviaBun, through Mac): "New Overworld map lags when fast-traveling
 // to a distant location. I can use the Overworld map just fine, no lag even when moving at high speeds when just
 // clicking around. The moment I go to my Travel Map and select a far away destination, the game drops to sub-10 FPS."
-// (bible/06-Systems/Travel-View.md, FB0929.)
 //
 // THE FAR JOURNEY'S LINE. TV2's route line is an SVG path through every projected point of the journey - four a leg -
 // dashed over a dark casing (ui/enhanced/enhancedStyle.js .tview-route-line). A click in the view is a few legs, all on the
@@ -20,7 +19,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { planRoute, routeLegs, routeDrawPoints } from '../../src/systems/travel/travelRoute.js';
-import { drawRouteRuns, drawOwnRun } from '../../src/systems/travel/roadLine.js';   // PIN MOVED (ROAD-FOLLOW): the host's line drawn along the painted road
+import { drawRouteRuns, drawOwnRun } from '../../src/systems/travel/roadLine.js';
 import { createTravelView, ROUTE_DOT_PX, ROUTE_DOTS_MAX } from '../../src/scenes/travelView.js';
 import { forwardOf, TV_RISE_S } from '../../src/player/travelCamera.js';
 import { projectToScreen } from '../../src/player/tapRay.js';
@@ -34,12 +33,12 @@ const W = 1366, H = 768;   // the reporter's class of screen
 const FROM = { x: 195, y: 172 };   // a pixel of Daggerfall's north, the network's roads about it
 const NEAR = { x: 193, y: 169 };   // three pixels off: a town's plate in the view
 const FAR = { x: 595, y: 5 };   // four hundred off: a pick on the travel map
-const NET = bayRoads();   // OWN-WORK2: the Bay's own network, off the player's ARENA2 (Basic Roads' arrays are retired)
+const NET = bayRoads();   // The Bay's own network, off the player's ARENA2 (Basic Roads' arrays are retired)
 const SPOT_M = 300;   // a click on the ground the view shows: 300 m north, in the traveller's own pixel (40 native units a metre)
 
 // the line's paint, read off the style sheet: the dash's period and the casing's width
 const CSS = rd('src/ui/enhanced/enhancedStyle.js');
-// OW-DOTS-GROUND: the line is drawn as dots now (the view's world points, scenes/travelView.js routeGroundDots) - the
+// The line is drawn as dots now (the view's world points, scenes/travelView.js routeGroundDots) - the
 // path's length is still the measure of what an uncut line would cost, a dot every ROUTE_DOT_PX at the finest
 const DASH = [null, '0', String(ROUTE_DOT_PX)];
 const CASING = /\.tview-route-casing \{[^}]*stroke-width: (\d+);[^}]*stroke-linecap: round; stroke-linejoin: round;/.exec(CSS);
@@ -75,7 +74,7 @@ function journey(goal, spot = null) {
     // the scene point of a native one, on flat ground (CI has no ARENA2 heights): world.js tvSceneOf's own placement
     tvSceneOf: (nx, nz, lift = 0) => { const [x, z] = state.localFromWorld(nx, nz); return [x, lift, z]; },
     deepWaters: null, tvSeaY: () => 0, tvGroundGenNow: () => 1,
-    drawRouteRuns, drawOwnRun,   // PIN MOVED (ROAD-FOLLOW): the host's two imports its line draws through
+    drawRouteRuns, drawOwnRun,
   };
   const travelViewRoute = new Function('d', `const { ${Object.keys(d).join(', ')} } = d;\n${src.route}\nreturn travelViewRoute;`)(d);
   const n1 = d.tvTrip.natives[1], [ax, az] = state.localFromWorld(n1[0], n1[1]);

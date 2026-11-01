@@ -175,8 +175,8 @@
   {
     "name": "VERGE1-off-by-default",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: true, online: true }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: false, online: true }),",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: true, online: true }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: false, online: true }),",
     "tests": [
       "test/world/road/verge1.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "VERGE1-before-it-painted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const vergeNet = verges && withRoads ? terrainGen.roads() : null;",
-    "new": "const vergeNet = verges ? terrainGen.roads() : null;",
+    "old": "    const vergeNet = verges && withRoads ? terrainGen.roads() : null;",
+    "new": "    const vergeNet = verges ? terrainGen.roads() : null;",
     "tests": [
       "test/world/road/verge1.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "VERGE1-site-flat-its-root",
     "file": "src/scenes/pixelBuild.js",
-    "old": "WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE + ((await halfWidthsOf(f.archive))[f.record] ?? 0) * f.scale.x)",
-    "new": "WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE)",
+    "old": "        if (vergeNet && !vergeClear(vergeNet, px, py, f.base[0], f.base[2], WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE + ((await halfWidthsOf(f.archive))[f.record] ?? 0) * f.scale.x)) { _wodOffRoad++; continue; }",
+    "new": "        if (vergeNet && !vergeClear(vergeNet, px, py, f.base[0], f.base[2], WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE)) { _wodOffRoad++; continue; }",
     "tests": [
       "test/world/road/verge1.test.js"
     ]

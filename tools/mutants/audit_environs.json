@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-ENVIRONS-G10-implicit-gradient",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  vec3 albedo = mix(${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')}, second,",
-    "new": "  vec3 albedo = mix(${decode('texture(uSnowAlbedo, albedoUV).rgb')}, second,",
+    "old": "  vec3 albedo = mix(${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')}, second, ${f(SNOW_ALBEDO_SECOND.share)}) * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);",
+    "new": "  vec3 albedo = mix(${decode('texture(uSnowAlbedo, albedoUV).rgb')}, second, ${f(SNOW_ALBEDO_SECOND.share)}) * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);",
     "tests": [
       "test/render/snowfall1_runtime.test.js"
     ]

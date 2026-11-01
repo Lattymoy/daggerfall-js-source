@@ -1,9 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31, the owner: "A proper 1 to 1 recreation for everything"): WINDFALL'S SOUNDS, MADE HERE. The 27
-// clips Windfall 1.0.0 plays keep its names, rates and lengths (systems/windfallEffects.js WINDFALL_CLIP_TABLE), and each
-// is synthesized from seeded noise. Nothing of the mod's audio is read. A gust is noise through a band that rises with its
-// swell. A passage is a slow breath of wind: a whistle in it, or a low open roar. A ruffle is a shower of short, bright
-// grains, as dry leaves give. The seed is the clip's name, so a clip is the same on every boot. Pure.
+// WINDFALL'S SOUNDS, MADE HERE. The 27 clips Windfall 1.0.0 plays keep its names, rates and lengths
+// (systems/windfallEffects.js WINDFALL_CLIP_TABLE), and each is synthesized from seeded noise. Nothing of the mod's audio
+// is read. A gust is noise through a band that rises with its swell. A passage is a slow breath of wind: a whistle in it,
+// or a low open roar. A ruffle is a shower of short, bright grains, as dry leaves give. The seed is the clip's name, so a
+// clip is the same on every boot. Pure.
 import { section, mulberry32 } from '../soundscape/bedDsp.js';
 
 const TAU = Math.PI * 2;

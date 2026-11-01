@@ -582,8 +582,8 @@
   {
     "name": "PIXEL-FADE-stamped-with-the-door-shut",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(",
-    "new": "if (key === pkey && isEnhanced() && midRingDisabled()) stampPixelFade(",
+    "old": "    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // The stream's new pixel eases out of the middle ring's tint",
+    "new": "    if (key === pkey && isEnhanced() && midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // The stream's new pixel eases out of the middle ring's tint",
     "tests": [
       "test/render/midring.test.js"
     ]

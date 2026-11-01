@@ -1,7 +1,7 @@
-// STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md section 7): THE MOUNT LOOKS - the account's look laid over the
-// horse's coat (systems/horse/horseCoats.js, its fifth part), never on the wire's code; each look's dye on the side
-// view and the 3D horse; mine off my token's kit and a peer's off its own (systems/horse/mountLook.js) wherever a horse is
-// drawn; the beat in the world (systems/horse/mountFx.js) and on the shop's and profile's horse (ui/mountPreview.js).
+// STOREFRONT: THE MOUNT LOOKS - the account's look laid over the horse's coat (systems/horse/horseCoats.js, its fifth
+// part), never on the wire's code; each look's dye on the side view and the 3D horse; mine off my token's kit and a peer's
+// off its own (systems/horse/mountLook.js) wherever a horse is drawn; the beat in the world (systems/horse/mountFx.js) and
+// on the shop's and profile's horse (ui/mountPreview.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -24,7 +24,7 @@ import { eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
 import { horsePictures } from '../../../tools/lib/horsePictures.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-// OWN-WORK4 (2026-10-31): the shop's horse is the cart's horse's side view, ours (systems/horse/horseArt.js), built from
+// The shop's horse is the cart's horse's side view, ours (systems/horse/horseArt.js), built from
 // the player's ARENA2 - so the pins on it run where ARENA2_PATH is set.
 const NO_ARENA2 = !process.env.ARENA2_PATH && 'ARENA2_PATH not set';
 const side = async () => { const p = await horsePictures().picture(MOUNT_PREVIEW_FILE); return { width: p.width, height: p.height, colors: new Uint8Array(p.data) }; };
@@ -40,12 +40,10 @@ test('STOREFRONT the look\'s code: a mount look a fifth part, its highest factor
   assert.deepEqual(horseLookOfCode(worn), { coat: 3, pattern: 2, legs: 1, seed: 999, mount: 3 });
   assert.equal(withMountLook(worn, null), coat, 'taken off: the coat again');
   assert.match(rd('src/systems/horse/horseCartWire.js'), /const hc = wireHorseLook\(view\.look \?\? 0\);/, 'a parked team\'s word never says it');
-  // PIN MOVED (DRAGON5, DRAGON-BLUE, at the merges of main): a tamed dragon's own look while one is ridden, an Admin's ride's
-  // off a horse; a horse's is still the coat alone
   assert.match(rd('src/scenes/world.js'), /rc: riding \? \(player\.transportMode === TRANSPORT_MODES\.Dragon \? dragonLookOfItem\(dragonMountOf\(playerEntity\.items\)\) : riddenHorseLook\(playerEntity\.items \?\? \[\]\)\) \|\| undefined : dragonRideLook\(\) \|\| undefined,/, 'nor the pose');
 });
 
-// AUDIT-STOREFRONT (2026-10-29): PIN MOVED - "nothing but the hide moved" left a ghost with a black mane and tail. A look
+// PIN MOVED - "nothing but the hide moved" left a ghost with a black mane and tail. A look
 // now moves the hide and its points (horseCoats.js pointsOf); the saddle and the rider are still never touched.
 /** The pixels of `img` a look moved off its coat alone, other than the hide's. */
 const movedOff = (img, hidden, look, plain) => {
@@ -55,8 +53,8 @@ const movedOff = (img, hidden, look, plain) => {
 };
 const src = (img, i) => [img.colors[i * 4], img.colors[i * 4 + 1], img.colors[i * 4 + 2]];
 
-// AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"): PIN MOVED - the looks redrawn by the horse's
-// own shape (mountPaint.js): no grid of holes, no scales or stripes laid flat over head and legs alike.
+// PIN MOVED - the looks redrawn by the horse's own shape (mountPaint.js): no grid of holes, no scales
+// or stripes laid flat over head and legs alike.
 test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and its marks by the horse\'s shape - the Spectral Steed a pale blue ghost, its rim lit and its legs dissolving from the hooves up; the Dawnfire Charger gold, its legs burning; the Daedric Warhorse obsidian, lit red from below; the Brass Automaton brass in seamed plates, an aetherium heart at its chest - the tack kept; the 3D horse the same looks, no holes in it (mutants: a look that dyes the saddle; holes over the ghost\'s body; the ghost\'s rim unlit; the charger\'s legs unburnt; the warhorse lit from above; the automaton\'s seams and heart gone)', { skip: NO_ARENA2 }, async () => {
   const img = await side();
   const kept = pictureHide(img), hide = { ...kept, at: Array.from(kept.at) };   // an array: a typed one's map keeps numbers whole
@@ -77,7 +75,7 @@ test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and i
   // THE VISUAL PASS: the art's rose sheen on the hooves and the poll is the look's in every look - none left the bay's pink
   const rose = [];
   for (let i = 0; i < W * img.height; i++) if (img.colors[i * 4 + 3] && !hidden.has(i) && isSpeckPixel(...src(img, i))) rose.push(i);
-  assert.ok(rose.length >= 10, `the side view's sheen (${rose.length})`);   // OWN-WORK4: our side view's, 11
+  assert.ok(rose.length >= 10, `the side view's sheen (${rose.length})`);   // Our side view's, 11
   for (const m of MOUNT_LOOKS) for (const i of rose) {
     const c = looks[m].colors, o = i * 4, pink = isSpeckPixel(c[o], c[o + 1], c[o + 2]) && hsv(c[o], c[o + 1], c[o + 2])[2] > 0.4;   // the obsidian's dark is purple-grey
     assert.ok(!c[o + 3] || !pink, `${m}: the sheen at ${i % W},${Math.floor(i / W)} left rose (${[...c.slice(o, o + 3)]})`);
@@ -118,7 +116,7 @@ test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and i
   }
 });
 
-// AUDIT-STOREFRONT (the owner: "the horse designs are awful"): PIN MOVED - the Warhorse's mane and tail burn now, and the
+// PIN MOVED - the Warhorse's mane and tail burn now, and the
 // charger's are fire, not the gold's shadow.
 test('AUDIT-STOREFRONT the points: a look moves the horse\'s near-black too - the ghost\'s mane and tail a deep blue, see-through at their tips; the charger\'s and the Warhorse\'s fire; the automaton\'s steel - and never a rider\'s bow rising off the neck, nor a rein hanging in the air, in either row order (mutants: the points left black; a bow dyed; a rein dyed; the ghost\'s points its hide\'s light; the charger\'s points cold; the ghost\'s points never see-through; the charger\'s far legs unburnt; the Warhorse\'s mane left black)', async () => {
   // a built horse: a bay hide, a tail off its croup, a bow rising off its withers, a rein hanging in the air
@@ -192,7 +190,7 @@ test('AUDIT-STOREFRONT the 3D horse\'s mane and tail: a mount look shades the ha
   const coatOnly = horseLookCode({ coat: 2, pattern: 0, legs: 0, seed: 3 });
   assert.equal(wear(coatOnly).id, 2);
   for (let f = 0; f < 16; f++) rig.tick();
-  assert.equal(wear(coatOnly).id, 2, 'a coat keeps the art\'s black');   // PIN MOVED (AUDIT-STOREFRONT: the Warhorse's mane burns)
+  assert.equal(wear(coatOnly).id, 2, 'a coat keeps the art\'s black');
   const ghost = withMountLook(0, 'spectral');
   assert.equal(wear(ghost).id, 2, 'the art\'s until the shade is up');
   for (let f = 0; f < art.height / HAIR_ROWS; f++) rig.tick();
@@ -234,7 +232,6 @@ test('STOREFRONT whose look: mine off my token\'s kit, a peer\'s off its own, on
   assert.match(rd('src/player/mountRig.js'), /ridingLook\(mode, ownMountLook\(riddenHorseLook\(playerEntity\?\.items \?\? \[\]\)\)\)/);
   assert.match(rd('src/combat/weapon/weaponRig.js'), /horseLook: entity \? ownMountLook\(riddenHorseLook\(entity\.items \?\? \[\]\)\) : 0,/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /look: ownMountLook\(riddenHorseLook\(playerEntity\.items \?\? \[\]\)\), slow: player\.slowRide/, host);
-  // PIN MOVED (the wire audit): each peer's horse with where it stands, for the Others' effects choice
   assert.match(rd('src/net/peer/peerRiders.js'), /horse: peerMountLook\(peer\.id, pose\.rc \| 0, feet\)/);
   assert.match(rd('src/net/peer/peerBodies.js'), /look: peerMountLook\(b\.id, shown\.rc \| 0, f\)/);
   assert.match(rd('src/scenes/horseCartPool.js'), /owner === '' \? ownMountLook\(horseLook\?\.\(\)\) : peerMountLook\(_peers\.get\(owner\)\?\.ownerId \?\? owner, _peers\.get\(owner\)\?\.horseLook \?\? 0, at\)/);
@@ -259,5 +256,5 @@ test('STOREFRONT the beat: a horse in a look throws its beat through the running
   assert.equal(fx.size, 0, 'riders not seen let go');
   assert.deepEqual(Object.keys(MOUNT_PREVIEW_BEAT).sort(), [...MOUNT_LOOKS].sort());
   assert.match(rd('src/player/mountRig.js'), /mountFx\.step\('self', mounted \? effectWorn\(ownEffects\(\), 'mount'\) : null,/);
-  assert.match(rd('src/net/peer/peerFx.js'), /const ridden =\n\s*pose\.rd === POSE_RIDE\.Horse && !pose\.wb && othersEffectShown\(feet\) \? effectWorn\(kit, 'mount'\) : null;/);   // PIN MOVED (the wire audit): by the Others' effects choice
+  assert.match(rd('src/net/peer/peerFx.js'), /const ridden =\n\s*pose\.rd === POSE_RIDE\.Horse && !pose\.wb && othersEffectShown\(feet\) \? effectWorn\(kit, 'mount'\) : null;/);
 });

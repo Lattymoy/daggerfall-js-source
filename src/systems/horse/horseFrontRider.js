@@ -1,5 +1,5 @@
 // @ts-check
-// OWN-AUDIT (2026-11-01): THE FRONT VIEW'S RIDER, AUTHORED. From the front the baked masks (eotbRiderMasks.js) miss
+// THE FRONT VIEW'S RIDER, AUTHORED. From the front the baked masks (eotbRiderMasks.js) miss
 // most of TEXTURE.495 record 0's rider - his lap and hands over the horse's head, a hilt, his legs and feet - where the
 // five mounted sets agree. These are ours, drawn over the player's eight frames: every row above the horse's forehead
 // (its row set by eye, a frame each), every pixel above the hooves in the rider's ramps (ART_PAL 3, 4, 5-10, 12, 14 -

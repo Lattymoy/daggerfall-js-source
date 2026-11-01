@@ -1,4 +1,4 @@
-// WHERE-ROBES (FIELD BUGS 2026-10-04c): THE HARNESS its two files share - test/systems/fb1004c_robes.test.js and its audit's,
+// THE HARNESS its two files share - test/systems/fb1004c_robes.test.js and its audit's,
 // test/systems/fb1004c_audit.test.js. The Qualifying Examination on the real QuestMachine (its vendored script, its own robes
 // and note), quick loot's switch, the enhanced pack mounted over a pile, and a real Collider's bed room. Not a test file
 // (the suite's glob is test/*.test.js), so it runs nothing of its own.
@@ -13,7 +13,7 @@ import { PREF_DEFAULTS, setPref } from '../src/systems/uiPrefs.js';
 import { mountEnhancedInventory } from '../src/ui/enhanced/enhancedInventory.js';
 import { _resetForTests } from '../src/systems/settings/settings.js';
 import { withDom } from './invdrag.mjs';
-import { QUEST_FILES } from './qlSources.mjs';   // PIN MOVED (OWN-WORDS2): the pack as the game reads it - our words where we have them
+import { QUEST_FILES } from './qlSources.mjs';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const rd = (p) => readFileSync(join(ROOT, p), 'utf8').replace(/^﻿/, '');
@@ -46,7 +46,7 @@ export function examination() {
   return { m, q, robes, note, popups, given, step, getQuest: (uid) => m.getQuest(uid) };
 }
 /** Whether the robes' note reached the player: message 1018 said and `_note_` given. */
-export const noteCame = (e) => e.popups.some((p) => /Paper crackles as you lift the/.test(p) && /hidden a note inside/.test(p)) && e.given.includes(e.note);   // PIN MOVED (OWN-WORDS2): O0A0AL00's 1018 in our words
+export const noteCame = (e) => e.popups.some((p) => /Paper crackles as you lift the/.test(p) && /hidden a note inside/.test(p)) && e.given.includes(e.note);
 
 /** The feature with its switch on and its state clean, restored after (test/systems/quickloot.test.js's own). */
 export function withQuickLoot(fn) {

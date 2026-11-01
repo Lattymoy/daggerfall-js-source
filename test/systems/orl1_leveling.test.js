@@ -1,8 +1,4 @@
-// ORL1 - OBLIVION REMASTER LIKE LEVELING 0.5.3, THE MOD, 1:1
-// (2026-09-17, Mac: "So I've been analyzing morrowind mods to integrate
-// and the first one I'd like to add is this. On new game, I want the
-// player to receive a notification on which leveling system they would
-// like to use").
+// OBLIVION REMASTER LIKE LEVELING 0.5.3, THE MOD, 1:1.
 //
 // THE FIRST MORROWIND MOD IN THIS TREE, so the producer these pins read
 // is Lua and a 487-byte OpenMW data file rather than a `.dfmod` and a
@@ -11,7 +7,7 @@
 // THE MINIMA, THE TWO CAPS AND THE BAR'S SIZE ARE READ OUT OF THE
 // VENDORED MOD AND COMPARED, never retyped. A pin that retypes the
 // mod's numbers measures a constant against itself.
-// OWN-WORK1 (2026-10-31): the vendored mod is retired, so those numbers are
+// OWN-WORK1: the vendored mod is retired, so those numbers are
 // SHIPPED below - a record of the files, not of the port's own constants.
 //
 // Then the laws, each driven through the port's own producers
@@ -58,7 +54,7 @@ import { ChargenFlow } from '../../src/ui/chargen.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 const V = ORL_VENDOR;
-// OWN-WORK1: what these pins read out of the mod's files, as the files read at 1b97b3a8f.
+// What these pins read out of the mod's files, as the files read at 1b97b3a8f.
 const SHIPPED = Object.freeze({
   // OblivionRemasterLikeLeveling.omwaddon: a TES3 plugin with exactly one record, GMST NAME "iLevelupTotal" INTV 100
   gmst: Object.freeze({ iLevelupTotal: 100 }),
@@ -140,8 +136,6 @@ test('ORL1: every setting default and minimum is settings.lua\'s, and every desc
   // of chosen skills Morrowind does not.
   const extra = Object.keys(ours).filter((k) => !Object.hasOwn(shipped, k));
   assert.deepEqual(extra.sort(), ['Enabled', 'primarySkillsImpact']);
-  // PIN MOVED (PLAIN-TEXT, 2026-10-19): the words a player reads, exactly - why the row exists, said for the player
-  // (Morrowind has no Primary tier) rather than as a note that the knob is the port's
   assert.equal(ours.primarySkillsImpact.description, 'Points given by a Primary Skill level up (100 points required to level up). Morrowind has no Primary skills, so this starts equal to Major skills.',
     'the port\'s own knob says in the pane why it is there');
   // ...and it ships equal to the major skills', which is the mapping
@@ -166,7 +160,7 @@ test('ORL1: the two caps are constants.lua\'s, and the record\'s version is the 
   // the VALUE is what this holds.
   assert.equal(ATTRIBUTE_INCREASE_LIMIT, SHIPPED.constants.ATRIBUTE_INCREASE_LIMIT);
   // The version was the registry row's cell, checked against README.upstream.md's
-  // newest heading. OWN-WORK1 took both out; Own-Work.md's row carries it (CREDITS-OUT: the credit is gone).
+  // newest heading. OWN-WORK1 took both out;'s row carries it (CREDITS-OUT: the credit is gone).
   const own = readFileSync(new URL('../../bible/01-Overview/Own-Work.md', import.meta.url), 'utf8');
   assert.ok(own.includes(`| \`${V}\` | OblivionRemasterLikeLeveling ${SHIPPED.version} `), 'the record names the release the port was read from');
 });
@@ -1037,7 +1031,7 @@ test('ORL1: the wizard\'s window stays OPEN on the question, and the answer reac
 
   w.input('ArrowDown');
   w.input('Enter');
-  // LEGACY2: Project Legacy ships on (MO1), so its question - the family's model - is the next stage of the same
+  // Project Legacy ships on, so its question - the family's model - is the next stage of the same
   // window: still not done, still no character handed over, until it too is answered
   assert.equal(w.done, false, 'the model question follows the leveling one');
   assert.equal(result, null);
@@ -1094,7 +1088,7 @@ test('ORL1: a wizard torn down mid-question still hands its host an answer', () 
 
 test('ORL1: the choice rides the ONE chargen door, and every apply path answers it', () => {
   const cs = rd('src/systems/chargenSession.js');
-  assert.match(cs, /return withLevelingChoice\(flow, \{ onDone, onCancel, hudScale, startChoice \}\);/,   // PIN MOVED (START2): and the host's start page
+  assert.match(cs, /return withLevelingChoice\(flow, \{ onDone, onCancel, hudScale, startChoice \}\);/,
     'createChargenWindow wraps the wizard rather than each host wiring a prompt');
   assert.match(cs, /initVirtueLeveling\(playerEntity, newCharacterLevelingSystem\(result\.levelingSystem \?\? LEVELING_CLASSIC, \{ online: isOnlinePage\(\) \}\)\);/,
     'finishChargen sets the answer beside the DFU level anchor (LEVEL-ONLINE: through the one law for a new character)');
@@ -1110,7 +1104,7 @@ test('ORL1: the choice rides the ONE chargen door, and every apply path answers 
 
 test('ORL1: the mod\'s window is the door\'s, in BOTH lanes, and the classic sheet stands down', () => {
   const door = rd('src/ui/charSheetDoor.js');
-  // LV1: the fork is one block now rather than two guards in a row,
+  // The fork is one block now rather than two guards in a row,
   // because the enhanced skin needs the same answer to build its own
   // window with. The LAW is unchanged and still pinned: whose law
   // levels this character is decided BEFORE anything is constructed,
@@ -1123,7 +1117,7 @@ test('ORL1: the mod\'s window is the door\'s, in BOTH lanes, and the classic she
   // was earned, which on the enhanced skin is not this moment), and the
   // law this pin holds - WHICH screen the answer above chooses - is
   // unchanged.
-  // PIN MOVED (GROWTH1): the rollout's one home, levelUpScreenFor, handed that same answer
+  // PIN MOVED: the rollout's one home, levelUpScreenFor, handed that same answer
   assert.match(door, /const rollout = \(\) => levelUpScreenFor\(deps\.entity, virtue\);/, 'and the screen either skin drives is chosen by that answer');
   assert.match(door, /return virtue \? new VirtueLevelUpScreen\(entity, \{ fanfare \}\) : new LevelUpScreen\(entity, undefined, \{ fanfare \}\);/);
   assert.match(door, /if \(virtue\) return new VirtueLevelUpScreen\(deps\.entity\);\n\s*if \(isEnhanced\(\)\) return new LevelUpScreen\(deps\.entity\);/,
@@ -1177,12 +1171,12 @@ test('ORL1: the tile and the group', () => {
   // all eight knobs reach the tile
   assert.equal(MOD_CURATED[V].length, 8);
   for (const k of MOD_CURATED[V]) assert.ok(MOD_SETTINGS[V].keys[k], `${k} is a key the mod ships`);
-  // OWN-WORK1: the vendor README and the registry row, which held the open
-  // record, left the tree; Own-Work.md's row holds it now.
+  // The vendor README and the registry row, which held the open
+  // record, left the tree;'s row holds it now.
 });
 
 test('ORL1: the mod ships ON, and a switched-off mod asks nobody', () => {
-  // MO1: every vendored mod's Enabled defaults true.
+  // Every vendored mod's Enabled defaults true.
   assert.equal(MOD_SETTINGS[V].keys.Enabled.default, true);
   assert.equal(oblivionLevelingEnabled(reader()), true);
   assert.equal(oblivionLevelingEnabled(reader({ Enabled: false })), false);

@@ -5,7 +5,7 @@
 // flat TEXTURE.357 record 3, which FLATS.CFG has no row for, under a faction with no flat of its own - so the portrait
 // law (GetPortraitIndexFromStaticNPCBillboard, systems/npcSession.js) stood its starting record, 410: TFAC00I0's grey
 // "OOPS! Tell Mack NOW!". The flat wears the face FLATS.CFG gives classic's own bearded man (182.3, 429), written as a
-// mod writes FLATS.CFG's dictionary, while the mod is loaded. OWN-WORK2 (2026-10-31): the stand is ours now
+// mod writes FLATS.CFG's dictionary, while the mod is loaded. OWN-WORK2: the stand is ours now
 // (world/immersiveTravelGates.js STAND_DRIVERS), and each of its four drivers has a FLATS.CFG row of his own.
 // `01-Overview/bugs/Field-Bugs-2026-10-09b.md`.
 import { test } from 'node:test';

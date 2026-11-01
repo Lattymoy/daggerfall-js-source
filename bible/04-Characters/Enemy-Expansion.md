@@ -32,9 +32,19 @@ record (provenance, files, art) is `vendor/daggerfall-enemy-expansion/README.md`
 - **Morrowind bodies.** `src/systems/enemyExpansion/dexBodies.js` matches each new monster to the Morrowind creature
   that is it and moves as it does, or declares a miss and keeps the sprite. Lizard men are people (Argonians). Classes
   are people, except riders, which keep their sprite.
-- **MUDEX.** With DEX loaded and Meaner Monsters on, the port loads MUDEX (Ralzar's form of Meaner Monsters for DEX)
-  instead: its two tables read after DEX's, and Meaner Monsters' own rows and scales stand aside
-  (`src/systems/enemyExpansion/dexSwitches.js` `mudexLoaded`, `meanerMonstersAlone`).
+- **Meaner Monsters beside DEX.** With DEX loaded and Meaner Monsters on, the game loads our own meaner monsters for
+  DEX (`src/systems/enemyExpansion/dexMeaner.js`): two tables in DEX's own formats, read by DEX's reader after its own,
+  while Meaner Monsters' own rows and scales stand aside (`src/systems/enemyExpansion/dexSwitches.js`
+  `dexMeanerLoaded`, `meanerMonstersAlone`). The relay's bounds read the profile (`src/net/foeBounds.js`).
+
+| rule | whom | what it does |
+|---|---|---|
+| the level stays | every kind | no line names a level, so every table's order, the progression share and the provinces' wild stay DEX's |
+| the floor | the bestiary's own average a level, to the half: 2 damage and 4.5 health (`MEANER_FLOOR`) | the line every rule below reads |
+| the newcomer's blow | a kind of level 4 or less (`NEWCOMER_LEVEL`) | its blow cut to the floor, its health left: the Rat, the Bat, the Giant Bat, the Imp, the Spider, the Mudcrab, the Skeletal Soldier |
+| the blow's floor | a kind past level 4 that neither casts nor carries a touch (`TOUCH_ARMS`) | its blow raised to the floor, the dice's shape kept: 27 kinds, the Orc 1-6 to 3-17 |
+| the health floor | a kind past level 4 | its health raised to the floor: 24 kinds, most of them levels 10 to 16 |
+| the courts | DFU's nineteen dungeon types, in every province | two courts of six for each, least to master (`DEX_MEANER_COURTS`), beside DEX's default: the seeded pick gives a dungeon one of three for good (a laboratory one of four) |
 
 ## Rules
 
@@ -43,7 +53,8 @@ record (provenance, files, art) is `vendor/daggerfall-enemy-expansion/README.md`
 - Permission recorded (Mac). The art follows Port-Doctrine: pictures that are Daggerfall's own records are rebuilt
   from the player's ARENA2, never carried; the authors' repaints of Daggerfall sprites ship under Port-Doctrine's
   fourth exception (Mac).
-- Every mod is made compatible: Meaner Monsters beside DEX is MUDEX, with no switch of its own (the owner).
+- Every mod is made compatible: Meaner Monsters beside DEX is our own design for it, with no switch of its own (the
+  owner; OWN-WORK, the owner).
 - The mod's switch is `Enabled` (on), read once at load; a change waits for the next load.
 - Online, the room takes the mod whole. A troll's body belongs to its foe's runner: only the runner counts, rises and
   burns it. A copy's missile is sent to the runner.
@@ -53,8 +64,8 @@ record (provenance, files, art) is `vendor/daggerfall-enemy-expansion/README.md`
 ## Daggerfall Unity
 
 The mod is a DFU mod (`BestiaryMod.cs`, `DEX_RRICompat.cs`, the troll corpse scripts). Departures: localized names;
-Morrowind bodies (DFU draws only sprites); online play; MUDEX is loaded for the player where Meaner Monsters only asks
-the player to switch.
+Morrowind bodies (DFU draws only sprites); online play; our meaner monsters are loaded for the player where Meaner
+Monsters only asks the player to switch.
 
 ## Code and tests
 
@@ -63,5 +74,6 @@ the player to switch.
 - `src/characters/enemy/customEnemies.js`, `enemyBasics.js`, `enemyEntity.js` - DFU's enemy doors
 - `src/scenes/corpsePrefabHost.js` - the hosts' door for the troll's corpse prefab
 - `tools/dexExtract.mjs` - splits the bundle's art and measures it against every TEXTURE record
-- `test/systems/enemyExpansion/` - the port, the record against the DLL (`dex0_record.test.js`), sprites
+- `test/systems/enemyExpansion/` - the port, the record against the DLL (`dex0_record.test.js`), sprites, and our
+  meaner monsters (`dexmeaner.test.js`, every line the rule's answer)
 - `test/net/world2.test.js`, `test/net/bodyloot_protocol.test.js` - the troll online

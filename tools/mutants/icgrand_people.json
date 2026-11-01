@@ -29,8 +29,8 @@
   {
     "name": "IC-HOMES-buildings-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": ".concat(cityHomesOf(dfLocation).buildings),",
-    "new": ",",
+    "old": "            .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })).concat(cityHomesOf(dfLocation).buildings),   // The fabric's homes (world/imperialHomes.js)",
+    "new": "            .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })),   // The fabric's homes (world/imperialHomes.js)",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]

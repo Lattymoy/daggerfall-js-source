@@ -302,8 +302,8 @@
   {
     "name": "PLACE-LRU-world-publish-never-settles",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const entry = built.get(pkey); pipeline.settle();",
-    "new": "    const entry = built.get(pkey);",
+    "old": "    const entry = built.get(pkey); pipeline.settle();   // The pixel stands (published above with its hold, `placeHold`, which destroyPixel releases) - the keep of its last visit goes, with what only that visit held (a re-skin's old season, a rebuild's old layout)",
+    "new": "    const entry = built.get(pkey);   // The pixel stands (published above with its hold, `placeHold`, which destroyPixel releases) - the keep of its last visit goes, with what only that visit held (a re-skin's old season, a rebuild's old layout)",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "PLACE-LRU-world-the-entry-carries-no-hold",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      placeHold: pipeline,\n      location: dfLocation",
-    "new": "      location: dfLocation",
+    "old": "      placeHold: pipeline,\n      location: dfLocation ? dfLocation.name : null,",
+    "new": "      location: dfLocation ? dfLocation.name : null,",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "PLACE-LRU-world-the-build-asks-through-the-host",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;",
-    "new": "const pkey = `${px},${py}`, key = swap.keyFor(px, py);",
+    "old": "    const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
+    "new": "    const pkey = `${px},${py}`, key = swap.keyFor(px, py);   // THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],

@@ -1,6 +1,6 @@
-// NO-BETHESDA (2026-10-31, the owner: "ensuring they are not implemented"): tools/bethesdaScan.mjs reads every tracked
-// file's bytes and pictures against the player's ARENA2. CI has no ARENA2, so its measures are pinned here on made-up
-// data: each finds what it is for and nothing else. With ARENA2_PATH set, the last test scans the tree's bytes.
+// tools/bethesdaScan.mjs reads every tracked file's bytes and pictures against the player's ARENA2. CI has no ARENA2,
+// so its measures are pinned here on made-up data: each finds what it is for and nothing else. With ARENA2_PATH set,
+// the last test scans the tree's bytes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
@@ -129,7 +129,7 @@ const ARENA2 = process.env.ARENA2_PATH;
 test('NO-BETHESDA: no tracked file is an ARENA2 file or record, and no run of ARENA2 stands outside a known place', { skip: !ARENA2 && 'ARENA2_PATH not set' }, () => {
   const report = scan({ arena2: ARENA2, pictures: false, files: trackedFiles() });
   assert.deepEqual(report.whole, [], 'a tracked file is an ARENA2 file or a BSA record');
-  // Known: DFU's MIT quest scripts and its TEXT.RSC table carry Bethesda's words (Own-Work.md, NO-BETHESDA); the
+  // Known: DFU's MIT quest scripts and its TEXT.RSC table carry Bethesda's words; the
   // exceptions' indexed PNGs carry Daggerfall's palette in their PLTE chunk.
   const known = (p) => inException(p) || p.startsWith('vendor/dfu-quests/') || p === 'vendor/dfu-text/Internal_RSC.csv';
   assert.deepEqual(report.embedded.filter((e) => !known(e.path)).map((e) => `${e.path} <- ${e.sources.join(', ')}`), []);
