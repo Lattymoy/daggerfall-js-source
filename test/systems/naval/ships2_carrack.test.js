@@ -29,11 +29,12 @@ import { pathHash } from '../../../src/world/unityAnimator.js';
 import { decodeMeshGeometry } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { scene, MODELS } from '../../csaScene.mjs';
 import { sweepRig } from '../../shipSweep.mjs';
+import { ownFile } from '../../ownBoats.mjs';
 
-const VENDOR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const csa = JSON.parse(readFileSync(new URL('prefabs.json', VENDOR), 'utf8'));
-const modMeshes = JSON.parse(readFileSync(new URL('meshes.json', VENDOR), 'utf8'));
-const bin = readFileSync(new URL('meshes.bin', VENDOR));
+// OWN-WORK4: our boats' files (test/ownBoats.mjs) - the base the port's ship copies her small things out of
+const csa = ownFile('prefabs.json');
+const modMeshes = ownFile('meshes.json');
+const bin = ownFile('meshes.bin');
 const bakeJson = JSON.parse(readFileSync(new URL('../../../src/assets/ships/carrack.json', import.meta.url), 'utf8'));
 const hullPart = bakeJson.parts.find((p) => p.role === 'hull');
 const built = carrackPrefab(bakeJson, csa);

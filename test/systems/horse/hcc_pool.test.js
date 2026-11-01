@@ -46,9 +46,7 @@ function fakeCollider({ floor = 0 } = {}) {
     sphereCast: (o, r, d, max, filter) => ({ dist: filter?.skip?.includes(WAGON_BUCKET) ? Infinity : 1, key: WAGON_BUCKET }),
   };
 }
-const png = (w, h) => new Uint8Array(8);
 const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4) });
-const fetchOk = async () => ({ ok: true, arrayBuffer: async () => png().buffer });
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const flush = async (n = 6) => { for (let i = 0; i < n; i++) await tick(); };
 
@@ -116,7 +114,7 @@ test('HCC pool: the wagon\'s five pieces and twelve cargo meshes arrive through 
 
 test('HCC pool: the horse billboard - the five standing views then the forty walk frames load, the view and the mirror follow the camera, the frame the walk', async () => {
   const renderer = fakeRenderer();
-  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => fakeCollider(), now: () => 0, fetchFn: fetchOk, decode });
+  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => fakeCollider(), now: () => 0, horsePicture: decode });
   assert.equal(pool.presentation.horseArt.ensureStationary(), false, 'loading');
   await flush();
   assert.equal(pool.presentation.horseArt.ensureStationary(), true);
@@ -149,7 +147,7 @@ test('HCC pool: the horse billboard - the five standing views then the forty wal
   // unreachable, and `failed()` went with it
   let asked = 0;
   const errors = [];
-  const failing = createHorseCartPool({ renderer: fakeRenderer(), meshes: fakeMeshes(), collider: () => fakeCollider(), fetchFn: async () => { asked++; return { ok: false, status: 404 }; }, decode, log: { error: (m) => errors.push(m), warn() {} } });
+  const failing = createHorseCartPool({ renderer: fakeRenderer(), meshes: fakeMeshes(), collider: () => fakeCollider(), horsePicture: async () => { asked++; throw new Error('no horse picture'); }, log: { error: (m) => errors.push(m), warn() {} } });
   failing.presentation.horseArt.ensureStationary(); await flush();
   const once = asked;
   assert.equal(failing.presentation.horseArt.ensureStationary(), false); await flush();
@@ -283,7 +281,7 @@ test('HCC-ONLINE wire: the ease - a step under twenty metres eases, a longer one
   assert.deepEqual(easeToward([0, 0, 0], [10, 0, 0], 0), [0, 0, 0]);
   const renderer = fakeRenderer();
   const names = { p1: 'Ann' };
-  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => fakeCollider(), now: () => 0, fetchFn: fetchOk, decode, selfId: () => 'me', peerName: (id) => names[id] ?? null });
+  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => fakeCollider(), now: () => 0, horsePicture: decode, selfId: () => 'me', peerName: (id) => names[id] ?? null });
   await flush();
   pool.attach(fakeRuntime());
   const toScene = (p) => [(p[0] - 100000) / 40, p[1] + 3, (p[2] - 200000) / 40];
@@ -331,7 +329,7 @@ test('AUDIT HCC O1/O3/O7/O8/O9: a peer\'s team is converted every frame, stands 
   let ox = 100000;   // the host's origin: the conversion reads it LIVE, as campToScene does
   const toScene = (p) => [(p[0] - ox) / 40, p[1] + 3, (p[2] - 200000) / 40];
   let changed = 0;
-  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => col, now: () => 0, fetchFn: fetchOk, decode, selfId: () => 'me', peerName: () => 'Ann', onChanged: () => changed++ });
+  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => col, now: () => 0, horsePicture: decode, selfId: () => 'me', peerName: () => 'Ann', onChanged: () => changed++ });
   pool.attach(fakeRuntime({ horse: horse([1, 0, 1], [0, 0, 1], 5, false) }));
   // O9: the word lands before the art: the horse is neither drawn nor named nor pressed
   pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, 100400, -3, 200400, 0, 0, 0, 1, 25, 0], h: [100200, -3, 200240, 0, 1, 0] }, toScene, 1);

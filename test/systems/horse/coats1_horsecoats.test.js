@@ -5,7 +5,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PNG } from 'pngjs';
 import {
   HORSE_COATS, HORSE_PATTERNS, HORSE_LEGS, HORSE_COAT_MAX, HORSE_PATTERN_MAX, HORSE_LEGS_MAX, HORSE_SEED_MAX, HORSE_LOOK_CODE_MAX, HORSE_LOOK_WORN_MAX, HORSE_MOUNTS, withMountLook, wireHorseLook,
   HORSE_LOOK_PARTS, COAT_REGION_SHARE, COAT_SHADOW_VALUE, COAT_SHADOW_REACH, SHADE_HUE, SHADE_VALUE, BIRTH_WEIGHTS, STRANGER_SEEDS,
@@ -24,6 +23,7 @@ import { createHorseCartPool, horseStillRecord, horseWalkRecord, HORSE_ARCHIVE, 
 import { HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT, HORSE_VIEWS, HORSE_WALK_FRAMES } from '../../../src/systems/horse/horseCartLaw.js';
 import { createEotbArt, RIDER_LOOKS_KEPT, RIDER_LOOK_IDLE_MS } from '../../../src/net/peer/peerRiders.js';
 import { stableProviderFor } from '../../../src/ui/holdingsPages.js';
+import { horsePictures } from '../../../tools/lib/horsePictures.mjs';   // OWN-WORK4: our horse, built from ARENA2
 
 const horseItem = (extra = {}) => ({ templateIndex: TRANSPORT_HORSE, group: 'Transportation', name: 'Horse', ...extra });
 const cartItem = (extra = {}) => ({ templateIndex: TRANSPORT_SMALL_CART, group: 'Transportation', name: 'Small cart', ...extra });
@@ -232,12 +232,12 @@ test('COATS1 the legs: socks and stockings climb from the hooves - the picture\'
   assert.equal(rowWhite(head, 0), 0, 'the riding sprite\'s lower edge is its neck');
 });
 
-test('COATS1 the dye, on the mod\'s own horse: the flank goes grey, the saddle stays leather, the mane stays black', () => {
-  const raw = PNG.sync.read(readFileSync(new URL('../../../vendor/horse-cart-and-cargo/Textures/horse3.png', import.meta.url)));
+test('COATS1 the dye, on our own horse (OWN-WORK4: horseArt.js): the flank goes grey, the saddle stays, the mane stays black', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
+  const raw = await horsePictures().picture('horse3.png');
   const img = { width: raw.width, height: raw.height, colors: raw.data };
-  const grey = recolorHorse(img, code(3));
+  const grey = recolorHorse(img, code(3), { bottomFirst: false });
   let hide = 0, greyed = 0, tack = 0, tackKept = 0, dark = 0, darkKept = 0, leather = 0, leatherKept = 0;
-  const a = new Uint8Array(raw.data.buffer, raw.data.byteOffset, raw.data.byteLength), b = bytes(grey);
+  const a = raw.data, b = bytes(grey);
   for (let i = 0; i < raw.width * raw.height; i++) {
     const o = i * 4;
     if (!a[o + 3]) continue;
@@ -249,14 +249,14 @@ test('COATS1 the dye, on the mod\'s own horse: the flank goes grey, the saddle s
     else if (s >= 0.2) { tack++; if (same) tackKept++; }
     else { dark++; if (same) darkKept++; }
   }
-  assert.ok(hide > 2000 && hide < 2300, `the hide is most of the horse, and no more of it (${hide} - the saddle counted in would pass 2300)`);
-  assert.ok(greyed / hide > 0.96, `nearly all of it greyed (${greyed}/${hide} - the rest are lit specks too small to be the horse)`);
-  assert.ok(tack > 20 && tackKept === tack, 'every warm pixel the hide is not (the saddle, the bridle) kept');
-  assert.equal(darkKept, dark, 'the mane, the tail and the hooves kept');
+  assert.ok(hide > 1800 && hide < 2050, `the hide is most of the horse, and no more of it (${hide})`);
+  assert.ok(greyed / hide > 0.97, `nearly all of it greyed (${greyed}/${hide} - the rest are lit specks too small to be the horse)`);
+  assert.ok(tack > 300 && tackKept === tack, `every coloured pixel the hide is not (our saddle cloth) kept (${tackKept}/${tack})`);
+  assert.equal(darkKept, dark, 'the mane, the tail, the hooves and our leather kept');
   // AUDIT COATS3D A13: the two above hold by construction (both sets are the gate's own complement) - these do not: the
-  // leather the tack rule spares (a dye that dropped the rule would grey it), and the mane's whole count
-  assert.ok(leather >= 150 && leatherKept === leather, `the saddle's leather the tack rule spares, every pixel of it kept (${leatherKept}/${leather})`);
-  assert.ok(dark >= 1000, `the mane, tail and hooves are a thousand pixels (${dark}) - none taken into the hide`);
+  // pixels the tack rule spares (on our horse the hooves' rims; a dye that dropped the rule would grey them), and the mane's count
+  assert.ok(leather >= 40 && leatherKept === leather, `the hooves' rims the tack rule spares, every pixel of it kept (${leatherKept}/${leather})`);
+  assert.ok(dark >= 1000, `the mane, tail, hooves and seat are a thousand pixels (${dark}) - none taken into the hide`);
 });
 
 test('COATS1 the dye: the shape in is the shape out - a Uint32Array stays one, a Uint8ClampedArray stays one', () => {
@@ -342,7 +342,7 @@ function poolWith(look) {
     destroyBillboardBatch() {}, createMesh: () => ({}),
   };
   const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4).fill(200) });
-  const pool = createHorseCartPool({ renderer, meshes: null, collider: () => null, now: () => 0, fetchFn: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }), decode, horseLook: () => look.v });
+  const pool = createHorseCartPool({ renderer, meshes: null, collider: () => null, now: () => 0, horsePicture: decode, horseLook: () => look.v });
   pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: { isInteractive: true, position: [0, 0, 5], forward: [0, 0, 1], walk: { animationFrame: 0, walking: false } }, teamFollowing: false, horseFollowing: false, persistence: true }), lateUpdate() {}, rebase() {} });
   return { pool, uploads, evicted, batches };
 }

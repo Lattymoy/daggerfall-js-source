@@ -541,7 +541,8 @@ export class ComeSailAwayRenderer {
 
   /**
    * The waves' pictures: the two paints (top-down RGBA, as decoded), the snow record (top-down RGBA) and each frame's
-   * spec, in frame order (Textures/derived.json's `112395_2-i`: its paint's index, scroll and tile).
+   * spec, in frame order (frame `112395_2-i`'s paint index, scroll and tile - OWN-WORK4: systems/comeSailAway/csaPictures.js
+   * waveSpecs; the snow our own foam).
    * @param {{ paints: {width:number,height:number,data:Uint8Array}[], snow: {width:number,height:number,data:Uint8Array}, specs: {paint:number, scroll:number, tile:number[], size:number[]}[] }} frames
    */
   setWaveFrames(frames) {

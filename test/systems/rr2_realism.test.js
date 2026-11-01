@@ -4,7 +4,7 @@
 // mod's own switch, and the seam it hangs on in the port.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../../src/systems/modSettings.js';
@@ -14,9 +14,10 @@ import {
   rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_TRAINING_LINES, RR_MOD,
 } from '../../src/systems/roleplayRealism/rrRealism.js';
 import {
-  RR_NPC_XML_SCALE, RR_KEEPER_OF, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrArtUrl, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
+  RR_NPC_XML_SCALE, RR_KEEPER_OF, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
   rrClimateRace, rrResidentVariant, rrVariantPerson, installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED,
 } from '../../src/systems/roleplayRealism/rrVariants.js';
+import { rrKeeperPicture, rrWeekButtonPicture, RR_KEEPER_SIZE } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4: our own keepers
 import { installRoleplayRealism, setRrHostSeams, rrHostSeams } from '../../src/systems/roleplayRealism/rrInstall.js';
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, MobilePerson } from '../../src/characters/mobile/mobilePerson.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
@@ -53,7 +54,7 @@ const off = () => { reset(); on('Enabled', false); };
 installRoleplayRealism();
 
 // ---- the record --------------------------------------------------------------
-test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stands as big as the classic keeper it replaces), the 24 pictures the release\'s listing names - each a file under public/art or a spec rebuilt from ARENA2 (NO-BETHESDA2), never both - the eleven switches', () => {
+test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stands as big as the classic keeper it replaces), the 24 pictures the release drew - each our own (OWN-WORK4), a spec rebuilt from ARENA2 (NO-BETHESDA2) or not carried, never two - the eleven switches', () => {
   assert.deepEqual({ ...RR_NPC_XML_SCALE }, { 0: [1.205, 0.987], 1: [1.516, 0.95], 2: [1.205, 0.938], 3: [1.237, 1.333], 4: [0.762, 1.036], 5: [1.471, 1.106], 6: [3.09, 0.729] });
   assert.deepEqual({ ...RR_KEEPER_OF }, { 0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 2 }, '182_0 for the shop keeper\'s four, 182_1 the tavern keeper\'s two, 182_2 for one');
   if (ARENA2) {
@@ -65,20 +66,20 @@ test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stand
       assert.deepEqual(RR_NPC_XML_SCALE[r], [r3((k.width * f) / v.width), r3((k.height * f) / v.height)], `197_${r}-0`);
     }
   }
-  const listing = JSON.parse(rd('vendor/roleplay-realism/roleplay-realism.files.json'));
-  assert.equal(listing.GUID, RR_MOD.guid); assert.equal(listing.ModVersion, RR_MOD.version);
-  const named = new Set(listing.Files.map((f) => f.split('/').pop()));
-  assert.equal(named.size, 24, 'the release\'s 24 pictures, and nothing else');
-  const shipped = readdirSync(join(ROOT, 'public/art/roleplay-realism')).filter((f) => f.endsWith('.png')).sort();
+  // OWN-WORK4 (2026-10-31): the release's listing left with its folder - its GUID and version, and its 24 pictures, as literals
+  assert.deepEqual([RR_MOD.guid, RR_MOD.version], ['d828b782-46e9-40e7-8ae6-19cde308032e', '1.8']);
+  const ours = Object.keys(RR_KEEPER_SIZE).map((r) => `197_${r}-0.png`);
   const rebuilt = Object.keys(RR_DERIVED).map((n) => `${n}.png`);
-  assert.deepEqual(shipped, ['197_0-0.png', '197_1-0.png', '197_2-0.png', '197_3-0.png', '197_6-0.png'], 'the authors\' own five');
-  assert.equal(rebuilt.length, 19, '197_4-0, 197_5-0 and the 17 buttons: Daggerfall\'s own records');
-  assert.deepEqual(rebuilt.filter((f) => shipped.includes(f)), [], 'never both a file and a spec');
-  assert.deepEqual([...shipped, ...rebuilt].sort(), [...RR_NPC_RECORDS.map((r) => `197_${r}-0.png`), ...RR_BUTTON_RECORDS.map((r) => `BUTTONS.RCI_${r}-0.png`)].sort(), '7 sprites + 17 buttons, every one somewhere');
-  for (const f of [...shipped, ...rebuilt]) assert.ok(named.has(f), `${f} is the mod's own`);
-  assert.deepEqual(RR_BUTTON_RECORDS, Array.from({ length: 17 }, (_, i) => 21 + i));
-  assert.deepEqual(readdirSync(join(ROOT, 'vendor/roleplay-realism')).sort(), ['README.md', 'derived-art.json', 'roleplay-realism.files.json'], 'OWN-WORK3: the directory is its art alone');
-  assert.equal(rrArtUrl('197_3-0', 'http://h/x/'), 'http://h/x/art/roleplay-realism/197_3-0.png');
+  // the release's 24: 7 keepers and 17 relabelled buttons. A spec WITH edits carried the authors' paint (the coordinator,
+  // OWN-WORK4), so 197_5-0 is ours too; of the buttons the week button alone is asked for, and it is ours
+  assert.deepEqual(ours, ['197_0-0.png', '197_1-0.png', '197_2-0.png', '197_3-0.png', '197_5-0.png', '197_6-0.png'], 'our own six keepers');
+  assert.deepEqual(rebuilt, ['197_4-0.png'], 'Daggerfall\'s own record alone, no edits');
+  assert.ok(Object.values(RR_DERIVED).every((spec) => !spec.edits), 'no spec carries another hand\'s pixels');
+  assert.deepEqual([...ours, ...rebuilt].sort(), RR_NPC_RECORDS.map((r) => `197_${r}-0.png`).sort(), '7 keepers, every one somewhere');
+  assert.deepEqual(RR_BUTTON_RECORDS, [21], 'the week button (RR_WEEK_BUTTON); 22-37 are asked for by nothing and are not carried');
+  assert.deepEqual([rrWeekButtonPicture().width, rrWeekButtonPicture().height], [32, 16], 'a classic button\'s size');
+  for (const [r, [w, h]] of Object.entries(RR_KEEPER_SIZE)) assert.deepEqual([rrKeeperPicture(Number(r)).width, rrKeeperPicture(Number(r)).height], [w, h], `197_${r}-0 at the release's size`);
+  assert.deepEqual([existsSync(join(ROOT, 'vendor/roleplay-realism')), existsSync(join(ROOT, 'public/art/roleplay-realism'))], [false, false], 'OWN-WORK4: the release\'s folders are retired');
   const keys = MOD_SETTINGS[V].keys;
   for (const k of ['variantNpcs', 'variantResidents', 'EnhancedRiding.enhancedRiding', 'EnhancedRiding.RealisticMovement', 'EnhancedRiding.followTerrainEnabled',
     'EnhancedRiding.followTerrainSoftenFactor', 'EnhancedRiding.GallopingInTowns', 'EnhancedRiding.TrampleCivilians', 'RefinedTraining.refinedTraining',
@@ -174,7 +175,10 @@ test('RR2 the decision per person: the two switches, the face override for the b
 test('RR2 the art on its doors: the XML scale and the 197 sprites under variantNpcs, the seventeen buttons under refinedTraining, once', async () => {
   off(); clearVendorTextures(); _resetRoleplayRealismArt();
   const asked = [];
-  const n = installRoleplayRealismArt({ fetchBytes: async (name) => { asked.push(name); return new Uint8Array(); } });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u) => { asked.push(String(u)); throw new Error('no fetch'); };
+  const n = installRoleplayRealismArt();
+  globalThis.fetch = realFetch;
   assert.equal(n, 7);
   assert.equal(installRoleplayRealismArt(), 0, 'once');
   assert.equal(hasTextureReplacement(197, 2), false, 'gated: off');
@@ -188,6 +192,7 @@ test('RR2 the art on its doors: the XML scale and the 197 sprites under variantN
   assert.deepEqual(billboardXmlScale(197, 6), { x: 3.09, y: 0.729 }, 'OWN-WORK3: our scale, the 182_2 keeper\'s size');
   for (const r of RR_BUTTON_RECORDS) assert.equal(buttonArtRegistered(r), true, `button ${r}`);
   assert.equal(buttonArtRegistered(20), false, 'the classic file ends at 20 and is not touched');
+  assert.equal(buttonArtRegistered(22), false, 'OWN-WORK4: no relabelled classic button is carried');
   assert.equal(asked.length, 0, 'lazy: nothing fetched at install');
   reset(); clearVendorTextures();
   for (const r of RR_BUTTON_RECORDS) registerButtonArt(r, null);

@@ -2,9 +2,9 @@
 // SNOWFALL1 (2026-10-08): THE SNOW'S MESHES AND PICTURES ON THE GPU - the three tiers systems/snowfallRuntime.js keeps
 // as arrays, uploaded as they change (a track mask by the rectangle its new pixels cover - Texture2D.SetPixel's part;
 // the ring's history at most every 0.1 s, as the mod's HistoryUploadInterval), and drawn through the renderer's snow
-// program (renderer.drawSnow: the ground's own light on the mod's snow). The pictures are the mod's: its albedo
-// (snow_albedo.png, Point-filtered and repeated), its masks as it makes them (Bilinear, clamped; the blanket's static
-// mask Point). Owned by scenes/snowfallHost.js, disposed with it.
+// program (renderer.drawSnow: the ground's own light on the snow). The albedo is ours (OWN-WORK4: made by
+// ownTextureRules.js snowAlbedo, Point-filtered and repeated); the masks as the runtime makes them (Bilinear, clamped;
+// the blanket's static mask Point). Owned by scenes/snowfallHost.js, disposed with it.
 
 import { SNOW_ATTR } from './snowfallGlsl.js';
 import { MID, BLANKET, snowUniforms } from '../systems/snowfallRuntime.js';
@@ -59,16 +59,18 @@ export class SnowfallSurface {
     this._tex = { local: {}, mid: {}, blanket: {} };
   }
 
-  /** The mod's albedo (snow_albedo.png, 64 x 64, its seven levels - m_MipCount 7): Point, repeated - the level nearest
-   *  the footprint, no blend between two (FilterMode.Point; AUDIT ENVIRONS G4). `image` decoded bottom row first
-   *  (scenes/snowfallHost.js: an ImageBitmap takes no UNPACK_FLIP_Y_WEBGL), so its first row is Unity's v = 0. */
+  /** The snow's albedo - OWN-WORK4, ours (ownTextureRules.js snowAlbedo: 64 x 64 RGBA, `{ width, height, data }`), or a
+   *  picture the browser decoded: Point, repeated, its mips the level nearest the footprint, no blend between two
+   *  (AUDIT ENVIRONS G4). */
   setAlbedo(image) {
     const gl = this.gl;
     this._seam();
     if (this.albedo) gl.deleteTexture(this.albedo);
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    if (image?.data && !(typeof ImageData !== 'undefined' && image instanceof ImageData))
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image.data);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);

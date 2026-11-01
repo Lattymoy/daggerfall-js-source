@@ -393,8 +393,10 @@ test('RR3b the hosts and the save: the four hosts bind the reader and await the 
     assert.match(s, /const blocks = new BlocksFile\(\);\s*blocks\.load\(blocksBytes\);\s*bindWorldDataBlocks\(blocks\);[^\n]*\n\s*await loadModWorldData\(\);/, `${h}: before the first region`);
   }
   const ld = rd('src/scenes/modWorldData.js');
-  assert.match(ld, /import\.meta\.glob\('\.\.\/\.\.\/vendor\/\*\/WorldData\/\*\.json', \{ import: 'default' \}\)/);
-  assert.match(ld, /registerWorldDataAsset\(baseName\(path\), json, \(\) => modSetting\(vendor, 'Enabled'\) === true\)/, 'a mod that is off is a mod DFU never loaded');
+  // PIN MOVED (OWN-WORK3): no vendored mod ships whole WorldData files any more, so the loader globs patches alone
+  assert.doesNotMatch(ld, /vendor\/\*\/WorldData\/\*\.json/);
+  assert.match(ld, /import\.meta\.glob\('\.\.\/\.\.\/vendor\/\*\/WorldDataPatches\/\*\.json', \{ import: 'default' \}\)/);
+  assert.match(ld, /registerWorldDataPatch\(await load\(\), \(\) => modSetting\(vendor, 'Enabled'\) === true\)/, 'a mod that is off is a mod DFU never loaded');
   assert.match(ld, /installWorldDataReplacement\(\);/);
   const w = rd('src/scenes/world.js'), e = rd('src/scenes/exterior.js');
   // AUDIT DELVE (PIN MOVED): GUIDE8's Town tier reads the town's summaries for the compass's building - a fifth site,

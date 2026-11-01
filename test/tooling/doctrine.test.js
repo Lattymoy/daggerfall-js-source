@@ -326,143 +326,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/skin/heads/breton-7.png', 'OURS - baked from our own generated head turnaround'],
   ['public/skin/heads/breton-8.png', 'OURS - baked from our own generated head turnaround'],
   ['public/skin/heads/breton-9.png', 'OURS - baked from our own generated head turnaround'],
-  // DYNAMIC SKIES (DS1, vendor/dynamic-skies/Textures/). The first rows on
-  // this list that are NOT ours: nineteen textures of a third-party mod,
-  // vendored whole with its authors' permission, and PUBLISHED - Vite emits
-  // them into the build through import.meta.glob, so they are as public as
-  // public/. The question this list asks - did the pixels come from ARENA2? -
-  // has two answers here. Ten are the mod's own art beyond doubt (a normal
-  // map, pixel-art moons, masks, noise, a snowflake, a flat black field).
-  // Nine cannot be settled from a container with no ARENA2 in it: the
-  // `CdM*` cloud sheets, which the mod's Nexus page says were "created with
-  // Daggerfall's vanilla skies and palettes", and the `VanillaStars` pair.
-  // The evidence for re-creation rather than export is recorded in the
-  // vendor README (2048x2048 star fields and 512x512 grayscale cloud
-  // cutouts with 500-1600 colours, where the classic files are 320x200 /
-  // 512x220 and paletted to 256), and it is evidence, not proof. The
-  // windmills precedent (vendor/windmills-kamer/README.md) left textures
-  // OUT when they were provably classic exports; these are carried on the
-  // mod's permission as it ships them, with the question flagged for Mac.
-  // Dropping a family is a preset edit (the file names), not a code change.
-  ['vendor/dynamic-skies/Textures/CdMCloudsNormal.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own normal map (Unity import of its grayscale source)"],
-  ['vendor/dynamic-skies/Textures/DefaultStars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own star field"],
-  ['vendor/dynamic-skies/Textures/DefaultStarsTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own twinkle mask"],
-  ['vendor/dynamic-skies/Textures/DefaultStarsTwinkleNoise.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own twinkle noise"],
-  ['vendor/dynamic-skies/Textures/NLStarsBlack.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; a single flat black texel field"],
-  ['vendor/dynamic-skies/Textures/NLStarsThiefTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own twinkle mask"],
-  ['vendor/dynamic-skies/Textures/NLstarsHighlight.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own highlight sheet"],
-  ['vendor/dynamic-skies/Textures/PixelEnceladus.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own pixel-art moon"],
-  ['vendor/dynamic-skies/Textures/PixelMars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; the mod's own pixel-art moon"],
-  ['vendor/dynamic-skies/Textures/PixelSnow.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; a two-colour 64x64 snowflake"],
-  ['vendor/dynamic-skies/Textures/CdMCloudy.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/CdMOvercast2.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/CdMRain.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/CdMSnow.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/CdMSunny.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/CdMSunny2.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/CdMThunder.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/VanillaStars.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  ['vendor/dynamic-skies/Textures/VanillaStarsTwinkleMask.png', "THIRD-PARTY - Dynamic Skies 2.3.4 (BadLuckBurt, carademono), carried on the authors' permission; PROVENANCE OPEN, Mac's ruling pending - see vendor/dynamic-skies/README.md"],
-  // HORSE CART AND CARGO (HCC, vendor/horse-cart-and-cargo/Textures/). Forty-five
-  // PNGs of a third-party mod - demifiend000's own horse art, a saddled
-  // horse from five sides standing and walking, drawn in Daggerfall's idiom
-  // and cut from no ARENA2 file. They are not a Unity texture the bundle's
-  // manifest names (so BUNDLE_ART below cannot derive them): the mod EMBEDS
-  // them in its assembly as .NET manifest resources, and
-  // formats/dotnetResources.js reads them out; test/tooling/hcc_assets.test.js pins
-  // every vendored file byte for byte against the vendored assembly. The
-  // permission line is RECORD OPEN in vendor/horse-cart-and-cargo/README.md
-  // (the registry row says so), as Dynamic Skies' PROVENANCE OPEN rows are.
-  ['vendor/horse-cart-and-cargo/Textures/horse1.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/horse2.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/horse3.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/horse4.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/horse5.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-1.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-2.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-3.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-4.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-5.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-6.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-7.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.0-8.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-1.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-2.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-3.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-4.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-5.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-6.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-7.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.1-8.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-1.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-2.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-3.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-4.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-5.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-6.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-7.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.2-8.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-1.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-2.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-3.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-4.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-5.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-6.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-7.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.3-8.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-1.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-2.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-3.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-4.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-5.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-6.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-7.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  ['vendor/horse-cart-and-cargo/Textures/Walk.4-8.png', "THIRD-PARTY - Horse Cart and Cargo 1.0.0-rc12 (demifiend000); the author's own horse art, embedded in the mod's assembly as manifest resources (formats/dotnetResources.js reads them, test/tooling/hcc_assets.test.js pins them); permission RECORD OPEN - see vendor/horse-cart-and-cargo/README.md"],
-  // HANDHELD TORCHES (HT1, vendor/handheld-torches/Textures/). Seventeen
-  // textures of a third-party mod, carried with the author's permission
-  // (the line in vendor/handheld-torches/README.md): the 112359 hands
-  // holding a torch or a lantern, the dropped torch and its emission
-  // twins, the doused torch. NO-BETHESDA2: the candles and holy candles
-  // (22 pictures) are TEXTURE.210's own flames, rebuilt from the
-  // player's files (derived.json), never carried - the account:
-  // bible/06-Systems/Handheld-Torches.md.
-  ['vendor/handheld-torches/Textures/112359_0-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 0"],
-  ['vendor/handheld-torches/Textures/112359_0-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 1"],
-  ['vendor/handheld-torches/Textures/112359_0-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 2"],
-  ['vendor/handheld-torches/Textures/112359_0-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit torch, frame 3"],
-  ['vendor/handheld-torches/Textures/112359_1-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 0"],
-  ['vendor/handheld-torches/Textures/112359_1-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 1"],
-  ['vendor/handheld-torches/Textures/112359_1-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 2"],
-  ['vendor/handheld-torches/Textures/112359_1-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the first-person hand holding a lit lantern, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_0-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 0"],
-  ['vendor/handheld-torches/Textures/112358_0-0_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 0"],
-  ['vendor/handheld-torches/Textures/112358_0-1.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 1"],
-  ['vendor/handheld-torches/Textures/112358_0-1_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 1"],
-  ['vendor/handheld-torches/Textures/112358_0-2.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 2"],
-  ['vendor/handheld-torches/Textures/112358_0-2_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 2"],
-  ['vendor/handheld-torches/Textures/112358_0-3.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a dropped torch, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_0-3_Emission.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - the dropped torch's emission mask, frame 3"],
-  ['vendor/handheld-torches/Textures/112358_10-0.png', "THIRD-PARTY - Handheld Torches 1.4.1 (RedRoryOTheGlen), carried on the author's permission; the mod's own pixel art - a doused torch, one frame, no emission"],
-  // CLIMATES & CALORIES (SURV2, vendor/climates-calories/Textures/).
-  // Thirteen PNGs, carried on the author's permission
-  // (vendor/climates-calories/README.md): the spoiled faces, raw meat's
-  // three, the waterskin. NO-BETHESDA2 rebuilds four that are Daggerfall's
-  // own records - two faces, the tent's canvas and pole (derived.json). Archives 532-539 are
-  // the mod's own (its template indices), with no ARENA2 file behind
-  // them - the pipeline stands a vendor archive in for them.
-  ['vendor/climates-calories/Textures/532_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy apple"],
-  ['vendor/climates-calories/Textures/532_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten apple"],
-  ['vendor/climates-calories/Textures/533_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy orange"],
-  ['vendor/climates-calories/Textures/533_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten orange"],
-  ['vendor/climates-calories/Textures/534_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten bread"],
-  ['vendor/climates-calories/Textures/535_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy raw fish"],
-  ['vendor/climates-calories/Textures/535_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten raw fish"],
-  ['vendor/climates-calories/Textures/537_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy meat"],
-  ['vendor/climates-calories/Textures/537_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten meat"],
-  ['vendor/climates-calories/Textures/538_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - mouldy raw meat"],
-  ['vendor/climates-calories/Textures/538_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - rotten raw meat"],
-  ['vendor/climates-calories/Textures/538_2-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - raw meat, fresh"],
-  ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
   // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
   // friend of Mac's drew for this port and sent through him to be its
   // alternate enemy health bar - a twin-bladed shape with a skull hub,
@@ -543,8 +406,8 @@ const PUBLIC_ALLOWLIST = new Map([
   // Imperial_Steel_Left_Gauntlet_20_Male, Breton_Male), so whether the geometry and the paintings are his own work or
   // carry a licence of their own is Mac's to confirm (bible/04-Characters/Steel-Plate.md). tools/bakeSteelPlate.mjs
   // re-makes every mesh and texture below from these sources, and test/tooling/mwsteel1.test.js holds it to the bytes. MW-STEEL4
-  // (2026-10-07): every mesh is skinned at the bake to Morrowind's Bip01 bones, its inverse binds the bind of the vendored
-  // retail skeleton (vendor/weapon-sheathing, Greatness7's, credited) - numbers of a skeleton, no Bethesda geometry.
+  // (2026-10-07): every mesh is skinned at the bake to Morrowind's Bip01 bones; OWN-WORK4: its inverse binds are our own
+  // biped's (tools/ownBiped.mjs), the bone names the game's interface - no copy of retail's skeleton is carried.
   ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the closed helm (steel_armor.fbx, 2026-10-09 - MW-STEEL5), committed as it came: it carries no Morrowind head or neck; committed so the files below are a DERIVATION the gate can re-run"],
   ['src/assets/mw/source/Steel_Plate_Open_Helm.fbx', "SUPPLIED - the open helm alone out of Mac's first export (New_Ship.fbx, 2026-10-06), every other object - and the Morrowind Breton head and neck it was fitted on - stripped by tools/fbxStrip.mjs (MW-STEEL5); a DERIVATION's source"],
   ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
@@ -919,65 +782,17 @@ test('doctrine: no raster of game data is tracked anywhere in the repo', () => {
 // Checked BOTH WAYS (AUDIT 27 F302's lesson: a row is a CLAIM, and a
 // claim about a file that is not there is not one) - see the pins
 // below.
-/** VE4: the mark a row carries when its pixels ARE a render of game data - Port-Doctrine's one exception. */
-const VE4_DERIVED = "Port-Doctrine's one exception (Mac, 2026-10-05): Daggerfall's own textures, repainted by the mod's author, carried on Mac's approval";
-/** ALIKR1 / SNOWFALL1: the second exception's mark - the desert's and the winter's ground, its own approval. */
-const ENVIRONS_DERIVED = "Port-Doctrine's second exception (Mac, 2026-10-08): Daggerfall's own desert and winter ground tiles, repainted by the packs' authors, carried on Mac's approval";
 /** LAYERED-GEAR: the third exception's mark - the game's own worn armor, drawn from Daggerfall's sprites, its own approval. */
 const LAYERED_DERIVED = "Port-Doctrine's third exception (the owner, 2026-10-19): the Layered Gearing look's armor, drawn for the game from Daggerfall's own class and enemy sprites, carried on the owner's approval";
 /** DEX0: the fourth exception's mark (the third on its branch, renumbered past LAYERED-GEAR's at the merge) - Daggerfall's own enemy and class sprites under the authors' paint, its own approval. */
 const DEX_DERIVED = "Port-Doctrine's fourth exception (Mac, 2026-10-19): Daggerfall's own enemy and enemy-class sprites, repainted by the mods' authors, carried on Mac's approval";
 const BUNDLE_ART = new Map([
-  // FORAGE1 (2026-09-28): Foraging's seven pictures - the author's own
-  // pixel art (tools, a wood bundle, an egg), no Daggerfall record - taken
-  // out of the bundle's Texture2D objects. A directory row: membership is
-  // derived from the shipped manifest's Files, so it cannot widen.
-  ['vendor/foraging/Textures/',
-    { manifest: 'vendor/foraging/foraging.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
-      why: "THIRD-PARTY - Foraging 1.7 (Harbinger451), carried on Mac's word of the author's permission; the mod's own pixel art - the Wood-Axe, Pick-Axe, Sickle, Fishing-Net, Wood Bundle, Egg and Spade - written as PNG from the bundle's Texture2D objects (see vendor/foraging/README.md)" }],
-  ['vendor/eye-of-the-beholder/Textures/',
-    { manifest: 'vendor/eye-of-the-beholder/eyeofthebeholder.dfmod.json',
-      why: "THIRD-PARTY - Eye Of The Beholder 2.1 (RedRoryOTheGlen); the author's own 166 player sprites, re-encoded as indexed PNG (lossless for every drawn pixel - see the vendor README). NO-BETHESDA2: the other 2,869 are Daggerfall's own TEXTURE records, rebuilt from the player's files (derived.json), never files" }],
-  // AUDIT-TO1 F3: TO1 vendored three pictures and never came here, and
-  // the gate did not say so on the day - `tracked()` reads git's index,
-  // the slice ran its suite BEFORE `git add`, and three untracked files
-  // are invisible to a rule written about tracked ones. It reddened on
-  // the very next run. The art itself is fine and always was: these are
-  // the mod's own UI chrome - a control strip and two filter buttons -
-  // NOT a render of ARENA2, which is the thing Port-Doctrine forbids.
-  // The row is a directory row for the same reason Eye Of The
-  // Beholder's is: membership is DERIVED from the bundle's own
-  // manifest, so the port cannot quietly widen it.
-  ['vendor/travel-options/Textures/',
-    { manifest: 'vendor/travel-options/travel-options.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
-      why: "THIRD-PARTY - Travel Options 1.11 (Hazelnut, MIT); the mod's own UI chrome - the 320x27 control strip and the two ports-filter buttons - re-encoded from the bundle's Texture2D objects by tools/travelOptionsAssets.mjs (see the vendor README: these are the PIXELS, not the author's file bytes)" }],
-  // SW1b (2026-09-19, the deep audit): the 600 shield sprites landed and
-  // this row did not, so the wider raster rule reddened on 600 files the
-  // moment they were tracked. The art itself is fine and is WHY they are
-  // vendored at all rather than read from the player's own .dfmod the way
-  // Weapon Widget's are: classic Daggerfall draws NO first-person shield,
-  // so there is no ARENA2 original for these to be a render of - they are
-  // the modder's own pixel art, not repainted game data, and
-  // Port-Doctrine's rule is about renders of game data.
-  ['vendor/shield-widget/Textures/',
-    { manifest: 'vendor/shield-widget/shield-widget.dfmod.json',
-      why: "THIRD-PARTY - Shield Widget 1.6 (RedRoryOTheGlen, animation art by WilhelmBlack); the mod's own first-person shield sprites - four shield shapes x twelve materials x three condition tiers x five animation frames - re-encoded from the bundle's Texture2D objects as indexed PNG (lossless for every drawn pixel; see the vendor README)" }],
   // DW2 (2026-09-23, Mac: "this needs to be in the codebase, not an
   // attachable file"): the 12,624 Diverse Weapons sprites. Under public/
   // rather than vendor/ because that many files through the bundler's
   // `new URL` glob is a 12,624-entry map in a chunk - public/ is served
   // as it is - so the public sweep below accepts a derived row too. The
   // same authority: the mod's own manifest names what may be here.
-  // RRI1: Roleplay & Realism: Items' 280 sprites, the same way and for the
-  // same reasons - the mod's own inventory and paper-doll art for items
-  // classic Daggerfall does not have (there is no ARENA2 original of a
-  // hauberk or an archer's axe).
-  ['public/art/roleplay-realism-items/',
-    { manifest: 'vendor/roleplay-realism-items/roleplay-realism-items.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
-      why: "THIRD-PARTY - Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar); the mod's own inventory and paper-doll sprites for its fourteen custom items in every metal, and the helmet's masks - re-encoded from the bundle's Texture2D objects by tools/rriExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README). NO-BETHESDA2: the 50 that are Daggerfall's own records (46 helmet masks, the four Dwarven helmets) are rebuilt from the player's files (derived-art.json), not carried" }],
-  ['public/art/roleplay-realism/',
-    { manifest: 'vendor/roleplay-realism/roleplay-realism.files.json',   // OWN-WORK3: the art alone stays (wave 3), our listing names it
-      why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own five variant shop and tavern keeper sprites (197_0-0 .. 197_3-0 and 197_6-0, our scale beside each in src/systems/roleplayRealism/rrVariants.js) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README). NO-BETHESDA2: 197_4-0, 197_5-0 and the seventeen BUTTONS.RCI records 21-37 are Daggerfall's own records under the author's paint, rebuilt from the player's files (derived-art.json), not carried" }],
   // OVH2 (2026-09-24, Mac: "Our first overhaul option will be the file attached"): GrimoireUI's 139 pictures - the
   // mod's own hand-drawn UI (parchment, wood and new lettering over Daggerfall's screen layouts), vendored byte for
   // byte the way Roleplay & Realism's BUTTONS.RCI repaints are. A LOOSE-FILE pack ships no .dfmod, so its authority is
@@ -996,64 +811,10 @@ const BUNDLE_ART = new Map([
   ['public/art/dfu-cursor/',
     { manifest: 'vendor/dfu-cursor/dfu-cursor.files.json',
       why: "THIRD-PARTY - Daggerfall Unity (Daggerfall Workshop, MIT); the defaultCursor ProjectSettings names, Assets/Resources/Cursor2.png, byte for byte at the commit the listing pins (see vendor/dfu-cursor/README.md)" }],
-  // SKIN2 (2026-09-25, Mac: "Implement these as new skin options"): Mac's ExistingClasses archive, twenty redrawn
-  // enemy-class sheets worn as on-foot skins. A LOOSE-FILE pack (no .dfmod), so GrimoireUI's way: the listing
-  // generated from the archive is the authority - and these names were changed on the way in (three port archive
-  // numbers, a gap renumbered, a stray underscore), so the listing maps each file to its archive path and
-  // tools/classSkinsListing.mjs proves the bytes. The first cut of this slice ran the suite BEFORE `git add` and
-  // shipped without this row - AUDIT-TO1 F3's trap again; the art is not ARENA2's (redrawn at twice the size, under
-  // archive numbers past TEXTURE.511 that the mods' art uses).
-  // DEX0 (2026-10-19, Mac: "Bring under 3rd exception"): the row above said these were redrawn at twice the size and not
-  // ARENA2's. Measured silhouette for silhouette against every TEXTURE record (the way tools/dexExtract.mjs measures the
-  // enemy mod's), most of them are Daggerfall's own enemy-class sprites (TEXTURE.477-490) at their own size, under the
-  // artists' paint - the bounty hunter (1504) is the very sheet Daggerfall Enemy Expansion ships. So the row says what
-  // the pack is, and Port-Doctrine's fourth exception names its directory.
-  ['vendor/class-skins/Textures/',
-    { manifest: 'vendor/class-skins/class-skins.files.json', derived: DEX_DERIVED,
-      why: "THIRD-PARTY - Daggerfall class skins (Mac's ExistingClasses archive; the artists unnamed but the bounty hunter's, Kamer), carried on Mac's word of the artists' permission; twenty enemy-class sprite sheets, most of them Daggerfall's own class sprites under the artists' paint, byte for byte from the archive under the names class-skins.files.json maps (see vendor/class-skins/README.md for the open permission record)" }],
-  ['public/art/diverse-weapons/',
-    { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
-      why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README). NO-BETHESDA3: the twelve magic daggers that are 60% or more Daggerfall's own hand (WEAPON02.CIF) are rebuilt from the player's files (derived-art.json), not carried" }],
-  // CSA-A (2026-09-27): Come Sail Away's pictures - AUDIT-TO1 F3's trap a third time: the slice ran its suite BEFORE
-  // `git add`, pushed, and the next gate reddened on 27 files. The bundle's own manifest cannot be the authority here,
-  // because the port carries LESS than it names and under other names for part: record 3 is Daggerfall's travel map
-  // (never carried), the 32 wave frames are Daggerfall's snow under the author's paint and ride as two paints with
-  // the snow taken out. So the authority is the extractor's own listing - generated beside the pictures from the
-  // bundle, which it hashes - the same both-ways derivation the loose-file packs use.
-  ['vendor/come-sail-away/Textures/',
-    { manifest: 'vendor/come-sail-away/come-sail-away.files.json',
-      why: "THIRD-PARTY - Come Sail Away 2.1 (RedRoryOTheGlen); the mod's own splash and wind-widget frames and the waves' two paints (the author's pixels, the Daggerfall snow under the crests taken out and rebuilt from the player's own TEXTURE.303), re-encoded as indexed PNG by tools/comeSailAwayExtract.mjs after measuring each against every TEXTURE record (see the vendor README)" }],
-  // DW-E3: Iliac Puddle No More's seven fish - the author's own pictures (no classic record covers any: the
-  // extractor measures each against every TEXTURE file, DS1's search, and refuses one a record covers).
-  ['vendor/iliac-puddle-no-more/Flats/',
-    { manifest: 'vendor/iliac-puddle-no-more/iliac-puddle-no-more.files.json',   // OWN-WORK3: the manifest left with the rows; our listing names the seven
-      why: "THIRD-PARTY - Iliac Puddle No More 1.2.2 (jet082); the mod's own seven fish, decoded from the bundle's Texture2D objects (DXT5, the first mip - the pixels the game samples) by tools/iliacPuddleAssets.mjs (see the vendor README)" }],
-  // VE4 (2026-10-05, Mac: "Approved and yes", then "Put it in the codebase"): VANILLA ENHANCED - THE ONE DERIVED PACK.
-  // Every row above carries a modder's OWN art, and several say so against this very rule. These carry Daggerfall's
-  // textures repainted, which A RENDER OF GAME DATA IS GAME DATA forbids - and which Mac approved: Port-Doctrine records
-  // the exception and names its directory. So each row says it is derived, and the pins below hold the mark to the
-  // directories that paragraph names. Each directory answers to its own generated listing (tools/vanillaEnhancedVendor.mjs
-  // writes it from the mod's repository at the pinned commit, every file's source path and sha256 beside it), so the
-  // both-ways derivation above holds for it as for every other bundle.
-  ['public/art/vanilla-enhanced/base/',
-    { manifest: 'vendor/vanilla-enhanced/base.files.json', derived: VE4_DERIVED,
-      why: "THIRD-PARTY - Vanilla Enhanced - Base 3.4.7 (carademono), carried on Mac's word of the author's permission; Daggerfall's own textures remastered - the terrain's tile sets, the nature flats, the city walls and the dungeons - the 1,246 PNGs its manifest names, byte for byte from github.com/drcarademono/vanilla-enhanced at the commit the listing pins (see vendor/vanilla-enhanced/README.md for the open permission record)" }],
-  ['public/art/vanilla-enhanced/masked-roads/',
-    { manifest: 'vendor/vanilla-enhanced/masked-roads.files.json', derived: VE4_DERIVED,
-      why: "THIRD-PARTY - Vanilla Enhanced - Masked Roads 3.4.7 (carademono & Kokey), carried on Mac's word of the author's permission; the road tiles - its own nine PNGs, and the 21 slices of its texture arrays no PNG it or the Base ships draws, each the repository's source picture for the slice, proved within BC7's error of it (see vendor/vanilla-enhanced/README.md)" }],
-  ['public/art/vanilla-enhanced/snowless-swamps-and-jungles/',
-    { manifest: 'vendor/vanilla-enhanced/snowless-swamps-and-jungles.files.json', derived: VE4_DERIVED,
-      why: "THIRD-PARTY - Vanilla Enhanced - Snowless Swamps and Jungles 3.4.7 (carademono), carried on Mac's word of the author's permission; the swamps' and jungles' ground and buildings without snow - the 160 PNGs its manifest names, byte for byte (see vendor/vanilla-enhanced/README.md)" }],
-  // ALIKR1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These
-  // should be on by default and integrate into our enhanced environments seamlessly"): THE SECOND EXCEPTION - two more
-  // packs of Daggerfall's ground repainted, each directory answering to the listing tools/environmentModsExtract.mjs
-  // writes from the archive (every file and its sha256), each row carrying the second exception's own mark.
-  ['public/art/sands-of-the-alikr/',
-    { manifest: 'vendor/sands-of-the-alikr/sands-of-the-alikr.files.json', derived: ENVIRONS_DERIVED,
-      why: "THIRD-PARTY - Sands of the Alik'r 2 (Nexus mod 1390; its archive names no author), carried on Mac's word of the author's permission; Daggerfall's desert ground under the author's sand - the pack's 47 loose TEXTURE.002 records, byte for byte (see vendor/sands-of-the-alikr/README.md for the open permission record)" }],
-  ['public/art/snowfall/',
-    { manifest: 'vendor/snowfall/snowfall.files.json', derived: ENVIRONS_DERIVED,
-      why: "THIRD-PARTY - Snowfall 1.0.5 (demifiend000), carried on Mac's word of the author's permission; the 168 winter ground records its bundle packages (TEXTURE.103, .303, .403 - Daggerfall's winter tiles under the author's snow), its snow albedo and its three surface masks, decoded losslessly from the bundle's Texture2D and TextAsset objects (see vendor/snowfall/README.md)" }],
+  // SKIN2, DEX0: the class skins' repainted sheets are gone (OWN-WORK4) - our own looks are painted at runtime on the
+  // player's own sprites (player/classSkinArt.js).
+  // VE4, ALIKR1, SNOWFALL1: the first two exceptions' repainted packs are gone (OWN-WORK4) - our own rules build the
+  // looks from the player's own records at runtime, so nothing of them is carried.
   // LAYERED-GEAR (2026-10-19, the owner: "Approve as an exception"): THE THIRD EXCEPTION - the worn-armor strips, the
   // cloak layer and the hood fixes, DFO's own work but drawn from Daggerfall's sprites, so derived. No bundle ships a
   // manifest for them: the folder answers to the listing tools/layered-armor/listing.mjs writes (every picture, its sha256).
@@ -1070,21 +831,16 @@ const BUNDLE_ART = new Map([
   ['public/art/daggerfall-enemy-expansion-repainted/',
     { manifest: 'vendor/daggerfall-enemy-expansion/repainted.files.json', derived: DEX_DERIVED,
       why: "THIRD-PARTY - Daggerfall Enemy Expansion 1.3.4 (Kamer & Kab), carried on Mac's word of the authors' permission; Daggerfall's own sprites under the authors' paint - the Bounty Hunter, the Royal Knight, the Druid, the Necromancer Acolyte, the Rogue Druid, the four riders' new sets and King Lysandus - byte for byte from the bundle (see vendor/daggerfall-enemy-expansion/README.md)" }],
-  // WINDFALL1: the mod's own three pictures - leaves and a snowflake, the author's pixels (no Daggerfall record).
-  ['vendor/windfall/Textures/',
-    { manifest: 'vendor/windfall/windfall.files.json',
-      why: "THIRD-PARTY - Windfall 1.0.0 (demifiend000), carried on Mac's word of the author's permission; the mod's own leaf sheets and snowflake, RGBA32 with one mip in the bundle - each PNG is the texture exactly (see vendor/windfall/README.md)" }],
 ]);
 /** NO-BETHESDA2 (2026-10-31, the owner: "ensuring they are not implemented"): the pictures a mod carried that are
  *  Daggerfall's own - 60% or more of their drawn pixels a TEXTURE, CIF or RCI record's, exactly - are rebuilt from the player's files
  *  (tools/classicDerive.mjs, formats/classicPictures.js), never carried. Each folder's listing, by the folder. */
 const REBUILT = new Map([
-  ['vendor/eye-of-the-beholder/Textures/', 'vendor/eye-of-the-beholder/derived.json'],
-  ['vendor/handheld-torches/Textures/', 'vendor/handheld-torches/derived.json'],
-  ['vendor/climates-calories/Textures/', 'vendor/climates-calories/derived.json'],
-  ['public/art/roleplay-realism/', 'vendor/roleplay-realism/derived-art.json'],
-  ['public/art/roleplay-realism-items/', 'vendor/roleplay-realism-items/derived-art.json'],
-  ['public/art/diverse-weapons/', 'vendor/diverse-weapons/derived-art.json'],   // NO-BETHESDA3: the magic daggers' classic hands
+  ['vendor/eye-of-the-beholder/Textures/', 'src/player/eyeOfTheBeholder/eotbDerived.json'],   // OWN-WORK4: the folder is gone, the edit-free specs ours
+  // OWN-WORK4: the retired mods' folders are gone; their edit-free specs moved beside the code that reads them
+  ['vendor/handheld-torches/Textures/', 'src/systems/handheldTorchesDerived.json'],
+  ['vendor/climates-calories/Textures/', 'src/systems/survival/derivedIcons.json'],
+  ['public/art/roleplay-realism/', 'src/systems/roleplayRealism/rrDerivedArt.json'],
 ]);
 /** The names a folder's listing rebuilds, lowercased with `.png` - none where it has no listing. */
 const rebuiltNames = (dir) => (REBUILT.has(dir) ? new Set(Object.keys(JSON.parse(readFileSync(join(root, REBUILT.get(dir)), 'utf8'))).map((n) => `${n.toLowerCase()}.png`)) : new Set());
@@ -1169,6 +925,8 @@ test('NO-BETHESDA2: a rebuilt picture is a spec and never a file, and every spec
       if (typeof spec.file === 'string') assert.ok(/^[A-Z0-9_]+\.(CIF|RCI)$/.test(spec.file) && spec.from?.length === 2 && spec.from.every(Number.isInteger), `${listing} ${n}: a CIF or RCI spec is file and [record, frame]`);
       else assert.ok(Array.isArray(spec.from) && spec.from.length === 3 && spec.from.every(Number.isInteger), `${listing} ${n}: from is [archive, record, frame]`);
       assert.ok(['ART_PAL.COL', 'PAL.PAL'].includes(spec.pal), `${listing} ${n}: a palette the player's ARENA2 has`);
+      // OWN-WORK4 (the owner: "no latching onto other mod authors"): an edit is the author's own pixel over the record
+      assert.ok(!spec.edits?.length, `${listing} ${n}: a spec with edits carries the author's pixels - draw it as ours`);
     }
     if (BUNDLE_ART.has(dir)) {
       const manifest = bundleNames(dir);
@@ -1181,15 +939,16 @@ test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both
   // A PIN MUST FAIL. Both arms are driven against the real manifest
   // with one name moved, because a membership test that cannot reject
   // is a rule that is not enforced.
-  const dir = 'vendor/eye-of-the-beholder/Textures/';
+  // OWN-WORK4: Eye of the Beholder's folder is retired; Daggerfall Enemy Expansion's art is the large manifest now
+  const dir = 'public/art/daggerfall-enemy-expansion/';
   const names = bundleNames(dir);
   assert.ok(names.size > 3000, `the manifest resolved to ${names.size} names - the gate is reading nothing`);
-  assert.equal(names.has('112364_0-0.png'), true, 'a sprite the bundle really ships');
-  assert.equal(names.has('112364_0-0.png.png'), false, 'and a name it does not');
+  assert.equal(names.has('1507_0-0.png'), true, 'a sprite the bundle really ships');
+  assert.equal(names.has('1507_0-0.png.png'), false, 'and a name it does not');
   // the stranger arm, in the shape it would really arrive: our own
   // artwork dropped into the mod's folder
-  assert.equal(bundleArt(`${dir}112364/logo.png`), false, 'a file the manifest never named must not pass as the mod\u2019s');
-  assert.equal(bundleArt(`${dir}112364/112364_0-0.png`), true, 'and one it did must pass');
+  assert.equal(bundleArt(`${dir}logo.png`), false, 'a file the manifest never named must not pass as the mod\u2019s');
+  assert.equal(bundleArt(`${dir}1507_0-0.png`), true, 'and one it did must pass');
 });
 
 // \u2500\u2500 VE4: A DERIVED ROW IS THE EXCEPTION PORT-DOCTRINE RECORDS, AND ONLY IT \u2500\u2500
@@ -1202,24 +961,20 @@ test('doctrine EOTB0: the derivation is not vacuous - a stranger and a loss both
 const DOCTRINE = 'bible/01-Overview/Port-Doctrine.md';
 /** The directories Port-Doctrine's exception paragraphs name - every backticked `public/` or `vendor/` path on their lines. */
 function exceptionDirs() {
-  // ALIKR1/SNOWFALL1: every exception paragraph's line - THE ONE EXCEPTION (Vanilla Enhanced) and THE SECOND EXCEPTION;
-  // LAYERED-GEAR: and THE THIRD, whose art sits under vendor/ (the build reaches it through a glob, as Eye of the Beholder's)
-  // DEX0: and THE FOURTH, whose class skins live under vendor/ (the player body's sprite index reads them there)
+  // every exception paragraph's line (OWN-WORK4 retired THE ONE and THE SECOND; their pattern stays, so a revived one
+  // is read). LAYERED-GEAR: THE THIRD, whose art sits under vendor/ (the build reaches it through a glob)
   const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND|THIRD|FOURTH) EXCEPTION\b/.test(l));
   return lines.flatMap((line) => [...line.matchAll(/`((?:public|vendor)\/[^`]+\/)`/g)].map((m) => m[1]));
 }
-/** The mark each directory's approval gave it: Vanilla Enhanced's rows the first exception's, the environment packs' the
- *  second's, Layered Gearing's the third's, the enemies' and the class skins' the fourth's - a row in one exception
- *  wearing another's mark is a row approved by the wrong approval. */
-const markFor = (dir) => (dir.startsWith('public/art/vanilla-enhanced/') ? VE4_DERIVED
-  : dir.startsWith('vendor/layered-armor/') ? LAYERED_DERIVED
-  : dir.startsWith('public/art/daggerfall-enemy-expansion-repainted/') || dir.startsWith('vendor/class-skins/') ? DEX_DERIVED : ENVIRONS_DERIVED);
+/** The mark each directory's approval gave it: Layered Gearing's the third exception's, the enemies' the fourth's - a
+ *  row in one exception wearing another's mark is a row approved by the wrong approval. */
+const markFor = (dir) => (dir.startsWith('vendor/layered-armor/') ? LAYERED_DERIVED : DEX_DERIVED);   // OWN-WORK4: the first two are retired
 /** The derived rows standing outside every directory the exception names. */
 const derivedOutside = (rows, dirs) => [...rows].filter(([dir, r]) => r.derived && !dirs.some((d) => dir.startsWith(d))).map(([dir]) => dir);
 
 test('doctrine VE4: a derived row stands inside the exception Port-Doctrine records, and every row inside it says it is derived', () => {
   const dirs = exceptionDirs();
-  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/', 'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/', 'vendor/class-skins/Textures/'], 'the doctrine names six directories, under four approvals');
+  assert.deepEqual(dirs, ['vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/'], 'the doctrine names two directories, under two approvals (OWN-WORK4 retired the first two and the class skins)');
   assert.deepEqual(derivedOutside(BUNDLE_ART, dirs), [], 'repainted game data outside the approved directory');
   for (const d of dirs) assert.ok([...BUNDLE_ART].some(([dir, r]) => r.derived && dir.startsWith(d)), `${d} is approved and no row carries it`);
   // and inside it nothing passes as the port's own: every row there says what it is
@@ -1243,7 +998,7 @@ test('doctrine STUDIO1: a picture is the studio\'s own by its roster and its lis
 });
 
 test('doctrine VE4: the bound is not vacuous - a derived row outside the named directory reddens, and with no approval every one does', () => {
-  const rogue = new Map([...BUNDLE_ART, ['public/art/someone-elses-repaint/', { manifest: 'x', derived: VE4_DERIVED, why: 'THIRD-PARTY - x' }]]);
+  const rogue = new Map([...BUNDLE_ART, ['public/art/someone-elses-repaint/', { manifest: 'x', derived: DEX_DERIVED, why: 'THIRD-PARTY - x' }]]);
   assert.deepEqual(derivedOutside(rogue, exceptionDirs()), ['public/art/someone-elses-repaint/']);
   assert.deepEqual(derivedOutside(rogue, []), [...rogue].filter(([, r]) => r.derived).map(([d]) => d));
 });

@@ -1147,7 +1147,6 @@
  "test/systems/foraging/haulcards.test.js": 898,
  "test/systems/hb_lycfree.test.js": 884,
  "test/scenes/hc1_horsecart.test.js": 927,
- "test/tooling/hcc_assets.test.js": 267,
  "test/systems/horse/hcc_follow.test.js": 272,
  "test/player/hcc_hosts.test.js": 906,
  "test/systems/horse/hcc_law.test.js": 264,

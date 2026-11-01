@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createComeSailAwayPool, activeObjects, lanternLightUpdate, vertexBox, LANTERN_HANDLER_REACH, CSA_LIGHTS_MAX } from '../../../src/scenes/comeSailAway/comeSailAwayPool.js';
 import { Boat, setLights } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
-import { CSA_MODEL_URLS, CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
+import { CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { setShipStanding } from '../../../src/systems/naval/navalShips.js';
 import { PrefabNode } from '../../../src/world/prefabNode.js';
 
@@ -172,13 +172,13 @@ test('CSA-B: the flats - one batch per active billboard, centred on its object, 
   assert.equal(pool.batches().length, 0);
 });
 
-test('CSA-B: the pool never traps on files that will not load - no boat stands and it says so once', async () => {
+test('CSA-B / OWN-WORK4: the pool never traps on files that will not load - our own boats are built, not fetched, so with every fetch refused the boats still stand, and each port ship\'s missing model is said once', async () => {
   const warns = [];
   const pool = createComeSailAwayPool({ renderer: recordingRenderer(), pipeline: standInPipeline(), fetchFn: async () => ({ ok: false, status: 404 }), log: { warn: (...a) => warns.push(a) } });
-  assert.equal(await pool.spawn(new Boat(0), { position: [0, 0, 0], rotation: [0, 0, 0, 1] }), null);
-  assert.equal(await pool.spawn(new Boat(0), { position: [0, 0, 0], rotation: [0, 0, 0, 1] }), null);
-  assert.equal(warns.length, 1);
-  assert.ok(Object.values(CSA_MODEL_URLS).every((u) => u.includes('vendor/come-sail-away/Models/')));
+  assert.ok(await pool.spawn(new Boat(0), { position: [0, 0, 0], rotation: [0, 0, 0, 1] }), 'our rowboat stands');
+  assert.ok(await pool.spawn(new Boat(0), { position: [0, 0, 0], rotation: [0, 0, 0, 1] }));
+  assert.equal(warns.length, 3, 'the galleon\'s, the carrack\'s and the large boat\'s models, each once');
+  assert.ok(warns.every((w) => /stands as our own/.test(String(w[0]))));
 });
 
 /** A Renderer over a GL that records what it is asked (audit39_render.test.js's stub, with the binds and the buffer writes kept). */

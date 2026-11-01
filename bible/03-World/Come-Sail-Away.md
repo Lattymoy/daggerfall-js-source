@@ -11,6 +11,20 @@ and log future work") and handed the archive over again on 2026-09-26,
 beside Ocean Holes'; the port read that as the hold lifted, said so, and
 Mac answered "continue".
 
+**OWN-WORK4 (2026-10-31, the owner).** "A proper 1 to 1 recreation for
+everything." `vendor/come-sail-away` is retired: the manifest, settings, item
+templates, assembly, 27 pictures, 5 clips and the boats as data, with
+`tools/comeSailAwayExtract.mjs` (RETIRED) and its block search, indexed PNG and
+FSB5 remux (RETIRED too). The law ported off the assembly stays. Our boats are built at
+the load by `world/ships/ownBoats/` under the mod's names and places (helms,
+triggers, oarlocks, lanterns, crew, Modifiers, colliders, controllers, event
+times) and painted in our archive 38176. `systems/comeSailAway/csaPictures.js`
+paints the wind arrow, splash and breakers; `csaSynth/` makes the five clips at
+their rates and lengths. Departures: the breakers lie over our own foam, not
+TEXTURE.303; the galley's top deck and the carrack's poop and forecastle are
+climbed by ladders. Mac's three ships still stand for hulls 1, 2 and 4. Pins:
+`csa_own_assets.test.js`.
+
 "Adds a usable boat and sailing mechanics": a boat bought as its parts
 (item 1320) or its deed (1321), put in the water near a port, and sailed -
 under oars, or under sails the wind fills and the player trims - with
@@ -219,7 +233,7 @@ one 1000x500 picture). A material named `TEXTURE.AAA_R` is Daggerfall's
 archive AAA record R, loaded from the player's own files (the mod's
 `ApplyGameTextures`, and the port's) and never carried.
 
-What each record is, and which the port may carry. `tools/comeSailAwayExtract.mjs`
+What each record is, and which the port may carry. `tools/comeSailAwayExtract.mjs` (RETIRED)
 measures every picture against every record of every TEXTURE file of the
 ARENA2 it is given before it writes anything, and refuses what fails:
 
@@ -237,7 +251,7 @@ ARENA2 it is given before it writes anything, and refuses what fails:
   the classic-source search (`tools/lib/classicSource.mjs` `findClassicSource`: a record within a pixel of
   the size, at every offset), neither whole nor cut to its visible box,
   and no square record matches more than 17% of the visible pixels of any
-  block of them (`tools/lib/classicBlocks.mjs`). They are carried as
+  block of them (`tools/lib/classicBlocks.mjs`, RETIRED). They are carried as
   indexed PNGs of the bundle's pixels.
 - **Record 2, the waves, is Daggerfall's snow under the author's paint.**
   Every crest pixel of the thirty-two 640x640 frames is TEXTURE.303
@@ -269,7 +283,7 @@ ARENA2 it is given before it writes anything, and refuses what fails:
 
 The mod's own pictures are all in exact `ART_PAL.COL` colours - the
 waves' paints need 57 RGBA values between them - which is why they carry
-as indexed PNGs (`tools/lib/indexedPng.mjs`): 240 KB for everything.
+as indexed PNGs (`tools/lib/indexedPng.mjs`, RETIRED): 240 KB for everything.
 
 ## The sounds (CSA-A)
 
@@ -277,7 +291,7 @@ Unity imports a clip as Vorbis and stores it as an FMOD sound bank
 (FSB5) in the bundle's `.resource`. FMOD keeps the audio packets and drops
 the three Vorbis headers: the identification header's numbers ride in the
 bank's sample header, the comment header is gone, and the setup header
-(the codebooks) is replaced by its CRC32. `tools/lib/fsb5Vorbis.mjs` puts
+(the codebooks) is replaced by its CRC32. `tools/lib/fsb5Vorbis.mjs` (RETIRED) puts
 the stream back together - the bank read as vgmstream lays it out, the
 setup header whose CRC32 the bank names (`vendor/vorbis-fsb-setups/`,
 vgmstream's table; one is libvorbisenc 1.3.7's own output), that header
@@ -3120,7 +3134,7 @@ now), CSA-I-left-colour, CSA-C-marker-twice.
 hash; every shipped key declared as shipped, in order, and nothing more;
 the three unread keys off the assembly's string heap; the item templates
 as DFU's parser reads them; the Features row, the credit and the lane.
-`test/tooling/csa_audio.test.js` (4): the setup headers to their CRC32s and mode
+`test/tooling/csa_audio.test.js` (DELETED): the setup headers to their CRC32s and mode
 tables, a cut or unframed one refused; an FSB5 bank read field by field;
 the pages, flags and granules of a synthetic bank's remux (clamped and
 not); the five vendored streams page by page. `test/formats/csa_textures.test.js`

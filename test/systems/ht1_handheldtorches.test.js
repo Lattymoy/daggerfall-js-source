@@ -17,12 +17,12 @@
 // envelope.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  createHandheldTorches, readTorchSettings, torchItemWords, spriteUrl, rotateAboutAxis,
+  createHandheldTorches, readTorchSettings, torchItemWords, vendoredTexture, rotateAboutAxis,
   HANDHELD_TORCHES_VENDOR, HANDHELD_TORCHES_MOD, ON_STOW, ON_PICK, BOB_SHAPE, STEP_CONDITION, FREE_HAND,
   DROPPED_ARCHIVE, SPRITE_ARCHIVE, DROPPED_RECORD, CLIPS, MESSAGES, ANIMATION_TIME, DROP_FORWARD_CAST, DROP_DOWN_CAST,
   THROW_HAND_OFFSET, THROW_STRENGTH_MIN, THROW_STRENGTH_MAX, TORCH_LIGHT_AT, SECONDS_PER_CONDITION,
@@ -30,8 +30,9 @@ import {
 } from '../../src/systems/handheldTorches.js';
 import {
   createDroppedTorches, ENEMY_LIGHT_EFFECT_KEY, ENEMY_FIRE_KIND, PUFF, ENEMY_LIGHT_LOCAL, PICKUP_REACH, PROJECTILE_FIXED_DT, PROJECTILE,
-  WATER_HEAD, droppedTextureUrl,
+  WATER_HEAD,
 } from '../../src/scenes/droppedTorches.js';
+import { TORCH_ART } from '../../src/systems/handheldTorchesArt.js';   // OWN-WORK4: our own pictures
 import { domCodeForKeyCode, keyCodeForDomCode, isBindableKeyCode, KEYCODE_NONE } from '../../src/systems/keyCodes.js';
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey, modSettingsOf, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { BOB_SHAPE as WW_BOB_SHAPE, STEP_CONDITION as WW_STEP_CONDITION } from '../../src/combat/weapon/weaponWidget.js';
@@ -105,19 +106,23 @@ function rig(over = {}, deps = {}) {
 
 // ═══ the settings ═══════════════════════════════════════════════════════
 
-test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its kind (TextKey and the two Tuple kinds new for it), its range or options, its default, the mod\'s own words where it wrote any; the manifest, the row, the credit, the README, the coercions and the pane', () => {
+test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pinned as literals) - every key, its kind (TextKey and the two Tuple kinds new for it), its range or options, its default, a description for each; the manifest\'s facts, our pictures, the row, the credit, the page, the coercions and the pane', () => {
   const m = MOD_SETTINGS[V];
   assert.ok(m, 'the vendor entry');
-  const manifest = JSON.parse(rd('vendor/handheld-torches/handheld-torches.dfmod.json'));
-  assert.equal(manifest.GUID, HANDHELD_TORCHES_MOD.guid);
-  assert.equal(manifest.ModTitle, HANDHELD_TORCHES_MOD.title); assert.equal(manifest.ModVersion, HANDHELD_TORCHES_MOD.version); assert.equal(manifest.ModAuthor, HANDHELD_TORCHES_MOD.author);
-  assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
-  assert.equal(manifest.Files.filter((f) => /\.png$/i.test(f)).length, 39, 'the 39 textures the manifest names - 17 the author\'s own art, vendored; 22 Daggerfall\'s own candles, rebuilt from the player\'s files (NO-BETHESDA2, nobethesda2_torchesicons.test.js)');
-  assert.equal(manifest.Files.filter((f) => /\.cs$/.test(f)).length, 4, 'the four scripts the manifest names and the bundle does not carry');
-  for (let f = 0; f < 4; f++) assert.ok(rd(`vendor/handheld-torches/Textures/${SPRITE_ARCHIVE}_0-${f}.png`).length > 0, `the torch hand's frame ${f}`);
-  for (let f = 0; f < 4; f++) assert.ok(rd(`vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_0-${f}_Emission.png`).length > 0, `the dropped torch's emission twin ${f}`);
-  assert.ok(rd(`vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_10-0.png`).length > 0, 'the doused torch');
-  const shipped = JSON.parse(rd('vendor/handheld-torches/modsettings.json'));
+  // OWN-WORK4 (2026-10-31): the release's manifest and settings left the tree; their facts are pinned here as literals
+  assert.deepEqual([HANDHELD_TORCHES_MOD.guid, HANDHELD_TORCHES_MOD.title, HANDHELD_TORCHES_MOD.version, HANDHELD_TORCHES_MOD.author], ['5922796c-9fa0-4e2f-8aaa-7c9702015813', 'Handheld Torches', '1.4.1', 'RedRoryOTheGlen']);
+  assert.equal(m.title, HANDHELD_TORCHES_MOD.title); assert.equal(m.author, HANDHELD_TORCHES_MOD.author);
+  assert.deepEqual(Object.keys(TORCH_ART).sort(), [...[0, 1, 2, 3].flatMap((f) => [`${DROPPED_ARCHIVE}_0-${f}`, `${DROPPED_ARCHIVE}_0-${f}_Emission`]), `${DROPPED_ARCHIVE}_10-0`, ...[0, 1].flatMap((r) => [0, 1, 2, 3].map((f) => `${SPRITE_ARCHIVE}_${r}-${f}`))].sort(), 'the 17 pictures the release drew itself are our own recipes; of the 22 candles 20 are rebuilt and the doused two ours over the lit (nobethesda2_torchesicons.test.js)');
+  // the release's modsettings.json, as literals: [section.key, kind, value, min, max] or [.., kind, value, options]
+  const SHIPPED = [['Handling.ToggleLightInput', 'TextKey', 'F'], ['Handling.RememberLastLightSource', 'ToggleKey', true], ['Handling.ManualDropInput', 'TextKey', 'Tab'], ['Handling.OnStow', 'MultipleChoiceKey', 1, ['Unequip', 'Drop']], ['Handling.OnPick', 'MultipleChoiceKey', 1, ['Store', 'Equip', 'Force Equip']], ['Handling.StowWhenSpellcasting', 'ToggleKey', true], ['Handling.StowWhenClimbing', 'ToggleKey', true], ['Handling.StowWhenSwimming', 'ToggleKey', true], ['Handling.RelaxedTwoHandedWeapons', 'ToggleKey', true], ['Handling.RelaxedLanterns', 'ToggleKey', false],
+    ['Throwing.ThrowTorchInput', 'TextKey', 'X'], ['Throwing.ThrowStrength', 'SliderFloatKey', 1, 0, 10], ['Throwing.GravityStrength', 'SliderFloatKey', 1, 0, 10], ['Throwing.ThrowAngleOffset', 'SliderFloatKey', 15, 0, 45], ['Throwing.ThrowDispersion', 'SliderFloatKey', 1, 0, 3], ['Throwing.ThrowScaleSpeed', 'SliderFloatKey', 1, 0, 10], ['Throwing.ShowTrajectory', 'ToggleKey', true], ['Throwing.Bounciness', 'SliderFloatKey', 0.5, 0, 1], ['Throwing.Combustion', 'ToggleKey', true], ['Throwing.Accuracy', 'SliderIntKey', 50, 0, 100], ['Throwing.Duration', 'SliderIntKey', 3, 0, 60], ['Throwing.Chance', 'SliderIntKey', 50, 0, 100], ['Throwing.Magnitude', 'TupleIntKey', [1, 2]], ['Throwing.Emission', 'ToggleKey', true], ['Throwing.EmissionShadows', 'ToggleKey', false],
+    ['Modules.Sprite', 'ToggleKey', false], ['Modules.Bob', 'ToggleKey', false], ['Modules.Inertia', 'ToggleKey', false], ['Modules.Step', 'ToggleKey', false],
+    ['Presentation.Tint', 'ToggleKey', true], ['Presentation.Ambidexterity', 'ToggleKey', false], ['Presentation.Scale', 'SliderFloatKey', 0.8, 0.8, 1.2], ['Presentation.Offset', 'TupleFloatKey', [0.5, 0.5]], ['Presentation.Speed', 'SliderFloatKey', 1, 0, 2], ['Presentation.LockAspectRatio', 'ToggleKey', true], ['Presentation.PlayerTorchAudio', 'ToggleKey', true], ['Presentation.AudioVolume', 'SliderFloatKey', 0.5, 0, 2],
+    ['Bob.Length', 'SliderIntKey', 100, 0, 200], ['Bob.Offset', 'SliderFloatKey', 0, 0, 1], ['Bob.SizeX', 'SliderFloatKey', 1, 0, 2], ['Bob.SizeY', 'SliderFloatKey', 1, 0, 2], ['Bob.SpeedMove', 'SliderFloatKey', 1, 0, 2], ['Bob.SpeedState', 'SliderFloatKey', 1, 0, 2], ['Bob.Shape', 'MultipleChoiceKey', 0, ['U', 'Sideways 8', 'Inverted U']], ['Bob.BobWhileIdle', 'ToggleKey', true],
+    ['Inertia.Scale', 'SliderFloatKey', 1, 0, 2], ['Inertia.Speed', 'SliderFloatKey', 1, 0, 2], ['Inertia.ForwardDepth', 'SliderFloatKey', 1, 0, 2], ['Inertia.ForwardSpeed', 'SliderFloatKey', 1, 0, 2],
+    ['Step.Length', 'SliderIntKey', 1, 1, 10], ['Step.Condition', 'MultipleChoiceKey', 0, ['Sheathe/Attack Only', 'All Transforms']], ['Compatibility.TextureScaleFactor', 'SliderIntKey', 1, 0, 8]];
+  // the keys the release described (the pane keeps a description for every key; PLAIN below holds our words for each)
+  const DESCRIBED = new Set(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Handling.OnStow', 'Handling.OnPick', 'Handling.RelaxedTwoHandedWeapons', 'Handling.RelaxedLanterns', 'Presentation.Tint', 'Presentation.Ambidexterity', 'Presentation.PlayerTorchAudio', 'Bob.Length', 'Bob.Offset', 'Bob.SizeX', 'Bob.SizeY', 'Bob.SpeedMove', 'Bob.SpeedState', 'Bob.Shape', 'Bob.BobWhileIdle', 'Inertia.Scale', 'Inertia.Speed', 'Inertia.ForwardDepth', 'Inertia.ForwardSpeed', 'Step.Length', 'Step.Condition']);
   // MODS-ON (2026-09-14, Mac: "all mods should be on by default"): the
   // keys whose default the port sets against the bundle's, listed here
   // rather than by loosening the compare - so this pin still holds
@@ -154,21 +159,40 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   // and the mod's own value is one click away on the dial, which is
   // pinned below with both options in the shipped order.
   const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O', 'Handling.OnStow': 0, 'Handling.RelaxedTwoHandedWeapons': false });   // 3ARMS: the relaxed switch ships off - a held two-hander takes both hands, HT7's own reasoning
-  // PLAIN-TEXT (2026-10-19): three of the mod's lines said plainly for a player (the idle bob named the shield) - their words, exactly
+  // OWN-WORK4 (2026-11-01): every line the release wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly
   const PLAIN = {
-    'Presentation.PlayerTorchAudio': 'Plays a burning sound while you hold a torch',
-    'Bob.BobWhileIdle': 'Whether the light will slightly bob while stationary',
+    'Handling.ToggleLightInput': 'The key that lights your torch, candle or lantern, or puts it out.',
+    'Handling.ManualDropInput': 'The key that drops the light from your hand.',
+    'Handling.OnStow': 'What happens to your light when your hand is needed: Unequip puts it in your pack, Drop leaves it on the ground.',
+    'Handling.OnPick': 'What happens when you pick up a light. Store packs it, Equip holds it if a hand is free, and Force Equip sheathes your weapon to hold it.',
+    'Handling.RelaxedTwoHandedWeapons': 'A two-handed weapon leaves your light alone until you swing it. A bow still needs both hands.',
+    'Handling.RelaxedLanterns': 'A lantern stays lit even when both your hands are full.',
+    'Presentation.Tint': 'Has no effect here: the First-person lighting feature decides whether the hand takes the light of the room.',
+    'Presentation.Ambidexterity': 'The light is drawn in whichever hand is free, left or right.',
+    'Presentation.PlayerTorchAudio': 'A torch in your hand crackles as it burns.',
+    'Bob.Length': 'How quickly the light sways as you walk.',
+    'Bob.Offset': 'Shifts where in your stride the sway begins, to keep it in time with your weapon.',
+    'Bob.SizeX': 'How far the light sways from side to side.',
+    'Bob.SizeY': 'How far the light sways up and down.',
+    'Bob.SpeedMove': 'How fast the sway fades when you leave the ground, and returns when you land.',
+    'Bob.SpeedState': 'How fast the sway settles into a new pace when you walk, run, crouch or stop.',
+    'Bob.Shape': 'The path the light follows as it sways.',
+    'Bob.BobWhileIdle': 'The light sways a little even while you stand still.',
+    'Inertia.Scale': 'How far the light trails behind when you look around or move.',
+    'Inertia.Speed': 'How fast the light catches up after it trails behind.',
+    'Inertia.ForwardDepth': 'How much the light swells as you step ahead and shrinks as you back away.',
+    'Inertia.ForwardSpeed': 'How fast the light swells or shrinks as you step ahead or back away.',
     'Step.Length': 'Size of each step. Higher moves in bigger jumps.',
+    'Step.Condition': 'Which moves go in steps: only sheathing and swinging, or the sway and the trail too.',
   };
   let n = 0;
   const kinds = new Set();
-  for (const section of shipped.Sections) {
-    for (const k of section.Keys) {
+  for (const [name, kind, Value, a, b] of SHIPPED) {
+    {
+      const k = { Value, ...(Array.isArray(a) ? { Options: a } : a !== undefined ? { Min: a, Max: b } : {}) };
       n += 1;
-      const name = `${section.Name}.${k.Name}`;
       const def = m.keys[name];
       assert.ok(def, `${name} is on the pane`);
-      const kind = k.$type.slice(k.$type.lastIndexOf('.') + 1);
       kinds.add(kind);
       if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, PORT_DEFAULT[name] ?? k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def) && !isTextKey(def) && !isTupleKey(def), name); }
       else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
@@ -180,16 +204,16 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
         const v = Array.isArray(k.Value) ? k.Value : [k.Value.First, k.Value.Second];
         assert.deepEqual([...def.default], v, `${name} defaults as shipped`);
       } else assert.fail(`${name}: an unknown key kind ${kind}`);
-      if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
-      else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
-      if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
+      assert.ok(def.description?.length > 8, `${name}: a description on the pane`);
+      if (DESCRIBED.has(name)) assert.equal(def.description, PLAIN[name], `${name}: our own words in place of the release's`);
+      if (PLAIN[name]) assert.ok(DESCRIBED.has(name), `${name}: our words replace words the release wrote`);
     }
   }
   assert.equal(n, 52, 'the eight sections carry 52 keys');
   // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist"): the port's OWN key on
   // this pane, beside the port's Enabled - named here, as ORL1 names primarySkillsImpact, so a third arrives
   // only with a decision behind it (test/systems/htwaist_setting.test.js holds its default and its words).
-  const shippedNames = new Set(shipped.Sections.flatMap((sec) => sec.Keys.map((k) => `${sec.Name}.${k.Name}`)));
+  const shippedNames = new Set(SHIPPED.map(([name]) => name));
   assert.deepEqual(Object.keys(m.keys).filter((k) => !shippedNames.has(k)).sort(), ['Enabled', 'Handling.LanternsAtWaist'], 'plus the port\'s Enabled and its lantern-at-the-waist switch, and nothing else');
   assert.equal(Object.keys(m.keys).length, 54);
   assert.deepEqual([...kinds].sort(), ['MultipleChoiceKey', 'SliderFloatKey', 'SliderIntKey', 'TextKey', 'ToggleKey', 'TupleFloatKey', 'TupleIntKey']);
@@ -205,11 +229,10 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /handheld-torches/);
   assert.equal(row.effect, 'Takes effect at once.', 'the component reads its switches every frame');
   const credit = CREDITS.mods.find((c) => c.title === 'Handheld Torches');
-  assert.ok(credit); assert.equal(credit.author, 'RedRoryOTheGlen'); assert.equal(credit.version, '1.4.1'); assert.deepEqual([...credit.vendor], ['handheld-torches']);
+  assert.ok(credit); assert.equal(credit.author, 'RedRoryOTheGlen'); assert.equal(credit.version, '1.4.1'); assert.deepEqual([...credit.retired], ['handheld-torches']);
   assert.match(credit.link ?? '', /nexusmods\.com\/daggerfallunity\/mods\/780/);
-  const readme = rd('vendor/handheld-torches/README.md');
-  assert.match(readme, /RedRoryOTheGlen/); assert.match(readme, /Permission/); assert.match(readme, /39/); assert.match(readme, /Handheld Torches\.dll/);
-  assert.match(readme, /author's own pixel art/, 'why the textures ARE vendored, against the doctrine\'s ARENA2 line');
+  assert.equal(existsSync(join(root, 'vendor/handheld-torches')), false, 'OWN-WORK4: the release\'s folder is retired');
+  assert.match(rd('bible/06-Systems/Handheld-Torches.md'), /\*\*OWN-WORK4 \(2026-10-31, the owner\)\.\*\*/, 'the page records it');
   // a text key coerces: trimmed, an empty one reads as the default; a tuple: a pair, ints truncated, floats to a thousandth, anything else the default
   _resetModSettings();
   setModSetting(V, 'Handling.ToggleLightInput', ' Q ');
@@ -283,8 +306,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   assert.deepEqual(r.fireDamageRange, [2, 5]); assert.equal(r.onStow, ON_STOW.Unequip);
   assert.equal(torchItemWords(torch()), 'new torch', 'Condition().ToLower() + " " + LongName.ToLower()');
   assert.equal(torchItemWords(lantern(10)), 'battered lantern');
-  assert.match(spriteUrl(1, 2), /vendor\/handheld-torches\/Textures\/112359_1-2\.png$/);
-  assert.match(droppedTextureUrl(0, 3, true), /Textures\/112358_0-3_Emission\.png$/);
+  assert.deepEqual([vendoredTexture('112359_1-2.png'), vendoredTexture('112358_0-3_Emission.png'), vendoredTexture('112359_1-4.png')], [true, true, false], 'OWN-WORK4: the set is our recipes and the rebuilt candles, nothing past the last frame');
   assert.equal(SECONDS_PER_CONDITION, 20); assert.equal(ANIMATION_TIME, 0.0625); assert.deepEqual([DROP_FORWARD_CAST, DROP_DOWN_CAST, THROW_HAND_OFFSET], [1.45, 145, 0.35]);
   assert.deepEqual([THROW_STRENGTH_MIN, THROW_STRENGTH_MAX], [0.25, 2], 'the wind-up clamp, as the IL writes it (0x19a6) - the literals, not the constants compared to themselves');
   assert.deepEqual([TRAJECTORY_STEPS, TRAJECTORY_FIXED_DT, TRAJECTORY_SPEED, TRAJECTORY_GRAVITY], [300, 0.02, 25, 9.8], 'DrawTrajectory\'s own numbers - 9.8, NOT the flight\'s 9.81');
@@ -976,7 +998,7 @@ test('HT5: the torch hand moves as the weapon does - every motion module the two
     assert.equal(torchKeys[m].default, widget[m].default, `${m}: the torch hand and the weapon ship the same answer`);
   }
   assert.equal(torchKeys['Modules.Bob'].default, true, 'and that answer, for Bob, is on - the widget\u2019s own shipped default');
-  assert.match(rd('vendor/handheld-torches/modsettings.json'), /"Value": false,\s*\n\s*"Name": "Bob",/, 'the mod\u2019s own file still ships Bob off - the departure is the port\u2019s, stated in the table');
+  // the release shipped Bob off (OWN-WORK4: its modsettings.json, pinned in HT1's SHIPPED) - the departure is the port\u2019s, stated in the table
   // and the law it turns on is the one the component runs: Bob on, at
   // rest, walking - the sprite moves off its target
   const r = rig({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Modules.Inertia': false }, { renderer: fakeRenderer(), loadSprite });

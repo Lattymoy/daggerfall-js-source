@@ -1,19 +1,15 @@
 // @ts-check
-// CSA-B (2026-09-27): COME SAIL AWAY'S BOATS, READ BACK - the files
-// tools/comeSailAwayExtract.mjs wrote out of the mod's bundle
-// (vendor/come-sail-away/Models/) as what the port instances and draws.
+// CSA-B (2026-09-27): COME SAIL AWAY'S BOATS, READ BACK - the files the boats are made of, as what the port instances
+// and draws. OWN-WORK4 (2026-10-31): they are OUR boats' files, built at the load by world/ships/ownBoats/ownBoatFiles.js
+// (Come Sail Away 2.1's author's models are retired); their shape is the one this module always read:
 //
-// - `prefabs.json`: the twelve prefabs DFU's MeshReplacement hands the
-//   assembly (the seven trigger boxes 112400-112406, the five hulls
-//   112410-112414) as node trees, their components in a shared table;
-//   world/prefabNode.js instances one.
-// - `meshes.json` + `meshes.bin`: each mesh's channels at their offsets in
-//   the one binary file (position f32x3, normal f32x3 or f32x4, uv0 f32x2,
-//   a skinned mesh's one-bone index u16), its indices (u16 or u32), its
-//   submeshes (Unity's start, count and baseVertex), its box, and a skinned
-//   mesh's bind poses (Unity's Matrix4x4, e00 e01 ... e33 - row by row).
-// - `materials.json`: the bundle's materials by name.
-// - `animation.json`: the controllers, overrides and clips (CSA-E plays them).
+// - `prefabs`: the twelve prefabs DFU's MeshReplacement hands the runtime (the seven trigger boxes 112400-112406, the
+//   five hulls 112410-112414) as node trees, their components in a shared table; world/prefabNode.js instances one.
+// - `meshes` + `bin`: each mesh's channels at their offsets in one binary buffer (position f32x3, normal f32x3 or
+//   f32x4, uv0 f32x2, a skinned mesh's one-bone index u16), its indices (u16 or u32), its submeshes (Unity's start,
+//   count and baseVertex), its box, and a skinned mesh's bind poses (Unity's Matrix4x4, e00 e01 ... e33 - row by row).
+// - `materials`: the materials by name.
+// - `animation`: the controllers, overrides and clips (CSA-E plays them).
 //
 // A mesh decodes to the port's model shape (world/meshReader.js's:
 // positions, normals, uvs, 32-bit indices - the renderer draws
@@ -63,17 +59,10 @@ import { carrackPrefab, CARRACK_PREFAB_ID } from '../../world/ships/carrackModel
 import { largeBoatPrefab, LARGE_BOAT_PREFAB_ID } from '../../world/ships/largeBoatModel.js'; // his Tiny Ship for hull 1
 import { shipBuildKey, shipBuildScope, isShipBuild } from './shipBuildsKept.js'; // FIRST-VISIT: the builds kept across launches
 import { derivedValueStore, keepAnswer } from '../firstVisit/firstVisitStore.js';
+import { ownBoatFiles } from '../../world/ships/ownBoats/ownBoatFiles.js'; // OWN-WORK4: our boats' files, built at the load
 
-/** Where the extractor's files are served (a pin reads them off the disk). */
-export const CSA_MODEL_URLS = Object.freeze({
-  prefabs: new URL('../../../vendor/come-sail-away/Models/prefabs.json', import.meta.url).href,
-  meshes: new URL('../../../vendor/come-sail-away/Models/meshes.json', import.meta.url).href,
-  bin: new URL('../../../vendor/come-sail-away/Models/meshes.bin', import.meta.url).href,
-  materials: new URL('../../../vendor/come-sail-away/Models/materials.json', import.meta.url).href,
-  animation: new URL('../../../vendor/come-sail-away/Models/animation.json', import.meta.url).href,
-});
-/** GALLEON (2026-10-01): the new galleon's model, baked from Mac's export (tools/bakeGalleon.mjs) - the port's own, not
- *  the mod's, so never among its files above: hull 2 is built on it (comeSailAwayModels' `galleon`). */
+/** GALLEON (2026-10-01): the new galleon's model, baked from Mac's export (tools/bakeGalleon.mjs): hull 2 is built on it
+ *  (comeSailAwayModels' `galleon`). */
 export const GALLEON_MODEL_URL = new URL('../../assets/galleon/galleon.json', import.meta.url).href;
 /** SHIPS-2 (2026-10-07): the new carrack's model and the new large boat's, baked from Mac's Tiny_Ship.fbx
  *  (tools/bakeCarrack.mjs, tools/bakeLargeBoat.mjs) - the port's own, as the galleon's is. */
@@ -111,67 +100,44 @@ export const PORT_SHIPS = Object.freeze([
     build: (bake, csa, base) => largeBoatPrefab(bake, csa, base),
   }),
 ]);
-const MOD_TITLES = Object.freeze({ galleon: 'galleon', carrack: 'carrack', largeBoat: 'large boat' });
-
-/** CSA-E: the wind widget's pictures as Start imports them - TryImportTexture(112395, 1, i), frame i of the 24. */
-export const windWidgetFrameUrl = (/** @type {number} */ i) =>
-  new URL(`../../../vendor/come-sail-away/Textures/112395_1-${i}.png`, import.meta.url).href;
-/** CSA-F: the waves' frames as recipes (Textures/derived.json: each frame's paint, scroll and tile over TEXTURE.303
- *  record 1) and the author's paints they name - the frames are rebuilt from the player's ARENA2, never shipped. */
-export const waveDerivedUrl = new URL('../../../vendor/come-sail-away/Textures/derived.json', import.meta.url).href;
-export const wavePaintUrl = (/** @type {string} */ name) =>
-  new URL(`../../../vendor/come-sail-away/Textures/${name}`, import.meta.url).href;
-/** CSA-G: the five clips Start loads (audioClips, 1022-1029) as the tool carried them - each its Ogg of the bundle's
- *  own Vorbis packets (Sounds/sounds.json). */
-export const soundUrl = (/** @type {string} */ name) =>
-  new URL(`../../../vendor/come-sail-away/Sounds/${name}.ogg`, import.meta.url).href;
+const MOD_TITLES = Object.freeze({ galleon: 'small ship', carrack: 'carrack', largeBoat: 'large boat' });
 
 /**
- * The five files, fetched. NEVER TRAPS: a file that will not load is the
- * mod's boats missing, never the scene - the answer is null and it says
- * so once. GALLEON: and the new galleon's model at `galleonUrl` (null for
- * none) - missing, hull 2 is the mod's own galleon, said once. AUDIT
- * GN2-PF4: fetched beside the five (it was asked for once all five had
- * come - a whole fetch later). SHIPS-2: and the new carrack's and the new
- * large boat's at `shipUrls` (each null for none), fetched beside them too,
- * each one's answer its own - missing or broken, its hull is the mod's
- * own, said once, and every other ship stands as it would. FIRST-VISIT: `store` keeps the build (shipBuildsKept.js).
+ * The five files - OWN-WORK4: ours, built (`files`, world/ships/ownBoats/ownBoatFiles.js). NEVER TRAPS: files that
+ * will not build are the boats missing, never the scene - the answer is null and it says so once. GALLEON: and the new
+ * galleon's model at `galleonUrl` (null for none) - missing, hull 2 is our own small ship, said once. SHIPS-2: and the
+ * new carrack's and the new large boat's at `shipUrls` (each null for none), fetched beside it, each one's answer its
+ * own - missing or broken, its hull is our own, said once, and every other ship stands as it would. FIRST-VISIT:
+ * `store` keeps the build (shipBuildsKept.js).
  * @returns {Promise<ReturnType<typeof comeSailAwayModels> | null>}
  */
 export async function loadComeSailAwayModels(
   fetchFn = globalThis.fetch,
-  urls = CSA_MODEL_URLS,
+  files = ownBoatFiles,
   log = console,
   galleonUrl = GALLEON_MODEL_URL,
   shipUrls = { carrack: CARRACK_MODEL_URL, largeBoat: LARGE_BOAT_MODEL_URL },
   store = derivedValueStore(),
 ) {
-  if (!fetchFn) return null;
   try {
-    const get = async (/** @type {string} */ url, /** @type {boolean} */ binary) => {
-      const r = await fetchFn(url);
+    const get = async (/** @type {string} */ url) => {
+      const r = await fetchFn?.(url);
       if (!r || !r.ok) throw new Error(`${url}: ${r?.status ?? 'no answer'}`);
-      return binary ? new Uint8Array(await r.arrayBuffer()) : r.json();
+      return r.json();
     };
     // GALLEON: her answer is her own - her model failing never fails the five, and is said only once they stand
     // (SHIPS-2: each port ship's the same)
     const own = (url) =>
       url
-        ? get(url, false).then(
+        ? get(url).then(
             (json) => ({ ok: true, json, error: null }),
             (error) => ({ ok: false, json: null, error }),
           )
         : null;
     const shipAt = { galleon: galleonUrl, carrack: shipUrls?.carrack ?? null, largeBoat: shipUrls?.largeBoat ?? null };
-    const [prefabs, meshes, bin, materials, animation, ...answers] = await Promise.all([
-      get(urls.prefabs, false),
-      get(urls.meshes, false),
-      get(urls.bin, true),
-      get(urls.materials, false),
-      get(urls.animation, false),
-      ...PORT_SHIPS.map((ship) => own(shipAt[ship.key])),
-    ]);
-    // GALLEON: the new galleon over hull 2 - and, its model not answering, the mod's own galleon, said once (a ship
+    const answers = await Promise.all(PORT_SHIPS.map((ship) => own(shipAt[ship.key])));
+    const { prefabs, meshes, bin, materials, animation } = files();
+    // GALLEON: the new galleon over hull 2 - and, its model not answering, our own small ship, said once (a ship
     // missing her new timbers still sails as the old one; never no ship). SHIPS-2: each port ship so, built here first
     // (once a process - its cache) so one that will not build drops alone
     const ships = {};
@@ -179,7 +145,7 @@ export async function loadComeSailAwayModels(
     for (const [k, ship] of PORT_SHIPS.entries()) {
       const answer = answers[k];
       if (!answer) continue;
-      const standsAs = `hull ${ship.hull} stands as the mod's own ${MOD_TITLES[ship.key]}`;
+      const standsAs = `hull ${ship.hull} stands as our own ${MOD_TITLES[ship.key]}`;
       if (!answer.ok) {
         log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error);
         continue;
@@ -193,7 +159,7 @@ export async function loadComeSailAwayModels(
     }
     return comeSailAwayModels({ prefabs, meshes, bin, materials, animation, ...ships });
   } catch (e) {
-    log?.warn?.("[come-sail-away] the boats' models did not load - no boat can stand", e);
+    log?.warn?.("[come-sail-away] the boats' models did not build - no boat can stand", e);
     return null;
   }
 }
@@ -326,7 +292,7 @@ export function matrixFromUnityRows(m) {
 }
 
 /**
- * One mesh out of meshes.bin.
+ * One mesh out of the files' buffer.
  * @param {any} entry - meshes.json's record
  * @param {Uint8Array} bin
  */

@@ -25,7 +25,7 @@ export const SEAT_TOP_STEP = 0.05;
 /** A table's top when the wire names none (an older relay's pose has no `st` at all; this is never sent). */
 export const SEAT_TOP_DEFAULT = 0.8;
 
-/** MEASURED (CARDS2b) on retail's biped (Weapon Sheathing's vendored xbase_anim_sh.nif, test/net/peer/cards2b_seated.test.js):
+/** MEASURED (CARDS2b) on retail's biped (Weapon Sheathing 1.6's copy of its Bip01 chain; OWN-WORK4: the pin, test/net/peer/cards2b_seated.test.js, stands on our own biped now):
  *  its pelvis stands at 1.09 m, its thigh is 0.46 m and its shin 0.53 m, so a drop of 0.48 m puts the hips level with
  *  the knees over shins standing straight - a chair's sitter. Scaled by the race's height. */
 export const SEAT_HIP_DROP = 0.48;

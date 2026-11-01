@@ -45,19 +45,19 @@
     ]
   },
   {
-    "name": "ALIKR1-pack-served-from-the-base-root",
+    "name": "ALIKR1-snowfall-pack-not-shipped",
     "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
-    "old": "  const root = mod.root ?? pack.Root;",
-    "new": "  const root = pack.Root;",
+    "old": "export const ENVIRONMENT_PACK_MODS = Object.freeze(OWN_TEXTURE_PACKS.filter((m) => !VE_DIRS.includes(m.dir)));",
+    "new": "export const ENVIRONMENT_PACK_MODS = Object.freeze(OWN_TEXTURE_PACKS.filter((m) => !VE_DIRS.includes(m.dir) && m.dir !== 'snowfall'));",
     "tests": [
       "test/systems/environs_texturePacks.test.js"
     ]
   },
   {
     "name": "SNOWFALL1-not-built-on-the-base",
-    "file": "vendor/snowfall/snowfall.index.json",
-    "old": "        \"deps\": [\n          [\n            \"vanilla enhanced - base\",",
-    "new": "        \"deps\": [\n          [\n            \"vanilla enhanced - nothing\",",
+    "file": "src/systems/ownTextures/ownTexturePacks.json",
+    "old": "\"title\": \"Snowfall\",\n        \"version\": null,\n        \"author\": \"DFO Online\",\n        \"guid\": null,\n        \"deps\": [[\"vanilla enhanced - base\", true, false]],",
+    "new": "\"title\": \"Snowfall\",\n        \"version\": null,\n        \"author\": \"DFO Online\",\n        \"guid\": null,\n        \"deps\": [[\"vanilla enhanced - nothing\", true, false]],",
     "tests": [
       "test/systems/environs_texturePacks.test.js"
     ]

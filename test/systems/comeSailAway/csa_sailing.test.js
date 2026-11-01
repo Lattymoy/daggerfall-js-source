@@ -18,10 +18,10 @@ import {
 import { helmButtons, helmHint, helmSpeedText, KNOTS_PER_MPS } from '../../../src/ui/enhanced/enhancedHelm.js';   // HELM-LADDER: the sails' button is the toggle, the line the ladder - HELM-SPEED: her way
 import { animatorOf } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { quatRotate, quatAngleAxis } from '../../../src/world/quat.js';
+import { ownFile } from '../../ownBoats.mjs';
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
 const closeV = (a, b, eps = 1e-4, msg = '') => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => assert.ok(close(v, b[i], eps), `${msg} [${i}] ${v} vs ${b[i]}`)); };
@@ -288,7 +288,7 @@ test('CSA-D: CheckCollision - two sweeps of the half-beam along the hull; each c
   other = boat.GameObject;
   s.rt.StartSailing(boat);
   // the sweep: from the hull collider's world centre, radius its mesh's half-beam, the length between the ends' spheres
-  const local = MODELS.meshes.OldSkiffHull.aabb;
+  const local = MODELS.meshes['own:skiff:hull:collider'].aabb; // OWN-WORK4: our large boat's hull collider
   const c0 = s.out.casts[0];
   assert.ok(close(c0.r, local.extent[0], 1e-6), 'radius = sharedMesh.bounds.extents.x');
   assert.ok(close(c0.dist, local.extent[2] - local.extent[0], 1e-4), 'length = extents.z - x: her own end (FIELD BUGS 2026-10-02b ROCK-REACH, a departure - the C#\'s reached twice that, half a hull past her end)');

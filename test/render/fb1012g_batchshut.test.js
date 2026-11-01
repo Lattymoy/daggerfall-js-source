@@ -46,7 +46,7 @@ async function stage(horses) {
   await rig.load();
   assert.ok(rig.ready(), `the rig: ${rig.failure?.()}`);
   const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4).fill(200) });
-  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, fetchFn: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }), decode, horses3d: () => rig, log: { warn() {} } });
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => null, now: () => 0, horsePicture: decode, horses3d: () => rig, log: { warn() {} } });
   pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, teamFollowing: false, horseFollowing: false, persistence: true }), lateUpdate() {}, rebase() {} });
   pool.presentation.horseArt.ensureStationary();
   for (let i = 0; i < 8; i++) await new Promise((res) => setTimeout(res, 0));

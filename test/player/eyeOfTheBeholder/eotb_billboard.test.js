@@ -1,8 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   STATE_TABLES, RECORD_OFFSETS, MIRRORED, ORIENTATIONS, ANGLE_PER_ORIENTATION, TABLE_FRAMES, frameCount,
@@ -13,6 +10,7 @@ import {
   mirrorFlips, MIRROR_TABLES, mirrorRevertTime, autoToggleRows, DELAYED_FRAMES, ORIENTATION_TIME,
 } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { EOTB_DERIVED, eotbHas } from '../../../tools/lib/eotbPictures.mjs';
+import { deathKeys } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
 
 // ═══ EOTB3: THE PLAYER BILLBOARD ══════════════════════════════════
 //
@@ -22,22 +20,30 @@ import { EOTB_DERIVED, eotbHas } from '../../../tools/lib/eotbPictures.mjs';
 // the two Mac reported - the chop and the turn - are the first two
 // pins after the table.
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const bundle = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/states.json'), 'utf8'));
-const TEX = join(root, 'vendor/eye-of-the-beholder/Textures');
-// NO-BETHESDA2 (2026-10-31): a sprite the bundle ships is the author's file or a derived.json spec, rebuilt from the
-// player's ARENA2 - so the names the mod has are both (test/player/eyeOfTheBeholder/nobethesda2_eotb.test.js)
-const SPRITE_NAMES = [
-  ...readdirSync(TEX, { recursive: true }).filter((f) => /\.png$/.test(f)).map((f) => f.split(/[\\/]/).pop().replace(/\.png$/, '')),
-  ...Object.keys(EOTB_DERIVED),
-];
+// OWN-WORK4 (2026-10-31): the mod's states.json (PlayerBillboard.InitializeStates, read off Eye Of The Beholder 2.1's
+// IL), written out - its copy left the tree. Each table: its eight records in orientation order, a flipped one marked
+// `m`, and the constructor's ignored fourth argument.
+const SHIPPED_STATES = {
+  Idle: ['0 1m 2m 3m 4 3 2 1', 0], Move: ['5 6m 7m 8m 9 8 7 6', 0], Death: ['10 11m 12m 13m 14 13 12 11', 0],
+  IdleMelee: ['15 16m 17m 18m 19 18 17 16', 0], MoveMelee: ['20 21m 22m 23m 24 23 22 21', 0], AttackMelee: ['25 26m 27m 28m 29 28 27 26', 0],
+  IdleRanged: ['30 31m 32m 33m 34 33 32 31', 3], MoveRanged: ['35 36m 37m 38m 39 38 37 36', 3], AttackRanged: ['40 41m 42m 43m 44 43 42 41', 0],
+  IdleSpell: ['45 46m 47m 48m 49 48 47 46', 0], MoveSpell: ['50 51m 52m 53m 54 53 52 51', 0], AttackSpell: ['55 56m 57m 58m 59 58 57 56', 0],
+  IdleHorse: ['0 1m 2m 3m 4 3 2 1', 0], MoveHorse: ['5 6m 7m 8m 9 8 7 6', 0], GallopHorse: ['10 11m 12m 13m 14 13 12 11', 0],
+  IdleLycan: ['0 1m 2m 3m 4 3 2 1', 0], MoveLycan: ['5 6m 7m 8m 9 8 7 6', 0], IdleMeleeLycan: ['15 16m 17m 18m 19 18 17 16', 0],
+  MoveMeleeLycan: ['20 21m 22m 23m 24 23 22 21', 0], AttackMeleeLycan: ['25 26m 27m 28m 29 28 27 26', 0], DeathLycan: ['10 11m 12m 13m 14 13 12 11', 0],
+};
+const bundle = { tables: Object.fromEntries(Object.entries(SHIPPED_STATES).map(([t, [recs, frames]]) => [t, recs.split(' ').map((r) => ({ record: parseInt(r, 10), mirror: r.endsWith('m'), frames }))])) };
+// NO-BETHESDA2 (2026-10-31): a sprite the mod ships is an eotbDerived.json spec, rebuilt from the player's ARENA2;
+// OWN-WORK4: or our own death (eotbDeath.js) - so the names the mod has are both (nobethesda2_eotb.test.js)
+const SPRITE_NAMES = [...Object.keys(EOTB_DERIVED), ...deathKeys(EOTB_DERIVED)];
 
 test('EOTB3: the GENERATED table is the mod’s own - all 168 states, checked not claimed', () => {
   // THE PIN THIS SLICE EXISTS FOR. The port carries 21 base records and
   // one wheel; the mod carries 168 written-out states. The claim that
   // those are the same thing is worth exactly nothing as a sentence in
-  // a comment, so the mod's table is vendored out of the IL and the
-  // port's is generated and compared, state for state, forever.
+  // a comment, so the mod's table was taken out of the IL (written out
+  // above since OWN-WORK4) and the port's is generated and compared,
+  // state for state, forever.
   const names = Object.keys(bundle.tables);
   assert.equal(names.length, 21, 'the bundle builds 21 tables');
   assert.deepEqual(names.sort(), Object.keys(STATE_TABLES).sort(), 'and the port knows the same 21');
@@ -60,10 +66,10 @@ test('EOTB-IL: THE CHOP - the clip lengths are the ART’s, counted per record o
   // Mac: "Frame chopping between animations". The port ran every table
   // on a five-frame clock; the bundle's records are not five frames.
   // `InitializeTextures` counts `archive_record-i` while the bundle has
-  // one (IL_5a70-IL_5ad4), so the count is asked of the vendored files
-  // - every archive, every record - and compared with TABLE_FRAMES.
+  // one (IL_5a70-IL_5ad4), so the count is asked of the sprites the
+  // port names - every archive, every record - and compared with TABLE_FRAMES.
   const counts = new Map();   // archive -> record -> frames
-  for (const name of SPRITE_NAMES) {   // NO-BETHESDA2: the files and the specs
+  for (const name of SPRITE_NAMES) {   // NO-BETHESDA2: the specs; OWN-WORK4: and our death
     const m = /^(\d+)_(\d+)-(\d+)$/.exec(name);
     if (!m) continue;
     if (!counts.has(+m[1])) counts.set(+m[1], new Map());
@@ -123,16 +129,16 @@ test('EOTB3: every sprite the table asks for is a sprite the bundle actually shi
       const archive = tableArchive(table, { onFoot: 0, onHorse: 0, lycanthropyType: 1 });
       for (let f = 0; f < frameCount(table); f++) {
         asked++;
-        if (!eotbHas(spriteKey(archive, record, f))) missing.push(`${table}[${o}] -> ${spriteKey(archive, record, f)}`);   // NO-BETHESDA2: a file or a spec
+        if (!eotbHas(spriteKey(archive, record, f))) missing.push(`${table}[${o}] -> ${spriteKey(archive, record, f)}`);   // NO-BETHESDA2: a spec; OWN-WORK4: or our death
       }
     }
   }
   assert.ok(asked > 168, 'the sweep really ran over every state and every frame');
-  assert.deepEqual(missing, [], 'every frame of every state is in the vendored art, or rebuilt from the player\'s');
+  assert.deepEqual(missing, [], 'every frame of every state is rebuilt from the player\'s art, or ours');
 });
 
 test('EOTB3: every on-foot and horse archive the settings can pick is present', () => {
-  // NO-BETHESDA2: an archive wholly Daggerfall's own (set 5, the five riders) has no folder now, only specs
+  // NO-BETHESDA2: an archive is its specs (OWN-WORK4: and our death) - no folder
   const has = (archive) => SPRITE_NAMES.some((n) => n.startsWith(`${archive}_`));
   for (let i = 0; i <= 15; i++) assert.ok(has(ARCHIVE_FOOT + i), `OnFoot ${i}`);
   for (let i = 0; i <= 4; i++) assert.ok(has(ARCHIVE_HORSE + i), `OnHorse ${i}`);
@@ -353,6 +359,6 @@ test('EOTB3: the sprite key is the bundle’s own naming', () => {
   assert.equal(spriteKey(112364, 25, 3), '112364_25-3');
   const { record } = stateFor('AttackMelee', 0);
   assert.equal(spriteKey(ARCHIVE_FOOT, record, 0), '112364_25-0');
-  assert.ok(eotbHas('112364_25-5'), 'and the swing really has a sixth frame');   // NO-BETHESDA2: a file or a spec
+  assert.ok(eotbHas('112364_25-5'), 'and the swing really has a sixth frame');   // NO-BETHESDA2: a spec
   assert.ok(!eotbHas('112364_0-1'), 'and the idle really has no second');
 });

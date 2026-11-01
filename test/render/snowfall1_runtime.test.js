@@ -18,8 +18,8 @@ import { setModSetting, modSetting } from '../../src/systems/modSettings.js';
 import { buildTerrainGrid, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt } from '../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2;
 
 /** A synthetic world: map pixels round (500, 250), each a plane tilted 5 cm and 2 cm a metre, record 1 tiles (with a
@@ -269,7 +269,7 @@ test('SNOWFALL1 the ground\'s helpers: BasicRoadsBridge\'s network round a pixel
   assert.throws(() => authoredTiles({ ...loc(0), missing: true }, maps, blocks), /Authored block unavailable/);
 });
 
-test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment program on all three lanes - its tile decode alone replaced by the mod\'s snow, its light, shadows and fog kept; the vertex law feeds what the ground\'s fragment reads; the pictures sit above every unit the world programs use (mutants: the decode span; the light dropped; a unit inside 0-15)', async () => {
+test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment program on all three lanes - its tile decode alone replaced by our snow (OWN-WORK4: our look, the packed track), its light, shadows and fog kept; the vertex law feeds what the ground\'s fragment reads; the pictures sit above every unit the world programs use (mutants: the decode span; the light dropped; a unit inside 0-15)', async () => {
   const { Renderer } = await import('../../src/render/renderer.js');
   const sources = [];
   const gl = new Proxy({}, { get(_, k) {
@@ -289,11 +289,13 @@ test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment progr
     const tail = fs.slice(fs.indexOf('  vec3 n = normalize(vNormal);\n'));
     assert.ok(snow.endsWith(tail), `${name}: the light after the decode is the ground's own, unchanged`);
     assert.ok(!snow.slice(snow.indexOf('void main() {')).includes('unwrapped'), `${name}: the tile decode is gone`);
-    assert.match(snow, /SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE TILE/);
+    assert.match(snow, /SNOWFALL1 \/ OWN-WORK4: OUR SNOW IN PLACE OF THE TILE/);   // PIN MOVED (OWN-WORK4): the look is ours
+    // OWN-WORK4: our look - a path's snow trodden 5% grey, a track packed darker as the snow it pressed was deep
+    assert.match(snow, /\* \(1\.0 - clamp\(pathW, 0\.0, 1\.0\) \* 0\.05\);\n\s*float packed = \(1\.0 - remain\) \* smoothstep\(0\.0, 0\.75, depth\) \* uSnowDarkening;\n\s*vec3 tex = albedo \* \(1\.0 - packed\) \* mix\(vec3\(1\.0\), vec3\(0\.94, 0\.97, 1\.03\), clamp\(packed \* 4\.0, 0\.0, 1\.0\)\);/, `${name}: our packed snow`);
     assert.match(snow, /in vec4 vSnow;/);
     if (fs.includes('elDecode(')) assert.match(snow, /elDecode\(textureGrad\(uSnowAlbedo, albedoUV, albedoDx, albedoDy\)/, `${name}: the albedo decoded as the lane decodes its pictures`);
     // AUDIT ENVIRONS: the albedo's footprint taken before the first discard (CLIP_AFTER's law), and the mask reads where they count
-    const span = snow.slice(snow.indexOf('SNOWFALL1: THE MOD\'S SNOW IN PLACE OF THE TILE'));
+    const span = snow.slice(snow.indexOf('OUR SNOW IN PLACE OF THE TILE'));
     assert.ok(span.indexOf('dFdx(albedoUV)') > 0 && span.indexOf('dFdx(albedoUV)') < span.indexOf('discard;'), `${name}: the gradient before any discard`);
     assert.ok(span.indexOf('if (coverage - 0.005 < 0.0) discard;') < span.indexOf('textureLod(uSnowContext'), `${name}: the coverage's discard before the context's read`);
     assert.match(span, /if \(m > 0\.0\) \{[^}]*textureLod\(uSnowFar,/, `${name}: the far mask read only inside the ring's hand-off band`);
@@ -301,7 +303,7 @@ test('SNOWFALL1 the shader: the snow program is the ground\'s own fragment progr
   }
   for (const v of ['out vec3 vNormal;', 'out vec3 vWorldPos;', 'out vec2 vLocalXZ;', 'out vec4 vSnow;']) assert.ok(SNOW_VS.includes(v), v);
   // AUDIT ENVIRONS: the vertex law's surface offset stands on the blanket's painted track edge as the fragment's coverage
-  // does (DynamicSnow.glsl: max(onPath, st.g) before _SurfaceOffset); the blanket reads no window mask (it rises by its own)
+  // does (Snowfall 1.0.5's shader took max(onPath, st.g) before its surface offset); the blanket reads no window mask (it rises by its own)
   // AUDIT PRECIP GROUND-9 (PIN MOVED): and the coverage laid where the ground wears snow (precip4_snowground pins snowLaid)
   assert.match(SNOW_VS, /float cover = st\.g;[^\n]*\n\s*if \(blanket && st\.b != 0\.0\) cover = max\(cover, snowOnPath\(st\.b, statUV\)\);\n\s*cover \*= laid;\n\s*float offset = cover \* uSnowRadius\.z \* st\.a \* fade;/);
   assert.match(SNOW_VS, /if \(!blanket\) \{[^\n]*\n\s*float depth = snowResolve\(textureLod\(uSnowContext/);

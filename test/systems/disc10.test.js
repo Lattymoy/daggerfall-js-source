@@ -131,7 +131,7 @@ async function riderScene() {
   mwCamera.restore({ firstPerson: true, baseDistance: mwCamera.baseDistance() });
   eotbCamera.loadSettings(null); eotbCamera.toggleOffset(false);
   mw.mwViewAttachWagon({ getGpuMesh: meshes.getGpuMesh, cpuModels });
-  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => w.now, fetchFn: async () => ({ ok: false, status: 404 }), log: { error() {}, warn() {}, info() {} } });
+  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => w.now, horsePicture: async () => { throw new Error('no horse picture'); }, log: { error() {}, warn() {}, info() {} } });
   const rt = createHorseCartRuntime({
     ready: () => true,
     transport: { get: () => w.mode, set: (m) => { w.mode = m; }, hasCart: () => true, hasHorse: () => true, isOnShip: () => false },

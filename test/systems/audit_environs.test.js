@@ -22,9 +22,10 @@ import { hazePhase } from '../../src/render/heatHaze.js';
 import { ShadowPass } from '../../src/render/shadowPass.js';
 import { setModSetting, modSetting } from '../../src/systems/modSettings.js';
 import { SEASONS } from '../../src/systems/gameDate.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
+import { snowAlbedo } from '../../src/systems/ownTextures/ownTextureRules.js';   // OWN-WORK4: our snow's albedo
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2;
 const coverage = () => new SnowCoverage(MASKS);
 const seeded = (s = 7) => () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 8) / 16777216; };
@@ -211,7 +212,7 @@ test('AUDIT ENVIRONS S6: snow_status is GetRuntimeStatus line for line - its lin
   assert.match(s, /^basicRoads=ready pathWeight=0\.00 pathCap=\d\.\d\dm bermWeight=0\.00 contextDepth=\d\.\d{3}m \(before coverage\/tracks\)$/m);
 });
 
-test('AUDIT ENVIRONS G1 + G3 + G4: the snow\'s GL owes the renderer its seam before its first bind - the 2D run closed and every shadow forgotten, so the HUD\'s vertex array never takes the blanket\'s index buffer; the albedo decoded bottom row first (an ImageBitmap takes no UNPACK_FLIP_Y_WEBGL) and read at its nearest level (Point) (mutants: the seam dropped; the flip back on the upload; the levels blended)', () => {
+test('AUDIT ENVIRONS G1 + G3 + G4: the snow\'s GL owes the renderer its seam before its first bind - the 2D run closed and every shadow forgotten, so the HUD\'s vertex array never takes the blanket\'s index buffer; no flip asked of the albedo, ours (OWN-WORK4: made at runtime and uploaded as its bytes), and read at its nearest level (Point) (mutants: the seam dropped; our albedo not uploaded as bytes; the levels blended)', () => {
   const log = [];
   const gl = new Proxy({}, { get: (_, k) => {
     if (typeof k === 'string' && k.startsWith('create')) return () => ({ id: Math.random() });
@@ -233,7 +234,12 @@ test('AUDIT ENVIRONS G1 + G3 + G4: the snow\'s GL owes the renderer its seam bef
   assert.equal(log[0]?.[0], 'endUiRun');
   assert.ok(!log.some((c) => c[0] === 'pixelStorei' && c[1] === 'UNPACK_FLIP_Y_WEBGL' && c[2] === true), 'no flip asked of an ImageBitmap');
   assert.ok(log.some((c) => c[0] === 'texParameteri' && c[2] === 'TEXTURE_MIN_FILTER' && c[3] === 'NEAREST_MIPMAP_NEAREST'), 'FilterMode.Point: the nearest level');
-  assert.match(read('src/scenes/snowfallHost.js'), /createImageBitmap\(await r\.blob\(\), \{\n\s*imageOrientation: 'flipY',\n\s*premultiplyAlpha: 'none',\n\s*colorSpaceConversion: 'none',\n\s*\}\)/);
+  // PIN MOVED (OWN-WORK4): the albedo is ours - made at runtime, no file and no decode - and uploaded as its own bytes
+  assert.match(read('src/scenes/snowfallHost.js'), /const defaultAlbedo = async \(\) => snowAlbedo\(64\);/);
+  log.length = 0;
+  const own = snowAlbedo(64);
+  surface.setAlbedo(own);
+  assert.ok(log.some((c) => c[0] === 'texImage2D' && c[4] === 64 && c[5] === 64 && c[9] === own.data), 'our albedo, its bytes uploaded');
 });
 
 test('AUDIT ENVIRONS G6: the blanket\'s tiles are culled to the frame\'s frustum by their bounds - the ground\'s span and the deepest snow over it - as each tile\'s renderer is culled in the mod (mutants: the cull ignored; the bounds without the snow; the span unread)', () => {

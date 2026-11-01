@@ -284,7 +284,7 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "          return b?.version ? `carademono, version ${b.version}` : 'carademono';",
+    "old": "          return b.version ? `carademono, version ${b.version}` : 'carademono';",
     "new": "          return 'carademono';"
   },
   {

@@ -21,8 +21,8 @@
 // The stand-in: bodyRig.mjs's fixture rig with its upper-arm BODY part
 // swapped for a man-sized slab written here (tools/nifWrite.mjs, the
 // port's own NIF writer) - the fixture's own body is a forearm lying flat,
-// 0.1 units tall, which no portrait can frame - holding Weapon Sheathing's
-// vendored retail longsword and long bow (PR-BOW1's pair) at their true
+// 0.1 units tall, which no portrait can frame - holding a longsword and a
+// long bow (PR-BOW1's pair, OWN-WORK4: our own stand-ins) at their true
 // size against it: a 128-unit figure, a 60-unit blade, an 84-unit stave.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,6 +32,7 @@ import * as mwFirstPerson from '../../../src/formats/morrowind/mwFirstPerson.js'
 import { multiply, perspective, lookAt } from '../../../src/world/mat4.js';
 import { meshToNif } from '../../../tools/nifWrite.mjs';
 import { bodyRec, fixtureFile as f } from '../../fixtures/mw/bodyRig.mjs';
+import { weaponMesh } from '../../fixtures/mw/ownGear.mjs';
 
 // Read off the namespaces, so the file LOADS on the unfixed tree (which has no foldPieceBounds and no
 // portraitWindow) and every pin there fails on its own assertion, not on a missing export (A PIN MUST FAIL).
@@ -39,7 +40,10 @@ const { createFpArm, fpSkeletonPath, FP_CLIP_PATH, foldRangeBoxes, packFpArm, po
 const { MW_WEAPON_TYPE, meshBounds, foldPieceBounds, bindPartsInto } = mwFirstPerson;
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
-const vendored = (n) => new Uint8Array(readFileSync(new URL(`../../../vendor/weapon-sheathing/Data Files/Meshes/w/${n}`, import.meta.url)));
+// OWN-WORK4: our own stand-in weapon meshes (ownGear.mjs), the old pins' sizes - a longsword running y -8..59.5
+// from its grip, a long bow -38.5..46 gripped mid-stave
+const STAND_INS = { 'w_iron_longsword_sh.nif': weaponMesh({ grip: 8, guard: 4, blade: 59.5 }), 'w_longbow_sh.nif': weaponMesh({ grip: 38.5, guard: 1, blade: 46, width: 1, thick: 1 }) };
+const standIn = (n) => STAND_INS[n];
 
 /** a closed box, as a mesh nifWrite takes */
 function boxMesh([x0, y0, z0], [x1, y1, z1]) {
@@ -74,8 +78,8 @@ function deps() {
     [fpSkeletonPath({}), f('armfp.nif')], [FP_CLIP_PATH, f('armfpidle.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')], ['meshes/fixture/armfparm.nif', STANDIN_BODY],
     ['meshes/xbase_anim.nif', f('armfp.nif')], ['meshes/xbase_anim.kf', f('armfpidle.kf')],
-    ['meshes/w/w_iron_longsword_sh.nif', vendored('w_iron_longsword_sh.nif')],
-    ['meshes/w/w_longbow_sh.nif', vendored('w_longbow_sh.nif')],
+    ['meshes/w/w_iron_longsword_sh.nif', standIn('w_iron_longsword_sh.nif')],
+    ['meshes/w/w_longbow_sh.nif', standIn('w_longbow_sh.nif')],
   ]);
   const esm = f('armfp.esm');
   const extra = [bodyRec('b_fprace_m_hand', 'fixture\\armfphand.nif', 'fprace', 5), bodyRec('b_fprace_m_upperarm', 'fixture\\armfparm.nif', 'fprace', 8)];

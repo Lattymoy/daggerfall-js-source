@@ -297,7 +297,7 @@ test('WAGONS2 THE DRAW: riding, the caravan\'s bogie is drawn turned by the stee
 test('WAGONS2 ANOTHER PLAYER\'S WAGON: their open wagon hangs on its two bars from their rider as drawn here - the pole from the rider at every frame, steered; its wheels turn HERE every frame off the pose drawn here, from the word\'s angle on the first; a leap and my own recentre spin nothing; their following team steers toward their horse as drawn here (mutants: the peer\'s wheels unturned, the word\'s angle not the seed, the peer\'s two bars dropped, a leap rolled, the recentre unshifted, the following steer unread)', async () => {
   let anchor = [0, 0, 0];
   const r = fakeRenderer();
-  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: floorCollider, now: () => 0, selfId: () => 'me', peerAnchor: (x) => (x === 'p1' ? anchor : null), bakedWagon: async (k) => bakeOf(k), fetchFn: async () => ({ ok: false, status: 404 }), log: QUIET });
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: floorCollider, now: () => 0, selfId: () => 'me', peerAnchor: (x) => (x === 'p1' ? anchor : null), bakedWagon: async (k) => bakeOf(k), horsePicture: async () => { throw new Error('no horse picture'); }, log: QUIET });
   pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, teamFollowing: false, horseFollowing: false, persistence: true, rest: null }), lateUpdate() {} });
   const L = WAGON_KINDS.openWagon.hitch;
   const word = (x, z) => ({ w: [HCC_WIRE_KIND.Trailing, x, NORMAL_GROUND_OFFSET, z, 0, 0, 0, 1, 0, 42], wk: 1 });
@@ -408,7 +408,7 @@ test('WAGONS2 (AUDIT) DRIVEN OFF AS IT STOOD, AND ANOTHER KIND: a four-wheeler p
   const K = Math.tan((10 * Math.PI) / 180), N = [0, Math.cos((10 * Math.PI) / 180), -Math.sin((10 * Math.PI) / 180)];   // a 10 degree slope rising along +z
   const col = { surfaceHit: (o, d, max) => { if (ground == null || !(d[1] < 0)) return { dist: Infinity }; const dist = o[1] - (ground + K * o[2]); return dist > 0 && dist <= max ? { dist, key: null, normal: N } : { dist: Infinity }; } };
   const r = fakeRenderer();
-  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => col, now: () => t, selfId: () => 'me', bakedWagon: async (x) => bakeOf(x), fetchFn: async () => ({ ok: false, status: 404 }), log: QUIET });
+  const pool = createHorseCartPool({ renderer: r, meshes: null, collider: () => col, now: () => t, selfId: () => 'me', bakedWagon: async (x) => bakeOf(x), horsePicture: async () => { throw new Error('no horse picture'); }, log: QUIET });
   pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, teamFollowing: false, horseFollowing: false, persistence: true, rest: null }), lateUpdate() {} });
   pool.partsOf('openWagon'); pool.partsOf('cart'); await flush();
   const q = quatAngleAxis(-10, [1, 0, 0]);   // parked nose up the slope

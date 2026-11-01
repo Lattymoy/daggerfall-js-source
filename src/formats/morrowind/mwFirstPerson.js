@@ -2688,7 +2688,7 @@ export const rotNegX = (rad) => {
  * so the world is `parent * local' = rotate * parent * local` - `rotate` in the root's frame. The port had copied the
  * line's letters (`W * rotate * W^T * local`), which turns the world by `rotate` conjugated by parent*W instead: on
  * retail's third-person skeleton a "look down" of 0.3 tipped the chest BACK 0.3, about an axis 3 degrees off the
- * root's X, where the corrected line turns it exactly `rotate`. Measured on the vendored retail biped
+ * root's X, where the corrected line turns it exactly `rotate`. Measured on retail's biped (since retired)
  * (test/combat/fb1026c_bowaim.test.js); MW-D20's fixture (a file root turned Rz90) is the same law worked by hand.
  */
 function rootSpaceTurn(local, w, rotate) {

@@ -1,9 +1,9 @@
 [
   {
-    "name": "perfext30-ds-top-gate-dropped",
+    "name": "perfext30-ds-high-gate-dropped",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "  if (_CloudTopOpacity > 0.0) {\n  float cloudTop1",
-    "new": "  {\n  float cloudTop1",
+    "old": "  if (uCloudHigh.y > 0.0) {\n    vec2 uvh",
+    "new": "  {\n    vec2 uvh",
     "tests": [
       "test/render/perfextd.test.js"
     ]
@@ -11,17 +11,17 @@
   {
     "name": "perfext30-ds-low-gate-dropped",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "  if (_CloudOpacity > 0.0) {\n  vec2 cloudUV",
-    "new": "  {\n  vec2 cloudUV",
+    "old": "  if (uCloudLow.y > 0.0) {\n    vec2 uvl",
+    "new": "  {\n    vec2 uvl",
     "tests": [
       "test/render/perfextd.test.js"
     ]
   },
   {
-    "name": "perfext30-ds-top-gated-on-the-low",
+    "name": "perfext30-ds-high-gated-on-the-low",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "  if (_CloudTopOpacity > 0.0) {\n",
-    "new": "  if (_CloudOpacity > 0.0) {\n",
+    "old": "  if (uCloudHigh.y > 0.0) {\n",
+    "new": "  if (uCloudLow.y > 0.0) {\n",
     "tests": [
       "test/render/perfextd.test.js"
     ]
@@ -29,26 +29,26 @@
   {
     "name": "perfext30-ds-gate-open-at-0",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "  if (_CloudOpacity > 0.0) {\n",
-    "new": "  if (_CloudOpacity >= 0.0) {\n",
+    "old": "  if (uCloudLow.y > 0.0) {\n",
+    "new": "  if (uCloudLow.y >= 0.0) {\n",
     "tests": [
       "test/render/perfextd.test.js"
     ]
   },
   {
-    "name": "perfext30-ds-locals-back-inside-the-top",
+    "name": "perfext30-ds-low-closed-before-its-mix",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "  float cloudThickness;\n  float pos;\n  float cloudLerpValue;\n  if (_CloudTopOpacity > 0.0) {\n",
-    "new": "  if (_CloudTopOpacity > 0.0) {\n  float cloudThickness;\n  float pos;\n  float cloudLerpValue;\n",
+    "old": "    col = mix(col, cl, dl * uCloudLow.y * smoothstep(0.0, 0.16, y));\n  }\n",
+    "new": "  }\n    col = mix(col, cl, dl * uCloudLow.y * smoothstep(0.0, 0.16, y));\n",
     "tests": [
       "test/render/perfextd.test.js"
     ]
   },
   {
-    "name": "perfext30-ds-top-closed-before-its-mix",
+    "name": "perfext30-ds-high-closed-before-its-mix",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);\n  }\n",
-    "new": "  }\n  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);\n",
+    "old": "    col = mix(col, ch, dh * uCloudHigh.y * smoothstep(0.0, 0.2, y));\n  }\n",
+    "new": "  }\n    col = mix(col, ch, dh * uCloudHigh.y * smoothstep(0.0, 0.2, y));\n",
     "tests": [
       "test/render/perfextd.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "perfext30-ds-opacity-not-zeroed-under-the-clouds",
     "file": "src/render/dynamicSkiesRenderer.js",
-    "old": "this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 :",
-    "new": "false ? 0 :",
+    "old": "gl.uniform4f(u.uCloudLow, low[0], this.cloudsExternal ? 0 : low[1], low[2], low[3]);",
+    "new": "gl.uniform4f(u.uCloudLow, low[0], low[1], low[2], low[3]);",
     "tests": [
       "test/render/perfextd.test.js"
     ]

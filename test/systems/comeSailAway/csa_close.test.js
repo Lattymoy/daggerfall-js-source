@@ -15,9 +15,9 @@ import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { quatRotate, quatAngleAxis } from '../../../src/world/quat.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
+import { ownFile } from '../../ownBoats.mjs';
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
 const closeV = (a, b, eps = 1e-4, msg = '') => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => assert.ok(close(v, b[i], eps), `${msg} [${i}] ${v} vs ${b[i]}`)); };
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });

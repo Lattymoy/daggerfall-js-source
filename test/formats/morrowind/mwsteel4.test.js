@@ -3,7 +3,7 @@
 // RETAIL'S ARMOUR IS.
 //
 // Every piece ships skinned - weighted at bake time to Morrowind's own Bip01 bones in the pose retail's skins are
-// bound in (the vendored skeleton's Tri Shadow), Mac's scene stood on that bind by SCENE_FROM_BIND - and the game
+// bound in (the skeleton's Tri Shadow - OWN-WORK4: our own biped's), Mac's scene stood on that bind by SCENE_FROM_BIND - and the game
 // takes it on the path it takes a retail armour mesh: rebound onto the wearer's skeleton by its bones' names, drawn by
 // skinBatch. These pins stand it on retail's own skeleton (test/fixtures/mw/retailRig.mjs): the bind read off the Tri
 // Shadow and the scene measured against it; every NIF the shape a retail piece has; through the binder retail's
@@ -29,7 +29,7 @@ import {
   PIECES, PLATE_RIG, SCENE_FROM_BIND, SCENE_BODY, RETAIL_SKELETON, retailBind, plateBind, rigSegments, meshFile, bakeObject, SOURCE,
 } from '../../../tools/bakeSteelPlate.mjs';
 import { readFbx } from '../../../tools/fbxRead.mjs';
-import { RETAIL_SKELETON_PATH, RETAIL_SKELETON_BYTES, SHADOW_INVERSE_BINDS, retailSkeleton, bindPoseTracks } from '../../fixtures/mw/retailRig.mjs';
+import { RETAIL_SKELETON_BYTES, SHADOW_INVERSE_BINDS, retailSkeleton, bindPoseTracks } from '../../fixtures/mw/retailRig.mjs';
 
 const raw = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url));
 const sourceText = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -62,7 +62,7 @@ const boneAt = (asm, name) => asm.mats.get(asm.skeleton.byName.get(name.toLowerC
 // ── the bind, and the scene on it ───────────────────────────────────────────────────────────────────────────────────
 
 test('MW-STEEL4: the bind is retail\'s own - every bone the Tri Shadow binds at its inverse bind undone, a T-pose, and the scene is it moved by SCENE_FROM_BIND', () => {
-  assert.equal(RETAIL_SKELETON, RETAIL_SKELETON_PATH, 'the bake and the pins read the one vendored skeleton');
+  assert.deepEqual(new Uint8Array(RETAIL_SKELETON), RETAIL_SKELETON_BYTES, 'the bake and the pins read the one skeleton - our own biped (OWN-WORK4)');
   const bind = retailBind(RETAIL_SKELETON_BYTES);
   assert.equal(bind.size, 32);
   assert.deepEqual([...bind.keys()].sort(), [...SHADOW_INVERSE_BINDS.keys()].sort());

@@ -29,6 +29,7 @@ import { trs } from '../../src/world/mat4.js';
 import { PersistentTrackField, SnowCoverage, TRACK_MAX_CELLS } from '../../src/systems/snowfall.js';
 import { SnowfallRuntime } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowPixelBox } from '../../src/scenes/snowfallHost.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const WORLD = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the dungeons' models live in scenes/travelViewDungeonModels.js
 const lift = (re, what) => { const m = re.exec(WORLD); assert.ok(m, `lifted from scenes/world.js: ${what}`); return m[1]; };
@@ -188,7 +189,6 @@ test('TV-PIN the climate\'s pictures are the dungeon\'s own: world.js\'s load ov
 // ── TV-SNOW ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const SIZE = 819.2;
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 
 /** test/render/snowfall1_runtime.test.js's host ground: map pixels round (500, 250), flat, record 1 tiles. */
 function hostGround() {

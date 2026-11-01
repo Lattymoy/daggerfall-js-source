@@ -7,8 +7,8 @@
 // MW-STEEL5 (2026-10-09, Mac: "Theres also an issue where the helmet isnt positioned properly on the head but only for
 // the new integrated model", with a screenshot of the set worn, from behind: the scalp standing up through the closed
 // helm's crown). AUDIT MW-STEEL5: the probe that read HELM_LIFT ran off the tree, so the number could not be re-run;
-// this is it. It draws no game data: the set is the port's own (the shipped NIFs), the skeleton the vendored retail
-// hierarchy (RETAIL_SKELETON), and the head a STAND-IN - SCENE_BODY's box as an ellipsoid, the bounds of the Breton head
+// this is it. It draws no game data: the set is the port's own (the shipped NIFs), the skeleton our own biped
+// (RETAIL_SKELETON, tools/ownBiped.mjs), and the head a STAND-IN - SCENE_BODY's box as an ellipsoid, the bounds of the Breton head
 // Mac's scene fitted the helms on, carried by the head bone as a rigid head is. The screenshot itself is the game's
 // head drawn, a render of the player's own data, and is not committed: what is kept of it is one number,
 // SCREENSHOT_SCALP_RATIO.
@@ -62,9 +62,9 @@ export async function wornSet(style = 'closed') {
     material: ARMOR_MATERIAL.Steel,
   }));
   const worn = composeWornArmor({ pieces: steel, armors: [], bodyPool: [], helmStyle: style });
-  const skeletonBytes = new Uint8Array(readFileSync(new URL(`../${RETAIL_SKELETON}`, import.meta.url)));
-  // no attach bones: the plate ships skinned, rebound by its own bones' names (rule 12), and the vendored hierarchy
-  // carries none of base_anim's part nodes to attach at
+  const skeletonBytes = new Uint8Array(RETAIL_SKELETON);
+  // no attach bones: the plate ships skinned, rebound by its own bones' names (rule 12), and our biped carries none of
+  // base_anim's part nodes to attach at
   const parts = worn.adds.map((a) => ({
     slot: a.slot,
     partName: a.partName,

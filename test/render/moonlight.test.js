@@ -14,7 +14,6 @@ import {
   skyState, moonlightTerm, withMoonAmbient, phaseLitFraction, MOONLIGHT,
 } from '../../src/render/enhancedSky.js';
 import { dynamicMoonState, dynamicMoonlight } from '../../src/render/dynamicSkiesBridge.js';   // AUDIT 65 MC-3: the mod's arm of moonlight(), and the state its own producer mints
-import { MATERIAL_DEFAULTS } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 import { LUNAR_PHASES } from '../../src/systems/gameDate.js';
 
 const midnight = (phases, weather = 'sunny') =>
@@ -125,10 +124,10 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // null arm, and byte-for-byte moonlightTerm for a state the mod's own
   // producer mints (dynamicMoonState, the shape shared.js hands it).
   assert.equal(dynamicMoonlight(null), null, 'no mod moons, no term - the classic night');
-  const dyn = {
-    mat: { ...MATERIAL_DEFAULTS }, _sunDir: [0, -0.5, 0],
+  const dyn = {   // PIN MOVED (OWN-WORK4): our sky's instance, its moons by name
+    _sunDir: [0, -0.5, 0],
     phases: { masser: { phase: LUNAR_PHASES.Full }, secunda: { phase: LUNAR_PHASES.Full } },
-    moonDirection: (w) => (w === 'Moon' ? [0, 0.7, 0.7] : [0, 0.5, 0.5]),
+    moonDirection: (w) => (w === 'masser' ? [0, 0.7, 0.7] : [0, 0.5, 0.5]),
   };
   const modMoons = dynamicMoonState(dyn, 23 * 60, 0);
   assert.ok(moonlightTerm(modMoons), 'the fixture is a LIT mod night - a null-vs-null identity would pin nothing');

@@ -1,6 +1,6 @@
 // MW-CLOAK1 / AUDIT MW-CLOAK: THE CLOAKED BODY'S FIXTURE, shared by the cloak's pins. A body in the port's own plate
-// and the red cloak on the vendored retail skeleton (retailRig.mjs), with whatever of the Weapon Sheathing addon's own
-// scabbards a pin asks for; poses of whole turns about a bone's own axis over its rest; and the two measures every
+// and the red cloak on our own biped (retailRig.mjs), with whatever stowed gear a pin asks for - OWN-WORK4: our own
+// scabbards on stand-in weapons (ownGear.mjs), at our own sheathing bones; poses of whole turns about a bone's own axis over its rest; and the two measures every
 // cloak pin reads - how far a piece stands through the cloak's sheet, and how many of its edges pass through a
 // triangle of the cloak (the clip itself, counted).
 import { readFileSync } from 'node:fs';
@@ -12,22 +12,24 @@ import { isCloakSlot } from '../../../src/characters/ownModels/ownClothingModels
 import { cloakSheet, sheetCellKey, surfaceSamples } from '../../../src/formats/morrowind/mwCloakFit.js';
 import { HOLSTER_SLOTS } from '../../../src/systems/weaponSheathing.js';
 import { retailSkeleton } from './retailRig.mjs';
+import { scabbardOf, gearParts, OWN_BONES } from './ownGear.mjs';
 
 const onDisk = (p) => new Uint8Array(readFileSync(new URL(`../../../${p}`, import.meta.url)));
-export const SHEATHED = (f) => onDisk(`vendor/weapon-sheathing/Data Files/Meshes/w/${f}`);
+/** Our scabbard for a stand-in of `kind` (ownGear.mjs STAND_IN), the whole file. */
+export const SHEATHED = (kind) => scabbardOf(kind);
 export const set = (material) => Object.values(CLASSIC_ARMOR_TEMPLATE).map((templateIndex) => ({ templateIndex, material }));
 export const CLOAK = Object.freeze({ kind: 'clothing', templateIndex: 154, name: 'Casual Cloak', dye: 2 });
 export const isCloak = (p) => isCloakSlot(p.slot);
 export const isGear = (p) => HOLSTER_SLOTS.includes(p.slot);
 export const isUnder = (p) => !isCloak(p) && !isGear(p);
 
-/** A body in `material`'s plate and the red cloak, on retail's rig - and whatever stowed gear `gear` names
- *  (`[file, bone]` pairs of the addon's scabbards). */
+/** A body in `material`'s plate and the red cloak, on our biped with our sheathing bones - and whatever stowed gear
+ *  `gear` names (stand-in kinds, ownGear.mjs: each our scabbard and the weapon in it, at its own bone). */
 export async function body(material, gear = []) {
   const worn = composeWornArmor({ pieces: [...set(material), CLOAK], armors: [], bodyPool: [], helmStyle: 'open' });
   const parts = worn.adds.map((a) => ({ slot: a.slot, partName: a.partName, bones: a.bones, bytes: onDisk(`src/assets/mw/meshes/${a.model}`) }));
-  for (const [file, bone] of gear) parts.push({ slot: 'sheath', bones: [bone], bytes: SHEATHED(file), bare: true });
-  const asm = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts });
+  for (const kind of gear) parts.push(...gearParts(kind));
+  const asm = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts, boneSources: OWN_BONES });
   assert.ok(asm.ok, asm.error);
   assert.deepEqual(asm.notes, []);
   return asm;

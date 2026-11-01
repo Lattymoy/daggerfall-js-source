@@ -6,8 +6,8 @@
 // One export, nothing of Bethesda's in it, committed as it came; eight paintings, a mesh each; skinned at bake time to
 // the chest alone (MW-CAPE-RIGID, 2026-10-14 - it rode the spine and clavicles and hung over the thighs); worn by a
 // garment's name and dye, claiming no slot. And the two fits a body takes once it is assembled (formats/morrowind/mwCloakFit.js):
-// the cloak eased back over the armour under it, and the Weapon Sheathing addon's stowed gear against it - slung gear
-// over it, hip gear pitched under it - pinned on the addon's own scabbards, vendored.
+// the cloak eased back over the armour under it, and stowed gear against it - slung gear over it, hip gear pitched
+// under it - pinned on our own scabbards (OWN-WORK4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -30,13 +30,14 @@ import { SOURCE, CLOAK_OBJECT, CLOAK_BOX, CLOAK_RIG, CHEST_BONE, CLOAK_SUBDIVISI
 import { loopSubdivide } from '../../tools/meshSubdivide.mjs';
 import { retailSkeleton } from '../fixtures/mw/retailRig.mjs';
 import { SHEATHED, set, CLOAK, isCloak, isGear, isUnder, body, turned, through, crossings } from '../fixtures/mw/cloakRig.mjs';
+import { OWN_BONES } from '../fixtures/mw/ownGear.mjs';
 
 const raw = (p) => readFileSync(new URL(`../../${p}`, import.meta.url));
 const onDisk = (p) => new Uint8Array(raw(p));
 const sha = (p) => createHash('sha256').update(raw(p)).digest('hex');
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 test('MW-CLOAK1: every mesh and painting re-made from the committed export, its eight paintings and retail\'s skeleton byte for byte; the export Mac\'s as it came, with nothing of Bethesda\'s in it', () => {
-  const baked = bakeCloak({ source: raw(SOURCE), pngs: Object.fromEntries(Object.entries(PAINTING).map(([p, f]) => [p, raw(f)])), skeleton: raw(RETAIL_SKELETON) });
+  const baked = bakeCloak({ source: raw(SOURCE), pngs: Object.fromEntries(Object.entries(PAINTING).map(([p, f]) => [p, raw(f)])), skeleton: RETAIL_SKELETON });
   assert.deepEqual(baked.paintings.map((p) => p.painting), [...CLOAK_PAINTINGS]);
   for (const p of baked.paintings) {
     assert.equal(Buffer.compare(Buffer.from(p.nif), raw(meshFile(p.painting))), 0, `${meshFile(p.painting)} is not what tools/bakeCloak.mjs makes - re-run it`);
@@ -176,7 +177,7 @@ test('MW-CAPE-RIGID: through the binder on retail\'s rig the cloak moves with th
 test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauldrons through its shoulders, then behind it in every pose; the cloak\'s batch replaced, never written into', async () => {
   const asm = await body(ARMOR_MATERIAL.Ebony);
   const before = through(asm, isUnder);
-  assert.ok(before > 1, `the ebony pauldrons stand ${before.toFixed(2)} through the cloak as baked`);   // PIN MOVED (MW-CAPE-RIGID): 2.6 hung over the spine and clavicles, 1.3 on the chest alone
+  assert.ok(before > 0.05, `the ebony pauldrons stand ${before.toFixed(2)} through the cloak as baked`);   // PIN MOVED (MW-CAPE-RIGID): 2.6 hung over the spine and clavicles, 1.3 on the chest alone; OWN-WORK4: 0.1 on our biped, its shoulders let down and forward
   const cloak = asm.pieces.find(isCloak);
   const baked = cloak.batch.positions; const copy = Float32Array.from(baked);
   const fit = fitCloakOver(asm, { isCloak, isUnder });
@@ -208,7 +209,7 @@ test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauld
   const skin = { ...b.skin, bones: b.skin.bones.map((x) => ({ ...x, indices: [...x.indices, ...Array.from(x.indices, (i) => i + n)], weights: [...x.weights, ...x.weights] })) };
   c.batch = { ...b, positions: pos, indices: idx, skin, normals: null }; c.indices = idx; c.positions = new Float32Array(pos.length); c.normals = null;
   poseAssembly(folded);
-  assert.ok(through(folded, isUnder) > 1, 'the folded cloak\'s front layer as pierced as the plain one');   // PIN MOVED (MW-CAPE-RIGID): 1.3, as the plain one
+  assert.ok(through(folded, isUnder) > 0.05, 'the folded cloak\'s front layer as pierced as the plain one');   // PIN MOVED (MW-CAPE-RIGID): 1.3, as the plain one; OWN-WORK4: 0.1 on our biped
   fitCloakOver(folded, { isCloak, isUnder });
   poseAssembly(folded);
   assert.ok(through(folded, isUnder) <= 0, 'both layers behind the pauldrons');
@@ -217,13 +218,15 @@ test('MW-CLOAK1: the cloak eases back over the armour under it - the ebony pauld
   assert.ok(fitCloakOver(steel, { isCloak, isUnder }).most < fit.most);
 });
 
-test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - the greatsword and the bow slung OVER it, the longsword pitched UNDER it, the dagger left as it hangs; none through it', async () => {
-  const GEAR = [['w_claymore_daedric_sh.nif', 'Bip01 LongBladeTwoClose'], ['w_longbow_sh.nif', 'Bip01 MarksmanBow'], ['w_iron_longsword_sh.nif', 'Bip01 LongBladeOneHand'], ['w_iron_dagger_sh.nif', 'Bip01 ShortBladeOneHand']];
+test('MW-CLOAK1: stowed gear against the cloak, on our own scabbards - the greatsword and the bow slung OVER it, the longsword pitched UNDER it, the dagger left as it hangs; none through it', async () => {
+  const GEAR = ['claymore', 'bow', 'glassLongsword', 'dagger'];   // OWN-WORK4: the long glass blade, whose tip reaches the cloak's side
   const asm = await body(ARMOR_MATERIAL.Steel, GEAR);
   fitCloakOver(asm, { isCloak, isUnder });
   poseAssembly(asm);
   const gearAt = (bone) => asm.pieces.filter((p) => isGear(p) && p.bone === bone);
-  assert.ok(crossings(asm, (p) => gearAt('Bip01 LongBladeTwoClose').includes(p)) > 40, 'the greatsword through the cloak as the addon slings it');   // PIN MOVED (MW-CAPE-RIGID): 48 edges on the chest alone
+  // OWN-WORK4: our greatsword lies against the back, wholly under the cloak; our bow comes through it (32 edges)
+  assert.equal(crossings(asm, (p) => gearAt('Bip01 LongBladeTwoClose').includes(p)), 0, 'the greatsword under the cloak as ours slings it');
+  assert.ok(crossings(asm, (p) => gearAt('Bip01 MarksmanBow').includes(p)) > 20, 'the bow through the cloak as ours slings it');
   assert.ok(crossings(asm, (p) => gearAt('Bip01 LongBladeOneHand').includes(p)) > 0, 'the longsword\'s tip through its side');
   const dagger = gearAt('Bip01 ShortBladeOneHand')[0].source;
   const sword = gearAt('Bip01 LongBladeOneHand')[0].source; const swordCopy = Float32Array.from(sword);
@@ -233,9 +236,9 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   assert.deepEqual(rows.map((r) => [r.bone, r.slung, r.how]), [
     ['Bip01 LongBladeTwoClose', true, 'over'], ['Bip01 MarksmanBow', true, 'over'], ['Bip01 LongBladeOneHand', false, 'pitched'], ['Bip01 ShortBladeOneHand', false, 'clear'],
   ]);
-  assert.ok(by['Bip01 LongBladeTwoClose'].by < 6 && Math.abs(by['Bip01 LongBladeTwoClose'].deg) <= SLUNG_PITCH_LIMIT, `the greatsword lies along the cloak - ${by['Bip01 LongBladeTwoClose'].by.toFixed(1)} back, turned ${by['Bip01 LongBladeTwoClose'].deg}`);
+  assert.ok(by['Bip01 LongBladeTwoClose'].by < 10 && Math.abs(by['Bip01 LongBladeTwoClose'].deg) <= SLUNG_PITCH_LIMIT, `the greatsword lies along the cloak - ${by['Bip01 LongBladeTwoClose'].by.toFixed(1)} back, turned ${by['Bip01 LongBladeTwoClose'].deg}`);
   assert.ok(by['Bip01 MarksmanBow'].by < 10);
-  assert.ok(by['Bip01 LongBladeOneHand'].by >= 10 && by['Bip01 LongBladeOneHand'].by <= 20, `the longsword nearer plumb by ${by['Bip01 LongBladeOneHand'].by} degrees`);
+  assert.ok(by['Bip01 LongBladeOneHand'].by >= 2 && by['Bip01 LongBladeOneHand'].by <= 10, `the longsword nearer plumb by ${by['Bip01 LongBladeOneHand'].by} degrees`);   // OWN-WORK4: 3 on ours
   assert.equal(gearAt('Bip01 ShortBladeOneHand')[0].source, dagger, 'the dagger untouched');
   assert.deepEqual(Array.from(sword), Array.from(swordCopy), 'a moved source is replaced, never written into');
   // the pitched sword's normals turned with it: each still meets its vertex's edges at the angle it did
@@ -269,7 +272,7 @@ test('MW-CLOAK1: stowed gear against the cloak, on the addon\'s own scabbards - 
   assert.ok(fitStowedGear(asm, { isCloak, isGear }).every((r) => r.how === 'clear' || (r.how === 'over' && r.by < 1e-3 && r.deg === 0)));
   assert.equal(HIP_PITCH_LIMIT, 60);
   // no cloak: nothing to answer and nothing moved
-  const bare = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts: [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('w_iron_longsword_sh.nif'), bare: true }] });
+  const bare = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts: [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('longsword'), bare: true }], boneSources: OWN_BONES });
   const was = bare.pieces[0].source;
   assert.equal(fitStowedGear(bare, { isCloak, isGear }), null);
   assert.equal(bare.pieces[0].source, was);

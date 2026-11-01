@@ -1,104 +1,31 @@
 // @ts-check
-// DYNAMIC SKIES - THE PASS (DS1). BLB/SkyBox/BLBProceduralSkybox
-// (vendor/dynamic-skies/Shaders/BLBProceduralSkybox.shader, with
-// Includes/Scattering.cginc and Includes/MoonFunctions.cginc) as one
-// GLSL ES 3.00 fullscreen pass, translated line for line. The shader's
-// property names are the uniform names, so the two can be read side by
-// side.
-//
-// THREE TRANSLATIONS, said out loud:
-//   1. Unity draws a skybox as a tessellated mesh and runs `vert` per
-//      vertex, interpolating skyColor/sunColor/fogColor across each
-//      triangle; here `vert` runs per PIXEL on the same eye ray ABOVE
-//      the horizon, which is the limit of the tessellation. BELOW it
-//      the limit is wrong: the ground arm's `far = -kCameraHeight /
-//      min(-0.001, y)` is at its 0.1 maximum for rays a hair under the
-//      horizon, where no mesh vertex ever sits (a vertex at y = 0 takes
-//      the sky arm), so a per-pixel `vert` painted a bright rim along
-//      the whole horizon that the shipped mod does not draw (the review
-//      of DS1 measured it: a full-white row under the horizon at dawn).
-//      So below the horizon the pass does what the mesh does: it
-//      evaluates `vert` at the two vertex rows the ray falls between
-//      (MESH_ROW apart, the first at y = 0) and interpolates. Unity's
-//      own skybox mesh is not in the tree; MESH_ROW is a sixteen-row
-//      hemisphere, recorded as the equivalence.
-//   2. Colour space. DFU renders LINEAR (ProjectSettings
-//      m_ActiveColorSpace 1): sRGB textures are linearised on sample
-//      (SRGB8_ALPHA8 here - the GPU's own decode, before filtering, as
-//      Unity's), Material.SetColor values are linearised at upload
-//      (dynamicSkies.srgbToLinear), the shader works in linear and the
-//      backbuffer encodes. The port's framebuffer is not sRGB, so the
-//      pass encodes its own output: outColor = linearToSrgb(col).
-//      UNITY_COLORSPACE_GAMMA is therefore NOT defined: no sqrt on the
-//      colours, COLOR_2_GAMMA is the pow(1/2.2) arm (unused - the mod
-//      feeds tintedSky, not kSkyTintInGammaSpace, to the wavelengths).
-//   3. Keywords are the material's, baked: REDUCE_COLOR on,
-//      _SUNDISK_HIGH_QUALITY, _MOONSPINOPTION_TIDAL_LOCK and
-//      _SECUNDASPINOPTION_TIDAL_LOCK. PHASE_LIGHT is off and its arm is
-//      commented out in the source anyway.
-//
-// HLSL -> GLSL notes at the lines they touch: `saturate` is clamp 0..1;
-// `smoothstep` is spelled out as HLSL's (GLSL's is undefined for
-// edge0 >= edge1 - not that any preset does it); `mul(M, v)` on a
-// float3x3 built from ROWS is rows dot v, which is `v * mat3(rows)` in
-// GLSL; `tex2D` is texture(); `frac` is fract(); `atan2(y, x)` is
-// atan(y, x); UnpackNormal is UnpackNormalmapRGorAG (desktop: x = R*A,
-// no DXT5nm keyword) and the vendored CdMCloudsNormal.png IS Unity's
-// converted normal map (R = 1, A = x), so the formula is exact;
-// BlendNormals is UnityStandardUtils' normalize(n1.xy + n2.xy, n1.z*n2.z);
-// UNITY_CALC_FOG_FACTOR_RAW computes a factor the fragment never
-// reads, and is left out.
-//
-// The contract is EnhancedSkyRenderer's: draw(yaw, pitch, fovY, aspect)
-// after beginFrame, fogMix / fogColor written by the host, clearColor /
-// fillColor read by it. The mod does no retro pass of its own kind
-// (REDUCE_COLOR is its posterise) and the port applies none over it -
-// PS2's copy of the port's pixelated sky was removed at FT3 with the
-// pass itself; PS3 gave REDUCE_COLOR the ordered dither its bare ceil()
-// never had - see the block itself.
+// DYNAMIC SKIES - THE PASS (OWN-WORK4, 2026-10-31). Our own sky shader, written from the effect it draws: a gradient
+// from zenith to horizon and down to the ground, the sun's disc and glow, both moons lit by their phase, a star field
+// hashed from cube-face cells that turns about the pole, two cloud layers cut from our painted noise, the host's fog,
+// then 48 levels a channel through PS3's world-fixed ordered dither. Every number is dynamicSkies.js's; the state is
+// its skyFrame's. The contract is EnhancedSkyRenderer's: draw(yaw, pitch, fovY, aspect) after beginFrame, fogMix /
+// fogColor written by the host, clearColor / fillColor read by it. No #define, struct or overload: test/glsl.mjs runs
+// the whole of it.
 
-import { DITHER_GLSL, BAYER_MEAN } from './orderedDither.js';   // PS2: the port's retro pass, shared with the dome and the clouds
-import { MATERIAL_DEFAULTS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, srgbToLinear } from '../systems/dynamicSkies/dynamicSkies.js';
+import { DITHER_GLSL, BAYER_MEAN } from './orderedDither.js';   // PS3: the world-fixed cell and the Bayer pattern
+import { STAR_LOOK, MOON_LOOK, SKY_LEVELS, TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL } from '../systems/dynamicSkies/dynamicSkies.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { DREAD_GLSL } from '../world/dreadSky.js';   // EVENT1: the live event's grade, the sky's last word
 import { SD_BRASS_GLSL } from '../world/superDungeon/sdBrassSky.js';   // AUDIT SD III (V8): the brass air's grade on the sky as on its haze
 import { HAZE_SKY_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js)
 
-/** Which material properties are COLOURS (SetColor -> linearised at
- *  upload under linear colour space). Every other vec4 is SetVector. */
-export const COLOR_PROPERTIES = Object.freeze([
-  '_SkyTint', '_GroundColor', '_FogColor', '_FogDayColor', '_FogNightColor', '_MoonNightColor',
-  '_CloudTopColor', '_CloudTopNightColor', '_CloudTopSunColor',
-  '_CloudColor', '_CloudNightColor', '_CloudSunColor',
-  '_MoonColor', '_SecundaColor',
-]);
-const VEC3_COLOR = new Set(['_SkyTint', '_GroundColor', '_FogColor', '_FogDayColor', '_FogNightColor',
-  '_CloudTopColor', '_CloudTopNightColor', '_CloudTopSunColor', '_CloudColor', '_CloudNightColor', '_CloudSunColor']);
-const VEC4_COLOR = new Set(['_MoonNightColor', '_MoonColor', '_SecundaColor']);
-const VEC4_RAW = new Set(['_MoonOrbitAngle', '_SecundaOrbitAngle']);
-const VEC3_RAW = new Set(['_MoonTidalAngle', '_SecundaTidalAngle', '_MoonSpinSpeed', '_SecundaSpinSpeed', '_MoonPhase', '_SecundaPhase']);
-export const FLOAT_PROPERTIES = Object.freeze([
-  '_Exposure', '_SunSize', '_SunSizeConvergence', '_AtmosphereLerpDuration', '_AtmosphereNormalThickness',
-  '_AtmosphereDawnDuskThickness', '_AtmosphereLerp', '_NightStartHeight', '_NightEndHeight', '_SkyFadeStart', '_SkyFadeEnd',
-  '_stepSize', '_FogDistance', '_WorldTime', '_CloudFadeHeight',
-  '_CloudTopNormalEffect', '_CloudTopOpacity', '_CloudTopAlphaMax', '_CloudTopAlphaCutoff', '_CloudTopBending',
-  '_CloudTopSunScale', '_CloudTopSunLerpScale',
-  '_CloudSpeed', '_CloudColorBoost', '_CloudBlendSpeed', '_CloudNormalEffect', '_CloudOpacity', '_CloudAlphaMax',
-  '_CloudAlphaCutoff', '_CloudBending', '_CloudDirection', '_CloudBlendScale', '_CloudBlendLB', '_CloudBlendUB',
-  '_CloudNormalSpeed', '_CloudSunScale', '_CloudSunLerpScale',
-  '_StarBending', '_TwinkleBoost', '_TwinkleSpeed',
-  '_MoonMaxSize', '_MoonMinSize', '_MoonOrbitSpeed', '_MoonOrbitOffset', '_MoonSemiMajAxis', '_MoonSemiMinAxis',
-  '_SecundaMaxSize', '_SecundaMinSize', '_SecundaOrbitSpeed', '_SecundaOrbitOffset', '_SecundaSemiMajAxis', '_SecundaSemiMinAxis',
-]);
-const ST_PROPERTIES = TEXTURE_SLOTS.map((s) => s + '_ST');
-/** Every uniform the pass fetches a location for - which must be every
- *  uniform the GLSL declares (the DS1 review found `_CloudTopColorBoost`
- *  read by the shader and fetched by nobody, so its upload was a silent
- *  no-op and the mod's red-only boost never happened). Pinned against
- *  the FS's own declarations in test/systems/dynamicSkies.test.js. */
-export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', 'uDread', 'uBrass', 'uHazeSky', '_WorldSpaceLightPos0', '_LightColor0',
-  '_CloudTopColorBoost',   // the float3-fed-by-a-float quirk, uploaded apart from the float list
-  ...FLOAT_PROPERTIES, ...COLOR_PROPERTIES, ...VEC4_RAW, ...VEC3_RAW, ...TEXTURE_SLOTS, ...ST_PROPERTIES]);
+const glslFloat = (value) => (Number.isInteger(value) ? `${value}.0` : `${value}`);
+const glslVec3 = (a) => `vec3(${a.map(glslFloat).join(', ')})`;
+const BAND_POLE = (() => { const pole = STAR_LOOK.bandPole, len = Math.hypot(...pole); return pole.map((x) => +(x / len).toFixed(6)); })();
+
+/** Every uniform the FS declares, each fetched by the constructor (pinned against the FS in
+ *  test/systems/dynamicSkies.test.js: a declared uniform nobody fetches is an upload that never happens). */
+export const UNIFORM_NAMES = Object.freeze(['uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uBandDither', 'uDread', 'uBrass', 'uHazeSky',
+  'uSunDir', 'uZenith', 'uHorizon', 'uGround', 'uGlow', 'uGlowPower', 'uSunDisc', 'uSunCos',
+  'uNight', 'uStarPole', 'uStarTurn', 'uTwinkle',
+  'uMasser', 'uSecunda', 'uMasserLight', 'uSecundaLight', 'uMasserColor', 'uSecundaColor',
+  'uCloudLow', 'uCloudHigh', 'uCloudOffset', 'uCloudLit', 'uCloudShade',
+  'uFogColor', 'uFogMix', ...TEXTURE_SLOTS]);
 
 const VS = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -111,680 +38,187 @@ precision highp sampler2D;
 in vec2 vNdc;
 out vec4 outColor;
 
-// the host's view (the same ray the enhanced sky builds)
 uniform float uYaw, uPitch, uTanHalfFov, uAspect;
-uniform float uBandDither;  // PS3: 1 = the mod's colour reduction gets an ordered dither; 0 = its raw ceil, 1:1
-uniform float uDread;       // EVENT1: the live event's grade over the encoded dome, 0 = none
+uniform float uBandDither;  // PS3: 1 = the levels take the ordered dither; 0 = the raw levels (?bands=raw)
+uniform float uDread;       // EVENT1: the live event's grade over the encoded sky, 0 = none
 uniform float uBrass;       // AUDIT SD III (V8): the brass air's, 0 = none
 ${DREAD_GLSL}
 ${SD_BRASS_GLSL}
 ${HAZE_SKY_GLSL}
-// Unity's per-frame light globals for the skybox pass
-uniform vec3 _WorldSpaceLightPos0;   // toward the sun (SunlightManager's rotation, unclamped)
-uniform vec3 _LightColor0;           // SunLight colour x intensity, linear
-// the host's fog over the dome (post-process fog with excludeSkybox false)
+uniform vec3 uSunDir;                     // toward the sun, under the horizon all night
+uniform vec3 uZenith, uHorizon, uGround;  // linear light
+uniform vec3 uGlow;                       // the sun's halo, linear, its amount in it
+uniform float uGlowPower;
+uniform vec3 uSunDisc;                    // the disc, linear, what shows through the weather in it
+uniform float uSunCos;                    // cos of the disc's radius
+uniform float uNight;                     // the stars' weight, 0 by day
+uniform vec3 uStarPole;
+uniform float uStarTurn, uTwinkle;
+uniform vec4 uMasser, uSecunda;           // direction, angular radius
+uniform vec3 uMasserLight, uSecundaLight; // the phase's light on each face
+uniform vec3 uMasserColor, uSecundaColor; // linear, the moon's visibility in it
+uniform vec4 uCloudLow, uCloudHigh;       // cover, opacity, scale, soft
+uniform vec4 uCloudOffset;                // high.xy, low.xy - the clock's drift, wrapped
+uniform vec3 uCloudLit, uCloudShade;
+uniform vec3 uFogColor;                   // the host's fog, display colour
+uniform float uFogMix;
+uniform sampler2D uSkyNoise;              // our painted noise (dynamicSkiesAssets.js paintSkyNoise)
 
-// ── Properties, as the shader declares them ──────────────────────
-uniform float _Exposure;
-uniform vec3 _GroundColor;
-uniform float _SunSize;
-uniform float _SunSizeConvergence;
-uniform vec3 _SkyTint;
-uniform float _AtmosphereLerpDuration;
-uniform float _AtmosphereNormalThickness;
-uniform float _AtmosphereLerp;
-uniform float _AtmosphereDawnDuskThickness;
-uniform float _NightStartHeight, _NightEndHeight;
-uniform float _SkyFadeStart, _SkyFadeEnd;
-uniform float _stepSize;
+const float STAR_SIZE = ${glslFloat(STAR_LOOK.size)};
+const float STAR_TWINKLE = ${glslFloat(STAR_LOOK.twinkle)};
+const float STAR_BAND = ${glslFloat(STAR_LOOK.band)};
+const vec3 STAR_BAND_POLE = ${glslVec3(BAND_POLE)};
+const float MOON_EARTHSHINE = ${glslFloat(MOON_LOOK.earthshine)};
+const float SKY_LEVELS = ${glslFloat(SKY_LEVELS)};
 
-uniform vec3 _FogColor;
-uniform vec3 _FogDayColor;
-uniform vec3 _FogNightColor;
-uniform float _FogDistance;
-uniform vec4 _MoonNightColor;
+float encodeSrgb(float c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0 / 2.4) - 0.055; }
 
-uniform float _WorldTime;
-
-uniform float _CloudFadeHeight;
-
-uniform sampler2D _CloudTopDiffuse, _CloudTopNormal;
-uniform vec4 _CloudTopDiffuse_ST, _CloudTopNormal_ST;
-uniform vec3 _CloudTopColorBoost, _CloudTopColor, _CloudTopNightColor;   // QUIRK: float3 fed by a float - stays zero, the boost inert (the readme's "broken")
-uniform float _CloudTopNormalEffect, _CloudTopOpacity;
-uniform float _CloudTopAlphaMax, _CloudTopAlphaCutoff;
-uniform float _CloudTopBending, _CloudTopSunScale, _CloudTopSunLerpScale;
-uniform vec3 _CloudTopSunColor;
-
-uniform sampler2D _CloudDiffuse, _CloudNormal;
-uniform vec4 _CloudDiffuse_ST, _CloudNormal_ST;
-uniform float _CloudSpeed, _CloudColorBoost, _CloudBlendSpeed;
-uniform vec3 _CloudColor, _CloudNightColor;
-uniform float _CloudNormalEffect, _CloudOpacity;
-uniform float _CloudAlphaMax, _CloudAlphaCutoff;
-uniform float _CloudBending;
-uniform float _CloudDirection, _CloudBlendScale, _CloudBlendLB, _CloudBlendUB, _CloudNormalSpeed;
-uniform float _CloudSunScale, _CloudSunLerpScale;
-uniform vec3 _CloudSunColor;
-
-uniform sampler2D _StarTex, _StarTwinkleTex, _TwinkleTex;
-uniform vec4 _StarTex_ST, _StarTwinkleTex_ST, _TwinkleTex_ST;
-uniform float _StarBending;
-uniform float _TwinkleBoost, _TwinkleSpeed;
-
-uniform sampler2D _MoonTex;
-uniform vec4 _MoonTex_ST;
-uniform vec4 _MoonColor;
-uniform vec4 _MoonOrbitAngle;
-uniform float _MoonMaxSize, _MoonMinSize;
-uniform float _MoonOrbitSpeed, _MoonOrbitOffset, _MoonSemiMajAxis, _MoonSemiMinAxis;
-uniform vec3 _MoonSpinSpeed, _MoonTidalAngle;
-uniform vec3 _MoonPhase;
-
-uniform sampler2D _SecundaTex;
-uniform vec4 _SecundaTex_ST;
-uniform vec4 _SecundaColor;
-uniform vec4 _SecundaOrbitAngle;
-uniform float _SecundaMaxSize, _SecundaMinSize;
-uniform float _SecundaOrbitSpeed, _SecundaOrbitOffset, _SecundaSemiMajAxis, _SecundaSemiMinAxis;
-uniform vec3 _SecundaSpinSpeed, _SecundaTidalAngle;
-uniform vec3 _SecundaPhase;
-
-// ── HLSL intrinsics ──────────────────────────────────────────────
-float saturate(float x) { return clamp(x, 0.0, 1.0); }
-vec3 saturate(vec3 x) { return clamp(x, 0.0, 1.0); }
-// HLSL smoothstep: saturate((x - a) / (b - a)), then the cubic
-float hsmoothstep(float a, float b, float x) { float t = saturate((x - a) / (b - a)); return t * t * (3.0 - 2.0 * t); }
-#define UNITY_PI 3.14159265359
-#define UNITY_TWO_PI 6.28318530718
-float radiansOf(float deg) { return deg * 0.01745329252; }
-
-// UnityCG UnpackNormal, the desktop (DXT5nm-style) arm: x rides R * A.
-vec3 UnpackNormal(vec4 packednormal) {
-  packednormal.x *= packednormal.w;
-  vec3 n;
-  n.xy = packednormal.xy * 2.0 - 1.0;
-  n.z = sqrt(1.0 - saturate(dot(n.xy, n.xy)));
-  return n;
-}
-// UnityStandardUtils BlendNormals
-vec3 BlendNormals(vec3 n1, vec3 n2) { return normalize(vec3(n1.xy + n2.xy, n1.z * n2.z)); }
-
-// ── Includes/MoonFunctions.cginc ─────────────────────────────────
-// float3x3 written in rows; mul(rotMat, position) = rows dot position
-vec3 RotateWorldPosition(vec3 position, vec3 axis) {
-  vec3 rot = axis;
-  vec3 r0 = vec3(cos(rot.y) * cos(rot.z), -cos(rot.y) * sin(rot.z), sin(rot.y));
-  vec3 r1 = vec3((cos(rot.x) * sin(rot.z)) + (sin(rot.x) * sin(rot.y) * cos(rot.z)), (cos(rot.x) * cos(rot.z)) - (sin(rot.x) * sin(rot.y) * sin(rot.z)), -sin(rot.x) * cos(rot.y));
-  vec3 r2 = vec3((sin(rot.x) * sin(rot.z)) - (cos(rot.x) * sin(rot.y) * cos(rot.z)), (sin(rot.x) * cos(rot.z)) + (cos(rot.x) * sin(rot.y) * sin(rot.z)), cos(rot.x) * cos(rot.y));
-  return vec3(dot(r0, position), dot(r1, position), dot(r2, position));
-}
-vec3 ElipsePosition(vec2 MajMinAxis, float angle) {
-  vec3 orbitPos;
-  orbitPos.x = (MajMinAxis.x * cos(angle));
-  orbitPos.y = 0.0;
-  orbitPos.z = (MajMinAxis.y * sin(angle));
-  return normalize(orbitPos);
-}
-vec3 GetOrbitPosition(vec3 orbitOffsetAngles, vec2 MajMinAxis, float angle) {
-  vec3 p = ElipsePosition(MajMinAxis, angle);
-  p = RotateWorldPosition(p, vec3(radiansOf(orbitOffsetAngles.x), radiansOf(orbitOffsetAngles.y), radiansOf(orbitOffsetAngles.z)));
-  return p;
-}
-float GetMoonDistance(float Min, float Max, vec2 MajMinAxis, float angle) {
-  vec3 pos = ElipsePosition(MajMinAxis, angle);
-  float lerpFactor = abs(dot(pos, vec3(0.0, 0.0, 1.0)));
-  float dist = mix(Min, Max, hsmoothstep(0.0, 1.0, lerpFactor));
-  return dist;
-}
-float SphereIntersect(vec3 rayOrigin, vec3 rayDirection, vec3 spherePos, float sphereRadius) {
-  vec3 originToCenter = rayOrigin - spherePos;
-  float b = dot(originToCenter, rayDirection);
-  float c = dot(originToCenter, originToCenter) - sphereRadius * sphereRadius;
-  float h = b * b - c;
-  if (h < 0.0) return -1.0;
-  h = sqrt(h);
-  return -b - h;
-}
-vec3 RotateArbitraryAxis(vec3 v, float angle, vec3 axis) {
-  float rads = radiansOf(angle);
-  vec3 r0 = vec3(cos(rads) + dot(axis.x, axis.x) * (1.0 - cos(rads)), axis.x * axis.y * (1.0 - cos(rads)) - axis.z * sin(rads), axis.x * axis.z * (1.0 - cos(rads)) + axis.y * sin(rads));
-  vec3 r1 = vec3(axis.y * axis.x * (1.0 - cos(rads)) + axis.z * sin(rads), cos(rads) + dot(axis.y, axis.y) * (1.0 - cos(rads)), axis.y * axis.z * (1.0 - cos(rads)) - axis.x * sin(rads));
-  vec3 r2 = vec3(axis.z * axis.x * (1.0 - cos(rads)) - axis.y * sin(rads), axis.z * axis.y * (1.0 - cos(rads)) + axis.x * sin(rads), cos(rads) + dot(axis.z, axis.z) * (1.0 - cos(rads)));
-  return vec3(dot(r0, v), dot(r1, v), dot(r2, v));
+// a cell's hash, 0..1: an integer mix of its three coordinates and a salt
+float cellHash(vec3 c, uint salt) {
+  uvec3 u = uvec3(ivec3(floor(c)) + ivec3(65536));
+  uint h = u.x * 2654435761u + u.y * 2246822519u + u.z * 3266489917u + salt * 668265263u;
+  h ^= h >> 15u; h *= 2246822519u; h ^= h >> 13u; h *= 3266489917u; h ^= h >> 16u;
+  return float(h >> 8u) / 16777216.0;
 }
 
-// ── Includes/Scattering.cginc (linear colour space arm) ──────────
-const vec3 kDefaultScatteringWavelength = vec3(.65, .57, .475);
-const vec3 kVariableRangeForScatteringWavelength = vec3(.15, .15, .15);
-#define OUTER_RADIUS 1.025
-const float kOuterRadius = OUTER_RADIUS;
-const float kOuterRadius2 = OUTER_RADIUS * OUTER_RADIUS;
-const float kInnerRadius = 1.0;
-const float kInnerRadius2 = 1.0;
-const float kCameraHeight = 0.0001;
-#define kMIE 0.0010
-#define kSUN_BRIGHTNESS 20.0
-#define kMAX_SCATTER 50.0
-const float kHDSundiskIntensityFactor = 15.0;
-const float kSimpleSundiskIntensityFactor = 27.0;
-const float kSunScale = 400.0 * kSUN_BRIGHTNESS;
-const float kKmESun = kMIE * kSUN_BRIGHTNESS;
-const float kKm4PI = kMIE * 4.0 * 3.14159265;
-const float kScale = 1.0 / (OUTER_RADIUS - 1.0);
-const float kScaleDepth = 0.25;
-const float kScaleOverScaleDepth = (1.0 / (OUTER_RADIUS - 1.0)) / 0.25;
-const float kSamples = 2.0;
-#define MIE_G (-0.990)
-#define MIE_G2 0.9801
-#define SKY_GROUND_THRESHOLD 0.01
-
-float getRayleighPhase(float eyeCos2) { return 0.75 + 0.75 * eyeCos2; }
-float getRayleighPhase(vec3 light, vec3 ray) { float eyeCos = dot(light, ray); return getRayleighPhase(eyeCos * eyeCos); }
-float scale(float inCos) {
-  float x = 1.0 - inCos;
-  return 0.25 * exp(-0.00287 + x * (0.459 + x * (3.83 + x * (-6.80 + x * 5.25))));
-}
-float getMiePhase(float eyeCos, float eyeCos2, float SunSize) {
-  float temp = 1.0 + MIE_G2 - 2.0 * MIE_G * eyeCos;
-  temp = pow(temp, pow(SunSize, 0.65) * 10.0);
-  temp = max(temp, 1.0e-4);
-  temp = 1.5 * ((1.0 - MIE_G2) / (2.0 + MIE_G2)) * (1.0 + eyeCos2) / temp;
-  return temp;
-}
-// SKYBOX_SUNDISK_HQ
-float calcSunAttenuation(vec3 lightPos, vec3 ray, float SunSize, float SunSizeConvergence) {
-  float focusedEyeCos = pow(saturate(dot(lightPos, ray)), SunSizeConvergence);
-  return getMiePhase(-focusedEyeCos, focusedEyeCos * focusedEyeCos, SunSize);
+// v turned by a radians about the unit axis k
+vec3 turnAbout(vec3 v, vec3 k, float a) {
+  float c = cos(a), s = sin(a);
+  return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c);
 }
 
-float Remap(float In, vec2 InMinMax, vec2 OutMinMax) {
-  return OutMinMax.x + (In - InMinMax.x) * (OutMinMax.y - OutMinMax.x) / (InMinMax.y - InMinMax.x);
+// one layer of stars: the cube face d falls on, cut into cells a side, a star in a cell at chance
+vec3 starLayer(vec3 d, float cells, float chance, vec2 gain, uint salt) {
+  vec3 a = abs(d);
+  float face;
+  vec2 uv;
+  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0.0 : 1.0; uv = d.yz / a.x; }
+  else if (a.y >= a.z) { face = d.y > 0.0 ? 2.0 : 3.0; uv = d.xz / a.y; }
+  else { face = d.z > 0.0 ? 4.0 : 5.0; uv = d.xy / a.z; }
+  vec2 g = (uv * 0.5 + 0.5) * cells;
+  vec2 cell = floor(g);
+  vec3 id = vec3(cell, face);
+  float h = cellHash(id, salt);
+  if (h > chance) return vec3(0.0);
+  vec2 at = vec2(cellHash(id, salt + 1u), cellHash(id, salt + 2u)) * 0.7 + 0.15;
+  vec2 off = g - cell - at;
+  float b = exp(-dot(off, off) / (STAR_SIZE * STAR_SIZE)) * mix(gain.x, gain.y, h / chance);
+  float tw = 1.0 - STAR_TWINKLE + STAR_TWINKLE * sin(uTwinkle * (1.5 + 3.0 * at.x) + 6.2831853 * at.y);
+  return mix(vec3(0.74, 0.82, 1.0), vec3(1.0, 0.86, 0.68), cellHash(id, salt + 3u)) * b * tw;
 }
 
-// ── vert, per pixel ──────────────────────────────────────────────
-struct V2F { vec3 vertex; vec3 groundColor; vec3 skyColor; vec3 sunColor; vec3 fogColor; };
-
-V2F vert(vec3 eyeRay) {
-  V2F OUT;
-  vec3 normalSunPos = normalize(_WorldSpaceLightPos0.xyz);
-  float lerpScale = saturate(hsmoothstep(-_AtmosphereLerpDuration, 0.0, -normalSunPos.y) / _AtmosphereLerp);
-  float _AtmosphereThickness = mix(_AtmosphereNormalThickness, _AtmosphereDawnDuskThickness, lerpScale);
-  float kRAYLEIGH = mix(0.0, 0.0025, pow(_AtmosphereThickness, 2.5));
-
-  vec3 tintedSky = mix(_SkyTint, vec3(1.0, 1.0, 1.0), saturate(sqrt(lerpScale)));
-  // kSkyTintInGammaSpace = COLOR_2_GAMMA(tintedSky) is computed and unused
-
-  vec3 kScatteringWavelength = mix(
-    kDefaultScatteringWavelength - kVariableRangeForScatteringWavelength,
-    kDefaultScatteringWavelength + kVariableRangeForScatteringWavelength,
-    vec3(1.0, 1.0, 1.0) - tintedSky);
-  vec3 kInvWavelength = 1.0 / pow(kScatteringWavelength, vec3(4.0));
-
-  float kKrESun = kRAYLEIGH * kSUN_BRIGHTNESS;
-  float kKr4PI = kRAYLEIGH * 4.0 * 3.14159265;
-
-  vec3 cameraPos = vec3(0.0, kInnerRadius + kCameraHeight, 0.0);
-
-  float far = 0.0;
-  vec3 cIn, cOut;
-
-  if (eyeRay.y >= 0.0) {
-    far = 0.5 * (sqrt(kOuterRadius2 + kInnerRadius2 * eyeRay.y * eyeRay.y - kInnerRadius2) - kInnerRadius * eyeRay.y);
-    float height = kInnerRadius + kCameraHeight;
-    float depth = exp(kScaleOverScaleDepth * (-kCameraHeight));
-    float startAngle = dot(eyeRay, cameraPos) / height;
-    float startOffset = depth * scale(startAngle);
-
-    float sampleLength = far / kSamples;
-    float scaledLength = sampleLength * kScale;
-    vec3 sampleRay = eyeRay * sampleLength;
-    vec3 samplePoint = cameraPos + sampleRay * 0.5;
-
-    vec3 frontColor = vec3(0.0, 0.0, 0.0);
-    {
-      float height2 = length(samplePoint);
-      float depth2 = exp(kScaleOverScaleDepth * (kInnerRadius - height2));
-      float lightAngle = dot(_WorldSpaceLightPos0.xyz, samplePoint) / height2;
-      float cameraAngle = dot(eyeRay, samplePoint) / height2;
-      float scatter = (startOffset + depth2 * (scale(lightAngle) - scale(cameraAngle)));
-      vec3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
-      frontColor += attenuate * (depth2 * scaledLength);
-      samplePoint += sampleRay;
-    }
-    {
-      float height2 = length(samplePoint);
-      float depth2 = exp(kScaleOverScaleDepth * (kInnerRadius - height2));
-      float lightAngle = dot(_WorldSpaceLightPos0.xyz, samplePoint) / height2;
-      float cameraAngle = dot(eyeRay, samplePoint) / height2;
-      float scatter = (startOffset + depth2 * (scale(lightAngle) - scale(cameraAngle)));
-      vec3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
-      frontColor += attenuate * (depth2 * scaledLength);
-      samplePoint += sampleRay;
-    }
-    cIn = frontColor * (kInvWavelength * kKrESun);
-    cOut = frontColor * kKmESun;
-  } else {
-    far = (-kCameraHeight) / (min(-0.001, eyeRay.y));
-    vec3 pos = cameraPos + far * eyeRay;
-    float depth = exp((-kCameraHeight) * (1.0 / kScaleDepth));
-    float cameraAngle = dot(-eyeRay, pos);
-    float lightAngle = dot(_WorldSpaceLightPos0.xyz, pos);
-    float cameraScale = scale(cameraAngle);
-    float lightScale = scale(lightAngle);
-    float cameraOffset = depth * cameraScale;
-    float temp = (lightScale + cameraScale);
-
-    float sampleLength = far / kSamples;
-    float scaledLength = .9 * sampleLength * kScale;
-    vec3 sampleRay = 1.5 * eyeRay * sampleLength;
-    vec3 samplePoint = cameraPos + sampleRay * 0.5;
-
-    vec3 frontColor = vec3(0.0, 0.0, 0.0);
-    vec3 attenuate;
-    {
-      float height2 = length(samplePoint);
-      float depth2 = exp(kScaleOverScaleDepth * (kInnerRadius - height2));
-      float scatter = depth2 * temp - cameraOffset;
-      attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
-      frontColor += attenuate * (depth2 * scaledLength);
-      samplePoint += sampleRay;
-    }
-    cIn = frontColor * (kInvWavelength * kKrESun + kKmESun);
-    cOut = clamp(attenuate, 0.0, 1.0);
-  }
-
-  OUT.vertex = -eyeRay;
-  OUT.groundColor = _FogColor;
-  OUT.fogColor = (cIn * .1) + _FogColor;
-  OUT.skyColor = _Exposure * (cIn * getRayleighPhase(_WorldSpaceLightPos0.xyz, -eyeRay));
-
-  float lightColorIntensity = clamp(length(_LightColor0.xyz), 0.25, 1.0);
-  OUT.sunColor = kHDSundiskIntensityFactor * saturate(cOut) * _LightColor0.xyz / lightColorIntensity;
-  return OUT;
+// a moon at d: rgb the light it sends, a how much of the sky behind it hides
+vec4 moonAt(vec3 d, vec4 moon, vec3 light, vec3 color, vec2 seed) {
+  if (dot(d, moon.xyz) <= cos(moon.w) || dot(color, color) <= 0.0) return vec4(0.0);
+  vec3 m = moon.xyz;
+  vec3 right = normalize(cross(abs(m.y) > 0.99 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0), m));
+  vec3 up = cross(m, right);
+  vec2 p = vec2(dot(d, right), dot(d, up)) / sin(moon.w);
+  float rho = length(p);
+  if (rho >= 1.0) return vec4(0.0);
+  float z = sqrt(1.0 - rho * rho);
+  vec3 n = right * p.x + up * p.y - m * z;   // the face toward the eye
+  float lit = smoothstep(-0.06, 0.12, dot(n, light));
+  float sea = texture(uSkyNoise, p * 0.23 + seed).b;
+  vec3 rgb = color * (0.72 + 0.55 * (sea - 0.5)) * (0.72 + 0.28 * z) * (lit + MOON_EARTHSHINE);
+  return vec4(rgb, 1.0 - smoothstep(0.93, 1.0, rho));
 }
 
-// ── the mesh's vertex rows below the horizon (translation 1) ────
-#define MESH_ROW 0.0625
-vec3 rayAtHeight(vec3 dir, float y) {
-  float h = sqrt(max(1.0 - y * y, 0.0));
-  float l = length(dir.xz);
-  vec2 xz = l > 1e-6 ? dir.xz / l * h : vec2(h, 0.0);
-  return vec3(xz.x, y, xz.y);
+// a layer's cut through the equalized noise: a cut at 1 - cover covers that share of the sky
+float cloudCut(float n, float cover, float soft) {
+  return smoothstep(1.0 - cover - soft, 1.0 - cover + soft, n);
 }
-V2F vertAsMesh(vec3 dir) {
-  if (dir.y >= 0.0) return vert(dir);
-  float t = -dir.y / MESH_ROW;
-  float rowHi = floor(t);
-  float f = t - rowHi;
-  V2F a = vert(rayAtHeight(dir, -rowHi * MESH_ROW));          // the row above the ray (y = 0 is the sky arm)
-  V2F b = vert(rayAtHeight(dir, -(rowHi + 1.0) * MESH_ROW));  // the row below
-  V2F o;
-  o.vertex = -dir;
-  o.groundColor = mix(a.groundColor, b.groundColor, f);
-  o.skyColor = mix(a.skyColor, b.skyColor, f);
-  o.sunColor = mix(a.sunColor, b.sunColor, f);
-  o.fogColor = mix(a.fogColor, b.fogColor, f);
-  return o;
-}
-
-// ── frag ─────────────────────────────────────────────────────────
-float linearToSrgb(float c) { return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0 / 2.4) - 0.055; }
 
 ${DITHER_GLSL}
 void main() {
-  // the host's ray: the enhanced sky's own construction, so both passes
-  // agree with the same yaw and pitch
+  // the host's ray: the enhanced sky's own construction, so both passes agree with the same yaw and pitch
   vec3 ray0 = normalize(vec3(vNdc.x * uTanHalfFov * uAspect, vNdc.y * uTanHalfFov, 1.0));
   float cp = cos(uPitch), sp = sin(uPitch);
   vec3 r1 = vec3(ray0.x, ray0.y * cp + ray0.z * sp, -ray0.y * sp + ray0.z * cp);
   float cy = cos(uYaw), sy = sin(uYaw);
-  vec3 worldPos = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
-  vec3 dir = worldPos;   // PS3's dither names a world-fixed cell off it below
+  vec3 dir = normalize(vec3(r1.x * cy + r1.z * sy, r1.y, -r1.x * sy + r1.z * cy));
+  float y = dir.y;
 
-  V2F IN = vertAsMesh(worldPos);
+  // the gradient: zenith to horizon over the sky, horizon to ground under it
+  vec3 col = y >= 0.0 ? mix(uZenith, uHorizon, pow(1.0 - y, 4.0)) : mix(uHorizon, uGround, smoothstep(0.0, 0.18, -y));
 
-  vec4 col = vec4(0.0, 0.0, 0.0, 0.0);
+  // the sun's glow, its warm band along the horizon, and its disc
+  float cs = dot(dir, uSunDir);
+  float above = smoothstep(-0.02, 0.02, y);
+  col += uGlow * pow(max(cs, 0.0), uGlowPower) * mix(0.35, 1.0, above);
+  col += uGlow * 0.35 * pow(max(cs, 0.0), 2.0) * exp(-max(y, 0.0) * 5.0);
+  col += uSunDisc * smoothstep(uSunCos - 0.00008, uSunCos + 0.00008, cs) * above;
 
-  vec3 normWorldPos = normalize(worldPos);
-
-  float dotWorldPos = dot(normWorldPos, vec3(0.0, 1.0, 0.0));
-  float horizonValue = 1.0 - saturate(Remap(dotWorldPos, vec2(_SkyFadeStart, _SkyFadeEnd), vec2(0.0, 1.0)));
-
-  vec3 sunPos = _WorldSpaceLightPos0.xyz;
-  vec3 normSunWorldPos = normalize(sunPos);
-  float lerpScale;
-
-  if (normSunWorldPos.y >= -0.333) {
-    if (normSunWorldPos.y <= 0.333) {
-      col.rgb = mix(col.rgb, vec3(0.2), 0.5);   // (0.2, 0.2, 0.2) is a comma expression: the scalar 0.2
-    }
+  // the moons, over the horizon
+  vec4 ma = vec4(0.0), mb = vec4(0.0);
+  if (y > 0.0) {
+    ma = moonAt(dir, uMasser, uMasserLight, uMasserColor, vec2(0.13, 0.71));
+    mb = moonAt(dir, uSecunda, uSecundaLight, uSecundaColor, vec2(0.57, 0.29));
   }
-  float sunDotUp = dot(sunPos, vec3(0.0, 1.0, 0.0));
-  float night = saturate(Remap(sunDotUp, vec2(_NightStartHeight, _NightEndHeight), vec2(0.0, 1.0)));
-  float night_clamp = clamp(night, 0.0, 0.5);
-  float day = saturate(Remap(sunDotUp, vec2(_NightEndHeight, _NightStartHeight), vec2(0.0, 1.0)));
-  float day_clamp = clamp(day, 0.0, 0.6);
-
-  // Moons
-  float orbitAngle = _WorldTime * _MoonOrbitSpeed;
-  float SecundaOrbitAngle = _WorldTime * _SecundaOrbitSpeed;
-
-  vec2 MajMinAxis = vec2(_MoonSemiMajAxis, _MoonSemiMinAxis);
-  vec2 SecundaMajMinAxis = vec2(_SecundaSemiMajAxis, _SecundaSemiMinAxis);
-
-  vec3 currentMoonPos = GetOrbitPosition(_MoonOrbitAngle.xyz, MajMinAxis, orbitAngle);
-  vec3 SecundaCurrentMoonPos = GetOrbitPosition(_SecundaOrbitAngle.xyz, SecundaMajMinAxis, SecundaOrbitAngle);
-
-  vec3 prevMoonPos = GetOrbitPosition(_MoonOrbitAngle.xyz, MajMinAxis, orbitAngle - 1.0);
-  vec3 moonUp = normalize(cross(currentMoonPos, prevMoonPos));
-  vec3 SecundaPrevMoonPos = GetOrbitPosition(_SecundaOrbitAngle.xyz, SecundaMajMinAxis, SecundaOrbitAngle - 1.0);
-  vec3 SecundaMoonUp = normalize(cross(SecundaCurrentMoonPos, SecundaPrevMoonPos));
-
-  currentMoonPos = RotateArbitraryAxis(currentMoonPos, _MoonOrbitOffset, moonUp);
-  SecundaCurrentMoonPos = RotateArbitraryAxis(SecundaCurrentMoonPos, _SecundaOrbitOffset, SecundaMoonUp);
-
-  float radius = GetMoonDistance(_MoonMinSize, _MoonMaxSize, MajMinAxis, orbitAngle);
-  float sphere = SphereIntersect(vec3(0.0, 0.0, 0.0), normWorldPos, currentMoonPos, radius);
-  float SecundaRadius = GetMoonDistance(_SecundaMinSize, _SecundaMaxSize, SecundaMajMinAxis, SecundaOrbitAngle);
-  float SecundaSphere = SphereIntersect(vec3(0.0, 0.0, 0.0), normWorldPos, SecundaCurrentMoonPos, SecundaRadius);
-
-  vec3 moonFragPos = normWorldPos * sphere + vec3(0.0, 0.0, 0.0);
-  vec3 moonFragNormal = normalize(moonFragPos - currentMoonPos);
-  vec3 SecundaMoonFragPos = normWorldPos * SecundaSphere + vec3(0.0, 0.0, 0.0);
-  vec3 SecundaMoonFragNormal = normalize(SecundaMoonFragPos - SecundaCurrentMoonPos);
-
-  vec3 moonForward = normalize(-currentMoonPos);
-  vec3 moonTangent = cross(moonForward, moonUp);
-  vec3 SecundaMoonForward = normalize(-SecundaCurrentMoonPos);
-  vec3 SecundaMoonTangent = cross(SecundaMoonForward, SecundaMoonUp);
-
-  // float3x3 worldToObject = float3x3(moonTangent, moonUp, moonForward): rows
-  vec3 phaseNormal = vec3(dot(moonTangent, moonFragNormal), dot(moonUp, moonFragNormal), dot(moonForward, moonFragNormal));
-  vec3 SecundaPhaseNormal = vec3(dot(SecundaMoonTangent, SecundaMoonFragNormal), dot(SecundaMoonUp, SecundaMoonFragNormal), dot(SecundaMoonForward, SecundaMoonFragNormal));
-
-  float NDotL = dot(sunPos, moonFragNormal);
-  float SecundaNDotL = dot(sunPos, SecundaMoonFragNormal);
-
-  float moonBlocking = max(sphere * saturate(NDotL), SecundaSphere * saturate(SecundaNDotL));
-
-  // Start of Unity code (SKYBOX_SUNDISK_HQ)
-  vec3 ray = normalize(IN.vertex.xyz);
-  float y = ray.y / SKY_GROUND_THRESHOLD;
-
-  vec3 tmp = mix(IN.fogColor, _FogNightColor, night);
-  col.rgb = mix(IN.skyColor, tmp, saturate(y));
-
-  float sunAttenuation = 0.0;
-  if (y <= 1.0) {
-    sunAttenuation = calcSunAttenuation(sunPos, -ray, _SunSize, _SunSizeConvergence);
-    if (moonBlocking <= 0.0) {
-      col.rgb += IN.sunColor * sunAttenuation;
-    }
-  }
-  // (UNITY_COLORSPACE_GAMMA is not defined: no LINEAR_2_OUTPUT here)
-  // End of Unity Code
 
   // Stars
-  // PERF-SKY1 (2026-10-10, the stars' part alone): THE STARS ARE A NIGHT'S. Their weight below is night * horizonValue,
-  // and by day night is 0: mix(col, stars, 0) is col exactly for any stars a texture gives (saturated, so finite) - yet
-  // every sky pixel paid three taps and the twinkle to be multiplied by nothing. night is the sun's light position's
-  // alone, so the branch is the same in every fragment of the draw (dynamically the same: the taps' implicit
-  // derivatives stay defined), and the picture is the mod's to the bit.
+  // PERF-SKY1: a night's alone - uNight is the frame's, one for every fragment, so the branch is the same across the
+  // draw and the tap's implicit derivatives stay defined; by day every pixel skips the hashes and the band's tap.
   vec3 stars = vec3(0.0);
-  if (night > 0.0) {
-  vec2 starsUV = normWorldPos.xz / (normWorldPos.y + _StarBending);
-  stars = texture(_StarTex, starsUV * _StarTex_ST.xy + _StarTex_ST.zw).rgb;
-  float starsAlpha = texture(_StarTwinkleTex, (starsUV * _StarTwinkleTex_ST.xy) + _StarTwinkleTex_ST.zw).r;
-
-  float twinkle = texture(_TwinkleTex, (starsUV * _TwinkleTex_ST.xy) + _TwinkleTex_ST.zw + vec2(1.0, 0.0) * _WorldTime * _TwinkleSpeed).r;
-  twinkle *= starsAlpha;
-  twinkle *= _TwinkleBoost;
-  stars.rgb -= twinkle;
-  stars = saturate(stars);
+  if (uNight > 0.0) {
+    vec3 sd = turnAbout(dir, uStarPole, uStarTurn);
+    stars = starLayer(sd, ${glslFloat(STAR_LOOK.bright.cells)}, ${glslFloat(STAR_LOOK.bright.chance)}, vec2(${STAR_LOOK.bright.gain.map(glslFloat).join(', ')}), 1u);
+    stars += starLayer(sd, ${glslFloat(STAR_LOOK.dim.cells)}, ${glslFloat(STAR_LOOK.dim.chance)}, vec2(${STAR_LOOK.dim.gain.map(glslFloat).join(', ')}), 7u);
+    float across = dot(sd, STAR_BAND_POLE) / 0.2;
+    stars += vec3(0.6, 0.66, 0.82) * STAR_BAND * exp(-across * across) * (0.4 + texture(uSkyNoise, sd.xz * 0.7 + sd.y * 0.3).b);
+    stars *= uNight * smoothstep(0.0, 0.08, y) * (1.0 - max(ma.a, mb.a));
   }
-
-  vec3 finalStarsColor;
-  if (normWorldPos.y > 0.0) {
-    finalStarsColor = mix(col.rgb, stars, night * horizonValue);
-    finalStarsColor.rgb = max(finalStarsColor.rgb, _MoonNightColor.rgb);
-  } else {
-    finalStarsColor = mix(col.rgb, stars, night * horizonValue);
-  }
-  col.rgb = finalStarsColor;
+  col += stars;
   // End of Stars
+  col += ma.rgb * ma.a + mb.rgb * mb.a;
 
-  // _MOONSPINOPTION_TIDAL_LOCK
-  moonFragNormal = phaseNormal;
-  moonFragNormal = RotateWorldPosition(moonFragNormal, vec3(radiansOf(_MoonTidalAngle.x), radiansOf(_MoonTidalAngle.y), radiansOf(_MoonTidalAngle.z)));
-  // _SECUNDASPINOPTION_TIDAL_LOCK
-  SecundaMoonFragNormal = SecundaPhaseNormal;
-  SecundaMoonFragNormal = RotateWorldPosition(SecundaMoonFragNormal, vec3(radiansOf(_SecundaTidalAngle.x), radiansOf(_SecundaTidalAngle.y), radiansOf(_SecundaTidalAngle.z)));
-
-  float u = atan(moonFragNormal.z, moonFragNormal.x) / UNITY_TWO_PI;
-  float fracU = fract(u);
-  vec2 moonUV = vec2(
-    fwidth(u) < fwidth(fracU) - 0.001 ? u : fracU,
-    acos(-moonFragNormal.y) / UNITY_PI
-  );
-
-  float SecundaU = atan(SecundaMoonFragNormal.z, SecundaMoonFragNormal.x) / UNITY_TWO_PI;
-  float SecundaFracU = fract(SecundaU);
-  vec2 SecundaMoonUV = vec2(
-    fwidth(SecundaU) < fwidth(SecundaFracU) - 0.001 ? SecundaU : SecundaFracU,
-    acos(-SecundaMoonFragNormal.y) / UNITY_PI
-  );
-
-  vec3 SecundaMoonTex;
-  vec3 tmpCol = vec3(0.0);   // (0.0, 0.0, 0.0) is a comma expression: the scalar 0.0
-  float NDotScale = 1.0;
-
-  if (normWorldPos.y > 0.0) {
-    if (SecundaSphere >= 0.0) {
-      SecundaMoonTex = texture(_SecundaTex, SecundaMoonUV).rgb * _SecundaColor.rgb;
-      vec3 minColor = _MoonNightColor.rgb;
-      tmpCol = day * 0.99 * IN.skyColor.rgb;
-      tmpCol = max(tmpCol, minColor);
-      SecundaMoonTex = mix(tmpCol, SecundaMoonTex, max(0.0, saturate(SecundaNDotL * NDotScale) - 0.0));
-      col.rgb = SecundaMoonTex;
-    } else if (sphere >= 0.0) {
-      vec3 moonTex = texture(_MoonTex, moonUV).rgb * _MoonColor.rgb;
-      vec3 minColor = _MoonNightColor.rgb;
-      tmpCol = day * 0.99 * IN.skyColor.rgb;
-      tmpCol = max(tmpCol, minColor);
-      moonTex = mix(tmpCol, moonTex, max(0.0, saturate(NDotL * NDotScale) - 0.0));
-      col.rgb = moonTex;
-    }
-  }
-  // End of moons
-
-  // Clouds
-  vec2 cloudDir = vec2(1.0, 1.0);
-  cloudDir.x = cloudDir.x * cos(radiansOf(_CloudDirection));
-  cloudDir.y = cloudDir.y * sin(radiansOf(_CloudDirection));
-
-  float cloudSpeedMultiplier = 0.75;
-  vec2 cloudTopUV = normWorldPos.xz / (normWorldPos.y + _CloudTopBending);
-
-  float newFadeStart = _CloudFadeHeight;
-  float newFadeEnd = -0.01;
-  float cloudFadeHeight = 1.0 - saturate(Remap(dotWorldPos, vec2(newFadeStart, newFadeEnd), vec2(0.0, 1.0)));
-
-  // PERF-EXT30 (2026-09-25; two players via Mac, "fps issues in the
-  // exterior but fine in the interior" and "me too my friend.. don't
-  // know why. I got a RX6600"): A SHEET WHOSE WEIGHT IS 0 IS NOT DRAWN.
-  // Under the volumetric clouds - the default, DS2 - draw() uploads
-  // _CloudTopOpacity and _CloudOpacity as 0, and each sheet ends in
-  // mix(col.rgb, sheet, x * 0): the col it was handed. Every sky pixel
-  // still paid for both - eight taps (a diffuse pair and a normal pair
-  // each), four UnpackNormal, two BlendNormals, the remaps and the sun's
-  // rim - to multiply the answer by nothing. A sheet runs now only while
-  // its opacity is above 0. It is a SKIP THAT CHANGES NO OUTPUT, not a
-  // change to the mod: mix(c, s, 0) is c exactly for any finite s, and
-  // every shipped preset's sheet is finite (AlphaMax above AlphaCutoff in
-  // all seven, the top boost's divide by 1, the Cloudy boost's divide by
-  // 0 saturated to 1). The mod's lines inside are its own to the
-  // character, left at their indentation so they still read against the
-  // vendored source; the three locals both sheets write are declared
-  // above the pair, where the second can see them. The gate is a
-  // uniform's, so every fragment of the draw takes the same arm and the
-  // taps' implicit derivatives stay defined. ?clouds=off gives a sheet
-  // its preset's opacity (0.25 to 1.0 across the seven) and both run as
-  // they always did.
-  float cloudThickness;
-  float pos;
-  float cloudLerpValue;
-  if (_CloudTopOpacity > 0.0) {
-  float cloudTop1 = texture(_CloudTopDiffuse, cloudTopUV * _CloudTopDiffuse_ST.xy + _CloudTopDiffuse_ST.zw + _WorldTime * (_CloudSpeed * cloudSpeedMultiplier) * cloudDir).x * cloudFadeHeight;
-  float cloudTop2 = texture(_CloudTopDiffuse, cloudTopUV * _CloudTopDiffuse_ST.xy * _CloudBlendScale + _CloudTopDiffuse_ST.zw - _WorldTime * (_CloudBlendSpeed * cloudSpeedMultiplier) * cloudDir + vec2(.373, .47)).x * cloudFadeHeight;
-
-  cloudTop2 = Remap(cloudTop2, vec2(0.0, 1.0), vec2(_CloudBlendLB, _CloudBlendUB));
-  float cloudsTop = cloudTop1 - cloudTop2;
-
-  cloudsTop = hsmoothstep(_CloudTopAlphaCutoff, _CloudTopAlphaMax, cloudsTop);
-
-  vec3 cloudTopNormal1 = UnpackNormal(texture(_CloudTopNormal, cloudTopUV * _CloudTopDiffuse_ST.xy + _CloudTopDiffuse_ST.zw + _WorldTime * (_CloudSpeed * cloudSpeedMultiplier) * cloudDir));
-  vec3 cloudTopNormal2 = UnpackNormal(texture(_CloudTopNormal, cloudTopUV * _CloudTopDiffuse_ST.xy * _CloudBlendScale + _CloudTopDiffuse_ST.zw - _WorldTime * _CloudBlendSpeed * _CloudNormalSpeed * cloudDir + vec2(.373, .47)));
-
-  vec3 cloudTopNormal = BlendNormals(cloudTopNormal1, cloudTopNormal2);
-
-  float NdotUpTop = dot(cloudTopNormal, vec3(0.0, 1.0, 0.0));
-
-  vec3 cloudTopColor = mix(_CloudTopColor, _CloudTopNightColor, night);
-
-  cloudTopColor = saturate(cloudTopColor / (1.0 - _CloudTopColorBoost));
-
-  NdotUpTop = Remap(NdotUpTop, vec2(-1.0, 1.0), vec2(1.0 - _CloudTopNormalEffect, 1.0));
-
-  if (normWorldPos.y > _SkyFadeEnd) {
-    if (cloudsTop > 0.0) {
-      vec3 normalSunPos = normalize(_WorldSpaceLightPos0.xyz);
-      float lerpScale2 = saturate(hsmoothstep(-_AtmosphereLerpDuration, 0.0, -normalSunPos.y) / _AtmosphereLerp);
-      cloudThickness = cloudsTop * (1.0 - night);
-      pos = saturate(1.0 + normSunWorldPos.y);
-      cloudLerpValue = sqrt(lerpScale2) * pos;
-      cloudTopColor = mix(cloudTopColor, (IN.sunColor + _CloudTopSunColor) * (_CloudTopSunScale * NdotUpTop), cloudLerpValue * _CloudTopSunLerpScale);
-    }
+  // the high layer: thin streaks drawn out along the wind
+  if (uCloudHigh.y > 0.0) {
+    vec2 uvh = dir.xz / (max(y, 0.0) + 0.12) * uCloudHigh.z + uCloudOffset.xy;
+    float dh = cloudCut(texture(uSkyNoise, uvh * vec2(1.0, 0.35)).g, uCloudHigh.x, uCloudHigh.w);
+    vec3 ch = mix(uCloudShade, uCloudLit, 0.75) + uGlow * pow(max(cs, 0.0), 6.0) * 0.5;
+    col = mix(col, ch, dh * uCloudHigh.y * smoothstep(0.0, 0.2, y));
   }
 
-  cloudTopColor = cloudTopColor * NdotUpTop;
-
-  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);
+  // the low layer: its body, and a tap toward the sun for the shade on its far side
+  if (uCloudLow.y > 0.0) {
+    vec2 uvl = dir.xz / (max(y, 0.0) + 0.18) * uCloudLow.z + uCloudOffset.zw;
+    vec2 toSun = uSunDir.xz / max(length(uSunDir.xz), 1e-4) * 0.035;
+    float n = texture(uSkyNoise, uvl).r;
+    float ns = texture(uSkyNoise, uvl + toSun).r;
+    float dl = cloudCut(n, uCloudLow.x, uCloudLow.w);
+    float lightK = clamp(0.62 + (n - ns) * 3.0, 0.0, 1.0);
+    vec3 cl = mix(uCloudShade, uCloudLit, clamp(lightK - 0.3 * dl + 0.3, 0.0, 1.0));
+    cl += uGlow * pow(max(cs, 0.0), 8.0) * (1.0 - dl) * 0.8;   // the bright rim toward the sun
+    col = mix(col, cl, dl * uCloudLow.y * smoothstep(0.0, 0.16, y));
   }
 
-  // PERF-EXT30: the low sheet, the same skip
-  if (_CloudOpacity > 0.0) {
-  vec2 cloudUV = normWorldPos.xz / (normWorldPos.y + _CloudBending);
-
-  float cloud1 = texture(_CloudDiffuse, cloudUV * _CloudDiffuse_ST.xy + _CloudDiffuse_ST.zw + _WorldTime * _CloudSpeed * cloudDir).x * cloudFadeHeight;
-  float cloud2 = texture(_CloudDiffuse, cloudUV * _CloudDiffuse_ST.xy * _CloudBlendScale + _CloudDiffuse_ST.zw - _WorldTime * _CloudBlendSpeed * cloudDir + vec2(.373, .47)).x * cloudFadeHeight;
-
-  cloud2 = Remap(cloud2, vec2(0.0, 1.0), vec2(_CloudBlendLB, _CloudBlendUB));
-
-  float clouds = cloud1 - cloud2;
-
-  clouds = hsmoothstep(_CloudAlphaCutoff, _CloudAlphaMax, clouds);
-
-  vec3 cloudNormal1 = UnpackNormal(texture(_CloudNormal, cloudUV * _CloudDiffuse_ST.xy + _CloudDiffuse_ST.zw + _WorldTime * _CloudSpeed * cloudDir));
-  vec3 cloudNormal2 = UnpackNormal(texture(_CloudNormal, cloudUV * _CloudDiffuse_ST.xy * _CloudBlendScale + _CloudDiffuse_ST.zw - _WorldTime * _CloudBlendSpeed * _CloudNormalSpeed * cloudDir + vec2(.373, .47)));
-
-  vec3 cloudNormal = BlendNormals(cloudNormal1, cloudNormal2);
-
-  float NdotUp = dot(cloudNormal, vec3(0.0, 1.0, 0.0));
-  NdotUp = Remap(NdotUp, vec2(-1.0, 1.0), vec2(1.0 - _CloudNormalEffect, 1.0));
-  vec3 cloudColor = mix(_CloudColor, _CloudNightColor, night);
-
-  cloudColor = saturate(cloudColor / (1.0 - _CloudColorBoost));
-
-  if (normWorldPos.y > _SkyFadeEnd) {
-    if (clouds > 0.0) {
-      vec3 normalSunPos = normalize(_WorldSpaceLightPos0.xyz);
-      float lerpScale3 = saturate(hsmoothstep(-_AtmosphereLerpDuration, 0.0, -normalSunPos.y) / _AtmosphereLerp);
-      cloudThickness = clouds * (1.0 - night);
-      pos = saturate(1.0 - normSunWorldPos.y);
-      cloudLerpValue = sqrt(sqrt(sqrt(lerpScale3))) * pos;
-      cloudColor = mix(cloudColor, (IN.sunColor + _CloudSunColor) * (_CloudSunScale * NdotUp), cloudLerpValue * _CloudSunLerpScale);
-    }
-  }
-
-  cloudColor = cloudColor * NdotUp;
-
-  col.rgb = mix(col.rgb, cloudColor, clouds * _CloudOpacity);
-  }
-
-  // REDUCE_COLOR
-  {
-    vec3 normalSunPos = normalize(_WorldSpaceLightPos0.xyz);
-    lerpScale = saturate(hsmoothstep(-_AtmosphereLerpDuration, 0.0, -normalSunPos.y) / _AtmosphereLerp);
-    float lerpScale_pow = pow(lerpScale, 5.0);
-
-    // PS3 (2026-09-12, Mac: "there's these progressing circles in the sky
-    // when I want it to be a smooth sky transition"). THE CIRCLES ARE
-    // THIS BLOCK. It quantizes each channel with a bare ceil() and no
-    // dither, in LINEAR light, at a step the sun's height drives - so
-    // the sky's iso-luminance contours, which around the sun are
-    // concentric rings, become hard-edged bands, and the step changing
-    // with the sun walks them across the sky. Measured on the shipped
-    // Sunny preset (stepSize 0.015) with the sun high: FIFTY flat
-    // plateaus through the halo, the worst of them a 0.033 sRGB edge -
-    // some eight levels of 255, several times the threshold at which a
-    // smooth gradient shows a contour.
-    //
-    // The port's answer is the one ES1e already applies to its own dome:
-    // an ORDERED dither, the same Bayer cell, half a step either way, so
-    // the quantizer's threshold moves per cell and the contours dissolve
-    // into a stipple. The palette and the mod's upward ceil() bias are
-    // untouched - the mean of a symmetric half-step offset is the value
-    // it replaced - and the same sweep yields 577 distinct levels
-    // instead of 50. Indexed by a world-fixed cell, so it is fine grain
-    // that stays put (FT3 removed the pixelated arm that indexed the
-    // sky's own pixel instead).
-    // uBandDither 0 restores the mod's raw ceil, bug for bug: ?bands=raw.
-    float bandStep = _stepSize - (lerpScale_pow * _stepSize) + 0.001;
-    // THE DITHER MUST BE WORLD-FIXED. Indexed by gl_FragCoord it is locked
-    // to the screen while the sky slides beneath it, so it CRAWLS as the
-    // camera turns - and half of the mod's band is 7/255 in the darks, not
-    // the half-LSB the dome's smooth pass dithers with and calls "never
-    // itself visible". The index is a cell about a third of a degree
-    // across, so the stipple sits near the screen's own pixel and still
-    // stays put when you look around.
-    vec2 fineCell; ringSnap(dir, 0.00204531, fineCell); vec2 bandCell = floor(fineCell);
-    // ...and ZERO-MEAN (bayer4 averages 7.5/16, not 8/16), so the mod's
-    // upward ceil() bias is the one it always had, to the bit.
-    float bandB = uBandDither * (bayer4(bandCell) - ${BAYER_MEAN});
-    col.r = ceil(col.r / bandStep - bandB) * bandStep;
-    col.g = ceil(col.g / bandStep - bandB) * bandStep;
-    col.b = ceil(col.b / bandStep - bandB) * bandStep;
-  }
-
-  // NO HOST FOG OVER THE DOME (MODS AUDIT). The mod's pass applies none:
-  // UNITY_CALC_FOG_FACTOR_RAW(_FogDistance) is computed at :872 and every
-  // consumer of unityFogFactor is commented out (:874-879), and
-  // BLBSkybox.LateUpdate (:320-335) forces the camera's clearFlags back
-  // to Skybox every outdoor frame - so under heavy fog (the one preset
-  // with ExcludeSkybox false) the player sees the mod's own Fog preset,
-  // never DFU's fog colour in the sky's place. The port used to mix the
-  // world's fog over the encoded dome here; the host still writes
-  // fogMix on whichever pass it holds, and this pass has nothing to
-  // apply it to.
-  vec3 lin = clamp(col.rgb, 0.0, 1.0);
-  vec3 enc = vec3(linearToSrgb(lin.r), linearToSrgb(lin.g), linearToSrgb(lin.b));
-  outColor = vec4(brassGrade(dreadGrade(enc, uDread), uBrass), 1.0);   // EVENT1: graded where the port's own dome grades - on the colour shown; AUDIT SD III (V8): the brass air's after it
-  outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon - the port's ground haze, in front of the mod's skybox (it takes no fog of its own); AUDIT BANTHA1 HAZE-8: after the grades
+  // encoded, the host's fog over it, then the levels
+  vec3 lin = clamp(col, 0.0, 1.0);
+  vec3 enc = vec3(encodeSrgb(lin.r), encodeSrgb(lin.g), encodeSrgb(lin.b));
+  enc = mix(enc, uFogColor, uFogMix);
+  // PS3: THE DITHER IS WORLD-FIXED - a cell a third of a degree across, so the grain sits near the screen's pixel
+  // and stays put as the camera turns - and ZERO-MEAN, so the levels' rounding keeps no bias.
+  vec2 fineCell; ringSnap(dir, 0.00204531, fineCell); vec2 bandCell = floor(fineCell);
+  float bandB = uBandDither * (bayer4(bandCell) - ${BAYER_MEAN});
+  enc = floor(enc * SKY_LEVELS + 0.5 + bandB) / SKY_LEVELS;
+  outColor = vec4(brassGrade(dreadGrade(enc, uDread), uBrass), 1.0);   // EVENT1: graded on the colour shown; AUDIT SD III (V8): the brass air's after it
+  outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon, after the grades
 }`;
 
 /** BOOT-COMPILE: the pass's one program, as its constructor builds it: what the boot starts ahead of the build
  *  (render/bootPrograms.js). */
 export const DYNAMIC_SKIES_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, FS]]));
 
-/** The pass. Textures arrive through `setTexture(name, image)` as the
- *  vendored files load; until one lands its slot shows the shader's own
- *  default ("black", "bump", "white"). */
+/** The pass. Our painted noise arrives through `setTexture('SkyNoise', { width, height, data })`; until it does the
+ *  slot shows the noise's middle. */
 export class DynamicSkiesRenderer {
+  /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
     const prog = buildProgram(gl, ...DYNAMIC_SKIES_PROGRAMS[0]);
     this.program = prog;
+    /** @type {Record<string, WebGLUniformLocation|null>} */
     this.u = {};
     for (const name of UNIFORM_NAMES) this.u[name] = gl.getUniformLocation(prog, name);
     this.vao = gl.createVertexArray();
@@ -795,7 +229,7 @@ export class DynamicSkiesRenderer {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    // the slot defaults, one 1x1 texture each
+    /** @type {Record<string, WebGLTexture|null>} the slot defaults, one 1x1 texture each */
     this.defaults = {};
     for (const slot of TEXTURE_SLOTS) {
       const t = gl.createTexture();
@@ -806,42 +240,35 @@ export class DynamicSkiesRenderer {
       this.defaults[slot] = t;
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
-    /** the vendored textures by file name, once uploaded */
+    /** @type {Map<string, WebGLTexture|null>} our painted textures, once uploaded */
     this.textures = new Map();
     /** EVENT1: the live event's grade over the dome, 0..1 (world/dreadSky.js) - the host's. */
     this.dread = 0;
     /** AUDIT SD III (V8): the brass air's grade over it, 0..1 (world/superDungeon/sdBrassSky.js) - the host's. */
     this.brass = 0;
     this.hazeSky = new Float32Array(4);   // BANTHA1: the jungle's haze over the sky (render/hazeGlsl.js uHazeSky) - the host's, w 0 none
-    this.bandDither = true;                            // PS3: the ordered dither over the mod's own colour reduction; false is its raw ceil, 1:1
-    this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two cloud sheets stand down (the dome's cloudsExternal, one pass over)
-    this.fogMix = 0;                                   // written by the host on every pass; unread here - the mod's skybox takes no fog (see the FS)
-    this.fogColor = new Float32Array([0.5, 0.5, 0.5]);   // likewise
-    this.clearColor = new Float32Array([0.4667, 0.5137, 0.7176]);   // FogSunny's day colour until the first state
-    this.fillColor = new Float32Array([0.4667, 0.5137, 0.7176]);
+    this.bandDither = true;                            // PS3: the ordered dither over the levels; false is the raw levels
+    this.cloudsExternal = false;                       // DS2: the volumetric clouds are drawn over this pass - its two layers stand down
+    this.fogMix = 0;                                   // the host's, every frame: how much of its fog lies over the sky
+    this.fogColor = new Float32Array([0.5, 0.5, 0.5]);   // ...and its colour
+    this.clearColor = new Float32Array([0.62, 0.74, 0.87]);   // the day's horizon until the first state
+    this.fillColor = new Float32Array([0.62, 0.74, 0.87]);
+    /** @type {any} the frame's state (systems/dynamicSkies/dynamicSkies.js skyFrame) */
     this.state = null;
-    this._c3 = new Float32Array(3);
-    this._c4 = new Float32Array(4);
   }
 
-  /** One vendored file, uploaded with its Unity import settings:
-   *  Point -> NEAREST (with NEAREST_MIPMAP_NEAREST when it has mips),
-   *  Bilinear -> LINEAR (LINEAR_MIPMAP_NEAREST with mips), Repeat, and
-   *  SRGB8_ALPHA8 for the sRGB-flagged files so the sample is
-   *  linearised before filtering, as Unity's is. Unity's v = 0 is the
-   *  image's bottom row, hence the flip. */
-  setTexture(name, image) {
+  /** One painted texture, uploaded as TEXTURE_IMPORTS says: linear and mipmapped, repeating.
+   *  @param {string} name @param {{ width: number, height: number, data: Uint8Array }} pic */
+  setTexture(name, pic) {
     const gl = this.gl;
-    const imp = TEXTURE_IMPORTS[name] ?? { filter: 'point', mips: true, srgb: true };
+    const imp = TEXTURE_IMPORTS[name] ?? { filter: 'bilinear', mips: true, srgb: false };
     const t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, imp.srgb ? gl.SRGB8_ALPHA8 : gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, imp.srgb ? gl.SRGB8_ALPHA8 : gl.RGBA8, pic.width, pic.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pic.data);
     const linear = imp.filter === 'bilinear';
     if (imp.mips) {
       gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, linear ? gl.LINEAR_MIPMAP_NEAREST : gl.NEAREST_MIPMAP_NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, linear ? gl.LINEAR_MIPMAP_LINEAR : gl.NEAREST_MIPMAP_NEAREST);
     } else {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, linear ? gl.LINEAR : gl.NEAREST);
     }
@@ -854,31 +281,18 @@ export class DynamicSkiesRenderer {
     this.textures.set(name, t);
   }
 
-  /** The frame's state: { mat, sunDir, lightColor, fogColorSrgb,
-   *  clearColor } from dynamicSkiesState. Cheap: a reference. */
+  /** The frame's state (skyFrame's). Cheap: a reference. @param {any} state */
   setState(state) {
     this.state = state;
-    if (state.clearColor) {
-      this.clearColor[0] = state.clearColor[0]; this.clearColor[1] = state.clearColor[1]; this.clearColor[2] = state.clearColor[2];
-      this.fillColor.set(this.clearColor);
-    }
+    if (state.clearColor) this.clearColor.set(state.clearColor);
+    if (state.fillColor) this.fillColor.set(state.fillColor);
   }
 
-  _color3(loc, c) {
-    const o = this._c3;
-    o[0] = srgbToLinear(c[0]); o[1] = srgbToLinear(c[1]); o[2] = srgbToLinear(c[2]);
-    this.gl.uniform3fv(loc, o);
-  }
-  _color4(loc, c) {
-    const o = this._c4;
-    o[0] = srgbToLinear(c[0]); o[1] = srgbToLinear(c[1]); o[2] = srgbToLinear(c[2]); o[3] = c[3] ?? 1;
-    this.gl.uniform4fv(loc, o);
-  }
-
+  /** @param {number} yaw @param {number} pitch @param {number} fovY @param {number} aspect */
   draw(yaw, pitch, fovY, aspect) {
     const s = this.state;
     if (!s) return;
-    const gl = this.gl, u = this.u, mat = s.mat;
+    const gl = this.gl, u = this.u;
     gl.useProgram(this.program);
     gl.depthMask(false);
     gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: only where nothing nearer has drawn - z is the far plane
@@ -888,35 +302,30 @@ export class DynamicSkiesRenderer {
     gl.uniform1f(u.uDread, this.dread);   // EVENT1
     gl.uniform1f(u.uBrass, this.brass);   // AUDIT SD III (V8)
     gl.uniform4fv(u.uHazeSky, this.hazeSky);   // BANTHA1
-    gl.uniform3f(u._WorldSpaceLightPos0, s.sunDir[0], s.sunDir[1], s.sunDir[2]);
-    gl.uniform3f(u._LightColor0, s.lightColor[0], s.lightColor[1], s.lightColor[2]);
-    for (const name of FLOAT_PROPERTIES) gl.uniform1f(u[name], this.cloudsExternal && (name === '_CloudTopOpacity' || name === '_CloudOpacity') ? 0 : (mat[name] ?? MATERIAL_DEFAULTS[name] ?? 0));   // DS2: opacity 0 to the shader under the volumetric clouds; the material keeps the preset's
-    for (const name of COLOR_PROPERTIES) {
-      const c = mat[name] ?? MATERIAL_DEFAULTS[name];
-      if (VEC3_COLOR.has(name)) this._color3(u[name], c);
-      else if (VEC4_COLOR.has(name)) this._color4(u[name], c);
+    gl.uniform3fv(u.uSunDir, s.sunDir);
+    gl.uniform3fv(u.uZenith, s.zenith); gl.uniform3fv(u.uHorizon, s.horizon); gl.uniform3fv(u.uGround, s.ground);
+    gl.uniform3fv(u.uGlow, s.glow); gl.uniform1f(u.uGlowPower, s.glowPower);
+    gl.uniform3fv(u.uSunDisc, s.sunDisc); gl.uniform1f(u.uSunCos, s.sunCos);
+    gl.uniform1f(u.uNight, s.night); gl.uniform3fv(u.uStarPole, s.starPole);
+    gl.uniform1f(u.uStarTurn, s.starTurn); gl.uniform1f(u.uTwinkle, s.twinkle % 3600);
+    for (const [key, name] of [['masser', 'Masser'], ['secunda', 'Secunda']]) {
+      const m = s[key];
+      gl.uniform4f(u[`u${name}`], m.dir[0], m.dir[1], m.dir[2], m.radius);
+      gl.uniform3fv(u[`u${name}Light`], m.light); gl.uniform3fv(u[`u${name}Color`], m.color);
     }
-    for (const name of VEC4_RAW) { const v = mat[name] ?? MATERIAL_DEFAULTS[name]; gl.uniform4f(u[name], v[0], v[1], v[2], v[3] ?? 0); }
-    for (const name of VEC3_RAW) { const v = mat[name] ?? MATERIAL_DEFAULTS[name]; gl.uniform3f(u[name], v[0], v[1], v[2]); }
-    // QUIRK: _CloudTopColorBoost is a float3 in the shader fed by SetFloat -
-    // the value lands in x and y, z are 0, so only red is boosted (the
-    // mod's readme: "broken on the top layer for some reason")
-    // AUDIT 61: what the player SEES is no boost at all - the mod's own
-    // readme: "Color boost - broken on the top layer for some reason".
-    // A Range property SetFloat into a float3 uniform leaves the vector
-    // zero, so the divide is by 1.0; (boost, 0, 0) would have tinted the
-    // top layer red, which the mod never shows. Uploaded as the zero it is.
-    void mat;
-    gl.uniform3f(u._CloudTopColorBoost, 0, 0, 0);
+    // DS2: the volumetric clouds over this pass - its two layers are handed opacity 0 and skip; the state keeps its own
+    const low = s.cloudLow, high = s.cloudHigh;
+    gl.uniform4f(u.uCloudLow, low[0], this.cloudsExternal ? 0 : low[1], low[2], low[3]);
+    gl.uniform4f(u.uCloudHigh, high[0], this.cloudsExternal ? 0 : high[1], high[2], high[3]);
+    gl.uniform4fv(u.uCloudOffset, s.cloudOffset);
+    gl.uniform3fv(u.uCloudLit, s.cloudLit); gl.uniform3fv(u.uCloudShade, s.cloudShade);
+    gl.uniform3fv(u.uFogColor, this.fogColor); gl.uniform1f(u.uFogMix, this.fogMix);
     for (let i = 0; i < TEXTURE_SLOTS.length; i++) {
       const slot = TEXTURE_SLOTS[i];
-      const st = mat[slot + '_ST'] ?? MATERIAL_DEFAULTS[slot + '_ST'];
-      gl.uniform4f(u[slot + '_ST'], st[0], st[1], st[2], st[3]);
       gl.activeTexture(gl.TEXTURE0 + i);
-      gl.bindTexture(gl.TEXTURE_2D, this.textures.get(mat[slot]) ?? this.defaults[slot]);
+      gl.bindTexture(gl.TEXTURE_2D, this.textures.get('SkyNoise') ?? this.defaults[slot]);
       gl.uniform1i(u[slot], i);
     }
-    gl.activeTexture(gl.TEXTURE0);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);

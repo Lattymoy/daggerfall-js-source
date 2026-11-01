@@ -2,7 +2,7 @@
 // other skin the reporter tried did). The
 // Eye of the Beholder mod's set 10 draws its spell sheets (records 45-59) with the woman 80 pixels hood to boot, where
 // her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the vendored art
-// itself (the producer: the mod's own PNGs and spriteInfo.json, read through pngjs), sized through the real door
+// itself (the producer: the mod's own pictures and its XML offsets, eotbSpriteInfo.json), sized through the real door
 // (eotbSprite.js spriteOffset + spriteSize) every caller that draws the body uses.
 // NO-BETHESDA2 (2026-10-31): set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
 // player's ARENA2 (tools/lib/eotbPictures.mjs), so the measure runs where ARENA2_PATH is set; the scale table runs in CI.

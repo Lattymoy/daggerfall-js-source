@@ -41,11 +41,12 @@ import { SOURCE, PAINTINGS, OBJECTS, OUTFITS, RECOLOURS, CUT, PACK_ARM_FALL, HAN
   packBind, hangOf, islandsOf, islandClass, liftHoods, materialMesh, checkObject, bakeTownsfolk, meshFile, textureFile, textureName } from '../../tools/bakeTownsfolk.mjs';
 import { segmentDistance } from '../../tools/skinWeights.mjs';
 import { retailSkeleton } from '../fixtures/mw/retailRig.mjs';
+import { STANCE } from '../../tools/ownBiped.mjs';
 
 const raw = (p) => readFileSync(new URL(`../../${p}`, import.meta.url));
 const onDisk = (p) => new Uint8Array(raw(p));
 const sha = (p) => createHash('sha256').update(raw(p)).digest('hex');
-const SKELETON = raw(RETAIL_SKELETON);
+const SKELETON = RETAIL_SKELETON;
 const tree = readFbx(raw(SOURCE));
 const nifOf = (archive) => flattenNif(parseNif(onDisk(meshFile(archive))));
 const ARCHIVES = [381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 398];
@@ -748,12 +749,18 @@ test('MW-FOLK1 (AUDIT): striding, the leg stays inside the cloth that hangs roun
     const sk = asm.skeleton; const rest = Array.from(sk.nodes.get(sk.byName.get(name)).rest.rotation);
     const g = deg * Math.PI / 180; const rz = [Math.cos(g), -Math.sin(g), 0, Math.sin(g), Math.cos(g), 0, 0, 0, 1];
     const m = [0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => rest[r * 3] * rz[c] + rest[r * 3 + 1] * rz[3 + c] + rest[r * 3 + 2] * rz[6 + c]));
-    const w = Math.sqrt(1 + m[0] + m[4] + m[8]) / 2;
-    return [w, (m[7] - m[5]) / (4 * w), (m[2] - m[6]) / (4 * w), (m[3] - m[1]) / (4 * w)];
+    // OWN-WORK4: Shepperd's, any angle - our biped's thigh turns near 180 degrees off its parent, where 1 + trace is 0
+    const tr = m[0] + m[4] + m[8];
+    if (tr > 0) { const q = Math.sqrt(tr + 1) * 2; return [q / 4, (m[7] - m[5]) / q, (m[2] - m[6]) / q, (m[3] - m[1]) / q]; }
+    if (m[0] > m[4] && m[0] > m[8]) { const q = Math.sqrt(1 + m[0] - m[4] - m[8]) * 2; return [(m[7] - m[5]) / q, q / 4, (m[1] + m[3]) / q, (m[2] + m[6]) / q]; }
+    if (m[4] > m[8]) { const q = Math.sqrt(1 + m[4] - m[0] - m[8]) * 2; return [(m[2] - m[6]) / q, (m[1] + m[3]) / q, q / 4, (m[5] + m[7]) / q]; }
+    const q = Math.sqrt(1 + m[8] - m[0] - m[4]) * 2; return [(m[3] - m[1]) / q, (m[2] + m[6]) / q, (m[5] + m[7]) / q, q / 4];
   };
   /** A pose: [bone, degrees] turns over the idle. */
   const pose = (asm, turns) => { const rows = turns.map(([n, d]) => [n, turn(asm, n, d)]); poseAssembly(asm, { tracks: new Map(rows.map(([n], i) => [n, i + 1])), sampleTrack: (t) => ({ rotation: rows[t - 1][1] }) }); };
-  const STRIDE = (deg, knee = 0, fwd = 'r') => { const back = fwd === 'r' ? 'l' : 'r'; return [[`bip01 ${fwd} thigh`, deg], [`bip01 ${back} thigh`, -deg], ...(knee ? [[`bip01 ${back} calf`, knee]] : [])]; };
+  // OWN-WORK4: a stride is measured from upright - our biped's right thigh already stands STANCE.step ahead at rest
+  const fromUp = (side, deg) => deg - (side === 'r' ? STANCE.step : 0);
+  const STRIDE = (deg, knee = 0, fwd = 'r') => { const back = fwd === 'r' ? 'l' : 'r'; return [[`bip01 ${fwd} thigh`, fromUp(fwd, deg)], [`bip01 ${back} thigh`, fromUp(back, -deg)], ...(knee ? [[`bip01 ${back} calf`, knee]] : [])]; };
   const at = (asm, n) => asm.mats.get(asm.skeleton.byName.get(n)).t;
   const P = (piece, v) => [piece.positions[v * 3], piece.positions[v * 3 + 1], piece.positions[v * 3 + 2]];
   const segPt = (p, a, b) => { const d = sub(b, a); const t = Math.max(0, Math.min(1, dot(sub(p, a), d) / dot(d, d))); return lerp(a, b, t); };

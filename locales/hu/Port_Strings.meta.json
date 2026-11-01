@@ -3894,19 +3894,9 @@
   "tr": "456731fd75aa",
   "by": "claude-in-session"
  },
- "credits.betterAmbience.terms": {
-  "en": "d0d785325b5b",
-  "tr": "7ceace37e2c2",
-  "by": "claude-in-session"
- },
  "credits.betterAmbience.what": {
   "en": "100f862ea8ed",
   "tr": "dd2c573fa499",
-  "by": "claude-in-session"
- },
- "credits.classSkins.terms": {
-  "en": "324ccfd7064b",
-  "tr": "725f69b991fa",
   "by": "claude-in-session"
  },
  "credits.classSkins.title": {
@@ -3914,29 +3904,9 @@
   "tr": "02997f422546",
   "by": "claude-in-session"
  },
- "credits.classSkins.what": {
-  "en": "2bd085e5afa1",
-  "tr": "fe38e0664b64",
-  "by": "claude-in-session"
- },
- "credits.climatesCalories.terms": {
-  "en": "b2ddc6fd23a7",
-  "tr": "90fd83f95e01",
-  "by": "claude-in-session"
- },
  "credits.climatesCalories.what": {
   "en": "83172d962534",
   "tr": "8225414a0a56",
-  "by": "claude-in-session"
- },
- "credits.comeSailAway.terms": {
-  "en": "aecd9f5f6b2c",
-  "tr": "3068aecc117c",
-  "by": "claude-in-session"
- },
- "credits.comeSailAway.what": {
-  "en": "a876c4d15ad4",
-  "tr": "90a09e3d583c",
   "by": "claude-in-session"
  },
  "credits.contact.dfuForums": {
@@ -3979,39 +3949,9 @@
   "tr": "ae11c3fc4b28",
   "by": "claude-in-session"
  },
- "credits.diverseWeapons.terms": {
-  "en": "d699389463c3",
-  "tr": "bf1bb3a3b0d6",
-  "by": "claude-in-session"
- },
  "credits.diverseWeapons.what": {
   "en": "de7668ccb0e5",
   "tr": "4ad23884eb72",
-  "by": "claude-in-session"
- },
- "credits.dynamicSkies.terms": {
-  "en": "e807de593645",
-  "tr": "c0834b724f22",
-  "by": "claude-in-session"
- },
- "credits.dynamicSkies.what": {
-  "en": "185c34a4a1d3",
-  "tr": "4e88da59ce66",
-  "by": "claude-in-session"
- },
- "credits.eyeOfTheBeholder.terms": {
-  "en": "97fcb5eb18a5",
-  "tr": "a83901b5f602",
-  "by": "claude-in-session"
- },
- "credits.eyeOfTheBeholder.what": {
-  "en": "3e7fcfad6a7c",
-  "tr": "3a4f9e0fd528",
-  "by": "claude-in-session"
- },
- "credits.foraging.terms": {
-  "en": "70bb85ac634a",
-  "tr": "7aa4e5b94d59",
   "by": "claude-in-session"
  },
  "credits.foraging.what": {
@@ -4029,19 +3969,9 @@
   "tr": "30975b607292",
   "by": "claude-in-session"
  },
- "credits.handheldTorches.terms": {
-  "en": "070aca06d975",
-  "tr": "20456e17dc1e",
-  "by": "claude-in-session"
- },
  "credits.handheldTorches.what": {
   "en": "7ff8f22e7606",
   "tr": "893037568fd4",
-  "by": "claude-in-session"
- },
- "credits.horseCart.terms": {
-  "en": "1502ec1b2cef",
-  "tr": "0d5dd160a277",
   "by": "claude-in-session"
  },
  "credits.horseCart.what": {
@@ -4049,24 +3979,9 @@
   "tr": "e6a15dff5680",
   "by": "claude-in-session"
  },
- "credits.iliacPuddle.terms": {
-  "en": "d35ec70eb275",
-  "tr": "c36907fcab98",
-  "by": "claude-in-session"
- },
  "credits.iliacPuddle.what": {
   "en": "1f7ddde709f4",
   "tr": "096b4a46c35d",
-  "by": "claude-in-session"
- },
- "credits.immersiveFootsteps.terms": {
-  "en": "102e603a77be",
-  "tr": "6c2465f29917",
-  "by": "claude-in-session"
- },
- "credits.immersiveFootsteps.what": {
-  "en": "471d7dd4e1c1",
-  "tr": "817b8b369923",
   "by": "claude-in-session"
  },
  "credits.l10n.bundled": {
@@ -4179,16 +4094,6 @@
   "tr": "67f5c07a4308",
   "by": "claude-in-session"
  },
- "credits.rrItems.terms": {
-  "en": "a738bf57ba37",
-  "tr": "8205c60e2de3",
-  "by": "claude-in-session"
- },
- "credits.rrItems.what": {
-  "en": "350c872d11c6",
-  "tr": "08fe1eb75921",
-  "by": "claude-in-session"
- },
  "credits.seasons.terms": {
   "en": "daad4657afaf",
   "tr": "699956eed040",
@@ -4197,11 +4102,6 @@
  "credits.seasons.what": {
   "en": "fc66084d5d41",
   "tr": "380e224aa1f9",
-  "by": "claude-in-session"
- },
- "credits.shieldWidget.terms": {
-  "en": "09ddb9b3f88c",
-  "tr": "0e36834cb151",
   "by": "claude-in-session"
  },
  "credits.shieldWidget.what": {
@@ -4217,11 +4117,6 @@
  "credits.silkscreen.what": {
   "en": "394d2d009d49",
   "tr": "711dfb4cd69b",
-  "by": "claude-in-session"
- },
- "credits.travelOptions.terms": {
-  "en": "d783191ec23c",
-  "tr": "0c0f2a7fce43",
   "by": "claude-in-session"
  },
  "credits.travelOptions.what": {
@@ -4244,26 +4139,6 @@
   "tr": "5bf0b773b261",
   "by": "claude-in-session"
  },
- "credits.vorbis.author": {
-  "en": "fdd46b831149",
-  "tr": "319fbfe7b022",
-  "by": "claude-in-session"
- },
- "credits.vorbis.terms": {
-  "en": "9a48158a4746",
-  "tr": "0baf3d999ac8",
-  "by": "claude-in-session"
- },
- "credits.vorbis.title": {
-  "en": "03d0121c9a55",
-  "tr": "8802ea7ff25a",
-  "by": "claude-in-session"
- },
- "credits.vorbis.what": {
-  "en": "e30c8baae0cb",
-  "tr": "3e5505dad427",
-  "by": "claude-in-session"
- },
  "credits.warmAshes.terms": {
   "en": "91b057179e9a",
   "tr": "08821e98c0a9",
@@ -4272,16 +4147,6 @@
  "credits.warmAshes.what": {
   "en": "2a6bc436fb0b",
   "tr": "c04433ddb12d",
-  "by": "claude-in-session"
- },
- "credits.weaponSheathing.terms": {
-  "en": "632a66933b93",
-  "tr": "0ec4ef48e9f8",
-  "by": "claude-in-session"
- },
- "credits.weaponSheathing.what": {
-  "en": "cb09390217e5",
-  "tr": "be03d1981217",
   "by": "claude-in-session"
  },
  "credits.weaponWidget.terms": {
@@ -9669,29 +9534,9 @@
   "tr": "489d1b5905ae",
   "by": "claude-in-session"
  },
- "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
-  "en": "ea78623b8aa0",
-  "tr": "f5b0316b9bf5",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.enable.description": {
   "en": "3c73a6aab686",
   "tr": "7ca7f73c7b12",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterFootsteps.footstepVolume.description": {
-  "en": "a24a22b52244",
-  "tr": "0cd75064d707",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterRain.enableBetterRain.description": {
-  "en": "b01ebc8f57a9",
-  "tr": "97d45f7a82c5",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterRain.enableBetterSnow.description": {
-  "en": "9e2c57dfba94",
-  "tr": "30cd7b5856c2",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.CameraShake.fadeInTime.description": {
@@ -9749,19 +9594,9 @@
   "tr": "4c8928e26ac7",
   "by": "claude-in-session"
  },
- "mods.betterAmbience.DungeonLighting.dungeonDarkness.description": {
-  "en": "5ef727ff388b",
-  "tr": "b3254d92068d",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.DungeonLighting.enableFogAmbientEffect.description": {
   "en": "fa83a653257f",
   "tr": "c5b6a39e98df",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.DungeonLighting.fogAmbientEffect.description": {
-  "en": "080f2d8b0012",
-  "tr": "b6e024536100",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.DungeonReverb.level.description": {
@@ -9832,11 +9667,6 @@
  "mods.comeSailAway.Controls.IncreaseTimeScale.description": {
   "en": "2fc1d73b92ae",
   "tr": "0f1986f7949b",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Controls.PortLocationSearchRange.description": {
-  "en": "da63f599ee82",
-  "tr": "e8459df7b01c",
   "by": "claude-in-session"
  },
  "mods.comeSailAway.Controls.ResetTimeScale.description": {
@@ -9929,31 +9759,6 @@
   "tr": "88d7541aad20",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.Map.MarkerOutlineThickness.description": {
-  "en": "b8a31b1ef164",
-  "tr": "09acbd23bfdc",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.MarkerThickness.description": {
-  "en": "6c8779b2189e",
-  "tr": "4ed97e317ee8",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.PositionLineThickness.description": {
-  "en": "5630d67aba94",
-  "tr": "58fd4cd5085c",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.RestrictPositionReadingTime.description": {
-  "en": "0c81c0e243fb",
-  "tr": "dd50a66b8c6e",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.RestrictPositionReadingWeather.description": {
-  "en": "82151f1f93f5",
-  "tr": "88a1847d0339",
-  "by": "claude-in-session"
- },
  "mods.comeSailAway.SailingAssist.AutoStowSquareSails.description": {
   "en": "80da6c3da601",
   "tr": "a4540452b590",
@@ -10044,34 +9849,14 @@
   "tr": "ebf0bf5c862c",
   "by": "claude-in-session"
  },
- "mods.dynamicSkies.ActivatePixelSnow.description": {
-  "en": "a6061104e961",
-  "tr": "0660156420ac",
-  "by": "claude-in-session"
- },
  "mods.dynamicSkies.Enabled.description": {
   "en": "24a56f1d6b04",
   "tr": "e3a55dc280fb",
   "by": "claude-in-session"
  },
- "mods.dynamicSkies.MaxParticleSize.description": {
-  "en": "f9adbf4bc9c0",
-  "tr": "39abe7e41940",
-  "by": "claude-in-session"
- },
  "mods.dynamicSkies.MaxParticles.description": {
   "en": "d94d1768b9d1",
   "tr": "9dd12d976860",
-  "by": "claude-in-session"
- },
- "mods.dynamicSkies.MinParticleSize.description": {
-  "en": "252164e4c1c7",
-  "tr": "18bfe6e1f4e1",
-  "by": "claude-in-session"
- },
- "mods.dynamicSkies.densitySetting.description": {
-  "en": "a135ebefc2ef",
-  "tr": "a7750a5f889f",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.BillboardScale.description": {
@@ -10289,24 +10074,9 @@
   "tr": "8ce9c3a66d9e",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Graphics.OnFoot.description": {
-  "en": "9b6e80fbd98b",
-  "tr": "752996778327",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.OnHorse.description": {
-  "en": "66382d4850bb",
-  "tr": "20ee5dac7f25",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.Graphics.PingPongOffset.description": {
   "en": "37ee0a84039b",
   "tr": "234fe01edc4e",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.ReadyStance.description": {
-  "en": "b9a13e8133b9",
-  "tr": "9abcf1efc3db",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.ShowCart.description": {
@@ -10314,14 +10084,9 @@
   "tr": "7f1e228f7554",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Graphics.TorchOffset.description": {
-  "en": "14baa7d0a735",
-  "tr": "fdd5f6278b20",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.Graphics.TurnToView.description": {
-  "en": "5b8f4846d335",
-  "tr": "7f5facce7c47",
+  "en": "96af4ccb0a75",
+  "tr": "f1d72823b289",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.LongitudinalDistance.description": {
@@ -10524,46 +10289,6 @@
   "tr": "9f4f7b853aee",
   "by": "claude-in-session"
  },
- "mods.handheldTorches.Bob.BobWhileIdle.description": {
-  "en": "62b350a41e80",
-  "tr": "23baef4888db",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.Length.description": {
-  "en": "c41e3b59724d",
-  "tr": "2e2b76bcb77c",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.Offset.description": {
-  "en": "032cf0a5887b",
-  "tr": "5657abe4fd73",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.Shape.description": {
-  "en": "6a14dd5fdf6e",
-  "tr": "85661d84473d",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.SizeX.description": {
-  "en": "4bf47b6b34e5",
-  "tr": "e17b9d93d898",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.SizeY.description": {
-  "en": "eafc60d14110",
-  "tr": "fcb9490a47a4",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.SpeedMove.description": {
-  "en": "e09859e0647a",
-  "tr": "6212ddfca758",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.SpeedState.description": {
-  "en": "cdc96eafe40a",
-  "tr": "c52efe262866",
-  "by": "claude-in-session"
- },
  "mods.handheldTorches.Compatibility.TextureScaleFactor.description": {
   "en": "5752dc87371d",
   "tr": "977925cc9def",
@@ -10577,31 +10302,6 @@
  "mods.handheldTorches.Handling.LanternsAtWaist.description": {
   "en": "6193f6a8e2d0",
   "tr": "9f534a5d2a84",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Handling.ManualDropInput.description": {
-  "en": "593759e44477",
-  "tr": "0009b7465c46",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Handling.OnPick.description": {
-  "en": "ef89ad20ea10",
-  "tr": "ef46054d05ba",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Handling.OnStow.description": {
-  "en": "a9b30ebac940",
-  "tr": "4452685237bb",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Handling.RelaxedLanterns.description": {
-  "en": "d2c557936354",
-  "tr": "ae0bf52baaf3",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Handling.RelaxedTwoHandedWeapons.description": {
-  "en": "40de3119a0f8",
-  "tr": "60f731e2921d",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Handling.RememberLastLightSource.description": {
@@ -10624,31 +10324,6 @@
   "tr": "ab4fedc1fc8f",
   "by": "claude-in-session"
  },
- "mods.handheldTorches.Handling.ToggleLightInput.description": {
-  "en": "b9221a3e2616",
-  "tr": "52abf000fe1e",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Inertia.ForwardDepth.description": {
-  "en": "209176f0c1d4",
-  "tr": "827a2bcb93b6",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Inertia.ForwardSpeed.description": {
-  "en": "bf25937ad445",
-  "tr": "79a61decc7b2",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Inertia.Scale.description": {
-  "en": "c520aa74f3e2",
-  "tr": "59fab62a5b43",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Inertia.Speed.description": {
-  "en": "0cd72172a403",
-  "tr": "d53a2949625d",
-  "by": "claude-in-session"
- },
  "mods.handheldTorches.Modules.Bob.description": {
   "en": "f42722653a9f",
   "tr": "bac657c7c4da",
@@ -10669,11 +10344,6 @@
   "tr": "6e186717d74a",
   "by": "claude-in-session"
  },
- "mods.handheldTorches.Presentation.Ambidexterity.description": {
-  "en": "11de83687686",
-  "tr": "6e501889e356",
-  "by": "claude-in-session"
- },
  "mods.handheldTorches.Presentation.AudioVolume.description": {
   "en": "700b8e7a3d88",
   "tr": "e8ce1107616b",
@@ -10689,11 +10359,6 @@
   "tr": "5ad7f970cd05",
   "by": "claude-in-session"
  },
- "mods.handheldTorches.Presentation.PlayerTorchAudio.description": {
-  "en": "99760b506da6",
-  "tr": "4698ed7da5f2",
-  "by": "claude-in-session"
- },
  "mods.handheldTorches.Presentation.Scale.description": {
   "en": "f6fcf7381547",
   "tr": "59cae90538ef",
@@ -10702,16 +10367,6 @@
  "mods.handheldTorches.Presentation.Speed.description": {
   "en": "b407afb232df",
   "tr": "50d631b5dd65",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Presentation.Tint.description": {
-  "en": "0d2001544ee1",
-  "tr": "083190f9026c",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Step.Condition.description": {
-  "en": "996cff2a5590",
-  "tr": "75c30417e003",
   "by": "claude-in-session"
  },
  "mods.handheldTorches.Step.Length.description": {
@@ -10849,21 +10504,6 @@
   "tr": "aecf0e56d8b4",
   "by": "claude-in-session"
  },
- "mods.horseCartAndCargo.Following.AvoidCombat.description": {
-  "en": "0502191ebe05",
-  "tr": "99877405ebe6",
-  "by": "claude-in-session"
- },
- "mods.horseCartAndCargo.Following.FollowFastTravel.description": {
-  "en": "72b7cc93a2cf",
-  "tr": "fde7581e7d8d",
-  "by": "claude-in-session"
- },
- "mods.horseCartAndCargo.Following.HorseFollowDistance.description": {
-  "en": "20479c8f6057",
-  "tr": "1966236c498c",
-  "by": "claude-in-session"
- },
  "mods.horseCartAndCargo.Hotkeys.QuickMountDismount.description": {
   "en": "f15667a93827",
   "tr": "c0978f9c6cdd",
@@ -10884,29 +10524,9 @@
   "tr": "b9aa0af53bf3",
   "by": "claude-in-session"
  },
- "mods.horseCartAndCargo.WagonAccess.InteriorAccessDistance.description": {
-  "en": "3847c1d65917",
-  "tr": "72332afbcef9",
-  "by": "claude-in-session"
- },
  "mods.iliacPuddleNoMore.Enabled.description": {
   "en": "e8c5f3979a60",
   "tr": "9121942a3f1d",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.ArgonianInfiniteBreath.description": {
-  "en": "dc8a3f7c5f8b",
-  "tr": "fdc65346aa4e",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.DarkerSurfaceWater.description": {
-  "en": "4439fd587b6c",
-  "tr": "a0345bfaa527",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.DecorationFrequency.description": {
-  "en": "38cd81df3fb1",
-  "tr": "bd4b9a434618",
   "by": "claude-in-session"
  },
  "mods.iliacPuddleNoMore.General.DecorationPopulateRadius.description": {
@@ -10914,104 +10534,9 @@
   "tr": "b3e975484d56",
   "by": "claude-in-session"
  },
- "mods.iliacPuddleNoMore.General.EnableSwimStroke.description": {
-  "en": "141fea21a62e",
-  "tr": "9069fef6fd7a",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.EnemyFrequency.description": {
-  "en": "a10e86878ec5",
-  "tr": "6940e46ef77d",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.MaxDecorationsPerTile.description": {
-  "en": "883fa3a6a23d",
-  "tr": "cf936ccb9622",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.MaxLiveEnemies.description": {
-  "en": "ff1ef28b0863",
-  "tr": "30e7dad8b004",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.MaxLiveFish.description": {
-  "en": "bdd180dfab26",
-  "tr": "322c8a015301",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.MaxLiveLootObjects.description": {
-  "en": "ef50513af3d7",
-  "tr": "717274905b2f",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.MaxLiveTreasureClusters.description": {
-  "en": "6aae19405166",
-  "tr": "29e2eb4c0d58",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.PassiveFishFrequency.description": {
-  "en": "db492606b319",
-  "tr": "07737d486c92",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.SeafloorLootRate.description": {
-  "en": "229f8aa3401e",
-  "tr": "22d277790b14",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.SpawnUnderwaterDecorations.description": {
-  "en": "1e91f5bf6b57",
-  "tr": "52ef7782dafa",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.SpawnUnderwaterEnemies.description": {
-  "en": "8dd68824af4b",
-  "tr": "e0425618819a",
-  "by": "claude-in-session"
- },
  "mods.iliacPuddleNoMore.General.SpawnWaterSurfaces.description": {
   "en": "f43bbc5ae413",
   "tr": "597604877d98",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.SwimSpeedMultiplier.description": {
-  "en": "502a9c337596",
-  "tr": "6a2e4b29bf01",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.TreasureClusterRate.description": {
-  "en": "c4c61ecbb948",
-  "tr": "9c791eb99abf",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.TreasureCove.description": {
-  "en": "26aedf459dbb",
-  "tr": "e801ca0f6f80",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.UnderwaterFogDistance.description": {
-  "en": "9bc1e9d87532",
-  "tr": "0eac7cd6cea3",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.UnderwaterFogStrength.description": {
-  "en": "61569e11279f",
-  "tr": "13602c7232a4",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.WaterDepth.description": {
-  "en": "6a063c59805e",
-  "tr": "feb393c816f9",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.WaterSurfaceBottomTransparency.description": {
-  "en": "8bdba6756ed0",
-  "tr": "30d05f0e1426",
-  "by": "claude-in-session"
- },
- "mods.iliacPuddleNoMore.General.WaterSurfaceTopTransparency.description": {
-  "en": "10422d2791a0",
-  "tr": "217bceed357c",
   "by": "claude-in-session"
  },
  "mods.immersiveFootsteps.ArmorSwaySettings.AllowArmorSwaySounds.description": {
@@ -11134,41 +10659,6 @@
   "tr": "4b79cca454b7",
   "by": "claude-in-session"
  },
- "mods.oceanHoles.General.DungeonVisualDarkness.description": {
-  "en": "0d8c9416374e",
-  "tr": "b3ce748ac961",
-  "by": "claude-in-session"
- },
- "mods.oceanHoles.General.DungeonVisualIntensity.description": {
-  "en": "9f87fdd391f7",
-  "tr": "b14945eb4d55",
-  "by": "claude-in-session"
- },
- "mods.oceanHoles.General.MiasmaHeight.description": {
-  "en": "d6ecb046fc82",
-  "tr": "d4d4b8228c64",
-  "by": "claude-in-session"
- },
- "mods.oceanHoles.General.MiasmaParticleCount.description": {
-  "en": "c35eb92c84af",
-  "tr": "135a0a362edb",
-  "by": "claude-in-session"
- },
- "mods.oceanHoles.General.PitSpawnRate.description": {
-  "en": "40e788bb41b7",
-  "tr": "4df96f833fb6",
-  "by": "claude-in-session"
- },
- "mods.oceanHoles.General.SeafloorHoleSize.description": {
-  "en": "af4c25029b62",
-  "tr": "84478b2bf7c9",
-  "by": "claude-in-session"
- },
- "mods.oceanHoles.General.SurfaceHoleSize.description": {
-  "en": "de447904d2b7",
-  "tr": "7481a0bd9b62",
-  "by": "claude-in-session"
- },
  "mods.pane.clearKey": {
   "en": "1cb266c3ecb7",
   "tr": "a2447778ec7a",
@@ -11239,249 +10729,9 @@
   "tr": "ef215c0d5b7f",
   "by": "claude-in-session"
  },
- "mods.roleplayRealism.EnhancedRiding.GallopingInTowns.description": {
-  "en": "d79d5f274d6e",
-  "tr": "38dd9fef9f36",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.EnhancedRiding.RealisticMovement.description": {
-  "en": "e50461917f93",
-  "tr": "cad67be20898",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.EnhancedRiding.TrampleCivilians.description": {
-  "en": "5c14e2d54524",
-  "tr": "8ee49d32d5c9",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.EnhancedRiding.enhancedRiding.description": {
-  "en": "14e12a245070",
-  "tr": "28a39efee5dc",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.EnhancedRiding.followTerrainEnabled.description": {
-  "en": "622443da8191",
-  "tr": "5c32563b960d",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.EnhancedRiding.followTerrainSoftenFactor.description": {
-  "en": "dac4862143fb",
-  "tr": "3023f2d111b0",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.RefinedTraining.intensiveTraining.description": {
-  "en": "1df5fe8b2e0b",
-  "tr": "fa53c98c8736",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.RefinedTraining.refinedTraining.description": {
-  "en": "c7117509c2e1",
-  "tr": "f627e3caad5c",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.RefinedTraining.variableTrainingPrice.description": {
-  "en": "5a9e45f22756",
-  "tr": "0cd44c590088",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.advancedArchery.description": {
-  "en": "07f293a12745",
-  "tr": "384f10d246c3",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.autoExtinguishLight.description": {
-  "en": "084006ef204d",
-  "tr": "043ba8c507c6",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.bandaging.description": {
-  "en": "3592f443feeb",
-  "tr": "217d87bcf178",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.bedSleeping.description": {
-  "en": "b61e5cd5f97c",
-  "tr": "ff70b0810636",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.classicStrengthDamageBonus.description": {
-  "en": "ed9c1551db20",
-  "tr": "aed17444e4e9",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.climbingRestriction.description": {
-  "en": "6816aeb0173b",
-  "tr": "4c5921b08fd9",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.encumbranceEffects.description": {
-  "en": "87ac37592500",
-  "tr": "714b11aed264",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.enemyAppearance.description": {
-  "en": "4d7053853656",
-  "tr": "f657587803a7",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.equipDamage.description": {
-  "en": "78d6133620bf",
-  "tr": "9c936fd939d7",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.loanAmountPerLevel.description": {
-  "en": "43434bb29ea4",
-  "tr": "348072df6b07",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.purificationPotion.description": {
-  "en": "2049f84c5639",
-  "tr": "92028da7973b",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.shipPorts.description": {
-  "en": "14625b7fb4eb",
-  "tr": "68de1c1140e0",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.underworldExpulsion.description": {
-  "en": "fa55bed3be97",
-  "tr": "f74851fcf25b",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.variantNpcs.description": {
-  "en": "4f4ccc93d088",
-  "tr": "5bc581b18559",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.variantResidents.description": {
-  "en": "a92c949ef2a5",
-  "tr": "6bce0ccc2c57",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.weaponMaterials.description": {
-  "en": "68a9d9fa7c47",
-  "tr": "d58232047295",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealism.weaponSpeed.description": {
-  "en": "8a4ec5796851",
-  "tr": "8e8dc6869f96",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.Enabled.description": {
-  "en": "e318fc30b2c1",
-  "tr": "21e326cf7575",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.alchemistPotions.description": {
-  "en": "f616a58c5f01",
-  "tr": "91cbea8a1d6e",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.bandaging.description": {
-  "en": "1d53d6d41276",
-  "tr": "09dcd9ecdb54",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.conditionBasedPrices.description": {
-  "en": "549787027110",
-  "tr": "8b5d311f78b8",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.lootRebalance.description": {
-  "en": "a226ed4e41d5",
-  "tr": "ef9ff83beb25",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.newArmor.description": {
-  "en": "d0e1cc3427ef",
-  "tr": "c5769f4bb3f0",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.newWeapons.description": {
-  "en": "52992d5f6641",
-  "tr": "7bfc54fdfd01",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.realisticEnemyEquipment.description": {
-  "en": "8c215c2355d4",
-  "tr": "27e06f89c4f0",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.skillBasedStartingEquipment.description": {
-  "en": "e3b84901772e",
-  "tr": "77f35d74033f",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.skillBasedStartingSpells.description": {
-  "en": "2ce7c2d1c330",
-  "tr": "55aab1f096bd",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.storeQualityItemCondition.description": {
-  "en": "aae4bd6a4f7d",
-  "tr": "50da820b7940",
-  "by": "claude-in-session"
- },
- "mods.roleplayRealismItems.weaponBalance.description": {
-  "en": "40a6a737dd2f",
-  "tr": "a0965755a719",
-  "by": "claude-in-session"
- },
  "mods.seasonsIliacBay.Enabled.description": {
   "en": "3c65ed9962c0",
   "tr": "23e4816a80ee",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Animation.Direction.description": {
-  "en": "cbd2d5b47296",
-  "tr": "f46d7bbdae4d",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Animation.Speed.description": {
-  "en": "119b2934b1af",
-  "tr": "4d827894f9c8",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.BobWhileIdle.description": {
-  "en": "5de8481879f1",
-  "tr": "7e2a978cc305",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.Length.description": {
-  "en": "c41e3b59724d",
-  "tr": "2e2b76bcb77c",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.Offset.description": {
-  "en": "032cf0a5887b",
-  "tr": "5657abe4fd73",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.Shape.description": {
-  "en": "6a14dd5fdf6e",
-  "tr": "85661d84473d",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.SizeX.description": {
-  "en": "4bf47b6b34e5",
-  "tr": "e17b9d93d898",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.SizeY.description": {
-  "en": "eafc60d14110",
-  "tr": "fcb9490a47a4",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.SpeedMove.description": {
-  "en": "e09859e0647a",
-  "tr": "6212ddfca758",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Bob.SpeedState.description": {
-  "en": "cdc96eafe40a",
-  "tr": "c52efe262866",
   "by": "claude-in-session"
  },
  "mods.shieldWidget.Compatibility.TextureScaleFactor.description": {
@@ -11492,26 +10742,6 @@
  "mods.shieldWidget.Enabled.description": {
   "en": "9c0698ae4845",
   "tr": "aab5448d0812",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Inertia.ForwardDepth.description": {
-  "en": "209176f0c1d4",
-  "tr": "827a2bcb93b6",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Inertia.ForwardSpeed.description": {
-  "en": "bf25937ad445",
-  "tr": "79a61decc7b2",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Inertia.Scale.description": {
-  "en": "c520aa74f3e2",
-  "tr": "59fab62a5b43",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Inertia.Speed.description": {
-  "en": "0cd72172a403",
-  "tr": "d53a2949625d",
   "by": "claude-in-session"
  },
  "mods.shieldWidget.Modules.Animation.description": {
@@ -11539,26 +10769,6 @@
   "tr": "ba86961b9750",
   "by": "claude-in-session"
  },
- "mods.shieldWidget.Recoil.Condition.description": {
-  "en": "54557c801508",
-  "tr": "a762dc382d2f",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Recoil.Offset.description": {
-  "en": "c298b3aeb43f",
-  "tr": "5c37e08b7724",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Recoil.Scale.description": {
-  "en": "67b9412c93fc",
-  "tr": "83319cb8f001",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Recoil.Speed.description": {
-  "en": "15a2d06ac3b1",
-  "tr": "37dd62c9017c",
-  "by": "claude-in-session"
- },
  "mods.shieldWidget.Shield.ConditionThresholdLower.description": {
   "en": "f2f6fb52a27f",
   "tr": "f3b79ab09129",
@@ -11567,51 +10777,6 @@
  "mods.shieldWidget.Shield.ConditionThresholdUpper.description": {
   "en": "03e38159fe12",
   "tr": "23606a97b34f",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.LockAspectRatio.description": {
-  "en": "3864eff42ba6",
-  "tr": "3a288530bd40",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.OffsetHorizontal.description": {
-  "en": "b306e75dfe02",
-  "tr": "1b16e5ed54df",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.OffsetVertical.description": {
-  "en": "4c66911d5aef",
-  "tr": "e232b55777a4",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.Scale.description": {
-  "en": "20248d75e702",
-  "tr": "aa9cb87afc1c",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.Speed.description": {
-  "en": "0d63610468f3",
-  "tr": "4072a9599b4a",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.WhenAttacking.description": {
-  "en": "261588662dd2",
-  "tr": "cb1ce883fc19",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.WhenCasting.description": {
-  "en": "6ccb1cbacec4",
-  "tr": "3a18d7f9ffdc",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Shield.WhenSheathed.description": {
-  "en": "e2d419eeba6a",
-  "tr": "90a4931276f2",
-  "by": "claude-in-session"
- },
- "mods.shieldWidget.Step.Condition.description": {
-  "en": "996cff2a5590",
-  "tr": "75c30417e003",
   "by": "claude-in-session"
  },
  "mods.shieldWidget.Step.Length.description": {
@@ -11709,64 +10874,14 @@
   "tr": "b2c7c0caa10a",
   "by": "claude-in-session"
  },
- "mods.travelOptions.CautiousTravel.FatigueMinimumValue.description": {
-  "en": "6162f9e06827",
-  "tr": "3691beaf9a0e",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.CautiousTravel.HealthMinimumPercentage.description": {
-  "en": "f6e3cff0ded7",
-  "tr": "5056b600d77e",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.CautiousTravel.MaxChanceToAvoidEncounter.description": {
-  "en": "7aaf5db24a83",
-  "tr": "075d55df29bd",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.CautiousTravel.PlayerControlledCautiousTravel.description": {
-  "en": "40b5cdb74286",
-  "tr": "c7c67f954977",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.CautiousTravel.SpeedPenalty.description": {
-  "en": "521c79369394",
-  "tr": "5b30deadfe1f",
-  "by": "claude-in-session"
- },
  "mods.travelOptions.Enabled.description": {
   "en": "ef071acf33d3",
   "tr": "ea7636d0d18e",
   "by": "claude-in-session"
  },
- "mods.travelOptions.FastTravelCostScaling.FastTravelCostScaleFactor.description": {
-  "en": "bbafec95bfed",
-  "tr": "6b97eaec0846",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.FastTravelCostScaling.ShipTravelCostScaleFactor.description": {
-  "en": "70d8b748a0b8",
-  "tr": "467b5b66871a",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.GeneralOptions.AllowAnnoyingSounds.description": {
-  "en": "216ae912d460",
-  "tr": "1d2168bd64e6",
-  "by": "claude-in-session"
- },
  "mods.travelOptions.GeneralOptions.AllowRealGrass.description": {
   "en": "ab10e1db80bf",
   "tr": "d42243226c21",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.GeneralOptions.AllowTargetingMapCoordinates.description": {
-  "en": "ee5f80053df6",
-  "tr": "2b9af787b76f",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.GeneralOptions.AllowWeather.description": {
-  "en": "33594f65aef5",
-  "tr": "7227f7979be4",
   "by": "claude-in-session"
  },
  "mods.travelOptions.GeneralOptions.AvoidObstacles.description": {
@@ -11784,149 +10899,9 @@
   "tr": "fec46ea8944e",
   "by": "claude-in-session"
  },
- "mods.travelOptions.GeneralOptions.LocationPause.description": {
-  "en": "8691a09b1fec",
-  "tr": "5832800fa7ee",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.LocationColours.description": {
-  "en": "bcf37712a0ea",
-  "tr": "87e31c9678aa",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.Enable.description": {
-  "en": "ca22628ddc2a",
-  "tr": "4cd2efba9432",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.EnableStreamsToggle.description": {
-  "en": "4961e4f368fa",
-  "tr": "c46f04112e37",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.EnableWaterways.description": {
-  "en": "e4dd1e996afe",
-  "tr": "6481b8586dd1",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.FollowPathsCustomKeyBind.description": {
-  "en": "abaa608f88ca",
-  "tr": "ef29d6b0e4c4",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.FollowPathsKey.description": {
-  "en": "edd4e864d6ef",
-  "tr": "671722bd0495",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.MarkLocationColor.description": {
-  "en": "12f4ed800d71",
-  "tr": "42b74e1b94d5",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsIntegration.VariableSizeDots.description": {
-  "en": "c5518a6716fa",
-  "tr": "8d9e19698e01",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.BackgroundColor.description": {
-  "en": "23b6f5914cd5",
-  "tr": "6d3142aa1b2e",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.Circular.description": {
-  "en": "67ee9df149c4",
-  "tr": "1e49f879018f",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.Enable.description": {
-  "en": "0cc147cc53a0",
-  "tr": "edd7a1c86643",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.FilterMode.description": {
-  "en": "c4043dfd06b4",
-  "tr": "e395d8f5c8c1",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.Opaque.description": {
-  "en": "aae0cfe0ce1a",
-  "tr": "91a02ac3626b",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.PersistentMap.description": {
-  "en": "fc1e49ce6019",
-  "tr": "1a72e625fabb",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.PlayerColor.description": {
-  "en": "7823f3c28a86",
-  "tr": "2bff6866b5ef",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.ScreenPositionX.description": {
-  "en": "8a3a7254e61f",
-  "tr": "d8152cfbc6fb",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.ScreenPositionY.description": {
-  "en": "13c95072d5ac",
-  "tr": "5221a7d06d4a",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.ScreenSize.description": {
-  "en": "3a6eb9c83916",
-  "tr": "a24d185b2b76",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.RoadsJunctionMap.ToggleMapOffPaths.description": {
-  "en": "c93b0f80f148",
-  "tr": "18887be78668",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.ShipTravel.OnlyFromPorts.description": {
-  "en": "f49c221cc1a3",
-  "tr": "66d62991f11a",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.ShipTravel.OnlyToPorts.description": {
-  "en": "5c00f598d322",
-  "tr": "56766e7af093",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.StopAtInnsTravel.PlayerControlledInnsTravel.description": {
-  "en": "3d221bd54c8a",
-  "tr": "b237e0cb1b6f",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.Teleportation.EnablePaidTeleportation.description": {
-  "en": "464443b7920c",
-  "tr": "82b7bc3844dc",
-  "by": "claude-in-session"
- },
  "mods.travelOptions.option.bilinear": {
   "en": "a8b51aa01c82",
   "tr": "1c9577ffe7d7",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.option.customKeyBind": {
-  "en": "41f471e446c8",
-  "tr": "405bde83fba7",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.option.entered": {
-  "en": "ec8c104beacc",
-  "tr": "ceefdb0bcc84",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.option.nearby": {
-  "en": "88090209e5fe",
-  "tr": "459c48231494",
-  "by": "claude-in-session"
- },
- "mods.travelOptions.option.off": {
-  "en": "da7a68734367",
-  "tr": "81d211101ecc",
   "by": "claude-in-session"
  },
  "mods.travelOptions.option.point": {
@@ -11954,69 +10929,9 @@
   "tr": "80e059fdce74",
   "by": "claude-in-session"
  },
- "mods.weaponWidget.Bob.BobWhileIdle.description": {
-  "en": "2d3e5a0595cd",
-  "tr": "d964b1adcd4c",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.Length.description": {
-  "en": "c41e3b59724d",
-  "tr": "2e2b76bcb77c",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.Offset.description": {
-  "en": "032cf0a5887b",
-  "tr": "5657abe4fd73",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.Shape.description": {
-  "en": "6a14dd5fdf6e",
-  "tr": "85661d84473d",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.SizeX.description": {
-  "en": "4bf47b6b34e5",
-  "tr": "e17b9d93d898",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.SizeY.description": {
-  "en": "eafc60d14110",
-  "tr": "fcb9490a47a4",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.SpeedMove.description": {
-  "en": "e09859e0647a",
-  "tr": "6212ddfca758",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Bob.SpeedState.description": {
-  "en": "cdc96eafe40a",
-  "tr": "c52efe262866",
-  "by": "claude-in-session"
- },
  "mods.weaponWidget.Enabled.description": {
   "en": "d45351dda5e7",
   "tr": "c6d3da2c9018",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Inertia.ForwardDepth.description": {
-  "en": "209176f0c1d4",
-  "tr": "827a2bcb93b6",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Inertia.ForwardSpeed.description": {
-  "en": "bf25937ad445",
-  "tr": "79a61decc7b2",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Inertia.Scale.description": {
-  "en": "c520aa74f3e2",
-  "tr": "59fab62a5b43",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Inertia.Speed.description": {
-  "en": "0cd72172a403",
-  "tr": "d53a2949625d",
   "by": "claude-in-session"
  },
  "mods.weaponWidget.Miscellaneous.MirrorBows.description": {
@@ -12089,11 +11004,6 @@
   "tr": "262970c33c19",
   "by": "claude-in-session"
  },
- "mods.weaponWidget.Recoil.Chance.description": {
-  "en": "49815d1bc74e",
-  "tr": "0956fd9639e0",
-  "by": "claude-in-session"
- },
  "mods.weaponWidget.Recoil.Condition.description": {
   "en": "218c9b3e74cd",
   "tr": "111bc44f0b82",
@@ -12119,19 +11029,9 @@
   "tr": "c42dd9a5933d",
   "by": "claude-in-session"
  },
- "mods.weaponWidget.Step.Condition.description": {
-  "en": "996cff2a5590",
-  "tr": "75c30417e003",
-  "by": "claude-in-session"
- },
  "mods.weaponWidget.Step.Length.description": {
   "en": "87f077da0797",
   "tr": "85af9748e55f",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Swings.NoDaggerMirroredStrikes.description": {
-  "en": "a1cc926edca1",
-  "tr": "fbc3dcbcd363",
   "by": "claude-in-session"
  },
  "mods.weaponWidget.Swings.Recovery.description": {
@@ -12147,11 +11047,6 @@
  "mods.weaponWidget.Swings.VanillaAlignmentOverride.description": {
   "en": "3dd38f97c826",
   "tr": "556f7ab39971",
-  "by": "claude-in-session"
- },
- "mods.weaponWidget.Swings.VanillaRecoveryOverride.description": {
-  "en": "b12cf604a96d",
-  "tr": "c3c115ca5bf3",
   "by": "claude-in-session"
  },
  "mods.weaponWidget.Swings.Windup.description": {
@@ -15160,8 +14055,8 @@
   "by": "claude-in-session"
  },
  "travel.nav.gatesShut": {
-  "en": "fd358facc6db",
-  "tr": "3a20cd09807f",
+  "en": "17f9bab0aa7c",
+  "tr": "d1411bcb2815",
   "by": "claude-in-session"
  },
  "travelView.planning": {

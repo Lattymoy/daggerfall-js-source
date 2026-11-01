@@ -14,9 +14,9 @@ import {
 import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { Boat, spawnBoat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
+import { ownFile } from '../../ownBoats.mjs';
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
 const ANIMATION = json('animation.json');
 const near = (a, b, eps = 1e-5, what = '') => assert.ok(Math.abs(a - b) <= eps, `${what} ${a} is not ${b}`);
 const nearV = (a, b, eps = 1e-5, what = '') => { assert.equal(a.length, b.length); a.forEach((v, i) => near(v, b[i], eps, `${what}[${i}]`)); };
@@ -266,16 +266,17 @@ test('CSA-E: disabled it stands still; enabled again it starts over - the defaul
 });
 
 test('CSA-E: an override controller is its base with its clips swapped; a reference naming nothing resolves to null', () => {
-  const r = resolveController(ANIMATION, 'Large Lateen');
+  // OWN-WORK4: our large boat's lateen's override (world/ships/ownBoats/ownBoatSails.js) over the Sail Controller
+  const r = resolveController(ANIMATION, 'own/skiff/SkiffLargeLateenSail');
   assert.equal(r.controller, ANIMATION.controllers['Sail Controller']);
-  assert.equal(r.clipOf('Sail Unstowed Right'), ANIMATION.clips['Lateen Unstowed GoodTack']);
-  assert.equal(r.clipOf('Sail Stowed'), ANIMATION.clips['skiffanimations/Lateen Stowed']);
+  assert.equal(r.clipOf('Sail Unstowed Right'), ANIMATION.clips['own/skiff/SkiffLargeLateenSail Right']);
+  assert.equal(r.clipOf('Sail Stowed'), ANIMATION.clips['own/skiff/SkiffLargeLateenSail Stowed']);
   assert.equal(resolveController(ANIMATION, 'Door Controller').clipOf('Door Opened'), ANIMATION.clips['Door Opened']);
   assert.equal(resolveController(ANIMATION, 'Nothing'), null);
 });
 
 // the vendored boats
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: ANIMATION });
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: ANIMATION });
 const ctx = { models: MODELS, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: () => [1, 2], modelBounds: () => ({ min: [0, 0, 0], max: [1, 1, 1] }) };
 
 test('CSA-E: on the vendored data every Animator of every hull binds its controller, and every sail enters Stowed', () => {

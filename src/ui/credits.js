@@ -133,54 +133,27 @@ export const CREDITS = Object.freeze({
     }),
     Object.freeze({
       get title() {
-        return t('credits.vorbis.title', 'Vorbis setup headers for FSB5');
-      },
-      // CSA-A: two codebook headers FMOD strips from a Unity audio clip, needed to turn Come Sail Away's sounds back into Ogg files
-      get author() {
-        return t('credits.vorbis.author', 'The {project} authors, and the {foundation} ({library})', {
-          project: 'vgmstream',
-          foundation: 'Xiph.org Foundation',
-          library: 'libvorbis',
-        });
-      },
-      get what() {
-        return t(
-          'credits.vorbis.what',
-          'Two Vorbis setup headers that Unity audio clips leave out. With them, Come Sail Away\u2019s 5 sounds play exactly as the author made them.',
-        );
-      },
-      get terms() {
-        return t(
-          'credits.vorbis.terms',
-          'From vgmstream\u2019s table (ISC-style license) and libvorbis\u2019s encoder output (BSD-3-Clause, Xiph.org). Both licenses are included with the files.',
-        );
-      },
-      vendor: Object.freeze(['vorbis-fsb-setups']),
-      link: 'https://github.com/vgmstream/vgmstream',
-    }),
-    Object.freeze({
-      get title() {
         return t('credits.classSkins.title', 'Daggerfall class skins');
       },
       // SKIN2: an art pack, not a mod (no switch, so no Features row) - Mac's ExistingClasses archive. It names no author for the pack (one folder
-      // names Kamer, for the bounty hunter), so the screen says so rather than crediting a guess; the record is open in
-      // vendor/class-skins/README.md and the registry row.
+      // names Kamer, for the bounty hunter), so the screen says so rather than crediting a guess; OWN-WORK4 retired the pack
+      // (bible/01-Overview/Own-Work.md), and the record stays open there.
       get author() {
         return t('credits.author.unnamed', 'Unnamed ({source})', { source: 'ExistingClasses' });
       },
       get what() {
         return t(
           'credits.classSkins.what',
-          'Daggerfall\u2019s classes as looks for your character in third person: acrobat, assassin, burglar, bounty hunter, dark acolyte, Dark Brotherhood, healer, monk, nightblade, pirate and sorcerer, most in both sexes, plus the original adventurer, in 20 redrawn sprite sheets. Pick one on your profile\u2019s Skin card.',
+          'Daggerfall\u2019s classes as looks for your character in third person: acrobat, assassin, burglar, bounty hunter, dark acolyte, Dark Brotherhood, healer, monk, nightblade, pirate, sorcerer and the original adventurer. The 20 looks are ours, painted on your Daggerfall sprites. Pick one on your profile\u2019s Skin card.',
         );
       },
       get terms() {
         return t(
           'credits.classSkins.terms',
-          'Used with the artists\u2019 permission, on Mac\u2019s word. The archive states no license. Its 1,683 pictures are included unchanged.',
+          'Used with the artists\u2019 permission, on Mac\u2019s word. The looks are now our own, and none of the pack\u2019s pictures is carried.',
         );
       },
-      vendor: Object.freeze(['class-skins']),
+      retired: Object.freeze(['class-skins']),
     }),
   ]),
   mods: Object.freeze([
@@ -288,7 +261,7 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.diverseWeapons.terms',
-          'Used with the author\u2019s permission. The script is under the MIT License, and the sprites are the author\u2019s own paintings.',
+          'Used with the author\u2019s permission. The script is under the MIT License. The weapon pictures are our own, built from your own Daggerfall files.',
         );
       },
       get contact() {
@@ -297,7 +270,7 @@ export const CREDITS = Object.freeze({
           page: 'daggerfallunity mod 242',
         });
       },
-      vendor: Object.freeze(['diverse-weapons']),
+      retired: Object.freeze(['diverse-weapons']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/242',
     }),
     Object.freeze({
@@ -332,13 +305,13 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.rrItems.what',
-          'Two new weapons, the Hatchet and the Short Flail, and a light and a chain armor set in every metal, with their own inventory and paper-doll art. Also lighter small goods, and its loot tables, enemy gear, starting kits and shop stock.',
+          'Two new weapons, the Hatchet and the Short Flail, and a light and a chain armor set in every metal, with our own inventory and paper-doll pictures. Also lighter small goods, and its loot tables, enemy gear, starting kits and shop stock.',
         );
       },
       get terms() {
         return t(
           'credits.rrItems.terms',
-          'Used with the authors\u2019 permission under the MIT License. The 230 sprites are the authors\u2019 own art; the items\u2019 names, numbers and words are our own.',
+          'Used with the authors\u2019 permission under the MIT License. The pictures are our own, and so are the items\u2019 names, numbers and words.',
         );
       },
       get contact() {
@@ -348,7 +321,7 @@ export const CREDITS = Object.freeze({
           { author: 'Hazelnut', forums: 'forums.dfworkshop.net', page: 'daggerfallunity mod 61' },
         );
       },
-      vendor: Object.freeze(['roleplay-realism-items']),
+      retired: Object.freeze(['roleplay-realism-items']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/61',
     }),
     Object.freeze({
@@ -371,7 +344,7 @@ export const CREDITS = Object.freeze({
           { author: 'Hazelnut', forums: 'forums.dfworkshop.net', page: 'daggerfallunity mod 16' },
         );
       },
-      vendor: Object.freeze(['roleplay-realism']),
+      retired: Object.freeze(['roleplay-realism']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/16',
     }),
     Object.freeze({
@@ -387,7 +360,7 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.shieldWidget.terms',
-          'Used with the author\u2019s permission, with the mod\u2019s own 600 sprites.',
+          'Used with the author\u2019s permission. Its shield pictures are our own.',
         );
       },
       get contact() {
@@ -396,7 +369,7 @@ export const CREDITS = Object.freeze({
           page: 'daggerfallunity mod 733',
         });
       },
-      vendor: Object.freeze(['shield-widget']),
+      retired: Object.freeze(['shield-widget']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/733',
     }),
     Object.freeze({
@@ -406,11 +379,14 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.weaponSheathing.what',
-          'Sheathed Morrowind weapons stay on your body, at the hip or on the back in their own scabbards, with a quiver for a bow. Its 71 scabbard models and 3 skeleton add-ons are included and work as they do in OpenMW. The scabbards are by akortunov, Greatness7, Heinrich, London Rook, Lord Berandas, Melchior Dahrk, MementoMoritius, Petethegoat, PikachunoTM and Remiros, as the mod\u2019s readme credits them.',
+          'Sheathed Morrowind weapons stay on your body, at the hip or on the back, with a quiver for a bow, as in OpenMW. The scabbards and the bones they hang on are our own.',
         );
       },
       get terms() {
-        return t('credits.weaponSheathing.terms', 'The mod\u2019s own permission: free to use with credit and no fee.');
+        return t(
+          'credits.weaponSheathing.terms',
+          'Our own scabbards follow the mod\u2019s design, credited as its readme asks.',
+        );
       },
       get contact() {
         return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', {
@@ -418,7 +394,7 @@ export const CREDITS = Object.freeze({
           page: 'morrowind mod 46069',
         });
       },
-      vendor: Object.freeze(['weapon-sheathing']),
+      retired: Object.freeze(['weapon-sheathing']),
       link: 'https://www.nexusmods.com/morrowind/mods/46069',
     }),
     Object.freeze({
@@ -432,10 +408,7 @@ export const CREDITS = Object.freeze({
         );
       },
       get terms() {
-        return t(
-          'credits.handheldTorches.terms',
-          'Used with the author\u2019s permission, with the mod\u2019s own textures.',
-        );
+        return t('credits.handheldTorches.terms', 'Used with the author\u2019s permission. Its pictures are our own.');
       },
       get contact() {
         return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', {
@@ -443,7 +416,7 @@ export const CREDITS = Object.freeze({
           page: 'daggerfallunity mod 780',
         });
       },
-      vendor: Object.freeze(['handheld-torches']),
+      retired: Object.freeze(['handheld-torches']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/780',
     }),
     Object.freeze({
@@ -459,13 +432,13 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.climatesCalories.terms',
-          'Reworked from the mod\u2019s rules with the author\u2019s permission, passed on by Mac. Its own art is used for spoiled food, raw meat and the waterskin. The rules, items and words are our own.',
+          'Reworked from the mod\u2019s rules with the author\u2019s permission, passed on by Mac. The rules, items, words and pictures are our own.',
         );
       },
       get contact() {
         return t('credits.contact.forumsManifest', '{author}, on the DFU forums', { author: 'Ralzar' });
       },
-      vendor: Object.freeze(['climates-calories']),
+      retired: Object.freeze(['climates-calories']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/49',
     }),
     Object.freeze({
@@ -583,11 +556,11 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.travelOptions.terms',
-          'Code under the MIT License (Copyright (C) 2020 Hazelnut; PlayerAutoPilot Copyright (C) 2019 Jedidia). The 3 interface textures are the mod\u2019s own art, used with the author\u2019s permission. The words and settings are our own.',
+          'Code under the MIT License (Copyright (C) 2020 Hazelnut; PlayerAutoPilot Copyright (C) 2019 Jedidia). The words, settings and interface pictures are our own.',
         );
       },
       contact: 'forums.dfworkshop.net',
-      vendor: Object.freeze(['travel-options']),
+      retired: Object.freeze(['travel-options']),
       link: 'https://github.com/ajrb/dfunity-mods',
     }),
     Object.freeze({
@@ -599,16 +572,19 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.dynamicSkies.what',
-          'The sky with Enhanced environments on: a sun and atmosphere (built on Feral Pug\u2019s extension of Unity\u2019s procedural sky), 2 cloud layers for each weather, twinkling stars, Masser and Secunda moving through their phases, its own fog colors and distances, longer sunrises and sunsets, lightning flashes in storms, and pixel snow. The shader, presets and textures are the mod\u2019s own. The Classic skin keeps Daggerfall\u2019s painted sky.',
+          'The sky with Enhanced environments on: a sun and atmosphere, 2 cloud layers for each weather, twinkling stars, Masser and Secunda moving through their phases, fog colors and distances for each weather, longer sunrises and sunsets, lightning flashes in storms, and pixel snow. The Classic skin keeps Daggerfall\u2019s painted sky.',
         );
       },
       get terms() {
-        return t('credits.dynamicSkies.terms', 'Used with the authors\u2019 permission.');
+        return t(
+          'credits.dynamicSkies.terms',
+          'Used with the authors\u2019 permission. The sky, its shader and its pictures are our own.',
+        );
       },
       get contact() {
         return t('credits.contact.discordServer', '{server} Discord server', { server: "Lysandus' Tomb" });
       },
-      vendor: Object.freeze(['dynamic-skies']),
+      retired: Object.freeze(['dynamic-skies']),
       link: 'https://github.com/drcarademono/dynamic-skies',
     }),
     Object.freeze({
@@ -655,17 +631,17 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.eyeOfTheBeholder.what',
-          'Third person without Morrowind data. Scroll the mouse wheel to swing the camera out behind your shoulder. It moves clear of walls, and you are drawn as the mod\u2019s own sprite from 8 directions, standing, walking, attacking and casting, on foot or riding.',
+          'Third person without Morrowind data. Scroll the mouse wheel to swing the camera out behind your shoulder. It moves clear of walls, and you are drawn as a sprite from 8 directions, standing, walking, attacking and casting, on foot or riding.',
         );
       },
       get terms() {
         return t(
           'credits.eyeOfTheBeholder.terms',
-          'Used with the author\u2019s permission, with the mod\u2019s own 166 sprites. The rest are built from your own Daggerfall files.',
+          'Used with the author\u2019s permission. Its pictures are our own, built from your own Daggerfall files.',
         );
       },
       contact: 'rmufrancisco@gmail.com',
-      vendor: Object.freeze(['eye-of-the-beholder']),
+      retired: Object.freeze(['eye-of-the-beholder']),
     }),
     Object.freeze({
       title: 'Immersive Footsteps',
@@ -674,17 +650,17 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.immersiveFootsteps.what',
-          'Footsteps that match the ground: grass, gravel, sand, mud, snow, stone paths and shallow or deep water outdoors, tile, stone or wood floors indoors, dungeon water, and leather, chain or plate boots on stone. Your armor rattles as you walk, and the mod adds its own landing and splash sounds. Comes in 2 sound qualities.',
+          'Footsteps that match the ground: grass, gravel, sand, mud, snow, stone paths and shallow or deep water outdoors, tile, stone or wood floors indoors, dungeon water, and leather, chain or plate boots on stone. Your armor rattles as you walk, with landing and splash sounds too. Comes in 2 sound qualities.',
         );
       },
       get terms() {
         return t(
           'credits.immersiveFootsteps.terms',
-          'Used with the author\u2019s permission, from the author\u2019s MIT-licensed source, with the mod\u2019s 210 sound clips.',
+          'Used with the author\u2019s permission, from the author\u2019s MIT-licensed source. Its sounds are our own.',
         );
       },
       contact: 'forums.dfworkshop.net',
-      vendor: Object.freeze(['immersive-footsteps']),
+      retired: Object.freeze(['immersive-footsteps']),
     }),
     Object.freeze({
       title: 'Better Ambience',
@@ -699,11 +675,11 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.betterAmbience.terms',
-          'Used with the author\u2019s permission under the MIT License, with the 29 sound clips the mod uses, from the author\u2019s repository. Its rain and snow particle changes are not included.',
+          'Used with the author\u2019s permission under the MIT License. Its sounds are our own. Its rain and snow particle changes are not included.',
         );
       },
       contact: 'forums.dfworkshop.net',
-      vendor: Object.freeze(['better-ambience']),
+      retired: Object.freeze(['better-ambience']),
     }),
     Object.freeze({
       title: 'Oblivion Remaster Like Leveling',
@@ -745,7 +721,7 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.horseCart.terms',
-          'Used with the author\u2019s permission, with the mod\u2019s own horse art.',
+          'Used with the author\u2019s permission. The horse pictures are our own, built from your own Daggerfall files.',
         );
       },
       get contact() {
@@ -754,7 +730,7 @@ export const CREDITS = Object.freeze({
           page: 'daggerfallunity mod 1374',
         });
       },
-      vendor: Object.freeze(['horse-cart-and-cargo']),
+      retired: Object.freeze(['horse-cart-and-cargo']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1374',
     }),
     Object.freeze({
@@ -774,9 +750,9 @@ export const CREDITS = Object.freeze({
       author: 'carademono',
       what: 'Daggerfall’s textures remastered: the ground, trees, rocks and plants, city walls and dungeons. Turn it on from the Texture Overhaul card, where its add-ons Masked Roads (with Kokey) and Snowless Swamps and Jungles have their own switches.',
       terms:
-        'Used with the author’s permission. The author’s repaints are included unchanged from the mod’s public repository.',
+        'Used with the author’s permission. Our own rules remaster your own Daggerfall textures; no repaint is carried.',
       contact: 'carademono, through the Lysandus’ Tomb Discord server',
-      vendor: Object.freeze(['vanilla-enhanced']),
+      retired: Object.freeze(['vanilla-enhanced']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/273',
     }),
     // WA1: Kamer's third - after the mill and the wilderness, which the CR1
@@ -845,7 +821,7 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.iliacPuddle.terms',
-          'Used with the author\u2019s permission for its fish pictures. The coastline is rebuilt from your own Daggerfall files.',
+          'Used with the author\u2019s permission. The fish pictures are our own, and the coastline is rebuilt from your own Daggerfall files.',
         );
       },
       get contact() {
@@ -854,7 +830,7 @@ export const CREDITS = Object.freeze({
           page: 'daggerfallunity mod 1304',
         });
       },
-      vendor: Object.freeze(['iliac-puddle-no-more']),
+      retired: Object.freeze(['iliac-puddle-no-more']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1304',
     }),
     Object.freeze({
@@ -886,13 +862,13 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.comeSailAway.what',
-          'A boat of your own to sail. Buy one as parts or as a deed, put it in the water (near a port for a deed) and take the helm. Row with the oars, or raise the sails, trim them to the wind and let it carry you. Pack the boat up to carry it with you. Includes his boats, sails, oars, wind gauge, waves and sounds.',
+          'A boat of your own to sail. Buy one as parts or as a deed, put it in the water (near a port for a deed) and take the helm. Row with the oars, or raise the sails, trim them to the wind and let it carry you. Pack the boat up to carry it with you.',
         );
       },
       get terms() {
         return t(
           'credits.comeSailAway.terms',
-          'Used with the author\u2019s permission, with his own pictures and sounds. Some wave textures are rebuilt from your own Daggerfall files.',
+          'Used with the author\u2019s permission. Its boats, pictures and sounds are made by our own code, to the mod\u2019s design.',
         );
       },
       get contact() {
@@ -901,7 +877,7 @@ export const CREDITS = Object.freeze({
           page: 'daggerfallunity mod 1131',
         });
       },
-      vendor: Object.freeze(['come-sail-away']),
+      retired: Object.freeze(['come-sail-away']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1131',
     }),
     // FORAGE1: Harbinger451's, with the four quest actions it needs restated
@@ -919,10 +895,10 @@ export const CREDITS = Object.freeze({
       get terms() {
         return t(
           'credits.foraging.terms',
-          'Used with the author\u2019s permission. His textures are carried; the items, words and quests are our own.',
+          'Used with the author\u2019s permission. The items, words, quests and textures are our own.',
         );
       },
-      vendor: Object.freeze(['foraging']),
+      retired: Object.freeze(['foraging']),
     }),
     // IT1: kkgobkk's carriages at the gates.
     Object.freeze({
@@ -963,19 +939,19 @@ export const CREDITS = Object.freeze({
       version: '1.0.0',
       author: 'demifiend000',
       what: 'Wind that changes from day to day. Trees and plants sway each in their own way, some days are windy or stormy, gusts come and go with their own sounds, and leaves and snow blow off the branches. Part of the enhanced outdoors.',
-      terms: 'Used with the author\u2019s permission, on Mac\u2019s word, with the mod\u2019s own pictures and sounds.',
+      terms: 'Used with the author\u2019s permission, on Mac\u2019s word. Its pictures and sounds are our own.',
       contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1396)',
-      vendor: Object.freeze(['windfall']),
+      retired: Object.freeze(['windfall']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1396',
     }),
     Object.freeze({
       title: 'Snowfall',
       version: '1.0.5',
       author: 'demifiend000',
-      what: 'Daggerfall\u2019s winter ground repainted with the author\u2019s snow. Part of the enhanced outdoors.',
-      terms: 'Used with the author\u2019s permission, on Mac\u2019s word.',
+      what: 'Daggerfall\u2019s winter ground under fresh snow that drifts and packs where you walk. Part of the enhanced outdoors.',
+      terms: 'Used with the author\u2019s permission, on Mac\u2019s word. The snow is our own.',
       contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1401)',
-      vendor: Object.freeze(['snowfall']),
+      retired: Object.freeze(['snowfall']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1401',
     }),
     Object.freeze({
@@ -983,8 +959,9 @@ export const CREDITS = Object.freeze({
       version: '2',
       author: 'Unnamed (Nexus mod 1390)',
       what: 'The desert ground repainted as pale, rippled dune sand. Part of the enhanced outdoors.',
-      terms: 'Used with the author\u2019s permission, on Mac\u2019s word. The archive names no author.',
-      vendor: Object.freeze(['sands-of-the-alikr']),
+      terms:
+        'Used with the author\u2019s permission, on Mac\u2019s word. The archive names no author. The sand is our own.',
+      retired: Object.freeze(['sands-of-the-alikr']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1390',
     }),
     // KG3 (bible/11-Multiplayer/Kings-Gambit.md section 10.7): the bundle names no author - the credits' own unnamed form

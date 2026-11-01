@@ -1,7 +1,7 @@
 // CLIMB6 (2026-10-01, the Enhanced Climbing arc - bible/03-World/Parkour-Arc.md; Mac: "Definitely want you to use the
 // morrowind model to get correct animations for everything. Be as detailed as possible"): THE MORROWIND BODY ON THE
 // WALL. The skeleton's half (combat/climbRig.js) - the reach solved on whatever skeleton it is handed: Weapon
-// Sheathing's vendored retail-shaped biped (bones along their local X, three-digit hands, clavicles under the neck)
+// Sheathing's retired retail-shaped biped, now our own (bones along their local X, three-digit hands, clavicles under the neck)
 // and chains of random rest frames take a hold to the same place; the hands set by their fingers and palms, the
 // elbows and knees to their poles, the body fitted under its hands, the shoulders drawn up. The climb's half
 // (player/climb/climbPose.js) - every hold and every move puts the limbs ON the stone the motor proved: the hang's hands on
@@ -13,6 +13,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { RETAIL_SKELETON_BYTES } from '../../fixtures/mw/retailRig.mjs';
 import { parseNif } from '../../../src/formats/morrowind/mwNifFile.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../../src/formats/morrowind/mwSkin.js';
 import {
@@ -30,8 +31,7 @@ import { climbPoseOf, climbMoveOf } from '../../../src/player/motor.js';
 import { PeerClimbTrack, peerMove } from '../../../src/net/peer/peerClimb.js';
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
-const RETAIL = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';
-const retail = () => buildSkeleton(parseNif(new Uint8Array(readFileSync(new URL('../../../' + RETAIL, import.meta.url)))));
+const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

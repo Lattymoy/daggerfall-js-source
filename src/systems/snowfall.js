@@ -1,8 +1,8 @@
 // SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be
 // on by default and integrate into our enhanced environments seamlessly") - SNOWFALL 1.0.5 (demifiend000's Dynamic
-// Snow, vendored at vendor/snowfall/), ported off its assembly: the law the snow lies by, pure. The runtime that stands
-// it round the player is systems/snowfallRuntime.js (DynamicSnowController, MidDetailSnowRing, StreamedSnowBlanket-
-// Prototype, FarTrackMask) and the surface it draws is render/snowfallSurface.js (the mod's shader).
+// Snow), ported off its assembly: the law the snow lies by, pure. The runtime that stands it round the player is
+// systems/snowfallRuntime.js (DynamicSnowController, MidDetailSnowRing, StreamedSnowBlanketPrototype, FarTrackMask) and
+// the surface it draws is render/snowfallSurface.js (render/snowfallGlsl.js: our own GLSL, OWN-WORK4).
 //
 // What is here, each its class or member whole:
 //   - DynamicSnowSettings and DynamicSnowMod.ReadSettings - the mod's settings as it clamps them;
@@ -10,8 +10,8 @@
 //     clear hours), between a minimum and a maximum, the location's and the wild's;
 //   - SnowDepthRules.Resolve - the depth at a place: the wild's lerped to the location's by the settlement weight, a
 //     road's berm risen, the authored locations' cap and the path's;
-//   - SnowCoverageData - the mod's surface masks (56 records of 64 x 64 coverage bytes for each winter archive), read
-//     with the tile's turn, and the main roads' distance fields;
+//   - SnowCoverageData - the surface masks (56 records of 64 x 64 bytes each winter archive; OWN-WORK4: ours,
+//     ownTexturePacks.js ownSnowMasks), read with the tile's turn, and the main roads' distance fields;
 //   - SnowContactRamp, CorpseImpressions, PersistentTrackField (the tracks kept in the save, 0.5 m cells), the track
 //     rasterizer the three masks share, and the Basic Roads classifier the context reads roads with;
 //   - SnowContextData's pure members (OutsideWeight, IsVanillaLocation) and BlanketSurfaceSamples.InterpolateQuad.

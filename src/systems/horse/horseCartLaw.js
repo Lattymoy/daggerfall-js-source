@@ -3,7 +3,7 @@
 // online integration functionality").
 //
 // demifiend000's Horse Cart and Cargo 1.0.0-rc12 for Daggerfall Unity, read off the shipped assembly's IL
-// (vendor/horse-cart-and-cargo/il/TrailingWagon.il.txt, `tools/ilDump.py`), every function below naming the method
+// (its TrailingWagon.dll, dumped by `tools/ilDump.py`), every function below naming the method
 // it restates and the IL offset it was read at. This file is the PURE half of `TrailingWagonRuntime` and its
 // companions: the enums and constants, the save record and its normalisation, the persistence-setting resolutions,
 // the availability predicates, the transport and activation decisions, the interior-entry law, the scene/world

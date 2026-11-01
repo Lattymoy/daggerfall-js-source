@@ -2,12 +2,12 @@
 // "Next mod we will be adding 1:1").
 //
 // The mod is two MonoBehaviours whose sources the author publishes under
-// MIT (vendored under vendor/immersive-footsteps/Scripts/), restated in
-// systems/immersiveFootsteps.js. The pins here hold the restatement to
-// the SOURCE - the tile and archive tables are parsed OUT OF THE .cs and
-// compared, not retyped - and to the seams: the Mods pane entry against
-// the shipped modsettings.json, the 210 clips against LoadAudio's asset
-// names and the manifest, the row, the credit, the README; then the laws
+// MIT, restated in systems/immersiveFootsteps.js. OWN-WORK4 (2026-10-31):
+// the vendored copy is retired and its clips are our own (audio/synth/), so
+// the pins hold the restatement to the SOURCE as literal tables (the tile and
+// archive tables as Object.cs wrote them, the settings as modsettings.json
+// shipped them) and to the seams: LoadAudio's 105 names a quality, each a
+// clip our synth makes at the mod's length and rate, the row, the credit; then the laws
 // driven through the component with a fixed-step frame: the step and
 // sway timers under walk / run / half speed, the mount, the two switches,
 // the swim distance, the exterior climate ladder tile by tile, the
@@ -28,7 +28,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  createImmersiveFootsteps, readFootstepSettings, clipTable, clipNames, clipFolder, clipPath, soundKey,
+  createImmersiveFootsteps, readFootstepSettings, clipTable, clipNames, soundKey, makeFootstepClip,
   unityMaterialName, getFormattedTextureArchiveFromMaterialName, interiorFloorType, rollRandomAudioClip, coinFlip,
   checkClimateTileTables, checkBuildingClimateFloorTypeTables, CLIMATE_TILE_TABLES, BUILDING_FLOOR_TABLES,
   isSnowyClimate, isGrassyClimate, isRockyClimate, isSandyClimate, isSwampyClimate,
@@ -46,6 +46,7 @@ import { TRANSPORT_MODES } from '../../src/systems/transport.js';
 import { SOUND } from '../../src/systems/soundClips.js';
 import { equipTableOf } from '../../src/systems/equip.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { immersiveFootstepsRecipe, IF_CLIP_MS, IF_RATE } from '../../src/audio/synth/clips.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -55,19 +56,19 @@ const defaults = () => Object.fromEntries(Object.entries(MOD_SETTINGS[V].keys).m
 const boots = (material) => ({ group: 'Armor', templateIndex: 108, material });
 const armor = (material) => ({ group: 'Armor', templateIndex: 102, material });
 
-/** A component with a fixed-step frame: the store is live, the audio records, the clips are bytes of nothing, the dice are scripted. */
+/** A component with a fixed-step frame: the store is live, the audio records, the clips are a sample of nothing, the dice are scripted. */
 function rig(over = {}, { rolls = [], fetchOk = () => true } = {}) {
   const store = { ...defaults(), ...over };
   const shots = [], registered = [];
   const audio = {
-    registerSound: async (k, b) => { registered.push(k); return b.length > 0; },
+    registerSamples: (k, samples) => { registered.push(k); return samples.length > 0; },
     playOneShot: (k, v) => shots.push([k, v]),
   };
   let ri = 0;
   const random = () => (ri < rolls.length ? rolls[ri++] : 0.0);
   const c = createImmersiveFootsteps({
     audio, settings: () => readFootstepSettings(() => store), random,
-    fetchClip: async (name) => (fetchOk(name) ? new Uint8Array([1]) : new Uint8Array(0)),
+    makeClip: async (name) => ({ samples: new Float32Array(fetchOk(name) ? 1 : 0), rate: 22050 }),
   });
   const entity = { items: [], activeEffects: [] };
   const slots = equipTableOf(entity);
@@ -87,19 +88,37 @@ function rig(over = {}, { rolls = [], fetchOk = () => true } = {}) {
 
 // ═══ the settings, the assets, the seams ══════════════════════════════════
 
-test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, the mod\'s own words; the manifest; the row; the curated keys; the credit; the README', () => {
+// OWN-WORK4 (2026-10-31): vendor/immersive-footsteps is retired. Its manifest and modsettings.json, as they read at
+// cc44705af, are written here so a changed default, range or option still fails the pins below.
+const SHIPPED_MANIFEST = Object.freeze({
+  ModTitle: 'ImmersiveFootsteps', ModVersion: '1.01', ModAuthor: 'Kirk.O', DFUnity_Version: '1.0.0', GUID: '8c75cd21-ca71-4841-b637-7728433c99f1',
+  clips: 210, scripts: Object.freeze(['ImmersiveFootstepsMain.cs', 'ImmersiveFootstepsObject.cs']),
+});
+/** modsettings.json, key by key: [section.name, $type, Value, [Min, Max] or Options]. */
+const SHIPPED_SETTINGS = Object.freeze([
+  ['AudioQualitySettings.SoundClipQuality', 'MultipleChoiceKey', 0, ['Low-Quality (Retro)', 'High-Quality']],
+  ['FootstepSettings.AllowFootstepSounds', 'ToggleKey', true],
+  ['FootstepSettings.FootstepVolumeMulti', 'SliderFloatKey', 1.0, [0, 10]],
+  ['FootstepSettings.FootstepFrequency', 'SliderFloatKey', 0.6, [0.3, 3.0]],
+  ['ArmorSwaySettings.AllowArmorSwaySounds', 'ToggleKey', true],
+  ['ArmorSwaySettings.ArmorSwayVolumeMulti', 'SliderFloatKey', 1.0, [0, 10]],
+  ['ArmorSwaySettings.ArmorSwayFrequency', 'SliderFloatKey', 0.6, [0.3, 3.0]],
+  ['ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings', 'ToggleKey', true],
+  ['ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging', 'ToggleKey', false],
+  ['ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs', 'ToggleKey', true],
+]);
+
+test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, our own words; the manifest; the row; the curated keys; the credit', () => {
   const m = MOD_SETTINGS[V];
   assert.ok(m, 'the vendor entry');
-  const manifest = JSON.parse(rd('vendor/immersive-footsteps/immersive-footsteps.dfmod.json'));
+  const manifest = SHIPPED_MANIFEST;
   assert.equal(manifest.GUID, IMMERSIVE_FOOTSTEPS_MOD.guid);
   assert.equal(manifest.ModTitle, IMMERSIVE_FOOTSTEPS_MOD.title); assert.equal(manifest.ModVersion, IMMERSIVE_FOOTSTEPS_MOD.version); assert.equal(manifest.ModAuthor, IMMERSIVE_FOOTSTEPS_MOD.author);
   assert.equal(manifest.DFUnity_Version, IMMERSIVE_FOOTSTEPS_MOD.dfunity);
   assert.equal(m.title, 'Immersive Footsteps'); assert.equal(m.author, manifest.ModAuthor);
-  assert.equal(manifest.Files.filter((f) => /\.mp3$/i.test(f)).length, 210, 'the 210 clips the manifest names');
-  assert.equal(manifest.Files.filter((f) => /\.cs$/.test(f)).length, 2, 'the two scripts the manifest names - vendored from the author\'s MIT repository');
-  for (const f of manifest.Files.filter((f) => /\.cs$/.test(f))) assert.ok(rd(`vendor/immersive-footsteps/Scripts/${f.split('/').pop()}`).length > 10000, `${f} is vendored`);
-  assert.match(rd('vendor/immersive-footsteps/Scripts/ImmersiveFootstepsMain.cs'), /License:\s+MIT License/, 'the main script carries the author\'s MIT header (the object script has none; the README says so)');
-  const shipped = JSON.parse(rd('vendor/immersive-footsteps/modsettings.json'));
+  assert.equal(manifest.clips, 210, 'the 210 clips the manifest names - each name now a clip of ours');
+  assert.equal(Object.values(IF_CLIP_MS).flat().length * 2, manifest.clips, 'OWN-WORK4: our synth answers every one, in both qualities');
+  assert.equal(manifest.scripts.length, 2, 'the two scripts the manifest names, from the author\'s MIT repository');
   // PLAIN-TEXT (2026-10-19): every line the mod wrote in Title Case with "|| Default = True", said plainly for a player (the two logging keys say they do nothing here) - their words, exactly
   const PLAIN = {
     'AudioQualitySettings.SoundClipQuality': 'Quality of the footstep sounds',
@@ -115,20 +134,19 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   };
   let n = 0;
   const kinds = new Set();
-  for (const section of shipped.Sections) {
-    for (const k of section.Keys) {
+  for (const [name, kind, Value, range] of SHIPPED_SETTINGS) {
+    {
+      const k = { Value, Min: range?.[0], Max: range?.[1], Options: range };
       n += 1;
-      const name = `${section.Name}.${k.Name}`;
       const def = m.keys[name];
       assert.ok(def, `${name} is on the pane`);
       assert.ok(SETTING_KEYS.includes(name), `${name} is one the component reads`);
-      const kind = k.$type.slice(k.$type.lastIndexOf('.') + 1);
       kinds.add(kind);
       if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def) && !isTextKey(def) && !isTupleKey(def), name); }
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
       else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
       else assert.fail(`${name}: a key kind the mod does not ship (${kind})`);
-      assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
+      assert.equal(def.description, PLAIN[name], `${name}'s description is our own plain words`);
     }
   }
   assert.equal(n, 10, 'the four sections carry ten keys');
@@ -144,18 +162,16 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /immersive-footsteps/);
   assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'sound');   // FT18: under Sound
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k} is a real key`);
-  const credit = CREDITS.mods.find((c) => c.vendor?.includes(V));
+  // the credit stays while our code follows the mod's design (Own-Work.md step 6); `retired` once its row is written
+  const credit = CREDITS.mods.find((c) => c.title === 'Immersive Footsteps');
   assert.ok(credit, 'credited on the About screen');
-  assert.equal(credit.title, 'Immersive Footsteps'); assert.equal(credit.version, '1.01'); assert.equal(credit.author, 'Kirk.O');
-  assert.match(credit.terms, /MIT/); assert.match(credit.terms, /210/);
-  const readme = rd('vendor/immersive-footsteps/README.md');
-  assert.match(readme, /Immersive Footsteps 1\.01/); assert.match(readme, /Kirk\.O/); assert.match(readme, /MIT/); assert.match(readme, /Permission/);
-  assert.ok(!readme.includes('kirkoliveri'), 'the manifest\'s ContactInfo stays out of the note (HT1\'s precedent)');
+  assert.ok([...(credit.retired ?? credit.vendor ?? [])].includes(V), 'its key');
+  assert.equal(credit.version, '1.01'); assert.equal(credit.author, 'Kirk.O');
+  assert.match(credit.terms, /MIT/);
+  // OWN-WORK4: the vendor README's four text pins left with it.
 });
 
-test('IF1: LoadAudio\'s 105 names per quality - Main is clips 1-3, Alt 4-6, four sways, two landings, one splash - and every one is a vendored file the manifest names, in the folder the bundle keeps it', () => {
-  const manifest = JSON.parse(rd('vendor/immersive-footsteps/immersive-footsteps.dfmod.json'));
-  const named = new Set(manifest.Files.filter((f) => /\.mp3$/i.test(f)).map((f) => f.split('/').pop()));
+test('IF1: LoadAudio\'s 105 names per quality - Main is clips 1-3, Alt 4-6, four sways, two landings, one splash - and every one is a clip our synth makes (OWN-WORK4), at the mod\'s length and the quality\'s rate', () => {
   for (const q of [SOUND_CLIP_QUALITY.Low, SOUND_CLIP_QUALITY.High]) {
     const t = clipTable(q);
     const P = q === SOUND_CLIP_QUALITY.High ? 'HQ' : 'LQ';
@@ -171,38 +187,42 @@ test('IF1: LoadAudio\'s 105 names per quality - Main is clips 1-3, Alt 4-6, four
     assert.equal(names.length, 105);
     assert.equal(new Set(names).size, 105, 'no name twice');
     for (const name of names) {
-      assert.ok(named.has(`${name}.mp3`), `${name} is a file the manifest names`);
-      assert.ok(existsSync(join(root, clipPath(name))), `${name} is vendored at ${clipPath(name)}`);
+      const r = immersiveFootstepsRecipe(name);
+      assert.ok(r, `${name} is a clip our synth makes`);
+      assert.equal(r.rate, q === SOUND_CLIP_QUALITY.High ? 44100 : 22050, `${name}: the quality's rate`);
+      assert.equal(r.retro, q === SOUND_CLIP_QUALITY.Low, `${name}: Low is the retro quality`);
+      assert.ok(r.seconds > 0.15 && r.seconds < 1, `${name}: the mod's own length`);
     }
   }
-  // the folders are the author's: HQ Armor_Footsteps / Climate_Footsteps / Armor_Swaying / Fall_Landing, LQ Armor / Climate / Armor_Swaying / Fall_Landing
-  assert.equal(clipFolder('HQ_Plate_Footstep_1'), 'High_Quality/Armor_Footsteps'); assert.equal(clipFolder('LQ_Plate_Footstep_1'), 'Low_Quality/Armor');
-  assert.equal(clipFolder('HQ_Snow_Footstep_6'), 'High_Quality/Climate_Footsteps'); assert.equal(clipFolder('LQ_Deep_Water_Footstep_2'), 'Low_Quality/Climate');
-  assert.equal(clipFolder('HQ_Leather_Swaying_4'), 'High_Quality/Armor_Swaying'); assert.equal(clipFolder('LQ_Water_Landing_1'), 'Low_Quality/Fall_Landing');
-  // and nothing else is vendored under Audio/: 210 files, all named
-  let count = 0;
-  for (const q of ['High_Quality', 'Low_Quality']) {
-    for (const d of readdirSync(join(root, 'vendor/immersive-footsteps/Audio', q))) {
-      for (const f of readdirSync(join(root, 'vendor/immersive-footsteps/Audio', q, d))) { count++; assert.ok(named.has(f), `${f} is the bundle's`); }
-    }
-  }
-  assert.equal(count, 210);
+  assert.deepEqual(IF_RATE, { HQ: 44100, LQ: 22050 });
+  assert.equal(immersiveFootstepsRecipe('HQ_Grass_Footstep_7'), null, 'a name LoadAudio never asks for is no clip');
+  assert.equal(immersiveFootstepsRecipe('HQ_Unarmored_Hard_Landing_2').heavy, true, '[1] is the fall that hurt (CheckToUseHardFallSounds)');
+  assert.equal(immersiveFootstepsRecipe('LQ_Unarmored_Hard_Landing_1').heavy, false);
+  assert.equal(immersiveFootstepsRecipe('HQ_Wood_Footstep_2').seed, immersiveFootstepsRecipe('LQ_Wood_Footstep_2').seed, 'one sound in two qualities');
+  assert.equal(makeFootstepClip('HQ_Grass_Footstep_1'), null, 'node holds no AudioContext: the default maker makes nothing');
   assert.equal(soundKey('HQ_Grass_Footstep_1'), 'if:HQ_Grass_Footstep_1', 'the engine\'s registered-buffer key');
 });
 
-// ═══ the tables, parsed out of the source ══════════════════════════════════
+// ═══ the tables, as the source wrote them ══════════════════════════════════
 
-/** The `static Dictionary<byte, bool> nameTileLookup = new ... { {5,true}, ... };` blocks of Object.cs, by their key string. */
-function sourceTables() {
-  const src = rd('vendor/immersive-footsteps/Scripts/ImmersiveFootstepsObject.cs');
-  const byVar = {};
-  for (const m of src.matchAll(/static Dictionary<(?:byte|string), bool> (\w+) = new Dictionary<(?:byte|string), bool>\s*\{([\s\S]*?)\};/g)) {
-    byVar[m[1]] = new Set([...m[2].matchAll(/\{\s*"?([^",\s]+)"?\s*,\s*true\s*\}/g)].map((x) => (/^\d+$/.test(x[1]) ? Number(x[1]) : x[1])));
-  }
-  const keyed = {};
-  for (const m of src.matchAll(/\{"([A-Za-z_]+)",(\w+Lookup)\}/g)) keyed[m[1]] = byVar[m[2]];
-  return keyed;
-}
+/** OWN-WORK4: Object.cs's tables as the author wrote them (ImmersiveFootstepsObject.cs at ac03581, read at cc44705af), by key. */
+const SOURCE_TABLES = Object.freeze({
+  Shallow_Water: [5, 6, 8, 20, 21, 23, 30, 31, 33, 34, 35, 36, 49],
+  Path: [46, 47, 55],
+  Temperate_Dirt: [1, 4, 7, 10, 13, 25, 26, 28, 37, 38, 39, 51, 52, 54],
+  Temperate_Stone: [3, 14, 16, 17, 24, 27, 29, 32, 43, 44, 45, 50],
+  Mountain_Dirt: [1, 4, 7, 10, 13, 25, 26, 28, 37, 38, 39, 51, 52, 54],
+  Mountain_Stone: [3, 14, 16, 17, 24, 27, 29, 32, 43, 44, 45, 50],
+  Desert_Gravel: [2, 9, 11, 12, 15, 18, 19, 22, 39, 40, 41, 42, 45, 53],
+  Desert_Stone: [3, 14, 16, 17, 24, 26, 27, 29, 32, 38, 43, 44],
+  Swamp_Bog: [1, 4, 7, 10, 13, 25, 26, 28, 37, 38, 39, 50, 51, 52, 54],
+  Swamp_Grass: [3, 14, 16, 17, 24, 27, 29, 32, 43, 44, 45],
+  Swamp_Snow_Alt: [1, 7, 10, 11, 13, 25, 26, 28, 37, 38, 39, 43, 48, 50, 52],
+  Tile_Floor: ['111_2', '111_3', '137_3', '141_0', '141_1', '141_2', '141_3', '144_3', '16_3', '311_3', '337_3', '341_0', '341_1', '341_2', '341_3', '363_3', '37_3', '40_3', '411_3', '41_0', '41_1', '41_2', '41_3', '437_3', '440_3', '444_3', '44_3', '463_3', '63_3'],
+  Stone_Floor: ['140_3', '160_3', '163_3', '340_3', '360_3', '366_3', '416_3', '460_3', '466_3', '60_3'],
+  Wood_Floor: ['116_3', '128_3', '166_3', '171_3', '28_3', '316_3', '328_3', '344_3', '428_3', '66_3'],
+});
+const sourceTables = () => Object.fromEntries(Object.entries(SOURCE_TABLES).map(([k, v]) => [k, new Set(v)]));
 
 test('IF1: the eleven climate tile tables and the three building floor tables are the source\'s, entry for entry', () => {
   const src = sourceTables();
@@ -257,7 +277,7 @@ test('IF1: the stride owns nothing until the clips are in, then DisableVanillaFo
   const r = rig();
   assert.equal(r.c.ownsStride(), false, 'before the load');
   r.c.update(FIXED_DELTA_TIME, r.outdoors());
-  assert.equal(r.c.ownsStride(), false, 'the fetch is in flight');
+  assert.equal(r.c.ownsStride(), false, 'the clips are still being made');
   await r.c.settle();
   assert.equal(r.c.ownsStride(), true, 'LoadAudio done, DisableVanillaFootsteps');
   assert.equal(r.registered.length, 105, 'the low-quality set registered, by name');
@@ -598,30 +618,21 @@ test('AUDIT-IF F2: a tile of -1 (off terrain, StreamingWorld.PlayerTileMapIndex\
   assert.equal(checkClimateTileTables('Shallow_Water', -1), false);
 });
 
-test('AUDIT-IF F1: the build never inlines a clip as base64 - the vite rule covers this vendor (since INLINE1, every vendor) and falls through outside vendor/', () => {
-  const viteConfig = rd('vite.config.js');
-  const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(viteConfig);
-  assert.ok(m, 'the callback');
-  const rule = new Function('filePath', `return (${m[1]});`);
-  assert.equal(rule('/x/vendor/immersive-footsteps/Audio/Low_Quality/Climate/LQ_Grass_Footstep_1.mp3'), false, 'never inline a clip');
-  assert.equal(rule('C:\\x\\vendor\\immersive-footsteps\\Audio\\High_Quality\\Fall_Landing\\HQ_Water_Landing_1.mp3'), false, 'and on a Windows path');
-  assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'EOTB5\'s rule still holds');
-  assert.equal(rule('/x/vendor/handheld-torches/Textures/112359_0-0.png'), false, 'INLINE1: every vendor asset is a file - this pin held handheld-torches OUT until Shield Widget\'s 275 sprites showed the allow-list was the bug');
-  assert.equal(rule('/x/src/ui/icons/diamond.png'), undefined, 'everything outside vendor/ keeps the default');
-  // the measurement that found it: 123 of the 210 clips are under Vite's 4 KB default and were inlined (250 KB of base64)
-  let small = 0;
-  for (const q of [SOUND_CLIP_QUALITY.Low, SOUND_CLIP_QUALITY.High]) for (const name of clipNames(q)) if (readFileSync(join(root, clipPath(name))).length < 4096) small++;
-  assert.ok(small > 100, `${small} clips sit under the inline limit - the rule is not academic`);
+test('AUDIT-IF F1 (OWN-WORK4): no clip is a file any more, so none can be inlined - the module neither globs nor fetches; every clip is made', () => {
+  const src = rd('src/systems/immersiveFootsteps.js');
+  assert.doesNotMatch(src, /import\.meta\.glob|\bfetch\(|\.mp3/, 'no file is read for a clip');
+  assert.match(src, /makeClip = makeFootstepClip/, 'the default maker is our synth\'s');
+  assert.match(src, /audio\.registerSamples\(soundKey\(name\), clip\.samples, clip\.rate\)/, 'and the engine takes its PCM');
 });
 
 test('AUDIT-IF F3: LoadAudio puts every clip in flight at once, and one missing clip still fails the whole load', async () => {
   let inFlight = 0, peak = 0;
   const release = [];
   const r = rig({}, { fetchOk: () => true });
-  // a fetch that holds every clip until all 105 have been asked for
+  // a maker that holds every clip until all 105 have been asked for
   const c = createImmersiveFootsteps({
-    audio: { registerSound: async (k, b) => b.length > 0, playOneShot() {} }, settings: () => readFootstepSettings(() => r.store), random: () => 0,
-    fetchClip: (name) => new Promise((res) => { inFlight++; peak = Math.max(peak, inFlight); release.push(() => { inFlight--; res(name === 'LQ_Snow_Footstep_3' ? new Uint8Array(0) : new Uint8Array([1])); }); }),
+    audio: { registerSamples: (k, x) => x.length > 0, playOneShot() {} }, settings: () => readFootstepSettings(() => r.store), random: () => 0,
+    makeClip: (name) => new Promise((res) => { inFlight++; peak = Math.max(peak, inFlight); release.push(() => { inFlight--; res({ samples: new Float32Array(name === 'LQ_Snow_Footstep_3' ? 0 : 1), rate: 22050 }); }); }),
   });
   c.update(0, r.outdoors());
   await new Promise((res) => setTimeout(res, 5));
@@ -629,6 +640,7 @@ test('AUDIT-IF F3: LoadAudio puts every clip in flight at once, and one missing 
   for (const f of release) f();
   await c.settle();
   assert.equal(c.ownsStride(), false, 'one empty clip: Missing sound asset, the mod stays inert');
+  assert.equal(c.status().loaded, false);
 });
 
 // ═══ the hosts ═══════════════════════════════════════════════════════════════

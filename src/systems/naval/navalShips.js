@@ -4,7 +4,7 @@
 // captains sail them as. The port's own numbers - DFU has no cannon, and the mod's hulls none either.
 //
 // THE GUNS SIT WHERE THE HULLS ARE. Every muzzle below was measured off the hull that carries it: the mod's four off
-// the vendored prefabs themselves (the hull's MeshCollider, `vendor/come-sail-away/Models/`, cast at from outside and
+// Come Sail Away 2.1's prefabs themselves (the hull's MeshCollider, cast at from outside and
 // from above at each station - the scratch probe the arc page records), a broadside's guns 0.9 m over the deck they
 // are mounted on, along the waist where that deck runs clear, and a hair outside the planking at that height; hull 2's
 // off Mac's galleon (world/ships/galleonModel.js GALLEON_BATTERIES - AUDIT GN-G11): each broadside gun in the middle of its

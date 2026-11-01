@@ -13,7 +13,8 @@ Every horse the port drew was the one bay horse. There are three sets of it:
   `systems/riding.js`), the horse's head and neck under the first-person view;
 - Horse Cart and Cargo's standing views and walk frames
   (`vendor/horse-cart-and-cargo/Textures`, `scenes/horseCartPool.js`) - the
-  horse that stands, follows, waits and pulls the wagon;
+  horse that stands, follows, waits and pulls the wagon (OWN-WORK4: ours now,
+  `systems/horse/horseArt.js`, built from Daggerfall's rider records);
 - Eye Of The Beholder's five riders (`vendor/eye-of-the-beholder`, archives
   112382-112386), horse and rider in ONE picture - the third-person body in
   the saddle, and every other player's.

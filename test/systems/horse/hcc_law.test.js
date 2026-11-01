@@ -1,6 +1,6 @@
 // HCC (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance its online integration functionality"):
 // THE LAW, PINNED BY EXECUTION - systems/horse/horseCartLaw.js is TrailingWagonRuntime's pure arithmetic read off
-// TrailingWagon.dll's IL (vendor/horse-cart-and-cargo/il/). Every pin here drives a function with the values the
+// Horse Cart and Cargo 1.0.0-rc12's TrailingWagon.dll IL. Every pin here drives a function with the values the
 // IL compares and expects what the IL branches to; a pin that reads the same number twice is a mutant's meal.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

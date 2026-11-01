@@ -5,7 +5,6 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
 import {
   buildWaveMesh, waveFrameTimeOf, waveDitherOf, stepWaveFrame, isDayHour, WAVE_MATERIAL, BAYER_8X8, WAVE_FRAME_COUNT,
   WAVE_ARCHIVE, WAVE_RECORD, WAVE_LIFT, WAVE_SCALE,
@@ -13,13 +12,10 @@ import {
 import { WAVE_FS } from '../../../src/render/comeSailAwayRender.js';
 import { composeTiledPicture } from '../../../src/formats/derivedTexture.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL } from '../../../src/systems/comeSailAway/comeSailAway.js';
-import { NAMED_MATERIALS, openBundle } from '../../../tools/comeSailAwayExtract.mjs';
-import { userStrings } from '../../../tools/lib/clrUserStrings.mjs';
-import { decodeTexture2D, CLASS_ID } from '../../../src/formats/unity/unityBundle.js';
+import { OWN_MATERIALS } from '../../../src/world/ships/ownBoats/ownBoatFiles.js';
+import { waveSpecs, wavePaint, foamPicture, WAVE_SIZE, FOAM_SIZE, WAVE_KEY } from '../../../src/systems/comeSailAway/csaPictures.js';
 
 const f = Math.fround;
-const VENDOR = new URL('../../../vendor/come-sail-away/', import.meta.url);
-const vjson = (p) => JSON.parse(readFileSync(new URL(p, VENDOR), 'utf8'));
 const near = (a, b, eps = 1e-5, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b}`);
 
 /** A heightmap from a set of land pixels (everything else the sea's 2), and rays that meet nothing. */
@@ -117,35 +113,40 @@ test('CSA-F: KEPT BUG - currentNeighbors is taken in every water pixel\'s loop (
 
 // ── the frames, the material and the shader ─────────────────────────────────────
 
-test('CSA-F: the material is the bundle\'s CurrentMaterial as the tool carried it - Daggerfall/Dither/Wave, the first frame tiled ten times, tinted (0.5, 0.75, 1), cut at a half, dithered from a half to one until LoadSettings sets it; its pattern BayerDither8x8', () => {
-  const m = vjson('Models/materials.json').CurrentMaterial;
+test('CSA-F: the material is CurrentMaterial as Come Sail Away 2.1 set it (OWN-WORK4: held as the table it was) - Daggerfall/Dither/Wave, the first frame tiled ten times, tinted (0.5, 0.75, 1), cut at a half, dithered from a half to one until LoadSettings sets it', () => {
+  assert.deepEqual(
+    [[...WAVE_MATERIAL.tile], [...WAVE_MATERIAL.color], WAVE_MATERIAL.cutoff, WAVE_MATERIAL.ditherStart, WAVE_MATERIAL.ditherEnd],
+    [[10, 10], [0.5, 0.75, 1, 1], 0.5, 0.5, 1],
+  );
+  const m = OWN_MATERIALS.CurrentMaterial;
   assert.equal(m.shader, 'Daggerfall/Dither/Wave');
-  assert.deepEqual(m.textures._MainTex, { texture: '112395_2-0', scale: [...WAVE_MATERIAL.tile], offset: [0, 0] });
-  assert.equal(m.textures._DitherPattern.texture, 'BayerDither8x8');
-  assert.deepEqual(m.colors._Color, [...WAVE_MATERIAL.color]);
-  assert.equal(m.floats._Cutoff, WAVE_MATERIAL.cutoff);
-  assert.equal(m.floats._DitherStart, WAVE_MATERIAL.ditherStart);
-  assert.equal(m.floats._DitherEnd, WAVE_MATERIAL.ditherEnd);
-  // every material the assembly loads by name (mod.GetAsset<Material>("....mat"): an ldstr on its #US heap) is one the
-  // tool carries beside the prefabs'
-  const heap = userStrings(new Uint8Array(readFileSync(new URL('Come Sail Away.dll', VENDOR))));
-  assert.deepEqual(heap.filter((x) => x.endsWith('.mat')), NAMED_MATERIALS.map((n) => `${n}.mat`));
-  assert.deepEqual([...NAMED_MATERIALS], ['CurrentMaterial']);
+  assert.deepEqual(m.textures._MainTex, { texture: '112395_2-0', scale: [...WAVE_MATERIAL.tile] });
 });
 
-test('CSA-F: InitializeWaveTextures finds thirty-two frames - 112395_2-0 to -31, each one of two paints over TEXTURE.303 record 1 keyed ff00ffff (the frames are rebuilt, never shipped)', () => {
-  const d = vjson('Textures/derived.json');
-  const frames = Object.keys(d).filter((k) => k.startsWith(`${WAVE_ARCHIVE}_${WAVE_RECORD}-`));
-  assert.equal(frames.length, WAVE_FRAME_COUNT);
-  for (let i = 0; i < WAVE_FRAME_COUNT; i++) {
-    const s = d[`${WAVE_ARCHIVE}_${WAVE_RECORD}-${i}`];
-    assert.ok(s, `frame ${i}`);
-    assert.deepEqual(s.from, [303, 1]);
-    assert.equal(s.key, 'ff00ffff');
-    assert.deepEqual(s.size, [640, 640]);
+test('CSA-F / OWN-WORK4: InitializeWaveTextures finds thirty-two frames (112395_2-0 to -31) - ours, each one of our two paints scrolled, its crests keyed ff00ffff over our own foam; none is a picture in the tree', () => {
+  assert.deepEqual([WAVE_ARCHIVE, WAVE_RECORD, WAVE_FRAME_COUNT], [112395, 2, 32]);
+  const specs = waveSpecs();
+  assert.equal(specs.length, WAVE_FRAME_COUNT);
+  for (const [i, s] of specs.entries()) {
+    assert.deepEqual(s.size, [WAVE_SIZE, WAVE_SIZE], `frame ${i}`);
+    assert.equal(s.paint, i % 2);
+    assert.ok(s.scroll >= 0 && s.scroll < WAVE_SIZE && s.tile[1] >= 0 && s.tile[1] < FOAM_SIZE);
   }
-  assert.equal(new Set(frames.map((k) => d[k].paint)).size, 2);
-  assert.ok(!existsSync(new URL(`Textures/${WAVE_ARCHIVE}_${WAVE_RECORD}-0.png`, VENDOR)), 'no frame is carried as a picture');
+  assert.equal(new Set(specs.map((s) => `${s.paint}:${s.scroll}`)).size, WAVE_FRAME_COUNT, 'every frame its own');
+  assert.equal(WAVE_KEY, 'ff00ffff');
+  for (const k of [0, 1]) {
+    const p = wavePaint(k);
+    let key = 0, face = 0, clear = 0;
+    for (let i = 0; i < p.data.length; i += 4) {
+      const [r, g, b, a] = p.data.subarray(i, i + 4);
+      if (r === 255 && g === 0 && b === 255 && a === 255) key++;
+      else if (a === 255) face++;
+      else clear++;
+    }
+    assert.ok(key > 0 && face > key && clear > face, `paint ${k}: crests, the faces under them, clear water between (${key}, ${face}, ${clear})`);
+  }
+  assert.deepEqual([foamPicture().width, foamPicture().height], [FOAM_SIZE, FOAM_SIZE]);
+  assert.deepEqual(wavePaint(1).data, wavePaint(1).data, 'painted the same every time');
 });
 
 test('CSA-F: LoadSettings\' numbers - the frame time reads Speed in whole hundreds (the integer division, kept): under 100 a quarter second, 100-199 an eighth, 200 none; the dither ends at half the Length and starts at the Fade\'s share of that', () => {
@@ -196,12 +197,6 @@ test('CSA-F: the Bayer table is the 8x8 ordered-dither matrix (its ranks the rec
     3, 192, 50, 239, 16, 204, 63, 251, 129, 66, 177, 114, 141, 78, 188, 126, 34, 224, 20, 208, 47, 235, 30, 220, 161, 98, 145, 82, 173, 110, 157, 94,
     12, 200, 59, 247, 8, 196, 55, 243, 137, 75, 184, 122, 133, 71, 180, 118, 43, 231, 27, 216, 39, 228, 24, 212, 169, 106, 153, 90, 165, 102, 149, 86,
   ]);
-  if (process.env.CSA_BUNDLE && existsSync(process.env.CSA_BUNDLE)) {
-    const { sf, resource } = openBundle(new Uint8Array(readFileSync(process.env.CSA_BUNDLE)));
-    const o = sf.objects.find((x) => x.classId === CLASS_ID.Texture2D && x.read().m_Name === 'BayerDither8x8');
-    const pic = decodeTexture2D(o.read(), resource);
-    assert.deepEqual(Array.from({ length: 64 }, (_, i) => pic.data[i * 4]), [...BAYER_8X8], 'the bundle\'s own, texel for texel');
-  }
 });
 
 test('CSA-F: the frame composed where it is sampled is composeTiledPicture\'s frame, texel for texel - the shader\'s waveTexel restated here and walked over every texel of a synthetic paint and snow', () => {

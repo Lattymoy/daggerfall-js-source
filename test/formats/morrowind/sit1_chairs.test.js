@@ -5,7 +5,7 @@
 // seat, eye, body, third-person pivot and every road up, the pose on the wire.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { RETAIL_SKELETON_BYTES } from '../../fixtures/mw/retailRig.mjs';
 import {
   CHAIR_MODELS, isChairModel, CHAIR_KIND, CHAIR_SEAT_MIN, CHAIR_SEAT_MAX, CHAIR_SEAT_DEFAULT, CHAIR_BACK_RISE, CHAIR_BACK_REACHES,
   CHAIR_LAP_TOP, CHAIR_PROBE_OVER, CHAIR_FLOOR_STEP, chairSeatOf, chairProbeOver,
@@ -71,7 +71,7 @@ test('SIT1 THE SEAT: the surface under its middle, the side its back rises on an
 
 test('SIT1 THE POSE: the card table\'s seated body SOLVED on retail\'s biped at a chair\'s lap - the hips level with the knees, the hands down on the thighs by the knees, the head at the seated eye', () => {
   const U = MW_UNITS_PER_METER;
-  const sk = buildSkeleton(parseNif(new Uint8Array(readFileSync(new URL('../../../vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif', import.meta.url)))));
+  const sk = buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // OWN-WORK4: our own biped
   const b = climbBones(sk), pose = poseSkeleton(sk, null, null, 0);
   assert.ok(applyClimbRig(sk, pose, GRAPH_ROOT, skeletonSpaceMatrices, seatRequestFor({ feet: [0, 0, 0], yaw: 0, top: CHAIR_LAP_TOP }, { unitsPerMetre: U })));
   const m = skeletonSpaceMatrices(sk, pose, GRAPH_ROOT);

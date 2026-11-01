@@ -1,7 +1,7 @@
 // PISTOL-STANCE (2026-10-22, the owner: "Yeah it needs its own stance ... It needs an idle and active state just like the
 // thunderlock"; bible/05-Combat/Dwarven-Pistolet.md PISTOL-STANCE): THE DWARVEN PISTOLET HELD AS A PISTOL on the
 // Morrowind body - combat/gun/pistolStance.js through combat/gun/gunHold.js, posed through poseAssembly's own `hold` slot on
-// the vendored retail biped in the port's plate, and the first person's on the MW-STEEL4 stand-in. Pinned as the owner
+// our own biped (OWN-WORK4) in the port's plate, and the first person's on the MW-STEEL4 stand-in. Pinned as the owner
 // picked it from rendered sheets: the fist high on the grip ("You can definitely tell the grip is too high up when
 // held"), the idle low with the muzzle down, the aim with the arm OUT ("the arms should be protruding more, not as
 // scrunched up to the face"), a pair each before its own shoulder ("when duel wielding the mirror is too close

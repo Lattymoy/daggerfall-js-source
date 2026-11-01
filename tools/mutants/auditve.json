@@ -58,10 +58,11 @@
     "name": "AUDITVE-worker-never-asked",
     "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
     "tests": [
-      "test/systems/auditve.test.js"
+      "test/systems/auditve.test.js",
+      "test/player/eyeOfTheBeholder/fv_rigdecode.test.js"
     ],
-    "old": "  if (lanes) {",
-    "new": "  if (false) {"
+    "old": "  const lanes = _decodeHere ? false : decodeWorkers();\n  if (lanes) {",
+    "new": "  const lanes = _decodeHere ? false : decodeWorkers();\n  if (false) {"
   },
   {
     "name": "AUDITVE-unsupported-not-falling-back",
@@ -69,8 +70,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "      if (!e?.unsupported) throw e;",
-    "new": "      throw e;"
+    "old": "      if (!e?.unsupported) throw e;\n      _decodeHere = true;",
+    "new": "      throw e;\n      _decodeHere = true;"
   },
   {
     "name": "AUDITVE-dead-worker-asked",
@@ -85,11 +86,10 @@
     "name": "AUDITVE-fallback-not-fitted",
     "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
     "tests": [
-      "test/systems/auditve.test.js",
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);",
-    "new": "  return img;"
+    "old": "  const [w, h] = mipFitSize(spec.w, spec.h, maxSize);",
+    "new": "  const [w, h] = mipFitSize(spec.w, spec.h, Infinity);"
   },
   {
     "name": "AUDITVE-worker-no-fit",
@@ -392,8 +392,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "      const one = (i) =>\n        picture(paths[i]).catch((e) => {\n          console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e);\n          return null;\n        });",
-    "new": "      const one = (i) => picture(paths[i]);"
+    "old": "      const one = (i) =>\n        built(specs[i]).catch((e) => {\n          console.warn(`[own textures] ${specKey(specs[i])} would not build:`, e?.message ?? e);\n          return null;\n        });",
+    "new": "      const one = (i) => built(specs[i]);"
   },
   {
     "name": "AUDITVE-R12-failed-set-cached",
@@ -412,5 +412,23 @@
     ],
     "old": "  _dollArt = _img.size > 0 || _cifRci.size > 0 || entries.some((e) => isItemArchive(e.archive));",
     "new": "  _dollArt = _mods.some((m) => dfmodEnabled(m.key));"
+  },
+  {
+    "name": "AUDITVE-build-worker-never-asked",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "tests": [
+      "test/systems/auditve.test.js"
+    ],
+    "old": "  const lanes = decodeWorkers();\n  if (lanes) {\n    try {\n      return await askWorker(lanes, { build: got.spec, source: got.src }, [got.src.data.buffer]);",
+    "new": "  const lanes = decodeWorkers();\n  if (false) {\n    try {\n      return await askWorker(lanes, { build: got.spec, source: got.src }, [got.src.data.buffer]);"
+  },
+  {
+    "name": "AUDITVE-build-dead-worker-not-falling-back",
+    "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
+    "tests": [
+      "test/systems/auditve.test.js"
+    ],
+    "old": "      if (!e?.unsupported) throw e;\n      _workers = false;",
+    "new": "      throw e;\n      _workers = false;"
   }
 ]

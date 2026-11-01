@@ -24,6 +24,16 @@ stride hosts. On by default (MO1). Pins: 18 in
 `test/systems/if1_immersivefootsteps.test.js`; campaign `tools/mutants/if1.json`,
 30 mutants, 28 killed, 2 equivalent as recorded (AUDIT-IF below).
 
+**OWN-WORK4 (2026-10-31, the owner).** vendor/immersive-footsteps is retired: the manifest, the settings file, the
+two C# sources, the 210 MP3 clips and the README left the tree. Each of the 105 names LoadAudio asks for in each
+quality is now a clip our own synth makes at runtime (`src/audio/synth/`), at its clip's length: High at 44.1 kHz,
+Low (Retro) at 22.05 kHz and 8 bits. Each set is a
+family of its own - a struck body for path, tile and wood, a crowd of grains for grass, gravel, sand and snow, a slap
+and bubbles for mud and water, rings and a plate's modes for armour - drawn from the name's seed, so six steps are six.
+The laws, the switch and the settings are unchanged. `ownsounds.test.js` holds the clips and
+`if1_immersivefootsteps.test.js` the settings and tables as literals. Git history holds the vendored copy (commit
+`cc44705af`); the provenance is `01-Overview/Own-Work.md`'s.
+
 ## The source the port reads
 
 Unlike Handheld Torches, Ambient Text and Eye Of The Beholder, this

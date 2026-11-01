@@ -18,7 +18,7 @@
 // a mod's item art) - and every item picture the mod's cache would have
 // answered answers the same. The icon is the drawn fish's picture with
 // its shape given back (RestoreIconAspect: Unity's import rounded each to
-// powers of two).
+// powers of two). OWN-WORK4: the pictures are our own (fishArt.js).
 // ═══════════════════════════════════════════════════════════════════
 
 import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES, FISH_NAMES } from './deepWatersFishRows.js'; // INT1: the rows' leaf - the item law reads them headless
@@ -29,7 +29,8 @@ import {
   registerCustomItemGroup,
 } from '../item/itemTemplates.js'; // CSA-H: DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
 import { modSetting, modLatchedOn } from '../modSettings.js';
-import { addVendorTextures, decodePng } from '../textureReplacement.js';
+import { addVendorTextures } from '../textureReplacement.js';
+import { fishPicture } from './fishArt.js'; // OWN-WORK4: our own seven pictures
 import {
   PASSIVE_FISH_SPECIES,
   isFishTemplateIndex,
@@ -52,24 +53,14 @@ for (const t of DEEP_WATERS_FISH_TEMPLATES)
     () => modLatchedOn('iliac-puddle-no-more') ?? modSetting('iliac-puddle-no-more', 'Enabled') === true,
   );
 
-/** A fish's own drawn picture's URL (the vendored Flats/<name>.png). */
-export const fishPictureUrl = (name) =>
-  new URL(`../../../vendor/iliac-puddle-no-more/Flats/${name}.png`, import.meta.url).href;
-
-async function fetchPicture(name) {
-  const r = await fetch(fishPictureUrl(name));
-  if (!r.ok) throw new Error(`${name}: ${r.status}`);
-  return new Uint8Array(await r.arrayBuffer());
-}
-
 let _iconsInstalled = false;
 /**
  * The icons on the texture door: each fish's archive, record 0, built
  * from its picture (LoadFishIconTexture falls back to the species' own
  * picture when no 216_NN-0 file is in the bundle - none is) with its
- * aspect restored. Once; a test passes its own bytes and decoder.
+ * aspect restored. Once; a test passes its own `picture(name)`.
  */
-export function installDeepWatersFishIcons({ fetchBytes = fetchPicture, decode = decodePng } = {}) {
+export function installDeepWatersFishIcons({ picture = fishPicture } = {}) {
   if (_iconsInstalled) return 0;
   _iconsInstalled = true;
   return addVendorTextures(
@@ -79,7 +70,8 @@ export function installDeepWatersFishIcons({ fetchBytes = fetchPicture, decode =
       frame: 0,
       standIn: true,
       fileName: `${s.textureName}.png`,
-      build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),
+      selfBuilt: true,
+      build: async () => restoreIconAspect(await picture(s.textureName), s.billboardAspect),
     })),
   );
 }

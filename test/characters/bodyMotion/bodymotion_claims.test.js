@@ -1,7 +1,7 @@
 // AUDIT BODY-MOTION DOC-5 / DOC-6 / DOC-7 / DOC-8 / DOC-9 (2026-10-19, bible/01-Overview/audits/Audit-Body-Motion.md):
 // THE RECORD'S CLAIMS, EACH PINNED. The doc lane wrote a mutant for every claim bible/04-Characters/Body-Motion.md
 // makes of the layer and found 36 of 37 surviving the suite; these are the pins for the ones the rest of the suite
-// still could not fail (tools/mutants/bodymotion_claims.json). Each measures the claim on the vendored retail biped,
+// still could not fail (tools/mutants/bodymotion_claims.json). Each measures the claim on our own biped (OWN-WORK4),
 // through the layer as the rig steps it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

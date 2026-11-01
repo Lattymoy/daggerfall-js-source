@@ -1,18 +1,20 @@
 // @ts-check
 // STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md sections 7 and 9): A MOUNT LOOK TRIED ON - the horse the world
-// draws (Horse Cart and Cargo's side view, vendor/horse-cart-and-cargo) in the look, by the world's own dye
+// draws (the cart's horse's side view - OWN-WORK4: ours, systems/horse/horseArt.js) in the look, by the world's own dye
 // (systems/horse/horseCoats.js recolorHorse, its mount part), on a canvas of its own with the look's beat drawn over it:
 // embers and smoke, light wisping off a ghost, sun motes, sparks and steam. For the profile's Mount slot and the shop's
 // panels. Still for less motion. Not a DFU member.
 import { recolorHorse, withMountLook } from '../systems/horse/horseCoats.js';
 import { VIEW_SIDE } from '../systems/horse/mountPaint.js';
 import { prefersReducedMotion } from '../systems/hitFlash.js';   // the viewer's less motion, read live
+import { ownHorsePicture } from '../systems/horse/horseArt.js';   // OWN-WORK4: the picture, ours
 
 /** The picture the preview dyes (the side view) and its scale on the canvas (whole pixels, the art's own). */
 export const MOUNT_PREVIEW_FILE = 'horse3.png';
 export const MOUNT_PREVIEW_SCALE = 2;
-/** Where on the picture (shares of its width and height, from its top left) the hooves strike and the mane runs. */
-export const MOUNT_PREVIEW_MARKS = Object.freeze({ hooves: Object.freeze([0.2, 0.33, 0.7, 0.83]), ground: 0.94, mane: Object.freeze([0.18, 0.2]), chest: Object.freeze([0.24, 0.5]) });
+/** Where on the picture (shares of its width and height, from its top left) the hooves strike and the mane runs -
+ *  OWN-WORK4: read off our side view (horseArt.js), its head to the left. */
+export const MOUNT_PREVIEW_MARKS = Object.freeze({ hooves: Object.freeze([0.34, 0.38, 0.62, 0.83]), ground: 0.94, mane: Object.freeze([0.12, 0.22]), chest: Object.freeze([0.27, 0.5]) });
 /** Each look's beat drawn over the picture: its particles' colours, how many a second, and how they move. */
 export const MOUNT_PREVIEW_BEAT = Object.freeze({
   warhorse: Object.freeze({ rate: 26, from: 'hooves', c: Object.freeze(['#ff9a3c', '#d2280a', '#3a2a2a']), rise: 40, life: 1.0 }),
@@ -21,35 +23,18 @@ export const MOUNT_PREVIEW_BEAT = Object.freeze({
   automaton: Object.freeze({ rate: 14, from: 'chest', c: Object.freeze(['#eef2f5', '#ffd27a', '#7fd8ff']), rise: 18, life: 1.2 }),
 });
 
-const fileUrl = (/** @type {string} */ f) => new URL(`../../vendor/horse-cart-and-cargo/Textures/${f}`, import.meta.url).href;
-/** @type {Promise<ImageData|null>|null} the picture, read once */
+/** @type {Promise<{ width: number, height: number, data: Uint8Array } | null> | null} the picture, built once */
 let _art = null;
-function loadArt() {
-  if (_art) return _art;
-  _art = new Promise((resolve) => {
-    const Img = /** @type {any} */ (globalThis).Image;
-    if (!Img || !globalThis.document) { resolve(null); return; }
-    const img = new Img();
-    img.onload = () => {
-      try {
-        const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-        const g = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
-        g.drawImage(img, 0, 0);
-        resolve(g.getImageData(0, 0, img.width, img.height));
-      } catch { resolve(null); }
-    };
-    img.onerror = () => resolve(null);
-    img.src = fileUrl(MOUNT_PREVIEW_FILE);
-  });
-  return _art;
-}
+/** OWN-WORK4: the side view, built from the player's own files once; a build that fails answers none and is forgotten. */
+const ownArt = () => (_art ??= ownHorsePicture(MOUNT_PREVIEW_FILE).catch(() => { _art = null; return null; }));
 
 /**
  * A preview: `node` its canvas, `set(key)` the look (null: the horse as drawn), `dispose()` its clock stopped.
- * @param {Document} doc @param {{ coat?: number, reduced?: boolean | (() => boolean) }} [o] `coat` the horse's own look's
- * code under it; `reduced` less motion - read each frame, or fixed
+ * @param {Document} doc @param {{ coat?: number, reduced?: boolean | (() => boolean), picture?: () => Promise<any> }} [o]
+ * `coat` the horse's own look's code under it; `reduced` less motion - read each frame, or fixed; `picture` the side
+ * view's loader (top row first, as horseArt.js builds it)
  */
-export function mountPreview(doc, { coat = 0, reduced = () => prefersReducedMotion() } = {}) {
+export function mountPreview(doc, { coat = 0, reduced = () => prefersReducedMotion(), picture = ownArt } = {}) {
   // AUDIT-STOREFRONT II (lane C 6): less motion read as each frame is drawn (render/effectStage.js's way), so a player
   // who changes it with the card open is followed - read once, the preview kept the old choice for the card's life
   const still = typeof reduced === 'function' ? reduced : () => !!reduced;
@@ -62,7 +47,7 @@ export function mountPreview(doc, { coat = 0, reduced = () => prefersReducedMoti
   let painted = /** @type {HTMLCanvasElement|null} */ (null);
   /** @type {{ x: number, y: number, vx: number, vy: number, age: number, life: number, c: string, s: number }[]} */
   const parts = [];
-  function dye(/** @type {ImageData} */ art) {
+  function dye(/** @type {{ width: number, height: number, data: Uint8Array<ArrayBuffer> | Uint8ClampedArray<ArrayBuffer> }} */ art) {
     const d = recolorHorse({ width: art.width, height: art.height, colors: new Uint8Array(art.data.buffer, art.data.byteOffset, art.data.byteLength) }, withMountLook(coat, key), { bottomFirst: false, view: VIEW_SIDE });
     const p = doc.createElement('canvas'); p.width = art.width; p.height = art.height;
     const pg = /** @type {CanvasRenderingContext2D} */ (p.getContext('2d'));
@@ -113,7 +98,7 @@ export function mountPreview(doc, { coat = 0, reduced = () => prefersReducedMoti
     set(/** @type {string|null} */ next) {
       key = typeof next === 'string' && Object.hasOwn(MOUNT_PREVIEW_BEAT, next) ? next : null;
       parts.length = 0;
-      loadArt().then((art) => { if (alive && art) { dye(art); kick(); } });
+      picture().then((art) => { if (alive && art) { dye(art); kick(); } });
     },
     dispose() { alive = false; if (raf) globalThis.cancelAnimationFrame?.(raf); raf = 0; },
   };

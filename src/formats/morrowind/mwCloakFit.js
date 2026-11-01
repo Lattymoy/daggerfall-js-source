@@ -3,7 +3,7 @@
 //
 // The cloak is one sheet hung down the back (characters/ownModels/ownClothingModels.js), fitted on the steel plate's body - and a
 // body wears whatever its owner put on it: the ebony pauldrons come 2.6 units through it as baked, a retail robe flares,
-// and the Weapon Sheathing addon slings a greatsword across the very back the cloak covers. So once a body is assembled:
+// and our own sheathing (OWN-WORK4) slings a greatsword across the very back the cloak covers. So once a body is assembled:
 //
 //   1. THE CLOAK OVER WHAT IT COVERS (fitCloakOver), once. Every point of the body and its clothes that stands behind
 //      the cloak's sheet - through it - eases the sheet back past it by CLOAK_CLEARANCE: the cloak round it moves back,

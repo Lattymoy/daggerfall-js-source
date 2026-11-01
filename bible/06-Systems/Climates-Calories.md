@@ -28,6 +28,18 @@ of its fifty; the skin the classic Decanter's 7. A food's condition is its
 keeping; rarity is 1, since nothing rolls these. The dishes move with their
 food. Pins: `auditcc_items` I10, `surv2_items`, `prof9_client`.
 
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for
+everything." The folder is retired (`01-Overview/Own-Work.md` holds its row). The
+thirteen icons it carried are ours, at the same keys and sizes
+(`systems/survival/itemIcons.js` OWN_ICONS), and so is the mouldy bread, whose
+spec carried the author's mould as edits. A spoiled face is our rot
+(`rotPicture.js`; `MOULDY` for the first stage) over the fresh food: the player's
+own apple, orange, bread, fish or meat, or our raw meat. Raw meat and the
+waterskin are painted by our painter (`systems/survival/survivalArt.js`,
+`art/ownPainter.js`). The three edit-free specs moved to
+`systems/survival/derivedIcons.json`. No pixel of the release is read. Pins:
+`nobethesda2_torchesicons`, `nobethesda3_rotfish`, `surv2_items`, `ownwork4_pictures`.
+
 > **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT A TIER - OFF, CASUAL
 > (the default) and HARD, and BOONS since SURV-BOONS (the next note).**
 > Everything from here to

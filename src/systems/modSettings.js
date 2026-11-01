@@ -2,8 +2,8 @@
 // 171 keys and nothing else (settings.test.js pins the count), and a
 // mod's switches are not DFU's - in DFU they live in the mod's own
 // modsettings, under the Mods menu. So they live here: one small store,
-// keyed by the vendor folder, with the mod's own names, defaults and
-// descriptions exactly as its modsettings ships them. localStorage-
+// keyed by the vendor folder, with the mod's own names and defaults,
+// each described in our own words (OWN-WORK4). localStorage-
 // backed through the port's ONE storage seam where there is storage,
 // in-memory where there is not, so the worker and node both read
 // defaults without a DOM.
@@ -44,21 +44,21 @@ const EOTB_VIEWS = lazyWords(
   () => t('mods.eyeOfTheBeholder.option.thirdPerson', 'ThirdPerson'),
 );
 
-/** Every vendored mod that has switches, by vendor key. Names, defaults
- *  and descriptions are the mod's own (Basic Roads 1.3.1 modsettings).
+/** Every vendored mod that has switches, by vendor key. Names and defaults
+ *  are the mod's own; the descriptions are ours (OWN-WORK4, 2026-11-01).
  *  `author` is the manifest's ModAuthor (Basic Roads: its README's),
  *  and the Mods pane puts it IN THE TITLE (Mac, 2026-09-08: "place each
  *  creator's name in the mod title").
  *  L10N4: every key's `description` is a getter over `t('mods.<vendor>.<Key>.description', ...)` and every list of
  *  option names (or labels) a `lazyWords`, so each reads in the player's language at the moment it is read - the
- *  English is the mod's own, byte for byte. Titles and authors are names, and stay as they are.
+ *  English is DFO's own words. Titles and authors are names, and stay as they are.
  *  PLAIN-TEXT (2026-10-19, the owner: "Remove overexplaining text and replace it with proper palatable descriptions"):
  *  a description that read as a note to a developer (the port's codes, "INERT", engine terms, a typo, "|| Default =
- *  True") is reworded for a player - an inert key says "Has no effect" and why. A description that already read plainly
- *  is still the mod's own; the tests pin each reworded one by its words. */
+ *  True") is reworded for a player - an inert key says "Has no effect" and why. OWN-WORK4 rewrote every description still
+ *  in an author's words; the tests pin each one by its words. */
 export const MOD_SETTINGS = Object.freeze({
   // DS1: DYNAMIC SKIES 2.3.4 (BadLuckBurt and carademono). Its own two
-  // sections, names and descriptions as modsettings.json ships them
+  // sections, names as modsettings.json ships them, our own descriptions
   // (FogDensity/densitySetting; SnowSizeAndNumberOfParticles/*), plus
   // `Enabled`, which is the port's: DFU enables a mod by listing it, and
   // the port has no mod list, so the whole sky is one switch here. A
@@ -93,13 +93,19 @@ export const MOD_SETTINGS = Object.freeze({
         min: 1,
         max: 10,
         get description() {
-          return t('mods.dynamicSkies.densitySetting.description', 'Makes fog thicker');
+          return t(
+            'mods.dynamicSkies.densitySetting.description',
+            'How thick the fog is in every weather. 1 is the lightest.',
+          );
         },
       }),
       ActivatePixelSnow: Object.freeze({
         default: false,
         get description() {
-          return t('mods.dynamicSkies.ActivatePixelSnow.description', 'Turn the pixel snow replacement on or off');
+          return t(
+            'mods.dynamicSkies.ActivatePixelSnow.description',
+            'Snow falls as small square flakes in place of the usual snow.',
+          );
         },
       }),
       MinParticleSize: Object.freeze({
@@ -107,7 +113,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 100,
         max: 800,
         get description() {
-          return t('mods.dynamicSkies.MinParticleSize.description', 'Minimum snow particle size');
+          return t('mods.dynamicSkies.MinParticleSize.description', 'Size of the smallest square snowflake.');
         },
       }),
       MaxParticleSize: Object.freeze({
@@ -115,7 +121,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 100,
         max: 800,
         get description() {
-          return t('mods.dynamicSkies.MaxParticleSize.description', 'Maximum snow particle size');
+          return t('mods.dynamicSkies.MaxParticleSize.description', 'Size of the largest square snowflake.');
         },
       }),
       // AUDIT 61: the value is read and logged by the mod and never applied; carried as it ships. PLAIN-TEXT (2026-10-19): the pane says so - it read as the author wrote it, a slider that did nothing.
@@ -626,7 +632,7 @@ export const MOD_SETTINGS = Object.freeze({
   // (jet082). Listed AFTER Iliac Puddle No More, its one non-optional
   // dependency (DFU Awakes a dependency first). Its one section, General,
   // restated flat in the shipped order with the shipped defaults, ranges
-  // and descriptions - seven 0..1 sliders, a twentieth a step - plus the
+  // and our own descriptions - seven 0..1 sliders, a twentieth a step - plus the
   // port's `Enabled` (MO1: on). With the sea's own switch off it has no
   // sea to open (oceanHoles.js reads that switch, as DFU asks ModManager).
   'ocean-holes': Object.freeze({
@@ -653,7 +659,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.oceanHoles.General.PitSpawnRate.description',
-            'How many blue holes there are: none at 0, 1 square in 48 at the middle, 1 in 24 at most',
+            'How common blue holes are. The default gives about one in 48 open-sea squares, the top of the slider one in 24, and 0 none.',
           );
         },
       }),
@@ -664,7 +670,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.05,
         get description() {
-          return t('mods.oceanHoles.General.SurfaceHoleSize.description', 'Surface hole size');
+          return t('mods.oceanHoles.General.SurfaceHoleSize.description', 'How wide a blue hole looks on the water.');
         },
       }),
       'General.SeafloorHoleSize': Object.freeze({
@@ -674,7 +680,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.05,
         get description() {
-          return t('mods.oceanHoles.General.SeafloorHoleSize.description', 'Sea floor hole size');
+          return t(
+            'mods.oceanHoles.General.SeafloorHoleSize.description',
+            'How wide the pit is where a blue hole reaches the seafloor.',
+          );
         },
       }),
       'General.MiasmaParticleCount': Object.freeze({
@@ -684,7 +693,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.05,
         get description() {
-          return t('mods.oceanHoles.General.MiasmaParticleCount.description', 'Amount of mist over a hole');
+          return t(
+            'mods.oceanHoles.General.MiasmaParticleCount.description',
+            'How much dark mist rises from a blue hole.',
+          );
         },
       }),
       'General.MiasmaHeight': Object.freeze({
@@ -694,7 +706,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.05,
         get description() {
-          return t('mods.oceanHoles.General.MiasmaHeight.description', 'Height of the mist over a hole');
+          return t(
+            'mods.oceanHoles.General.MiasmaHeight.description',
+            'How high the dark mist climbs above a blue hole.',
+          );
         },
       }),
       'General.DungeonVisualIntensity': Object.freeze({
@@ -704,7 +719,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.05,
         get description() {
-          return t('mods.oceanHoles.General.DungeonVisualIntensity.description', 'Underwater dungeon fog intensity');
+          return t(
+            'mods.oceanHoles.General.DungeonVisualIntensity.description',
+            'How thick the fog is in a flooded dungeon.',
+          );
         },
       }),
       'General.DungeonVisualDarkness': Object.freeze({
@@ -716,7 +734,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.oceanHoles.General.DungeonVisualDarkness.description',
-            'How dark the fog and light are in flooded dungeons',
+            'Higher makes the fog and light of a flooded dungeon darker.',
           );
         },
       }),
@@ -727,10 +745,9 @@ export const MOD_SETTINGS = Object.freeze({
   // name joined with a dot, the shipped defaults and ranges; the four
   // unnamed spacer sections ("---", "----", "-", "--") carry no keys and
   // fall between Controls and WindDirectionWidget, Waves and Cargo, Cargo
-  // and Audio, Audio and Handling. The mod wrote six descriptions
-  // (PortLocationSearchRange and five of Map's) and they are the pane's;
-  // the rest are the port's, each saying what ComeSailAway.LoadSettings
-  // does with the key. THREE KEYS THE ASSEMBLY NEVER READS - LoadSettings
+  // and Audio, Audio and Handling. Every description is the port's
+  // (OWN-WORK4 rewrote the six the mod wrote), each saying what
+  // ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY NEVER READS - LoadSettings
   // takes no Handling.BadTack, no Handling.BadTackMultiplier and no
   // SailingAssist.AutoStowGaffSails, and nothing else in it does - are
   // declared as shipped, so a player's file keeps them, and do nothing,
@@ -834,7 +851,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.comeSailAway.Controls.PortLocationSearchRange.description',
-            'How far from you a port can be found',
+            'How many map squares away a port may be and still count as near you.',
           );
         },
       }),
@@ -1130,7 +1147,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.comeSailAway.Map.RestrictPositionReadingTime.description',
-            'Position can only be viewed around midday and midnight',
+            'The position reading works only near noon and near midnight.',
           );
         },
       }),
@@ -1139,7 +1156,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.comeSailAway.Map.RestrictPositionReadingWeather.description',
-            'Position can only be viewed in Sunny or Cloudy weather',
+            'The position reading works only under a clear or cloudy sky.',
           );
         },
       }),
@@ -1161,7 +1178,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.comeSailAway.Map.PositionLineThickness.description',
-            'Additional pixels on each side of the position line',
+            'How thick the red cross that marks your position is.',
           );
         },
       }),
@@ -1170,7 +1187,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 1,
         max: 5,
         get description() {
-          return t('mods.comeSailAway.Map.MarkerThickness.description', 'Additional pixels around the map marker');
+          return t('mods.comeSailAway.Map.MarkerThickness.description', 'How large the markers you place are.');
         },
       }),
       'Map.MarkerOutlineThickness': Object.freeze({
@@ -1180,7 +1197,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.comeSailAway.Map.MarkerOutlineThickness.description',
-            'Thickness of the marker outline in pixels',
+            'How thick the black edge around each marker is. 0 draws none.',
           );
         },
       }),
@@ -1387,11 +1404,11 @@ export const MOD_SETTINGS = Object.freeze({
   // the port's words instead. Plus the port's `Enabled` (MO1: on).
   // DW1: Diverse Weapons 1.7.3 (RealAKP) ships no settings of its own -
   // its one script sets FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
-  // (vendor/diverse-weapons/DiverseWeaponsMain.cs:37). `Enabled` IS that
+  // (DiverseWeaponsMain.cs:37, in the 1.7.3 release). `Enabled` IS that
   // flag. The second key is the port's rendering of the mod's readme -
   // "For Weapon Widget users, select Diverse Weapons settings preset in
-  // Weapon Widget mod options": the preset the bundle carries
-  // (vendor/diverse-weapons/weapon-widget-preset.json) is laid over the
+  // Weapon Widget mod options": the preset the bundle carries (restated
+  // in combat/diverseWeapons/diverseWeapons.js) is laid over the
   // player's Weapon Widget settings while this is on, and their own
   // values are untouched underneath, where DFU's preset picker would
   // have overwritten them. Off by default, as a preset nobody has
@@ -1794,7 +1811,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Shield.Scale.description', 'Size of the sprite');
+          return t('mods.shieldWidget.Shield.Scale.description', 'How large the shield is drawn.');
         },
       }),
       'Shield.OffsetHorizontal': Object.freeze({
@@ -1806,7 +1823,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Shield.OffsetHorizontal.description',
-            'Offsets the sprite relative to the left edge of the screen',
+            'Moves the shield left or right on the screen.',
           );
         },
       }),
@@ -1817,10 +1834,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t(
-            'mods.shieldWidget.Shield.OffsetVertical.description',
-            'Offsets the sprite relative to the bottom edge of the screen',
-          );
+          return t('mods.shieldWidget.Shield.OffsetVertical.description', 'Moves the shield up or down on the screen.');
         },
       }),
       'Shield.Speed': Object.freeze({
@@ -1830,7 +1844,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Shield.Speed.description', 'Speed of stance transition when attacking');
+          return t(
+            'mods.shieldWidget.Shield.Speed.description',
+            'How fast the shield moves aside, and back, when you swing, sheathe or cast.',
+          );
         },
       }),
       'Shield.WhenSheathed': Object.freeze({
@@ -1839,7 +1856,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Shield.WhenSheathed.description',
-            "The shield's behavior when sheathing your weapon",
+            'Where the shield goes while your weapon is sheathed.',
           );
         },
       }),
@@ -1849,7 +1866,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Shield.WhenAttacking.description',
-            "The shield's behavior when attacking with a weapon",
+            'Where the shield goes while you swing a weapon.',
           );
         },
       }),
@@ -1859,7 +1876,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Shield.WhenCasting.description',
-            "The shield's behavior when readying or while casting a spell",
+            'Where the shield goes while you ready or cast a spell.',
           );
         },
       }),
@@ -1868,7 +1885,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Shield.LockAspectRatio.description',
-            "Enable to prevent the sprite from stretching or squishing depending on the screen's aspect ratio",
+            'Keeps the shield in proportion on a wide or narrow screen.',
           );
         },
       }),
@@ -1941,7 +1958,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 0,
         max: 200,
         get description() {
-          return t('mods.shieldWidget.Bob.Length.description', 'Amount of bobs in a single stride');
+          return t('mods.shieldWidget.Bob.Length.description', 'How quickly the shield sways as you walk.');
         },
       }),
       'Bob.Offset': Object.freeze({
@@ -1951,7 +1968,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Bob.Offset.description', 'Advances the bob timing. For use with weapon bob.');
+          return t(
+            'mods.shieldWidget.Bob.Offset.description',
+            'Shifts where in your stride the sway begins, to keep it in time with your weapon.',
+          );
         },
       }),
       'Bob.SizeX': Object.freeze({
@@ -1961,7 +1981,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Bob.SizeX.description', 'Extent of horizontal movement when bobbing');
+          return t('mods.shieldWidget.Bob.SizeX.description', 'How far the shield sways from side to side.');
         },
       }),
       'Bob.SizeY': Object.freeze({
@@ -1971,7 +1991,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Bob.SizeY.description', 'Extent of vertical movement when bobbing');
+          return t('mods.shieldWidget.Bob.SizeY.description', 'How far the shield sways up and down.');
         },
       }),
       'Bob.SpeedMove': Object.freeze({
@@ -1981,7 +2001,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Bob.SpeedMove.description', 'Speed of transition between stationary and moving');
+          return t(
+            'mods.shieldWidget.Bob.SpeedMove.description',
+            'How fast the sway fades when you leave the ground, and returns when you land.',
+          );
         },
       }),
       'Bob.SpeedState': Object.freeze({
@@ -1991,7 +2014,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Bob.SpeedState.description', 'Speed of transition between movement states');
+          return t(
+            'mods.shieldWidget.Bob.SpeedState.description',
+            'How fast the sway settles into a new pace when you walk, run, crouch or stop.',
+          );
         },
       }),
       'Bob.Shape': Object.freeze({
@@ -2002,7 +2028,7 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.shieldWidget.option.invertedU', 'Inverted U'),
         ),
         get description() {
-          return t('mods.shieldWidget.Bob.Shape.description', 'Shape of bob');
+          return t('mods.shieldWidget.Bob.Shape.description', 'The path the shield follows as it sways.');
         },
       }),
       'Bob.BobWhileIdle': Object.freeze({
@@ -2010,7 +2036,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Bob.BobWhileIdle.description',
-            'Whether the shield will slightly bob while stationary',
+            'The shield sways a little even while you stand still.',
           );
         },
       }),
@@ -2023,7 +2049,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Inertia.Scale.description',
-            'The maximum distance that the sprite will be offset',
+            'How far the shield trails behind when you look around or move.',
           );
         },
       }),
@@ -2036,7 +2062,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Inertia.Speed.description',
-            'The speed that the sprite will move at towards the target offset',
+            'How fast the shield catches up after it trails behind.',
           );
         },
       }),
@@ -2049,7 +2075,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Inertia.ForwardDepth.description',
-            'Multiplier for the change in scale when moving forward or backward',
+            'How much the shield swells as you step ahead and shrinks as you back away.',
           );
         },
       }),
@@ -2062,7 +2088,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Inertia.ForwardSpeed.description',
-            'The speed that the sprite will scale towards the target depth',
+            'How fast the shield swells or shrinks as you step ahead or back away.',
           );
         },
       }),
@@ -2073,7 +2099,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Animation.Speed.description', 'Determines how fast the animation plays');
+          return t(
+            'mods.shieldWidget.Animation.Speed.description',
+            'How fast the shield’s frames play as it is raised and lowered.',
+          );
         },
       }),
       'Animation.Direction': Object.freeze({
@@ -2086,7 +2115,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Animation.Direction.description',
-            'Set which animations will play during actions',
+            'Plays the frames both ways, only as the shield moves aside, or only as it comes back.',
           );
         },
       }),
@@ -2107,7 +2136,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Step.Condition.description',
-            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',
+            'Which moves go in steps: only sheathing and swinging, or the sway, the trail and the recoil too.',
           );
         },
       }),
@@ -2118,7 +2147,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Recoil.Scale.description', 'The amount the shield will recoil');
+          return t('mods.shieldWidget.Recoil.Scale.description', 'How hard a blow rocks the shield.');
         },
       }),
       'Recoil.Offset': Object.freeze({
@@ -2126,7 +2155,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Recoil.Offset.description',
-            'Whether the shield should be moved to the center when recoiling',
+            'The shield swings to the middle of the screen to meet a blow.',
           );
         },
       }),
@@ -2137,7 +2166,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.shieldWidget.Recoil.Speed.description', 'The speed that the shield recovers from recoil');
+          return t('mods.shieldWidget.Recoil.Speed.description', 'How fast the shield settles after a blow rocks it.');
         },
       }),
       'Recoil.Condition': Object.freeze({
@@ -2151,7 +2180,7 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.shieldWidget.option.anyAttack', 'Any Attack'),
         ),
         get description() {
-          return t('mods.shieldWidget.Recoil.Condition.description', 'Event required for the shield to recoil');
+          return t('mods.shieldWidget.Recoil.Condition.description', 'Which attacks rock the shield and make it ring.');
         },
       }),
       'Compatibility.TextureScaleFactor': Object.freeze({
@@ -2305,7 +2334,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Swings.VanillaRecoveryOverride.description',
-            'Plays the StrikeUp animation in reverse during recovery for some vanilla weapons',
+            'After a thrust, some of the game’s own weapons pull back by playing the thrust in reverse.',
           );
         },
       }),
@@ -2314,7 +2343,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Swings.NoDaggerMirroredStrikes.description',
-            'Prevents Daggers from using the opposite hand animations',
+            'A dagger slashes from one side only, the side drawn for the hand that holds it.',
           );
         },
       }),
@@ -2333,7 +2362,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 0,
         max: 200,
         get description() {
-          return t('mods.weaponWidget.Bob.Length.description', 'Amount of bobs in a single stride');
+          return t('mods.weaponWidget.Bob.Length.description', 'How quickly the weapon sways as you walk.');
         },
       }),
       'Bob.Offset': Object.freeze({
@@ -2343,7 +2372,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.weaponWidget.Bob.Offset.description', 'Advances the bob timing. For use with weapon bob.');
+          return t('mods.weaponWidget.Bob.Offset.description', 'Shifts where in your stride the sway begins.');
         },
       }),
       'Bob.SizeX': Object.freeze({
@@ -2353,7 +2382,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.weaponWidget.Bob.SizeX.description', 'Extent of horizontal movement when bobbing');
+          return t('mods.weaponWidget.Bob.SizeX.description', 'How far the weapon sways from side to side.');
         },
       }),
       'Bob.SizeY': Object.freeze({
@@ -2363,7 +2392,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.weaponWidget.Bob.SizeY.description', 'Extent of vertical movement when bobbing');
+          return t('mods.weaponWidget.Bob.SizeY.description', 'How far the weapon sways up and down.');
         },
       }),
       'Bob.SpeedMove': Object.freeze({
@@ -2373,7 +2402,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.weaponWidget.Bob.SpeedMove.description', 'Speed of transition between stationary and moving');
+          return t(
+            'mods.weaponWidget.Bob.SpeedMove.description',
+            'How fast the sway fades when you leave the ground, and returns when you land.',
+          );
         },
       }),
       'Bob.SpeedState': Object.freeze({
@@ -2383,7 +2415,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.weaponWidget.Bob.SpeedState.description', 'Speed of transition between movement states');
+          return t(
+            'mods.weaponWidget.Bob.SpeedState.description',
+            'How fast the sway settles into a new pace when you walk, run, crouch or stop.',
+          );
         },
       }),
       'Bob.Shape': Object.freeze({
@@ -2394,7 +2429,7 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.weaponWidget.option.invertedU', 'Inverted U'),
         ),
         get description() {
-          return t('mods.weaponWidget.Bob.Shape.description', 'Shape of bob');
+          return t('mods.weaponWidget.Bob.Shape.description', 'The path the weapon follows as it sways.');
         },
       }),
       'Bob.BobWhileIdle': Object.freeze({
@@ -2402,7 +2437,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Bob.BobWhileIdle.description',
-            'Whether the weapon will slightly bob while stationary',
+            'The weapon sways a little even while you stand still.',
           );
         },
       }),
@@ -2423,7 +2458,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Step.Condition.description',
-            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',
+            'Which moves go in steps: only sheathing and swinging, or the sway, the trail and the recoil too.',
           );
         },
       }),
@@ -2436,7 +2471,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Inertia.Scale.description',
-            'The maximum distance that the sprite will be offset',
+            'How far the weapon trails behind when you look around or move.',
           );
         },
       }), // DISC16-B: the mod's own again (DISC14-B had it at 0)
@@ -2449,7 +2484,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Inertia.Speed.description',
-            'The speed that the sprite will move at towards the target offset',
+            'How fast the weapon catches up after it trails behind.',
           );
         },
       }),
@@ -2462,7 +2497,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Inertia.ForwardDepth.description',
-            'Multiplier for the change in scale when moving forward or backward',
+            'How much the weapon swells as you step ahead and shrinks as you back away.',
           );
         },
       }),
@@ -2475,7 +2510,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Inertia.ForwardSpeed.description',
-            'The speed that the sprite will scale towards the target depth',
+            'How fast the weapon swells or shrinks as you step ahead or back away.',
           );
         },
       }),
@@ -2511,7 +2546,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.weaponWidget.Recoil.Chance.description',
-            'Chance, in percent, of a recoil when the condition is met',
+            'The odds, in percent, that a swing bounces back when it could. At 100 it always does.',
           );
         },
       }),
@@ -2588,12 +2623,11 @@ export const MOD_SETTINGS = Object.freeze({
     }),
   }),
   // HT1 (2026-09-14): HANDHELD TORCHES 1.4.1 (RedRoryOTheGlen), ported
-  // 1:1 - the shipped modsettings.json (vendor/handheld-torches/) key
-  // for key, section and name joined with a dot. Two kinds are new
+  // 1:1 - the shipped release's modsettings.json (no longer carried,
+  // OWN-WORK4) key for key, section and name joined with a dot. Two kinds are new
   // here: a TextKey (a Unity KeyCode name - `text`), and the two Tuple
-  // keys (`tuple: 'int' | 'float'`, the value a pair). Where the mod
-  // wrote a description it is the pane's; where it wrote none the port
-  // did.
+  // keys (`tuple: 'int' | 'float'`, the value a pair). Every description is
+  // the port's own (OWN-WORK4 rewrote the ones the mod wrote).
   'handheld-torches': Object.freeze({
     title: 'Handheld Torches',
     author: 'RedRoryOTheGlen',
@@ -2628,7 +2662,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Handling.ToggleLightInput.description',
-            'Button used to quickly ignite or douse your light source',
+            'The key that lights your torch, candle or lantern, or puts it out.',
           );
         },
       }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
@@ -2657,7 +2691,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Handling.ManualDropInput.description',
-            'Button used to manually drop a light source',
+            'The key that drops the light from your hand.',
           );
         },
       }), // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
@@ -2687,7 +2721,10 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.handheldTorches.option.drop', 'Drop'),
         ),
         get description() {
-          return t('mods.handheldTorches.Handling.OnStow.description', 'Behavior when forced to stow a light source');
+          return t(
+            'mods.handheldTorches.Handling.OnStow.description',
+            'What happens to your light when your hand is needed: Unequip puts it in your pack, Drop leaves it on the ground.',
+          );
         },
       }),
       'Handling.OnPick': Object.freeze({
@@ -2698,7 +2735,10 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.handheldTorches.option.forceEquip', 'Force Equip'),
         ),
         get description() {
-          return t('mods.handheldTorches.Handling.OnPick.description', 'Behavior when picking up a light source');
+          return t(
+            'mods.handheldTorches.Handling.OnPick.description',
+            'What happens when you pick up a light. Store packs it, Equip holds it if a hand is free, and Force Equip sheathes your weapon to hold it.',
+          );
         },
       }),
       'Handling.StowWhenSpellcasting': Object.freeze({
@@ -2733,7 +2773,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Handling.RelaxedTwoHandedWeapons.description',
-            'Two-handed weapons will only occupy your off-hand when attacking',
+            'A two-handed weapon leaves your light alone until you swing it. A bow still needs both hands.',
           );
         },
       }), // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
@@ -2742,7 +2782,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Handling.RelaxedLanterns.description',
-            'If enabled, will not stow lanterns when both hands are occupied',
+            'A lantern stays lit even when both your hands are full.',
           );
         },
       }),
@@ -2979,7 +3019,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Presentation.Tint.description',
-            "Matches the weapon sprite's tint when using First-Person-Lighting.",
+            'Has no effect here: the First-person lighting feature decides whether the hand takes the light of the room.',
           );
         },
       }),
@@ -2988,7 +3028,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Presentation.Ambidexterity.description',
-            'Mirror the first-person graphic depending on the free hand. Recommended when using Shield Widget.',
+            'The light is drawn in whichever hand is free, left or right.',
           );
         },
       }),
@@ -3039,7 +3079,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Presentation.PlayerTorchAudio.description',
-            'Plays a burning sound while you hold a torch',
+            'A torch in your hand crackles as it burns.',
           );
         },
       }),
@@ -3061,7 +3101,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 0,
         max: 200,
         get description() {
-          return t('mods.handheldTorches.Bob.Length.description', 'Amount of bobs in a single stride');
+          return t('mods.handheldTorches.Bob.Length.description', 'How quickly the light sways as you walk.');
         },
       }),
       'Bob.Offset': Object.freeze({
@@ -3071,7 +3111,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.05,
         get description() {
-          return t('mods.handheldTorches.Bob.Offset.description', 'Advances the bob timing. For use with weapon bob.');
+          return t(
+            'mods.handheldTorches.Bob.Offset.description',
+            'Shifts where in your stride the sway begins, to keep it in time with your weapon.',
+          );
         },
       }),
       'Bob.SizeX': Object.freeze({
@@ -3081,7 +3124,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.handheldTorches.Bob.SizeX.description', 'Extent of horizontal movement when bobbing');
+          return t('mods.handheldTorches.Bob.SizeX.description', 'How far the light sways from side to side.');
         },
       }),
       'Bob.SizeY': Object.freeze({
@@ -3091,7 +3134,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.handheldTorches.Bob.SizeY.description', 'Extent of vertical movement when bobbing');
+          return t('mods.handheldTorches.Bob.SizeY.description', 'How far the light sways up and down.');
         },
       }),
       'Bob.SpeedMove': Object.freeze({
@@ -3103,7 +3146,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Bob.SpeedMove.description',
-            'Speed of transition between stationary and moving',
+            'How fast the sway fades when you leave the ground, and returns when you land.',
           );
         },
       }),
@@ -3114,7 +3157,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.handheldTorches.Bob.SpeedState.description', 'Speed of transition between movement states');
+          return t(
+            'mods.handheldTorches.Bob.SpeedState.description',
+            'How fast the sway settles into a new pace when you walk, run, crouch or stop.',
+          );
         },
       }),
       'Bob.Shape': Object.freeze({
@@ -3125,7 +3171,7 @@ export const MOD_SETTINGS = Object.freeze({
           () => t('mods.handheldTorches.option.invertedU', 'Inverted U'),
         ),
         get description() {
-          return t('mods.handheldTorches.Bob.Shape.description', 'Shape of bob');
+          return t('mods.handheldTorches.Bob.Shape.description', 'The path the light follows as it sways.');
         },
       }),
       'Bob.BobWhileIdle': Object.freeze({
@@ -3133,7 +3179,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Bob.BobWhileIdle.description',
-            'Whether the light will slightly bob while stationary',
+            'The light sways a little even while you stand still.',
           );
         },
       }),
@@ -3146,7 +3192,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Inertia.Scale.description',
-            'The maximum distance that the sprite will be offset',
+            'How far the light trails behind when you look around or move.',
           );
         },
       }),
@@ -3159,7 +3205,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Inertia.Speed.description',
-            'The speed that the sprite will move at towards the target offset',
+            'How fast the light catches up after it trails behind.',
           );
         },
       }),
@@ -3172,7 +3218,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Inertia.ForwardDepth.description',
-            'Multiplier for the change in scale when moving forward or backward',
+            'How much the light swells as you step ahead and shrinks as you back away.',
           );
         },
       }),
@@ -3185,7 +3231,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Inertia.ForwardSpeed.description',
-            'The speed that the sprite will scale towards the target depth',
+            'How fast the light swells or shrinks as you step ahead or back away.',
           );
         },
       }),
@@ -3206,7 +3252,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Step.Condition.description',
-            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',
+            'Which moves go in steps: only sheathing and swinging, or the sway and the trail too.',
           );
         },
       }),
@@ -3680,7 +3726,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 0,
         max: FOOT_SKIN_COUNT - 1,
         get description() {
-          return t('mods.eyeOfTheBeholder.Graphics.OnFoot.description', 'Sprite when on foot');
+          return t('mods.eyeOfTheBeholder.Graphics.OnFoot.description', 'Which character you are drawn as on foot.');
         },
         labels: lazyWords(
           () => t('mods.eyeOfTheBeholder.skin.lightFighterFemale', 'Light Fighter (female)'),
@@ -3707,7 +3753,7 @@ export const MOD_SETTINGS = Object.freeze({
         min: 0,
         max: 4,
         get description() {
-          return t('mods.eyeOfTheBeholder.Graphics.OnHorse.description', 'Sprite when riding a horse');
+          return t('mods.eyeOfTheBeholder.Graphics.OnHorse.description', 'Which rider you are drawn as in the saddle.');
         },
         labels: lazyWords(
           () => t('mods.eyeOfTheBeholder.skin.lightFighterFemale', 'Light Fighter (female)'),
@@ -3751,7 +3797,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.eyeOfTheBeholder.Graphics.ReadyStance.description',
-            'Whether the sprite will change states when readying a weapon or spell',
+            'When a readied weapon or spell changes how your character stands.',
           );
         },
       }),
@@ -3769,7 +3815,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.eyeOfTheBeholder.Graphics.TurnToView.description',
-            'When the sprite turns to face where you look',
+            'When your figure turns toward where you are looking',
           );
         },
       }),
@@ -3844,7 +3890,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.eyeOfTheBeholder.Graphics.TorchOffset.description',
-            'Whether the torch follows the orientation of the sprite',
+            'Where a held torch is drawn as your character turns.',
           );
         },
       }),
@@ -4141,7 +4187,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.betterAmbience.BetterFootsteps.armorVolume.description', 'Volume for armor clanking');
+          return t(
+            'mods.betterAmbience.BetterFootsteps.armorVolume.description',
+            'How loud your armor clanks as you walk.',
+          );
         },
       }),
       'Better Footsteps.footstepVolume': Object.freeze({
@@ -4151,7 +4200,7 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.betterAmbience.BetterFootsteps.footstepVolume.description', 'Volume for footsteps');
+          return t('mods.betterAmbience.BetterFootsteps.footstepVolume.description', 'How loud your footsteps are.');
         },
       }),
       'Dungeon Reverb.level': Object.freeze({
@@ -4305,7 +4354,10 @@ export const MOD_SETTINGS = Object.freeze({
         float: true,
         step: 0.1,
         get description() {
-          return t('mods.betterAmbience.DungeonLighting.dungeonDarkness.description', 'The darkness of dungeons');
+          return t(
+            'mods.betterAmbience.DungeonLighting.dungeonDarkness.description',
+            'How bright each dungeon’s fog and light are. Lower makes dungeons darker.',
+          );
         },
       }),
       'Dungeon Lighting.fogAmbientEffect': Object.freeze({
@@ -4317,7 +4369,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.betterAmbience.DungeonLighting.fogAmbientEffect.description',
-            'How much the random dungeon color affects dungeon lighting',
+            'How much a dungeon’s light takes on the color of its fog.',
           );
         },
       }),
@@ -4326,7 +4378,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.betterAmbience.BetterRain.enableBetterRain.description',
-            'Makes rain particles look a bit better',
+            'Has no effect here: this game draws its own rain.',
           );
         },
       }),
@@ -4335,7 +4387,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.betterAmbience.BetterRain.enableBetterSnow.description',
-            'Makes snow particles look a bit better',
+            'Has no effect here: this game draws its own snow.',
           );
         },
       }),
@@ -4702,7 +4754,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.travelOptions.RoadsIntegration.Enable.description',
-            'The travel map draws cities and towns as larger dots, and shows roads and tracks with a button for each.',
+            'On the travel map, cities and towns get bigger markers, and roads and tracks each get a button to show them.',
           );
         },
       }),
@@ -5065,8 +5117,8 @@ export const MOD_SETTINGS = Object.freeze({
     }),
   }),
   // IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1"): IMMERSIVE TRAVEL - kkgobkk's
-  // carriages outside the city gates, 1.5, its three sections restated verbatim (the release's modsettings.json),
-  // the author's own words and spellings, a null or empty description carried as empty. Read live: the map reads them
+  // carriages outside the city gates, 1.5, its three sections restated (the release's modsettings.json), in our own
+  // words (OWN-WORK4), a null or empty description carried as empty. Read live: the map reads them
   // as it opens (systems/immersiveTravel.js readImmersiveTravelSettings), the calculator as it bills - where the mod's
   // static constructors read four of them once a session (the bible's page records it).
   'immersive-travel': Object.freeze({
@@ -5085,59 +5137,57 @@ export const MOD_SETTINGS = Object.freeze({
       // holds it off (systems/online/onlineLane.js). The key is still a key: turning it on restores the mod's own default.
       'General.DisableNormalTravel': Object.freeze({
         default: false,
-        description: 'You can no longer travel from the map, and must use carriages and ships.',
+        description: 'Turns off travel from the map. Carriages and ships become your only fast travel.',
       }),
       'General.DailyCarriageFee': Object.freeze({
         default: 1,
         min: 0,
         max: 99,
-        description: 'The fee you must pay to travel with a carriage for every day of travel',
+        description: 'Gold a carriage driver charges for each day on the road.',
       }),
       'General.ClearerMapDots': Object.freeze({
         default: true,
-        description: 'Draws larger dots depending on town size in the travel map.',
+        description: 'On the carriage map, cities and hamlets get big dots and smaller places small ones.',
       }),
       'General.DrawRoads': Object.freeze({
         default: true,
-        description: 'Draws roads on the map when Basic Roads is on.',
+        description: 'The carriage map marks the roads. Needs Basic Roads.',
       }),
       'General.DrawTracks': Object.freeze({
         default: true,
-        description: 'Draws dirt tracks on the map when Basic Roads is on.',
+        description: 'The carriage map marks the dirt tracks. Needs Basic Roads.',
       }),
       'General.RegionLockedCarriages': Object.freeze({
         default: false,
-        description:
-          'Prevent carriages from travelling to a different region. You must travel from the capital city to leave the region.',
+        description: 'A carriage keeps to its own region, unless you board it in the region’s capital.',
       }),
       'ShipTravel.DisableShipTravelOutsideDocks': Object.freeze({
         default: true,
-        description: 'Prevents you from choosing ship transport mode during land travel',
+        description: 'A carriage trip is always by land. To go by sea, find a sailor at a dock.',
       }),
       'ShipTravel.DailyShipCost': Object.freeze({
         default: 15,
         min: 0,
         max: 99,
-        description: 'Daily cost of renting a ship, if you don’t own one.',
+        description: 'Gold per day at sea to hire a ship. You pay nothing if you own one.',
       }),
       'ShipTravel.DailyCaptainFee': Object.freeze({
         default: 10,
         min: 0,
         max: 99,
-        description: 'Daily cost of hiring a captain and crew. You pay a captain even if you own the ship.',
+        description: 'Gold per day at sea for a captain and crew. You pay it even on your own ship.',
       }),
       'ShipTravel.LimitedRangeInSmallDocks': Object.freeze({
         default: true,
-        description:
-          "Ships in smaller locations will only take you to ports in the same region. To travel to a different region you'll need to sail from a city",
+        description: 'A sailor in a small port sails only within its region. Large port cities sail anywhere.',
       }),
       'ShipTravel.ShowLargerDocks': Object.freeze({
         default: true,
-        description: 'Uses larger dots on the map for locations with a dock.',
+        description: 'On the sailor’s map, every place with a dock gets a big dot.',
       }),
       'ShipTravel.ShowOnlyDocks': Object.freeze({
         default: false,
-        description: 'Hides every location on the map except those that have a dock',
+        description: 'The sailor’s map shows only places with a dock.',
       }),
       'AllowedDestinations.Cities': Object.freeze({ default: true, description: '' }),
       'AllowedDestinations.Covens': Object.freeze({ default: false, description: '' }),
@@ -5608,8 +5658,8 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   // HAZE1 / WINDFALL1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the
   // codebase. These should be on by default and integrate into our enhanced environments seamlessly"): demifiend000's
-  // three environment mods, their modsettings restated verbatim (Heat Haze 1.0.1's, vendor/windfall/ and
-  // vendor/snowfall/ modsettings.json) - every name, default, range and description the mod's, section and name joined
+  // three environment mods, their modsettings restated (Heat Haze 1.0.1's, Windfall 1.0.0's and
+  // Snowfall 1.0.5's modsettings.json) - every name, default and range the mod's, the words ours, section and name joined
   // with a dot. Each mod's own Enabled (Heat Haze's in its one section, Windfall's and Snowfall's in General) IS the
   // port's `Enabled`, the mod's switch, on by default (MO1), with the port's words for the Features row; a slider's
   // `step` is the port's (the pane's grain), chosen so the mod's default sits on it. The three ride the enhanced
@@ -5625,7 +5675,7 @@ export const MOD_SETTINGS = Object.freeze({
       }),
       'Heat Haze.AllowSubtropical': Object.freeze({
         default: false,
-        description: 'Also allow heat haze in subtropical climates during sunny or cloudy daytime weather.',
+        description: 'Heat haze also shows in subtropical lands, on clear or cloudy days.',
       }),
       'Heat Haze.Intensity': Object.freeze({
         default: 1.5,
@@ -5641,7 +5691,7 @@ export const MOD_SETTINGS = Object.freeze({
         max: 3000.0,
         float: true,
         step: 0.1,
-        description: 'Distance from you, in meters, of the ring of haze.',
+        description: 'How far from you the haze shimmers, in meters.',
       }),
       'Heat Haze.RingHeight': Object.freeze({
         default: 1006.0,
@@ -5649,7 +5699,7 @@ export const MOD_SETTINGS = Object.freeze({
         max: 1500.0,
         float: true,
         step: 2,
-        description: 'Height of the haze, in meters.',
+        description: 'How tall the haze rises, in meters.',
       }),
       'Heat Haze.NoiseScale': Object.freeze({
         default: 4.5,
@@ -5665,7 +5715,7 @@ export const MOD_SETTINGS = Object.freeze({
         max: 4.0,
         float: true,
         step: 0.1,
-        description: 'Speed of the rising-air motion.',
+        description: 'How fast the shimmer rises.',
       }),
     }),
   }),
@@ -6408,7 +6458,7 @@ export const MOD_SETTINGS = Object.freeze({
   // HCC (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also
   // enhance its online integration functionality"): HORSE CART AND CARGO -
   // demifiend000's persistent horse and wagon, 1.0.0-rc12, its five
-  // sections restated verbatim (vendor/horse-cart-and-cargo/modsettings.json).
+  // sections restated (the 1.0.0-rc12 release's modsettings.json), in our words.
   // The two TextKeys are Unity KeyCode names. THE PORT SHIPS THEM ON 5 AND 6
   // (Alpha5 / Alpha6), NOT THE MOD'S K AND G (HCC-KEYS, a recorded departure
   // on HT4's own law): K is Travel Options' FollowPathsKey and G is Handheld
@@ -6463,7 +6513,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.horseCartAndCargo.Following.HorseFollowDistance.description',
-            'How closely a following horse, or horse and wagon, stays behind you.',
+            'How far back your horse walks when it follows you.',
           );
         },
       }),
@@ -6472,7 +6522,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.horseCartAndCargo.Following.AvoidCombat.description',
-            'A following horse, or horse and wagon, keeps away from enemies in a fight.',
+            'Your horse stays out of fights and keeps clear of your foes while it follows you.',
           );
         },
       }),
@@ -6481,7 +6531,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.horseCartAndCargo.Following.FollowFastTravel.description',
-            'A following horse or wagon comes with you when you fast travel. Off, it waits where it was.',
+            'When you fast travel, a horse that follows you arrives with you. Off, it stays behind.',
           );
         },
       }),
@@ -6492,7 +6542,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.horseCartAndCargo.WagonAccess.InteriorAccessDistance.description',
-            'How close to a building or dungeon entrance your wagon must be for you to use it from inside.',
+            'From inside, you can reach your wagon’s cargo only if it stands this close to the door you came in by.',
           );
         },
       }),

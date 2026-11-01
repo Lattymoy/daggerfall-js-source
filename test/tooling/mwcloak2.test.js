@@ -151,13 +151,14 @@ test('MW-CLOAK2: the fit over the armour eases the cloak round each point that c
   assert.equal(CLOAK_EASE_RADIUS, 8);
   // PIN MOVED (MW-CAPE-RIGID): on the chest alone the cloak sits at rest where the chest carries it, the ebony
   // pauldrons 1.3 through it (2.6 hung over the spine and clavicles) - 720 vertices eased, the furthest 2.3 (it was 3.6)
-  assert.ok(eased.fit.pushed > 500 && eased.fit.most > 2.1 && eased.fit.most < 2.5, `${eased.fit.pushed} vertices eased, the furthest ${eased.fit.most.toFixed(2)}`);
+  // OWN-WORK4: on our biped, its shoulders let down and forward - 625 eased, the furthest 1.1
+  assert.ok(eased.fit.pushed > 500 && eased.fit.most > 0.9 && eased.fit.most < 1.4, `${eased.fit.pushed} vertices eased, the furthest ${eased.fit.most.toFixed(2)}`);
   assert.ok(eased.steepest < 0.8, `the push slopes at most ${eased.steepest.toFixed(2)} a unit`);
   assert.ok(eased.side < 1e-3, `pushed straight back - ${eased.side.toFixed(4)} aside`);
   // the falloff (1 - (d / 8)^2)^2: the mean push over the eased vertices 0.74 (a falloff of (1 - (d / 8)^2) alone, 0.96)
-  assert.ok(eased.mean > 0.68 && eased.mean < 0.79, `the eased vertices' mean push ${eased.mean.toFixed(3)}`);   // PIN MOVED (MW-CAPE-RIGID): 1.66, and 1.90 alone, on the old rig
+  assert.ok(eased.mean > 0.25 && eased.mean < 0.3, `the eased vertices' mean push ${eased.mean.toFixed(3)}`);   // PIN MOVED (MW-CAPE-RIGID): 1.66, and 1.90 alone, on the old rig; OWN-WORK4: 0.28 on our biped (0.74 on retail's)
   const stepped = await slope(1e-3);
-  assert.ok(stepped.steepest > 3.5, `a triangle's corners alone step ${stepped.steepest.toFixed(1)} a unit - the facet over the pauldron`);   // PIN MOVED (MW-CAPE-RIGID): 4.1 (9.6 on the old rig)
+  assert.ok(stepped.steepest > 0.9 && stepped.steepest > eased.steepest, `a triangle's corners alone step ${stepped.steepest.toFixed(1)} a unit - the facet over the pauldron`);   // PIN MOVED (MW-CAPE-RIGID): 4.1 (9.6 on the old rig); OWN-WORK4: 1.1 on our biped, the pauldrons barely through
   // its normals are its new shape's, facing as before
   const fresh = vertexNormals(eased.batch.positions, eased.batch.indices);
   let agree = 0; let facing = 0;

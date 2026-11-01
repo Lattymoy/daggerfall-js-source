@@ -2,7 +2,7 @@
 // EYE OF THE BEHOLDER - THE CART (EOTB-IL, 2026-09-16).
 //
 // `EyeOfTheBeholder.SpawnWagon` / `UpdateWagon` / `CheckWagon`, read
-// off the shipped assembly's IL (`vendor/eye-of-the-beholder/il/`).
+// off the shipped assembly's IL (Eye Of The Beholder 2.1's).
 // `Graphics.ShowCart`: "A 3D cart will follow your billboard when
 // using the Cart Transport Mode" - Daggerfall model 41239, built by
 // `GameObjectHelper.CreateDaggerfallMeshGameObject` (IL_1e4d-IL_1e5c),

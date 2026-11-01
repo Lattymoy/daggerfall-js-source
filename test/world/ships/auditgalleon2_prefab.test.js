@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto';
 import * as GM from '../../../src/world/ships/galleonModel.js';
 import * as GA from '../../../src/world/ships/galleonArt.js';
 import { MeshBench, prism, box, planarUv, cross, sub, dot, norm, add, scl } from '../../../src/world/ships/galleonMesh.js';
-import { comeSailAwayModels, loadComeSailAwayModels, CSA_MODEL_URLS } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
+import { comeSailAwayModels, loadComeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { createComeSailAwayPool } from '../../../src/scenes/comeSailAway/comeSailAwayPool.js';
 import { createDataPipeline } from '../../../src/scenes/dataPipeline.js';
 import { Renderer } from '../../../src/render/renderer.js';
@@ -30,16 +30,13 @@ import { colliderPoses, boxColliderTriangles, raycastColliders, invertAffine } f
 import { EYE_HEIGHT, CROUCH_EYE_HEIGHT } from '../../../src/player/motor.js';
 import { multiply } from '../../../src/world/mat4.js';
 import { MODELS, scene } from '../../csaScene.mjs';
+import { ownFiles } from '../../ownBoats.mjs';
 
 const { MEASURED: M, HELM } = GM;
 const { galleonArt, galleonGlow, _resetGalleonArt, GALLEON_ARCHIVE, TEX, BANDS } = GA;
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
 const BAKE_TEXT = readFileSync(new URL('../../../src/assets/galleon/galleon.json', import.meta.url), 'utf8');
 const BAKE = JSON.parse(BAKE_TEXT);
-const modFiles = () => {
-  const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-  return { prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') };
-};
+const modFiles = ownFiles; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
 const near = (a, b, eps, what) => assert.ok(Math.abs(a - b) <= eps, `${what}: ${a} vs ${b}`);
 const xf = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
 const nodeNamed = (root, name) => [...root.walk()].find((n) => n.name === name) ?? null;
@@ -96,7 +93,7 @@ test('AUDIT GALLEON-2 PF4: her model is fetched BESIDE the mod\'s five files - e
     events.push(`done ${name}`);
     return fileFetch(url);
   };
-  const m = await loadComeSailAwayModels(slow, CSA_MODEL_URLS, { warn() {} });
+  const m = await loadComeSailAwayModels(slow, undefined, { warn() {} });
   assert.equal(m.galleon, true);
   const firstDone = events.findIndex((e) => e.startsWith('done'));
   assert.ok(events.indexOf('start galleon.json') >= 0 && events.indexOf('start galleon.json') < firstDone, `her model asked before any file answered: ${events.join(', ')}`);

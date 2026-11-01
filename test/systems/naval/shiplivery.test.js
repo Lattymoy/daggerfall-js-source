@@ -20,6 +20,7 @@ import { GALLEON_ARCHIVE, TEX as GTEX, C } from '../../../src/world/ships/galleo
 import { CARRACK_ARCHIVE, TEX as CTEX } from '../../../src/world/ships/carrackArt.js';
 import { LARGE_BOAT_ARCHIVE, TEX as LTEX } from '../../../src/world/ships/largeBoatArt.js';
 import { createLiveryPaint, PLANK_ARCHIVE, CLASSIC_SAIL } from '../../../src/scenes/comeSailAway/shipLiveryPaint.js';
+import { OWN_WOOD_RECORDS } from '../../../src/world/ships/ownBoats/ownBoatArt.js';
 import { createComeSailAwayPool } from '../../../src/scenes/comeSailAway/comeSailAwayPool.js';
 import { createFleetHost } from '../../../src/scenes/fleetHost.js';
 import { createDeckPlanDoor } from '../../../src/scenes/deckPlanDoor.js';
@@ -164,7 +165,8 @@ test('SHIP-LIVERY the paint shop: a boat drawn as built while her paint is made,
   const galley = liveryCode({ stain: 3, sail: 7 });
   shop.remapOf(3, galley, false, null); await tick(); await tick(); await tick();
   const g = shop.remapOf(3, galley, false, null);
-  assert.deepEqual([...g.keys()].sort(), [`${PLANK_ARCHIVE}_0`, `${PLANK_ARCHIVE}_1`, `${PLANK_ARCHIVE}_2`, `${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`].sort());
+  // OWN-WORK4: our hulls' woods (ownBoatArt.js OWN_WOOD_RECORDS), where Come Sail Away 2.1's were records 0-2
+  assert.deepEqual([...g.keys()].sort(), [...OWN_WOOD_RECORDS.map((r) => `${PLANK_ARCHIVE}_${r}`), `${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`].sort());
 });
 
 const fileFetch = async (url) => {

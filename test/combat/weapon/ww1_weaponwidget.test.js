@@ -102,7 +102,7 @@ const SHIPPED_SETTINGS = Object.freeze([
 
 // ═══ the settings ═══════════════════════════════════════════════════════
 
-test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, and the mod\'s own words where it wrote any', () => {
+test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, and our own words where the mod wrote any', () => {
   const m = MOD_SETTINGS[WEAPON_WIDGET_VENDOR];
   assert.ok(m, 'the vendor entry');
   const manifest = SHIPPED_MANIFEST;
@@ -113,11 +113,25 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
   assert.equal(manifest.textures.length, 173, 'the 173 double-scale textures the manifest names, none vendored');
   assert.match(manifest.script, /FPSWeaponClone\.cs$/, 'the one script the manifest names and the bundle does not carry');
-  // PLAIN-TEXT (2026-10-19): three of the mod's lines said plainly for a player (the idle bob named the shield) - their words, exactly
+  // OWN-WORK4 (2026-11-01): every line the mod wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly
   const PLAIN = {
-    'Bob.BobWhileIdle': 'Whether the weapon will slightly bob while stationary',
+    'Swings.VanillaRecoveryOverride': 'After a thrust, some of the game’s own weapons pull back by playing the thrust in reverse.',
+    'Swings.NoDaggerMirroredStrikes': 'A dagger slashes from one side only, the side drawn for the hand that holds it.',
+    'Bob.Length': 'How quickly the weapon sways as you walk.',
+    'Bob.Offset': 'Shifts where in your stride the sway begins.',
+    'Bob.SizeX': 'How far the weapon sways from side to side.',
+    'Bob.SizeY': 'How far the weapon sways up and down.',
+    'Bob.SpeedMove': 'How fast the sway fades when you leave the ground, and returns when you land.',
+    'Bob.SpeedState': 'How fast the sway settles into a new pace when you walk, run, crouch or stop.',
+    'Bob.Shape': 'The path the weapon follows as it sways.',
+    'Bob.BobWhileIdle': 'The weapon sways a little even while you stand still.',
     'Step.Length': 'Size of each step. Higher moves in bigger jumps.',
-    'Recoil.Chance': 'Chance, in percent, of a recoil when the condition is met',
+    'Step.Condition': 'Which moves go in steps: only sheathing and swinging, or the sway, the trail and the recoil too.',
+    'Inertia.Scale': 'How far the weapon trails behind when you look around or move.',
+    'Inertia.Speed': 'How fast the weapon catches up after it trails behind.',
+    'Inertia.ForwardDepth': 'How much the weapon swells as you step ahead and shrinks as you back away.',
+    'Inertia.ForwardSpeed': 'How fast the weapon swells or shrinks as you step ahead or back away.',
+    'Recoil.Chance': 'The odds, in percent, that a swing bounces back when it could. At 100 it always does.',
   };
   let n = 0;
   for (const [name, kind, Value, range, Description] of SHIPPED_SETTINGS) {
@@ -130,9 +144,9 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
     else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
     else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
     else assert.fail(`${name}: an unknown key kind ${kind}`);
-    if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
+    if (k.Description) assert.equal(def.description, PLAIN[name], `${name}: our own words in place of the mod's`);
     else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
-    if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
+    if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: our words replace words the mod wrote`);
   }
   assert.equal(n, 41, 'the nine sections carry 41 keys');
   assert.equal(Object.keys(m.keys).length, 42, 'plus the port\'s Enabled, and nothing else');

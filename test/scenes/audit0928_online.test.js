@@ -22,6 +22,7 @@ import { isCellRoom, isWorldRoom, FOES_HZ_MAX } from '../../src/net/wire.js';
 import { Renderer, WORLD_FRAME } from '../../src/render/renderer.js';
 import { EL_LANE } from '../../src/render/enhancedLighting.js';
 import { SHADOW_DYNAMIC_HOLD } from '../../src/render/shadowPass.js';
+import { ownFile } from '../ownBoats.mjs';
 
 const { createComeSailAwayPool, activeObjects } = poolMod;
 const { createComeSailAwayPeers } = peersMod;
@@ -89,7 +90,7 @@ function mount(scope, code, name) {
 // ── O1 ──────────────────────────────────────────────────────────────────────
 
 test('AUDIT PRE-MERGE 0928 O1: the variants each hull\'s prefab carries - read off the vendored prefabs, the table the door bounds a word by; the Large Boat\'s seven and none on the rest', () => {
-  const prefabs = JSON.parse(rd('vendor/come-sail-away/Models/prefabs.json')).prefabs;
+  const prefabs = ownFile('prefabs.json').prefabs; // OWN-WORK4: our boats' prefabs
   const counts = boatMod.HULL_NAMES.map((_, h) => {
     let n = 0;
     (function walk(node) { if (node.name === 'Variants' && node.active) n = node.children.length; else for (const c of node.children) walk(c); })(prefabs[String(boatMod.FIRST_HULL_MODEL_ID + h)]);

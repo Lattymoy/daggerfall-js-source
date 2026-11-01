@@ -35,13 +35,12 @@ import { prefetchPortSites } from '../world/portSitesKept.js'; // FIRST-VISIT
 // The glob sits INSIDE the loader (Vite rewrites it wherever it stands),
 // so a node test that imports a host reaching this module does not trip
 // on the macro - only a call would, and node never calls it.
-const globFiles = () => import.meta.glob('../../vendor/*/WorldData/*.json', { import: 'default' });
+// OWN-WORK3: no vendored mod ships whole WorldData files any more (the town packs are retired), so only patches load.
 // WD1: a mod whose world data is a whole classic block with its edits in it
 // ships the edit only (formats/worldData/worldDataPatch.js); rebuilt here from the
 // player's BLOCKS.BSA and registered under the file's own DFU name.
 const globPatches = () => import.meta.glob('../../vendor/*/WorldDataPatches/*.json', { import: 'default' });
 const vendorOf = (path) => /vendor\/([^/]+)\/WorldData(?:Patches)?\//.exec(path)?.[1] ?? '';
-const baseName = (path) => path.split('/').pop();
 
 let _loaded = null;
 /** Every vendored mod's world-data file onto the door, gated on that mod's
@@ -60,13 +59,6 @@ export async function loadModWorldData() {
     installTownDress(); // TOWN-DRESS (OWN-WORK3): behind no switch and no door - our market stall (scenes/townDressHost.js)
     installTownStandIns(); // OWN-WORK3: the port's own pieces a room's decor may stand, at every boot (world/townStandIns.js)
     let n = 0;
-    await Promise.all(
-      Object.entries(globFiles()).map(async ([path, load]) => {
-        const vendor = vendorOf(path);
-        const json = await load();
-        if (registerWorldDataAsset(baseName(path), json, () => modSetting(vendor, 'Enabled') === true)) n++;
-      }),
-    );
     await Promise.all(
       Object.entries(globPatches()).map(async ([path, load]) => {
         const vendor = vendorOf(path);

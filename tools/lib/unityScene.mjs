@@ -1,5 +1,6 @@
 // CSA-A (2026-09-27): A UNITY BUNDLE'S PREFABS, MESHES, MATERIALS AND ANIMATION,
-// READ OFF ITS TYPE TREES INTO PLAIN DATA (tools/comeSailAwayExtract.mjs).
+// READ OFF ITS TYPE TREES INTO PLAIN DATA (tools/daggerfallArenaExtract.mjs, tools/lowPolyTreesExtract.mjs; first
+// written for Come Sail Away's extractor, retired with its files in OWN-WORK4).
 //
 // src/formats/unity/unityBundle.js reads any object through its type tree; this
 // module knows what a few classes MEAN, so a prefab comes out as the tree

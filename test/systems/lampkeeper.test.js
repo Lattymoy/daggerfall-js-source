@@ -23,18 +23,16 @@ test('LAMP-KEEPER: the 182_2 keeper of a good shop is drawn from 197 record 6 - 
   assert.equal(RR_NPC_ARCHIVE, 197);
 });
 
-test('LAMP-KEEPER: the mod\'s keeper is on the door but not decoded until asked - and the ask the person\'s stand makes decodes it', async () => {
+test('LAMP-KEEPER: the keeper is on the door but not painted until asked - and the ask the person\'s stand makes paints it', async () => {
   _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismArt();
   setModSetting(V, 'Enabled', true); setModSetting(V, 'variantNpcs', true);
-  const asked = [];
-  installRoleplayRealismArt({ fetchBytes: async (name) => { asked.push(name); return new Uint8Array([1, 2, 3]); } });
+  installRoleplayRealismArt();
   assert.equal(hasTextureReplacement(197, 6), true, 'registered');
   assert.equal(decodedTexture(197, 6), null, 'lazy: the upload path would draw the classic record - the lamp');
-  const decode = async () => ({ width: 1, height: 2, data: new Uint8Array([10, 20, 30, 255, 40, 50, 60, 255]) });
-  const got = await preloadTextureRecord(197, 6, 0, 'Albedo', null, { decode });
-  assert.ok(got, 'the ask decodes the mod\'s keeper');
-  assert.deepEqual(asked, ['197_6-0'], 'the one record, fetched on demand');
-  assert.deepEqual([...decodedTexture(197, 6).colors], [40, 50, 60, 255, 10, 20, 30, 255], 'and the upload path now reads the mod\'s picture');
+  const got = await preloadTextureRecord(197, 6, 0, 'Albedo', null, { decode: async () => assert.fail('OWN-WORK4: our keeper is no file') });
+  assert.ok(got, 'the ask paints the keeper');
+  const pic = decodedTexture(197, 6);
+  assert.deepEqual([pic.width, pic.height], [71, 128], 'OWN-WORK4: our keeper, at the 182_2 keeper\'s size the scale is read against');
   _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismArt();
 });
 

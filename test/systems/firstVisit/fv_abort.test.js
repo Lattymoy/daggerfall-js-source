@@ -48,7 +48,7 @@ test('FIRST-VISIT abort: the port ships\' models load while the write is still p
     return { ok: true, json: async () => JSON.parse(bytes.toString('utf8')), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length) };
   };
   const mod = await import(`${MODELS}?abort=1`);
-  const loaded = mod.loadComeSailAwayModels(fileFetch, mod.CSA_MODEL_URLS, { warn() {} }, mod.GALLEON_MODEL_URL, undefined, neverSettles());
+  const loaded = mod.loadComeSailAwayModels(fileFetch, undefined, { warn() {} }, mod.GALLEON_MODEL_URL, undefined, neverSettles());
   assert.equal(await settles(loaded), 'settled');
   const models = await loaded;
   assert.ok(models?.galleon && models.carrack && models.largeBoat);

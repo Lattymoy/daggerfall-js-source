@@ -142,8 +142,8 @@ export function writePng({ width, height, data }) {
 }
 
 /**
- * DW2: an INDEXED PNG (colour type 3) - the encoding Shield Widget's 600
- * sprites went out in (vendor/shield-widget/README.md): every drawn
+ * DW2: an INDEXED PNG (colour type 3) - the encoding Shield Widget 1.6's
+ * 600 sprites went out in when the tree carried them: every drawn
  * pixel identical, every hidden pixel still hidden, and the ghost colour
  * an exporter leaves under the transparent pixels collapsed to one
  * index. Answers null when the picture will not fit - an alpha that is
@@ -188,4 +188,28 @@ export function writeIndexedPng({ width, height, data }) {
   if (transparent) chunks.push(chunk('tRNS', Buffer.from([0])));
   chunks.push(chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0)));
   return Buffer.concat(chunks);
+}
+
+/** The PNG a texel goes out as: indexed when it fits, RGBA when not (DW2's encoding; the extractors share it). */
+export function encodeSprite(img) {
+  const indexed = writeIndexedPng(img);
+  return { png: indexed ?? writePng(img), indexed: !!indexed };
+}
+
+/** Drawn pixels identical, hidden pixels hidden - the check each file passes before the next is written. */
+export function sameOnScreen(a, b) {
+  if (a.width !== b.width || a.height !== b.height) return false;
+  for (let p = 0; p < a.data.length; p += 4) {
+    const hidden = a.data[p + 3] === 0;
+    if (hidden !== (b.data[p + 3] === 0)) return false;
+    if (hidden) continue;
+    if (
+      a.data[p] !== b.data[p] ||
+      a.data[p + 1] !== b.data[p + 1] ||
+      a.data[p + 2] !== b.data[p + 2] ||
+      a.data[p + 3] !== b.data[p + 3]
+    )
+      return false;
+  }
+  return true;
 }

@@ -2442,7 +2442,7 @@ export class ShadowPass {
    *    player by up to two frames and caught up in a jerk - the flicker. It casts only into a map redrawn EVERY frame
    *    (`self`), and a slot is redrawn the frame that changes.
    *  - it was turned to FACE each lamp, which the mod's card never does: Unity renders a ShadowsOnly renderer's shadow
-   *    in its own transform (the billboard's turn to the camera - Eye_Of_The_Beholder.il IL_4e42 sets
+   *    in its own transform (the billboard's turn to the camera - Eye Of The Beholder 2.1's IL_4e42 sets
    *    shadowCastingMode 2), so walking round a lamp swung the silhouette through a half turn. It casts in the basis it
    *    was drawn with.
    */

@@ -9,8 +9,8 @@
 // `GetComponent<T>()`, `GetComponentInChildren<T>()`. The port keeps that
 // shape, so the mod's walk reads here line for line: a PrefabNode is a
 // GameObject and its Transform in one (Unity keeps them one-to-one), with
-// its components as the plain records tools/comeSailAwayExtract.mjs wrote
-// (vendor/come-sail-away/Models/prefabs.json), each instance holding its OWN
+// its components as plain records (OWN-WORK4: our boats' own prefabs,
+// world/ships/ownBoats/ownBoatFiles.js), each instance holding its OWN
 // copy so a runtime edit (a collider's size, a renderer switched off) touches
 // that boat alone.
 //

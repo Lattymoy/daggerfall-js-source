@@ -4,13 +4,10 @@
 // dye was for (C4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { PNG } from 'pngjs';
 
 import { ridersReady } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import { recolorHorse, dyeHorseHairRows, withMountLook, horseLookCode, HORSE_MOUNTS } from '../../../src/systems/horse/horseCoats.js';
 import { VIEW_SIDE } from '../../../src/systems/horse/mountPaint.js';
-import { MOUNT_PREVIEW_FILE } from '../../../src/ui/mountPreview.js';
 
 test('AUDIT-STOREFRONT II C3 the riders\' masks: a load that fails answers none for the picture that asked, and is forgotten - the next asks again and keeps what it loads (mutants: the failure thrown at the picture; the failure kept for the session)', async () => {
   let asked = 0;
@@ -23,7 +20,9 @@ test('AUDIT-STOREFRONT II C3 the riders\' masks: a load that fails answers none 
 });
 
 test('AUDIT-STOREFRONT II C4 the 3D horse\'s mane and tail in a mount look: one picture for every horse in the look, whichever horse\'s coat was dyed last (mutants: the hair\'s seed left to the last dye)', () => {
-  const raw = PNG.sync.read(readFileSync(new URL(`../../../vendor/horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`, import.meta.url)));
+  // OWN-WORK4: any horse dyed first will do - a bay's hide, drawn here (the cart's horse is built from ARENA2 now)
+  const raw = { width: 60, height: 40, data: new Uint8Array(60 * 40 * 4) };
+  for (let y = 8; y < 34; y++) for (let x = 6; x < 54; x++) raw.data.set(y < 12 ? [24, 20, 18, 255] : [139 - (y % 5) * 6, 90 - (x % 4) * 4, 43, 255], (y * 60 + x) * 4);
   const w = 24, h = 6, hair = new Uint8Array(w * h * 4);
   for (let i = 0; i < w * h; i++) { const v = 8 + ((i * 37) % 70); hair.set([v, Math.max(0, v - 3), v, 255], i * 4); }   // a strand's near-black, lit unevenly
   const fire = HORSE_MOUNTS.indexOf('warhorse');

@@ -1,0 +1,22 @@
+{
+"112358_1-0": {"from":[210,3,0],"pal":"PAL.PAL"},
+"112358_1-0_Emission": {"from":[210,3,0],"pal":"PAL.PAL"},
+"112358_1-1": {"from":[210,3,1],"pal":"PAL.PAL"},
+"112358_1-1_Emission": {"from":[210,3,1],"pal":"PAL.PAL"},
+"112358_1-2": {"from":[210,3,2],"pal":"PAL.PAL"},
+"112358_1-2_Emission": {"from":[210,3,2],"pal":"PAL.PAL"},
+"112358_1-3": {"from":[210,3,3],"pal":"PAL.PAL"},
+"112358_1-3_Emission": {"from":[210,3,3],"pal":"PAL.PAL"},
+"112358_1-4": {"from":[210,3,4],"pal":"PAL.PAL"},
+"112358_1-4_Emission": {"from":[210,3,4],"pal":"PAL.PAL"},
+"112358_2-0": {"from":[210,4,0],"pal":"PAL.PAL"},
+"112358_2-0_Emission": {"from":[210,4,0],"pal":"PAL.PAL"},
+"112358_2-1": {"from":[210,4,1],"pal":"PAL.PAL"},
+"112358_2-1_Emission": {"from":[210,4,1],"pal":"PAL.PAL"},
+"112358_2-2": {"from":[210,4,2],"pal":"PAL.PAL"},
+"112358_2-2_Emission": {"from":[210,4,2],"pal":"PAL.PAL"},
+"112358_2-3": {"from":[210,4,3],"pal":"PAL.PAL"},
+"112358_2-3_Emission": {"from":[210,4,3],"pal":"PAL.PAL"},
+"112358_2-4": {"from":[210,4,4],"pal":"PAL.PAL"},
+"112358_2-4_Emission": {"from":[210,4,4],"pal":"PAL.PAL"}
+}

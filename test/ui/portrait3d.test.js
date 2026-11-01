@@ -5,7 +5,7 @@
 // (combat/fpArm.js headPortrait): the face (faceMatchOf - the build's face door; an NPC's walked off its seed), the
 // curse (the vampire's head, the werewolf's), the helm and the hood (composeWornArmor, its shadows, HEAD-HELD), framed
 // face-on round the head, mirrored as the inventory's figure is, read back. Pinned on the port's own Breton heads and
-// steel and ebony helms (src/assets/mw) on the vendored retail skeleton with its part nodes (fixtures/mw/retailRig.mjs),
+// steel and ebony helms (src/assets/mw) on our own biped with its part nodes (fixtures/mw/retailRig.mjs),
 // read off the disk as the page serves them, under a counting renderer - no game data, no GL; the real renderer's
 // pictures are tools/headPortraitProbe.mjs's. And the doors: the talk window, the faces' one home (ui/facePortrait.js),
 // the large HUD's head, the classic chargen's ten, the party and family faces, the escorts', the tab dial's.

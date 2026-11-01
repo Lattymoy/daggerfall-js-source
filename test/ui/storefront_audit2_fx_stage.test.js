@@ -73,13 +73,12 @@ test('AUDIT-STOREFRONT II C6 the Mount slot\'s horse follows less motion as it c
     getImageData: (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ w, /** @type {number} */ h) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }),
   }) });
   const g = /** @type {any} */ (globalThis);
-  g.Image = class { constructor() { this.width = 40; this.height = 30; } set src(_u) { queueMicrotask(() => this.onload()); } };
   g.document = { createElement: canvas };
   g.ImageData = class { constructor(/** @type {any} */ d, /** @type {number} */ w, /** @type {number} */ h) { this.data = d; this.width = w; this.height = h; } };
   g.matchMedia = (/** @type {string} */ q) => ({ matches: q.includes('reduce') && calm });
   Date.now = () => ms;   // the shared read (systems/hitFlash.js prefersReducedMotion) asks again after a second
   try {
-    const m = mountPreview(/** @type {any} */ ({ createElement: canvas }));
+    const m = mountPreview(/** @type {any} */ ({ createElement: canvas }), { picture: async () => ({ width: 40, height: 30, data: new Uint8Array(40 * 30 * 4) }) });   // OWN-WORK4: the side view built, here a blank one
     m.set('warhorse');
     for (let i = 0; i < 4; i++) await new Promise((r) => setImmediate(r));
     clock.frames(40);

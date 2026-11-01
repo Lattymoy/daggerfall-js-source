@@ -379,7 +379,7 @@ test('WARDEN1 pool: a team the watch carries is no box for the ray - mine nor an
   const meshes = { getGpuMesh: async (id) => gpu[id] ?? null, cpuModels: new Map([[WAGON_MODEL_ID, syntheticWagon41214()]]) };
   const buckets = new Map();
   const collider = { addMesh: (k) => buckets.set(k, 1), removeBucket: (k) => buckets.delete(k), surfaceHit: () => ({ dist: Infinity, key: null, normal: null }), sphereCast: () => ({ dist: Infinity, key: null }) };
-  const pool = createHorseCartPool({ renderer, meshes, collider: () => collider, selfId: () => 'me', now: () => 0, fetchFn: async () => ({ ok: false, status: 404 }), log: { error() {}, warn() {}, info() {} } });
+  const pool = createHorseCartPool({ renderer, meshes, collider: () => collider, selfId: () => 'me', now: () => 0, horsePicture: async () => { throw new Error('no horse picture'); }, log: { error() {}, warn() {}, info() {} } });
   pool.attach(rt({ Mode: WAGON_MODE.Deployed, WorldX: AX, WorldZ: AZ, HorseMode: HORSE_MODE.None }, { deployed: { isGrounded: true, position: [40, 0, 40], rotation: [0, 0, 0, 1], cargoTier: 50 } }));
   pool.partsOf('cart');
   for (let i = 0; i < 8; i++) await tick();

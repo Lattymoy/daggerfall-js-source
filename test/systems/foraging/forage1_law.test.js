@@ -6,8 +6,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   FT, FORAGING_TEMPLATES, TOOL_TEMPLATES, FORAGING_GROUP, FORAGING_QUEST_LIST, FORAGING_TEXTURE_ARCHIVES,
@@ -23,9 +21,8 @@ import { ON_EXTERIOR_WATER } from '../../../src/player/exteriorSurface.js';
 import { TEMPLATE as CC } from '../../../src/systems/survival/food.js';
 import { stringBreach } from '../../../tools/plainText.mjs';
 import { FORAGING_QUESTS, ownQuest, asBuilt, AS_BUILT } from './foragingAsBuilt.mjs';
+import { FORAGING_ART } from '../../../src/systems/foraging/foragingArt.js';   // OWN-WORK4: our own seven pictures
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const ART = join(ROOT, 'vendor/foraging/Textures');   // the author's seven pictures, which stay until wave 3
 /** A draw that answers `i` of an `n`-long list: Random.Range(0, n) == i. */
 const at = (i, n) => () => (i + 0.5) / n;
 
@@ -52,7 +49,8 @@ test('FORAGE1: the twelve templates (OWN-WORK3: our own rows), group 9, and noth
   }
   assert.equal(FORAGING_GROUP, 'UselessItems2');
   assert.deepEqual(TOOL_TEMPLATES, [1600, 1601, 1602, 1603, 1606, 1607], "the console command's DCE7 order");
-  assert.deepEqual(FORAGING_TEXTURE_ARCHIVES, readdirSync(ART).map((f) => Number(f.split('_')[0])).sort());
+  assert.deepEqual(FORAGING_TEXTURE_ARCHIVES, [11600, 11601, 11602, 11603, 11604, 11605, 11606]);
+  assert.deepEqual(Object.keys(FORAGING_ART).map(Number), [...FORAGING_TEXTURE_ARCHIVES], 'OWN-WORK4: each picture is a recipe of ours');
   assert.equal(FORAGING_QUEST_LIST, 'ForagingQuests', 'RegisterQuestList("ForagingQuests"), IL_02e5');
 });
 

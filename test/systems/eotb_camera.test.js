@@ -1,8 +1,5 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   createEotbCamera, readCameraSettings, eyeVector, eyeBasis, bodyVector, EYE_RADIUS, MAX_Z,
@@ -22,7 +19,6 @@ import { PrefabNode } from '../../src/world/prefabNode.js';
 // quietly stops being one, and the first dump had them printing
 // absolute.
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 /** Round for comparison, and normalise signed zero: `(-0).toFixed()`
  *  keeps the sign and `deepEqual` tells -0 from 0, so a direction
  *  component that is exactly zero would fail on its sign alone. */
@@ -30,14 +26,20 @@ const r6 = (n) => Number(n.toFixed(6)) + 0;
 const r3 = (n) => Number(n.toFixed(3)) + 0;
 const r4 = (n) => Number(n.toFixed(4)) + 0;
 
-const vendored = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/modsettings.json'), 'utf8'));
-const shipped = (section, key) => vendored.Sections.find((s) => s.Name === section).Keys.find((k) => k.Name === key).Value;
+// OWN-WORK4 (2026-10-31): the shipped modsettings.json's camera values, written out - its copy left the tree. A literal
+// table, so a changed default still fails here.
+const SHIPPED = {
+  Camera: { StartInThirdPerson: true, FrontalPlaneOffset: { First: 0.0, Second: 0.5 }, LongitudinalDistance: 2.0, MinimumDistance: 0.8, RidingOffset: 1.0, Speed: 10.0, Dampen: 1.0, 'Auto-Switch': true, SwitchResetTime: 3.0 },
+  CameraOverrideWeapon: { LongitudinalDistance: 2.0 }, CameraOverrideMount: { LongitudinalDistance: 2.0 }, CameraOverrideBoat: { LongitudinalDistance: 2.0 },
+  CameraScrolling: { ScrollableZOffset: false, ScrollIncrement: 0.2 },
+};
+const shipped = (section, key) => SHIPPED[section][key];
 
 test('EOTB2: the settings are the BUNDLE’s, sign flip and all - derived, never typed', () => {
   // LoadSettings reads `LongitudinalDistance` and multiplies by -1, so
   // a POSITIVE setting means that many metres BEHIND. Pinned against
-  // the vendored JSON rather than against a literal, so a port that
-  // drifts from the bundle reddens here and nowhere else has to know.
+  // the bundle's values (written out above since OWN-WORK4), so a port
+  // that drifts from the bundle reddens here and nowhere else has to know.
   const cfg = readCameraSettings(null);
   assert.equal(cfg.z, -shipped('Camera', 'LongitudinalDistance'), 'offsetZ = LongitudinalDistance * -1');
   assert.equal(cfg.overrides.Weapon.z, -shipped('CameraOverrideWeapon', 'LongitudinalDistance'));
@@ -465,7 +467,7 @@ test('AUDIT-EOTB F5b: the SHIPPED offset puts the camera above the feet, not bel
 
 // ═══ EOTB-IL (2026-09-16): THE CAMERA, AGAINST THE ASSEMBLY ═════════
 //
-// The shipped `.dfmod` is open (vendor/eye-of-the-beholder/il/). These
+// The shipped `.dfmod` was opened (Eye Of The Beholder 2.1's IL). These
 // pin the places where EOTB2's reading of the camera was wrong or
 // short, each at its IL offset.
 

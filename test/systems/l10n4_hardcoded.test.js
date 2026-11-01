@@ -65,6 +65,7 @@ const HARDCODED = {
   'src/formats/morrowind/mwGpuSkin.js': 3,
   'src/formats/morrowind/mwItemMap.js': 26,
   'src/formats/morrowind/mwNifFile.js': 1,
+  'src/formats/morrowind/mwNifWrite.js': 1,   // OWN-WORK4: the format's own header line, the reader's twin - never a player's word
   'src/formats/morrowind/mwNpc.js': 1,
   'src/formats/morrowind/mwParticles.js': 1,
   'src/formats/morrowind/mwSkin.js': 1,
@@ -183,6 +184,7 @@ const HARDCODED = {
   'src/net/wild/wildRemains.js': 3,
   'src/net/wire.js': 27,
   'src/net/writBook.js': 1,
+  'src/player/classSkins.js': 5,   // OWN-WORK4: the class skins' five two-word names, moved from the retired pack's skins.json - the Skin card showed them in English before, as now
   'src/player/enterExit.js': 2,
   'src/player/eyeOfTheBeholder/eotbCamera.js': 4,
   'src/player/eyeOfTheBeholder/eotbWagon.js': 1,
@@ -273,7 +275,7 @@ const HARDCODED = {
   'src/scenes/camps.js': 3,
   'src/scenes/caravanHost.js': 13,
   'src/scenes/comeSailAway/comeSailAwayPeers.js': 1,
-  'src/scenes/comeSailAway/comeSailAwayPool.js': 7,   // SHIP-PLAQUE: +1, the log's line when FONT0003 will not load - a developer's, never a player's
+  'src/scenes/comeSailAway/comeSailAwayPool.js': 8,   // SHIP-PLAQUE: +1, the log's line when FONT0003 will not load - a developer's, never a player's; OWN-WORK4: +1, the log's line when our boats' pictures will not load
   'src/scenes/comeSailAway/shipLiveryPaint.js': 1,
   'src/scenes/corpseMarker.js': 3,
   'src/scenes/dataSource.js': 29,
@@ -340,7 +342,7 @@ const HARDCODED = {
   'src/scenes/townTalk.js': 9,
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
-  'src/scenes/windfallHost.js': 5,
+  'src/scenes/windfallHost.js': 6,   // OWN-WORK4: the wind test command's console replies, reworded plainly (wave 3) - the debug console answers in English
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
   'src/scenes/world.js': 276,   // HOST-SPLIT TEST-PRESET: -3, the test room's words moved verbatim to scenes/testPresetHost.js. HOST-SPLIT PROFESSIONS: -35, the professions' words moved verbatim to scenes/professionsHost.js. ZONE-BANK (FIELD BUGS 2026-10-30b): -1, the zone bank's refusal through zoneSafe.js's t(). ZONE-HOMES: -1, the zone's house refusal through zoneSafe.js's t(). SHARED-HEALTH: -2, the battles' readouts print no 'Your vitality' line (my own health is my bar). THE SIXTH MERGE OF MAIN INTO #1184: MENTOR2 (main's): -1, mentoring's end through mentorText.js's t(). THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 79,   // NOTICE-PANEL: 82 -> 80, the board's two plaque words out with its press; the merge of main: 79, main's set-down line gone to scenes/arrivalSetDown.js, through t()
@@ -394,7 +396,6 @@ const HARDCODED = {
   'src/systems/dragon/dragonMount.js': 1,   // DRAGON5: the Dwarven Dragon's row name - English, as every custom row's is (upkeepItemRows.js)
   'src/systems/dungeon/dungeonEcho.js': 6,
   'src/systems/dungeon/dungeonTier.js': 3,
-  'src/systems/dynamicSkies/dynamicSkies.js': 3,
   'src/systems/eliteGates/egFind.js': 1,
   'src/systems/eliteGates/egLordArms.js': 8,
   'src/systems/eliteGates/egSpoils.js': 8,
@@ -433,7 +434,7 @@ const HARDCODED = {
   'src/systems/horse/horseCoats.js': 3,
   'src/systems/horse/trailingPoseCache.js': 3,   // STALE-PARK: the far-park warning's three - a console line through the runtime's injected `log`, which the scan reads as prose (it exempts `console.*` alone)
   'src/systems/iliac/iliacItems.js': 8,
-  'src/systems/immersiveFootsteps.js': 10,
+  'src/systems/immersiveFootsteps.js': 9,
   'src/systems/immersiveTravel.js': 13,
   'src/systems/improvedInteriorLighting.js': 1,
   'src/systems/inputActions.js': 86,   // TECH-KEY2: +1, the signature key's row label, beside its sibling rows'
@@ -594,7 +595,6 @@ const HARDCODED = {
   'src/systems/wagon/wagonWarden.js': 2,
   'src/systems/walletItem.js': 9,
   'src/systems/weaponSheathing.js': 3,
-  'src/systems/weaponSheathingAssets.js': 1,
   'src/systems/wild/wildRemainsWaypoint.js': 1,
   'src/systems/wild/wildZone.js': 37,   // the merge: FOE-KEEPS's and WW-C2's (37 once the zone's entry named Cyrodiil bare)
   'src/systems/windfall.js': 23,
@@ -822,10 +822,21 @@ const HARDCODED = {
   'src/world/gate/gateBoss.js': 17,
   'src/world/ships/largeBoatModel.js': 8,
   'src/world/ships/largeBoatRig.js': 5,
+  // OWN-WORK4: our boats' prefabs - Come Sail Away's node, controller, state and clip names the runtime walks and asks
+  // by (a Unity name, never a player's sentence)
+  'src/world/ships/ownBoats/ownBoatAnimation.js': 29,
+  'src/world/ships/ownBoats/ownBoatFiles.js': 1,
+  'src/world/ships/ownBoats/ownBoatKit.js': 7,
+  'src/world/ships/ownBoats/ownBoatSails.js': 14,
+  'src/world/ships/ownBoats/ownCarrack.js': 15,
+  'src/world/ships/ownBoats/ownGalley.js': 17,
+  'src/world/ships/ownBoats/ownRowboat.js': 12,
+  'src/world/ships/ownBoats/ownSkiff.js': 16,
+  'src/world/ships/ownBoats/ownSmallShip.js': 3,
   'src/world/lefayMonument.js': 11,
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
-  'src/world/eliteGates/pseudoArchives.js': 58,   // AURUM-CACHES: +1, the coffer's row (AURUM_COFFER_ARCHIVE) - the registry's own words for a developer; FIGUREHEAD: +1, the carvings' pictures' row (FIGUREHEAD_ARCHIVE); AUDIT GUILD-SHOP R2: +1, the guild furniture's row (GUILD_ART_ARCHIVE, moved off the Spire's 38241) - the registry's own words for a developer; DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows; STOREFRONT: +1, the Brass Fissure's art row (FISSURE_ARCHIVE) - the registry's own words for a developer
+  'src/world/eliteGates/pseudoArchives.js': 59,   // OWN-WORK4: +1, our boats' pictures' row (OWN_BOAT_ARCHIVE); AURUM-CACHES: +1, the coffer's row (AURUM_COFFER_ARCHIVE) - the registry's own words for a developer; FIGUREHEAD: +1, the carvings' pictures' row (FIGUREHEAD_ARCHIVE); AUDIT GUILD-SHOP R2: +1, the guild furniture's row (GUILD_ART_ARCHIVE, moved off the Spire's 38241) - the registry's own words for a developer; DRAGON7: +1, the Aetherbright's row (AETHERBRIGHT_ARCHIVE) - the registry's own words for a developer, as the brass's; DWARVEN-DRAGON: +1, its sprites' row (DWARVEN_DRAGON_ARCHIVE) - the registry's own words for a developer; GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows; STOREFRONT: +1, the Brass Fissure's art row (FISSURE_ARCHIVE) - the registry's own words for a developer
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

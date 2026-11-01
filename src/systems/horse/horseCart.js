@@ -2,7 +2,7 @@
 // HORSE CART AND CARGO - THE RUNTIME (HCC, 2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance
 // its online integration functionality"). `TrailingWagonRuntime`, `DeployedWagonVisual` and `StationaryHorseVisual`
 // of demifiend000's Horse Cart and Cargo 1.0.0-rc12, read off the shipped assembly's IL
-// (vendor/horse-cart-and-cargo/il/TrailingWagon.il.txt); every function names the method it restates and the IL
+// (its TrailingWagon.dll); every function names the method it restates and the IL
 // offset it was read at. The mod is a MonoBehaviour over Unity's scene; this is the same machine over the port's
 // hosts, which hand it their seams (`deps`, below) and a presentation (scenes/horseCartPool.js) that draws what
 // the machine says and answers its physics. The pure arithmetic is systems/horse/horseCartLaw.js and

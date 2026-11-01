@@ -683,6 +683,17 @@ real producer; literals off the real ceiling of 90); mutants
 `tools/mutants/enc_ceil.json` (3, all dead).
 `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
+## OWN-WORK4 - our own keepers
+
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for everything." `vendor/roleplay-realism/`
+and `public/art/roleplay-realism/` are retired (`01-Overview/Own-Work.md` holds the row). Six keepers are ours: recipes
+in `systems/roleplayRealism/rrKeeperArt.js` for our painter (`art/ownPainter.js`), at the sizes the scale table is read
+against (records 0-3 at 47 x 76, 5 at 61 x 117, 6 at 71 x 128), better dressed as the house is better. Record 5's and
+the buttons' specs carried the author's paint and letters, so they went. The week button ("5 Days", record 21) is ours;
+the other sixteen relabelled buttons are asked for by nothing and are not carried. Record 4, edit-free, stays rebuilt
+(`systems/roleplayRealism/rrDerivedArt.json`). Nothing is fetched. Pins:
+`rr2_realism`, `rr_nobethesda2`, `lampkeeper`, `ownwork4_pictures`.
+
 ## OWN-WORK3 - our own data and words
 
 **OWN-WORK3 (2026-10-31, the owner).** The owner: "removing mods from outside authors and instead replacing them with

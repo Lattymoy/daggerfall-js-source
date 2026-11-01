@@ -97,8 +97,6 @@ export const LIGHT_ABOVE_BILLBOARD = 0.5;
 
 const RECORD_FOR = Object.freeze({ [TEMPLATES.Torch]: DROPPED_RECORD.Torch, [TEMPLATES.Candle]: DROPPED_RECORD.Candle, [TEMPLATES.Holy_candle]: DROPPED_RECORD.HolyCandle });
 const GROUP_FOR = Object.freeze({ [TEMPLATES.Torch]: 'UselessItems2', [TEMPLATES.Candle]: 'UselessItems2', [TEMPLATES.Holy_candle]: 'ReligiousItems' });
-export const droppedTextureUrl = (record, frame, emission = false) =>
-  new URL(`../../vendor/handheld-torches/Textures/${DROPPED_ARCHIVE}_${record}-${frame}${emission ? '_Emission' : ''}.png`, import.meta.url).href;
 
 /**
  * deps = { renderer, audio, getTexture, uploadRecordFrame, collider(), foes(), foeSinks(f), makeEnemiesHostile(),
@@ -120,7 +118,7 @@ export function createDroppedTorches({
   const frames = new Map();   // record -> { count, size: {w,h} } once its textures are up
   const framesLoading = new Map();
 
-  /** The archive's records, uploaded from the mod's own PNGs: frames until one is missing; the lit records' emission masks white (`_Emission` twins). */
+  /** The archive's records, uploaded from the set's pictures (OWN-WORK4: ours, and the candles rebuilt): frames until one is missing; the lit records' emission masks white (`_Emission` twins). */
   function ensureRecord(record) {
     if (frames.has(record)) return frames.get(record);
     if (!framesLoading.has(record)) {
@@ -520,10 +518,10 @@ export function createDroppedTorches({
   };
 }
 
-/** The default texture loader: the vendored PNG in the port's color32 order,
+/** The default texture loader: the set's picture in the port's color32 order,
  *  in the shape `uploadTexture` reads - `{ width, height, colors }` (TEX1). */
 async function defaultLoadTexture(record, frame) {
   if (!vendoredTexture(`${DROPPED_ARCHIVE}_${record}-${frame}.png`)) return null;   // the probe's miss, known (FIELD 2026-09-27: handheldTorches.js)
-  const pic = await torchPicture(`${DROPPED_ARCHIVE}_${record}-${frame}`, droppedTextureUrl(record, frame));   // NO-BETHESDA2: a candle's is rebuilt from the player's TEXTURE.210
+  const pic = await torchPicture(`${DROPPED_ARCHIVE}_${record}-${frame}`);   // NO-BETHESDA2: a candle's is rebuilt from the player's TEXTURE.210; OWN-WORK4: a torch's is ours
   return pic && toColor32(pic);
 }

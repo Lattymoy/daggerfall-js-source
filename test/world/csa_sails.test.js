@@ -16,11 +16,11 @@ import { resolveNodePointer } from '../../src/world/prefabNode.js';
 import { bakeSkinnedMesh, recalculateNormals, fixDeformationsTick, FIX_DEFORMATIONS_INTERVAL } from '../../src/world/skinnedBake.js';
 import { multiply } from '../../src/world/mat4.js';
 import { mat4FromQuatPosScale } from '../../src/world/quat.js';
+import { ownFile } from '../ownBoats.mjs';
 
-const DIR = new URL('../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
 const MESHES = json('meshes.json');
-const BIN = new Uint8Array(readFileSync(new URL('meshes.bin', DIR)));
+const BIN = json('meshes.bin');
 const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: MESHES, bin: BIN, materials: json('materials.json'), animation: json('animation.json') });
 const ctx = { models: MODELS, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: () => [1, 2], modelBounds: () => ({ min: [0, 0, 0], max: [1, 1, 1] }) };
 const apply = (m, p) => [0, 1, 2].map((d) => m[d] * p[0] + m[4 + d] * p[1] + m[8 + d] * p[2] + m[12 + d]);
@@ -93,7 +93,7 @@ test('CSA-B: RecalculateNormals - Unity\'s cross(b - a, c - a), summed per verte
   const t = [-2, 0, -2], lt = Math.hypot(...t);
   for (let d = 0; d < 3; d++) assert.ok(Math.abs(n[9 + d] - t[d] / lt) < 1e-6);
   assert.deepEqual([...n.slice(12, 15)], [0, 0, 0], 'a degenerate triangle leaves its vertex a zero normal');
-  // the bundle's imported normals face the same way as that cross product on all but a handful of its triangles
+  // OWN-WORK4: our meshes' normals face the same way as that cross product on every triangle (a collider's carry none)
   let agree = 0, disagree = 0;
   for (const [k, m] of Object.entries(MESHES)) {
     const g = MODELS.geometry(k);
@@ -107,7 +107,7 @@ test('CSA-B: RecalculateNormals - Unity\'s cross(b - a, c - a), summed per verte
     }
     assert.ok(m);
   }
-  assert.deepEqual([agree, disagree], [18060, 9]);
+  assert.deepEqual([agree, disagree], [11158, 0]);   // OWN-WORK4: ours (18060 and 9 Come Sail Away 2.1's)
 });
 
 test('CSA-B: the vendored sails skin as Unity skinned them - in each root bone\'s frame the skinned mesh fills the box Unity stored for the renderer (m_AABB), and the holder shows the bake exactly where the skinned renderer would have drawn it, the galleon\'s scaled sail included', () => {

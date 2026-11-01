@@ -94,7 +94,7 @@ import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixel
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
-import { textureReplacementEnabled, hasTextureReplacement, preloadTextureRecord, decodePng, decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW-E2: a decoration's replacement (UnderwaterDecorationReplacementCache)
+import { textureReplacementEnabled, hasTextureReplacement, preloadTextureRecord, decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW-E2: a decoration's replacement (UnderwaterDecorationReplacementCache)
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
@@ -247,9 +247,9 @@ import { windDrive, floraSwayOn, gustPhaseAfterShift, gustClock } from '../syste
 import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000's Heat Haze 1.0.1)
-import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
+import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall 1.0.0 (demifiend000) - its wind, its sounds, its leaves (OWN-WORK4: the sounds and pictures ours)
 import { createAmbientLifeHost, streamedWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: the birds, bats and small animals outdoors
-import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
+import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall 1.0.5 (demifiend000) - the snow on the ground, its tracks (OWN-WORK4: its ground, masks and look ours)
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
@@ -681,8 +681,9 @@ import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, HULL_NAMES as CSA_HULL_NAMES, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
 import { createComeSailAwayRuntime, cargoModWords, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
-import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAway/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
-import { WAVE_FRAME_COUNT as CSA_WAVE_FRAME_COUNT, waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAway/comeSailAwayWaves.js';   // CSA-F
+import { windWidgetFrame as csaWindWidgetFrame, waveFrames as csaOwnWaveFrames, splashPicture as csaSplashPicture } from '../systems/comeSailAway/csaPictures.js';   // OWN-WORK4: the wind widget's arrow, the breakers and the splash, painted
+import { registerCsaClips } from '../systems/comeSailAway/csaSynth/csaClips.js';   // OWN-WORK4: the boats' five clips, made
+import { waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAway/comeSailAwayWaves.js';   // CSA-F
 import { ComeSailAwayRenderer, softParticleTexture as csaSoftParticleTexture } from '../render/comeSailAwayRender.js';   // CSA-F: the waves' and the particles' passes
 import { createNavalHost, hullBoxOf as navalHullBoxOf, NAVAL_SAVE_VENDOR, NAVAL_TAG_RANGE } from './naval/navalHost.js';   // NAV-H: the sea fight - the Iliac Bay's ships, the guns, boarding, the law and the word
 import { peaceWayOf, heldPeaceWay } from '../systems/comeSailAway/peaceWay.js';   // PEACE-WAY: her way out of a fight (held a moment)
@@ -728,7 +729,6 @@ import { navalRecordKey } from '../systems/naval/navalWire.js';   // NAV-G: my s
 import { CROWNS as NAVAL_CROWNS, crownOf as navalCrownOf } from '../systems/naval/navalShips.js';   // NAV-C: the three crowns, whose capitals name the waters; AUDIT NAV1 (B2): a raid at sea parsed in theirs
 import { particleMeshRotation as csaParticleMeshRotation, RENDER_MODE as CSA_RENDER_MODE } from '../world/unityParticles.js';   // CSA-F
 import { quatRotate as csaQuatRotate, quatMultiply as csaQuatMultiply, quatAngleAxis as csaQuatAngleAxis } from '../world/quat.js';   // CSA-F: the effects probe's flag forward; CSA-K: the helm's turn a frame ahead
-import { classicRecordRgba } from '../formats/derivedTexture.js';   // CSA-F: the snow the waves' paints key
 import { toScreenOrder as csaToScreenOrder } from '../formats/color32Order.js';   // CSA-E: a screen quad's PNG keeps its rows
 import { parseHexColor as csaParseHexColor } from '../ui/toolTip.js';   // CSA-E: the widget's colour setting, RRGGBBAA
 import { horseOffsetHeight as csaHorseOffsetHeight } from '../ui/hud/hudLarge.js';   // CSA-E: OnGUI's LargeHUD lift   // CSA-C: the boats placed, kept and saved; CSA-D: sailed
@@ -1181,7 +1181,8 @@ import { createMusicBoxScore } from '../systems/musicBox.js';   // MUSIC-BOX: a 
 import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } from '../world/underwater/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform; DW-E5: SpawnRevealDistance
 import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
-import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishPictureUrl, fishIconArchive } from '../systems/deepWater/deepWatersFishItems.js';   // DW-E3: the fish as items
+import { installDeepWatersFishIcons, createFishItem, normalizeFishItems, fishIconArchive } from '../systems/deepWater/deepWatersFishItems.js';   // DW-E3: the fish as items
+import { fishPicture } from '../systems/deepWater/fishArt.js';   // OWN-WORK4: the fish's own pictures, ours
 import { clearEdgeBlackPixels } from '../world/underwater/underwaterDecorations.js';   // DW-E3: a fish's picture, edge-cleaned   // DW-E2: the seafloor's decorations   // DW-D: DeepWaterRuntime's load grace
 import { carvedFloorLocalY } from './deepWater/deepWatersHost.js';   // DW-D: the shore probes see no terrain over a carved cell
 import { etherPlaceRects } from '../world/etherWatersBake.js';   // ETHER-DEEP: the Eltheric Ocean's places' rects, for its own bake
@@ -4362,7 +4363,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const collider = new Collider(heightAt, surfaceAt);
   collider.cover = createCoverIndex();   // TACT1: the streamed world's trees, rocks and props are cover, with the switch on
-  // DW-B: ILIAC PUDDLE NO MORE 1.2.2 (jet082, vendor/iliac-puddle-no-more/)
+  // DW-B: ILIAC PUDDLE NO MORE 1.2.2 (jet082)
   // - the sea carved out of the streamed ground (deepWatersHost.js says
   // how). Opened as the world mounts, its switch read once: the bake
   // starts building at once on its own worker, and every pixel promoted
@@ -4584,11 +4585,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (_ohParts.length) ohRender.drawMiasma(_ohParts);
     renderer.markForeignPass();
   }
-  // DW-E3: THE FISH - the pulse that stands and clears them, their laws, their loot; their pictures the mod's own
-  // (vendored), their items' icons on the texture door
+  // DW-E3: THE FISH - the pulse that stands and clears them, their laws, their loot; their pictures our own
+  // (OWN-WORK4, systems/deepWater/fishArt.js), their items' icons on the texture door
   const dwFishPictures = deepWaters ? createFishPictures({
-    fetchBytes: async (name) => { const res = await fetch(fishPictureUrl(name)); if (!res.ok) throw new Error(`${name}: ${res.status}`); return new Uint8Array(await res.arrayBuffer()); },
-    decode: decodePng, clean: clearEdgeBlackPixels, createTexture: (frames) => dwRender.createDecorationTexture(frames),
+    picture: fishPicture, clean: clearEdgeBlackPixels, createTexture: (frames) => dwRender.createDecorationTexture(frames),
   }) : null;
   let _dwFishInventoryAt = 0;   // PassiveFishResources' FishItemGroupMigrationInterval clock
   // DW-E4: THE DEEP'S FOES - the pulse's other lane (UnderwaterEnemySpawner), each foe the exterior pool's own
@@ -8215,39 +8215,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const csaRender = csaRuntime ? new ComeSailAwayRenderer(renderer) : null;
   if (csaRender) void warmPrograms(csaRender.warmSteps());   // PERF-COMPILE1 (stutter): the sea's four programs at idle, not on the first frame at sea; SHADER-STALL: each built once its compile is done
   let _csaWaveLoad = null;
-  function csaWaveFrames() {
-    _csaWaveLoad ??= (async () => {
-      const r = await fetch(csaWaveDerivedUrl);
-      if (!r.ok) throw new Error(`derived.json: ${r.status}`);
-      const derived = await r.json();
-      const names = [];
-      const specs = Array.from({ length: CSA_WAVE_FRAME_COUNT }, (_, i) => {
-        const d = derived[`112395_2-${i}`];
-        if (!d || d.key !== 'ff00ffff' || d.from?.[0] !== 303 || d.from?.[1] !== 1) throw new Error(`112395_2-${i}: not a frame over TEXTURE.303 record 1 keyed ff00ffff`);
-        if (!names.includes(d.paint)) names.push(d.paint);
-        return { paint: names.indexOf(d.paint), scroll: d.scroll, tile: d.tile, size: d.size };
-      });
-      const paints = await Promise.all(names.map(async (n) => {
-        const pr = await fetch(csaWavePaintUrl(n));
-        if (!pr.ok) throw new Error(`${n}: ${pr.status}`);
-        return decodePng(new Uint8Array(await pr.arrayBuffer()));
-      }));
-      const t = await getTexture(303);
-      const bm = t?.getDFBitmap(1, 0);
-      if (!bm?.width) throw new Error('TEXTURE.303 record 1 is not in this ARENA2');
-      csaRender.setWaveFrames({ paints, snow: classicRecordRgba(bm, palette), specs });
-    })().catch((e) => console.warn('[come-sail-away] the waves\' pictures did not load', e));
+  function csaWaveFrames() {   // OWN-WORK4: our breakers, painted (systems/comeSailAway/csaPictures.js)
+    _csaWaveLoad ??= Promise.resolve().then(() => csaRender.setWaveFrames(csaOwnWaveFrames())).catch((e) => console.warn('[come-sail-away] the waves\' pictures did not paint', e));
   }
   /** CSA-F: the particles' pictures - the mod's splash (112395_0-0, point-sampled) and the port's own soft dot for Unity's
    *  Default-Particle - loaded at boot, as the bundle's materials are there at Start (CSA-J). */
   let _csaParticleLoad = null;
   function csaParticleTextures() {
-    _csaParticleLoad ??= (async () => {
-      const r = await fetch(new URL('../../vendor/come-sail-away/Textures/112395_0-0.png', import.meta.url).href);
-      if (!r.ok) throw new Error(`112395_0-0.png: ${r.status}`);
-      csaRender.setParticleTexture('112395_0-0', await decodePng(new Uint8Array(await r.arrayBuffer())));
+    _csaParticleLoad ??= Promise.resolve().then(() => {   // OWN-WORK4: our splash, painted
+      csaRender.setParticleTexture('112395_0-0', csaSplashPicture());
       csaRender.setParticleTexture('Default-Particle', csaSoftParticleTexture(), { linear: true });
-    })().catch((e) => console.warn('[come-sail-away] the particles\' pictures did not load', e));
+    }).catch((e) => console.warn('[come-sail-away] the particles\' pictures did not paint', e));
   }
   /** CSA-F: every boat's living particles, by the material their renderer wears. */
   function csaParticleLists() {
@@ -8335,13 +8313,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const csaUnityGain = (v) => plainSourceGain(v, getFloat('Controls', 'SoundVolume', 0, 1));
   const csaClipKey = (name) => `come-sail-away/${name}`;
   let _csaSoundLoad = null;
-  /** Start's five clips (1022-1029), decoded once onto the bus's register - at the first boat heard. */
+  /** Start's five clips (1022-1029) - OWN-WORK4: ours, made once (csaSynth/csaClips.js) - onto the bus's register; refused
+   *  (no audio context yet), the next ask tries again. */
   function csaSounds() {
-    _csaSoundLoad ??= Promise.all(CSA_AUDIO_CLIPS.map(async (name) => {
-      const r = await fetch(csaSoundUrl(name));
-      if (!r.ok) throw new Error(`${name}.ogg: ${r.status}`);
-      await audio.registerSound(csaClipKey(name), new Uint8Array(await r.arrayBuffer()));
-    })).catch((e) => console.warn('[come-sail-away] the boats\' sounds did not load', e));
+    _csaSoundLoad ??= registerCsaClips((name, c) => audio.registerSamples(csaClipKey(name), c.samples, c.rate), CSA_AUDIO_CLIPS).catch(() => { _csaSoundLoad = null; });
     return _csaSoundLoad;
   }
   if (csaRuntime) csaSounds();   // decoded before the first boat is heard (here, below the names it reads)
@@ -8365,13 +8340,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _csaWidgetFrames = [];
   let _csaWidgetLoad = null;
   function csaWindWidgetFrames() {
-    _csaWidgetLoad ??= Promise.all(Array.from({ length: csaWindWidgetFrameCount() }, async (_, i) => {
-      const r = await fetch(csaWindWidgetFrameUrl(i));
-      if (!r.ok) throw new Error(`112395_1-${i}.png: ${r.status}`);
-      return decodePng(new Uint8Array(await r.arrayBuffer()));
-    })).then((imgs) => {
+    _csaWidgetLoad ??= Promise.resolve().then(() => {   // OWN-WORK4: our arrow, painted a frame a step (systems/comeSailAway/csaPictures.js)
+      const imgs = Array.from({ length: csaWindWidgetFrameCount() }, (_, i) => csaWindWidgetFrame(i));
       _csaWidgetFrames.push(...imgs.map((img, i) => ({ tex: renderer.uploadTexture('img', `csa-wind:${i}`, csaToScreenOrder(img)), w: img.width, h: img.height })));
-    }).catch((e) => console.warn('[come-sail-away] the wind widget\'s pictures did not load', e));
+    }).catch((e) => console.warn('[come-sail-away] the wind widget\'s pictures did not paint', e));
     return _csaWidgetFrames;
   }
   /** CSA-E: OnGUI's wind widget - after the HUD, as GUI.depth -1 draws it over DFU's - in every mode the helm is taken. */

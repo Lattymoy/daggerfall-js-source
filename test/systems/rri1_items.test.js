@@ -17,7 +17,8 @@ import {
   RRI_MOD, RRI_VENDOR, RRI_TEMPLATES, RRI_TEMPLATE_PATCHES, RRI_ROW_RULE, RRI_ROW_FROM, RRI_CLASSES, RRI_TEXT, FIRST_FEMALE_ARCHIVE,
   leatherMaterialArmorValue, chainmailMaterialArmorValue, customItemClass, rriCustomItemsForGroup, rriVariantFields, rriSpriteEntries, rriEnabled, rriModule,
 } from '../../src/systems/roleplayRealismItems/rriItems.js';
-import { installRoleplayRealismItems, _resetRoleplayRealismItems, rriSpriteUrl } from '../../src/systems/roleplayRealismItems/rriInstall.js';
+import { installRoleplayRealismItems, _resetRoleplayRealismItems } from '../../src/systems/roleplayRealismItems/rriInstall.js';
+import { rriArtRecipe } from '../../src/systems/roleplayRealismItems/rriArt.js';
 import { templateByIndex, templateOverrideCount, registerTemplateOverrides, inventoryItemImage, setItemFields, ITEM_TEMPLATES } from '../../src/systems/item/itemTemplates.js';
 import { paperdollItemImage } from '../../src/ui/paperDoll.js';
 import { ARMOR_MATERIAL, armorArchive, itemArmorValue, registerCustomArmorValue } from '../../src/systems/armorMaterials.js';
@@ -38,20 +39,20 @@ import {
 import { MOD_SETTINGS, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { CREDITS } from '../../src/ui/credits.js';
-import { RRI_SPRITES, RRI_DERIVED } from '../../src/systems/roleplayRealismItems/rriIndex.js';
-import { rectOf, renderIndex } from '../../tools/rriExtract.mjs';
+import { RRI_SPRITES } from '../../src/systems/roleplayRealismItems/rriIndex.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
 const M = ARMOR_MATERIAL;
-const topDown = () => ({ width: 2, height: 2, data: new Uint8Array([1, 1, 1, 255, 2, 2, 2, 255, 3, 3, 3, 255, 4, 4, 4, 255]) });
+/** OWN-WORK4: a classic reader for the pins - every record one small picture, every ask written down. */
+const fakeArt = (loads) => ({ picture: async (archive, record) => { loads.push(`${archive}_${record}`); return { width: 2, height: 2, data: new Uint8Array([1, 1, 1, 255, 2, 2, 2, 255, 3, 3, 3, 255, 4, 4, 4, 255]) }; } });
 
 function fresh({ enabledAtBoot = true } = {}) {
   _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismItems(); registerTemplateOverrides([]); registerCustomArmorValue(null);
   for (const c of Object.values(RRI_CLASSES)) registerSwingSound(c.index, null);
   const loads = [];
-  const n = installRoleplayRealismItems({ fetchBytes: async (name) => { loads.push(name); return new Uint8Array([1]); }, enabledAtBoot });
+  const n = installRoleplayRealismItems({ art: fakeArt(loads), enabledAtBoot });
   return { n, loads };
 }
 function done() { _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismItems(); registerTemplateOverrides([]); registerCustomArmorValue(null); for (const c of Object.values(RRI_CLASSES)) registerSwingSound(c.index, null); }
@@ -116,8 +117,6 @@ test('RRI1 switches: the mod\'s eleven modules and Enabled on the Mods pane, our
   assert.equal(m.keys.Enabled.default, true, 'MO1');
   assert.equal(m.keys.Enabled.description, 'Two new weapons, a light and a chain armor set in every metal, and lighter arrows, paper and small goods.');
   assert.deepEqual({ ...RRI_MOD }, { guid: '68589945-3fbb-4d58-81a3-3066f3f08539', title: 'RoleplayRealism-Items', version: '1.3', author: 'Hazelnut & Ralzar' });
-  const listing = JSON.parse(rd('vendor/roleplay-realism-items/roleplay-realism-items.files.json'));
-  assert.equal(listing.GUID, RRI_MOD.guid); assert.equal(listing.ModVersion, RRI_MOD.version); assert.equal(listing.ModAuthor, RRI_MOD.author); assert.equal(listing.ModTitle, RRI_MOD.title);
   try {
     _resetModSettings();
     assert.equal(rriEnabled(), true); assert.equal(rriModule('newWeapons'), true);
@@ -265,7 +264,7 @@ test('RRI1 InventoryTextureRecord: the chain set by material on the body\'s arch
   } finally { done(); }
 });
 
-test('RRI1 the art: 280 sprites by DFU\'s names with their <rect>s, registered as lazy, gated stand-in entries by dye (the helmet\'s masks under TextureMap.Mask); the stand-in answers a record\'s size and doll offset across dyes; the folder against the index both ways', async () => {
+test('RRI1 the art: 280 pictures by DFU\'s names with their <rect>s, registered as lazy, gated stand-in entries by dye (the helmet\'s masks under TextureMap.Mask); the stand-in answers a record\'s size and doll offset across dyes; OWN-WORK4: each one ours, built - no file, no derived spec', async () => {
   const entries = rriSpriteEntries();
   assert.equal(entries.length, 280);
   assert.equal(Object.keys(RRI_SPRITES).length, 280);
@@ -278,10 +277,6 @@ test('RRI1 the art: 280 sprites by DFU\'s names with their <rect>s, registered a
   assert.deepEqual(iron.rect, { x: 37, y: 37, width: 44, height: 76 }, 'the <rect> beside it, TextureReplacement.OverridePaperdollItemRect\'s');
   assert.equal(entries.find((e) => e.name === '520_10-0').dye, null, 'the bare name: the leather ask');
   assert.ok(!entries.some((e) => e.dye === DYE_COLORS.Silver), 'no Silver entry could be asked for');
-  assert.deepEqual(rectOf('<?xml version="1.0"?><info><rect scale="2"><x>10</x><y>20</y><width>30</width><height>40</height></rect></info>'), { x: 5, y: 10, width: 15, height: 20 }, 'XMLManager.GetRect divides by the rect\'s scale');
-  assert.equal(rectOf('<info></info>'), null);
-  assert.match(renderIndex([{ name: 'a', width: 1, height: 2, rect: null }], '1.3'), /"a": \[1, 2\],/);
-  assert.match(renderIndex([{ name: 'a', width: 1, height: 2, rect: null }], '1.3', ['a']), /RRI_DERIVED = Object\.freeze\(\[\n {2}"a",\n\]\);/, 'NO-BETHESDA2: the derived names');
   try {
     const { n, loads } = fresh();
     assert.equal(n, 280); assert.equal(installRoleplayRealismItems(), 0, 'once');
@@ -292,34 +287,26 @@ test('RRI1 the art: 280 sprites by DFU\'s names with their <rect>s, registered a
     assert.equal(hasTextureReplacement(520, 10, 0, 'Albedo', DYE_COLORS.Silver), true, 'the bare stem answers the silver (Unchanged) ask');
     assert.equal(hasTextureReplacement(522, 13, 0, 'Mask', DYE_COLORS.Iron), true, 'the helmet\'s mask by the same name');
     assert.equal(hasTextureReplacement(520, 10, 0, 'Mask', DYE_COLORS.Iron), false);
-    assert.equal(await preloadTextureArchive(520, { decode: async () => topDown() }), 0, 'lazy: the archive preload fetches none (AUDIT-DW F1)');
+    assert.equal(await preloadTextureArchive(520), 0, 'lazy: the archive preload builds none (AUDIT-DW F1)');
     assert.equal(loads.length, 0);
-    const decode = async () => topDown();
-    assert.ok(await preloadTextureRecord(520, 10, 0, 'Albedo', DYE_COLORS.Iron, { decode }));
-    assert.deepEqual(loads, ['520_10-0_Iron']);
+    assert.ok(await preloadTextureRecord(520, 10, 0, 'Albedo', DYE_COLORS.Iron));
+    assert.deepEqual(loads, ['247_4'], 'OWN-WORK4: ours, over the classic record of the slot (rriArt.js RRI_ART_BASE)');
+    assert.ok(await preloadTextureRecord(522, 13, 0, 'Mask', DYE_COLORS.Dwarven));
+    assert.deepEqual(loads, ['247_4', '251_27'], 'a Dwarven helmet\'s mask is ours too, over the helm whose hair it clears');
     const stand = vendorTextureStandIn(520);
     assert.equal(stand.recordCount, 18);
-    assert.deepEqual(stand.getSize(10), { width: 2, height: 2 }, 'the size off a DYED entry when the bare one is not decoded');
+    assert.deepEqual(stand.getSize(10), { width: 44, height: 76 }, 'the size off a DYED entry when the bare one is not decoded - the picture\'s own');
     assert.deepEqual(stand.getOffset(10), { x: 37, y: 37, paperdoll: true }, 'the doll offset is the rect\'s x,y in the doll\'s own space');
     assert.ok(stand.getDFBitmap(10).rgba, 'the RGBA the doll blits, from the dyed entry');
-    assert.equal(decodedTexture(520, 10, 0, 'Albedo', DYE_COLORS.Iron)?.width, 2);
+    assert.equal(decodedTexture(520, 10, 0, 'Albedo', DYE_COLORS.Iron)?.width, 44);
     setModSetting(RRI_VENDOR, 'Enabled', false);
     assert.equal(hasTextureReplacement(520, 10, 0, 'Albedo', DYE_COLORS.Iron), false, 'gated on the mod');
     assert.equal(decodedTexture(520, 10, 0, 'Albedo', DYE_COLORS.Iron), null);
-    assert.match(rriSpriteUrl('520_10-0_Iron', 'https://host/play/'), /^https:\/\/host\/play\/art\/roleplay-realism-items\/520_10-0_Iron\.png$/);
   } finally { done(); }
-  // NO-BETHESDA2: a sprite is a file or a spec rebuilt from the player's ARENA2 - never both, never neither
-  const files = tracked('public/art/roleplay-realism-items').filter((f) => /\.png$/i.test(f)).map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, ''));
-  const specs = Object.keys(JSON.parse(rd('vendor/roleplay-realism-items/derived-art.json')));
-  assert.deepEqual([...RRI_DERIVED], specs, 'the index\'s derived names are the listing\'s, in its order');
-  assert.deepEqual(files.filter((n) => !RRI_SPRITES[n]), [], 'files the index does not name');
-  assert.deepEqual(specs.filter((n) => !RRI_SPRITES[n]), [], 'specs the index does not name');
-  assert.deepEqual(specs.filter((n) => files.includes(n)), [], 'a picture both rebuilt and carried');
-  assert.deepEqual(Object.keys(RRI_SPRITES).filter((n) => !files.includes(n) && !specs.includes(n)), [], 'index names with neither a file nor a spec');
-  assert.equal(files.length, 230); assert.equal(specs.length, 50);
-  // OWN-WORK3: the release's pictures, our listing - every carried file and every spec is one of them, and nothing else is
-  const listed = JSON.parse(rd('vendor/roleplay-realism-items/roleplay-realism-items.files.json')).Files.map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, ''));
-  assert.deepEqual([...listed].sort(), [...files, ...specs].sort(), 'the listing names the 280, carried or rebuilt');
+  // OWN-WORK4: every picture is ours - never a file, never a spec over the authors' pixels
+  assert.deepEqual(Object.keys(RRI_SPRITES).filter((n) => !rriArtRecipe(n)), [], 'index names with no recipe of ours');
+  assert.deepEqual(tracked('public/art/roleplay-realism-items'), [], 'no picture of the release is carried');
+  assert.deepEqual(tracked('src/systems/roleplayRealismItems').filter((f) => f.endsWith('.json')), [], 'no derived spec either');
 });
 
 test('RRI1 the random makers: CreateRandomWeapon rolls over 19 + the registered custom weapons, CreateRandomArmor over 11 + the custom armor, with the class\'s variant writes; off, the classic rolls', () => {
@@ -347,11 +334,10 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   const row = FEATURES.find((f) => f.id === 'mod-roleplay-realism-items');
   assert.ok(row); assert.equal(row.control.vendor, RRI_VENDOR); assert.equal(row.group, 'loot');
   const credit = CREDITS.mods.find((c) => c.title === 'Roleplay & Realism: Items');
-  assert.ok(credit); assert.equal(credit.author, 'Hazelnut & Ralzar'); assert.equal(credit.version, '1.3'); assert.deepEqual([...credit.vendor], [RRI_VENDOR]);
+  assert.ok(credit); assert.equal(credit.author, 'Hazelnut & Ralzar'); assert.equal(credit.version, '1.3'); assert.deepEqual([...(credit.retired ?? credit.vendor)], [RRI_VENDOR]);
   assert.match(credit.link, /nexusmods\.com\/daggerfallunity\/mods\/61/);
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'), /\| `roleplay-realism-items` \|/);
-  // OWN-WORK3: the directory is its art alone - the README, the rebuilt pictures' specs and the pictures' listing
-  assert.deepEqual(tracked('vendor/roleplay-realism-items').sort(), ['vendor/roleplay-realism-items/README.md', 'vendor/roleplay-realism-items/derived-art.json', 'vendor/roleplay-realism-items/roleplay-realism-items.files.json']);
+  // OWN-WORK4: the directory is retired - the pictures are ours (rriArt.js)
+  assert.deepEqual(tracked('vendor/roleplay-realism-items'), []);
   assert.match(rd('LICENSE'), /Roleplay & Realism: Items 1\.3\n\nMIT License\n\nCopyright \(C\) 2020 Hazelnut\nCopyright \(C\) 2020 \(Authors: Hazelnut & Ralzar\)/, 'our JS restates the release\'s MIT scripts: the notice travels in LICENSE');
   // the dispatch, one line at each law site
   assert.match(rd('src/systems/item/itemTemplates.js'), /const cls = customItemClass\(item\.templateIndex\);\n\s+if \(cls\) \{\n\s+const bodyArchive = playerArchiveFor\(item, t, identity\);/);

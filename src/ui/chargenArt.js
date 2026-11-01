@@ -272,17 +272,17 @@ export function textRecordLines(id) {
 
 // StatsRollout.cs:88-127 - value panel (8,33) 34x6 stepping 22, the
 // select button (7,20) 36x20 stepping 22, spinner at (44, 21+22i).
-const STAT_PANEL = [8, 33, 34, 6], STAT_BUTTON = [7, 20, 36, 20], STAT_STEP = 22;
+export const STAT_PANEL = [8, 33, 34, 6], STAT_BUTTON = [7, 20, 36, 20], STAT_STEP = 22;
 const STAT_SPINNER_X = 44, STAT_SPINNER_Y = 21;
 // CreateCharAddBonusStats.cs:94-100 - the derived labels.
-const DERIVED_POS = Object.freeze({
+export const DERIVED_POS = Object.freeze({
   damage: [83, 22], encumbrance: [103, 32], spellPoints: [112, 49],
   magicResist: [121, 71], toHit: [97, 93], hitPoints: [101, 110], healingRate: [122, 120],
 });
 // SkillsRollout.cs:182-236 - three groups, label x=68, value x=187,
 // rows 10 apart, group tops 32 / 81 / 130; spinner x=203, tops -1.
 const SKILL_LABEL_X = 68, SKILL_VALUE_X = 187, SKILL_ROW_STEP = 10, SKILL_SPINNER_X = 203;
-const SKILL_GROUP_TOP = Object.freeze({ primary: 32, major: 81, minor: 130 });
+export const SKILL_GROUP_TOP = Object.freeze({ primary: 32, major: 81, minor: 130 });
 const SKILL_SPINNER_TOP = Object.freeze({ primary: 31, major: 80, minor: 129 });
 // UpDownSpinner.cs:96-116 / LeftRightSpinner.cs:82-96.
 const UD_SPINNER = { w: 15, h: 20, up: [0, 0, 15, 7], value: [0, 7, 15, 6], down: [0, 13, 15, 7] };
@@ -888,8 +888,8 @@ function drawClassMethod(renderer, m, font, flow) {
 // 76, and y is DFU's own 5.5 - Unity's alignment is float math and
 // the panel really does land on the half pixel (the mapping carries
 // it: m.oy + 5.5 * scale).
-const REP_PANEL = Object.freeze([76, 5.5, 168, 189]);
-const REP_COLUMN_X = Object.freeze([3, 36, 69, 102, 135]);        // merchants..underworld (:123-127)
+export const REP_PANEL = Object.freeze([76, 5.5, 168, 189]);
+export const REP_COLUMN_X = Object.freeze([3, 36, 69, 102, 135]);        // merchants..underworld (:123-127)
 const REP_LABEL_X = Object.freeze([18, 50, 82, 114, 146]);        // :131-135
 // ONE DFU MEMBER, ONE EXPORT: the five-group ORDER is REP_GROUPS,
 // declared once in the laws module - this file imports it.

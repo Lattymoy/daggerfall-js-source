@@ -11,7 +11,8 @@ the monsters' design and their animation. Kamer's Windmills, Daggerfall Arena an
 Raiding Parties are `vendor/windmills-kamer/`, `vendor/daggerfall-arena/` and
 `vendor/world-events-raiding-parties/`, and his Low Poly Trees (as SquidKamer)
 `vendor/low-poly-trees/`. Its one dependency, optional, is
-`roleplayrealism-items` (`vendor/roleplay-realism-items/`).
+`roleplayrealism-items` (Roleplay & Realism: Items 1.3, retired from `vendor/` at OWN-WORK4;
+`src/systems/roleplayRealismItems/` is ours).
 
 Mac (Lattymoy) handed the shipped archive over on 2026-10-19
 (`Daggerfall Enemy Expansion-372-1-3-4-1708711071 (1).7z`, 40,903,152 bytes,
@@ -157,11 +158,12 @@ records the archive's own TEXTURE file has - TEXTURE.399 has twenty, 0-19, and
 the bundle no `399_0-0`. In DFU they are never drawn, so they are not carried
 (`tools/dexExtract.mjs` drawnClassic).
 
-**One number, two pictures**: `vendor/class-skins/` (the player's on-foot skins)
-uses archives 1513, 1514, 1519, 1520 and 1530 for other sheets than these, and
-its 1504 is this Bounty Hunter, pixel for pixel. The skins are read by the
-player body's own sprite index (`player/eyeOfTheBeholder/eotbSprite.js`), never
-through the texture door these register on, so neither draws the other's.
+**One number, two pictures**: the class skins (the player's on-foot skins,
+`player/classSkins.js`) key archives 1504, 1513, 1514, 1519, 1520 and 1530 for
+other sheets than these. Their pictures are our own since OWN-WORK4 (2026-10-31),
+painted on the player's TEXTURE files (`player/classSkinArt.js`). The skins are
+read by the player body's own sprite index (`player/eyeOfTheBeholder/eotbSprite.js`),
+never through the texture door these register on, so neither draws the other's.
 
 ## What is ported, and where
 

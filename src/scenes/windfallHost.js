@@ -38,18 +38,10 @@ const MODE_OF = Object.freeze({
   storm: DEBUG_MODE.storm,
 });
 
-// The mod's three pictures (vendor/windfall/Textures/), served - Vite's compile-time glob, none in node.
-const IN_BROWSER = typeof window !== 'undefined';
-const PICTURE_URLS = IN_BROWSER
-  ? import.meta.glob('../../vendor/windfall/Textures/*.png', { eager: true, query: '?url', import: 'default' })
-  : {};
+// OWN-WORK4: the three pictures are our own, painted on the first outdoor frame (systems/windfall/windfallPictures.js).
 async function defaultPicture(name) {
-  const url = PICTURE_URLS[`../../vendor/windfall/Textures/${name}.png`];
-  if (!url) return null;
-  const r = await fetch(url);
-  if (!r.ok) return null;
-  const { decodePng } = await import('../systems/textureReplacement.js');
-  return decodePng(new Uint8Array(await r.arrayBuffer()));
+  const { paintWindfallPicture } = await import('../systems/windfall/windfallPictures.js');
+  return paintWindfallPicture(name);
 }
 
 /**
@@ -119,24 +111,24 @@ export function createWindfallHost({
 
   /** ExecuteDebugCommand. */
   function command(args) {
-    if (!enhanced) return 'Windfall runtime is unavailable.';
+    if (!enhanced) return 'Windfall is not running.';
     if (!args || args.length !== 1) return `Usage: ${WINDFALL_COMMAND.usage}`;
     const a = String(args[0]).toLowerCase();
     if (a in MODE_OF) {
       model.setDebugMode(MODE_OF[a]);
-      return `Wind test mode set to ${a}. DFU weather itself was not changed.`;
+      return `Wind test mode: ${a}. The weather is unchanged.`;
     }
     if (a === 'gust') {
-      if (!last?.outside) return 'Go outside before triggering a wind gust.';
+      if (!last?.outside) return 'A gust needs you outdoors.';
       const g = model.triggerGust();
       for (const e of model.takeEvents()) effects.playWindEvent(e.peak, e.windy, e.storm);
-      return `Triggered a ${g.peak.toFixed(2)}-peak ${g.normal ? 'normal-day breeze' : 'gust'} for ${g.duration.toFixed(1)} seconds.`;
+      return `A ${g.normal ? 'breeze' : 'gust'} of peak ${g.peak.toFixed(2)} blows for ${g.duration.toFixed(1)} s.`;
     }
     if (a === 'bright') return effects.triggerBrightWindTest();
     if (a === 'ruffle') return effects.triggerRuffleTest();
     if (a === 'leaves') {
-      if (!last?.outside) return 'Go outside before testing wind leaves.';
-      if (!particles) return 'Leaf renderer is unavailable; check Player.log for missing particle assets.';
+      if (!last?.outside) return 'Leaves need you outdoors.';
+      if (!particles) return 'Leaves cannot be drawn here.';
       return effects.triggerLeafTest(last.center, last.wf.direction);
     }
     if (a === 'status') return windfallStatusText(model.status());

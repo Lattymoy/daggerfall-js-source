@@ -25,6 +25,7 @@ import { fishKind } from '../../src/scenes/fishHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { WORLD_MAP_TILE_DIM } from '../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const rd = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const w = console.warn; console.warn = () => {}; try { return fn(); } finally { console.warn = w; } };
@@ -82,7 +83,6 @@ test('MEM-AUDIT the cover index: held at its size - COVER-COMPACT (2026-10-26): 
 
 // ─── THE SNOW'S BLANKET ──────────────────────────────────────────────
 
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2, RING = 3, X0 = 500, Y0 = 250;
 /** SNOW-HOLD's world (fb1021b_snowhold.test.js): tiles stand within three pixels of the player's, destroyed as they leave. */
 function streamingWorld() {

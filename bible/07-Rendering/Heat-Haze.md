@@ -12,7 +12,7 @@ siblings from the same message: `07-Rendering/Windfall.md`,
 **OWN-WORK1 (2026-10-31, the owner).** vendor/heat-haze is retired: the
 shipped manifest, its settings file, `HeatHaze.dll`, its IL dump, the shader
 read back as GLSL and the README left the tree, and
-`tools/environmentModsExtract.mjs` lost its Heat Haze arm. The port's own code
+`tools/environmentModsExtract.mjs` (DELETED) lost its Heat Haze arm. The port's own code
 is now the record of the behaviour: `src/systems/heatHaze.js` (the law),
 `src/render/heatHaze.js` (the shader's translation) and the keys in
 `src/systems/modSettings.js`. `test/systems/haze1_heatHaze.test.js` holds the

@@ -187,7 +187,8 @@ test('AUDIT NAV2 F32 A SMALL HULL\'S DECK: kept off her walls and her open side,
   const small = pool.deckOf(2, 0);
   assert.equal(cellsOf(small).filter((c) => Math.abs(c[1] - mainLevel(small)) <= DECK_STEP).length, 664, 'the Small Ship\'s main deck, 664');
   assert.equal(small.count, 838, 'the Small Ship\'s 838, her castle with it');
-  assert.equal(pool.deckOf(3, 0).count, 4016, 'the Large Galley\'s 4016');
+  // PIN MOVED (OWN-WORK4, 2026-10-31): the Large Galley is our own - her top deck's 4527 (Come Sail Away 2.1's tent's 4016)
+  assert.equal(pool.deckOf(3, 0).count, 4527, 'the Large Galley\'s 4527');
   // PIN MOVED (SHIPS-2, 2026-10-07): the Carrack is Mac's carrack - her open deck one level, 1087 cells
   const carrack = pool.deckOf(4, 0);
   assert.equal(carrack.count, 1087, 'the Carrack\'s 1087');
@@ -469,7 +470,7 @@ test('AUDIT NAV2 F11 THE DEAD LIE ON HER DECK AND GO DOWN WITH HER: a crewman ki
 
 test('AUDIT NAV2 F38 A QUAY OVER SHALLOW WATER IS WALKED ON: a model over a shallow-water tile (a coast\'s or a river\'s edge, SHALLOW_WATER_TILES) plays the model\'s own ground - the armour\'s, as over the open sea - never the shallow water\'s splash; wading the same tile off the model still splashes (mutants: tile 0 alone)', async () => {
   const store = Object.fromEntries(Object.entries(MOD_SETTINGS[IMMERSIVE_FOOTSTEPS_VENDOR].keys).map(([k, d]) => [k, d.default]));
-  const c = createImmersiveFootsteps({ audio: { registerSound: async () => true, playOneShot() {} }, settings: () => readFootstepSettings(() => store), random: () => 0, fetchClip: async () => new Uint8Array([1]) });
+  const c = createImmersiveFootsteps({ audio: { registerSamples: () => true, playOneShot() {} }, settings: () => readFootstepSettings(() => store), random: () => 0, makeClip: async () => ({ samples: new Float32Array(1), rate: 22050 }) });
   const entity = { items: [], activeEffects: [] };
   const outdoors = (o = {}) => ({ paused: false, entity, grounded: true, standingStill: false, isRunning: false, movingLessThanHalfSpeed: false, transportMode: TRANSPORT_MODES.Foot, swimming: false, pos: [0, 0, 0], inside: false, inDungeon: false, season: SEASON.Summer, climateIndex: CLIMATES.Woodlands, tileMapIndex: 2, waterWalking: false, ...o });
   c.update(0, outdoors());

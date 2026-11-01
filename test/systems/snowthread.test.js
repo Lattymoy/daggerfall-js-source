@@ -8,7 +8,6 @@
 // from the side that sent it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { SnowCoverage, snowfallSettings, predictRoadTile, roadCorners } from '../../src/systems/snowfall.js';
 import { SnowfallRuntime } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost } from '../../src/scenes/snowfallHost.js';
@@ -17,8 +16,8 @@ import { SnowBuildClient, snowThreadDisabled } from '../../src/systems/snowfall/
 import { snowThreadVerify } from '../../src/systems/snowfall/snowBuildVerify.js';
 import { snowGroundHeight, snowGroundNormal, snowGroundBare, snowGroundSnapshot, snowPixelX, snowPixelY, snowGlobalOf } from '../../src/systems/snowfall/snowGroundLaw.js';
 import { VERTEX_GRID_SIZE } from '../../src/world/deepWater/deepWaterFloor.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2;
 const bytesOf = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 

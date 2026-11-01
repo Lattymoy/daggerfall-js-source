@@ -7,7 +7,7 @@
 import { EnhancedSkyRenderer, skyState, WEATHER_SKY, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';
 import { cloudsStateUnderMod, dynamicMoonState } from '../render/dynamicSkiesBridge.js';   // DS2: the clouds' state under the mod, as the game builds it
 import { MINUTES_PER_DAY, lunarPhaseFractionsFromMinutes } from '../systems/gameDate.js';   // CLK3: the clock's own fraction, as the dome takes it
-import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: the mod's pass in the lab too - ?sky=dynamic
+import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' pass in the lab too - ?sky=dynamic
 import { DynamicSkies } from '../systems/dynamicSkies/dynamicSkiesRuntime.js';
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';
 import { weatherSunlightScale } from '../world/weather.js';
@@ -22,8 +22,8 @@ const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });   // the probe reads pixels after the frame
 if (!gl) throw new Error('webgl2 unavailable');
 // DS1: `?sky=dynamic` puts Dynamic Skies on the lab's canvas - the same
-// pass, presets and textures the game draws, with the lab's clock and
-// weather, so the mod can be looked at and screenshotted with no data.
+// pass, rule and painted noise the game draws (OWN-WORK4: our own), with
+// the lab's clock and weather, to be looked at with no data.
 const dynamicOn = params.get('sky') === 'dynamic';
 const sky = dynamicOn ? new DynamicSkiesRenderer(gl) : new EnhancedSkyRenderer(gl);
 const dyn = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), { densitySetting: Number(params.get('density')) || 1 }) : null;

@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { RETAIL_SKELETON_BYTES } from '../../fixtures/mw/retailRig.mjs';
 import { PNG } from 'pngjs';
 import { bakeHorse, GAIT_STACKS, HORSE_FPS } from '../../../tools/bakeHorse.mjs';
 import {
@@ -347,8 +348,8 @@ test('COATS3D THE BODY ASTRIDE: the saddle\'s request - hips on the seat, the st
   assert.equal(r3(tall.feet.L.at[1]), r3(1.68 - 0.88), 'their drop the rider\'s leg');
   assert.equal(r3(tall.hands.R.at[0]), r3(0.12 * 0.9), 'the reins in the rider\'s build');
   assert.equal(saddleRequestFor(null, { unitsPerMetre: 70 }), null);
-  // solved on retail's biped (Weapon Sheathing's xbase_anim_sh.nif, as CARDS2b's seat is)
-  const sk = buildSkeleton(parseNif(new Uint8Array(bytes('vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif'))));
+  // solved on our own biped (tools/ownBiped.mjs, as CARDS2b's seat is)
+  const sk = buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));
   const b = climbBones(sk), U = MW_UNITS_PER_METER;
   const pose = poseSkeleton(sk, null, null, 0);
   const out = applyClimbRig(sk, pose, GRAPH_ROOT, skeletonSpaceMatrices, saddleRequestFor(saddle, { unitsPerMetre: U }));

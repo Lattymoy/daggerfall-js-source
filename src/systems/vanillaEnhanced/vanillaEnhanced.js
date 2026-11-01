@@ -1,13 +1,13 @@
 // VE3 (2026-10-05) - VANILLA ENHANCED, THE TEXTURE OVERHAUL'S FIRST PACK.
 //
-// carademono's Vanilla Enhanced (Nexus Mods, Daggerfall Unity mod 273; its sources at
-// github.com/drcarademono/vanilla-enhanced) is Daggerfall's own textures remastered - the terrain's tile sets, the
-// nature flats, the city walls, the dungeons. VE3 had the player attach it (Port-Doctrine: A RENDER OF GAME DATA IS
-// GAME DATA); VE4 (Mac, 2026-10-05: "Put it in the codebase") ships it, under the exception Port-Doctrine records:
-// systems/vanillaEnhanced/vanillaEnhancedPack.js registers the Base, Masked Roads and Snowless Swamps and Jungles in the texture-mod
-// door (systems/dfmodTextures.js) - the Base on by default (AUDIT VE), its add-ons off. A copy the player attaches under the same name - a newer version
-// from Nexus - shadows the shipped one. This module names which registered mods are Vanilla Enhanced and wears them as
-// one look on the Texture Overhaul card (systems/overhauls.js).
+// carademono's Vanilla Enhanced (Nexus Mods, Daggerfall Unity mod 273) is Daggerfall's own textures remastered - the
+// terrain's tile sets, the nature flats, the city walls, the dungeons. VE3 had the player attach it; VE4 shipped it under
+// Port-Doctrine's exception. OWN-WORK4 (2026-10-31) retired the author's pictures: the shipped Base, Masked Roads and
+// Snowless Swamps and Jungles are ours now, built at runtime from the player's own records under our rules
+// (systems/vanillaEnhanced/vanillaEnhancedPack.js, systems/ownTextures/), in the texture-mod door
+// (systems/dfmodTextures.js) under the same names and switches - the Base on by default (AUDIT VE), its add-ons off. A
+// copy of carademono's the player attaches under the same name shadows ours. This module names which registered mods
+// are the family and wears them as one look on the Texture Overhaul card (systems/overhauls.js).
 //
 // THE FAMILY is the Base and every mod built on it: Masked Roads, Snowless Swamps and Jungles and Winter Tracks each
 // declare `vanilla enhanced - base` a dependency in their manifests - the same declaration that loads them after the
@@ -25,7 +25,7 @@ import { optionPath } from '../../ui/settings/settingsMap.js'; // ORG2: the pack
 
 /** The Base's Mod.FileName - the name its add-ons depend on. */
 export const VE_BASE = 'vanilla enhanced - base';
-/** The Base's GUID (`Vanilla Enhanced - Base.dfmod.json`), for a copy stored under another file name. */
+/** The Base's GUID (Vanilla Enhanced 3.4.7's manifest), for a player's copy stored under another file name. */
 export const VE_BASE_GUID = '1f124f8c-dd01-48ad-a5b9-0b4a0e4702d2';
 /** Where the mod is published - a newer version than the one the port ships is attached from there. */
 export const VE_LINK = 'https://www.nexusmods.com/daggerfallunity/mods/273';

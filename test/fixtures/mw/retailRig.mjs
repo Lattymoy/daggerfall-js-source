@@ -1,8 +1,9 @@
 // MW-STEEL3 (2026-10-07) cut this rig from retail's own skeleton; MW-STEEL4 (2026-10-07, Mac: "You do it properly")
-// keeps it for the plate shipped skinned. RETAIL'S SKELETON, AS THE GAME STANDS IT:
+// keeps it for the plate shipped skinned. OWN-WORK4 (2026-10-31): THE SKELETON IS OUR OWN BIPED (tools/ownBiped.mjs) -
+// Morrowind's bone names and tree, the bind our armour ships skinned in, the arms hanging by our own rule - in place of
+// the retail hierarchy Weapon Sheathing's retired addon carried. As the game stands it:
 //
-// - THE SKELETON is the vendored retail hierarchy (vendor/weapon-sheathing/.../xbase_anim_sh.nif): every NiNode's own
-//   rest - the idle's first frame, the arms hanging, the right leg forward - and its "Tri Shadow" verbatim (`shadow`).
+// - THE SKELETON is the biped's every NiNode at its rest and its "Tri Shadow" (`shadow`).
 // - THE PART NODES base_anim carries ("Right Hand", "Right Clavicle") hang at zero under their Bip01 bones, so a part
 //   claimed at one (ARMO_PART's bones) has the node bindPartsInto asks the skeleton for. A skinned part is rebound by
 //   its bones' names whatever these stand at (rule 12); they are here so the binder's door is the game's.
@@ -10,15 +11,15 @@
 //   and `extra` adds nodes before every other (a camera), so the same bones stand at other refs.
 //
 // And THE TRUE BIND, built here from the Tri Shadow's records by hand - not by the bake's retailBind, which is under
-// test: each bound bone's inverse bind undone, placed so the pelvis stands on its rest origin (the bind's own frame is
-// the Tri Shadow's, its pelvis 22 units under its origin); a bone the shadow does not bind rides its parent's rest.
-import { readFileSync } from 'node:fs';
+// test: each bound bone's inverse bind undone, placed so the pelvis stands on its rest origin; a bone the shadow does
+// not bind rides its parent's rest.
 import { parseNif } from '../../../src/formats/morrowind/mwNifFile.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../../src/formats/morrowind/mwSkin.js';
 import { writeNif } from '../../../tools/nifWrite.mjs';
+import { bipedSkeletonBytes } from '../../../tools/ownBiped.mjs';
 
-export const RETAIL_SKELETON_PATH = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';
-export const RETAIL_SKELETON_BYTES = new Uint8Array(readFileSync(new URL(`../../../${RETAIL_SKELETON_PATH}`, import.meta.url)));
+/** Our biped's bytes - the file a pin would have read off the disk. */
+export const RETAIL_SKELETON_BYTES = new Uint8Array(bipedSkeletonBytes());
 const nif = parseNif(RETAIL_SKELETON_BYTES);
 
 /** Each part node base_anim carries, and the Bip01 bone it hangs off at zero. */

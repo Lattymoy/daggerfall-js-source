@@ -1,314 +1,119 @@
-// DYNAMIC SKIES - THE INSTANCE (DS1). BLBSkybox's MonoBehaviour life,
-// as one object the sky controller ticks: Init's material and preset
-// load, the OnWeatherChange event and its one-frame-late apply, the
-// day-part machine, the moons' phases and orbits, _WorldTime, the fog
-// colour every real second, and the LightningFlashListener. Pure - no
-// GL, no DOM - so node runs it against the vendored presets; the
-// renderer takes what tick() answers.
-//
-// The DFU objects it read are the port's: WorldTime.Now is the classic
-// minute clock (systems/gameDate.dateFromClassicMinutes), WeatherManager
-// is systems/weatherSim's word as the hosts hand it to the sky
-// controller, SunLight's rotation is SunlightManager's formula
-// (dynamicSkies.sunLightDirection) and AmbientEffectsPlayer.OnPlayEffect
-// is AmbientEffects.onPlayEffect.
+// DYNAMIC SKIES - THE INSTANCE (OWN-WORK4). One object the sky controller ticks: the weather's row walked on the
+// game clock, the frame (dynamicSkies.js skyFrame), the world's fog rows and light curve while this sky is up, and the
+// storm's flash. Pure - no GL, no DOM - so node runs it; the pass takes what tick() answers.
 
 import {
-  WEATHER_PRESET,
-  parseSkyboxSetting,
-  parseLightCurve,
+  WEATHER_LOOK,
+  FOG_LOOK,
+  DYNAMIC_LIGHT_CURVE,
+  SKY_EASE_MINUTES,
+  SKY_JUMP_MINUTES,
+  weatherRow,
+  easeRow,
+  skyFrame,
+  phasesAt,
+  seasonAt,
   fogSettingsFromPresets,
   fogPresetKey,
-  initMaterial,
-  applySkyboxSettings,
-  applyLunarPhases,
-  moonDirection,
-  DAY_PARTS,
-  dayPartOfHour,
-  weatherIndexOf,
-  dayTimeOf,
-  worldTimeSeconds,
-  sunLightDirection,
-  sunLightColor,
-  fogColorNow,
-  FOG_COLOR_INTERVAL_SECONDS,
   LightningFlash,
-  windDirectionRoll,
   pixelSnowSettings,
-  parseHtmlColor,
 } from './dynamicSkies.js';
-import { dateFromClassicMinutes } from '../gameDate.js';
 
 export class DynamicSkies {
   /**
-   * @param {object} assets { presets: {SkyboxSunny: json, ...}, fogPresets:
-   *   {FogSunny: json, ...}, lightCurve: json }
-   * @param {object} settings the mod's modsettings values
+   * @param {object} assets our tables (dynamicSkiesAssets.js dynamicSkiesAssets): { weathers, fog, lightCurve }
+   * @param {object} settings the Mods pane's values
    *   { densitySetting, ActivatePixelSnow, MinParticleSize, MaxParticleSize, MaxParticles }
-   * @param {() => number} rng Unity's Random.value / Random.Range
+   * @param {() => number} rng the flash's dice
    */
-  constructor(assets, settings = {}, rng = Math.random, { classicMinutes = null } = {}) {
-    this.rng = rng;
+  constructor(assets = {}, settings = {}, rng = Math.random, { classicMinutes = null } = {}) {
     this.settings = settings;
-    // loadAllSkyboxSettings: one preset per WeatherType; the *Night.json
-    // variants are not in the shipped manifest, so [1] is [0]
-    this.skyboxSettings = {};
-    for (const [weather, name] of Object.entries(WEATHER_PRESET)) {
-      const s = parseSkyboxSetting(assets.presets[name]);
-      this.skyboxSettings[weather] = [s, s];
-    }
-    // loadFogSettings / ProcessFogSetting: WeatherManager's five, replaced
-    this.fogSettings = fogSettingsFromPresets(assets.fogPresets, settings.densitySetting ?? 1);
-    // SetLightCurve: SunlightManager.LightCurve, replaced
-    this.lightCurve = parseLightCurve(assets.lightCurve);
-    // Init's material writes, then the vanilla sky is switched off
-    this.mat = initMaterial(windDirectionRoll(rng));
-    this.currentDayPart = DAY_PARTS.None;
-    this.dayTime = false;
-    this.hour = 0;
-    this.minutes = 0;
-    // Weather
-    this.currentWeather = 'sunny'; // WeatherType.None == Sunny
-    this.forceWeatherUpdate = true;
-    this.pendingWeather = false;
-    this.pendingWeatherType = 'sunny';
-    this.pendingSkyboxSettings = null;
-    this.pendingWindDirection = 0;
-    this._seenWeather = null;
-    // Lightning
-    this.lightningFlash = new LightningFlash(rng); // BLBSkybox.Start: flashDuration 0.2
-    this.lightningSubscriptions = 0; // the OnPlayEffect invocation list (a count: duplicates kept)
-    this.lightningCoroutine = false; // StartLightningEffect's handle, null until Thunder
-    // Fog colour (RenderSettings.fogColor), sRGB
-    this.fogColor = null;
-    this.lastFogUpdate = null;
-    this.playerInside = false;
-    // InitSnow
+    this.weathers = assets.weathers ?? WEATHER_LOOK;
+    this.fogSettings = fogSettingsFromPresets(assets.fog ?? FOG_LOOK, settings.densitySetting ?? 1);
+    this.lightCurve = assets.lightCurve ?? DYNAMIC_LIGHT_CURVE;
     this.pixelSnow = settings.ActivatePixelSnow ? pixelSnowSettings(settings) : null;
-    // setLunarPhases, ChangeLunarPhases (:138-139): the orbits are on the
-    // material the moment Init returns, before the first Update - given
-    // the clock (MODS AUDIT: the port left MATERIAL_DEFAULTS until the
-    // first tick; nothing drew in between, but it is his order).
-    this.phases = classicMinutes === null ? null : applyLunarPhases(this.mat, dateFromClassicMinutes(classicMinutes));
-    this._seconds = null; // the last frame's real clock (Time.time)
-    this._insideSince = null; // when the player went in, on that clock
-    // Init: currentWeather = None, force, OnWeatherChange(None), SetFogDistance
-    this.onWeatherChange('sunny');
-    this.setFogDistance('sunny');
+    this.lightningFlash = new LightningFlash(rng);
+    this.lightningLight = null;
+    this.playerInside = false;
+    this.currentWeather = 'sunny';
+    this.row = null;
+    this.state = null;
+    this.fogColor = null;
+    this._sunDir = null;
+    this._lastMinutes = null;
+    this._whole = true;
+    this.phases = classicMinutes === null ? null : phasesAt(classicMinutes);
   }
 
-  /** getWeatherIndex. */
-  weatherIndex() {
-    return weatherIndexOf(this.currentDayPart);
+  /** A load or a jump: the next tick takes its weather's row whole. The word, when given, is taken at once. */
+  weatherJump(weather) {
+    this._whole = true;
+    if (weather !== undefined) this.currentWeather = this.weathers[weather] ? weather : 'sunny';
   }
 
-  /** WeatherManager.OnWeatherChange -> BLBSkybox.OnWeatherChange (:534-574). */
-  onWeatherChange(weather) {
-    if (this.pendingWeather === true) return;
-    if (weather !== this.currentWeather || this.forceWeatherUpdate === true) {
-      this.forceWeatherUpdate = false;
-      this.pendingWeatherType = weather;
-      const index = this.weatherIndex();
-      this.pendingWindDirection = windDirectionRoll(this.rng);
-      this.pendingSkyboxSettings = (this.skyboxSettings[weather] ?? this.skyboxSettings.sunny)[index];
-      this.pendingWeather = true;
-      // The lightning listener follows the pending type - AS THE MOD
-      // KEEPS IT (AUDIT 61): `lightningCoroutine` is the coroutine
-      // handle (:557-571 start it only while null, stop it in the else
-      // arm), and StartListening/StopListening are `+=`/`-=` on a C#
-      // multicast event (LightingFlashListener.cs:28/:33), which keeps
-      // duplicates and removes one at a time - so the subscriptions are
-      // a COUNT. The ExteriorTransitionEvent re-arms the listener without
-      // touching the null coroutine (:1295-1298), so a Thunder round
-      // trip through a door and the next OnWeatherChange subscribe
-      // twice; the else arm then drops one, and the other stays for the
-      // session, rolling on every one-shot under any weather. Kept.
-      if (this.pendingWeatherType === 'thunder') {
-        if (!this.lightningCoroutine) {
-          // StartCoroutine(StartLightningEffect) -> StartListening
-          this.lightningCoroutine = true;
-          this.lightningSubscriptions++;
-        }
-      } else if (this.lightningCoroutine) {
-        // StopCoroutine + ONE StopListening
-        this.lightningCoroutine = false;
-        this.lightningSubscriptions = Math.max(0, this.lightningSubscriptions - 1);
-      }
-    }
-  }
-
-  /** ApplyPendingWeatherSettings (:587-595). */
-  applyPendingWeatherSettings() {
-    if (this.pendingWeather === true) {
-      applySkyboxSettings(this.mat, this.pendingSkyboxSettings);
-      this.currentWeather = this.pendingWeatherType;
-      this.setFogColor(this.dayTime);
-      this.setFogDistance(this.pendingWeatherType);
-      this.pendingWeather = false;
-    }
-  }
-
-  /** SetFogDistance (:1075-1091): _FogDistance from the preset (the
-   *  apply just wrote the same), and WeatherManager's fog end distance,
-   *  which the world takes from fogSettingsFor() anyway. */
-  setFogDistance(weather) {
-    const setting = this.skyboxSettings[weather] ?? this.skyboxSettings.sunny;
-    this.mat._FogDistance = setting[this.weatherIndex()].FogDistance;
-  }
-
-  /** The world's fog row for a weather - the mod's WeatherManager
-   *  settings, in the port's FOG_SETTINGS shape. */
+  /** The world's fog row for a weather while this sky is up. */
   fogSettingsFor(weather) {
     return this.fogSettings[fogPresetKey(weather)];
   }
 
-  /** setFogColor (:1036-1073): RenderSettings.fogColor and _FogColor
-   *  from the current preset's FogDayColor and the sun's height. */
-  setFogColor(_day) {
-    const setting = this.skyboxSettings[this.currentWeather];
-    if (!setting) return;
-    const s = setting[this.weatherIndex()];
-    this.mat._FogDayColor = parseHtmlColorOr(s.FogDayColor, this.mat._FogDayColor);
-    const c = fogColorNow(s, this.mat._AtmosphereLerpDuration, this._sunDir?.[1] ?? 0);
-    if (c) this.fogColor = c;
-    if (this.fogColor) this.mat._FogColor = [this.fogColor[0], this.fogColor[1], this.fogColor[2], 1];
-  }
-
-  /** SaveLoadManager_OnLoad (:303-317): force the loaded weather through
-   *  - `pendingWeather` is dropped so the OnWeatherChange guard cannot
-   *  swallow it, then raised so the next Update applies it. Without a
-   *  weather (the controller's jump, which does not carry the sim's
-   *  word) the next tick forces whatever word it brings. */
-  weatherJump(weather) {
-    if (weather === undefined) {
-      this._seenWeather = null;
-      return;
-    }
-    this.forceWeatherUpdate = true;
-    this.pendingWeather = false;
-    this.onWeatherChange(weather);
-    this.forceWeatherUpdate = false;
-    this.pendingWeather = true;
-  }
-
-  /** Is the listener subscribed at all (the port's pins' question). */
+  /** The flash listens while the sky's word is a thunderstorm and the player is out under it. */
   get lightningListening() {
-    return this.lightningSubscriptions > 0;
+    return this.currentWeather === 'thunder' && !this.playerInside;
   }
 
-  /** LightningFlashListener.HandleOnPlayEffect: an ambient effect
-   *  played; outside, the flash rolls ONCE PER SUBSCRIPTION (each
-   *  delegate entry is its own handler, :37-51 - two entries, two
-   *  independent StartFlash rolls). `storm` is the host's word for
-   *  whether the clip that played is a storm clip: in DFU the listener
-   *  is on exactly while WeatherManager's word is Thunder and the
-   *  AmbientEffectsPlayer preset is the storm's, so the two coincide;
-   *  under the port's own weather front the ambience follows the
-   *  front's word, and the flash follows the clips it can hear. */
+  /** An ambient effect played (AmbientEffects.onPlayEffect); `storm` is the host's word for whether it was a storm
+   *  clip. One roll a clap, outside, under a thunderstorm. */
   onAmbientEffect(playerPos, storm = true) {
-    if (this.playerInside) return;
-    if (!this.lightningSubscriptions || !storm) return;
-    let hit = false;
-    for (let i = 0; i < this.lightningSubscriptions; i++) hit = this.lightningFlash.startFlash(playerPos) || hit;
-    return hit;
+    if (!this.lightningListening || !storm) return false;
+    return this.lightningFlash.startFlash(playerPos);
   }
 
-  /** InteriorTransitionEvent (:1264-1283) / ExteriorTransitionEvent
-   *  (:1295-1298), under Thunder: inside, StopListening once, the
-   *  weather coroutine stopped and nulled, the flash's routines killed
-   *  and the light off; outside, StartListening only - the coroutine
-   *  stays null, which is the double subscription above. */
+  /** The door: going in stops every flash in flight and puts the light out; coming out listens again. */
   setInside(inside) {
     this.playerInside = !!inside;
-    if (inside && this.pendingWeatherType === 'thunder') {
-      this.lightningSubscriptions = Math.max(0, this.lightningSubscriptions - 1);
-      this.lightningCoroutine = false;
+    if (this.playerInside) {
       this.lightningFlash.stopAll();
-    } else if (!inside && this.pendingWeatherType === 'thunder') {
-      this.lightningSubscriptions++;
+      this.lightningLight = null;
     }
-    // MODS AUDIT: under any OTHER weather the teardown does not run (:1264
-    // is `if (pendingWeatherType == Thunder)`), and a flash the leaked
-    // subscription rolled keeps running as a coroutine on Unity's clock
-    // while the player is inside - it finishes and switches its light
-    // off unseen. The port's routine is advanced by the exterior frame
-    // alone, so it would freeze mid-burst and pay out at the door; the
-    // real seconds spent inside are charged to it on the first frame out.
-    if (inside) this._insideSince = this._seconds;
   }
 
   /**
-   * BLBSkybox.Update for one frame (exterior, playing).
-   * @param {object} f { minuteOfDay, classicMinutes, weather, seconds (real, monotonic),
-   *   dt (real seconds), weatherScale (WeatherManager's sunlight ScaleFactor), playerPos }
-   * @returns the renderer's state
+   * One frame (exterior, playing).
+   * @param {object} f { minuteOfDay, classicMinutes (the sky's clock), weather (the sky's word), seconds (real),
+   *   dt (real seconds), weatherScale (the sun's weather scale), playerPos }
+   * @returns the pass's state (dynamicSkies.js skyFrame)
    */
-  tick(f) {
-    const dt = f.dt ?? 0;
-    if (this._insideSince !== null) {
-      if (f.seconds !== undefined && f.seconds > this._insideSince) {
-        this.lightningFlash.tick(0); // a routine rolled and never entered lights at its roll, as StartCoroutine runs to the first yield
-        this.lightningFlash.tick(f.seconds - this._insideSince);
-      }
-      this._insideSince = null;
-    }
-    this._seconds = f.seconds ?? this._seconds;
-    // The WeatherManager event, as the sim's word changes. THE FIRST
-    // word (and the word after a jump) is a LOAD: Init leaves its own
-    // Sunny apply pending, and OnWeatherChange's `if (pendingWeather)
-    // return` swallows any event that lands in that window - in DFU it
-    // is SaveLoadManager_OnLoad, firing after Init with the save's
-    // weather and dropping the pending flag first, that puts the real
-    // weather on the sky. The port has no save event on the sky's
-    // frame; the first tick's word is the loaded one and takes that arm.
-    if (this._seenWeather === null) {
-      this._seenWeather = f.weather;
-      this.weatherJump(f.weather);
-    } else if (f.weather !== this._seenWeather) {
-      this._seenWeather = f.weather;
-      this.onWeatherChange(f.weather);
-    }
-    const minuteOfDay = f.minuteOfDay;
-    this._sunDir = sunLightDirection(minuteOfDay);
-    if (this.lastFogUpdate === null || f.seconds - this.lastFogUpdate >= FOG_COLOR_INTERVAL_SECONDS) {
-      this.setFogColor(this.dayTime);
-      this.lastFogUpdate = f.seconds;
-    }
-    this.hour = Math.floor((((minuteOfDay % 1440) + 1440) % 1440) / 60);
-    this.minutes = Math.floor((((minuteOfDay % 1440) + 1440) % 1440) % 60);
-    this.forceWeatherUpdate = true;
-    const part = dayPartOfHour(this.hour);
-    if (part !== DAY_PARTS.None && part !== this.currentDayPart) {
-      // each arm: dayTime, OnWeatherChange(currentWeather), currentDayPart
-      // (Dawn/DawnEnd/Dusk/DuskEnd also call HandleDawnDusk, which returns)
-      this.dayTime = dayTimeOf(part);
-      this.currentDayPart = part;
-      this.onWeatherChange(this.currentWeather);
-    }
-    const date = dateFromClassicMinutes(f.classicMinutes ?? 0);
-    this.phases = applyLunarPhases(this.mat, date);
-    this.mat._WorldTime = worldTimeSeconds(minuteOfDay);
-    this.applyPendingWeatherSettings();
-    // the lightning light (LightningFlash's coroutines)
-    this.lightningLight = this.lightningFlash.tick(dt, f.playerPos ?? null);
-    const lightColor = sunLightColor(minuteOfDay, this.lightCurve, f.weatherScale ?? 1);
-    return {
-      mat: this.mat,
-      sunDir: this._sunDir,
-      lightColor,
-      clearColor: this.fogColor ?? [0, 0, 0],
-      fogColor: this.fogColor,
-      weather: this.currentWeather,
+  tick(frame) {
+    const minutes = frame.classicMinutes ?? 0;
+    const word = this.weathers[frame.weather] ? frame.weather : 'sunny';
+    const want = weatherRow(word, this.weathers);
+    const dtMin = this._lastMinutes === null || minutes < this._lastMinutes ? null : minutes - this._lastMinutes;
+    this._lastMinutes = minutes;
+    if (this._whole || !this.row || dtMin === null || dtMin > SKY_JUMP_MINUTES) this.row = want;
+    else this.row = easeRow(this.row, want, 1 - Math.exp(-dtMin / SKY_EASE_MINUTES));
+    this._whole = false;
+    this.currentWeather = word;
+    this.phases = phasesAt(minutes);
+    const state = skyFrame({
+      minuteOfDay: frame.minuteOfDay,
+      classicMinutes: minutes,
+      row: this.row,
+      season: seasonAt(minutes),
+      seconds: frame.seconds ?? 0,
+      weatherScale: frame.weatherScale ?? 1,
       phases: this.phases,
-    };
+      lightCurve: this.lightCurve,
+    });
+    state.weather = word;
+    this.state = state;
+    this._sunDir = state.sunDir;
+    this.fogColor = state.fogColor;
+    this.lightningLight = this.playerInside ? null : this.lightningFlash.tick(frame.dt ?? 0, frame.playerPos ?? null);
+    return state;
   }
 
-  /** Where a moon is now, on the CPU twin of the shader's orbit. */
-  moonDirection(which = 'Moon') {
-    return moonDirection(this.mat, which);
+  /** Where a moon is now: 'masser' or 'secunda'. Null before the first frame. */
+  moonDirection(which = 'masser') {
+    return this.state?.[which]?.dir ?? null;
   }
-}
-
-function parseHtmlColorOr(hex, fallback) {
-  return parseHtmlColor(hex) ?? fallback;
 }

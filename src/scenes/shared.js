@@ -36,10 +36,10 @@ import { isOnlinePage, onlineForcedPref } from '../systems/online/onlineLane.js'
 import { madeRuleHere } from '../systems/madeLevel.js';   // EG-PERFECT: the made level's law refuses the running leap on its proven ways
 import { carriedWeight } from '../systems/inventory.js';   // CLIMB2: a heavy pack cuts the enhanced climb's reach
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // CLIMB2: ...over what the body can carry
-import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
-import { DynamicSkies } from '../systems/dynamicSkies/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
-import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
-import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';   // DS1: the vendored files
+import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' pass (OWN-WORK4: our own)
+import { DynamicSkies } from '../systems/dynamicSkies/dynamicSkiesRuntime.js';   // DS1: the sky's instance
+import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies/dynamicSkies.js';   // the storm flash's frame clamp
+import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';   // OWN-WORK4: our tables and painted pictures
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
 import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
 import { airLight, airColor, litFog, nightFogOn } from '../systems/weather/nightFog.js';   // NIGHT-FOG: the fog lit by the land's own light
@@ -242,17 +242,10 @@ export function createSkyController(gl, params) {
   // EE1: one switch for the whole outdoors. ?sky=classic stays the URL
   // door and still forces the panorama, so every probe riding it works.
   const enhancedLane = isEnhanced() && params.get('sky') !== 'classic' && getPref('enhancedEnvironments');
-  // DS1: DYNAMIC SKIES (BadLuckBurt and carademono, vendored 1:1 with
-  // permission - Mac, 2026-09-04) is the enhanced lane's sky while the
-  // mod's own `Enabled` switch is on (Mods pane; on by default until
-  // VC1, 2026-09-07, since when the port's own dome is the lane's sky
-  // and the mod is the player's choice). The doors keep their meaning:
-  // `?sky=dynamic` forces the mod, `?sky=enhanced` / `?sky=smooth` force
-  // the port's own dome (every probe riding them still gets it), and
-  // `?sky=classic` still forces the panorama. The mod replaces
-  // SunlightManager.LightCurve for the whole world while it is the sky
-  // (BLBSkybox.SetLightCurve), and the rig's own curve comes back when
-  // it is not.
+  // DS1: DYNAMIC SKIES is the enhanced lane's sky while its `Enabled` switch is on (OWN-WORK4, 2026-10-31: our own sky
+  // since the retired mod's - bible/07-Rendering/Dynamic-Skies.md). The doors keep their meaning: `?sky=dynamic` forces
+  // it, `?sky=enhanced` / `?sky=smooth` the port's own dome, `?sky=classic` the panorama. While it is the sky its light
+  // curve is the world's (setLightCurve), and the rig's own comes back when it is not.
   const skyDoor = params.get('sky');
   const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));
   const enhancedSky = enhancedLane && !dynamicOn ? new EnhancedSkyRenderer(gl) : null;
@@ -338,8 +331,7 @@ export function createSkyController(gl, params) {
     : fog);
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
-    // the presets' textures land as they decode; a slot shows the
-    // shader's own default ("black", "bump", "white") until its file does
+    // OWN-WORK4: our noise lands once painted; its slot shows the noise's middle until it does
     for (const name of DYNAMIC_SKIES_TEXTURES) {
       if (name === 'PixelSnow') continue;   // the snow's, not the sky's
       loadDynamicSkiesTexture(name).then((img) => dynamicSky.setTexture(name, img))

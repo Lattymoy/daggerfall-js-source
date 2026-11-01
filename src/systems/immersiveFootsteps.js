@@ -4,8 +4,8 @@
 // "Adds New Footsteps Sounds That Change Based On What Terrain Is
 // Being Walked On, Also Armor Sway Sounds Based On What Type Of Armor
 // You Have Equipped." Two MonoBehaviours, ported from the author's
-// own MIT sources (vendor/immersive-footsteps/Scripts/, the .cs the
-// shipped bundle's manifest names - the DLL in the bundle is their
+// own MIT sources (Immersive Footsteps 1.01's two .cs files, from the
+// author's repository at ac03581 - the DLL in the bundle is their
 // build): `ImmersiveFootstepsMain` (the statics: the settings, the
 // clip tables, the worn-armor slots and their sway weights, the
 // transition and window handlers, the interior floor law) and
@@ -22,7 +22,7 @@
 // and landing shape are state other readers want) and ask
 // `ownsStride()` before playing what it returns; the three landing
 // sounds go through `fallSoundSink` / `playLargeSplash`. While the
-// audio is still loading (a fetch + decode here, where DFU's
+// clips are still being made (one a task here, where DFU's
 // LoadAudio is synchronous) the mod owns nothing and the classic
 // stride plays - which is DFU's own shape for a LoadAudio that throws:
 // Start aborts before DisableVanillaFootsteps and AddComponent.
@@ -47,6 +47,7 @@ import { isRiding } from './transport.js';
 import { modSettingsOf, modSettingIfDeclared } from './modSettings.js'; // BA1: ModCompatibilityChecking reads Better Ambience's switch
 import { audio as defaultAudio } from './audio.js';
 import { SOUND } from './soundClips.js';
+import { immersiveFootstepsClipInTurn } from '../audio/synth/clips.js'; // OWN-WORK4: the clips our synth makes
 
 export const IMMERSIVE_FOOTSTEPS_VENDOR = 'immersive-footsteps';
 export const IMMERSIVE_FOOTSTEPS_MOD = Object.freeze({
@@ -99,7 +100,6 @@ export const FOOTSTEP_SETS = Object.freeze([
 ]);
 export const SWAY_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate']);
 export const LANDING_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate', 'Unarmored']);
-export const ARMOR_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate', 'Unarmored']); // the Armor_Footsteps folder
 const FILE_WORD = Object.freeze({ DeepWater: 'Deep_Water', ShallowWater: 'Shallow_Water' });
 const QUALITY_PREFIX = (q) => (q === SOUND_CLIP_QUALITY.High ? 'HQ' : 'LQ');
 
@@ -123,30 +123,11 @@ export function clipTable(quality) {
 /** Every name LoadAudio asks for at one quality (the `success &=` chain). */
 export const clipNames = (quality) => Object.values(clipTable(quality)).flat();
 
-/** Where the bundle keeps each clip, under vendor/immersive-footsteps/Audio/
- *  (the folders are the author's; the names are what LoadAudio asks for). */
-export function clipFolder(name) {
-  const hq = name.startsWith('HQ_');
-  const set = name.slice(3).split('_')[0];
-  if (/_Swaying_\d$/.test(name)) return hq ? 'High_Quality/Armor_Swaying' : 'Low_Quality/Armor_Swaying';
-  if (/_Landing_\d$/.test(name)) return hq ? 'High_Quality/Fall_Landing' : 'Low_Quality/Fall_Landing';
-  if (ARMOR_SETS.includes(set)) return hq ? 'High_Quality/Armor_Footsteps' : 'Low_Quality/Armor';
-  return hq ? 'High_Quality/Climate_Footsteps' : 'Low_Quality/Climate';
-}
-export const clipPath = (name) => `vendor/immersive-footsteps/Audio/${clipFolder(name)}/${name}.mp3`;
-
-// BROWSER-ONLY: import.meta.glob is a Vite compile-time macro (the road
-// eotbSprite.js and dynamicSkiesAssets.js take) - node has no
-// transform for it, and the pins read the files by path instead.
-const IN_BROWSER = typeof window !== 'undefined';
-const URLS = IN_BROWSER
-  ? import.meta.glob('../../vendor/immersive-footsteps/Audio/*/*/*.mp3', {
-      eager: true,
-      query: '?url',
-      import: 'default',
-    })
-  : {};
-export const clipUrl = (name) => URLS[`../../${clipPath(name)}`] ?? null;
+// OWN-WORK4 (2026-10-31): THE CLIPS ARE OURS. Each name LoadAudio asks for is a clip our synth makes
+// (audio/synth/clips.js): the mod's name, length and rate, our own sound. One is made a task, so a set never stalls a
+// frame. Node has no AudioContext to hold one (the engine's registerSamples answers false there), so it makes none.
+const CAN_PLAY = typeof window !== 'undefined';
+export const makeFootstepClip = (name) => (CAN_PLAY ? immersiveFootstepsClipInTurn(name) : null);
 export const soundKey = (name) => `if:${name}`; // the audio engine's registered-buffer key (MW-D40)
 
 // --- The tile and archive tables (Object.cs:365-467) ---------------------
@@ -333,18 +314,6 @@ export function rollRandomAudioClip(clips, last, random) {
   return clip;
 }
 
-// --- Fetching the clips ---------------------------------------------------
-
-/** The browser road: the Vite-served URL, fetched to bytes. Tests hand
- *  their own. */
-async function defaultFetchClip(name) {
-  const url = clipUrl(name);
-  if (!url) return null;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return new Uint8Array(await res.arrayBuffer());
-}
-
 /** The material value ladder the mod reads at four sites (CheckToUse
  *  ArmorFootsteps, CheckToUseHardFallSounds, UpdateInteriorArmorFootstep
  *  Sounds, UpdateSwayMaterialWeights): NativeMaterialValue >= Iron is
@@ -379,7 +348,7 @@ export function createImmersiveFootsteps({
   audio = defaultAudio,
   settings = readFootstepSettings,
   random = Math.random,
-  fetchClip = defaultFetchClip,
+  makeClip = makeFootstepClip,
 } = {}) {
   // --- ImmersiveFootstepsMain statics ---
   let s = null; // the settings snapshot LoadSettings last applied
@@ -454,8 +423,8 @@ export function createImmersiveFootsteps({
         if (registered.has(name)) return true;
         let ok = false;
         try {
-          const bytes = await fetchClip(name);
-          ok = !!bytes && (await audio.registerSound(soundKey(name), bytes));
+          const clip = await makeClip(name); // OWN-WORK4: { samples, rate }, our own
+          ok = !!clip?.samples?.length && !!audio.registerSamples(soundKey(name), clip.samples, clip.rate);
         } catch {
           ok = false;
         }
@@ -942,7 +911,7 @@ export function createImmersiveFootsteps({
 export const immersiveFootsteps = createImmersiveFootsteps();
 
 // --- ModCompatibilityChecking / ReportModCompatibilityIssues (Main.cs:216-236, :400-449) ---
-// BA1: Better Ambience is vendored now, so the arm IF1 recorded as "no twin" has one.
+// BA1: Better Ambience is ported too, so the arm IF1 recorded as "no twin" has one.
 
 export const BETTER_AMBIENCE_GUID = 'd5655077-ba38-4dbc-a41f-2b358cb1d680'; // Main.cs:219
 /** ModCompatibilityChecking (:216-236): Better Ambience installed, and its "Better Footsteps" module on.
@@ -961,23 +930,23 @@ export function modCompatibilityChecking(read = modSettingIfDeclared) {
 }
 /** The box's tokens (:430-441), JustifyCenter, ClickAnywhereToClose. */
 export const COMPAT_WARNING_LINES = Object.freeze([
-  '! WARNING !',
-  'Compatibility Issue Detected',
-  'Immersive Footsteps:',
+  'Footsteps play twice',
   '',
-  "Disable the 'Better Footsteps' setting for the Better Ambience mod.",
-  'Otherwise footstep sounds will be constantly overlapping each other.',
+  "Immersive Footsteps and Better Ambience's Better Footsteps",
+  'both play your steps.',
   '',
-  '(These automatic warnings can be disabled in Immersive Footsteps settings)',
+  "Turn off Better Footsteps in Better Ambience's settings.",
+  '',
+  'Immersive Footsteps settings can turn this warning off.',
 ]);
 export const COMPAT_WARNING_LOG = Object.freeze([
-  "[Warning] Immersive Footsteps: The 'Better Ambience' mod is currently active, more importantly, the 'Better Footsteps' module for that mod is also enabled.",
-  "While using the Immersive Footsteps mod, you should always have Better Ambience's 'Better Footsteps' setting disabled, otherwise you will be constantly...",
-  "hearing overlapping footstep sounds, turn this feature off in Better Ambience's settings to resolve this issue.",
-  "You can also turn these warnings off in 'Immersive Footsteps' settings, if you wish.",
+  "[Warning] Immersive Footsteps: Better Ambience's Better Footsteps is on too, so each step plays twice.",
+  "Turn off Better Footsteps in Better Ambience's settings to hear each step once.",
+  'Immersive Footsteps settings can turn this warning off.',
 ]);
-/** ReportModCompatibilityIssues (:424-449), raised by OnStartGame and OnLoad (:400-422): the four log lines
- *  and the message box, when the mod is on, AllowModCompatWarnings is on, and Better Ambience's module is on.
+/** ReportModCompatibilityIssues (:424-449), raised by OnStartGame and OnLoad (:400-422): the log lines and the
+ *  message box, in our own words (OWN-WORK4), when the mod is on, AllowModCompatWarnings is on, and Better
+ *  Ambience's module is on.
  *  `showText(lines)` is the host's DaggerfallUI.MessageBox; `log` is Debug.Log. Answers whether it fired. */
 export function reportModCompatibilityIssues({
   showText,

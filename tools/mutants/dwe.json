@@ -994,8 +994,8 @@
   {
     "name": "DW-E3-icon-aspect",
     "file": "src/systems/deepWater/deepWatersFishItems.js",
-    "old": "      build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),",
-    "new": "      build: async () => await decode(await fetchBytes(s.textureName)),",
+    "old": "      build: async () => restoreIconAspect(await picture(s.textureName), s.billboardAspect),",
+    "new": "      build: async () => await picture(s.textureName),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]

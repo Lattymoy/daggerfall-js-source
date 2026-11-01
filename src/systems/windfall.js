@@ -1,6 +1,6 @@
 // WINDFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be
-// on by default and integrate into our enhanced environments seamlessly") - WINDFALL 1.0.0 (demifiend000, vendored at
-// vendor/windfall/), ported off its assembly: WindNaturalPlanner and WindRecordWeights whole, and WindMod's state -
+// on by default and integrate into our enhanced environments seamlessly") - WINDFALL 1.0.0 (demifiend000; its files left
+// the tree at OWN-WORK4), ported off its assembly: WindNaturalPlanner and WindRecordWeights whole, and WindMod's state -
 // its settings, the day's context and plan, the presentation state, the gusts and the profile the flora sway by, its
 // save record and its console command. Pure: the hosts hand it the frame, the renderer draws what it answers (render/
 // renderer.js BB_VS's Windfall law), and systems/windfallEffects.js is WindEnvironmentEffects (the sound and the
@@ -858,7 +858,7 @@ export function createWindfall({ settings: initial = WINDFALL_BUILT_IN } = {}) {
 // ---- the console command (RegisterDebugCommand) ----------------------------------------------------------------------
 export const WINDFALL_COMMAND = Object.freeze({
   name: 'windfall',
-  description: 'Windfall support and diagnostic controls.',
+  description: 'Tests the wind: its mode, a gust, its sounds and its leaves.',
   usage: 'windfall <auto|normal|windy|storm|gust|bright|ruffle|leaves|status>',
 });
 const MODE_NAMES = Object.freeze(['auto', 'normal', 'windy', 'storm']);

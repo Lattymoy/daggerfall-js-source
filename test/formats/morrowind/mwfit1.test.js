@@ -21,7 +21,7 @@ import { HELM_LIFT, SCENE_BODY, RETAIL_SKELETON, plateBind } from '../../../tool
 
 const raw = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url));
 const sourceText = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const SKELETON = new Uint8Array(raw(RETAIL_SKELETON));
+const SKELETON = new Uint8Array(RETAIL_SKELETON);
 const BIND = plateBind(SKELETON);
 const nif = (file) => flattenNif(parseNif(new Uint8Array(raw(`src/assets/mw/meshes/${file}`))));
 const T = CLASSIC_ARMOR_TEMPLATE;

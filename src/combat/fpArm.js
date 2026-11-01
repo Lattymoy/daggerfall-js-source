@@ -97,6 +97,7 @@ import { diffuseAt, emissiveAt } from '../formats/morrowind/mwNifMesh.js';   // 
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/morrowind/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
+import { ownScabbardBytes } from '../systems/ownSheathing.js';   // OWN-WORK4: our own scabbard where the player's data has none
 import { fitCloakOver, fitStowedGear, followCloak, HIP_PITCH_LIMIT, CLOAK_PUSH_LIMIT, SLUNG_MOVE_LIMIT } from '../formats/morrowind/mwCloakFit.js';   // MW-CLOAK1: the cloak over what the body wears, stowed gear against it; AUDIT MW-CLOAK: and going with it
 import { isCloakSlot, ownCloakFor, isOutfitSlot } from '../characters/ownModels/ownClothingModels.js';   // MW-CLOAK1; AUDIT MW-CLOAK: and its picture; AUDIT MW-FOLK1: an outfit's add, by its label
 import { injectSkeletonNodes } from '../formats/morrowind/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs
@@ -1645,12 +1646,12 @@ export function resolveTorchPart({ torch = false, allLights, find, skeletonBytes
  * port's own and says so:
  *
  *   the RECORD - pickLanternRecord, pickTorchRecord's own shape for a carriable light named lantern;
- *   the BONE   - `Bip01 Pelvis`, which the retail third-person skeleton carries (Weapon Sheathing's vendored
- *                xbase_anim_sh.nif copies its Bip01 chain: the pelvis at (0, 1.8, 76.4) in the actor's Z-up,
- *                +Y-forward, -X-left units - measured with this port's own buildSkeleton / poseSkeleton);
+ *   the BONE   - `Bip01 Pelvis`, which the retail third-person skeleton carries (the pelvis at (0, 1.8, 76.4) in
+ *                the actor's Z-up, +Y-forward, -X-left units in retail's idle, as measured when the tree still
+ *                carried a copy of its Bip01 chain);
  *   the HOOK   - HIP_LANTERN_HOOK, off the pelvis in those same axes: the RIGHT hip, clear of the one-handed
- *                scabbard that hangs at the left (Bip01 LongBladeOneHand, (-10.8, 7.8, 86.5)) and of the thigh
- *                (Bip01 R Thigh at x 6.6), a little forward, at belt height (the scabbard's own 86.5);
+ *                scabbard that hangs at the left (OWN-WORK4: our Bip01 LongBladeOneHand, systems/ownSheathing.js,
+ *                hangs at this hook's own belt height) and of the thigh (Bip01 R Thigh at x 6.6), a little forward;
  *   the HANG   - plumb from the hook, not the pelvis's rotation (mwFirstPerson.js hangAffine), times the swing
  *                law (systems/lanternSwing.js) stepped off the body's motion every frame it is drawn;
  *   the SIZE   - a belt lantern's (hipLanternSize, HT-WAIST-SIZE), whatever size the record's mesh was made at;
@@ -2230,7 +2231,7 @@ async function buildTpBody({
         weaponBytes: resolvedWeapon.parts.find((p) => p.slot === 'weapon')?.bytes ?? null,
         ammo: resolvedWeapon.arrowInfo ? { bytes: resolvedWeapon.parts.find((p) => p.slot === 'arrow')?.bytes ?? null, type: resolvedWeapon.arrowInfo.type } : null,
         ammoCount: ammoCount ?? (hasAmmo ? Number.MAX_SAFE_INTEGER : 0),
-        find, hasBone: boneProbe(skeletonBytes, boneSources), parseNif: parseNifOnce,
+        find, hasBone: boneProbe(skeletonBytes, boneSources), parseNif: parseNifOnce, ownScabbard: ownScabbardBytes,
       })
       : { parts: [], info: null, notes: [] };
     partBytes.push(...resolvedHolster.parts);

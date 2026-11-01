@@ -59,10 +59,12 @@ test('HT3 the two orders, executed: one keeps the rows, the other turns them ove
 
 test('HT3 the SCREEN doors keep their rows; the WORLD doors still flip', () => {
   // the two that draw on a screen quad
-  // PIN MOVED (NO-BETHESDA2, 2026-10-31): both torch doors take a top-down picture from torchPicture - the PNG through
-  // decodePng, or one rebuilt from the player's files - and convert it at the door
+  // PIN MOVED (NO-BETHESDA2, 2026-10-31): both torch doors take a top-down picture from torchPicture - our own
+  // (OWN-WORK4, painted top-down, or our rule over the player's record), or one rebuilt from the player's files - and
+  // convert it at the door
   assert.match(read('src/systems/handheldTorches.js'), /return pic && toScreenOrder\(pic\);/, 'the held torch');
-  assert.match(read('src/systems/handheldTorches.js'), /decode = decodePng \} = \{\}\) \{\n[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n\s*return decode\(new Uint8Array\(await res\.arrayBuffer\(\)\)\);/, 'torchPicture: the PNG through decodePng, top-down');
+  assert.match(read('src/systems/handheldTorches.js'), /export async function torchPicture\(name, \{ art = undefined \} = \{\}\) \{\n\s*const spec = derivedTorchSpec\(name\);\n\s*if \(spec\) return rebuiltPicture\(spec, art\);\n\s*if \(Object\.hasOwn\(TORCH_OVER, name\)\) return dousedCandle\(await rebuiltPicture\(TORCH_OVER\[name\], art\)\);\n\s*return ownTorchPicture\(name\);/, 'torchPicture: rebuilt, ours over the record, or our own - all top-down');
+  assert.equal(read('src/systems/handheldTorchesArt.js').includes('toScreenOrder'), false, 'our recipes paint top-down; the door turns the rows');
   assert.match(read('src/combat/weapon/weaponWidgetAssets.js'), /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the widget\'s loose PNG');
   // DWHD1: and so does the widget's BUNDLE arm - the reader answers top-first already (decodeTexture2D flips Unity's
   // bottom-up rows), so a flip here drew every bundle frame upside down ("all weapons are overhead")

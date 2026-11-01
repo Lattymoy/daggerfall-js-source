@@ -22,6 +22,27 @@ pixelated sky sat on it from PS2 until FT3 removed the pass); the port's own dom
 it is), the lane draws the mod's skybox in place of the port's own
 dome (ES1). The classic lane keeps Daggerfall's painted sky, untouched.
 
+**OWN-WORK4 (2026-10-31, the owner).** "Our goal is no latching onto other mod authors or needing
+permissions. A proper 1 to 1 recreation for everything." vendor/dynamic-skies is retired: its presets,
+fog and light-curve files, nineteen textures, shader, two includes, manifest, settings and README left
+the tree (commit `cc44705af` still holds them; the provenance is `01-Overview/Own-Work.md`'s). The sky
+is now our own: `src/systems/dynamicSkies/dynamicSkies.js` (the rule below), `dynamicSkiesRuntime.js`
+(the instance), `dynamicSkiesAssets.js` (the noise and the snowflake, painted at runtime) and
+`src/render/dynamicSkiesRenderer.js` (GLSL written from the effect, not ported). The switch, the five
+settings and every place the sky is wired are unchanged. The storm's flash is still the mod's routine.
+`test/systems/dynamicSkies.test.js` holds the tables as literals. The sections below are DS1's record.
+
+| part | our rule |
+|---|---|
+| hour | five anchors on the sun's height (-0.3, -0.12, 0, 0.16, 0.42): navy night, indigo blue hour, an orange horizon at rise and set, the golden hour, a day blue lifted toward white at the horizon |
+| weather | one cover c and one grey a weather: the colours mix to the grey by c^1.5 and darken by 0.35 c^2; the sun, moons and stars show (1 - c^2)^2 |
+| clouds | two layers cut from equalized noise: the low covers c, the high 0.3 (1 - c); they drift on the game clock |
+| season | the calendar's, the same in every province: summer deeper, autumn golden, winter paler, by the hour's light |
+| moons | where the port's dome puts them; Masser rose, Secunda silver; lit from the sun's side by the clock's phase |
+| stars | two layers hashed from cube-face cells and a faint band, turning once a day about the dome's pole |
+| fog | clear rows linear to 4,800; falling rows exp2, half the light at d50 (rain 700, snow 450, fog 120, sandstorm 90, ash 400); the slider thickens by 1 + (x - 1) / 3 |
+| light | 0.92 sin(pi t)^0.6 over the day: longer sunrises and sunsets than the rig's |
+
 ## What the mod is, and where each part landed
 
 The mod is a `MonoBehaviour` (`BLBSkybox.cs`, 2,378 lines) driving one

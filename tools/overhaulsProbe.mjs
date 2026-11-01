@@ -129,28 +129,29 @@ const spills = (page) =>
       JSON.stringify(sh.kept) === '["dfmod/vanilla enhanced - masked roads.dfmod"]',
     JSON.stringify(sh),
   );
-  // the pack's own file, served under the site root and decoded the way a drawn tile is - in the pack's worker
+  // OWN-WORK4: a road tile built from the player's own record by our road rule, the way a drawn tile is - in the
+  // pack's worker (the player's ARENA2 attached; with none, nothing is built and the classic set draws)
   const decodeWorkers = [];
   page.on('worker', (w) => {
     if (/vanillaEnhancedDecodeWorker/.test(w.url())) decodeWorkers.push(w.url());
   });
   const served = await page.evaluate(async () => {
     const pack = await import('/src/systems/vanillaEnhanced/vanillaEnhancedPack.js');
+    const own = await import('/src/systems/ownTextures/ownTexturePacks.js');
     const masked = pack.VE_PACK_MODS.find((m) => m.dir === 'masked-roads');
-    const url = pack.vePackUrl(masked.slices['302-TexArray'][46]);
     const tiles = await pack.vePackClient(masked).layers('302-TexArray');
     const tree = await pack.vePackClient(pack.VE_PACK_MODS[0]).rgba('501_13-0', { maxSize: 256 });
     return {
-      url: url.replace(location.origin, ''),
+      rule: own.ownSliceSpecs(masked, '302-TexArray')[46].rule,
       n: tiles.length,
-      size: `${tiles[46].width}x${tiles[46].height}`,
-      tree: `${tree.width}x${tree.height}`,
+      size: tiles[46] ? `${tiles[46].width}x${tiles[46].height}` : 'none',
+      tree: tree ? `${tree.width}x${tree.height}` : 'none',
     };
   });
   await page.waitForTimeout(100);
   check(
-    "a road tile is the pack's own file under the site root, the 302 set decoded whole and a 457x700 tree at the texture detail - by the decode worker",
-    served.url === '/art/vanilla-enhanced/masked-roads/302-TexArray_46.png' &&
+    "a road tile is our road rule over the player's record, the 302 set built whole and a 457x700 tree at the texture detail - by the build worker",
+    served.rule === 'road' &&
       served.n === 56 &&
       served.size === '256x256' &&
       served.tree === '114x175' &&

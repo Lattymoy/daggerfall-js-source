@@ -15,10 +15,10 @@ import { readFileSync } from 'node:fs';
 import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { spawnBoat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE, LOST_UNDER_M } from '../../../src/systems/comeSailAway/comeSailAway.js';
+import { ownFile } from '../../ownBoats.mjs';
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
 
 /** A built pixel as the host hands it (world.js csaTerrainOf): its corner, a TileMap, a SampleHeight over its own y. */

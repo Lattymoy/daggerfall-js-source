@@ -9,7 +9,7 @@
 // the lit light (or drops it, by OnStow) and lights it again when a
 // hand frees; three keys - ignite/douse, drop, throw (held to wind up);
 // a first-person sprite of the hand holding the lit torch or lantern
-// (the mod's own art, vendor/handheld-torches/Textures), placed by
+// (our own pictures since OWN-WORK4, handheldTorchesArt.js), placed by
 // SetGuard / SetAttack / SetSheathe and moved by Weapon Widget's Bob,
 // Inertia and Step laws (the author's other mod, WW1 - the same
 // arithmetic, restated here where the IL restates it); and a burning
@@ -56,9 +56,9 @@ import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../c
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
 import { beltLanternOf } from './beltLantern.js'; // BELT-WAIST: a press lights the lantern slot's lantern first
 import { toScreenOrder } from '../formats/color32Order.js'; // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
-import { decodePng } from './textureReplacement.js';
 import { rebuiltPicture } from './rebuiltPicture.js'; // NO-BETHESDA2: a picture that is Daggerfall's own, built from the player's files
-import DERIVED_TEXTURES from '../../vendor/handheld-torches/derived.json' with { type: 'json' };
+import DERIVED_TEXTURES from './handheldTorchesDerived.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader (OWN-WORK4)
+import { ownTorchPicture, TORCH_ART, TORCH_OVER, dousedCandle } from './handheldTorchesArt.js'; // OWN-WORK4: our own pictures
 import { setLightSource, addLightSourceListener } from './lightSource.js'; // DISC7: the light in hand's one door
 import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
@@ -208,49 +208,26 @@ export function readTorchSettings(read = () => modSettingsOf(HANDHELD_TORCHES_VE
  *  message spells its item (`Condition().ToLower() + " " + LongName.ToLower()`). */
 export const torchItemWords = (item) => `${conditionWord(item).toLowerCase()} ${itemLongName(item).toLowerCase()}`;
 
-/** The vendored sprite's URL (the mod's own PNG, Unity's import of it). */
-export const spriteUrl = (record, frame) =>
-  new URL(`../../vendor/handheld-torches/Textures/${SPRITE_ARCHIVE}_${record}-${frame}.png`, import.meta.url).href;
-
-// FIELD 2026-09-27 (a player's console: `/assets/undefined` 404, twice at boot and twice at every door): both
-// loaders here (the hand's sprite, droppedTorches' flats) probe frames until one is missing - the mod's own
-// TryImportTexture loop - and in the BUNDLE a frame past the last has no file, so Vite's dynamic URL answers
-// `/assets/undefined` and each probe's miss went out as a request. The vendored set is known at build time: a
-// frame not in it is the probe's miss here, never a fetch. Node sees no table (the tests hand their own loaders).
-const VENDORED_TEXTURES =
-  typeof window !== 'undefined'
-    ? import.meta.glob('../../vendor/handheld-torches/Textures/*.png', {
-        eager: true,
-        query: '?url',
-        import: 'default',
-      })
-    : null;
-/** Whether `table` - import.meta.glob's answer, keyed by the glob's own pattern spelled from this file - carries
- *  `file` (`archive_record-frame.png`); true where there is no table to ask. Pure, so node can hand it the table the
- *  bundle builds (AUDIT PRE-MERGE 0928 N8: node has none, and a wrong key form missed every frame unseen). */
-export const inVendoredSet = (table, file) =>
-  table == null || `../../vendor/handheld-torches/Textures/${file}` in table;
-/** NO-BETHESDA2 (2026-10-31): the mod's pictures that are Daggerfall's own - the candle's and the holy candle's flats,
- *  lit and doused, and their emission twins, TEXTURE.210 records 3 and 4 (vendor/handheld-torches/derived.json). The
- *  spec for `name` (`archive_record-frame`, no extension), or null where the picture is the author's own file. */
+/** NO-BETHESDA2 (2026-10-31): the pictures that are Daggerfall's own - the candle's and the holy candle's lit flats
+ *  and their emission twins, TEXTURE.210 records 3 and 4 (handheldTorchesDerived.json). The spec for `name`
+ *  (`archive_record-frame`, no extension), or null where the picture is not rebuilt. */
 export const derivedTorchSpec = (name) => (Object.hasOwn(DERIVED_TEXTURES, name) ? DERIVED_TEXTURES[name] : null);
-/** Whether the mod's set carries `file` - a picture rebuilt, or a file `table` carries (inVendoredSet). Pure. */
-export const inTorchSet = (table, file) =>
-  derivedTorchSpec(file.replace(/\.png$/, '')) != null || inVendoredSet(table, file);
-/** Whether the mod's set carries `file` - true where there is no table to ask. */
-export const vendoredTexture = (file) => inTorchSet(VENDORED_TEXTURES, file);
-/** The mod's picture `name`, top-down RGBA: rebuilt from the player's files where derived.json names it (`art`, a
- *  test's reader), else the vendored PNG at `url`, fetched and decoded. Null where the fetch finds none. */
-export async function torchPicture(
-  name,
-  url,
-  { art = undefined, fetchUrl = (u) => fetch(u), decode = decodePng } = {},
-) {
+/** Whether the set carries `file` (`archive_record-frame.png`): a picture rebuilt, or one of ours. Pure. The loaders
+ *  probe frames until one is missing - the mod's own TryImportTexture loop - and a frame past the last is a miss here,
+ *  never a fetch (FIELD 2026-09-27: a probe's miss went out as `/assets/undefined`). */
+export const inTorchSet = (file) => {
+  const name = file.replace(/\.png$/, '');
+  return derivedTorchSpec(name) != null || Object.hasOwn(TORCH_ART, name) || Object.hasOwn(TORCH_OVER, name);
+};
+/** Whether the set carries `file`. */
+export const vendoredTexture = (file) => inTorchSet(file);
+/** The picture `name`, top-down RGBA: rebuilt from the player's files where the specs name it (`art`, a test's
+ *  reader), a doused candle our rule over the player's lit one, else our own (OWN-WORK4). Null where none. */
+export async function torchPicture(name, { art = undefined } = {}) {
   const spec = derivedTorchSpec(name);
   if (spec) return rebuiltPicture(spec, art);
-  const res = await fetchUrl(url);
-  if (!res.ok) return null;
-  return decode(new Uint8Array(await res.arrayBuffer()));
+  if (Object.hasOwn(TORCH_OVER, name)) return dousedCandle(await rebuiltPicture(TORCH_OVER[name], art));
+  return ownTorchPicture(name);
 }
 
 /** HT6: THE LIVE COMPONENT - the one whose Update ran last, and the
@@ -1221,11 +1198,10 @@ export function createHandheldTorches({
   };
 }
 
-/** The default sprite loader: the vendored PNG, decoded in the browser
- *  into the port's color32 order. */
+/** The default sprite loader: our picture, in the port's color32 order. */
 async function defaultLoadSprite(record, frame) {
   if (!vendoredTexture(`${SPRITE_ARCHIVE}_${record}-${frame}.png`)) return null; // the probe's miss, known (FIELD 2026-09-27)
-  const pic = await torchPicture(`${SPRITE_ARCHIVE}_${record}-${frame}`, spriteUrl(record, frame));
+  const pic = await torchPicture(`${SPRITE_ARCHIVE}_${record}-${frame}`);
   return pic && toScreenOrder(pic); // TEX1: `{ width, height, colors }` - the shape uploadTexture reads; HT3: and the rows as the PNG has them, because this one is drawn on a SCREEN quad (toColor32's flip put the flame under the hand)
 }
 

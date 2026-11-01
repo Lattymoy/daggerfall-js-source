@@ -6,10 +6,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createWindfallEffects, WINDFALL_CLIPS, WINDFALL_PARTICLE_SYSTEMS, WINDFALL_EMITTER, leafAvailability, leafSeasonMultiplier, gustParticleResponse, windfallAudio, windfallClipKey } from '../../src/systems/windfallEffects.js';
+import { createWindfallEffects, WINDFALL_CLIPS, WINDFALL_CLIP_TABLE, WINDFALL_PARTICLE_SYSTEMS, WINDFALL_EMITTER, leafAvailability, leafSeasonMultiplier, gustParticleResponse, windfallAudio, windfallClipKey } from '../../src/systems/windfallEffects.js';
 import { AudioEngine } from '../../src/systems/audio.js';
 import { WindfallParticles, WINDFALL_PICTURES } from '../../src/render/windfallParticles.js';
-import { WINDFALL_SWAY_GLSL, windfallUniforms, windfallLawOn, swayShare, windfallLeanMax, windfallAnchorAfterShift, WINDFALL_ANCHOR_PERIOD, WINDFALL_SCALE_MAX } from '../../src/render/windfallSway.js';
+import { WINDFALL_SWAY_GLSL, windfallUniforms, windfallLawOn, swayShare, windfallLeanMax, windfallAnchorAfterShift, WINDFALL_ANCHOR_PERIOD, WINDFALL_SCALE_MAX, WINDFALL_STRENGTH_MAX, WINDFALL_TURNS } from '../../src/render/windfallSway.js';
 import { bbVertexShader } from '../../src/render/renderer.js';
 import { createWindfallHost } from '../../src/scenes/windfallHost.js';
 import { registeredModSaveVendors } from '../../src/systems/modSaveData.js';
@@ -38,14 +38,21 @@ function fakeSources(clock) {
 const CFG = { audioEnabled: true, audioVolume: 0.5, regularWindVolume: 1, gustVolume: 1, ruffleVolume: 1, leavesEnabled: true, leafAmount: 2.4, ambientLeafAmount: 1, snowFlurriesEnabled: true, snowFlurryAmount: 1 };
 const outdoor = (o = {}) => ({ outside: true, weather: 0, natureArchive: 504, season: 0, climate: 231, windyDay: false, storm: false, gust: 0, windDirection: [1, 0], dt: 0.05, playerPos: [0, 0.9, 0], ...o });
 
-test('WINDFALL1 the clips: the pools WindMod.CreateEnvironmentalEffects loads - twelve gusts, nine intermittent passages, six ruffles - with the bundle\'s own lengths, each an Ogg the extractor remuxed (mutants: a pool short; a length not the clip\'s)', () => {
+test('WINDFALL1 the clips: the pools WindMod.CreateEnvironmentalEffects loads - twelve gusts, nine intermittent passages, six ruffles - each at Windfall 1.0.0\'s own rate, frame count and length; OWN-WORK4: the sounds are our own, made at that rate and count (test/systems/ownwork4_windfall.test.js) (mutants: a pool short; a length not the clip\'s)', () => {
   assert.deepEqual([WINDFALL_CLIPS.gust.length, WINDFALL_CLIPS.ambient.length, WINDFALL_CLIPS.ruffle.length], [12, 9, 6]);
   assert.equal(WINDFALL_CLIPS.ambient[0].name, 'wind_blowing_01_ultrasoft');
   assert.equal(WINDFALL_CLIPS.ambient[8].name, 'open_wind_03_ultrasoft');
   assert.equal(WINDFALL_CLIPS.gust[4].length, 6);
   near(WINDFALL_CLIPS.ambient[3].length, 13.8545, 1e-3);
   assert.equal(windfallClipKey('leaf_ruffle_01'), 'windfall:leaf_ruffle_01');
-  for (const c of [...WINDFALL_CLIPS.gust, ...WINDFALL_CLIPS.ambient, ...WINDFALL_CLIPS.ruffle]) assert.ok(read(`vendor/windfall/Sound/${c.name}.ogg`).startsWith('OggS'), c.name);
+  // OWN-WORK4: the table the pools read, pinned as a literal (the mod's 27 clips: rate, frames; the length is frames over rate)
+  const TABLE = { wind_gust_01: [22050, 61740], wind_gust_02: [22050, 79380], wind_gust_03: [22050, 97020], wind_gust_04: [22050, 114660], wind_gust_05: [22050, 132300], wind_gust_06: [22050, 68355], wind_gust_07: [22050, 85995], wind_gust_08: [22050, 103635], wind_gust_09: [22050, 121275], wind_gust_10: [22050, 138915], wind_gust_11: [22050, 90405], wind_gust_12: [22050, 127890],
+    wind_blowing_01_ultrasoft: [44100, 793800], wind_blowing_02_ultrasoft: [44100, 793800], wind_blowing_03_ultrasoft: [44100, 793800], whistling_wind_01_ultrasoft: [44100, 610986], whistling_wind_02_ultrasoft: [44100, 610986], whistling_wind_03_ultrasoft: [44100, 610986], open_wind_01_ultrasoft: [44100, 633381], open_wind_02_ultrasoft: [44100, 633381], open_wind_03_ultrasoft: [44100, 633381],
+    leaf_ruffle_01: [22050, 30870], leaf_ruffle_02: [22050, 37485], leaf_ruffle_03: [22050, 44100], leaf_ruffle_04: [22050, 35280], leaf_ruffle_05: [22050, 48510], leaf_ruffle_06: [22050, 41895] };
+  assert.deepEqual(Object.fromEntries(WINDFALL_CLIP_TABLE.map((c) => [c.name, [c.rate, c.samples]])), TABLE);
+  for (const c of WINDFALL_CLIP_TABLE) assert.equal(c.length, Math.fround(c.samples / c.rate), c.name);
+  assert.equal(WINDFALL_CLIP_TABLE[0].length, 2.799999952316284, 'AudioClip.length, single precision');
+  assert.deepEqual([...WINDFALL_CLIPS.gust, ...WINDFALL_CLIPS.ambient, ...WINDFALL_CLIPS.ruffle].map((c) => c.name).sort(), Object.keys(TABLE).sort(), 'every clip in one pool');
 });
 
 test('WINDFALL1 the sounds: a gust on a windy day plays a gust clip at 0.18..0.40 of the mod\'s volume by its peak (0.44 in a storm), a normal day\'s a soft passage at 0.14; a windy day plays passages end to end with a gap (0.2, 0.28 a storm); never the clip before; pitched (mutants: the storm\'s 0.44 the windy 0.40; the normal day a gust clip; the gap dropped; a repeat allowed)', () => {
@@ -154,7 +161,7 @@ test('WINDFALL1 the flows: the gust\'s leaves from 13 m upwind and 7 up at its p
   assert.equal(s.leafSeason, 'fall'); assert.equal(s.flows.leaves.clear, true, 'a new sheet clears the leaves'); assert.equal(s.flows.ambientLeaves.clear, true);
   const t = createWindfallEffects({ random: seeded() });
   t.configure(CFG);
-  assert.match(t.triggerLeafTest([0, 0, 0], [1, 0]), /Emitted 60 test leaves/);
+  assert.match(t.triggerLeafTest([0, 0, 0], [1, 0]), /Sixty test leaves blow past/);
   assert.equal(t.flows.leaves.emit, 60);
 });
 
@@ -181,7 +188,7 @@ test('WINDFALL1 the AudioSource: a live volume (a playing shot follows it - the 
   s.stop();
   assert.equal(s.isPlaying, false);
   const fakeEngine = { source: () => ({ volume: 1, pitch: 1, isPlaying: false, playOneShot: (k) => k, stop() {}, dispose() {} }), registerSound: async () => true };
-  const wa = windfallAudio(fakeEngine, { fetch: async () => new Uint8Array(4) });
+  const wa = windfallAudio(fakeEngine, { make: async () => new Float32Array(4) });
   assert.equal(wa.sources.gust.playOneShot('wind_gust_01'), 'windfall:wind_gust_01', 'a clip by its name, on the bus by its key');
 });
 
@@ -222,47 +229,80 @@ test('WINDFALL1 the particles: the three systems at the mod\'s caps (800, 300, 1
   assert.equal(p.draw('fall', [], [], [1, 0, 0], [0, 1, 0], [1, 1, 1]), false, 'no context, no pictures: nothing drawn');
 });
 
-test('WINDFALL1 the law\'s numbers: sway amplitude x min(S, 2), shiver amplitude x saturate(S) x min(S, 2), the phases, the heading made unit, the anchor - all zero with no law (the mod off, indoors); a batch\'s share its mask under the law, its WIND3 sway else; the most a crown leans (mutants: the shiver unsaturated; the share WIND3\'s under the law)', () => {
+test('WINDFALL1 / OWN-WORK4 the law\'s numbers, our own: the sway\'s and the shiver\'s reach each its amount x the strength (0..2), the phases, the heading made unit, the anchor - all zero with no law (the mod off, indoors); a batch\'s share its mask under the law, its WIND3 sway else; the most a crown leans (mutants: the shiver\'s strength dropped; the strength uncapped; the share WIND3\'s under the law)', () => {
   const wf = { on: true, outside: true, strength: 1.5, profile: { swayAmplitude: 0.026, shiverAmplitude: 0.012 }, swayPhase: 1, shiverPhase: 2, direction: [3, 4] };
   const u = windfallUniforms(wf, [10, 20]);
-  near(u[0], 0.026 * 1.5, 1e-7); near(u[1], 0.012 * 1 * 1.5, 1e-7);
+  near(u[0], 0.026 * 1.5, 1e-7); near(u[1], 0.012 * 1.5, 1e-7);
   assert.deepEqual([...u.slice(2)].map((v) => Math.round(v * 1e6) / 1e6), [1, 2, 0.6, 0.8, 10, 20]);
-  near(windfallUniforms({ ...wf, strength: 0.4 })[1], 0.012 * 0.4 * 0.4, 1e-7, 'the shiver saturates under 1');
+  near(windfallUniforms({ ...wf, strength: 0.4 })[1], 0.012 * 0.4, 1e-7, 'linear in the strength');
+  assert.equal(WINDFALL_STRENGTH_MAX, 2);
+  near(windfallUniforms({ ...wf, strength: 3 })[0], 0.026 * 2, 1e-7, 'the strength capped at 2');
+  assert.equal(windfallUniforms({ ...wf, strength: -1 })[1], 0, 'and never below nothing');
   assert.deepEqual([...windfallUniforms({ ...wf, outside: false })], [0, 0, 0, 0, 0, 0, 0, 0]);
   assert.deepEqual([...windfallUniforms(null)], [0, 0, 0, 0, 0, 0, 0, 0]);
   assert.equal(windfallLawOn(u), true); assert.equal(windfallLawOn(new Float32Array(8)), false);
   const b = { sway: 0.6, windfall: 166 / 255 };
   assert.equal(swayShare(b, true), 166 / 255); assert.equal(swayShare(b, false), 0.6); assert.equal(swayShare({}, true), 0);
   near(windfallLeanMax(u, 1, 10), (0.039 + 0.018) * WINDFALL_SCALE_MAX * 10, 1e-6);
+  assert.equal(WINDFALL_SCALE_MAX, 1.3, 'a flat\'s reach at its most');
   assert.deepEqual(windfallAnchorAfterShift([0, 0], [819.2, 0, -819.2]), [WINDFALL_ANCHOR_PERIOD - 819.2, 819.2], 'the anchor moves back, wrapped');
-  assert.equal(WINDFALL_ANCHOR_PERIOD % 12, 0, 'a whole number of the mod\'s 12 m cells');
+  assert.equal(WINDFALL_ANCHOR_PERIOD, 49152);
+  for (const pair of Object.values(WINDFALL_TURNS)) for (const t of pair.flat()) assert.ok(Number.isInteger(t), 'every field a whole number of turns over the period');
 });
 
 const lean = glslFunctions(WINDFALL_SWAY_GLSL, { uWindfallSway: [0.04, 0.01, 0.7, 1.9], uWindfallAxis: [1, 0, 0, 0] }, { fp32: true });
 
-test('WINDFALL1 the vertex wind (run in BB_VS\'s own function): the heading\'s 15% plus 85% of it along the quad\'s right - a wind across the view moves a card whole, one along it barely; linear in the two amplitudes; each flat 0.8..1.2 of it; a wood\'s 12 m cell swaying together with a fifth of each flat\'s own; and the place the land\'s - a floating-origin shift carried by the anchor moves no flat (mutants: the 0.85 lost; the 0.4 spread; the cell 6 m; the anchor ignored)', () => {
-  const across = lean.windfallLean([3.2, 7.7], [1, 0, 0]);
-  const along = lean.windfallLean([3.2, 7.7], [0, 0, 1]);
-  near(along[0] / across[0], 0.15, 1e-4, 'along the view: the heading\'s 15%');
-  assert.equal(across[1], 0, 'level');
+test('WINDFALL1 / OWN-WORK4 the vertex wind, our own law (run in BB_VS\'s own function): the lean lies along the quad\'s right - a card moves in its own plane - the sway by the heading\'s share across the view, the shiver whatever the heading; linear in the two reaches; each flat 0.7..1.3 of it; a wood bends in patches, flats a metre apart nearly together and 40 m apart not; each field periodic over the anchor\'s wrap; the place the land\'s - a floating-origin shift carried by the anchor moves no flat (mutants: the heading\'s share dropped; the reach widened; the wood field lost; the anchor ignored)', () => {
   const g = lean.globals;
-  g.uWindfallSway = [0.08, 0.01, 0.7, 1.9];
-  const twice = lean.windfallLean([3.2, 7.7], [1, 0, 0]);
+  const across = lean.windfallLean([3.2, 7.7], [1, 0, 0]);
+  assert.equal(Math.abs(across[1]), 0, 'level'); assert.equal(Math.abs(across[2]), 0, 'along the right axis alone');
+  // the heading's share across the view: none along it, half at 45 degrees; the shiver whatever the heading
+  g.uWindfallSway = [0.04, 0, 0.7, 1.9];
+  const full = lean.windfallLean([3.2, 7.7], [1, 0, 0])[0];
+  assert.ok(Math.abs(full) > 1e-3, `a wind across the view sways the card: ${full}`);
+  assert.deepEqual(lean.windfallLean([3.2, 7.7], [0, 0, 1]).map(Math.abs), [0, 0, 0], 'a wind along the view sways no card');
+  near(lean.windfallLean([3.2, 7.7], [Math.SQRT1_2, 0, Math.SQRT1_2])[0], full * 0.5, 1e-6, 'at 45 degrees, half along x');
   g.uWindfallSway = [0, 0.01, 0.7, 1.9];
-  const shiverOnly = lean.windfallLean([3.2, 7.7], [1, 0, 0]);
-  near(twice[0] - shiverOnly[0], 2 * (across[0] - shiverOnly[0]), 1e-5, 'linear in the sway\'s amplitude');
+  let shiverAlong = 0;
+  for (let i = 0; i < 20; i++) shiverAlong += Math.abs(lean.windfallLean([i * 1.37, 2.5], [0, 0, 1])[2]);
+  assert.ok(shiverAlong > 0.02, `the shiver shows along the view: ${shiverAlong}`);
+  // linear in the two reaches
   g.uWindfallSway = [0.04, 0.01, 0.7, 1.9];
-  // each flat 0.8..1.2 x its signal (|sway| + |shiver| <= 0.05 here)
+  const once = lean.windfallLean([3.2, 7.7], [1, 0, 0])[0];
+  g.uWindfallSway = [0.08, 0.01, 0.7, 1.9];
+  const twice = lean.windfallLean([3.2, 7.7], [1, 0, 0])[0];
+  g.uWindfallSway = [0, 0.01, 0.7, 1.9];
+  const shiverOnly = lean.windfallLean([3.2, 7.7], [1, 0, 0])[0];
+  near(twice - shiverOnly, 2 * (once - shiverOnly), 1e-5, 'linear in the sway\'s reach');
+  // each flat 0.7..1.3 of the lean, and never past the reaches x 1.3
+  near(lean.windfallReach(0), 0.7, 1e-6); near(lean.windfallReach(1), WINDFALL_SCALE_MAX, 1e-6);
+  g.uWindfallSway = [0.04, 0.01, 0.7, 1.9];
   let most = 0;
   for (let i = 0; i < 400; i++) most = Math.max(most, Math.abs(lean.windfallLean([i * 1.37, i * 2.11], [1, 0, 0])[0]));
-  assert.ok(most <= 0.05 * 1.2 + 1e-6 && most > 0.05 * 0.8, `the spread: ${most}`);
-  // the cell: two flats a metre apart in one cell sway nearly together (a fifth is their own); across a cell they need not
-  const pair = (a, b) => Math.abs(lean.windfallLean(a, [1, 0, 0])[0] - lean.windfallLean(b, [1, 0, 0])[0]);
-  g.uWindfallSway = [0.04, 0, 0.7, 0];
-  const inCell = pair([1.5, 1.5], [2.0, 1.5]);
-  assert.ok(inCell < 0.02, `one cell, nearly one phase: ${inCell}`);
-  const wide = [[5.0, 1.5, 7.0, 1.5], [1.0, 5.5, 1.0, 6.5], [13.0, 17.0, 23.0, 22.0], [30.0, 40.0, 35.0, 46.5]].map(([a, b, c, d]) => pair([a, b], [c, d]));
-  for (const d of wide) assert.ok(d < 0.025, `a 12 m cell, not a 6 m one: ${wide}`);
+  assert.ok(most <= 0.05 * WINDFALL_SCALE_MAX + 1e-6 && most > 0.05 * 0.7, `the spread: ${most}`);
+  // the wood: the sway of flats a metre apart moves together, 40 m apart it does not
+  const sway = (gap) => {
+    let xy = 0, xx = 0, yy = 0;
+    for (let i = 0; i < 200; i++) {
+      const p = [(i * 37.13) % 3000, (i * 91.7) % 2500];
+      for (const phase of [0, 1.3, 2.9, 4.4]) {
+        g.uWindfallSway = [0.04, 0, phase, 0];
+        const a = lean.windfallLean(p, [1, 0, 0])[0], b = lean.windfallLean([p[0] + gap, p[1]], [1, 0, 0])[0];
+        xy += a * b; xx += a * a; yy += b * b;
+      }
+    }
+    return xy / Math.sqrt(xx * yy);
+  };
+  const near1 = sway(1), far40 = sway(40);
+  assert.ok(near1 > 0.8, `a metre apart, nearly one sway: ${near1}`);
+  assert.ok(far40 < 0.4, `40 m apart, another patch: ${far40}`);
+  // each field repeats over the anchor's wrap
+  const kOf = (t) => [(t[0] * 2 * Math.PI) / WINDFALL_ANCHOR_PERIOD, (t[1] * 2 * Math.PI) / WINDFALL_ANCHOR_PERIOD];
+  const field = glslFunctions(WINDFALL_SWAY_GLSL, {}).windfallField;
+  for (const pair of Object.values(WINDFALL_TURNS)) {
+    const [a, b] = pair.map(kOf);
+    near(field([123.4, 567.8], a, b), field([123.4 + WINDFALL_ANCHOR_PERIOD, 567.8 - WINDFALL_ANCHOR_PERIOD], a, b), 1e-6, 'one field a wrap on');
+  }
   // the land's place: the scene moved by a shift, the anchor back by it - one lean
   g.uWindfallSway = [0.04, 0.01, 0.7, 1.9];
   g.uWindfallAxis = [0.6, 0.8, 100, 200];
@@ -270,7 +310,8 @@ test('WINDFALL1 the vertex wind (run in BB_VS\'s own function): the heading\'s 1
   const [ax, az] = windfallAnchorAfterShift([100, 200], [819.2, 0, -819.2]);
   g.uWindfallAxis = [0.6, 0.8, ax, az];
   const after = lean.windfallLean([5.3 + 819.2, 4.1 - 819.2], [1, 0, 0]);
-  near(after[0], before[0], 1e-5, 'a crossing moves no flat'); near(after[2], before[2], 1e-5);
+  near(after[0], before[0], 1e-4, 'a crossing moves no flat (fp32 at the wrap: a place near 49 km holds 4 mm)'); near(after[2], before[2], 1e-4);
+  g.uWindfallAxis = [1, 0, 0, 0];
 });
 
 const I16 = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -337,7 +378,7 @@ test('WINDFALL1 the runtime (scenes/windfallHost.js): off the enhanced lane it a
   assert.equal(host.frame({ ...f, outside: false }), null, 'none indoors');
   assert.ok(registeredModSaveVendors().includes('windfall'));
   assert.equal(hasConsoleCommand('windfall'), true);
-  assert.match(executeConsoleCommand('windfall', ['storm']), /Wind test mode set to storm/);
+  assert.match(executeConsoleCommand('windfall', ['storm']), /Wind test mode: storm/);
   assert.match(executeConsoleCommand('windfall', ['status']), /^override=storm/);
   assert.match(executeConsoleCommand('windfall', []), /^Usage: windfall/);
   setModSetting('windfall', 'Enabled', false);

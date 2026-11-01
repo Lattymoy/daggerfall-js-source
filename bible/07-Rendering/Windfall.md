@@ -10,6 +10,21 @@ Its three siblings arrived in the same message: Heat Haze
 (`07-Rendering/Heat-Haze.md`), Snowfall (`03-World/Snowfall.md`) and Sands of
 the Alik'r (`07-Rendering/Sands-Of-The-Alikr.md`).
 
+**OWN-WORK4 (2026-10-31, the owner).** "A proper 1 to 1 recreation for
+everything." vendor/windfall is retired: its manifest, settings, console note,
+`Windfall.dll`, IL dump, two shaders as GLSL, three pictures and 27
+clips left the tree, and `tools/environmentModsExtract.mjs` (DELETED) lost its
+Windfall arm. The law ported from the assembly stays (`systems/windfall.js`,
+`systems/windfallEffects.js`). The art and sound are our own, under the mod's
+names, rates, frame counts and sizes: the clips synthesized from seeded noise
+(`systems/windfall/windfallSynth.js`), the leaf sheets and the flake painted
+(`systems/windfall/windfallPictures.js`), and the vertex wind our own law,
+written from the effect's description (`render/windfallSway.js`): the lean in
+the card's own plane, linear in the strength, a wood bending in patches. What
+this page says of the mod's clips, pictures and shader below is history. Pins:
+`test/systems/ownwork4_windfall.test.js`. Commit `cc44705af` still holds the
+vendored copy.
+
 ## What the mod is
 
 One `.dfmod` bundle: an assembly (`Windfall.dll`, 54,272 bytes - eight types),
@@ -95,10 +110,8 @@ planner's and the tables' to `de42ad23...`.
   only where there are leaves (LeafAvailability x LeafSeasonMultiplier), not in
   snow and not under a winter nature set. A clip is never the one before it,
   and each is pitched a little. Indoors every source fades at 0.8 a second
-  and stops at nothing. The clips are the bundle's FSB5 Vorbis, remuxed to Ogg
-  losslessly by `tools/environmentModsExtract.mjs`
-  (`vendor/vorbis-fsb-setups`' headers), fetched on the first frame the mod's
-  sound is wanted.
+  and stops at nothing. The clips were the bundle's FSB5 Vorbis, remuxed to Ogg
+  by `tools/environmentModsExtract.mjs` (DELETED), fetched when sound was first wanted.
 - **THE LEAVES AND THE SNOW** (`render/windfallParticles.js`): the gust's
   leaves blow from 13 m upwind and 7 up at the gust's particle response (a
   smoothstep of the gust past 0.3) times the canopy (32 a second, 48 a storm,

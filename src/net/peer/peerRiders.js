@@ -5,7 +5,7 @@
 // screen - their doll or their body sliding over the road at a gallop's pace. The pose carries the mount now
 // (net/wire.js validPose: `rd` 1 the horse, 2 the cart - DFU's TransportModes that ride - and `rv` which mounted
 // sprite set the rider chose), and this draws a riding peer as the only art the port has of a person on a horse:
-// Eye Of The Beholder's mounted player sprites (vendor/eye-of-the-beholder, archives 112382-112386), the same eight
+// Eye Of The Beholder 2.1's mounted player sprites (archives 112382-112386, Daggerfall's own riders), the same eight
 // views, the same idle / walk / gallop tables and clip lengths, the same size and offsets its own billboard takes
 // (player/eyeOfTheBeholder/eotbBillboard.js, player/eyeOfTheBeholder/eotbSprite.js) - so a rider looks the same to the others as to themselves in third
 // person. A peer in the saddle stands no doll, sprite or Morrowind body (the host hands the other two layers the
@@ -93,7 +93,7 @@ async function decodeUrl(url) {
 
 /**
  * DISC23-B: THE ART, ONE STORE. A rider and a walker draw from the same bundle (the on-foot and mounted archives are
- * one vendored folder) and the renderer caches a texture by archive and record, so the two layers share one store:
+ * one set of names) and the renderer caches a texture by archive and record, so the two layers share one store:
  * a sprite fetched, decoded and uploaded once, whoever asked first. `ensure(s)` answers `{ w, h }` once the sprite's
  * texture is up, else null (asked, loading, failed and cooling down, or no art at all).
  *

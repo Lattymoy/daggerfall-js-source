@@ -366,7 +366,7 @@ async function hccPool({ groundAt, clock = { t: 0 }, runtime = null } = {}) {
   const renderer = { createMesh: (m) => ({ m }), drawMesh() {}, createBillboardBatch: () => ({ origin: [0, 0, 0] }), destroyBillboardBatch() {}, uploadTexture() {} };
   const meshes = { getGpuMesh: async (id) => gpu[id] ?? null, cpuModels: new Map([[WAGON_MODEL_ID, syntheticWagon41214()]]) };
   const col = groundCollider(groundAt);
-  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => clock.t, fetchFn: async () => ({ ok: false, status: 404 }), selfId: () => 'me', log: { error() {}, warn() {}, info() {} } });
+  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => clock.t, horsePicture: async () => { throw new Error('no horse picture'); }, selfId: () => 'me', log: { error() {}, warn() {}, info() {} } });
   pool.attach(runtime ?? { view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, persistence: true }), lateUpdate() {}, rebase() {} });
   return { pool, col, clock };
 }

@@ -3894,19 +3894,9 @@
   "tr": "8a53068981b0",
   "by": "claude-in-session"
  },
- "credits.betterAmbience.terms": {
-  "en": "d0d785325b5b",
-  "tr": "e2320b3784f6",
-  "by": "claude-in-session"
- },
  "credits.betterAmbience.what": {
   "en": "100f862ea8ed",
   "tr": "f24774d96183",
-  "by": "claude-in-session"
- },
- "credits.classSkins.terms": {
-  "en": "324ccfd7064b",
-  "tr": "fe07409af7b5",
   "by": "claude-in-session"
  },
  "credits.classSkins.title": {
@@ -3914,29 +3904,9 @@
   "tr": "c58aa1204e5f",
   "by": "claude-in-session"
  },
- "credits.classSkins.what": {
-  "en": "2bd085e5afa1",
-  "tr": "a712ef8340b1",
-  "by": "claude-in-session"
- },
- "credits.climatesCalories.terms": {
-  "en": "b2ddc6fd23a7",
-  "tr": "58b7a4613c54",
-  "by": "claude-in-session"
- },
  "credits.climatesCalories.what": {
   "en": "83172d962534",
   "tr": "c71a27ca8dc4",
-  "by": "claude-in-session"
- },
- "credits.comeSailAway.terms": {
-  "en": "aecd9f5f6b2c",
-  "tr": "d99adab9e062",
-  "by": "claude-in-session"
- },
- "credits.comeSailAway.what": {
-  "en": "a876c4d15ad4",
-  "tr": "d81484702f03",
   "by": "claude-in-session"
  },
  "credits.contact.dfuForums": {
@@ -3979,39 +3949,9 @@
   "tr": "1e8f512d13c3",
   "by": "claude-in-session"
  },
- "credits.diverseWeapons.terms": {
-  "en": "d699389463c3",
-  "tr": "0d1374643e44",
-  "by": "claude-in-session"
- },
  "credits.diverseWeapons.what": {
   "en": "de7668ccb0e5",
   "tr": "351942d390ae",
-  "by": "claude-in-session"
- },
- "credits.dynamicSkies.terms": {
-  "en": "e807de593645",
-  "tr": "3e69b5a2a3b4",
-  "by": "claude-in-session"
- },
- "credits.dynamicSkies.what": {
-  "en": "185c34a4a1d3",
-  "tr": "03801cdd3cef",
-  "by": "claude-in-session"
- },
- "credits.eyeOfTheBeholder.terms": {
-  "en": "97fcb5eb18a5",
-  "tr": "904fffe1409c",
-  "by": "claude-in-session"
- },
- "credits.eyeOfTheBeholder.what": {
-  "en": "3e7fcfad6a7c",
-  "tr": "c07d98c256d1",
-  "by": "claude-in-session"
- },
- "credits.foraging.terms": {
-  "en": "70bb85ac634a",
-  "tr": "b2403a39e574",
   "by": "claude-in-session"
  },
  "credits.foraging.what": {
@@ -4029,19 +3969,9 @@
   "tr": "7af014651a9e",
   "by": "claude-in-session"
  },
- "credits.handheldTorches.terms": {
-  "en": "070aca06d975",
-  "tr": "99ead080134f",
-  "by": "claude-in-session"
- },
  "credits.handheldTorches.what": {
   "en": "7ff8f22e7606",
   "tr": "507c9b6c168f",
-  "by": "claude-in-session"
- },
- "credits.horseCart.terms": {
-  "en": "1502ec1b2cef",
-  "tr": "bb0b00212a09",
   "by": "claude-in-session"
  },
  "credits.horseCart.what": {
@@ -4049,24 +3979,9 @@
   "tr": "6421e5fffab8",
   "by": "claude-in-session"
  },
- "credits.iliacPuddle.terms": {
-  "en": "d35ec70eb275",
-  "tr": "71742b349cfe",
-  "by": "claude-in-session"
- },
  "credits.iliacPuddle.what": {
   "en": "1f7ddde709f4",
   "tr": "6e720162286f",
-  "by": "claude-in-session"
- },
- "credits.immersiveFootsteps.terms": {
-  "en": "102e603a77be",
-  "tr": "502e48725d2e",
-  "by": "claude-in-session"
- },
- "credits.immersiveFootsteps.what": {
-  "en": "471d7dd4e1c1",
-  "tr": "9758390f1275",
   "by": "claude-in-session"
  },
  "credits.l10n.bundled": {
@@ -4179,16 +4094,6 @@
   "tr": "48c1f6224cf1",
   "by": "claude-in-session"
  },
- "credits.rrItems.terms": {
-  "en": "a738bf57ba37",
-  "tr": "59452b3f89ba",
-  "by": "claude-in-session"
- },
- "credits.rrItems.what": {
-  "en": "350c872d11c6",
-  "tr": "0956fe029604",
-  "by": "claude-in-session"
- },
  "credits.seasons.terms": {
   "en": "daad4657afaf",
   "tr": "e77c643cb753",
@@ -4197,11 +4102,6 @@
  "credits.seasons.what": {
   "en": "fc66084d5d41",
   "tr": "661fdc373330",
-  "by": "claude-in-session"
- },
- "credits.shieldWidget.terms": {
-  "en": "09ddb9b3f88c",
-  "tr": "0a8ec7b66a25",
   "by": "claude-in-session"
  },
  "credits.shieldWidget.what": {
@@ -4217,11 +4117,6 @@
  "credits.silkscreen.what": {
   "en": "394d2d009d49",
   "tr": "da9602df503e",
-  "by": "claude-in-session"
- },
- "credits.travelOptions.terms": {
-  "en": "d783191ec23c",
-  "tr": "bccbe923c7d4",
   "by": "claude-in-session"
  },
  "credits.travelOptions.what": {
@@ -4244,26 +4139,6 @@
   "tr": "9b7e534ed47e",
   "by": "claude-in-session"
  },
- "credits.vorbis.author": {
-  "en": "fdd46b831149",
-  "tr": "aa226f93a0dd",
-  "by": "claude-in-session"
- },
- "credits.vorbis.terms": {
-  "en": "9a48158a4746",
-  "tr": "e651758e4575",
-  "by": "claude-in-session"
- },
- "credits.vorbis.title": {
-  "en": "03d0121c9a55",
-  "tr": "897ecd8a0c87",
-  "by": "claude-in-session"
- },
- "credits.vorbis.what": {
-  "en": "e30c8baae0cb",
-  "tr": "81a94ec7993c",
-  "by": "claude-in-session"
- },
  "credits.warmAshes.terms": {
   "en": "91b057179e9a",
   "tr": "b2444fe35fe9",
@@ -4272,16 +4147,6 @@
  "credits.warmAshes.what": {
   "en": "2a6bc436fb0b",
   "tr": "45b3a69e4da6",
-  "by": "claude-in-session"
- },
- "credits.weaponSheathing.terms": {
-  "en": "632a66933b93",
-  "tr": "fd37aa358fb5",
-  "by": "claude-in-session"
- },
- "credits.weaponSheathing.what": {
-  "en": "cb09390217e5",
-  "tr": "e8af144fdc56",
   "by": "claude-in-session"
  },
  "credits.weaponWidget.terms": {
@@ -9669,29 +9534,9 @@
   "tr": "cf8fdc63d4c6",
   "by": "claude-in-session"
  },
- "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
-  "en": "ea78623b8aa0",
-  "tr": "2de7911ca9c5",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.enable.description": {
   "en": "3c73a6aab686",
   "tr": "78d37509ce07",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterFootsteps.footstepVolume.description": {
-  "en": "a24a22b52244",
-  "tr": "4311af967f20",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterRain.enableBetterRain.description": {
-  "en": "b01ebc8f57a9",
-  "tr": "5384f7b9f28f",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterRain.enableBetterSnow.description": {
-  "en": "9e2c57dfba94",
-  "tr": "b2e722ba7f34",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.CameraShake.fadeInTime.description": {
@@ -9749,19 +9594,9 @@
   "tr": "856408f4cecd",
   "by": "claude-in-session"
  },
- "mods.betterAmbience.DungeonLighting.dungeonDarkness.description": {
-  "en": "5ef727ff388b",
-  "tr": "c8773808a5d1",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.DungeonLighting.enableFogAmbientEffect.description": {
   "en": "fa83a653257f",
   "tr": "cbf391e45e6e",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.DungeonLighting.fogAmbientEffect.description": {
-  "en": "080f2d8b0012",
-  "tr": "7996cfc565b4",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.DungeonReverb.level.description": {
@@ -9832,11 +9667,6 @@
  "mods.comeSailAway.Controls.IncreaseTimeScale.description": {
   "en": "2fc1d73b92ae",
   "tr": "71afa17249e7",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Controls.PortLocationSearchRange.description": {
-  "en": "da63f599ee82",
-  "tr": "83f11b39b46c",
   "by": "claude-in-session"
  },
  "mods.comeSailAway.Controls.ResetTimeScale.description": {
@@ -9929,31 +9759,6 @@
   "tr": "375f5cfbc74e",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.Map.MarkerOutlineThickness.description": {
-  "en": "b8a31b1ef164",
-  "tr": "d044a562b7f4",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.MarkerThickness.description": {
-  "en": "6c8779b2189e",
-  "tr": "86f2c1f5e668",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.PositionLineThickness.description": {
-  "en": "5630d67aba94",
-  "tr": "d6b6833aed99",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.RestrictPositionReadingTime.description": {
-  "en": "0c81c0e243fb",
-  "tr": "6378c4755481",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.RestrictPositionReadingWeather.description": {
-  "en": "82151f1f93f5",
-  "tr": "ffdb58e4d5b9",
-  "by": "claude-in-session"
- },
  "mods.comeSailAway.SailingAssist.AutoStowSquareSails.description": {
   "en": "80da6c3da601",
   "tr": "08e5bf0c4f71",
@@ -10044,34 +9849,14 @@
   "tr": "80638a62ad0d",
   "by": "claude-in-session"
  },
- "mods.dynamicSkies.ActivatePixelSnow.description": {
-  "en": "a6061104e961",
-  "tr": "64df5e3dcf73",
-  "by": "claude-in-session"
- },
  "mods.dynamicSkies.Enabled.description": {
   "en": "24a56f1d6b04",
   "tr": "500f33bd34e7",
   "by": "claude-in-session"
  },
- "mods.dynamicSkies.MaxParticleSize.description": {
-  "en": "f9adbf4bc9c0",
-  "tr": "8b4841201b62",
-  "by": "claude-in-session"
- },
  "mods.dynamicSkies.MaxParticles.description": {
   "en": "d94d1768b9d1",
   "tr": "33e8ee0246c3",
-  "by": "claude-in-session"
- },
- "mods.dynamicSkies.MinParticleSize.description": {
-  "en": "252164e4c1c7",
-  "tr": "baea49dba4d6",
-  "by": "claude-in-session"
- },
- "mods.dynamicSkies.densitySetting.description": {
-  "en": "a135ebefc2ef",
-  "tr": "5fce4a9f2f58",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.BillboardScale.description": {
@@ -10289,24 +10074,9 @@
   "tr": "7222917afa23",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Graphics.OnFoot.description": {
-  "en": "9b6e80fbd98b",
-  "tr": "2a998610a7cd",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.OnHorse.description": {
-  "en": "66382d4850bb",
-  "tr": "cd5cbc695639",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.Graphics.PingPongOffset.description": {
   "en": "37ee0a84039b",
   "tr": "d529c6bca48e",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.ReadyStance.description": {
-  "en": "b9a13e8133b9",
-  "tr": "a8143e381f22",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.ShowCart.description": {
@@ -10314,14 +10084,9 @@
   "tr": "a454f781896f",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Graphics.TorchOffset.description": {
-  "en": "14baa7d0a735",
-  "tr": "fcb492fbd0bc",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.Graphics.TurnToView.description": {
-  "en": "5b8f4846d335",
-  "tr": "bf754fff7b13",
+  "en": "96af4ccb0a75",
+  "tr": "25aedfc9f4dc",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.LongitudinalDistance.description": {
@@ -10522,36 +10287,6 @@
  "mods.foraging.Enabled.description": {
   "en": "6aebd7af6181",
   "tr": "59a206cf9bb5",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.BobWhileIdle.description": {
-  "en": "62b350a41e80",
-  "tr": "7528e3dbba1f",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.Length.description": {
-  "en": "c41e3b59724d",
-  "tr": "bef58e37a4c3",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.Offset.description": {
-  "en": "032cf0a5887b",
-  "tr": "760e8d9de86f",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.Shape.description": {
-  "en": "6a14dd5fdf6e",
-  "tr": "6cea7ee4c342",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.SizeX.description": {
-  "en": "4bf47b6b34e5",
-  "tr": "a2752a08f066",
-  "by": "claude-in-session"
- },
- "mods.handheldTorches.Bob.SizeY.description": {
-  "en": "eafc60d14110",
-  "tr": "96e807d2ead6",
   "by": "claude-in-session"
  },
  "mods.meanerMonsters.Enabled.description": {
@@ -13455,8 +13190,8 @@
   "by": "claude-in-session"
  },
  "travel.nav.gatesShut": {
-  "en": "fd358facc6db",
-  "tr": "c8ec063ba161",
+  "en": "17f9bab0aa7c",
+  "tr": "5d3d89a22780",
   "by": "claude-in-session"
  },
  "travelView.planning": {

@@ -139,6 +139,7 @@ import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
 import { localizedText, formatText, getLocalizedLocationName, getLocalizedRegionName } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
 import { IT_POPUP, IT_TEXT, itMapRefusal, itMapPaths, carriageLocationLarge, seafarerLocationLarge, seafarerDiscovered } from '../../systems/immersiveTravel.js';   // IT1: Immersive Travel's CarriageMap and SeafarersMap
+import { travelPicture } from './travelArt.js';   // OWN-WORK4: the PORTS button, our own
 
 // --- DFU's fields (:38-63) ---
 export const BETONY_INDEX = 19;
@@ -340,27 +341,20 @@ let _art = null;
 /** The window's whole art bundle: the overworld, the picker BITMAP
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
-/** TO1: a PNG out of a vendored mod folder, in the shape `drawImg`
+/** TO1: one of our travel pictures (OWN-WORK4, travelArt.js), in the shape `drawImg`
  *  reads. The precedent is systems/handheldTorches.js:"async function defaultLoadSprite" -
  *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
- *  quad and the flip would stand it on its head. A file that is not
- *  there answers null and the caller draws nothing. */
+ *  quad and the flip would stand it on its head. A picture that cannot be
+ *  uploaded answers null and the caller draws nothing. */
 async function loadVendorPng(deps, name) {
   try {
-    const fetchFn = deps?.fetchFn ?? globalThis.fetch;
-    if (!fetchFn) return null;
-    const url = new URL(`../../../vendor/travel-options/Textures/${name}.png`, import.meta.url).href;
-    const res = await fetchFn(url);
-    if (!res?.ok) return null;
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    const { decodePng } = await import('../../systems/textureReplacement.js');
     const { toScreenOrder } = await import('../../formats/color32Order.js');
     // AUDIT-TO1 E2: toScreenOrder answers `{ width, height, colors }` -
     // what uploadTexture EATS - and the precedent this loader cited
     // (handheldTorches.js) uploads it before drawing. Stored as-is, the
     // pair reached drawImg with no `tex` and the PORTS button painted
     // as an opaque white 45x11 block in both of its states.
-    const px = toScreenOrder(await decodePng(bytes));
+    const px = toScreenOrder(travelPicture(name));
     const tex = deps?.renderer?.uploadTexture?.('img', `travelopts:${name}`, px, { mips: false, variant: '#travelopts' }) ?? null;
     return tex ? { tex, w: px.width, h: px.height } : null;
   } catch { return null; }
@@ -389,11 +383,11 @@ export async function preloadTravelMapArt(deps) {
   const identifyFlashColor = packRGBA(
     fmapPalette.getRed(IDENTIFY_FLASH_COLOR_INDEX), fmapPalette.getGreen(IDENTIFY_FLASH_COLOR_INDEX),
     fmapPalette.getBlue(IDENTIFY_FLASH_COLOR_INDEX), 255);
-  // TO1 (:80-84, :148-158): the mod's two PORTS textures, out of its
-  // own vendored folder. They are the only art it ships for this
-  // window, and a player without them gets no ports button - which is
-  // the mod's own arm too (`TryImportImage` returning false RETURNS
-  // from Setup before the button is made, :150-153).
+  // TO1 (:80-84, :148-158): the two PORTS pictures, our own (OWN-WORK4,
+  // travelArt.js), under the names the mod read. A host that cannot
+  // upload them gets no ports button - which is the mod's own arm too
+  // (`TryImportImage` returning false RETURNS from Setup before the
+  // button is made, :150-153).
   const [portsOff, portsOn] = await Promise.all([
     loadVendorPng(deps, 'TOportsOff'), loadVendorPng(deps, 'TOportsOn'),
   ]);

@@ -1,11 +1,11 @@
 // NO-BETHESDA2 (2026-10-31; the owner: "ensuring they are not implemented"): HANDHELD TORCHES' AND CLIMATES & CALORIES'
-// PICTURES THAT ARE DAGGERFALL'S OWN ARE REBUILT, NOT CARRIED. Each mod's derived.json (tools/classicDerive.mjs) holds
-// a spec for each; systems/rebuiltPicture.js builds it from the player's TEXTURE file in the spec's palette. In CI:
-// every picture is a file or a spec, never both and never neither, and a spec's name takes the build path, never a
-// fetch. With ARENA2_PATH: every spec builds the pixels the mod's PNG gave, as the browser decoded it.
+// PICTURES THAT ARE DAGGERFALL'S OWN ARE REBUILT, NOT CARRIED. Each one's spec (tools/classicDerive.mjs; OWN-WORK4 moved
+// the two listings beside their readers) is built by systems/rebuiltPicture.js from the player's TEXTURE file in the
+// spec's palette. In CI: every picture is a spec or ours, never both and never neither, and none is fetched. With
+// ARENA2_PATH: every spec builds the pixels the mod's PNG gave, as the browser decoded it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -13,6 +13,7 @@ import { createHash } from 'node:crypto';
 import { createClassicPictures } from '../../src/formats/classicPictures.js';
 import { rebuiltPicture } from '../../src/systems/rebuiltPicture.js';
 import { derivedTorchSpec, torchPicture, inTorchSet, DROPPED_ARCHIVE } from '../../src/systems/handheldTorches.js';
+import { TORCH_ART, TORCH_OVER } from '../../src/systems/handheldTorchesArt.js';
 import { derivedIconSpec, ownIconSpec, installSurvivalIcons, VENDOR_TENT_FILES } from '../../src/systems/survival/itemIcons.js';
 import { VENDOR_ICON_FILES } from '../../src/systems/survival/items.js';
 import {
@@ -21,45 +22,47 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
-const HT = 'vendor/handheld-torches', CC = 'vendor/climates-calories';
-const listing = (dir) => JSON.parse(read(`${dir}/derived.json`));
-const isFile = (dir, name) => existsSync(join(root, `${dir}/Textures/${name}.png`));
-/** The PNG names a mod's manifest lists, without the extension (the bundle spells some `.PNG`). */
-const manifestNames = (path) => JSON.parse(read(path)).Files.filter((f) => /\.png$/i.test(f)).map((f) => f.split('/').pop().replace(/\.png$/i, ''));
+// OWN-WORK4 (2026-10-31): the two folders are retired; their spec listings moved beside the code that reads them
+const HT = 'src/systems/handheldTorchesDerived.json', CC = 'src/systems/survival/derivedIcons.json';
+const listing = (path) => JSON.parse(read(path));
 
-test('NO-BETHESDA2: every picture Handheld Torches\' manifest names is a file or a spec - never both, never neither', () => {
-  const names = manifestNames(`${HT}/handheld-torches.dfmod.json`);
-  const specs = listing(HT);
+test('NO-BETHESDA2: every picture Handheld Torches drew is a spec or ours - never both, never neither', () => {
+  // OWN-WORK4: the 39 the release's manifest named, as a literal - its manifest left the tree with its folder
+  const lit = (r, n) => [0, 1, 2, 3, 4].slice(0, n).flatMap((f) => [`${DROPPED_ARCHIVE}_${r}-${f}`, `${DROPPED_ARCHIVE}_${r}-${f}_Emission`]);
+  const names = [...lit(0, 4), ...lit(1, 5), ...lit(2, 5), ...[10, 11, 12].map((r) => `${DROPPED_ARCHIVE}_${r}-0`), ...[0, 1].flatMap((r) => [0, 1, 2, 3].map((f) => `112359_${r}-${f}`))];
   assert.equal(names.length, 39);
-  for (const n of names) assert.notEqual(isFile(HT, n), derivedTorchSpec(n) != null, `${n}: a file or a spec, never both and never neither`);
+  const specs = listing(HT);
+  const kinds = (n) => [Object.hasOwn(TORCH_ART, n), Object.hasOwn(TORCH_OVER, n), derivedTorchSpec(n) != null].filter(Boolean).length;
+  for (const n of names) assert.equal(kinds(n), 1, `${n}: a spec, ours or ours over the player's record - exactly one`);
   assert.deepEqual(Object.keys(specs).filter((n) => !names.includes(n)), [], 'a spec for a picture the mod never shipped');
-  const files = readdirSync(join(root, `${HT}/Textures`)).filter((f) => f.endsWith('.png'));
-  assert.equal(files.length, 17, 'the author\'s own: the hand\'s eight, the dropped torch\'s four and their emission twins, the doused torch');
-  assert.equal(Object.keys(specs).length, 22, 'Daggerfall\'s own: the candle\'s and the holy candle\'s flats, lit and doused, and the lit ones\' twins');
+  assert.equal(Object.keys(TORCH_ART).length, 17, 'ours (OWN-WORK4): the hand\'s eight, the dropped torch\'s four and their emission twins, the doused torch');
+  assert.equal(existsSync(join(root, 'vendor/handheld-torches')), false, 'no file of the release\'s is carried');
+  assert.equal(Object.keys(specs).length, 20, 'Daggerfall\'s own: the candle\'s and the holy candle\'s lit flats and their twins');
+  assert.deepEqual(Object.keys(TORCH_OVER), ['112358_11-0', '112358_12-0'], 'OWN-WORK4: the doused two carried the author\'s pixels - ours now, our rule over the lit candle');
   for (const [n, s] of Object.entries(specs)) {
-    assert.match(n, new RegExp(`^${DROPPED_ARCHIVE}_(1|2|11|12)-\\d(_Emission)?$`), `${n}: only the candles are rebuilt`);
-    assert.deepEqual(s.from.slice(0, 2), [210, /^112358_1?1-/.test(n) ? 3 : 4], `${n}: TEXTURE.210, the candle record 3, the holy candle 4`);
+    assert.equal(s.edits, undefined, `${n}: Daggerfall's record alone, no other hand's pixels`);
+    assert.match(n, new RegExp(`^${DROPPED_ARCHIVE}_(1|2)-\\d(_Emission)?$`), `${n}: only the lit candles are rebuilt`);
+    assert.deepEqual(s.from.slice(0, 2), [210, /^112358_1-/.test(n) ? 3 : 4], `${n}: TEXTURE.210, the candle record 3, the holy candle 4`);
     assert.equal(s.pal, 'PAL.PAL', `${n}: the palette the author's copy was drawn in`);
   }
 });
 
-test('NO-BETHESDA2: every picture Climates & Calories draws is a file, a spec or ours - one of them, never two, never none', () => {
+test('NO-BETHESDA2: every picture Climates & Calories draws is a spec or ours - one of them, never two, never none', () => {
   const drawn = [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES];
   // OWN-WORK3 (2026-10-31): the twenty pictures Climates & Calories 1.7.1's manifest named, as a literal - the manifest left the tree
   const names = ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_0-0', '536_1-0', '537_0-0', '537_1-0',
     '538_0-0', '538_1-0', '538_2-0', '539_0-0', '50_7-0', '67_10-0', 'RALZARTAVERN', 'BLANKMENU_TAVERN'];
   assert.deepEqual(names.filter((n) => !drawn.includes(n)), ['RALZARTAVERN', 'BLANKMENU_TAVERN'], 'the port draws all but the two tavern menus');
-  // PIN MOVED (NO-BETHESDA3, 2026-10-31): the rotten cooked fish is ours - our rot over the player's record (rotPicture.js)
-  for (const n of drawn) assert.equal([isFile(CC, n), derivedIconSpec(n) != null, ownIconSpec(n) != null].filter(Boolean).length, 1, `${n}: a file, a spec or ours - exactly one`);
-  assert.deepEqual(drawn.filter((n) => ownIconSpec(n)), ['536_1-0'], 'ours: the rotten cooked fish');
+  // PIN MOVED (NO-BETHESDA3, then OWN-WORK4, 2026-10-31): every picture not Daggerfall's own is ours (itemIcons.js OWN_ICONS)
+  for (const n of drawn) assert.equal([derivedIconSpec(n) != null, ownIconSpec(n) != null].filter(Boolean).length, 1, `${n}: a spec or ours - exactly one`);
+  assert.deepEqual(drawn.filter((n) => ownIconSpec(n)), ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0'], 'ours: the spoiled faces, raw meat and the waterskin');
   const specs = listing(CC);
-  assert.deepEqual(Object.keys(specs).sort(), ['50_7-0', '534_0-0', '536_0-0', '67_10-0'], 'the tent\'s two, the mouldy bread and the mouldy cooked fish');
+  assert.deepEqual(Object.keys(specs).sort(), ['50_7-0', '536_0-0', '67_10-0'], 'the tent\'s two and the mouldy cooked fish (OWN-WORK4: the mouldy bread carried the author\'s mould - it is ours)');
   assert.deepEqual(specs['50_7-0'], { from: [50, 7, 0], pal: 'PAL.PAL' }, 'the tent\'s canvas IS TEXTURE.050 record 7');
   assert.deepEqual(specs['67_10-0'], { from: [67, 10, 0], pal: 'PAL.PAL' }, 'the pole IS TEXTURE.067 record 10');
   assert.deepEqual(specs['536_0-0'], { from: [211, 10, 0], pal: 'PAL.PAL' }, 'the mouldy cooked fish IS the cooked fish, TEXTURE.211 record 10');
-  assert.deepEqual(specs['534_0-0'].from, [211, 31, 0], 'the mouldy bread is the bread, record 31, under the author\'s mould');
-  assert.ok(specs['534_0-0'].edits.length > 0);
-  assert.equal(readdirSync(join(root, `${CC}/Textures`)).filter((f) => f.endsWith('.png')).length, 13, 'NO-BETHESDA3: the rotten cooked fish left');
+  assert.ok(Object.values(specs).every((spec) => !spec.edits), 'no spec carries another hand\'s pixels');
+  assert.equal(existsSync(join(root, 'vendor/climates-calories')), false, 'OWN-WORK4: no file of the release\'s is carried');
 });
 
 /** A one-record, one-frame, uncompressed TEXTURE file (test/formats/classicpictures.test.js's). */
@@ -92,51 +95,45 @@ test('NO-BETHESDA2: a rebuilt picture comes from the player\'s record in its own
   await assert.rejects(rebuiltPicture({ from: [211, 0, 0], pal: 'PAL.PAL' }, art), /missing/, 'no such file: the build refuses');
 });
 
-test('NO-BETHESDA2: a torch picture derived.json names takes the build path, never a fetch; the author\'s own is fetched; the probe admits both', async () => {
+test('NO-BETHESDA2: a torch picture a spec names takes the build path; ours is painted; nothing is fetched; the probe admits both', async () => {
   const asked = [];
   const art = { build: async (spec) => { asked.push(spec); return { width: 2, height: 1, data: new Uint8Array([9, 9, 9, 0, 1, 2, 3, 255]) }; } };
-  const noFetch = async (u) => assert.fail(`fetched ${u}`);
-  const pic = await torchPicture('112358_1-0', 'http://x/112358_1-0.png', { art, fetchUrl: noFetch });
+  const pic = await torchPicture('112358_1-0', { art });
   assert.deepEqual(asked, [derivedTorchSpec('112358_1-0')], 'built from its own spec');
   assert.deepEqual([...pic.data], [0, 0, 0, 0, 1, 2, 3, 255]);
-  const fetched = [];
-  const own = await torchPicture('112358_0-0', 'http://x/112358_0-0.png', {
-    art: { build: async () => assert.fail('the author\'s own picture was built') },
-    fetchUrl: async (u) => { fetched.push(u); return { ok: true, arrayBuffer: async () => new Uint8Array([5]).buffer }; },
-    decode: async (b) => ({ width: 1, height: 1, data: new Uint8Array([b[0], 0, 0, 255]) }),
-  });
-  assert.deepEqual(fetched, ['http://x/112358_0-0.png']);
-  assert.equal(own.data[0], 5);
-  await assert.rejects(torchPicture('112358_2-4', 'u', { art: { build: async () => { throw new Error('TEXTURE.210: missing'); } } }), /missing/,
+  const own = await torchPicture('112358_0-0', { art: { build: async () => assert.fail('our own picture was built from classic art') } });
+  assert.deepEqual([own.width, own.height], [31, 34], 'OWN-WORK4: the dropped torch, painted at the release\'s size');
+  assert.equal(await torchPicture('112358_0-9'), null, 'none past the last frame');
+  await assert.rejects(torchPicture('112358_2-4', { art: { build: async () => { throw new Error('TEXTURE.210: missing'); } } }), /missing/,
     'no TEXTURE.210: refused, which the loaders read as the frame missing');
-  // the bundle's table holds only files: a candle's frame is admitted by its spec, a frame past the last by neither
-  assert.equal(inTorchSet({}, '112358_1-4.png'), true);
-  assert.equal(inTorchSet({}, '112358_11-0.png'), true);
-  assert.equal(inTorchSet({}, '112358_1-5.png'), false, 'the probe\'s miss past the candle\'s fifth frame');
-  assert.equal(inTorchSet({}, '112358_0-0.png'), false, 'a file the table does not hold');
+  // a candle's frame is admitted by its spec, a torch's by our recipe, a frame past the last by neither
+  assert.equal(inTorchSet('112358_1-4.png'), true);
+  assert.equal(inTorchSet('112358_11-0.png'), true);
+  assert.equal(inTorchSet('112358_1-5.png'), false, 'the probe\'s miss past the candle\'s fifth frame');
+  assert.equal(inTorchSet('112358_0-0.png'), true, 'ours');
+  assert.equal(inTorchSet('112358_0-4.png'), false, 'past our fourth frame');
   // both default loaders go through it
   for (const [f, fn] of [['src/systems/handheldTorches.js', 'defaultLoadSprite'], ['src/scenes/droppedTorches.js', 'defaultLoadTexture']]) {
     assert.match(read(f), new RegExp(`async function ${fn}\\(record, frame\\) \\{\\n[^\\n]*\\n\\s*const pic = await torchPicture\\(`), `${f}: ${fn}`);
   }
 });
 
-test('NO-BETHESDA2: a Climates & Calories picture derived.json names reaches the texture door built, never fetched - its own palette, not the door\'s context', async () => {
+test('NO-BETHESDA2: a Climates & Calories picture a spec names reaches the texture door built, never fetched - its own palette, not the door\'s context', async () => {
   const was = textureDeriveContext();
   clearVendorTextures();
   setTextureDeriveContext({ classicRgba: async () => assert.fail('the door\'s context is ART_PAL alone - the spec\'s palette is the build\'s') });
   try {
-    const asked = [], fetched = [];
+    const asked = [];
     const art = { build: async (spec) => { asked.push(spec.from.join('_')); return { width: 1, height: 2, data: new Uint8Array([40, 41, 42, 255, 9, 9, 9, 0]) }; } };
-    assert.equal(installSurvivalIcons({ fetchBytes: async (n) => { fetched.push(n); return new Uint8Array([6]); }, art }), 18);
-    const decode = async (b) => ({ width: 1, height: 1, data: new Uint8Array([b[0], 0, 0, 255]) });
+    assert.equal(installSurvivalIcons({ art }), 18);
+    const decode = async () => assert.fail('OWN-WORK4: no survival picture is a file');
     await preloadTextureArchive(534, { decode });
-    assert.deepEqual(asked, ['211_31_0'], 'the mouldy bread, built');
-    assert.deepEqual(fetched, ['534_1-0'], 'the rotten bread, the author\'s own, fetched');
-    assert.deepEqual([...decodedTextureTopDown(534, 0).rgba], [40, 41, 42, 255, 0, 0, 0, 0], 'the built picture, top-down, its clear pixel 0,0,0,0');
+    assert.deepEqual(asked, ['211_31_0', '211_31_0'], 'the mouldy and the rotten bread: our rot over the player\'s bread');
+    await preloadTextureArchive(536, { decode });
+    assert.deepEqual([...decodedTextureTopDown(536, 0).rgba], [40, 41, 42, 255, 0, 0, 0, 0], 'a rebuilt picture, top-down, its clear pixel 0,0,0,0');
     await preloadTextureArchive(50, { decode });
     await preloadTextureArchive(67, { decode });
-    assert.deepEqual(asked.slice(1), ['50_7_0', '67_10_0'], 'the tent\'s canvas and pole, built');
-    assert.equal(fetched.length, 1);
+    assert.deepEqual(asked.slice(4), ['50_7_0', '67_10_0'], 'the tent\'s canvas and pole, built');
     assert.equal(isVendorArchive(50), false, 'TEXTURE.050 is still the player\'s file');
   } finally {
     setTextureDeriveContext(was);
@@ -164,7 +161,7 @@ test('NO-BETHESDA2 (ARENA2): every spec builds, from the player\'s own files, th
     sizes[n] = [pic.width, pic.height];
     assert.equal(printOf(pic), PRINTS[n.replace(/_Emission$/, '')], `${n}: the picture the PNG gave`);
   }
-  assert.equal(Object.keys(specs).length, 26);
+  assert.equal(Object.keys(specs).length, 23);
   // PIN MOVED (SURV-TENT, survart_icons.test.js): the canvas and the pole are the sizes the bundle's Texture2Ds carry
   assert.deepEqual(sizes['50_7-0'], [32, 32], 'the canvas');
   assert.deepEqual(sizes['67_10-0'], [64, 8], 'the pole');

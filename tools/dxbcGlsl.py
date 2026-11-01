@@ -3,7 +3,7 @@
 
     pip install UnityPy lz4
     apt install vkd3d-compiler spirv-cross
-    python3 -I tools/dxbcGlsl.py "<path-to>/windfall.dfmod" vendor/windfall/shaders
+    python3 -I tools/dxbcGlsl.py "<path-to>/<mod>.dfmod" vendor/<mod>/shaders
 
 A `.dfmod` built for Windows carries its shaders as DXBC only (Direct3D 11
 bytecode; the platform list is `[4]`), and a DXBC program has its reflection

@@ -21,6 +21,7 @@ import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
 import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { spawnBoat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL, WATER_LEVEL, BOAT_ACTIONS } from '../../../src/systems/comeSailAway/comeSailAway.js';
+import { ownFile } from '../../ownBoats.mjs';
 
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 /** One two-space-indented `const name = (...) => {` of world.js's host, whole. */
@@ -105,9 +106,8 @@ test('FIELD-CSA2: the host\'s Terrain (world.js csaTerrainOf, mounted) answers S
 
 // ── the runtime over the vendored hulls ────────────────────────────────────────
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 
 /** A helm over one built pixel, Iliac Puddle No More on, its Terrain the host's own (mounted). */
 function helmOnThe(samples, { px = 208, py = 215, isPortTown = () => false } = {}) {

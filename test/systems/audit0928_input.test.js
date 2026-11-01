@@ -26,13 +26,13 @@ import { buttonText } from '../../src/systems/controlsConfig.js';
 import { attachTouch } from '../../src/ui/touch/touch.js';
 import { setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
 import { hidesHud } from '../../src/ui/windowStack.js';
+import { ownFile } from '../ownBoats.mjs';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
 const MODES = read('src/scenes/worldModes.js');
-const DIR = new URL('../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }), particleRandom: () => 0.5 });
 const CANVAS = { width: 320, height: 200, clientWidth: 320, clientHeight: 200, getBoundingClientRect: () => ({ left: 0, top: 0, width: 320, height: 200 }) };
 

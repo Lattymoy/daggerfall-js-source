@@ -5,16 +5,13 @@
 // allocations (the scavenges and mark-compacts a --trace-gc run counts are the caller's), and a hash of everything the
 // GL layer would upload (every tier's mesh, masks and contexts) - two trees with the same hash drew the same snow.
 //   node tools/snowBench.mjs [frames=1800] [budgetMs=2]      (budget 'inf': the mod's sample budgets alone)
-import { readFileSync } from 'node:fs';
 import { SnowCoverage, predictRoadTile, BasicRoadsTerrain, roadCorners } from '../src/systems/snowfall.js';
 import { SnowfallRuntime } from '../src/systems/snowfallRuntime.js';
 import { snowPixelBox } from '../src/scenes/snowfallHost.js';
+import { MASKS } from '../test/snowMasks.mjs'; // OWN-WORK4: our snow law's masks over the pins' made-up winter set
 
 const FRAMES = Number(process.argv[2] || 1800);
 const BUDGET = process.argv[3] === 'inf' ? Infinity : Number(process.argv[3] ?? 2);
-const MASKS = [103, 303, 403].map(
-  (a) => new Uint8Array(readFileSync(new URL(`../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))),
-);
 const SIZE = 819.2;
 let seed = 7;
 const R = (n) => {

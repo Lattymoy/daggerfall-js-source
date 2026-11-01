@@ -235,18 +235,15 @@ test('SURV2: the dead leave food - animals raw meat by kind (half of it turning)
   assert.equal(humanoidFood(() => 0.99).templateIndex, TEMPLATE.Waterskin);
 });
 
-test('SURV2: the mod\'s sixteen icons are vendored or rebuilt (NO-BETHESDA2), allow-listed, and ride the texture pipeline as the port\'s own art through a stand-in archive', async () => {
-  // PIN MOVED (NO-BETHESDA2, 2026-10-31): a picture that is Daggerfall's own is a spec rebuilt from the player's files
-  // (derived.json), never a file - each of the eighteen is one or the other, and every file carried has its row
-  const doctrine = read('test/tooling/doctrine.test.js');
-  // PIN MOVED (NO-BETHESDA3, 2026-10-31): or ours - the rotten cooked fish is our rot over the player's record
+test('SURV2: the sixteen icons are rebuilt (NO-BETHESDA2) or our own (OWN-WORK4), and ride the texture pipeline as the port\'s own art through a stand-in archive', async () => {
+  // PIN MOVED (NO-BETHESDA2, then OWN-WORK4, 2026-10-31): a picture that is Daggerfall's own is a spec rebuilt from the
+  // player's files (derivedIcons.json); every other one is ours (OWN_ICONS) - each of the eighteen one or the other
   for (const f of [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES]) {
-    const file = existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`));
-    assert.equal([file, derivedIconSpec(f) != null, ownIconSpec(f) != null].filter(Boolean).length, 1, `${f}: a file, a spec or ours - exactly one`);
-    if (file) assert.ok(doctrine.includes(`'vendor/climates-calories/Textures/${f}.png'`), `${f} has its allow-list row`);
+    assert.equal([derivedIconSpec(f) != null, ownIconSpec(f) != null].filter(Boolean).length, 1, `${f}: a spec or ours - exactly one`);
   }
+  assert.equal(existsSync(join(root, 'vendor/climates-calories')), false, 'no file of the release\'s is carried');
   clearVendorTextures();
-  const bytes = readFileSync(join(root, 'vendor/climates-calories/Textures/539_0-0.png'));
+  const bytes = new Uint8Array([7]);
   const n = addVendorTextures([{ archive: 539, record: 0, fileName: '539_0-0', standIn: true, load: async () => new Uint8Array(bytes) }]);   // SURV-TENT: an archive that is ONLY this art
   assert.equal(n, 1);
   assert.equal(isVendorArchive(539), true);
@@ -267,7 +264,7 @@ test('SURV2: the mod\'s sixteen icons are vendored or rebuilt (NO-BETHESDA2), al
   assert.equal(vendorTextureCount(), 0);
   // SURV-TENT: eighteen now - the sixteen icons plus the tent's two
   // reskins, which are the OTHER kind of vendored file
-  assert.equal(installSurvivalIcons({ fetchBytes: async () => new Uint8Array(bytes) }), 18, 'the boot registers all eighteen');
+  assert.equal(installSurvivalIcons(), 18, 'the boot registers all eighteen');
   assert.equal(installSurvivalIcons(), 0, 'once');
   assert.ok(isVendorArchive(532) && isVendorArchive(538), 'the icon archives are the port\'s own whole');
   // ...and 50 and 67 are NOT: they are real ARENA2 archives with one

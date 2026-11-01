@@ -21,10 +21,13 @@ import { bindPeerEffects } from '../../../src/net/peer/peerEffects.js';
 import { SESSION_KEY } from '../../../src/net/accountClient.js';
 import { HORSE_LOOK_MAX } from '../../../src/net/wire.js';
 import { eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
+import { horsePictures } from '../../../tools/lib/horsePictures.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const picture = (p) => { const raw = PNG.sync.read(readFileSync(new URL(`../../../vendor/${p}`, import.meta.url))); return { width: raw.width, height: raw.height, colors: new Uint8Array(raw.data) }; };
-const side = () => picture(`horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`);
+// OWN-WORK4 (2026-10-31): the shop's horse is the cart's horse's side view, ours (systems/horse/horseArt.js), built from
+// the player's ARENA2 - so the pins on it run where ARENA2_PATH is set.
+const NO_ARENA2 = !process.env.ARENA2_PATH && 'ARENA2_PATH not set';
+const side = async () => { const p = await horsePictures().picture(MOUNT_PREVIEW_FILE); return { width: p.width, height: p.height, colors: new Uint8Array(p.data) }; };
 const hsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx / 255]; };
 
 test('STOREFRONT the look\'s code: a mount look a fifth part, its highest factor, so every code the wire knew is the same horse; the wire never carries one (the token does), and a screen lays it on and takes it off (mutants: the mount on the wire; a look changing the coat\'s code)', () => {
@@ -54,8 +57,8 @@ const src = (img, i) => [img.colors[i * 4], img.colors[i * 4 + 1], img.colors[i 
 
 // AUDIT-STOREFRONT (2026-10-29, the owner: "the horse designs are awful"): PIN MOVED - the looks redrawn by the horse's
 // own shape (mountPaint.js): no grid of holes, no scales or stripes laid flat over head and legs alike.
-test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and its marks by the horse\'s shape - the Spectral Steed a pale blue ghost, its rim lit and its legs dissolving from the hooves up; the Dawnfire Charger gold, its legs burning; the Daedric Warhorse obsidian, lit red from below; the Brass Automaton brass in seamed plates, an aetherium heart at its chest - the tack kept; the 3D horse the same looks, no holes in it (mutants: a look that dyes the saddle; holes over the ghost\'s body; the ghost\'s rim unlit; the charger\'s legs unburnt; the warhorse lit from above; the automaton\'s seams and heart gone)', () => {
-  const img = side();
+test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and its marks by the horse\'s shape - the Spectral Steed a pale blue ghost, its rim lit and its legs dissolving from the hooves up; the Dawnfire Charger gold, its legs burning; the Daedric Warhorse obsidian, lit red from below; the Brass Automaton brass in seamed plates, an aetherium heart at its chest - the tack kept; the 3D horse the same looks, no holes in it (mutants: a look that dyes the saddle; holes over the ghost\'s body; the ghost\'s rim unlit; the charger\'s legs unburnt; the warhorse lit from above; the automaton\'s seams and heart gone)', { skip: NO_ARENA2 }, async () => {
+  const img = await side();
   const kept = pictureHide(img), hide = { ...kept, at: Array.from(kept.at) };   // an array: a typed one's map keeps numbers whole
   assert.ok(hide.at.length > 500);
   const hidden = new Set(hide.at), W = img.width;
@@ -74,7 +77,7 @@ test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and i
   // THE VISUAL PASS: the art's rose sheen on the hooves and the poll is the look's in every look - none left the bay's pink
   const rose = [];
   for (let i = 0; i < W * img.height; i++) if (img.colors[i * 4 + 3] && !hidden.has(i) && isSpeckPixel(...src(img, i))) rose.push(i);
-  assert.ok(rose.length >= 12, `the side view's sheen (${rose.length})`);
+  assert.ok(rose.length >= 10, `the side view's sheen (${rose.length})`);   // OWN-WORK4: our side view's, 11
   for (const m of MOUNT_LOOKS) for (const i of rose) {
     const c = looks[m].colors, o = i * 4, pink = isSpeckPixel(c[o], c[o + 1], c[o + 2]) && hsv(c[o], c[o + 1], c[o + 2])[2] > 0.4;   // the obsidian's dark is purple-grey
     assert.ok(!c[o + 3] || !pink, `${m}: the sheen at ${i % W},${Math.floor(i / W)} left rose (${[...c.slice(o, o + 3)]})`);
@@ -151,11 +154,11 @@ test('AUDIT-STOREFRONT the points: a look moves the horse\'s near-black too - th
   }
   // the shop's horse and the riders' own pictures: nothing over the hide's crest moves (a helmet, a bow); the ghost's
   // points see-through as its hide is, the charger's burning at its legs. NO-BETHESDA2: the riders' are Daggerfall's own
-  // TEXTURE.495, rebuilt from the player's ARENA2 - asked where ARENA2_PATH is set; the shop's horse always
-  const riders = process.env.ARENA2_PATH ? ['1-0', '2-0', '3-0'].map((k) => `112382_${k}`) : [];
+  // TEXTURE.495, rebuilt from the player's ARENA2 - asked where ARENA2_PATH is set; OWN-WORK4: and the shop's horse, ours
+  const riders = process.env.ARENA2_PATH ? [MOUNT_PREVIEW_FILE, ...['1-0', '2-0', '3-0'].map((k) => `112382_${k}`)] : [];
   const EOTB = eotbPictures();
-  for (const f of [`horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`, ...riders]) {
-    const img = f.includes('/') ? picture(f) : await EOTB.picture(f).then((p) => ({ width: p.width, height: p.height, colors: new Uint8Array(p.data) })), hide = pictureHide(img), hidden = new Set(hide.at);
+  for (const f of riders) {
+    const img = f === MOUNT_PREVIEW_FILE ? await side() : await EOTB.picture(f).then((p) => ({ width: p.width, height: p.height, colors: new Uint8Array(p.data) })), hide = pictureHide(img), hidden = new Set(hide.at);
     const crest = hide.r0 - Math.ceil(POINT_ABOVE * (hide.r1 - hide.r0 + 1));
     const coat = horseLookCode({ coat: 2, pattern: 0, legs: 0, seed: 5 }), plain = recolorHorse(img, coat, { bottomFirst: false });
     for (const m of MOUNT_LOOKS) {

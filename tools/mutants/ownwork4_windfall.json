@@ -1,0 +1,110 @@
+[
+  {
+    "name": "OWN-WORK4-windfall-strength-uncapped",
+    "file": "src/render/windfallSway.js",
+    "old": "  const strength = Math.min(WINDFALL_STRENGTH_MAX, Math.max(0, wf.strength));",
+    "new": "  const strength = Math.max(0, wf.strength);",
+    "tests": [
+      "test/systems/windfall1_presentation.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-gust-level",
+    "file": "src/systems/windfall/windfallSynth.js",
+    "old": "  gustPeak: 0.8,",
+    "new": "  gustPeak: 0.9,",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-seed-not-the-name",
+    "file": "src/systems/windfall/windfallSynth.js",
+    "old": "  const voice = voiceOf(family, clip.rate, count, mulberry32(windfallVoiceSeed(clip.name)));",
+    "new": "  const voice = voiceOf(family, clip.rate, count, mulberry32(1));",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-passage-fade-dropped",
+    "file": "src/systems/windfall/windfallSynth.js",
+    "old": "    const edge = smooth(at / fadeIn) * smooth((seconds - at) / fadeOut);",
+    "new": "    const edge = 1;",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-gust-band-fixed",
+    "file": "src/systems/windfall/windfallSynth.js",
+    "old": "      band.set('bandpass', lowHz + (highHz - lowHz) * swell, 0.9, rate);\n      roof.set('lowpass', 700 + 1100 * swell, Math.SQRT1_2, rate);",
+    "new": "      band.set('bandpass', lowHz, 0.9, rate);\n      roof.set('lowpass', 700, Math.SQRT1_2, rate);",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-whistle-dropped",
+    "file": "src/systems/windfall/windfallSynth.js",
+    "old": "    if (family === 'whistling') out = 0.8 * out + whistleGain * whistle.run(noise);",
+    "new": "    if (family === 'whistling') out = 0.8 * out;",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-grains-smoothed",
+    "file": "src/systems/windfall/windfallSynth.js",
+    "old": "    grain *= fall;",
+    "new": "    grain = 0.5;",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-leaf-colours-swapped",
+    "file": "src/systems/windfall/windfallPictures.js",
+    "old": "    for (let tile = 0; tile < tiles * tiles; tile++) paintLeaf(data, side, tile, WINDFALL_LEAF_COLOURS[name]);",
+    "new": "    for (let tile = 0; tile < tiles * tiles; tile++) paintLeaf(data, side, tile, WINDFALL_LEAF_COLOURS.fall_leaves);",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-leaf-shape-by-sheet",
+    "file": "src/systems/windfall/windfallPictures.js",
+    "old": "  const random = mulberry32(LEAF_SEED + tile);",
+    "new": "  const random = mulberry32(LEAF_SEED + tile + colours[0][0]);",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-tile-left-empty",
+    "file": "src/systems/windfall/windfallPictures.js",
+    "old": "      const blade = Math.abs(across) <= width;",
+    "new": "      const blade = tile !== 9 && Math.abs(across) <= width;",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-held-ignored",
+    "file": "src/systems/windfallEffects.js",
+    "old": "          if (held.has(clip.name)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK4-windfall-refusal-not-stopping",
+    "file": "src/systems/windfallEffects.js",
+    "old": "            if (!engine.registerSamples(windfallClipKey(clip.name), samples, clip.rate)) return;",
+    "new": "            if (!engine.registerSamples(windfallClipKey(clip.name), samples, clip.rate)) continue;",
+    "tests": [
+      "test/systems/ownwork4_windfall.test.js"
+    ]
+  }
+]

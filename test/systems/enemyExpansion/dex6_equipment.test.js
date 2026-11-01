@@ -179,8 +179,8 @@ test('DEX6-6 THE SECOND WEAPON PUT ON (AUDIT DEX E1/E2): a combat class\'s left-
   reset();
   assert.match(COMPAT, /else if \(Dice100\.SuccessRoll\(chance\)\)\s*AddAndEquipWornItem\(enemyEntity, CreateWeapon\(SecondaryWeapon\(\), FormulaHelper\.RandomMaterial\(itemLevel\)\)\);/);
   assert.match(COMPAT, /if \(Dice100\.SuccessRoll\(chance\)\)\s*AddAndEquipWornItem\(enemyEntity, CreateWeapon\(SecondaryWeapon\(\), FormulaHelper\.RandomMaterial\(itemLevel \/ 2\)\)\);/);
-  assert.match(RRI_JS, /else if \(dice100\(chance, rolls\(\)\)\) add\(mintWeapon\(secondaryWeapon\(rolls\), randomMaterial\(itemLevel, rolls\), rolls\), read\.equipsSecondary\);/, 'RRI\'s own: carried, unless the reader equips it');
-  assert.match(RRI_JS, /if \(dice100\(chance, rolls\(\)\)\) add\(mintWeapon\(secondaryWeapon\(rolls\), randomMaterial\(Math\.trunc\(itemLevel \/ 2\), rolls\), rolls\), read\.equipsSecondary\);/);
+  assert.match(RRI_JS, /else if \(dice100\(chance, rolls\(\)\)\)\s*add\(mintWeapon\(secondaryWeapon\(rolls\), randomMaterial\(itemLevel, rolls\), rolls\), read\.equipsSecondary\);/, 'RRI\'s own: carried, unless the reader equips it');
+  assert.match(RRI_JS, /if \(dice100\(chance, rolls\(\)\)\)\s*add\(\s*mintWeapon\(secondaryWeapon\(rolls\), randomMaterial\(Math\.trunc\(itemLevel \/ 2\), rolls\), rolls\),\s*read\.equipsSecondary,\s*\);/);
   dexRead({ log: silent });
   const dex = createDexEquipmentAssigner((id) => dexProperties(id));
   const held = (eq) => [eq.rightHand?.templateIndex ?? null, eq.leftHand?.templateIndex ?? null];

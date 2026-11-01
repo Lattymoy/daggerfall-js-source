@@ -1,7 +1,7 @@
 // VAULT-HANDS v2: first-person Morrowind arms must release world holds, not keep chasing a projected ray.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { RETAIL_SKELETON_BYTES } from '../../fixtures/mw/retailRig.mjs';
 import { parseNif } from '../../../src/formats/morrowind/mwNifFile.js';
 import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../../src/formats/morrowind/mwSkin.js';
 import { applyClimbRig, climbBones, climbRequestToFirstPerson } from '../../../src/combat/climbRig.js';
@@ -11,8 +11,7 @@ import { createFpArm } from '../../../src/combat/fpArm.js';
 import { MW_UNITS_PER_METER as U } from '../../../src/formats/morrowind/mwFirstPerson.js';
 import { fixtureBodyDeps, countingRenderer } from '../../fixtures/mw/bodyRig.mjs';
 
-const retail = () => buildSkeleton(parseNif(new Uint8Array(readFileSync(new URL(
-  '../../../vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif', import.meta.url)))));
+const retail = () => buildSkeleton(parseNif(RETAIL_SKELETON_BYTES));   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
 const distance = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
 const matrix = (sk, p) => skeletonSpaceMatrices(sk, p, GRAPH_ROOT);
 const posed = (sk, req) => {

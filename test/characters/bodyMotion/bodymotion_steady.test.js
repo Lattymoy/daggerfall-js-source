@@ -1,6 +1,6 @@
 // BODY-MOTION, HELD STEADY (2026-10-20, Mac: "When wielding 2 daggers and running, the character is super stiff and
 // wobbles side to side. Might as well check the other animations also. I think we went way too stiff";
-// bible/04-Characters/Body-Motion.md) - on the vendored retail biped, measured on the solved body.
+// bible/04-Characters/Body-Motion.md) - on our own biped (OWN-WORK4), measured on the solved body.
 //
 // What is pinned: HELD-STEADY - a hand that holds a blade holds the blade's way still against the stride's counter-turn
 // and counter-drop of the chest (every held weapon's tips swung side to side with it, the pair's 50 units together),

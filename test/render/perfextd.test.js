@@ -74,131 +74,67 @@ let seed = 0x2545f491;
 const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
 const f32 = (v) => v.map((x) => Math.fround(x));
 
-// ── PERF-EXT30: THE DEFAULT SKY'S TWO SHEETS ──────────────────────────────────────────────────────────────────────────
-// The FS carries structs, #defines and an overloaded saturate, which the evaluator does not take; the sheets use none
-// of the first two, so they are run as the FS's own text between `// Clouds` and `// REDUCE_COLOR`, with the helpers
-// they call cut out of the FS by name and HLSL's saturate spelled as the clamp it is.
-function unsaturate(s) {
-  let out = '', i = 0;
-  for (;;) {
-    const k = s.indexOf('saturate(', i);
-    if (k < 0) return out + s.slice(i);
-    let d = 0, j = k + 8;
-    for (; j < s.length; j++) { if (s[j] === '(') d++; else if (s[j] === ')' && --d === 0) break; }
-    out += `${s.slice(i, k)}clamp(${unsaturate(s.slice(k + 9, j))}, 0.0, 1.0)`;
-    i = j + 1;
-  }
-}
-function fnText(src, head) {
-  const a = src.indexOf(head);
-  assert.ok(a >= 0, `${head} is in the FS`);
-  let d = 0, j = src.indexOf('{', a);
-  for (; j < src.length; j++) { if (src[j] === '{') d++; else if (src[j] === '}' && --d === 0) break; }
-  return src.slice(a, j + 1);
-}
-const SHEETS = DS_FS.slice(DS_FS.indexOf('  // Clouds\n'), DS_FS.indexOf('  // REDUCE_COLOR'));
-const TOP_OPEN = '  if (_CloudTopOpacity > 0.0) {\n', TOP_CLOSE = '  col.rgb = mix(col.rgb, cloudTopColor, cloudsTop * _CloudTopOpacity);';
-const LOW_OPEN = '  if (_CloudOpacity > 0.0) {\n', LOW_CLOSE = '  col.rgb = mix(col.rgb, cloudColor, clouds * _CloudOpacity);';
-function sheetsProgram(body) {
-  const uniforms = DS_FS.split('\n').filter((l) => /^uniform /.test(l)).join('\n');
-  const helpers = ['float hsmoothstep(', 'float radiansOf(', 'vec3 UnpackNormal(', 'vec3 BlendNormals(', 'float Remap('].map((h) => fnText(DS_FS, h)).join('\n');
-  return unsaturate(`${uniforms}
-uniform vec3 normWorldPos;
-uniform float dotWorldPos;
-uniform float night;
-uniform vec3 normSunWorldPos;
-uniform vec3 IN_sunColor;
-${helpers}
-vec3 sheets(vec3 colIn) {
-  vec4 col = vec4(colIn, 1.0);
-${body.split('IN.sunColor').join('IN_sunColor')}
-  return col.rgb;
-}`);
-}
-/** One state of the real runtime through the real renderer's draw(): the uniforms the sheets are run on. */
+// ── PERF-EXT30: DYNAMIC SKIES' TWO LAYERS ─────────────────────────────────────────────────────────────────────────────
+// PIN MOVED (OWN-WORK4): the sky is our own pass now, and test/glsl.mjs runs the whole of its FS - so the layers are run
+// in place, the whole frame against the same text with the two gates taken out.
+const HIGH_OPEN = '  if (uCloudHigh.y > 0.0) {\n', HIGH_CLOSE = '    col = mix(col, ch, dh * uCloudHigh.y * smoothstep(0.0, 0.2, y));';
+const LOW_OPEN = '  if (uCloudLow.y > 0.0) {\n', LOW_CLOSE = '    col = mix(col, cl, dl * uCloudLow.y * smoothstep(0.0, 0.16, y));';
+/** One state of the real instance through the real renderer's draw(): the uniforms the pass is run on. */
 function dsUniforms(weather, minute, cloudsExternal) {
-  const PRESETS = ['SkyboxSunny', 'SkyboxCloudy', 'SkyboxOvercast', 'SkyboxFog', 'SkyboxRain', 'SkyboxThunder', 'SkyboxSnow'];
-  const FOGS = ['FogSunny', 'FogOvercast', 'FogHeavyFog', 'FogRainy', 'FogSnowy'];
-  const V = 'vendor/dynamic-skies';
-  const assets = {
-    presets: Object.fromEntries(PRESETS.map((n) => [n, read(`${V}/SkyboxSettings/${n}.json`)])),
-    fogPresets: Object.fromEntries(FOGS.map((n) => [n, read(`${V}/FogSettings/${n}.json`)])),
-    lightCurve: read(`${V}/LightCurveSettings/LightCurve.json`),
-  };
-  const dyn = new DynamicSkies(assets, { densitySetting: 1 }, () => 0.25);
+  const dyn = new DynamicSkies({}, { densitySetting: 1 }, () => 0.25);
   const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
-  let st = null;
-  for (let k = 0; k < 2; k++) st = dyn.tick({ minuteOfDay: minute, classicMinutes: base + minute, weather, seconds: 100 + k, dt: 1 / 60, weatherScale: 1 });   // the weather applies a tick late
+  const st = dyn.tick({ minuteOfDay: minute, classicMinutes: base + minute, weather, seconds: 100, dt: 1 / 60, weatherScale: 1 });
   const { gl, calls } = recordingGl();
   const sky = new DynamicSkiesRenderer(gl);
   sky.setState(st); sky.cloudsExternal = cloudsExternal;
   calls.length = 0;
   sky.draw(0.3, 0.2, 65 * Math.PI / 180, 16 / 9);
-  return { u: uploads(calls), sunDir: st.sunDir };
+  return uploads(calls);
 }
-/** The sheets over one sky direction: the colour they hand on and the textures they read. */
-function runSheets(src, u, sunDir, dir, colIn, sunColor) {
+/** The whole pass along one direction: the colour it draws and the noise it read. The moons are put out so every tap
+ *  counted is a layer's. */
+function runSkyPass(src, u, dir) {
   const reads = [];
-  const n = Math.hypot(...sunDir) || 1;
   const f = glslFunctions(src, {
-    ...u, normWorldPos: dir, dotWorldPos: dir[1], night: 0.3, normSunWorldPos: sunDir.map((x) => x / n), IN_sunColor: sunColor,
+    ...u, uYaw: Math.atan2(dir[0], dir[2]), uPitch: Math.asin(dir[1]), uTanHalfFov: 1, uAspect: 1, vNdc: [0, 0],
+    uMasserColor: [0, 0, 0], uSecundaColor: [0, 0, 0],
     texture: (name, uv) => {
       reads.push(name);
-      const a = 0.5 + 0.5 * Math.sin(uv[0] * 12.9898 + uv[1] * 78.233), b = 0.5 + 0.5 * Math.cos(uv[0] * 4.1 - uv[1] * 7.7);
-      return /Normal/.test(name) ? [1, b, 0.5, a] : [a, b, a * b, 1];   // CdMCloudsNormal: R = 1, A = x
+      return [0.5 + 0.5 * Math.sin(uv[0] * 12.9898 + uv[1] * 78.233), 0.5 + 0.5 * Math.cos(uv[0] * 4.1 - uv[1] * 7.7), 0.5, 1];
     },
   }, { fp32: true });
-  return { col: f.sheets(colIn), reads };
+  f.main();
+  return { col: f.globals.outColor.slice(0, 3), reads };
 }
 
-test('PERF-EXT30: Dynamic Skies\' sheets at opacity 0 read nothing and hand on the colour they were given - to the bit what the ungated sheets hand on; at the preset\'s opacity they run whole and agree to the bit - which rests on every shipped preset\'s sheet being finite (mutants: either gate dropped, the top gated on the low\'s opacity, the gate open at 0)', () => {
-  const gated = sheetsProgram(SHEETS);
-  const open = sheetsProgram(ungate(ungate(SHEETS, TOP_OPEN, TOP_CLOSE), LOW_OPEN, LOW_CLOSE));
-  const SHEET_TEX = ['_CloudTopDiffuse', '_CloudTopNormal', '_CloudDiffuse', '_CloudNormal'];
+test('PERF-EXT30: Dynamic Skies\' two layers at opacity 0 read nothing and the frame is to the bit what the ungated layers draw; at their own opacity both run whole and agree to the bit (mutants: either gate dropped, the high gated on the low\'s opacity, the gate open at 0)', () => {
+  const open = ungate(ungate(DS_FS, HIGH_OPEN, HIGH_CLOSE), LOW_OPEN, LOW_CLOSE);
   let checked = 0, lit = 0;
-  for (const [weather, minute] of [['cloudy', 12 * 60], ['sunny', 7 * 60], ['thunder', 17 * 60 + 30], ['rain', 1 * 60]]) {
+  for (const [weather, minute] of [['cloudy', 12 * 60], ['sunny', 7 * 60], ['thunder', 17 * 60 + 30], ['rain', 9 * 60]]) {
     const under = dsUniforms(weather, minute, true), own = dsUniforms(weather, minute, false);
-    assert.equal(under.u._CloudTopOpacity, 0); assert.equal(under.u._CloudOpacity, 0);   // DS2: what the shader is handed under the clouds
-    assert.ok(own.u._CloudTopOpacity > 0 && own.u._CloudOpacity > 0, `${weather}: ?clouds=off hands the preset's opacity`);
-    const topOnly = { ...under.u, _CloudTopOpacity: own.u._CloudTopOpacity };
-    for (let k = 0; k < 12; k++) {
-      const y = 0.02 + rnd() * 0.98, a = rnd() * 2 * Math.PI, r = Math.sqrt(1 - y * y);
+    assert.equal(under.uCloudLow[1], 0); assert.equal(under.uCloudHigh[1], 0);   // DS2: what the pass is handed under the clouds
+    assert.ok(own.uCloudLow[1] > 0 && own.uCloudHigh[1] > 0, `${weather}: ?clouds=off hands the layers' own opacity`);
+    assert.equal(under.uNight, 0, `${weather}: a day - no star band tapped`);
+    const highOnly = { ...under, uCloudHigh: own.uCloudHigh };
+    for (let k = 0; k < 6; k++) {
+      const y = 0.05 + rnd() * 0.9, a = rnd() * 2 * Math.PI, r = Math.sqrt(1 - y * y);
       const dir = [r * Math.cos(a), y, r * Math.sin(a)];
-      const colIn = f32([rnd(), rnd(), rnd()]), sunColor = [rnd() * 2, rnd() * 2, rnd()];
-      // under the clouds: nothing read, the colour handed on - the ungated sheets' own answer, to the bit
-      const g0 = runSheets(gated, under.u, under.sunDir, dir, colIn, sunColor), o0 = runSheets(open, under.u, under.sunDir, dir, colIn, sunColor);
-      assert.deepEqual(g0.reads, [], `${weather}: at opacity 0 no sheet texture is read`);
-      assert.equal(o0.reads.length, 8, 'the ungated sheets read eight - the work the gate saves');
+      const g0 = runSkyPass(DS_FS, under, dir), o0 = runSkyPass(open, under, dir);
+      assert.deepEqual(g0.reads, [], `${weather}: at opacity 0 no layer reads the noise`);
+      assert.equal(o0.reads.length, 3, 'the ungated layers read three - the work the gate saves');
       assert.deepEqual(g0.col, o0.col, `${weather}: the same colour out, to the bit`);
-      assert.deepEqual(g0.col, colIn, 'which is the colour in: a sheet at opacity 0 adds nothing');
-      // the mod's own sheets (?clouds=off): the same eight reads and the same answer as ungated
-      const g1 = runSheets(gated, own.u, own.sunDir, dir, colIn, sunColor), o1 = runSheets(open, own.u, own.sunDir, dir, colIn, sunColor);
-      assert.deepEqual(g1.reads, o1.reads, `${weather}: at the preset's opacity both sheets run`);
+      const g1 = runSkyPass(DS_FS, own, dir), o1 = runSkyPass(open, own, dir);
+      assert.equal(g1.reads.length, 3, `${weather}: at their own opacity both layers run`);
       assert.deepEqual(g1.col, o1.col, `${weather}: and agree to the bit`);
-      if (g1.col.some((v, i) => v !== colIn[i])) lit++;
-      // one sheet on, one off: the top alone reads, the low stands down
-      const g2 = runSheets(gated, topOnly, under.sunDir, dir, colIn, sunColor), o2 = runSheets(open, topOnly, under.sunDir, dir, colIn, sunColor);
-      assert.deepEqual([...new Set(g2.reads)].sort(), ['_CloudTopDiffuse', '_CloudTopNormal'], 'the top sheet reads its own two textures alone');
+      if (g1.col.some((v, i) => v !== g0.col[i])) lit++;
+      const g2 = runSkyPass(DS_FS, highOnly, dir), o2 = runSkyPass(open, highOnly, dir);
+      assert.equal(g2.reads.length, 1, 'the high layer alone reads its one tap');
       assert.deepEqual(g2.col, o2.col, 'and the answer is the ungated one');
-      for (const t of g1.reads) assert.ok(SHEET_TEX.includes(t));
       checked++;
     }
   }
-  assert.equal(checked, 48);
-  assert.ok(lit > 24, `the preset's sheets drew over most of those directions (${lit} of 48) - else the ?clouds=off arm is vacuous`);
-  // the three locals both sheets write are declared above the pair, where the low sheet can still see them
-  assert.match(DS_FS, / {2}float cloudThickness;\n {2}float pos;\n {2}float cloudLerpValue;\n {2}if \(_CloudTopOpacity > 0\.0\) \{\n {2}float cloudTop1 = texture\(_CloudTopDiffuse,/);
-  assert.match(DS_FS, / {2}\/\/ PERF-EXT30: the low sheet, the same skip\n {2}if \(_CloudOpacity > 0\.0\) \{\n {2}vec2 cloudUV = normWorldPos\.xz \/ \(normWorldPos\.y \+ _CloudBending\);/);
-  // THE PREMISE the gate's exactness rests on: every shipped preset's sheets are finite (AlphaMax above the cutoff,
-  // so hsmoothstep never divides by 0) and drawn under ?clouds=off (opacity above 0), and the clouds hand them 0
-  for (const n of ['SkyboxSunny', 'SkyboxCloudy', 'SkyboxOvercast', 'SkyboxFog', 'SkyboxRain', 'SkyboxThunder', 'SkyboxSnow']) {
-    const p = JSON.parse(read(`vendor/dynamic-skies/SkyboxSettings/${n}.json`));
-    for (const k of ['TopCloudsFlat', 'BottomCloudsFlat']) {
-      const s = JSON.parse(p[k]);
-      assert.ok(s.AlphaMax > s.AlphaTreshold, `${n} ${k}: AlphaMax ${s.AlphaMax} above the cutoff ${s.AlphaTreshold}`);
-      assert.ok(s.Opacity > 0, `${n} ${k}: opacity ${s.Opacity}`);
-    }
-  }
+  assert.equal(checked, 24);
+  assert.ok(lit > 12, `the layers drew over most of those directions (${lit} of 24) - else the ?clouds=off arm is vacuous`);
   assert.match(read('src/scenes/shared.js'), /if \(dynamicSky\) dynamicSky\.cloudsExternal = !!cloudsShown;/, 'DS2: under the clouds, the default (CLOUD-COMPILE: once they stand)');
 });
 

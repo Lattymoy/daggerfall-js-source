@@ -36,7 +36,7 @@ const tree = readFbx(raw(SOURCE));
 
 test('MW-EBONY1: every mesh and painting re-made from the committed export, its paintings and retail\'s skeleton byte for byte; the export Mac\'s as it came, with nothing of Bethesda\'s in it', () => {
   const pngs = Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, raw(p)]));
-  const baked = bakeEbonyPlate({ source: raw(SOURCE), pngs, skeleton: raw(RETAIL_SKELETON) });
+  const baked = bakeEbonyPlate({ source: raw(SOURCE), pngs, skeleton: RETAIL_SKELETON });
   assert.deepEqual(baked.pieces.map((p) => p.id), ['cuirass', 'skirt', 'pauldron_right', 'pauldron_left', 'gauntlet_right', 'gauntlet_left',
     'greave_right', 'greave_left', 'boot_right', 'boot_left', 'helm']);
   for (const p of baked.pieces) {

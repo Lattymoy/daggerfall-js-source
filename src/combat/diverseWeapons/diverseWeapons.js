@@ -7,10 +7,10 @@
 //
 //     FPSWeapon.moddedWeaponHUDAnimsEnabled = true;
 //
-// (DiverseWeaponsMain.cs:37, carried verbatim in vendor/diverse-weapons/)
-// and everything it switches on is Daggerfall Unity's own - so this is
-// a port of DFU, gated on a vendored mod's flag, and the sprites reach
-// the game off the player's copy of the bundle (combat/
+// (DiverseWeaponsMain.cs:37, in the Diverse Weapons 1.7.3 release) and
+// everything it switches on is Daggerfall Unity's own - so this is a
+// port of DFU, gated on the mod's flag. OWN-WORK4: the sprites are our
+// own, built from the player's files (combat/diverseWeapons/
 // diverseWeaponsAssets.js). Nothing here is the mod's code; every
 // function names the DFU member it restates.
 //
@@ -244,12 +244,11 @@ export function customTextureNames(file, record, frame, metalName, doubleScale) 
 
 /**
  * The bundle's "Diverse Weapons" TextAsset - a Weapon Widget settings
- * preset (vendor/diverse-weapons/weapon-widget-preset.json, verbatim
- * there; restated here as the store's own keys, the way every vendored
- * modsettings.json is). "Recommended settings for DW": the nine
- * modules on, TrueTextureSize at factor 1 so the mod's frames draw at
- * their painted size, DoubleScaleTextures for its `w_` idles, a bob of
- * 142, recoil on every condition. A pin holds this against the JSON.
+ * preset (in the Diverse Weapons 1.7.3 release; restated here as the
+ * store's own keys). "Recommended settings for DW": the nine
+ * modules on, TrueTextureSize at factor 1 so the frames draw at
+ * their own size, DoubleScaleTextures for the `w_` idles, a bob of
+ * 142, recoil on every condition. A pin holds these values as a table.
  */
 export const DIVERSE_WEAPONS_WIDGET_PRESET = Object.freeze({
   Modules: {

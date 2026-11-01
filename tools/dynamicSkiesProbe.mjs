@@ -1,9 +1,9 @@
-// DYNAMIC SKIES, SEEN (DS1). Opens the sky lab with `?sky=dynamic` - the
-// mod's own pass, presets and textures on the lab's canvas, no game data
-// needed - at a set of hours and weathers and screenshots each. Judges
-// what a screenshot can: the pass compiles and draws (no page error,
-// no WebGL error), the textures landed (the lab reports ready only once
-// they have), the frame is not black, noon is brighter than midnight,
+// DYNAMIC SKIES, SEEN (DS1; OWN-WORK4: our own sky). Opens the sky lab with
+// `?sky=dynamic` - the pass, its rule and its painted noise on the lab's
+// canvas, no game data needed - at a set of hours and weathers and
+// screenshots each. Judges what a screenshot can: the pass compiles and
+// draws (no page error, no WebGL error), the noise landed (the lab reports
+// ready only once it has), the frame is not black, noon is brighter than midnight,
 // the sun's disc is in the frame at noon looking up at it, the stars
 // are there at midnight, and the weathers differ from one another.
 //

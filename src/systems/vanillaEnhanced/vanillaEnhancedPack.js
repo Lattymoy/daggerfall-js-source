@@ -1,49 +1,27 @@
-// VE4 (2026-10-05, Mac: "Put it in the codebase") - VANILLA ENHANCED SHIPS WITH THE PORT.
-//
-// carademono's Vanilla Enhanced is Daggerfall's own textures remastered, and Port-Doctrine's A RENDER OF GAME DATA IS
-// GAME DATA kept it the player's to attach (VE3). Mac approved carrying it (Port-Doctrine records the exception), so
-// three of its mods ship under public/art/vanilla-enhanced/ - the Base, Masked Roads, and Snowless Swamps and Jungles -
-// written there by tools/vanillaEnhancedVendor.mjs from github.com/drcarademono/vanilla-enhanced at the commit it pins.
-//
-// THEY ARE MODS, NOT THE PORT'S OWN ART. Daggerfall Unity reads them as mods - behind Replace Game Artwork, after the
-// loose folder, in the load order their manifests' dependencies make - so they register in the texture-mod door
-// (systems/dfmodTextures.js setShippedDfmods) beside any the player attaches, with the index an attached copy's would
-// carry (vendor/vanilla-enhanced/vanilla-enhanced.index.json). Only where a picture comes from differs: the client here
-// fetches the port's own file. Nothing is fetched until a picture is drawn; the Base is on by default, its add-ons off.
-//
-// A TEXTURE ARRAY IS ITS SLICES. The bundles carry each terrain tile set as one BC7 Texture2DArray; the vendoring proved
-// every slice within BC7's error of a PNG and serves the slice from it (the Base's own record where it is that record),
-// so `layers` answers the array from those files. Masked Roads' 403 array is 57 deep and Daggerfall Unity refuses it;
-// it is indexed with its depth and no slices, and the door's own depth law refuses it here too.
-//
-// AUDIT VE (Mac, 2026-10-05: "Ensure this is on by default. And performance isn't affected"):
-//   - THE BASE IS ON BY DEFAULT (`ON_BY_DEFAULT`), as a mod in DFU's Mods folder is; its add-ons stay off until picked on
-//     the Texture Overhaul card. The player's own choice either way is kept (dfmodTextures.js DFMOD_SHIPPED_PREF).
-//   - THE DECODE IS A WORKER'S (P1, systems/vanillaEnhanced/vanillaEnhancedDecodeWorker.js): the fetch, the readback and the texture
-//     detail's fit run off the main thread, as an attached bundle's decode does in its own worker. A browser with no
-//     OffscreenCanvas in a worker, or node, decodes on this thread - the same pixels.
-//
-// ALIKR1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These
-// should be on by default and integrate into our enhanced environments seamlessly."): TWO MORE PACKS SHIP THROUGH THIS
-// DOOR, ON BY DEFAULT - Sands of the Alik'r's desert ground (public/art/sands-of-the-alikr/, a loose pack in DFU) and
-// Snowfall's packaged winter ground (public/art/snowfall/, three archives the mod's bundle carries). Port-Doctrine
-// carries both as its second exception. They are the door's mods as Vanilla Enhanced's are - one load order, one walk,
-// a switch each on the Replacement packs card - and the one list setShippedDfmods takes is ALL the shipped packs, so it
-// is built here, where the first was: `installVanillaEnhancedPack` installs every one of them (the name is the door's
-// history; every caller wants the whole list - another list would replace it). Each pack's index (vendor/<pack>/
-// <pack>.index.json, tools/environmentModsExtract.mjs) names its own root under the served art.
-import pack from '../../../vendor/vanilla-enhanced/vanilla-enhanced.index.json' with { type: 'json' };
-import sandsPack from '../../../vendor/sands-of-the-alikr/sands-of-the-alikr.index.json' with { type: 'json' };
-import snowfallPack from '../../../vendor/snowfall/snowfall.index.json' with { type: 'json' };
+// VE4 (2026-10-05, Mac: "Put it in the codebase") - VANILLA ENHANCED SHIPS WITH THE PORT. OWN-WORK4 (2026-10-31, the
+// owner: "A proper 1 to 1 recreation for everything") - AND IS OUR OWN: the Base, Masked Roads, Snowless Swamps and
+// Jungles, Sands of the Alik'r and Snowfall's winter ground keep their place in the texture-mod door (key, title,
+// switch, dependencies, names and sizes - systems/ownTextures/ownTexturePacks.json), and each picture is built when it
+// is first drawn from the player's own classic record (systems/classicArt.js) under our rule (ownTextureRules.js).
+// AUDIT VE P1 (Mac: "performance isn't affected"): the rule runs in the pack's worker (vanillaEnhancedDecodeWorker.js)
+// and the pixels come back moved; a page with none builds here, the same pixels. A built picture is kept a while
+// (OWN_CACHE_BYTES), and two asks share one build. FIRST-VISIT: the same workers decode a served PNG.
+import { OWN_TEXTURE_PACKS, ownSpec, ownSliceSpecs, specKey } from '../ownTextures/ownTexturePacks.js';
+import { applyOwnRule } from '../ownTextures/ownTextureRules.js';
 import { setShippedDfmods } from '../dfmodTextures.js';
 import { decodePng, PRELOAD_CONCURRENCY } from '../textureReplacement.js';
-import { resampleRgba, mipFitSize } from '../../formats/resample.js';
+import { mipFitSize } from '../../formats/resample.js';
 import { APP_ROOT } from '../appRoot.js';
+import { classicArt } from '../classicArt.js';
 
-/** The repository and commit the pictures were read from. */
-export const VE_PACK_SOURCE = Object.freeze({ repo: pack.Source, commit: pack.Commit });
-/** The shipped mods, as the index lists them: `{ key, dir, index, slices }`. */
-export const VE_PACK_MODS = Object.freeze(pack.Mods.map((m) => Object.freeze({ ...m })));
+const VE_DIRS = Object.freeze(['base', 'masked-roads', 'snowless-swamps-and-jungles']);
+/** OWN-WORK4: where the pictures come from now - our rules over the player's own records, no repository. */
+export const VE_PACK_SOURCE = Object.freeze({
+  rules: 'systems/ownTextures/ownTextureRules.js',
+  records: 'systems/classicArt.js',
+});
+/** The Vanilla Enhanced mods, as the listing has them: `{ key, dir, rule, index }`. */
+export const VE_PACK_MODS = Object.freeze(OWN_TEXTURE_PACKS.filter((m) => VE_DIRS.includes(m.dir)));
 
 /** AUDIT VE: the shipped mods on until the player chooses otherwise - the Base (Mac: "Ensure this is on by default"). */
 export const ON_BY_DEFAULT = Object.freeze(new Set(['base']));
@@ -53,23 +31,40 @@ const fetchBytes = async (url) => {
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return new Uint8Array(await r.arrayBuffer());
 };
+const classicPicture = (archive, record, frame) => classicArt().picture(archive, record, frame);
 let _fetch = fetchBytes;
 let _decode = decodePng;
+let _classic = classicPicture;
+let _build = null;
 const defaultWorker = () =>
   new Worker(new URL('./vanillaEnhancedDecodeWorker.js', import.meta.url), { type: 'module' });
 let _makeWorker = defaultWorker;
-/** Test seam: this thread's fetch and decode (node has neither a server nor createImageBitmap), and the decode worker -
- *  none when a fetch or decode is handed in and no worker is, a fake one when it is. */
-export function _setVePackIoForTests({ fetch = null, decode = null, worker = null } = {}) {
+/** Test seam: this thread's fetch and decode (node has neither a server nor createImageBitmap), the classic records
+ *  (`classic(archive, record, frame)`), a whole build (`build(spec)`, in place of the rule), and the worker - none when
+ *  any of the others is handed in and no worker is, a fake one when it is. */
+export function _setVePackIoForTests({
+  fetch = null,
+  decode = null,
+  worker = null,
+  classic = null,
+  build = null,
+} = {}) {
   _fetch = fetch ?? fetchBytes;
   _decode = decode ?? decodePng;
-  _makeWorker = worker ?? (fetch || decode ? null : defaultWorker);
+  _classic = classic ?? classicPicture;
+  _build = build;
+  _makeWorker = worker ?? (fetch || decode || classic || build ? null : defaultWorker);
   _workers = null;
+  _decodeHere = false;
+  _built.clear();
+  _building.clear();
+  _builtBytes = 0;
 }
 
-// ---- AUDIT VE P1: THE DECODE, OFF THE MAIN THREAD -------------------------------------------------------------------
+// ---- AUDIT VE P1: THE WORK, OFF THE MAIN THREAD --------------------------------------------------------------------
 const DECODE_WORKERS = 2; // as the attached mods' bundle pool (formats/unity/unityBundlePool.js)
-let _workers = null; // [{ w, pending }] once made; false when this page cannot have them
+let _workers = null; // [{ w, pending, dead }] once made; false when this page cannot have them
+let _decodeHere = false; // a worker said it cannot decode a PNG (no OffscreenCanvas there): decodes are this thread's
 let _nextAsk = 1,
   _turn = 0;
 function decodeWorkers() {
@@ -101,7 +96,7 @@ function decodeWorkers() {
   }
   return _workers;
 }
-const askWorker = (lanes, url, maxSize) =>
+const askWorker = (lanes, msg, transfer = []) =>
   new Promise((resolve, reject) => {
     const live = lanes.filter((l) => !l.dead);
     if (!live.length) {
@@ -112,97 +107,129 @@ const askWorker = (lanes, url, maxSize) =>
     const id = _nextAsk++;
     lane.pending.set(id, { resolve, reject });
     try {
-      lane.w.postMessage({ id, url, maxSize });
+      lane.w.postMessage({ id, ...msg }, transfer);
     } catch (e) {
       lane.pending.delete(id);
       reject(Object.assign(e, { unsupported: true }));
     }
   });
-/** One shipped file as top-down RGBA, fitted to `maxSize` as a mip chain would be: a worker's decode where the page has
- *  one, else this thread's - and this thread's for good once a worker says it cannot. ALIKR1: `root` is the pack's. */
-async function decodeShipped(path, maxSize = Infinity, root = pack.Root) {
-  return decodeAt(vePackUrl(path, undefined, root), maxSize);
+
+/** FIRST-VISIT: any served PNG by its URL, top-down RGBA and whole, decoded in a worker where the page has one (the
+ *  weapon rig's body sprites: 200 ms of a warm launch's boot on this thread). A relative URL is the page's, not the
+ *  worker's. */
+export async function decodeServedPng(url) {
+  const href = new URL(url, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+  const lanes = _decodeHere ? false : decodeWorkers();
+  if (lanes) {
+    try {
+      return await askWorker(lanes, { url: href, maxSize: Infinity });
+    } catch (e) {
+      if (!e?.unsupported) throw e;
+      _decodeHere = true; // this browser's workers cannot decode: this thread's, for good - its builds stay there
+    }
+  }
+  return _decode(await _fetch(href));
 }
-/** FIRST-VISIT: any served PNG by its URL, top-down RGBA and whole, decoded as the pack's files are - in a decode worker
- *  where the page has one (the weapon rig's body sprites: 200 ms of a warm launch's boot on this thread). A relative URL
- *  is the page's, not the worker's. */
-export const decodeServedPng = (url) =>
-  decodeAt(new URL(url, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href, Infinity);
-async function decodeAt(url, maxSize) {
+
+// ---- OWN-WORK4: A PICTURE BUILT, KEPT A WHILE ------------------------------------------------------------------------
+/** The bytes of built pictures kept for the next ask (a terrain record is asked as a slice and as a texture). */
+export const OWN_CACHE_BYTES = 24 * 1024 * 1024;
+const _built = new Map(); // specKey -> picture, least recently asked first
+const _building = new Map(); // specKey -> Promise, the builds in flight
+let _builtBytes = 0;
+function keep(key, pic) {
+  _built.set(key, pic);
+  _builtBytes += pic.data.byteLength;
+  while (_builtBytes > OWN_CACHE_BYTES && _built.size > 1) {
+    const [k, p] = _built.entries().next().value;
+    _built.delete(k);
+    _builtBytes -= p.data.byteLength;
+  }
+}
+/** The classic record a spec reads - its own, or (snow) the summer one where the data has no winter record. */
+async function sourceOf(spec) {
+  const own = await _classic(...spec.from).catch(() => null);
+  if (own || !spec.fallback) return own ? { src: own, spec } : null;
+  const summer = await _classic(...spec.fallback).catch(() => null);
+  return summer ? { src: summer, spec: { ...spec, fromSummer: true } } : null;
+}
+/** One spec's picture, built in a worker where the page has one, else here. Null where the player has no record. */
+async function buildNow(spec) {
+  if (_build) return _build(spec);
+  const got = await sourceOf(spec);
+  if (!got) return null;
   const lanes = decodeWorkers();
   if (lanes) {
     try {
-      return await askWorker(lanes, url, maxSize);
+      return await askWorker(lanes, { build: got.spec, source: got.src }, [got.src.data.buffer]);
     } catch (e) {
       if (!e?.unsupported) throw e;
-      for (const l of lanes) {
-        try {
-          l.w.terminate();
-        } catch {
-          /* gone */
-        }
-      }
-      _workers = false;
+      _workers = false; // the workers are gone: this thread builds from here on
+      return buildNow(spec);
     }
   }
-  const img = await _decode(await _fetch(url));
-  const [w, h] = mipFitSize(img.width, img.height, maxSize);
-  return w === img.width && h === img.height ? img : resampleRgba(img, w, h);
+  return applyOwnRule(got.spec, got.src);
+}
+/** A spec's picture at the texture detail - the size a mip chain reaches under `maxSize`, built at that size. */
+function built(spec, maxSize = Infinity) {
+  const [w, h] = mipFitSize(spec.w, spec.h, maxSize);
+  const at = w === spec.w && h === spec.h ? spec : { ...spec, w, h };
+  const key = specKey(at);
+  const hit = _built.get(key);
+  if (hit) {
+    _built.delete(key);
+    _built.set(key, hit);
+    return Promise.resolve(hit);
+  }
+  if (!_building.has(key)) {
+    const p = buildNow(at)
+      .then((pic) => {
+        if (pic) keep(key, pic);
+        return pic;
+      })
+      .finally(() => _building.delete(key));
+    _building.set(key, p);
+  }
+  return _building.get(key);
 }
 
-/** The served URL of a file under the pack's root (`base/302_0-0.png`). ALIKR1: `packRoot` - another shipped pack's
- *  root under the served art (`art/sands-of-the-alikr`). */
-export const vePackUrl = (
-  path,
-  root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/',
-  packRoot = pack.Root,
-) => new URL(`${packRoot}/${path.split('/').map(encodeURIComponent).join('/')}`, root).href;
-
 /** A shipped mod's client, in unityBundleClient's shape: `rgba(name, { maxSize })` a texture, top-down RGBA at the
- *  texture detail; `layers(name)` an array's slices, top-down, whole; `close()`. ALIKR1: `mod.root`, a pack's own root
- *  (Vanilla Enhanced's mods name none). */
+ *  texture detail; `layers(name)` an array's slices, top-down, whole; `close()`. OWN-WORK4: each picture built. */
 export function vePackClient(mod) {
-  const root = mod.root ?? pack.Root;
-  const files = new Map(
-    mod.index.textures.map(([name]) => [name, `${mod.dir === '.' ? '' : `${mod.dir}/`}${name}.png`]),
-  );
-  const picture = (path) => decodeShipped(path, Infinity, root);
   return {
     async rgba(name, { maxSize = Infinity } = {}) {
-      const path = files.get(name);
-      if (!path) throw new Error(`${mod.index.title} carries no ${name}`);
-      return decodeShipped(path, maxSize, root);
+      const spec = ownSpec(mod, name);
+      if (!spec) throw new Error(`${mod.index.title} carries no ${name}`);
+      return built(spec, maxSize);
     },
     async layers(name) {
-      const paths = mod.slices?.[name] ?? [];
-      if (!paths.length) throw new Error(`${mod.index.title}: ${name} carries no slices`);
-      // a few at a time, as an archive's preload decodes (PRELOAD_CONCURRENCY); AUDIT VE R12: a slice that will not load
-      // is null, said once - the ground stands the classic record there (dfmodTextures.js groundLayers), not the climate
-      const out = new Array(paths.length);
+      const specs = ownSliceSpecs(mod, name);
+      if (!specs) throw new Error(`${mod.index.title}: ${name} carries no slices`);
+      // a few at a time, as an archive's preload decodes (PRELOAD_CONCURRENCY); AUDIT VE R12: a slice that will not
+      // build is null, said once - the ground stands the classic record there (dfmodTextures.js groundLayers)
+      const out = new Array(specs.length);
       let next = 0;
       const one = (i) =>
-        picture(paths[i]).catch((e) => {
-          console.warn(`[vanilla-enhanced] ${paths[i]} would not load:`, e?.message ?? e);
+        built(specs[i]).catch((e) => {
+          console.warn(`[own textures] ${specKey(specs[i])} would not build:`, e?.message ?? e);
           return null;
         });
       const lane = async () => {
-        while (next < paths.length) {
+        while (next < specs.length) {
           const i = next++;
           out[i] = await one(i);
         }
       };
-      await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, paths.length) }, lane));
+      await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, specs.length) }, lane));
       return out;
     },
     close() {},
   };
 }
 
-/** ALIKR1 / SNOWFALL1: the environment packs - each `{ key, dir, index, root }`, on by default (Mac: "These should be
- *  on by default"). */
-export const ENVIRONMENT_PACK_MODS = Object.freeze(
-  [sandsPack, snowfallPack].flatMap((p) => p.Mods.map((m) => Object.freeze({ ...m, root: p.Root }))),
-);
+/** ALIKR1 / SNOWFALL1: the environment packs - Sands of the Alik'r and Snowfall's winter ground, each `{ key, dir, rule,
+ *  index }`, on by default (Mac: "These should be on by default"). */
+export const ENVIRONMENT_PACK_MODS = Object.freeze(OWN_TEXTURE_PACKS.filter((m) => !VE_DIRS.includes(m.dir)));
 const SHIPPED = Object.freeze([
   ...VE_PACK_MODS.map((m) =>
     Object.freeze({ key: m.key, index: m.index, open: () => vePackClient(m), on: ON_BY_DEFAULT.has(m.dir) }),

@@ -59,7 +59,10 @@ test('DISC23-B: the sets are NAMED - sixteen on foot, five in the saddle, the ar
   assert.equal(foot.labels.length, FOOT_SKINS, 'the wire\'s bound is the same count (SKIN2: the sixteen, and Daggerfall\'s classes after them)');
   assert.equal(EOTB_FOOT_SET_COUNT, 16, 'the mod\'s own sets are the first sixteen');
   // the mod's own preset titles, and the art's own rule: every even set a woman, every odd set a man
-  const presets = JSON.parse(src('vendor/eye-of-the-beholder/modpresets.json'));
+  // OWN-WORK4 (2026-10-31): the shipped modpresets.json's titles and their Graphics.OnFoot, written out
+  const presets = [['Light Fighters (Default)', 0], ['Medium Fighters', 2], ['Heavy Fighter F', 4], ['Heavy Fighter M', 5], ['Mage F', 6], ['Mage M', 7],
+    ['Thief Mage F', 8], ['Thief Mage M', 9], ['Fighter Mage F', 10], ['Fighter Mage M', 11], ['Thief F', 12], ['Thief M', 13], ['Fighter Thief F', 14], ['Fighter Thief M', 15]]
+    .map(([Title, i]) => ({ Title, Values: { Graphics: { OnFoot: String(i) } } }));
   for (const p of presets) {
     const i = Number(p.Values?.Graphics?.OnFoot);
     if (!Number.isInteger(i)) continue;
@@ -80,7 +83,7 @@ test('DISC23-B2: the PROFILE carries the skin - every set as its own picture, th
   assert.deepEqual(sets.foot.map((s) => s.name), MOD_SETTINGS[V].keys['Graphics.OnFoot'].labels);
   // each tile is the set's own front-on standing sprite, out of the bundle the body draws from
   // (the URL is the build's - node has no bundle - so the pin reads the key the build indexes by, against the file;
-  // NO-BETHESDA2: or the derived.json spec the player's ARENA2 rebuilds it from)
+  // NO-BETHESDA2: the eotbDerived.json spec the player's ARENA2 rebuilds it from)
   for (const s of [...sets.foot.slice(0, EOTB_FOOT_SET_COUNT), ...sets.horse]) {   // (the classes' art: skin2_class_skins)
     assert.ok(eotbHas(s.key), `${s.name}: ${s.key}`);
   }

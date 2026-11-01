@@ -21,13 +21,14 @@ import {
 } from '../../../src/world/ships/galleonArt.js';
 import { newell, norm } from '../../../src/world/ships/galleonMesh.js';
 import { createGalleonGunDeck, recoilAt, HOLD_S, RUN_IN_X, RUN_OUT_X, RECOIL, KICK_S, HAUL_S } from '../../../src/systems/naval/galleonGunDeck.js';
-import { loadComeSailAwayModels, CSA_MODEL_URLS, GALLEON_MODEL_URL } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
+import { loadComeSailAwayModels, GALLEON_MODEL_URL } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { animatorOf, colliderBounds } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { HULL, hullBuild } from '../../../src/systems/naval/navalShips.js';
 import { quatEuler } from '../../../src/world/unityAnimator.js';
 import { CAPSULE_HEIGHT } from '../../../src/player/motor.js';
 import { scene, MODELS } from '../../csaScene.mjs';
 import { sea } from '../../navalSea.mjs';
+import { ownFile } from '../../ownBoats.mjs';
 
 const bakeJson = JSON.parse(readFileSync(new URL(`../../../${OUT}`, import.meta.url), 'utf8'));
 const near = (a, b, eps, what) => assert.ok(Math.abs(a - b) <= eps, `${what}: ${a} vs ${b}`);
@@ -444,22 +445,22 @@ test('GALLEON THE LOADER: the new galleon over hull 2 when her model answers; wh
     const bytes = readFileSync(new URL(url));
     return { ok: true, json: async () => JSON.parse(bytes.toString('utf8')), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.length) };
   };
-  assert.ok(Object.values(CSA_MODEL_URLS).every((u) => u.includes('vendor/come-sail-away/Models/')) && GALLEON_MODEL_URL.endsWith('src/assets/galleon/galleon.json'));
+  assert.ok(GALLEON_MODEL_URL.endsWith('src/assets/galleon/galleon.json'), 'her model is the port\'s own file');
   const warns = [];
   const log = { warn: (...a) => warns.push(a) };
-  const hers = await loadComeSailAwayModels(fileFetch(), CSA_MODEL_URLS, log);
+  const hers = await loadComeSailAwayModels(fileFetch(), undefined, log);
   assert.equal(hers.galleon, true);
   assert.ok(hers.prefab(GALLEON_PREFAB_ID).children.some((c) => c.name === GALLEON_HULL_NODE), 'her hull under prefab 112412');
   assert.equal(warns.length, 0);
-  const missing = await loadComeSailAwayModels(fileFetch(GALLEON_MODEL_URL), CSA_MODEL_URLS, log);
+  const missing = await loadComeSailAwayModels(fileFetch(GALLEON_MODEL_URL), undefined, log);
   assert.equal(missing.galleon, false, 'her model missing: the mod\'s own galleon');
   assert.equal(warns.length, 1);
-  const broken = await loadComeSailAwayModels(fileFetch(null, { url: GALLEON_MODEL_URL, json: { ...bakeJson, parts: [] } }), CSA_MODEL_URLS, log);
+  const broken = await loadComeSailAwayModels(fileFetch(null, { url: GALLEON_MODEL_URL, json: { ...bakeJson, parts: [] } }), undefined, log);
   assert.equal(broken.galleon, false, 'her model broken: the mod\'s own galleon');
   assert.equal(warns.length, 2);
   assert.match(String(warns[1][0]), /would not build/);
   // the prefab builder alone, as the loader calls it
-  assert.throws(() => galleonPrefab({ ...bakeJson, parts: [] }, JSON.parse(readFileSync(new URL('../../../vendor/come-sail-away/Models/prefabs.json', import.meta.url), 'utf8'))), /the bake has no /);
+  assert.throws(() => galleonPrefab({ ...bakeJson, parts: [] }, ownFile('prefabs.json')), /the bake has no /);
 });
 
 // ── HULL_BUILDS' Small Ship ─────────────────────────────────────────────────────────────────────────────────────────

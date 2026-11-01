@@ -7,12 +7,11 @@
 // the player's and are destroyed as they leave, each new one promoted as the host promotes it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { SnowCoverage } from '../../src/systems/snowfall.js';
 import { SnowfallRuntime, BLANKET } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowPixelBox } from '../../src/scenes/snowfallHost.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2, RING = 3, X0 = 500, Y0 = 250;
 const quiet = (fn) => { const w = console.warn; console.warn = () => {}; try { return fn(); } finally { console.warn = w; } };
 

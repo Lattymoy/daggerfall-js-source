@@ -9,9 +9,9 @@
 // Animator does the rest after every Update and before every LateUpdate:
 // the state machine, the clips sampled, the poses blended, the bones
 // written (the sails' FixDeformations then bakes them). This module is
-// that Animator over what tools/comeSailAwayExtract.mjs carried
-// (vendor/come-sail-away/Models/animation.json): the compiled controllers,
-// the override controllers' clip swaps, and each clip's muscle-clip curves.
+// that Animator over the boats' animation (OWN-WORK4: ours, ownBoatAnimation.js,
+// in Come Sail Away 2.1's shape): the compiled controllers, the override
+// controllers' clip swaps, and each clip's curves.
 //
 // What is restated, and how:
 // - A CLIP'S CURVE is a constant or streamed Hermite segments: at t, the

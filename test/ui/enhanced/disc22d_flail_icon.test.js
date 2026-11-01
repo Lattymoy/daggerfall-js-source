@@ -9,16 +9,17 @@
 // record with no dye, which no metal's file answers.
 //
 // Driven through the real data pipeline, the real list drawer with the icons object EXACTLY as the scenes build it,
-// the real renderer's colour gate, and the mod's real PNGs; only the browser's decode is stubbed (node has none), over
-// tools/pngIO.mjs so the pixels are the file's.
+// and the real renderer's colour gate. OWN-WORK4: the flail is our own picture, drawn whole at runtime
+// (systems/roleplayRealismItems/rriArt.js) - built where it was fetched and decoded, by the same lazy door.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readPng } from '../../../tools/pngIO.mjs';
 import { installRoleplayRealismItems } from '../../../src/systems/roleplayRealismItems/rriInstall.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
+import { decodedTexture } from '../../../src/systems/textureReplacement.js';
+import { DYE_COLORS } from '../../../src/characters/dyes.js';
 import { WEAPON_MATERIALS } from '../../../src/characters/weapons.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { makeIconDrawer } from '../../../src/ui/item/itemScroller.js';
@@ -27,14 +28,8 @@ import { color32Bytes } from '../../../src/render/renderer.js';
 import { loadIcon } from '../../../src/ui/textureCanvas.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const fetched = [];
-installRoleplayRealismItems({ fetchBytes: async (n) => { fetched.push(n); return new Uint8Array(readFileSync(join(ROOT, 'public/art/roleplay-realism-items', `${n}.png`))); } });
-// the browser's decode (textureReplacement.js decodePng), over the file's own pixels
-globalThis.createImageBitmap = async (blob) => ({ ...readPng(new Uint8Array(await blob.arrayBuffer())), close() {} });
-globalThis.OffscreenCanvas = class {
-  constructor(w, h) { this.width = w; this.height = h; }
-  getContext() { let bmp = null; return { drawImage: (b) => { bmp = b; }, getImageData: () => ({ width: bmp.width, height: bmp.height, data: new Uint8ClampedArray(bmp.data) }) }; }
-};
+installRoleplayRealismItems({ art: { picture: async () => { throw new Error('the flail reads no classic record'); }, build: async () => { throw new Error('nor a derived spec'); } } });
+const built = (dye) => decodedTexture(514, 0, 0, 'Albedo', dye) != null;
 const settle = () => new Promise((r) => setTimeout(r, 50));
 const flail = () => createWeapon(514, WEAPON_MATERIALS.Steel);
 
@@ -55,15 +50,15 @@ test('DISC22-D: the classic list draws the Steel Light Flail, with the icons obj
   const m = { ox: 0, oy: 0, s: 1 };
   draw(renderer, m, flail(), [0, 0, 60, 200], 0);
   await settle();
-  assert.ok(fetched.includes('514_0-0_Steel'), 'the Steel file is fetched when the flail is drawn (the bug: nothing was)');
-  assert.deepEqual(uploads, [{ k: '514_0#ui_Steel', w: 48, h: 76 }], 'uploaded under its metal\'s UI variant, at the file\'s size');
+  assert.ok(built(DYE_COLORS.Steel), 'the Steel picture is built when the flail is drawn (the bug: nothing was)');
+  assert.deepEqual(uploads, [{ k: '514_0#ui_Steel', w: 48, h: 76 }], 'uploaded under its metal\'s UI variant, at the picture\'s size');
   assert.equal(draw(renderer, m, flail(), [0, 0, 60, 200], 0), true);
   assert.deepEqual(drawn, ['514_0#ui_Steel'], 'and drawn');
 });
 
 test('DISC22-D: the enhanced door draws it too - this record, by its metal (a Daedric one here, so its file is its own ask)', async () => {
   const daedric = createWeapon(514, WEAPON_MATERIALS.Daedric);
-  fetched.length = 0;
+  assert.equal(built(DYE_COLORS.Daedric), false);
   globalThis.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ({ createImageData: (w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, drawImage() {}, imageSmoothingEnabled: true }), toDataURL: () => 'data:image/png;base64,FLAIL' }) };
   const warn = console.warn; const warns = []; console.warn = (...a) => warns.push(a.join(' '));
   try {
@@ -71,7 +66,8 @@ test('DISC22-D: the enhanced door draws it too - this record, by its metal (a Da
     await settle();
     const url = await loadIcon(514, 0, { scale: 2, dye: inventoryItemImage(daedric).dye });   // the dye as itemLine hands it
     assert.equal(url, 'data:image/png;base64,FLAIL', `a picture, not the initials (warned: ${warns.join(' | ')})`);
-    assert.deepEqual(fetched, ['514_0-0_Daedric'], 'the metal\'s own file - not the bare 514_0-0 every metal would then share');
+    assert.ok(built(DYE_COLORS.Daedric), 'the metal\'s own picture');
+    assert.equal(built(null), false, 'not the bare 514_0-0 every metal would then share');
   } finally { console.warn = warn; delete globalThis.document; }
 });
 

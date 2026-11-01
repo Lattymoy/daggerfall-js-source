@@ -287,18 +287,17 @@ export function createDeepWatersFish({
 }
 
 /**
- * LoadFishTexture's pictures: each species' own, fetched and decoded once,
+ * LoadFishTexture's pictures: each species' own (OWN-WORK4: ours, systems/deepWater/fishArt.js), made once,
  * edge-cleaned (the fish's underwater material is made from its billboard
  * material by CopyTextureAndTransform, which cleans it), rows turned to
  * the GPU's bottom-up, on the GPU as a one-layer array. A species whose
  * picture never comes never spawns (the mod's warning, once).
  * @param {object} deps
- * @param {(name: string) => Promise<Uint8Array>} deps.fetchBytes
- * @param {(bytes: Uint8Array) => Promise<{width: number, height: number, data: Uint8Array}>} deps.decode - top-down RGBA
+ * @param {(name: string) => ({width: number, height: number, data: Uint8Array} | null | Promise<any>)} deps.picture - top-down RGBA
  * @param {(img: object) => boolean} deps.clean - GetEdgeCleanedTexture's flood (underwaterDecorations.clearEdgeBlackPixels)
  * @param {(frames: object[]) => ?{tex: any, frames: number}} deps.createTexture
  */
-export function createFishPictures({ fetchBytes, decode, clean, createTexture }) {
+export function createFishPictures({ picture, clean, createTexture }) {
   const textures = new Map();
   const failed = new Set();
   let started = false;
@@ -307,7 +306,8 @@ export function createFishPictures({ fetchBytes, decode, clean, createTexture })
     started = true;
     for (const s of PASSIVE_FISH_SPECIES) {
       (async () => {
-        const img = await decode(await fetchBytes(s.textureName));
+        const img = await picture(s.textureName);
+        if (!img) throw new Error('no picture');
         const rows = new Uint8Array(img.width * img.height * 4);
         for (let y = 0; y < img.height; y++)
           rows.set(

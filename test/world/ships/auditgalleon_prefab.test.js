@@ -32,6 +32,7 @@ import { multiply } from '../../../src/world/mat4.js';
 import { comeSailAwayModels } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { spawnBoat, Boat } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { buildDeck, DECK_FLAT } from '../../../src/systems/naval/navalDeck.js';
+import { ownFiles, ownFile } from '../../ownBoats.mjs';
 
 const { MEASURED: M, HELM } = GM;
 const { TEX } = GA;
@@ -46,6 +47,8 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 /** Her prefab tree, fresh (the prefab's root is her frame: her hull's node stands at its origin, unturned). */
 const herTree = () => instantiatePrefab(MODELS.prefab(GM.GALLEON_PREFAB_ID), MODELS.components);
 const nodeNamed = (root, name) => [...root.walk()].find((n) => n.name === name) ?? null;
+/** OWN-WORK4: a node's mesh key (our boats' meshes are keyed apart from their nodes' names). */
+const meshKeyOf = (n) => n?.getComponent('MeshFilter')?.m_Mesh?.mesh ?? null;
 const meshOf = (node) => { const mf = node.components.find((c) => c.type === 'MeshFilter'); return mf ? MODELS.geometry(mf.m_Mesh.mesh) : null; };
 const pointsIn = (g, m) => { const out = []; for (let i = 0; i < g.positions.length; i += 3) out.push(xf(m, [g.positions[i], g.positions[i + 1], g.positions[i + 2]])); return out; };
 const trianglesIn = (g, m, sm = null) => {
@@ -106,9 +109,7 @@ const halfBreadth = (y, z, s = 1) => xOver(HULL_TRIS, y, z, s, true);
 let _old = null;
 const OLD = () => {
   if (_old) return _old;
-  const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-  const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-  _old = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+  _old = comeSailAwayModels(ownFiles()); // OWN-WORK4: our own small ship (test/ownBoats.mjs)
   return _old;
 };
 
@@ -157,11 +158,11 @@ test('AUDIT GALLEON P1: her DrivePosition stands half a capsule over her roof - 
   const oroot = instantiatePrefab(old.prefab(112412), old.components);
   const od = nodeNamed(oroot, 'DrivePosition').worldMatrix();
   const oeye = [od[12], od[13] - CAPSULE_HEIGHT / 2 + EYE_HEIGHT, od[14]];
-  const oh = old.geometry('Galleon'), ohm = nodeNamed(oroot, 'Galleon').worldMatrix();
+  const oh = old.geometry(meshKeyOf(nodeNamed(oroot, 'Galleon'))), ohm = nodeNamed(oroot, 'Galleon').worldMatrix();
   const obow = Math.max(...pointsIn(oh, ohm).map((p) => p[2])), herStem = Math.max(...pointsIn(MODELS.geometry('galleon:hull'), nodeNamed(root, GM.GALLEON_HULL_NODE).worldMatrix()).map((p) => p[2]));
   const odeck = 40 - hitsOf(trianglesIn(oh, ohm), [1, 40, 10], [0, -1, 0])[0];
   near(odeck, 6.767, 1e-3, 'the mod\'s galleon\'s main deck');
-  const oocc = ['GalleonWheel', 'GalleonWhelWell'].map((n) => trianglesIn(old.geometry(n), nodeNamed(oroot, n).worldMatrix()));
+  const oocc = ['GalleonWheel', 'GalleonWhelWell'].map((n) => trianglesIn(old.geometry(meshKeyOf(nodeNamed(oroot, n))), nodeNamed(oroot, n).worldMatrix()));
   assert.equal(blockedLines(oeye, fan(odeck, obow - (herStem - 21)), oocc), 0, 'the mod\'s galleon: none of its 28 blocked by its wheel');
   // the wheel's swept circle (its handles' tips) clears her roof
   assert.ok(HELM.hub[1] - (HELM.wheelR + 0.26) >= M.castleRoofY + 0.05, 'the wheel\'s lowest handle clear of her roof');
@@ -220,7 +221,7 @@ test('AUDIT GALLEON P3: both anchors - weighed (ActiveObject\'s, shown as she sa
     const n = nodeNamed(root, name);
     assert.equal(n.parent.name, parent, `${name} under ${parent}`);
     let inside = 0, least = Infinity, measured = 0;
-    for (const p of pointsIn(MODELS.geometry(name), n.worldMatrix())) {
+    for (const p of pointsIn(MODELS.geometry(meshKeyOf(n)), n.worldMatrix())) {   // OWN-WORK4: by its mesh's key
       assert.ok(p[0] > 0, `${name}: on her starboard bow`);
       const side = halfBreadth(p[1], p[2], 1);
       if (side == null) continue;
@@ -238,7 +239,7 @@ test('AUDIT GALLEON P3: both anchors - weighed (ActiveObject\'s, shown as she sa
     assert.ok(turn < 1, `${name}: its arms ${turn.toFixed(1)} degrees off her bow's run in plan`);
   }
   // the cable's head at her side, as out of her hawse: its top's corners within 5 cm of her planking
-  const cable = nodeNamed(root, 'GalleonAnchorDeployed'), cp = pointsIn(MODELS.geometry('GalleonAnchorDeployed'), cable.worldMatrix());
+  const cable = nodeNamed(root, 'GalleonAnchorDeployed'), cp = pointsIn(MODELS.geometry(meshKeyOf(cable)), cable.worldMatrix());
   const top = Math.max(...cp.map((p) => p[1]));
   for (const p of cp.filter((q) => q[1] > top - 0.05)) assert.ok(p[0] - halfBreadth(p[1], p[2], 1) <= 0.05, `the cable's head ${((p[0] - halfBreadth(p[1], p[2], 1)) * 100).toFixed(1)} cm off her side`);
 });
@@ -287,7 +288,7 @@ test('AUDIT GALLEON P5: her two stern lanterns\' poles stand on her rail\'s cap 
   const poles = [...root.walk()].filter((n) => n.name === 'LanternHookStandPoleShort');
   assert.equal(poles.length, 2);
   for (const pole of poles) {
-    const pts = pointsIn(MODELS.geometry('LanternHookStandOld'), pole.worldMatrix());
+    const pts = pointsIn(MODELS.geometry(meshKeyOf(pole)), pole.worldMatrix());
     const inside = pts.filter((p) => insideOf(railTris, p)).length;
     assert.equal(inside, 0, `the pole at x ${pole.position[0]}: vertices inside her rail`);
     const foot = Math.min(...pts.map((p) => p[1]));
@@ -574,9 +575,9 @@ test('AUDIT GALLEON STOVE: her stove\'s cowl stands STOVE.headGap under her deck
   // the mod's galleon's: its cowl's top under its deck's underside (the first face looking down over the cowl's top -
   // that deck's underside stops short of its side at the cowl's outboard lip, where a line up meets its top)
   const old = OLD(), oroot = instantiatePrefab(old.prefab(112412), old.components);
-  const opts = pointsIn(old.geometry('StovePipe'), nodeNamed(oroot, 'StovePipe').worldMatrix());
+  const opts = pointsIn(old.geometry(meshKeyOf(nodeNamed(oroot, 'StovePipe'))), nodeNamed(oroot, 'StovePipe').worldMatrix());
   const otop = Math.max(...opts.map((p) => p[1]));
-  const otris = trianglesIn(old.geometry('Galleon'), nodeNamed(oroot, 'Galleon').worldMatrix());
+  const otris = trianglesIn(old.geometry(meshKeyOf(nodeNamed(oroot, 'Galleon'))), nodeNamed(oroot, 'Galleon').worldMatrix());
   let head = Infinity;
   for (const p of opts.filter((q) => q[1] > otop - 0.05)) for (const tr of otris) {
     const t = rayTri([p[0], otop, p[2]], [0, 1, 0], tr);
@@ -585,7 +586,7 @@ test('AUDIT GALLEON STOVE: her stove\'s cowl stands STOVE.headGap under her deck
   const mod = head - otop;
   // hers: its top under her deckhead (her main deck's underside over her gun deck) as the mod's
   const root = herTree();
-  const cowl = nodeNamed(root, 'StovePipe'), pipe = MODELS.geometry('StovePipe');
+  const cowl = nodeNamed(root, 'StovePipe'), pipe = MODELS.geometry(meshKeyOf(cowl));
   const top = Math.max(...pointsIn(pipe, cowl.worldMatrix()).map((p) => p[1]));
   near(M.mainDeckUnderY - top, mod, 1e-3, 'the cowl\'s top under her deckhead as the mod\'s under its');
   near(GM.STOVE.headGap, mod, 1e-3, 'STOVE.headGap the mod\'s');

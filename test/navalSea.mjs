@@ -1,5 +1,5 @@
 // AUDIT NAV1 (2026-09-29) - the naval audit suites' one sea: createNavalHost over Come Sail Away's real pool (the
-// vendored hulls, a stand-in renderer and pipeline - test/systems/naval/nav_h_host.test.js's), every other seam a recording stand-in.
+// hulls (OWN-WORK4: our own, built), a stand-in renderer and pipeline - test/systems/naval/nav_h_host.test.js's), every other seam a recording stand-in.
 // Its own module so the audit's suites (test/navaudit_*.test.js) stand the same sea.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

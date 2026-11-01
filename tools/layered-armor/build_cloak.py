@@ -9,8 +9,9 @@ which takes the dye with the cloak), 6 shoulders (alpha only, back views: the sh
 armour lies over the cape's top corners). The manifest also carries the 10 clothing-dye bands (characters/dyes.js
 CLOTHING_STARTS) and the green ramp they replace, the cloak templates and slots.
 
-usage: python -I build_cloak.py <class-skins/Textures> <vendor/layered-armor> <van/pal.json> [<van>]
-  Textures = the folder holding the class sprites (<archive>/<archive>_<record>-<frame>.png); pal.json = the game palette
+usage: python -I build_cloak.py <class sprites> <vendor/layered-armor> <van/pal.json> [<van>]
+  class sprites = the folder holding the sheets of Mac's ExistingClasses archive (<archive>/<archive>_<record>-<frame>.png;
+  retired from the tree at OWN-WORK4); pal.json = the game palette
   [[r,g,b],...]; van = the vanilla enemy frames (<archive>_<record>-<frame>.<w>x<h>.raw, palette indices - arena2's
   TEXTURE.475-490), needed for the bow.
 Records 0-19 (walk, attack, hurt, idle) from the caped sorcerer of each body. The bow / cast (20-24) from the hooded,

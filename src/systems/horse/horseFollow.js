@@ -1,6 +1,6 @@
 // @ts-check
 // HORSE CART AND CARGO - THE FOLLOWING (HCC, 2026-09-23): `HorseFollowPath`, `HorseFollowController`, the wagon's
-// trail and the grounded pose, read off TrailingWagon.dll's IL (vendor/horse-cart-and-cargo/il/). The mod's horse
+// trail and the grounded pose, read off Horse Cart and Cargo 1.0.0-rc12's TrailingWagon.dll IL. The mod's horse
 // walks a breadcrumb path the player leaves (horizontal, 0.08 m samples, 45 m kept), stays `followDistance`
 // behind, speeds up to catch up, steps around obstacles by seven detour angles with a sphere cast, keeps to a
 // step's height change, recovers when stuck, and - with the setting on - evades hostile foes that have the player

@@ -1,7 +1,7 @@
 // BODY-MOTION (2026-10-18, Mac: "Weapon specific walking/running animations ... (running with a 2 hander by the hip)
 // (1 hand idle animation, holding down away from side. Running with it using the same format) (Duelhand idle away from
 // sides, running with them behind you) - Improved melee 3rd person attack animations"; bible/04-Characters/
-// Body-Motion.md) - THE CARRY, THE BLOWS AND THE WIRING, on the vendored retail biped with the pair's Weapon Bone Left
+// Body-Motion.md) - THE CARRY, THE BLOWS AND THE WIRING, on our own biped (OWN-WORK4) with the pair's Weapon Bone Left
 // made as the build makes it (combat/twoHands/mirrorRig.js offWeaponBoneAddon).
 //
 // What is pinned: every weapon type and hands mode to its carry class; the stances Mac named, measured on the solved

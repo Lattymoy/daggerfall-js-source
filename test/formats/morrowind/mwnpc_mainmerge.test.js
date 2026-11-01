@@ -23,6 +23,7 @@ import { bowClip, T } from '../../fixtures/mw/bowClip.mjs';
 import { fixtureBodyDeps, countingRenderer } from '../../fixtures/mw/bodyRig.mjs';
 import { retailSkeleton } from '../../fixtures/mw/retailRig.mjs';
 import { SHEATHED, isCloak, isGear, isUnder, body, turned } from '../../fixtures/mw/cloakRig.mjs';
+import { OWN_BONES } from '../../fixtures/mw/ownGear.mjs';
 
 const f = (n) => new Uint8Array(readFileSync(new URL(`../../fixtures/mw/${n}`, import.meta.url)));
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -128,7 +129,7 @@ test('MW-BOW1 x MWNPC1: the rig - a third-person body whose part moved on its ow
   assert.equal(renderer.c.streams.length, 1, 'once');
 });
 
-const GEAR = [['w_claymore_daedric_sh.nif', 'Bip01 LongBladeTwoClose'], ['w_iron_longsword_sh.nif', 'Bip01 LongBladeOneHand']];
+const GEAR = ['claymore', 'longsword'];
 // MW-CAPE-RIGID: the cloak rides the chest alone, so a stride moves none of it and turns no gear - the chest leant back
 // swings its hem onto the hip-hung sword (PIN MOVED: these were the two strides)
 const LEANS = [{ 'bip01 spine2': -10 }, { 'bip01 spine2': -5 }];
@@ -179,7 +180,7 @@ test('AUDIT MW-CLOAK x MWNPC1: a cloak whose batch was replaced skins by another
   assert.ok(turnedAny, 'and the follow turned gear leaning back - the pin reads a placement that differs from its bone\'s');
 
   // a body with no cloak: the follow lets go of every placement it left
-  const bare = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts: [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('w_iron_longsword_sh.nif'), bare: true }] });
+  const bare = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts: [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('longsword'), bare: true }], boneSources: OWN_BONES });
   bare.pieces[0].followAt = { a: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [9, 9, 9] };
   assert.equal(followCloak(bare, { isCloak, isGear }), null);
   assert.equal(bare.pieces[0].followAt, null, 'a placement the last follow left goes with it');

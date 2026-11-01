@@ -34,6 +34,9 @@ import {
   customTextureNote,
 } from './vanillaEnhanced/vanillaEnhanced.js'; // VE3; VE4: its add-ons; AUDIT VE R10: a loose pack's say
 
+/** The game's own name, as a look's maker: the Enhanced Plus skin, and (OWN-WORK4) the shipped texture pack. */
+const OUR_NAME = 'DFO Online';
+
 const row = (id) => {
   const f = FEATURES.find((x) => x.id === id);
   if (!f) throw new Error(`overhauls: no Features row '${id}'`);
@@ -185,9 +188,11 @@ export const OVERHAUL_PANELS = Object.freeze([
         blocked: classicBlocked,
       }),
       textureOption('vanilla-enhanced', 'Vanilla Enhanced', {
+        // OWN-WORK4: the shipped pack is our own work; a copy of carademono's the player attaches over it is hers
         by: () => {
           const b = veBase();
-          return b?.version ? `carademono, version ${b.version}` : 'carademono';
+          if (!b || b.shipped) return OUR_NAME;
+          return b.version ? `carademono, version ${b.version}` : 'carademono';
         },
         blurb:
           'The original game\u2019s own textures, remastered and sharper: the ground, trees, rocks, city walls and dungeons.',
@@ -227,7 +232,7 @@ export const OVERHAUL_PANELS = Object.freeze([
       // PLUS1 (2026-09-25): the enhanced screens in the refreshed dress. PLUS-ONLY (2026-09-26): and the only enhanced
       // option - plain Enhanced, which stood beside it, is retired (systems/uiSkin.js isEnhancedPlus).
       uiOption('enhanced-plus', SKIN_NAMES.enhanced, 'enhanced', UI_PACK_NONE, {
-        by: 'DFO Online',
+        by: OUR_NAME,
         blurb:
           'A modern interface built for mouse and keyboard, controller or phone. You can adjust some settings and the controller bindings.',
       }),

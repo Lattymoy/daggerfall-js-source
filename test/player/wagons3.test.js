@@ -254,7 +254,7 @@ test('WAGONS3 THE HARNESS\'S TUBE: ROPE.sides faces round each link, laid once w
 
 test('WAGONS3 THE TEAM, DRIVEN AND PARKED: a driven bench wagon\'s pair stands either side of the hitch facing down the pole, drawn; the Small Cart\'s one is its driver\'s mount, not drawn; parked in harness the runtime\'s horse leads its mate beside it; my parked pair keeps its second horse in harness while I own two and the first is away; one horse owned, it does not (mutants: the pair on the hitch, the cart\'s horse drawn, the mate unstood, the count unread)', async () => {
   let owned = 2;
-  const art = { fetchFn: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) }), decode: () => ({ width: 1, height: 1, data: new Uint8Array(4) }) };   // the horse's pictures, stood in
+  const art = { horsePicture: async () => ({ width: 1, height: 1, data: new Uint8Array(4) }) };   // the horse's pictures, stood in (OWN-WORK4: built, not fetched)
   for (const kind of ['cart', 'openWagon', 'caravan']) {
     const world = await wagonWorld(kind, { horses: () => owned, ...art });
     world.pool.presentation.horseArt.ensureStationary(); await flush();

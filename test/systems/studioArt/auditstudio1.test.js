@@ -483,20 +483,22 @@ test('AUDIT STUDIO1 S12 (lane E K4-K8): the registry\'s merges through the real 
     // K5: Climates & Calories' tent - one record of the real TEXTURE.050 - under the studio's (the game's order: the
     // mod's icons register as its module loads, the studio at the boot)
     reset();
-    assert.ok(installSurvivalIcons({ fetchBytes: async () => picture(2, 2, [1, 2, 3]) }) > 0);
+    // OWN-WORK4: no survival picture is a file - each is built, here through a made-up classic reader
+    const flatArt = { build: async () => ({ width: 2, height: 2, data: Uint8Array.from({ length: 16 }, (_, i) => [1, 2, 3, 255][i % 4]) }) };
+    assert.ok(installSurvivalIcons({ art: flatArt }) > 0);
     await installStudioArt({ fetch: responses({ 'a/50_7-0.png': picture(2, 2, [5, 5, 5]) }).fetch, decode });
     assert.equal(isVendorArchive(50), false, 'TEXTURE.050 is a real file: no stand-in branch for it');
     await preloadTextureArchive(50, { decode });
     assert.deepEqual(red(decodedTexture(50, 7)), [5, 5, 5]);
     // K6: the studio over a mod's picture already decoded (its fileName its key - Climates & Calories' icons)
     reset();
-    assert.ok(installSurvivalIcons({ fetchBytes: async () => picture(2, 2, [1, 2, 3]) }) > 0);
-    await preloadTextureArchive(532, { decode });
-    assert.deepEqual(red(decodedTexture(532, 0)), [1, 2, 3]);
-    await installStudioArt({ fetch: responses({ 'a/532_0-0.png': picture(2, 2, [9, 8, 7]) }).fetch, decode });
+    assert.ok(installSurvivalIcons({ art: flatArt }) > 0);
+    await preloadTextureArchive(536, { decode });
+    assert.deepEqual(red(decodedTexture(536, 0)), [1, 2, 3], 'the mouldy cooked fish: the record itself, rebuilt');
+    await installStudioArt({ fetch: responses({ 'a/536_0-0.png': picture(2, 2, [9, 8, 7]) }).fetch, decode });
     await studioLanded();
-    assert.deepEqual(red(decodedTexture(532, 0)), [9, 8, 7]);
-    assert.equal(isVendorArchive(532), true);
+    assert.deepEqual(red(decodedTexture(536, 0)), [9, 8, 7]);
+    assert.equal(isVendorArchive(536), true);
     // K7: the Thunderlock's icons under the studio's: the doll's place theirs; a registration the studio absorbs is
     // counted and moves the tiers' epoch, and its missing offset leaves the place as it was
     reset();

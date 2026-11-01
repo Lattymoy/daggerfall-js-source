@@ -461,8 +461,8 @@
   {
     "name": "ASH-the-skies-sky-unnamed",
     "file": "src/systems/dynamicSkies/dynamicSkies.js",
-    "old": "  ashfall: 'SkyboxOvercast',\n});",
-    "new": "});",
+    "old": "  ashfall: 'ashfall',\n});\n\n/** THE SEASON leans",
+    "new": "});\n\n/** THE SEASON leans",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "ASH-the-skies-fog-unnamed",
     "file": "src/systems/dynamicSkies/dynamicSkies.js",
-    "old": "  sandstorm: 'FogHeavyFog',\n  ashfall: 'FogSnowy', // ASHFALL1's audit: as world/weather.js fogForWeather stands them in",
-    "new": "  sandstorm: 'FogHeavyFog', // ASHFALL1's audit: as world/weather.js fogForWeather stands them in",
+    "old": "  sandstorm: 'sandstorm',\n  ashfall: 'ashfall',\n});\n\n/** The rows in the port's FOG_SETTINGS shape",
+    "new": "  sandstorm: 'sandstorm',\n});\n\n/** The rows in the port's FOG_SETTINGS shape",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

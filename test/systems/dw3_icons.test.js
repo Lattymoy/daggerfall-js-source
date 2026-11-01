@@ -8,10 +8,10 @@
 // none of its three icon doors carried one. Pins: GetName's dye arm and
 // the names DFU prints, the key with the dye in it (a pack's two dyes no
 // longer collide), DaggerfallUnityItem.dyeColor as the port's items
-// carry it (the four writers), the registration off the shipped index
-// behind the mod's switch, the preload's lanes, the DOM door and the
-// classic list drawer executed by dye, the paper doll's arm by source,
-// and the wiring.
+// carry it (the four writers), the registration off our index behind
+// the mod's switch (OWN-WORK4: each icon ours, built from the player's
+// record), the preload's lanes, the DOM door and the classic list drawer
+// executed by dye, the paper doll's arm by source, and the wiring.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -107,35 +107,37 @@ test('DW3 law: DaggerfallUnityItem.dyeColor as the port\'s items carry it - a we
   assert.equal(inventoryItemImage({ group: 'Books', templateIndex: 277 }).dye, DYE_COLORS.Unchanged);
 });
 
-test('DW3 registration: every icon the shipped index names, as a vendor entry by its dye (the bare stem for Unchanged), behind the mod\'s switch - decoded once, answering only while on', async () => {
+test('DW3 registration: every icon our index names, as a vendor entry by its dye (the bare stem for Unchanged), built from the player\'s record behind the mod\'s switch - built once, answering only while on', async () => {
   const entries = diverseWeaponsIconEntries();
-  assert.ok(entries.length > 500 && entries.length <= 561, `${entries.length}: the 561 shipped icons on 233/234/432/433, less the Silver-named`);
+  assert.equal(entries.length, 2 * 28 * 10 + 2, '233/234 records 0..27 in nine dyes and bare, and the Wabbajack\'s two');
   assert.deepEqual([...new Set(entries.map((e) => e.archive))].sort(), [233, 234, 432, 433]);
   for (const e of entries) {
     assert.ok(hasDiverseWeaponsSprite(e.fileName), e.fileName);
     assert.equal(e.frame, 0);
-    if (e.dye === null) assert.ok(!/_[A-Za-z]+$/.test(e.fileName), 'a bare stem has no suffix');
-    else assert.equal(e.fileName, `${e.archive}_${e.record}-0_${DYE_NAMES[e.dye]}`, 'a dyed one spells its dye as GetName would');
+    if (e.dye === null) {
+      assert.ok(!/_[A-Za-z]+$/.test(e.fileName), 'a bare stem has no suffix');
+      assert.equal(e.ramp, e.archive >= 432 ? 'chaos' : 'Silver', 'the bare ask is a silver weapon\'s, or the Wabbajack\'s');
+    } else {
+      assert.equal(e.fileName, `${e.archive}_${e.record}-0_${DYE_NAMES[e.dye]}`, 'a dyed one spells its dye as GetName would');
+      assert.equal(e.ramp, DYE_NAMES[e.dye], 'and is painted in its own metal');
+    }
   }
   const iconStems = Object.entries(DIVERSE_WEAPONS_STEMS).filter(([k]) => /^(233|234|432|433)_/.test(k));
-  const silverNamed = iconStems.filter(([, b]) => b & (1 << 2)).length;
-  assert.equal(entries.length, iconStems.reduce((n, [, b]) => n + (b.toString(2).split('1').length - 1), 0) - silverNamed, 'nothing dropped but the Silver-named files, nothing invented');
-  assert.ok(silverNamed > 0, 'the mod does ship some `_Silver` icons; keyed by their dye they would be the bare key');
-  const rri = Object.entries(DIVERSE_WEAPONS_STEMS).filter(([k]) => /^(513|514)_/.test(k)).reduce((n, [, b]) => n + (b.toString(2).split('1').length - 1), 0);
-  assert.equal(rri, 40, 'Roleplay & Realism: Items\' two archives are in the index and not registered - no template here draws them');
+  assert.equal(entries.length, iconStems.reduce((n, [, b]) => n + (b.toString(2).split('1').length - 1), 0), 'nothing dropped, nothing invented');
   assert.deepEqual([...ICON_ARCHIVES], [233, 234, 432, 433]);
   assert.ok(entries.some((e) => e.archive === 432 && e.record === 25 && e.dye === null), 'the Wabbajack\'s icon is bare - a minted artifact\'s dye is Unchanged');
   assert.ok(!entries.some((e) => e.dye === DYE_COLORS.Silver), 'no Silver entries: they could never be asked (DYE_NAMES)');
-  assert.ok(iconStems.filter(([, b]) => b & DIVERSE_WEAPONS_BARE).length >= 50, 'and ships the bare stem for most: the name a silver weapon asks by');
+  assert.deepEqual(diverseWeaponsIconEntries({ '233_5-0': 0b111 }).map((e) => e.fileName), ['233_5-0_Iron', '233_5-0_Steel'], 'a Silver bit is never an entry: keyed by its dye it would be the bare key');
+  assert.equal(iconStems.filter(([, b]) => b & DIVERSE_WEAPONS_BARE).length, 58, 'the bare stem for every one: the name a silver weapon asks by');
   assert.ok(DIVERSE_WEAPONS_SPRITE_COUNT > entries.length);
 
   _resetModSettings(); clearVendorTextures(); _resetDiverseWeaponsIcons();
   try {
     const loads = [];
     let inFlight = 0, most = 0;
-    const fetchBytes = async (name) => { loads.push(name); inFlight++; most = Math.max(most, inFlight); await Promise.resolve(); await Promise.resolve(); inFlight--; return new Uint8Array([1]); };
-    assert.equal(installDiverseWeaponsIcons({ fetchBytes }), entries.length);
-    assert.equal(installDiverseWeaponsIcons({ fetchBytes }), 0, 'once');
+    const art = { icon: async (archive, record, ramp) => { loads.push(`${archive}_${record}-0:${ramp}`); await Promise.resolve(); return topDown(); } };
+    assert.equal(installDiverseWeaponsIcons({ art }), entries.length);
+    assert.equal(installDiverseWeaponsIcons({ art }), 0, 'once');
     assert.equal(vendorTextureCount(), entries.length);
     assert.equal(hasTextureReplacement(233, 5, 0, 'Albedo', DYE_COLORS.Iron), true, 'on by default (MO1)');
     assert.equal(hasTextureReplacement(233, 5, 0, 'Albedo', DYE_COLORS.Silver), true, 'the bare stem answers the silver ask');
@@ -143,28 +145,29 @@ test('DW3 registration: every icon the shipped index names, as a vendor entry by
     setModSetting('diverse-weapons', 'Enabled', false);
     assert.equal(hasTextureReplacement(233, 5, 0, 'Albedo', DYE_COLORS.Iron), false, 'the gate, read at lookup');
     setModSetting('diverse-weapons', 'Enabled', true);
-    // AUDIT-DW F1: the icons are LAZY - the archive's preload fetches none
+    // AUDIT-DW F1: the icons are LAZY - the archive's preload builds none
     // of them (it used to fetch all 280 before the first classic icon could
-    // draw); a record decodes when an item wearing it is drawn
+    // draw); a record is built when an item wearing it is drawn
     assert.equal(await preloadTextureArchive(233, { decode: async () => topDown() }), 0, 'the archive preload skips lazy entries');
     assert.equal(loads.length, 0);
     assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), null, 'nothing decoded yet');
     const decode = async () => topDown();
     const [a, b] = await Promise.all([preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Iron, { decode }), preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Iron, { decode })]);
-    assert.ok(a?.colors && a === b, 'one record, one fetch shared by the asks in flight');
-    assert.deepEqual(loads, ['233_5-0_Iron'], 'the one file');
+    assert.ok(a?.colors && a === b, 'one record, one build shared by the asks in flight');
+    assert.deepEqual(loads, ['233_5-0:Iron'], 'the one record, in its own metal');
     const iron = decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron);
     assert.equal(iron, a, 'decoded, in color32 order');
     assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Iron, { decode }), iron, 'idempotent');
     assert.equal((await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Silver, { decode }))?.width, 2, 'the bare one too');
-    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', 'Glass', { decode }), null, 'nothing registered: null, no fetch');
+    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', 'Glass', { decode }), null, 'nothing registered: null, no build');
     assert.equal(loads.length, 2);
+    assert.equal(loads[1], '233_5-0:Silver', 'the bare one in the Silver law');
     setModSetting('diverse-weapons', 'Enabled', false);
     assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), null, 'off: the classic draws, the decode is kept');
-    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Daedric, { decode }), null, 'off: a gated-off icon costs no fetch');
+    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Daedric, { decode }), null, 'off: a gated-off icon costs no build');
     assert.equal(loads.length, 2);
     setModSetting('diverse-weapons', 'Enabled', true);
-    assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), iron, 'on again: the same texture, no second fetch');
+    assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), iron, 'on again: the same texture, no second build');
     // a pack's (non-lazy) entries still preload with the archive, in lanes
     on(); clearTextureReplacements();
     setTextureReplacements(['233_7-0_Iron.png', '233_7-0_Steel.png', '233_7-0_Elven.png'], async (n) => { loads.push(n); inFlight++; most = Math.max(most, inFlight); await Promise.resolve(); inFlight--; return new Uint8Array([1]); });
@@ -191,25 +194,22 @@ test('DW3 DOM door: requestIcon by dye - the replacement drawn as it is, keyed a
   globalThis.document = { createElement: canvasStub };
   try {
     const loads = [];
-    installDiverseWeaponsIcons({ fetchBytes: async (n) => { loads.push(n); return new Uint8Array([1]); } });
-    // AUDIT-DW F1: the door decodes the record it draws (preloadTextureRecord);
-    // node has no PNG decoder, so the records this pin draws are decoded
-    // here with one, and the door finds them - the archive's preload
-    // fetches none (lazy)
-    const decode = async () => topDown();
-    for (const dye of [DYE_COLORS.Iron, DYE_COLORS.Daedric, DYE_COLORS.Silver]) await preloadTextureRecord(233, 5, 0, 'Albedo', dye, { decode });
-    assert.deepEqual(loads, ['233_5-0_Iron', '233_5-0_Daedric', '233_5-0'], 'three records, three fetches, nothing else');
+    installDiverseWeaponsIcons({ art: { icon: async (a, r, ramp) => { loads.push(`${a}_${r}-0:${ramp}`); return topDown(); } } });
+    // AUDIT-DW F1: the door builds the record it draws (preloadTextureRecord),
+    // and the archive's preload builds none (lazy)
+    for (const dye of [DYE_COLORS.Iron, DYE_COLORS.Daedric, DYE_COLORS.Silver]) await preloadTextureRecord(233, 5, 0, 'Albedo', dye);
+    assert.deepEqual(loads, ['233_5-0:Iron', '233_5-0:Daedric', '233_5-0:Silver'], 'three records, three builds, nothing else');
     assert.equal(requestIcon(233, 5, { scale: 1, dye: DYE_COLORS.Iron }), null, 'cold, as every requestIcon is');
     const iron = await loadIcon(233, 5, { scale: 1, dye: DYE_COLORS.Iron });
     assert.match(iron ?? '', /^data:image\/png;base64,STUB/, 'the replacement, drawn');
     assert.equal(requestIcon(233, 5, { scale: 1, dye: DYE_COLORS.Iron }), iron, 'warm on the next repaint');
-    assert.deepEqual([...puts.at(-1).data.slice(0, 4)], [1, 1, 1, 255], 'the canvas\'s top row is the PNG\'s top row (the color32 flip undone)');
+    assert.deepEqual([...puts.at(-1).data.slice(0, 4)], [1, 1, 1, 255], 'the canvas\'s top row is the picture\'s top row (the color32 flip undone)');
     const daedric = await loadIcon(233, 5, { scale: 1, dye: DYE_COLORS.Daedric });
     assert.ok(daedric && daedric !== iron, 'a second key for the second dye');
     const silver = await loadIcon(233, 5, { scale: 1, dye: DYE_COLORS.Silver });
     assert.ok(silver && silver !== daedric, 'the bare stem answers the silver ask');
     assert.equal(await loadIcon(233, 5, { scale: 1, dye: 'Glass' }), null, 'no such file: the classic arm, which has no ARENA2 here');
-    assert.equal(loads.length, 3, 'the door fetched nothing the pin had not: a record decodes once');
+    assert.equal(loads.length, 3, 'the door built nothing the pin had not: a record builds once');
   } finally { globalThis.document = hadDocument; _resetModSettings(); clearVendorTextures(); _resetDiverseWeaponsIcons(); }
 });
 

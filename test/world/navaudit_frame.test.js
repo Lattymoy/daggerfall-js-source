@@ -561,7 +561,8 @@ test('AUDIT NAV1 (#13) A BOAT\'S STILL PARTS AS ONE MESH: a war galley\'s parts 
   for (const n of st.nodes) assert.ok(!log.drawn.some((d) => d.mesh !== st.mesh && d.matrix === walk.mats[walk.nodes.indexOf(n)]), `${n.name}: never drawn twice`);
   // its triangles: every part's, carried by her hull's matrix where each stands
   const merged = st.mesh.model;
-  const oar = [...st.nodes].find((n) => n.name.startsWith("T'avaTriremeOar"));
+  // OWN-WORK4: our oar's loom hangs under its pivot (the rowing clips turn the pivot), so the part is the pivot's child
+  const oar = [...st.nodes].find((n) => n.getComponent('MeshFilter') && (n.name.startsWith("T'avaTriremeOar") || n.parent?.name.startsWith("T'avaTriremeOar")));
   const oarWorld = walk.mats[walk.nodes.indexOf(oar)];
   const mf = oar.getComponent('MeshFilter');
   const og = pool.models.geometry(mf.m_Mesh.mesh);

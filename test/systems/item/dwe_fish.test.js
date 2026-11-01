@@ -307,8 +307,8 @@ test('DW-E3: the pulse - a dozen destroys and the queued spawns every frame; the
 });
 
 // ── the fish as items, their pictures, and the host ─────────────────
-import { readFileSync, readdirSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { FISH_ART, fishPicture } from '../../../src/systems/deepWater/fishArt.js';   // OWN-WORK4: our own pictures
 import { templateByIndex } from '../../../src/systems/item/itemTemplates.js';
 import { preloadTextureRecord, decodedTextureTopDown, setTextureDeriveContext, isVendorArchive } from '../../../src/systems/textureReplacement.js';
 import { DEEP_WATERS_FISH_TEMPLATES, createFishItem, normalizeFishItems, installDeepWatersFishIcons, fishIconArchive, FISH_GROUP } from '../../../src/systems/deepWater/deepWatersFishItems.js';
@@ -363,23 +363,22 @@ test('DW-E3 / OWN-WORK3: the fish items are our own rows - the names one a fish,
   assert.deepEqual([kept.name, kept.value], ['Pale Grouper', 999], 'OWN-WORK3: renamed by its index, its worth its own');
 });
 
-test('OWN-WORK3: the folder is the fish pictures, our listing of them and the README - the listing names the seven in the catalog\'s order, each by its sha256, as the tool writes it (the authority the doctrine gate reads under Flats/)', async () => {
-  const dir = 'vendor/iliac-puddle-no-more';
-  assert.deepEqual(readdirSync(new URL(`../../../${dir}`, import.meta.url), { recursive: true }).map(String).sort(),
-    ['Flats', ...PASSIVE_FISH_SPECIES.map((sp) => `Flats/${sp.textureName}.png`).sort(), 'README.md', 'iliac-puddle-no-more.files.json'].sort(), 'art, its listing and the README: nothing else');
-  const text = rd(`${dir}/iliac-puddle-no-more.files.json`);
-  const listing = JSON.parse(text);
-  assert.deepEqual(listing.Files, PASSIVE_FISH_SPECIES.map((sp) => `Flats/${sp.textureName}.png`));
-  const png = (n) => readFileSync(new URL(`../../../${dir}/Flats/${n}.png`, import.meta.url));
-  for (const f of listing.Files) assert.equal(createHash('sha256').update(readFileSync(new URL(`../../../${dir}/${f}`, import.meta.url))).digest('hex'), listing.Sha256[f], f);
-  const { fishListing } = await import('../../../tools/iliacPuddleAssets.mjs');
-  assert.equal(fishListing(png), text, 'the tool writes the listing byte for byte');
+test('OWN-WORK4: the seven pictures are our own - a recipe for each species, at the power-of-two size the sea samples; the release\'s folder is gone', async () => {
+  assert.deepEqual(Object.keys(FISH_ART).sort(), PASSIVE_FISH_SPECIES.map((sp) => sp.textureName).sort(), 'one recipe a species');
+  const SIZES = { longnose_butterflyfish: [64, 64], largemouth_bass: [64, 32], canary_rockfish: [32, 16], crucian_carp: [32, 32], mackerel: [32, 16], white_zebra_angelfish: [32, 64], finulon: [32, 32] };
+  for (const sp of PASSIVE_FISH_SPECIES) {
+    const p = fishPicture(sp.textureName);
+    assert.deepEqual([p.width, p.height], SIZES[sp.textureName], `${sp.textureName}: the size the release's picture had`);
+    assert.ok(p.data.some((v, i) => i % 4 === 3 && v === 255) && p.data.some((v, i) => i % 4 === 3 && v === 0), `${sp.textureName}: a fish on clear`);
+  }
+  assert.equal(fishPicture('no_such_fish'), null);
+  assert.equal(existsSync(new URL('../../../vendor/iliac-puddle-no-more', import.meta.url)), false, 'no file of the release\'s is carried');
 });
 
 test('DW-E3: the icons - each fish\'s archive a stand-in of one record, built from its picture with the aspect restored (LoadFishIconTexture\'s fallback, RestoreIconAspect) (mutants: the aspect, the archive)', async () => {
   const pic = { width: 4, height: 2, data: new Uint8Array(4 * 2 * 4).fill(255) };
   const asked = [];
-  const n = installDeepWatersFishIcons({ fetchBytes: async (name) => { asked.push(name); return new Uint8Array([1]); }, decode: async () => pic });
+  const n = installDeepWatersFishIcons({ picture: (name) => { asked.push(name); return pic; } });
   assert.equal(n, 7);
   assert.ok(isVendorArchive(9001) && isVendorArchive(9007), 'an archive that is only the icon');
   assert.ok(!isVendorArchive(216), 'TEXTURE.216 untouched');
@@ -436,8 +435,7 @@ test('DW-E3: the fish pictures load once each, edge-cleaned, bottom-up; a specie
   const made = [];
   let cleaned = 0;
   const pics = createFishPictures({
-    fetchBytes: async (name) => { if (name === 'finulon') throw new Error('404'); return new Uint8Array([1]); },
-    decode: async () => ({ width: 1, height: 2, data: new Uint8Array([1, 1, 1, 255, 2, 2, 2, 255]) }),
+    picture: async (name) => (name === 'finulon' ? null : { width: 1, height: 2, data: new Uint8Array([1, 1, 1, 255, 2, 2, 2, 255]) }),
     clean: () => { cleaned++; return true; },
     createTexture: (frames) => { made.push(frames); return { tex: made.length, frames: frames.length }; },
   });

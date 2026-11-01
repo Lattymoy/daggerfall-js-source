@@ -3,7 +3,7 @@
 // a hip-hung blade on every step its leg went forward (31 of the addon's 71 scabbards); a greatsword's tip came through
 // it in a stride and a bow's limb as the spine leant back; a pauldron came through its shoulders as an arm swung back;
 // and seated, its hem wrapped forward under the thighs past the knees. The pins below hold the cloak and what hangs
-// round it through the poses (fixtures/mw/cloakRig.mjs SWEEP), on the port's own plate and the addon's own scabbards.
+// round it through the poses (fixtures/mw/cloakRig.mjs SWEEP), on the port's own plate and our own scabbards (OWN-WORK4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { assembleFirstPersonArm, poseAssembly, bindPartsInto } from '../../../src/formats/morrowind/mwFirstPerson.js';
@@ -16,8 +16,10 @@ import { fitThirdPersonCloak } from '../../../src/combat/fpArm.js';
 import { meshToNif } from '../../../tools/nifWrite.mjs';
 import { retailSkeleton } from '../../fixtures/mw/retailRig.mjs';
 import { SHEATHED, isCloak, isGear, isUnder, body, turned, through, crossings, SWEEP } from '../../fixtures/mw/cloakRig.mjs';
+import { OWN_BONES, STAND_IN } from '../../fixtures/mw/ownGear.mjs';
+import { SHEATHING_BONE } from '../../../src/systems/weaponSheathing.js';
 
-const GEAR = [['w_claymore_daedric_sh.nif', 'Bip01 LongBladeTwoClose'], ['w_longbow_steel_sh.nif', 'Bip01 MarksmanBow'], ['w_iron_longsword_sh.nif', 'Bip01 LongBladeOneHand'], ['w_crossbow_sh.nif', 'Bip01 MarksmanCrossbow']];
+const GEAR = ['claymore', 'bow', 'longsword', 'crossbow'];
 /** The poses of SWEEP in which `which` comes through the cloak, by name. */
 function sweep(asm, which) {
   const out = [];
@@ -53,7 +55,8 @@ test('AUDIT MW-CLOAK: fit 1 holds the cloak over the poses - the rest, a stride 
   const restOnly = await body(ARMOR_MATERIAL.Ebony);
   fitCloakOver(restOnly, { isCloak, isUnder, poses: [{}] });
   const missed = sweep(restOnly, isUnder);
-  assert.ok(missed.includes('armL') || missed.includes('armR'), `fitted at rest alone, an arm swung back comes through (${missed})`);
+  // OWN-WORK4: on our biped (its shoulders let down and forward) the rest fit alone misses the lean and the stride, not an arm
+  assert.deepEqual(missed, ['leanBack5', 'leanBack10', 'strideL', 'strideR'], `fitted at rest alone, a pose of the sweep comes through (${missed})`);
   // MW-CAPE-RIGID: the cloak rides the chest alone, so leaning back swings its whole hem forward into the legs
   const noLean = await body(ARMOR_MATERIAL.Ebony);
   fitCloakOver(noLean, { isCloak, isUnder, poses: CLOAK_FIT_POSES.slice(0, 3) });
@@ -80,7 +83,7 @@ test('AUDIT MW-CLOAK: the stowed gear GOES WITH the cloak - the addon\'s greatsw
   assert.deepEqual(unfollowed, ['leanBack5', 'leanBack10'], 'fitted at rest alone, the gear comes through leaning back, and only then');
   const follow = followCloak(asm, { isCloak, isGear });
   assert.equal(typeof asm.afterPose, 'function');
-  assert.deepEqual(follow.groups.map((g) => g.pieces[0].bone), GEAR.map(([, b]) => b));
+  assert.deepEqual(follow.groups.map((g) => g.pieces[0].bone), GEAR.map((k) => SHEATHING_BONE[STAND_IN[k].type]));
   assert.ok(follow.groups.every((g) => g.contacts > 10), 'each tied at its contacts');
   assert.deepEqual(follow.groups.map((g) => g.slide), [true, true, false, false], 'slung gear may slide off the back; hip gear only turns');
   // the rest is where the rest fit put it: a pose the cloak keeps clear moves nothing
@@ -128,7 +131,7 @@ test('AUDIT MW-CLOAK: the stowed gear GOES WITH the cloak - the addon\'s greatsw
   poseAssembly(near);
   assert.ok(slab.positions.every((x, k) => Math.abs(x - hung[k]) < 1e-3), 'the rest moves the near slab nothing');
   // no cloak, no tie: the hook cleared
-  const bare = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts: [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('w_iron_longsword_sh.nif'), bare: true }] });
+  const bare = await assembleFirstPersonArm({ skeletonBytes: retailSkeleton(), parts: [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('longsword'), bare: true }], boneSources: OWN_BONES });
   bare.afterPose = () => {};
   assert.equal(followCloak(bare, { isCloak, isGear }), null);
   assert.equal(bare.afterPose, null);
@@ -141,9 +144,9 @@ test('AUDIT MW-CLOAK: the third-person build\'s fits whole (fitThirdPersonCloak)
   assert.deepEqual(fitted.notes, []);
   assert.ok(fitted.cloak.pushed > 0 && fitted.follow.groups.length === 4);
   assert.deepEqual(sweep(asm, (p) => !isCloak(p)), [], 'neither the plate nor the gear through the cloak');
-  // the swap: the longsword out, the crystal longsword in (fpArm's own order - bind, then fit with no cover to redo)
+  // the swap: the longsword out, a saber in (fpArm's own order - bind, then fit with no cover to redo)
   asm.pieces = asm.pieces.filter((p) => !(isGear(p) && p.bone === 'Bip01 LongBladeOneHand'));
-  bindPartsInto(asm, [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('w_longsword_crystal_sh.nif'), bare: true }]);
+  bindPartsInto(asm, [{ slot: 'sheath', bones: ['Bip01 LongBladeOneHand'], bytes: SHEATHED('saber'), bare: true }]);
   const swapped = fitThirdPersonCloak(asm, null);
   assert.equal(swapped.cloak, null, 'the cloak is not fitted again');
   assert.deepEqual(swapped.notes, []);
@@ -200,10 +203,10 @@ test('AUDIT MW-CLOAK: what the fits will not chase or move - a thing more than C
   const said = fitThirdPersonCloak(slab, new Set(slab.pieces.filter((p) => !isGear(p)).map((p) => p.slot))).notes;
   assert.ok(said.some((n) => /^holster @ Bip01 Spine2: over the cloak it would hang more than 15 units off the back/.test(n)), said.join(' | '));
   // and a hip blade no pitch within the limit keeps clear (the limit lowered for the pin) hangs as it was
-  const hip = await body(ARMOR_MATERIAL.Steel, [['w_iron_longsword_sh.nif', 'Bip01 LongBladeOneHand']]);
+  const hip = await body(ARMOR_MATERIAL.Steel, ['longsword']);
   fitCloakOver(hip, { isCloak, isUnder, poses: [{}] });
   const src = hip.pieces.find(isGear).source;
-  assert.deepEqual(fitStowedGear(hip, { isCloak, isGear, pitchLimit: 5 }).map((r) => r.how), ['unresolved']);
+  assert.deepEqual(fitStowedGear(hip, { isCloak, isGear, pitchLimit: 1 }).map((r) => r.how), ['unresolved']);   // OWN-WORK4: ours pitches clear within 5
   assert.equal(hip.pieces.find(isGear).source, src);
   // a rod hung at the hip across the back, behind the sheet between its ends and its ends past the cloak's sides: no
   // vertex of it is over the cloak, so the vertices alone call it clear - its edges, sampled, do not

@@ -22,6 +22,16 @@ Raw Fish's price plus 60 over its spawn weight. A catch from before takes its
 new name (`normalizeFishItems`). Every setting's description is ours; the
 defaults stay the sea's ported tuning. Pins: `dwe_fish`.
 
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for
+everything." The folder is retired (`01-Overview/Own-Work.md` holds its row). The
+seven fish are our own pictures (`systems/deepWater/fishArt.js`, by
+`art/ownPainter.js`), each under the texture name its species reads and at the
+power-of-two size the sea samples. A fish is drawn in the shape it shows, so
+`restoreIconAspect` gives its icon that shape. The sea's billboards take them
+through `createFishPictures({ picture })`, the icons through
+`installDeepWatersFishIcons`. No pixel of the release is read. Pins: `dwe_fish`,
+`ownwork4_pictures`.
+
 ## The slices
 
 | slice | what | the port's modules |

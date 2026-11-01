@@ -1,13 +1,12 @@
 // WINDFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be
 // on by default and integrate into our enhanced environments seamlessly") - WINDFALL 1.0.0 (demifiend000), ported off
-// its assembly (vendor/windfall/). THE MODEL: WindNaturalPlanner, WindRecordWeights and WindMod's state machine, pinned
+// its assembly (OWN-WORK4: its files left the tree; the settings it shipped are a literal below). THE MODEL: WindNaturalPlanner, WindRecordWeights and WindMod's state machine, pinned
 // against a C# reference that runs the decompiled method bodies themselves (the session's harness: WindCore.cs, the
 // planner's and the weights' own sources, System.Random) - two trace hashes and a table hash, float bits and all.
 // bible/07-Rendering/Windfall.md is the record.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import {
   WINDFALL_VENDOR, WINDFALL_NATURE, RECORD_WEIGHTS, RESPONSE, NATURAL, PRESENTATION, DEBUG_MODE, WINDFALL_BUILT_IN,
   plannerStableHash, hashUnit, buildNaturalPlan, effectiveChance, cooldownMultiplier, isWithinWindow, scaleAutomaticDelay, scaleGust,
@@ -124,9 +123,39 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
   assert.equal(wild.storm.swayAmplitude, F(0.08), 'sway 8% at most');
   assert.equal(wild.normal.shiverFrequency, 0.5, 'shiver 0.5 a second at least');
   assert.equal(wild.windy.strength, 1.5);
-  // every key the mod ships, under its section, with the mod's default, range and words (the heading's offset says it has
-  // no effect here - one wind); the mod's own General.Enabled is the port's switch
-  const ms = JSON.parse(readFileSync(new URL('../../vendor/windfall/modsettings.json', import.meta.url), 'utf8').replace(/^\uFEFF/, ''));
+  // every key the mod ships, under its section, with the mod's default and range, and our words (the heading's offset
+  // says it has no effect here - one wind); the mod's own General.Enabled is the port's switch. OWN-WORK4: Windfall
+  // 1.0.0's modsettings.json as it shipped, held here as a literal - [default, min, max], a switch [default].
+  const SHIPPED = {
+    'General.WindDirectionDegrees': [35, 0, 360], 'General.OverallWindyPeriodFrequency': [100, 0, 200],
+    'General.NaturalWindstormFrequency': [100, 0, 200], 'General.GustFrequency': [100, 0, 200],
+    'General.GustStrength': [100, 0, 200], 'Normal.Strength': [0.2, 0, 1.5], 'Normal.SwayAmountPercent': [1.4, 0, 8],
+    'Normal.SwaySpeed': [0.2, 0.05, 1.5], 'Normal.ShiverAmountPercent': [0.6, 0, 3],
+    'Normal.ShiverSpeed': [0.6, 0.5, 8], 'Season Frequency.SpringFrequency': [100, 0, 200],
+    'Season Frequency.SummerFrequency': [100, 0, 200], 'Season Frequency.FallFrequency': [100, 0, 200],
+    'Season Frequency.WinterFrequency': [100, 0, 200], 'Regional Frequency.OceanFrequency': [100, 0, 200],
+    'Regional Frequency.DesertFrequency': [100, 0, 200], 'Regional Frequency.MountainFrequency': [100, 0, 200],
+    'Regional Frequency.RainforestFrequency': [100, 0, 200], 'Regional Frequency.SwampFrequency': [100, 0, 200],
+    'Regional Frequency.SubtropicalFrequency': [100, 0, 200],
+    'Regional Frequency.MountainWoodsFrequency': [100, 0, 200],
+    'Regional Frequency.WoodlandsFrequency': [100, 0, 200],
+    'Regional Frequency.HauntedWoodlandsFrequency': [100, 0, 200],
+    'Regional Frequency.UnknownFrequency': [100, 0, 200], 'Weather Frequency.SunnyFrequency': [100, 0, 200],
+    'Weather Frequency.CloudyFrequency': [100, 0, 200], 'Weather Frequency.OvercastFrequency': [100, 0, 200],
+    'Weather Frequency.FogFrequency': [100, 0, 200], 'Weather Frequency.RainFrequency': [100, 0, 200],
+    'Weather Frequency.SnowFrequency': [100, 0, 200], 'Windy Day.Strength': [0.2, 0, 1.5],
+    'Windy Day.SwayAmountPercent': [2.6, 0, 8], 'Windy Day.SwaySpeed': [0.6, 0.05, 1.5],
+    'Windy Day.ShiverAmountPercent': [1.2, 0, 3], 'Windy Day.ShiverSpeed': [1.1, 0.5, 8],
+    'Gust.Strength': [0.6, 0, 1.5], 'Gust.SwayAmountPercent': [2.6, 0, 8], 'Gust.SwaySpeed': [0.8, 0.05, 1.5],
+    'Gust.ShiverAmountPercent': [1.2, 0, 3], 'Gust.ShiverSpeed': [1.7, 0.5, 8], 'Storm.Strength': [0.6, 0, 1.5],
+    'Storm.SwayAmountPercent': [2.6, 0, 8], 'Storm.SwaySpeed': [0.8, 0.05, 1.5],
+    'Storm.ShiverAmountPercent': [1.2, 0, 3], 'Storm.ShiverSpeed': [1.7, 0.5, 8],
+    'Presentation.AudioEnabled': [true], 'Presentation.AudioVolume': [0.5, 0, 1],
+    'Presentation.RegularWindVolume': [100, 0, 200], 'Presentation.GustVolume': [100, 0, 200],
+    'Presentation.FoliageRuffleVolume': [100, 0, 200], 'Presentation.LeavesEnabled': [true],
+    'Presentation.LeafAmount': [2.4, 0, 3], 'Presentation.AmbientLeafAmount': [1, 0, 3],
+    'Presentation.SnowFlurriesEnabled': [true], 'Presentation.SnowFlurryAmount': [1, 0, 3],
+  };
   // PLAIN-TEXT (2026-10-19): the mod's lines spoke of crown displacement, billboard height and windy-period frequencies; each is said plainly for a player - their words, exactly
   const PLAIN = {
     'General.WindDirectionDegrees': 'Has no effect here. The enhanced outdoors set the wind’s direction.',
@@ -186,14 +215,14 @@ test('WINDFALL1 the settings: the mod\'s keys as LoadSettings reads them - perce
     'Presentation.SnowFlurryAmount': 'How much snow blows off the trees.',
   };
   let n = 0;
-  for (const sec of ms.Sections) for (const k of sec.Keys) {
-    if (sec.Name === 'General' && k.Name === 'Enabled') continue;
-    const def = MOD_SETTINGS[WINDFALL_VENDOR].keys[`${sec.Name}.${k.Name}`];
-    assert.ok(def, `${sec.Name}.${k.Name} declared`); n++;
-    assert.equal(def.default, k.Value, `${sec.Name}.${k.Name}: the mod's default`);
-    if ('Min' in k) assert.deepEqual([def.min, def.max], [k.Min, k.Max], `${sec.Name}.${k.Name}: the mod's range`);
-    assert.equal(def.description, PLAIN[`${sec.Name}.${k.Name}`] ?? k.Description, `${sec.Name}.${k.Name}: the mod's words, or their plain rewording`);
+  for (const [key, [value, min, max]] of Object.entries(SHIPPED)) {
+    const def = MOD_SETTINGS[WINDFALL_VENDOR].keys[key];
+    assert.ok(def, `${key} declared`); n++;
+    assert.equal(def.default, value, `${key}: the mod's default`);
+    if (min !== undefined) assert.deepEqual([def.min, def.max], [min, max], `${key}: the mod's range`);
+    assert.equal(def.description, PLAIN[key], `${key}: our plain words`);
   }
+  assert.equal(n, 55, 'the 55 keys the mod ships beside its Enabled');
   assert.equal(n, Object.keys(MOD_SETTINGS[WINDFALL_VENDOR].keys).length - 1, 'no key of the port\'s own');
   assert.equal(windfallOn(''), modSetting(WINDFALL_VENDOR, 'Enabled'));
   setModSetting(WINDFALL_VENDOR, 'Enabled', true);
@@ -260,7 +289,7 @@ test('WINDFALL1 the save record: version 1, the last natural wind\'s day and con
 });
 
 test('WINDFALL1 the console: windfall <auto|normal|windy|storm|gust|bright|ruffle|leaves|status>; a test mode holds the presentation over the weather; a gust on demand is StartGust\'s, its sound handed on; status is GetDebugStatus\'s seven lines (mutants: the storm mode windy; the test mode under the weather)', () => {
-  assert.deepEqual(WINDFALL_COMMAND, { name: 'windfall', description: 'Windfall support and diagnostic controls.', usage: 'windfall <auto|normal|windy|storm|gust|bright|ruffle|leaves|status>' });
+  assert.deepEqual(WINDFALL_COMMAND, { name: 'windfall', description: 'Tests the wind: its mode, a gust, its sounds and its leaves.', usage: 'windfall <auto|normal|windy|storm|gust|bright|ruffle|leaves|status>' });
   const w = createWindfall();
   w.tick(frame());
   w.setDebugMode(DEBUG_MODE.storm);

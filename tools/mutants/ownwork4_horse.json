@@ -1,0 +1,101 @@
+[
+  {
+    "name": "OW4H-gap-on-the-edge",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "export const HORSE_ART_GROUND_GAP = 2;",
+    "new": "export const HORSE_ART_GROUND_GAP = 0;",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-still-view-off-by-one",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  if (parts) return { view: Number(parts[1]) - 1, frame: 0, still: true };",
+    "new": "  if (parts) return { view: Number(parts[1]), frame: 0, still: true };",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-rider-colours-unread",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  return (sat >= 0.22 && hue >= 55 && hue <= 320 && value > 0.12) || (sat < 0.12 && value > 0.45);",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-rider-kept",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  for (let i = 0; i < wide * tall; i++) if (keep[i]) pixels.set(src.subarray(i * 4, i * 4 + 4), i * 4);",
+    "new": "  for (let i = 0; i < wide * tall; i++) if (src[i * 4 + 3]) pixels.set(src.subarray(i * 4, i * 4 + 4), i * 4);",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-flank-unfilled",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  reach = 14,",
+    "new": "  reach = 1,",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-hilt-kept",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  if (!saddle.under) clearAboveSeat(keep, cover, saddle.seat, dx, wide, tall);",
+    "new": "  if (saddle.under) clearAboveSeat(keep, cover, saddle.seat, dx, wide, tall);",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-any-mask-is-his",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "    return unpacked.width === record.width && unpacked.height === record.height ? unpacked.mask : null;",
+    "new": "    return unpacked.mask;",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-walk-and-still-heights-swapped",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT, bob);",
+    "new": "named.still ? HORSE_ART_WALK_HEIGHT : HORSE_ART_STILL_HEIGHT, bob);",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4H-leather-a-hide",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  ['#171513', '#282521', '#3b3732', '#524d46', '#6b655c'].map((colour) => Object.freeze(hex(colour))),",
+    "new": "  ['#17140f', '#28231d', '#3b352d', '#524a40', '#6b6256'].map((colour) => Object.freeze(hex(colour))),",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OW4D-struck-frame-laid-down",
+    "file": "src/player/eyeOfTheBeholder/eotbDeath.js",
+    "old": "  return frame === 0 ? base : { ...base, laid: view };",
+    "new": "  return { ...base, laid: view };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/nobethesda2_eotb.test.js"
+    ]
+  },
+  {
+    "name": "OW4D-side-view-not-turned",
+    "file": "src/player/eyeOfTheBeholder/eotbDeath.js",
+    "old": "  Object.freeze({ turn: true, run: 0.95, deep: 0.58 }),",
+    "new": "  Object.freeze({ turn: false, run: 0.95, deep: 0.58 }),",
+    "tests": [
+      "test/player/eyeOfTheBeholder/nobethesda2_eotb.test.js"
+    ]
+  }
+]

@@ -4,15 +4,13 @@
 // THE MOD IS ONE LINE OF CODE AND 12,624 SPRITES. The line is
 // `FPSWeapon.moddedWeaponHUDAnimsEnabled = true` and everything it
 // switches on is Daggerfall Unity's own - so what is pinned here is a
-// port OF DFU, gated on a vendored mod's switch, and a door that reads
-// the sprites off the player's copy of the bundle. The bundle is not in
-// the repository (58 MB, and the port ships no mod's art), so the door
-// is driven on its loose-PNG arm and its refusals here, and was driven
-// on the real bundle by hand when it was written (12,624 textures
-// indexed, every ask at its painted size).
+// port OF DFU, gated on the mod's switch, and a door that reads a
+// player's own copy of the bundle. OWN-WORK4 (2026-10-31): the sprites
+// that come with the game are our own (ownwork4_dwart.test.js); the door
+// is driven here on its loose-PNG arm, its refusals and our arm.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dfuFile, missingDfu } from '../../dfuRoot.mjs';
 import {
   moddedWeaponHUDAnimsEnabled, moddedWeaponFilename, atlasFileName, customTextureNames,
@@ -21,6 +19,7 @@ import {
 import {
   DIVERSE_WEAPONS_MOD, setDiverseWeaponsSources, clearDiverseWeaponsSources, diverseWeaponsSourcesCount,
   diverseWeaponsBundle, diverseWeaponsImage, customWeaponImage, diverseWeaponsTexturesAttached, _resetDiverseWeaponsImages,
+  setDiverseWeaponsArt,
 } from '../../../src/combat/diverseWeapons/diverseWeaponsAssets.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings, flattenModPreset } from '../../../src/systems/modSettings.js';
 import { readWidgetSettings } from '../../../src/combat/weapon/weaponWidgetMotion.js';
@@ -52,10 +51,6 @@ test('DW1: the flag is the mod’s Enabled switch, on by default (MO1); the pres
   setModSetting('diverse-weapons', 'Enabled', false);
   assert.equal(diverseWeaponsPresetOn(), false, 'the preset rides the mod: off with it');
   _resetModSettings();
-  // the one line the mod ships, carried verbatim
-  const cs = src('vendor/diverse-weapons/DiverseWeaponsMain.cs');
-  assert.match(cs, /FPSWeapon\.moddedWeaponHUDAnimsEnabled = true;/);
-  assert.match(cs, /License:\s+MIT License/);
 });
 
 // ── WeaponBasics.GetModdedWeaponFilename ──────────────────────────────
@@ -153,8 +148,7 @@ test('DW1: the names one frame is asked by - the metal suffix, and the w_ ask fa
 // ── the door ──────────────────────────────────────────────────────────
 
 test('DW1: the door - the mod’s bundle and its spellings from the pick, nothing else; nothing attached is a fast miss and never a throw', async () => {
-  assert.equal(DIVERSE_WEAPONS_MOD.guid, '8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc');
-  assert.equal(JSON.parse(src('vendor/diverse-weapons/diverse-weapons.dfmod.json')).GUID, DIVERSE_WEAPONS_MOD.guid, 'the manifest carried is the bundle’s');
+  assert.deepEqual({ ...DIVERSE_WEAPONS_MOD }, { guid: '8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc', title: 'Diverse Weapons', version: '1.7.3', author: 'RealAKP' }, 'the bundle a player may attach, by its manifest');
   const loads = [];
   const load = async (n) => { loads.push(n); return null; };
   assert.equal(setDiverseWeaponsSources([
@@ -165,13 +159,21 @@ test('DW1: the door - the mod’s bundle and its spellings from the pick, nothin
   assert.equal(await diverseWeaponsBundle(), null, 'a loader answering nothing: no bundle, no throw');
   assert.deepEqual(loads, ['dfmod/Diverse Weapons.dfmod', 'dfmod/diverseweapons.dfmod'], 'each bundle asked once');
   assert.equal(await diverseWeaponsTexturesAttached(), false);
-  assert.equal(await diverseWeaponsImage('LONGSWORD.CIF_0-0_Iron'), null);
-  // NOTHING ATTACHED: the flag is on by default, so every weapon load
-  // asks ~35 names - the miss must cost no work at all
+  // OWN-WORK4: NOTHING ATTACHED - our set answers, built from the player's
+  // files, and a name outside it is a miss that costs no work at all
   clearDiverseWeaponsSources();
-  const before = loads.length;
-  assert.equal(await customWeaponImage('LONGSWORD.CIF_0-0_Iron'), null);
-  assert.equal(loads.length, before, 'no loader touched');
+  const built = [];
+  setDiverseWeaponsArt({ frame: async (n) => { built.push(n); return { width: 1, height: 1, data: new Uint8Array([4, 5, 6, 255]) }; } });
+  try {
+    const before = loads.length;
+    assert.deepEqual([...(await customWeaponImage('LONGSWORD.CIF_0-0_Iron')).colors], [4, 5, 6, 255], 'ours');
+    assert.equal(await customWeaponImage('WEAPON04.CIF_0-0_Iron'), null, 'a classic archive we draw no set for');
+    assert.deepEqual(built, ['LONGSWORD.CIF_0-0_Iron']);
+    assert.equal(loads.length, before, 'no loader touched');
+    setModSetting('diverse-weapons', 'Enabled', false);
+    assert.equal(await customWeaponImage('KATANA.CIF_0-0_Iron'), null, 'the mod off: the classic frame');
+    assert.deepEqual(built, ['LONGSWORD.CIF_0-0_Iron'], 'and nothing built');
+  } finally { setDiverseWeaponsArt(null); _resetModSettings(); }
 });
 
 test('DW1: the door - a loose PNG spelt as the mod asks answers, keeps its rows, and a miss is cached', async () => {
@@ -200,10 +202,22 @@ test('DW1: the door - a loose PNG spelt as the mod asks answers, keeps its rows,
 
 // ── the preset ────────────────────────────────────────────────────────
 
+/** The preset the 1.7.3 bundle ships ("Recommended settings for DW"), as a table - OWN-WORK4: the vendored JSON left
+ *  the tree, so a changed value fails here. */
+const PRESET = {
+  Modules: { Swings: 'True', Ambidexterity: 'True', Offset: 'True', Bob: 'True', Inertia: 'True', Step: 'True', DoubleScaleTextures: 'True', TrueTextureSize: 'True', Recoil: 'True' },
+  Swings: { Speed: '1', Windup: '1', Recovery: '0', VanillaAlignmentOverride: 'True', VanillaRecoveryOverride: 'False', NoDaggerMirroredStrikes: 'True' },
+  Offset: { Speed: '1' },
+  Bob: { Length: '142', Offset: '0', SizeX: '1', SizeY: '1', SpeedMove: '1', SpeedState: '1', Shape: '0', BobWhileIdle: 'True' },
+  Step: { Length: '1', Condition: '0' },
+  Inertia: { Scale: '1', Speed: '1', ForwardDepth: '1', ForwardSpeed: '1' },
+  TrueTextureSize: { TextureScaleFactor: '1' },
+  Recoil: { Condition: '0', Chance: '100', PlayEntityMissEffects: 'True', DetectEnvironment: 'True', PlayEnvironmentMissEffects: 'True', MissEffectPlacement: '0' },
+  Miscellaneous: { MirrorBows: 'False' },
+};
+
 test('DW1: the Weapon Widget preset the bundle ships, restated exactly, laid over the player’s settings while the switch is on', () => {
-  const json = JSON.parse(src('vendor/diverse-weapons/weapon-widget-preset.json'));
-  assert.equal(json.Title, 'Diverse Weapons'); assert.equal(json.Description, 'Recommended settings for DW');
-  assert.deepEqual(DIVERSE_WEAPONS_WIDGET_PRESET, json.Values, 'the restatement IS the JSON');
+  assert.deepEqual(DIVERSE_WEAPONS_WIDGET_PRESET, PRESET, 'the restatement, value for value');
   const flat = diverseWeaponsWidgetPreset();
   assert.equal(Object.keys(flat).length, 38, 'every one of the preset’s 38 keys is a declared Weapon Widget key');
   assert.equal(flat['Modules.TrueTextureSize'], true); assert.equal(flat['Modules.DoubleScaleTextures'], true);
@@ -234,19 +248,13 @@ test('DW1: the Weapon Widget preset the bundle ships, restated exactly, laid ove
 
 // ── the wiring ────────────────────────────────────────────────────────
 
-test('DW1: the pick reaches the door at BOTH of its sites, the credits name the mod, and the vendor record is whole', () => {
+test('DW1: the pick reaches the door at BOTH of its sites, and the credits name the mod', () => {
   // PIN MOVED (AUDIT VE R2): the two sites are one registration now - the store's, which the boot seam calls
   assert.match(src('src/scenes/dataSource.js'), /setDiverseWeaponsSources\(names, loadTextureFile\);/, 'the store\'s registration fans the pick out to the door');
   assert.match(src('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/, 'and the boot reaches it');
   assert.match(src('src/scenes/dataSource.js'), /<b>Diverse Weapons<\/b> comes with the game\.\s+A folder with a newer version's <b>\.dfmod<\/b> uses that version's\s+art instead\./, 'and the pick says so (DW2: the shipped set, the attached one winning)');
   const credits = src('src/ui/credits.js');
   assert.match(credits, /title: 'Diverse Weapons',\s*\n\s*version: '1\.7\.3',\s*\n\s*author: 'RealAKP',/);
-  assert.match(credits, /vendor: Object\.freeze\(\['diverse-weapons'\]\),/);
-  for (const f of ['README.md', 'DiverseWeaponsMain.cs', 'diverse-weapons.dfmod.json', 'weapon-widget-preset.json', 'Readme.txt']) {
-    assert.ok(existsSync(new URL(`../../../vendor/diverse-weapons/${f}`, import.meta.url)), `vendor/diverse-weapons/${f}`);
-  }
-  const manifest = JSON.parse(src('vendor/diverse-weapons/diverse-weapons.dfmod.json'));
-  assert.equal(manifest.ModVersion, DIVERSE_WEAPONS_MOD.version); assert.equal(manifest.ModAuthor, DIVERSE_WEAPONS_MOD.author);
-  assert.equal(manifest.Files.length, 12937, 'the script, the manifest, the preset, and 12,934 textures');
-  assert.ok(manifest.Files.some((f) => f.endsWith('DiverseWeaponsMain.cs')));
+  // OWN-WORK4: the vendored record left the tree (bible/01-Overview/Own-Work.md holds its facts); the credit's
+  // `vendor` or `retired` mark is credits.test.js's to hold
 });

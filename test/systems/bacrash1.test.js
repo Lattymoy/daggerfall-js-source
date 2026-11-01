@@ -16,13 +16,13 @@ function rig(weather) {
   const store = { ...defaults() };
   const loops = [], loops3d = [];
   const audio = {
-    registerSound: async () => true, playOneShot: () => {},
+    registerSamples: () => true, playOneShot: () => {},
     loop: (k, v, o) => { const l = { k, v, o, stopped: false, stop() { this.stopped = true; } }; loops.push(l); return l; },
     loop3d: (k, pos, v, o) => { const l = { k, pos, v, o, stopped: false, stop() { this.stopped = true; } }; loops3d.push(l); return l; },
     setReverb: () => true,
   };
   const w = { word: weather };
-  const c = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, weather: () => w.word, fetchClip: async () => new Uint8Array([1]), snowFree: () => false });
+  const c = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, weather: () => w.word, makeClip: async () => ({ samples: new Float32Array(1), rate: 22050 }), snowFree: () => false });
   const entity = { items: [], activeEffects: [], maxHealth: 100 };
   const m = (o) => ({ entity, inside: false, inBuilding: false, inDungeon: false, grounded: true, standingStill: true, isRunning: false, movingLessThanHalfSpeed: true, levitating: false, swimming: false, motorSwimming: false, pos: [0, 0, 0], centreY: 0.9, waterSurfaceY: null, onExteriorWater: false, onExteriorWaterAny: false, onExteriorPath: false, onStaticGeometry: false, onFoot: true, winter: false, climateIndex: 231, loadInProgress: false, ...o });
   return { c, w, loops, loops3d, outdoors: () => m({}), dungeon: () => m({ inside: true, inDungeon: true }), building: () => m({ inside: true, inBuilding: true }) };

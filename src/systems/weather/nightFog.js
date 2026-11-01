@@ -7,9 +7,9 @@
 // one lit air.
 //
 // WHY. A fog's colour is the light its droplets send toward the eye: the light that reaches them, which is the light the
-// land stands in. Under Dynamic Skies (DS1 - the enhanced lane's sky by default) the colour is the mod's own
-// RenderSettings.fogColor: its preset's FogDayColor walked to black on the sun's height (systems/dynamicSkies/
-// dynamicSkies.js fogColorNow - wholly black from the sun on the horizon, a third of the day's colour an hour before), and
+// land stands in. Under Dynamic Skies (DS1 - the enhanced lane's sky by default) the colour was the mod's own
+// RenderSettings.fogColor: its preset's FogDayColor walked to black on the sun's height (its setFogColor, retired with
+// it at OWN-WORK4 - wholly black from the sun on the horizon, a third of the day's colour an hour before), and
 // under the port's own dome it is the sky's horizon (0.04 to 0.09 on a clear night). So from dusk to dawn every fog closed
 // to black, or nearly, while the land about it was lit by the night's ambient and the moons: the mod's heavy fog (exp
 // 0.005 at its default density) closed into black across the first few hundred metres, the jungle's haze (0.007 a metre

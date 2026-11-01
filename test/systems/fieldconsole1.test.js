@@ -12,7 +12,7 @@
 //     probe's miss went out as a request. The vendored set is known at build time; a frame not in it is a miss.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -33,17 +33,14 @@ test('FIELD-CONSOLE1: the region read townTalk makes at load is a hoisted declar
   assert.match(w, /\n  var modes = createWorldModes\(\{/, '`modes` is a var: `modes?.mode` reads undefined, not a dead zone');
 });
 
-test('FIELD-CONSOLE1: a torch frame the vendored set does not carry is a miss, never a fetch', async () => {
+test('FIELD-CONSOLE1: a torch frame the set does not carry is a miss, never a fetch', async () => {
+  // OWN-WORK4: the set is our recipes (handheldTorchesArt.js) and the rebuilt candles - nothing is fetched at all
   const ht = read('src/systems/handheldTorches.js');
-  assert.match(ht, /const VENDORED_TEXTURES =\n\s*typeof window !== 'undefined'\n\s*\? import\.meta\.glob\('\.\.\/\.\.\/vendor\/handheld-torches\/Textures\/\*\.png', \{\n\s*eager: true,\n\s*query: '\?url',\n\s*import: 'default',\n\s*\}\)\n\s*: null;/);
+  assert.doesNotMatch(ht, /import\.meta\.glob|fetch\(/, 'no file to glob, nothing to fetch');
   assert.match(ht, /async function defaultLoadSprite\(record, frame\) \{\n\s*if \(!vendoredTexture\(`\$\{SPRITE_ARCHIVE\}_\$\{record\}-\$\{frame\}\.png`\)\) return null;/);
   const dt = read('src/scenes/droppedTorches.js');
   assert.match(dt, /async function defaultLoadTexture\(record, frame\) \{\n\s*if \(!vendoredTexture\(`\$\{DROPPED_ARCHIVE\}_\$\{record\}-\$\{frame\}\.png`\)\) return null;/);
-  // the names the loaders ask are the vendored files' own spelling
-  const files = readdirSync(new URL('../../vendor/handheld-torches/Textures/', import.meta.url)).filter((f) => f.endsWith('.png'));
   const { SPRITE_ARCHIVE, DROPPED_ARCHIVE, vendoredTexture } = await import('../../src/systems/handheldTorches.js');
-  for (const arch of [SPRITE_ARCHIVE, DROPPED_ARCHIVE]) {
-    assert.ok(files.some((f) => f.startsWith(`${arch}_0-0.png`)), `${arch}'s first frame is vendored as the loader spells it`);
-  }
-  assert.equal(vendoredTexture('112359_0-4.png'), true, 'node has no table: the loaders fetch as before (the tests hand their own)');
+  for (const arch of [SPRITE_ARCHIVE, DROPPED_ARCHIVE]) assert.equal(vendoredTexture(`${arch}_0-0.png`), true, `${arch}'s first frame, as the loader spells it`);
+  assert.equal(vendoredTexture('112359_0-4.png'), false, 'a frame past the last is a miss');
 });

@@ -3,76 +3,68 @@
 //
 // The logic lives in `eotbBillboard.js` (which table, which record,
 // which way round, how long a frame lasts). This file is the part that
-// touches the art: the mod's own sprites, uploaded once each and drawn
+// touches the art: the sets' sprites, built once each and drawn
 // as one billboard at the player's feet, plus `UpdateBillboard`'s
-// sizing and offset arithmetic (EOTB-IL, off the IL).
+// sizing and offset arithmetic (EOTB-IL, off the IL of Eye Of The
+// Beholder 2.1's assembly).
 //
-// ═══ WHY THE URLs ARE EAGER AND THE PIXELS ARE NOT ════════════════
+// OWN-WORK4 (2026-10-31): no sprite is carried. 2869 of the mod's 3035
+// are Daggerfall's own records, built from the player's ARENA2
+// (eotbDerived.json, NO-BETHESDA2); the death the author drew is ours
+// (eotbDeath.js), and the class skins are built too (classSkinArt.js).
+// A sprite's "URL" is a marker its build answers.
 //
-// The bundle ships 3035 sprites. A non-eager glob would make each one
-// its own module, which is 3035 chunks in the build; an eager glob of
-// the IMAGES would decode all of them at boot. Neither is a thing to
-// do to a browser.
-//
-// `{ eager: true, query: '?url' }` is the middle: Vite resolves every
-// path to a URL STRING at build time - one object, no chunks - and
-// emits the PNGs as plain assets that are fetched only when the body
-// asks for one. The mod loads every texture of its 21 tables up front
-// (`InitializeTextures`), and the body does the same in the background
-// the moment it attaches - see `eotbBody.preload`.
-//
-// IN NODE the glob is not taken at all (the same door `dynamicSkies
-// Assets.js` uses): `import.meta.glob` is a Vite macro, and the pins
-// drive this module through its seams rather than through the bundle.
+// IN NODE no marker is handed out (`eotbSpriteUrl`), and the pins drive
+// this module through its seams rather than through the bundle.
 
 import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount } from './eotbBillboard.js';
 import { layeredSprite, isLayeredKey, decodeLayered } from './layeredArmor.js';   // WORN-ARMOUR: the on-foot body in the armour it wears
-import { classSkinOf, classRecord, classFrame, classRecordScale } from '../classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
+import { classSkinOf, classRecord, classFrame, classRecordScale, classSkinKeyOf, CLASS_SPRITE_COUNT } from '../classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
 import { toColor32, toColor32OrderInPlace } from '../../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../systems/horse/horseCoats.js';   // COATS1: the mount's look
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
-import spriteInfo from '../../../vendor/eye-of-the-beholder/spriteInfo.json' with { type: 'json' };
-import EOTB_DERIVED from '../../../vendor/eye-of-the-beholder/derived.json' with { type: 'json' };   // NO-BETHESDA2: the pictures that are Daggerfall's own
+import spriteInfo from './eotbSpriteInfo.json' with { type: 'json' };   // the mod's per-sprite XML, folded (EOTB0)
+import EOTB_DERIVED from './eotbDerived.json' with { type: 'json' };   // NO-BETHESDA2: the pictures that are Daggerfall's own
 import { classicArt } from '../../systems/classicArt.js';   // NO-BETHESDA2: and the one reader that builds them from the player's files
+import { deathSpec, deathKeys, layDown } from './eotbDeath.js';   // OWN-WORK4: the death, ours
 
 const IN_BROWSER = typeof window !== 'undefined';
-const URLS = IN_BROWSER
-  ? {
-    ...import.meta.glob('../../../vendor/eye-of-the-beholder/Textures/*/*.png', { eager: true, query: '?url', import: 'default' }),
-    // SKIN2: the class skins, keyed the same way (`<archive>_<record>-<frame>`) - their archives (1504-1541) are not the mod's (112364-112386)
-    ...import.meta.glob('../../../vendor/class-skins/Textures/*/*.png', { eager: true, query: '?url', import: 'default' }),
-  }
-  : {};
+/** OWN-WORK4: the death sprites that are ours (eotbDeath.js), by key. */
+const OWN_DEATH = Object.freeze(deathKeys(EOTB_DERIVED));
 
-/** `<archive>_<record>-<frame>` -> the built asset's URL. */
-const BY_KEY = Object.fromEntries(
-  Object.entries(URLS).map(([p, u]) => [p.split('/').pop().replace(/\.png$/, ''), u]),
-);
 // NAMED `eotbSpriteUrl`, not `spriteUrl`: `systems/handheldTorches.js`
 // already exports a `spriteUrl` and it answers a different question
 // (which torch sprite, out of the mod's own sheet). audit24's
 // duplicate-declaration ratchet caught the collision - ONE DFU
 // MEMBER, ONE EXPORT - and these two are genuinely different things,
 // so the answer is a distinct name rather than a shared home.
-export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : BY_KEY[key] ?? (IN_BROWSER ? derivedSpriteUrl(key) : null));   // WORN-ARMOUR: a worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
+export const eotbSpriteUrl = (key) => (isLayeredKey(key) ? key : IN_BROWSER ? derivedSpriteUrl(key) ?? classSpriteUrl(key) : null);   // WORN-ARMOUR: a worn-armour key is its own "URL" - the decoders compose it (layeredArmor.js decodeLayered)
 /** How many sprites the build can draw - for the probes, and
  *  so "the art is wired" is a number rather than a hope. AUDIT 68
  *  S15-eotb-spritecount-hot: counted once - the table never changes, and
- *  `eotbBody.ready()` asks about eleven times a frame. NO-BETHESDA2: the files and the specs. */
-const SPRITE_COUNT = Object.keys(BY_KEY).length + (IN_BROWSER ? Object.keys(EOTB_DERIVED).length : 0);
+ *  `eotbBody.ready()` asks about eleven times a frame. NO-BETHESDA2: the specs; OWN-WORK4: our death and class frames. */
+const SPRITE_COUNT = IN_BROWSER ? Object.keys(EOTB_DERIVED).length + OWN_DEATH.length + CLASS_SPRITE_COUNT : 0;
 export const spriteCount = () => SPRITE_COUNT;
 
 // ── NO-BETHESDA2 (2026-10-31, the owner): A SPRITE THAT IS DAGGERFALL'S OWN ────────────────────────────────────────
-// 2869 of the bundle's 3035 are TEXTURE records exactly. They are not carried: derived.json names each one's record and
-// palette, and the picture is built from the player's own ARENA2 (systems/classicArt.js). The author's 166 stay files.
+// 2869 of the bundle's 3035 are TEXTURE records exactly. They are not carried: eotbDerived.json names each one's record
+// and palette, and the picture is built from the player's own ARENA2 (systems/classicArt.js). OWN-WORK4: the other 166,
+// the author's death, are ours - the class's struck record and that record laid down (eotbDeath.js deathSpec).
 // A derived sprite's "URL" is a marker the decoders build, as a worn-armour key is composed. In node, as the glob, none.
 const DERIVED_MARK = 'DF:';
 export const isDerivedSprite = (url) => typeof url === 'string' && url.startsWith(DERIVED_MARK);
-/** The marker for `key`, or null where derived.json names no spec for it. Pure, browser or not. */
-export const derivedSpriteUrl = (key) => (Object.hasOwn(EOTB_DERIVED, key) ? `${DERIVED_MARK}${key}` : null);
-/** The spec a marker (or a bare key) names - `{ from, pal }` (formats/derivedTexture.js) - or null. */
-export const derivedSpriteSpec = (url) => EOTB_DERIVED[isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url] ?? null;
+/** The spec for a bare key: eotbDerived.json's, or our death's. */
+const specOf = (key) => EOTB_DERIVED[key] ?? deathSpec(key, EOTB_DERIVED);
+/** The marker for `key`, or null where no spec is named for it. Pure, browser or not. */
+export const derivedSpriteUrl = (key) => (specOf(key) ? `${DERIVED_MARK}${key}` : null);
+/** The spec a marker (or a bare key) names - `{ from, pal }` (formats/derivedTexture.js), with `laid` for a body laid
+ *  down - or null. */
+export const derivedSpriteSpec = (url) => specOf(isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url) ?? null;
+/** OWN-WORK4 (2026-10-31): a class skin's frame is ours, painted on the player's own class sheet (player/classSkinArt.js,
+ *  loaded on the first one) - the same marker, the same paced builds. Pure, browser or not. */
+export const classSpriteUrl = (key) => (classSkinKeyOf(key) ? `${DERIVED_MARK}${key}` : null);
+const buildClassFrame = (own) => import('../classSkinArt.js').then((art) => art.classSkinPicture(own));
 /** The builds, a few milliseconds of them a task: once a TEXTURE file lands, a set's 145 built in one task took ~85 ms. */
 const BUILD_BUDGET_MS = 6;
 const _builds = [];
@@ -86,13 +78,16 @@ async function drainBuilds() {
   }
   _building = false;
 }
+/** OWN-WORK4: a spec built - a body laid down is its struck record built, then turned onto the ground by our code. */
+const buildSpec = async (spec, build) => (spec.laid == null ? build(spec) : layDown(await build({ from: spec.from, pal: spec.pal }), spec.laid));
 /** A derived sprite's picture, top row first, built from the player's own record (`build` the pins' door). Rejects
  *  where the player's file is missing, as a PNG's failed fetch does. */
 export function buildDerivedSprite(url, build = (spec) => classicArt().build(spec)) {
-  const spec = derivedSpriteSpec(url);
-  if (!spec) return Promise.reject(new Error(`${url}: no spec in derived.json`));
+  const own = classSkinKeyOf(isDerivedSprite(url) ? url.slice(DERIVED_MARK.length) : url);   // OWN-WORK4: a class frame, ours
+  const spec = own ? null : derivedSpriteSpec(url);
+  if (!own && !spec) return Promise.reject(new Error(`${url}: no spec in eotbDerived.json`));
   return new Promise((resolve, reject) => {
-    _builds.push(() => Promise.resolve().then(() => build(spec)).then(resolve, reject));
+    _builds.push(() => Promise.resolve().then(() => (own ? buildClassFrame(own) : buildSpec(spec, build))).then(resolve, reject));
     if (!_building) drainBuilds();
   });
 }
@@ -111,7 +106,7 @@ export const sizeMod = ({ riding = false, transformed = false, scale = 1 } = {})
 /**
  * [IL] `PlayerBillboardState.InitializeTextures`'s XML (IL_5ae7-IL_5b81):
  * the per-sprite `scale`, `X` and `Y` beside a record's FIRST frame,
- * folded to `spriteInfo.json` at EOTB0 (1035 files, six distinct
+ * folded to `eotbSpriteInfo.json` at EOTB0 (1035 files, six distinct
  * triples). The rect is `(X / scale, Y / scale, width / scale, height
  * / scale)`; a record with no XML is `(0, 0, width, height)`. So the
  * offset is in METRES, in the billboard's parent frame - X along the

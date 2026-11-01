@@ -1,0 +1,185 @@
+[
+  {
+    "name": "OWN4-upscale-clamp-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "        v = v < lo ? lo : v > hi ? hi : v;\n        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;",
+    "new": "        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-upscale-alpha-soft",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;",
+    "new": "        out[o + c] = v + 0.5;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-sharpen-past-its-range",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      t = t < lo ? lo : t > hi ? hi : t;\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-grain-unseeded",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  addDetail(sharp, src, { strength: factor > 1.01 ? 0.07 : 0.04, cells, seed, wrap });",
+    "new": "  addDetail(sharp, src, { strength: factor > 1.01 ? 0.07 : 0.04, cells, seed: 0, wrap });",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-grade-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  return grade(sharp, { contrast: 0.12, saturation: 1.08 });",
+    "new": "  return sharp;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-road-relief-unlit",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);",
+    "new": "      const k = pave + verge * 0.88 + (1 - pave - verge);",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-road-verge-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);",
+    "new": "      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + (1 - pave);",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-desert-water-graded",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const m = sandOf(i) * 0.9;",
+    "new": "      const m = 0.9;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-desert-ripple-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const k = (0.86 + 0.7 * (rel - 1)) * (1 + 0.05 * ripple);",
+    "new": "      const k = 0.86 + 0.7 * (rel - 1) + 0 * ripple;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-snow-on-the-water",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "    cover[i] = (1 - water) * (fromSummer ? clamp01(1.02 - 0.75 * steep) : smooth(0.62, 0.71, ground.ht[i]));",
+    "new": "    cover[i] = water * 0 + (fromSummer ? clamp01(1.02 - 0.75 * steep) : smooth(0.62, 0.71, ground.ht[i]));",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-summer-left-bare",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "    cover[i] = (1 - water) * (fromSummer ? clamp01(1.02 - 0.75 * steep) : smooth(0.62, 0.71, ground.ht[i]));",
+    "new": "    cover[i] = (1 - water) * (fromSummer ? 0 * steep : smooth(0.62, 0.71, ground.ht[i]));",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-paving-snowed-on",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "    cover[i] = (1 - water) * (fromSummer ? clamp01(1.02 - 0.75 * steep) : smooth(0.62, 0.71, ground.ht[i]));",
+    "new": "    cover[i] = (1 - water) * (fromSummer ? clamp01(1.02 - 0.75 * steep) : smooth(0.32, 0.41, ground.ht[i]));",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-snow-left-warm",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const tone = [v * (240 - 16 * hollow), v * (244 - 8 * hollow), v * 254];",
+    "new": "      const tone = [v * 254, v * (244 - 8 * hollow), v * (240 - 16 * hollow)];",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-mask-rows-flipped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      out[y * w + x] = m >= 0.96 ? 255 : m < 0.02 ? 0 : Math.round(m * 255);",
+    "new": "      out[(h - 1 - y) * w + x] = m >= 0.96 ? 255 : m < 0.02 ? 0 : Math.round(m * 255);",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-albedo-warm",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "    data[i * 4 + 2] = Math.min(255, 255 * (v + 0.03 + glint) + 0.5);",
+    "new": "    data[i * 4 + 2] = Math.min(255, 255 * (v - 0.08 + glint) + 0.5);",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-swamp-winter-snowed",
+    "file": "src/systems/ownTextures/ownTexturePacks.js",
+    "old": "      const summer = archive === SWAMP_SUMMER ? archive : archive - 1;",
+    "new": "      const summer = archive;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js",
+      "test/systems/ve4_vanillaEnhancedShipped.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-snow-fallback-dropped",
+    "file": "src/systems/ownTextures/ownTexturePacks.js",
+    "old": "      return { rule: 'snow', from: [archive, record, frame], fallback: [archive - 1, record, frame], w, h, seed };",
+    "new": "      return { rule: 'snow', from: [archive, record, frame], w, h, seed };",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js",
+      "test/systems/environs_texturePacks.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-masks-summer-unread",
+    "file": "src/systems/ownTextures/ownTexturePacks.js",
+    "old": "        src = await picture(a - 1, r).catch(() => null);",
+    "new": "        src = null;",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-masks-nothing-taken-for-snow",
+    "file": "src/systems/ownTextures/ownTexturePacks.js",
+    "old": "    if (!read) throw new Error(`TEXTURE.${String(a).padStart(3, '0')}: no record to lay the snow by`);\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownwork4_textures.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-shipped-look-credited-to-carademono",
+    "file": "src/systems/overhauls.js",
+    "old": "          if (!b || b.shipped) return OUR_NAME;",
+    "new": "          if (!b) return OUR_NAME;",
+    "tests": [
+      "test/systems/ve1_vanillaEnhanced.test.js",
+      "test/ui/overhauls.test.js"
+    ]
+  }
+]

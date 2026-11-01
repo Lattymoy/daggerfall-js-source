@@ -174,12 +174,12 @@ test('DISC9: indoors you hear the rain the street heard - the sim\'s word says r
     const store = Object.fromEntries(Object.entries(MOD_SETTINGS[BETTER_AMBIENCE_VENDOR].keys).map(([k, d]) => [k, d.default]));
     const loops = [];
     const audio = {
-      registerSound: async () => true, playOneShot: () => {}, setReverb: () => true,
+      registerSamples: () => true, playOneShot: () => {}, setReverb: () => true,
       loop: (k) => { const l = { k, stopped: false, stop() { this.stopped = true; } }; loops.push(l); return l; },
       loop3d: () => null,
     };
     // the mod as shipped: NO weather dep - its default is the ear's word
-    const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, fetchClip: async () => new Uint8Array([1]), snowFree: () => false });
+    const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, makeClip: async () => ({ samples: new Float32Array(1), rate: 22050 }), snowFree: () => false });
     const entity = { items: [], activeEffects: [], maxHealth: 100 };
     const m = (o) => ({ entity, inside: false, inBuilding: false, inDungeon: false, grounded: true, standingStill: true, isRunning: false, movingLessThanHalfSpeed: true, levitating: false, swimming: false, motorSwimming: false, pos: [0, 0, 0], centreY: 0.9, waterSurfaceY: null, onExteriorWater: false, onExteriorWaterAny: false, onExteriorPath: false, onStaticGeometry: false, onFoot: true, winter: false, climateIndex: 231, loadInProgress: false, ...o });
     ba.frame(0, m({})); await ba.settle();

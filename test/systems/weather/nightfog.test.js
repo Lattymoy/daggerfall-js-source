@@ -13,7 +13,7 @@ import { NIGHT_AIR, airLight, airColor, litFog, nightFogOn } from '../../../src/
 import { exteriorAmbient, setLightCurve, daylightScale } from '../../../src/world/worldClock.js';
 import { FOG_SETTINGS, fogForWeather, weatherSunlightScale } from '../../../src/world/weather.js';
 import { skyState } from '../../../src/render/enhancedSky.js';
-import { WEATHER_PRESET, parseSkyboxSetting, parseLightCurve, fogColorNow, sunLightDirection } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
+import { DYNAMIC_LIGHT_CURVE, skyFrame, weatherRow } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
 import { createSkyController, outdoorFogColor } from '../../../src/scenes/shared.js';
 import { getFloat, setValue } from '../../../src/systems/settings/settings.js';
 
@@ -22,15 +22,16 @@ const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
 const near = (a, b, e = 1e-6) => Math.abs(a - b) <= e;
 const nearAll = (a, b, e = 1e-6) => a.length === b.length && [...a].every((v, i) => near(v, b[i], e));
 const WEATHERS = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
-const MOD_CURVE = parseLightCurve(rd('vendor/dynamic-skies/LightCurveSettings/LightCurve.json'));
-const preset = (w) => parseSkyboxSetting(rd(`vendor/dynamic-skies/SkyboxSettings/${WEATHER_PRESET[w]}.json`));
-/** the mod's own fog colour at a minute (BLBSkybox.setFogColor, as its runtime asks it: the direction-to-sun's height) */
-const modFog = (w, m) => { const s = preset(w); return fogColorNow(s, s.AtmosphereLerpDuration, sunLightDirection(m)[1]); };
+// PIN MOVED (OWN-WORK4, 2026-10-31): Dynamic Skies is our own sky now - its fog colour is its horizon (skyFrame), its
+// light curve its own rule. The mod's black night these pins were written against is history.
+const MOD_CURVE = DYNAMIC_LIGHT_CURVE;
+/** Dynamic Skies' fog colour at a minute: the sky's horizon, as the instance publishes it */
+const modFog = (w, m) => skyFrame({ minuteOfDay: m, row: weatherRow(w), lightCurve: MOD_CURVE }).fogColor;
 /** the port's dome's: SetSkyFogColor over the dome's horizon */
 const domeFog = (w, m) => outdoorFogColor(fogForWeather(w), skyState({ minuteOfDay: m, weather: w }).clearColor);
 /** the air at a minute in a weather, no moon */
 const airAt = (w, m, nightScale = 1, moon = null) => airColor(airLight({ minute: m, nightScale, sun: weatherSunlightScale(w, false), moon }));
-/** each light curve the world can run: the rig's (the dome) and Dynamic Skies' own (BLBSkybox.SetLightCurve) */
+/** each light curve the world can run: the rig's (the dome) and Dynamic Skies' own (its rule, OWN-WORK4) */
 const underCurve = (keys, fn) => { setLightCurve(keys); try { fn(); } finally { setLightCurve(null); } };
 
 test('NIGHT-FOG THE AIR\'S NUMBERS: half the light that reaches it, half of Masser\'s key, leaned cool (mutants: each number moved)', () => {
@@ -74,7 +75,7 @@ test('NIGHT-FOG THE FOG, LIT: a black fog becomes the air, a fog as bright is IT
   assert.equal(litFog([0, 0, 0], air, out), out, 'into the array handed');
 });
 
-test('NIGHT-FOG THE DAY IS WHERE IT WAS: from 10:00 to 14:00 every weather\'s fog, on Dynamic Skies (its own light curve) and on the dome (the rig\'s), winter or not, comes back ITSELF - the mod\'s thunder at noon, the nearest, over air of 0.145; its shoulders, the mod\'s 0.149 walked darker on the sun\'s height, are the air\'s (mutants: the albedo raised to 0.55; the identity\'s edge moved)', () => {
+test('NIGHT-FOG THE DAY IS WHERE IT WAS: from 10:00 to 14:00 every weather\'s fog, on Dynamic Skies (its own light curve) and on the dome (the rig\'s), winter or not, comes back ITSELF - the storm\'s at noon over its air (mutants: the albedo raised to 0.55; the identity\'s edge moved)', () => {
   for (const [name, keys, fogOf] of [['Dynamic Skies', MOD_CURVE, modFog], ['the dome', null, domeFog]]) {
     underCurve(keys, () => {
       for (const w of WEATHERS) for (const winter of [false, true]) for (let m = 600; m <= 840; m += 20) {
@@ -86,19 +87,17 @@ test('NIGHT-FOG THE DAY IS WHERE IT WAS: from 10:00 to 14:00 every weather\'s fo
   }
   underCurve(MOD_CURVE, () => {
     const thunder = modFog('thunder', 720), air = airAt('thunder', 720);
-    assert.ok(lum(air) < lum(thunder) && lum(thunder) - lum(air) < 0.01, `the mod's thunder at noon (${lum(thunder).toFixed(4)}) the day's nearest, over its air (${lum(air).toFixed(4)})`);
-    for (const m of [480, 960]) assert.ok(lum(litFog(modFog('thunder', m), airAt('thunder', m))) > lum(modFog('thunder', m)) + 0.02, `the storm's shoulder at ${m / 60}h: lifted to its air`);
+    assert.ok(lum(air) < lum(thunder), `the storm's fog at noon (${lum(thunder).toFixed(4)}) over its air (${lum(air).toFixed(4)})`);
   });
 });
 
-test('NIGHT-FOG THE NIGHT IS LIT AIR: the mod\'s black is the air in every weather, the moons brighten it, the dome\'s night-blue horizon is lifted with its blue kept, the dome\'s rain and DFU\'s grey are left, and a player\'s Night Brightness at none keeps the night black (mutants: the albedo dropped; the moon unread; the lift from the fog\'s colour)', () => {
+test('NIGHT-FOG THE NIGHT IS LIT AIR: Dynamic Skies\' dark night horizon is lifted to the air in every weather, the moons brighten it, the dome\'s night-blue horizon is lifted with its blue kept, the dome\'s rain and DFU\'s grey are left, and a player\'s Night Brightness at none keeps the night black (mutants: the albedo dropped; the moon unread; the lift from the fog\'s colour)', () => {
   underCurve(MOD_CURVE, () => {
-    for (const w of WEATHERS) for (const m of [1140, 1380, 0, 240]) {
-      const fog = modFog(w, m);
-      assert.deepEqual([...fog], [0, 0, 0], `the mod's ${w} at ${m / 60}h is black`);
-      const lit = litFog(fog, airAt(w, m));
-      assert.ok(nearAll(lit, airAt(w, m)) && near(lum(lit), 0.125), `${w} at ${m / 60}h: the air, at ${lum(lit).toFixed(3)}`);
+    for (const w of WEATHERS) for (const m of [1260, 1380, 0, 240]) {
+      const fog = modFog(w, m), lit = litFog(fog, airAt(w, m));
+      assert.ok(near(lum(lit), Math.max(lum(fog), 0.125), 1e-6), `${w} at ${m / 60}h: never darker than the air (${lum(fog).toFixed(3)} to ${lum(lit).toFixed(3)})`);
     }
+    for (const m of [1380, 0]) assert.ok(lum(modFog('sunny', m)) < 0.1, `a clear night's horizon is darker than the air at ${m / 60}h, so it is lifted`);
     const masser = { scale: 0.25, color: [0.827, 0.604, 0.525], ambient: [0.004, 0.004, 0.004] };
     assert.ok(lum(litFog([0, 0, 0], airAt('fog', 1380, 1, masser))) > 0.15, 'a full Masser lights the fog brighter');
     assert.deepEqual([...litFog([0, 0, 0], airAt('fog', 1380, 0))], [0, 0, 0], 'Night Brightness at none: the player\'s dark night');
@@ -129,7 +128,6 @@ test('NIGHT-FOG DUSK AND DAWN ARE SMOOTH: on both skies, minute by minute throug
       }
     });
   }
-  underCurve(MOD_CURVE, () => assert.ok(daylightScale(1050) > 0.7 && lum(modFog('sunny', 1050)) < 0.1, 'the case: at 17:30 the mod\'s fog was nearly black under a land lit at three quarters of noon'));
 });
 
 test('NIGHT-FOG THE CONTROLLER hands every host the lit fog on the enhanced lane - the hour and the sun its use() was handed, the player\'s Night Brightness, the moons - the sky\'s own colour where nothing lacks, and DFU\'s verbatim on the classic panorama and behind ?nightfog=off; indoors takes none of it (mutants: the lane unread; the door unread; the hour unkept; the moon unread; the Night Brightness unread)', () => {

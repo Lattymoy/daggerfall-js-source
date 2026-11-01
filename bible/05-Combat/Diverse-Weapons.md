@@ -11,6 +11,21 @@ record and frame; Weapon Widget's double-scale idle for each; the
 inventory and paper-doll icons in every metal; the Wabbajack's own set.
 12,624 sprites, 58 MB.
 
+**OWN-WORK4 (2026-10-31, the owner).** "A proper 1 to 1 recreation for
+everything." vendor/diverse-weapons is retired: its script, manifest, preset,
+readme, the 12,612 sprites under `public/art/` and the twelve dagger specs
+(their edits were the author's blade) left the tree, with the two tools. Every
+name the mod answered is our own now, built at runtime from the player's
+WEAPON*.CIF and TEXTURE records (`combat/diverseWeapons/diverseWeaponsArt.js`;
+the looks in `diverseWeaponsIndex.js`): each blade reshaped by a rule of
+length, width, curve, chisel and fuller (the dagger's behind the hand), the war
+axe single-bitted, the staff and the Wabbajack ringed, each metal by our own
+ramp, the hand Daggerfall's.
+An enchanted weapon is built from the magic file, so it fills the box it is
+drawn in. The idles are Scale2x, the icons the classic records in our metals.
+Our set answers only while the mod is on. Pins: `ownwork4_dwart.test.js`,
+`dw2_shipped.test.js`, `nobethesda3_dwdaggers.test.js`; `tools/mutants/ownwork4dw.json`.
+
 ## The mod is one line
 
 ```csharp
@@ -52,15 +67,15 @@ Mac, the same day: "this needs to be in the codebase, not an attachable
 file". So the 12,624 sprites are under `public/art/diverse-weapons/`,
 by the exact name DFU asks for, the way Shield Widget's 600 are under
 `vendor/shield-widget/Textures/`: re-encoded from the bundle's
-Texture2D objects by `tools/diverseWeaponsExtract.mjs` as indexed PNG
-where the picture fits one and RGBA where it does not, each file read
+Texture2D objects by `tools/diverseWeaponsExtract.mjs` (RETIRED) as indexed PNG
+where the picture fits one, RGBA where it does not, each file read
 back and compared to its texel before the next is written - every drawn
-pixel identical, every hidden pixel hidden. Under `public/` rather than
-`vendor/` because that many files through the bundler's `new URL` glob
+pixel identical, every hidden pixel hidden. Under `public/`, not
+`vendor/`, because that many files through the bundler's `new URL` glob
 is a 12,624-entry map in a chunk; `public/` is served as it is, and the
 URL is computed off the app root (`systems/appRoot.js`, the held map's
 shape). What the folder may hold is the mod's own manifest:
-`tools/diverseWeaponsIndex.mjs` derives the door's index from it (1,298
+`tools/diverseWeaponsIndex.mjs` (RETIRED) derives the door's index from it (1,298
 stems with a bitmask over MetalTypes' order - 39 KB where the names are
 350) and `test/tooling/doctrine.test.js` derives the folder's membership from
 it, so a name the set lacks is a miss without a fetch and a file the

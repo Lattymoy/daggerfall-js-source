@@ -216,7 +216,9 @@ test('AUDIT GALLEON-2 DK2: THE LEASH KEEPS A BODY ON THE LEVEL IT LAST STOOD ON 
       }
     }
   }
-  assert.equal(walks, 8, 'the walks across her stair\'s top treads');
+  // PIN MOVED (OWN-WORK4, 2026-10-31): the Carrack is our own - her stair kept up her forecastle's front its whole flight,
+  // 25 of its points walked across both ways (Come Sail Away 2.1's: 4)
+  assert.equal(walks, 50, 'the walks across her stair\'s top treads');
   assert.equal(dropped, 0, `dropped off her stair: ${dropped} of ${walks} - first ${first}`);
   // standing on her main deck under her forecastle, no floor stood on before (a body new to the leash): never lifted,
   // and put on her deck under her forecastle beside it - a cell's diagonal across at the most, never slid out to her
@@ -231,12 +233,21 @@ test('AUDIT GALLEON-2 DK2: THE LEASH KEEPS A BODY ON THE LEVEL IT LAST STOOD ON 
     if (got[1] > y + DECK_STEP) { lifted++; firstUp ||= `(${x.toFixed(2)}, ${z.toFixed(2)}) -> ${fmt(got)}`; }
     if (side > across) { across = side; acrossAt = `(${x.toFixed(2)}, ${z.toFixed(2)}) -> ${fmt(got)}`; }
   }
-  assert.equal(n, 914, 'her standable main-deck points under her forecastle');
+  assert.equal(n, 1240, 'her standable main-deck points under her forecastle');   // PIN MOVED (OWN-WORK4): our Carrack's (Come Sail Away 2.1's 914)
   assert.equal(lifted, 0, `lifted onto her forecastle standing still: ${lifted} of ${n} - first ${firstUp}`);
   assert.ok(across <= d.cell * Math.SQRT2, `moved ${across.toFixed(2)} m across her at ${acrossAt}`);
+  // OWN-WORK4: pressed past her main deck's end under her forecastle along her middle (no floor stood on before) - set
+  // straight back onto it, its floor under her half deck's read, never a cell aside whose top floor is her main deck
+  for (const x of [-0.25, 0]) {
+    body.f.deckLocal = null;
+    const got = body.press([x, main, 17]);
+    assert.ok(Math.abs(got[0] - x) < 1e-6 && Math.abs(got[1] - main) < 0.01 && got[2] < 17, `pressed past her deck's end at x ${x}: ${fmt(got)}`);
+  }
   // fallen through her main deck under her forecastle (stood on it a frame ago): back on it, never lifted onto her
   // forecastle - the floor of its piece nearest the one it stood on, never the one nearest where it fell to
-  for (const [x, z] of [[0, 15.01], [-1, 14.51], [1, 15.51]]) for (const drop of [1.5, 2.5]) {
+  // PIN MOVED (OWN-WORK4): our Carrack's points under her forecastle, by her stair's head (Come Sail Away 2.1's were
+  // (0, 15.01), (-1, 14.51) and (1, 15.51))
+  for (const [x, z] of [[0.5, 15.01], [0, 16.01], [0.5, 15.51]]) for (const drop of [1.5, 2.5]) {
     const y0 = d.heightAt(x, z, main), got = leashOne(d, F.boat).step([x, y0, z], [x, y0 - drop, z]);
     assert.ok(Math.abs(y0 - main) < 0.01 && Math.abs(got[1] - main) < 0.01, `fallen ${drop} m through her deck at (${x}, ${z}): set at ${fmt(got)}`);
   }
@@ -418,7 +429,9 @@ test('AUDIT GALLEON-2 DK2 and DK4: THE MOD\'S GALLEON - where the new galleon wi
     const pool = await fallbackPool();
     assert.equal(hullBuild(HULL.SmallShip), ships.MOD_SMALL_SHIP_BUILD, 'her numbers the mod galleon\'s');
     const d = pool.deckOf(HULL.SmallShip, 0);
-    assert.equal(d.count, 727, 'the mod\'s galleon\'s deck');
+    // PIN MOVED (OWN-WORK4, 2026-10-31): hull 2 falls back to our own Small Ship - her main deck, poop and forecastle
+    // joined up their stairs, 2190 cells (Come Sail Away 2.1's galleon's 727, navalDeck.js's record below)
+    assert.equal(d.count, 2190, 'the mod\'s galleon\'s deck');
     const DECK = src('src/systems/naval/navalDeck.js');
     assert.doesNotMatch(DECK, /the mod's galleon 714 -> 750/, 'measured over the new galleon\'s extent');
     assert.match(DECK, /the mod's galleon 690 -> 727/, 'over her own');

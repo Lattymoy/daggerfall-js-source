@@ -2,7 +2,7 @@
 // CSA-F (2026-09-27): COME SAIL AWAY'S WAVES - ComeSailAway.cs's
 // UpdateWaveMesh (2145-3477, its body from 2797), InitializeWaveTextures
 // (1811-1819), the wave object Start builds (1030-1037) and the material it
-// wears (the bundle's CurrentMaterial.mat, Models/materials.json), as data
+// wears (Come Sail Away 2.1's CurrentMaterial.mat; OWN-WORK4: our own, world/ships/ownBoats/ownBoatFiles.js), as data
 // the runtime keeps and the host draws.
 //
 // WHAT THE WAVES ARE. Not the open sea's swell: a strip of breakers laid on
@@ -44,7 +44,7 @@ const f = Math.fround;
 export const WAVE_ARCHIVE = 112395;
 export const WAVE_RECORD = 2;
 export const WAVE_FRAME_LIMIT = 99;
-/** ...and what it finds: the mod's thirty-two frames, 112395_2-0 to -31 (Textures/derived.json; pinned), the loop
+/** ...and what it finds: the mod's thirty-two frames, 112395_2-0 to -31 (OWN-WORK4: ours, csaPictures.js; pinned), the loop
  *  stopping at the first import that fails. */
 export const WAVE_FRAME_COUNT = 32;
 /** ComeSailAway.WaterLevel's metre over which a ray's hit is land (`num2 = (int)WaterLevel + 1`). */
@@ -85,7 +85,7 @@ export const BAYER_8X8 = Object.freeze([
 /**
  * FIELD BUGS 2026-09-29 (the sea) #4 (the Discord, through Mac: "Water flickers from a distance"): THE FRAMES FROM
  * AFAR. The mod's 32 frames ship as one level each, point-filtered (the bundle's Texture2Ds: m_MipCount 1,
- * m_FilterMode 0 - vendor/come-sail-away/Textures/textures.json), and a frame is tiled ten times over a strip hundreds
+ * m_FilterMode 0; OWN-WORK4: ours are painted, systems/comeSailAway/csaPictures.js), and a frame is tiled ten times over a strip hundreds
  * of metres long: from a few hundred metres off a screen pixel covers dozens of its texels and picks one, a different
  * one each time the deck bobs the camera a centimetre - the coast's breakers boil (tools/fbseaWaterProbe.mjs: a third
  * to all of a strip's pixels change from one bob to the next, from 300 m out, at every height the camera stands at).

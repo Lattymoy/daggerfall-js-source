@@ -14,10 +14,10 @@ import { quatRotate, quatLookRotation } from '../../../src/world/quat.js';
 import { quatEuler } from '../../../src/world/unityAnimator.js';
 import { evaluateMinMax, SPACE } from '../../../src/world/unityParticles.js';
 import { PART_CUT_FS, PART_PREMUL_FS, CUBE_FS, CUBE_TRIANGLES, softParticleTexture } from '../../../src/render/comeSailAwayRender.js';
+import { ownFile } from '../../ownBoats.mjs';
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (p) => JSON.parse(readFileSync(new URL(p, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const near = (a, b, eps = 1e-5, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b}`);
 const nearV = (a, b, eps = 1e-5, msg = '') => a.forEach((v, i) => near(v, b[i], eps, `${msg}[${i}]`));

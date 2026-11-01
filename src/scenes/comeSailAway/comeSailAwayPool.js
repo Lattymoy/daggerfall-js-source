@@ -34,7 +34,7 @@
 // CSA-D).
 //
 // deps = { renderer, pipeline: scenes/dataPipeline.js's { getTexture, uploadRecord, getGpuMesh, gpuMeshes, cpuModels,
-//          textureFiles, markClassicArt, isClassicArt }, fetchFn (the vendored files' fetch), log }
+//          textureFiles, markClassicArt, isClassicArt }, fetchFn (the port ships' bakes' fetch), log }
 
 import { loadComeSailAwayModels, rendererModel, rendererModelKey, bundleSlots, PORT_SHIPS } from '../../systems/comeSailAway/comeSailAwayModels.js';
 import { createLiveryPaint } from './shipLiveryPaint.js';   // SHIP-LIVERY: a boat's paint, painted once and drawn by a remap
@@ -61,6 +61,7 @@ import { hullBuild, setGalleonStanding, setShipStanding } from '../../systems/na
 import { registerGalleonArt, GALLEON_ARCHIVE, galleonCut, galleonGlow, GALLEON_NIGHT } from '../../world/ships/galleonArt.js';   // GALLEON: the new galleon's own pictures, on the texture door before her meshes ask
 import { registerCarrackArt, CARRACK_ARCHIVE, carrackCut, carrackGlow, CARRACK_NIGHT } from '../../world/ships/carrackArt.js';   // SHIPS-2: and the new carrack's,
 import { registerLargeBoatArt, LARGE_BOAT_ARCHIVE } from '../../world/ships/largeBoatArt.js';   // and the new large boat's
+import { registerOwnBoatArt, OWN_BOAT_ARCHIVE } from '../../world/ships/ownBoats/ownBoatArt.js';   // OWN-WORK4: and every hull's own pictures
 import { toColor32 } from '../../formats/color32Order.js';
 import { createShipPlaques, BLOCK_LETTERS, fntLetters } from './shipPlaque.js';   // SHIP-PLAQUE: her name on her bows
 import { FntFile } from '../../formats/fntFile.js';   // SHIP-PLAQUE: FONT0003, the boards' lettering
@@ -443,6 +444,8 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       // preload asks for it, below; this said "made at boot", and they were made at her first draw). AUDIT GN2-PF5: and
       // they are her CLASSIC art, as ARENA2's is every other hull's - Retro Mode's no-mip cap reaches them
       // SHIPS-2: and the new carrack's and the new large boat's, each as hers are, when their own models stand
+      // OWN-WORK4: and our boats' own, which every hull wears (world/ships/ownBoats/ownBoatArt.js)
+      if (m) { registerOwnBoatArt(addVendorTextures); pipeline?.markClassicArt?.(OWN_BOAT_ARCHIVE); }
       for (const [key, art] of Object.entries(PORT_ART)) {
         if (!m?.[key]) continue;
         art.register(addVendorTextures);
@@ -509,6 +512,8 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
         try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }
         catch (e) { warnOnce(`tex:${art.archive}`, `[come-sail-away] TEXTURE.${art.archive} will not load - the boats' faces in it draw nothing`, e); }
       }
+      try { await pipeline.getTexture(OWN_BOAT_ARCHIVE); }   // OWN-WORK4: our boats' pictures, painted while the world loads
+      catch (e) { warnOnce(`tex:${OWN_BOAT_ARCHIVE}`, `[come-sail-away] TEXTURE.${OWN_BOAT_ARCHIVE} will not load - the boats' faces in it draw nothing`, e); }
       for (let hull = 0; hull < HULL_NAMES.length; hull++) deckOf(hull, 0);   // DECK-WALK: baked while the world loads (10-50 ms a hull), never mid-voyage (AUDIT NAV2 F57: every rig's deck, one a hull)
       // AUDIT 2: and, the same way, each hull's planking and bows read for her name boards (SHIP-PLAQUE: 10-50 ms a hull, the
       // pool's draw's the first time a named ship of it was seen) and the livery painter's base pictures

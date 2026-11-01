@@ -58,7 +58,7 @@ export const wodOn = () => !!modSetting(WOD_VENDOR, 'Enabled');
 export const wodMountainsOn = () => !!modSetting(WOD_VENDOR, 'Mountains');
 
 const IN_BROWSER = typeof window !== 'undefined';
-// Vite's glob doors (the dynamic-skies pattern): the packs as URLs the
+// Vite's glob doors (the vendored packs' pattern): the packs as URLs the
 // build emits beside the bundle (INLINE1 keeps anything under vendor/
 // out of the JS), the prefabs as text, each its own lazy chunk. Node
 // sees empty tables and the tests feed the same files off the disk.

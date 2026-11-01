@@ -57,22 +57,28 @@ const online = (fn) => {
   try { return fn(); } finally { if (had) Object.defineProperty(globalThis, 'location', had); else delete globalThis.location; }
 };
 
-test('IT1 the record: the settings as the release ships them, every key restated under the vendor with the mod\'s own words - Disable Normal Travel shipped OFF, the one recorded departure', () => {
+test('IT1 the record: the settings as the release ships them, every key restated under the vendor in our own words - Disable Normal Travel shipped OFF, the one recorded departure', () => {
   const keys = MOD_SETTINGS[IMMERSIVE_TRAVEL_VENDOR].keys;
   const restated = Object.keys(keys).filter((k) => k !== 'Enabled');
   assert.deepEqual(restated, SHIPPED.map(([n]) => n), 'every key, in the file\'s order');
-  // PLAIN-TEXT (2026-10-19): six of the author's lines said plainly for a player (two typos among them) - their words, exactly
+  // OWN-WORK4 (2026-11-01): every line the author wrote, in our own words - ours, exactly
   const PLAIN = {
-    'General.DisableNormalTravel': 'You can no longer travel from the map, and must use carriages and ships.',
-    'General.DrawRoads': 'Draws roads on the map when Basic Roads is on.',
-    'General.DrawTracks': 'Draws dirt tracks on the map when Basic Roads is on.',
-    'ShipTravel.DailyShipCost': 'Daily cost of renting a ship, if you don’t own one.',
-    'ShipTravel.DailyCaptainFee': 'Daily cost of hiring a captain and crew. You pay a captain even if you own the ship.',
-    'ShipTravel.ShowLargerDocks': 'Uses larger dots on the map for locations with a dock.',
+    'General.DisableNormalTravel': 'Turns off travel from the map. Carriages and ships become your only fast travel.',
+    'General.DailyCarriageFee': 'Gold a carriage driver charges for each day on the road.',
+    'General.ClearerMapDots': 'On the carriage map, cities and hamlets get big dots and smaller places small ones.',
+    'General.DrawRoads': 'The carriage map marks the roads. Needs Basic Roads.',
+    'General.DrawTracks': 'The carriage map marks the dirt tracks. Needs Basic Roads.',
+    'General.RegionLockedCarriages': 'A carriage keeps to its own region, unless you board it in the region’s capital.',
+    'ShipTravel.DisableShipTravelOutsideDocks': 'A carriage trip is always by land. To go by sea, find a sailor at a dock.',
+    'ShipTravel.DailyShipCost': 'Gold per day at sea to hire a ship. You pay nothing if you own one.',
+    'ShipTravel.DailyCaptainFee': 'Gold per day at sea for a captain and crew. You pay it even on your own ship.',
+    'ShipTravel.LimitedRangeInSmallDocks': 'A sailor in a small port sails only within its region. Large port cities sail anywhere.',
+    'ShipTravel.ShowLargerDocks': 'On the sailor’s map, every place with a dock gets a big dot.',
+    'ShipTravel.ShowOnlyDocks': 'The sailor’s map shows only places with a dock.',
   };
   for (const [name, value, words, range] of SHIPPED) {
     const def = keys[name];
-    assert.equal(def.description, PLAIN[name] ?? words ?? '', `${name}: the author's words, or their plain rewording`);
+    assert.equal(def.description, words ? PLAIN[name] : '', `${name}: our own words in place of the author's`);
     if (name === 'General.DisableNormalTravel') { assert.equal(value, true, 'the mod ships it on'); assert.equal(def.default, false, 'IT1: the port ships it off'); continue; }
     assert.equal(def.default, value, `${name}: the shipped default`);
     if (range) assert.deepEqual([def.min, def.max], range, `${name}: the slider's range`);

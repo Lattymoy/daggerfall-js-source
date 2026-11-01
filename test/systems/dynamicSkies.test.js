@@ -1,387 +1,468 @@
-// DS1 - DYNAMIC SKIES (2026-09-04, Mac: "I want to implement this mod
-// 1:1. We received permission from the creator. I also want it to be
-// compatible with our current implementation").
-//
-// What is pinned: the vendored tree is the mod's (manifest, presets,
-// textures the presets name); the logic port answers what BLBSkybox.cs
-// answers (presets parsed with JsonUtility's defaults, ApplySkyboxSettings
-// with its quirks, ProcessFogSetting's density law, the light curve's
-// flat tangents, ChangeLunarPhases' interpolation, ApplyOrbitCalculations,
-// setFogColor, LightningFlash's rolls); the shader is the mod's (every
-// property a uniform of the same name, the baked keywords); and the seam
-// (controller, hosts, settings, credits) is wired in both exterior hosts
-// with the port's own laws untouched underneath.
+// DYNAMIC SKIES - OUR OWN SKY (OWN-WORK4, 2026-10-31, the owner: "Our goal is no latching onto other mod authors or
+// needing permissions. A proper 1 to 1 recreation for everything"). DS1 (2026-09-04) carried BadLuckBurt and
+// carademono's mod; OWN-WORK4 retired vendor/dynamic-skies and drew the sky again as ours (bible/07-Rendering/
+// Dynamic-Skies.md OWN-WORK4). Pinned here, as literals: the preset rule's tables (the hours, the weathers, the seasons,
+// the moons, the stars, the clouds, the fog rows, the light curve), what the rule makes of them, the painted noise
+// and flake, the instance's clock and storm, the shader run whole in test/glsl.mjs, and the seam - the switch, the
+// settings and every place the sky is wired - unchanged.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  DYNAMIC_SKIES_MOD, WEATHER_PRESET, FOG_PRESET_FOR_WEATHER, TIMESCALE_FACTOR,
-  parseHtmlColor, srgbToLinear, linearToSrgb, parseSkyboxSetting, parseFogSetting, parseLightCurve,
-  fogSettingsFromPresets, fogPresetKey, MATERIAL_DEFAULTS, initMaterial, applySkyboxSettings,
-  TEXTURE_IMPORTS, TEXTURE_SLOTS, dayPartOfHour, weatherIndexOf, DAY_PARTS,
-  LUNAR_PHASE_X, lunarPhaseLength, phaseDayOffset, nextLunarPhase, interpolateAngle, lunarPhaseState, orbitParameters,
-  rotateWorldPosition, orbitPosition, rotateArbitraryAxis, moonDirection,
-  worldTimeSeconds, sunLightDirection, sunCurveTime, sunLightColor, mathfSmoothStep, fogColorNow, FOG_COLOR_INTERVAL_SECONDS,
+  SKY_HOURS, WEATHER_LOOK, WEATHER_PRESET, SEASON_LEAN, SUN_LOOK, MOON_LOOK, STAR_LOOK, CLOUD_LOOK, SKY_LEVELS,
+  SKY_EASE_MINUTES, SKY_JUMP_MINUTES, LIGHT_RULE, DYNAMIC_LIGHT_CURVE, FOG_LOOK, FOG_PRESET_FOR_WEATHER,
+  TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, MAX_DELTA_SECONDS,
+  srgbToLinear, linearToSrgb, hexLinear, toSrgb3, luminance, weatherRow, easeRow, weatherShow, hourAt, nightWeight, moonNightWeight,
+  phasesAt, moonPhaseLight, skyFrame, fogSettingsFromPresets, fogPresetKey, sunLightDirection, sunCurveTime,
   LightningFlash, pixelSnowSettings,
 } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 import { DynamicSkies } from '../../src/systems/dynamicSkies/dynamicSkiesRuntime.js';
-import { FS, COLOR_PROPERTIES, FLOAT_PROPERTIES, UNIFORM_NAMES } from '../../src/render/dynamicSkiesRenderer.js';
-import { BAYER_MEAN } from '../../src/render/orderedDither.js';   // PS3: the zero-mean Bayer offset (retroPixel.js until FT3)
-import { LUNAR_PHASES, lunarPhase, dateFromClassicMinutes, MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
-import { evaluateCurve, daylightScale, setLightCurve, sunDirection } from '../../src/world/worldClock.js';
-import { FOG_SETTINGS, fogForWeather, fogFactor } from '../../src/world/weather.js';
+import { DYNAMIC_SKIES_TEXTURES, SKY_NOISE_CHANNELS, dynamicSkiesAssets, paintSkyNoise, paintSnowflake, loadDynamicSkiesTexture, dynamicSkiesTextureUrl } from '../../src/systems/dynamicSkies/dynamicSkiesAssets.js';
+import { FS, UNIFORM_NAMES, DynamicSkiesRenderer } from '../../src/render/dynamicSkiesRenderer.js';
+import { dynamicMoonState } from '../../src/render/dynamicSkiesBridge.js';
+import { moonSkyDirection, MOONS, STAR_POLE } from '../../src/render/enhancedSky.js';
+import { BAYER_MEAN } from '../../src/render/orderedDither.js';   // PS3: the zero-mean Bayer offset
+import { SEASONS, MINUTES_PER_DAY, lunarPhaseFractionsFromMinutes } from '../../src/systems/gameDate.js';
+import { evaluateCurve, daylightScale, setLightCurve } from '../../src/world/worldClock.js';
+import { fogForWeather, fogFactor } from '../../src/world/weather.js';
 import { MOD_SETTINGS, modSetting, setModSetting, modSettingsOf, isIntKey, _resetModSettings } from '../../src/systems/modSettings.js';
-import { CREDITS } from '../../src/ui/credits.js';
 import { AmbientEffects } from '../../src/systems/ambientEffects.js';
 import { Renderer } from '../../src/render/renderer.js';
+import { glslFunctions } from '../glsl.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
-const V = 'vendor/dynamic-skies';
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
-
-const PRESET_NAMES = ['SkyboxSunny', 'SkyboxCloudy', 'SkyboxOvercast', 'SkyboxFog', 'SkyboxRain', 'SkyboxThunder', 'SkyboxSnow'];
-const FOG_NAMES = ['FogSunny', 'FogOvercast', 'FogHeavyFog', 'FogRainy', 'FogSnowy'];
-const assets = () => ({
-  presets: Object.fromEntries(PRESET_NAMES.map((n) => [n, read(`${V}/SkyboxSettings/${n}.json`)])),
-  fogPresets: Object.fromEntries(FOG_NAMES.map((n) => [n, read(`${V}/FogSettings/${n}.json`)])),
-  lightCurve: read(`${V}/LightCurveSettings/LightCurve.json`),
-});
 const seq = (vals) => { let i = 0; return () => vals[i++ % vals.length]; };
+const BASE = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
+const WEATHERS = Object.keys(WEATHER_LOOK);
 
-// ── THE VENDORED TREE IS THE MOD'S ────────────────────────────────
-test('DS1 vendor: the manifest is 2.3.4 by BadLuckBurt and carademono, and every preset and fog file it lists is here', () => {
-  const manifest = JSON.parse(read(`${V}/dynamic-skies.dfmod.json`));
-  assert.equal(manifest.ModTitle, DYNAMIC_SKIES_MOD.title);
-  assert.equal(manifest.ModVersion, DYNAMIC_SKIES_MOD.version);
-  assert.equal(manifest.ModAuthor, DYNAMIC_SKIES_MOD.author);
-  assert.equal(manifest.GUID, DYNAMIC_SKIES_MOD.guid);
-  assert.equal(manifest.ContactInfo, DYNAMIC_SKIES_MOD.contact);
-  const listed = manifest.Files.map((f) => f.split('/').pop());
-  for (const n of PRESET_NAMES) { assert.ok(listed.includes(`${n}.json`)); assert.ok(existsSync(join(root, V, 'SkyboxSettings', `${n}.json`))); }
-  for (const n of FOG_NAMES) { assert.ok(listed.includes(`${n}.json`)); assert.ok(existsSync(join(root, V, 'FogSettings', `${n}.json`))); }
-  assert.ok(listed.includes('LightCurve.json'));
-  // the *Night.json variants are NOT shipped - index 1 is index 0
-  assert.ok(!listed.some((f) => /Night\.json$/.test(f)), 'no night preset in the shipped manifest');
-  // modsettings' two sections and their keys are the Mods pane's
-  const ms = JSON.parse(read(`${V}/modsettings.json`));
-  const keys = ms.Sections.flatMap((s) => s.Keys.map((k) => k.Name));
-  assert.deepEqual(keys, ['densitySetting', 'ActivatePixelSnow', 'MinParticleSize', 'MaxParticleSize', 'MaxParticles']);
-});
-
-test('DS1 vendor: every texture a shipped preset names is vendored, with an import setting, and nothing unnamed is', () => {
-  const named = new Set(['PixelSnow']);   // InitSnow's, not a preset's
-  for (const n of PRESET_NAMES) {
-    const s = parseSkyboxSetting(read(`${V}/SkyboxSettings/${n}.json`));
-    for (const f of [s.TopClouds.CloudsTextureFile, s.TopClouds.CloudsNormalTextureFile, s.BottomClouds.CloudsTextureFile, s.BottomClouds.CloudsNormalTextureFile,
-      s.Stars.StarsTextureFile, s.Stars.StarsTwinkleTextureFile, s.Stars.TwinkleTextureFile, s.Masser.MoonTextureFile, s.Secunda.MoonTextureFile]) named.add(f);
+// ── RETIRED ───────────────────────────────────────────────────────
+test('OWN-WORK4: vendor/dynamic-skies is gone, nothing reads it, and the sky\'s pictures are painted by our own code', () => {
+  assert.equal(existsSync(join(root, 'vendor/dynamic-skies')), false, 'the directory is retired (01-Overview/Own-Work.md)');
+  for (const f of ['src/systems/dynamicSkies/dynamicSkies.js', 'src/systems/dynamicSkies/dynamicSkiesRuntime.js', 'src/systems/dynamicSkies/dynamicSkiesAssets.js',
+    'src/render/dynamicSkiesRenderer.js', 'src/render/dynamicSkiesBridge.js', 'src/scenes/shared.js', 'src/tools/skyLab.js']) {
+    const s = read(f);
+    assert.doesNotMatch(s, /vendor\/dynamic-skies/, `${f} names no vendored path`);
+    assert.doesNotMatch(s, /import\.meta\.glob/, `${f} globs nothing`);
   }
-  const files = readdirSync(join(root, V, 'Textures')).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort();
-  assert.deepEqual(files, [...named].sort(), 'the vendored textures are exactly the named ones');
-  for (const f of files) assert.ok(TEXTURE_IMPORTS[f], `${f} has its Unity import settings restated`);
-  // the one normal map is the converted one (bilinear, no mips, not sRGB)
-  assert.deepEqual(TEXTURE_IMPORTS.CdMCloudsNormal, { filter: 'bilinear', mips: false, srgb: false, normal: true });
-  // DS3 (2026-09-15, Mac: "the nighttime sky has these dark spots in the skybox") - THE ONE DEPARTURE FROM THE
-  // MOD'S IMPORTS, AND ITS BOUNDS. At night `night * horizonValue` reaches 1.0, so the sky IS `_StarTex` and
-  // `_MoonNightColor` (0, 0, 39) floors the BLUE channel alone - the star field's own per-texel dither in red and
-  // green has nothing under it, and Point magnified ~3.5x by StarsTiling 0.25 turns each dark texel into a visible
-  // block. The three star FIELDS take bilinear so the dither blends back under the pixel; every other file keeps
-  // the mod's Point, and the twinkle MASKS and noise keep it too - they are sampled for a scalar, not looked at.
-  const STAR_FIELDS = ['VanillaStars', 'DefaultStars', 'NLStarsBlack'];
-  for (const f of STAR_FIELDS) assert.equal(TEXTURE_IMPORTS[f].filter, 'bilinear', `${f} is the star field: filtered (DS3)`);
-  for (const f of ['VanillaStarsTwinkleMask', 'DefaultStarsTwinkleMask', 'NLStarsThiefTwinkleMask', 'NLstarsHighlight', 'DefaultStarsTwinkleNoise']) {
-    assert.equal(TEXTURE_IMPORTS[f].filter, 'point', `${f} is a mask or the noise: the mod's own Point stands`);
+  assert.deepEqual([...DYNAMIC_SKIES_TEXTURES], ['PixelSnow', 'SkyNoise'], 'two pictures, both painted');
+  assert.deepEqual(Object.keys(TEXTURE_IMPORTS), ['SkyNoise']);
+  assert.deepEqual([...TEXTURE_SLOTS], ['uSkyNoise'], 'the pass samples our noise alone');
+  assert.deepEqual([...SLOT_DEFAULT_TEXEL.uSkyNoise], [128, 128, 128, 128], 'the noise\'s middle until it is painted');
+  // the retired mod's preset words and shader names are not ours to carry
+  const law = read('src/systems/dynamicSkies/dynamicSkies.js') + read('src/render/dynamicSkiesRenderer.js');
+  for (const gone of ['CdMSunny', 'VanillaStars', 'PixelMars', 'BLBProceduralSkybox', '_CloudTopColorBoost', 'MATERIAL_DEFAULTS', 'Scattering', 'kSUN_BRIGHTNESS']) {
+    assert.ok(!law.includes(gone), `${gone} is the retired mod's, not ours`);
   }
-  for (const [f, imp] of Object.entries(TEXTURE_IMPORTS)) {
-    if (STAR_FIELDS.includes(f) || f === 'CdMCloudsNormal') continue;
-    assert.equal(imp.filter, 'point', `${f} keeps the mod's Point - DS3 moved the star fields and nothing else`);
+});
+
+// ── THE PRESET RULE, AS LITERALS ──────────────────────────────────
+test('OWN-WORK4 the hours: five anchors on the sun\'s height, navy to blue through an orange horizon - the table as written', () => {
+  assert.deepEqual(SKY_HOURS.map((a) => ({ ...a })), [
+    { h: -0.3, zenith: '#02050c', horizon: '#060b18', glow: '#000000', glowAmount: 0, sun: '#000000', light: 0.03 },
+    { h: -0.12, zenith: '#0a1430', horizon: '#232d4e', glow: '#46304a', glowAmount: 0.35, sun: '#000000', light: 0.1 },
+    { h: 0, zenith: '#1e3672', horizon: '#d8844e', glow: '#ff8a3e', glowAmount: 1, sun: '#ffb06a', light: 0.45 },
+    { h: 0.16, zenith: '#2c5aa6', horizon: '#e4b68c', glow: '#ffc88c', glowAmount: 0.7, sun: '#ffe0b0', light: 0.8 },
+    { h: 0.42, zenith: '#2862b8', horizon: '#a0c2e4', glow: '#fff0d8', glowAmount: 0.35, sun: '#fff8ee', light: 1 },
+  ]);
+  // walked linearly between anchors, held past the ends
+  const mid = hourAt(0.08);
+  for (let k = 0; k < 3; k++) assert.ok(near(mid.zenith[k], (hexLinear('#1e3672')[k] + hexLinear('#2c5aa6')[k]) / 2, 1e-12));
+  assert.deepEqual(hourAt(-1).zenith, hexLinear('#02050c'));
+  assert.deepEqual(hourAt(1).horizon, hexLinear('#a0c2e4'));
+  // the rule's words, held: the day horizon is the zenith lifted toward white; the sunset horizon warmer than blue
+  const day = SKY_HOURS[4], sunset = SKY_HOURS[2];
+  assert.ok(luminance(hexLinear(day.horizon)) > luminance(hexLinear(day.zenith)) * 2, 'the day horizon is lifted toward white');
+  const sh = hexLinear(sunset.horizon);
+  assert.ok(sh[0] > sh[2] * 2, 'the sun on the horizon: an orange horizon');
+  // the warm band - LONGER SUNRISES AND SUNSETS: from 7 degrees under to 9 over, about an hour and ten minutes a side
+  assert.ok(near(Math.asin(-0.12) * 180 / Math.PI, -6.89, 0.01) && near(Math.asin(0.16) * 180 / Math.PI, 9.21, 0.01));
+});
+
+test('OWN-WORK4 the weathers: one cover and one grey each - snow pale, the storm slate, the sandstorm ochre, the ashfall brown; every word the sim says has its own row', () => {
+  assert.deepEqual(Object.fromEntries(Object.entries(WEATHER_LOOK).map(([k, v]) => [k, { ...v }])), {
+    sunny: { cover: 0.1, grey: '#a4aeb8' },
+    cloudy: { cover: 0.45, grey: '#a4aeb8' },
+    overcast: { cover: 0.8, grey: '#8e969f' },
+    fog: { cover: 0.92, grey: '#b0b5b9' },
+    rain: { cover: 0.85, grey: '#737e8a' },
+    thunder: { cover: 0.95, grey: '#4e5866' },
+    snow: { cover: 0.85, grey: '#c8d0da' },
+    sandstorm: { cover: 0.92, grey: '#b88e5e' },
+    ashfall: { cover: 0.9, grey: '#72645c' },
+  });
+  for (const w of WEATHERS) assert.equal(WEATHER_PRESET[w], w, `${w} wears its own row`);
+  const ochre = hexLinear(WEATHER_LOOK.sandstorm.grey), ash = hexLinear(WEATHER_LOOK.ashfall.grey);
+  assert.ok(ochre[0] > ochre[2] * 1.5 && ash[0] > ash[2], 'the desert\'s and the ash\'s skies are warm, not the rain\'s blue');
+  // the rule: what shows through is (1 - c^2)^2
+  assert.ok(near(weatherShow(0.1), 0.9801, 1e-12));
+  assert.ok(near(weatherShow(0.95), (1 - 0.9025) ** 2, 1e-12));
+  // an unknown word is the sunny row, and an eased row walks each number
+  assert.deepEqual(weatherRow('blizzard'), weatherRow('sunny'));
+  const half = easeRow(weatherRow('sunny'), weatherRow('thunder'), 0.5);
+  assert.ok(near(half.cover, 0.525, 1e-12));
+  assert.deepEqual(easeRow(weatherRow('sunny'), weatherRow('thunder'), 2), weatherRow('thunder'), 'k is held to 0..1');
+});
+
+test('OWN-WORK4 what the rule makes: clear noon blue, a storm darker and greyer, a night dark, the sun\'s disc and the stars by the cover; the seasons lean the clear day and leave the night', () => {
+  const at = (weather, minute, season = SEASONS.Spring) => skyFrame({ minuteOfDay: minute, classicMinutes: BASE + minute, row: weatherRow(weather), season });
+  const noon = at('sunny', 720), storm = at('thunder', 720), night = at('sunny', 0), dusk = at('sunny', 18 * 60);
+  assert.ok(noon.zenith[2] > noon.zenith[0] * 2, 'a clear noon\'s zenith is blue');
+  assert.ok(luminance(storm.horizon) < luminance(noon.horizon) * 0.6, 'a storm\'s horizon is darker');
+  const sat = (c) => (Math.max(...c) - Math.min(...c)) / Math.max(...c);
+  assert.ok(sat(toSrgb3(storm.zenith)) < sat(toSrgb3(noon.zenith)) / 2, 'and greyer');
+  assert.ok(luminance(night.zenith) < 0.003, 'midnight is dark');
+  assert.ok(dusk.horizon[0] > dusk.horizon[2], 'the sun on the horizon warms it');
+  assert.equal(noon.night, 0, 'no stars at noon');
+  assert.ok(near(night.night, nightWeight(-1) * weatherShow(0.1), 1e-12) && night.night > 0.9, 'a clear midnight\'s stars');
+  assert.ok(at('thunder', 0).night < 0.02, 'a storm\'s night hides them');
+  assert.ok(near(noon.sunDisc[0] / storm.sunDisc[0], weatherShow(0.1) / weatherShow(0.95), 1e-9), 'the disc by what shows through');
+  assert.ok(near(noon.sunCos, Math.cos(SUN_LOOK.radius), 1e-15));
+  // the night weight: none 3 degrees under, whole 11 under; the world's moonlight a degree either side of the line
+  assert.equal(nightWeight(-0.05), 0); assert.equal(nightWeight(-0.19), 1);
+  assert.equal(moonNightWeight(0.02), 0); assert.equal(moonNightWeight(-0.02), 1);
+  // the seasons: summer's zenith deeper than winter's at noon; the night untouched within the light's share
+  const summer = at('sunny', 720, SEASONS.Summer), winter = at('sunny', 720, SEASONS.Winter), fall = at('sunny', 720, SEASONS.Fall);
+  assert.ok(winter.zenith[0] > summer.zenith[0] && luminance(winter.zenith) > luminance(summer.zenith), 'winter paler');
+  assert.ok(fall.horizon[0] - fall.horizon[2] > noon.horizon[0] - noon.horizon[2], 'autumn golden at the horizon');
+  const nightSummer = at('sunny', 0, SEASONS.Summer);
+  for (let k = 0; k < 3; k++) assert.ok(Math.abs(nightSummer.zenith[k] - night.zenith[k]) < 0.002, 'a night stays a night');
+  assert.deepEqual(Object.keys(SEASON_LEAN).map(Number).sort(), [SEASONS.Fall, SEASONS.Spring, SEASONS.Summer, SEASONS.Winter]);
+  // TAMRIEL-WIDE: the frame takes no place - the season is the calendar's, the same in every province
+  assert.doesNotMatch(read('src/systems/dynamicSkies/dynamicSkies.js'), /\b(worldPixelKey|worldPixelOk|worldPlaces|areaAt|inBay|climateIndex|MapsFile)\b/, 'no rule of the sky reads a place');
+});
+
+test('OWN-WORK4 the moons, the stars and the clouds: the tables as written, the moons where the dome puts them, the phase lit from the sun\'s side', () => {
+  assert.deepEqual(JSON.parse(JSON.stringify(MOON_LOOK)), { masser: { radius: 0.06, color: '#e2a890' }, secunda: { radius: 0.032, color: '#e3e5ea' }, dayFade: 0.9, earthshine: 0.05 });
+  assert.deepEqual(JSON.parse(JSON.stringify(STAR_LOOK)), {
+    bright: { cells: 110, chance: 0.12, gain: [0.55, 1] }, dim: { cells: 300, chance: 0.14, gain: [0.12, 0.4] },
+    size: 0.11, twinkle: 0.3, band: 0.025, bandPole: [0.3, 0.45, -0.84],
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(CLOUD_LOOK)), {
+    low: { scale: 0.35, speed: 1 / 300, dir: [1, 0.35] }, high: { scale: 0.15, speed: 1 / 900, dir: [1, -0.1] },
+    soft: 0.12, white: '#f2efe8', nightLit: '#151b29', nightShade: '#0a0d15',
+  });
+  assert.deepEqual({ ...SUN_LOOK }, { radius: 0.035, gain: 2.4 });
+  assert.equal(SKY_LEVELS, 48);
+  // the moons stand where the port's own dome puts them, on the clock's phase fraction
+  const minute = 23 * 60, cm = BASE + 20 * MINUTES_PER_DAY + minute;
+  const st = skyFrame({ minuteOfDay: minute, classicMinutes: cm });
+  const ph = lunarPhaseFractionsFromMinutes(cm);
+  assert.deepEqual(st.masser.dir, moonSkyDirection(minute, ph.masser, MOONS.masser.tilt));
+  assert.deepEqual(st.secunda.dir, moonSkyDirection(minute, ph.secunda, MOONS.secunda.tilt));
+  assert.deepEqual(phasesAt(cm), { masser: { phase: ph.masser }, secunda: { phase: ph.secunda } });
+  // the phase's light: from behind at new, from the eye at full, from the sun's side at a half - waxing or waning
+  const m = [0, 0.6, 0.8], sun = [1, 0, 0];
+  const toEye = m.map((v) => -v), dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  assert.ok(near(dot(moonPhaseLight(m, sun, 0), toEye), -1, 1e-12), 'new: lit from behind');
+  assert.ok(near(dot(moonPhaseLight(m, sun, 4), toEye), 1, 1e-12), 'full: lit from the eye');
+  for (const half of [2, 6]) {
+    const l = moonPhaseLight(m, sun, half);
+    assert.ok(Math.abs(dot(l, toEye)) < 1e-12 && dot(l, sun) > 0.99, `a half (${half}): lit across, the limb toward the sun`);
   }
-  // and the departure is written down where the table is, not only in the Ledger
-  assert.match(read('src/systems/dynamicSkies/dynamicSkies.js'), /DS3 \(2026-09-15, Mac: "the nighttime sky has these dark spots/, 'the table says why it departs');
-  // the shader sources are beside the port for reading
-  assert.match(read(`${V}/Shaders/BLBProceduralSkybox.shader`), /^﻿?Shader "BLB\/SkyBox\/BLBProceduralSkybox"/);
-  assert.ok(existsSync(join(root, V, 'Shaders/Includes/MoonFunctions.cginc')));
-  assert.ok(existsSync(join(root, V, 'Shaders/Includes/Scattering.cginc')));
+  // the stars turn once a day about the dome's own pole; the clouds drift on the clock, wrapped
+  assert.equal(st.starPole, STAR_POLE);
+  assert.ok(near(st.starTurn, (minute / 1440) * Math.PI * 2, 1e-12));
+  assert.ok(st.cloudOffset.every((v) => v >= 0 && v < 1), 'the drift wrapped to the texture\'s period');
+  const later = skyFrame({ minuteOfDay: minute + 30, classicMinutes: cm + 30 });
+  assert.ok(near(((later.cloudOffset[2] - st.cloudOffset[2]) % 1 + 1) % 1, (30 * CLOUD_LOOK.low.speed) % 1, 1e-6), 'the low layer travels its speed a game minute');
+  // the layers' share of the sky is the cover: the low c, the high 0.3 (1 - c); opaque by c
+  const storm = skyFrame({ minuteOfDay: 720, row: weatherRow('thunder') });
+  assert.deepEqual(storm.cloudLow, [0.95, 0.6 + 0.4 * 0.95, CLOUD_LOOK.low.scale, CLOUD_LOOK.soft]);
+  assert.ok(near(storm.cloudHigh[0], 0.3 * 0.05, 1e-12) && storm.cloudHigh[1] === 0.55);
 });
 
-test('DS1 vendor: the README records the permission and the credit row names the folder', () => {
-  const readme = read(`${V}/README.md`);
-  assert.match(readme, /BadLuckBurt/); assert.match(readme, /carademono/);
-  assert.match(readme, /permission/i);
-  const row = CREDITS.mods.find((m) => m.title === 'Dynamic Skies');
-  assert.ok(row, 'no credit row');
-  assert.equal(row.version, '2.3.4');
-  assert.equal(row.author, 'BadLuckBurt and carademono');
-  assert.deepEqual([...row.vendor], ['dynamic-skies']);
-  assert.equal(row.contact, "Lysandus' Tomb Discord server");   // the manifest's own words
-});
-
-// ── THE STRUCTS, JsonUtility's way ────────────────────────────────
-test('DS1 presets: parsed as JsonUtility parses them - absent fields default, the flat sub-structs are parsed twice', () => {
-  const s = parseSkyboxSetting(read(`${V}/SkyboxSettings/SkyboxSunny.json`));
-  assert.equal(s.SunSize, 0.10000000149011612);
-  assert.equal(s.SunSizeConvergence, 10);
-  assert.equal(s.SkyTint, '6176DCFF');
-  assert.equal(s.TopClouds.CloudsTextureFile, 'CdMSunny');
-  assert.equal(s.BottomClouds.CloudsTextureFile, 'CdMSunny2');
-  assert.equal(s.BottomClouds.Speed, 0.0012499999720603228);
-  // fields the JSON does not carry are the struct's defaults (0)
-  assert.equal(s.BottomClouds.Direction, 0);
-  assert.equal(s.BottomClouds.BlendScale, 0);
-  assert.equal(s.BottomClouds.BlendLB, 0);
-  assert.equal(s.BottomClouds.BlendUB, 0);
-  assert.equal(s.BottomClouds.BlendSpeed, 0);
-  assert.deepEqual(s.Masser.OrbitAngle, [0, 270, 90, 0]);
-  assert.deepEqual(s.Secunda.TidalAngle, [30, 160, -30, 0]);
-  // Fog has no MoonNightColor: the struct's null, and the apply leaves the slot
-  const f = parseSkyboxSetting(read(`${V}/SkyboxSettings/SkyboxFog.json`));
-  assert.equal(f.MoonNightColor, null);
-  // colours: "RRGGBBAA" -> sRGB /255
-  assert.deepEqual(parseHtmlColor('6176DCFF'), [0x61 / 255, 0x76 / 255, 0xDC / 255, 1]);
-  assert.equal(parseHtmlColor('nonsense'), null);
-  assert.equal(parseHtmlColor(null), null);
-  // the colour space: Mathf.GammaToLinearSpace and back
-  assert.ok(near(srgbToLinear(0.5), 0.21404114, 1e-6));
-  assert.ok(near(linearToSrgb(srgbToLinear(0.73)), 0.73, 1e-9));
-  assert.equal(srgbToLinear(0), 0); assert.equal(srgbToLinear(1), 1);
-});
-
-test('DS1 fog: ProcessFogSetting - Unity FogMode ints, density / (11 - densitySetting), the mod ships exp2', () => {
-  const f = parseFogSetting(read(`${V}/FogSettings/FogOvercast.json`));
-  assert.equal(f.FogModeInt, 3); assert.equal(f.ExcludeSkybox, true); assert.equal(f.EndDistance, 500000);
-  const t1 = fogSettingsFromPresets(assets().fogPresets, 1);
-  assert.equal(t1.sunny.mode, 'linear'); assert.equal(t1.sunny.start, 2000); assert.equal(t1.sunny.end, 3600);
-  assert.equal(t1.overcast.mode, 'exp2'); assert.ok(near(t1.overcast.density, 0.0075000000237487257 / 10));
-  assert.equal(t1.rainy.mode, 'exp2'); assert.equal(t1.snowy.mode, 'exp2');
-  assert.equal(t1.heavy.mode, 'exp'); assert.ok(near(t1.heavy.density, 0.05000000074505806 / 10)); assert.equal(t1.heavy.excludeSky, false);
-  const t10 = fogSettingsFromPresets(assets().fogPresets, 10);
-  assert.ok(near(t10.heavy.density, 0.05000000074505806), 'slider 10 divides by 1');
-  // the world's readers: fogForWeather over the mod's table, fogFactor's exp2
-  assert.equal(fogForWeather('thunder', t1), t1.rainy);
-  assert.equal(fogForWeather('cloudy', t1), t1.sunny);
-  assert.equal(fogForWeather('fog', t1), t1.heavy);
-  assert.equal(fogForWeather('snow'), FOG_SETTINGS.snowy, 'no table: DFU’s own, as before');
-  assert.ok(near(fogFactor({ mode: 'exp2', density: 0.002, start: 0, end: 0 }, 500), Math.exp(-1)));
-  for (const w of Object.keys(WEATHER_PRESET)) assert.ok(['sunny', 'overcast', 'rainy', 'snowy', 'heavy'].includes(fogPresetKey(w)));
-  assert.equal(FOG_PRESET_FOR_WEATHER.thunder, 'FogRainy');
-});
-
-test('DS1 light curve: LightCurve.json as Keyframe(time, value) - flat tangents, and it replaces the world’s daylightScale', () => {
-  const keys = parseLightCurve(assets().lightCurve);
-  assert.deepEqual(keys, [[0, 0, 0, 0], [0.05, 0.8, 0, 0], [0.5, 1, 0, 0], [0.95, 0.8, 0, 0], [1, 0, 0, 0]]);
-  // Hermite with zero tangents: halfway between two keys is their mean
-  assert.ok(near(evaluateCurve(keys, 0.025), 0.4));
-  assert.ok(near(evaluateCurve(keys, 0.5), 1));
-  assert.ok(near(evaluateCurve(keys, 0.975), 0.4));
-  // the rig's own curve stands until a mod replaces it, and comes back after
-  const rig = daylightScale(12 * 60);
-  assert.ok(near(rig, 0.9));
-  setLightCurve(keys);
+test('OWN-WORK4 the world under the sky: its light curve is the rule\'s, and its fog rows half the light at their d50, thickened by the slider (mutants: the slider\'s law; a row\'s mode)', () => {
+  assert.deepEqual({ ...LIGHT_RULE }, { peak: 0.92, power: 0.6 });
+  const rule = (t) => 0.92 * Math.pow(Math.sin(Math.PI * t), 0.6);
+  assert.equal(DYNAMIC_LIGHT_CURVE[0][1], 0); assert.ok(near(DYNAMIC_LIGHT_CURVE.at(-1)[1], 0, 1e-12));
+  for (const t of [0.1, 0.25, 0.5, 0.75, 0.9]) assert.ok(Math.abs(evaluateCurve(DYNAMIC_LIGHT_CURVE, t) - rule(t)) < 0.02, `the curve at ${t} is the rule's`);
+  assert.ok(near(evaluateCurve(DYNAMIC_LIGHT_CURVE, 0.5), 0.92, 1e-12), 'noon is the peak');
+  const rig = daylightScale(17 * 60 + 30);
+  setLightCurve(DYNAMIC_LIGHT_CURVE);
   try {
-    assert.ok(near(daylightScale(12 * 60), 1), 'the mod’s noon is 1');
-    assert.ok(near(daylightScale(6 * 60 + 36), 0.8), 'the mod’s 06:36 is its second key');
+    assert.ok(daylightScale(17 * 60 + 30) > rig * 1.5, `the longer sunset: at 17:30 ${daylightScale(17 * 60 + 30).toFixed(3)} against the rig's ${rig.toFixed(3)}`);
+    assert.equal(daylightScale(0), 0);
   } finally { setLightCurve(null); }
-  assert.ok(near(daylightScale(12 * 60), rig));
+  assert.deepEqual(JSON.parse(JSON.stringify(FOG_LOOK)), {
+    sunny: { mode: 'linear', start: 1200, end: 4800, excludeSky: true },
+    overcast: { mode: 'linear', start: 600, end: 3600, excludeSky: true },
+    rainy: { mode: 'exp2', d50: 700, excludeSky: true },
+    snowy: { mode: 'exp2', d50: 450, excludeSky: true },
+    heavy: { mode: 'exp2', d50: 120, excludeSky: false },
+    sandstorm: { mode: 'exp2', d50: 90, excludeSky: false },
+    ashfall: { mode: 'exp2', d50: 400, excludeSky: true },
+  });
+  const one = fogSettingsFromPresets(FOG_LOOK, 1);
+  for (const [name, row] of Object.entries(FOG_LOOK)) {
+    if (row.mode === 'exp2') assert.ok(near(fogFactor(one[name], row.d50), 0.5, 1e-9), `${name}: half the light at ${row.d50}`);
+    else assert.deepEqual([one[name].start, one[name].end], [row.start, row.end]);
+  }
+  const ten = fogSettingsFromPresets(FOG_LOOK, 10);
+  assert.ok(near(ten.heavy.density, one.heavy.density * 4, 1e-12), 'the slider\'s top is four times as thick');
+  assert.ok(near(ten.sunny.end, 1200, 1e-9), 'a linear row closes four times as near');
+  assert.deepEqual(fogSettingsFromPresets(FOG_LOOK, 14), ten, 'the slider is held to 1..10');
+  // every word the sim says takes a row, through the world's own reader
+  assert.deepEqual({ ...FOG_PRESET_FOR_WEATHER }, { sunny: 'sunny', cloudy: 'sunny', overcast: 'overcast', fog: 'heavy', rain: 'rainy', thunder: 'rainy', snow: 'snowy', sandstorm: 'sandstorm', ashfall: 'ashfall' });
+  for (const w of WEATHERS) assert.equal(fogForWeather(w, one), one[fogPresetKey(w)], `${w}: world/weather.js fogForWeather reads the sky's row`);
 });
 
-// ── ApplySkyboxSettings, with its quirks ──────────────────────────
-test('DS1 apply: every material property a preset sets, the timescale factors, and the four quirks kept', () => {
-  const mat = initMaterial(123.4);
-  assert.equal(mat._CloudDirection, 123.4, 'Init writes the rolled wind');
-  assert.equal(mat._SunSize, 0.04); assert.equal(mat._AtmosphereLerp, 0);
-  const s = parseSkyboxSetting(read(`${V}/SkyboxSettings/SkyboxSunny.json`));
-  applySkyboxSettings(mat, s);
-  assert.equal(mat._SunSize, s.SunSize);
-  assert.equal(mat._SunSizeConvergence, 10);
-  assert.deepEqual(mat._SkyTint, parseHtmlColor('6176DCFF'));
-  assert.equal(mat._SkyFadeEnd, s.SkyEndStart);
-  // AUDIT 62 F30: the three assertions below used to multiply by the
-  // IMPORTED TIMESCALE_FACTOR, so they restated the port's own constant
-  // on both sides and 0.0833 -> 0.08 survived the whole suite. The
-  // mod's LITERAL is the law, and the constant is asserted outright -
-  // that is the load-bearing half, because near()'s 1e-6 sleeps through
-  // a small drift on Sunny's BottomClouds.Speed of 0.00125.
-  assert.equal(TIMESCALE_FACTOR, 0.0833, 'BLBSkybox.cs:1380 "Because game runs at timescale 12"');
-  assert.ok(near(mat._CloudSpeed, s.BottomClouds.Speed * 0.0833), '"Because game runs at timescale 12" (:1380)');
-  assert.ok(near(mat._TwinkleSpeed, s.Stars.TwinkleSpeed * 0.0833), ':1430');
-  assert.deepEqual(mat._MoonSpinSpeed, s.Masser.SpinSpeed.map((v) => v * 0.0833), ':1447');
-  assert.deepEqual(mat._SecundaSpinSpeed, s.Secunda.SpinSpeed, 'Secunda’s spin is NOT timescaled (:1464)');
-  // QUIRK 1: the preset's Direction (0) overwrites Init's wind
-  assert.equal(mat._CloudDirection, 0);
-  // QUIRK 2: _CloudSunScale takes the TOP layer's scale
-  assert.equal(mat._CloudSunScale, s.TopClouds.SunColorScale);
-  // QUIRK 3: the twinkle texture's offset is the STARS' offset
-  assert.deepEqual(mat._TwinkleTex_ST, [s.Stars.TwinkleTilingX, s.Stars.TwinkleTilingY, s.Stars.StarsOffsetX, s.Stars.StarsOffsetY]);
-  // QUIRK 4: the Masser tidal angle goes to a property the shader lacks;
-  // _MoonTidalAngle keeps the material's (0, 300, 0)
-  assert.deepEqual(mat._MasserTidalAngle, [0, 300, 0, 0]);
-  assert.deepEqual(mat._MoonTidalAngle, MATERIAL_DEFAULTS._MoonTidalAngle);
-  assert.deepEqual(mat._SecundaTidalAngle, [30, 160, -30, 0], 'Secunda’s reaches the shader');
-  // the texture slots and their _ST
-  assert.equal(mat._CloudTopDiffuse, 'CdMSunny'); assert.equal(mat._CloudDiffuse, 'CdMSunny2');
-  assert.deepEqual(mat._CloudDiffuse_ST, [0.25, 0.25, 0.5, 0]);
-  assert.equal(mat._StarTex, 'VanillaStars'); assert.equal(mat._MoonTex, 'PixelMars'); assert.equal(mat._SecundaTex, 'PixelEnceladus');
-  assert.deepEqual(mat._StarTwinkleTex_ST, mat._StarTex_ST, 'the twinkle mask tiles as the stars do');
-  // a preset without a colour leaves the slot as it was (the TryParse guard)
-  const fog = parseSkyboxSetting(read(`${V}/SkyboxSettings/SkyboxFog.json`));
-  const before = mat._MoonNightColor;
-  applySkyboxSettings(mat, fog);
-  assert.equal(mat._MoonNightColor, before, 'Fog has no MoonNightColor: the previous stays');
-  assert.equal(mat._CloudTopDiffuse, 'CdMRain');
-  // every preset applies without throwing, over the same material
-  for (const n of PRESET_NAMES) applySkyboxSettings(mat, parseSkyboxSetting(read(`${V}/SkyboxSettings/${n}.json`)));
+// ── THE PICTURES ──────────────────────────────────────────────────
+test('OWN-WORK4 the painted noise: three channels, each tiling and equalized (a cut at 1 - c covers c), the same bytes every time; the flake six-armed and premultiplied', async () => {
+  assert.deepEqual(SKY_NOISE_CHANNELS.map((c) => ({ ...c })), [
+    { seed: 11, cells: 4, octaves: 5, billow: false },
+    { seed: 23, cells: 8, octaves: 5, billow: false },
+    { seed: 37, cells: 3, octaves: 4, billow: true },
+  ]);
+  const a = paintSkyNoise(), b = paintSkyNoise();
+  assert.deepEqual(a.data, b.data, 'deterministic');
+  assert.equal(a.width, 256); assert.equal(a.height, 256);
+  for (let k = 0; k < 3; k++) {
+    const quarter = [0, 0, 0, 0];
+    let edge = 0;
+    for (let i = 0; i < 256 * 256; i++) quarter[a.data[i * 4 + k] >> 6]++;
+    for (const q of quarter) assert.ok(Math.abs(q - 16384) < 200, `channel ${k}: a quarter of the texture in each quarter of its range (${quarter})`);
+    for (let x = 0; x < 256; x++) edge = Math.max(edge, Math.abs(a.data[x * 4 + k] - a.data[(255 * 256 + x) * 4 + k]), Math.abs(a.data[x * 256 * 4 + k] - a.data[(x * 256 + 255) * 4 + k]));
+    assert.ok(edge < 24, `channel ${k} tiles: the far edge meets the near (${edge})`);
+  }
+  for (let i = 3; i < a.data.length; i += 4) assert.equal(a.data[i], 255);
+  const flake = paintSnowflake();
+  let ink = 0;
+  for (let i = 0; i < flake.data.length; i += 4) {
+    if (flake.data[i + 3] === 0) assert.deepEqual([...flake.data.subarray(i, i + 3)], [0, 0, 0], 'a clear texel is black, for the premultiplied blend');
+    else ink++;
+  }
+  assert.ok(ink > 400 && ink < 1600, `a flake, not a blot (${ink} texels)`);
+  // six arms: the flake is close to itself turned a sixth of a turn
+  let same = 0, inked = 0;
+  for (let j = 0; j < 64; j++) for (let i = 0; i < 64; i++) {
+    if (!flake.data[(j * 64 + i) * 4 + 3]) continue;
+    inked++;
+    const x = i - 31.5, y = j - 31.5, c = Math.cos(Math.PI / 3), s = Math.sin(Math.PI / 3);
+    const ri = Math.round(x * c - y * s + 31.5), rj = Math.round(x * s + y * c + 31.5);
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+      const ii = ri + di, jj = rj + dj;
+      if (ii >= 0 && jj >= 0 && ii < 64 && jj < 64 && flake.data[(jj * 64 + ii) * 4 + 3]) { same++; dj = 2; break; }
+    }
+  }
+  assert.ok(same / inked > 0.95, `six-fold (${(same / inked).toFixed(3)})`);
+  // the pass's door: a painted texture, a name we do not paint refused; the snow's URL needs a canvas
+  const tex = await loadDynamicSkiesTexture('SkyNoise');
+  assert.equal(tex.width, 256);
+  await assert.rejects(loadDynamicSkiesTexture('CdMSunny'), /no texture named CdMSunny/);
+  assert.equal(dynamicSkiesTextureUrl('PixelSnow'), null, 'node has no canvas');
+  assert.deepEqual(dynamicSkiesAssets(), { weathers: WEATHER_LOOK, fog: FOG_LOOK, lightCurve: DYNAMIC_LIGHT_CURVE });
 });
 
-test('DS1 day parts: isHourDayPart’s bands and getWeatherIndex', () => {
-  assert.equal(dayPartOfHour(0), DAY_PARTS.Night); assert.equal(dayPartOfHour(3), DAY_PARTS.Night);
-  assert.equal(dayPartOfHour(4), DAY_PARTS.Dawn); assert.equal(dayPartOfHour(5), DAY_PARTS.Dawn);
-  assert.equal(dayPartOfHour(6), DAY_PARTS.DawnEnd);
-  assert.equal(dayPartOfHour(7), DAY_PARTS.Morning); assert.equal(dayPartOfHour(11), DAY_PARTS.Morning);
-  assert.equal(dayPartOfHour(12), DAY_PARTS.Midday); assert.equal(dayPartOfHour(15), DAY_PARTS.Midday);
-  assert.equal(dayPartOfHour(16), DAY_PARTS.Dusk); assert.equal(dayPartOfHour(17), DAY_PARTS.Dusk);
-  assert.equal(dayPartOfHour(18), DAY_PARTS.DuskEnd);
-  assert.equal(dayPartOfHour(19), DAY_PARTS.Evening); assert.equal(dayPartOfHour(23), DAY_PARTS.Evening);
-  assert.equal(weatherIndexOf(DAY_PARTS.Evening), 1); assert.equal(weatherIndexOf(DAY_PARTS.Night), 1);
-  assert.equal(weatherIndexOf(DAY_PARTS.Midday), 0); assert.equal(weatherIndexOf(DAY_PARTS.None), 0);
+// ── THE INSTANCE ──────────────────────────────────────────────────
+test('OWN-WORK4 the instance: the first word whole, a new word walked on the game clock, a jump or a clock gone back whole; the fog rows, the light curve and the phases its own', () => {
+  const d = new DynamicSkies(dynamicSkiesAssets(), { densitySetting: 4 }, () => 0.25);
+  assert.equal(d.currentWeather, 'sunny');
+  assert.equal(d.phases, null, 'no clock, no phases until the first frame');
+  assert.deepEqual(d.fogSettings, fogSettingsFromPresets(FOG_LOOK, 4), 'the slider\'s rows');
+  assert.equal(d.lightCurve, DYNAMIC_LIGHT_CURVE);
+  assert.equal(d.pixelSnow, null, 'ActivatePixelSnow off');
+  const frame = (minute, weather, extra = {}) => d.tick({ minuteOfDay: minute % 1440, classicMinutes: BASE + minute, weather, seconds: minute, dt: 1 / 60, weatherScale: 1, ...extra });
+  const st = frame(720, 'rain');
+  assert.equal(st.weather, 'rain');
+  assert.deepEqual(d.row, weatherRow('rain'), 'the first word is a load: whole');
+  assert.deepEqual(st.sunDir.map((v) => Math.round(v * 1e6) / 1e6), [0, 1, 0]);
+  assert.deepEqual(st.clearColor, st.fogColor, 'the sky publishes its fog colour as the horizon the world fogs to');
+  assert.equal(d.fogColor, st.fogColor);
+  assert.equal(d.state, st);
+  assert.deepEqual(d.phases, phasesAt(BASE + 720));
+  assert.deepEqual(d.moonDirection('masser'), st.masser.dir);
+  assert.equal(d.fogSettingsFor('thunder'), d.fogSettings.rainy);
+  // a new word walks: SKY_EASE_MINUTES of game time is 1 - 1/e of the way
+  assert.equal(SKY_EASE_MINUTES, 3); assert.equal(SKY_JUMP_MINUTES, 60);
+  frame(720 + SKY_EASE_MINUTES, 'sunny');
+  assert.ok(near(d.row.cover, 0.85 + (0.1 - 0.85) * (1 - Math.exp(-1)), 1e-12), 'one ease span: 1 - 1/e of the way');
+  frame(720 + SKY_EASE_MINUTES, 'thunder');
+  const held = d.row.cover;
+  frame(720 + SKY_EASE_MINUTES, 'thunder');
+  assert.equal(d.row.cover, held, 'a stopped clock holds the sky');
+  frame(720 + 200, 'thunder');
+  assert.deepEqual(d.row, weatherRow('thunder'), 'a jump past an hour: whole');
+  frame(700, 'snow');
+  assert.deepEqual(d.row, weatherRow('snow'), 'a clock gone back: whole');
+  frame(701, 'sunny');
+  d.weatherJump();
+  frame(702, 'fog');
+  assert.deepEqual(d.row, weatherRow('fog'), 'a load (weatherJump): whole');
+  frame(703, 'blizzard');
+  assert.equal(d.currentWeather, 'sunny', 'a word the sky does not know wears the clear sky');
+  // phases with a clock at birth
+  assert.deepEqual(new DynamicSkies({}, {}, Math.random, { classicMinutes: BASE }).phases, phasesAt(BASE));
+  assert.deepEqual(new DynamicSkies({}, { ActivatePixelSnow: true, MinParticleSize: 200 }).pixelSnow, pixelSnowSettings({ MinParticleSize: 200 }));
 });
 
-// ── THE MOONS ─────────────────────────────────────────────────────
-test('DS1 moons: the phase ladder, lengths, day offsets and the short-way interpolation, verbatim', () => {
-  assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.New], 180); assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.Full], 0); assert.equal(LUNAR_PHASE_X[LUNAR_PHASES.OneWane], -135);
-  // AUDIT 62 F32: the WHOLE ladder, not three of its eight arms.
-  // GetLunarPhaseLength (BLBSkybox.cs:901-913) verbatim, in DFU's own
-  // order, plus the `default: return 1` arm - LUNAR_PHASES.None is what
-  // gameDate's lunarPhase answers for a year below zero.
-  // MUTANT: any single `return` in dynamicSkies.js's switch - the three
-  // wane arms and HalfWax used to have no pin at all.
-  assert.deepEqual([
-    LUNAR_PHASES.Full, LUNAR_PHASES.New, LUNAR_PHASES.ThreeWane, LUNAR_PHASES.HalfWane,
-    LUNAR_PHASES.OneWane, LUNAR_PHASES.OneWax, LUNAR_PHASES.HalfWax, LUNAR_PHASES.ThreeWax,
-  ].map(lunarPhaseLength), [1, 1, 5, 5, 5, 6, 6, 3], 'GetLunarPhaseLength (:901-913)');
-  assert.equal(lunarPhaseLength(LUNAR_PHASES.None), 1, 'and the default arm (:912)');
-  // AUDIT 62 F33: GetPhaseDayOffset (:915-931) over its WHOLE domain,
-  // written out from the reference's six bands - `==0||==16 -> 0`, then
-  // `<=5`/-1, `<=10`/-6, `<=15`/-11, `<=22`/-17, `<=28`/-23, `<=31`/-29.
-  // Five sample points used to stand here and left every band edge and
-  // three whole bands (HalfWane, OneWane, HalfWax) undriven, so
-  // `<= 28` -> `<= 27`, `<= 10` -> `<= 9`, `<= 15` -> `<= 14` and the
-  // subtraction constants -6/-11/-23 all survived.
-  assert.deepEqual(Array.from({ length: 32 }, (_, r) => phaseDayOffset(r)),
-    [0, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2],
-    'GetPhaseDayOffset (:915-931), both sides of every band edge');
-  assert.equal(nextLunarPhase(LUNAR_PHASES.OneWane), LUNAR_PHASES.New); assert.equal(nextLunarPhase(LUNAR_PHASES.ThreeWax), LUNAR_PHASES.Full);
-  assert.equal(interpolateAngle(-135, 180, 0.5), -157.5, 'OneWane (-135) to New (180) goes the short way, through -180');
-  assert.equal(interpolateAngle(180, 135, 0.5), 157.5);
-  // a date: the state agrees with DFU's ladder and progresses through the day
-  const date = dateFromClassicMinutes(405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY + 12 * 60);
-  const st = lunarPhaseState(date, true);
-  assert.equal(st.phase, lunarPhase(date, { masser: true }));
-  assert.equal(st.moonRatio, 22); assert.equal(st.phase, LUNAR_PHASES.OneWax);
-  assert.ok(near(st.progress, (5 * 86400 + 12 * 3600) / (6 * 86400)), 'day offset 5 of 6, at noon');
-  assert.ok(near(st.interpolatedX, interpolateAngle(135, 90, st.progress)));
-  const sec = lunarPhaseState(date, false);
-  assert.equal(sec.moonRatio, 18);
-  // AUDIT 62 F32, the LIVE path: the only date fixture above is OneWax
-  // for both moons, so the length-6 arm was the only one ChangeLunarPhases
-  // ever divided by. Sixteen days on, Masser is HalfWane (moonRatio 8,
-  // band 6..10, day offset 2) and the divisor is the FIVE-day length -
-  // this is the phaseLength that dynamicSkiesRuntime's per-tick
-  // applyLunarPhases actually consumes, through `progress`.
-  const hw = lunarPhaseState(dateFromClassicMinutes(405 * 360 * MINUTES_PER_DAY + 28 * MINUTES_PER_DAY + 12 * 60), true);
-  assert.equal(hw.phase, LUNAR_PHASES.HalfWane); assert.equal(hw.moonRatio, 8);
-  assert.ok(near(hw.progress, (2 * 86400 + 12 * 3600) / (5 * 86400)), 'day offset 2 of a FIVE-day phase, at noon');
-  // the orbit: 270/90 with a Z from the phase, speed 0.0000725, offset X + 180
-  const o = orbitParameters(st, sec);
-  assert.deepEqual(o._MoonOrbitAngle.slice(0, 2), [270, 90]);
-  assert.ok(near(o._MoonOrbitAngle[2], -20 * Math.sin(st.interpolatedX * Math.PI / 180)));
-  assert.ok(near(o._SecundaOrbitAngle[2], -30 * Math.sin(sec.interpolatedX * Math.PI / 180)));
-  assert.equal(o._MoonOrbitSpeed, 0.0000725); assert.equal(o._SecundaOrbitSpeed, 0.0000725);
-  assert.ok(near(o._MoonOrbitOffset, st.interpolatedX + 180));
-  // OneWane and New nudge the offset (the eclipse avoidance)
-  const wane = { phase: LUNAR_PHASES.OneWane, progress: 0.5, interpolatedX: -157.5 };
-  const nw = { phase: LUNAR_PHASES.New, progress: 0, interpolatedX: 180 };
-  const o2 = orbitParameters(wane, nw);
-  assert.ok(near(o2._MoonOrbitOffset, -157.5 + 180 + 15 * 0.5));
-  assert.ok(near(o2._MoonOrbitAngle[2], -20 * Math.sin(-157.5 * Math.PI / 180) + 15 * 0.5));
-  assert.ok(near(o2._SecundaOrbitOffset, 180 + 180 - 5));
-  // AUDIT 62 F34: the MIRROR pair. The fixture above only ever gives
-  // Masser the OneWane arm and Secunda the New one, so Secunda's own
-  // constants (20f, not Masser's 15f - BLBSkybox.cs:972-973, :997-998)
-  // and Masser's New arm (-5f, :969-970) had no pin: 20 -> 15 and
-  // -5 -> -7 both left the suite green. Swapping the roles drives all
-  // four arms, and the distinct multipliers (15 vs 20, -20 sin vs
-  // -30 sin) make each one separately visible.
-  const secWane = { phase: LUNAR_PHASES.OneWane, progress: 0.5, interpolatedX: -157.5 };
-  const o3 = orbitParameters(nw, secWane);
-  assert.ok(near(o3._SecundaOrbitOffset, -157.5 + 180 + 20 * 0.5), 'Secunda’s OneWane nudge is 20, not Masser’s 15 (:972-973)');
-  assert.ok(near(o3._SecundaOrbitAngle[2], -30 * Math.sin(-157.5 * Math.PI / 180) + 20 * 0.5), 'and on Z too (:997-998)');
-  assert.ok(near(o3._MoonOrbitOffset, 180 + 180 - 5), 'Masser New: -5 (:969-970)');
-  assert.ok(near(o3._MoonOrbitAngle[2], -20 * Math.sin(180 * Math.PI / 180)), 'and New adds nothing to Z');
-  // ...and the no-arm baseline for Secunda on the real date, which was
-  // asserted for Masser only
-  assert.ok(near(o._SecundaOrbitOffset, sec.interpolatedX + 180), 'no phase arm: offset is X + 180 (:964)');
+test('OWN-WORK4 the storm: the flash listens under a thunderstorm out of doors, rolls once a storm clap, and the door puts it out', () => {
+  const d = new DynamicSkies({}, {}, () => 0.25);
+  const frame = (weather, dt = 1 / 60) => d.tick({ minuteOfDay: 720, classicMinutes: BASE + 720, weather, seconds: 0, dt, weatherScale: 1, playerPos: [1, 2, 3] });
+  frame('rain');
+  assert.equal(d.lightningListening, false, 'rain: no flash');
+  assert.equal(d.onAmbientEffect([1, 2, 3]), false);
+  frame('thunder');
+  assert.equal(d.lightningListening, true);
+  assert.equal(d.onAmbientEffect([1, 2, 3], false), false, 'a clip that is not the storm\'s rolls nothing');
+  let rolls = 0;
+  const startFlash = d.lightningFlash.startFlash.bind(d.lightningFlash);
+  d.lightningFlash.startFlash = (p) => { rolls++; return startFlash(p); };
+  assert.equal(d.onAmbientEffect([1, 2, 3]), true, '0.25 under 0.5: a flash');
+  assert.equal(rolls, 1, 'one roll a clap');
+  frame('thunder', 0.01);
+  assert.ok(d.lightningLight && d.lightningLight.range >= 500 && d.lightningLight.range <= 1000, 'lit');
+  d.setInside(true);
+  assert.equal(d.lightningLight, null, 'the door puts the light out');
+  assert.equal(d.lightningFlash._routines.length, 0, 'and stops the routine');
+  assert.equal(d.lightningListening, false, 'nothing rolls indoors');
+  assert.equal(d.onAmbientEffect([1, 2, 3]), false);
+  frame('thunder', 0.01);
+  assert.equal(d.lightningLight, null, 'a frame ticked while inside lights nothing');
+  d.setInside(false);
+  assert.equal(d.lightningListening, true, 'out again, it listens');
+  frame('sunny');
+  assert.equal(d.lightningListening, false, 'the storm passed');
+  assert.equal(MAX_DELTA_SECONDS, 1 / 3, 'the most real time a frame carries into the flash');
+  assert.match(read('src/scenes/shared.js'), /Math\.min\(MAX_DELTA_SECONDS, Math\.max\(0, seconds - weatherAt\)\)/);
 });
 
-test('DS1 moons: the CPU twin of MoonFunctions.cginc - rows dot vector, the ellipse, the arbitrary axis', () => {
-  // RotateWorldPosition about Y by 90 degrees takes +X to -Z... as the
-  // cginc's row matrix does: row0 = (cos y cos z, -cos y sin z, sin y)
-  const r = rotateWorldPosition([1, 0, 0], [0, Math.PI / 2, 0]);
-  assert.ok(near(r[0], 0, 1e-9) && near(r[1], 0, 1e-9) && near(r[2], -1, 1e-9));
-  // the ellipse is normalised; at angle 0 it is the major axis
-  assert.deepEqual(orbitPosition([0, 0, 0], [1, 1], 0).map((v) => Math.round(v * 1e9) / 1e9), [1, 0, 0]);
-  // an arbitrary-axis rotation of a vector about itself is the vector
-  const v = rotateArbitraryAxis([0, 1, 0], 37, [0, 1, 0]);
-  assert.ok(near(v[0], 0, 1e-9) && near(v[1], 1, 1e-9) && near(v[2], 0, 1e-9));
-  // and 90 about +Y takes +Z to +X (right-hand rule, as the matrix is written)
-  const w = rotateArbitraryAxis([0, 0, 1], 90, [0, 1, 0]);
-  assert.ok(near(w[0], 1, 1e-9) && near(w[2], 0, 1e-9));
-  // a moon's direction is unit length and moves with _WorldTime
-  const mat = { ...MATERIAL_DEFAULTS, _WorldTime: 0 };
-  const a = moonDirection(mat, 'Moon', 0), b = moonDirection(mat, 'Moon', 20000);
-  assert.ok(near(Math.hypot(...a), 1, 1e-9));
-  assert.ok(!near(a[0], b[0], 1e-3) || !near(a[1], b[1], 1e-3), 'the moon moves across the day');
-  // over one day the orbit turns 86400 * 0.0000725 radians - just under a turn
-  assert.ok(near(86400 * 0.0000725, 6.264, 1e-3));
+// ── THE PASS ──────────────────────────────────────────────────────
+const NOISE = paintSkyNoise();
+const noiseAt = (_name, uv) => {
+  const s = NOISE.width, x = (((Math.floor(uv[0] * s)) % s) + s) % s, y = (((Math.floor(uv[1] * s)) % s) + s) % s, i = (y * s + x) * 4;
+  return [0, 1, 2, 3].map((k) => NOISE.data[i + k] / 255);
+};
+/** The pass's whole FS, run in test/glsl.mjs on one frame's state, looking straight along `dir`. */
+function shadeAlong(st, dir, extra = {}) {
+  const b = {
+    uYaw: Math.atan2(dir[0], dir[2]), uPitch: Math.asin(dir[1]), uTanHalfFov: 1, uAspect: 1, uBandDither: 1, uDread: 0, uBrass: 0, uHazeSky: [0, 0, 0, 0],
+    uSunDir: st.sunDir, uZenith: st.zenith, uHorizon: st.horizon, uGround: st.ground, uGlow: st.glow, uGlowPower: st.glowPower,
+    uSunDisc: st.sunDisc, uSunCos: st.sunCos, uNight: st.night, uStarPole: st.starPole, uStarTurn: st.starTurn, uTwinkle: 1,
+    uMasser: [...st.masser.dir, st.masser.radius], uSecunda: [...st.secunda.dir, st.secunda.radius],
+    uMasserLight: st.masser.light, uSecundaLight: st.secunda.light, uMasserColor: st.masser.color, uSecundaColor: st.secunda.color,
+    uCloudLow: st.cloudLow, uCloudHigh: st.cloudHigh, uCloudOffset: st.cloudOffset, uCloudLit: st.cloudLit, uCloudShade: st.cloudShade,
+    uFogColor: [0.5, 0.5, 0.5], uFogMix: 0, vNdc: [0, 0], texture: noiseAt, ...extra,
+  };
+  const fns = glslFunctions(FS, b);
+  fns.main();
+  return fns.globals.outColor.slice(0, 3);
+}
+
+test('OWN-WORK4 the pass runs whole: every uniform it declares is fetched, and what it draws is the rule\'s - blue overhead at a clear noon, the sun\'s disc white, the stars at a clear midnight, a full Masser rose, a layer at opacity 0 nothing', () => {
+  const declared = new Set([...FS.matchAll(/uniform\s+[a-zA-Z0-9]+\s+([^;]+);/g)].flatMap((m) => m[1].split(',').map((s) => s.trim().replace(/\[.*$/, ''))));
+  assert.deepEqual([...declared].sort(), [...UNIFORM_NAMES].sort(), 'declared and fetched are one list');
+  assert.equal(new Set(UNIFORM_NAMES).size, UNIFORM_NAMES.length);
+  assert.doesNotMatch(FS, /#define|\bstruct\b/, 'nothing test/glsl.mjs cannot read');
+  const clear = (minute, weather = 'sunny', minutes = BASE + minute) => skyFrame({ minuteOfDay: minute, classicMinutes: minutes, row: weatherRow(weather) });
+  const noon = clear(720);
+  const north = shadeAlong(noon, [0, 0.6, 0.8]);
+  const openSky = shadeAlong({ ...noon, cloudLow: [0, 0, 1, 0.1], cloudHigh: [0, 0, 1, 0.1] }, [0, 0.6, 0.8]);
+  assert.ok(openSky[2] > openSky[0] + 0.2, `a clear noon is blue (${openSky.map((v) => v.toFixed(2))})`);
+  assert.ok(north.every((v) => v >= 0 && v <= 1));
+  const disc = shadeAlong(noon, noon.sunDir);
+  assert.ok(disc.every((v) => v > 0.97), `the sun's disc is white at noon (${disc.map((v) => v.toFixed(2))})`);
+  // a clear midnight: the sky dark, and somewhere along a sweep a star
+  const midnight = clear(0);
+  let brightest = 0, darkest = 1;
+  for (let i = 0; i < 60; i++) {
+    const a = i * 0.137, y = 0.3 + 0.6 * ((i * 0.618) % 1), r = Math.sqrt(1 - y * y);
+    const c = shadeAlong({ ...midnight, cloudLow: [0, 0, 1, 0.1], cloudHigh: [0, 0, 1, 0.1] }, [r * Math.cos(a), y, r * Math.sin(a)]);
+    brightest = Math.max(brightest, ...c); darkest = Math.min(darkest, Math.max(...c));
+  }
+  assert.ok(darkest < 0.1, `the night sky is dark (${darkest.toFixed(3)})`);
+  // ...the stars: a direction at a star's own centre, found from the hash the pass uses
+  const st = { ...midnight, cloudLow: [0, 0, 1, 0.1], cloudHigh: [0, 0, 1, 0.1], starTurn: 0 };
+  const fns = glslFunctions(FS, { uTwinkle: 0 });
+  let star = null;
+  for (let cy = 60; cy < 110 && !star; cy++) for (let cx = 0; cx < 110 && !star; cx++) {
+    if (fns.cellHash([cx, cy, 2], 1) > STAR_LOOK.bright.chance) continue;
+    const at = [fns.cellHash([cx, cy, 2], 2), fns.cellHash([cx, cy, 2], 3)].map((v) => v * 0.7 + 0.15);
+    const u = ((cx + at[0]) / 110) * 2 - 1, v = ((cy + at[1]) / 110) * 2 - 1, l = Math.hypot(u, 1, v);
+    star = [u / l, 1 / l, v / l];
+  }
+  assert.ok(star, 'a bright star on the zenith\'s face');
+  const lit = shadeAlong(st, star, { uTwinkle: 0 });
+  assert.ok(Math.max(...lit) > 0.3, `a star at its centre is bright (${lit.map((v) => v.toFixed(2))})`);
+  // a full Masser at night: rose, where the sky puts it
+  const full = { ...midnight, cloudLow: [0, 0, 1, 0.1], cloudHigh: [0, 0, 1, 0.1], night: 0, masser: { ...midnight.masser, dir: [0, 0.8, 0.6], light: [0, -0.8, -0.6], color: hexLinear(MOON_LOOK.masser.color) } };
+  const face = shadeAlong(full, [0, 0.8, 0.6]);
+  assert.ok(face[0] > 0.45 && face[0] > face[2], `a full Masser is lit and rose (${face.map((v) => v.toFixed(2))})`);
+  const newMoon = shadeAlong({ ...full, masser: { ...full.masser, light: [0, 0.8, 0.6] } }, [0, 0.8, 0.6]);
+  assert.ok(Math.max(...newMoon) < face[0] / 4, 'a new Masser is dark');
+  // a layer at opacity 0 reads nothing (PERF-EXT30, DS2) - test/render/perfextd.test.js holds the colour it hands on
+  let reads = 0;
+  shadeAlong({ ...noon, cloudLow: [0.9, 0, 0.35, 0.12], cloudHigh: [0.9, 0, 0.15, 0.12] }, [0, 0.6, 0.8], { texture: (n, uv) => { reads++; return noiseAt(n, uv); } });
+  assert.equal(reads, 0, 'by day, both layers at opacity 0: no tap at all');
 });
 
-// ── TIME, SUN, FOG COLOUR ─────────────────────────────────────────
-test('DS1 sun: SunlightManager’s rotation over the INT minute, UNCLAMPED - under the horizon all night', () => {
-  const noon = sunLightDirection(12 * 60);
-  assert.ok(near(noon[0], 0, 1e-9) && near(noon[1], 1, 1e-9));
-  const dawn = sunLightDirection(6 * 60);
-  assert.ok(near(dawn[0], 1, 1e-9) && near(dawn[1], 0, 1e-9), 'dawn from map east');
-  const midnight = sunLightDirection(0);
-  assert.ok(near(midnight[1], -1, 1e-9), 'straight down at midnight - the port’s worldClock clamps this for the world light');
-  assert.ok(near(sunDirection(0)[1], 0, 1e-9), 'and the world light’s sunDirection still sits on the horizon');
-  // the int minute: 12:00:30 is 12:00
-  assert.deepEqual(sunLightDirection(12 * 60 + 0.5), noon);
-  assert.equal(sunCurveTime(6 * 60), 0); assert.equal(sunCurveTime(18 * 60), 1); assert.equal(sunCurveTime(0), -0.5);
-  // _WorldTime: seconds of the day
-  assert.equal(worldTimeSeconds(0), 0); assert.equal(worldTimeSeconds(90.5), 5430); assert.equal(worldTimeSeconds(1440), 0);
-  // _LightColor0: the rig's colour linearised x 0.6 x the mod's curve x the weather
-  const keys = parseLightCurve(assets().lightCurve);
-  const c = sunLightColor(12 * 60, keys, 0.25);
-  assert.ok(near(c[2], srgbToLinear(1) * 0.6 * 1 * 0.25));
-  assert.deepEqual(sunLightColor(0, keys, 1), [0, 0, 0], 'the curve is 0 outside dawn..dusk');
+test('PS3 THE LEVELS AND THE DITHER: 48 levels a channel, the ordered dither world-fixed and zero-mean, on by default, `?bands=raw` the door to the raw levels (mutants: the dither off; indexed by the screen)', () => {
+  const levels = FS.slice(FS.indexOf('// encoded, the host\'s fog over it'), FS.indexOf('outColor = vec4('));
+  const code = levels.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+  assert.doesNotMatch(code, /gl_FragCoord/, 'the dither never indexes the screen');
+  assert.match(code, /vec2 fineCell; ringSnap\(dir, 0\.00204531, fineCell\); vec2 bandCell = floor\(fineCell\);/);
+  assert.match(code, /float bandB = uBandDither \* \(bayer4\(bandCell\) - 0\.46875\);/);
+  assert.match(code, /enc = floor\(enc \* SKY_LEVELS \+ 0\.5 \+ bandB\) \/ SKY_LEVELS;/);
+  assert.equal(BAYER_MEAN, 0.46875);
+  const rend = read('src/render/dynamicSkiesRenderer.js');
+  assert.match(rend, /this\.bandDither = true;/, 'the dither is on by default');
+  assert.match(rend, /gl\.uniform1f\(u\.uBandDither, this\.bandDither \? 1 : 0\);/, 'and uploaded');
+  assert.match(read('src/scenes/shared.js'), /dynamicSky\.bandDither = params\.get\('bands'\) !== 'raw';/, '?bands=raw reaches the game');
+  assert.match(read('src/tools/skyLab.js'), /sky\.bandDither = params\.get\('bands'\) !== 'raw';/, 'and the lab');
+  // THE RINGS, MEASURED: a halo's falloff through the levels, raw and dithered (a 4x4 cell's mean)
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  const plateaus = (dither) => {
+    let n = 0, prev = null;
+    for (let px = 0; px < 900; px++) {
+      const enc = 0.25 + 0.7 / (1 + Math.pow((px * 0.1) / 2.2, 1.6));
+      let acc = 0;
+      for (let cell = 0; cell < 16; cell++) acc += Math.floor(enc * SKY_LEVELS + 0.5 + (dither ? BAYER[cell] / 16 - BAYER_MEAN : 0)) / SKY_LEVELS;
+      const v = (acc / 16).toFixed(3);
+      if (v !== prev) { n++; prev = v; }
+    }
+    return n;
+  };
+  const raw = plateaus(false), dithered = plateaus(true);
+  assert.ok(raw <= SKY_LEVELS, `raw, the halo is ${raw} flat bands`);
+  assert.ok(dithered > raw * 3, `dithered, ${dithered} steps - the rings dissolve`);
 });
 
-test('DS1 fog colour: setFogColor - SmoothStep(lerpDuration, 0, sunY) rescaled by 0.66, squared, day colour to black', () => {
-  assert.ok(near(mathfSmoothStep(0.66, 0, 0), 0.66)); assert.ok(near(mathfSmoothStep(0.66, 0, 1), 0)); assert.ok(near(mathfSmoothStep(0.66, 0, 0.5), 0.33));
-  const s = parseSkyboxSetting(read(`${V}/SkyboxSettings/SkyboxSunny.json`));
-  const day = parseHtmlColor(s.FogDayColor);
-  assert.deepEqual(fogColorNow(s, s.AtmosphereLerpDuration, 1), day.slice(0, 3), 'sun high: the day colour');
-  assert.deepEqual(fogColorNow(s, s.AtmosphereLerpDuration, 0), [0, 0, 0], 'sun on the horizon: black');
-  assert.deepEqual(fogColorNow(s, s.AtmosphereLerpDuration, -0.5), [0, 0, 0], 'and under it');
-  const half = fogColorNow(s, s.AtmosphereLerpDuration, 0.5);
-  const t = Math.min(1, 0.33 / 0.66) ** 2;   // lerpScale 0.5, squared
-  assert.ok(near(half[0], day[0] * (1 - t)));
-  assert.equal(fogColorNow({ FogDayColor: null }, 0.66, 1), null, 'no parse, no write');
+test('OWN-WORK4 the pass\'s GL: one painted texture on unit 0, the layers handed opacity 0 under the volumetric clouds, the host\'s fog over it, the colours the state\'s', () => {
+  const calls = [];
+  const gl = new Proxy({}, { get: (_t, k) => (typeof k === 'string' && /^[A-Z_0-9]+$/.test(k) ? k : (...args) => { calls.push([k, ...args]); return k === 'getUniformLocation' ? args[1] : k === 'getShaderParameter' || k === 'getProgramParameter' ? true : {}; }) });
+  const sky = new DynamicSkiesRenderer(/** @type {any} */ (gl));
+  const st = skyFrame({ minuteOfDay: 720, row: weatherRow('cloudy') });
+  sky.setState(st);
+  assert.deepEqual([...sky.clearColor].map((v) => +v.toFixed(5)), st.clearColor.map((v) => +v.toFixed(5)));
+  assert.deepEqual([...sky.fillColor].map((v) => +v.toFixed(5)), st.fillColor.map((v) => +v.toFixed(5)));
+  sky.setTexture('SkyNoise', NOISE);
+  const up = calls.find((c) => c[0] === 'texImage2D' && c[4] === 256);
+  assert.ok(up && up[3] === 'RGBA8' && up[9] === NOISE.data, 'the noise uploaded as data, not colour');
+  assert.ok(calls.some((c) => c[0] === 'texParameteri' && c[3] === 'LINEAR_MIPMAP_LINEAR') && calls.some((c) => c[0] === 'generateMipmap'));
+  const draw = (external) => {
+    sky.cloudsExternal = external; calls.length = 0;
+    sky.draw(0, 0.2, 1.1, 16 / 9);
+    return Object.fromEntries(calls.filter((c) => /^uniform/.test(c[0])).map((c) => [c[1], c.slice(2)]));
+  };
+  const own = draw(false), under = draw(true);
+  assert.ok(own.uCloudLow[1] > 0 && own.uCloudHigh[1] > 0, '?clouds=off: the layers\' own opacity');
+  assert.equal(under.uCloudLow[1], 0); assert.equal(under.uCloudHigh[1], 0, 'under the volumetric clouds: 0, the state keeps its own');
+  assert.deepEqual(own.uCloudLow, st.cloudLow, 'the state\'s layer, whole');
+  assert.equal(own.uSkyNoise[0], 0, 'unit 0');
+  sky.fogMix = 0.7; sky.fogColor = new Float32Array([0.2, 0.3, 0.4]);
+  const fogged = draw(false);
+  assert.deepEqual(fogged.uFogMix, [0.7], 'the host\'s fog over the sky, as the dome takes it');
+  assert.deepEqual([...fogged.uFogColor[0]].map((v) => +v.toFixed(3)), [0.2, 0.3, 0.4]);
+  assert.match(FS, /enc = mix\(enc, uFogColor, uFogMix\);/);
+  // the hosts write it on whichever pass they hold
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(host), /sky\.renderer\.fogMix = fogNow\.excludeSky \? 0 : 1 - fogFactor\(fogNow, 800\);/);
 });
 
-// ── LIGHTNING ─────────────────────────────────────────────────────
+// ── THE STORM'S FLASH (LightningFlash: still the retired mod's own routine - code, not art) ──
 test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomised light, on for 0.2 s then off', () => {
   // rolls: [start < 0.5 -> flash] [double < 0.33? no] then FlashOnce's 8 draws
   const f = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
@@ -438,223 +519,14 @@ test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomis
   assert.equal(dB.tick(0.04), null, 'the gap'); assert.ok(dB.tick(0.06), 'the second half');
 });
 
-test('DS1 pixel snow: InitSnow’s numbers - sizes /100000 (viewport fractions), the count x1000 and unused', () => {
+test('DS1 pixel snow: the sliders\' numbers - sizes over 100,000 (fractions of the view), the count in thousands and unread', () => {
   assert.deepEqual(pixelSnowSettings({}), { minParticleSize: 0.001, maxParticleSize: 0.003, maxParticles: 20000 });
   assert.deepEqual(pixelSnowSettings({ MinParticleSize: 800, MaxParticleSize: 100, MaxParticles: 15 }), { minParticleSize: 0.008, maxParticleSize: 0.001, maxParticles: 15000 });
-});
-
-// ── THE INSTANCE ──────────────────────────────────────────────────
-test('DS1 runtime: Init, the pending weather applied a frame late, the fog colour every second, the moons every frame', () => {
-  const d = new DynamicSkies(assets(), { densitySetting: 2 }, () => 0.25);
-  assert.equal(d.currentWeather, 'sunny');
-  assert.equal(d.pendingWeather, true, 'Init leaves the first apply pending');
-  assert.ok(near(d.fogSettings.heavy.density, 0.05000000074505806 / 9), 'densitySetting 2 divides by 9');
-  assert.equal(d.pixelSnow, null, 'ActivatePixelSnow off');
-  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
-  const st = d.tick({ minuteOfDay: 12 * 60, classicMinutes: base + 12 * 60, weather: 'sunny', seconds: 0, dt: 1 / 60, weatherScale: 1 });
-  assert.equal(d.pendingWeather, false, 'applied');
-  assert.equal(st.mat._CloudTopDiffuse, 'CdMSunny');
-  assert.equal(st.mat._WorldTime, 12 * 3600);
-  assert.deepEqual(st.sunDir.map((v) => Math.round(v * 1e6) / 1e6), [0, 1, 0]);
-  assert.ok(st.fogColor, 'the fog colour is written on the apply');
-  assert.deepEqual(st.clearColor, st.fogColor, 'the sky publishes its fog colour as the horizon the world fogs to');
-  assert.deepEqual(st.mat._MoonOrbitAngle.slice(0, 2), [270, 90], 'ApplyOrbitCalculations ran');
-  assert.equal(d.currentDayPart, DAY_PARTS.Midday);
-  // the sim's word changes -> OnWeatherChange -> pending -> applied next tick
-  d.tick({ minuteOfDay: 12 * 60 + 1, classicMinutes: base + 12 * 60 + 1, weather: 'thunder', seconds: 0.5, dt: 1 / 60, weatherScale: 0.25 });
-  assert.equal(d.currentWeather, 'thunder');
-  assert.equal(d.mat._CloudTopDiffuse, 'CdMThunder');
-  assert.equal(d.lightningListening, true, 'Thunder starts the listener');
-  assert.equal(d.mat._FogDistance, 384);
-  assert.equal(d.fogSettingsFor('thunder').mode, 'exp2');
-  // the fog colour holds for a second of real time (no apply, no day-part
-  // change in between), then follows the sun
-  const c0 = [...d.fogColor];
-  d.tick({ minuteOfDay: 12 * 60 + 2, classicMinutes: base + 12 * 60 + 2, weather: 'thunder', seconds: 0.9, dt: 1 / 60, weatherScale: 0.25 });
-  assert.deepEqual([...d.fogColor], c0, 'not yet a second');
-  d.tick({ minuteOfDay: 17 * 60 + 50, classicMinutes: base + 17 * 60 + 50, weather: 'thunder', seconds: 1.6, dt: 1 / 60, weatherScale: 0.25 });
-  assert.ok(d.fogColor[0] < c0[0], 'a second on, near dusk, the fog is darker');
-  // an ambient effect under thunder rolls the flash (rng 0.25 < 0.5 and < 0.33: a double)
-  assert.equal(d.onAmbientEffect([1, 2, 3]), true);
-  d.tick({ minuteOfDay: 17 * 60 + 50, classicMinutes: base + 17 * 60 + 50, weather: 'thunder', seconds: 1.7, dt: 0.01, weatherScale: 0.25 });
-  assert.ok(d.lightningLight, 'the light is on');
-  assert.ok(d.lightningLight.range >= 500 && d.lightningLight.range <= 1000);
-  // sunny again: the listener stops and the flash never rolls
-  d.tick({ minuteOfDay: 17 * 60 + 50, classicMinutes: base + 17 * 60 + 50, weather: 'sunny', seconds: 2, dt: 1 / 60, weatherScale: 1 });
-  assert.equal(d.lightningListening, false);
-  assert.equal(d.onAmbientEffect([1, 2, 3]), undefined);
-  // inside: the flash is torn down and the listener with it
-  d.tick({ minuteOfDay: 17 * 60 + 50, classicMinutes: base + 17 * 60 + 50, weather: 'thunder', seconds: 3, dt: 1 / 60, weatherScale: 0.25 });
-  d.setInside(true);
-  assert.equal(d.lightningListening, false);
-  d.setInside(false);
-  assert.equal(d.lightningListening, true);
-  // AUDIT 61 - THE LISTENER IS A MULTICAST DELEGATE, kept as the mod
-  // keeps it: the interior transition nulls the coroutine and drops one
-  // subscription, the exterior transition re-subscribes without
-  // restarting the coroutine, so the NEXT OnWeatherChange that takes its
-  // branch under Thunder (the day-part machine forces one every frame)
-  // subscribes a second time - two handlers, two rolls per one-shot;
-  // leaving Thunder removes ONE, and the other stays for the session.
-  assert.equal(d.lightningSubscriptions, 1);
-  assert.equal(d.lightningCoroutine, false, 'the exterior transition re-arms the listener, not the coroutine');
-  d.forceWeatherUpdate = true; d.pendingWeather = false; d.onWeatherChange('thunder'); d.applyPendingWeatherSettings();
-  assert.equal(d.lightningSubscriptions, 2, 'the next OnWeatherChange subscribes again');
-  let rolls = 0;
-  const startFlash = d.lightningFlash.startFlash.bind(d.lightningFlash);
-  d.lightningFlash.startFlash = (p) => { rolls++; return startFlash(p); };
-  d.onAmbientEffect([1, 2, 3]);
-  assert.equal(rolls, 2, 'two delegate entries, two independent rolls');
-  assert.equal(d.onAmbientEffect([1, 2, 3], false), undefined, 'a clip that is not the storm\'s rolls nothing (the port\'s front plays the front\'s word)');
-  d.tick({ minuteOfDay: 17 * 60 + 50, classicMinutes: base + 17 * 60 + 50, weather: 'sunny', seconds: 3.5, dt: 1 / 60, weatherScale: 1 });
-  assert.equal(d.lightningSubscriptions, 1, 'the else arm removes ONE subscription - the other leaks');
-  assert.equal(d.lightningListening, true);
-  rolls = 0; d.onAmbientEffect([1, 2, 3]);
-  assert.equal(rolls, 1, '...and rolls on every outdoor one-shot under any weather, as the mod does');
-  // a load: weatherJump forces the loaded weather through
-  d.weatherJump('snow');
-  assert.equal(d.pendingWeather, true);
-  d.tick({ minuteOfDay: 2 * 60, classicMinutes: base + 2 * 60, weather: 'snow', seconds: 4, dt: 1 / 60, weatherScale: 0.45 });
-  assert.equal(d.currentWeather, 'snow');
-  assert.equal(d.currentDayPart, DAY_PARTS.Night);
-  assert.equal(d.weatherIndex(), 1, 'night index... which is the day preset, the night file not being shipped');
-  assert.equal(d.mat._CloudTopDiffuse, 'CdMThunder', 'SkyboxSnow’s top layer');
-  // a moon's direction is the shader's, on the CPU
-  const m = d.moonDirection('Moon');
-  assert.ok(near(Math.hypot(...m), 1, 1e-9));
-});
-
-test('DS1 runtime: the fog colour is recomputed on a ONE-SECOND cadence, and holds in between', () => {
-  // AUDIT 62 F35. The hold assertion in the test above discriminates
-  // nothing: it compares two NOON frames, where sunY is ~1, so
-  // setFogColor's rescaled smoothstep underflows to 0 in the squaring
-  // and the recomputed colour is the day colour to the last bit either
-  // way - `FOG_COLOR_INTERVAL_SECONDS` 1.0 -> 0.3 left the whole suite
-  // green, and nothing asserted the constant.
-  //
-  // The colour only MOVES between about 15:00 and 16:25 (from 16:30 on
-  // it is saturated black), so the hold is driven there. Both frames sit
-  // in ONE day part (hour 15 is Midday, so no day-part arm re-applies)
-  // and carry the SAME weather word, so ApplyPendingWeatherSettings'
-  // unconditional setFogColor (:587-595) cannot forge the result - only
-  // the interval gate can write the colour.
-  // MUTANT: `UpdateInterval = 1.0f` (BLBSkybox.cs:193), the gate at
-  // :199 - at 0.3 the middle frame already recomputes and the hold goes
-  // red.
-  assert.equal(FOG_COLOR_INTERVAL_SECONDS, 1.0, 'BLBSkybox.cs:193 "Update fog color every 1.0 seconds"');
-  const d = new DynamicSkies(assets(), { densitySetting: 2 }, () => 0.25);
-  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
-  const frame = (minute, seconds) => ({
-    minuteOfDay: minute, classicMinutes: base + minute, weather: 'sunny', seconds, dt: 1 / 60, weatherScale: 1,
-  });
-  d.tick(frame(15 * 60 + 30, 10.0));                 // lastUpdateTime is stamped here
-  const c1 = [...d.fogColor];
-  assert.ok(c1[0] > 0 && c1[0] < parseHtmlColor('7783B7FF')[0], 'mid-afternoon: the fog is between the day colour and black');
-  d.tick(frame(15 * 60 + 50, 10.9));
-  assert.deepEqual([...d.fogColor], c1, 'not yet a second: the sun moved 20 game-minutes and the fog did not');
-  d.tick(frame(15 * 60 + 50, 11.05));
-  assert.ok(d.fogColor[0] < c1[0], 'a second on, the fog follows the sun down');
-});
-
-// ── THE SHADER ────────────────────────────────────────────────────
-test('DS1 shader: every property the mod declares is a uniform of the same name, and the material’s keywords are baked', () => {
-  const src = read(`${V}/Shaders/BLBProceduralSkybox.shader`);
-  const props = [...src.matchAll(/^\s*(?:\[[^\]]+\]\s*)*(_[A-Za-z0-9]+)\s*\(/gm)].map((m) => m[1]);
-  assert.ok(props.length > 80, 'the property block read');
-  const glslUniforms = new Set([...FS.matchAll(/uniform\s+[a-zA-Z0-9]+\s+([^;]+);/g)].flatMap((m) => m[1].split(',').map((s) => s.trim())));
-  for (const p of props) {
-    if (['_Lut', '_ReduceColor', '_SunDisk', '_MoonPhaseOption', '_MoonSpinOption', '_SecundaPhaseOption', '_SecundaSpinOption'].includes(p)) continue;   // keywords / the unused LUT
-    assert.ok(glslUniforms.has(p), `${p} is not a uniform of the GLSL`);
-  }
-  for (const s of TEXTURE_SLOTS) { assert.ok(glslUniforms.has(s)); assert.ok(glslUniforms.has(s + '_ST')); }
-  // the baked keywords: REDUCE_COLOR's posterise, HQ sun disk, both tidal locks.
-  // PS3 (2026-09-12) hoisted the mod's own step out of the three channel
-  // lines and gave the quantizer an ordered dither - the step formula is
-  // still the mod's to the character, the ceil is still the mod's, and
-  // uBandDither 0 is its raw threshold back (?bands=raw).
-  assert.match(FS, /float bandStep = _stepSize - \(lerpScale_pow \* _stepSize\) \+ 0\.001;/, 'REDUCE_COLOR: the mod\'s own step, unchanged');
-  for (const ch of ['r', 'g', 'b']) {
-    assert.match(FS, new RegExp(`col\\.${ch} = ceil\\(col\\.${ch} / bandStep - bandB\\) \\* bandStep;`), `REDUCE_COLOR: the mod's ceil on ${ch}`);
-  }
-  assert.match(FS, /float bandB = uBandDither \* \(bayer4\(bandCell\) - 0\.46875\);/,
-    'PS3: half a step either way, zero-mean, on a world-fixed cell');
-  assert.ok(UNIFORM_NAMES.includes('uBandDither'), 'and the switch is fetched like every other uniform');
-  // THE DOOR IS WHAT MAKES THE DEPARTURE LEGAL, so it is pinned like the
-  // shader is. Delete the upload and uBandDither sits at its default 0 -
-  // the mod's raw ceil - and PS3 silently does nothing, which is exactly
-  // the _CloudTopColorBoost failure this file's own comment cites.
-  const rend = read('src/render/dynamicSkiesRenderer.js');
-  assert.match(rend, /this\.bandDither = true;/, 'the dither is on by default');
-  assert.match(rend, /gl\.uniform1f\(u\.uBandDither, this\.bandDither \? 1 : 0\);/, 'and it is actually uploaded');
-  assert.match(read('src/scenes/shared.js'), /dynamicSky\.bandDither = params\.get\('bands'\) !== 'raw';/, '?bands=raw reaches the game');
-  assert.match(read('src/tools/skyLab.js'), /sky\.bandDither = params\.get\('bands'\) !== 'raw';/, 'and the lab shows what the game shows');
-  // WORLD-FIXED, never the screen. Indexed by gl_FragCoord the stipple is
-  // locked to the display while the sky slides under it, so it crawls when
-  // the camera turns - at half of the mod's band, which in the darks is
-  // 7/255, not the half-LSB the dome's smooth pass calls invisible.
-  const reduce = FS.slice(FS.indexOf('// REDUCE_COLOR'), FS.indexOf('// NO HOST FOG'))
-    .split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');   // the CODE, not the comment that explains why
-  assert.doesNotMatch(reduce, /gl_FragCoord/, 'the band dither never indexes the screen');
-  assert.match(reduce, /vec2 fineCell; ringSnap\(dir, 0\.00204531, fineCell\); vec2 bandCell = floor\(fineCell\);/,
-    'smooth, it snaps a finer cell rather than falling back to the fragment');
-  // ...and ZERO-MEAN: bayer4 averages 7.5/16, so subtracting 0.5 would
-  // raise the mod's ceil bias by 1/32 of a band.
-  assert.match(reduce, /bayer4\(bandCell\) - 0\.46875/, 'the offset is zero-mean, so the mod\'s bias is the one it had');
-  assert.equal(BAYER_MEAN, 0.46875);
-  // THE CIRCLES, MEASURED. A JS mirror of the block over a radial sweep
-  // out of the sun, in the linear light the shader works in, encoded to
-  // sRGB the way the pass encodes its output. Raw, the shipped Sunny
-  // preset's step leaves a few dozen FLAT plateaus - the rings Mac saw.
-  // Dithered, the same sweep resolves an order of magnitude more levels.
-  const lin2srgb = (c) => (c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
-  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-  const bayer = (x, y) => BAYER[(((y % 4) + 4) % 4) * 4 + (((x % 4) + 4) % 4)] / 16;
-  const plateaus = (dither) => {
-    const step = 0.015 - 0 * 0.015 + 0.001;   // the Sunny preset with the sun high (lerpScale_pow 0)
-    let n = 0; let prev = null;
-    for (let px = 0; px < 900; px++) {
-      const lin = 0.06 + 0.9 / (1 + Math.pow((px * 0.1) / 2.2, 1.6));   // a sun halo falling off with angle
-      let acc = 0;
-      for (let py = 0; py < 4; py++) {
-        const b = dither ? bayer(px, py) - 0.5 : 0;
-        acc += lin2srgb(Math.min(1, Math.ceil(lin / step - b) * step));
-      }
-      const v = (acc / 4).toFixed(3);
-      if (v !== prev) { n++; prev = v; }
-    }
-    return n;
-  };
-  const raw = plateaus(false); const dithered = plateaus(true);
-  assert.ok(raw < 80, `the mod's bare ceil leaves ${raw} flat plateaus through the halo - the progressing circles`);
-  assert.ok(dithered > raw * 5, `and the ordered dither resolves ${dithered}, an order of magnitude more`);
-  assert.match(FS, /getMiePhase\(-focusedEyeCos, focusedEyeCos \* focusedEyeCos, SunSize\)/, '_SUNDISK_HIGH_QUALITY');
-  assert.match(FS, /moonFragNormal = phaseNormal;\s*\n\s*moonFragNormal = RotateWorldPosition\(moonFragNormal, vec3\(radiansOf\(_MoonTidalAngle\.x\)/, '_MOONSPINOPTION_TIDAL_LOCK');
-  assert.match(FS, /SecundaMoonFragNormal = SecundaPhaseNormal;/, '_SECUNDASPINOPTION_TIDAL_LOCK');
-  // linear colour space: no sqrt on the colours, the output encoded
-  assert.doesNotMatch(FS, /OUT\.skyColor\s*=\s*sqrt/);
-  assert.match(FS, /enc = vec3\(linearToSrgb\(lin\.r\), linearToSrgb\(lin\.g\), linearToSrgb\(lin\.b\)\);/);
-  // UnpackNormal is the desktop arm (x rides R * A) and BlendNormals is Unity's
-  assert.match(FS, /packednormal\.x \*= packednormal\.w;/);
-  assert.match(FS, /normalize\(vec3\(n1\.xy \+ n2\.xy, n1\.z \* n2\.z\)\)/);
-  // HLSL's smoothstep, spelled out, is the one the clouds use
-  assert.match(FS, /cloudsTop = hsmoothstep\(_CloudTopAlphaCutoff, _CloudTopAlphaMax, cloudsTop\);/);
-  // the colour lists cover every colour property once
-  assert.equal(new Set(COLOR_PROPERTIES).size, COLOR_PROPERTIES.length);
-  assert.equal(new Set(FLOAT_PROPERTIES).size, FLOAT_PROPERTIES.length);
-  assert.ok(!FLOAT_PROPERTIES.includes('_CloudTopColorBoost'), 'the top boost is the float3 quirk, uploaded apart');
-  // ...and every uniform the GLSL declares has its location fetched (the
-  // DS1 review: `_CloudTopColorBoost` was read by the shader and fetched
-  // by nobody, so its upload was a silent no-op)
-  const fetched = new Set(UNIFORM_NAMES);
-  for (const u of glslUniforms) assert.ok(fetched.has(u), `${u} is declared by the FS and never fetched`);
-  assert.equal(new Set(UNIFORM_NAMES).size, UNIFORM_NAMES.length);
-  // the horizon: below it `vert` runs at the mesh's vertex rows, never a hair under the line
-  assert.match(FS, /V2F IN = vertAsMesh\(worldPos\);/);
-  assert.match(FS, /#define MESH_ROW 0\.0625/);
+  assert.match(read('src/scenes/shared.js'), /pixelSnow: dynamic\?\.pixelSnow \? \{ \.\.\.dynamic\.pixelSnow, textureUrl: dynamicSkiesTextureUrl\('PixelSnow'\) \} : null,/, 'the flake we paint, as a URL');
 });
 
 // ── THE SEAM ──────────────────────────────────────────────────────
-test('DS1 seam: the controller stands the mod beside the dome on the one lane, and both hosts are wired', () => {
+test('DS1 seam: the controller stands Dynamic Skies beside the dome on the one lane, and both hosts are wired - unchanged by OWN-WORK4', () => {
   const shared = read('src/scenes/shared.js');
   assert.match(shared, /const dynamicOn = enhancedLane && \(skyDoor === 'dynamic' \|\| \(skyDoor === null && modSetting\('dynamic-skies', 'Enabled'\)\)\);/,
     'the mod’s own switch, under the lane; ?sky=dynamic forces it, any other door the dome');
@@ -663,8 +535,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
   assert.match(shared, /onAmbientEffect\(playerPos, storm = true\) \{ dynamic\?\.onAmbientEffect\(playerPos, storm\); \}/);
   assert.match(shared, /setInside\(inside\) \{ dynamic\?\.setInside\(inside\); \}/, 'AUDIT 61: the transition seam on the controller');
   assert.match(shared, /dynamicMoonState\(dynamic, minuteOfDay, weatherRowNow\.cover\)/, 'AUDIT 61: the eased cover stands in for the mod’s clouds');
-  assert.match(read('src/render/dynamicSkiesBridge.js'), /vis: dir\[1\] > 0 \? \(1 - day\) \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the mod’s moons (DS2: in the bridge)');
-  assert.match(read('src/render/dynamicSkiesRenderer.js'), /gl\.uniform3f\(u\._CloudTopColorBoost, 0, 0, 0\)/, 'AUDIT 61: the top boost is inert, as the readme says it is');
+  assert.match(read('src/render/dynamicSkiesBridge.js'), /vis: dir\[1\] > 0 \? night \* cloud : 0/, 'AUDIT 61: the dome’s cloud factor over the sky’s moons (DS2: in the bridge)');
   assert.match(shared, /lightningLight\(\) \{ return dynamic\?\.lightningLight \?\? null; \}/);
   assert.match(shared, /dynamic\?\.weatherJump\(\);/, 'a load forces the mod’s re-apply');
   assert.match(shared, /weatherScale: extra\?\.sun \?\? weatherSunlightScale\(weatherName, winter\)/, '_LightColor0 takes WeatherManager’s ScaleFactor - the host’s own (AUDIT 61)');
@@ -764,24 +635,27 @@ test('DS1 ambience: AmbientEffectsPlayer.OnPlayEffect - raised from PlayEffects 
   assert.equal(got.length, 0);
 });
 
-test('DS1 settings: the mod’s own keys as modsettings ships them, the integer keys clamped, the Mods pane renders steppers', () => {
+test('DS1 settings: the switch and the five keys as they shipped, the integer keys clamped, the Mods pane renders steppers', () => {
   _resetModSettings();
   try {
     const m = MOD_SETTINGS['dynamic-skies'];
     assert.equal(m.title, 'Dynamic Skies');
     assert.deepEqual(Object.keys(m.keys), ['Enabled', 'densitySetting', 'ActivatePixelSnow', 'MinParticleSize', 'MaxParticleSize', 'MaxParticles']);
-    const ms = JSON.parse(read(`${V}/modsettings.json`));
-    for (const sec of ms.Sections) {
-      for (const k of sec.Keys) {
-        const def = m.keys[k.Name];
-        assert.ok(def, `${k.Name} carried`);
-        assert.equal(def.default, k.Value, `${k.Name} default`);
-        if (k.Min !== undefined) { assert.equal(def.min, k.Min); assert.equal(def.max, k.Max); assert.ok(isIntKey(def)); }
-        else assert.ok(!isIntKey(def));
-        // PLAIN-TEXT (2026-10-19): MaxParticles is read and never applied (AUDIT 61), and the pane now says so - its words, exactly
-        if (k.Name === 'MaxParticles') assert.equal(def.description, 'Has no effect: the mod never uses this setting.', 'the pane says the slider does nothing');
-        else assert.equal(def.description, k.Description, `${k.Name} description is the mod’s, verbatim (AUDIT 61: the pane shows nothing the author did not write)`);
-      }
+    // OWN-WORK4: the five keys as the retired mod's settings shipped them, written out when vendor/dynamic-skies left; the words ours
+    const KEYS = {
+      densitySetting: { default: 1, min: 1, max: 10, description: 'How thick the fog is in every weather. 1 is the lightest.' },
+      ActivatePixelSnow: { default: false, description: 'Snow falls as small square flakes in place of the usual snow.' },
+      MinParticleSize: { default: 100, min: 100, max: 800, description: 'Size of the smallest square snowflake.' },
+      MaxParticleSize: { default: 300, min: 100, max: 800, description: 'Size of the largest square snowflake.' },
+      MaxParticles: { default: 20, min: 15, max: 20, description: 'Has no effect: the mod never uses this setting.' },
+    };
+    for (const [name, k] of Object.entries(KEYS)) {
+      const def = m.keys[name];
+      assert.ok(def, `${name} carried`);
+      assert.equal(def.default, k.default, `${name} default`);
+      if (k.min !== undefined) { assert.equal(def.min, k.min); assert.equal(def.max, k.max); assert.ok(isIntKey(def)); }
+      else assert.ok(!isIntKey(def));
+      assert.equal(def.description, k.description, `${name}: the pane's words`);
     }
     assert.equal(modSetting('dynamic-skies', 'Enabled'), true, 'VC1 (2026-09-07) made it a choice in the Mods pane; MO1 (Mac, 2026-09-12): every mod is on by default');
     assert.equal(modSetting('dynamic-skies', 'densitySetting'), 1);
@@ -796,7 +670,7 @@ test('DS1 settings: the mod’s own keys as modsettings ships them, the integer 
   } finally { _resetModSettings(); }
 });
 
-// ── MODS AUDIT (2026-09-08): the 1:1 re-audit against BLBSkybox.cs ────
+// ── MODS AUDIT (2026-09-08): the flash follows the player ────────────
 test('MODS AUDIT: FlashOnce reads the player LIVE - a double flash\u2019s second half follows the player (LightningFlash.cs:95)', () => {
   // a double: rolls [< 0.5] [< 0.33] then FlashOnce's draws at 0.5
   const d = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
@@ -816,50 +690,3 @@ test('MODS AUDIT: FlashOnce reads the player LIVE - a double flash\u2019s second
   assert.match(read('src/scenes/shared.js'), /playerPos: extra\?\.pos \?\? null,/, 'the controller hands the frame\u2019s position through');
 });
 
-test('MODS AUDIT: a flash rolled under a NON-Thunder word runs on indoors, on Unity\u2019s clock - it does not freeze at the door and pay out on the way back', () => {
-  const d = new DynamicSkies(assets(), {}, () => 0.25);
-  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
-  const at = (s, weather, dt = 1 / 60) => d.tick({ minuteOfDay: 12 * 60, classicMinutes: base + 12 * 60, weather, seconds: s, dt, weatherScale: 1 });
-  at(0, 'sunny'); at(0.1, 'thunder'); at(0.2, 'thunder');
-  // the recorded leak: in and out under Thunder leaves a second subscription; back to sunny drops one
-  d.setInside(true); at(0.3, 'thunder'); d.setInside(false); at(0.4, 'thunder'); at(0.5, 'sunny');
-  assert.equal(d.lightningListening, true, 'the leaked subscription (AUDIT 61) is live under sunny');
-  assert.equal(d.onAmbientEffect([1, 2, 3]), true, 'and it rolls a flash under a sunny word');
-  at(0.51, 'sunny', 0.01);
-  assert.ok(d.lightningLight, 'lit');
-  // the player goes in under sunny: no teardown (:1264 is Thunder-only)
-  d.setInside(true);
-  assert.ok(d.lightningFlash._routines.length > 0, 'the routine is NOT stopped - the mod\u2019s teardown is Thunder-only');
-  // ...and comes out five real seconds later: the coroutine ran to its end unseen
-  d.setInside(false);
-  at(5.5, 'sunny', 0.01);
-  assert.equal(d.lightningLight, null, 'the light is off - the burst finished indoors');
-  assert.equal(d.lightningFlash._routines.length, 0, 'and the routine is gone');
-  // a routine rolled and never ticked before the door lights at its roll and still runs out
-  assert.equal(d.onAmbientEffect([1, 2, 3]), true);
-  d.setInside(true); d.setInside(false);
-  at(9, 'sunny', 0.01);
-  assert.equal(d.lightningLight, null);
-});
-
-test('MODS AUDIT: the mod\u2019s skybox pass takes NO host fog (LateUpdate :320-335 forces clearFlags Skybox; the shader\u2019s fog factor has no reader)', () => {
-  assert.ok(!/uFogMix/.test(FS), 'no fog mix in the fragment');
-  assert.ok(!UNIFORM_NAMES.includes('uFogMix') && !UNIFORM_NAMES.includes('uFogColor'));
-  assert.match(FS, /NO HOST FOG OVER THE DOME/);
-  // the hosts still write fogMix on whichever pass they hold (the enhanced sky reads it)
-  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(host), /sky\.renderer\.fogMix = fogNow\.excludeSky \? 0 : 1 - fogFactor\(fogNow, 800\);/);
-});
-
-test('MODS AUDIT: SunSizeConvergence is an int on the struct; the frame clamp is Time.maximumDeltaTime; Init runs ChangeLunarPhases when it has a clock', async () => {
-  const { MAX_DELTA_SECONDS } = await import('../../src/systems/dynamicSkies/dynamicSkies.js');
-  const s = parseSkyboxSetting(JSON.stringify({ SunSizeConvergence: 7.9 }));
-  assert.equal(s.SunSizeConvergence, 7, '`public int SunSizeConvergence` - JsonUtility truncates at the parse, not at SetInt');
-  assert.equal(MAX_DELTA_SECONDS, 1 / 3, 'Unity\u2019s default maximumDeltaTime');
-  assert.match(read('src/scenes/shared.js'), /Math\.min\(MAX_DELTA_SECONDS, Math\.max\(0, seconds - weatherAt\)\)/);
-  const base = 405 * 360 * MINUTES_PER_DAY + 10 * MINUTES_PER_DAY;
-  const d = new DynamicSkies(assets(), {}, () => 0.25, { classicMinutes: base + 12 * 60 });
-  assert.deepEqual(d.mat._MoonOrbitAngle.slice(0, 2), [270, 90], 'ApplyOrbitCalculations ran inside Init (:138-139), before OnWeatherChange');
-  assert.ok(d.phases, 'and the phases are on the instance');
-  const e = new DynamicSkies(assets(), {}, () => 0.25);
-  assert.equal(e.phases, null, 'without a clock nothing is applied - the first tick is Init\u2019s WorldTime.Now');
-});

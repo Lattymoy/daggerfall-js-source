@@ -1,26 +1,44 @@
 // PERF-SKY1 (2026-10-10, the stars' part of the perf pass v5's slice - bible/07-Rendering/Performance-Crowd.md): THE
-// STARS ARE A NIGHT'S. The Dynamic Skies dome weighs its stars by night * horizonValue, and by day night is 0 - so every
-// sky pixel's three star taps and its twinkle were multiplied by nothing. They run under a night above 0 alone now.
-// mix(col, stars, 0) is col exactly for any finite stars (the taps are saturated), so the picture is the mod's to the
-// bit: the real pass in Chromium, main against the change, 24 views from dawn round to the small hours - every one
-// byte for byte the same. (The pass's other half - the frame's constants worked out once a draw in place of every
-// pixel - is not taken: its own measure found texels flipped inside a moon's face, and the picture is kept.)
+// STARS ARE A NIGHT'S. The Dynamic Skies pass weighs its stars by the night, and by day the night is 0 - so every sky
+// pixel's star work would be multiplied by nothing. It runs under a night above 0 alone.
 //
-// ONE: the taps are inside the night's branch, and nothing else of the FS moved into it. TWO: `night` is the sun's
-// light position's alone - the same in every fragment of the draw, so the branch is dynamically uniform and the taps'
-// implicit derivatives stay defined. THREE: the mix is the mod's - at night 0 it is col, whatever stars holds.
+// PIN MOVED (OWN-WORK4, 2026-10-31): the sky is our own pass now - its stars hashed from cube-face cells and one tap
+// of our noise for the river of stars. ONE: every tap and both star layers are inside the night's branch. TWO: the
+// night is a uniform, the frame's - the same in every fragment, so the branch is dynamically uniform and the tap's
+// implicit derivatives stay defined. THREE: by day the stars add nothing, run in test/glsl.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FS } from '../../src/render/dynamicSkiesRenderer.js';
+import { skyFrame } from '../../src/systems/dynamicSkies/dynamicSkies.js';
+import { glslFunctions } from '../glsl.mjs';
 
 const stars = FS.slice(FS.indexOf('  // Stars'), FS.indexOf('  // End of Stars'));
 
-test('PERF-SKY1: the stars\' three taps and the twinkle run under a night above 0 alone - by a branch the sun alone decides, and the mod\'s mix after it (mutants: the branch dropped; a branch on the pixel\'s own place)', () => {
-  const branch = stars.slice(stars.indexOf('  if (night > 0.0) {'), stars.indexOf('\n  }\n', stars.indexOf('  if (night > 0.0) {')));
-  assert.match(stars, /\n {2}vec3 stars = vec3\(0\.0\);\n {2}if \(night > 0\.0\) \{\n/, 'the stars are nothing until the night branch fills them');
-  assert.equal((branch.match(/texture\(/g) ?? []).length, 3, 'the three taps - the stars, their twinkle\'s alpha, the twinkle - inside it');
-  assert.equal((stars.match(/texture\(/g) ?? []).length, 3, 'and none outside it');
-  assert.match(FS, /float sunDotUp = dot\(sunPos, vec3\(0\.0, 1\.0, 0\.0\)\);\n {2}float night = saturate\(Remap\(sunDotUp, vec2\(_NightStartHeight, _NightEndHeight\), vec2\(0\.0, 1\.0\)\)\);/, 'night is the sun\'s alone');
-  assert.match(FS, /vec3 sunPos = _WorldSpaceLightPos0\.xyz;/, '...and the sun is the light\'s position, one for every fragment');
-  assert.equal((stars.match(/finalStarsColor = mix\(col\.rgb, stars, night \* horizonValue\);/g) ?? []).length, 2, 'the mix is the mod\'s, above the horizon and below: at night 0 it is col');
+test('PERF-SKY1: the stars\' layers and the river\'s tap run under a night above 0 alone - by a branch the frame alone decides (mutants: the branch dropped; a branch on the pixel\'s own place)', () => {
+  const open = '  if (uNight > 0.0) {';
+  assert.match(stars, /\n {2}vec3 stars = vec3\(0\.0\);\n {2}if \(uNight > 0\.0\) \{\n/, 'the stars are nothing until the night branch fills them');
+  const branch = stars.slice(stars.indexOf(open), stars.indexOf('\n  }\n', stars.indexOf(open)));
+  assert.equal((branch.match(/texture\(/g) ?? []).length, 1, 'the river\'s one tap inside it');
+  assert.equal((stars.match(/texture\(/g) ?? []).length, 1, 'and none outside it');
+  assert.equal((branch.match(/starLayer\(/g) ?? []).length, 2, 'both layers\' hashes inside it');
+  assert.match(FS, /uniform float uNight;/, 'the night is the frame\'s, one for every fragment');
+  assert.doesNotMatch(open, /dir|gl_FragCoord|vNdc/, 'never the pixel\'s own place');
+  // THREE, run: a noon and a midnight frame, the moons and the layers out - by day no tap, by night the river's one
+  const run = (minute) => {
+    const st = skyFrame({ minuteOfDay: minute });
+    let taps = 0;
+    const f = glslFunctions(FS, {
+      uYaw: 0.4, uPitch: 0.9, uTanHalfFov: 1, uAspect: 1, vNdc: [0, 0], uBandDither: 1, uDread: 0, uBrass: 0, uHazeSky: [0, 0, 0, 0],
+      uSunDir: st.sunDir, uZenith: st.zenith, uHorizon: st.horizon, uGround: st.ground, uGlow: st.glow, uGlowPower: st.glowPower,
+      uSunDisc: st.sunDisc, uSunCos: st.sunCos, uNight: st.night, uStarPole: st.starPole, uStarTurn: st.starTurn, uTwinkle: 1,
+      uMasser: [0, 1, 0, 0.05], uSecunda: [0, 1, 0, 0.05], uMasserLight: [0, 1, 0], uSecundaLight: [0, 1, 0], uMasserColor: [0, 0, 0], uSecundaColor: [0, 0, 0],
+      uCloudLow: [0, 0, 1, 0.1], uCloudHigh: [0, 0, 1, 0.1], uCloudOffset: [0, 0, 0, 0], uCloudLit: [1, 1, 1], uCloudShade: [0, 0, 0],
+      uFogColor: [0, 0, 0], uFogMix: 0, texture: () => { taps++; return [0.5, 0.5, 0.5, 1]; },
+    });
+    f.main();
+    return { taps, night: st.night };
+  };
+  const noon = run(720), midnight = run(0);
+  assert.equal(noon.night, 0); assert.equal(noon.taps, 0, 'by day the stars cost no tap');
+  assert.ok(midnight.night > 0.9); assert.equal(midnight.taps, 1, 'by night the river\'s one');
 });

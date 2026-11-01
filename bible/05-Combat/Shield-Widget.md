@@ -23,6 +23,14 @@ settings, the presets, a README with the provenance), it is credited on
 the About screen, and it is ported as `src/combat/shieldWidget.js` (the
 component) and `src/combat/shieldWidgetAssets.js` (the sprite door).
 
+**OWN-WORK4 (2026-10-31, the owner).** "A proper 1 to 1 recreation for everything." The mod's 600 pictures and its
+presets are retired. Every slot is our own painting, made in code the first time the widget asks for it
+(`combat/shieldFaces.js`): four kinds of shield at the mod's four sizes, ten material groups, three states of wear,
+and five frames from the guard to the shield turned out of the way. The forearm runs off the bottom edge and the top
+edge stays clear, as SW4 pins. The settings, the slots, the frames and their timing are unchanged. Our presets
+(`SHIELD_WIDGET_PRESETS`) follow one rule: a section at its defaults, or every slider of it half the way toward one end
+of its range.
+
 ## The source the port reads
 
 The shipped `shield widget.dfmod` is a UnityFS bundle (Unity

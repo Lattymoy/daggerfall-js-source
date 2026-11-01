@@ -298,7 +298,7 @@ test('VE3/VE4 the Texture Overhaul card: Classic and Vanilla Enhanced - the pack
   await attach({});
   // PIN MOVED (AUDIT VE, Mac: "Ensure this is on by default"): nothing attached was Classic while the shipped pack was off
   assert.equal(currentOption(tex), ve, 'nothing attached: the shipped Base, on by default');
-  assert.equal(ve.by, 'carademono, version 3.4.7', 'VE4: the shipped Base');
+  assert.equal(ve.by, 'DFO Online', 'VE4: the shipped Base - PIN MOVED (OWN-WORK4): our own work');
   // PIN MOVED (AUDIT VE R3, one switch a mod): a copy over a shipped mod wears that mod's switch, so the attach's own
   // step is what switches it on - this registered the copies without it, and each was on by its own empty shelf
   await attach({

@@ -271,8 +271,8 @@ import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { Dr
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000's Heat Haze 1.0.1)
 import { createAmbientLifeHost, benchWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: world.js's twin
-import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
-import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - world.js's twin
+import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall 1.0.0 (demifiend000) - world.js's twin
+import { createSnowfallHost, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall 1.0.5 (demifiend000) - world.js's twin
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';   // SNOWFALL1: the town's tiles in its map pixel, where the streamed world lays them
 import { gridValueAt } from '../world/terrain/terrainSurface.js';   // SNOWFALL1: the bed carved under the town's water, off the snow's ground
 import { BODY_CAPSULE_RADIUS } from '../systems/spellcast.js';   // SNOWFALL1: a foe's controller, as its track's width reads it

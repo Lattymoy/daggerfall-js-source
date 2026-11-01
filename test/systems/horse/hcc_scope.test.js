@@ -1,13 +1,13 @@
 // HCC (2026-09-23): WHAT IS AND IS NOT PORTED - the whole of TrailingWagon.dll, method by method.
 //
-// The mod's assembly is `TrailingWagon.dll` (vendored under vendor/horse-cart-and-cargo/ with its IL dumped by
-// tools/ilDump.py to il/TrailingWagon.il.txt, the same way Eye Of The Beholder's was - test/player/eyeOfTheBeholder/eotb_scope.test.js is
-// this file's model). The dump carries 444 method bodies; 46 are compiler-generated (constructors, the
-// `<Start>d__161` coroutine's five, the `<>c` lambda classes' bodies, the event accessors) and are struck. What is
-// left is 398 AUTHORED methods, every one a row below: `port` names the symbol carrying its arithmetic and the
-// module it lives in, and a row with no port says WHY in a sentence starting "no twin here" - the port has no
-// Unity transform, no Harmony, no ModManager message bus, no session-scoped texture release. There is no NOT DONE
-// row. The dump is READ here: a row's method must be in it, and no authored method may be missing from the table.
+// The mod's assembly is Horse Cart and Cargo 1.0.0-rc12's `TrailingWagon.dll`, its IL dumped by tools/ilDump.py the same
+// way Eye Of The Beholder's was (test/player/eyeOfTheBeholder/eotb_scope.test.js is this file's model). The dump carried
+// 444 method bodies; 46 are compiler-generated (constructors, the `<Start>d__161` coroutine's five, the `<>c` lambda
+// classes' bodies, the event accessors) and are struck. What is left is 398 AUTHORED methods, every one a row below:
+// `port` names the symbol carrying its arithmetic and the module it lives in, and a row with no port says WHY in a
+// sentence starting "no twin here" - the port has no Unity transform, no Harmony, no ModManager message bus, no
+// session-scoped texture release. There is no NOT DONE row. OWN-WORK4 (2026-10-31): the dump left the tree with the
+// mod's directory; this table, checked against it until then, is the record now.
 //
 // 340 of 398 are ported; 58 have no twin (AUDIT HCC U6 ported the horse-name label's three; KB1 retired ParseConfiguredHotkey - the keys are registry actions). The bible page (06-Systems/Horse-Cart-And-Cargo.md) states
 // these numbers and the no-twin families, and a pin below holds it to them.
@@ -19,7 +19,6 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
-const IL_DUMP = 'vendor/horse-cart-and-cargo/il/TrailingWagon.il.txt';
 
 /** The module a row's `mod` names, by path. */
 const MOD = {
@@ -34,7 +33,7 @@ const MOD = {
   'mountRig.js': 'src/player/mountRig.js',
   'inventorySession.js': 'src/systems/inventorySession.js',
   'nativeInventory.js': 'src/ui/native/nativeInventory.js',
-  'dotnetResources.js': 'src/formats/dotnetResources.js',
+  'horseArt.js': 'src/systems/horse/horseArt.js',   // OWN-WORK4: the horse's pictures, ours
   'horseNameTooltip.js': 'src/ui/horseNameTooltip.js',   // AUDIT HCC U6
 };
 
@@ -163,13 +162,13 @@ const IL = {
   'HorseTextureSet::GetTexture': { port: 'horseStillRecord', mod: 'horseCartPool.js' },
   'HorseTextureSet::ReleaseOwnedResources': { port: null, why: 'no twin here: uploadTexture\'s cache is session-long by the renderer\'s own law (renderer.js AUDIT 19 F10); nothing frees a world texture' },
   'HorseTextureSet::LoadAll': { port: 'ensureStationary', mod: 'horseCartPool.js' },
-  'HorseTextureSet::ReadResource': { port: 'readManifestResources', mod: 'dotnetResources.js' },
+  'HorseTextureSet::ReadResource': { port: 'ownHorsePicture', mod: 'horseArt.js' },
   // ── HorseWalkAnimationSet (5)
   'HorseWalkAnimationSet::TryLoad': { port: 'ensureWalk', mod: 'horseCartPool.js' },
   'HorseWalkAnimationSet::GetTexture': { port: 'horseWalkRecord', mod: 'horseCartPool.js' },
   'HorseWalkAnimationSet::ReleaseOwnedResources': { port: null, why: 'no twin here: uploadTexture\'s cache is session-long by the renderer\'s own law (renderer.js AUDIT 19 F10); nothing frees a world texture' },
   'HorseWalkAnimationSet::LoadAll': { port: 'ensureWalk', mod: 'horseCartPool.js' },
-  'HorseWalkAnimationSet::ReadResource': { port: 'readManifestResources', mod: 'dotnetResources.js' },
+  'HorseWalkAnimationSet::ReadResource': { port: 'ownHorsePicture', mod: 'horseArt.js' },
   // ── StationaryHorseActivator (2)
   'StationaryHorseActivator::Initialize': { port: 'attach', mod: 'horseCartPool.js' },
   'StationaryHorseActivator::Activate': { port: 'activate', mod: 'horseCartPool.js' },
@@ -471,39 +470,11 @@ const PORTED = Object.entries(IL).filter(([, v]) => v.port);
 const NOT = Object.entries(IL).filter(([, v]) => !v.port);
 const PER_TYPE = { DeployedWagonActivator: 2, DeployedWagonFollowerCollisionFilter: 11, DeployedWagonVisual: 18, FollowingWagonActivator: 2, GroundSurfaceSelection: 1, HorseCartAccessDecision: 2, HorseCartTransportActionResult: 3, HorseCartCompatibilityApi: 9, HorseCartUiCompatibilityCoordinator: 11, HorseFollowController: 32, HorseFollowPath: 9, HorseNameTooltipController: 5, HorseTextureSet: 5, HorseWalkAnimationSet: 5, StationaryHorseActivator: 2, StationaryHorseBillboard: 9, StationaryHorseVisual: 16, TrailingWagonRuntime: 205, TrailingWagonInventoryWindow: 8, TrailingWagonTradeWindow: 4, TrailingWagonTransportWindow: 11, Wagon41214VisualBuilder: 13, WagonCargoVisual: 10, WagonSaveData: 1, ComponentData: 2, DisjointSet: 2 };
 
-/** The dump's own inventory, by the same rule the header states. */
-function authoredFromDump() {
-  const txt = rd(IL_DUMP);
-  const out = [];
-  for (const m of txt.matchAll(/^---- (\S+)::(\S+) rva=/gm)) {
-    const [, t, name] = m;
-    if (name === '.ctor' || name === '.cctor') continue;
-    if (name.startsWith('add_') || name.startsWith('remove_')) continue;
-    if (/^<.*>b__/.test(name)) continue;
-    if (t.startsWith('<') || t.includes('<>')) continue;
-    if (['MoveNext', 'System.IDisposable.Dispose', 'System.Collections.IEnumerator.Reset', 'System.Collections.IEnumerator.get_Current', 'System.Collections.Generic.IEnumerator<System.Object>.get_Current'].includes(name)) continue;
-    out.push(`${t}::${name}`);
-  }
-  return out;
-}
-
-test('HCC scope: the inventory is whole - 398 authored methods, every one a row, none missing, none invented', () => {
+test('HCC scope: the inventory is whole - 398 authored methods, every one a row, by type as the dump held them', () => {
   assert.equal(Object.keys(IL).length, 398);
   const per = {};
   for (const k of Object.keys(IL)) { const [t] = k.split('::'); per[t] = (per[t] ?? 0) + 1; }
   assert.deepEqual(per, PER_TYPE);
-  const dump = authoredFromDump();
-  assert.equal(dump.length, 398, 'the dump holds the same 398 under the header\'s rule');
-  const counts = new Map();
-  for (const k of dump) counts.set(k, (counts.get(k) ?? 0) + 1);
-  for (const k of Object.keys(IL)) {
-    const base = k.replace(/#\d+$/, '');
-    assert.ok(counts.has(base), `${k} is not a method the assembly has`);
-  }
-  for (const [k, n] of counts) {
-    const rows = Object.keys(IL).filter((r) => r === k || r.startsWith(`${k}#`)).length;
-    assert.equal(rows, n, `${k}: the dump has ${n} bodies and the table ${rows} rows`);
-  }
 });
 
 test('HCC scope: every ported row names a symbol that exists in the module it names; every no-twin row says why', () => {
@@ -539,7 +510,7 @@ test('HCC scope: the bible page states THIS table, and a 1:1 claim for this mod 
   assert.match(page, /test\/systems\/horse\/hcc_scope\.test\.js/);
   const notNames = new Set(NOT.map(([k]) => k.split('::')[0]));
   for (const t of ['DeployedWagonFollowerCollisionFilter', 'HorseCartUiCompatibilityCoordinator', 'TrailingWagonTradeWindow']) assert.ok(notNames.has(t) && page.includes(t), `the page names ${t} among the no-twins`);
-  for (const f of ['bible/06-Systems/Horse-Cart-And-Cargo.md', 'bible/01-Overview/Mod-Registry.md', 'vendor/horse-cart-and-cargo/README.md']) {
+  for (const f of ['bible/06-Systems/Horse-Cart-And-Cargo.md', 'bible/01-Overview/Mod-Registry.md']) {
     for (const line of rd(f).split('\n')) {
       if (!/1:1/.test(line) || !/horse cart|hcc/i.test(line)) continue;
       assert.match(line, /hcc_scope|338|no twin|IL|checkable|read off|scope/i, `${f}: a 1:1 claim for this mod carries its check - "${line.trim().slice(0, 120)}"`);

@@ -130,7 +130,7 @@ port's `loot.js` makers take the same roll.
 
 ### The art
 
-280 textures, extracted by `tools/rriExtract.mjs` into
+280 textures, extracted by `tools/rriExtract.mjs` (RETIRED) into
 `public/art/roleplay-realism-items/` by the name DFU asks for (99 as
 indexed PNG, the rest RGBA, each read back against its texel) with the
 `<rect>` beside 232 of them written into `systems/roleplayRealismItems/rriIndex.js`. They
@@ -144,7 +144,7 @@ unmasked areas of image and alpha 1 are masked areas" - the hair under
 it comes back to the background before the helmet draws;
 `ui/paperDoll.js blitRgba`). The `<rect>` is
 `TextureReplacement.OverridePaperdollItemRect`'s placement, in the
-doll's own space (it replaces the screen rect whole), so the stand-in's
+doll's own space (it replaces the screen rect), so the stand-in's
 offset says `paperdoll: true` and the doll's `dollXY` skips the
 paperDollOrigin subtraction a classic record's offset needs. The
 stand-in answers a record's size, offset and RGBA across dyes (one
@@ -156,7 +156,7 @@ drawn pixels exactly, and are no longer carried: 46 of the helmet's 48 masks and
 index 255. `tools/classicDerive.mjs` wrote each as a spec in `vendor/roleplay-realism-items/derived-art.json`; the
 door builds it from the player's own ARENA2 through `systems/classicArt.js` (`rriInstall.js` rriDerivedPicture). The
 specs are 600 kB, so they load as a chunk of their own at the first build; `rriIndex.js` names them at boot
-(`RRI_DERIVED`). The other 230 stay as files, and `tools/rriExtract.mjs` indexes a derived sprite without writing it.
+(`RRI_DERIVED`). The other 230 stay as files, and `tools/rriExtract.mjs` (RETIRED) indexes a derived sprite without writing it.
 `test/systems/rr_nobethesda2.test.js` pins it.
 
 ### Not in this slice
@@ -413,7 +413,7 @@ the bare TEMPLATE's name (`systems/loot/lootRarity.js rarityName`), so the long 
 our own work". Wave 2 took the mod's data and words out of `vendor/roleplay-realism-items/`. The release's fifteen
 scripts stay restated in `systems/roleplayRealismItems/` and `combat/rriEnemyEquipment.js`, its MIT notice in
 `LICENSE`, and the 230 sprites stay until wave 3. `roleplay-realism-items.files.json` names the release's 280 pictures
-for the doctrine gate and `tools/rriExtract.mjs`. Our design decisions are the list below, pinned in `rri1_items` and
+for the doctrine gate and `tools/rriExtract.mjs` (RETIRED). Our design decisions are the list below, pinned in `rri1_items` and
 `rri2_realism`. A piece saved before keeps the name it was minted with.
 
 - **The rows** (`rriItems.js` RRI_ROW_RULE). Each piece answers to the classic piece of its slot. Weapons take x0.5
@@ -427,11 +427,21 @@ for the doctrine gate and `tools/rriExtract.mjs`. Our design decisions are the l
   Half-boots, Gloves, Left and Right Armguard; Chain, Fur-lined and Plated before a name; the spells Static Touch,
   Spell Dart, Featherfall, Glimmer, Conjure Trinket, Mend Bruise, Second Wind, Lift and Unbar; the settings' text.
 
+## OWN-WORK4 - our own pictures
+
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for everything". The release's 230
+sprites and `vendor/roleplay-realism-items/` are retired. Each picture is ours, built at runtime at the name, size and
+doll place `rriIndex.js` keeps (`rriArt.js`). The armour is our variation of Daggerfall's matching paper-doll record,
+read from the player's ARENA2: the jacket over the cuirass, the trousers over the greaves, the cap over the helm. The
+record's shape and light stay, and our leather, fur trim, riveted scales and ten metals are laid on it. The Hatchet is
+the Battle Axe at 88% about the hand. Our painter draws the Short Flail whole, so it needs no ARENA2. NO-BETHESDA2's
+fifty specs are gone too, as they held the authors' painted pixels: a helmet's mask is the classic helm's own hair
+area, and a Dwarven helmet is our cap in our Dwarven metal. `test/systems/ownwork4_rriart.test.js` pins it.
+
 ## Record
 
-`vendor/roleplay-realism-items/` (the art), `src/systems/roleplayRealismItems/` (OWN-WORK3). Suites `test/systems/rri1_items.test.js` (9),
-`test/systems/rri2_realism.test.js` (13), `test/systems/auditrr.test.js` (15) and `test/systems/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
-(11), `tools/mutants/rri2.json` (18). The shipped set:
-`public/art/roleplay-realism-items/` (230 PNGs; NO-BETHESDA2 rebuilds the other 50 from
-`vendor/roleplay-realism-items/derived-art.json`, suite `test/systems/rr_nobethesda2.test.js`),
-`src/systems/roleplayRealismItems/rriIndex.js` (generated), `tools/rriExtract.mjs`.
+`src/systems/roleplayRealismItems/` (OWN-WORK3; the pictures OWN-WORK4). Suites `test/systems/rri1_items.test.js` (9),
+`test/systems/rri2_realism.test.js` (13), `test/systems/auditrr.test.js` (15) and `test/systems/auditrr2.test.js` (17, both shared with the RR page), `test/systems/ownwork4_rriart.test.js` (4). Campaigns `tools/mutants/rri1.json`
+(11), `tools/mutants/rri2.json` (18). The pictures: `src/systems/roleplayRealismItems/rriArt.js`, all 280 ours (suites
+`test/systems/ownwork4_rriart.test.js` and `test/systems/rr_nobethesda2.test.js`), at the names, sizes and rects
+`src/systems/roleplayRealismItems/rriIndex.js` keeps.

@@ -139,7 +139,7 @@ test('DA13: the release packs the game a file at a time - each file compressed O
 });
 
 test('DA13: the manifest is held to its laws - a path that leaves the store, a path twice, another generation, another release, a file past the pack', () => {
-  for (const ok of ['play/index.html', 'assets/a-B_c.js', 'art/diverse-weapons/x.png']) assert.equal(G.isSafeGamePath(ok), true, ok);
+  for (const ok of ['play/index.html', 'assets/a-B_c.js', 'art/studio/x.png']) assert.equal(G.isSafeGamePath(ok), true, ok);
   for (const bad of ['', '/etc/x', '../x', 'a/../b', 'a/./b', 'a//b', 'a\\b', 'C:x', 'a/con.js', 'NUL', 'a/b.', 'a/b ', 'x\0y', 'a'.repeat(600)]) {
     assert.equal(G.isSafeGamePath(bad), false, JSON.stringify(bad.slice(0, 20)));
   }

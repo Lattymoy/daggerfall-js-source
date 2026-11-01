@@ -96,6 +96,7 @@ export const PSEUDO_ARCHIVES = Object.freeze([
     'port',
     'the large boat (moved from 38151 - AUDIT SD IV R6)',
   ),
+  N(38176, 'world/ships/ownBoats/ownBoatArt.js', 'OWN_BOAT_ARCHIVE', 'port', "the boats' own pictures (OWN-WORK4)"),
   N(38181, 'world/wagonArt.js', 'WAGON_ARCHIVE', 'port', 'the wagons'),
   N(
     38191,
@@ -285,7 +286,13 @@ export const PSEUDO_ARCHIVES = Object.freeze([
     'Eye Of The Beholder: mounted, five',
     112386,
   ),
-  N(112395, 'systems/comeSailAway/comeSailAwayWaves.js', 'WAVE_ARCHIVE', 'mod', "Come Sail Away's waves"),
+  N(
+    112395,
+    'systems/comeSailAway/comeSailAwayWaves.js',
+    'WAVE_ARCHIVE',
+    'port',
+    "Come Sail Away's waves, painted as ours (OWN-WORK4)",
+  ),
   N(
     600000,
     'poi/poiRuntime.js',

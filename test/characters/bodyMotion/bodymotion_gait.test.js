@@ -1,6 +1,6 @@
 // BODY-MOTION (2026-10-18, Mac: "I want to build improved animations for the morrowind rig (3rd person)" - "Improved
 // running/walking for all races ... No band aids"; bible/04-Characters/Body-Motion.md) - THE GAIT AND THE SOLVE, on the
-// vendored retail biped (test/fixtures/mw/retailRig.mjs - no Morrowind data in hand).
+// biped of our own (test/fixtures/mw/retailRig.mjs, OWN-WORK4 - no Morrowind data in hand).
 //
 // What is pinned: Alexander's stride and its cap, the duty factor falling with the pace (a walk's double support, a
 // run's flight); a planted foot standing still in the world while the body travels over it (the phase advanced by the

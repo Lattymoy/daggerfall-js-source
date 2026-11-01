@@ -1,6 +1,6 @@
 // @ts-check
 // HORSE CART AND CARGO - MODEL 41214, SPLIT (HCC, 2026-09-23): `Wagon41214VisualBuilder` and `WagonCargoVisual`'s
-// table, read off TrailingWagon.dll's IL (vendor/horse-cart-and-cargo/il/). Daggerfall's wagon is ONE mesh; the
+// table, read off Horse Cart and Cargo 1.0.0-rc12's TrailingWagon.dll IL. Daggerfall's wagon is ONE mesh; the
 // mod takes it apart so the wheels can turn: every triangle is joined to every other that shares a welded vertex
 // (positions within 1e-4), which yields exactly five connected components - the body (14 triangles), two wheels
 // (10 each, flat discs whose X extent is nil), two shafts (7 each) - verified against that topology and refused

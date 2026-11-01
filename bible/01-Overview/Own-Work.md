@@ -15,12 +15,15 @@ OWN-WORK1 did (section "How a directory is retired").
 - **Kamer and Kab's work stays** (the owner: "Counts as ours - keep"): `world-of-daggerfall`, `windmills-kamer`,
   `daggerfall-arena`, `world-events-raiding-parties`, `warm-ashes-ships`, `low-poly-trees` and
   `daggerfall-enemy-expansion`. They made work for this project.
-- **DFO's and Mac's own work**: `project-legacy`, `raum-book`, `pixelify-glyphs` and `layered-armor`.
+- **GrimoireUI stays** (the owner, 2026-10-31: "Grimoire ui can stay"): `grimoire-ui`, its pictures and fonts as
+  the pack ships them, under its author's permission.
+- **DFO's and Mac's own work**: `project-legacy`, `raum-book`, `pixelify-glyphs` and `layered-armor` (the owner,
+  2026-10-31: "Layered Gear is ours", its cloak layer included, though it was drawn from the class skins' sheets).
 - **Daggerfall Unity's MIT data**: `dfu-books`, `dfu-icons`, `dfu-cursor`, `dfu-quests`, `dfu-settings` and
   `dfu-text`. DFU is the reference (Port-Doctrine's Scope). NO-BETHESDA found Bethesda's own words inside two of
   them, below.
-- **Licensed pieces**: `silkscreen-five` (one glyph, SIL OFL 1.1) and `vorbis-fsb-setups` (two codec headers, ISC
-  and BSD-3-Clause). Their licences travel with them.
+- **Licensed pieces**: `silkscreen-five` (one glyph, SIL OFL 1.1), whose licence travels with it. `vorbis-fsb-setups`
+  went with Come Sail Away's clips (OWN-WORK4).
 
 ## NO-BETHESDA: what the scan found
 
@@ -50,11 +53,13 @@ byte for byte. `test/tooling/doctrine.test.js` holds each folder: a picture is a
 
 | mod | rebuilt | still carried, the author's own | listing |
 |---|---|---|---|
-| Eye of the Beholder | 2,869 sprites (TEXTURE.096, .264, .269, .475-.495) | 166 | `vendor/eye-of-the-beholder/derived.json` |
-| Handheld Torches | 22 candle frames (TEXTURE.210 records 3 and 4) | 17 | `vendor/handheld-torches/derived.json` |
-| Climates & Calories | 4 (two spoiled faces, the tent's canvas and pole) | 14 | `vendor/climates-calories/derived.json` |
-| Roleplay & Realism | 2 keeper sprites, 17 BUTTONS.RCI buttons | 5 | `vendor/roleplay-realism/derived-art.json` |
-| Roleplay & Realism: Items | 46 helmet masks, 4 Dwarven helmets | 230 | `vendor/roleplay-realism-items/derived-art.json` |
+| Eye of the Beholder | 2,869 sprites (TEXTURE.096, .264, .269, .475-.495) | 0 (OWN-WORK4) | `src/player/eyeOfTheBeholder/eotbDerived.json` |
+| Handheld Torches | 20 candle frames (TEXTURE.210 records 3 and 4) | 0 (OWN-WORK4) | `src/systems/handheldTorchesDerived.json` |
+| Climates & Calories | 3 (a spoiled face, the tent's canvas and pole) | 0 (OWN-WORK4) | `src/systems/survival/derivedIcons.json` |
+| Roleplay & Realism | 1 keeper sprite (197_4-0) | 0 (OWN-WORK4) | `src/systems/roleplayRealism/rrDerivedArt.json` |
+| Roleplay & Realism: Items | 0 (OWN-WORK4: all 280 ours) | 0 | none |
+
+**OWN-WORK4 (2026-10-31, the owner: "no latching onto other mod authors").** A spec's edits are the author's own pixels laid over Daggerfall's record, so a spec with edits was not ours. Each one is now our own picture: RRI's 50 (31,833 pixels), Diverse Weapons' 12 daggers, Roleplay & Realism's 18, two candle frames and one spoiled face. A spec with no edits is Daggerfall's record alone, and it stays.
 
 A player without ARENA2 stored sees these pictures as a failed load, as any missing file. A texture-door entry is
 built once a world pipeline is up.
@@ -65,9 +70,8 @@ daggers, the rotten cooked fish, and DFU's quest and TEXT.RSC text.
 ### NO-BETHESDA3: the daggers and the fish (the owner: "Rebuild DW's 7 daggers", "Also rebuild the rotten fish ourself")
 
 Twelve Diverse Weapons sprites are 60% or more Daggerfall's own hand (WEAPON02.CIF, 62.7% to 84.5%), and the scan's
-seven are among them. They are rebuilt like the rest, the author's blades kept as edits
-(`vendor/diverse-weapons/derived-art.json`, loaded on first use); 12,612 stay as files. 687 more draw 10% or more of
-a CIF frame, under the law's line. The rotten cooked fish was the author's re-shade of TEXTURE.211 record 10: it is
+seven are among them. They were rebuilt like the rest, the author's blades kept as edits; 12,612 stayed as files. OWN-WORK4 took all of
+them out: every Diverse Weapons frame is now our own rule over the player's classic CIF frame. The rotten cooked fish was the author's re-shade of TEXTURE.211 record 10: it is
 gone, and in its place is our own rot (`systems/survival/rotPicture.js`), drawn at runtime over the player's own
 cooked fish.
 
@@ -89,46 +93,25 @@ cooked fish.
   and OWN-WORDS2 rewrote all 264 quests with messages, and the build no longer bundles DFU's quest text
   (`06-Systems/Own-Words.md`). Internal_RSC's 1,448 rows remain, counted by `tools/bethesdaWordsBaseline.json`,
   which only goes down.
-- **The rest of Diverse Weapons' hands.** 687 sprites draw between 10% and 60% of a classic WEAPON CIF frame
-  exactly, under NO-BETHESDA2's line. Wave 3 replaces the mod's art.
-- **The exceptions themselves.** Vanilla Enhanced, Sands of the Alik'r, Snowfall and the class skins are outside
-  authors' repaints of Daggerfall's art. Layered Gearing and Enemy Expansion's repaints stay (ours, and Kamer and
-  Kab's). Wave 3 can replace the four with our own art.
+- **The rest of Diverse Weapons' hands.** Closed by OWN-WORK4: none of the mod's sprites is carried.
+- **The exceptions themselves.** OWN-WORK4 retired Vanilla Enhanced, Sands of the Alik'r and Snowfall: our own rules
+  build their looks from the player's records. Layered Gearing and Enemy Expansion's repaints stay (ours, and Kamer and
+  Kab's).
 - **What the scan cannot see.** Audio beyond raw 8-bit runs (DAGGER.SND, MIDI.BSA). Morrowind's data, which is not
-  freeware and not here, so Weapon Sheathing's meshes are unchecked. Three PNGs it cannot decode (a 4-bit Vanilla
+  freeware and not here (OWN-WORK4 took out Weapon Sheathing's meshes and its copy of Morrowind's skeleton). Three PNGs it cannot decode (a 4-bit Vanilla
   Enhanced tile and two greyscale skin maps of ours).
 
 ## The inventory
 
 Forty directories under `vendor/` held an outside author's work on 2026-10-31. OWN-WORK1 retired twelve of them,
-OWN-WORK2 four and OWN-WORK3 two more (the next section). The 22 left are below, sorted by what replacing them needs. "Runtime" means the game loads the
-files, so a replacement has to exist before the directory can go. The registry (`Mod-Registry.md`) keeps each one's
+OWN-WORK2 four, OWN-WORK3 two and OWN-WORK4 twenty-one more (the next section). The one left is below, sorted by what
+replacing them needs. "Runtime" means the game loads the files, so a replacement has to exist before the directory can
+go. The registry (`Mod-Registry.md`) keeps each one's
 provenance until it is retired.
 
 | vendor | author | what the tree carries | runtime | kind | wave |
 |---|---|---|---|---|---|
-| `climates-calories` | Ralzar | 13 item icons (OWN-WORK3: the rows, prices and words are ours) | yes | art | 3 |
-| `foraging` | Harbinger451 | 7 textures (OWN-WORK3: the items, words and 22 quests are ours) | yes | art | 3 |
-| `travel-options` | Hazelnut | 3 UI textures (OWN-WORK3: the settings and words are ours) | yes | art | 3 |
-| `roleplay-realism` | Hazelnut | 5 sprites, 19 more rebuilt (OWN-WORK3: the quests, world, settings and words are ours) | yes | art | 3 |
-| `roleplay-realism-items` | Hazelnut and Ralzar | 230 sprites, 50 more rebuilt (OWN-WORK3: the items, spells and words are ours) | yes | art | 3 |
-| `iliac-puddle-no-more` | jet082 | 7 fish pictures (OWN-WORK3: the fish, settings' words and coastline are ours) | yes | art | 3 |
-| `diverse-weapons` | RealAKP | 12,612 weapon sprites (59 MB under `public/art/`), the script | yes | art | 3 |
-| `grimoire-ui` | LordSquacquerone | 93 screens, 38 buttons and 2 fonts (23 MB under `public/art/`) | yes | art | 3 |
-| `eye-of-the-beholder` | RedRoryOTheGlen | 166 sprites, the assembly's IL | yes | art | 3 |
-| `shield-widget` | RedRoryOTheGlen | 600 shield textures, presets | yes | art | 3 |
-| `handheld-torches` | RedRoryOTheGlen | 17 torch textures | yes | art | 3 |
-| `horse-cart-and-cargo` | demifiend000 | 45 horse pictures, two assemblies and their IL, the text table | yes | art, words | 3 |
-| `dynamic-skies` | BadLuckBurt and carademono | sky presets, 19 textures, shaders | yes | art | 3 |
-| `come-sail-away` | RedRoryOTheGlen | 12 boats as data, pictures, 5 clips, the assembly | yes | art, sound | 3 |
-| `weapon-sheathing` | Greatness7 and others | 71 scabbard meshes and 3 skeleton add-ons (a Morrowind mod) | yes | art | 3 |
-| `windfall` | demifiend000 | 27 clips, 3 pictures, shaders, the assembly and its IL | yes | art, sound | 3 |
-| `better-ambience` | joshcamas | 29 WAV clips, 16 scripts | yes | sound | 3 |
-| `immersive-footsteps` | Kirk.O | 210 MP3 clips, 2 scripts | yes | sound | 3 |
-| `vanilla-enhanced` | carademono | 1,415 repainted Daggerfall textures (Port-Doctrine's first exception) | yes | art, Bethesda-derived | 3 |
-| `sands-of-the-alikr` | unknown | 47 repainted TEXTURE.002 records (the second exception) | yes | art, Bethesda-derived | 3 |
-| `snowfall` | demifiend000 | 168 repainted winter textures (the second exception), the assembly and its IL | yes | art, Bethesda-derived | 3 |
-| `class-skins` | not named for the pack | 1,683 repainted class sprites (the fourth exception) | yes | art, Bethesda-derived | 3 |
+| `grimoire-ui` | LordSquacquerone | 93 screens, 38 buttons and 2 fonts (23 MB under `public/art/`) | yes | art | stays (the owner) |
 
 Wave 2 replaced data, tables and words: our own text, our own tables and our own world edits (OWN-WORK2 and
 OWN-WORK3, 2026-10-31). A folder that held art too is cut down to its art, listed by a file of ours, and waits for
@@ -160,9 +143,32 @@ still carries the files.
 | `roads-hazelnut` | Basic Roads 1.3.1 (`ajrb/dfunity-mods`, `BasicRoads/`) | Hazelnut | code MIT ("Copyright (C) 2020 Hazelnut", in `LICENSE`); the data no licence text, granted to Mac 2026-09-02 - **RECORD OPEN** | four 500,000-byte path masks (roads, tracks, rivers, streams) | `world/roadsProducer.js`, `world/road/riverNetwork.js`, `world/road/roadNetwork.js` (OWN-WORK2: our own Bay network, the provinces' rule), `world/road/roadPainter.js` (his MIT painter, ported) | 2026-10-31, `c2fbbbbfa` |
 | `beautiful-villages` | Beautiful Villages of Daggerfall 1.4.2 | carademono | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | manifest, one world-data pack (7,317 locations, 209 blocks: the author's edit of MAPS.BSA and BLOCKS.BSA) | `world/townDress.js`, `scenes/townDressHost.js` (OWN-WORK3: every town dressed by our own rules; no town laid out again), `world/townStandIns.js`, `systems/layoutPins.js` | 2026-10-31, `8d110d8f7`; credit ended |
 | `beautiful-cities` | Beautiful Cities of Daggerfall 0.5.0 | carademono | granted (Mac handed the archive over 2026-10-01: "We have permission") - **RECORD OPEN** | manifest, one world-data pack (410 cities, 611 blocks: the author's edit of MAPS.BSA and BLOCKS.BSA) | `world/townDress.js`, `scenes/townDressHost.js`, `world/townStandIns.js`, `systems/layoutPins.js` | 2026-10-31, `8d110d8f7`; credit ended |
+| `climates-calories` | Climates & Calories 1.7.1 | Ralzar | "**Permission: the author's, relayed by Mac (2026-09-17) - an overhaul, not a 1:1 port, with the mod's own item art carried.**" | 13 item icons, `derived.json` (4 specs), README | `survival/itemIcons.js`, `survival/survivalArt.js`, `survival/rotPicture.js`, `survival/derivedIcons.json`, `art/ownPainter.js` | 2026-10-31, `cc44705af` |
+| `foraging` | Foraging 1.7 | Harbinger451 | granted (Mac, 2026-09-28: "Yes, permission") - **RECORD OPEN** | 7 textures (11600-11606), the listing, README | `foraging/foragingArt.js`, `foraging/foragingInstall.js` | 2026-10-31, `cc44705af` |
+| `travel-options` | Travel Options 1.11 | Hazelnut | code MIT ("Copyright (C) 2020 Hazelnut"; `PlayerAutoPilot.cs` "Copyright (C) 2019 Jedidia"); the textures carried no licence text - **RECORD OPEN** | 3 interface textures, the listing, README | `ui/travel/travelArt.js`, `ui/travel/travelControlUI.js`, `ui/travel/travelMapWindow.js` | 2026-10-31, `cc44705af` |
+| `roleplay-realism` | Roleplay & Realism 1.8 | Hazelnut | scripts MIT ("Copyright (C) 2020 Hazelnut", "Copyright (C) 2021 Hazelnut"); the pictures carried no licence line - **RECORD OPEN** | 5 keeper sprites, `derived-art.json` (19 specs), the listing, README | `roleplayRealism/rrKeeperArt.js`, `roleplayRealism/rrVariants.js`, `roleplayRealism/rrDerivedArt.json` | 2026-10-31, `cc44705af` |
+| `roleplay-realism-items` | Roleplay & Realism: Items 1.3 | Hazelnut and Ralzar | code MIT (every script's header); the sprites carried no licence text - granted (Mac handed the zip over 2026-09-23) - **RECORD OPEN** | 230 sprites, `derived-art.json` (50 specs), the listing of 280 names, README, `tools/rriExtract.mjs` (DELETED) | `roleplayRealismItems/rriArt.js`, `roleplayRealismItems/rriInstall.js`, `roleplayRealismItems/rriIndex.js` | 2026-10-31, `cc44705af` |
+| `iliac-puddle-no-more` | Iliac Puddle No More 1.2.2 | jet082 | "**Permission: granted (Mac handed the archive over 2026-09-25) - the archive carries no licence text and no readme.**" - **RECORD OPEN** | 7 fish pictures, the listing, README | `deepWater/fishArt.js`, `deepWater/deepWatersFishItems.js`, `scenes/deepWater/deepWatersFish.js` | 2026-10-31, `cc44705af` |
+| `handheld-torches` | Handheld Torches 1.4.1 | RedRoryOTheGlen | granted (Mac: "Next mod to integrate 1:1 is this.") - **RECORD OPEN** | manifest, settings (52 keys), 17 textures, `derived.json` (22 specs), README | `systems/handheldTorchesArt.js`, `systems/handheldTorches.js`, `scenes/droppedTorches.js`, `systems/handheldTorchesDerived.json` | 2026-10-31, `cc44705af` |
+| `windfall` | Windfall 1.0.0 | demifiend000 | granted (Mac, 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN**; the bundle states no licence | manifest, settings (56 keys), `Windfall.dll` and its IL, 2 shaders, 3 pictures, 27 clips, README | `systems/windfall/windfallSynth.js`, `systems/windfall/windfallPictures.js`, `render/windfallSway.js`, `systems/windfallEffects.js`, `scenes/windfallHost.js` | 2026-10-31, `cc44705af` |
+| `better-ambience` | Better Ambience 0.1.4 | Joshua Steinhauer (joshcamas) | MIT ("Copyright (c) 2020 Josh Steinhauer"; the full notice is in `LICENSE`) | manifest, settings (20 keys), 16 C# sources, the LICENSE, 29 WAV clips, README | `systems/betterAmbience.js`, `systems/reverbPresets.js`, `audio/synth/` | 2026-10-31, `cc44705af` |
+| `immersive-footsteps` | Immersive Footsteps 1.01 | Kirk.O | MIT ("Copyright (C) 2024 Kirk.O"; the full notice is in `LICENSE`) - **RECORD OPEN** | manifest, settings (10 keys), 2 C# sources, 210 MP3 clips, README | `systems/immersiveFootsteps.js`, `audio/synth/` | 2026-10-31, `cc44705af` |
+| `dynamic-skies` | Dynamic Skies 2.3.4 | BadLuckBurt and carademono | "**Permission: granted by the authors to Mac (Lattymoy), 2026-09-04.**" - **RECORD OPEN** | manifest, settings (5 keys), 7 sky and 5 fog presets, the light curve, 19 textures, the shader and two include files, README | `systems/dynamicSkies/dynamicSkies.js`, `systems/dynamicSkies/dynamicSkiesRuntime.js`, `systems/dynamicSkies/dynamicSkiesAssets.js`, `render/dynamicSkiesRenderer.js`, `render/dynamicSkiesBridge.js` | 2026-10-31, `cc44705af` |
+| `diverse-weapons` | Diverse Weapons 1.7.3 | RealAKP (the script: "Author: RealAKP & Kirk.O") | the script MIT ("Copyright (C) 2022 Kirk.O"); the sprites carried no licence line - granted (Mac handed the zip over 2026-09-23) - **RECORD OPEN** | the script, manifest, the widget preset, readmes, `derived-art.json` (12 specs), 12,612 sprites under `public/art/diverse-weapons/`, two tools | `combat/diverseWeapons/diverseWeaponsArt.js`, `combat/diverseWeapons/diverseWeaponsIndex.js`, `combat/diverseWeapons/diverseWeaponsAssets.js`, `combat/diverseWeapons/diverseWeaponsIcons.js` | 2026-10-31, `cc44705af` |
+| `weapon-sheathing` | Weapon Sheathing 1.6 (OpenMW, Nexus Morrowind 46069) | Greatness7; art by akortunov, Greatness7, Heinrich, London Rook, Lord Berandas, Melchior Dahrk, MementoMoritius, Petethegoat, PikachunoTM, Remiros | "Everything included in this mod is free to use for your own Morrowind projects, so long as you give credit to the original authors and do not charge a monetary fee." | 71 scabbard NIFs, 3 skeleton add-ons (one a copy of retail Morrowind's skeleton), the mod's readme, README | `systems/ownSheathing.js`, `systems/weaponSheathing.js`, `systems/weaponSheathingAssets.js`, `formats/morrowind/mwNifWrite.js`, `tools/ownBiped.mjs` | 2026-10-31, `cc44705af` |
+| `shield-widget` | Shield Widget 1.6 (Nexus 733) | RedRoryOTheGlen; frame animation by WilhelmBlack | granted (Mac handed the zip over 2026-09-19) - **RECORD OPEN** | manifest, settings, presets, 600 shield sprites, README | `combat/shieldFaces.js`, `combat/shieldWidgetAssets.js`, `combat/shieldWidget.js` | 2026-10-31, `cc44705af` |
+| `vanilla-enhanced` | Vanilla Enhanced 3.4.7 (Base, Masked Roads, Snowless Swamps and Jungles) | carademono (Masked Roads: carademono and Kokey) | granted (Mac, 2026-10-05: "Approved and yes"); the repository states no licence - **RECORD OPEN** | 3 manifests, 3 listings, the door index, README; 1,436 repainted textures under `public/art/vanilla-enhanced/`; its vendoring tool | `systems/ownTextures/ownTextureRules.js`, `systems/ownTextures/ownTexturePacks.js`, `systems/vanillaEnhanced/vanillaEnhancedPack.js`, `systems/vanillaEnhanced/vanillaEnhancedDecodeWorker.js` | 2026-10-31, `cc44705af` |
+| `sands-of-the-alikr` | Sands of the Alik'r 2 (Nexus 1390) | unknown (the archive names none) | granted (Mac, 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN** | the listing, the index, README; 47 repainted TEXTURE.002 records under `public/art/sands-of-the-alikr/` | `systems/ownTextures/ownTextureRules.js` (`desert`), `systems/vanillaEnhanced/vanillaEnhancedPack.js` | 2026-10-31, `cc44705af` |
+| `snowfall` | Snowfall 1.0.5 (Nexus 1401) | demifiend000 | granted (Mac, 2026-10-08, as above) - **RECORD OPEN** | manifest, settings, `DynamicSnow.dll` and its IL, the shader, Basic Roads' MIT notice, the listing, the index; 168 repainted winter records, the snow albedo and 3 masks under `public/art/snowfall/` | `systems/snowfall.js`, `systems/snowfallRuntime.js`, `render/snowfallGlsl.js`, `render/snowfallSurface.js`, `scenes/snowfallHost.js`, `systems/ownTextures/ownTextureRules.js` (`snow`) | 2026-10-31, `cc44705af` |
+| `class-skins` | Daggerfall class skins (Mac's `ExistingClasses.rar`, no version) | not named for the pack (one folder: "KAMER - Bounty Hunter") | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN**; carried under Port-Doctrine's fourth exception | 1,683 repainted class sprites in 20 sheets, `skins.json`, the listing, README, `tools/classSkinsListing.mjs` (DELETED) | `player/classSkins.js`, `player/classSkinArt.js`, `player/eyeOfTheBeholder/eotbSprite.js` | 2026-10-31, `cc44705af` |
+| `eye-of-the-beholder` | Eye Of The Beholder 2.1 | RedRoryOTheGlen | granted (Mac handed the archive over 2026-09-15) - **RECORD OPEN** | manifest, settings, presets, states, `spriteInfo.json`, `derived.json` (2,869 specs), 166 death sprites, the DLL and its IL, README, `tools/eotbIl.mjs` (DELETED) | `player/eyeOfTheBeholder/eotbSprite.js`, `player/eyeOfTheBeholder/eotbDeath.js`, `player/eyeOfTheBeholder/eotbDerived.json`, `player/eyeOfTheBeholder/eotbSpriteInfo.json`, `player/eyeOfTheBeholder/eotbBillboard.js` | 2026-10-31, `cc44705af` |
+| `horse-cart-and-cargo` | Horse Cart and Cargo 1.0.0-rc12 (Nexus 1374) | demifiend000 | granted (Mac handed the bundle over 2026-09-23) - **RECORD OPEN** | manifest, settings, the text table, two DLLs and their IL, 45 horse pictures, README, `tools/hccAssets.mjs` (DELETED) | `systems/horse/horseArt.js`, `systems/horse/horseCart.js`, `systems/horse/horseCartLaw.js`, `scenes/horseCartPool.js` | 2026-10-31, `cc44705af` |
+| `come-sail-away` | Come Sail Away 2.1 (Nexus 1131) | RedRoryOTheGlen | "**Permission: granted (Mac handed the archive over 2026-09-26) - the archive carries no licence text and no readme.**" - **RECORD OPEN** | manifest, settings, item templates, the DLL, 12 boats as prefabs and meshes, 27 pictures, `derived.json` (32 specs), 5 clips, README, the extractor and three of its libraries | `world/ships/ownBoats/`, `systems/comeSailAway/csaPictures.js`, `systems/comeSailAway/csaSynth/`, `systems/comeSailAway/comeSailAwayModels.js`, `systems/comeSailAway/comeSailAwayItems.js` | 2026-10-31, `cc44705af` |
+| `vorbis-fsb-setups` | two Vorbis setup headers for FSB5 (vgmstream's table, ISC-style; libvorbis's encoder output, BSD-3-Clause) | vgmstream and Xiph.org | the two licences, carried with the files | the two headers and their licences | none: only Come Sail Away's clips needed them, and they are ours now | 2026-10-31, `cc44705af`; credit ended |
 
 The MIT rows keep their notice because our JS restates their code closely: `unleveledLoot.js` method by method,
-`meanerMonsters.js` the mod's 24-row table value for value, `worldTooltips.js` the mod's tables word for word.
+`meanerMonsters.js` the mod's 24-row table value for value, `worldTooltips.js` the mod's tables word for word,
+`immersiveFootsteps.js` and `betterAmbience.js` their scripts' laws. The art and sound they carried is ours now.
 `LICENSE` carries each notice in full, and the About screen the copyright lines.
 
 ## How a directory is retired

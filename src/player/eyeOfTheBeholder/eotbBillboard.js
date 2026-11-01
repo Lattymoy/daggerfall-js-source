@@ -10,8 +10,8 @@
 // Mac handed the shipped archive over ("it needs to be 1:1 with the
 // uploaded file. No exceptions") and the port's own UnityFS reader
 // took `Eye Of The Beholder.dll` out of the `.dfmod`; `dnfile`/`dncil`
-// read every method (`tools/eotbIl.mjs` + `tools/ilDump.py`; the dump
-// is vendored beside the art). Every law below is now [IL] - the
+// read every method (`tools/ilDump.py`; OWN-WORK4: the dump left the
+// tree with the mod's directory). Every law below is now [IL] - the
 // settings-only readings AUDIT-EOTB2 made in the assembly's absence are
 // gone, and where one was wrong the IL offset that corrects it is
 // cited. The two things Mac saw were both here:
@@ -80,9 +80,9 @@ export const lycanArchive = (lycanthropyType) => ARCHIVE_LYCAN + (lycanthropyTyp
  * constructor - 0 everywhere but the two bow-ready loops, which say 3
  * - and the constructor IGNORES IT (IL_59f4-IL_5a60 stores the name and
  * the mirror flag and asks `InitializeTextures` to COUNT the files).
- * It is carried because `vendor/eye-of-the-beholder/states.json` is
- * the table as the IL builds it and the pin compares every field; the
- * clip length the mod actually runs is `TABLE_FRAMES` below.
+ * It is carried because the mod's states.json was the table as the IL
+ * builds it, and the pin (eotb_billboard.test.js) compares every field;
+ * the clip length the mod actually runs is `TABLE_FRAMES` below.
  *
  * The on-foot twelve are `slot * 5` exactly; the horse and lycan sets
  * reuse the same numbering over their own archives, which is why they
@@ -115,7 +115,7 @@ export const STATE_TABLES = Object.freeze({
 /**
  * [IL] THE CLIP LENGTHS, as `PlayerBillboardState.InitializeTextures`
  * finds them (IL_5a70-IL_5ad4: `archive_record-i` for i = 0, 1, ...
- * while the bundle has one). Counted from the vendored art rather than
+ * while the bundle has one). Counted from the bundle's art rather than
  * typed - the pin in test/eotb_playerbillboard.test.js walks all 23
  * archives and every record - and the same for every archive of a
  * kind, which is why the table is per TABLE and not per file:
@@ -418,7 +418,7 @@ export function chooseTable(s = {}) {
  *  (IL_5384-IL_53c2) picks by `IsTransformedLycanthrope`. */
 export const deathTable = (s = {}) => (s.transformed ? 'DeathLycan' : 'Death');
 
-/** The sprite the bundle ships for one state, in the vendored naming:
+/** The sprite the bundle ships for one state, in the bundle's naming:
  *  `<archive>_<record>-<frame>`. */
 export const spriteKey = (archive, record, frame) => `${archive}_${record}-${frame}`;
 

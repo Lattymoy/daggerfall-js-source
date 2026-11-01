@@ -14,6 +14,15 @@ shipped modsettings, the text table, the two assemblies with their IL
 dumps, and the 45 horse PNGs the assembly embeds - see the README there
 for the provenance and the permission line).
 
+**OWN-WORK4 (2026-10-31, the owner).** "Our goal is no latching onto other mod authors or needing permissions. A
+proper 1 to 1 recreation for everything." vendor/horse-cart-and-cargo is retired (`01-Overview/Own-Work.md`): the
+manifest, the settings file, the text table, both assemblies, their IL dumps and the 45 horse pictures left the tree,
+with `tools/hccAssets.mjs` (RETIRED). The horse is ours (`src/systems/horse/horseArt.js`): Daggerfall's horse under its rider
+(TEXTURE.495, the walk's five views and eight frames), the rider taken off and the flank under his leg filled, our own
+saddle painted on, in colours no coat dyes. The names, sizes, views, frames and timing are the mod's. The text table's names were never shown;
+the rows and their words are ours. Pins: `test/systems/horse/ownwork4_horseart.test.js`; mutants
+`tools/mutants/ownwork4_horse.json` (11). An `[IL_xxxx]` below names an offset in the 1.0.0-rc12 assembly, not a file here.
+
 The port is read off `TrailingWagon.dll`'s IL and nothing else: no
 source ships with the mod. The scope of that reading is a table, not a
 sentence - `test/systems/horse/hcc_scope.test.js` holds every authored method of the
@@ -556,7 +565,7 @@ still ported and pinned as the record, called by no runtime module (`RETIRED_BY_
   online rows), `test/net/hcc_park.test.js` (13, HCC-PARK, HCC-TIP, RIDE and the audit's park and rider rows),
   `test/scenes/audit_hcc_branch.test.js` (6, the branch audit's IL and host rows), `test/systems/audit_hcc.test.js` (9, AUDIT HCC),
   `test/player/hcc_hosts.test.js` (10, the hosts' seams by execution and by
-  source), `test/systems/horse/hcc_scope.test.js` (4, the table), `test/tooling/hcc_assets.test.js`
+  source), `test/systems/horse/hcc_scope.test.js` (4, the table), `test/tooling/hcc_assets.test.js` (RETIRED)
   (3, the vendored files are the assembly's).
 - `tools/mutants/hcc.json`, `tools/mutants/hccpark.json` and
   `tools/mutants/auditbranch.json`: the mutation lists, every one dead.

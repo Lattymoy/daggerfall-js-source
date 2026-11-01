@@ -102,6 +102,12 @@ test('PAD1-B every button name the poller can synthesise is a KeyCode a mod key 
     const walk = (o) => { if (!o || typeof o !== 'object') return; if (typeof o.$type === 'string' && /TextKey$/.test(o.$type) && !/Axis$/.test(String(o.Name ?? o.name ?? ''))) { walked++; const v = String(o.Value ?? o.value ?? ''); assert.ok(v === '' || isBindableKeyCode(v), `${mod}: ${o.Name ?? o.name} = ${v}`); } for (const v of Object.values(o)) walk(v); };
     walk(j);
   }
+  // OWN-WORK4 (2026-10-31): a retired mod's TextKey defaults as its modsettings.json shipped them - its copy left the tree
+  const RETIRED_TEXT_KEYS = {
+    'eye-of-the-beholder': { 'Camera.TogglePerspective': 'KeypadEnter', 'Camera.SwitchShoulder': 'Tab', 'AutoTogglePerspective.ToggleInput': 'KeypadPlus' },
+    'horse-cart-and-cargo': { 'Hotkeys.QuickMountDismount': 'K', 'Hotkeys.SummonTransport': 'G' },
+  };
+  for (const [mod, keys] of Object.entries(RETIRED_TEXT_KEYS)) for (const [name, v] of Object.entries(keys)) { walked++; assert.ok(isBindableKeyCode(v), `${mod}: ${name} = ${v}`); }
   assert.ok(walked >= 3, `the mods' TextKeys were walked (${walked})`);
 });
 

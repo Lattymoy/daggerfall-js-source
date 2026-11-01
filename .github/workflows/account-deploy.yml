@@ -464,7 +464,6 @@ on:
       - "src/systems/portBooks.js"
       - "src/systems/potions.js"
       - "src/systems/loot/lootThemes.js"
-      - "vendor/class-skins/skins.json"
       - "src/systems/foraging/foragingItems.js"
       - ".github/workflows/account-deploy.yml"
       - "tools/discordModCommands.mjs"

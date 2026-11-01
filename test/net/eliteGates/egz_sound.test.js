@@ -183,8 +183,8 @@ test('EG-ZH BETTER AMBIENCE YIELDS (systems/betterAmbience.js updateReverb): whi
   store.Enabled = true;
   const reverbs = [];
   let held = null;
-  const audio = { registerSound: async () => true, playOneShot: () => {}, loop: () => null, loop3d: () => null, setReverb: (p) => { reverbs.push(p); return true; }, reverbHeld: () => held };
-  const c = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, weather: () => 'sunny', fetchClip: async () => null });
+  const audio = { registerSamples: () => true, playOneShot: () => {}, loop: () => null, loop3d: () => null, setReverb: (p) => { reverbs.push(p); return true; }, reverbHeld: () => held };
+  const c = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, weather: () => 'sunny', makeClip: async () => null });
   const dungeon = { inside: true, inDungeon: true, entity: { items: [], activeEffects: [] }, pos: [0, 0, 0] };
   c.frame(0, dungeon);
   assert.deepEqual(reverbs, ['Stoneroom'], 'its wish, as ever');

@@ -10,10 +10,10 @@ import { comeSailAwayModels } from '../src/systems/comeSailAway/comeSailAwayMode
 import { spawnBoat } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_ACTIONS, HANDLING } from '../src/systems/comeSailAway/comeSailAway.js';
 import { quatRotate } from '../src/world/quat.js';
+import { ownFile } from './ownBoats.mjs';
 
-const DIR = new URL('../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 export const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
 const openWater = () => ({ mapPixelX: 10, mapPixelY: 20, position: [0, 0, 0], tileMap: new Uint8Array(128 * 128), sampleHeight: () => 20 });
 

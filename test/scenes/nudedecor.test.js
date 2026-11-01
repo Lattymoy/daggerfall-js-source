@@ -27,6 +27,7 @@ import { settle, near, rmb, toolRig, placeFrom, all, one, rows } from '../decorF
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const ROOT = new URL('../../', import.meta.url);
+import { ownFile } from '../ownBoats.mjs';
 const src = (p) => hostText(p);
 const keys = (list) => list.map((e) => e.key).sort();
 /** Show Nudity for the length of `body` - the setting ships False and goes back to it after. */
@@ -244,8 +245,8 @@ test('NUDE-HOSTS by source: every file of src/ that batches a billboard is named
     assert.match(src(f).replace(/^\s*\/\/.*$/gm, ''), /\bdrawnFlat\(/, `${f} draws people: it asks drawnFlat`);
   }
   // Come Sail Away draws its prefabs' people (systems/comeSailAway/comeSailAwayBoat.js setupBillboardHelper: `BillboardHelper-AAA_RRR`)
-  // exactly as the mod lays them - held here to the table, so a figure of it arriving in the vendored data is caught
-  const helpers = [...src('vendor/come-sail-away/Models/prefabs.json').matchAll(/BillboardHelper-(\d{3})_(\d{3})/g)].map((m) => `${Number(m[1])}_${Number(m[2])}`);
+  // exactly as our boats lay them (OWN-WORK4) - held here to the table, so a figure of it arriving in their data is caught
+  const helpers = [...JSON.stringify(ownFile('prefabs.json')).matchAll(/BillboardHelper-(\d{3})_(\d{3})/g)].map((m) => `${Number(m[1])}_${Number(m[2])}`);
   assert.ok(helpers.filter((k) => k.startsWith('182_')).length >= 20, `the prefabs' people are read (${helpers.length} helpers)`);
   assert.deepEqual(helpers.filter((k) => k in NUDE_FLAT_STAND_INS), [], 'none of the table\'s figures');
 });

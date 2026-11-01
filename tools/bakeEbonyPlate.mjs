@@ -309,7 +309,7 @@ if (isMain(import.meta.url)) {
   const r = bakeEbonyPlate({
     source: readFileSync(SOURCE),
     pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
-    skeleton: readFileSync(RETAIL_SKELETON),
+    skeleton: RETAIL_SKELETON,
   });
   for (const p of r.pieces) {
     save(meshFile(p.id), p.nif);

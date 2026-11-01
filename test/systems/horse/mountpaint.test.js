@@ -10,6 +10,7 @@ import { recolorHorse, recolorHorseTexels, withMountLook, POINT_SHINE } from '..
 import { VIEW_FRONT, VIEW_SIDE, VIEW_BACK, GHOST_LEGS } from '../../../src/systems/horse/mountPaint.js';
 import { horseTexelMap } from '../../../src/world/horseModel.js';
 import { MOUNT_PREVIEW_FILE } from '../../../src/ui/mountPreview.js';
+import { horsePictures } from '../../../tools/lib/horsePictures.mjs';
 
 const bytes = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url));
 const hsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx / 255]; };
@@ -56,8 +57,8 @@ test('AUDIT-STOREFRONT the mane seen from the saddle: every strand of it the loo
   }
 });
 
-test('AUDIT-STOREFRONT the views: the automaton\'s heart at its chest from the side and the front quarter; none from behind, and none from the front, where its head stands before it; seen from the front or behind its plates never seamed as a flank\'s (mutants: the heart from behind; the view ignored for its face)', () => {
-  const raw = PNG.sync.read(bytes(`vendor/horse-cart-and-cargo/Textures/${MOUNT_PREVIEW_FILE}`));
+test('AUDIT-STOREFRONT the views: the automaton\'s heart at its chest from the side and the front quarter; none from behind, and none from the front, where its head stands before it; seen from the front or behind its plates never seamed as a flank\'s (mutants: the heart from behind; the view ignored for its face)', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
+  const raw = await horsePictures().picture(MOUNT_PREVIEW_FILE);   // OWN-WORK4: the shop's side view, ours, built from ARENA2
   const img = { width: raw.width, height: raw.height, colors: new Uint8Array(raw.data) }, W = img.width;
   const heart = (view) => { const c = recolorHorse(img, withMountLook(0, 'automaton'), { bottomFirst: false, view }).colors; let n = 0; for (let i = 0; i < W * img.height; i++) { const [h, s, v] = hsv(c[i * 4], c[i * 4 + 1], c[i * 4 + 2]); if (c[i * 4 + 3] && h > 190 && h < 215 && s > 0.5 && v > 0.5) n++; } return n; };
   assert.ok(heart(undefined) > 6 && heart(VIEW_SIDE) > 6 && heart(1) > 6, 'seen from the side');

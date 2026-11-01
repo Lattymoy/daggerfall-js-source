@@ -8,6 +8,14 @@ Daggerfall Unity whose archive names no author. Ledger row ALIKR1; the
 registry row and the permission line (Mac's word recorded, the author's name
 and words still to come - `RECORD OPEN`) are `vendor/sands-of-the-alikr/`'s.
 
+**OWN-WORK4 (2026-10-31, the owner).** "A proper 1 to 1 recreation for everything." The unnamed author's 47
+pictures are retired with `vendor/sands-of-the-alikr/` and `public/art/sands-of-the-alikr/` (`01-Overview/Own-Work.md`).
+The pack keeps its key, title, switch, its 47 records of TEXTURE.002 at 64 x 64, and the loose ground below. Each record
+is our desert rule over the player's own record (`src/systems/ownTextures/ownTextureRules.js`, `desert`): where a texel
+is sand - a warm tan, light enough - it is graded toward a pale dune sand that keeps the record's own light and dark,
+and rippled by a north-west wind, whole cycles across the tile so it repeats. Water, green, grey and dark dirt stay
+the record's own. Pins: `test/systems/environs_texturePacks.test.js`, `test/systems/ownwork4_textures.test.js`.
+
 ## What the pack is
 
 47 pictures of TEXTURE.002 - the desert's ground, which Daggerfall wears all
@@ -27,7 +35,7 @@ Port-Doctrine's SECOND EXCEPTION (a render of game data is game data; Mac
 approved carrying it on his word of the author's permission), with a listing
 of every file's sha256 and the texture door's index
 (`vendor/sands-of-the-alikr/`, both written by
-`tools/environmentModsExtract.mjs`, which checks the tree against the
+`tools/environmentModsExtract.mjs` (its Sands arm RETIRED, OWN-WORK4), which checks the tree against the
 archive). The pack is a SHIPPED MOD in the texture door
 (`systems/dfmodTextures.js` `setShippedDfmods`), registered beside Vanilla
 Enhanced's by `systems/vanillaEnhanced/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`): one

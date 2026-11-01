@@ -26,7 +26,7 @@ async function poolWith(look, { walk = true } = {}) {
     destroyBillboardBatch() {}, createMesh: () => ({}),
   };
   const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4).fill(200) });
-  const pool = createHorseCartPool({ renderer, meshes: null, collider: () => null, now: () => 0, fetchFn: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }), decode, horseLook: () => look.v });
+  const pool = createHorseCartPool({ renderer, meshes: null, collider: () => null, now: () => 0, horsePicture: decode, horseLook: () => look.v });
   pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: { isInteractive: true, position: [0, 0, 5], forward: [0, 0, 1], walk: { animationFrame: 0, walking: false } }, teamFollowing: false, horseFollowing: false, persistence: true }), lateUpdate() {}, rebase() {} });
   pool.presentation.horseArt.ensureStationary(); await flush();
   if (walk) { pool.presentation.horseArt.ensureWalk(); await flush(); }

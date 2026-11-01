@@ -3894,19 +3894,9 @@
   "tr": "15e178b8ce23",
   "by": "claude-in-session"
  },
- "credits.betterAmbience.terms": {
-  "en": "d0d785325b5b",
-  "tr": "cfc5711b5aeb",
-  "by": "claude-in-session"
- },
  "credits.betterAmbience.what": {
   "en": "100f862ea8ed",
   "tr": "ebafc89fc46c",
-  "by": "claude-in-session"
- },
- "credits.classSkins.terms": {
-  "en": "324ccfd7064b",
-  "tr": "c778eab0b5f8",
   "by": "claude-in-session"
  },
  "credits.classSkins.title": {
@@ -3914,29 +3904,9 @@
   "tr": "1d702a4db822",
   "by": "claude-in-session"
  },
- "credits.classSkins.what": {
-  "en": "2bd085e5afa1",
-  "tr": "2698d33df197",
-  "by": "claude-in-session"
- },
- "credits.climatesCalories.terms": {
-  "en": "b2ddc6fd23a7",
-  "tr": "b9337d095acc",
-  "by": "claude-in-session"
- },
  "credits.climatesCalories.what": {
   "en": "83172d962534",
   "tr": "0658b96653f4",
-  "by": "claude-in-session"
- },
- "credits.comeSailAway.terms": {
-  "en": "aecd9f5f6b2c",
-  "tr": "4db996961b08",
-  "by": "claude-in-session"
- },
- "credits.comeSailAway.what": {
-  "en": "a876c4d15ad4",
-  "tr": "d71063390b4f",
   "by": "claude-in-session"
  },
  "credits.contact.dfuForums": {
@@ -3979,39 +3949,9 @@
   "tr": "94f6b2e018b4",
   "by": "claude-in-session"
  },
- "credits.diverseWeapons.terms": {
-  "en": "d699389463c3",
-  "tr": "64a358e7dad7",
-  "by": "claude-in-session"
- },
  "credits.diverseWeapons.what": {
   "en": "de7668ccb0e5",
   "tr": "915b52e7fd9d",
-  "by": "claude-in-session"
- },
- "credits.dynamicSkies.terms": {
-  "en": "e807de593645",
-  "tr": "3d817f2d41d0",
-  "by": "claude-in-session"
- },
- "credits.dynamicSkies.what": {
-  "en": "185c34a4a1d3",
-  "tr": "9286df20ada2",
-  "by": "claude-in-session"
- },
- "credits.eyeOfTheBeholder.terms": {
-  "en": "97fcb5eb18a5",
-  "tr": "30ed4dcd9c5a",
-  "by": "claude-in-session"
- },
- "credits.eyeOfTheBeholder.what": {
-  "en": "3e7fcfad6a7c",
-  "tr": "6059c407ab8b",
-  "by": "claude-in-session"
- },
- "credits.foraging.terms": {
-  "en": "70bb85ac634a",
-  "tr": "db13c975d27c",
   "by": "claude-in-session"
  },
  "credits.foraging.what": {
@@ -4029,19 +3969,9 @@
   "tr": "ffb9ce84acb0",
   "by": "claude-in-session"
  },
- "credits.handheldTorches.terms": {
-  "en": "070aca06d975",
-  "tr": "96ba1ee4dfbd",
-  "by": "claude-in-session"
- },
  "credits.handheldTorches.what": {
   "en": "7ff8f22e7606",
   "tr": "6a82fd94b680",
-  "by": "claude-in-session"
- },
- "credits.horseCart.terms": {
-  "en": "1502ec1b2cef",
-  "tr": "ff4e396288b9",
   "by": "claude-in-session"
  },
  "credits.horseCart.what": {
@@ -4049,24 +3979,9 @@
   "tr": "f870ebcb2681",
   "by": "claude-in-session"
  },
- "credits.iliacPuddle.terms": {
-  "en": "d35ec70eb275",
-  "tr": "c1e6730f744f",
-  "by": "claude-in-session"
- },
  "credits.iliacPuddle.what": {
   "en": "1f7ddde709f4",
   "tr": "f8ed13c57427",
-  "by": "claude-in-session"
- },
- "credits.immersiveFootsteps.terms": {
-  "en": "102e603a77be",
-  "tr": "044044781480",
-  "by": "claude-in-session"
- },
- "credits.immersiveFootsteps.what": {
-  "en": "471d7dd4e1c1",
-  "tr": "166f742085c9",
   "by": "claude-in-session"
  },
  "credits.l10n.bundled": {
@@ -4179,16 +4094,6 @@
   "tr": "b92e345696c0",
   "by": "claude-in-session"
  },
- "credits.rrItems.terms": {
-  "en": "a738bf57ba37",
-  "tr": "533943ff5c7f",
-  "by": "claude-in-session"
- },
- "credits.rrItems.what": {
-  "en": "350c872d11c6",
-  "tr": "c1e1973cd8eb",
-  "by": "claude-in-session"
- },
  "credits.seasons.terms": {
   "en": "daad4657afaf",
   "tr": "a4ee7d247ab1",
@@ -4197,11 +4102,6 @@
  "credits.seasons.what": {
   "en": "fc66084d5d41",
   "tr": "e01cd0b8ae58",
-  "by": "claude-in-session"
- },
- "credits.shieldWidget.terms": {
-  "en": "09ddb9b3f88c",
-  "tr": "453d06f3873c",
   "by": "claude-in-session"
  },
  "credits.shieldWidget.what": {
@@ -4217,11 +4117,6 @@
  "credits.silkscreen.what": {
   "en": "394d2d009d49",
   "tr": "83b04567a454",
-  "by": "claude-in-session"
- },
- "credits.travelOptions.terms": {
-  "en": "d783191ec23c",
-  "tr": "c7d8fbca5d56",
   "by": "claude-in-session"
  },
  "credits.travelOptions.what": {
@@ -4244,26 +4139,6 @@
   "tr": "5c4eaabe0456",
   "by": "claude-in-session"
  },
- "credits.vorbis.author": {
-  "en": "fdd46b831149",
-  "tr": "09ef18462e20",
-  "by": "claude-in-session"
- },
- "credits.vorbis.terms": {
-  "en": "9a48158a4746",
-  "tr": "0c1e719397e7",
-  "by": "claude-in-session"
- },
- "credits.vorbis.title": {
-  "en": "03d0121c9a55",
-  "tr": "945c07b03be2",
-  "by": "claude-in-session"
- },
- "credits.vorbis.what": {
-  "en": "e30c8baae0cb",
-  "tr": "7398b8258e29",
-  "by": "claude-in-session"
- },
  "credits.warmAshes.terms": {
   "en": "91b057179e9a",
   "tr": "496dcb690e51",
@@ -4272,16 +4147,6 @@
  "credits.warmAshes.what": {
   "en": "2a6bc436fb0b",
   "tr": "6a1d4c16dea5",
-  "by": "claude-in-session"
- },
- "credits.weaponSheathing.terms": {
-  "en": "632a66933b93",
-  "tr": "0973b38b6200",
-  "by": "claude-in-session"
- },
- "credits.weaponSheathing.what": {
-  "en": "cb09390217e5",
-  "tr": "5ca42991b173",
   "by": "claude-in-session"
  },
  "credits.weaponWidget.terms": {
@@ -9669,29 +9534,9 @@
   "tr": "6999334e49cd",
   "by": "claude-in-session"
  },
- "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
-  "en": "ea78623b8aa0",
-  "tr": "03884475529e",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.enable.description": {
   "en": "3c73a6aab686",
   "tr": "687288b698b5",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterFootsteps.footstepVolume.description": {
-  "en": "a24a22b52244",
-  "tr": "db542fc9a0d5",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterRain.enableBetterRain.description": {
-  "en": "b01ebc8f57a9",
-  "tr": "27d4ed8b8a11",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.BetterRain.enableBetterSnow.description": {
-  "en": "9e2c57dfba94",
-  "tr": "f582fb52d117",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.CameraShake.fadeInTime.description": {
@@ -9749,19 +9594,9 @@
   "tr": "d9d2691c93d3",
   "by": "claude-in-session"
  },
- "mods.betterAmbience.DungeonLighting.dungeonDarkness.description": {
-  "en": "5ef727ff388b",
-  "tr": "61f560b696d9",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.DungeonLighting.enableFogAmbientEffect.description": {
   "en": "fa83a653257f",
   "tr": "d08e94d4769b",
-  "by": "claude-in-session"
- },
- "mods.betterAmbience.DungeonLighting.fogAmbientEffect.description": {
-  "en": "080f2d8b0012",
-  "tr": "626698966959",
   "by": "claude-in-session"
  },
  "mods.betterAmbience.DungeonReverb.level.description": {
@@ -9832,11 +9667,6 @@
  "mods.comeSailAway.Controls.IncreaseTimeScale.description": {
   "en": "2fc1d73b92ae",
   "tr": "f95fd48f2024",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Controls.PortLocationSearchRange.description": {
-  "en": "da63f599ee82",
-  "tr": "66b62259017e",
   "by": "claude-in-session"
  },
  "mods.comeSailAway.Controls.ResetTimeScale.description": {
@@ -9929,31 +9759,6 @@
   "tr": "3ad0bd6ea9e2",
   "by": "claude-in-session"
  },
- "mods.comeSailAway.Map.MarkerOutlineThickness.description": {
-  "en": "b8a31b1ef164",
-  "tr": "19baf17b6b35",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.MarkerThickness.description": {
-  "en": "6c8779b2189e",
-  "tr": "10395d287b91",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.PositionLineThickness.description": {
-  "en": "5630d67aba94",
-  "tr": "b434e8024738",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.RestrictPositionReadingTime.description": {
-  "en": "0c81c0e243fb",
-  "tr": "59ead60501b1",
-  "by": "claude-in-session"
- },
- "mods.comeSailAway.Map.RestrictPositionReadingWeather.description": {
-  "en": "82151f1f93f5",
-  "tr": "c9c72af494a6",
-  "by": "claude-in-session"
- },
  "mods.comeSailAway.SailingAssist.AutoStowSquareSails.description": {
   "en": "80da6c3da601",
   "tr": "ffc5618af1a2",
@@ -10044,34 +9849,14 @@
   "tr": "b3b20c521975",
   "by": "claude-in-session"
  },
- "mods.dynamicSkies.ActivatePixelSnow.description": {
-  "en": "a6061104e961",
-  "tr": "5a35b6bb3237",
-  "by": "claude-in-session"
- },
  "mods.dynamicSkies.Enabled.description": {
   "en": "24a56f1d6b04",
   "tr": "b43bdff67667",
   "by": "claude-in-session"
  },
- "mods.dynamicSkies.MaxParticleSize.description": {
-  "en": "f9adbf4bc9c0",
-  "tr": "662193a73aa3",
-  "by": "claude-in-session"
- },
  "mods.dynamicSkies.MaxParticles.description": {
   "en": "d94d1768b9d1",
   "tr": "01a5bfe4d3f3",
-  "by": "claude-in-session"
- },
- "mods.dynamicSkies.MinParticleSize.description": {
-  "en": "252164e4c1c7",
-  "tr": "d2d4be8326a0",
-  "by": "claude-in-session"
- },
- "mods.dynamicSkies.densitySetting.description": {
-  "en": "a135ebefc2ef",
-  "tr": "0bf6dcc69f6b",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Animation.BillboardScale.description": {
@@ -10289,24 +10074,9 @@
   "tr": "c76c0f446a11",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Graphics.OnFoot.description": {
-  "en": "9b6e80fbd98b",
-  "tr": "cb26db23cba1",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.OnHorse.description": {
-  "en": "66382d4850bb",
-  "tr": "c422aaf9e0de",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.Graphics.PingPongOffset.description": {
   "en": "37ee0a84039b",
   "tr": "9d89e620321b",
-  "by": "claude-in-session"
- },
- "mods.eyeOfTheBeholder.Graphics.ReadyStance.description": {
-  "en": "b9a13e8133b9",
-  "tr": "9315f28237b4",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.ShowCart.description": {
@@ -10314,14 +10084,9 @@
   "tr": "09877d46d056",
   "by": "claude-in-session"
  },
- "mods.eyeOfTheBeholder.Graphics.TorchOffset.description": {
-  "en": "14baa7d0a735",
-  "tr": "04f1c1da40e6",
-  "by": "claude-in-session"
- },
  "mods.eyeOfTheBeholder.Graphics.TurnToView.description": {
-  "en": "5b8f4846d335",
-  "tr": "aa6345b79210",
+  "en": "96af4ccb0a75",
+  "tr": "eed439d391bc",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.LongitudinalDistance.description": {
@@ -12840,8 +12605,8 @@
   "by": "claude-in-session"
  },
  "travel.nav.gatesShut": {
-  "en": "fd358facc6db",
-  "tr": "0385729c9ab0",
+  "en": "17f9bab0aa7c",
+  "tr": "608cf502e359",
   "by": "claude-in-session"
  },
  "travelView.planning": {

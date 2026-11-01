@@ -95,8 +95,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "  const packed = await packImgTexture(renderer, name);\n  return",
-    "new": "  const packed = null;\n  return"
+    "old": "  const packed = await packImgTexture(renderer, name, { fetchBytes, palette });",
+    "new": "  const packed = null;"
   },
   {
     "name": "OVH-renderer-alpha-flag-dropped-at-upload",

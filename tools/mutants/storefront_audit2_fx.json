@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-C6-the-default-read-once",
     "file": "src/ui/mountPreview.js",
-    "old": "reduced = () => prefersReducedMotion() } = {}) {",
-    "new": "reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches } = {}) {",
+    "old": "reduced = () => prefersReducedMotion(), picture = ownArt } = {}) {",
+    "new": "reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches, picture = ownArt } = {}) {",
     "tests": [
       "test/ui/storefront_audit2_fx_stage.test.js"
     ]

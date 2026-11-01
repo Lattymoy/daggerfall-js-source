@@ -759,7 +759,8 @@ test('AUDIT GALLEON D-wall A TALK\'S PLACE ON HER MAIN DECK: a hand coming over 
 test('AUDIT GALLEON THE BAKES: every hull\'s deck - every rig of hers the one her rig 0 bakes - as the deck lens left it (PIN MOVED, AUDIT GALLEON D-wall: each wall its own height in a cell): the galleon\'s 838 cells (her hatchways out, her entry ports and her bow to her side), her main deck\'s 664 and her castle and flights over it; the Rowboat\'s 13 as it was, the Large Galley\'s 4016; PIN MOVED (SHIPS-2, 2026-10-07): the Carrack\'s 1087 (Mac\'s carrack: her main deck at 7.81 one level, her houses, her masts\' partners and her helm out) and the Large Boat\'s 95 (Mac\'s Tiny Ship: her deck at 0.90 and her helmsman\'s step at 1.55) where the mod\'s were 511 and 18', async () => {
   const pool = await readyPool();
   const counts = Array.from(HULL_NAMES, (_, hull) => pool.deckOf(hull, 0).count);
-  assert.deepEqual(counts, [13, 95, 838, 4016, 1087]);
+  // PIN MOVED (OWN-WORK4, 2026-10-31): the Rowboat and the Large Galley are our own - her 25 and her top deck's 4527
+  assert.deepEqual(counts, [25, 95, 838, 4527, 1087]);
   const g = pool.deckOf(HULL.SmallShip, 0);
   assert.equal(cellsOf(g).filter((c) => Math.abs(c[1] - mainLevel(g)) <= DECK_STEP).length, 664, 'the galleon\'s main deck');
   for (let hull = 0; hull < HULL_NAMES.length; hull++) for (let v = 1; v < HULL_VARIANT_COUNTS[hull]; v++) assert.equal(pool.deckOf(hull, v), pool.deckOf(hull, 0));

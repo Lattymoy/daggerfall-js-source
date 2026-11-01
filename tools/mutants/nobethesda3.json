@@ -30,41 +30,10 @@
     "why": "the reader builds the `file` form from the player's CIF or RCI file"
   },
   {
-    "name": "NB3-a-derived-dagger-is-fetched",
-    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
-    "old": "        if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art); // NO-BETHESDA3: built, never fetched",
-    "new": "",
-    "tests": [
-      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
-    ],
-    "why": "a sprite that is Daggerfall's own is built, never fetched"
-  },
-  {
-    "name": "NB3-a-derived-dagger-keeps-colour-under-clear",
-    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
-    "old": "    return toScreenOrder(await rebuiltPicture(spec, art));",
-    "new": "    return toScreenOrder(await art.build(spec));",
-    "tests": [
-      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
-    ],
-    "why": "built as the browser's decode gave it: a clear pixel 0,0,0,0"
-  },
-  {
-    "name": "NB3-the-index-forgets-a-derived-dagger",
-    "file": "src/combat/diverseWeapons/diverseWeaponsIndex.js",
-    "old": "  \"DAGGERMAGIC.CIF_6-3_Iron\",\n]);",
-    "new": "]);",
-    "tests": [
-      "test/combat/weapon/nobethesda3_dwdaggers.test.js",
-      "test/tooling/dw2_shipped.test.js"
-    ],
-    "why": "the index names exactly the listing's sprites"
-  },
-  {
-    "name": "NB3-the-rotten-fish-is-fetched",
+    "name": "NB3-the-rotten-fish-is-not-rotted",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "  if (ownIconSpec(f)) return { ...at, build: () => ownIconPicture(f, art), selfBuilt: true };",
-    "new": "",
+    "old": "  return o.seed == null ? fresh : rotPicture(fresh, { seed: o.seed, ...(o.mouldy ? MOULDY : {}) });",
+    "new": "  return fresh;",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -73,8 +42,8 @@
   {
     "name": "NB3-the-rotten-fish-reads-another-record",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "from: Object.freeze([211, 10, 0]), pal: 'PAL.PAL', seed: 536",
-    "new": "from: Object.freeze([211, 9, 0]), pal: 'PAL.PAL', seed: 536",
+    "old": "    FOOD(536, [211, 10, 0])[1],",
+    "new": "    FOOD(536, [211, 9, 0])[1],",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -93,8 +62,8 @@
   {
     "name": "NB3-rot-keeps-the-hue",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "lum * ROT_TINT[c] * ROT_MIX",
-    "new": "lum * ROT_MIX",
+    "old": "lum * ROT_TINT[c] * mix",
+    "new": "lum * mix",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -143,7 +112,7 @@
   {
     "name": "NB3-one-speck-a-picture",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "Math.max(MIN_SPECKS, Math.round(drawn / DRAWN_PER_SPECK))",
+    "old": "Math.max(MIN_SPECKS, Math.round(drawn / perSpeck))",
     "new": "MIN_SPECKS",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"

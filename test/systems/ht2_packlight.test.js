@@ -123,8 +123,7 @@ test('MODS-ON, executed: the two switches a lit torch was invisible without are 
   assert.equal(getBool('Enhancements', 'PlayerTorchFromItems'), true, 'and the torch lights the room');
   assert.equal(effectiveSettings().Enhancements.PlayerTorchFromItems, 'True', 'the merged view agrees with the getter');
   // the sources, unedited
-  assert.match(read('vendor/handheld-torches/modsettings.json'), /"Value": false,\s*\n\s*"Name": "Sprite",/,
-    'the shipped bundle still says Sprite = False - the vendored file is never edited to make a departure look like parity');
+  // the release shipped Sprite = False (OWN-WORK4: its file left the tree; ht1's SHIPPED holds the value as a literal)
   assert.equal(SETTINGS_DEFAULTS.Enhancements.PlayerTorchFromItems, 'False',
     "and the generated table still carries DFU's own default");
   // the layer is ONE key wide, and everything else still reads the ini

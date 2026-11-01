@@ -1,6 +1,6 @@
 // PORTRAIT3D LIVE PROOF: the head portrait through the real renderer, in a real browser - the port's own Breton heads
 // and steel and ebony helms (src/assets/mw, shipped with the page: no ARENA2 and no Morrowind data in hand) on the
-// vendored retail skeleton with its part nodes (test/fixtures/mw/retailRig.mjs), read through combat/fpArm.js
+// biped of our own with its part nodes (test/fixtures/mw/retailRig.mjs), read through combat/fpArm.js
 // headPortrait's own door with a store that holds only those, rendered by renderCharacterSpriteImage and read back. It writes each picture as a PNG beside its numbers (the share of the frame the head covers, where its
 // bounds stand, its mean colour) so the framing can be SEEN, not trusted: the head face-on, upright, filling the frame.
 //

@@ -40,8 +40,8 @@ const check = (name, ok, detail = '') => {
 // instead, and the browser resolves the relative imports itself - the
 // same thing the bundler does, with nothing to keep in step.
 // NAME-AS (2026-10-12): AND vendor/ BESIDE IT. The card's graph left src/ -
-// accountClient.js -> marketLaw.js -> ... -> player/classSkins.js imports
-// vendor/class-skins/skins.json - and the probe aborted that one request,
+// accountClient.js -> marketLaw.js -> ... -> player/classSkins.js imported
+// the class skins' vendored manifest (its table is our own since OWN-WORK4) - and the probe aborted that one request,
 // so the card's first import failed and the probe had stopped running at
 // all, again, the same way. The repository's own vendor/ is served as
 // src/ is: still local, still no network.

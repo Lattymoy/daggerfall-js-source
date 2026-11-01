@@ -70,7 +70,7 @@ export const isForagingTemplate = (templateIndex) => templateIndex >= FT.WoodAxe
 export const TOOL_TEMPLATES = Object.freeze([FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.Spade, FT.Basket]);
 export const isForagingTool = (templateIndex) => TOOL_TEMPLATES.includes(templateIndex);
 
-/** The author's seven pictures (vendor/foraging/Textures/<archive>_0-0.png): archive = the texture name's number. */
+/** The seven pictures' archives (`<archive>_0-0`), each our own (foragingArt.js, OWN-WORK4). */
 export const FORAGING_TEXTURE_ARCHIVES = Object.freeze([11600, 11601, 11602, 11603, 11604, 11605, 11606]);
 
 // ---- draws and bands -------------------------------------------------

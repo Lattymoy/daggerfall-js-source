@@ -90,19 +90,19 @@ test('HAZE1 the settings: the mod\'s keys, its own Enabled the port\'s switch (o
   // but Enabled: [name, default, min, max] (a toggle has no range).
   const SHIPPED = [['AllowSubtropical', false], ['Intensity', 1.5, 0, 3], ['FullStrengthDistance', 400.4, 50, 3000], ['RingHeight', 1006, 50, 1500],
     ['NoiseScale', 4.5, 0.25, 6], ['AnimationSpeed', 4, 0, 4]];
-  // the mod's words; PLAIN-TEXT (2026-10-19) said four that spoke in engine terms plainly for a player - their words, exactly
+  // our own words for each (PLAIN-TEXT 2026-10-19, OWN-WORK4 2026-11-01) - ours, exactly
   const WORDS = {
-    'AllowSubtropical': 'Also allow heat haze in subtropical climates during sunny or cloudy daytime weather.',
+    'AllowSubtropical': 'Heat haze also shows in subtropical lands, on clear or cloudy days.',
     'Intensity': 'How strongly the haze bends the view, in pixels.',
-    'FullStrengthDistance': 'Distance from you, in meters, of the ring of haze.',
-    'RingHeight': 'Height of the haze, in meters.',
+    'FullStrengthDistance': 'How far from you the haze shimmers, in meters.',
+    'RingHeight': 'How tall the haze rises, in meters.',
     'NoiseScale': 'How fine the shimmer’s ripples are.',
-    'AnimationSpeed': 'Speed of the rising-air motion.',
+    'AnimationSpeed': 'How fast the shimmer rises.',
   };
   for (const [name, value, min, max] of SHIPPED) {
     const def = MOD_SETTINGS[HEAT_HAZE_VENDOR].keys[`Heat Haze.${name}`];
     assert.equal(def.default, value, `${name}: the mod's default`);
-    assert.equal(def.description, WORDS[name], `${name}: the mod's words, or their plain rewording`);
+    assert.equal(def.description, WORDS[name], `${name}: our own words`);
     if (min !== undefined) assert.deepEqual([def.min, def.max], [min, max], `${name}: the mod's range`);
   }
   const wild = { Enabled: true, 'Heat Haze.AllowSubtropical': true, 'Heat Haze.Intensity': 9, 'Heat Haze.FullStrengthDistance': 1, 'Heat Haze.RingHeight': 99999, 'Heat Haze.NoiseScale': 0, 'Heat Haze.AnimationSpeed': -3 };

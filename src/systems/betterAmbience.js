@@ -3,8 +3,8 @@
 //
 // "Adds camera shaking, better footsteps, and dungeon fog + reverb." Six
 // modules, sixteen sources - every one of them carried INSIDE the shipped
-// bundle as a TextAsset (vendor/better-ambience/Scripts/, byte for byte),
-// under the author's MIT licence (vendor/better-ambience/LICENSE, from the
+// bundle as a TextAsset (the Nexus archive's .dfmod, byte for byte),
+// under the author's MIT licence ("Copyright (c) 2020 Josh Steinhauer", the
 // author's repository, which carries the 0.1.3 sources and the WAV clips):
 //
 //   BetterFootstepsMod + BetterFootstepsComponent(Player)  - the player's stride,
@@ -33,13 +33,13 @@
 // so a player who turns both on is told exactly what a DFU player is told.
 // Every other module is on, as the mod ships it.
 //
-// THE CLIPS. The bundle's 51 clips are Unity's Vorbis imports (FSB5 in the
-// AssetBundle's .resource, undecodable here); the author's repository
-// ships the WAVs they were imported from, and the 29 this mod actually
-// asks for are vendored from it (vendor/better-ambience/Sound/). The
-// water list asks for six and the bundle carries five (there is no
-// sfx_footstep_water_001 anywhere): TryImportAudioClips skips the miss
-// and the list plays five, verbatim.
+// THE CLIPS ARE OURS (OWN-WORK4, 2026-10-31). Each name TryImportAudioClips
+// asks for is a clip our synth makes (audio/synth/clips.js: the boards, the
+// flags, the light armour's clank, the dry grass, the wade and the rain
+// loop) at the mod's name, length and rate. The water list asks for six and
+// the mod carried five (there was never an sfx_footstep_water_001):
+// TryImportAudioClips skips the miss and the list plays five, verbatim - so
+// no clip is made for it here either.
 
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
@@ -57,6 +57,7 @@ import { stringHash, NetRandom as SystemRandom } from '../formats/netRuntime.js'
 import { perlinNoise } from '../world/perlin.js'; // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
 import { setRemoveHealthListener } from '../ui/damageFlash.js'; // the SendMessage("RemoveHealth", amount) edge
 import { playerEntity } from '../characters/playerEntity.js';
+import { betterAmbienceClipInTurn } from '../audio/synth/clips.js'; // OWN-WORK4: the clips our synth makes
 
 export const BETTER_AMBIENCE_VENDOR = 'better-ambience';
 export const BETTER_AMBIENCE_MOD = Object.freeze({
@@ -163,21 +164,11 @@ export function baClipNames() {
   out.push(AMBIENT_RAIN_CLIP);
   return out;
 }
-export const MISSING_CLIPS = Object.freeze(['sfx_footstep_water_001']); // not in the bundle, not in the repository
-export const baClipPath = (name) => `vendor/better-ambience/Sound/${name}.wav`;
-const IN_BROWSER = typeof window !== 'undefined';
-const URLS = IN_BROWSER
-  ? import.meta.glob('../../vendor/better-ambience/Sound/*.wav', { eager: true, query: '?url', import: 'default' })
-  : {};
-export const baClipUrl = (name) => URLS[`../../${baClipPath(name)}`] ?? null;
+export const MISSING_CLIPS = Object.freeze(['sfx_footstep_water_001']); // the mod's list asks for it, and it never was
+// OWN-WORK4: each clip ours, one a task; node has no AudioContext to hold one (registerSamples answers false), so it makes none
+const CAN_PLAY = typeof window !== 'undefined';
+export const makeAmbienceClip = (name) => (CAN_PLAY ? betterAmbienceClipInTurn(name) : null);
 export const baSoundKey = (name) => `ba:${name}`;
-async function defaultFetchClip(name) {
-  const url = baClipUrl(name);
-  if (!url) return null;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return new Uint8Array(await res.arrayBuffer());
-}
 
 /** DisableBuiltInFootsteps (BetterFootstepsMod.cs:92-105), VERBATIM: the
  *  mod nulls Dungeon1 TWICE and Outside1 TWICE, so the classic component
@@ -659,7 +650,7 @@ export function createBetterAmbience({
   audio = defaultAudio,
   settings = readBetterAmbienceSettings,
   random = Math.random,
-  fetchClip = defaultFetchClip,
+  makeClip = makeAmbienceClip,
   weather = heardWeather,
   rainLevel = heardRainGain,
   snowFree = isSnowFreeClimate,
@@ -684,8 +675,9 @@ export function createBetterAmbience({
       baClipNames().map(async (name) => {
         if (present.has(name)) return;
         try {
-          const bytes = await fetchClip(name);
-          if (bytes && (await audio.registerSound(baSoundKey(name), bytes))) present.add(name);
+          const clip = await makeClip(name); // OWN-WORK4: { samples, rate }, our own
+          if (clip?.samples?.length && audio.registerSamples(baSoundKey(name), clip.samples, clip.rate))
+            present.add(name);
         } catch {
           /* TryImportAudioClip answers false */
         }
@@ -729,7 +721,7 @@ export function createBetterAmbience({
     rainWeather = null;
   }
   // DISC11 (Mac: "ITS LOUDER ON THE INSIDE COMPARED TO THE OUTSIDE"): THE MOD'S RAIN IS THE STREET'S RAIN, HEARD
-  // FROM INSIDE. InteriorAmbientSoundSource plays AmbientRaining.wav at the AudioSource's own volume, 1 - whatever
+  // FROM INSIDE. InteriorAmbientSoundSource plays the AmbientRaining clip at the AudioSource's own volume, 1 - whatever
   // falls outside. The street's loop plays DAGGER.SND's rain at the front's level (a light shower 0.15), so a tavern
   // under a drizzle played a full downpour through its walls, in a louder recording. The mod's source now takes the
   // street's level (`rainLevel`, the heard seam), matched to the street's recording by measured RMS (`clipLevel`),

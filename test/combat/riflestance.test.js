@@ -5,7 +5,7 @@
 // What is pinned: the hold's step law (on with the gun in the hands, off for anything else, up to the aim while it
 // shoots, for RIFLE_EASE.hold after and while the fight's signal stands); the gun held by its pistol grip
 // (GUN_GRIP_ATTITUDE through the resolve's own part - the barrel along the hand, not across it as a sword's grip); the
-// two stances solved on the vendored retail biped in the port's plate - the low ready's barrel down and across, the
+// two stances solved on our own biped (OWN-WORK4) in the port's plate - the low ready's barrel down and across, the
 // aim's level down the body's forward with its sights up, both hands on the gun (the right wrist where the grip puts it,
 // the left palm up under the forend) and a share between them; the first person's on the MW-STEEL4 stand-in, the gun in
 // the 60-degree lens in both; the fight's signal (harmMark.js playerHarmedWithin); and the live arm with the shipped gun -

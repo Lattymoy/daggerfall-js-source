@@ -29,8 +29,8 @@ test('NO-BETHESDA2: with no pipeline up, a selfBuilt entry is built and a pipeli
 
 test('NO-BETHESDA2: every registrant that builds through classicArt says so', () => {
   const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-  assert.match(rd('src/systems/survival/itemIcons.js'), /build: \(\) => rebuiltPicture\(spec, art\), selfBuilt: true/);
-  assert.match(rd('src/systems/survival/itemIcons.js'), /build: \(\) => ownIconPicture\(f, art\), selfBuilt: true/);
-  assert.match(rd('src/systems/roleplayRealismItems/rriInstall.js'), /build: \(\) => rriDerivedPicture\(name, art \?\? classicArt\(\)\), selfBuilt: true/);
-  assert.match(rd('src/systems/roleplayRealism/rrVariants.js'), /build: \(\) => built\(fileName\), selfBuilt: true/);
+  // OWN-WORK4: every survival picture is built - rebuilt or ours - so every entry says so once, for both
+  assert.match(rd('src/systems/survival/itemIcons.js'), /fileName: f, standIn, selfBuilt: true \};\n\s*return \{ \.\.\.at, build: ownIconSpec\(f\) \? \(\) => ownIconPicture\(f, art\) : \(\) => rebuiltPicture\(spec, art\) \};/);
+  assert.match(rd('src/systems/roleplayRealismItems/rriInstall.js'), /build: \(\) => rriOwnPicture\(e\.name, art \?\? classicArt\(\)\), selfBuilt: true/, 'OWN-WORK4: every picture ours');
+  assert.match(rd('src/systems/roleplayRealism/rrVariants.js'), /selfBuilt: true,\n\s*build: RR_DERIVED\[fileName\] \? \(\) => built\(fileName\) : async \(\) => rrKeeperPicture\(record\),/, 'OWN-WORK4: and our keepers');
 });

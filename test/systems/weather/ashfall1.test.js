@@ -276,8 +276,9 @@ test('ASHFALL1 the sky: a brown-grey pall low, deep and dark, tinted, its veil h
   assert.equal(FORECAST_WORDS.ashfall, 'Ashfall'); assert.ok(FORECAST_NOTABLE.has('ashfall'));
   // the second audit (lane A): an overcast to the music and the sky mod, as to every flag's reader - never the sunny default
   assert.equal(outdoorPlaylist({ weather: 'ashfall' }), OVERCAST_SONGS); assert.equal(outdoorPlaylist({ weather: 'ashfall', fm: true }), OVERCAST_SONGS_FM);
-  assert.equal(WEATHER_PRESET.ashfall, 'SkyboxOvercast'); assert.equal(FOG_PRESET_FOR_WEATHER.ashfall, 'FogSnowy'); assert.equal(fogPresetKey('ashfall'), 'snowy', 'the sky mod\'s fog the one fogForWeather stands in');
-  assert.equal(WEATHER_PRESET.sandstorm, 'SkyboxFog'); assert.equal(fogPresetKey('sandstorm'), 'heavy', 'and the sandstorm\'s, which had fallen to the sunny sky too');
+  // PIN MOVED (OWN-WORK4): Dynamic Skies is our own sky now, and the two words wear rows of their own - never the sunny default
+  assert.equal(WEATHER_PRESET.ashfall, 'ashfall'); assert.equal(FOG_PRESET_FOR_WEATHER.ashfall, 'ashfall'); assert.equal(fogPresetKey('ashfall'), 'ashfall', 'the sky\'s own ash row');
+  assert.equal(WEATHER_PRESET.sandstorm, 'sandstorm'); assert.equal(fogPresetKey('sandstorm'), 'sandstorm', 'and the sandstorm\'s');
 });
 
 test('ASHFALL1 the fall: grey ash and the embers among it - two instance sets on one program, the ash blended, the embers ADDED; counts the front\'s share; the clock whole cycles and whole boxes over its period; the travel wrapped at the gust\'s span (mutants: the embers blended; the counts; the clock)', () => {

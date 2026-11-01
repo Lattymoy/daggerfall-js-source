@@ -86,7 +86,7 @@ test('AUDIT-DW F1: the list drawer decodes THE RECORD it draws before the upload
   assert.match(rd('src/ui/item/itemScroller.js'), /const ask = icons\?\.preloadRecord \?\? \(\(archive, record, dye\) => preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\)\);/);
   assert.match(rd('src/ui/textureCanvas.js'), /\? preloadTextureRecord\(archive, record, 0, 'Albedo', dye\)\.catch\(\(\) => null\)/, 'the DOM door');
   assert.match(rd('src/ui/paperDoll.js'), /await preloadTextureRecord\(archive, record, 0, 'Albedo', dye\);[^\n]*\n\s+const swap = decodedTextureTopDown/, 'the doll');
-  assert.match(rd('src/combat/diverseWeapons/diverseWeaponsIcons.js'), /gate: moddedWeaponHUDAnimsEnabled, lazy: true/, 'the mod\'s icons are lazy');
+  assert.match(rd('src/combat/diverseWeapons/diverseWeaponsIcons.js'), /gate: moddedWeaponHUDAnimsEnabled,\s+lazy: true/, 'the mod\'s icons are lazy');   // PIN MOVED (OWN-WORK4): built, one key a line
   // PIN MOVED (AUDIT VE R1): the preload decodes each key from the one entry that answers it now - a lazy one is still skipped
   // (AUDIT DEX B5: and a readOnly one the GPU holds alone)
   assert.match(rd('src/systems/textureReplacement.js'), /if \(entry && !entry\.lazy && !decodedFrom\(key, entry\) && !releasedFrom\(key, entry\)\) todo\.push\(\[key, entry\]\);/, 'and the archive preload skips them');
@@ -158,11 +158,11 @@ test('AUDIT-DW F4 (named, not changed): DFU keeps the first template\'s custom f
   assert.match(rd('bible/05-Combat/Diverse-Weapons.md'), /## AUDIT-DW/, 'and recorded');
 });
 
-test('AUDIT-DW: checked and standing - the shipped set, the index, the door order, the dye law, the install site; the suites and campaign the audit leaves behind', () => {
-  // the attached bundle still answers first, the shipped set second, the miss third
+test('AUDIT-DW: checked and standing - the set, the index, the door order, the dye law, the install site; the suites and campaign the audit leaves behind', () => {
+  // the attached bundle still answers first, our set second (OWN-WORK4: built, never fetched), the miss third
   const door = rd('src/combat/diverseWeapons/diverseWeaponsAssets.js');
-  assert.match(door, /const attached = _names\.length \? await attachedImage\(name, decode\) : null;/);
-  assert.match(door, /if \(!hasDiverseWeaponsSprite\(name\) \|\| typeof fetchFn !== 'function'\) return null;/);
+  assert.match(door, /if \(_names\.length\) \{\n\s+if \(!_images\.has\(name\)\) _images\.set\(name, attachedImage\(name, decode\)\);[^\n]*\n\s+const attached = await _images\.get\(name\);\n\s+if \(attached\) return attached;/);
+  assert.match(door, /if \(!enabled \|\| !hasDiverseWeaponsSprite\(name\)\) return null;/);
   // the icon install sits at the scene boot, after the survival pair and before the archives load
   // PIN MOVED (AUDIT VE R2): the store's one registration follows the installs - the seam's own copy of it is gone
   assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+installEnemyExpansion\(\);[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+const textures = registerTextureStore\(\)/);   // PIN MOVED (DEX1): Daggerfall Enemy Expansion's Start after the Inits, before the archives load too

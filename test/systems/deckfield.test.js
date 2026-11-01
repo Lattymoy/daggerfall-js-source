@@ -34,8 +34,8 @@ const WORLD = src('src/scenes/world.js');
 async function strideRig() {
   const store = Object.fromEntries(Object.entries(MOD_SETTINGS[IMMERSIVE_FOOTSTEPS_VENDOR].keys).map(([k, d]) => [k, d.default]));
   const c = createImmersiveFootsteps({
-    audio: { registerSound: async () => true, playOneShot() {} }, settings: () => readFootstepSettings(() => store), random: () => 0,
-    fetchClip: async () => new Uint8Array([1]),
+    audio: { registerSamples: () => true, playOneShot() {} }, settings: () => readFootstepSettings(() => store), random: () => 0,
+    makeClip: async () => ({ samples: new Float32Array(1), rate: 22050 }),
   });
   const entity = { items: [], activeEffects: [] };
   const slots = equipTableOf(entity);

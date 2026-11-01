@@ -4,17 +4,17 @@
 // picture, a sprite's and the 3D horse's, is byte for byte the one COATS1 dyed before.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { PNG } from 'pngjs';
 import { recolorHorse, recolorHorseTexels, pictureHide, horseLookCode, texelPlanes, latticeNearest } from '../../../src/systems/horse/horseCoats.js';
 import { toColor32 } from '../../../src/formats/color32Order.js';
+import { horsePictures } from '../../../tools/lib/horsePictures.mjs';
 
-/** One of Horse Cart and Cargo's own pictures, as the pool keeps it (world rows, bottom first). */
-const picture = (file) => {
-  const p = PNG.sync.read(readFileSync(new URL(`../../../vendor/horse-cart-and-cargo/Textures/${file}`, import.meta.url)));
-  return toColor32({ width: p.width, height: p.height, data: new Uint8Array(p.data.buffer, p.data.byteOffset, p.data.length) });
-};
+// OWN-WORK4 (2026-10-31): the cart's horse is ours (systems/horse/horseArt.js), built from the player's ARENA2 - so the
+// pins that dye it need ARENA2_PATH, and the digest is our pictures' under today's dye.
+const NO_ARENA2 = !process.env.ARENA2_PATH && 'ARENA2_PATH not set';
+const HORSE = horsePictures();
+/** One of the cart's horse's pictures, as the pool keeps it (world rows, bottom first). */
+const picture = async (file) => toColor32(await HORSE.picture(file));
 const look = (coat, pattern, legs, seed) => horseLookCode({ coat, pattern, legs, seed });
 const bytes = (img) => Buffer.from(img.colors.buffer, img.colors.byteOffset, img.colors.byteLength);
 const FILES = ['horse1.png', 'horse3.png', 'Walk.2-5.png', 'Walk.4-1.png'];
@@ -22,14 +22,15 @@ const FILES = ['horse1.png', 'horse3.png', 'Walk.2-5.png', 'Walk.4-1.png'];
  *  no legs) - in that order, so one picture is asked with and without its tack in turn. */
 const WAYS = [[2, 1, undefined], [5, 2, { bottomFirst: false }], [3, 0, { tack: false, legs: false }]];
 
-test('PERF-HIDE: every sprite dyed byte for byte as COATS1 dyed it - each pattern, each way, the hide kept between them', () => {
+test('PERF-HIDE: every sprite dyed byte for byte as COATS1 dyed it - each pattern, each way, the hide kept between them', { skip: NO_ARENA2 }, async () => {
   const h = createHash('sha256');
   for (const f of FILES) {
-    const p = picture(f);
+    const p = await picture(f);
     for (let pattern = 0; pattern < 5; pattern++) for (const [coat, legs, opts] of WAYS) h.update(bytes(recolorHorse(p, look(coat, pattern, legs, 41 + pattern), opts)));
   }
-  // the digest of the same 60 pictures under the dye before PERF-HIDE (origin/main ee8cee565)
-  assert.equal(h.digest('hex'), '097b3ce7cf3213b5f16a2ead36d9438a0a0e22278025b03c71a88e3c167c6d42');
+  // OWN-WORK4: the digest of our 60 pictures under the dye (the retired mod's pictures read 097b3ce7 before PERF-HIDE and after;
+  // ours with the saddle leather no coat takes)
+  assert.equal(h.digest('hex'), 'e62ca72185f0b9421932452c81fc217d4cdc0416c30b7c95e6f76f511ebf85e2');
 });
 
 test('PERF-HIDE: the 3D horse dyed byte for byte as COATS3D dyed it - the same helpers, answering into scratch', () => {
@@ -46,8 +47,8 @@ test('PERF-HIDE: the 3D horse dyed byte for byte as COATS3D dyed it - the same h
   assert.equal(h.digest('hex'), 'accc3208cb1304ab887567c157e3983318280dbcfc6dda105c536b2fd2b7b931');
 });
 
-test('PERF-HIDE: a picture\'s hide is found once and kept - one a tack, never another picture\'s', () => {
-  const p = picture('horse3.png');
+test('PERF-HIDE: a picture\'s hide is found once and kept - one a tack, never another picture\'s', { skip: NO_ARENA2 }, async () => {
+  const p = await picture('horse3.png');
   const a = pictureHide(p);
   assert.ok(a.at.length > 1000, `the hide is the horse's body: ${a.at.length} pixels`);
   assert.equal(pictureHide(p), a, 'asked again: the kept one');
@@ -55,7 +56,7 @@ test('PERF-HIDE: a picture\'s hide is found once and kept - one a tack, never an
   assert.equal(pictureHide(p), a, 'a dye finds no new one');
   const bare = pictureHide(p, { tack: false });
   assert.notEqual(bare, a, 'without its tack: its own');
-  assert.ok(bare.at.length > a.at.length, 'the saddle\'s leather is hide where no tack is spared');
+  assert.ok(bare.at.length > a.at.length, 'the hooves\' rims are hide where no tack is spared');
   assert.equal(pictureHide(p, { tack: false }), bare);
   // the same pixels in a new array are another picture to the keep - found again, the same hide
   const copy = { ...p, colors: p.colors.slice() };
@@ -64,13 +65,14 @@ test('PERF-HIDE: a picture\'s hide is found once and kept - one a tack, never an
   assert.deepEqual([...c.at], [...a.at]);
   assert.deepEqual([c.x0, c.x1, c.r0, c.r1], [a.x0, a.x1, a.r0, a.r1]);
   // and a different picture never wears this one's
-  const w = picture('Walk.0-3.png');
+  const w = await picture('Walk.0-3.png');
   assert.notDeepEqual([...pictureHide(w).at], [...a.at]);
 });
 
-test('PERF-HIDE: a dye is the same cold or warm - whatever picture, pattern or seed came between', () => {
-  const cold = (file, l, opts) => bytes(recolorHorse(picture(file), l, opts));   // a fresh picture: nothing kept
-  const p = picture('horse1.png'), q = picture('Walk.1-2.png');
+test('PERF-HIDE: a dye is the same cold or warm - whatever picture, pattern or seed came between', { skip: NO_ARENA2 }, async () => {
+  const pics = Object.fromEntries(await Promise.all(['horse1.png', 'Walk.1-2.png', 'Walk.3-4.png'].map(async (f) => [f, await picture(f)])));
+  const cold = (file, l, opts) => bytes(recolorHorse({ ...pics[file], colors: pics[file].colors.slice() }, l, opts));   // a fresh picture: nothing kept
+  const p = pics['horse1.png'], q = pics['Walk.1-2.png'];
   const dap = look(3, 3, 0, 5), app = look(4, 2, 1, 6), app2 = look(4, 2, 1, 9);
   const first = bytes(recolorHorse(p, dap));
   recolorHorse(q, app); recolorHorse(q, app2); recolorHorse(p, app, { tack: false });
@@ -79,7 +81,7 @@ test('PERF-HIDE: a dye is the same cold or warm - whatever picture, pattern or s
   assert.deepEqual(bytes(recolorHorse(q, app)), cold('Walk.1-2.png', app));
   assert.deepEqual(bytes(recolorHorse(p, app, { tack: false })), cold('horse1.png', app, { tack: false }));
   // the lattice's cells are kept for the last one asked: a pattern's cells never answer another's, nor another seed's
-  const w = picture('Walk.3-4.png');
+  const w = pics['Walk.3-4.png'];
   for (let seed = 1; seed <= 12; seed++) {
     for (const [before, after] of [[look(2, 2, 0, seed), look(2, 3, 0, seed)], [look(2, 3, 0, seed), look(2, 2, 0, seed)], [look(2, 2, 0, seed), look(2, 2, 0, seed + 1)], [look(2, 3, 0, seed), look(2, 3, 0, seed + 1)]]) {
       recolorHorse(w, before);

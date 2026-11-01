@@ -1,20 +1,22 @@
 // SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be
 // on by default and integrate into our enhanced environments seamlessly") - SNOWFALL 1.0.5 (demifiend000), ported off
-// its assembly (vendor/snowfall/). THE MODEL (systems/snowfall.js): SnowpackState, SnowDepthRules.Resolve,
-// SnowCoverageData over the mod's own three masks (public/art/snowfall/), SnowContactRamp, PersistentTrackField and its
-// save, the masks' rasterizers, the statics' encodings, BasicRoadsClassifier and BasicRoadsTerrain, and the field's
-// eviction - pinned against a C# reference that runs the decompiled method bodies themselves (the session's harness:
-// the mod's own sources on .NET 8, its float arithmetic and its DeflateStream): nine trace hashes, float bits and all,
-// one LCG run through them in order, so the sections below run in the reference's order and share its generator.
-// bible/03-World/Snowfall.md is the record.
+// its assembly. THE MODEL (systems/snowfall.js): SnowpackState, SnowDepthRules.Resolve, SnowCoverageData over three
+// surface masks, SnowContactRamp, PersistentTrackField and its save, the masks' rasterizers, the statics' encodings,
+// BasicRoadsClassifier and BasicRoadsTerrain, and the field's eviction - pinned against a C# reference that runs the
+// decompiled method bodies themselves (the session's harness: the mod's own sources on .NET 8, its float arithmetic and
+// its DeflateStream): nine trace hashes, float bits and all, one LCG run through them in order, so the sections below
+// run in the reference's order and share its generator. bible/03-World/Snowfall.md is the record.
+// OWN-WORK4 (2026-10-31): the mod's own masks are retired; the masks are ours (test/snowMasks.mjs: our snow law over a
+// made-up winter set). The two sections that read a mask - the coverage and Basic Roads' berm - pin OUR values now, the
+// port's law over our masks; the reference ran the mod's. The other seven are still the reference's own.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import zlib from 'node:zlib';
 import * as M from '../../src/systems/snowfall.js';
 import { deflateRaw, inflateRaw } from '../../src/formats/rawDeflate.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const f32 = Math.fround;
 let lcg = 12345;
@@ -26,7 +28,6 @@ const F = (f) => { dv.setFloat32(0, f); return (dv.getUint32(0) >>> 0).toString(
 const D = (d) => { dv.setFloat64(0, d); return BigInt.asUintN(64, dv.getBigInt64(0)).toString(16).padStart(16, '0'); };
 const H = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
 const Px = (p) => { let s = ''; for (let k = 0; k < p.length; k += 4) s += `${p[k]},${p[k + 1]},${p[k + 2]},${p[k + 3]};`; return H(s); };
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const coverage = () => new M.SnowCoverage(MASKS);
 
 function settings(v) {
@@ -79,7 +80,7 @@ test('SNOWFALL1 SnowDepthRules.Resolve: 6000 contexts (settlement, cap, path, be
   assert.equal(H(sb), 'e1e83e50daf2758a0a48a09305a0ecc5b829fc46f265d6a4821302050e80e5b8');
 });
 
-test('SNOWFALL1 SnowCoverageData over the mod\'s own masks: every tile\'s full-cover flag on five archives, and 20000 samples - the coverage (none off the masks) and the road distance field - float bits (mutants: the turn\'s rotation; the flip; the bilinear\'s weights; the distance records)', () => {
+test('SNOWFALL1 SnowCoverageData over our masks (OWN-WORK4): every tile\'s full-cover flag on five archives, and 20000 samples - the coverage (none off the masks) and the road distance field - float bits (mutants: the turn\'s rotation; the flip; the bilinear\'s weights; the distance records)', () => {
   const cov = coverage();
   let sb = '';
   const archives = [103, 303, 403, 102, 3];
@@ -92,7 +93,7 @@ test('SNOWFALL1 SnowCoverageData over the mod\'s own masks: every tile\'s full-c
     const c = cov.sample(a, tile, u, v);
     sb += `${c === null ? 'none' : F(c)} ${F(cov.roadDistance(a, tile, u, v))}\n`;
   }
-  assert.equal(H(sb), 'b47895636ff658f184991921e64b81443235519d8bf7f990048b06d82df85908');
+  assert.equal(H(sb), 'b7db3246be8dc3c8696e05871e6f4d395e35ade73008c229a62566f804a741ce');   // PIN MOVED (OWN-WORK4): over our masks
   assert.deepEqual(M.SNOW_MASK_ARCHIVES, [103, 303, 403]);
   for (const m of MASKS) assert.equal(m.length, M.SNOW_MASK_BYTES, 'a mask is 56 records of 64 x 64 bytes');
 });
@@ -238,7 +239,7 @@ test('SNOWFALL1 Basic Roads: 20000 path-edge and outside distances, 24 painted p
     const rx = R(128), ry = R(128), rw = R(30), rh = R(30);
     sb += `${M.predictRoadTile(x, y, flags, corners, ground, road, { xMin: rx, yMin: ry, xMax: rx + rw, yMax: ry + rh })}${i % 40 === 39 ? '\n' : ' '}`;
   }
-  assert.equal(H(sb), 'e4c9678b8e09594697e9832e206c68a3f0037db9e961db89bcfacab98d08c20c');
+  assert.equal(H(sb), '2541ef6888a3c301e71fb59471d5dd066627e9eab6b50162da504cd397f01bc1');   // PIN MOVED (OWN-WORK4): the berm over our masks
 });
 
 test('SNOWFALL1 the field\'s ceiling: fourteen 1.5 km strides past the 65,536 cells, refills and save round trips between - the counts, the evictions (the oldest written first), a mask and the save\'s order (mutants: the eviction\'s order; the ceiling)', () => {

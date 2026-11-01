@@ -249,8 +249,8 @@
   {
     "name": "SLP-stain-one",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "      for (let r = 0; r < n; r++) {",
-    "new": "      for (let r = 0; r < Math.min(n, 1); r++) {",
+    "old": "      for (const r of OWN_WOOD_RECORDS) {",
+    "new": "      for (const r of OWN_WOOD_RECORDS.slice(0, 1)) {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

@@ -20,20 +20,29 @@
   {
     "name": "NB2-the-torch-probe-admits-no-spec",
     "file": "src/systems/handheldTorches.js",
-    "old": "export const inTorchSet = (table, file) =>\n  derivedTorchSpec(file.replace(/\\.png$/, '')) != null || inVendoredSet(table, file);",
-    "new": "export const inTorchSet = (table, file) => inVendoredSet(table, file);",
+    "old": "  return derivedTorchSpec(name) != null || Object.hasOwn(TORCH_ART, name) || Object.hasOwn(TORCH_OVER, name);",
+    "new": "  return Object.hasOwn(TORCH_ART, name) || Object.hasOwn(TORCH_OVER, name);",
     "tests": [
       "test/systems/nobethesda2_torchesicons.test.js",
       "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
-    "name": "NB2-a-derived-cc-picture-is-fetched",
+    "name": "NB2-a-derived-cc-picture-is-taken-for-ours",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "...(spec ? { build: () => rebuiltPicture(spec, art), selfBuilt: true } : { load: () => load(f) })",
-    "new": "load: () => load(f)",
+    "old": "  return { ...at, build: ownIconSpec(f) ? () => ownIconPicture(f, art) : () => rebuiltPicture(spec, art) };",
+    "new": "  return { ...at, build: () => ownIconPicture(f, art) };",
     "tests": [
       "test/systems/nobethesda2_torchesicons.test.js"
+    ]
+  },
+  {
+    "name": "NB2-the-doused-candle-keeps-its-flame",
+    "file": "src/systems/handheldTorches.js",
+    "old": "  if (Object.hasOwn(TORCH_OVER, name)) return dousedCandle(await rebuiltPicture(TORCH_OVER[name], art));",
+    "new": "  if (Object.hasOwn(TORCH_OVER, name)) return rebuiltPicture(TORCH_OVER[name], art);",
+    "tests": [
+      "test/systems/ownwork4_pictures.test.js"
     ]
   }
 ]

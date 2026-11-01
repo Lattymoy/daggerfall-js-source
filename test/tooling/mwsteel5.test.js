@@ -135,7 +135,9 @@ test('MW-STEEL5: the evidence, re-run (tools/helmLiftProbe.mjs) - the screenshot
     assert.ok(r.raise != null && r.raise > 2.5 && r.raise < 5.5, `eye ${r.eyeZ}: the screenshot's scalp at a raise of ${r.raise}`);
     assert.ok(r.ratios.every((x, i) => i === 0 || x >= r.ratios[i - 1]), `eye ${r.eyeZ}: the higher the head, the more scalp`);
   }
-  assert.ok(lo <= HELM_LIFT && HELM_LIFT <= hi, `HELM_LIFT ${HELM_LIFT} within the probe's ${lo.toFixed(2)} to ${hi.toFixed(2)}`);
+  // OWN-WORK4: the probe stands on our biped, whose head is the bind's - the span 2.9 to 3.8 there (3.2 to 4.3 on retail's
+  // idle, which HELM_LIFT was read on): the lift within half a unit of it
+  assert.ok(lo - 0.5 <= HELM_LIFT && HELM_LIFT <= hi + 0.5, `HELM_LIFT ${HELM_LIFT} within half a unit of the probe's ${lo.toFixed(2)} to ${hi.toFixed(2)}`);
   // the head where the scene put it shows no scalp in MW-STEEL1's helm - and the game's, raised across the whole span
   // and a unit past it, none in the shipped open helm, the one helm with a head under it since MW-FIT1
   const set = await wornSet();

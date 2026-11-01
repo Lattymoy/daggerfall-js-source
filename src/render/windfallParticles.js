@@ -53,7 +53,7 @@ uniform vec3 uLight;
 out vec4 outColor;
 void main() {
   vec4 t = texture(uTex, vUV);
-  if (t.a < 0.5) discard;   // _Cutoff 0.5 x _TintColor.a 1
+  if (t.a < 0.5) discard;   // cut out at a half, as the mod cuts its particles
   outColor = vec4(t.rgb * uLight, 1.0);
 }`;
 // SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
@@ -330,8 +330,8 @@ export class WindfallParticles {
 }
 
 // ---- the pictures ----------------------------------------------------------------------------------------------------
-/** The mod's three pictures by key, as their files are named (WindMod's asset names; vendor/windfall/Textures/ - served
- *  by scenes/windfallHost.js, which carries the bundler's glob this checked module cannot). */
+/** The mod's three pictures by key, under WindMod's own asset names - our own since OWN-WORK4, painted by
+ *  systems/windfall/windfallPictures.js, which scenes/windfallHost.js loads on the first outdoor frame. */
 export const WINDFALL_PICTURES = Object.freeze({
   springSummer: 'spring_summer_leaves',
   fall: 'fall_leaves',

@@ -8,6 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { RETAIL_SKELETON_BYTES } from '../../fixtures/mw/retailRig.mjs';
 import {
   SEAT_TOP_STEP, SEAT_TOP_DEFAULT, SEAT_HIP_DROP, SEATED_EYE_HEIGHT, SEAT_OUT, SEAT_HAND_ON, SEAT_FOOT_AHEAD, SEAT_FOOT_SIDE,
   SEAT_ANKLE, SEAT_HAND_SIDE, SEAT_HAND_OVER, seatTopByte, seatTopOf, seatRigInput, seatRequestFor,
@@ -27,9 +28,8 @@ const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const pt = (p) => p.map(r3);
 const U = MW_UNITS_PER_METER;
-const RETAIL = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';
 const POSE = { x: 1, y: 2, z: 3, yaw: 0.5, pitch: 0, mv: 0 };
-const biped = (() => { let sk = null; return () => (sk ??= buildSkeleton(parseNif(new Uint8Array(readFileSync(new URL(`../../../${RETAIL}`, import.meta.url)))))); })();
+const biped = (() => { let sk = null; return () => (sk ??= buildSkeleton(parseNif(RETAIL_SKELETON_BYTES))); })();   // OWN-WORK4: our own biped
 /** The seat solved on retail's biped at a race: each joint as the WORLD has it (drawThird's own model: right and forward
  *  by the build, up by the height, about the seat's feet and facing). */
 function solveSeat(seat, race = { weight: 1, height: 1 }) {

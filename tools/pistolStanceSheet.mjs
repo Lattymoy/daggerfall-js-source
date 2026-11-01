@@ -1,4 +1,4 @@
-// PISTOL-STANCE SHEETS (bible/05-Combat/Dwarven-Pistolet.md PISTOL-STANCE): the vendored retail biped
+// PISTOL-STANCE SHEETS (bible/05-Combat/Dwarven-Pistolet.md PISTOL-STANCE): our own biped
 // (test/fixtures/mw/retailRig.mjs - no Morrowind data in hand) in the port's steel plate, holding the shipped Dwarven Pistolet
 // (and a pair's second), posed through poseAssembly's own `hold` slot by the stance the arm uses (combat/gun/gunHold.js),
 // rasterised flat-shaded with a depth buffer and written as PNG pictures - so the stance can be SEEN, as the owner picked

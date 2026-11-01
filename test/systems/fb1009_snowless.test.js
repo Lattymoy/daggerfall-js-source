@@ -4,7 +4,6 @@
 // snow on the green ground.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { setDfmodEnabled, DFMOD_SHIPPED_PREF, DFMOD_OFF_PREF, _resetDfmodForTests, winterGroundSnowless } from '../../src/systems/dfmodTextures.js';
 import { installVanillaEnhancedPack } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';
 import { clearTextureReplacements } from '../../src/systems/textureReplacement.js';
@@ -15,11 +14,11 @@ import { groundWearsSnow, groundIsSnowy, getTerrainGroundArchive, SEASON } from 
 import { resetWeatherSim, setSnowGroundLaw, overGround, mapGround, WEATHER_ENUM } from '../../src/systems/weather/weatherSim.js';
 import { CLIMATES, getWorldClimateSettings } from '../../src/formats/mapsFile.js';
 import { createSnowfallHost } from '../../src/scenes/snowfallHost.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
 const SNOWLESS = 'dfmod/vanilla enhanced - snowless swamps and jungles.dfmod';
 const WINTER = 0;
 const SIZE = 819.2;
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SWAMPS = [CLIMATES.Ocean, CLIMATES.Rainforest, CLIMATES.Swamp];
 
 function fresh() {

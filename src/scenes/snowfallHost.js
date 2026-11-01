@@ -34,7 +34,9 @@ import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';
 import { weatherFlags } from '../world/weather.js'; // WeatherManager.IsSnowing, from its one home
-import { APP_ROOT } from '../systems/appRoot.js';
+import { classicArt } from '../systems/classicArt.js'; // OWN-WORK4: the player's own winter records, our masks' ground
+import { ownSnowMasks } from '../systems/ownTextures/ownTexturePacks.js';
+import { snowAlbedo } from '../systems/ownTextures/ownTextureRules.js';
 import { winterGroundSnowless, dfmodGeneration } from '../systems/dfmodTextures.js'; // SNOWLESS1
 
 /** DynamicSnowMod's console command (ConsoleCommandsDatabase.RegisterCommand). */
@@ -58,30 +60,12 @@ export const newSnowfallSaveData = () => ({
   PhaseWasSnowing: false,
 });
 
-const artUrl = (name) =>
-  new URL(`art/snowfall/${name}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
-/** The mod's three surface masks (snow_surface_masks_<archive>.bytes, 229,376 bytes each), served under art/snowfall/. */
-async function defaultMasks() {
-  return Promise.all(
-    SNOW_MASK_ARCHIVES.map(async (a) => {
-      const r = await fetch(artUrl(`snow_surface_masks_${a}.bytes`));
-      if (!r.ok) throw new Error(`snow_surface_masks_${a}.bytes: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    }),
-  );
-}
-/** The mod's albedo (snow_albedo.png), decoded bottom row first - a Unity texture's v = 0 is its picture's last row,
- *  and WebGL ignores UNPACK_FLIP_Y_WEBGL for an ImageBitmap, so the flip is the decode's (its bytes as authored). AUDIT
- *  ENVIRONS G3: it was drawn mirrored north to south. */
-async function defaultAlbedo() {
-  const r = await fetch(artUrl('snow_albedo.png'));
-  if (!r.ok) throw new Error(`snow_albedo.png: ${r.status}`);
-  return createImageBitmap(await r.blob(), {
-    imageOrientation: 'flipY',
-    premultiplyAlpha: 'none',
-    colorSpaceConversion: 'none',
-  });
-}
+/** OWN-WORK4 (2026-10-31): the three surface masks are ours - laid by our snow law over the player's own winter records
+ *  (systems/ownTextures/ownTexturePacks.js ownSnowMasks), 229,376 bytes each; Snowfall's own masks are retired. */
+const defaultMasks = () =>
+  ownSnowMasks(SNOW_MASK_ARCHIVES, (archive, record) => classicArt().picture(archive, record, 0));
+/** OWN-WORK4: our snow's albedo (ownTextureRules.js snowAlbedo), 64 x 64 and made here - no file. */
+const defaultAlbedo = async () => snowAlbedo(64);
 
 /**
  * @typedef {object} SnowGround - what a host stands the snow on
@@ -112,8 +96,8 @@ let standing = null;
 
 /**
  * The runtime. `gl` and `renderer` the host's (none: nothing drawn), `enhanced` the host's lane (the mod is the
- * enhanced outdoors' - off it nothing stands), `ground` the host's SnowGround, `loadMasks` / `loadAlbedo` the mod's
- * files (a test's stand-ins).
+ * enhanced outdoors' - off it nothing stands), `ground` the host's SnowGround, `loadMasks` / `loadAlbedo` the masks
+ * and the albedo, ours (a test's stand-ins).
  */
 export function createSnowfallHost({
   gl = null,

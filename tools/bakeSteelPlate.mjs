@@ -58,9 +58,9 @@
 //
 //   THE BIND IS RETAIL'S OWN. Mac's scene stands its Breton in a T-pose, and a T-pose is exactly what Morrowind's
 //   skins are bound in: the skeleton file's "Tri Shadow" binds all 32 Bip01 bones there, the arms level (its rest is
-//   the idle's first frame, the arms hanging). The vendored retail hierarchy carries it (RETAIL_SKELETON, Greatness7's
-//   Weapon Sheathing skeleton - the retail nodes and their Tri Shadow verbatim), and retailBind reads each bone's bind
-//   off its inverse bind.
+//   the idle's first frame, the arms hanging). retailBind reads each bone's bind off its inverse bind. OWN-WORK4: the
+//   skeleton the bake reads is our own biped (RETAIL_SKELETON, tools/ownBiped.mjs), whose Tri Shadow carries the bind
+//   the plate first shipped skinned in.
 //
 //   THE SCENE STANDS ON IT, MEASURED. The Tri Shadow's frame is its own (the pelvis 22 units under its origin); the
 //   scene's is Blender's (the soles on z = 0). Their axes agree - both upright, both facing +Y - and the scene is the
@@ -110,6 +110,7 @@ import { bakeMesh } from './fbxMesh.mjs';
 import { stripFbx, meshModelNames } from './fbxStrip.mjs';
 import { mipChain, writeDds } from './meshTexture.mjs';
 import { skinnedMeshesToNif } from './nifWrite.mjs';
+import { bipedSkeletonBytes } from './ownBiped.mjs';
 import { jointWeights } from './skinWeights.mjs';
 import { previewSheet } from './meshSheets.mjs';
 import { readPng, writePng } from './pngIO.mjs';
@@ -163,9 +164,9 @@ export const SCENE_BODY = Object.freeze({
   }),
 });
 
-/** MW-STEEL4: the retail skeleton whose bind the plate is skinned in - the retail hierarchy and its "Tri Shadow"
- *  verbatim, vendored with Greatness7's Weapon Sheathing (vendor/weapon-sheathing/README.md). */
-export const RETAIL_SKELETON = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';
+/** MW-STEEL4: the skeleton whose bind the plate is skinned in, as NIF bytes. OWN-WORK4: our own biped
+ *  (tools/ownBiped.mjs), its Tri Shadow bound in the bind our armour ships in. */
+export const RETAIL_SKELETON = bipedSkeletonBytes();
 
 /**
  * MW-STEEL4: WHERE MAC'S SCENE STANDS AGAINST THE BIND - the scene is the Tri Shadow's frame moved by this much (units;
@@ -621,7 +622,7 @@ if (isMain(import.meta.url)) {
       set: imported ? imported.set : readFileSync(SOURCE.set),
       openHelm: openHelm ?? readFileSync(SOURCE.openHelm),
       pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
-      skeleton: readFileSync(RETAIL_SKELETON),
+      skeleton: RETAIL_SKELETON,
     },
     { sheets: wantSheets },
   );

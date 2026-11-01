@@ -84,8 +84,7 @@ async function cartHorse() {
   const { canvas } = recordingGl();
   const renderer = new Renderer(canvas);
   const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4) });
-  const fetchFn = async () => ({ ok: true, arrayBuffer: async () => new Uint8Array(8).buffer });
-  const pool = createHorseCartPool({ renderer, meshes: null, collider: () => null, now: () => 0, fetchFn, decode });
+  const pool = createHorseCartPool({ renderer, meshes: null, collider: () => null, now: () => 0, horsePicture: decode });
   const horse = { isInteractive: true, position: [10, 0, 10], forward: [0, 0, 1], walk: { animationFrame: 5, walking: false } };
   pool.attach({ view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse, teamFollowing: false }), lateUpdate() {}, rebase() {} });
   pool.presentation.horseArt.ensureStationary(); pool.presentation.horseArt.ensureWalk();

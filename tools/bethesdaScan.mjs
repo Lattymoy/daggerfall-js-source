@@ -35,8 +35,8 @@ export const NEAR_DIFF = 48;
 
 /** Port-Doctrine's approved exceptions to A RENDER OF GAME DATA IS GAME DATA, by directory. */
 export const EXCEPTION_DIRS = Object.freeze([
-  'public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/',
-  'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/', 'vendor/class-skins/',
+  // OWN-WORK4: the first two exceptions' packs are retired, their looks built from the player's own records
+  'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/',
 ]);
 export const inException = (path) => EXCEPTION_DIRS.some((d) => path.startsWith(d));
 

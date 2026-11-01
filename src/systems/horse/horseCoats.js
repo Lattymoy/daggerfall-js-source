@@ -4,9 +4,9 @@
 // then "What about also different patterns? The goal is for every person's horse to be unique" - asked, every horse BORN
 // unique and re-dyable on the Stable card, with pinto, appaloosa, dapples, socks and roan): THE HORSE'S LOOK - THE LAW.
 //
-// Every horse the port draws is one bay horse: Daggerfall's riding sprite (MRED00I0.CFA, the player's own data), Horse
-// Cart and Cargo's standing and walking views (vendor/horse-cart-and-cargo) and Eye Of The Beholder's five riders
-// (vendor/eye-of-the-beholder, archives 112382-112386, horse and rider in one picture). A look is not new art: it is the
+// Every horse the port draws is one bay horse: Daggerfall's riding sprite (MRED00I0.CFA, the player's own data), the
+// cart's horse standing and walking (OWN-WORK4: ours, systems/horse/horseArt.js, Daggerfall's rider record unridden) and
+// Eye Of The Beholder's five riders (archives 112382-112386, horse and rider in one picture). A look is not new art: it is the
 // same pictures re-dyed as they are uploaded, by `recolorHorse` below - so no picture of the player's data is ever
 // written anywhere but the renderer (Port-Doctrine: A RENDER OF GAME DATA IS GAME DATA), and a set the port gains later
 // takes every look for free.
@@ -30,7 +30,7 @@
 //  - a hide pixel is a warm one (hue 345-50 degrees) with some colour in it (saturation 0.2 or more) - the mane, the
 //    tail, the hooves, steel and cloth are none of them;
 //  - but not the TACK: the saddle and the bridle's leather are yellower, duller and darker than the hide around them
-//    (hue 28-48, saturation 0.36-0.58, value 0.24-0.5 - measured off horse3.png's saddle against its flank);
+//    (hue 28-48, saturation 0.36-0.58, value 0.24-0.5; OWN-WORK4: our saddle, horseArt.js, is in no hide's colour);
 //  - and only where the warm pixels are the HORSE's: a rider's face, hands and leathers are warm too, but they stand
 //    apart from the hide - small islands, cut off by steel and shadow. So the warm pixels are gathered into their
 //    8-connected regions and a region is dyed only when it is at least COAT_REGION_SHARE of the largest (the body; a

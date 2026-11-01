@@ -6,7 +6,7 @@
 // is how a "1:1" port quietly stops being one. `monodis` segfaults on
 // this assembly; it was read with dncil/dnfile.
 //
-// EOTB-IL (2026-09-17): READ AGAIN, AGAINST THE VENDORED DUMP, and
+// EOTB-IL (2026-09-17): READ AGAIN, AGAINST THE ASSEMBLY'S DUMP, and
 // fourteen readings corrected - each cites its offset where it lands.
 // The ones a player meets: the auto-toggle table was DISARMED by the
 // mod's own LoadSettings whenever every row is Don'tChange (the sum of

@@ -39,7 +39,7 @@ const SET = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({ templa
 
 test('MW-STEEL1: every shipped mesh and texture is re-made from the committed sources byte for byte, and read back as the port reads it', () => {
   const pngs = Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, raw(p)]));
-  const baked = bakeSteelPlate({ set: raw(SOURCE.set), openHelm: raw(SOURCE.openHelm), pngs, skeleton: raw(RETAIL_SKELETON) });   // MW-STEEL4: skinned in retail's bind; MW-STEEL5: two sources
+  const baked = bakeSteelPlate({ set: raw(SOURCE.set), openHelm: raw(SOURCE.openHelm), pngs, skeleton: RETAIL_SKELETON });   // MW-STEEL4: skinned in retail's bind; MW-STEEL5: two sources
   assert.deepEqual(baked.pieces.map((p) => p.id), ['cuirass', 'skirt', 'pauldron_right', 'pauldron_left', 'gauntlet_right', 'gauntlet_left',
     'greave_right', 'greave_left', 'boot_right', 'boot_left', 'helm_open', 'helm_closed']);
   assert.deepEqual(baked.textures.map((t) => t.tex), ['cuirass', 'pauldron', 'gauntlet', 'greave', 'boot', 'helm', 'visor', 'skirt']);

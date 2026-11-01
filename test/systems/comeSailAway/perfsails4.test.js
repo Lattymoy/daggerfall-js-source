@@ -44,8 +44,9 @@ test('PERF-SAILS4: every pose the sea\'s animators write is the one they wrote b
   for (let f = 0; f < 60; f++) for (const a of rudders) { a.update(1 / 60); for (const p of a.props) h.update(bits(p.node.localRotation)); h.update(`${a.stateName}|`); }
   assert.ok(rudders.filter((a) => a.stateName === 'Rowing').length >= 8, 'rowing');
   pool.destroyAll();
-  // the same run on the animator before PERF-SAILS4 (origin/main d8ccf7fd6)
-  assert.equal(h.digest('hex'), 'ccc3a6ec4eff35a2cb9a5cb045fda1476d0d9b3e258d5cd06ed0a5e19905c4e1');
+  // the same run on the animator before PERF-SAILS4 (origin/main d8ccf7fd6); OWN-WORK4 (2026-10-31): re-pinned over our
+  // own boats' clips (ccc3a6ec... over Come Sail Away 2.1's)
+  assert.equal(h.digest('hex'), 'a5f50df6f70ed2815fe8871dc349684585ce8837d5d664cce3c59ef96152ca52');
 });
 
 test('PERF-SAILS4: a still clip is posed once - a standing animator hands out the one pose frame after frame, and an animated one a new pose each frame (mutant: a still clip posed every frame)', async () => {

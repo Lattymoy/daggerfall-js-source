@@ -57,8 +57,8 @@
   {
     "name": "SURVTENT-2-the-tent-art-is-registered-as-a-stand-in",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false, art)),",
-    "new": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, true, art)),",
+    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, false, art)),",
+    "new": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, true, art)),",
     "tests": [
       "test/systems/survart_icons.test.js",
       "test/systems/surv2_items.test.js"
@@ -67,7 +67,7 @@
   {
     "name": "SURVTENT-3-the-tent-art-is-not-registered-at-all",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false, art)),",
+    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, false, art)),",
     "new": "",
     "tests": [
       "test/systems/survart_icons.test.js",

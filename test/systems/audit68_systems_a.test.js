@@ -34,14 +34,14 @@ function rainRig({ holdRain = false, engineRunning = true } = {}) {
   let release = () => {};
   const held = new Promise((r) => { release = r; });
   const audio = {
-    registerSound: async () => true, playOneShot: () => {}, setReverb: () => true, clipLevel: () => null,
+    registerSamples: () => true, playOneShot: () => {}, setReverb: () => true, clipLevel: () => null,
     loop: (k, v, o) => mk(k, v, { o }), loop3d: (k, pos, v, o) => mk(k, v, { pos, o }),
   };
-  const fetchClip = async (name) => {
-    if (holdRain && name === AMBIENT_RAIN_CLIP) await held;   // the 5 MB AmbientRaining.wav, still on the wire
-    return new Uint8Array([1]);
+  const makeClip = async (name) => {
+    if (holdRain && name === AMBIENT_RAIN_CLIP) await held;   // OWN-WORK4: the rain loop, still being made (a step a task)
+    return ({ samples: new Float32Array(1), rate: 22050 });
   };
-  const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, fetchClip, snowFree: () => false });
+  const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, makeClip, snowFree: () => false });
   const m = { entity: { items: [], activeEffects: [], maxHealth: 100 }, inside: true, inBuilding: true, inDungeon: false, grounded: true, standingStill: true, pos: [0, 0, 0] };
   return { ba, loops, engine, release, m };
 }
@@ -50,7 +50,7 @@ test('AUDIT 68 S24-ba-rain-never-retried: the indoor rain starts once its clip l
   W.resetWeatherSim();
   try {
     W.setWeather('rain'); W.setHeardWeather('rain', 0.5);
-    // (1) a save loaded in a tavern while the rain clip is still decoding
+    // (1) a save loaded in a tavern while the rain clip is still being made
     {
       const r = rainRig({ holdRain: true });
       r.ba.onLoad();

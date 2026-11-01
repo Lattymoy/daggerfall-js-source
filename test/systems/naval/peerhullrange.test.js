@@ -49,10 +49,9 @@ test('PEER-HULL-RANGE another\'s ship within PEER_HULL_NEAR_M of the eye stands 
 // out at 87%. And a hull built AGAIN wore her first hull's past rather than her record: her sails by height, colours and
 // wake were remembered on her record against the hull given back, so she came back under full canvas, a struck ship
 // flying her colours, a ship under way with no wake - at full strength in one frame, and her fires hung where she was.
-import { readFileSync } from 'node:fs';
 import { FOG_SETTINGS, scaleFogForDistance } from '../../../src/world/weather.js';
 import { LAND_VIEW_MAX } from '../../../src/world/landView.js';
-import { fogSettingsFromPresets } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
+import { fogSettingsFromPresets, FOG_LOOK } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
 
 /** What a fog row lets through of a surface `d` away (1 clear, 0 the fog's colour) - the renderer's three modes. */
 const seenThrough = (f, d) => (f.mode === 'linear' ? Math.max(0, Math.min(1, (f.end - d) / Math.max(1e-6, f.end - f.start)))
@@ -60,9 +59,7 @@ const seenThrough = (f, d) => (f.mode === 'linear' ? Math.max(0, Math.min(1, (f.
 
 test('AUDIT PEER-HULL-RANGE a hull is built and given back only where every lane\'s fog has closed: past the enhanced lane\'s linear fog at its widest Land View, past each of DFU\'s rows and past each of Dynamic Skies\' presets at their lightest density (mutant: the first cut\'s 3,000 m)', () => {
   const dfu = Object.entries(FOG_SETTINGS).filter(([k]) => k !== 'interior' && k !== 'dungeon').map(([k, f]) => [`DFU ${k}`, scaleFogForDistance(f, LAND_VIEW_MAX)]);
-  const names = ['FogSunny', 'FogOvercast', 'FogRainy', 'FogSnowy', 'FogHeavyFog'];
-  const json = Object.fromEntries(names.map((n) => [n, readFileSync(new URL(`../../../vendor/dynamic-skies/FogSettings/${n}.json`, import.meta.url), 'utf8')]));
-  const ds = Object.entries(fogSettingsFromPresets(json, 1)).map(([k, f]) => [`Dynamic Skies ${k}`, f]);
+  const ds = Object.entries(fogSettingsFromPresets(FOG_LOOK, 1)).map(([k, f]) => [`Dynamic Skies ${k}`, f]);   // PIN MOVED (OWN-WORK4): our sky's own rows
   assert.equal(scaleFogForDistance(FOG_SETTINGS.sunny, LAND_VIEW_MAX).end, 4800, 'the widest linear fog this port draws');
   for (const [name, f] of [...dfu, ...ds]) assert.ok(seenThrough(f, PEER_HULL_NEAR_M) < 0.01, `${name}: ${seenThrough(f, PEER_HULL_NEAR_M).toFixed(3)} seen at the near edge`);
 });

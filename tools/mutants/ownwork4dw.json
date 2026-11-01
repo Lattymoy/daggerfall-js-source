@@ -1,0 +1,216 @@
+[
+  {
+    "name": "OW4-1-the-light-half-of-a-ramp-starts-at-the-shadow",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "mix(ramp[1], ramp[2], (x - 0.5) * 2)",
+    "new": "mix(ramp[0], ramp[2], (x - 0.5) * 2)",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a swatch shade lands on our ramp by its light: middle to light in the light half"
+  },
+  {
+    "name": "OW4-2-the-tip-is-taken-for-the-wide-end",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "handSide ? handSide > 0 : atLo < atHi",
+    "new": "handSide ? handSide > 0 : atLo > atHi",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a blade's axis runs from its base on the frame edge to its narrow tip"
+  },
+  {
+    "name": "OW4-2b-a-held-blade-points-into-the-hand",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "handSide ? handSide > 0 : atLo < atHi",
+    "new": "handSide ? handSide < 0 : atLo < atHi",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a dagger's base is the end in the hand, whatever the frame edge cuts"
+  },
+  {
+    "name": "OW4-3-a-shortened-blade-grows",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "      const along = outAlong < lo ? outAlong : lo + (outAlong - lo) / stretch;",
+    "new": "      const along = outAlong < lo ? outAlong : lo + (outAlong - lo) * stretch;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the length scales the blade about its base"
+  },
+  {
+    "name": "OW4-4-the-width-is-never-scaled",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "      const across = mid + (outAcross - mid - bend * share * share) / wide;",
+    "new": "      const across = mid + (outAcross - mid - bend * share * share);",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a broad blade is widened about its centre line"
+  },
+  {
+    "name": "OW4-5-no-blade-bends",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "      const across = mid + (outAcross - mid - bend * share * share) / wide;",
+    "new": "      const across = mid + (outAcross - mid) / wide;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a curved blade bends toward its tip"
+  },
+  {
+    "name": "OW4-6-the-chisel-cuts-nothing",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "      if (blade.tip === 'chisel' && share > 0.8 + 0.1 * (1 - rel)) continue;",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the tanto's point is cut"
+  },
+  {
+    "name": "OW4-7-the-fuller-covers-the-blade",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "Math.abs(rel) < 0.2) fuller[y * w + x] = 1;",
+    "new": "Math.abs(rel) < 2) fuller[y * w + x] = 1;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the groove runs down the middle"
+  },
+  {
+    "name": "OW4-8-the-war-axe-keeps-both-bits",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "  const keepFrom = -0.1 * axis.len;",
+    "new": "  const keepFrom = -1e9;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "our war axe is single-bitted"
+  },
+  {
+    "name": "OW4-9-the-staff-is-ringed-from-its-foot",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "  if (towardTip < 0) {",
+    "new": "  if (towardTip > 0) {",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the rings are measured from the capped tip"
+  },
+  {
+    "name": "OW4-10-the-fuller-is-not-shaded",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "    const shade = fuller?.[pixel] ? FULLER_SHADE : 1,",
+    "new": "    const shade = 1,",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a groove is shaded"
+  },
+  {
+    "name": "OW4-11-the-item-mask-is-drawn",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "    if (!i || i === MASK) continue;",
+    "new": "    if (!i) continue;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "GetItemImage strips the mask (ChangeMask) before an icon is drawn"
+  },
+  {
+    "name": "OW4-12-a-double-size-idle-past-record-0",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "|| (wide && (record || frame))) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "Weapon Widget asks w_ for the idle alone; a strike falls through to the plain name"
+  },
+  {
+    "name": "OW4-13-a-metal-that-is-not-one",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "  if (!own || !DIVERSE_WEAPONS_METALS.includes(metal)) return null;",
+    "new": "  if (!own) return null;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a name is ours in MetalTypes' ten metals alone"
+  },
+  {
+    "name": "OW4-14-an-icon-answers-a-silver-name",
+    "file": "src/combat/diverseWeapons/diverseWeaponsIndex.js",
+    "old": "out[`${archive}_${record}-0`] = NOT_SILVER | DIVERSE_WEAPONS_BARE;",
+    "new": "out[`${archive}_${record}-0`] = ALL_METALS | DIVERSE_WEAPONS_BARE;",
+    "tests": [
+      "test/tooling/dw2_shipped.test.js"
+    ],
+    "why": "Silver is Unchanged: GetName leaves it bare, so no _Silver icon is ever asked"
+  },
+  {
+    "name": "OW4-15-an-enchanted-weapon-built-from-the-plain-file",
+    "file": "src/combat/diverseWeapons/diverseWeaponsIndex.js",
+    "old": "[`${name}MAGIC.CIF`, Object.freeze({ look: name, base: look.magic })]",
+    "new": "[`${name}MAGIC.CIF`, Object.freeze({ look: name, base: look.plain })]",
+    "tests": [
+      "test/tooling/dw2_shipped.test.js",
+      "test/combat/weapon/ownwork4_dwart.test.js",
+      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
+    ],
+    "why": "an enchanted weapon is drawn into the magic file's box (FPSWeapon.cs:398-399), so it is built from that file"
+  },
+  {
+    "name": "OW4-16-the-bare-icon-in-another-law",
+    "file": "src/combat/diverseWeapons/diverseWeaponsIcons.js",
+    "old": "? LOOKS.WABBAJACK.ramp : 'Silver';",
+    "new": "? LOOKS.WABBAJACK.ramp : 'Iron';",
+    "tests": [
+      "test/systems/dw3_icons.test.js"
+    ],
+    "why": "the bare ask is a silver weapon's"
+  },
+  {
+    "name": "OW4-17-our-set-answers-with-the-mod-off",
+    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
+    "old": "enabled = moddedWeaponHUDAnimsEnabled() } = {},",
+    "new": "enabled = true } = {},",
+    "tests": [
+      "test/combat/weapon/dw1_diverseweapons.test.js"
+    ],
+    "why": "the mod off is the classic frame, as DFU with the mod disabled"
+  },
+  {
+    "name": "OW4-18-a-held-blade-redraws-the-hand",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "      if (own && (!own[srcY * w + srcX] || out[y * w + x])) continue; // the hand stays Daggerfall's",
+    "new": "      if (own && !own[srcY * w + srcX]) continue;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js",
+      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
+    ],
+    "why": "the dagger's blade is redrawn behind the hand, never over it"
+  },
+  {
+    "name": "OW4-19-the-pommel-counts-as-blade",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "    if (!run || along - run.hi > 4) run = { lo: along, hi: along, n: 0 };",
+    "new": "    if (!run) run = { lo: along, hi: along, n: 0 };",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "metal past the fist is a pommel, no part of the blade"
+  },
+  {
+    "name": "OW4-20-a-stab-toward-the-eye-is-reshaped",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "  if (elongation < MIN_ELONGATION) return null;",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js",
+      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
+    ],
+    "why": "a blade seen end on has no length to shape: coloured only"
+  }
+]

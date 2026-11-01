@@ -549,7 +549,7 @@ test('AUDIT BANTHA1 HAZE-3: every fogged pass that draws where the haze is armed
 
 test('AUDIT BANTHA1 HAZE-1: every program a module under src/render exports compiles whole in the repo\'s GLSL reader - a block\'s uniform redeclared beside it (the Deadlands\' sea declared its own uHaze under the fog block\'s, and on the branch the Burning Court\'s sky and sea would not build) is a type error there; the jungle\'s uniform has a name of its own (mutant: the jungle\'s uniform named uHaze again)', async () => {
   const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.js') ? [join(d, e.name)] : []));
-  const PREPROCESSED = new Set(['render/dynamicSkiesRenderer.js FS']);   // Dynamic Skies' own #define - the reader takes no preprocessor
+  const PREPROCESSED = new Set([]);   // PIN MOVED (OWN-WORK4): Dynamic Skies' pass is our own and has no #define - the reader takes it whole
   const bad = [];
   let n = 0;
   for (const f of walk(join(ROOT, 'src', 'render'))) {

@@ -336,7 +336,6 @@
 !/src/formats/crunch.js
 !/src/formats/derivedTexture.js
 !/src/formats/dfRandom.js
-!/src/formats/dotnetResources.js
 !/src/formats/dxt.js
 !/src/formats/faceUVTool.js
 !/src/formats/factionFile.js
@@ -2787,7 +2786,6 @@
 !/tools/citeAnchor.mjs
 !/tools/citeMerge.mjs
 !/tools/citeShift.mjs
-!/tools/classSkinsListing.mjs
 !/tools/classicStartProbe.mjs
 !/tools/classicTextProbe.mjs
 !/tools/climbDungeonProbe.mjs
@@ -2796,7 +2794,6 @@
 !/tools/cloudNoiseProbe.mjs
 !/tools/collectionsProbe.mjs
 !/tools/colliderBench.mjs
-!/tools/comeSailAwayExtract.mjs
 !/tools/compileStallProbe.mjs
 !/tools/computationPin.mjs
 !/tools/courtShadowProbe.mjs
@@ -2819,8 +2816,6 @@
 !/tools/dexExtract.mjs
 !/tools/dfuConstDiff.mjs
 !/tools/discordModCommands.mjs
-!/tools/diverseWeaponsExtract.mjs
-!/tools/diverseWeaponsIndex.mjs
 !/tools/doActive.mjs
 !/tools/dragonTelegraphProbe.mjs
 !/tools/drapeClip.mjs
@@ -2869,8 +2864,6 @@
 !/tools/enhancedSheetProbe.mjs
 !/tools/enhancedSkyProbe.mjs
 !/tools/enhancedTapProbe.mjs
-!/tools/environmentModsExtract.mjs
-!/tools/eotbIl.mjs
 !/tools/equipProbe.mjs
 !/tools/equipRestrictionProbe.mjs
 !/tools/etherChartProbe.mjs
@@ -2941,7 +2934,6 @@
 !/tools/gunSfxInstall.mjs
 !/tools/gunSlotsProbe.mjs
 !/tools/haloThinProbe.mjs
-!/tools/hccAssets.mjs
 !/tools/headPortraitProbe.mjs
 !/tools/heldMapArtProbe.mjs
 !/tools/heldMapLoadProbe.mjs
@@ -3153,7 +3145,6 @@
 !/tools/roadLookProbe.mjs
 !/tools/roadWalkProbe.mjs
 !/tools/roadsCalibrate.mjs
-!/tools/rriExtract.mjs
 !/tools/rscTableDiff.mjs
 !/tools/sailDrive.mjs
 !/tools/sameProgram.mjs
@@ -3242,7 +3233,6 @@
 !/tools/uiStatusProbe.mjs
 !/tools/unreached.mjs
 !/tools/urbanProbe.mjs
-!/tools/vanillaEnhancedVendor.mjs
 !/tools/vc6ShaftProbe.mjs
 !/tools/vc7bHazeProbe.mjs
 !/tools/verify-deploy.mjs

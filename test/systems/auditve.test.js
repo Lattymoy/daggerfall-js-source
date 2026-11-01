@@ -2,8 +2,9 @@
 // Vanilla Enhanced, VE1-VE4 (`01-Overview/audits/Audit-VE.md`). Every pin here fails on the code as it stood before its fix:
 //   D1 - THE DEFAULT: the shipped Base is on until the player chooses otherwise, its add-ons off; a choice either way is
 //        kept, through a boot and under a copy the player attaches.
-//   P1 - THE DECODE OFF THE MAIN THREAD: the shipped pack's fetch, decode and texture-detail fit run in a worker
-//        (systems/vanillaEnhanced/vanillaEnhancedDecodeWorker.js); a browser that cannot falls back to this thread, and a worker that
+//   P1 - THE WORK OFF THE MAIN THREAD: the shipped pack's pictures are made in a worker
+//        (systems/vanillaEnhanced/vanillaEnhancedDecodeWorker.js) - OWN-WORK4: built there from the player's record by
+//        our rule, and a served PNG decoded there; a browser that cannot falls back to this thread, and a worker that
 //        dies is never asked again - an ask must not wait for ever.
 //   P2 - THE GROUND CACHE IS BOUNDED: three decoded tile sets, the least recently asked let go.
 //   R1-R14 - THE REVIEW: an independent adversarial reading of the pushed head (d1c38864) against DFU's own C#, each
@@ -16,7 +17,9 @@ import {
   setDfmodSources, attachedDfmods, setDfmodEnabled, dfmodEnabled, DFMOD_SHIPPED_PREF, DFMOD_OFF_PREF, GROUND_CACHE_SETS,
   dfmodGroundLayers, _resetDfmodForTests,
 } from '../../src/systems/dfmodTextures.js';
-import { VE_PACK_MODS, ON_BY_DEFAULT, vePackClient, vePackUrl, installVanillaEnhancedPack, _setVePackIoForTests } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';
+import { VE_PACK_MODS, ON_BY_DEFAULT, vePackClient, decodeServedPng, installVanillaEnhancedPack, _setVePackIoForTests } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';
+import { ownSpec, specKey } from '../../src/systems/ownTextures/ownTexturePacks.js';
+import { applyOwnRule } from '../../src/systems/ownTextures/ownTextureRules.js';
 import { mipFitSize } from '../../src/formats/resample.js';
 import { clearTextureReplacements } from '../../src/systems/textureReplacement.js';
 import { wearVanillaEnhanced, wearClassicTextures, veWorn, classicTexturesWorn, VE_ADDONS_PREF } from '../../src/systems/vanillaEnhanced/vanillaEnhanced.js';
@@ -46,7 +49,7 @@ function fresh() {
   setPref(DFMOD_SHIPPED_PREF, {});
   setPref(VE_ADDONS_PREF, []);
   clearTextureReplacements();
-  _setVePackIoForTests({ fetch: async (u) => enc(u), decode: async () => ({ width: 1, height: 1, data: new Uint8Array(4) }) });
+  _setVePackIoForTests({ build: async () => ({ width: 1, height: 1, data: new Uint8Array(4) }) });
 }
 const states = () => attachedDfmods().map((m) => [m.key, m.shipped, m.enabled]);
 
@@ -142,37 +145,58 @@ function fakeWorkers(mode = 'ok') {
 }
 const within = (p, ms = 500) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`still waiting after ${ms} ms`)), ms))]);
 
-test('AUDIT VE P1: the shipped client asks its worker, not this thread; a worker that cannot (no OffscreenCanvas there) hands the decode back to this thread for good; a worker that died while idle is never asked again - the next ask is this thread\'s, never a wait for ever (mutants: the worker never asked; unsupported not falling back; a dead worker asked)', async () => {
+test('AUDIT VE P1: the shipped client builds in its worker, not this thread - the classic record and the spec posted, the pixels the rule\'s; a served PNG is decoded there too, and a worker that cannot decode (no OffscreenCanvas there) hands the decode back to this thread for good while it still builds; a worker that died while idle is never asked again - the next ask is this thread\'s, never a wait for ever (mutants: the worker never asked; unsupported not falling back; a dead worker asked)', async () => {
   fresh();
+  const classic = { width: 4, height: 4, data: Uint8Array.from({ length: 64 }, (_, i) => (i % 4 === 3 ? 255 : (i * 29) & 255)) };
+  const read = [];
   const mainThread = [];
-  const io = { fetch: async (u) => { mainThread.push(u); return enc(u); }, decode: async () => ({ width: 1, height: 1, data: Uint8Array.of(9, 0, 0, 255) }) };
+  const io = {
+    classic: async (a, r, f) => { read.push([a, r, f]); return { ...classic, data: new Uint8Array(classic.data) }; },
+    fetch: async (u) => { mainThread.push(u); return enc(u); },
+    decode: async () => ({ width: 1, height: 1, data: Uint8Array.of(9, 0, 0, 255) }),
+  };
   const base = VE_PACK_MODS.find((m) => m.dir === 'base');
-  const name = base.index.textures[0][0];
-  // a worker that answers
+  const spec = ownSpec(base, '302_9-0');
+  // a worker that answers: the record read here, the build its
   let w = fakeWorkers();
   _setVePackIoForTests({ ...io, worker: w.factory });
-  let img = await vePackClient(base).rgba(name, { maxSize: 256 });
+  let img = await vePackClient(base).rgba('302_9-0', { maxSize: 256 });
   assert.equal(img.data[0], 77, 'the worker\'s pixels');
-  assert.deepEqual(mainThread, [], 'nothing fetched on this thread');
-  assert.deepEqual(w.made.flatMap((x) => x.asks).map((a) => [a.url, a.maxSize]), [[vePackUrl(`base/${name}.png`), 256]], 'the URL and the detail, to the worker');
-  // a worker that cannot
+  assert.deepEqual(read, [[302, 9, 0]], 'the player\'s own record, read here');
+  const asks = w.made.flatMap((x) => x.asks);
+  assert.deepEqual(asks.map((a) => [specKey(a.build), a.source.width]), [[specKey(spec), 4]], 'the spec and the record, to the worker');
+  // a worker that cannot decode a PNG: the decode is this thread's for good; a build still goes to the worker
   w = fakeWorkers('unsupported');
   _setVePackIoForTests({ ...io, worker: w.factory });
-  img = await vePackClient(base).rgba(name);
-  assert.equal(img.data[0], 9, 'this thread decoded it');
+  assert.equal((await decodeServedPng('art/x.png')).data[0], 9, 'this thread decoded it');
   const asked = w.made.flatMap((x) => x.asks).length;
-  await vePackClient(base).rgba(name);
-  assert.equal(w.made.flatMap((x) => x.asks).length, asked, 'and the worker is not asked again');
+  await decodeServedPng('art/x.png');
+  assert.equal(w.made.flatMap((x) => x.asks).length, asked, 'and the worker is not asked to decode again');
   assert.equal(mainThread.length, 2);
   // a worker that died between asks
   w = fakeWorkers();
   _setVePackIoForTests({ ...io, worker: w.factory });
-  mainThread.length = 0;
-  assert.equal((await vePackClient(base).rgba(name)).data[0], 77);
+  assert.equal((await vePackClient(base).rgba('302_9-0')).data[0], 77);
   for (const x of w.made) { x.dead = true; x.onerror?.({ message: 'the worker script would not load' }); }
-  img = await within(vePackClient(base).rgba(name));
-  assert.equal(img.data[0], 9, 'this thread, at once');
+  img = await within(vePackClient(base).rgba('302_8-0'));
+  assert.deepEqual([...img.data.slice(0, 4)], [...applyOwnRule({ ...ownSpec(base, '302_8-0') }, classic).data.slice(0, 4)], 'this thread, at once - our rule\'s own pixels');
   _setVePackIoForTests();
+});
+
+test('AUDIT VE P1 (OWN-WORK4): the worker builds by our rule - a spec and its classic record in, the rule\'s pixels out, moved', async () => {
+  const saved = { onmessage: globalThis.onmessage, postMessage: globalThis.postMessage };
+  const posted = [];
+  try {
+    globalThis.postMessage = (msg, transfer) => posted.push({ msg, transfer });
+    await import('../../src/systems/vanillaEnhanced/vanillaEnhancedDecodeWorker.js?build');   // a fresh instance: the P1 pin above set and restored its handler
+    const source = { width: 4, height: 4, data: Uint8Array.from({ length: 64 }, (_, i) => (i % 4 === 3 ? 255 : (i * 31) & 255)) };
+    const build = { rule: 'enhance', from: [302, 1, 0], w: 16, h: 16, wrap: false, seed: 7 };
+    await globalThis.onmessage({ data: { id: 5, build, source } });
+    const r = posted[0];
+    assert.deepEqual([r.msg.id, r.msg.width, r.msg.height], [5, 16, 16]);
+    assert.deepEqual([...r.msg.data], [...applyOwnRule(build, source).data], 'the page\'s own pixels');
+    assert.deepEqual(r.transfer, [r.msg.data.buffer], 'moved, not copied');
+  } finally { Object.assign(globalThis, saved); }
 });
 
 // ---- P2 ------------------------------------------------------------------------------------------------------------
@@ -209,18 +233,16 @@ test('AUDIT VE P2: the ground cache keeps the three most recently asked tile set
 // TextureReplacement.cs, TextureReader.cs). Its load order, TryGetAsset walk and terrain import held; these are what did
 // not, each red here on the code as it read it.
 
-/** The shipped pack over a fake fetch and decode whose picture's red says whose file it is: 1 the Base, 2 Masked Roads,
- *  3 Snowless Swamps and Jungles. `gate` holds every decode until it settles. Answers the URLs decoded. */
+/** The shipped pack over a fake build whose picture's red says which rule made it: 1 our enhanced rule, 2 our road
+ *  (Masked Roads'). `gate` holds every build until it settles; `failing(spec)` throws. Answers the specs built. */
 function packIo({ gate = null, failing = null } = {}) {
   const decodes = [];
   _setVePackIoForTests({
-    fetch: async (u) => { if (failing?.(u)) throw new Error(`${u}: the network dropped it`); return enc(u); },
-    decode: async (bytes) => {
-      const url = new TextDecoder().decode(bytes);
-      decodes.push(url);
+    build: async (spec) => {
+      if (failing?.(spec)) throw new Error(`${specKey(spec)}: the build failed`);
+      decodes.push(specKey(spec));
       if (gate) await gate;
-      const red = /\/masked-roads\//.test(url) ? 2 : /\/snowless-swamps-and-jungles\//.test(url) ? 3 : 1;
-      return { width: 1, height: 1, data: Uint8Array.of(red, 0, 0, 255) };
+      return { width: 1, height: 1, data: Uint8Array.of(spec.rule === 'road' ? 2 : 1, 0, 0, 255) };
     },
   });
   return decodes;
@@ -456,10 +478,8 @@ test('AUDIT VE R11: ?nomods is the door\'s one rule - no attached mod registers 
 
 test('AUDIT VE R12: one slice of a shipped array that will not load costs that tile, not the climate - it stands classic in the set, and a set that lost one is asked again next time, not kept (mutants: the array all or nothing; a failed set cached)', async () => {
   fresh();
-  const base = VE_PACK_MODS.find((m) => m.dir === 'base');
-  const lost = vePackUrl(base.slices['302-TexArray'][5]);
   let failing = true;
-  packIo({ failing: (u) => failing && u === lost });
+  packIo({ failing: (spec) => failing && spec.from.join('_') === '302_5_0' });
   installVanillaEnhancedPack();
   const tex = { recordCount: 56, getDFBitmap: (r) => r, getColor32: () => ({ width: 1, height: 1, colors: Uint8Array.of(0, 0, 0, 255) }) };
   const warn = console.warn; console.warn = () => {};

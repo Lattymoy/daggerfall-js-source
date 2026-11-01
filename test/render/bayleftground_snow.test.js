@@ -19,8 +19,8 @@ import { beyondKey, setArenaRoads } from '../../src/world/arenaRoads.js';
 import { generatePixelTerrain } from '../../src/world/terrain/terrainGen.js';
 import { DIR, MAP_W, MAP_H } from '../../src/world/road/roadNetwork.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../../src/formats/woodsFile.js';
+import { MASKS } from '../snowMasks.mjs';   // OWN-WORK4: our snow law's masks over a made-up winter set - Snowfall's own are retired
 
-const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`../../public/art/snowfall/snow_surface_masks_${a}.bytes`, import.meta.url))));
 const SIZE = 819.2;
 afterEach(() => { setArenaRoads(null); });
 

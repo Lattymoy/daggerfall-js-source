@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,12 +10,10 @@ import { fileURLToPath } from 'node:url';
 // settings reader had no caller. The claim was never checkable, which
 // is why it survived seven slices - so this file makes it checkable.
 //
-// THE INVENTORY, and how to reproduce it. The mod's assembly is
-// `Eye Of The Beholder.dll`, which EOTB-IL (2026-09-16) took out of
-// the shipped `.dfmod` with `tools/eotbIl.mjs` and vendored beside the
-// art, with its whole IL dumped by `tools/ilDump.py` (dnfile + dncil;
-// `monodis` segfaults on it) to `vendor/eye-of-the-beholder/il/`.
-// Every method body is in that dump; these were struck as
+// THE INVENTORY. The mod's assembly is Eye Of The Beholder 2.1's
+// `Eye Of The Beholder.dll`, which EOTB-IL (2026-09-16) took out of the
+// shipped `.dfmod` and dumped whole with `tools/ilDump.py` (dnfile +
+// dncil; `monodis` segfaults on it). These were struck as
 // compiler-generated rather than authored:
 //
 //   .ctor / .cctor                          - constructors
@@ -34,13 +32,12 @@ import { fileURLToPath } from 'node:url';
 // counted 62 and listed a `PlayerBillboard::InitializeTextures` that
 // does not exist - the texture walk is `PlayerBillboardState`'s alone;
 // the 33rd body on the sprite is `<FixedUpdate>b__96_0`, the one-line
-// TravelOptions handler. Every authored method is a row below, and the
-// dump is READ here: a row's method must be in it, and no authored
-// method of the three types may be missing from this table.
+// TravelOptions handler. Every authored method is a row below. OWN-WORK4
+// (2026-10-31): the dump left the tree with the mod's directory; this
+// table, checked against it until then, is the record now.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
-const IL_DUMP = 'vendor/eye-of-the-beholder/il/Eye_Of_The_Beholder.il.txt';
 
 /**
  * THE 61. `port` names the symbol carrying that method's arithmetic
@@ -141,28 +138,11 @@ test('AUDIT-EOTB scope: the inventory is whole, and every row has a verdict', ()
   assert.equal(NOT.length, 15, 'fifteen with no twin here');
 });
 
-test('EOTB-IL scope: the table is checked AGAINST THE DUMP - every row is an authored method, and no authored method is missing', () => {
-  assert.ok(existsSync(join(root, IL_DUMP)), 'the IL dump is vendored beside the art');
-  const dump = rd(IL_DUMP);
-  const authored = new Set();
-  let lambdas = 0;
-  for (const m of dump.matchAll(/^---- (EyeOfTheBeholder|PlayerBillboard|PlayerBillboardState)::(\S+) rva=/gm)) {
-    const name = m[2];
-    if (/^\.c?ctor$/.test(name)) continue;
-    if (/^(add|remove)_/.test(name)) continue;
-    if (/^<\w+>b__\d+_\d+$/.test(name)) { lambdas += 1; continue; }
-    authored.add(`${m[1]}::${name}`);
-  }
-  assert.equal(lambdas, 3, 'the three compiler-lifted lambdas, struck');
-  // the coroutine state machines are nested types (`<PlayAnimation>d__N`)
-  // and never match the three type names above
-  const missing = [...authored].filter((k) => !(k in IL));
-  const extra = Object.keys(IL).filter((k) => !authored.has(k));
-  assert.deepEqual(missing, [], 'authored methods in the dump with no row here');
-  assert.deepEqual(extra, [], 'rows here that are not in the dump');
-  assert.equal(authored.size, 61);
-  // and the assembly itself is beside it
-  assert.ok(existsSync(join(root, 'vendor/eye-of-the-beholder/Eye Of The Beholder.dll')), 'the assembly is vendored');
+test('EOTB-IL scope: the table is the dump\'s inventory - 28 methods on the camera, 32 on the sprite, one on its state', () => {
+  const per = {};
+  for (const k of Object.keys(IL)) { const [t] = k.split('::'); per[t] = (per[t] ?? 0) + 1; }
+  assert.deepEqual(per, { EyeOfTheBeholder: 28, PlayerBillboard: 32, PlayerBillboardState: 1 });
+  assert.equal(Object.keys(IL).length, 61);
 });
 
 test('AUDIT-EOTB scope: every row claiming a PORT names a symbol that is really there', () => {
@@ -275,8 +255,7 @@ test('AUDIT-EOTB scope: the bible page states THIS table, and no record says 1:1
   // read. It is read now, and every law is pinned against it - but a
   // sentence saying "1:1" is still only as good as the table above, so
   // a record may say it only beside the thing that checks it.
-  for (const f of ['bible/06-Systems/Eye-Of-The-Beholder.md', 'bible/01-Overview/Mod-Registry.md',
-    'vendor/eye-of-the-beholder/README.md']) {
+  for (const f of ['bible/06-Systems/Eye-Of-The-Beholder.md', 'bible/01-Overview/Mod-Registry.md']) {
     const s = rd(f);
     for (const line of s.split('\n')) {
       if (!/1:1/.test(line)) continue;

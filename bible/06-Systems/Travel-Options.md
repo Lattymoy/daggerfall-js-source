@@ -1533,6 +1533,15 @@ Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bay
 junction dots' 2), all dead; `tools/mutants/to1.json` data-point-unchecked and i6-discovery-by-map-id-again re-aimed by
 content and run (dead). A departure from Travel Options, whose data is the Bay's: Port-Ledger A, BAY-LEFT-MAPS.
 
+## OWN-WORK4 - our own pictures (2026-10-31)
+
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for everything." `vendor/travel-options/`
+is retired (`01-Overview/Own-Work.md` holds its row, the three re-encodes' hashes with it). The control strip (320 x 27)
+and the map's two PORTS buttons (45 x 11) are ours: recipes in `ui/travel/travelArt.js` for our painter
+(`art/ownPainter.js`), carved stone with our own letters, every recess and button where `CONTROL_RECTS` and
+`PORTS_SIZE` place them. They keep the names the windows asked for (`TOcontrolUI`, `TOportsOff`, `TOportsOn`) and are
+uploaded as before; nothing is fetched. No pixel of the release is read. Pins: `to1_travelOptions`, `ownwork4_pictures`.
+
 ## OWN-WORK3 - our own data and words (2026-10-31)
 
 **OWN-WORK3 (2026-10-31, the owner).** "Removing mods from outside authors and instead replacing them with our own

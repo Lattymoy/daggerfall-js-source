@@ -7,6 +7,15 @@ body - the player's own behind the wheel camera (MW-D24), other
 players' online (MWBODY1) - drew a sheathed weapon the way vanilla
 Morrowind does: not at all. Now it stays on the body.
 
+**OWN-WORK4 (2026-10-31, the owner).** "Our goal is no latching onto other mod authors or needing permissions."
+The mod's seventy-one scabbards and three skeleton addons are retired, and the feature is ours.
+`systems/ownSheathing.js` hangs our own eleven sheathing bones under the game's `Bip01 Pelvis` and `Bip01 Spine2`
+(`SHEATH_POINTS`: a one-handed weapon on the belt at the hip, a two-hander and the bow across the back) and builds
+each weapon's scabbard in code, sized to that weapon's own mesh: a sheath for a blade, a ring for a haft, a quiver
+for a bow or a crossbow. The three laws, the switch and the bones' names are unchanged, and a player's own `_sh` file
+still wins. Every weapon of a covered kind wears one now, where the mod covered seventy-one named meshes. The pins
+stand on our own biped (`tools/ownBiped.mjs`), which the armour bakes read too.
+
 ## What the mod is, and what was ported
 
 On OpenMW the mod is ART plus a SETTING. The art: seventy-one `_sh`
@@ -110,7 +119,7 @@ NiBSAnimationNode over an empty sheath); twelve carry quivers of five
 to seven slots (the bows and crossbows); the three addons carry the
 same thirteen marked nodes, and `Bip01 AttachWeapon` unmarked.
 
-**Pins:** test/formats/morrowind/ws1_sheathing.test.js (12). tools/mutants/ws1.json (35).
+**Pins:** test/formats/morrowind/ws1_sheathing.test.js (13). tools/mutants/ws1.json (35).
 
 ## AUDIT-WS (2026-09-17, Mac: "Please audit this")
 

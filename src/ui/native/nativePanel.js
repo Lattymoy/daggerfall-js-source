@@ -53,7 +53,7 @@ export async function loadImg({ renderer, fetchBytes, palette }, name) {
   const img = new ImgFile();
   img.load(await fetchBytes(name), name, palette);
   const bmp = img.getDFBitmap();
-  const packed = await packImgTexture(renderer, name);
+  const packed = await packImgTexture(renderer, name, { fetchBytes, palette });   // OWN-WORK4: the data door, for a screen painted from its own picker
   return { tex: packed ?? renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height };
 }
 

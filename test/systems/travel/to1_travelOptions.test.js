@@ -13,8 +13,8 @@
 import { test } from 'node:test';
 import { travelDriveForward, travelLookaheadFor } from '../../../src/systems/travel/travelAutopilot.js';   // AUDIT-FIELD F8
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { TRAVEL_ART, travelPicture } from '../../../src/ui/travel/travelArt.js';   // OWN-WORK4: our own three pictures
 
 import {
   N, NE, E, SE, S, SW, W, NW, DIRECTIONS, sameCompass,
@@ -86,7 +86,6 @@ const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace
 
 const root = new URL('../../..', import.meta.url);
 const read = (rel) => readFileSync(new URL(rel, root), 'utf8');
-const VENDOR = 'vendor/travel-options/';   // OWN-WORK3: the author's three pictures, which stay until wave 3
 
 // ─── our own record (OWN-WORK3: the mod's settings, presets and string table left the tree) ───
 
@@ -169,25 +168,16 @@ test('TO1: the words - our own, key for key (OWN-WORK3: the mod\'s string table 
   assert.equal(directionText(0), TRAVEL_OPTIONS_TEXT.DirectionNone);
 });
 
-test('TO1: the three vendored textures are the bundle\'s own pixels, byte for byte as this tree carries them', () => {
-  // the BYTES are pinned in test/tooling/vendorIntegrity.test.js, which is the
-  // house's one home for a vendored file's hash; what is held here is
-  // that they are the right SHAPE and that the record says what they are.
-  const png = (rel) => readFileSync(new URL(rel, root));
-  const size = (b) => [b.readUInt32BE(16), b.readUInt32BE(20)];
-  assert.deepEqual(size(png(`${VENDOR}Textures/TOcontrolUI.png`)), [320, 27], 'the control strip');
-  assert.deepEqual(size(png(`${VENDOR}Textures/TOportsOff.png`)), [45, 11], 'the ports button, off');
-  assert.deepEqual(size(png(`${VENDOR}Textures/TOportsOn.png`)), [45, 11], '...and on');
-  // the README says they are RE-ENCODES and names the tool that makes them
-  const readme = read(`${VENDOR}README.md`);
-  assert.match(readme, /RE-ENCODES, not the author's own files/);
-  assert.match(readme, /tools\/travelOptionsAssets\.mjs/);
-  assert.match(read('tools/travelOptionsAssets.mjs'), /export function encodePng/);
-  // OWN-WORK3: our listing of the art, each file and its sha256, in place of the bundle's manifest
-  const listing = JSON.parse(read(`${VENDOR}travel-options.files.json`));
-  assert.deepEqual([listing.ModTitle, listing.ModVersion, listing.ModAuthor], ['TravelOptions', '1.11', 'Hazelnut']);
-  assert.deepEqual(listing.Files, ['TOcontrolUI.png', 'TOportsOff.png', 'TOportsOn.png']);
-  for (const f of listing.Files) assert.equal(createHash('sha256').update(png(`${VENDOR}Textures/${f}`)).digest('hex'), listing.Sha256[f], f);
+test('TO1: the three pictures are our own (OWN-WORK4), at the sizes and under the names the windows read', () => {
+  assert.deepEqual(Object.keys(TRAVEL_ART), ['TOcontrolUI', 'TOportsOff', 'TOportsOn']);
+  const size = (n) => { const p = travelPicture(n); return [p.width, p.height]; };
+  assert.deepEqual(size('TOcontrolUI'), [320, 27], 'the control strip');
+  assert.deepEqual(size('TOportsOff'), [45, 11], 'the ports button, off');
+  assert.deepEqual(size('TOportsOn'), [45, 11], '...and on');
+  assert.deepEqual([...PORTS_SIZE], size('TOportsOn'), 'the size the map draws the button at');
+  assert.notDeepEqual([...travelPicture('TOportsOff').data], [...travelPicture('TOportsOn').data], 'two states, two pictures');
+  assert.equal(travelPicture('TOnothing'), null);
+  assert.equal(existsSync(new URL('vendor/travel-options', root)), false, 'no file of the release\'s is carried');
 });
 
 // ─── the settings, resolved ───────────────────────────────────────────

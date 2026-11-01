@@ -17,7 +17,7 @@ import {
 import { PLANS, VARIANT_COUNT, sailKey, stayLines, LARGE_BOAT_RIG, MAST, FORESTAY_IN } from '../../../src/world/ships/largeBoatRig.js';
 import { largeBoatArt, registerLargeBoatArt, _resetLargeBoatArt, LARGE_BOAT_ARCHIVE, TEX } from '../../../src/world/ships/largeBoatArt.js';
 import { RUDDER_DEG } from '../../../src/world/ships/galleonModel.js';
-import { loadComeSailAwayModels, CSA_MODEL_URLS, CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL, decodeMeshGeometry } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
+import { loadComeSailAwayModels, CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL, decodeMeshGeometry } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { animatorOf, colliderBounds } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { HULL, HULL_BUILDS, MOD_LARGE_BOAT_BUILD, hullBuild, setShipStanding } from '../../../src/systems/naval/navalShips.js';
 import { gangwaySide, gangwayFoot, GANGWAY_SIDE, MOD_LARGE_BOAT_GANGWAY } from '../../../src/systems/naval/quays.js';
@@ -28,11 +28,12 @@ import { pathHash } from '../../../src/world/unityAnimator.js';
 import { CAPSULE_HEIGHT, CAPSULE_RADIUS } from '../../../src/player/motor.js';
 import { scene, MODELS } from '../../csaScene.mjs';
 import { sweepRig } from '../../shipSweep.mjs';
+import { ownFile } from '../../ownBoats.mjs';
 
-const VENDOR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const csa = JSON.parse(readFileSync(new URL('prefabs.json', VENDOR), 'utf8'));
-const modMeshes = JSON.parse(readFileSync(new URL('meshes.json', VENDOR), 'utf8'));
-const bin = readFileSync(new URL('meshes.bin', VENDOR));
+// OWN-WORK4: our boats' files (test/ownBoats.mjs) - the base the port's ship copies her small things out of
+const csa = ownFile('prefabs.json');
+const modMeshes = ownFile('meshes.json');
+const bin = ownFile('meshes.bin');
 const bakeJson = JSON.parse(readFileSync(new URL('../../../src/assets/ships/largeBoat.json', import.meta.url), 'utf8'));
 const built = largeBoatPrefab(bakeJson, csa);
 const comps = [...csa.components, ...built.components];
@@ -352,18 +353,18 @@ test('SHIPS-2 THE LOADER: the new carrack over hull 4 and the new large boat ove
   assert.ok(CARRACK_MODEL_URL.endsWith('src/assets/ships/carrack.json') && LARGE_BOAT_MODEL_URL.endsWith('src/assets/ships/largeBoat.json'));
   const warns = [];
   const log = { warn: (...w) => warns.push(w) };
-  const all = await loadComeSailAwayModels(fileFetch(), CSA_MODEL_URLS, log);
+  const all = await loadComeSailAwayModels(fileFetch(), undefined, log);
   assert.deepEqual([all.galleon, all.carrack, all.largeBoat], [true, true, true]);
   assert.ok(all.prefab(LARGE_BOAT_PREFAB_ID).children.some((c) => c.name === LARGE_BOAT_HULL_NODE), 'her hull under prefab 112411');
   assert.equal(warns.length, 0);
-  const missing = await loadComeSailAwayModels(fileFetch(LARGE_BOAT_MODEL_URL), CSA_MODEL_URLS, log);
+  const missing = await loadComeSailAwayModels(fileFetch(LARGE_BOAT_MODEL_URL), undefined, log);
   assert.deepEqual([missing.galleon, missing.carrack, missing.largeBoat], [true, true, false], 'her model missing: the mod\'s own boat, the others theirs');
   assert.equal(warns.length, 1);
-  assert.match(String(warns[0][0]), /large boat did not load - hull 1 stands as the mod's own/);
-  const broken = await loadComeSailAwayModels(fileFetch(null, { url: CARRACK_MODEL_URL, json: { ...bakeJson, parts: [] } }), CSA_MODEL_URLS, log);
+  assert.match(String(warns[0][0]), /large boat did not load - hull 1 stands as our own/);
+  const broken = await loadComeSailAwayModels(fileFetch(null, { url: CARRACK_MODEL_URL, json: { ...bakeJson, parts: [] } }), undefined, log);
   assert.deepEqual([broken.galleon, broken.carrack, broken.largeBoat], [true, false, true], 'the carrack\'s broken: hers alone');
   assert.equal(warns.length, 2);
-  assert.match(String(warns[1][0]), /carrack would not build - hull 4 stands as the mod's own/);
+  assert.match(String(warns[1][0]), /carrack would not build - hull 4 stands as our own/);
   assert.throws(() => largeBoatPrefab({ ...bakeJson, parts: [] }, csa), /the bake has no /);
 });
 

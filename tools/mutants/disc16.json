@@ -60,8 +60,8 @@
   {
     "name": "DISC16-B-Inertia-Scale-at-DISC14-B",
     "file": "src/systems/modSettings.js",
-    "old": "            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 1.0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
-    "new": "            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
+    "old": "            'Which moves go in steps: only sheathing and swinging, or the sway, the trail and the recoil too.',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 1.0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
+    "new": "            'Which moves go in steps: only sheathing and swinging, or the sway, the trail and the recoil too.',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
     "tests": [
       "test/combat/disc16.test.js",
       "test/combat/weapon/ww1_weaponwidget.test.js"

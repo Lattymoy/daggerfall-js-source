@@ -18,10 +18,10 @@ import { DEEP_WATERS_FISH_TEMPLATES } from '../../src/systems/deepWater/deepWate
 import { isStackable } from '../../src/systems/inventory.js';
 import { setModSetting, latchModLoaded, modLatchedOn } from '../../src/systems/modSettings.js';
 import { effectKindLoaded, WATER_WALKING_SILENT_KIND } from '../../src/systems/effects.js';
+import { ownFile } from '../ownBoats.mjs';
 
-const DIR = new URL('../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (p) => JSON.parse(readFileSync(new URL(p, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const f = Math.fround;
 const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }), particleRandom: () => 0.5 });
 const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
@@ -85,9 +85,15 @@ function scene(opts = {}) {
 
 // ── the rows, the mint, the shelf ─────────────────────────────────────────────
 
-test('CSA-H: the two rows are the bundle\'s ItemTemplates.json field for field (its trailing comma read as DFU\'s parser reads it), registered past the classic table; neither stacks; the mint is SetItem off the row - the template\'s name, price and weight - with the host\'s UID', () => {
-  const raw = readFileSync(new URL('../../vendor/come-sail-away/ItemTemplates.json', import.meta.url), 'utf8');
-  assert.deepEqual(CSA_ITEM_TEMPLATES, JSON.parse(raw.replace(/,(\s*)\]\s*$/, '$1]')));
+/** OWN-WORK4: the two rows as Come Sail Away 2.1's ItemTemplates.json held them, kept as the table they are (the file
+ *  is retired): a changed field still fails here. */
+const SHIPPED_TEMPLATES = Object.freeze([
+  { index: 1320, name: 'Parts of', baseWeight: 120, hitPoints: 1400, capacityOrTarget: 400, basePrice: 4000, enchantmentPoints: 1250, rarity: 1, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 0, worldTextureRecord: 0, playerTextureArchive: 212, playerTextureRecord: 11, hasNoEncumbrance: false },
+  { index: 1321, name: 'Deed to', baseWeight: 0.5, hitPoints: 1400, capacityOrTarget: 400, basePrice: 6000, enchantmentPoints: 1250, rarity: 1, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 0, worldTextureRecord: 0, playerTextureArchive: 209, playerTextureRecord: 5, hasNoEncumbrance: false },
+]);
+
+test('CSA-H: the two rows are Come Sail Away 2.1\'s ItemTemplates field for field, registered past the classic table; neither stacks; the mint is SetItem off the row - the template\'s name, price and weight - with the host\'s UID', () => {
+  assert.deepEqual(CSA_ITEM_TEMPLATES, SHIPPED_TEMPLATES);
   assert.deepEqual([BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE], [1320, 1321]);
   assert.deepEqual([templateByIndex(1320).name, templateByIndex(1320).basePrice, templateByIndex(1321).name, templateByIndex(1321).baseWeight], ['Parts of', 4000, 'Deed to', 0.5]);
   const deed = mintBoatItem(1321, 42);

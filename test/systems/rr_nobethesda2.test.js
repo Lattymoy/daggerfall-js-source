@@ -10,9 +10,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClassicPictures } from '../../src/formats/classicPictures.js';
 import { setTextureDeriveContext, textureDeriveContext, clearVendorTextures, preloadTextureRecord, decodedTextureTopDown } from '../../src/systems/textureReplacement.js';
-import { installRoleplayRealismItems, _resetRoleplayRealismItems, rriDerivedSpecs, rriDerivedPicture } from '../../src/systems/roleplayRealismItems/rriInstall.js';
-import { RRI_SPRITES, RRI_DERIVED } from '../../src/systems/roleplayRealismItems/rriIndex.js';
+import { installRoleplayRealismItems, _resetRoleplayRealismItems } from '../../src/systems/roleplayRealismItems/rriInstall.js';
+import { RRI_SPRITES } from '../../src/systems/roleplayRealismItems/rriIndex.js';
+import { DYE_COLORS } from '../../src/characters/dyes.js';
 import { installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED, RR_BUTTON_RECORDS } from '../../src/systems/roleplayRealism/rrVariants.js';
+import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4: our week button
 import { drawMessageBox, registerButtonArt, _setMessageBoxArtForTests } from '../../src/ui/messageBox.js';
 import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 
@@ -33,52 +35,58 @@ async function withDeriveContext(fn) {
   try { await fn(); } finally { setTextureDeriveContext(prior); }
 }
 
-test('NO-BETHESDA2 RRI: a derived sprite is built from its spec through the classic reader and never fetched; a file is still fetched', async () => {
+test('NO-BETHESDA2 RRI, OWN-WORK4: all 280 pictures are ours, built over their classic records - the helmet\'s masks and the Dwarven helmets too; no derived spec is built and nothing is fetched', async () => {
   _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismItems();
-  const fetched = [];
+  const fetched = [], pictured = [];
   const { asked, pic, art } = fakeArt();
+  const ownArt = { ...art, picture: async (archive, record) => { pictured.push(`${archive}_${record}`); return pic; } };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => { fetched.push(String(url)); throw new Error('no fetch in this pin'); };
   try {
     await withDeriveContext(async () => {
-      assert.equal(installRoleplayRealismItems({ fetchBytes: async (n) => { fetched.push(n); return new Uint8Array([1]); }, art }), 280);
-      const specs = await rriDerivedSpecs();
-      assert.deepEqual(Object.keys(specs), [...RRI_DERIVED], 'the lazy listing is the one the index names');
+      assert.equal(installRoleplayRealismItems({ art: ownArt }), 280);
       assert.ok(await preloadTextureRecord(522, 10, 0, 'Mask', null), 'the helmet mask answers');
-      assert.deepEqual(asked, [specs['522_10-0_Mask']], 'built from its own spec');
-      const got = decodedTextureTopDown(522, 10, 0, 'Mask', null);
-      assert.deepEqual([got.width, got.height, [...got.rgba]], [3, 2, [...pic.data]], 'the built picture is what the door draws');
-      assert.deepEqual(fetched, [], 'no file is asked for a derived picture');
-      assert.ok(await preloadTextureRecord(522, 10, 0, 'Albedo', null, { decode: async () => pic }));
-      assert.deepEqual(fetched, ['522_10-0'], 'the authors\' own helmet is still a file');
-      await assert.rejects(rriDerivedPicture('522_10-0', art), /no spec/, 'a file\'s name has no spec');
+      assert.ok(await preloadTextureRecord(522, 10, 0, 'Albedo', null));
+      assert.ok(await preloadTextureRecord(522, 10, 0, 'Albedo', DYE_COLORS.Dwarven));
+      assert.deepEqual(pictured, ['245_27', '245_27', '245_27'], 'the mask, the cap and the Dwarven cap: ours, over the classic helm');
+      assert.equal(decodedTextureTopDown(522, 10, 0, 'Albedo', DYE_COLORS.Dwarven).width, RRI_SPRITES['522_10-0_Dwarven'][0], 'at the picture\'s own size');
+      assert.deepEqual(asked, [], 'no derived spec is built');
+      assert.deepEqual(fetched, [], 'no file is asked');
     });
-  } finally { clearVendorTextures(); _resetRoleplayRealismItems(); _resetModSettings(); }
+  } finally { globalThis.fetch = realFetch; clearVendorTextures(); _resetRoleplayRealismItems(); _resetModSettings(); }
 });
 
-test('NO-BETHESDA2 RR: 197_4-0, 197_5-0 and the seventeen buttons are built through the classic reader; the authors\' five are fetched', async () => {
+test('NO-BETHESDA2 RR: 197_4-0 is built through the classic reader; OWN-WORK4: our six keepers and the week button are painted, nothing is fetched', async () => {
   _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismArt();
   setModSetting('roleplay-realism', 'variantNpcs', true);
   setModSetting('roleplay-realism', 'RefinedTraining.refinedTraining', true);
   const fetched = [], uploads = [];
-  const { asked, pic, art } = fakeArt();
+  const { asked, art } = fakeArt();
   try {
     await withDeriveContext(async () => {
-      assert.equal(installRoleplayRealismArt({ fetchBytes: async (n) => { fetched.push(n); return new Uint8Array([1]); }, art }), 7);
-      for (const r of [4, 5]) assert.ok(await preloadTextureRecord(197, r), `197_${r}-0`);
-      assert.deepEqual(asked, [RR_DERIVED['197_4-0'], RR_DERIVED['197_5-0']]);
-      assert.ok(await preloadTextureRecord(197, 0, 0, 'Albedo', null, { decode: async () => pic }));
-      assert.deepEqual(fetched, ['197_0-0'], 'only the authors\' own keeper is a file');
-      // the training window's button: the message box uploads the built picture, never a fetched one
+      const realFetch = globalThis.fetch;
+      globalThis.fetch = async (u) => { fetched.push(String(u)); throw new Error('no fetch'); };
+      try {
+        assert.equal(installRoleplayRealismArt({ art }), 7);
+        for (const r of [4, 5]) assert.ok(await preloadTextureRecord(197, r), `197_${r}-0`);
+        assert.deepEqual(asked, [RR_DERIVED['197_4-0']], 'only the edit-free spec is built; 197_5-0 is ours (it carried the author\'s paint)');
+        assert.equal(decodedTextureTopDown(197, 5, 0, 'Albedo', null).width, 61, 'our keeper at the 182_1 keeper\'s size');
+        assert.ok(await preloadTextureRecord(197, 0, 0, 'Albedo', null, { decode: async () => assert.fail('our keeper is no file') }));
+        assert.equal(decodedTextureTopDown(197, 0, 0, 'Albedo', null).width, 47, 'our keeper, at the classic keeper\'s size');
+      } finally { globalThis.fetch = realFetch; }
+      assert.deepEqual(fetched, [], 'nothing is a file');
+      // the training window's button: the message box uploads our picture, never a fetched one
       const renderer = { drawScreenQuad() {}, setScreenScissor() {}, clearScreenScissor() {}, uploadTexture: (kind, key, c) => { uploads.push({ key, ...c }); return `tex:${key}`; } };
       _setMessageBoxArtForTests({ slices: Array(9).fill('slice'), buttons: new Map(), renderer });
       const box = { x: 0, y: 0, w: 66, h: 66, textW: 0, rows: [], buttons: [{ button: 21, rect: [0, 0, 32, 16] }] };
       drawMessageBox(renderer, { ox: 0, oy: 0, s: 1 }, { fnt: {} }, box);
       for (let i = 0; i < 20 && !uploads.length; i++) await new Promise((r) => setTimeout(r, 0));
-      assert.deepEqual(asked.at(-1), RR_DERIVED['BUTTONS.RCI_21-0']);
+      assert.equal(asked.length, 1, 'no button is built from a spec');
       assert.equal(uploads.length, 1);
-      assert.deepEqual([uploads[0].key, uploads[0].width, uploads[0].height], ['buttons:21', 3, 2]);
-      assert.deepEqual([...new Uint8Array(uploads[0].colors.buffer, 0, 24)], [...pic.data], 'the built picture is the button');
-      assert.deepEqual(fetched, ['197_0-0']);
-      assert.ok(RR_BUTTON_RECORDS.every((r) => RR_DERIVED[`BUTTONS.RCI_${r}-0`]?.file === 'BUTTONS.RCI'), 'every button is a BUTTONS.RCI record\'s spec');
+      assert.deepEqual([uploads[0].key, uploads[0].width, uploads[0].height], ['buttons:21', 32, 16]);
+      assert.deepEqual([...new Uint8Array(uploads[0].colors.buffer)], [...rrWeekButtonPicture().data], 'our week button is the button');
+      assert.deepEqual(fetched, []);
+      assert.ok(Object.keys(RR_DERIVED).every((n) => !n.startsWith('BUTTONS.RCI_')), 'no button spec: the relabelled ones carried the author\'s letters');
     });
   } finally {
     _setMessageBoxArtForTests(null);
@@ -95,8 +103,7 @@ const digestOf = (p) => {
 };
 /** Taken from the mods' own PNGs (HEAD before NO-BETHESDA2) - and the rebuilt pictures gave the same. */
 const SHIPPED = {
-  'vendor/roleplay-realism/derived-art.json': 'ddac68c744cfdcfac860c3bece88a919ec765c86f5b247c09bbe7fb610395be6',
-  'vendor/roleplay-realism-items/derived-art.json': '20163f43fef9ab321c186359aa95d8e8ec622cc3304d2c4f69c9d63d355c3136',
+  'src/systems/roleplayRealism/rrDerivedArt.json': 'ab1479d4bc22f9b2a204176837efd1c0cc892116fc9d6a7aae0124f170183bd3',   // OWN-WORK4: 197_4-0 alone, the edit-free spec
 };
 
 test('NO-BETHESDA2 with ARENA2: every spec builds at its picture\'s size, and the pictures are the ones the mods shipped', { skip: !ARENA2 && 'ARENA2_PATH not set' }, async () => {
@@ -105,8 +112,7 @@ test('NO-BETHESDA2 with ARENA2: every spec builds at its picture\'s size, and th
     const specs = JSON.parse(rd(listing));
     const h = createHash('sha256');
     for (const name of Object.keys(specs).sort()) {
-      const p = RRI_SPRITES[name] ? await rriDerivedPicture(name, art) : await art.build(specs[name]);
-      if (RRI_SPRITES[name]) assert.deepEqual([p.width, p.height], RRI_SPRITES[name].slice(0, 2), name);
+      const p = await art.build(specs[name]);
       if (name.startsWith('BUTTONS.RCI_')) assert.deepEqual([p.width, p.height], [32, 16], name);
       h.update(`${name}=${digestOf(p)}\n`);
     }

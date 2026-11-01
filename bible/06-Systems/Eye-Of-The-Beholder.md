@@ -12,6 +12,16 @@ the findings. Vendor record and the permission line:
 `vendor/eye-of-the-beholder/README.md`. Registry row:
 `01-Overview/Mod-Registry.md`.
 
+**OWN-WORK4 (2026-10-31, the owner).** "Our goal is no latching onto other mod authors or needing permissions. A
+proper 1 to 1 recreation for everything." vendor/eye-of-the-beholder is retired (`01-Overview/Own-Work.md`): the
+assembly, its IL dump, the manifest, the settings, presets and states files and the author's 166 death sprites left
+the tree. Daggerfall's own 2,869 stay specs, now `src/player/eyeOfTheBeholder/eotbDerived.json`, beside
+`eotbSpriteInfo.json` (the XML offsets). The death is ours (`player/eyeOfTheBeholder/eotbDeath.js`): its first frame
+is the set's class struck, records 10-14 of its TEXTURE file (the werewolf's and the wereboar's too), and its second
+is that picture laid on the ground by our code, a shadow under it. The tables, frames, keys and settings are unchanged.
+The four setting descriptions still in the author's words are ours now. An `[IL_xxxx]` below names an offset in the 2.1
+assembly, not a file here.
+
 ## What is and is not ported
 
 The arc called itself **1:1** in six places. AUDIT-EOTB counted the
@@ -23,7 +33,7 @@ this section is the count as the IL has it.
 **THE ASSEMBLY IS IN THE TREE.** `vendor/eye-of-the-beholder/Eye Of
 The Beholder.dll` is the `.dfmod`'s own TextAsset, taken out of the
 archive Mac handed over (`Eye_of_the_Beholder-762-2-1-1775438888.zip`)
-by `tools/eotbIl.mjs` through the port's UnityFS reader, and
+by `tools/eotbIl.mjs` (RETIRED) through the port's UnityFS reader, and
 `vendor/eye-of-the-beholder/il/Eye_Of_The_Beholder.il.txt` is every
 method body of it as `tools/ilDump.py` prints it (dnfile + dncil;
 `monodis` segfaults on this one). The `[IL]` offsets cited beside every
@@ -719,7 +729,7 @@ on input."** And the uploaded file: the shipped
 
 The `.dfmod` is a UnityFS archive and `Eye Of The Beholder.dll` rides
 in it as a TextAsset. The port's own reader (`formats/unity/unityBundle.js`)
-opened it - nothing new was needed - and `tools/eotbIl.mjs` writes the
+opened it - nothing new was needed - and `tools/eotbIl.mjs` (RETIRED) writes the
 54,272-byte assembly out beside the art. `tools/ilDump.py` (dnfile +
 dncil, both installed through the proxy; `monodis` segfaults on this
 assembly) prints every method body, and that dump is vendored at
@@ -1057,7 +1067,7 @@ has the provenance and the archive numbers.
 doctrine, `test/tooling/doctrine.test.js`, reddened on them: the suite had run before `git add`, the AUDIT-TO1 trap). The
 pack is a loose-file archive with no manifest of its own, so its authority is a listing generated from the archive,
 GrimoireUI's way: `vendor/class-skins/class-skins.files.json`, every vendored file mapped to the archive path it came
-from, the archive's sha256 beside it, and `tools/classSkinsListing.mjs` proving each vendored file is that path's
+from, the archive's sha256 beside it; `tools/classSkinsListing.mjs` (RETIRED) proved each vendored file was that path's
 bytes. The art moved under `Textures/` (the doctrine's directory rows hold art alone, as Eye of the Beholder's do),
 and the row is `vendor/class-skins/Textures/`. Building the listing turned up the pirate's `1529_3-1_.png`: SKIN2's
 first cut skipped it as a stray and renumbered record 3's 0, 2, 3 into three frames, and it is the walk's passing
@@ -1121,6 +1131,32 @@ same `spriteOffset` ACRO-SHORT's class scale is, so the body, its placement and 
 kept and divided by the scale with the figure it centres. A DEPARTURE from the mod's XML (Port-Ledger A, SPELL-SHORT).
 Pins: `test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js` (1: the vendored PNGs measured, every spell record and
 cast frame within 6% of her idle, every other set and record unscaled); mutants `tools/mutants/rpt1026_misc.json` (3).
+
+**OWN-WORK4 (2026-10-31, the owner).** "Our goal is no latching onto other mod authors or needing permissions. A
+proper 1 to 1 recreation for everything." The pack is retired (`01-Overview/Own-Work.md`). Each skin is now its classic
+sheet (`from` in `player/classSkins.js`, the TEXTURE file its pictures were sized by), built from the player's ARENA2
+and painted by `player/classSkinArt.js`. ART_PAL's cloth, drape and metal ramps take the class's colours. A trim, a
+pattern, a sash, a belt, an insignia or a shield is drawn on the frame's own regions. The indices, labels, setting and
+sizes stay. The frame counts are the sheets' own: the female healer casts in five, the bounty hunter's last record has
+four, and the sorceress's record 8 has seven. The female monk moves to the robed woman's sheet (485). ACRO-SHORT's
+scale belongs to TEXTURE.483, so the adventurer carries it too. Pins: `test/player/ownwork4_classskins.test.js`,
+`test/net/skin2_class_skins.test.js`; mutants `tools/mutants/ownwork4_classskins.json` (9).
+
+| class | sheet (m / f) | outer / inner / metal | marks | why |
+|---|---|---|---|---|
+| Acrobat | 482 / 483 | red / yellow / bronze | motley diamonds, a yellow sash | a tumbler's motley reads as a performer at any distance |
+| Assassin | 490 / 489 | red / black / iron | a black belt | a blood-red hood and cloak over black, seen once and from behind |
+| Burglar | 480 / 479 | grey / brown / iron | olive patches | drab for the night; the cloth is mended, not bought |
+| Bounty Hunter | 482 | leather / black / iron | a studded leather bandolier | worn leather and dark iron; the bandolier carries the trade |
+| Dark Acolyte | 486 | black / olive / black | bone hems, a bone skull | necromancy's black robe and bone |
+| Dark Brotherhood | 482 | black / black / black | a red sash, a red hand | the Brotherhood's black and its red hand |
+| Daggerfall Adventurer | 483 | green / leather / steel | none | a traveller no guild has marked yet |
+| Healer | 486 / 485 | white / gold / gold | gold hems, a gold sun | the temple's white, edged in gold |
+| Healer with Shield | 486 | as the healer | a white shield with a sun on the left arm | the healer who stands in the line |
+| Monk | 486 / 485 | saffron / brown / bronze | a rope belt | one robe and one cord |
+| Nightblade | 490 / 489 | blue / black / steel | silver hems, a silver moon | the night's blue and a spellcasting thief's moon |
+| Pirate | 484 | linen striped red / blue / bronze | a red waist sash | the sailor's stripes and navy |
+| Sorcerer | 488 / 477 | purple / purple / gold | gold hems, a gold eye | purple for power, the armour gilded |
 
 ## SPRITE-FLICKER (2026-10-07): the view that went back
 

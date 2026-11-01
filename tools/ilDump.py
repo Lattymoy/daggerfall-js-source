@@ -2,8 +2,10 @@
 """EOTB-IL: dump every method body of a .NET assembly as CIL.
 
     pip install dnfile dncil
-    python3 tools/ilDump.py "vendor/eye-of-the-beholder/Eye Of The Beholder.dll" \
-        > vendor/eye-of-the-beholder/il/Eye_Of_The_Beholder.il.txt
+    python3 tools/ilDump.py "<path to>/Eye Of The Beholder.dll" > /tmp/Eye_Of_The_Beholder.il.txt
+
+(OWN-WORK4: the dumps no longer live in the tree; a mod's assembly is dumped
+where it is read.)
 
 Optional trailing arguments filter by type name substring
 (`EyeOfTheBeholder PlayerBillboard`). `monodis` segfaults on this

@@ -52,7 +52,7 @@ async function world({ mine = {}, wall = null } = {}) {
   const meshes = { getGpuMesh: async (id) => gpu[id] ?? null, cpuModels: new Map([[WAGON_MODEL_ID, syntheticWagon41214()]]) };
   const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4) });
   const names = { p1: 'Ann' };
-  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => 0, fetchFn: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }), decode, selfId: () => 'me', peerName: (id) => names[id] ?? null, log: { error() {}, warn() {}, info() {} } });
+  const pool = createHorseCartPool({ renderer, meshes, collider: () => col, now: () => 0, horsePicture: decode, selfId: () => 'me', peerName: (id) => names[id] ?? null, log: { error() {}, warn() {}, info() {} } });
   const calls = [];
   pool.attach({
     view: () => ({ state: { HorseName: '' }, moving: null, deployed: null, horse: null, teamFollowing: false, horseFollowing: false, persistence: true, ...mine }),

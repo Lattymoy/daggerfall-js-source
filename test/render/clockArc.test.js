@@ -246,8 +246,10 @@ test('CLK3: the moon\'s phase is continuous on the clock for the dome - no 45-de
   assert.match(dome, /const ph = phases \?\? lunarPhaseFractionsFromMinutes\(skyMinutes\);/);   // TIME1: the moons' date is the sky's (`skyMinutes`, the one clock when unhanded)
   assert.doesNotMatch(dome, /lunarPhasesFromMinutes/, 'the ladder is not the dome\'s to read any more');
   // the systems keep the step - the readers the page names (the enchant ctx's moon arms, the lycanthrope's full
-  // moon, the Dynamic Skies mod's own), unconditionally: a file that stops reading DFU's step goes red, not quiet
-  for (const f of ['src/scenes/hostEnchant.js', 'src/systems/lycanthropy.js', 'src/systems/dynamicSkies/dynamicSkies.js']) {
+  // moon), unconditionally: a file that stops reading DFU's step goes red, not quiet. PIN MOVED (OWN-WORK4): Dynamic
+  // Skies is our own sky now, and a sky takes the dome's fraction - its moons stand where the dome puts them
+  assert.match(read('src/systems/dynamicSkies/dynamicSkies.js'), /const fractions = lunarPhaseFractionsFromMinutes\(classicMinutes\);/);
+  for (const f of ['src/scenes/hostEnchant.js', 'src/systems/lycanthropy.js']) {
     const s = read(f);
     assert.match(s, /lunarPhasesFromMinutes|isFullMoonFromMinutes|lunarPhase\(/, `${f}: reads DFU's step`);
     assert.doesNotMatch(s, /lunarPhaseFraction/, `${f}: a system reads DFU's step, never the dome's fraction`);

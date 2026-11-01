@@ -19,8 +19,8 @@
 // (ui/native/nativePanel.js), so the strip is the mod's 320x27 image at the
 // top, centred, whatever the canvas is.
 //
-// THE ART is the mod's own `TOcontrolUI.png`, vendored and re-encoded
-// out of its bundle (vendor/travel-options/README.md says how and why).
+// THE ART is our own strip (OWN-WORK4, travelArt.js), painted at the
+// mod's 320x27 under the name it read, `TOcontrolUI`.
 // RATE-LAW (2026-10-04, Mac: "Remove travel options dials"): the mod's
 // spinner is gone. It was DFU's `UpDownSpinner` (CHAR02I1.IMG, the mod
 // ships no art for it - :106-110) over the strip's own recess after
@@ -33,6 +33,7 @@ import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
 import { TRAVEL_OPTIONS_TEXT as T } from '../../systems/travel/travelOptionsText.js';
 import { firstHotkey } from '../../systems/dialogShortcuts.js';
+import { travelPicture } from './travelArt.js'; // OWN-WORK4: our own strip
 
 /** TravelControlUI.cs:19-24 - every rect on the strip, virtual pixels
  *  of the 320x200 screen. The panel itself is `baseSize` at the top
@@ -63,35 +64,28 @@ export const UD_SPINNER = Object.freeze({ w: 15, h: 20, value: [0, 7, 15, 6] });
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
 let _art = null;
-/** The strip's own image, from the vendor folder. A host that cannot
- *  load it gets a panel that draws its text on a plain bar rather than
+/** The strip's image, our own (travelArt.js). A host that cannot upload
+ *  it gets a panel that draws its text on a plain bar rather than
  *  nothing: the journey is still steerable, which is what the mod's own
  *  `Debug.LogError` arm (:207-210) leaves the player with. */
 export async function preloadTravelControlArt(deps = {}) {
   if (_art) return _art;
-  const fetchFn = deps.fetchFn ?? globalThis.fetch;
-  const url = new URL('../../../vendor/travel-options/Textures/TOcontrolUI.png', import.meta.url).href;
   let strip = null;
   try {
-    const res = await fetchFn(url);
-    if (res?.ok) {
-      const bytes = new Uint8Array(await res.arrayBuffer());
-      const { decodePng } = await import('../../systems/textureReplacement.js');
-      const { toScreenOrder } = await import('../../formats/color32Order.js');
-      // AUDIT-TO1 E1: a decoded PNG is `{ width, height, data }`, which is
-      // what uploadTexture EATS, not what drawImg DRAWS - drawImg reads
-      // `img.tex` (ui/native/nativePanel.js), and a decode stored as-is has none,
-      // so drawScreenQuad ran untextured and painted the whole 320x27
-      // strip as one opaque white bar with the yellow text on top. The
-      // port's idiom for a vendored PNG on a screen quad is
-      // handheldTorches.js:"frame++;" - toScreenOrder, then upload, then
-      // `{ tex, w, h }` (loadImg's own shape, ui/native/nativePanel.js:"export async function loadImg").
-      const px = toScreenOrder(await decodePng(bytes));
-      const tex =
-        deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ??
-        null;
-      strip = tex ? { tex, w: px.width, h: px.height, key: 'TOcontrolUI' } : null;
-    }
+    const { toScreenOrder } = await import('../../formats/color32Order.js');
+    // AUDIT-TO1 E1: a picture is `{ width, height, data }`, which is
+    // what uploadTexture EATS, not what drawImg DRAWS - drawImg reads
+    // `img.tex` (ui/native/nativePanel.js), and a picture stored as-is has none,
+    // so drawScreenQuad ran untextured and painted the whole 320x27
+    // strip as one opaque white bar with the yellow text on top. The
+    // port's idiom for a picture on a screen quad is
+    // handheldTorches.js:"frame++;" - toScreenOrder, then upload, then
+    // `{ tex, w, h }` (loadImg's own shape, ui/native/nativePanel.js:"export async function loadImg").
+    const px = toScreenOrder(travelPicture('TOcontrolUI'));
+    const tex =
+      deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ??
+      null;
+    strip = tex ? { tex, w: px.width, h: px.height, key: 'TOcontrolUI' } : null;
   } catch {
     strip = null;
   }

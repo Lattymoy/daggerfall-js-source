@@ -107,7 +107,7 @@ if (isMain(import.meta.url)) {
   const r = bakeCloak({
     source: readFileSync(SOURCE),
     pngs: Object.fromEntries(Object.entries(PAINTING).map(([t, p]) => [t, readFileSync(p)])),
-    skeleton: readFileSync(RETAIL_SKELETON),
+    skeleton: RETAIL_SKELETON,
   });
   console.log(`${SOURCE}: ${r.mesh.indices.length / 3} triangles, ${r.mesh.positions.length / 3} vertices`);
   for (const p of r.paintings) {

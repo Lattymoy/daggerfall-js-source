@@ -55,20 +55,20 @@
     ]
   },
   {
-    "name": "N8-the-vendored-key-spelled-from-the-wrong-folder",
+    "name": "N8-the-set-admits-a-frame-past-the-last",
     "file": "src/systems/handheldTorches.js",
-    "old": "export const inVendoredSet = (table, file) =>\n  table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
-    "new": "export const inVendoredSet = (table, file) => table == null || `../vendor/handheld-torches/Textures/${file}` in table;",
+    "old": "  return derivedTorchSpec(name) != null || Object.hasOwn(TORCH_ART, name) || Object.hasOwn(TORCH_OVER, name);",
+    "new": "  return derivedTorchSpec(name) != null || Object.hasOwn(TORCH_ART, name) || Object.hasOwn(TORCH_OVER, name) || /_\\d+-\\d+$/.test(name);",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/systems/fieldconsole1.test.js"
     ]
   },
   {
-    "name": "N8-the-vendored-set-read-inside-out",
+    "name": "N8-the-set-forgets-our-pictures",
     "file": "src/systems/handheldTorches.js",
-    "old": "  table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
-    "new": "  table == null || !(`../../vendor/handheld-torches/Textures/${file}` in table);",
+    "old": "  return derivedTorchSpec(name) != null || Object.hasOwn(TORCH_ART, name) || Object.hasOwn(TORCH_OVER, name);",
+    "new": "  return derivedTorchSpec(name) != null || Object.hasOwn(TORCH_OVER, name);",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/systems/fieldconsole1.test.js"

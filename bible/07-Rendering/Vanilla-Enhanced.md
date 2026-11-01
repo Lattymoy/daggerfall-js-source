@@ -13,6 +13,16 @@ approved carrying it: he chose "Bundle the files in the repo", answered
 "Approved and yes", and said "Put it in the codebase". **VE4 ships three of
 its mods** under the one exception the doctrine records (below).
 
+**OWN-WORK4 (2026-10-31, the owner).** "Our goal is no latching onto other mod authors or needing permissions. A
+proper 1 to 1 recreation for everything." carademono's pictures are retired with `vendor/vanilla-enhanced/` and
+`public/art/vanilla-enhanced/` (`01-Overview/Own-Work.md`). The three mods keep their keys, titles, switches,
+dependencies, arrays, and the records and sizes they dress (`src/systems/ownTextures/ownTexturePacks.json`). Each
+picture is built when it is first drawn, from the player's own classic record, by our rule
+(`src/systems/ownTextures/ownTextureRules.js`): the Base an edge-aware upscale (a cubic held inside its four nearest
+texels), our grain and a gentle grade; Masked Roads the same, the paving's own stones raised and lit; Snowless Swamps'
+winter its summer record. The build runs in the pack's worker and is kept a while. The card credits DFO Online.
+Pins: `test/systems/ownwork4_textures.test.js`, `tools/mutants/ownwork4_textures.json`.
+
 ## What the mod is, and why it needed an exception
 
 Five manifests stand in its tree:
@@ -161,7 +171,7 @@ inside it that does not say derived, and an allow-list row inside it. A second
 derived pack needs its own approval, written in the doctrine.
 
 **THE PACK** (`vendor/vanilla-enhanced/README.md`).
-`tools/vanillaEnhancedVendor.mjs` reads the repository at commit
+`tools/vanillaEnhancedVendor.mjs` (RETIRED, OWN-WORK4) read the repository at commit
 `c0c9041c101ba8b57feb93258dda7a37be1b9433` and writes three mods, each in its
 own directory: the Base (its manifest's 1,246 PNGs), Masked Roads (its own 9)
 and Snowless Swamps and Jungles (its 160). That is 1,436 pictures, 22.4 MB,
@@ -339,7 +349,7 @@ and nothing of it reaches the wire.
 **Mutants:**
 - `tools/mutants/ve1.json`: 35, all dead. VE3's three on the attach retired
   with it.
-- `tools/mutants/ve4.json`: 24, all dead.
+- `tools/mutants/ve4.json`: 23, all dead (OWN-WORK4: re-aimed at the builds, one added).
 - `tools/mutants/overhauls.json`: its texture-panel record re-aimed by
   content.
 

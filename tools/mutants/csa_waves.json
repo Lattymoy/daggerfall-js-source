@@ -1132,15 +1132,5 @@
     "tests": [
       "test/world/csa_particles.test.js"
     ]
-  },
-  {
-    "name": "CSA-F-extractor-named-dropped",
-    "file": "tools/comeSailAwayExtract.mjs",
-    "old": "export const NAMED_MATERIALS = Object.freeze(['CurrentMaterial']);",
-    "new": "export const NAMED_MATERIALS = Object.freeze([]);",
-    "tests": [
-      "test/systems/comeSailAway/csa_waves.test.js",
-      "test/tooling/csa_models.test.js"
-    ]
   }
 ]

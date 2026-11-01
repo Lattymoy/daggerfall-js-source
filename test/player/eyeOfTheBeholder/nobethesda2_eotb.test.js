@@ -1,12 +1,12 @@
 // NO-BETHESDA2 (2026-10-31, the owner: "ensuring they are not implemented"): EYE OF THE BEHOLDER'S DAGGERFALL PICTURES,
 // REBUILT. 2869 of the mod's 3035 sprites are TEXTURE records exactly (tools/classicDerive.mjs). They are carried as
-// specs (vendor/eye-of-the-beholder/derived.json) and built from the player's ARENA2 (eotbSprite.js); the author's own
-// 166 stay files. Pinned on TEXTURE files and palettes made here, so CI needs no ARENA2. The last pin builds every spec
-// from the real data when ARENA2_PATH is set.
+// specs (src/player/eyeOfTheBeholder/eotbDerived.json) and built from the player's ARENA2 (eotbSprite.js). OWN-WORK4: the
+// author's own 166, the death, are ours (eotbDeath.js). Pinned on TEXTURE files and palettes made here, so CI needs no
+// ARENA2. The last pin builds every sprite from the real data when ARENA2_PATH is set.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   derivedSpriteUrl, isDerivedSprite, derivedSpriteSpec, eotbSpriteUrl, spriteCount, decodeSprite, buildDerivedSprite,
@@ -24,29 +24,37 @@ import { TextureFile } from '../../../src/formats/textureFile.js';
 import { DFPalette } from '../../../src/formats/dfPalette.js';
 import { horseLookCode } from '../../../src/systems/horse/horseCoats.js';
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
-import { EOTB_DERIVED, eotbHas } from '../../../tools/lib/eotbPictures.mjs';
+import { EOTB_DERIVED, eotbHas, eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
+import { deathKeys, deathSpec, layDown } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
+import { STATE_TABLES, TABLE_FRAMES, ARCHIVE_FOOT, ARCHIVE_HORSE, ARCHIVE_LYCAN, stateFor } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 
-const ROOT = new URL('../../../', import.meta.url).pathname;
-const DIR = join(ROOT, 'vendor/eye-of-the-beholder');
-const MANIFEST = JSON.parse(readFileSync(join(DIR, 'eyeofthebeholder.dfmod.json'), 'utf8')).Files
-  .filter((f) => /\.png$/i.test(f)).map((f) => basename(f).replace(/\.png$/i, ''));
-const FILES = readdirSync(join(DIR, 'Textures'), { recursive: true }).filter((n) => /\.png$/i.test(n)).map((n) => basename(n).replace(/\.png$/i, ''));
+/** OWN-WORK4 (2026-10-31): every sprite the bundle shipped (its manifest's 3035 PNGs, left the tree with the directory),
+ *  named by the tables: each archive's records, each record's frames. */
+const MANIFEST = (() => {
+  const out = new Set();
+  const kinds = [[ARCHIVE_FOOT, 16, (t) => !t.endsWith('Horse') && !t.endsWith('Lycan')], [ARCHIVE_HORSE, 5, (t) => t.endsWith('Horse')], [ARCHIVE_LYCAN, 2, (t) => t.endsWith('Lycan')]];
+  for (const [base, n, mine] of kinds) for (let a = base; a < base + n; a++) for (const t of Object.keys(STATE_TABLES).filter(mine)) {
+    for (let o = 0; o < 8; o++) for (let f = 0; f < TABLE_FRAMES[t]; f++) out.add(`${a}_${stateFor(t, o).record}-${f}`);
+  }
+  return [...out];
+})();
 const SPECS = Object.keys(EOTB_DERIVED);
+const OURS = deathKeys(EOTB_DERIVED);
 
-test('NO-BETHESDA2: every picture the mod names is a file or a spec - never both, never neither - and nothing else stands there', () => {
-  assert.equal(MANIFEST.length, 3035, 'the bundle ships 3035 sprites');
+test('NO-BETHESDA2: every picture the mod names is a spec or ours - never both, never neither - and nothing else stands there', () => {
+  assert.equal(MANIFEST.length, 3035, 'the bundle shipped 3035 sprites');
   assert.equal(SPECS.length, 2869, 'the ones that are Daggerfall\'s own records, rebuilt');
-  assert.equal(FILES.length, 166, 'the author\'s own, carried');
-  const files = new Set(FILES), specs = new Set(SPECS), named = new Set(MANIFEST);
-  assert.deepEqual(MANIFEST.filter((n) => files.has(n) && specs.has(n)), [], 'never both');
-  assert.deepEqual(MANIFEST.filter((n) => !files.has(n) && !specs.has(n)), [], 'never neither');
-  assert.deepEqual([...files, ...specs].filter((n) => !named.has(n)), [], 'and nothing the bundle never shipped');
+  assert.equal(OURS.length, 166, 'OWN-WORK4: the author\'s own death, ours now');
+  const ours = new Set(OURS), specs = new Set(SPECS), named = new Set(MANIFEST);
+  assert.deepEqual(MANIFEST.filter((n) => ours.has(n) && specs.has(n)), [], 'never both');
+  assert.deepEqual(MANIFEST.filter((n) => !ours.has(n) && !specs.has(n)), [], 'never neither');
+  assert.deepEqual([...ours, ...specs].filter((n) => !named.has(n)), [], 'and nothing the bundle never shipped');
   for (const [k, s] of Object.entries(EOTB_DERIVED)) {
     assert.ok(Array.isArray(s.from) && s.from.length === 3 && s.from.every(Number.isInteger), `${k}: [archive, record, frame]`);
     assert.ok(['PAL.PAL', 'ART_PAL.COL'].includes(s.pal), `${k}: the palette its copy was drawn in`);
   }
   assert.equal(eotbHas('112364_0-0'), true, 'a spec');
-  assert.equal(eotbHas('112364_10-0'), true, 'a file');
+  assert.equal(eotbHas('112364_10-0'), true, 'ours');
   assert.equal(eotbHas('112364_0-1'), false, 'the idle has no second frame');
 });
 
@@ -55,7 +63,12 @@ test('NO-BETHESDA2: a derived key\'s URL is a marker naming its spec; in node, a
   assert.equal(isDerivedSprite('DF:112364_0-0'), true);
   assert.equal(isDerivedSprite('/assets/112364_10-0.png'), false);
   assert.deepEqual(derivedSpriteSpec('DF:112364_0-0'), EOTB_DERIVED['112364_0-0']);
-  assert.equal(derivedSpriteUrl('112364_10-0'), null, 'an author\'s own file is a file');
+  assert.equal(derivedSpriteUrl('112364_10-0'), 'DF:112364_10-0', 'OWN-WORK4: our death, the same marker');
+  assert.deepEqual(derivedSpriteSpec('DF:112364_10-0'), { from: [481, 10, 0], pal: 'ART_PAL.COL' }, 'the class struck: TEXTURE.481 record 10, the idle\'s palette');
+  assert.deepEqual(derivedSpriteSpec('DF:112364_13-1'), { from: [481, 13, 0], pal: 'PAL.PAL', laid: 3 }, 'and laid down, the view\'s own');
+  assert.deepEqual(derivedSpriteSpec('DF:112380_12-1'), { from: [264, 12, 0], pal: 'PAL.PAL', laid: 2 }, 'the werewolf\'s too');
+  assert.deepEqual(derivedSpriteSpec('DF:112369_10-1'), EOTB_DERIVED['112369_10-1'], 'a death eotbDerived.json names stays its own');
+  assert.equal(derivedSpriteUrl('112364_15-0') && deathSpec('112364_15-0', EOTB_DERIVED), null, 'no other record is a death');
   assert.equal(derivedSpriteUrl('LA:male:x:15-0:lll'), null);
   assert.equal(eotbSpriteUrl('112364_0-0'), null, 'node: no glob, no specs');
   assert.equal(spriteCount(), 0);
@@ -71,6 +84,22 @@ test('NO-BETHESDA2: a derived key decodes through the build path - its spec buil
   assert.deepEqual([...px.colors], [...worldOrderColors({ width: 2, height: 2, data: top }).colors], 'bottom row first, as a decoded PNG');
   await assert.rejects(decodeSprite('DF:112382_0-0', { build: async () => { throw new Error('TEXTURE.495: missing'); } }), /missing/);
   await assert.rejects(decodeSprite('DF:999_0-0', { build }), /no spec/);
+});
+
+test('OWN-WORK4: our death decodes through the same path - the struck record built, then laid down by our code', async () => {
+  const asked = [];
+  const W2 = 4, H2 = 10, top = new Uint8Array(W2 * H2 * 4);
+  for (let y = 0; y < H2; y++) for (let x = 1; x < 3; x++) top.set([20 * y, 100, 50, 255], (y * W2 + x) * 4);   // a figure two wide, ten tall
+  const build = async (spec) => { asked.push(spec); return { width: W2, height: H2, data: top.slice() }; };
+  const stood = await decodeSprite('DF:112364_12-0', { build });
+  assert.deepEqual(asked, [{ from: [481, 12, 0], pal: EOTB_DERIVED['112364_2-0'].pal }], 'frame 0: the record alone');
+  assert.deepEqual([stood.width, stood.height], [W2, H2]);
+  const laid = await decodeSprite('DF:112364_12-1', { build });
+  assert.deepEqual(asked[1], { from: [481, 12, 0], pal: EOTB_DERIVED['112364_2-0'].pal }, 'frame 1: the same record');
+  const want = worldOrderColors(layDown({ width: W2, height: H2, data: top }, 2));
+  assert.deepEqual([laid.width, laid.height], [want.width, want.height]);
+  assert.ok(laid.width > laid.height, 'lying: longer than it is tall');
+  assert.deepEqual([...laid.colors], [...want.colors], 'turned onto the ground, bottom row first');
 });
 
 test('NO-BETHESDA2: the builds are paced - a few milliseconds a task - and one that fails costs only itself', async () => {
@@ -196,7 +225,7 @@ test('NO-BETHESDA2: a derived mounted picture keeps its rider spared - the masks
   assert.ok([...spare.keys()].some((i) => !spare[i] && view[i] !== was[i]), 'and the horse\'s were');
 });
 
-test('NO-BETHESDA2: every spec builds from the player\'s own TEXTURE file, at the spec\'s size or its record\'s; every mounted picture at its rider mask\'s', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
+test('NO-BETHESDA2: every spec builds from the player\'s own TEXTURE file, at the spec\'s size or its record\'s; every mounted picture at its rider mask\'s; OWN-WORK4: and our every death', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
   const A2 = /** @type {string} */ (process.env.ARENA2_PATH);
   const cp = createClassicPictures(async (name) => readFileSync(join(A2, name)));
   const sizes = new Map();
@@ -211,4 +240,14 @@ test('NO-BETHESDA2: every spec builds from the player\'s own TEXTURE file, at th
     sizes.set(key, `${built.width}x${built.height}`);
   }
   for (const [key, m] of Object.entries(RIDER_MASKS)) assert.equal(sizes.get(key), m.split(':')[0], `${key}: the rider mask is the built picture's`);
+  const EOTB = eotbPictures({ arena2: A2 });
+  for (const key of OURS) {
+    const p = await EOTB.picture(key);
+    let drawn = 0;
+    for (let i = 3; i < p.data.length; i += 4) if (p.data[i]) drawn++;
+    assert.ok(drawn > 100, `${key}: a body drawn (${drawn})`);
+    const view = Number(key.split('_')[1].split('-')[0]) - 10;
+    if (key.endsWith('-1') && view % 4) assert.ok(p.width > p.height, `${key}: lying across the view`);
+    if (key.endsWith('-1') && !(view % 4)) assert.ok(p.height < 60, `${key}: lying toward the eye, foreshortened (${p.height})`);
+  }
 });

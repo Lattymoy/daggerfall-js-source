@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // FORAGE1-FORAGE2 (2026-09-28): FORAGING 1.7 (Harbinger451) - THE
 // INSTALL. What ForagingMain.Init/Awake/Start do (IL_0251-IL_0513): the
-// twelve templates, the author's seven pictures, the quest list, the six
+// twelve templates, the seven pictures (our own, OWN-WORK4), the quest list, the six
 // tools' and five foods' UseItem, the console command, and (FORAGE3) the
 // three loot hooks' subscriptions. The law is
 // systems/foraging/foragingLaw.js; the record is bible/06-Systems/Foraging.md.
@@ -58,6 +58,7 @@ import {
   templateByIndex,
 } from '../item/itemTemplates.js';
 import { addVendorTextures } from '../textureReplacement.js';
+import { foragingPicture } from './foragingArt.js'; // OWN-WORK4: our own pictures
 import { registerQuestList } from '../quest/questLists.js';
 import { registerCommand, gateConsoleCommand } from '../consoleCommands.js';
 import { modSetting } from '../modSettings.js';
@@ -401,13 +402,9 @@ export function onForagingEnemyDeath(entity, opts = {}) {
 
 // ---- the install -------------------------------------------------------
 
-/** The author's pictures, from the vendored Textures/ (standIn: these archives exist only as this art). */
-export const foragingTextureUrl = (archive) =>
-  new URL(`../../../vendor/foraging/Textures/${archive}_0-0.png`, import.meta.url).href;
-
 let _installed = false;
-/** Once, at the scene boot (ensureAudio, before any quest bridge is built). `fetchBytes` is a test's seam. */
-export function installForaging({ fetchBytes = null } = {}) {
+/** Once, at the scene boot (ensureAudio, before any quest bridge is built). */
+export function installForaging() {
   if (_installed) return 0;
   _installed = true;
   registerQuestList(FORAGING_QUEST_LIST, foragingOn);
@@ -431,13 +428,7 @@ export function installForaging({ fetchBytes = null } = {}) {
   registerContainerLootHandler(FORAGING_VENDOR, onForagingContainerLoot);
   registerTabledLootHandler(FORAGING_VENDOR, onForagingPileLoot);
   registerEnemyDeathHandler(FORAGING_VENDOR, onForagingEnemyDeath);
-  const load =
-    fetchBytes ??
-    (async (archive) => {
-      const r = await fetch(foragingTextureUrl(archive));
-      if (!r.ok) throw new Error(`foraging ${archive}: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
+  // OWN-WORK4: our own seven pictures, painted when first asked (foragingArt.js; standIn: these archives are only them)
   return addVendorTextures(
     FORAGING_TEXTURE_ARCHIVES.map((archive) => ({
       archive,
@@ -445,8 +436,9 @@ export function installForaging({ fetchBytes = null } = {}) {
       frame: 0,
       standIn: true,
       lazy: true,
+      selfBuilt: true,
       fileName: `${archive}_0-0`,
-      load: () => load(archive),
+      build: async () => foragingPicture(archive),
     })),
   );
 }

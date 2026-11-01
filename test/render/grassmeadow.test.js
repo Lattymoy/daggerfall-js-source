@@ -419,8 +419,8 @@ test('MEADOW1: the owner\'s colours on any ground - the fragment stage\'s own te
     f.main();
     return f.globals.o.slice(0, 3);
   };
-  // VE's temperate grass base, measured (public/art/vanilla-enhanced/base/302_2-0.png); a darker and a greyer green
-  const VE = [49.3 / 255, 72.8 / 255, 39.1 / 255], SWAMP = [44 / 255, 63 / 255, 38 / 255], MOUNTAIN = [59 / 255, 67 / 255, 46 / 255];
+  // a temperate grass base (OWN-WORK4: a made-up green, no pack's measure); a darker and a greyer green
+  const VE = [50 / 255, 74 / 255, 40 / 255], SWAMP = [44 / 255, 63 / 255, 38 / 255], MOUNTAIN = [59 / 255, 67 / 255, 46 / 255];
   const petal = [153 / 255, 56 / 255, 113 / 255], leaf = [74 / 255, 106 / 255, 67 / 255], dry = [78 / 255, 79 / 255, 55 / 255];
   for (const lane of [GRASS_TONES[1], GRASS_TONES_CLASSIC[1]]) {
     const artGround = meadowArtGround(lane);

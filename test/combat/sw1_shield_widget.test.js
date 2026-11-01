@@ -6,8 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { inflateSync } from 'node:zlib';
+import { readFileSync, existsSync } from 'node:fs';
 
 import {
   createShieldWidget, readShieldWidgetSettings, shieldTextureIndex, shieldTextureName,
@@ -314,133 +313,67 @@ test('SW1: the FPS-models seam is recorded and not carried', () => {
 // ---- the sprite door -------------------------------------------------
 
 import {
-  shieldTextureFileName, shieldWidgetSize, shieldSpritePath, SHIELD_ARCHIVE_SIZES,
-  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES,
+  shieldTextureFileName, shieldWidgetSize, shieldWidgetImage, SHIELD_ARCHIVE_SIZES,
+  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, SHIELD_WIDGET_PRESETS,
 } from '../../src/combat/shieldWidgetAssets.js';
+import { paintShieldFace, shieldFaceOf, SHIELD_KINDS, SHIELD_PAINTS } from '../../src/combat/shieldFaces.js';
+import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 
-test('SW1: the 600 sprites are VENDORED, and every one is on disk under the name the mod asks for', () => {
-  // They are the modder's own art, not a render of ARENA2 - classic
-  // Daggerfall draws no first-person shield, so there is no original for
-  // them to repaint. That is what separates them from Weapon Widget's
-  // 173 and Seasons of the Iliac Bay's flats, which the doctrine keeps
-  // out of the repo; these ship with the port and it works out of the box.
-  const dir = 'vendor/shield-widget/Textures';
-  const names = readdirSync(dir);
-  assert.equal(names.length, SHIELD_TEXTURE_COUNT, `${names.length} sprites vendored`);
-  for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) {
-    assert.ok(existsSync(`${dir}/${shieldTextureFileName(i)}.png`), `${shieldTextureFileName(i)}.png is missing`);
+test('OWN-WORK4: the 600 sprites are our own paintings - every slot painted in code at the size the registry promises, a 1-bit cutout, one slot one picture; the mod\'s folder is gone', () => {
+  assert.equal(existsSync('vendor/shield-widget'), false, 'no picture of the mod is carried');
+  assert.deepEqual(SHIELD_KINDS, ['buckler', 'round', 'kite', 'tower']);
+  assert.equal(SHIELD_PAINTS.length, 10, 'a paint for every material group');
+  assert.deepEqual(shieldFaceOf(0), { kind: 'buckler', group: 0, tier: 0, frame: 0 });
+  assert.deepEqual(shieldFaceOf(150 + 13 * 5 + 4), { kind: 'round', group: 3, tier: 1, frame: 4 });
+  assert.deepEqual(shieldFaceOf(599), { kind: 'tower', group: 9, tier: 2, frame: 4 });
+  assert.equal(shieldFaceOf(600), null);
+  const seen = new Set();
+  for (const i of [0, 4, 37, 150, 299, 300, 449, 450, 599]) {
+    const pic = paintShieldFace(i, shieldWidgetSize(i));
+    assert.deepEqual({ width: pic.width, height: pic.height }, shieldWidgetSize(i));
+    for (let k = 3; k < pic.data.length; k += 4) assert.ok(pic.data[k] === 0 || pic.data[k] === 255, `${i}: alpha 0 or 255`);
+    assert.deepEqual(paintShieldFace(i, shieldWidgetSize(i)).data, pic.data, `${i}: the same slot, the same picture`);
+    seen.add(Buffer.from(pic.data).toString('base64'));
   }
-  // and every one is an INDEXED png with a transparent index - the
-  // encoding the README's measurement rests on
-  for (const n of ['112360_0-0.png', '112362_2-0.png', '112363_29-4.png']) {
-    const b = readFileSync(`${dir}/${n}`);
-    assert.equal(b[25], 3, `${n} is colour type 3 (indexed)`);
-    assert.ok(b.includes(Buffer.from('PLTE')), `${n} carries a palette`);
-    assert.ok(b.includes(Buffer.from('tRNS')), `${n} carries the transparent index`);
-  }
+  assert.equal(seen.size, 9, 'every slot its own');
+  // the wear shows: a battered shield is not its pristine twin, frame for frame
+  const pristine = paintShieldFace(300 + 2 * 5, shieldWidgetSize(300)), battered = paintShieldFace(300 + 22 * 5, shieldWidgetSize(300));
+  assert.notDeepEqual(battered.data, pristine.data);
+  assert.equal(paintShieldFace(0, null), null);
 });
 
 // ---- SW4: WHICH WAY UP ------------------------------------------------
 //
 // SW4 (2026-09-19, Mac: "the new shield mod we integrated shows the
-// shields upside down") - THE ART WAS MIRRORED, NOT THE CODE.
-//
-// The door reads `toScreenOrder`, which is right: a screen quad hands
-// p.y = 0 (the rect's TOP) the pair `v0`, nothing flips at upload, so
-// row 0 of the PNG lands at the top of the sprite (HT3's law, the same
-// one the held torch and the weapon widget's loose arm take). What was
-// wrong was the 600 files: they had been written straight out of the
-// mod's Unity texture buffer, which is bottom-up, without the flip that
-// a PNG's top-down rows need. Every sprite shipped vertically mirrored,
-// so the shield's rim sat at the bottom of the screen and the arm
-// reached DOWN into it from the sky.
-//
-// The picture says which way up it is, and says it the same way for all
-// 600: a first-person shield is held, so the gauntleted forearm runs off
-// the BOTTOM edge of the sprite, while the top edge - open air above the
-// rim - is empty. Measured over the whole set, right way up:
-//   - the top row is 100% transparent in all 600 (max opaque pixels: 0);
-//   - the bottom row is opaque in all 600, never below 69 pixels, which
-//     is 44% of the narrowest sprite's width.
-// Mirrored, that reads exactly backwards - 600 touching the top, 0
-// touching the bottom - so this pin is what a re-extraction that forgets
-// the flip runs into.
+// shields upside down"): the picture says which way up it is. A
+// first-person shield is held, so the forearm runs off the BOTTOM edge
+// of the sprite, while the top edge - open air above the rim - is empty.
+// Read through the door, all 600: a door that flipped the rows would
+// read exactly backwards.
 
-/** A minimal reader for the shape these 600 are in - indexed (colour
- *  type 3), 8 bits, not interlaced - handed back as index rows plus the
- *  set of indices tRNS calls fully transparent. Enough to ask which rows
- *  hold paint, which is the only question SW4 has. */
-function readIndexedPng(buf) {
-  let p = 8, w = 0, h = 0, depth = 0, colourType = -1, trns = null;
-  const idat = [];
-  while (p + 8 <= buf.length) {
-    const len = buf.readUInt32BE(p);
-    const type = buf.toString('latin1', p + 4, p + 8);
-    const data = buf.subarray(p + 8, p + 8 + len);
-    if (type === 'IHDR') {
-      w = data.readUInt32BE(0); h = data.readUInt32BE(4); depth = data[8]; colourType = data[9];
-      assert.equal(data[12], 0, 'not interlaced');
-    } else if (type === 'IDAT') idat.push(Buffer.from(data));
-    else if (type === 'tRNS') trns = Buffer.from(data);
-    else if (type === 'IEND') break;
-    p += 12 + len;
-  }
-  assert.equal(colourType, 3, 'indexed');
-  assert.equal(depth, 8, '8 bits an index');
-  const raw = inflateSync(Buffer.concat(idat));
-  const stride = w + 1;   // one filter byte a row, then one index a pixel
-  assert.equal(raw.length, stride * h, `${w}x${h} unpacks to ${raw.length}`);
-  const rows = [];
-  let prev = Buffer.alloc(w);
-  for (let y = 0; y < h; y++) {
-    const f = raw[y * stride];
-    const cur = Buffer.from(raw.subarray(y * stride + 1, y * stride + 1 + w));
-    for (let x = 0; x < w; x++) {       // bpp is 1, so `a` and `c` are one byte back
-      const a = x > 0 ? cur[x - 1] : 0, b = prev[x], c = x > 0 ? prev[x - 1] : 0;
-      if (f === 1) cur[x] = (cur[x] + a) & 255;
-      else if (f === 2) cur[x] = (cur[x] + b) & 255;
-      else if (f === 3) cur[x] = (cur[x] + ((a + b) >> 1)) & 255;
-      else if (f === 4) {
-        const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
-        cur[x] = (cur[x] + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 255;
-      } else assert.equal(f, 0, `filter ${f}`);
-    }
-    rows.push(cur); prev = cur;
-  }
-  const clear = new Set();
-  if (trns) for (let i = 0; i < trns.length; i++) if (trns[i] === 0) clear.add(i);
-  return { width: w, height: h, rows, clear };
-}
-
-test('SW4: all 600 sprites are the right way up - the arm runs off the bottom edge and the top edge is empty', () => {
-  const dir = 'vendor/shield-widget/Textures';
-  let topTouch = 0, worstBottom = Infinity, worstName = '';
+test('SW4: all 600 sprites are the right way up through the door - the arm runs off the bottom edge and the top edge is empty', async () => {
+  let worstBottom = Infinity;
   for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) {
-    const name = `${shieldTextureFileName(i)}.png`;
-    const { width, height, rows, clear } = readIndexedPng(readFileSync(`${dir}/${name}`));
-    assert.deepEqual({ width, height }, shieldWidgetSize(i), `${name} is not the size the registry promises`);
-    const opaque = (row) => { let c = 0; for (let x = 0; x < width; x++) if (!clear.has(row[x])) c++; return c; };
-    const top = opaque(rows[0]), bottom = opaque(rows[height - 1]);
-    if (top > 0) topTouch++;
-    if (bottom < worstBottom) { worstBottom = bottom; worstName = name; }
-    assert.equal(top, 0, `${name} paints ${top} pixels on its TOP row - the art is mirrored`);
-    assert.ok(bottom >= width * 0.4, `${name} paints only ${bottom} of ${width} on its BOTTOM row - the arm is not there`);
+    const img = await shieldWidgetImage(i);
+    const { width, height, colors } = img;
+    assert.deepEqual({ width, height }, shieldWidgetSize(i), `${shieldTextureFileName(i)} is not the size the registry promises`);
+    const opaque = (y) => { let c = 0; for (let x = 0; x < width; x++) if (colors[(y * width + x) * 4 + 3]) c++; return c; };
+    assert.equal(opaque(0), 0, `${shieldTextureFileName(i)} paints its TOP row - the picture is mirrored`);
+    worstBottom = Math.min(worstBottom, opaque(height - 1) / width);
   }
-  assert.equal(topTouch, 0, 'no sprite touches the top edge');
-  assert.equal(worstBottom, 69, `the thinnest arm is 69 pixels (${worstName})`);
+  assert.ok(worstBottom > 0.2, `the thinnest arm and rim still a fifth of the bottom row (${worstBottom.toFixed(3)})`);
+  assert.equal(await shieldWidgetImage(-1), null);
+  assert.equal(await shieldWidgetImage(0), await shieldWidgetImage(0), 'painted once');
 });
 
-test('SW4: the shield door keeps the PNG’s rows, as the port’s other two screen sprites do', () => {
-  // The third member of HT3's list. `toColor32` here would flip a
-  // top-down raster into a bottom-up one and mirror all 600 again, this
-  // time in code.
+test('SW4: the shield door keeps the painting’s rows, as the port’s other two screen sprites do', () => {
   const door = readFileSync('src/combat/shieldWidgetAssets.js', 'utf8');
   assert.match(door, /import \{ toScreenOrder \} from '\.\.\/formats\/color32Order\.js';/);
-  assert.match(door, /return toScreenOrder\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/);
+  assert.match(door, /return picture \? toScreenOrder\(picture\) : null;/);
   assert.equal((door.match(/toColor32/g) ?? []).length, 1, 'named once, in the comment that says why it is not used');
 });
 
-test('SW1: a flat index spells TextureReplacement\u2019s own name, and every size is known up front', () => {
+test('SW1: a flat index spells TextureReplacement’s own name, and every size is known up front', () => {
   assert.equal(shieldTextureFileName(0), '112360_0-0');
   assert.equal(shieldTextureFileName(4), '112360_0-4', 'five frames to a record');
   assert.equal(shieldTextureFileName(5), '112360_1-0');
@@ -449,21 +382,24 @@ test('SW1: a flat index spells TextureReplacement\u2019s own name, and every siz
   assert.equal(shieldTextureFileName(599), '112363_29-4');
   assert.deepEqual([...SHIELD_ARCHIVES], [112360, 112361, 112362, 112363]);
   assert.equal(SHIELD_WIDGET_MOD.guid, 'e59d8114-e9a2-4e8e-84e8-4666475dbb9f');
-  // the size is known for all 600 WITHOUT loading one - the widget
-  // measures before it uploads, and a shield with no size draws nothing
+  // the size is known for all 600 WITHOUT painting one - the widget measures before it uploads, and a shield with no
+  // size draws nothing
   for (let i = 0; i < SHIELD_TEXTURE_COUNT; i++) assert.ok(shieldWidgetSize(i), `no size for ${i}`);
   assert.deepEqual(shieldWidgetSize(0), SHIELD_ARCHIVE_SIZES[112360]);
   assert.deepEqual(shieldWidgetSize(599), SHIELD_ARCHIVE_SIZES[112363]);
   assert.equal(shieldWidgetSize(-1), null);
   assert.equal(shieldWidgetSize(SHIELD_TEXTURE_COUNT), null);
-  // and the path is the vendored one the bundler carries
-  assert.equal(shieldSpritePath(0), 'vendor/shield-widget/Textures/112360_0-0.png');
-  // the URL is built the way handheldTorches.js builds its own - the
-  // archive, record and frame interpolated separately inside a
-  // `new URL(..., import.meta.url)`, which is what lets the bundler
-  // carry them. Measured over a real build: all 600 names reach it.
-  const door = readFileSync('src/combat/shieldWidgetAssets.js', 'utf8');
-  assert.match(door, /new URL\(`\.\.\/\.\.\/vendor\/shield-widget\/Textures\/\$\{archive\}_\$\{record\}-\$\{frame\}\.png`, import\.meta\.url\)/);
+});
+
+test('OWN-WORK4: our presets - each sets one section to its defaults, or moves every slider of it half the way toward one end of its range', () => {
+  const keys = MOD_SETTINGS['shield-widget'].keys;
+  assert.equal(SHIELD_WIDGET_PRESETS.length, 9);
+  for (const { title, values } of SHIELD_WIDGET_PRESETS) {
+    const sliders = Object.entries(values).filter(([, v]) => typeof v === 'number');
+    for (const [k, v] of Object.entries(values)) assert.ok(keys[k], `${title}: ${k} is a setting`);
+    const steps = sliders.map(([k, v]) => { const d = keys[k]; return v === d.default ? 0 : (v - d.default) / ((v > d.default ? d.max : d.min) - d.default); });
+    assert.ok(steps.every((x) => x === 0) || steps.every((x) => Math.abs(x - 0.5) < 1e-9), `${title}: ${steps}`);
+  }
 });
 
 test('SW1: a widget whose door answers no size draws nothing', () => {

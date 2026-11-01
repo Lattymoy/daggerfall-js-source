@@ -405,10 +405,10 @@
     ]
   },
   {
-    "name": "WINDFALL1-shiver-unsaturated",
+    "name": "WINDFALL1-shiver-strength-dropped",
     "file": "src/render/windfallSway.js",
-    "old": "  out[1] = wf.profile.shiverAmplitude * sat * cap;",
-    "new": "  out[1] = wf.profile.shiverAmplitude * cap;",
+    "old": "  out[1] = wf.profile.shiverAmplitude * strength;",
+    "new": "  out[1] = wf.profile.shiverAmplitude;",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -423,28 +423,28 @@
     ]
   },
   {
-    "name": "WINDFALL1-lateral-085-lost",
+    "name": "WINDFALL1-across-dropped",
     "file": "src/render/windfallSway.js",
-    "old": "  return (d * 0.15 + right * (dot(d, right) * 0.85)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.400000036 + 0.8);",
-    "new": "  return (d * 0.15 + right * (dot(d, right) * 0.0)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.400000036 + 0.8);",
+    "old": "  float across = dot(vec3(uWindfallAxis.x, 0.0, uWindfallAxis.y), right);",
+    "new": "  float across = 1.0;",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
   },
   {
-    "name": "WINDFALL1-spread-04",
+    "name": "WINDFALL1-reach-widened",
     "file": "src/render/windfallSway.js",
-    "old": "  return (d * 0.15 + right * (dot(d, right) * 0.85)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.400000036 + 0.8);",
-    "new": "  return (d * 0.15 + right * (dot(d, right) * 0.85)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.8 + 0.8);",
+    "old": "float windfallReach(float own) { return 0.7 + 0.6 * own; }",
+    "new": "float windfallReach(float own) { return 0.6 + 0.8 * own; }",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
   },
   {
-    "name": "WINDFALL1-cell-6m",
+    "name": "WINDFALL1-wood-lost",
     "file": "src/render/windfallSway.js",
-    "old": "  float cell = fract(sin(dot(mod(floor(w * 0.0833333358), 4096.0) * 12.0, vec2(12.9898, 78.233))) * 43758.5469);",
-    "new": "  float cell = fract(sin(dot(mod(floor(w * 0.166666672), 8192.0) * 6.0, vec2(12.9898, 78.233))) * 43758.5469);",
+    "old": "  float sway = sin((wood + own * 0.125) * 6.28318548 + uWindfallSway.z);",
+    "new": "  float sway = sin(own * 6.28318548 + uWindfallSway.z);",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]

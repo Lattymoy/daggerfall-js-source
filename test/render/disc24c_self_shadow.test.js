@@ -10,7 +10,7 @@
 //  - A LAMP PAST THE NEAREST TWO redraws every third frame, so there the silhouette trailed the player by up to two
 //    frames and caught up in a jerk;
 //  - TURNED TO FACE EACH LAMP, which the mod's card never is (Unity draws a ShadowsOnly renderer's shadow in its own
-//    transform - Eye_Of_The_Beholder.il IL_4e42), so walking round a lamp swung the silhouette through a half turn.
+//    transform - Eye Of The Beholder 2.1's IL_4e42), so walking round a lamp swung the silhouette through a half turn.
 //
 // Driven through the real Renderer and its real shadow pass on a recording fake GL (sc1_shadowcache's), with the card
 // flagged as player/eyeOfTheBeholder/eotbBody.js flags it.

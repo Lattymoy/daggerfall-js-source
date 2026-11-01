@@ -21,10 +21,10 @@ import {
 } from '../../../src/world/prefabColliders.js';
 import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { quatRotate } from '../../../src/world/quat.js';
+import { ownFile } from '../../ownBoats.mjs';
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 const geometry = (c) => (c.m_Mesh?.mesh ? MODELS.geometry(c.m_Mesh.mesh) : c.m_Mesh?.builtin ? BUILTIN_COLLIDER_MESHES[c.m_Mesh.builtin] : null);
 const close = (a, b, eps = 1e-4) => Math.abs(a - b) <= eps;
 const closeV = (a, b, eps = 1e-4, msg = '') => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => assert.ok(close(v, b[i], eps), `${msg} [${i}] ${v} vs ${b[i]}`)); };
@@ -145,12 +145,12 @@ test('CSA-C: a built hull under the ray - its hull, masts and doors, its trigger
   assert.equal(down.node.name, 'OldSkiffHull', 'with triggers ignored, the hull');
   const hullOnly = raycastColliders(boat.GameObject.getChild(0).find('OldSkiffHull'), [100, 60, 200], [0, -1, 0], 100, { triggers: false, geometry });
   assert.ok(close(down.distance, hullOnly.distance, 1e-9));
-  // the two convex colliders in the bundle
-  const convex = [];
-  for (let hull = 0; hull < 5; hull++) for (const c of collidersOf(spawnBoat(new Boat(hull, 0), ctxFor({ position: [0, 0, 0], rotation: [0, 0, 0, 1] })).GameObject)) if (c.collider.m_Convex) convex.push(c.node.name);
+  // the two convex colliders in the files (OWN-WORK4: our doors' leaves, each its mesh's collider)
+  const convex = [], keyOf = new Map();
+  for (let hull = 0; hull < 5; hull++) for (const c of collidersOf(spawnBoat(new Boat(hull, 0), ctxFor({ position: [0, 0, 0], rotation: [0, 0, 0, 1] })).GameObject)) if (c.collider.m_Convex) { convex.push(c.node.name); keyOf.set(c.node.name, c.collider.m_Mesh.mesh); }
   assert.deepEqual(convex.sort(), ['GalleonInteriorEntrance', 'T\'ava Trireme Door'].sort());
   for (const name of convex) {
-    const g = MODELS.geometry(name);
+    const g = MODELS.geometry(keyOf.get(name));
     const planes = convexHullPlanes(g.positions);
     assert.ok(planes && planes.length >= 4, `${name}: a hull`);
     for (let i = 0; i < g.positions.length; i += 3) for (const pl of planes) assert.ok(pl.n[0] * g.positions[i] + pl.n[1] * g.positions[i + 1] + pl.n[2] * g.positions[i + 2] - pl.d <= 1e-5, `${name}: every vertex inside`);

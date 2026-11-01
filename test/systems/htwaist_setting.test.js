@@ -8,7 +8,7 @@
 // departure moved a shipped default). These pins hold what that promises:
 // it is on the pane and reachable (the tile drawer draws only the curated
 // keys - TORCH-BIND's lesson), it ships OFF, its words say it is the
-// port's, the vendored modsettings.json is untouched, the component's
+// port's, the release's own keys never carried it, the component's
 // settings frame carries it, and the one predicate every reader asks
 // (systems/playerTorch.js lanternAtWaist) answers only for a lantern, only
 // with the mod on, only with the switch on. The departure is recorded where
@@ -40,9 +40,9 @@ test('HT-WAIST: the switch is on the Handheld Torches pane - a toggle, ON by def
   // and no longer a note that the switch is the port's: the pane says what it does
   assert.equal(def.description, 'If enabled, lanterns hang at your waist instead of being held, so they never need a free hand and are never put away. Torches and candles are still held.');
   // the vendored file is the mod's: the port adds its key on its own pane, never to the author's json
-  const shipped = JSON.parse(read('vendor/handheld-torches/modsettings.json'));
-  const names = shipped.Sections.flatMap((s) => s.Keys.map((k) => `${s.Name}.${k.Name}`));
-  assert.ok(!names.includes(KEY), 'the shipped modsettings.json is untouched');
+  // OWN-WORK4: the release's Handling section, its keys as it shipped them (its modsettings.json left the tree)
+  const names = ['ToggleLightInput', 'RememberLastLightSource', 'ManualDropInput', 'OnStow', 'OnPick', 'StowWhenSpellcasting', 'StowWhenClimbing', 'StowWhenSwimming', 'RelaxedTwoHandedWeapons', 'RelaxedLanterns'].map((k) => `Handling.${k}`);
+  assert.ok(!names.includes(KEY), 'the release never carried it');
   assert.ok(names.includes('Handling.RelaxedLanterns'), 'and it sits beside the mod\'s own Relaxed Lanterns');
   const keys = Object.keys(MOD_SETTINGS[V].keys);
   assert.equal(keys.indexOf(KEY), keys.indexOf('Handling.RelaxedLanterns') + 1, 'directly under Relaxed Lanterns, the switch it takes the rest of the way');

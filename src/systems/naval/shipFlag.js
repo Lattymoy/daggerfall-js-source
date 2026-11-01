@@ -3,7 +3,7 @@
 // bible/03-World/Naval-Refit.md SHIP-COLOURS) - A SHIP'S FLAG. The port's own; pure.
 //
 // Come Sail Away's boats fly a PENNANT: their FlagObject's particle system streams small cubes downwind off her masthead
-// (vendor/come-sail-away, the prefab's FlagEmitter; scenes/world.js csaParticleLists draws them, a sea ship's tinted her
+// (the prefab's FlagEmitter - OWN-WORK4: our boats' own, world/ships/ownBoats/ownBoatEffects.js; scenes/world.js csaParticleLists draws them, a sea ship's tinted her
 // faction's). A captain could not choose it. Now each ship of a player's may fly a FLAG of the captain's own design -
 // cloth, flown from her masthead downwind (render/shipFlagPass.js), drawn from the guild heraldry's own art
 // (ui/flagArt.js over ui/heraldryArt.js) so a guild's arms and a ship's flag are one hand:

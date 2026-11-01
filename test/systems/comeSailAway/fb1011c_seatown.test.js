@@ -28,11 +28,11 @@ import { Boat, boatAnimators, spawnBoat } from '../../../src/systems/comeSailAwa
 import { createComeSailAwayRuntime, NO_WATER_LEVEL } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { PrefabNode } from '../../../src/world/prefabNode.js';
 import { passengerCard } from '../../../src/scenes/naval/passageHelm.js';
+import { ownFile } from '../../ownBoats.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') });
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') });
 
 const fileFetch = async (url) => {
   const bytes = readFileSync(fileURLToPath(url));

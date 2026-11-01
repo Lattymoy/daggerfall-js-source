@@ -301,7 +301,7 @@ test('AUDIT WARDEN1 C8: the carried wagon is drawn with its load (the pool\'s ow
   const gpu = { [WAGON_MODEL_ID]: { id: WAGON_MODEL_ID } };
   for (const d of CARGO_DEFINITIONS) gpu[d.modelId] = { id: d.modelId };
   const meshes = { getGpuMesh: async (id) => gpu[id] ?? null, cpuModels: new Map([[WAGON_MODEL_ID, syntheticWagon41214()]]) };
-  const pool = createHorseCartPool({ renderer, meshes, collider: () => null, selfId: () => 'me', now: () => 0, fetchFn: async () => ({ ok: false, status: 404 }), log: { error() {}, warn() {}, info() {} } });
+  const pool = createHorseCartPool({ renderer, meshes, collider: () => null, selfId: () => 'me', now: () => 0, horsePicture: async () => { throw new Error('no horse picture'); }, log: { error() {}, warn() {}, info() {} } });
   pool.attach(rt({ Mode: 0 }));
   pool.partsOf('cart');
   for (let i = 0; i < 8; i++) await tick();

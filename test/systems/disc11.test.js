@@ -16,11 +16,11 @@ function rig() {
   const loops = [];
   const mk = (k, v, extra) => { const l = { k, v: Math.max(0, Math.min(1, v)), stopped: false, ...extra, stop() { this.stopped = true; }, setVolume(x) { this.v = Math.max(0, Math.min(1, x)); } }; loops.push(l); return l; };
   const audio = {
-    registerSound: async () => true, playOneShot: () => {}, setReverb: () => true,
+    registerSamples: () => true, playOneShot: () => {}, setReverb: () => true,
     loop: (k, v, o) => mk(k, v, { o }), loop3d: (k, pos, v, o) => mk(k, v, { pos, o, spatial: true }),
     clipLevel: (k) => LEVEL[k] ?? null,
   };
-  const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, fetchClip: async () => new Uint8Array([1]), snowFree: () => false });
+  const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, makeClip: async () => ({ samples: new Float32Array(1), rate: 22050 }), snowFree: () => false });
   const street = new AmbientEffects({ minWait: 5, maxWait: 25 }, {
     loop: (i, v) => mk(i, v), play3d: () => 0, playOneShot: () => {},
   }, () => 0.5);

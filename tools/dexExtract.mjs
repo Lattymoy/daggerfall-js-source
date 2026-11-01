@@ -50,8 +50,7 @@ import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 import { composeDerivedPicture, deriveSpec } from '../src/formats/derivedTexture.js';
 import { readCsvTable, parseCsInt } from '../src/systems/enemyExpansion/dexCsv.js';
-import { readPng } from './pngIO.mjs';
-import { encodeSprite, sameOnScreen } from './diverseWeaponsExtract.mjs';
+import { readPng, encodeSprite, sameOnScreen } from './pngIO.mjs';
 import { classicRecords, findClassicSource } from './lib/classicSource.mjs';
 import { isMain } from './lib/isMain.mjs';
 

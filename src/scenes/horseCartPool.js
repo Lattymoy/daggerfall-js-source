@@ -2,8 +2,8 @@
 // HORSE CART AND CARGO - THE PRESENTATION (HCC, 2026-09-23). What the runtime (systems/horse/horseCart.js) says, drawn:
 // the trailing / following wagon and the parked one as the five pieces of classic model 41214 (systems/wagon/wagon41214.js
 // - the body and shafts on the wagon's frame, each wheel turned about its own pivot), the cargo pieces the tier
-// shows (WagonCargoVisual's twelve), and the horse as an eight-orientation billboard off the mod's own 45 PNGs
-// (five drawn views, three mirrored - StationaryHorseBillboard). It also ANSWERS the runtime's physics
+// shows (WagonCargoVisual's twelve), and the horse as an eight-orientation billboard off 45 pictures (five drawn views,
+// three mirrored - StationaryHorseBillboard; OWN-WORK4: ours, systems/horse/horseArt.js, on the mod's names and sizes). It also ANSWERS the runtime's physics
 // (Physics.RaycastAll / SphereCast over the port's collider, the threats off the foe pool), stands the parked
 // wagon's collider (the mod's non-trigger BoxCollider over the model's bounds - mine; another player's stands none,
 // PR-WAGON1), hands the hosts their activation
@@ -11,7 +11,7 @@
 // camps.js draws a peer's camps.
 //
 // deps = { renderer, meshes: { getGpuMesh, cpuModels }, collider() -> the host's, now() -> unscaled seconds,
-//          threats() -> [[x,y,z]] (the qualifying foes' positions, CollectThreats), fetchFn, selfId(),
+//          threats() -> [[x,y,z]] (the foes' positions, CollectThreats), horsePicture(file) (horseArt.js), selfId(),
 //          peerName(id) -> string | null, onChanged() (the host's online publish), toWire(p) (the scene-to-wire law, so
 //          the change key is the WIRE's and a floating-origin rebase of mine is not a word),
 //          peerAnchor(id) -> [x,y,z] | null (WAGON-HITCH: where that player's cart rider is drawn this frame, scene
@@ -91,7 +91,7 @@ import { thrownRecord } from '../systems/wagon/wagonWarden.js';   // WARDEN1: a 
 import { WAGON_HOVER_TEXT } from '../player/eyeOfTheBeholder/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horse/horseCartWire.js';
 import { eventGroundAt } from '../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: no other player's parked wagon drawn on an event's gate's ground
-import { decodePng } from '../systems/textureReplacement.js';
+import { ownHorsePicture } from '../systems/horse/horseArt.js';   // OWN-WORK4: the horse's pictures, ours
 import { toColor32 } from '../formats/color32Order.js';
 import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
 import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // WAGONS3: the driver's hands, and a seated peer's `st`
@@ -152,7 +152,6 @@ export const PARK_SAME_NATIVES = 400;
 /** How many surfaces a RaycastAll answers before it stops looking (a ray through a town meets a handful). */
 export const RAYCAST_ALL_MAX_HITS = 8;
 
-const texturePath = (file) => new URL(`../../vendor/horse-cart-and-cargo/Textures/${file}`, import.meta.url).href;
 const horseStillFile = (view) => `horse${view + 1}.png`;
 const horseWalkFile = (view, frame) => `Walk.${view}-${frame + 1}.png`;
 const WHEEL_AXIS = Object.freeze([1, 0, 0]);
@@ -297,7 +296,7 @@ export function raycastAllOver(col, origin, dir, maxDist, skip = [WAGON_BUCKET])
 
 export function createHorseCartPool({
   renderer = null, meshes = null, collider = () => null, now = () => performance.now() / 1000, threats = () => [],
-  fetchFn = null, decode = decodePng, selfId = () => null, peerName = (/** @type {string} */ _id) => null, onChanged = null,
+  horsePicture = ownHorsePicture, selfId = () => null, peerName = (/** @type {string} */ _id) => null, onChanged = null,
   toWire = (/** @type {number[]} */ p) => p, log = console,
   peerAnchor = (/** @type {string} */ _id) => /** @type {number[] | null} */ (null),
   wagonKind = () => 'cart', bakedWagon = /** @type {((kind: string) => Promise<any>) | null} */ (null),
@@ -350,12 +349,7 @@ export function createHorseCartPool({
   const _held = new Map();
   let wardenWord = null;   // WARDEN1: setWardenWord's - (anchor) => the park word's watch fields ({ ly, tw?, rd? }) or null
 
-  const fetchPng = async (file) => {
-    const f = fetchFn ?? globalThis.fetch;
-    const res = await f(texturePath(file));
-    if (!res?.ok) throw new Error(`${file}: HTTP ${res?.status}`);
-    return toColor32(await decode(new Uint8Array(await res.arrayBuffer())));
-  };
+  const horsePx = async (file) => toColor32(await horsePicture(file));   // OWN-WORK4: built, not fetched
 
   // ── the wagon's meshes (DeployedWagonVisual.Initialize's CreateDaggerfallMeshGameObject(41214) + TryBuild)
   function ensureParts() {
@@ -466,7 +460,7 @@ export function createHorseCartPool({
   function ensureStationary() {
     if (_stillReady) return true;
     if (_stillFailed || _stillLoading || !renderer?.uploadTexture) return false;
-    _stillLoading = Promise.all(Array.from({ length: HORSE_VIEWS }, (_, v) => fetchPng(horseStillFile(v)).then((px) => {
+    _stillLoading = Promise.all(Array.from({ length: HORSE_VIEWS }, (_, v) => horsePx(horseStillFile(v)).then((px) => {
       renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v), px);
       _stillPx.set(v, px);   // COATS1
     }))).then(() => { _stillReady = true; onChanged?.(); }).catch((e) => { _stillFailed = true; log?.error?.(`[TrailingWagon] the horse art would not load: ${e?.message ?? e}`); }).finally(() => { _stillLoading = null; });
@@ -475,7 +469,7 @@ export function createHorseCartPool({
   function ensureWalk() {
     if (_walkReady || _walkFailed || _walkLoading || !renderer?.uploadTexture) return;   // AUDIT 68 S27-hcc-walk-fetch-storm: a failed set is not fetched again every frame - TryLoad fails once, as the stills do
     const jobs = [];
-    for (let v = 0; v < HORSE_VIEWS; v++) for (let f = 0; f < HORSE_WALK_FRAMES; f++) jobs.push(fetchPng(horseWalkFile(v, f)).then((px) => { renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f), px); _walkPx.set(`${v}#${f}`, px); }));   // COATS1: kept to dye
+    for (let v = 0; v < HORSE_VIEWS; v++) for (let f = 0; f < HORSE_WALK_FRAMES; f++) jobs.push(horsePx(horseWalkFile(v, f)).then((px) => { renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f), px); _walkPx.set(`${v}#${f}`, px); }));   // COATS1: kept to dye
     _walkLoading = Promise.all(jobs).then(() => { _walkReady = true; }).catch((e) => { _walkFailed = true; log?.warn?.(`[TrailingWagon] the horse walk frames would not load; the standing views stay: ${e?.message ?? e}`); }).finally(() => { _walkLoading = null; });
   }
   /** COATS1: a look's pictures up - its standing views once the bay's are, its walk frames once the bay's are - dyed

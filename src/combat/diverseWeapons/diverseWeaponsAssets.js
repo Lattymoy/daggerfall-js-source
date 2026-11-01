@@ -1,58 +1,18 @@
-// DW1: DIVERSE WEAPONS' TEXTURES, from the player's own copy of the mod.
-//
-// Diverse Weapons 1.7.3 (RealAKP; script by RealAKP & Kirk.O, MIT) is
-// 12,624 sprites and one line of code. The line is
-// `FPSWeapon.moddedWeaponHUDAnimsEnabled = true` (DiverseWeaponsMain.cs
-// :37, carried verbatim in vendor/diverse-weapons/), and the law it
-// switches on lives in DFU itself - combat/diverseWeapons/diverseWeapons.js is the
-// port's home for it. The sprites are a first-person set PER WEAPON
-// TEMPLATE where the classic art has one per weapon CLASS - eighteen
-// weapons, each in ten metals, each plain and enchanted, a record and
-// frame for every pose (`LONGSWORD.CIF_3-2_Dwarven`, `KATANAMAGIC.CIF
-// _0-0_Ebony`), plus Weapon Widget's double-scale idle set for each
-// (`w_LONGSWORD.CIF_0-0_Iron`) and the inventory and paper-doll icons
-// in the same metals (`233_5-0_Elven`).
-//
-// DW2 (Mac, 2026-09-23: "this needs to be in the codebase, not an
-// attachable file"): THE SPRITES SHIP WITH THE PORT, under
-// public/art/diverse-weapons/, by the name DFU asks for -
-// TextureReplacement.GetNameCifRci's spelling (TextureReplacement.cs
-// :783-801), `<prefix><FILE>_<record>-<frame>[_<Metal>]` - the way
-// Shield Widget's 600 do (combat/shieldWidgetAssets.js): re-encoded
-// from the bundle's Texture2D objects by tools/diverseWeaponsExtract
-// .mjs, every drawn pixel identical. Which names the folder carries is
-// the mod's own manifest (tools/diverseWeaponsIndex.mjs -> combat/
-// diverseWeaponsIndex.js), so a miss costs no fetch. Under public/
-// rather than vendor/ because 12,624 files through the bundler's
-// `new URL` glob is a 12,624-entry map in a chunk; public/ is served
-// as it is, and the URL is computed off the app root (systems/appRoot
-// .js, the held map's shape).
-//
-// The player's own `.dfmod` still answers FIRST when one is attached
-// through the textures pick (a newer version's art wins over the
-// shipped set), and a loose PNG of a name in the texture folder too,
-// as TryImportCifRci reads one in DFU. The two arms are the widget
-// door's (combat/weapon/weaponWidgetAssets.js, systems/seasonsIliacBayAssets
-// .js): the bundle opened once by its manifest's GUID, in a worker.
-//
-// Same registry shape as the widget's door - a name list and a loader,
-// the bundle opened once, never throwing.
-
+// DW1: DIVERSE WEAPONS' TEXTURES. OWN-WORK4 (2026-10-31; the owner: "no latching onto other mod authors"): the set
+// that comes with the game is our own, built at runtime from the player's classic WEAPON*.CIF and TEXTURE records by
+// our looks (combat/diverseWeapons/diverseWeaponsArt.js) - by the names DFU asks for, TextureReplacement.GetNameCifRci's
+// `<prefix><FILE>_<record>-<frame>_<Metal>` (TextureReplacement.cs:783-801). Diverse Weapons 1.7.3's own sprites
+// (RealAKP) are no longer carried. A player's own copy of the mod, attached through the textures pick, still answers
+// first - its bundle by GUID, or a loose PNG of a name - as TryImportCifRci reads one in DFU.
 import { openUnityBundle } from '../../formats/unity/unityBundleClient.js'; // the open runs in a worker (~10 s of LZ4 for this bundle); this thread when there is none
 import { toScreenOrder } from '../../formats/color32Order.js'; // DWHD1: EVERY arm keeps its rows - a screen quad, and the bundle reader already answers top-first
 import { decodePng } from '../../systems/textureReplacement.js';
 import { DFMOD_KEY_PREFIX } from '../../systems/seasonsIliacBayAssets.js'; // the stored-name prefix the texture pick writes for a bundle - one home
 import { weaponWidgetImage } from '../weapon/weaponWidgetAssets.js';
 import { dfmodCifRciNamed } from '../../systems/dfmodTextures.js'; // DFMOD2: an attached mod's handheld frames, after the two weapon mods
-import { APP_ROOT } from '../../systems/appRoot.js'; // DW2: the shipped sprites hang off the site root, as the held map does
-import { rebuiltPicture } from '../../systems/rebuiltPicture.js'; // NO-BETHESDA3: a sprite that is Daggerfall's own, built from the player's files
-import {
-  DIVERSE_WEAPONS_STEMS,
-  DIVERSE_WEAPONS_METALS,
-  DIVERSE_WEAPONS_BARE,
-  DIVERSE_WEAPONS_ODD,
-  DIVERSE_WEAPONS_DERIVED,
-} from './diverseWeaponsIndex.js'; // DW2: generated from the manifest
+import { moddedWeaponHUDAnimsEnabled } from './diverseWeapons.js';
+import { ownWeaponArt } from './diverseWeaponsArt.js'; // OWN-WORK4: our frames, from the player's files
+import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE } from './diverseWeaponsIndex.js';
 
 export const DIVERSE_WEAPONS_MOD = Object.freeze({
   guid: '8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc',
@@ -76,74 +36,34 @@ const isDiversePng = (name) => {
   return /^(w_)?[A-Z0-9]+\.CIF_\d+-\d+(_[A-Za-z]+)?\.png$/i.test(base) || /^\d{3}_\d+-\d+_[A-Za-z]+\.png$/i.test(base);
 };
 
-// ---- DW2: the shipped set ---------------------------------------------
+// ---- OWN-WORK4: our set ------------------------------------------------
 
-/** The sprite's path in the repository, which is what the pins read. */
-export const SHIPPED_DIR = 'public/art/diverse-weapons';
-
-/** Does the shipped set carry this name? Decoded from the manifest's
- *  index: a stem (`LONGSWORD.CIF_0-0`) with a bit per metal in
- *  MetalTypes' order, bit 10 for the bare stem, and the odd list. No
- *  fetch is made for a name this answers false to. */
+/** Does our set answer this name? A stem (`LONGSWORD.CIF_0-0`) with a bit per metal in MetalTypes' order, bit 10 for
+ *  the bare stem (diverseWeaponsIndex.js). No build is started for a name this answers false to. */
 export function hasDiverseWeaponsSprite(name) {
   if (typeof name !== 'string') return false;
   const m = /^(.*?_\d+-\d+)(?:_([A-Za-z]+))?$/.exec(name);
-  if (!m) return DIVERSE_WEAPONS_ODD.includes(name);
-  const bits = DIVERSE_WEAPONS_STEMS[m[1]];
-  if (!bits) return DIVERSE_WEAPONS_ODD.includes(name);
+  const bits = m ? DIVERSE_WEAPONS_STEMS[m[1]] : 0;
+  if (!bits) return false;
   if (m[2] === undefined) return (bits & DIVERSE_WEAPONS_BARE) !== 0;
   const i = DIVERSE_WEAPONS_METALS.indexOf(m[2]);
-  return i >= 0 ? (bits & (1 << i)) !== 0 : DIVERSE_WEAPONS_ODD.includes(name);
+  return i >= 0 && (bits & (1 << i)) !== 0;
 }
 
-/** How many names the shipped set carries (the manifest's count). */
-export const DIVERSE_WEAPONS_SPRITE_COUNT =
-  Object.values(DIVERSE_WEAPONS_STEMS).reduce((n, b) => n + (b.toString(2).split('1').length - 1), 0) +
-  DIVERSE_WEAPONS_ODD.length;
-
-/** The shipped sprite's URL - `<root>/art/diverse-weapons/<name>.png`,
- *  off the app root the module URL names (systems/appRoot.js), else
- *  the document's own base. */
-export const diverseWeaponsSpriteUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
-  new URL(`art/diverse-weapons/${encodeURIComponent(name)}.png`, root).href;
-
-// ---- NO-BETHESDA3: the sprites that are Daggerfall's own ---------------
-
-// The owner, 2026-10-31: "Rebuild DW's 7 daggers". Twelve magic-dagger frames are 60% or more WEAPON02.CIF's own
-// hand, exactly. They are not carried: each is the player's frame with the author's blade pixels laid over it.
-const DERIVED = new Set(DIVERSE_WEAPONS_DERIVED);
-/** Is `name` a sprite built from the player's files rather than a file? */
-export const isDerivedDiverseWeaponsSprite = (name) => DERIVED.has(name);
-let _specs = null;
-/** The specs (vendor/diverse-weapons/derived-art.json, 425 kB): their own chunk, read on the first build. A failed
- *  read is forgotten. */
-export const diverseWeaponsDerivedSpecs = () =>
-  (_specs ??= import('../../../vendor/diverse-weapons/derived-art.json', { with: { type: 'json' } }).then(
-    (m) => m.default,
-    (e) => {
-      _specs = null;
-      throw e;
-    },
-  ));
-/** A derived sprite in the door's shape, built through `art` (the session's classic reader by default); null, said
- *  once, where the player's files will not build it - the classic frame then draws, as for any miss. */
-async function derivedImage(name, art) {
-  try {
-    const spec = (await diverseWeaponsDerivedSpecs())[name];
-    if (!spec) throw new Error('no spec in derived-art.json');
-    return toScreenOrder(await rebuiltPicture(spec, art));
-  } catch (e) {
-    console.warn(`[diverse weapons] ${name} would not build from the player's files:`, e?.message ?? e);
-    return null;
-  }
-}
+/** How many names our set answers. */
+export const DIVERSE_WEAPONS_SPRITE_COUNT = Object.values(DIVERSE_WEAPONS_STEMS).reduce(
+  (n, b) => n + (b.toString(2).split('1').length - 1),
+  0,
+);
 
 // ---- the registry ----------------------------------------------------
 
 let _names = [];
 let _load = null;
 let _bundle = null; // Promise<{ bundle, manifest, byName } | null>
-let _images = new Map(); // texture name -> Promise<image | null>
+let _images = new Map(); // texture name -> Promise<image | null>, the attached arms
+let _own = new Map(); // texture name -> Promise<image | null>, our set (OWN-WORK4)
+let _art = null; // test seam: the reader our frames are built through
 let _workerFactory = null; // test seam: a fake Worker, or a factory that throws (the same-thread fallback)
 
 /** Register the stored names and a `load(name) -> bytes` loader (the
@@ -235,39 +155,39 @@ export async function diverseWeaponsTexturesAttached() {
   return !!(await diverseWeaponsBundle());
 }
 
-/** One texture by name - `{ width, height, colors }` RGBA in the port's
- *  color32 (bottom-up) order, the shape renderer.uploadTexture reads -
- *  or null when neither an attached bundle, a loose PNG nor the shipped
- *  set carries it. Cached per name, misses included. The two arms are the widget door's
- *  (WW3, HT3): the bundle's texel rows are Unity's, bottom-up, and
- *  `toColor32` is the flip into the port's order; a decoded PNG is
- *  top-first already and keeps its rows through `toScreenOrder`. A derived name is built through `art`, never fetched. */
-export function diverseWeaponsImage(name, { decode = decodePng, fetchFn = globalThis.fetch, art = undefined } = {}) {
-  if (!_images.has(name)) {
-    _images.set(
-      name,
-      (async () => {
-        const attached = _names.length ? await attachedImage(name, decode) : null; // nothing attached: no bundle walk
-        if (attached) return attached;
-        if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art); // NO-BETHESDA3: built, never fetched
-        // DW2: the shipped set, by the manifest's index - a name it lacks
-        // is a miss here and now, not a 404
-        if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;
-        try {
-          const res = await fetchFn(diverseWeaponsSpriteUrl(name));
-          if (!res?.ok) {
-            console.warn(`[diverse weapons] ${name}.png is in the index and not on the site (${res?.status})`);
-            return null;
-          }
-          return toScreenOrder(await decode(new Uint8Array(await res.arrayBuffer()))); // a PNG's rows are top-first: no flip (HT3)
-        } catch (e) {
-          console.warn(`[diverse weapons] ${name} would not load:`, e?.message ?? e);
-          return null;
-        }
-      })(),
-    );
+/** One texture by name - `{ width, height, colors }` in screen order, the shape renderer.uploadTexture reads - or null
+ *  when neither the player's attached copy nor our set answers it. Each arm is cached per name, misses included. A
+ *  decoded PNG and the bundle reader are top-first already and keep their rows (WW3, HT3). OWN-WORK4: our set answers
+ *  only while the mod is on, built through `art` (the session's own reader of the player's files), never fetched. */
+export async function diverseWeaponsImage(
+  name,
+  { decode = decodePng, art = undefined, enabled = moddedWeaponHUDAnimsEnabled() } = {},
+) {
+  if (_names.length) {
+    if (!_images.has(name)) _images.set(name, attachedImage(name, decode)); // nothing attached: no bundle walk
+    const attached = await _images.get(name);
+    if (attached) return attached;
   }
-  return _images.get(name);
+  if (!enabled || !hasDiverseWeaponsSprite(name)) return null;
+  if (!_own.has(name)) _own.set(name, ownImage(name, art ?? _art ?? ownWeaponArt()));
+  return _own.get(name);
+}
+
+/** Our frame of `name`, or null - said once - where the player's files will not build it: the classic frame draws. */
+async function ownImage(name, art) {
+  try {
+    const pic = await art.frame(name);
+    return pic ? toScreenOrder(pic) : null;
+  } catch (e) {
+    console.warn(`[diverse weapons] ${name} would not build from the player's files:`, e?.message ?? e);
+    return null;
+  }
+}
+
+/** Test seam: the reader our frames are built through (createOwnWeaponArt's shape), the built ones forgotten. */
+export function setDiverseWeaponsArt(art) {
+  _art = art ?? null;
+  _own = new Map();
 }
 
 /** The attached arms: the player's bundle, then a loose PNG of the name. */
@@ -308,7 +228,7 @@ async function attachedImage(name, decode) {
  */
 export async function customWeaponImage(name) {
   // DWHD1: a player-attached texture mod FIRST - Diverse Weapons HD is a replacer for the sprites the two weapon doors
-  // (and the port's shipped Diverse Weapons set) would otherwise answer with
+  // (and our own Diverse Weapons set) would otherwise answer with
   return (await dfmodWeaponImage(name)) ?? (await weaponModImage(name));
 }
 /** The two weapon mods' arms, in their order. */
@@ -326,7 +246,8 @@ async function dfmodWeaponImage(name) {
   }
 }
 
-/** Test seam: forget the name cache without touching the sources. */
+/** Test seam: forget the name caches without touching the sources. */
 export function _resetDiverseWeaponsImages() {
   forgetBundle();
+  _own = new Map();
 }

@@ -1,7 +1,7 @@
 // BOW-AIM (FIELD BUGS 2026-10-26c, feature-feedback via Mac: "Bow, while being drawn, is pointed upwards too much";
 // bible/01-Overview/bugs/Field-Bugs-2026-10-26c.md) - THE THIRD-PERSON BODY AIMS A RANGED WEAPON WHERE ITS OWNER LOOKS
 // (combat/spineAim.js): the reference's two spine RotateControllers, half the pitch each, and its pitch factor. On the
-// vendored retail biped (test/fixtures/mw/retailRig.mjs).
+// biped of our own (test/fixtures/mw/retailRig.mjs, OWN-WORK4).
 //
 // What is pinned: setPitchFactor's law verbatim (character.cpp:1868-1895); the turn in the ACTOR ROOT's frame, laid on
 // spine1 and spine2 so the chest and everything above it carry the whole pitch about the root's X, + down; the

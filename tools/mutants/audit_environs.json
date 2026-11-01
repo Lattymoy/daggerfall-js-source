@@ -110,17 +110,17 @@
   {
     "name": "AUDIT-ENVIRONS-G3-flip-asked-of-the-bitmap",
     "file": "src/render/snowfallSurface.js",
-    "old": "    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);",
-    "new": "    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);\n    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);",
+    "old": "    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);",
+    "new": "    else {\n      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);\n      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);\n    }",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
   },
   {
-    "name": "AUDIT-ENVIRONS-G3-decoded-top-down",
+    "name": "AUDIT-ENVIRONS-G3-our-albedo-not-made",
     "file": "src/scenes/snowfallHost.js",
-    "old": "  return createImageBitmap(await r.blob(), {\n    imageOrientation: 'flipY',\n    premultiplyAlpha: 'none',\n    colorSpaceConversion: 'none',\n  });",
-    "new": "  return createImageBitmap(await r.blob());",
+    "old": "const defaultAlbedo = async () => snowAlbedo(64);",
+    "new": "const defaultAlbedo = async () => null;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-ENVIRONS-G10-implicit-gradient",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  vec3 albedo = ${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.03);",
-    "new": "  vec3 albedo = ${decode('texture(uSnowAlbedo, albedoUV).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.03);",
+    "old": "  vec3 albedo = ${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);",
+    "new": "  vec3 albedo = ${decode('texture(uSnowAlbedo, albedoUV).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);",
     "tests": [
       "test/render/snowfall1_runtime.test.js"
     ]

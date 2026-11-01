@@ -71,7 +71,7 @@ test('EOTB5: the sprite is sized in METRES PER PIXEL, and the saddle shares its 
 });
 
 test('EOTB-IL: the per-sprite offsets are the XML’s, in metres, six triples over 288 records, and GlobalOffsetScale never touches them', () => {
-  const info = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/spriteInfo.json'), 'utf8'));
+  const info = JSON.parse(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSpriteInfo.json'), 'utf8'));   // OWN-WORK4: moved beside its reader
   assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 0), { scale: 1, x: 0, y: 0 }, 'a record with no XML is the default');
   assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 18), { scale: 1, x: -0.2, y: 0 }, 'ReadyMeleeBackwardLeft (record 18) sits a fifth of a metre to the left');
   assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 48), { scale: 1, x: -0.76, y: 0 }, 'the largest');
@@ -512,10 +512,9 @@ test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining - and sinc
   // this pin was written for is still held, and so is the one it once held OUT.
   // eslint-disable-next-line no-new-func
   const rule = new Function('filePath', `return (${m[1]});`);
-  assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'never inline a sprite');
+  assert.equal(rule('/x/vendor/layered-armor/male/112364_0-0.png'), false, 'never inline a sprite');
   assert.equal(rule('/x/vendor/dynamic-skies/Textures/CdMSunny.png'), false, 'INLINE1: every vendor asset is a file - this one was the pinned exception');
-  assert.equal(rule('/x/vendor/immersive-footsteps/Audio/Low_Quality/Climate/LQ_Grass_Footstep_1.mp3'), false, 'AUDIT-IF F1: Immersive Footsteps\' clips are the same class (test/systems/if1_immersivefootsteps.test.js holds the measurement)');
-  assert.equal(rule('C:\\x\\vendor\\eye-of-the-beholder\\Textures\\a.png'), false, 'and on a Windows path too');
+  assert.equal(rule('C:\\x\\vendor\\layered-armor\\a.png'), false, 'and on a Windows path too');
   assert.equal(rule('/x/src/ui/icons/diamond.png'), undefined, 'and everything OUTSIDE vendor/ keeps Vite\u2019s default - the rule is the class, not the tree');
   assert.equal(rule('/x/src/assets/mw/textures/thunderlock.dds'), undefined, 'the port\u2019s own assets included');
 });
@@ -670,10 +669,9 @@ test('ATTACK-WARM: the frames a look queues - its swing (each hand\'s for a pair
 });
 
 test('TURN-FREE (the owner, 2026-10-31: "Allow players to view all rotations of their character when idle or moving in a direction with the camera facing another direction"): a readied body keeps its own facing - stood still, the eye goes round it and sees all eight views; walking aside it faces its walk; a blow turns it to the eye', async () => {
-  const vendored = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/modsettings.json'), 'utf8'));
-  const shipped = vendored.Sections.find((s) => s.Name === 'Graphics').Keys.find((k) => k.Name === 'TurnToView').Value;
-  assert.equal(shipped, 2, 'the bundle ships When Weapon Readied');
+  const shipped = 2;   // OWN-WORK4: the shipped modsettings.json's Graphics.TurnToView (When Weapon Readied), written out
   assert.equal(MOD_SETTINGS[MOD].keys['Graphics.TurnToView'].default, 1, 'the port ships Only When Animating - a departure');
+  assert.notEqual(MOD_SETTINGS[MOD].keys['Graphics.TurnToView'].default, shipped, 'from the bundle\'s When Weapon Readied');
   const { b } = await liveBody();
   const eye = (th, extra = {}) => ({ ...extra, yaw: th, cameraPos: [-2 * Math.sin(th), 1.5, -2 * Math.cos(th)] });
   ticks(b, 30, walk({ sheathed: false, ...eye(0) }));   // walked ahead, the weapon out

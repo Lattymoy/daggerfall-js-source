@@ -31,6 +31,15 @@ as "no restart" and a stop is not a restart; the reverb tail's decay
 was one sample against one sample of noise, a coin toss, and is a
 windowed mean now.
 
+**OWN-WORK4 (2026-10-31, the owner).** vendor/better-ambience is retired: the manifest, the settings file, the
+sixteen C# sources, the author's LICENSE, the 29 WAV clips and the README left the tree. Each clip TryImportAudioClips
+asks for is now one our own synth makes at runtime (`src/audio/synth/`), at the mod's name, length and rate: the
+boards, the dungeon's flags, the light armour's clank, the dry grass, the wade, and the indoor rain loop - a hiss, a
+roof's low body, single drops and an eave's drip, 29.5 s, mono at 22.05 kHz, looping without a seam. The water list
+still plays five. The six modules, their switches and their settings are unchanged. `ba1_betterambience.test.js`
+holds the shipped settings as literals and `ownsounds.test.js` the clips. Git history holds the vendored copy (commit
+`cc44705af`); the provenance is `01-Overview/Own-Work.md`'s.
+
 ## The compatibility brief, and the two departures
 
 Immersive Footsteps (IF1) and this mod both take the player's stride:

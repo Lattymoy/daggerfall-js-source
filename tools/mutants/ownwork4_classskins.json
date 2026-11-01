@@ -1,0 +1,83 @@
+[
+  {
+    "name": "OW4-outer-ignored",
+    "file": "src/player/classSkinArt.js",
+    "old": "  const slotOf = { outer, inner: outer === CLOTH ? DRAPE : CLOTH };",
+    "new": "  const slotOf = { outer: DRAPE, inner: CLOTH };",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-skin-dyed",
+    "file": "src/player/classSkinArt.js",
+    "old": "export const SLOT_OF_RAMP = Object.freeze({ 2: SKIN, 4: SKIN,",
+    "new": "export const SLOT_OF_RAMP = Object.freeze({ 2: CLOTH, 4: SKIN,",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-sign-on-the-side",
+    "file": "src/player/classSkinArt.js",
+    "old": "  if (scheme.sign && view !== 2) {",
+    "new": "  if (scheme.sign) {",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-belt-on-bare-skin",
+    "file": "src/player/classSkinArt.js",
+    "old": "scheme.belt, garment);",
+    "new": "scheme.belt);",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-hem-one-row",
+    "file": "src/player/classSkinArt.js",
+    "old": "if (below(x, y + 1) || below(x, y + 2) ||",
+    "new": "if (below(x, y + 1) ||",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-short-record-at-full-height",
+    "file": "src/player/classSkinArt.js",
+    "old": "  const height = CLASS_FIGURE * classRecordScale(skin.archive, record);",
+    "new": "  const height = CLASS_FIGURE;",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-485-casts-in-four",
+    "file": "src/player/classSkins.js",
+    "old": "  485: Object.freeze({ 20: 5, 21: 5, 22: 5, 23: 5, 24: 5 }),",
+    "new": "  485: Object.freeze({}),",
+    "tests": [
+      "test/net/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-489-loses-its-bow",
+    "file": "src/player/classSkins.js",
+    "old": "export const BOW_SHEETS = Object.freeze([475, 489, 490]);",
+    "new": "export const BOW_SHEETS = Object.freeze([475, 490]);",
+    "tests": [
+      "test/net/skin2_class_skins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-key-past-the-sheet",
+    "file": "src/player/classSkins.js",
+    "old": "  return frame < (skin.frames[record] ?? 0) ? { skin, record, frame } : null;",
+    "new": "  return { skin, record, frame };",
+    "tests": [
+      "test/net/skin2_class_skins.test.js"
+    ]
+  }
+]

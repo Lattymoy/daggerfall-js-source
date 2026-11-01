@@ -12,7 +12,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cloudsStateUnderMod, dynamicMoonState } from '../../src/render/dynamicSkiesBridge.js';
 import { skyState, WEATHER_SKY } from '../../src/render/enhancedSky.js';   // DSH1: the row's greyness
-import { MATERIAL_DEFAULTS } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -51,7 +50,7 @@ test('DS2: the clouds’ state under the mod - the port’s colours, the MOD’s
   }
   assert.deepEqual(t.masser, base.masser);
   // and the moon state the world's moonlight takes is the same object the clouds get
-  const dyn = { mat: { ...MATERIAL_DEFAULTS }, _sunDir: [0, -0.5, 0], phases: null, moonDirection: (w) => (w === 'Moon' ? [0, 0.7, 0.7] : [0, -1, 0]) };
+  const dyn = { _sunDir: [0, -0.5, 0], phases: null, moonDirection: (w) => (w === 'masser' ? [0, 0.7, 0.7] : [0, -1, 0]) };   // PIN MOVED (OWN-WORK4): our sky's instance, its moons by name
   const m = dynamicMoonState(dyn, 23 * 60, 0.5);
   assert.ok(m.masser.vis > 0 && m.secunda.vis === 0);
   assert.deepEqual(cloudsStateUnderMod(st, m, { minuteOfDay: 23 * 60, weather }).masser, m.masser);
@@ -69,7 +68,8 @@ test('DS2: the seam - built on the lane, the mod’s sheets stand down, the clou
   assert.doesNotMatch(shared, /^function dynamicMoonState/m, 'the moon state moved to the bridge, with the clouds’ state');
   const r = read('src/render/dynamicSkiesRenderer.js');
   assert.match(r, /this\.cloudsExternal = false;/);
-  assert.match(r, /this\.cloudsExternal && \(name === '_CloudTopOpacity' \|\| name === '_CloudOpacity'\) \? 0 : \(mat\[name\] \?\? MATERIAL_DEFAULTS\[name\] \?\? 0\)/, 'opacity 0 to the shader, the material untouched - the dome’s uCloudCover law');
+  assert.match(r, /gl\.uniform4f\(u\.uCloudLow, low\[0\], this\.cloudsExternal \? 0 : low\[1\], low\[2\], low\[3\]\);/, 'opacity 0 to the shader, the state untouched - the dome’s uCloudCover law (PIN MOVED, OWN-WORK4: our two layers)');
+  assert.match(r, /gl\.uniform4f\(u\.uCloudHigh, high\[0\], this\.cloudsExternal \? 0 : high\[1\], high\[2\], high\[3\]\);/);
   const lab = read('src/tools/skyLab.js');
   assert.match(lab, /import \{ cloudsStateUnderMod, dynamicMoonState \} from '\.\.\/render\/dynamicSkiesBridge\.js';/, 'the lab takes the bridge, not the controller');
   assert.match(lab, /const cst = dynamicOn\s*\n\s*\? cloudsStateUnderMod\(sky\.state, dynamicMoonState\(dyn, minuteOfDay, row\.cover\), \{ minuteOfDay, weather: \$\('weather'\)\.value, phases, seconds, drift: labDrift \}\)\s*\n\s*: sky\.state;/);

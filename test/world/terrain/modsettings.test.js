@@ -185,8 +185,7 @@ function syntheticWoods(W, H) {
 }
 
 test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08) - the manifest\'s ModAuthor, and the README\'s where a mod ships none', () => {
-  const manifest = (f) => JSON.parse(readFileSync(f, 'utf8'));
-  assert.equal(MOD_SETTINGS['dynamic-skies'].author, manifest('vendor/dynamic-skies/dynamic-skies.dfmod.json').ModAuthor);
+  assert.equal(MOD_SETTINGS['dynamic-skies'].author, 'BadLuckBurt and carademono', 'OWN-WORK4: Dynamic Skies 2.3.4\'s ModAuthor, written out when vendor/dynamic-skies was retired');
   assert.equal(MOD_SETTINGS['seasons-iliac-bay'].author, 'RosyTheRascal', 'OWN-WORK1: Seasons of the Iliac Bay 1.1\'s ModAuthor, written out when vendor/seasons-iliac-bay was retired');
   // BR3: MO1's law, swept rather than spot-checked. It was stated mod by
   // mod and Basic Roads was simply left out of the sweep, so the one mod

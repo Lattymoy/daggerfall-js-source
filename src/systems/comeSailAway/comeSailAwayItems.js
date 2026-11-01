@@ -1,9 +1,9 @@
 // CSA-H (2026-09-27) - COME SAIL AWAY'S TWO ITEMS: ItemBoatParts (1320) and ItemBoatDeed (1321), the custom classes
 // Start registers (ComeSailAway.cs:1079-1080, ItemHelper.RegisterCustomItem(index, UselessItems2, type)).
 //
-// THE ROWS are the bundle's ItemTemplates.json, carried here field for field: the vendored file keeps the author's
-// trailing comma (DFU's fsJsonParser takes it, a strict parser does not - test/systems/csa_registration.test.js), so the rows
-// ride as Roleplay Realism: Items' do, and test/systems/csa_items.test.js holds them to the file. Registered at import, as
+// THE ROWS are the bundle's ItemTemplates.json, carried here field for field (Come Sail Away 2.1's file kept the author's
+// trailing comma, which DFU's fsJsonParser takes - OWN-WORK4: the file is retired, these rows are the record), so the rows
+// ride as Roleplay Realism: Items' do, and test/systems/csa_items.test.js holds them to a literal table. Registered at import, as
 // Iliac Puddle No More's fish are: a row nobody mints costs nothing, and an item the save carries keeps its name,
 // weight and picture whether or not the mod is on.
 //
@@ -30,7 +30,7 @@ export const BOAT_DEED_TEMPLATE = 1321;
 /** RegisterCustomItem's group for both: (ItemGroups)9. */
 export const BOAT_ITEM_GROUP = 'UselessItems2';
 
-/** vendor/come-sail-away/ItemTemplates.json, row for row. */
+/** Come Sail Away 2.1's ItemTemplates.json, row for row (OWN-WORK4: the file is retired; these rows are the record). */
 export const CSA_ITEM_TEMPLATES = Object.freeze([
   Object.freeze({
     index: 1320,

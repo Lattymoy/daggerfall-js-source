@@ -2,8 +2,8 @@
 // WS1 (2026-09-17, Mac: "Can we implement this for the morrowind model" -
 // Greatness7's WEAPON SHEATHING 1.6, the OpenMW archive). THE LAW, ONE
 // HOME. The mod is two things: ART (seventy-one `_sh` scabbard meshes
-// and three skeleton addons, vendored under vendor/weapon-sheathing/ -
-// the assets module serves them) and a MECHANISM, which on OpenMW is the
+// and three skeleton addons, retired at OWN-WORK4 for our own in
+// systems/ownSheathing.js) and a MECHANISM, which on OpenMW is the
 // engine's own (`weapon sheathing = true` + `use additional anim
 // sources = true`; the mod's readme credits "akortunov and the OpenMW
 // team" for it). This module is the port of that mechanism, read off
@@ -15,24 +15,23 @@
 //
 //   1. THE BONES. Every .nif under `animations/<model>/` is a bone
 //      addon: the skeleton takes its unknown nodes under the node of
-//      their parent's name (mwSkin.js injectSkeletonNodes). Weapon
-//      Sheathing's `xbase_anim_sh.nif` brings fourteen: twelve
-//      sheathing bones, "Bip01 AttachShield" and "Bip01 AttachWeapon".
+//      their parent's name (mwSkin.js injectSkeletonNodes); ours brings
+//      the eleven SHEATHING_BONE names (ownSheathing.js SHEATH_POINTS).
 //   2. THE HOLSTER. A sheathed weapon of type T hangs at SHEATHING_BONE[T]
 //      (the type's mSheathingBone). If `<model>_sh.nif` exists it is the
 //      SCABBARD: the whole file attaches at that bone and stays; its
 //      "Bip01 Weapon" node is masked while the weapon is drawn, and if
 //      that node is EMPTY the base weapon mesh is instanced under it
 //      (the author tweaks the position without shipping the blade). No
-//      `_sh` file: the base mesh itself hangs at the bone, shown while
-//      sheathed. Thrown weapons never holster ("they stack").
+//      `_sh` file: ours (`ownScabbard`), else the base mesh at the bone,
+//      shown while sheathed. Thrown weapons never holster ("they stack").
 //   3. THE QUIVER. A scabbard carrying "Bip01 Ammo" takes one instance of
 //      the equipped ammunition's mesh under each "Bip01 Ammo N" child,
 //      min(count, children) of them - arrows for a bow, bolts for a
 //      crossbow, the thrown stack for a thrown weapon.
 //
-// Third person only: the first-person skeleton has no addon (the mod
-// ships none for xbase_anim.1st) and the reference draws no holster
+// Third person only: the first-person skeleton has no addon (ours is
+// the base model's alone) and the reference draws no holster
 // there either. The pieces are rigid parts through the same binder the
 // weapon takes (bindPartsInto), but BARE (AUDIT-WS F6): the reference's
 // attachMesh is a plain getInstance under the bone, so no BoneOffset and
@@ -129,7 +128,8 @@ export function holsterPartPaths({ weaponModel }) {
  * resolved ammunition `{ bytes, type }` or null, `ammoCount` the stack.
  * `find(path)` answers the archive holding a loaded path, `hasBone`
  * asks the skeleton AFTER its addons. `parseNif` is passed in so this
- * module stays a leaf of the format layer's parser.
+ * module stays a leaf of the format layer's parser; `ownScabbard` builds
+ * ours (OWN-WORK4) where the player's data has no `_sh` file.
  *
  * @returns {{ parts: object[], info: object|null, notes: string[] }}
  */
@@ -142,6 +142,7 @@ export function resolveHolsterParts({
   find,
   hasBone,
   parseNif,
+  ownScabbard = null,
 }) {
   const notes = [];
   const parts = [];
@@ -151,20 +152,19 @@ export function resolveHolsterParts({
   if (!bone) return { parts, info: null, notes };
   const showHolstered = holsters(mwType); // AUDIT-WS F3: thrown - the scabbard alone
   if (!hasBone(bone)) {
-    notes.push(
-      `holster: this skeleton has no "${bone}" - no bone addon (animations/xbase_anim/xbase_anim_sh.nif) was found`,
-    );
+    notes.push(`holster: this skeleton has no "${bone}" - no bone addon (animations/xbase_anim/) was found`);
     return { parts, info: { bone, reason: 'no sheathing bone' }, notes };
   }
   const shPath = sheathedMeshPath(`meshes/${weaponModel}`);
   const shArc = find(shPath);
-  if (!shArc) {
+  const own = shArc ? null : (ownScabbard?.({ mwType, weaponBytes, parseNif }) ?? null); // OWN-WORK4: ours, sized to this weapon
+  if (!shArc && !own) {
     // No scabbard: the weapon's own mesh hangs at the bone while sheathed
     // (:352-360) - and for a thrown weapon nothing at all.
     if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });
     return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };
   }
-  const shBytes = shArc.get(shPath).slice();
+  const shBytes = shArc ? shArc.get(shPath).slice() : own;
   let shNif;
   try {
     shNif = parseNif(shBytes);
@@ -178,7 +178,7 @@ export function resolveHolsterParts({
     // The reference attaches the file and returns: no node to mask, so
     // the whole scabbard stands whatever the hand does, and no holster.
     parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, bare: true });
-    return { parts, info: { bone, scabbard: shPath, weaponNode: false, thrown: !showHolstered }, notes };
+    return { parts, info: { bone, scabbard: shPath, own: !shArc, weaponNode: false, thrown: !showHolstered }, notes };
   }
   // The scabbard, less the weapon node; then the weapon node's own
   // geometry, or the base mesh instanced under an empty one.
@@ -244,6 +244,7 @@ export function resolveHolsterParts({
     info: {
       bone,
       scabbard: shPath,
+      own: !shArc,
       weaponNode: true,
       weaponNodeEmpty: weaponKids === 0,
       quiver,
@@ -272,7 +273,7 @@ export function holsterHidden(slot, weaponShown, { arrowShown = false, tag = nul
  *  the wire. */
 export { makeVendoredArchive } from './urlArchive.js';
 
-/** `vendor/weapon-sheathing/Data Files/Meshes/w/x_sh.nif` -> `meshes/w/x_sh.nif`:
+/** `<a mod's folder>/Data Files/Meshes/w/x_sh.nif` -> `meshes/w/x_sh.nif`:
  *  the canonical data-files path the loose store keys by. */
 export function vendoredDataPath(file) {
   const p = String(file).replace(/\\/g, '/').toLowerCase();

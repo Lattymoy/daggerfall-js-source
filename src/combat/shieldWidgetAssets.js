@@ -1,47 +1,15 @@
 // @ts-check
-// SW1: SHIELD WIDGET'S SPRITES, vendored.
+// SW1: SHIELD WIDGET'S SPRITES. OWN-WORK4 (2026-10-31): the mod's 600 pictures are retired; each slot is our own
+// painting (combat/shieldFaces.js), made in code the first time the widget asks for it. Four archives (112360
+// Buckler, 112361 Round, 112362 Kite, 112363 Tower), thirty records each (a material group and a wear tier), five
+// frames each: the slots, the sizes and the frames the widget plays are the mod's, the pictures ours.
 //
-// 600 of them - four archives (112360 Buckler, 112361 Round, 112362
-// Kite, 112363 Tower), thirty records each, five frames each. A record
-// is a MATERIAL GROUP plus a CONDITION TIER, so the set is the mod's own
-// art for every shield in every metal at three states of wear.
-//
-// THEY ARE THE MODDER'S OWN ART, NOT A RENDER OF ARENA2. Classic
-// Daggerfall draws no first-person shield at all - there is no original
-// for these to be a repaint of. That is what separates them from Weapon
-// Widget's 173 (repaints of the classic WEAPON*.CIF frames) and from
-// Seasons of the Iliac Bay's flats, which the doctrine
-// (bible/01-Overview/Port-Doctrine.md: A RENDER OF GAME DATA IS GAME
-// DATA) keeps out of this repository and reads from the player's own
-// copy of the mod. This art is carried, the way Eye of the Beholder's
-// 3035 sprites and Handheld Torches' are, and the mod works out of the
-// box with nothing to attach.
-//
-// RE-ENCODED, and measured over all 600 rather than sampled:
-//   - every pixel's alpha is 0 or 255 - the classic 1-bit cutout, which
-//     is the port's own law (`if (t.a < 0.5) discard`);
-//   - no sprite holds more than 84 distinct colours once the
-//     transparent pixels are counted as one.
-// So each is written as an indexed PNG with an exact palette and a
-// single transparent index: 49.51 MB of RGBA becomes 2.02 MB on disk,
-// verified per sprite, all 600 - every DRAWN pixel identical, every
-// hidden pixel still hidden. Lossless for everything that reaches a
-// screen; not byte-lossless, because the ghost colour the author's
-// export left UNDER the transparent pixels collapses to one index.
-// Nothing visible changes; the bytes under the cutout do.
-//
-// SW4 (2026-09-19, Mac: "the new shield mod we integrated shows the
-// shields upside down") - AND REVERSED, ONCE, ON DISK. The 600 came out
-// of the mod's Unity texture buffer without the flip a PNG's top-down
-// rows need - a Texture2D is stored bottom-up - so every sprite shipped
-// vertically mirrored and the arm reached DOWN into the shield out of
-// the sky. The rows were reversed in place, palette and transparent
-// index carried over byte for byte, each file checked by flipping the
-// output back to the input. The door below is unchanged, because the
-// door was never what was wrong: see bible/05-Combat/Shield-Widget.md.
+// SW4 (2026-09-19, Mac: "the new shield mod we integrated shows the shields upside down"): a held shield's forearm
+// runs off the BOTTOM edge and the top edge is clear. The door hands the painting's top-down rows to a screen quad
+// through toScreenOrder, never toColor32, which would flip them.
 
 import { toScreenOrder } from '../formats/color32Order.js';
-import { decodePng } from '../systems/textureReplacement.js';
+import { paintShieldFace } from './shieldFaces.js';
 import { SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
 
 export const SHIELD_WIDGET_MOD = Object.freeze({
@@ -57,31 +25,11 @@ export function shieldTextureFileName(index) {
   return `${archive}_${record}-${frame}`;
 }
 
-/** The sprite's path in the repository, which is what the pins read. */
-export const shieldSpritePath = (index) => `vendor/shield-widget/Textures/${shieldTextureFileName(index)}.png`;
-
-/** The vendored sprite's URL - the shape handheldTorches.js uses for its
- *  own, which is what lets the bundler carry them. The archive, record
- *  and frame are interpolated separately, as that door does: measured
- *  over a real build, all 600 names reach the bundle. INLINE1
- *  (2026-09-20): ALL 600 AS FILES. This used to read "201 as files and
- *  the rest inlined under Vite's 4 KB limit, which is the project's
- *  setting and not this mod's business" - and that deference is exactly
- *  how 275 of these went into the boot chunk as 1.34 MB of base64. The
- *  project's setting now refuses to inline anything under vendor/
- *  (vite.config.js, test/ui/vendorinline.test.js). */
-export const shieldSpriteUrl = (index) => {
-  const { archive, record, frame } = shieldTextureName(index);
-  return new URL(`../../vendor/shield-widget/Textures/${archive}_${record}-${frame}.png`, import.meta.url).href;
-};
-
 // ---- the registry ----------------------------------------------------
 
-/** Every sprite's size, keyed by flat index. Written once by
- *  `SHIELD_SPRITE_SIZES` below, because the widget's rect maths measures
- *  a sprite BEFORE any texture is uploaded - a shield with no measured
- *  size draws nothing. The four archives each hold one size, so the
- *  table is four rows and not six hundred. */
+/** Every sprite's size, by archive: the widget's rect maths measures a
+ *  sprite BEFORE any texture is uploaded - a shield with no measured size
+ *  draws nothing. The mod's own sizes, which our paintings take. */
 export const SHIELD_ARCHIVE_SIZES = Object.freeze({
   112360: Object.freeze({ width: 134, height: 131 }), // Buckler
   112361: Object.freeze({ width: 157, height: 132 }), // Round
@@ -97,26 +45,16 @@ export function shieldWidgetSize(index) {
 
 const _images = new Map(); // flat index -> Promise<image | null>
 
-/** One sprite - `{ width, height, colors }` RGBA in the port's color32
- *  shape, which is what `renderer.uploadTexture` reads (TEX1). The rows
- *  stay as the PNG has them: this is a SCREEN quad, so it takes
- *  `toScreenOrder` and not `toColor32`'s flip (HT3's law, and WW3's
- *  crash is why the SHAPE is named here too). Cached per index, misses
- *  included. */
+/** One sprite - `{ width, height, colors }` RGBA in the port's color32 shape, which is what `renderer.uploadTexture`
+ *  reads (TEX1). The rows stay as the painting has them, a SCREEN quad's (HT3's law). Painted once per index. */
 export function shieldWidgetImage(index) {
   if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return Promise.resolve(null);
   if (!_images.has(index)) {
     _images.set(
       index,
       (async () => {
-        try {
-          const res = await fetch(shieldSpriteUrl(index));
-          if (!res.ok) return null;
-          return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));
-        } catch (e) {
-          console.warn(`[shield widget] ${shieldTextureFileName(index)} would not load:`, e?.message ?? e);
-          return null;
-        }
+        const picture = paintShieldFace(index, shieldWidgetSize(index));
+        return picture ? toScreenOrder(picture) : null;
       })(),
     );
   }
@@ -128,3 +66,44 @@ export const shieldWidgetTextures = Object.freeze({ size: shieldWidgetSize, imag
 
 /** The four archives, for a probe or a pin. */
 export const SHIELD_ARCHIVES = Object.freeze(Object.keys(SHIELD_ARCHIVE_SIZES).map(Number));
+
+/** OWN-WORK4: our presets, in this store's keys (modSettings.js 'shield-widget'), by one rule: each sets one section
+ *  to its defaults, or moves every slider of it half the way from its default toward one end of its range. */
+export const SHIELD_WIDGET_PRESETS = Object.freeze([
+  { title: 'Position - Default', values: { 'Shield.OffsetHorizontal': 0.5, 'Shield.OffsetVertical': 0.5 } },
+  { title: 'Position - Low', values: { 'Shield.OffsetHorizontal': -0.25, 'Shield.OffsetVertical': -0.25 } },
+  { title: 'Position - High', values: { 'Shield.OffsetHorizontal': 0.75, 'Shield.OffsetVertical': 0.75 } },
+  { title: 'Bob - Default', values: { 'Modules.Bob': true, 'Bob.SizeX': 1, 'Bob.SizeY': 1 } },
+  { title: 'Bob - Wide', values: { 'Modules.Bob': true, 'Bob.SizeX': 1.5, 'Bob.SizeY': 0.5 } },
+  { title: 'Bob - Tall', values: { 'Modules.Bob': true, 'Bob.SizeX': 0.5, 'Bob.SizeY': 1.5 } },
+  {
+    title: 'Inertia - Default',
+    values: {
+      'Modules.Inertia': true,
+      'Inertia.Scale': 1,
+      'Inertia.Speed': 1,
+      'Inertia.ForwardDepth': 1,
+      'Inertia.ForwardSpeed': 1,
+    },
+  },
+  {
+    title: 'Inertia - Light',
+    values: {
+      'Modules.Inertia': true,
+      'Inertia.Scale': 0.5,
+      'Inertia.Speed': 1.5,
+      'Inertia.ForwardDepth': 0.5,
+      'Inertia.ForwardSpeed': 1.5,
+    },
+  },
+  {
+    title: 'Inertia - Heavy',
+    values: {
+      'Modules.Inertia': true,
+      'Inertia.Scale': 1.5,
+      'Inertia.Speed': 0.5,
+      'Inertia.ForwardDepth': 1.5,
+      'Inertia.ForwardSpeed': 0.5,
+    },
+  },
+]);

@@ -57,7 +57,7 @@
 // again (bible/04-Characters/Layered-Gearing.md).
 //
 // Not a DFU member: Daggerfall Unity has no profile and no skins. The
-// sprites are the vendored mod's (vendor/eye-of-the-beholder).
+// sets are Eye Of The Beholder 2.1's, built from the player's own files.
 // ═══════════════════════════════════════════════════════════════════
 
 import { MOD_SETTINGS, modSetting, setModSetting, storedModSetting } from '../systems/modSettings.js';
@@ -118,7 +118,7 @@ export function derivedImageUrl(url, { build = undefined, encode = pictureBlobUr
  * The sets the card offers, each with its name and its picture's URL - the idle table's front frame for a set on
  * foot, the mounted idle's for a rider. Pure off the declarations and the bundle's own index, so node pins it.
  * `key` is the bundle's own name for the picture (`<archive>_<record>-<frame>`); `url` the built asset's, null outside
- * a browser build (eotbSprite.js's glob), where the tile says the name alone. NO-BETHESDA2: a derived sprite's marker.
+ * a browser build (eotbSprite.js eotbSpriteUrl), where the tile says the name alone. NO-BETHESDA2: a derived sprite's marker.
  * LAYERED-GEAR: `layered` the setting's four - off, female, male, your own body - each body pictured in plain leather
  * (layeredArmor.js layeredPreviewUrl; off has no picture, and the card offers the two bodies).
  * @returns {{foot: Array<{index:number, name:string, key:string|null, url:string|null}>, horse: Array<{index:number, name:string, key:string|null, url:string|null}>, layered: Array<{index:number, name:string, key:string|null, url:string|null}>}}
@@ -163,7 +163,7 @@ export const FOOT_GROUPS = Object.freeze([
  * The card. `doc` the document (the pins hand a fake); the card repaints itself on every press. SKIN2: two panels,
  * ON FOOT and MOUNTED, each closed to the one skin worn - its picture and its name - and opened on a press to the
  * skins it offers; one is open at a time, and a skin chosen closes it on the new one. `sets` the offer (skinSets; the
- * pins hand one with URLs, which only a browser build's glob has). LAYERED-GEAR: over them the Look toggle, and
+ * pins hand one with URLs, which only a browser build hands out). LAYERED-GEAR: over them the Look toggle, and
  * `gender` the character's own body ('male' or 'female'; the menu hands playerEntity's), the one Layered Gearing
  * first wears. NO-BETHESDA2: `imageUrl` a derived sprite's `<img>` src, a moment later (derivedImageUrl).
  * @param {Document} doc

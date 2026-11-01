@@ -14,7 +14,7 @@
 // the box is folded over the ranges the pass draws: the box is the
 // window, never the size. These pins drive
 // the REAL rig (createFpArm on the fixture third body, test/fixtures/mw
-// /bodyRig.mjs) holding the REAL vendored meshes, through the REAL
+// /bodyRig.mjs) holding a longsword and a bow at their true length (OWN-WORK4: our stand-ins), through the REAL
 // drawThird and drawRigSpriteBox, and route the body through the pass's
 // own ortho, RT and quad onto the main camera - the chain every pixel
 // of the body takes.
@@ -30,9 +30,13 @@ import { leanedUp } from '../../src/player/travelCamera.js';   // AUDIT OW4 J6: 
 import { Renderer } from '../../src/render/renderer.js';   // AUDIT OW4 J6: the quad's own corners
 import { setPref } from '../../src/systems/uiPrefs.js';   // BODY-CROP: the card's laws under the Billboard Look
 import { bodyRec, fixtureFile as f } from '../fixtures/mw/bodyRig.mjs';
+import { weaponMesh } from '../fixtures/mw/ownGear.mjs';
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
-const vendored = (n) => new Uint8Array(readFileSync(new URL(`../../vendor/weapon-sheathing/Data Files/Meshes/w/${n}`, import.meta.url)));
+// OWN-WORK4: our own stand-in weapon meshes (ownGear.mjs), the old pins' sizes - a longsword running y -8..59.5
+// from its grip, a long bow -38.5..46 gripped mid-stave
+const STAND_INS = { 'w_iron_longsword_sh.nif': weaponMesh({ grip: 8, guard: 4, blade: 59.5 }), 'w_longbow_sh.nif': weaponMesh({ grip: 38.5, guard: 1, blade: 46, width: 1, thick: 1 }) };
+const standIn = (n) => STAND_INS[n];
 const u = 1 / MW_UNITS_PER_METER;
 
 /** a WEAP record (mwarrow.test.js's wpdt: mType at byte 8 of WPDT) */
@@ -47,8 +51,7 @@ const wpdt = (id, model, type) => {
   return [...A('WEAP'), ...U(d.length), ...U(0), ...U(0), ...d];
 };
 
-// The hand holds the vendored Weapon Sheathing meshes (the whole _sh file:
-// the scabbard rides along, which only makes the gear more one-sided).
+// The hand holds our stand-in meshes at the old _sh files' lengths (OWN-WORK4).
 const LONGSWORD = { templateIndex: 120 };   // -> LongBladeOneHand, "Weapon Bone"
 const LONG_BOW = { templateIndex: 130 };    // -> MarksmanBow, "Weapon Bone Left" (rule 8)
 
@@ -58,8 +61,8 @@ function deps() {
     [fpSkeletonPath({}), f('armfp.nif')], [FP_CLIP_PATH, f('armfpidle.kf')],
     ['meshes/fixture/armfphand.nif', f('armfphand.nif')], ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
     ['meshes/xbase_anim.nif', f('armfp.nif')], ['meshes/xbase_anim.kf', f('armfpidle.kf')],
-    ['meshes/w/w_iron_longsword_sh.nif', vendored('w_iron_longsword_sh.nif')],
-    ['meshes/w/w_longbow_sh.nif', vendored('w_longbow_sh.nif')],
+    ['meshes/w/w_iron_longsword_sh.nif', standIn('w_iron_longsword_sh.nif')],
+    ['meshes/w/w_longbow_sh.nif', standIn('w_longbow_sh.nif')],
   ]);
   const esm = f('armfp.esm');
   const extra = [bodyRec('b_fprace_m_hand', 'fixture\\armfphand.nif', 'fprace', 5), bodyRec('b_fprace_m_upperarm', 'fixture\\armfparm.nif', 'fprace', 8)];

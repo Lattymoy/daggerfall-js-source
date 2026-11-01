@@ -12,7 +12,7 @@
 // IT RUNS ON VITE'S OWN DEV SERVER rather than a static file server,
 // and that is not a convenience: the HUD's module graph reaches
 // `import.meta.glob` (scenes/quest/questData.js, systems/dynamicSkiesAssets
-// .js, systems/betterAmbience.js), which is a Vite COMPILE-TIME macro.
+// .js), which is a Vite COMPILE-TIME macro.
 // A plain server hands the browser the macro itself and the page dies
 // with "(intermediate value).glob is not a function" - measured, on the
 // first draft of this file. The shipping graph is the transformed one,

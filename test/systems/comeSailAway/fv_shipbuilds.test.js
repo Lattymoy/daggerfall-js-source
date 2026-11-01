@@ -21,7 +21,7 @@ let launches = 0;
 /** One launch: a fresh module instance. */
 async function launch(store, fetchFn = fileFetch) {
   const mod = await import(`${MODELS}?launch=${++launches}`);
-  const models = await mod.loadComeSailAwayModels(fetchFn, mod.CSA_MODEL_URLS, { warn() {} }, mod.GALLEON_MODEL_URL, undefined, store);
+  const models = await mod.loadComeSailAwayModels(fetchFn, undefined, { warn() {} }, mod.GALLEON_MODEL_URL, undefined, store);
   return { models };
 }
 const shape = (m) => ({ prefabs: m.prefabs, components: m.components, meshes: m.meshes, animation: m.animation, galleon: m.galleon, carrack: m.carrack, largeBoat: m.largeBoat, geo: Object.keys(m.meshes).filter((k) => m.meshes[k].port).map((k) => m.geometry(k)) });

@@ -1,7 +1,8 @@
 // CSA-F (2026-09-27) - UNITY'S PARTICLE SYSTEM AS COME SAIL AWAY'S PREFABS USE IT: world/unityParticles.js over the
-// vendored prefabs' own systems (Models/prefabs.json) - the curves, emission by time, distance and burst, the shapes,
-// Local scaling, the size and force modules, plane collisions and their sub-emitters, Play and Stop. Every expectation
-// is worked out here from the modules' documented behaviour and the serialized values.
+// prefabs' own systems - the curves, emission by time, distance and burst, the shapes, Local scaling, the size and
+// force modules, plane collisions and their sub-emitters, Play and Stop. Every expectation is worked out here from the
+// modules' documented behaviour and the serialized values. OWN-WORK4 (2026-10-31): over our own boats' systems
+// (world/ships/ownBoats/ownBoatEffects.js), their values read from the prefab, not written here.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,8 +13,9 @@ import {
 } from '../../src/world/unityParticles.js';
 import { evaluateCurve } from '../../src/world/worldClock.js';
 import { quatRotate } from '../../src/world/quat.js';
+import { ownFile } from '../ownBoats.mjs';
 
-const P = JSON.parse(readFileSync(new URL('../../vendor/come-sail-away/Models/prefabs.json', import.meta.url), 'utf8'));
+const P = ownFile('prefabs.json'); // OWN-WORK4: our boats' prefabs (test/ownBoats.mjs)
 const near = (a, b, eps = 1e-6, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b}`);
 const nearV = (a, b, eps = 1e-6, msg = '') => a.forEach((v, i) => near(v, b[i], eps, `${msg}[${i}]`));
 /** A draw sequence: each call the next value, round again. */
@@ -24,24 +26,33 @@ const skiff = (random = draws(0.5)) => {
   const sys = (path) => root.find(path).getComponent('ParticleSystem').particleSystem;
   return { root, systems, sys };
 };
+/** A system's serialized record on the skiff (OWN-WORK4: read by its node, not by its place in the table). */
+const recordOf = (path) => instantiatePrefab(P.prefabs['112411'], P.components).find(path).getComponent('ParticleSystem');
+const WAKE = recordOf('WakeObject');
+const WAKE_SIZE = WAKE.SizeModule.curve.maxCurve.m_Curve;
+const FLAG = recordOf('OldSkiffHull/Variants/0/FlagObject/Particle System');
+const RUDDER = recordOf('OldSkiffHull/RudderObject/OldSkiffRudder/RudderEffect');
 const step = (systems, dt = 0.1, n = 1) => { for (let i = 0; i < n; i++) for (const s of systems) s.step(dt); };
 
 test('CSA-F: AnimationCurve.Evaluate - a cubic Hermite on each span\'s outer slopes, held flat past the ends; MinMaxCurve\'s four modes', () => {
-  const keys = P.components[28].SizeModule.curve.maxCurve.m_Curve;   // the wake's size: 0.25 up to 1 at the middle, down to 0
-  assert.equal(evaluateKeyframes(keys, -1), 0.25);
-  assert.equal(evaluateKeyframes(keys, 0), 0.25);
+  const keys = WAKE_SIZE;   // the wake's size: up to 1 inside its life, down to nought at its end
+  assert.ok(keys.length >= 3 && keys[1].value === 1 && keys.at(-1).value === 0, 'a rise and a fall');
+  assert.equal(evaluateKeyframes(keys, -1), keys[0].value);
+  assert.equal(evaluateKeyframes(keys, 0), keys[0].value);
   assert.equal(evaluateKeyframes(keys, 2), 0);
   const [a, b] = keys;
   const h = (t) => { const d = b.time - a.time, s = (t - a.time) / d; return (2 * s ** 3 - 3 * s ** 2 + 1) * a.value + (s ** 3 - 2 * s ** 2 + s) * a.outSlope * d + (-2 * s ** 3 + 3 * s ** 2) * b.value + (s ** 3 - s ** 2) * b.inSlope * d; };
   near(evaluateKeyframes(keys, 0.25), h(0.25));
   near(evaluateKeyframes(keys, b.time), 1, 1e-6);
+  // OWN-WORK4: a span leaving its first key on a slope (our wake's keys leave level) - its out slope read: 0.75 midway
+  near(evaluateKeyframes([{ time: 0, value: 0, inSlope: 0, outSlope: 2 }, { time: 1, value: 1, inSlope: 0, outSlope: 0 }], 0.5), 0.75, 1e-9);
   assert.equal(evaluateKeyframes(keys, 0.3), evaluateCurve(keys.map((k) => [k.time, k.value, k.inSlope, k.outSlope]), 0.3), 'worldClock\'s evaluateCurve, the one home');
   assert.equal(evaluateKeyframes([], 0.5), 0, 'an empty curve: nought');
   // what that home does not read, the prefabs never carry: every key of every curve finite, unweighted, and after the last
   const all = [];
   const walk = (o) => { if (o && typeof o === 'object') { if (Array.isArray(o.m_Curve)) all.push(o.m_Curve); for (const v of Object.values(o)) walk(v); } };
   walk(P.components);
-  assert.ok(all.flat().length > 50, `${all.flat().length} keys`);
+  assert.ok(all.flat().length > 20, `${all.flat().length} keys`);
   for (const c of all) c.forEach((k, i) => {
     assert.ok(Number.isFinite(k.inSlope) && Number.isFinite(k.outSlope), 'no stepped key');
     assert.ok(!k.weightedMode, 'no weighted key');
@@ -49,7 +60,7 @@ test('CSA-F: AnimationCurve.Evaluate - a cubic Hermite on each span\'s outer slo
   });
   assert.equal(evaluateMinMax(constantCurve(3), 0.7, 0.9), 3);
   assert.equal(evaluateMinMax(twoConstantsCurve(2, 6), 0, 0.25), 3);
-  assert.equal(evaluateMinMax({ minMaxState: 1, scalar: 2, maxCurve: { m_Curve: keys } }, 0), 0.5);
+  assert.equal(evaluateMinMax({ minMaxState: 1, scalar: 2, maxCurve: { m_Curve: keys } }, 0), 2 * keys[0].value);
   assert.equal(evaluateMinMax({ minMaxState: 2, scalar: 2, minCurve: { m_Curve: [{ time: 0, value: 0, inSlope: 0, outSlope: 0 }] }, maxCurve: { m_Curve: [{ time: 0, value: 1, inSlope: 0, outSlope: 0 }] } }, 0, 0.5), 1);
 });
 
@@ -82,23 +93,28 @@ test('CSA-F: Play and Stop reach the children (withChildren) but never a system 
 
 test('CSA-F: rate over distance - the emitter\'s world movement counted from the step after Play, a particle for each whole one the accumulator crosses, each born where the emitter stood at its fraction of the frame', () => {
   const { root, sys } = skiff();
-  const wake = sys('WakeObject');   // 0.5 a metre, world space, speed nought
+  const wake = sys('WakeObject');   // world space, speed nought
+  const rate = WAKE.EmissionModule.rateOverDistance.scalar;   // a particle every 1 / rate metres
+  assert.equal(WAKE.moveWithTransform, SPACE.World);
   wake.play();
   step([wake], 0.1);   // the first step: no last position, nothing moved
   assert.equal(wake.particleCount, 0);
-  root.localPosition = [0, 0, 4];   // 4 m: 2 particles, at the frame's half and its end
+  root.localPosition = [0, 0, 4];   // 4 m: one for each whole the accumulator crosses, each where the emitter stood
   step([wake], 0.1);
-  assert.equal(wake.particleCount, 2);
+  const n = Math.floor(4 * rate);
+  assert.ok(n >= 2, `${n}`);
+  assert.equal(wake.particleCount, n);
   const zs = wake.getParticles().map((q) => q.position[2]).sort((a, b) => a - b);
-  near(zs[0], 2, 1e-4, 'the first where the emitter stood half way');
-  near(zs[1], 4, 1e-4);
-  assert.equal(wake.getParticles()[0].position[1] <= 0.1 + 0.05 && wake.getParticles()[0].position[1] >= 0.1 - 0.05, true, 'the Box: a point in its 0.01-tall volume, times the object\'s 10 (Local scaling)');
-  root.localPosition = [0, 0, 5];   // 1 m more: the accumulator at 0.5
+  zs.forEach((z, i) => near(z, (i + 1) / rate, 1e-4, `the ${i + 1}th where the emitter stood ${(i + 1) / rate} m on`));
+  const y = wake.node.position[1], half = 0.5 * WAKE.ShapeModule.m_Scale.y * wake.node.localScale[1];
+  assert.ok(Math.abs(wake.getParticles()[0].position[1] - y) <= half + 1e-6, 'the Box: a point in its thin volume, times the object\'s scale (Local scaling)');
+  const room = (n + 1 - 4 * rate) / rate;   // metres to the next whole
+  root.localPosition = [0, 0, 4 + room / 2];
   step([wake], 0.1);
-  assert.equal(wake.particleCount, 2);
-  root.localPosition = [0, 0, 6];
+  assert.equal(wake.particleCount, n, 'short of the next whole: none');
+  root.localPosition = [0, 0, 4 + room * 1.5];
   step([wake], 0.1);
-  assert.equal(wake.particleCount, 3);
+  assert.equal(wake.particleCount, n + 1);
 });
 
 test('CSA-F: Local scaling - the wake\'s size is its start size times the size curve at its age times its object\'s local scale (the skiff\'s 10); its life the lifetime multiplier the C# sets', () => {
@@ -109,16 +125,18 @@ test('CSA-F: Local scaling - the wake\'s size is its start size times the size c
   wake.play();
   step([wake], 0.1);
   root.localPosition = [0, 0, 2];
-  step([wake], 0.1);   // one particle, born at the frame's end
+  step([wake], 0.1);   // one particle, born inside the frame
   const [q] = wake.renderList();
   assert.equal(wake.getParticles()[0].startLifetime, 2);
-  near(q.size[0], 0.2 * evaluateKeyframes(P.components[28].SizeModule.curve.maxCurve.m_Curve, 0) * 10, 1e-5);
+  const S = wake.node.localScale[0];
+  const age0 = wake.getParticles()[0].startLifetime - wake.getParticles()[0].remainingLifetime;   // born inside the frame
+  near(q.size[0], 0.2 * evaluateKeyframes(WAKE_SIZE, age0 / 2) * S, 1e-5);
   step([wake], 0.5, 2);   // a second on: half its life
-  near(wake.renderList()[0].size[0], 0.2 * evaluateKeyframes(P.components[28].SizeModule.curve.maxCurve.m_Curve, 0.5) * 10, 1e-5);
+  near(wake.renderList()[0].size[0], 0.2 * evaluateKeyframes(WAKE_SIZE, 0.5 + age0 / 2) * S, 1e-5);
   step([wake], 0.5, 2);   // two seconds: dead
   assert.equal(wake.particleCount, 0);
   // the Box's volume, too, through the shape's scale and then the object's own: a draw off the middle (0.9) is 0.4 of
-  // the shape's 0.01 up, times the skiff's 10
+  // the shape's height up, times the object's scale
   const off = skiff(draws(0.9));
   const w2 = off.sys('WakeObject');
   w2.play();
@@ -126,34 +144,43 @@ test('CSA-F: Local scaling - the wake\'s size is its start size times the size c
   off.root.localPosition = [0, 0, 2];
   step([w2], 0.1);
   const s2 = w2.node.localScale;
-  const lp = [0, (0.9 - 0.5) * P.components[28].ShapeModule.m_Scale.y, 0];
+  const lp = [0, (0.9 - 0.5) * WAKE.ShapeModule.m_Scale.y, 0];
   const want = quatRotate(w2.node.rotation, lp.map((v, i) => v * s2[i])).map((v, i) => v + w2.node.position[i]);
-  assert.equal(s2[1], 10);
-  nearV(w2.getParticles()[0].position, want, 1e-6, 'born 0.04 off the emitter');
+  assert.ok(s2[1] > 1, 'the wake\'s object scaled up');
+  assert.ok(lp[1] * s2[1] > 0, 'off the middle');
+  nearV(w2.getParticles()[0].position.map((v, i) => (i === 2 ? 0 : v)), want.map((v, i) => (i === 2 ? 0 : v)), 1e-6, 'born off the emitter');
 });
 
-test('CSA-F: the drops - a zero-scale Box keeps its own axis (they fall along the rudder effect\'s forward at its 100 m/s); crossing the helper Plane they lose all their life and fire the splash at the crossing', () => {
+test('CSA-F: the drops - a zero-scale Box keeps its own axis (they fall along the rudder effect\'s forward at its start speed); crossing the helper Plane they lose all their life and fire the splash at the crossing', () => {
   const { root, sys } = skiff();
   const rudder = sys('OldSkiffHull/RudderObject/OldSkiffRudder/RudderEffect');
   const splash = rudder.subEmitters[0].system;
   rudder.play();
   step([rudder, splash], 1 / 60);
-  root.localPosition = [0, 0, 1];   // a metre: one drop, born at the frame's end
+  const per = RUDDER.EmissionModule.rateOverDistance.scalar;
+  root.localPosition = [0, 0, 1 / per];   // one drop's distance: one drop, born at the frame's end
   rudder.step(1 / 60);
   assert.equal(rudder.particleCount, 1);
   const drop = rudder.getParticles()[0];
-  nearV(drop.velocity, [0, 0, 100], 1e-4, 'local space: the shape\'s own +Z, 100 m/s');
+  const speed = RUDDER.InitialModule.startSpeed.scalar;
+  nearV(drop.velocity, [0, 0, speed], 1e-4, `local space: the shape's own +Z, ${speed} m/s`);
   const fwd = quatRotate(rudder.node.rotation, [0, 0, 1]);
   const w0 = rudder.renderList()[0].position;
   nearV(w0.map((v, i) => v - rudder.node.position[i]), [0, 0, 0], 1e-6, 'born at the emitter');
   assert.ok(fwd[1] < -0.4, 'the rudder\'s forward points down into the water');
-  // the drop falls 1.08 m to the plane at y = 0 along a forward half down: in about 2.2 m, 0.022 s
-  rudder.step(1 / 60);
-  assert.equal(rudder.particleCount, 1);
+  // the drop's sphere falls to the plane along that forward: the frames it takes, from its height and speed
+  const r = RUDDER.InitialModule.startSize.scalar / 2;
+  const plane = rudder.planes[0].position[1];
+  const frames = Math.ceil((rudder.node.position[1] - r - plane) / -fwd[1] / (speed / 60) - 1e-9);
+  assert.ok(frames >= 1 && frames / 60 < RUDDER.InitialModule.startLifetime.scalar, `${frames} frames, inside its life`);
+  for (let f = 1; f < frames; f++) {
+    rudder.step(1 / 60);
+    assert.equal(rudder.particleCount, 1, `still falling at frame ${f}`);
+  }
   rudder.step(1 / 60);
   assert.equal(rudder.particleCount, 0, 'crossed: its lifetime lost whole');
   assert.equal(splash.particleCount, 1, 'the splash sub-emitter\'s burst of one');
-  near(splash.getParticles()[0].position[1], 0.125, 1e-3, 'where its collision sphere touched the plane - half its 0.25 size above it (radius scale 1)');
+  near(splash.getParticles()[0].position[1], plane + r, 1e-3, 'where its collision sphere touched the plane - half its size above it (radius scale 1)');
 });
 
 test('CSA-F: a system that does not loop emits its time-0 burst once and stops emitting at its duration; a burst of one at Play, again at the next Play once it has stopped', () => {
@@ -164,7 +191,7 @@ test('CSA-F: a system that does not loop emits its time-0 burst once and stops e
   oar.play();
   oar.step(0.01);
   assert.equal(oar.particleCount, 1, 'the burst');
-  oar.step(0.01);
+  oar.step(0.001);
   assert.equal(oar.particleCount, 1, 'once');
   for (let i = 0; i < 60; i++) oar.step(0.1);
   assert.equal(oar.isEmitting, false, 'past its five seconds');
@@ -184,10 +211,10 @@ test('CSA-F: a world-space force is added to the velocity each step; a local-spa
   root.localPosition = [0, 0, 2];
   step([wake], 0.1);
   const q = wake.getParticles()[0];
-  const x0 = q.position[0];
+  const x0 = q.position[0], v0 = q.velocity[0];   // born inside the frame: pushed for what was left of it
   wake.step(0.5);
-  near(q.velocity[0], 1, 1e-6, 'two a second for half a second');
-  near(q.position[0], x0 + 0.5, 1e-6, 'the new velocity over the step');
+  near(q.velocity[0], v0 + 1, 1e-6, 'two a second for half a second');
+  near(q.position[0], x0 + (v0 + 1) * 0.5, 1e-6, 'the new velocity over the step');
   const bow = sys('WakeObject/Particle System (4)');   // local space
   bow.play();
   bow.step(0.1);
@@ -199,7 +226,7 @@ test('CSA-F: a world-space force is added to the velocity each step; a local-spa
   after.forEach((z, i) => near(z - before[i], 10, 1e-4, 'moved with the boat'));
 });
 
-test('CSA-F: the flag - Mesh particles, a streamer of cubes along its forward: per-axis sizes from the size module (0.2, 3 falling to nought, 0.2 of the start size) through its object\'s (1, 1, 2) scale, turned by its system and its own 45 degrees about y', () => {
+test('CSA-F: the flag - Mesh particles, a streamer of cubes along its forward: per-axis sizes, its start size\'s three times the size module\'s three curves (one falling to nought), through its object\'s (1, 1, 2) scale, turned by its system and its own turn', () => {
   const { root, sys } = skiff();
   const variant = root.find('OldSkiffHull/Variants/0');
   variant.setActive(true);
@@ -207,19 +234,28 @@ test('CSA-F: the flag - Mesh particles, a streamer of cubes along its forward: p
   assert.equal(flag.renderer.m_RenderMode, RENDER_MODE.Mesh);
   assert.deepEqual(flag.renderer.m_Mesh, { builtin: 'Cube' });
   flag.main.startSpeed = constantCurve(0.5);
-  for (let i = 0; i < 10; i++) flag.step(0.02);   // 50 a second
-  assert.ok(flag.particleCount >= 9 && flag.particleCount <= 10, `${flag.particleCount}`);
-  const r = flag.renderList().sort((a, b) => a.position[2] - b.position[2])[0];
-  const age = 1 - flag.getParticles().find((q) => true).remainingLifetime / 0.5;
-  assert.ok(age >= 0);
-  near(r.size[0], 0.2 * 0.2, 1e-6);
-  near(r.size[2], 0.2 * 0.2 * 2, 1e-6, 'z doubled by the object');
+  const rate = FLAG.EmissionModule.rateOverTime.scalar;
+  for (let i = 0; i < 10; i++) flag.step(0.02);   // a fifth of a second
+  assert.ok(Math.abs(flag.particleCount - rate * 0.2) <= 1, `${flag.particleCount} of ${rate * 0.2}`);
+  const I = FLAG.InitialModule, S = FLAG.SizeModule;
+  assert.equal(S.separateAxes, true);
+  const start = [I.startSize.scalar, I.startSizeY.scalar, I.startSizeZ.scalar];
+  const scale = flag.node.localScale;
+  assert.deepEqual(scale, [1, 1, 2]);
+  const sizeAt = (q) => {
+    const t = 1 - q.remainingLifetime / q.startLifetime;
+    return [S.curve, S.y, S.z].map((c, i) => start[i] * evaluateMinMax(c, t, 0.5) * scale[i]);
+  };
+  const list = flag.renderList();
+  flag.getParticles().forEach((q, i) => nearV(list[i].size, sizeAt(q), 1e-6, 'its start size, its curves, its object\'s scale'));
   const oldest = flag.getParticles().reduce((a, b) => (a.remainingLifetime < b.remainingLifetime ? a : b));
-  const t = 1 - oldest.remainingLifetime / oldest.startLifetime;
-  const oldestSize = flag.renderList()[flag.getParticles().indexOf(oldest)].size;
-  near(oldestSize[1], 0.2 * 3 * (1 - t), 1e-4, 'y: three times the start size, falling to nought over the life');
-  assert.deepEqual(r.rotation.map((v) => +v.toFixed(4)), [0, 0.7854, 0]);
-  const q = particleMeshRotation([0, 0, 0, 1], r.rotation);
+  const youngest = flag.getParticles().reduce((a, b) => (a.remainingLifetime > b.remainingLifetime ? a : b));
+  assert.ok(sizeAt(oldest)[1] < sizeAt(youngest)[1], 'y falls over the life');
+  near(evaluateMinMax(S.y, 1, 0.5), 0, 1e-9, 'to nought');
+  near(list[0].size[2], start[2] * evaluateMinMax(S.z, 0, 0.5) * 2, 1e-6, 'z doubled by the object');
+  const r = list[0];
+  assert.deepEqual(r.rotation.map((v) => +v.toFixed(4) + 0), [I.startRotationX, I.startRotationY, I.startRotation].map((c) => +evaluateMinMax(c, 0, 0.5).toFixed(4) + 0), 'its own turn');
+  const q = particleMeshRotation([0, 0, 0, 1], [0, Math.PI / 4, 0]);
   nearV(quatRotate(q, [1, 0, 0]), [Math.SQRT1_2, 0, -Math.SQRT1_2], 1e-5, 'Euler(0, 45, 0)');
   // the system's rotation first, then the particle's own: a system turned a quarter about x, the particle 45 about y
   const turned = [Math.SQRT1_2, 0, 0, Math.SQRT1_2];

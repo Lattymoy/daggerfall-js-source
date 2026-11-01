@@ -1,6 +1,6 @@
 // BODY-MOTION, THE RUN (2026-10-19, Mac after the merge of #1025: "the greatsword running doesnt use both hands. The
 // running animation with the legs needs to be stiffer. The hands are way too close together when running both in third
-// and first person."; bible/04-Characters/Body-Motion.md) - on the vendored retail biped, measured on the solved body.
+// and first person."; bible/04-Characters/Body-Motion.md) - on our own biped (OWN-WORK4), measured on the solved body.
 //
 // What is pinned: RUN-STIFF - the run's knee folds less in the swing and the hips ride higher on the standing leg (the
 // knee folded 98 degrees past the standing leg's at a run, the hips sank to 0.87 of their standing height) - and RUN-EASE

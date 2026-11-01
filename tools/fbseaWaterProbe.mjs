@@ -1,7 +1,7 @@
 // FIELD BUGS 2026-09-29 (the sea) #4 - "Water flickers from a distance". A synthetic coast drawn by the port's own
 // passes on a real GL pipeline (SwiftShader): Iliac Puddle No More's floor and surface top (render/deepWatersRender.js)
 // and Come Sail Away's waves (render/comeSailAwayRender.js, its mesh from systems/comeSailAway/comeSailAwayWaves.js buildWaveMesh,
-// the author's own two paints from vendor/come-sail-away), under the world's lens (0.2 to 6000). The camera bobs by
+// OWN-WORK4: our own two paints, systems/comeSailAway/csaPictures.js), under the world's lens (0.2 to 6000). The camera bobs by
 // centimetres, as a deck carries it; a pixel whose colour changes between two bobs of a still scene is a flicker.
 //     node tools/fbseaWaterProbe.mjs [--solid] [--time]   (--solid: the waves painted flat - their depth alone, no texels;
 //                                                          --time: the frame's cost, the strip over half the screen)
@@ -56,6 +56,7 @@ const out = await page.evaluate(async (solidWaves) => {
   const { DeepWatersRenderer } = await import('/src/render/deepWatersRender.js');
   const { ComeSailAwayRenderer } = await import('/src/render/comeSailAwayRender.js');
   const { buildWaveMesh, waveDitherOf, WAVE_SCALE } = await import('/src/systems/comeSailAway/comeSailAwayWaves.js');
+  const { waveFrames } = await import('/src/systems/comeSailAway/csaPictures.js');
   const { perspective, lookAt, multiply, mirrorProjectionX } = await import('/src/world/mat4.js');
   // the renderer's frame, as the two passes read it
   const r = {
@@ -133,26 +134,8 @@ const out = await page.evaluate(async (solidWaves) => {
     waveDistance: 2,
     waterLevel: SEA,
   });
-  const img = async (src) => {
-    const im = new Image();
-    im.src = src;
-    await im.decode();
-    const c = document.createElement('canvas');
-    c.width = im.width;
-    c.height = im.height;
-    const g = c.getContext('2d');
-    g.drawImage(im, 0, 0);
-    return {
-      width: im.width,
-      height: im.height,
-      data: new Uint8Array(g.getImageData(0, 0, im.width, im.height).data.buffer),
-    };
-  };
-  const derived = await (await fetch('/vendor/come-sail-away/Textures/derived.json')).json();
-  const paints = [
-    await img('/vendor/come-sail-away/Textures/112395_2-base0.paint.png'),
-    await img('/vendor/come-sail-away/Textures/112395_2-base1.paint.png'),
-  ];
+  const own = waveFrames();
+  const paints = own.paints;
   if (solidWaves)
     for (const p of paints)
       for (let i = 0; i < p.data.length; i += 4) {
@@ -161,21 +144,8 @@ const out = await page.evaluate(async (solidWaves) => {
         p.data[i + 2] = 240;
         p.data[i + 3] = 255;
       }
-  const snow = { width: 64, height: 64, data: new Uint8Array(64 * 64 * 4) };
-  let s = 12345;
-  for (let i = 0; i < snow.data.length; i += 4) {
-    s = (s * 1103515245 + 12345) >>> 0;
-    const v = 200 + (s >>> 27);
-    snow.data[i] = v;
-    snow.data[i + 1] = v;
-    snow.data[i + 2] = v + 4;
-    snow.data[i + 3] = 255;
-  } // a soft white, as the record is
-  const specs = [];
-  for (let i = 0; i < 32; i++) {
-    const d = derived[`112395_2-${i}`];
-    specs.push({ paint: d.paint.includes('base1') ? 1 : 0, scroll: d.scroll, tile: d.tile, size: d.size });
-  }
+  const snow = own.snow; // our foam
+  const specs = own.specs;
   csa.setWaveFrames({ paints, snow, specs });
   const waves = { position: built.position, scale: WAVE_SCALE, mesh: built.mesh, frame: 5 };
   const dither = waveDitherOf(10, 0.5);

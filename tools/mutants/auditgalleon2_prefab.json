@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-GN2-PF4-her-model-after-the-five",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "        ? get(url, false).then(\n            (json) => ({ ok: true, json, error: null }),\n            (error) => ({ ok: false, json: null, error }),\n          )",
-    "new": "        ? new Promise((r) => setTimeout(r, 60))\n            .then(() => get(url, false))\n            .then(\n              (json) => ({ ok: true, json, error: null }),\n              (error) => ({ ok: false, json: null, error }),\n            )",
+    "old": "        ? get(url).then(\n            (json) => ({ ok: true, json, error: null }),\n            (error) => ({ ok: false, json: null, error }),\n          )",
+    "new": "        ? new Promise((r) => setTimeout(r, 60))\n            .then(() => get(url))\n            .then(\n              (json) => ({ ok: true, json, error: null }),\n              (error) => ({ ok: false, json: null, error }),\n            )",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],

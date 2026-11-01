@@ -1,5 +1,5 @@
 // TWO-HANDS, THE MORROWIND LANE (2026-10-16, bible/05-Combat/Two-Hands.md): the second hand on the 3D body - an arm, or
-// the whole body, as the mirror of another (combat/twoHands/mirrorRig.js) on the vendored retail biped (Weapon Sheathing's
+// the whole body, as the mirror of another (combat/twoHands/mirrorRig.js) on our own biped (OWN-WORK4; once Weapon Sheathing's
 // xbase_anim, bones along their local X) and the fixture rig; the left hand's weapon on the Weapon Bone Left
 // (combat/fpArm.js resolveOffWeaponParts, setOffWeapon); the left-hand blow, the fists' mirror, and the running hands
 // through the real arm's update. The sprite lane's pins are test/combat/twohands.test.js.
@@ -36,13 +36,12 @@ import { GUARD, RUN_PUMP, RUN_STEP_M, runPhaseOfBob, runPhaseFollow, runPhaseSte
 import { HeadBobber } from '../../src/player/headBobber.js';
 import { MW_WEAPON_TYPE, MW_UNITS_PER_METER, assembleFirstPersonArm, poseAssembly } from '../../src/formats/morrowind/mwFirstPerson.js';
 import { bodyRec } from '../fixtures/mw/bodyRec.mjs';
-import { SHADOW_INVERSE_BINDS, retailSkeleton } from '../fixtures/mw/retailRig.mjs';
+import { SHADOW_INVERSE_BINDS, RETAIL_SKELETON_BYTES, retailSkeleton } from '../fixtures/mw/retailRig.mjs';
 import { composeWornArmor } from '../../src/formats/morrowind/mwItemMap.js';   // MIRROR-BIND: the port's own gauntlets, a left and a right piece
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const f = (n) => new Uint8Array(readFileSync(new URL(`../fixtures/mw/${n}`, import.meta.url)));
-const RETAIL = 'vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif';
-const retailBytes = () => new Uint8Array(readFileSync(new URL('../../' + RETAIL, import.meta.url)));
+const retailBytes = () => RETAIL_SKELETON_BYTES;   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
 const retail = () => buildSkeleton(parseNif(retailBytes()));
 const M = (sk, pose) => skeletonSpaceMatrices(sk, pose, GRAPH_ROOT);
 

@@ -9,6 +9,15 @@ the author's own still to come - `RECORD OPEN`) are `vendor/snowfall/`'s. Its
 siblings from the same message: `07-Rendering/Heat-Haze.md`,
 `07-Rendering/Windfall.md`, `07-Rendering/Sands-Of-The-Alikr.md`.
 
+**OWN-WORK4 (2026-10-31, the owner).** "A proper 1 to 1 recreation for everything." `vendor/snowfall/` and
+`public/art/snowfall/` are retired (`01-Overview/Own-Work.md`); the model and the runtime stay our port of the
+assembly. The winter ground is our snow law over the player's own TEXTURE.103, .303 and .403, or over the summer
+record where the data has none: snow laid by slope and exposure, crept downwind, shaded cold
+(`src/systems/ownTextures/ownTextureRules.js`). The masks are that law's coverage (`ownSnowMasks`), the albedo our own
+noise (`snowAlbedo`), and `src/render/snowfallGlsl.js` our own GLSL written from the effect: a path trodden 5% grey, a
+track packed darker and colder with its depth. PIN MOVED: the model test's coverage hash is over our masks
+(`test/snowMasks.mjs`, our law over a made-up winter set).
+
 ## The winter ground
 
 The mod's bundle packages 168 winter ground records - TEXTURE.103, .303 and
@@ -16,7 +25,7 @@ The mod's bundle packages 168 winter ground records - TEXTURE.103, .303 and
 and three surface masks (`snow_surface_masks_<archive>.bytes`, a byte a tile
 corner saying where snow may lie). They ship under `public/art/snowfall/`
 (mip 0 of each texture written losslessly), under Port-Doctrine's SECOND
-EXCEPTION, written and checked by `tools/environmentModsExtract.mjs`. The
+EXCEPTION, written and checked by `tools/environmentModsExtract.mjs` (its Snowfall arm RETIRED, OWN-WORK4). The
 records are a SHIPPED MOD in the texture door, registered beside Vanilla
 Enhanced's by `systems/vanillaEnhanced/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`), ON BY
 DEFAULT and a switch of its own on the Replacement packs card. They carry each

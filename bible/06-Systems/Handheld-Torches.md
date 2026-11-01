@@ -24,6 +24,16 @@ default (MO1); the four presentation modules (Sprite, Bob, Inertia,
 Step) ship OFF as the mod ships them. Pins: 19 in
 `test/systems/ht1_handheldtorches.test.js`.
 
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for everything." `vendor/handheld-torches/`
+is retired (`01-Overview/Own-Work.md` holds its row). The seventeen pictures the release drew are ours, recipes in
+`systems/handheldTorchesArt.js` for our painter (`art/ownPainter.js`): the hand with a torch (90 x 205) and with a
+lantern (110 x 138), the torch on the floor (31 x 34) and doused, four frames each where the release had four, played
+at its ANIMATION_TIME. A lit floor frame's `_Emission` twin is the frame. The doused candle and holy candle carried the
+author's pixels as edits; they are ours now, `dousedCandle` (our rule) over the player's lit candle. The twenty lit
+candle frames, edit-free, stay rebuilt (`systems/handheldTorchesDerived.json`). The manifest's facts and the 52 settings
+are pinned as literals in `ht1_handheldtorches`. Nothing is fetched. Pins: `nobethesda2_torchesicons`,
+`audit0928_nav` N8, `fieldconsole1`, `ownwork4_pictures`.
+
 ## The source the port reads
 
 The bundle carries `Handheld Torches.dll` (43,520 bytes) and no source;

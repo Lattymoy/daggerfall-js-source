@@ -1,23 +1,23 @@
 // The scripted Come Sail Away scene - csa_wind.test.js's (csa_sailing's, with the wind's seams), one harness: the
-// vendored hulls through the real SpawnBoat and runtime, Time.deltaTime a quarter second, every seam a stand-in.
+// hulls (OWN-WORK4: our own, test/ownBoats.mjs) through the real SpawnBoat and runtime, Time.deltaTime a quarter second, every seam a stand-in.
 // HELM-WAY's suite (test/systems/naval/helmway.test.js) drives the same runtime through it.
 import { readFileSync } from 'node:fs';
 import { comeSailAwayModels } from '../src/systems/comeSailAway/comeSailAwayModels.js';
 import { spawnBoat } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { createComeSailAwayRuntime, NO_WATER_LEVEL, WEATHER_TYPE } from '../src/systems/comeSailAway/comeSailAway.js';
+import { ownFile } from './ownBoats.mjs';
 
-const DIR = new URL('../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
 // GALLEON (2026-10-01): hull 2 the new galleon over the mod's, as the game's loader stands her (comeSailAwayModels.js) -
 // the pool's own models (navalSea.mjs, a file fetch) and these are one ship
 const GALLEON = JSON.parse(readFileSync(new URL('../src/assets/galleon/galleon.json', import.meta.url), 'utf8'));
 // SHIPS-2 (2026-10-07): and hull 4 the new carrack, hull 1 the new large boat, as the loader stands them
 const ship = (f) => JSON.parse(readFileSync(new URL(`../src/assets/ships/${f}`, import.meta.url), 'utf8'));
-export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON, carrack: ship('carrack.json'), largeBoat: ship('largeBoat.json') });
+export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON, carrack: ship('carrack.json'), largeBoat: ship('largeBoat.json') });
 export const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
-/** SHIPS-2: the mod's own Carrack and Large Boat under the galleon - hulls 4 and 1 as the game stands them when the new
+/** SHIPS-2: our own Carrack and Large Boat (OWN-WORK4: once the mod's) under the galleon - hulls 4 and 1 as the game stands them when the new
  *  ships' models do not load (test/navalSea.mjs modShipsPool's) - and a context over them. */
-export const MOD_MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON });
+export const MOD_MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON });
 export const modCtxFor = (player) => ({ ...ctxFor(player), models: MOD_MODELS });
 
 export function terrain(x, y, { tile = 0 } = {}) {
@@ -41,7 +41,7 @@ export function scene(opts = {}) {
   };
   let timeScale = opts.timeScale ?? 1;
   const deps = {
-    // SHIPS-2: `opts.mod` - the mod's own Carrack and Large Boat (MOD_MODELS), as the game stands them when the new ships' models do not load
+    // SHIPS-2: `opts.mod` - our own Carrack and Large Boat (MOD_MODELS), as the game stands them when the new ships' models do not load
     pool: { models: opts.mod ? MOD_MODELS : MODELS, ready: () => true, spawnNow: (boat, p) => { spawnBoat(boat, (opts.mod ? modCtxFor : ctxFor)(p)); return boat; }, remove: () => {} },
     player: () => ({ position: [...player.position], rotation: [0, Math.sin((player.yaw * Math.PI / 180) / 2), 0, Math.cos((player.yaw * Math.PI / 180) / 2)] }),
     camera: () => ({ position: [0, 50, 0], forward: [0, -1, 0] }),

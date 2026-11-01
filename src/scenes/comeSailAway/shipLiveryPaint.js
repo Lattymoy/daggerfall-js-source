@@ -10,9 +10,9 @@
 //     (world/ships/shipLiveryArt.js liveryArtOf), each picture in Daggerfall's look as her stand-ins are (world/dfLook.js,
 //     her own record's grain); a see-through record twice - by day its glass cut out, at night whole with its glow (the
 //     pool's own NIGHT_REMAP law, kept: a painted gallery is see-through by day and lit at night);
-//   - a hull of the mod's own planks (TEXTURE.067 - the Rowboat, the Large Galley, and a port hull's small things) -
-//     every plank record stained (systems/naval/shipLivery.js stainPicture);
-//   - classic sailcloth (TEXTURE.050 record 7, the mod's sails) - tinted (SAIL_TINT).
+//   - a hull of our boats' own planks (OWN-WORK4: world/ships/ownBoats/ownBoatArt.js - the Rowboat, the Large Galley, and
+//     a port hull's small things) - every wood record stained (systems/naval/shipLivery.js stainPicture);
+//   - our boats' sailcloth (its canvas record, the Large Galley's sail) - tinted (SAIL_TINT).
 import {
   LIVERY_ARCHIVE,
   SHIP_PAINTS,
@@ -26,13 +26,16 @@ import { logoVersion } from '../../ui/guild/guildLogoImages.js';
 import { liveryArtOf } from '../../world/ships/shipLiveryArt.js';
 import { cutGlass } from '../../world/ships/galleonArt.js';
 import { dfLook, lookSeed } from '../../world/dfLook.js';
-import { classicPictureOf } from '../../formats/derivedTexture.js';
 import { toColor32 } from '../../formats/color32Order.js';
+import { OWN_BOAT_ARCHIVE, OWN_TEX, OWN_WOOD_RECORDS, ownBoatArt } from '../../world/ships/ownBoats/ownBoatArt.js';
 
-/** The mod's plank archive, stained. */
-export const PLANK_ARCHIVE = 67;
-/** The mod's sailcloth: TEXTURE.050 record 7 (its sails' ApplyGameTextures names, `050_007`). */
-export const CLASSIC_SAIL = Object.freeze([50, 7]);
+/** OWN-WORK4: our boats' plank archive, stained (its wood records, OWN_WOOD_RECORDS). */
+export const PLANK_ARCHIVE = OWN_BOAT_ARCHIVE;
+/** OWN-WORK4: our boats' sailcloth - their canvas record (each sail's ApplyGameTextures child names it). */
+export const CLASSIC_SAIL = Object.freeze([OWN_BOAT_ARCHIVE, OWN_TEX.canvas]);
+/** Our boats' pictures as painted (before Daggerfall's look), made once at the first paint that needs them. */
+let _own = null;
+const ownPicture = (record) => (_own ??= new Map(ownBoatArt())).get(record) ?? null;
 
 /**
  * @param {{ renderer: any, pipeline: any, portArchiveOf: (hull: number) => number | null, log?: any }} deps - `portArchiveOf`
@@ -69,9 +72,6 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     if (glow) renderer.uploadEmissionTexture?.(LIVERY_ARCHIVE, rec, toColor32(glow), { replacement: false });
     return `${LIVERY_ARCHIVE}_${rec}`;
   }
-  /** A classic record as a top-down picture, or null where the player's data has none (derivedTexture.js). */
-  const classic = (archive, record) =>
-    classicPictureOf((a) => pipeline.getTexture(a), pipeline.palette, archive, record);
   /** Every picture a livery repaints on a hull, painted and uploaded: `{ day, night }`. GUILD-SHOP: `code` is her livery's
    *  own (three bytes); a sailcloth flying arms is paintArmed's. */
   async function paint(hull, code) {
@@ -96,10 +96,8 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     }
     const stain = SHIP_PAINTS[lv.stain]?.rgb;
     if (stain) {
-      const t = await pipeline.getTexture(PLANK_ARCHIVE);
-      const n = t && !t.vendor ? (t.recordCount ?? 0) : 0;
-      for (let r = 0; r < n; r++) {
-        const pic = await classic(PLANK_ARCHIVE, r);
+      for (const r of OWN_WOOD_RECORDS) {
+        const pic = ownPicture(r);
         if (!pic) continue;
         const key = put(PLANK_ARCHIVE, r, code, 'd', dfLook(stainPicture(pic, stain), lookSeed(PLANK_ARCHIVE, r)));
         day.set(`${PLANK_ARCHIVE}_${r}`, key);
@@ -110,7 +108,7 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     // a sailcloth (a pattern, the arms) is a port hull's whole canvas only (shipLivery.js clothHull)
     const sail = SHIP_PAINTS[lv.sail]?.rgb;
     if (sail) {
-      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);
+      const pic = ownPicture(CLASSIC_SAIL[1]);
       if (pic) {
         const key = put(
           CLASSIC_SAIL[0],

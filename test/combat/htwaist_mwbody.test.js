@@ -12,13 +12,15 @@
 // a light that arrives mid-build is queued; unload drops it.
 //
 // Driven through the real code: the formats' own assembly over Weapon
-// Sheathing's vendored retail-shaped skeleton for the hang's geometry, and
+// Sheathing's retired skeleton, now our own biped, for the hang's geometry, and
 // a whole createFpArm() rig for the doors, on the fixture body with a
 // pelvis joined through the WS1 bone-addon door (a tiny addon NIF written
 // here - the fixture skeleton is an arm and has none).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { RETAIL_SKELETON_BYTES } from '../fixtures/mw/retailRig.mjs';
+import { OWN_BONES } from '../fixtures/mw/ownGear.mjs';
 
 import { pickLanternRecord, pickTorchRecord, assembleFirstPersonArm, poseAssembly, hangAffine, hangAnchor, MW_LIGHT_CARRY, MW_UNITS_PER_METER } from '../../src/formats/morrowind/mwFirstPerson.js';
 import {
@@ -30,7 +32,7 @@ import { fixtureFile, countingRenderer, hipLanternBodyDeps } from '../fixtures/m
 import { createLanternSwing, lanternSwingMatrix, HIP_LANTERN_HEIGHT } from '../../src/systems/lanternSwing.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const SKEL = new Uint8Array(readFileSync(new URL('../../vendor/weapon-sheathing/Data Files/Animations/xbase_anim/xbase_anim_sh.nif', import.meta.url)));
+const SKEL = RETAIL_SKELETON_BYTES;   // OWN-WORK4: our own biped (tools/ownBiped.mjs)
 const light = (id, flags = MW_LIGHT_CARRY, model = `l/${id}.nif`) => ({ id, model, name: id, carry: !!(flags & MW_LIGHT_CARRY), fire: false, flags });
 const bbox = (pos) => {
   const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
@@ -91,8 +93,8 @@ test('HT-WAIST resolveHipLanternPart: nothing unlit; a note, never a throw, for 
 async function hungOnRetailSkeleton() {
   const mesh = fixtureFile('weapon.nif');   // any rigid mesh stands in for the lantern's
   const res = resolveHipLanternPart({ hipLight: true, allLights: [light('lantern_01')], find: (p) => (p === 'meshes/l/lantern_01.nif' ? { get: () => mesh } : null), skeletonBytes: SKEL });
-  assert.deepEqual(res.notes, [], 'Weapon Sheathing\'s copy of the retail Bip01 chain carries the pelvis');
-  const arm = await assembleFirstPersonArm({ skeletonBytes: SKEL, parts: res.parts });
+  assert.deepEqual(res.notes, [], 'our biped\'s Bip01 chain carries the pelvis');
+  const arm = await assembleFirstPersonArm({ skeletonBytes: SKEL, parts: res.parts, boneSources: OWN_BONES });   // OWN-WORK4: our sheathing bones, the scabbard's at the left
   assert.equal(arm.ok, true);
   const hang = hangHipLight(arm);
   assert.ok(hang, 'the bound hang is found and measured');
@@ -103,7 +105,7 @@ test('HT-WAIST the hang: the lantern hangs by its TOP from a hook on the RIGHT h
   const { arm, piece } = await hungOnRetailSkeleton();
   poseAssembly(arm);
   const pelvis = arm.mats.get(arm.skeleton.byName.get('bip01 pelvis')).t;
-  close(pelvis, [0, 1.8, 76.4], 0.1, 'the retail pelvis');
+  close(pelvis, [0, 0.4, 76.37], 0.1, 'our biped\'s pelvis (OWN-WORK4: the bind\'s own; retail\'s idle stands it at 0, 1.8, 76.4)');
   const b = bbox(piece.positions);
   close(b.top, [pelvis[0] + HIP_LANTERN_HOOK[0], pelvis[1] + HIP_LANTERN_HOOK[1], pelvis[2] + HIP_LANTERN_HOOK[2]], 1e-3, 'the top-centre at the hook');
   assert.ok(b.top[0] > 0, 'the actor\'s RIGHT (+X): the one-handed scabbard hangs at the left');

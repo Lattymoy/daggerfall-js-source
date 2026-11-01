@@ -3,24 +3,22 @@
 // Travel Options ships one file - `traveloptions.dfmod`, a Unity
 // 2019.4.40f1 AssetBundle - and the PNGs it was built from are not in
 // it: the bundle carries them as Texture2D objects in RGB24. The three
-// under `vendor/travel-options/Textures/` are therefore RE-ENCODES: the
-// author's pixels, this encoder's bytes (vendor/travel-options/
-// README.md says so in as many words, and test/tooling/vendorIntegrity.test.js
-// pins the re-encodes' hashes).
+// the tree once carried were therefore RE-ENCODES: the author's pixels,
+// this encoder's bytes. OWN-WORK4 (2026-10-31) retired them for our own
+// (src/ui/travel/travelArt.js); their hashes are their Own-Work.md row's.
 //
 // This script is what reproduces them, so the claim is checkable by
 // anyone holding the shipped zip rather than taken on trust:
 //
-//   node tools/travelOptionsAssets.mjs <path-to>/traveloptions.dfmod [outDir]
+//   node tools/travelOptionsAssets.mjs <path-to>/traveloptions.dfmod <outDir>
 //
-// Default outDir is vendor/travel-options/Textures. It also prints the
+// outDir is required: nothing of the bundle's is written into the tree. It also prints the
 // bundle's five text assets' sizes (OWN-WORK3: the settings, presets and
 // string table they held left the tree; our own words and settings are the
 // record now).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 
 const CRC = (() => {
@@ -68,11 +66,11 @@ export function encodePng(w, h, rgba) {
 }
 
 const bundlePath = process.argv[2];
-if (!bundlePath) {
-  console.error('usage: node tools/travelOptionsAssets.mjs <traveloptions.dfmod> [outDir]');
+const outDir = process.argv[3];
+if (!bundlePath || !outDir) {
+  console.error('usage: node tools/travelOptionsAssets.mjs <traveloptions.dfmod> <outDir>');
   process.exit(2);
 }
-const outDir = process.argv[3] ?? fileURLToPath(new URL('../vendor/travel-options/Textures', import.meta.url));
 const bundle = readUnityBundle(new Uint8Array(readFileSync(bundlePath)));
 mkdirSync(outDir, { recursive: true });
 

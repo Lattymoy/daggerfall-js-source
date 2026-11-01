@@ -7,16 +7,21 @@
 // (player/eyeOfTheBeholder/eotbSprite.js spriteFor): the body, the preload, the peers and the Skin card. (2) The card is two panels,
 // ON FOOT and MOUNTED, each closed to the worn skin and opened on a press to the skins it offers.
 //
-// Driven through the real manifest and files on disk, the real spriteFor, the real settings store, the real look and
-// wire door, the real walker layer and the real card against a fake document; the cascade read off ENHANCED_CSS.
+// OWN-WORK4 (2026-10-31): the sheets are ours now - each skin's frames are its classic sheet's (`from`, the player's own
+// TEXTURE file) painted by player/classSkinArt.js, and the pack is gone. These pins hold OUR table as literals; with
+// ARENA2_PATH set they hold it to the player's files too. Driven through the real spriteFor, the real settings store,
+// the real look and wire door, the real walker layer and the real card against a fake document; the cascade read off
+// ENHANCED_CSS.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   CLASS_SKINS, EOTB_FOOT_SET_COUNT, FOOT_SKIN_COUNT, classSkinOf, classSkinLabel, classRecord, classFrame,
-  CLASS_TABLE_BASE, CLASS_BOW_BASE, classRecordScale,
+  CLASS_TABLE_BASE, CLASS_BOW_BASE, classRecordScale, classSkinKeyOf, CLASS_SPRITE_COUNT, BOW_SHEETS,
 } from '../../src/player/classSkins.js';
-import { spriteFor, tableKeys, spriteOffset, spriteSize, SIZE_ON_FOOT } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, tableKeys, spriteOffset, spriteSize, SIZE_ON_FOOT, eotbSpriteUrl, classSpriteUrl } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
+import { TextureFile } from '../../src/formats/textureFile.js';
 import { STATE_TABLES, frameCount, ORIENTATIONS, ARCHIVE_FOOT } from '../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { composeLook } from '../../src/net/remotePlayers.js';
@@ -26,31 +31,51 @@ import { skinCard, skinSets, FOOT_GROUPS } from '../../src/ui/skinCard.js';
 import { ENHANCED_CSS } from '../../src/ui/enhanced/enhancedStyle.js';
 
 const V = 'eye-of-the-beholder';
-const png = (key) => new URL(`../../vendor/class-skins/Textures/${key.split('_')[0]}/${key}.png`, import.meta.url);
+const A2 = process.env.ARENA2_PATH;
+const sheet = (from) => { const t = new TextureFile(); t.load(new Uint8Array(readFileSync(join(/** @type {string} */ (A2), `TEXTURE.${from}`))), `TEXTURE.${from}`, null); return t; };
 const skin = (name, gender) => CLASS_SKINS.find((s) => s.name === name && s.gender === gender);
 const indexOf = (s) => EOTB_FOOT_SET_COUNT + CLASS_SKINS.indexOf(s);
 
-test('SKIN2: the twenty class sheets are vendored, and the manifest counts every record\'s frames off the files themselves', () => {
-  assert.equal(CLASS_SKINS.length, 20);
-  assert.equal(new Set(CLASS_SKINS.map((s) => s.archive)).size, 20, 'one archive a skin - a key names one picture');
+test('SKIN2, OWN-WORK4: the twenty class skins are our table - each one\'s key, name, sex and classic sheet - and the pack is gone', () => {
+  assert.equal(existsSync(new URL('../../vendor/class-skins', import.meta.url)), false, 'retired: no picture of the pack in the tree');
+  // [key, label, the classic sheet it is painted on, its frames] - the order a saved Graphics.OnFoot names them
+  assert.deepEqual(CLASS_SKINS.map((s) => [s.archive, classSkinLabel(s), s.from, s.frames.reduce((a, b) => a + b, 0)]), [
+    [1523, 'Acrobat (male)', 482, 80], [1524, 'Acrobat (female)', 483, 80], [1536, 'Assassin (male)', 490, 100],
+    [1537, 'Assassin (female)', 489, 100], [1538, 'Burglar (male)', 480, 80], [1539, 'Burglar (female)', 479, 80],
+    [1504, 'Bounty Hunter (male)', 482, 80], [1535, 'Dark Acolyte', 486, 80], [1513, 'Dark Brotherhood (male)', 482, 80],
+    [1514, 'Daggerfall Adventurer', 483, 80], [1530, 'Healer (male)', 486, 80], [1527, 'Healer with Shield (male)', 486, 80],
+    [1528, 'Healer (female)', 485, 85], [1519, 'Monk (male)', 486, 80], [1520, 'Monk (female)', 485, 85],
+    [1525, 'Nightblade (male)', 490, 100], [1526, 'Nightblade (female)', 489, 100], [1529, 'Pirate (male)', 484, 80],
+    [1540, 'Sorcerer (male)', 488, 80], [1541, 'Sorcerer (female)', 477, 81],
+  ]);
+  assert.equal(CLASS_SPRITE_COUNT, 1691, 'every record\'s every frame of the twenty');
   for (const s of CLASS_SKINS) {
-    assert.ok(s.archive < ARCHIVE_FOOT, `${classSkinLabel(s)}: a Daggerfall archive, never one of the mod's (${s.archive})`);
+    assert.ok(s.archive < ARCHIVE_FOOT, `${classSkinLabel(s)}: a key of the port's, never one of the mod's (${s.archive})`);
     assert.equal(s.frames.length, s.bow ? 30 : 25, `${classSkinLabel(s)}: five groups, six with a bow`);
-    const files = readdirSync(new URL(`../../vendor/class-skins/Textures/${s.archive}/`, import.meta.url));
-    assert.equal(files.length, s.frames.reduce((a, b) => a + b, 0), `${classSkinLabel(s)}: the manifest is the folder`);
-    s.frames.forEach((n, rec) => {
-      assert.ok(n >= 1, `${s.archive} record ${rec} has a frame`);
-      for (let f = 0; f < n; f++) assert.ok(existsSync(png(`${s.archive}_${rec}-${f}`)), `${s.archive}_${rec}-${f}: numbered with no gap`);
-      assert.ok(!existsSync(png(`${s.archive}_${rec}-${n}`)), `${s.archive} record ${rec}: no frame past the count`);
-    });
+    assert.equal(s.bow, BOW_SHEETS.includes(s.from), `${classSkinLabel(s)}: a bow where its sheet has one`);
   }
-  // the pack is not uniform, and the manifest says so rather than assuming the layout
-  assert.equal(skin('Healer', 'female').frames[20], 5, 'the female healer casts in five');
-  assert.equal(skin('Bounty Hunter', 'male').frames[24], 2, 'the bounty hunter\'s last ranged record is two');
-  assert.equal(skin('Pirate', 'male').frames[3], 4, 'the pirate\'s record 3 walks in four - its 3-1 shipped as `1529_3-1_.png`, an underscore that is a typo, not a withdrawn frame');
+  // the classic sheets are not uniform, and the table says so rather than assuming the layout
+  assert.deepEqual(skin('Healer', 'female').frames.slice(20, 25), [5, 5, 5, 5, 5], 'TEXTURE.485 casts in five');
+  assert.equal(skin('Sorcerer', 'female').frames[8], 7, 'TEXTURE.477 swings its record 8 in seven');
+  assert.equal(skin('Bounty Hunter', 'male').frames[24], 4, 'TEXTURE.482\'s last ranged record is four');
+  assert.deepEqual(skin('Pirate', 'male').frames, [4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 4]);
   assert.deepEqual(CLASS_SKINS.filter((s) => s.bow).map(classSkinLabel), ['Assassin (male)', 'Assassin (female)', 'Nightblade (male)', 'Nightblade (female)']);
   assert.equal(classSkinLabel(skin('Dark Acolyte', null)), 'Dark Acolyte', 'no sex named, none printed');
   assert.ok(Object.isFrozen(CLASS_SKINS) && Object.isFrozen(CLASS_SKINS[0].frames));
+  // a key names a class frame only where the sheet has one
+  assert.deepEqual(classSkinKeyOf('1528_20-4'), { skin: skin('Healer', 'female'), record: 20, frame: 4 });
+  assert.equal(classSkinKeyOf('1523_20-4'), null, 'TEXTURE.482 casts in four');
+  assert.equal(classSkinKeyOf('1523_25-0'), null, 'no bow on the acrobat');
+  assert.equal(classSkinKeyOf('112364_0-0'), null, 'one of the mod\'s own');
+  assert.equal(classSkinKeyOf('LA:male:x:15-0:lll'), null);
+});
+
+test('OWN-WORK4: the table is the player\'s own sheets - every record\'s frame count read off its TEXTURE file', { skip: !A2 && 'ARENA2_PATH not set' }, () => {
+  for (const s of CLASS_SKINS) {
+    const t = sheet(s.from);
+    assert.equal(t.recordCount, s.frames.length, `${classSkinLabel(s)}: TEXTURE.${s.from}'s records`);
+    s.frames.forEach((n, record) => assert.equal(t.getFrameCount(record), n, `${classSkinLabel(s)}: TEXTURE.${s.from} record ${record}`));
+  }
 });
 
 test('SKIN2: an index past the mod\'s sixteen is a class skin; the tables read the class sheet\'s groups, the bow where there is one', () => {
@@ -82,7 +107,9 @@ test('SKIN2: an index past the mod\'s sixteen is a class skin; the tables read t
   assert.deepEqual([0, 1].map((f) => classFrame(plain, 15, f, 2)), [0, 0], 'a one-frame idle held');
   assert.deepEqual([0, 1, 2, 3, 4, 5].map((f) => classFrame(plain, 5, f, 6)), [0, 1, 2, 3, 4, 5], 'the six-frame swing');
   assert.deepEqual([0, 1, 2, 3].map((f) => classFrame(skin('Healer', 'female'), 20, f, 4)), [0, 1, 2, 3], 'five frames under four: never past');
-  assert.deepEqual([0, 1, 2, 3].map((f) => classFrame(skin('Bounty Hunter', 'male'), 24, f, 4)), [0, 0, 1, 1]);
+  assert.deepEqual([0, 1, 2, 3].map((f) => classFrame(skin('Bounty Hunter', 'male'), 24, f, 4)), [0, 1, 2, 3]);
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map((f) => classFrame(skin('Sorcerer', 'female'), 8, f, 6)), [0, 1, 2, 3, 4, 5], 'seven under the six-frame swing');
+  assert.deepEqual([0, 1].map((f) => classFrame(skin('Healer', 'female'), 20, f, 2)), [0, 2], 'five under two');
   assert.equal(classFrame(plain, 0, 9, 4), 3, 'a frame past the clip is its last');
   assert.equal(classFrame(plain, 0, -1, 4), 0);
 });
@@ -96,16 +123,24 @@ test('SKIN2: spriteFor draws a class skin through the one door - the wheel and t
     assert.equal(cls.record, 15 + (mod.record - STATE_TABLES.Idle.base), `orientation ${o}: the same offset into the class idle`);
     assert.equal(cls.mirror, mod.mirror, `orientation ${o}: the mod's mirror`);
     assert.equal(cls.key, `1523_${cls.record}-0`);
-    assert.ok(existsSync(png(cls.key)), cls.key);
+    assert.ok(classSkinKeyOf(cls.key), cls.key);
     assert.equal(cls.rec, `${cls.record}-0${cls.mirror ? 'm' : ''}`, 'the body\'s cache key tells a mirrored view apart');
     assert.equal(spriteFor('Idle', o, 0, { onFoot: acro }, { flip: true }).mirror, !cls.mirror);
   }
-  // every table, orientation and frame of every class skin names a file that is there
+  // every table, orientation and frame of every class skin names a frame its sheet has - built as ours, behind the
+  // derived marker in a browser (eotbSprite.js classSpriteUrl); node has no build, as it has no glob
   for (let i = EOTB_FOOT_SET_COUNT; i < FOOT_SKIN_COUNT; i++) {
     for (const t of Object.keys(CLASS_TABLE_BASE)) {
-      for (let f = 0; f < frameCount(t); f++) for (const k of tableKeys(t, f, { onFoot: i })) assert.ok(existsSync(png(k)), `${i} ${t} ${f}: ${k}`);
+      for (let f = 0; f < frameCount(t); f++) {
+        for (const k of tableKeys(t, f, { onFoot: i })) {
+          assert.ok(classSkinKeyOf(k), `${i} ${t} ${f}: ${k}`);
+          assert.equal(classSpriteUrl(k), `DF:${k}`);
+        }
+      }
     }
   }
+  assert.equal(eotbSpriteUrl('1523_15-0'), null, 'node: no build');
+  assert.equal(classSpriteUrl('112364_0-0'), null, 'the mod\'s own are not ours');
   assert.equal(spriteFor('AttackRanged', 0, 2, { onFoot: asn }).key, '1536_25-2', 'the assassin looses the bow');
   assert.equal(spriteFor('AttackRanged', 0, 2, { onFoot: acro }).key, '1523_20-2', 'the acrobat throws');
   assert.equal(spriteFor('MoveMelee', 0, 1, { onFoot: acro }).key, '1523_0-2');
@@ -148,39 +183,39 @@ test('SKIN2: the setting offers them, the look sends them, the relay keeps them,
 
 // ACRO-SHORT (2026-09-27, Discord, "acrobat (female) skin bug": "acrobat sprite is super short on certain angles, (i am
 // not crouching)"). The female acrobat's front three-quarter idle is a whole figure drawn at another scale - 81 pixels
-// where the group's other views are 110 - and a loose-file pack carries no XML to size it, so she stood a quarter
-// shorter from that side, on her own body and on a peer's screen alike. The manifest's `scale` plays the XML's part
-// (TextureReplacement.SetBillboardScale) and spriteOffset reads it. Sized off the real pictures on disk.
-const pngSize = (key) => { const b = readFileSync(png(key)); return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) }; };
-const drawnAt = (archive, record) => {
-  const { w, h } = pngSize(`${archive}_${record}-0`);
-  return spriteSize(w, h, {}, spriteOffset(archive, record).scale);
-};
-
-test('ACRO-SHORT: a class record drawn at another scale stands as tall as its group - every view of every sheet, the female acrobat\'s three-quarter idle 110 pixels high', () => {
-  assert.deepEqual(pngSize('1524_16-0'), { w: 47, h: 81 }, 'the picture: a whole figure drawn small, not a crop');
+// where the group's other views are 110 - so she stood a quarter shorter from that side, on her own body and on a peer's
+// screen alike. OWN-WORK4: the picture is TEXTURE.483's own record 16, and the table carries its scale (the part
+// TextureReplacement.SetBillboardScale plays); spriteOffset reads it. Sized off the player's files when ARENA2_PATH is set.
+test('ACRO-SHORT: the female acrobat\'s three-quarter idle carries its scale, and no other record does', () => {
   assert.equal(classRecordScale(1524, 16), 81 / 110, 'the scale is the idle group\'s 110 pixels');
-  assert.ok(Math.abs(drawnAt(1524, 16).h - 110 * SIZE_ON_FOOT) < 1e-9, `she stands ${drawnAt(1524, 16).h} m, the group's 110 pixels`);
+  assert.equal(spriteOffset(1524, 16).scale, 81 / 110, 'the one door every sizer reads');
   assert.equal(classRecordScale(1524, 15), 1, 'her front view is drawn at the group\'s scale');
   assert.equal(classRecordScale(1523, 16), 1, 'the male acrobat\'s three-quarter view too');
+  assert.equal(classRecordScale(1514, 16), 81 / 110, 'the adventurer is painted on the same sheet: a scale is the sheet\'s');
   assert.equal(classRecordScale(15, 16), 1, 'a mod archive carries no class scale');
-  // THE SWEEP: every view of every five-record group of every sheet stands within 15% of its group's median - the pack
-  // carries no size of its own, so a picture drawn small is caught here and not on a player's screen
+  assert.deepEqual(CLASS_SKINS.filter((s) => s.scale).map((s) => [s.archive, s.from, s.scale]), [[1524, 483, { 16: 81 / 110 }], [1514, 483, { 16: 81 / 110 }]]);
+});
+
+test('ACRO-SHORT: every view of every sheet stands within 15% of its group, her idle wheel 110 pixels high', { skip: !A2 && 'ARENA2_PATH not set' }, () => {
+  const sizeOf = (s, record) => { const z = sheet(s.from).getSize(record); return { w: z.width, h: z.height }; };
+  const drawnAt = (s, record) => { const { w, h } = sizeOf(s, record); return spriteSize(w, h, {}, spriteOffset(s.archive, record).scale); };
+  assert.deepEqual(sizeOf(skin('Acrobat', 'female'), 16), { w: 47, h: 81 }, 'the picture: a whole figure drawn small, not a crop');
+  assert.ok(Math.abs(drawnAt(skin('Acrobat', 'female'), 16).h - 110 * SIZE_ON_FOOT) < 1e-9, 'she stands the group\'s 110 pixels');
   const short = [];
   for (const s of CLASS_SKINS) {
     for (let g = 0; g < s.frames.length; g += 5) {
-      const hs = [0, 1, 2, 3, 4].map((o) => drawnAt(s.archive, g + o).h);
+      const hs = [0, 1, 2, 3, 4].map((o) => drawnAt(s, g + o).h);
       const median = [...hs].sort((a, b) => a - b)[2];
       hs.forEach((h, o) => { if (h < 0.85 * median) short.push(`${classSkinLabel(s)} record ${g + o}: ${h.toFixed(3)} m against ${median.toFixed(3)}`); });
     }
   }
   assert.deepEqual(short, []);
-  // the one door the body and the peers size through: spriteFor, then spriteOffset - her idle wheel stands level
   const acro = indexOf(skin('Acrobat', 'female'));
   const tall = [];
   for (let o = 0; o < ORIENTATIONS; o++) {
     const sp = spriteFor('Idle', o, 0, { onFoot: acro });
-    tall.push(Math.round(spriteSize(pngSize(sp.key).w, pngSize(sp.key).h, {}, spriteOffset(sp.archive, sp.record).scale).h / SIZE_ON_FOOT));
+    const { w, h } = sizeOf(skin('Acrobat', 'female'), sp.record);
+    tall.push(Math.round(spriteSize(w, h, {}, spriteOffset(sp.archive, sp.record).scale).h / SIZE_ON_FOOT));
   }
   assert.deepEqual(tall, [110, 110, 109, 110, 110, 110, 109, 110], 'every orientation of the idle, the mirrored three-quarter included');
 });

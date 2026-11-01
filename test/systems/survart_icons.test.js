@@ -205,10 +205,10 @@ test('SURV-TENT: the tent’s art is registered, and does NOT stand in for its a
   // are rebuilt from the player's files, not carried. Their sizes (32x32, 64x8) are pinned on the built pictures, with
   // ARENA2, in nobethesda2_torchesicons.test.js.
   assert.deepEqual(VENDOR_TENT_FILES.map(derivedIconSpec), [{ from: [50, 7, 0], pal: 'PAL.PAL' }, { from: [67, 10, 0], pal: 'PAL.PAL' }]);
-  for (const f of VENDOR_TENT_FILES) assert.equal(existsSync(`vendor/climates-calories/Textures/${f}.png`), false, `${f}: no copy in the tree`);
+  assert.equal(existsSync('vendor/climates-calories'), false, 'OWN-WORK4: no copy of any of them in the tree');
 
   clearVendorTextures();
-  const n = installSurvivalIcons({ fetchBytes: async () => new Uint8Array(readFileSync('vendor/climates-calories/Textures/539_0-0.png')) });
+  const n = installSurvivalIcons();
   assert.equal(n, 18, 'sixteen icons and the tent’s two');
 
   // the swap arm finds them, ungated - they are the port's own art

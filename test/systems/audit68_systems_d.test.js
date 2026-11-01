@@ -119,14 +119,13 @@ test('AUDIT 68 S27-hcc-changed-every-frame: an idle runtime (nothing owned, noth
 test('AUDIT 68 S27-hcc-walk-fetch-storm: a walk set that failed to load is not fetched again every frame - one batch, one warning', async () => {
   const fetched = [];
   const warned = [];
-  const fetchFn = async (url) => {
-    fetched.push(String(url));
-    if (/Walk\./.test(String(url))) return { ok: false, status: 404 };
-    return { ok: true, arrayBuffer: async () => new Uint8Array(8).buffer };
+  const horsePicture = async (file) => {   // OWN-WORK4: the pictures are built; here a walk frame's build fails
+    fetched.push(String(file));
+    if (/Walk\./.test(String(file))) throw new Error(`${file}: not built`);
+    return { width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4) };
   };
-  const decode = async () => ({ width: HORSE_SPRITE_WIDTH, height: HORSE_SPRITE_HEIGHT, data: new Uint8ClampedArray(HORSE_SPRITE_WIDTH * HORSE_SPRITE_HEIGHT * 4) });
   const renderer = { uploadTexture: () => 'k' };
-  const pool = createHorseCartPool({ renderer, fetchFn, decode, now: () => 0, log: { warn: (m) => warned.push(m), error() {} } });
+  const pool = createHorseCartPool({ renderer, horsePicture, now: () => 0, log: { warn: (m) => warned.push(m), error() {} } });
   for (let frame = 0; frame < 6; frame++) { pool.presentation.horseArt.ensureWalk(); await flush(); }
   const walks = fetched.filter((u) => /Walk\./.test(u)).length;
   assert.equal(walks, HORSE_VIEWS * HORSE_WALK_FRAMES, 'the forty frames asked for once');
@@ -175,8 +174,8 @@ test('AUDIT 68 S27-if-load-clobber: a superseded clip load does not clear the ne
   const held = [];
   let asked = 0;
   const c = createImmersiveFootsteps({
-    audio: { registerSound: async () => true, playOneShot() {} }, settings: () => readFootstepSettings(() => store), random: () => 0,
-    fetchClip: (name) => { asked++; return new Promise((res) => held.push({ name, go: () => res(new Uint8Array([1])) })); },
+    audio: { registerSamples: () => true, playOneShot() {} }, settings: () => readFootstepSettings(() => store), random: () => 0,
+    makeClip: (name) => { asked++; return new Promise((res) => held.push({ name, go: () => res(({ samples: new Float32Array(1), rate: 22050 })) })); },
   });
   const m = { paused: false, entity: { items: [], activeEffects: [] }, grounded: true, standingStill: true, isRunning: false, movingLessThanHalfSpeed: false,
     transportMode: 0, swimming: false, pos: [0, 0, 0], inside: false, inDungeon: false, season: 0, climateIndex: 0, tileMapIndex: 2, waterWalking: false };

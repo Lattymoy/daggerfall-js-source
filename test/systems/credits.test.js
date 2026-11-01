@@ -136,7 +136,7 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
   for (const p of OVERHAUL_PANELS) for (const o of p.options) if (o.vendor) named.add(o.vendor);
   // ALIKR1 / SNOWFALL1: ...and a pack shipped in the texture door is a switch of its own on the packs card (`textureMods`
   // lists every registered .dfmod) and a chip under Vanilla Enhanced (its index names the Base) - `art/<vendor>`
-  for (const m of ENVIRONMENT_PACK_MODS) named.add(m.root.replace(/^art\//, ''));
+  for (const m of ENVIRONMENT_PACK_MODS) named.add(m.dir);   // OWN-WORK4: a pack is its directory's key
   // ARENA1: the one credited work that is NOT a switch - the Arena of Daggerfall stands in the city in every game (Arena.md:
   // "the arena is not a switch, it is the city"), so there is nothing on the Features home to turn off
   named.add('daggerfall-arena');

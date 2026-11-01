@@ -1071,6 +1071,15 @@ search's Escape was never heard either. The patch table's count corrected (Q10 a
 `auditsurv.json` re-aimed, every one dead. (HUNT-OUT, 2026-10-04: H7's test and record retired with the hunt page -
 the wait page takes no key; `audit28_forage.test.js` holds 9.)
 
+## OWN-WORK4 - our own pictures (2026-10-31)
+
+**OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for everything." `vendor/foraging/` is
+retired (`01-Overview/Own-Work.md` holds its row). The seven pictures are ours: the Wood-Axe, Pick-Axe, Sickle,
+Fishing-Net, Wood Bundle, Egg and Spade are recipes in `systems/foraging/foragingArt.js` for our painter
+(`art/ownPainter.js`), at the same archives (11600-11606, record 0) and sizes (64 x 64, the net 128 x 128).
+`installForaging` registers each as a built stand-in, painted the first time it is asked. No pixel of the release is
+read. Pins: `forage1_law`, `ownwork4_pictures`.
+
 ## OWN-WORK3 - our own data and words (2026-10-31)
 
 **OWN-WORK3 (2026-10-31, the owner).** "Removing mods from outside authors and instead replacing them with our own

@@ -39,12 +39,12 @@ export function rimDepth(pic) {
   return out;
 }
 
-/** Where the specks fall: drawn pixels two or more from the clear, picked by the seed. Pure. */
-export function mouldSpecks(depth, w, seed) {
+/** Where the specks fall: drawn pixels two or more from the clear, picked by the seed, one to `perSpeck`. Pure. */
+export function mouldSpecks(depth, w, seed, perSpeck = DRAWN_PER_SPECK) {
   const room = [];
   let drawn = 0;
   for (let i = 0; i < depth.length; i++) { if (depth[i]) drawn++; if (depth[i] >= 2) room.push(i); }
-  const want = Math.min(room.length, Math.max(MIN_SPECKS, Math.round(drawn / DRAWN_PER_SPECK)));
+  const want = Math.min(room.length, Math.max(MIN_SPECKS, Math.round(drawn / perSpeck)));
   const next = rng(seed), picked = [];
   while (picked.length < want) {
     const i = room.splice(next() % room.length, 1)[0];
@@ -54,8 +54,12 @@ export function mouldSpecks(depth, w, seed) {
   return picked.sort((a, b) => a - b);
 }
 
-/** The food, rotten: `pic` is the fresh food's picture (top-down RGBA), `seed` our pattern's. */
-export function rotPicture(pic, { seed = 1 } = {}) {
+/** OWN-WORK4: the first spoiled face, mouldy - less of the sick tint, more mould. Rotten is the default. */
+export const MOULDY = Object.freeze({ mix: 0.3, perSpeck: 30 });
+
+/** The food, rotten: `pic` is the fresh food's picture (top-down RGBA), `seed` our pattern's; `mix` and `perSpeck`
+ *  set how far the tint goes and how thick the mould lies (MOULDY for the first stage). */
+export function rotPicture(pic, { seed = 1, mix = ROT_MIX, perSpeck = DRAWN_PER_SPECK } = {}) {
   const { width: w, height: h } = pic;
   const src = pic.data, data = new Uint8Array(w * h * 4);
   const depth = rimDepth(pic);
@@ -63,10 +67,10 @@ export function rotPicture(pic, { seed = 1 } = {}) {
     if (!depth[i]) continue;
     const o = i * 4, lum = 0.299 * src[o] + 0.587 * src[o + 1] + 0.114 * src[o + 2];
     const rim = depth[i] < 3 ? ROT_RIM[depth[i] - 1] : 1;
-    for (let c = 0; c < 3; c++) data[o + c] = Math.min(255, Math.round((src[o + c] * (1 - ROT_MIX) + lum * ROT_TINT[c] * ROT_MIX) * rim));
+    for (let c = 0; c < 3; c++) data[o + c] = Math.min(255, Math.round((src[o + c] * (1 - mix) + lum * ROT_TINT[c] * mix) * rim));
     data[o + 3] = 255;
   }
-  for (const i of mouldSpecks(depth, w, seed)) {
+  for (const i of mouldSpecks(depth, w, seed, perSpeck)) {
     const x = i % w, y = (i / w) | 0;
     for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
       const j = (y + dy) * w + x + dx;

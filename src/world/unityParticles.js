@@ -3,7 +3,7 @@
 // CSA-F (2026-09-27): UNITY'S PARTICLE SYSTEM, THE PART COME SAIL AWAY'S
 // PREFABS USE. The mod's wake, bow waves, oar and rudder drops, their
 // splashes and its flag are Shuriken systems in the bundle
-// (Models/prefabs.json: every module's serialized fields), which the C#
+// (Come Sail Away 2.1's prefabs: every module's serialized fields - OWN-WORK4: ours, world/ships/ownBoats/), which the C#
 // plays, stops, re-tunes and reads. Unity's simulation is native code, so
 // what is here is its documented behaviour for the modules those systems
 // switch on - and nothing they leave off:

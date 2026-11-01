@@ -19,7 +19,7 @@ import { DeepWatersRenderer } from '../../src/render/deepWatersRender.js';
 import { ComeSailAwayRenderer, WAVE_FS } from '../../src/render/comeSailAwayRender.js';
 import { boxLevels, wavePaintLevels, wavePictureMean } from '../../src/systems/comeSailAway/comeSailAwayWaves.js';
 import { composeTiledPicture } from '../../src/formats/derivedTexture.js';
-import { readPng } from '../../tools/pngIO.mjs';
+import { wavePaint } from '../../src/systems/comeSailAway/csaPictures.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const WORLD = read('src/scenes/world.js');
@@ -142,13 +142,14 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: A PICTURE\'S CHAIN - level 0 to 1 x 1 
   }
 });
 
-test('FIELD BUGS 2026-09-29 (the sea) #4: A PAINT\'S CHAIN - level 0 the paint itself (its key kept: the mod\'s own read there), past it the mean of the frame it composes, premultiplied, the key standing for the snow record at its mean; the author\'s paints are 0 or 255 in alpha; the whole chain\'s last texel is the frame\'s coverage and colour as its texels count them (mutants: straight alpha, the key left as magenta, level 0 composed, the snow\'s mean)', () => {
+test('FIELD BUGS 2026-09-29 (the sea) #4: A PAINT\'S CHAIN - level 0 the paint itself (its key kept: the mod\'s own read there), past it the mean of the frame it composes, premultiplied, the key standing for the snow record at its mean; our paints are 0 or 255 in alpha; the whole chain\'s last texel is the frame\'s coverage and colour as its texels count them (mutants: straight alpha, the key left as magenta, level 0 composed, the snow\'s mean)', () => {
   const tiny = wavePaintLevels({ width: 2, height: 1, data: new Uint8Array([200, 100, 50, 128, 255, 0, 255, 255]) }, [240, 244, 250]);
   assert.deepEqual([...tiny[0].data], [200, 100, 50, 128, 255, 0, 255, 255], 'level 0 the paint itself');
   assert.deepEqual([...tiny[1].data], [(100 + 240) / 2, (50 + 244) / 2, Math.floor((25 + 250) / 2 + 0.5), Math.floor((128 + 255) / 2 + 0.5)], 'past it the frame\'s mean, premultiplied, the key the snow\'s mean');
   assert.deepEqual(wavePictureMean({ width: 2, height: 1, data: new Uint8Array([200, 100, 0, 255, 100, 51, 10, 0]) }), [150, 76, 5], 'a picture\'s mean colour');
-  for (const name of ['112395_2-base0.paint.png', '112395_2-base1.paint.png']) {
-    const pic = readPng(readFileSync(new URL(`../../vendor/come-sail-away/Textures/${name}`, import.meta.url)));
+  // OWN-WORK4: our two paints (systems/comeSailAway/csaPictures.js), as the author's were checked
+  for (const name of [0, 1]) {
+    const pic = wavePaint(name);
     const snow = [236, 238, 245];
     const levels = wavePaintLevels(pic, snow);
     assert.equal(levels.length, 10, '640 to 1');

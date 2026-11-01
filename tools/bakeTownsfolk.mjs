@@ -719,7 +719,7 @@ if (isMain(import.meta.url)) {
   const r = bakeTownsfolk({
     source: readFileSync(SOURCE),
     pngs: Object.fromEntries(Object.entries(PAINTINGS).map(([paint, p]) => [paint, readFileSync(p.png)])),
-    skeleton: readFileSync(RETAIL_SKELETON),
+    skeleton: RETAIL_SKELETON,
   });
   for (const o of r.outfits) {
     save(meshFile(o.archive), o.nif);

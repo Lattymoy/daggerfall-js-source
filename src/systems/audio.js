@@ -518,7 +518,7 @@ export class AudioEngine {
   }
 
   /** DISC11: a clip's RMS level over its whole buffer, measured once. Two recordings of one sound (DAGGER.SND's rain
-   *  and Better Ambience's AmbientRaining.wav) are not equally loud at equal gain; this is how a caller matches them.
+   *  and Better Ambience's AmbientRaining) are not equally loud at equal gain; this is how a caller matches them.
    *  Null while the clip is not decoded. */
   clipLevel(index) {
     const buf = this._buffer(index);

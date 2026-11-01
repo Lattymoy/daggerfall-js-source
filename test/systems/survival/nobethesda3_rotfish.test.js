@@ -56,8 +56,8 @@ test('NO-BETHESDA3 rot: a clear pixel stays clear, a colour loses its saturation
 });
 
 test('NO-BETHESDA3: the rotten cooked fish is ours - not a file, not a spec - built from the player\'s cooked fish under our rot, never fetched', async () => {
-  assert.equal(existsSync(join(root, 'vendor/climates-calories/Textures/536_1-0.png')), false, 'the author\'s re-shade left the tree');
-  assert.deepEqual(Object.keys(OWN_ICONS), ['536_1-0']);
+  assert.equal(existsSync(join(root, 'vendor/climates-calories')), false, 'the author\'s re-shade left the tree, and OWN-WORK4 the folder');
+  assert.ok(Object.keys(OWN_ICONS).includes('536_1-0'), 'OWN-WORK4: one of our fourteen');
   assert.deepEqual(ownIconSpec('536_1-0'), { from: [211, 10, 0], pal: 'PAL.PAL', seed: 536 }, 'TEXTURE.211 record 10 in PAL.PAL, our seed');
   assert.deepEqual(derivedIconSpec('536_0-0'), { from: [211, 10, 0], pal: 'PAL.PAL' }, 'the record and palette the mouldy one is');
   assert.equal(derivedIconSpec('536_1-0'), null);
@@ -66,13 +66,12 @@ test('NO-BETHESDA3: the rotten cooked fish is ours - not a file, not a spec - bu
   clearVendorTextures();
   setTextureDeriveContext({ classicRgba: async () => assert.fail('the door\'s context is ART_PAL alone') });
   try {
-    const asked = [], fetched = [];
+    const asked = [];
     const fish = flat(6, 5, [120, 110, 60], (x, y) => y === 0 && x < 2);
     const art = { build: async (spec) => { asked.push(spec); return { ...fish, data: fish.data.slice() }; } };
-    assert.equal(installSurvivalIcons({ fetchBytes: async (n) => { fetched.push(n); return new Uint8Array([1]); }, art }), 18);
+    assert.equal(installSurvivalIcons({ art }), 18);
     await preloadTextureArchive(536, { decode: async () => assert.fail('nothing of 536 is a file') });
     assert.deepEqual(asked, [{ from: [211, 10, 0], pal: 'PAL.PAL' }, { from: [211, 10, 0], pal: 'PAL.PAL' }], 'the mouldy fish\'s spec, and our rotten one\'s record');
-    assert.deepEqual(fetched, [], 'neither face is fetched');
     assert.deepEqual([...decodedTextureTopDown(536, 1).rgba], [...rotPicture(fish, { seed: 536 }).data], 'the rotten face is our rot of the record');
     assert.deepEqual([...decodedTextureTopDown(536, 0).rgba], [...fish.data], 'the mouldy face is the record');
   } finally {

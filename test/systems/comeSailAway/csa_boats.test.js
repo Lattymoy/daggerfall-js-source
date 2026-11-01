@@ -21,10 +21,11 @@ import {
   importCustomGameobject, worldBounds, colliderBounds, meshLocalBounds, goFlatName, goModelName, applyGameTextures,
   FIRST_HULL_MODEL_ID, TRIGGER_MODEL, LANTERN_LIGHT, NEW_GAME_OBJECT, HULL_NAMES, AUDIO_CLIPS, BED_MODEL_ID,
 } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
+import { ownFile } from '../../ownBoats.mjs';
+import { OWN_BOAT_ARCHIVE } from '../../../src/world/ships/ownBoats/ownBoatArt.js';
 
-const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
-const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
-const FILES = { prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json') };
+const json = ownFile; // OWN-WORK4: our boats' files (test/ownBoats.mjs)
+const FILES = { prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: json('meshes.bin'), materials: json('materials.json'), animation: json('animation.json') };
 const MODELS = comeSailAwayModels(FILES);
 const { prefabs, components } = FILES.prefabs;
 
@@ -141,22 +142,30 @@ test('CSA-B: a mesh decodes to the port\'s model shape - its submeshes\' baseVer
   assert.ok(g.indices instanceof Uint32Array, 'the renderer draws UNSIGNED_INT');
   assert.deepEqual([...g.bindPoses[0]].slice(12, 15), [5, 6, 7], 'the translation lands in the fourth column');
   assert.deepEqual([...matrixFromUnityRows([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])], [1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16]);
-  // the vendored hull streamed from the .resS reads whole, every index inside its vertices
-  const carrack = MODELS.geometry('Carrack');
-  assert.equal(carrack.subMeshes.length, 17);
+  // OWN-WORK4: our carrack's hull reads whole out of our files' buffer, every index inside its vertices, a submesh a picture
+  const carrack = MODELS.geometry('own:carrack:hull');
+  assert.equal(carrack.subMeshes.length, 7);
   assert.ok([...carrack.indices].every((i) => i < carrack.vertexCount));
-  assert.ok(MODELS.geometry('Carrack') === carrack, 'decoded once');   // by ===: a failing diff of a mesh's arrays never ends
+  assert.ok(MODELS.geometry('own:carrack:hull') === carrack, 'decoded once');   // by ===: a failing diff of a mesh's arrays never ends
   assert.equal(MODELS.geometry('no such mesh'), null);
 });
 
 test('CSA-B: which Daggerfall texture a slot wears - RuntimeMaterials in the component\'s order and then the next one\'s, ApplyGameTextures\' AAA_RRR child names, and Unity\'s draw rule when the materials and submeshes do not pair', () => {
-  // the carrack's third mast carries two RuntimeMaterials: the second's 067_8 and 000_76 are what it wears
+  // OWN-WORK4: our boats carry no RuntimeMaterials - each renderer names its own pictures (our archive's), which the walk
+  // leaves as they are; a component with two runs both, in order, the second's writes over the first's
   const mast = [...nodes(prefabs[112414])].find(([n]) => n.name === 'CarrackMast3')[0];
   const inst = instantiatePrefab(mast, components);
-  assert.equal(inst.getComponents('MonoBehaviour').length, 2);
-  applyRuntimeMaterials(inst);
-  assert.deepEqual(inst.getComponent('MeshRenderer').materials, [{ archive: 67, record: 8 }, { archive: 0, record: 76 }]);
-  assert.equal(applyRuntimeMaterials(inst), 0, 'applied once (hasAppliedMaterials)');
+  assert.equal(inst.getComponents('MonoBehaviour').length, 0);
+  assert.equal(applyRuntimeMaterials(inst), 0);
+  assert.ok(inst.getComponent('MeshRenderer').materials.every((m) => m.archive === OWN_BOAT_ARCHIVE));
+  const two = new PrefabNode('two', { components: [
+    { type: 'MeshRenderer', m_Materials: [{ material: 'a' }, { material: 'b' }] },
+    { type: 'MonoBehaviour', m_Script: { script: 'RuntimeMaterials' }, Materials: [{ Index: 0, Archive: 1, Record: 1 }] },
+    { type: 'MonoBehaviour', m_Script: { script: 'RuntimeMaterials' }, Materials: [{ Index: 0, Archive: 67, Record: 8 }, { Index: 1, Archive: 0, Record: 76 }] },
+  ] });
+  applyRuntimeMaterials(two);
+  assert.deepEqual(two.getComponent('MeshRenderer').materials, [{ archive: 67, record: 8 }, { archive: 0, record: 76 }]);
+  assert.equal(applyRuntimeMaterials(two), 0, 'applied once (hasAppliedMaterials)');
   // an entry past the renderer's slots stops that component, and the next one still runs
   const odd = new PrefabNode('odd', { components: [
     { type: 'MeshRenderer', m_Materials: [{ material: 'a' }, null] },
@@ -187,9 +196,10 @@ test('CSA-B: which Daggerfall texture a slot wears - RuntimeMaterials in the com
   assert.deepEqual(rendererModel(g, [{ bundle: 'WaterMaskMaterial' }, { archive: 7, record: 2 }]).subMeshes.map((s) => s.startIndex), [3]);
   assert.equal(rendererModel(g, [{ bundle: 'Default-Material' }, null]), null);
   assert.equal(rendererModelKey('m', [{ archive: 7, record: 2 }, null]), 'csa:m|7_2,-');
-  // the galleon's anchor is the one renderer in the files that does not pair: four submeshes, two materials
+  // OWN-WORK4: and every renderer of ours pairs - a material a submesh (the small ship's anchor's two)
   const anchor = [...nodes(prefabs[112412])].find(([n]) => n.name === 'GalleonAnchor')[0];
-  assert.deepEqual([MODELS.meshes.GalleonAnchor.submeshes.length, components[anchor.components.find((i) => components[i].type === 'MeshRenderer')].m_Materials.length], [4, 2]);
+  const key = components[anchor.components.find((i) => components[i].type === 'MeshFilter')].m_Mesh.mesh;
+  assert.deepEqual([MODELS.meshes[key].submeshes.length, components[anchor.components.find((i) => components[i].type === 'MeshRenderer')].materials.length], [2, 2]);
 });
 
 test('CSA-B: every renderer a built hull shows wears Daggerfall textures but the water masks (CSA-F) - the flag\'s cube, the dock planks and the root\'s helper plane that keep a bundle material are all hidden, and stay hidden', () => {
@@ -467,10 +477,14 @@ test('CSA-B: ApplyGameTextures and FixDeformations on every walked sail - the sl
   }
   assert.equal(sails, want, 'every skinned renderer of the active tree, and only those');
   assert.ok(sails >= 10);
-  // the galleon's second lateen sail is the one under a scaled node (2.83): its holder's local scale is one over that
-  const galleon = spawnBoat(new Boat(2), ctx);
-  const l2 = [...galleon.GameObject.walk()].find((n) => n.name === 'GalleonLateen2SailMesh');
+  // OWN-WORK4: a sail under a scaled node (our small ship's second lateen's, scaled 2.83 here): its holder's local scale
+  // is one over that
+  const scaled = ownFile('prefabs.json');
+  [...nodes(scaled.prefabs[112412])].find(([n]) => n.name === 'GalleonLargeLateen2Sail')[0].scale = [2.83, 2.83, 2.83];
+  const galleon = spawnBoat(new Boat(2), ctxFor(comeSailAwayModels({ ...FILES, prefabs: scaled })));
+  const l2 = [...galleon.GameObject.walk()].find((n) => n.name === 'GalleonLargeLateen2SailMesh');
   assert.ok(l2.lossyScale[0] > 2.8 && l2.lossyScale[0] < 2.9);
+  closeV(l2.getChild(l2.childCount - 1).localScale, l2.lossyScale.map((v) => 1 / v), 1e-5);
   // a skinned node with fewer texture children than slots throws in the C#'s Awake: the slots stay as they were
   const odd = new PrefabNode('odd', { components: [{ type: 'SkinnedMeshRenderer', m_Materials: [{ material: 'a' }, { material: 'b' }] }] });
   new PrefabNode('050_007').setParent(odd);

@@ -796,9 +796,9 @@ async function _openMorrowindArchives(gen) {
     }
     archives.push(makeLooseArchive(loose));
   }
-  // WS1: Weapon Sheathing's vendored scabbards and bone addons, after
-  // the player's own loose files (a replacer wins) and before every
-  // .bsa (retail carries none of these names).
+  // WS1: our own sheathing bones (OWN-WORK4: Weapon Sheathing's files
+  // are retired), after the player's own loose files (a replacer wins)
+  // and before every .bsa (retail carries none of these names).
   try {
     const ws = await import('../systems/weaponSheathingAssets.js');
     archives.push(ws.weaponSheathingArchive());

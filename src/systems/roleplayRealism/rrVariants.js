@@ -1,8 +1,8 @@
 // RR2 - THE NPC SPRITE VARIANTS (RoleplayRealism.cs :775-1077, Hazelnut, MIT): a shop's or tavern's 182 keeper drawn
 // as one of the seven `197_N` pictures by the building's quality, and four of five residents as the townsfolk walkers
 // of the climate's race, with a face to match. DFU rewrites the interior's billboards after the transition; the port
-// asks `rrVariantPerson` as each person is listed. Five pictures ship under public/art/roleplay-realism/, two are
-// rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety arm (:948-978) has no
+// asks `rrVariantPerson` as each person is listed. Six keepers are our own pictures (OWN-WORK4, rrKeeperArt.js), one
+// is rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety arm (:948-978) has no
 // counterpart: `materialSet` is false and the walker's archive is taken, the C#'s else.
 import {
   PERSON_TEXTURES,
@@ -19,15 +19,10 @@ import { addVendorTextures } from '../textureReplacement.js';
 import { registerBillboardXml } from '../../world/billboardXml.js';
 import { registerButtonArt } from '../../ui/messageBox.js';
 import { setFlatFaceOverride } from '../../characters/staticNpc.js';
-import { APP_ROOT } from '../appRoot.js';
 import { classicArt } from '../classicArt.js';
 import { rrModule, rrRefinedTrainingOn } from './rrRealism.js';
-import RR_DERIVED from '../../../vendor/roleplay-realism/derived-art.json' with { type: 'json' };
-
-export const RR_ART_DIR = 'art/roleplay-realism';
-/** The shipped sprite's URL - `<root>/art/roleplay-realism/<name>.png`. */
-export const rrArtUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
-  new URL(`${RR_ART_DIR}/${encodeURIComponent(name)}.png`, root).href;
+import RR_DERIVED from './rrDerivedArt.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader (OWN-WORK4)
+import { rrKeeperPicture, rrWeekButtonPicture } from './rrKeeperArt.js'; // OWN-WORK4: our own keepers and week button
 
 /** OWN-WORK3: each record's billboard scale (TextureReplacement's `scaleX`, `scaleY`), by our rule - a variant keeper
  *  stands as big as the classic keeper it replaces (182_0 for records 0-3, 182_1 for 4-5, 182_2 for 6): that keeper's
@@ -44,9 +39,9 @@ export const RR_NPC_XML_SCALE = Object.freeze({
 });
 export const RR_NPC_ARCHIVE = 197;
 export const RR_NPC_RECORDS = Object.freeze([0, 1, 2, 3, 4, 5, 6]);
-/** BUTTONS.RCI records 21..37, the pictures the release drew - 21 is "5 Days", the training window's week
- *  button (RR_WEEK_BUTTON). */
-export const RR_BUTTON_RECORDS = Object.freeze([21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37]);
+/** OWN-WORK4: the BUTTONS.RCI record our art adds - 21, "5 Days", the training window's week button (RR_WEEK_BUTTON),
+ *  our own. The release relabelled sixteen more (22-37) that nothing here asks for; they are not carried. */
+export const RR_BUTTON_RECORDS = Object.freeze([21]);
 
 // ---- the shop / tavern keeper (:775-849) ---------------------------------
 /** GetRecord_182_0 (:826-849): the 197 record for a shop's 182_0 keeper by
@@ -151,26 +146,19 @@ export function rrVariantPerson(
 
 // ---- the art on its doors ----------------------------------------------------
 let _installed = false;
-/** NO-BETHESDA2: the pictures that are Daggerfall's own records (197_4-0, 197_5-0, the seventeen buttons), by name -
- *  each one's spec, built from the player's ARENA2 and never carried (vendor/roleplay-realism/derived-art.json). */
+/** NO-BETHESDA2: the picture that is Daggerfall's own record alone (197_4-0), by name - its spec, built from the
+ *  player's ARENA2 and never carried (rrDerivedArt.json). */
 export { RR_DERIVED };
 /** Once: the seven 197 sprites on the replacement door (lazy, gated on
  *  variantNpcs - a classic archive, so ordinary replacement entries, not
- *  stand-ins), the XML scale beside them, and the seventeen button
- *  records on the message box (gated on refinedTraining). A file is
- *  fetched; a derived picture is built through `art` (the session's
- *  classic reader). `fetchBytes(name)` and `art` are the test seams.
+ *  stand-ins), the XML scale beside them, and the week button on the
+ *  message box (gated on refinedTraining). Nothing is fetched: a keeper
+ *  and the button are our own, a derived one is built through `art`
+ *  (the session's classic reader, the test seam).
  *  Returns the sprite count registered. */
-export function installRoleplayRealismArt({ fetchBytes = null, art = null } = {}) {
+export function installRoleplayRealismArt({ art = null } = {}) {
   if (_installed) return 0;
   _installed = true;
-  const load =
-    fetchBytes ??
-    (async (name) => {
-      const r = await fetch(rrArtUrl(name));
-      if (!r.ok) throw new Error(`${name}: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
   const built = (name) => (art ?? classicArt()).build(RR_DERIVED[name]);
   const gate = () => rrModule('variantNpcs');
   registerBillboardXml(
@@ -178,14 +166,12 @@ export function installRoleplayRealismArt({ fetchBytes = null, art = null } = {}
     { [RR_NPC_ARCHIVE]: Object.fromEntries(Object.entries(RR_NPC_XML_SCALE)) },
     gate,
   );
-  for (const record of RR_BUTTON_RECORDS) {
-    const name = `BUTTONS.RCI_${record}-0`;
+  for (const record of RR_BUTTON_RECORDS)
     registerButtonArt(
       record,
-      () => (RR_DERIVED[name] ? built(name) : load(name)),
+      () => rrWeekButtonPicture(),
       () => rrRefinedTrainingOn(),
     );
-  }
   return addVendorTextures(
     RR_NPC_RECORDS.map((record) => {
       const fileName = `${RR_NPC_ARCHIVE}_${record}-0`;
@@ -198,7 +184,8 @@ export function installRoleplayRealismArt({ fetchBytes = null, art = null } = {}
         fileName,
         lazy: true,
         gate,
-        ...(RR_DERIVED[fileName] ? { build: () => built(fileName), selfBuilt: true } : { load }),
+        selfBuilt: true,
+        build: RR_DERIVED[fileName] ? () => built(fileName) : async () => rrKeeperPicture(record),
       };
     }),
   );

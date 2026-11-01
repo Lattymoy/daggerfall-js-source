@@ -1,6 +1,6 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 import { SURVIVAL_RULES, SURVIVAL_STORED } from '../../../src/systems/survival/difficulty.js';
 import { SURVIVAL_PREF } from '../../../src/systems/survival/switch.js';
@@ -149,9 +149,9 @@ test('AUDIT C&C I10 / OWN-WORK3: no camp word that nothing says - "Turn Climates
     assert.equal(foodPrice(t), Math.max(1, Math.round((f.satiety / 60) * (meat ? 4 : 2) * (f.keeps == null ? 1.5 : 1))), `${f.name}: the price rule`);
     if (f.keeps != null) assert.equal(SURVIVAL_TEMPLATES.find((r) => r.index === t).hitPoints, f.keeps, `${f.name}: its condition is its keeping`);
   }
-  // the folder is the mod's art and its README: the thirteen icons, the four rebuilt pictures' specs (derived.json)
-  assert.deepEqual(readdirSync(new URL('../../../vendor/climates-calories', import.meta.url)).sort(), ['README.md', 'Textures', 'derived.json']);
-  assert.equal(readdirSync(new URL('../../../vendor/climates-calories/Textures', import.meta.url)).filter((f) => f.endsWith('.png')).length, 13);
+  // OWN-WORK4 (2026-10-31): the folder is retired - the four rebuilt pictures' specs moved beside their reader, the rest are ours
+  assert.equal(existsSync(new URL('../../../vendor/climates-calories', import.meta.url)), false);
+  assert.deepEqual(Object.keys(JSON.parse(readFileSync(new URL('../../../src/systems/survival/derivedIcons.json', import.meta.url), 'utf8'))).sort(), ['50_7-0', '536_0-0', '67_10-0'], 'the edit-free specs; the mouldy bread is ours');
 });
 
 test('AUDIT C&C I11: AN EMPTY SKIN IS NAMED EMPTY WHEREVER IT IS MINTED - the provisions shelf\'s and the general store\'s, by the law a drink and a fill name it by (food.js waterskinName); A COLD CAMP OFFERS NO COOK - the cooking list only refused at it - and its Stoke or Relight lights it; a lit one cooks', async () => {

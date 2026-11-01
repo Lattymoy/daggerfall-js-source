@@ -14,7 +14,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readPng } from '../../../tools/pngIO.mjs';
 import { DYE_COLORS, DYE_TARGETS, METAL_TABLES, changeDyeBitmap, applyDyeToIndex } from '../../../src/characters/dyes.js';
 import { itemDyeTarget, itemDyeColor } from '../../../src/systems/item/itemDye.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
@@ -183,14 +182,9 @@ test('DYE-ICON: every icon door asks with the swatch - the GL lists, the enhance
 
 // ── MOUNT-LAZY: the hung picture's door decodes its record first ──────
 
-test('MOUNT-LAZY: a mount of a picture only the mod has (Roleplay Realism Items\' Light Flail) hangs on a fresh load - its record decoded by the dye before the upload, at the file\'s size - where it hung as nothing (mutants: the preload dropped, the dye dropped from the preload)', async () => {
-  globalThis.createImageBitmap = async (blob) => ({ ...readPng(new Uint8Array(await blob.arrayBuffer())), close() {} });
-  globalThis.OffscreenCanvas = class {
-    constructor(w, h) { this.width = w; this.height = h; }
-    getContext() { let bmp = null; return { drawImage: (b) => { bmp = b; }, getImageData: () => ({ width: bmp.width, height: bmp.height, data: new Uint8ClampedArray(bmp.data) }) }; }
-  };
-  const fetched = [];
-  installRoleplayRealismItems({ fetchBytes: async (n) => { fetched.push(n); return new Uint8Array(readFileSync(join(ROOT, 'public/art/roleplay-realism-items', `${n}.png`))); } });
+test('MOUNT-LAZY: a mount of a picture only the mod has (Roleplay Realism Items\' Light Flail) hangs on a fresh load - its record built by the dye before the upload, at the picture\'s size - where it hung as nothing (mutants: the preload dropped, the dye dropped from the preload)', async () => {
+  const asked = [];
+  installRoleplayRealismItems({ art: { picture: async (...at) => { asked.push(at); return null; }, build: async (spec) => { asked.push(spec); return null; } } });
   try {
     const textures = new Map();
     const renderer = {
@@ -202,11 +196,11 @@ test('MOUNT-LAZY: a mount of a picture only the mod has (Roleplay Realism Items\
     const flail = createWeapon(514, WEAPON_MATERIALS.Steel);
     const img = inventoryItemImage(flail);
     const art = await loadMountArt({ getTexture: pipe.getTexture, uploadRecord: pipe.uploadRecord, renderer }, img.archive, img.record, img.dye, img.dyeTarget);
-    assert.ok(fetched.includes('514_0-0_Steel'), 'the Steel file is fetched by the mount itself - no list drew it first');
-    assert.ok(art, 'and it hangs (the bug: nothing did)');
-    assert.deepEqual([art.tex.k, art.tex.w, art.tex.h], ['514_0#ui_Steel', 48, 76], 'the mod\'s own picture, under its metal\'s variant');
-    assert.ok(art.w > 0 && art.h > 0 && Math.abs(art.h / art.w - 76 / 48) < 1e-9, 'sized as the file is, not the stand-in\'s one pixel');
-  } finally { clearVendorTextures(); delete globalThis.createImageBitmap; delete globalThis.OffscreenCanvas; }
+    assert.ok(art, 'it hangs, built by the mount itself - no list drew it first (the bug: nothing did)');
+    assert.deepEqual([art.tex.k, art.tex.w, art.tex.h], ['514_0#ui_Steel', 48, 76], 'OWN-WORK4: our Short Flail, under its metal\'s variant');
+    assert.ok(art.w > 0 && art.h > 0 && Math.abs(art.h / art.w - 76 / 48) < 1e-9, 'sized as the picture is, not the stand-in\'s one pixel');
+    assert.deepEqual(asked, [], 'our flail is drawn whole: no classic record read, no file fetched');
+  } finally { clearVendorTextures(); }
 });
 
 test('MOUNT-LAZY: the door awaits the record\'s decode by the dye before it uploads (source)', () => {

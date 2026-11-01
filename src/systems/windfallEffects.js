@@ -25,15 +25,49 @@
 // DaggerfallUnity.Settings.SoundVolume: the mod multiplies it into each source's volume; the port's bus carries it
 // (systems/audio.js `_out`), so a source here takes the mod's product without it - the same loudness.
 
-/** The clips WindMod.CreateEnvironmentalEffects loads, by pool, with their lengths (Unity's AudioClip.length - the
- *  vendored bundle's own, vendor/windfall/Sound/sounds.json). */
-import SOUNDS from '../../vendor/windfall/Sound/sounds.json' with { type: 'json' };
+/** The clips Windfall 1.0.0's WindMod.CreateEnvironmentalEffects loads, by pool, from WINDFALL_CLIP_TABLE below - their
+ *  names, rates, frame counts and lengths; the sounds are our own (systems/windfall/windfallSynth.js, OWN-WORK4). */
 import { WEATHER_TYPES } from '../world/weather.js';
 import { SEASONS } from './gameDate.js';
 
+/** Every clip the mod plays: [name, rate, frames], its length Unity's AudioClip.length (the frames over the rate). */
+export const WINDFALL_CLIP_TABLE = Object.freeze(
+  /** @type {Array<[string, number, number]>} */ ([
+    ['wind_gust_01', 22050, 61740],
+    ['wind_gust_02', 22050, 79380],
+    ['wind_gust_03', 22050, 97020],
+    ['wind_gust_04', 22050, 114660],
+    ['wind_gust_05', 22050, 132300],
+    ['wind_gust_06', 22050, 68355],
+    ['wind_gust_07', 22050, 85995],
+    ['wind_gust_08', 22050, 103635],
+    ['wind_gust_09', 22050, 121275],
+    ['wind_gust_10', 22050, 138915],
+    ['wind_gust_11', 22050, 90405],
+    ['wind_gust_12', 22050, 127890],
+    ['wind_blowing_01_ultrasoft', 44100, 793800],
+    ['wind_blowing_02_ultrasoft', 44100, 793800],
+    ['wind_blowing_03_ultrasoft', 44100, 793800],
+    ['whistling_wind_01_ultrasoft', 44100, 610986],
+    ['whistling_wind_02_ultrasoft', 44100, 610986],
+    ['whistling_wind_03_ultrasoft', 44100, 610986],
+    ['open_wind_01_ultrasoft', 44100, 633381],
+    ['open_wind_02_ultrasoft', 44100, 633381],
+    ['open_wind_03_ultrasoft', 44100, 633381],
+    ['leaf_ruffle_01', 22050, 30870],
+    ['leaf_ruffle_02', 22050, 37485],
+    ['leaf_ruffle_03', 22050, 44100],
+    ['leaf_ruffle_04', 22050, 35280],
+    ['leaf_ruffle_05', 22050, 48510],
+    ['leaf_ruffle_06', 22050, 41895],
+  ]).map(([name, rate, samples]) => Object.freeze({ name, rate, samples, length: Math.fround(samples / rate) })),
+);
+const clipOf = (name) => WINDFALL_CLIP_TABLE.find((c) => c.name === name);
 const poolOf = (prefix) =>
   Object.freeze(
-    SOUNDS.filter((c) => prefix.test(c.name)).map((c) => Object.freeze({ name: c.name, length: c.length })),
+    WINDFALL_CLIP_TABLE.filter((c) => prefix.test(c.name)).map((c) =>
+      Object.freeze({ name: c.name, length: c.length }),
+    ),
   );
 export const WINDFALL_CLIPS = Object.freeze({
   gust: poolOf(/^wind_gust_/),
@@ -48,7 +82,7 @@ export const WINDFALL_CLIPS = Object.freeze({
       'open_wind_01_ultrasoft',
       'open_wind_02_ultrasoft',
       'open_wind_03_ultrasoft',
-    ].map((n) => Object.freeze({ name: n, length: SOUNDS.find((c) => c.name === n).length })),
+    ].map((n) => Object.freeze({ name: n, length: clipOf(n).length })),
   ),
   ruffle: poolOf(/^leaf_ruffle_/),
 });
@@ -161,7 +195,7 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
     snowFlurriesEnabled: false,
     snowFlurryAmount: 0,
   };
-  let leafSeason = 'springSummer'; // the leaf material's sheet - spring_summer_leaves.png until a fall or winter frame
+  let leafSeason = 'springSummer'; // the leaf material's sheet - spring_summer_leaves until a fall or winter frame
   const flows = { leaves: newFlow(), ambientLeaves: newFlow(), snow: newFlow() };
 
   const fadeSource = (s, dt) => {
@@ -371,19 +405,18 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
     },
     // ---- the console's ----
     triggerBrightWindTest() {
-      if (!cfg.audioEnabled) return 'Wind audio is disabled in mod settings.';
-      if (!clips.ambient.length || !src.ambient)
-        return 'The intermittent wind clip pool is unavailable; check Player.log.';
+      if (!cfg.audioEnabled) return 'Wind sound is off in the settings.';
+      if (!clips.ambient.length || !src.ambient) return 'No wind clip is ready yet.';
       if (src.ambient.isPlaying) src.ambient.stop();
       playAmbientWind(0.2, 0);
-      return `Played a long intermittent-wind test clip at mod volume ${cfg.audioVolume.toFixed(2)}.`;
+      return `A long wind clip plays at volume ${cfg.audioVolume.toFixed(2)}.`;
     },
     triggerRuffleTest() {
-      if (!cfg.audioEnabled) return 'Wind audio is disabled in mod settings.';
-      if (!src.ruffle || !clips.ruffle.length) return 'The leaf-ruffle clip pool is unavailable; check Player.log.';
+      if (!cfg.audioEnabled) return 'Wind sound is off in the settings.';
+      if (!src.ruffle || !clips.ruffle.length) return 'No leaf clip is ready yet.';
       if (src.ruffle.isPlaying) src.ruffle.stop();
       playRuffle(1, true, 1);
-      return `Played a leaf-ruffle test clip at mod volume ${cfg.audioVolume.toFixed(2)}.`;
+      return `A leaf clip plays at volume ${cfg.audioVolume.toFixed(2)}.`;
     },
     /** TriggerLeafTest: sixty leaves from 8 m upwind and 4 up, blown at 8 m/s - Emit(60) at the test's place, where they
      *  stand however the next frame's UpdatePresentation moves the flow (AUDIT ENVIRONS W5: the burst keeps its own place,
@@ -394,7 +427,7 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
       flowTo(l, playerPos[0] - dir[0] * 8, playerPos[1] + 4, playerPos[2] - dir[1] * 8, dir, 0, 8, -0.25, 1);
       l.emitAt = [l.position[0], l.position[1], l.position[2]];
       l.emit += 60;
-      return "Emitted 60 test leaves with shader 'Windfall/Particles'.";
+      return 'Sixty test leaves blow past.';
     },
     /** For the tests. */
     _peek: () => ({
@@ -411,27 +444,27 @@ export function createWindfallEffects({ sources = null, clips = WINDFALL_CLIPS, 
 }
 
 // ---- the clips, on the port's bus ---------------------------------------------------------------------------------
-// The bundle's 27 AudioClips are FSB5 Vorbis; tools/environmentModsExtract.mjs remuxed each to an Ogg file losslessly
-// (vendor/windfall/Sound/, vendor/vorbis-fsb-setups' headers). Fetched once, on the first frame the mod's sound is
-// wanted - never for a player who has it off.
-const IN_BROWSER = typeof window !== 'undefined';
-const CLIP_URLS = IN_BROWSER
-  ? import.meta.glob('../../vendor/windfall/Sound/*.ogg', { eager: true, query: '?url', import: 'default' })
-  : {};
-/** The key a clip registers under (systems/audio.js registerSound). */
+// OWN-WORK4: the clips are made here, not fetched - systems/windfall/windfallSynth.js, loaded on the first frame the
+// mod's sound is wanted and never for a player who has it off. A slice of a clip is made a turn, so no frame holds them.
+/** The key a clip registers under (systems/audio.js registerSamples). */
 export const windfallClipKey = (name) => `windfall:${name}`;
-async function fetchClip(name) {
-  const url = CLIP_URLS[`../../vendor/windfall/Sound/${name}.ogg`];
-  if (!url) return null;
-  const r = await fetch(url);
-  return r.ok ? new Uint8Array(await r.arrayBuffer()) : null;
+/** The samples made a turn: half a second at the passages' rate, a millisecond or two of work. */
+export const WINDFALL_CLIP_SLICE = 22050;
+const nextTurn = () => new Promise((resolve) => setTimeout(resolve, 0));
+/** The clips each engine holds already: a host built again (the world's, then a city's) makes none twice. */
+const heldBy = new WeakMap();
+async function makeClip(clip) {
+  const { windfallClipMaker } = await import('./windfall/windfallSynth.js');
+  const maker = windfallClipMaker(clip);
+  while (!maker.step(WINDFALL_CLIP_SLICE)) await nextTurn();
+  return maker.samples;
 }
 
 /**
  * The mod's three AudioSources on `engine` (systems/audio.js AudioEngine), each playing its clips by name, and the
- * clips' one load. `fetch(name)` -> the Ogg's bytes (the served file; a test's stand-in).
+ * clips' one load. `make(clip)` -> the clip's samples at its rate (our synthesizer; a test's stand-in).
  */
-export function windfallAudio(engine, { fetch = fetchClip } = {}) {
+export function windfallAudio(engine, { make = makeClip } = {}) {
   const wrap = (s) => ({
     get volume() {
       return s.volume;
@@ -456,19 +489,26 @@ export function windfallAudio(engine, { fetch = fetchClip } = {}) {
   let loading = null;
   return {
     sources,
-    /** Every clip, fetched and registered once; a clip that will not load is a missing clip (the mod's LoadAudioClips
-     *  leaves it out of its pool - here its shot plays nothing). */
+    /** Every clip, made and registered once, one after another; a clip that cannot be made or taken is a missing clip
+     *  (the mod's LoadAudioClips leaves it out of its pool - here its shot plays nothing). An engine with no context
+     *  takes none, so the rest are not made. */
     load() {
-      loading ??= Promise.all(
-        SOUNDS.map(async (c) => {
+      loading ??= (async () => {
+        if (typeof engine.registerSamples !== 'function') return;
+        const held = heldBy.get(engine) ?? new Set();
+        heldBy.set(engine, held);
+        for (const clip of WINDFALL_CLIP_TABLE) {
+          if (held.has(clip.name)) continue;
           try {
-            const bytes = await fetch(c.name);
-            if (bytes) await engine.registerSound(windfallClipKey(c.name), bytes);
+            const samples = await make(clip);
+            if (!samples) continue;
+            if (!engine.registerSamples(windfallClipKey(clip.name), samples, clip.rate)) return;
+            held.add(clip.name);
           } catch {
             /* a missing clip */
           }
-        }),
-      );
+        }
+      })();
       return loading;
     },
     get loading() {

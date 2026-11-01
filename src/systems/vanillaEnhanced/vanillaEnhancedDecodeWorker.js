@@ -1,19 +1,23 @@
-// AUDIT VE P1 (2026-10-05, Mac: "performance isn't affected") - THE SHIPPED PACK'S PICTURES, DECODED OFF THE MAIN THREAD.
+// AUDIT VE P1 (2026-10-05, Mac: "performance isn't affected") - THE SHIPPED PACK'S PICTURES, MADE OFF THE MAIN THREAD.
+// OWN-WORK4 (2026-10-31): a pack's picture is built here - the page posts the player's classic record and its spec, and
+// this runs our rule (systems/ownTextures/ownTextureRules.js applyOwnRule), the same pixels the page's fallback makes.
+// FIRST-VISIT: a served PNG is decoded and fitted here (mipFitSize, resampleRgba). The pixels come back moved.
 //
-// An attached .dfmod decodes in its bundle worker (formats/unity/unityBundleWorker.js). The shipped pack's PNGs were decoded on
-// the page's own thread: createImageBitmap's decode is the browser's, but the readback (drawImage and getImageData, about
-// 1.7 ms for a 256-pixel tile) and the texture detail's box filter (resampleRgba - tens of ms for a 726x941 tree) were the
-// main thread's, in the middle of frames while the world streams. Here they are this worker's: it fetches the file,
-// decodes it, fits it to the detail as a mip chain would (mipFitSize), and hands the pixels back without a copy. The
-// pixels are decodePng's and resampleRgba's, the same as the page's own fallback draws.
-//
-// Protocol: in `{ id, url, maxSize }`; out `{ id, width, height, data }` (data transferred) or `{ id, error, unsupported }`
-// - `unsupported` when this browser has no OffscreenCanvas in a worker, and the page decodes on its own thread instead.
+// Protocol: in `{ id, url, maxSize }` (a PNG to decode and fit) or `{ id, build, source }` (a spec and its classic
+// record); out `{ id, width, height, data }` (data transferred) or `{ id, error, unsupported }` - `unsupported` when this
+// browser has no OffscreenCanvas in a worker, and the page decodes on its own thread instead.
 import { resampleRgba, mipFitSize } from '../../formats/resample.js';
+import { applyOwnRule } from '../ownTextures/ownTextureRules.js';
 
 globalThis.onmessage = async (ev) => {
-  const { id, url, maxSize = Infinity } = ev.data ?? {};
+  const { id, url, maxSize = Infinity, build, source } = ev.data ?? {};
   try {
+    if (build) {
+      const pic = applyOwnRule(build, source);
+      const data = pic.data instanceof Uint8Array ? pic.data : new Uint8Array(pic.data.buffer);
+      globalThis.postMessage({ id, width: pic.width, height: pic.height, data }, [data.buffer]);
+      return;
+    }
     if (typeof OffscreenCanvas !== 'function' || typeof createImageBitmap !== 'function') {
       globalThis.postMessage({ id, error: 'no OffscreenCanvas in a worker', unsupported: true });
       return;
