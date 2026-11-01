@@ -17,7 +17,7 @@ test('TV-SURF: the breakers are drawn only while the travel view is not (its fra
   const calls = [...W.matchAll(/csaDrawWaves\(\);/g)];
   assert.equal(calls.length, 1, 'one draw of the breakers in the frame');
   assert.match(W, /\n {4}if \(!tvf\) csaDrawWaves\(\);\n/);
-  assert.match(W, /\n {4}if \(labGrass && !tvf\) \{/, 'the grass waits the same way (TV1)');
+  assert.match(W, /\n {4}if \(labGrass && !tvf(?: && !travelOptions\?\.grassHidden)?\) \{/, 'the grass waits the same way (TV1)');
   // the gate reads the frame's own travel view - declared in the same frame, above the draw
   const tvfAt = W.indexOf('    const tvf = travelView?.frame(dt, { eye: tvHeadEye, fwd }) ?? null;');
   const at = W.indexOf('    if (!tvf) csaDrawWaves();');

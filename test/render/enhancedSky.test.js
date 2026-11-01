@@ -542,8 +542,9 @@ test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab pr
 
   const enhanced = spy();
   const ep = new PrecipitationRenderer(enhanced.gl, { enhanced: true, countCap: 4000 });
-  assert.equal(enhanced.seen.programs, 2, 'the enhanced lane builds the lab\u2019s program in the CONSTRUCTOR - a shader fault stays a constructor fault');
-  assert.ok(ep.labProgram, 'and keeps it');
+  // OWN-AUDIT (2026-11-01, PIN MOVED): and Better Ambience's fall beside it (render/precipitation.js BETTER_FALL)
+  assert.equal(enhanced.seen.programs, 3, 'the enhanced lane builds the lab\u2019s programs in the CONSTRUCTOR - a shader fault stays a constructor fault');
+  assert.ok(ep.labProgram && ep.betterProgram, 'and keeps them');
   assert.ok(enhanced.seen.uploads.includes(LAB_COUNTS.rain * 4),
     'with the lab\u2019s own 26,000 instances - the enhanced look is unchanged');
   assert.equal(ep.enhanced, true, 'the lane opens enhanced');
@@ -556,7 +557,7 @@ test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab pr
   assert.equal(late.seen.programs, 1);
   lp.enhanced = true;
   lp.draw('rain', new Float32Array(16), new Float32Array(16), new Float32Array(3), new Float32Array(3), 1);
-  assert.equal(late.seen.programs, 2, 'the lab\u2019s program is built on first use');
+  assert.equal(late.seen.programs, 3, 'the lab\u2019s programs are built on first use (OWN-AUDIT: Better Ambience\u2019s fall, on by default, with them)');
   assert.ok(late.seen.uploads.includes(LAB_COUNTS.rain * 4));
 });
 

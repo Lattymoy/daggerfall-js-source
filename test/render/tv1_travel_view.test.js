@@ -665,7 +665,7 @@ test('TV1 host wiring: the frame draws from the view\'s eye risen out of the bod
   assert.match(w, /const bbUp = tvf \? tvf\.up : UP_Y;/);
   assert.equal((w.match(/renderer\.drawBillboards\(.*, camRight, bbUp\);/g) ?? []).length, 3, 'the flats, the missiles, the townsfolk');
   assert.match(w, /renderer\.recordShadowBillboards\(castBatches, camRight, UP_Y\)/, 'their shadows stand upright');
-  assert.match(w, /if \(labGrass && !tvf\) \{/);
+  assert.match(w, /if \(labGrass && !tvf(?: && !travelOptions\?\.grassHidden)?\) \{/);   // OWN-AUDIT: AllowRealGrass may hide it too
   assert.match(w, /if \(walkMode && playerSpawned && !tvf\) weaponRig\.draw\(\{ paralyzed \}\);/);
   assert.match(w, /cursorActive: gamePaused\(\) \|\| pointerSurfaces\.size > 0 \|\| !!tvf,/, 'the hover\'s own door: a freed cursor names nothing');
   assert.match(w, /travelView\?\.steer\(dt\);/);

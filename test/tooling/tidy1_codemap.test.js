@@ -46,6 +46,7 @@ test('TIDY1: Come Sail Away lives in its folder', () => {
     'csaSynth',   // PIN MOVED (OWN-WORK4: the five clips made as ours - their folder)
     'ladenRest.js',   // PIN MOVED (FIELD BUGS 2026-10-29e LADEN-REST: a laden boat's swing and way still come to rest - the runtime's rates' seam, beside it)
     'peaceWay.js',   // PIN MOVED (NAVAL-REFIT PEACE-WAY: her way out of a fight - the runtime's own speed seam, beside it)
+    'sailAssist.js',   // PIN MOVED (OWN-AUDIT: BadTack and AutoStowGaffSails, keys the mod never read, made live - the handling's seam, beside it)
     'shipBuildsKept.js',   // PIN MOVED (FIRST-VISIT: the port ships' builds kept across launches - the models' loader's, beside it)
   ]);
 });

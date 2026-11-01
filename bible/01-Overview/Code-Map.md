@@ -57,6 +57,7 @@ and what it takes out lands loose in `src/scenes/` or `src/systems/`.
 |---|---|
 | `src/` | `main.js`, the entry point and scene router; `buildTag.js`, written by the build. |
 | `src/ai/` | Enemy behaviour: tactics, blows, the navmesh. |
+| `src/audio/` | Sound helpers above the synth (OWN-AUDIT): `layeredLoop.js` plays loops of different lengths as one sound, so a long bed comes round after hours. |
 | `src/audio/synth/` | Sound the port makes of its own (OWN-WORK4): the synth's primitives (noise, filters, envelopes, resonators) and the clips made of them for the sound mods. Pure and seeded; no recording is read. Any sound work reuses it. |
 | `src/art/` | Our own pixel painter (OWN-WORK4, `01-Overview/Own-Work.md`): shapes, dithered light and a dark rim. Each picture's recipe lives with its feature. |
 | `src/characters/` | People and creatures: bodies and rigs, outfits and dyes, enemies, NPC builders. |
