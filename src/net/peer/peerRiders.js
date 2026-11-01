@@ -194,7 +194,7 @@ function figureLayer(art) {
     const up = art.ensure(s);
     const g = grow > 1 ? grow : 1;
     if (up) {
-      const xml = spriteOffset(s.archive, s.record);
+      const xml = spriteOffset(s.archive, s.record, s.frame);   // OWN-AUDIT: a frame drawn on another canvas has its own shift
       const own = spriteSize(up.w, up.h, mode, xml.scale);
       const size = g > 1 ? { w: own.w * g, h: own.h * g } : own;
       const key = `${s.archive}:${s.rec}`;

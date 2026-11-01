@@ -17,14 +17,15 @@
 // IN NODE no marker is handed out (`eotbSpriteUrl`), and the pins drive
 // this module through its seams rather than through the bundle.
 
-import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount } from './eotbBillboard.js';
+import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount, ARCHIVE_LYCAN } from './eotbBillboard.js';
 import { layeredSprite, isLayeredKey, decodeLayered } from './layeredArmor.js';   // WORN-ARMOUR: the on-foot body in the armour it wears
 import { classSkinOf, classRecord, classFrame, classRecordScale, classSkinKeyOf, CLASS_SPRITE_COUNT } from '../classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
 import { toColor32, toColor32OrderInPlace } from '../../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../systems/horse/horseCoats.js';   // COATS1: the mount's look
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
-import spriteInfo from './eotbSpriteInfo.json' with { type: 'json' };   // the mod's per-sprite XML, folded (EOTB0)
+import EOTB_ANCHORS from './eotbAnchors.json' with { type: 'json' };   // OWN-AUDIT: where each sprite stands, measured by our law
+import { anchorShift, anchorScale } from './eotbAnchor.js';   // OWN-AUDIT: and the law's reader
 import EOTB_DERIVED from './eotbDerived.json' with { type: 'json' };   // NO-BETHESDA2: the pictures that are Daggerfall's own
 import { classicArt } from '../../systems/classicArt.js';   // NO-BETHESDA2: and the one reader that builds them from the player's files
 import { deathSpec, ownDeathKeys, layDown } from './eotbDeath.js';   // OWN-WORK4: the death, ours
@@ -104,22 +105,19 @@ export const sizeMod = ({ riding = false, transformed = false, scale = 1 } = {})
   (riding || transformed ? SIZE_RIDING_OR_TRANSFORMED : SIZE_ON_FOOT) * scale;
 
 /**
- * [IL] `PlayerBillboardState.InitializeTextures`'s XML (IL_5ae7-IL_5b81):
- * the per-sprite `scale`, `X` and `Y` beside a record's FIRST frame,
- * folded to `eotbSpriteInfo.json` at EOTB0 (1035 files, six distinct
- * triples). The rect is `(X / scale, Y / scale, width / scale, height
- * / scale)`; a record with no XML is `(0, 0, width, height)`. So the
- * offset is in METRES, in the billboard's parent frame - X along the
- * view's right, Y up - and `UpdateBillboard` NEGATES X for a mirrored
- * state (IL_4ba7-IL_4bd1). `GlobalOffsetScale` never touches it:
- * `get_scaleOffset` has no caller in the assembly.
+ * A SPRITE'S PLACE, `{ scale, x, y }`, in the shape `UpdateBillboard` read the mod's XML (IL_4a1a-IL_4bd1): metres in
+ * the billboard's frame, X along the view's right (negated for a mirrored state), Y up, each divided by `scale`.
+ * OWN-AUDIT (2026-11-01): the author's per-record table is gone. The shift is our law's (eotbAnchor.js, eotbAnchors.json):
+ * the body's centre line on the player's spot and the lowest foot on the ground, per canvas, so `frame` matters only
+ * where a record's frames are drawn on two. The scale is the record's art scale. A sprite the law has not measured (a
+ * class sheet, a worn look) stands as drawn.
  */
-export function spriteOffset(archive, record) {
-  const o = spriteInfo.offsets[`${archive}_${record}-0`];
-  const d = spriteInfo.default;
-  const xml = o ? { scale: o.scale ?? 1, x: o.x ?? 0, y: o.y ?? 0 } : { scale: d.scale ?? 1, x: d.x ?? 0, y: d.y ?? 0 };
-  const s = spriteArtScale(archive, record);
-  return s === 1 ? xml : { ...xml, scale: xml.scale * s };
+export function spriteOffset(/** @type {number} */ archive, /** @type {number} */ record, frame = 0) {
+  const scale = spriteArtScale(archive, record);
+  const own = anchorShift(EOTB_ANCHORS, archive, record, frame);
+  if (!own) return { scale, x: 0, y: 0 };
+  const perPixel = archive >= ARCHIVE_LYCAN ? SIZE_RIDING_OR_TRANSFORMED : SIZE_ON_FOOT;   // the beasts and the horses are drawn at the larger size
+  return { scale, x: own.right * perPixel, y: own.up * perPixel };
 }
 
 /** A RECORD'S ART SCALE: its pixels a set's pixel - 1 for the sets. What spriteOffset scales a record by, and the rows a
@@ -127,25 +125,18 @@ export function spriteOffset(archive, record) {
 export function spriteArtScale(/** @type {number} */ archive, /** @type {number} */ record) {
   // ACRO-SHORT: a class sheet's record drawn at another scale carries its own (player/classSkins.js classRecordScale)
   const k = classRecordScale(archive, record);
-  const s = k * eotbRecordScale(archive, record);   // RPT1026-MISC SPELL-SHORT: and a set of the mod's own drawn so
+  const s = k * eotbRecordScale(archive, record);   // RPT1026-MISC SPELL-SHORT: and a set's sheet drawn small (our law measures it)
   return s;
 }
 
 /**
- * RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting, and no
- * other skin tried did). THE MOD'S OWN ART, DRAWN SMALL. Set 10's spell sheets
- * (archive 112374, records 45-59: the readied spell, its walk and its cast) draw the woman 80 pixels from hood to boot,
- * where every other sheet of hers draws her 107-112 (the idle 110) - and the mod's XML gives those records scale 1.0, so
- * she shrank by a quarter as the spell came up, in Daggerfall Unity with the mod as here. Every other set's spell sheets
- * stand as tall as its idle or taller (the raised arm). The records are given the scale they were drawn at (80/110, the
- * spell sheets' figure over the idle's), ACRO-SHORT's door for a class sheet: the XML scale `spriteOffset` hands every
- * caller that sizes a sprite - the body, its placement, the peers. A DEPARTURE from the mod's XML (Ledger A).
+ * RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting).
+ * Set 10's spell sheets (archive 112374, records 45-59) draw the woman 80 pixels from hood to boot against her idle's
+ * 110. OWN-AUDIT (2026-11-01): the scale is measured, not typed: our law scales a sheet drawn short of its view's
+ * standing figure (eotbAnchor.js SHORT_SHEET), and over every set it finds these fifteen records alone, at 80/110.
  */
-export const EOTB_RECORD_SCALE = Object.freeze({ 112374: Object.freeze({ from: 45, to: 59, scale: 80 / 110 }) });
-/** The scale a record of the mod's own sets was drawn at against its set (SPELL-SHORT); 1 for every other. */
-export function eotbRecordScale(archive, record) {
-  const r = EOTB_RECORD_SCALE[archive];
-  return r && record >= r.from && record <= r.to ? r.scale : 1;
+export function eotbRecordScale(/** @type {number} */ archive, /** @type {number} */ record) {
+  return anchorScale(EOTB_ANCHORS, archive, record);
 }
 
 /** [IL] The billboard's world size (IL_49dd-IL_4a15): the XML rect's

@@ -151,7 +151,7 @@ test('AUDIT C&C I10 / OWN-WORK3: no camp word that nothing says - "Turn Climates
   }
   // OWN-WORK4 (2026-10-31): the folder is retired - the four rebuilt pictures' specs moved beside their reader, the rest are ours
   assert.equal(existsSync(new URL('../../../vendor/climates-calories', import.meta.url)), false);
-  assert.deepEqual(Object.keys(JSON.parse(readFileSync(new URL('../../../src/systems/survival/derivedIcons.json', import.meta.url), 'utf8'))).sort(), ['50_7-0', '536_0-0', '67_10-0'], 'the edit-free specs; the mouldy bread is ours');
+  assert.deepEqual(Object.keys(JSON.parse(readFileSync(new URL('../../../src/systems/survival/derivedIcons.json', import.meta.url), 'utf8'))).sort(), ['50_7-0', '67_10-0'], 'the edit-free specs; the mouldy bread is ours, and (OWN-AUDIT 2026-11-01) the mouldy cooked fish');
 });
 
 test('AUDIT C&C I11: AN EMPTY SKIN IS NAMED EMPTY WHEREVER IT IS MINTED - the provisions shelf\'s and the general store\'s, by the law a drink and a fill name it by (food.js waterskinName); A COLD CAMP OFFERS NO COOK - the cooking list only refused at it - and its Stoke or Relight lights it; a lit one cooks', async () => {

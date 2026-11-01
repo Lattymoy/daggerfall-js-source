@@ -39,7 +39,7 @@ import { LAST_CLASSIC_TEXTURE_ARCHIVE } from '../../../src/formats/textureFile.j
 import { registerCarrackArt, _resetCarrackArt } from '../../../src/world/ships/carrackArt.js';
 import { registerLargeBoatArt, _resetLargeBoatArt } from '../../../src/world/ships/largeBoatArt.js';
 import { townPictureEntries, TOWN_PICTURES } from '../../../src/world/townPictures.js';
-import { installSurvivalIcons } from '../../../src/systems/survival/itemIcons.js';
+import { installSurvivalIcons, ownIconPicture } from '../../../src/systems/survival/itemIcons.js';
 import { installThunderlockIcons, PAPERDOLL_OFFSET } from '../../../src/systems/thunderlock.js';
 import { yardArt, YARD_ARCHIVE } from '../../../src/world/merchantYards/merchantYardArt.js';
 import { PORT_PAINTERS, PORT_ARCHIVE } from '../../../src/world/portArt.js';
@@ -494,7 +494,9 @@ test('AUDIT STUDIO1 S12 (lane E K4-K8): the registry\'s merges through the real 
     reset();
     assert.ok(installSurvivalIcons({ art: flatArt }) > 0);
     await preloadTextureArchive(536, { decode });
-    assert.deepEqual(red(decodedTexture(536, 0)), [1, 2, 3], 'the mouldy cooked fish: the record itself, rebuilt');
+    // PIN MOVED (OWN-AUDIT, 2026-11-01): the mouldy cooked fish is our mould over the record now, not the record itself
+    const ours = await ownIconPicture('536_0-0', flatArt), bottomLeft = (ours.height - 1) * ours.width * 4;
+    assert.deepEqual(red(decodedTexture(536, 0)), [...ours.data.subarray(bottomLeft, bottomLeft + 3)], 'the mouldy cooked fish: our mould, built');
     await installStudioArt({ fetch: responses({ 'a/536_0-0.png': picture(2, 2, [9, 8, 7]) }).fetch, decode });
     await studioLanded();
     assert.deepEqual(red(decodedTexture(536, 0)), [9, 8, 7]);

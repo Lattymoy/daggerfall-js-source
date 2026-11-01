@@ -131,7 +131,7 @@ test('OWN-WORK4: the torches keep the release\'s frames - four of the torch, fou
 });
 
 test('OWN-WORK4: the spoiled faces are our rot over the fresh food - mouldy lighter than rotten - and raw meat and the waterskin are painted', async () => {
-  assert.deepEqual({ ...MOULDY }, { mix: 0.3, perSpeck: 30 });
+  assert.deepEqual({ ...MOULDY }, { mix: 0.3, cover: 0.38 });   // OWN-AUDIT (2026-11-01): a share of the food, not a speck count
   const flat = { width: 12, height: 8, data: new Uint8Array(12 * 8 * 4) };
   for (let i = 0; i < 96; i++) flat.data.set([180, 60, 40, 255], i * 4);
   const mouldy = rotPicture(flat, { seed: 5, ...MOULDY }), rotten = rotPicture(flat, { seed: 5 });
@@ -170,15 +170,17 @@ test('OWN-WORK4: a candle doused by our rule - the flame above the wax goes clea
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
+// PIN MOVED (OWN-AUDIT, 2026-11-01): the mould is soft patches now, not specks, so every spoiled face has a new print;
+// and the mouldy cooked fish (536_0-0) is ours, the sixteenth.
 const ICONS = Object.freeze({
-  '532_0-0': [17, 13, '6e1ed682741e6ae4'], '532_1-0': [17, 13, 'bf1986eeb2283839'], '533_0-0': [16, 13, '81946e3e79106eab'],
-  '533_1-0': [16, 13, '38b5b47ddec192ab'], '534_0-0': [34, 27, '43a299580ad6605d'], '534_1-0': [34, 27, '6478e81d10c37325'], '535_0-0': [22, 11, '2716781e2a603b8a'],
-  '535_1-0': [22, 11, 'c58e947f7a133b24'], '536_1-0': [29, 11, '0dd457e83cd2d69f'], '537_0-0': [29, 24, 'e18e7059c77a0b06'],
-  '537_1-0': [29, 24, '3ec4c09a692afb9f'], '538_0-0': [47, 24, '202a866f8e8a276d'], '538_1-0': [47, 24, 'b397f9424d3d1a2d'],
+  '532_0-0': [17, 13, '6264fc9abe60abe0'], '532_1-0': [17, 13, 'fcdedad732357ea9'], '533_0-0': [16, 13, '40f4b74853de446f'],
+  '533_1-0': [16, 13, 'e5fd8e744e13e205'], '534_0-0': [34, 27, 'a74fb3e995f9eb9c'], '534_1-0': [34, 27, '20f981050395e130'], '535_0-0': [22, 11, 'c0ebf8fa8c1397b6'],
+  '535_1-0': [22, 11, '2b3d9f3f385a0e43'], '536_0-0': [29, 11, '6b6bc8413dba55f6'], '536_1-0': [29, 11, 'c1e6fa54cd05e458'], '537_0-0': [29, 24, '498c5d12bb9b9b4d'],
+  '537_1-0': [29, 24, '0349801ec3d25472'], '538_0-0': [47, 24, '42d9ce5e25feacc1'], '538_1-0': [47, 24, '93925068dee16537'],
   '538_2-0': [47, 24, '5d1a2b6d7c75adda'], '539_0-0': [23, 26, 'b9440e83bc15be03'],
 });
 
-test('OWN-WORK4 (ARENA2): our fifteen survival pictures over the player\'s own food, and the two doused candles over the lit - each its size (the classic record\'s) and its print', { skip: !ARENA2 && 'ARENA2_PATH not set' }, async () => {
+test('OWN-WORK4 (ARENA2): our sixteen survival pictures over the player\'s own food, and the two doused candles over the lit - each its size (the classic record\'s) and its print', { skip: !ARENA2 && 'ARENA2_PATH not set' }, async () => {
   const art = createClassicPictures(async (n) => readFileSync(join(ARENA2, n)));
   assert.deepEqual(Object.keys(OWN_ICONS).sort(), Object.keys(ICONS).sort());
   for (const [n, [w, h, print]] of Object.entries(ICONS)) {

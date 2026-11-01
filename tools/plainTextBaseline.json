@@ -821,7 +821,7 @@
   "src/player/eyeOfTheBeholder/eotbBody.js": 100,
   "src/player/eyeOfTheBeholder/eotbCamera.js": 84,
   "src/player/eyeOfTheBeholder/eotbLantern.js": 35,
-  "src/player/eyeOfTheBeholder/eotbSprite.js": 35,
+  "src/player/eyeOfTheBeholder/eotbSprite.js": 30,
   "src/player/eyeOfTheBeholder/eotbWagon.js": 11,
   "src/player/eyeOfTheBeholder/layeredArmor.js": 27,
   "src/player/groundRay.js": 3,

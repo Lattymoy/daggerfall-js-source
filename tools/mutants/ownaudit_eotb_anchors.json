@@ -1,0 +1,144 @@
+[
+  {
+    "name": "ownaudit-eotb-anchor-mean",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "  return median(mids) ?? pic.width / 2;",
+    "new": "  return mids.length ? mids.reduce((a, b) => a + b, 0) / mids.length : pic.width / 2;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: the centre line the rows' mean: an arm held out drags it off the torso"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-first-run",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "        if (x - from > best) { best = x - from; bestMid = (from + x) / 2; }",
+    "new": "        if (best < 0) { best = x - from; bestMid = (from + x) / 2; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: each row's first run, not its widest: a staff held apart is read as the body"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-feet-rows",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "export const BODY_ROWS = Object.freeze([0.4, 0.7]);",
+    "new": "export const BODY_ROWS = Object.freeze([0.05, 0.3]);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: the line read at the shins: a stride moves the body"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-laid-read",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "  if (feet - Math.round(BODY_ROWS[1] * tall) < 0) return pic.width / 2;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: a body laid down read as if it stood: its top edge taken for a torso"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-blade-counted",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "const HEAD_LEAST = 0.035;",
+    "new": "const HEAD_LEAST = 0.01;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: a blade over the head counted as the figure: a raised sword makes a sheet read tall"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-tall-scaled",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "export const SHORT_SHEET = 0.85;",
+    "new": "export const SHORT_SHEET = 1.2;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: a sheet that reads tall (a raised arm) or as tall is scaled down"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-death-scaled",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "    if (name.startsWith('Death')) continue;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: the death's laid body votes on its sheet's scale, and shrinks the struck body"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-no-family",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "    if (a !== b) head.set(Math.max(a, b), Math.min(a, b));",
+    "new": "    if (a !== b && false) head.set(Math.max(a, b), Math.min(a, b));",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: records sharing a picture placed apart: a swing jumps off its ready stance"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-ground-lost",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "    canvas.shift = [quarter(canvas.lead.width / 2 - bodyLine(canvas.lead, tall)), -canvas.low || 0];",
+    "new": "    canvas.shift = [quarter(canvas.lead.width / 2 - bodyLine(canvas.lead, tall)), 0];",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: a sheet drawn above its picture's bottom floats off the ground"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-shift-sign",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "    canvas.shift = [quarter(canvas.lead.width / 2 - bodyLine(canvas.lead, tall)), -canvas.low || 0];",
+    "new": "    canvas.shift = [quarter(bodyLine(canvas.lead, tall) - canvas.lead.width / 2), -canvas.low || 0];",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: the shift the wrong way: the body doubled off its spot"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-frame-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbAnchor.js",
+    "old": "(entry)[Math.min(Math.max(frame | 0, 0), entry.length - 1)]",
+    "new": "(entry)[0]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/ownaudit_eotb_anchors.test.js",
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: a record on two canvases shifts every frame as its first"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-beast-size",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  const perPixel = archive >= ARCHIVE_LYCAN ? SIZE_RIDING_OR_TRANSFORMED : SIZE_ON_FOOT;",
+    "new": "  const perPixel = SIZE_ON_FOOT;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: a horse's and a beast's shift in on-foot metres: the rider off the saddle's spot"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-unread",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  return { scale, x: own.right * perPixel, y: own.up * perPixel };",
+    "new": "  return { scale, x: 0, y: 0 };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js",
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: the door never reads the law's shift: every picture centred as drawn"
+  },
+  {
+    "name": "ownaudit-eotb-anchor-frame-unpassed",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  const own = anchorShift(EOTB_ANCHORS, archive, record, frame);",
+    "new": "  const own = anchorShift(EOTB_ANCHORS, archive, record);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "note": "OWN-AUDIT EOTB-ANCHOR: the door drops the frame: the werewolf's armed walk shifts its second canvas as its first"
+  }
+]

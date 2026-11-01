@@ -55,12 +55,12 @@ test('NO-BETHESDA2: every picture Climates & Calories draws is a spec or ours - 
   assert.deepEqual(names.filter((n) => !drawn.includes(n)), ['RALZARTAVERN', 'BLANKMENU_TAVERN'], 'the port draws all but the two tavern menus');
   // PIN MOVED (NO-BETHESDA3, then OWN-WORK4, 2026-10-31): every picture not Daggerfall's own is ours (itemIcons.js OWN_ICONS)
   for (const n of drawn) assert.equal([derivedIconSpec(n) != null, ownIconSpec(n) != null].filter(Boolean).length, 1, `${n}: a spec or ours - exactly one`);
-  assert.deepEqual(drawn.filter((n) => ownIconSpec(n)), ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0'], 'ours: the spoiled faces, raw meat and the waterskin');
+  // PIN MOVED (OWN-AUDIT, 2026-11-01): the mouldy cooked fish was a spec of the plain fish - it is our mould now
+  assert.deepEqual(drawn.filter((n) => ownIconSpec(n)), ['532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0', '536_0-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0'], 'ours: the spoiled faces, raw meat and the waterskin');
   const specs = listing(CC);
-  assert.deepEqual(Object.keys(specs).sort(), ['50_7-0', '536_0-0', '67_10-0'], 'the tent\'s two and the mouldy cooked fish (OWN-WORK4: the mouldy bread carried the author\'s mould - it is ours)');
+  assert.deepEqual(Object.keys(specs).sort(), ['50_7-0', '67_10-0'], 'the tent\'s two (OWN-WORK4: the mouldy bread carried the author\'s mould; OWN-AUDIT: the mouldy fish was the plain fish - both ours)');
   assert.deepEqual(specs['50_7-0'], { from: [50, 7, 0], pal: 'PAL.PAL' }, 'the tent\'s canvas IS TEXTURE.050 record 7');
   assert.deepEqual(specs['67_10-0'], { from: [67, 10, 0], pal: 'PAL.PAL' }, 'the pole IS TEXTURE.067 record 10');
-  assert.deepEqual(specs['536_0-0'], { from: [211, 10, 0], pal: 'PAL.PAL' }, 'the mouldy cooked fish IS the cooked fish, TEXTURE.211 record 10');
   assert.ok(Object.values(specs).every((spec) => !spec.edits), 'no spec carries another hand\'s pixels');
   assert.equal(existsSync(join(root, 'vendor/climates-calories')), false, 'OWN-WORK4: no file of the release\'s is carried');
 });
@@ -130,8 +130,8 @@ test('NO-BETHESDA2: a Climates & Calories picture a spec names reaches the textu
     await preloadTextureArchive(534, { decode });
     assert.deepEqual(asked, ['211_31_0', '211_31_0'], 'the mouldy and the rotten bread: our rot over the player\'s bread');
     await preloadTextureArchive(536, { decode });
-    assert.deepEqual([...decodedTextureTopDown(536, 0).rgba], [40, 41, 42, 255, 0, 0, 0, 0], 'a rebuilt picture, top-down, its clear pixel 0,0,0,0');
     await preloadTextureArchive(50, { decode });
+    assert.deepEqual([...decodedTextureTopDown(50, 7).rgba], [40, 41, 42, 255, 0, 0, 0, 0], 'a rebuilt picture, top-down, its clear pixel 0,0,0,0 (OWN-AUDIT: the tent\'s, the fish being ours)');
     await preloadTextureArchive(67, { decode });
     assert.deepEqual(asked.slice(4), ['50_7_0', '67_10_0'], 'the tent\'s canvas and pole, built');
     assert.equal(isVendorArchive(50), false, 'TEXTURE.050 is still the player\'s file');
@@ -147,7 +147,7 @@ const PRINTS = Object.freeze({
   '112358_1-0': 'd2de1d03893dda78', '112358_1-1': '5fd1159b19abea3d', '112358_1-2': 'e483e993e979c949', '112358_1-3': '44b0bc7c3e9dd81a',
   '112358_1-4': 'ea0be431a5da7cad', '112358_11-0': 'f5ddea25d8fe2dcc', '112358_12-0': '238fe2baa2c67eea', '112358_2-0': 'ed4b9761697881c6',
   '112358_2-1': '8e75d8baf1e2051d', '112358_2-2': '7448bdf40aaa3405', '112358_2-3': '0ca42a659d96198d', '112358_2-4': 'ea21e5e919afd2b9',
-  '50_7-0': 'b7c0d92a74e31875', '534_0-0': '0b26d527d991a4e2', '536_0-0': 'af7fa8af9e9c3a78', '67_10-0': 'cc90ed7a2c7ac3c7',
+  '50_7-0': 'b7c0d92a74e31875', '534_0-0': '0b26d527d991a4e2', '536_0-0': 'af7fa8af9e9c3a78', '67_10-0': 'cc90ed7a2c7ac3c7',   // 536_0-0: the plain fish, kept to say ours is not it
 });
 const printOf = (p) => createHash('sha256').update(`${p.width}x${p.height}:`).update(p.data).digest('hex').slice(0, 16);
 const ARENA2 = process.env.ARENA2_PATH;
@@ -161,7 +161,7 @@ test('NO-BETHESDA2 (ARENA2): every spec builds, from the player\'s own files, th
     sizes[n] = [pic.width, pic.height];
     assert.equal(printOf(pic), PRINTS[n.replace(/_Emission$/, '')], `${n}: the picture the PNG gave`);
   }
-  assert.equal(Object.keys(specs).length, 23);
+  assert.equal(Object.keys(specs).length, 22, 'OWN-AUDIT (2026-11-01): less the mouldy cooked fish, ours');
   // PIN MOVED (SURV-TENT, survart_icons.test.js): the canvas and the pole are the sizes the bundle's Texture2Ds carry
   assert.deepEqual(sizes['50_7-0'], [32, 32], 'the canvas');
   assert.deepEqual(sizes['67_10-0'], [64, 8], 'the pole');

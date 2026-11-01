@@ -12,8 +12,8 @@ import DERIVED_ICONS from './derivedIcons.json' with { type: 'json' };
  *  10, the pole), so they register WITHOUT `standIn` and the pipeline swaps only these two records. */
 export const VENDOR_TENT_FILES = Object.freeze(['50_7-0', '67_10-0']);
 /** NO-BETHESDA2 (2026-10-31): the pictures that are Daggerfall's own records alone - the tent's two (TEXTURE.050
- *  record 7, TEXTURE.067 record 10) and the mouldy cooked fish, record 10 itself (derivedIcons.json, moved from the
- *  retired release's folder; OWN-WORK4 took out the mouldy bread, whose spec carried the author's mould). Or null. */
+ *  record 7, TEXTURE.067 record 10; derivedIcons.json). OWN-WORK4 took out the mouldy bread, whose spec carried the
+ *  author's mould, and OWN-AUDIT (2026-11-01) the mouldy cooked fish, which was the plain fish. Or null. */
 export const derivedIconSpec = (name) => (Object.hasOwn(DERIVED_ICONS, name) ? DERIVED_ICONS[name] : null);
 const own = (spec) => Object.freeze({ ...spec, ...(spec.from ? { from: Object.freeze(spec.from) } : {}) });
 const FOOD = (archive, from) => [
@@ -30,7 +30,7 @@ export const OWN_ICONS = Object.freeze(
     ...FOOD(533, [213, 0, 0]),
     ...FOOD(534, [211, 31, 0]),
     ...FOOD(535, [211, 9, 0]),
-    FOOD(536, [211, 10, 0])[1],
+    ...FOOD(536, [211, 10, 0]),   // OWN-AUDIT (2026-11-01): the mouldy cooked fish is our mould too, not the plain fish
     ...FOOD(537, [211, 40, 0]),
     ['538_0-0', own({ paint: '538_2-0', seed: 5380, mouldy: true })],
     ['538_1-0', own({ paint: '538_2-0', seed: 538 })],

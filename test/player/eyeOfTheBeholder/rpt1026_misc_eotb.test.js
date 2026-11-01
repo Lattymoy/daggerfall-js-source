@@ -1,14 +1,15 @@
 // RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting, and no
 // other skin the reporter tried did). The
 // Eye of the Beholder mod's set 10 draws its spell sheets (records 45-59) with the woman 80 pixels hood to boot, where
-// her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the vendored art
-// itself (the producer: the mod's own pictures and its XML offsets, eotbSpriteInfo.json), sized through the real door
-// (eotbSprite.js spriteOffset + spriteSize) every caller that draws the body uses.
+// her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the art itself,
+// sized through the real door (eotbSprite.js spriteOffset + spriteSize) every caller that draws the body uses.
+// OWN-AUDIT (2026-11-01): the author's XML is gone; the scale and the shift are our law's (eotbAnchor.js).
 // NO-BETHESDA2 (2026-10-31): set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
 // player's ARENA2 (tools/lib/eotbPictures.mjs), so the measure runs where ARENA2_PATH is set; the scale table runs in CI.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spriteOffset, spriteSize, eotbRecordScale } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteOffset, spriteSize, eotbRecordScale, SIZE_ON_FOOT } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
+import EOTB_ANCHORS from '../../../src/player/eyeOfTheBeholder/eotbAnchors.json' with { type: 'json' };
 import { ARCHIVE_FOOT, STATE_TABLES } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
 
@@ -53,11 +54,17 @@ test('RPT1026-MISC SPELL-SHORT: the Fighter Mage (female) stands as tall with a 
   assert.ok(asDrawn / idle < 0.8, `at the XML's scale 1 the cast stands ${(asDrawn / idle).toFixed(2)} of her height`);
 });
 
-test('RPT1026-MISC SPELL-SHORT: set 10\'s spell sheets carry the scale they were drawn at, the XML\'s offset kept; no other set or record moves (mutants: rpt1026-misc-spell-short-unscaled, rpt1026-misc-spell-short-unread, rpt1026-misc-spell-short-xml-lost)', () => {
+// PIN MOVED (OWN-AUDIT, 2026-11-01): the scale was typed (EOTB_RECORD_SCALE) beside the author's XML offset (x 0.52).
+// Both are measured now: our law finds set 10's three spell sheets drawn short and no other sheet of any set, at the
+// 80/110 SPELL-SHORT found by eye, and the shift is the law's own.
+test('RPT1026-MISC SPELL-SHORT: set 10\'s spell sheets carry the scale they were drawn at, measured by our law, their shift its own; no other set or record moves (mutants: rpt1026-misc-spell-short-unscaled, rpt1026-misc-spell-short-unread, rpt1026-misc-spell-short-xml-lost)', () => {
   const set10 = ARCHIVE_FOOT + 10;
-  // the mod's XML offset is kept, and grows with the figure it centres
-  assert.deepEqual(spriteOffset(set10, 45), { scale: 80 / 110, x: 0.52, y: 0 });
-  // the rest of her sets are the mod's own: her walk and her blade, and the other women's spells
+  const [right, up] = EOTB_ANCHORS.shift[`${set10}_45`];
+  assert.deepEqual(spriteOffset(set10, 45), { scale: 80 / 110, x: right * SIZE_ON_FOOT, y: up * SIZE_ON_FOOT });
+  assert.notEqual(right, 0, 'the readied spell stands off its picture\'s middle, and is moved');
+  // the rest of her sets are drawn at her idle's scale: her walk and her blade, and the other women's spells
   for (const record of [0, 5, 15, 25, 30, 40]) assert.equal(eotbRecordScale(set10, record), 1, `record ${record}`);
   for (const set of [0, 2, 4, 6, 8, 11, 12, 14]) for (const record of [45, 50, 55]) assert.equal(spriteOffset(ARCHIVE_FOOT + set, record).scale, 1, `set ${set} record ${record}`);
+  const spell = Array.from({ length: 15 }, (_, i) => `${set10}_${45 + i}`);
+  assert.deepEqual(Object.keys(EOTB_ANCHORS.scale).sort(), spell.sort(), 'over every set, these fifteen records alone are drawn small');
 });

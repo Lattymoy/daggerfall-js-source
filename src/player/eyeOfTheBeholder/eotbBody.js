@@ -960,7 +960,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   function place() {
     if (!shown || !batchSize) return null;
     const sp = spriteFor(shown.table, shown.orientation, shown.frame, lookNow());   // PR-WW1: the live form's archive
-    const xml = spriteOffset(sp.archive, sp.record);
+    const xml = spriteOffset(sp.archive, sp.record, sp.frame);   // OWN-AUDIT: a frame drawn on another canvas has its own shift
     const size = batchSize;
     const h = last.height;
     const yaw = cam.yaw, sy = Math.sin(yaw), cy = Math.cos(yaw);

@@ -223,6 +223,7 @@ test('AUDIT-EOTB scope: THE DEAD EXPORTS - what is ported, exported, and called 
     'eotbCamera.js:OVERRIDE_ORDER': 'the three override sections’ precedence, spelled once so posOffset’s arm order can be read against it.',
     'eotbBillboard.js:TURN_TO_VIEW': 'Graphics.TurnToView’s four labels by index, for the pane and the pins; facingFor reads the number.',
     'eotbBillboard.js:ATTACK_STRINGS': 'Graphics.AttackStrings’s four labels by index, for the pane and the pins; STRING is the number the laws read.',
+    'eotbAnchor.js:measureSet': 'OWN-AUDIT (2026-11-01): the placement law over one set, run by tools/eotbAnchors.mjs on the player’s ARENA2 and by the pins; the game reads what it wrote (eotbAnchors.json) through anchorShift.',
   };
   assert.deepEqual(dead.sort(), Object.keys(ALLOWED).sort(),
     'every export the arc calls from nowhere is named here, with why');

@@ -262,12 +262,12 @@
   {
     "name": "rpt1026-misc-spell-short-unscaled",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "export const EOTB_RECORD_SCALE = Object.freeze({ 112374: Object.freeze({ from: 45, to: 59, scale: 80 / 110 }) });",
-    "new": "export const EOTB_RECORD_SCALE = Object.freeze({});",
+    "old": "  return anchorScale(EOTB_ANCHORS, archive, record);",
+    "new": "  return 1;",
     "tests": [
       "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
     ],
-    "note": "SPELL-SHORT: set 10's spell sheets sized as the XML has them - the Fighter Mage (female) shrinks as a spell comes up"
+    "note": "SPELL-SHORT: set 10's spell sheets sized as drawn, the law's measured scale unread - the Fighter Mage (female) shrinks as a spell comes up (OWN-AUDIT 2026-11-01: re-aimed from the typed EOTB_RECORD_SCALE)"
   },
   {
     "name": "rpt1026-misc-spell-short-unread",
@@ -282,12 +282,12 @@
   {
     "name": "rpt1026-misc-spell-short-xml-lost",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  return s === 1 ? xml : { ...xml, scale: xml.scale * s };",
-    "new": "  return s === 1 ? xml : { scale: xml.scale * s, x: 0, y: 0 };",
+    "old": "  return { scale, x: own.right * perPixel, y: own.up * perPixel };",
+    "new": "  return { scale, x: 0, y: 0 };",
     "tests": [
       "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
     ],
-    "note": "SPELL-SHORT: the scaled record loses the mod's XML offset - the figure stands off its feet"
+    "note": "SPELL-SHORT: the scaled record loses its shift - the figure stands off its spot (OWN-AUDIT 2026-11-01: the shift is our law's, not the XML's)"
   },
   {
     "name": "rpt1026-misc-talk-sideways-short",

@@ -40,6 +40,19 @@ waterskin are painted by our painter (`systems/survival/survivalArt.js`,
 `systems/survival/derivedIcons.json`. No pixel of the release is read. Pins:
 `nobethesda2_torchesicons`, `nobethesda3_rotfish`, `surv2_items`, `ownwork4_pictures`.
 
+**OWN-AUDIT (2026-11-01).** Two faces of the spoiled food. The mouldy cooked fish
+(`536_0-0`) was a spec of the plain cooked fish, while every other food showed
+mould at that stage. It is our rot now, `MOULDY` over the player's own fish, and
+`derivedIcons.json` keeps the tent's two alone. The mould read as bright
+plus-shaped sparkles. It is now soft, irregular patches (`rotPicture.js`
+`mouldField`): seeded noise, thicker toward the rim and in the hollows of the
+food's own shading, over a share of the food that `cover` sets (`MOULDY` covers
+more). Inside a patch the colour runs from grey-green to white, lit as the food is
+lit there, and no pixel is brighter than the food's highlight. Pins:
+`nobethesda3_rotfish`, `ownwork4_pictures`, `nobethesda2_torchesicons`,
+`auditcc_items`; mutants `tools/mutants/nobethesda3.json` (16 for the rot and the
+fish).
+
 > **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT A TIER - OFF, CASUAL
 > (the default) and HARD, and BOONS since SURV-BOONS (the next note).**
 > Everything from here to

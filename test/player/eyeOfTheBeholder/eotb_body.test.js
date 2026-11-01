@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,7 +10,11 @@ import {
 } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import { createEotbBody, bodyState } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
 import { createEotbCamera, eotbCamera } from '../../../src/player/eyeOfTheBeholder/eotbCamera.js';
-import { ARCHIVE_FOOT, ARCHIVE_HORSE, frameTime, TABLE_FRAMES } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
+import { ARCHIVE_FOOT, ARCHIVE_HORSE, ARCHIVE_LYCAN, frameTime, TABLE_FRAMES } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
+import { anchorShift } from '../../../src/player/eyeOfTheBeholder/eotbAnchor.js';
+import EOTB_ANCHORS from '../../../src/player/eyeOfTheBeholder/eotbAnchors.json' with { type: 'json' };
+import EOTB_DERIVED from '../../../src/player/eyeOfTheBeholder/eotbDerived.json' with { type: 'json' };
+import { ownDeathKeys } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
 import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../../../src/systems/modSettings.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
 import { WEAPONS } from '../../../src/characters/weapons.js';
@@ -70,16 +74,28 @@ test('EOTB5: the sprite is sized in METRES PER PIXEL, and the saddle shares its 
   assert.equal(spriteSize(53, 110, {}, 2).h, 110 / 2 * 0.019);
 });
 
-test('EOTB-IL: the per-sprite offsets are the XML’s, in metres, six triples over 288 records - OWN-AUDIT: and the body scales them by GlobalOffsetScale (the placement pin below)', () => {
-  const info = JSON.parse(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSpriteInfo.json'), 'utf8'));   // OWN-WORK4: moved beside its reader
-  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 0), { scale: 1, x: 0, y: 0 }, 'a record with no XML is the default');
-  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 18), { scale: 1, x: -0.2, y: 0 }, 'ReadyMeleeBackwardLeft (record 18) sits a fifth of a metre to the left');
-  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 48), { scale: 1, x: -0.76, y: 0 }, 'the largest');
-  assert.equal(Object.keys(info.offsets).length, 288);
-  const triples = new Set(Object.values(info.offsets).map((o) => `${o.scale},${o.x},${o.y}`));
-  assert.equal(triples.size, 6);
+// PIN MOVED (OWN-AUDIT, 2026-11-01; the owner: "no latching onto other mod authors"): this pinned the author's hand-tuned
+// XML, six triples over 288 records. Those offsets are gone; each sprite's shift is what our law measures on its own
+// pictures (eotbAnchor.js, written to eotbAnchors.json by tools/eotbAnchors.mjs), in the XML's shape and units.
+test('OWN-AUDIT: the per-sprite offsets are our law\'s, in metres in the XML\'s shape - every record of every set measured, the beasts at their size, a frame on another canvas its own (mutants: ownaudit-eotb-anchor-*)', () => {
+  const own = (archive, record, frame = 0) => anchorShift(EOTB_ANCHORS, archive, record, frame);
+  const at = (archive, record, frame, m) => { const s = own(archive, record, frame); return { scale: 1, x: s.right * m, y: s.up * m }; };
+  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 0), at(ARCHIVE_FOOT, 0, 0, SIZE_ON_FOOT), 'the idle, in metres at the on-foot size');
+  assert.notEqual(spriteOffset(ARCHIVE_FOOT, 18).x, 0, 'the drawn record 18 stands off its picture\'s middle, and is moved');
+  assert.deepEqual(spriteOffset(ARCHIVE_HORSE, 7, 3), at(ARCHIVE_HORSE, 7, 3, SIZE_RIDING_OR_TRANSFORMED), 'a horse at the riding size');
+  assert.deepEqual(spriteOffset(ARCHIVE_LYCAN, 16), at(ARCHIVE_LYCAN, 16, 0, SIZE_RIDING_OR_TRANSFORMED), 'a beast at the transformed size');
+  // the werewolf's armed walk draws its frames on the idle's canvas and the ready's: each frame takes its own
+  assert.notDeepEqual(spriteOffset(ARCHIVE_LYCAN, 21, 0), spriteOffset(ARCHIVE_LYCAN, 21, 1));
+  assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 26, 0), spriteOffset(ARCHIVE_FOOT, 26, 5), 'one canvas, one shift: the art\'s own registration kept');
+  // every record of every set has a shift, and none lifts a picture off the ground
+  const keys = new Set([...Object.keys(EOTB_DERIVED), ...ownDeathKeys(EOTB_DERIVED)].map((k) => k.slice(0, k.indexOf('-'))));
+  assert.deepEqual([...keys].sort(), Object.keys(EOTB_ANCHORS.shift).sort());
+  for (const s of Object.values(EOTB_ANCHORS.shift)) for (const [, up] of Array.isArray(s[0]) ? s : [s]) assert.ok(up <= 0);
+  assert.deepEqual(spriteOffset(1524, 15), { scale: 1, x: 0, y: 0 }, 'a sprite the law has not measured (a class sheet) stands as drawn');
+  // the author's table is not in the tree, nor read
+  assert.ok(!existsSync(join(root, 'src/player/eyeOfTheBeholder/eotbSpriteInfo.json')));
   // get_scaleOffset has no caller in the assembly; OWN-AUDIT (2026-11-01) made the dial ours, in the body's place, not here
-  assert.ok(!/(function|const|let)\s+scaleOffset\b/.test(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSprite.js'), 'utf8')), 'the record\'s offset is the XML\'s, unscaled');
+  assert.ok(!/(function|const|let)\s+scaleOffset\b/.test(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSprite.js'), 'utf8')), 'the record\'s offset is the law\'s, unscaled');
 });
 
 test('EOTB-IL: bodyState reads the motion bag the way LoopIdleBillboard reads PlayerMotor', () => {
@@ -394,10 +410,11 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   const vs = readFileSync(join(root, 'src/render/renderer.js'), 'utf8');
   assert.match(vs, /\+ uUp \* \(\((?:aCorner|cn)\.y \+ 0\.5\) \* uSize\.y\);/, 'the billboard shader is bottom-anchored');   // ELITE FOES: `cn` is aCorner, widened only for an elite
   assert.match(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbBody.js'), 'utf8'), /const base = y - size\.h \* 0\.5;\n\s+return \[origin\[0\] \+ right\[0\] \* x \+ fwd\[0\] \* z, origin\[1\] \+ base,/, 'and the body hands it the base');
-  // the XML X: record 18 (x -0.2) is index 5 straight and index 3
-  // mirrored, and UpdateBillboard negates X for the mirrored state
-  // (IL_4ba7-IL_4bd1). A drawn weapon faces the camera's forward (+z);
-  // the camera at the back-left is index 5, at the back-right 3.
+  // the X: record 18 is index 5 straight and index 3 mirrored, and UpdateBillboard negates X for the mirrored state
+  // (IL_4ba7-IL_4bd1). A drawn weapon faces the camera's forward (+z); the camera at the back-left is index 5, at the
+  // back-right 3. PIN MOVED (OWN-AUDIT, 2026-11-01): the shift is our law's (eotbAnchors.json), not the author's -0.2.
+  const ownX = Number(spriteOffset(ARCHIVE_FOOT, 18).x.toFixed(6)), ownY = spriteOffset(ARCHIVE_FOOT, 18).y;
+  assert.notEqual(ownX, 0);
   const { b: armed } = await liveBody();
   ticks(armed, 12, still({ sheathed: false, cameraPos: [-1.4, 1.5, -1.4] }));
   assert.equal(armed.state().shown.table, 'IdleMelee');
@@ -406,21 +423,21 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   await new Promise((res) => setTimeout(res, 2));
   armed.draw(null, { eye: [-1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
   p = armed.state().placed;
-  assert.equal(Number(p[0].toFixed(6)), -0.2, 'the -0.2 XML offset along the right');
+  assert.equal(Number(p[0].toFixed(6)), ownX, 'the record\'s shift along the right');
   ticks(armed, 12, still({ sheathed: false, cameraPos: [1.4, 1.5, -1.4] }));
   assert.equal(armed.state().shown.orientation, 3, 'the back-right: index 3, the same record mirrored');
   armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
   await new Promise((res) => setTimeout(res, 2));
   armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
-  assert.equal(Number(armed.state().placed[0].toFixed(6)), 0.2, 'and the offset negated for the mirrored state');
-  // OWN-AUDIT (2026-11-01): Animation.GlobalOffsetScale, FineGlobalOffsetScale added, scales the shift - 2.5 x -0.2
+  assert.equal(Number(armed.state().placed[0].toFixed(6)), -ownX, 'and the offset negated for the mirrored state');
+  // OWN-AUDIT (2026-11-01): Animation.GlobalOffsetScale, FineGlobalOffsetScale added, scales the shift - 2.5 times
   setModSetting(MOD, 'Animation.GlobalOffsetScale', 2);
   setModSetting(MOD, 'Animation.FineGlobalOffsetScale', 0.5);
   t.after(() => { setModSetting(MOD, 'Animation.GlobalOffsetScale', 1); setModSetting(MOD, 'Animation.FineGlobalOffsetScale', 0); });
   armed.reload();
   armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
-  assert.equal(Number(armed.state().placed[0].toFixed(6)), 0.5, 'the mirrored shift, two and a half times the art\'s');
-  assert.equal(Number(armed.state().placed[1].toFixed(6)), 0, 'the feet still on the ground (the XML\'s Y is nought)');
+  assert.equal(Number(armed.state().placed[0].toFixed(6)), Number((-ownX * 2.5).toFixed(6)), 'the mirrored shift, two and a half times the art\'s');
+  assert.equal(Number(armed.state().placed[1].toFixed(6)), Number((ownY * 2.5).toFixed(6)), 'the upward shift scaled with it (the law\'s: the lowest foot on the ground)');
 });
 
 test('EOTB-IL: the first-person billboard - active while FirstPersonBillboard is not None, a quarter metre behind, the front record, mirrored when Visible', async () => {

@@ -42,12 +42,12 @@
   {
     "name": "NB3-the-rotten-fish-reads-another-record",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "    FOOD(536, [211, 10, 0])[1],",
-    "new": "    FOOD(536, [211, 9, 0])[1],",
+    "old": "    ...FOOD(536, [211, 10, 0]),",
+    "new": "    ...FOOD(536, [211, 9, 0]),",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
-    "why": "the cooked fish, TEXTURE.211 record 10"
+    "why": "the cooked fish, TEXTURE.211 record 10 - both its faces"
   },
   {
     "name": "NB3-rot-keeps-the-rim",
@@ -62,7 +62,7 @@
   {
     "name": "NB3-rot-keeps-the-hue",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "lum * ROT_TINT[c] * mix",
+    "old": "lum * ROT_TINT[channel] * mix",
     "new": "lum * mix",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
@@ -72,51 +72,122 @@
   {
     "name": "NB3-rot-paints-the-clear",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "    if (!depth[i]) continue;\n    const o = i * 4",
-    "new": "    const o = i * 4",
+    "old": "    if (!depth[i]) continue;\n    const lum = lumAt(src, i);",
+    "new": "    const lum = lumAt(src, i);",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
     "why": "a clear pixel stays clear"
   },
   {
-    "name": "NB3-specks-on-the-rim",
+    "name": "NB3-mould-ignores-the-rim",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "if (depth[i] >= 2) room.push(i);",
-    "new": "if (depth[i] >= 1) room.push(i);",
+    "old": "* (1 - MOULD_EDGE + MOULD_EDGE * rim)",
+    "new": "* 1",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
-    "why": "no speck on the outline"
+    "why": "mould lies thicker toward the rim (OWN-AUDIT 2026-11-01: re-aimed from the specks to the mould's patches)"
   },
   {
-    "name": "NB3-specks-ignore-the-seed",
+    "name": "NB3-mould-ignores-the-seed",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "const next = rng(seed), picked = [];",
-    "new": "const next = rng(1), picked = [];",
+    "old": "const depth = rimDepth(pic), next = rng(seed),",
+    "new": "const depth = rimDepth(pic), next = rng(1),",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
-    "why": "the specks fall where our seed puts them"
+    "why": "the patches fall where our seed puts them (OWN-AUDIT 2026-11-01: re-aimed from the specks to the mould's patches)"
   },
   {
-    "name": "NB3-a-speck-without-fuzz",
+    "name": "NB3-mould-hard-edged",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "      for (let c = 0; c < 3; c++) data[j * 4 + c] = Math.round(data[j * 4 + c] + (MOULD[c] - data[j * 4 + c]) * MOULD_FUZZ);",
+    "old": "    const amount = Math.max(0, Math.min(1, (density[i] - edge + MOULD_SOFT) / (2 * MOULD_SOFT)));",
+    "new": "    const amount = density[i] >= edge ? 1 : 0;",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "a patch's border is soft, not a hard-edged blot (OWN-AUDIT 2026-11-01: re-aimed from the specks to the mould's patches)"
+  },
+  {
+    "name": "NB3-mould-ignores-the-cover",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * (1 - cover)))]",
+    "new": "sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.9))]",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "the mould covers its share of the food, and the first stage more (OWN-AUDIT 2026-11-01: re-aimed from the specks to the mould's patches)"
+  },
+  {
+    "name": "NB3-the-mouldy-fish-is-the-plain-fish",
+    "file": "src/systems/survival/itemIcons.js",
+    "old": "    ...FOOD(536, [211, 10, 0]),",
+    "new": "    FOOD(536, [211, 10, 0])[1],",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js",
+      "test/systems/surv2_items.test.js"
+    ],
+    "why": "OWN-AUDIT (2026-11-01): the mouldy cooked fish is our mould, not the plain fish"
+  },
+  {
+    "name": "NB3-mould-ignores-the-hollows",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "+ MOULD_HOLLOW * hollow +",
+    "new": "+ 0 * hollow +",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "OWN-AUDIT (2026-11-01): mould gathers in the hollows of the food's shading"
+  },
+  {
+    "name": "NB3-mould-over-the-highlight",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "    while (lumAt(data, i) > light) data[i * 4 + brightest()]--;\n",
     "new": "",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
-    "why": "a speck's fuzz on the pixels beside it"
+    "why": "OWN-AUDIT (2026-11-01): no mould pixel is brighter than the food's highlight"
   },
   {
-    "name": "NB3-one-speck-a-picture",
+    "name": "NB3-mould-lifted-past-the-highlight",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "Math.max(MIN_SPECKS, Math.round(drawn / perSpeck))",
-    "new": "MIN_SPECKS",
+    "old": "    const want = lum + (light - lum) * (0.3 + 0.7 * white) * Math.sqrt(lum / (light || 1));",
+    "new": "    const want = lum + (255 - lum) * (0.3 + 0.7 * white);",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
-    "why": "the speck count follows the drawn area"
+    "why": "OWN-AUDIT (2026-11-01): the mould is lifted toward the food's own highlight and no further - a white speck past it is a sparkle"
+  },
+  {
+    "name": "NB3-mould-unshaded",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "* Math.sqrt(lum / (light || 1));",
+    "new": "* 1;",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "OWN-AUDIT (2026-11-01): in shadow the mould is shadowed too"
+  },
+  {
+    "name": "NB3-mould-no-white",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "    const white = Math.max(0, Math.min(1, (density[i] - edge) / (2 * MOULD_SOFT))) * (0.45 + 0.55 * tone[i]);",
+    "new": "    const white = 0;",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "OWN-AUDIT (2026-11-01): a patch's core goes white"
+  },
+  {
+    "name": "NB3-mould-not-green",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "export const MOULD_GREEN = Object.freeze([0.78, 1, 0.74]);",
+    "new": "export const MOULD_GREEN = Object.freeze([1, 0.7, 0.9]);",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "OWN-AUDIT (2026-11-01): mould is grey-green, never a pink or a purple"
   }
 ]

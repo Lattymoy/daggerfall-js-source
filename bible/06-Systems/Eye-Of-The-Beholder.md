@@ -16,7 +16,7 @@ the findings. Vendor record and the permission line:
 proper 1 to 1 recreation for everything." vendor/eye-of-the-beholder is retired (`01-Overview/Own-Work.md`): the
 assembly, its IL dump, the manifest, the settings, presets and states files and the author's 166 death sprites left
 the tree. Daggerfall's own 2,869 stay specs, now `src/player/eyeOfTheBeholder/eotbDerived.json`, beside
-`eotbSpriteInfo.json` (the XML offsets). The death is ours (`player/eyeOfTheBeholder/eotbDeath.js`): its first frame
+`eotbSpriteInfo.json` (the XML offsets; DELETED by OWN-AUDIT, ours in `eotbAnchors.json`). The death is ours (`player/eyeOfTheBeholder/eotbDeath.js`): its first frame
 is the set's class struck, records 10-14 of its TEXTURE file (the werewolf's and the wereboar's too), and its second
 is that picture laid on the ground by our code, a shadow under it. The tables, frames, keys and settings are unchanged.
 The four setting descriptions still in the author's words are ours now. An `[IL_xxxx]` below names an offset in the 2.1
@@ -31,6 +31,21 @@ the game's TogglePerspective action (VIEW-TOGGLE), which now shows on the mod's 
 ONE-STROKE retired: both retired. A saved value of a retired key is let go on load (`modSettings.js` RETIRED_KEYS). Pins:
 `eotb_body.test.js` (the placement), `uxb1f_featurekeys.test.js`, `ownaudit_keys.test.js`; mutants
 `tools/mutants/ownaudit_keys.json`.
+
+**OWN-AUDIT (2026-11-01): the sprites placed by our own law.** `eotbSpriteInfo.json` was the author's hand-tuned table,
+byte for byte. It is gone, and nothing reads it. `eotbAnchor.js` measures each set's own pictures: the body's centre
+line (the median middle of each row's widest run, hips to chest) stands on the player's spot, and the lowest foot on
+the ground. Records that share a picture are one family, and a family's pictures of one size share one shift, so a
+swing keeps its ready stance's place and its lunge as drawn. A sheet drawn short of its view's standing figure is
+scaled to it. Over every set that is set 10's spell sheets alone, at the 80/110 SPELL-SHORT had typed.
+`tools/eotbAnchors.mjs` writes `eotbAnchors.json` from ARENA2, and `spriteOffset` takes the frame.
+
+The jitter, measured over the 23 sets on 2026-11-01. Turning, the body's line moved 38.4 cm on average under the
+author's table (76.7 at most) and 0.6 cm under ours (10.5). Changing state, 5.8 cm against 0.2. Inside a record, 3.6
+cm against 2.4, and no record is worse. Read at the feet instead: turning, 40.7 cm against 18.8; changing state, 8.8
+against 4.5. The lycanthropes' two-canvas walks and the deaths lose jumps of 35 to 46 cm. Pins:
+`ownaudit_eotb_anchors.test.js`, `eotb_body.test.js` and `rpt1026_misc_eotb.test.js` (re-aimed from the author's -0.2
+m and the typed scale); mutants `tools/mutants/ownaudit_eotb_anchors.json` (14) and `rpt1026_misc.json` (3, re-aimed).
 
 ## What is and is not ported
 
