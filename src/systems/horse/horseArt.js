@@ -7,6 +7,7 @@
 // rider's walk, frames 0-7), the rider taken off (his mask, eotbRiderMasks.js, and his colours), the flank under his
 // leg filled from the hide beside it, and our own saddle painted on (art/ownPainter.js). Pure but for `ownHorsePicture`.
 import { createPainter, poly, rect, stroke, hex, RAMP } from '../../art/ownPainter.js';
+import { FRONT_RIDER_MASKS, FRONT_RIDER_SIZE } from './horseFrontRider.js';
 
 /** Daggerfall's mounted rider set the horse is taken from, its palette, and the masks' key for it (EOTB's 112382). */
 export const HORSE_ART_ARCHIVE = 495;
@@ -561,5 +562,21 @@ export async function ownHorsePicture(
       seatThen = seatOf(first, record.width);
     if (seat && seatThen) bob = [0, seat[1] - seatThen[1]];
   }
-  return composeHorse(record, mask, named.view, named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT, bob);
+  const height = named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT;
+  return composeHorse(record, named.view === 0 ? withFrontRider(mask, record, named.frame) : mask, named.view, height, bob);
+}
+
+/** OWN-AUDIT: the front view's rider as we drew him (horseFrontRider.js) laid over the baked mask, on a record of the
+ *  size he was drawn over; any other record keeps the baked mask alone. */
+export function withFrontRider(
+  /** @type {Uint8Array|null} */ mask,
+  /** @type {{width:number,height:number}} */ record,
+  /** @type {number} */ frame,
+) {
+  const [wide, tall] = FRONT_RIDER_SIZE,
+    packed = FRONT_RIDER_MASKS[frame];
+  if (!packed || record.width !== wide || record.height !== tall) return mask;
+  const drawn = unpackRiderMask(packed).mask;
+  if (mask) for (let i = 0; i < drawn.length; i++) drawn[i] |= mask[i];
+  return drawn;
 }

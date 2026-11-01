@@ -36,12 +36,13 @@ settings and every place the sky is wired are unchanged. The storm's flash is st
 |---|---|
 | hour | five anchors on the sun's height (-0.3, -0.12, 0, 0.16, 0.42): navy night, indigo blue hour, an orange horizon at rise and set, the golden hour, a day blue lifted toward white at the horizon |
 | weather | one cover c and one grey a weather: the colours mix to the grey by c^1.5 and darken by 0.35 c^2; the sun, moons and stars show (1 - c^2)^2 |
-| clouds | two layers cut from equalized noise: the low covers c, the high 0.3 (1 - c); they drift on the game clock |
+| clouds | two layers cut from equalized noise: the low covers c, the high 0.3 (1 - c), faded out from 0.16 to 0.07 (a thin cut read as scratches); they drift on the game clock |
 | season | the calendar's, the same in every province: summer deeper, autumn golden, winter paler, by the hour's light |
 | moons | where the port's dome puts them; Masser rose, Secunda silver; lit from the sun's side by the clock's phase |
 | stars | two layers hashed from cube-face cells and a faint band, turning once a day about the dome's pole |
 | fog | clear rows linear to 4,800; falling rows exp2, half the light at d50 (rain 700, snow 450, fog 120, sandstorm 90, ash 400); the slider thickens by 1 + (x - 1) / 3 |
 | light | 0.92 sin(pi t)^0.6 over the day: longer sunrises and sunsets than the rig's |
+| pixel snow | our six-armed flake; MaxParticles (thousands) caps the flakes drawn - the mod logged it and never applied it (OWN-WORK4 AUDIT, 2026-11-01) |
 
 ## What the mod is, and where each part landed
 

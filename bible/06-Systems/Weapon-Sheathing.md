@@ -16,6 +16,13 @@ for a bow or a crossbow. The three laws, the switch and the bones' names are unc
 still wins. Every weapon of a covered kind wears one now, where the mod covered seventy-one named meshes. The pins
 stand on our own biped (`tools/ownBiped.mjs`), which the armour bakes read too.
 
+**OWN-WORK4 AUDIT (2026-11-01).** A sheath read its blade in sixteen slices, so a guard that crossed a slice's edge
+was taken for blade: a claymore's sheath came out as wide as its guard, and a straight blade's corners stood out of
+the narrowed tip. A sheath now reads 48 slices, sets its mouth on the guard's own top, and narrows no faster than
+the blade (*OWN-WORK4 AUDIT: a sheath holds its blade* in `ws1_sheathing.test.js`; mutants OWW-1 to OWW-3 in `tools/mutants/ws1.json`). The
+assembly pin now binds a player's own scabbard too, which kills `binder-subtree-lost`: ours keeps its weapon node
+empty, so it could not.
+
 ## What the mod is, and what was ported
 
 On OpenMW the mod is ART plus a SETTING. The art: seventy-one `_sh`

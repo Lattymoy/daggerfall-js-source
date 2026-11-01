@@ -117,11 +117,11 @@ export function plip(rate, { hertz = 1400, decay = 0.03, seed = 1 }) {
   const count = Math.round(decay * 6 * rate),
     out = new Float32Array(count);
   const pitch = hertz * (0.85 + seededDie(seed)() * 0.3);
-  let phase = 0;
+  let turns = 0; // the phase in turns, kept in [0, 1)
   for (let i = 0; i < count; i++) {
     const time = i / rate;
-    phase += (2 * Math.PI * pitch * (1 + 0.6 * Math.exp(-time / decay))) / rate;
-    out[i] = Math.sin(phase) * Math.exp(-time / decay);
+    turns = (turns + (pitch * (1 + 0.6 * Math.exp(-time / decay))) / rate) % 1;
+    out[i] = Math.sin(2 * Math.PI * turns) * Math.exp(-time / decay);
   }
   return out;
 }

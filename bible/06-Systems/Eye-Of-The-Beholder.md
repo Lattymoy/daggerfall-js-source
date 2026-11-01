@@ -1140,7 +1140,7 @@ pattern, a sash, a belt, an insignia or a shield is drawn on the frame's own reg
 sizes stay. The frame counts are the sheets' own: the female healer casts in five, the bounty hunter's last record has
 four, and the sorceress's record 8 has seven. The female monk moves to the robed woman's sheet (485). ACRO-SHORT's
 scale belongs to TEXTURE.483, so the adventurer carries it too. Pins: `test/player/ownwork4_classskins.test.js`,
-`test/net/skin2_class_skins.test.js`; mutants `tools/mutants/ownwork4_classskins.json` (9).
+`test/net/skin2_class_skins.test.js`; mutants `tools/mutants/ownwork4_classskins.json` (12).
 
 | class | sheet (m / f) | outer / inner / metal | marks | why |
 |---|---|---|---|---|
@@ -1157,6 +1157,13 @@ scale belongs to TEXTURE.483, so the adventurer carries it too. Pins: `test/play
 | Nightblade | 490 / 489 | blue / black / steel | silver hems, a silver moon | the night's blue and a spellcasting thief's moon |
 | Pirate | 484 | linen striped red / blue / bronze | a red waist sash | the sailor's stripes and navy |
 | Sorcerer | 488 / 477 | purple / purple / gold | gold hems, a gold eye | purple for power, the armour gilded |
+
+**OWN-AUDIT (2026-11-01).** The robed sheets shade a garment in the other cloth ramp's near-black steps: TEXTURE.486
+darkens its teal robe's hem with the olive's darkest. Dyed, those pixels took the inner colour, so the white robe carried
+brown blotches. A cloth pixel in steps 13-15 of its ramp now joins the garment nearest it (`classSkinArt.js`
+`shadeByNearest`), and keeps its own unless the other is SHADE_MARGIN pixels nearer. Pinned in
+`ownwork4_classskins.test.js`; three of the twelve mutants are its. Still open: the acrobat (male), the bounty hunter
+and the Dark Brotherhood stand on TEXTURE.482's bare-chested figure, and a dye cannot clothe skin.
 
 ## SPRITE-FLICKER (2026-10-07): the view that went back
 

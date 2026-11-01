@@ -79,5 +79,32 @@
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
+  },
+  {
+    "name": "OW4-tail-never-joins",
+    "file": "src/player/classSkinArt.js",
+    "old": "    if (theirs < 0 || (mine >= 0 && theirs + SHADE_MARGIN >= mine)) continue;",
+    "new": "    continue;",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-tail-no-margin",
+    "file": "src/player/classSkinArt.js",
+    "old": "    if (theirs < 0 || (mine >= 0 && theirs + SHADE_MARGIN >= mine)) continue;",
+    "new": "    if (theirs < 0 || (mine >= 0 && theirs >= mine)) continue;",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OW4-tail-whole-ramp",
+    "file": "src/player/classSkinArt.js",
+    "old": "export const CLOTH_TAIL_STEP = 13;",
+    "new": "export const CLOTH_TAIL_STEP = 0;",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
   }
 ]

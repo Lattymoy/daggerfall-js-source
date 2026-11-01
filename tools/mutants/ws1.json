@@ -323,5 +323,35 @@
       "test/formats/morrowind/ws1_sheathing.test.js",
       "test/systems/modsonline.test.js"
     ]
+  },
+  {
+    "name": "OWW-1-the-mouth-at-a-slice-end",
+    "file": "src/systems/ownSheathing.js",
+    "old": "  const mouth = ext.top[guardEnd];",
+    "new": "  const mouth = ext.lo[1] + (guardEnd + 1) * ext.slice;",
+    "tests": [
+      "test/formats/morrowind/ws1_sheathing.test.js"
+    ],
+    "why": "the sheath's mouth sits on the guard's own top"
+  },
+  {
+    "name": "OWW-2-the-guard-read-as-blade",
+    "file": "src/systems/ownSheathing.js",
+    "old": "    if (across(ext.width[i]) >= 0.7 * across(ext.width[guardSlice])) guardEnd = i;",
+    "new": "    if (across(ext.width[i]) >= 99 * across(ext.width[guardSlice])) guardEnd = i;",
+    "tests": [
+      "test/formats/morrowind/ws1_sheathing.test.js"
+    ],
+    "why": "a guard across a slice's edge is guard, so the sheath is the blade's width"
+  },
+  {
+    "name": "OWW-3-the-tip-narrows-past-the-blade",
+    "file": "src/systems/ownSheathing.js",
+    "old": "  const [tipX, tipZ] = [tipOf(halfX, 0, 0.55), tipOf(halfZ, 1, 0.8)];",
+    "new": "  const [tipX, tipZ] = [halfX * 0.55, halfZ * 0.8];",
+    "tests": [
+      "test/formats/morrowind/ws1_sheathing.test.js"
+    ],
+    "why": "the sheath narrows toward its tip no faster than the blade does"
   }
 ]

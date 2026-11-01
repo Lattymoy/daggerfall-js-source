@@ -603,11 +603,13 @@ export class PrecipitationRenderer {
   }
 
   /** DS1: the lab's snow, drawn as the mod's pixel snow: the same count,
-   *  fall, wind and travel; the mod's blend and texture; the size clamp. */
+   *  fall, wind and travel; the mod's blend and texture; the size clamp; at most MaxParticles. */
   drawPixelSnow(proj, view, camPos, timeSeconds) {
     const gl = this.gl;
     if (!this.pixelProgram) this._buildPixelSnow();
-    const full = Math.round(LAB_COUNTS.snow * Math.min(1, Math.max(0, this.intensity)));
+    // OWN-WORK4: the MaxParticles slider caps the flakes (the retired mod logged it and never applied it)
+    const most = Math.min(LAB_COUNTS.snow, this.pixelSnow.maxParticles ?? LAB_COUNTS.snow);
+    const full = Math.round(most * Math.min(1, Math.max(0, this.intensity)));
     const count = this.countCap != null ? Math.min(full, this.countCap) : full;
     if (count <= 0) return;
     if (!this._vp) this._vp = new Float32Array(16);

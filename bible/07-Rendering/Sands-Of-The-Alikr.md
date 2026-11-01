@@ -16,6 +16,11 @@ is sand - a warm tan, light enough - it is graded toward a pale dune sand that k
 and rippled by a north-west wind, whole cycles across the tile so it repeats. Water, green, grey and dark dirt stay
 the record's own. Pins: `test/systems/environs_texturePacks.test.js`, `test/systems/ownwork4_textures.test.js`.
 
+**OWN-WORK4 AUDIT (2026-11-01).** Read texel by texel, the rule paled a light speck in dark dirt to near white and the
+light joints of a road's paving, so the shore and the road flanks came out speckled. Sand is now sand over its 5 x 5,
+and a pebble in it is darker sand. On a road record the paving is the side darker over its 7 x 7: all of 46, and the
+paved lower-right half of 47 and 55. The paving stays the record's, as the pack's README said. The ripple is 6%.
+
 ## What the pack is
 
 47 pictures of TEXTURE.002 - the desert's ground, which Daggerfall wears all

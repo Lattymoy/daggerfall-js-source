@@ -17,7 +17,9 @@ import {
   RR_NPC_XML_SCALE, RR_KEEPER_OF, RR_NPC_ARCHIVE, RR_NPC_RECORDS, RR_BUTTON_RECORDS, rrRecord182_0, rrShopTavernRecord, rrResidentGender,
   rrClimateRace, rrResidentVariant, rrVariantPerson, installRoleplayRealismArt, _resetRoleplayRealismArt, RR_DERIVED,
 } from '../../src/systems/roleplayRealism/rrVariants.js';
-import { rrKeeperPicture, rrWeekButtonPicture, RR_KEEPER_SIZE } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4: our own keepers
+import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4: our own week button
+import { rrKeeperPicture, RR_KEEPER_SIZE, RR_KEEPERS, composeKeeper } from '../../src/systems/roleplayRealism/rrKeepers.js';   // OWN-WORK4 AUDIT: our keepers, the player's own people
+import { createClassicPictures } from '../../src/formats/classicPictures.js';
 import { installRoleplayRealism, setRrHostSeams, rrHostSeams } from '../../src/systems/roleplayRealism/rrInstall.js';
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, MobilePerson } from '../../src/characters/mobile/mobilePerson.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
@@ -78,7 +80,6 @@ test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stand
   assert.deepEqual([...ours, ...rebuilt].sort(), RR_NPC_RECORDS.map((r) => `197_${r}-0.png`).sort(), '7 keepers, every one somewhere');
   assert.deepEqual(RR_BUTTON_RECORDS, [21], 'the week button (RR_WEEK_BUTTON); 22-37 are asked for by nothing and are not carried');
   assert.deepEqual([rrWeekButtonPicture().width, rrWeekButtonPicture().height], [32, 16], 'a classic button\'s size');
-  for (const [r, [w, h]] of Object.entries(RR_KEEPER_SIZE)) assert.deepEqual([rrKeeperPicture(Number(r)).width, rrKeeperPicture(Number(r)).height], [w, h], `197_${r}-0 at the release's size`);
   assert.deepEqual([existsSync(join(ROOT, 'vendor/roleplay-realism')), existsSync(join(ROOT, 'public/art/roleplay-realism'))], [false, false], 'OWN-WORK4: the release\'s folders are retired');
   const keys = MOD_SETTINGS[V].keys;
   for (const k of ['variantNpcs', 'variantResidents', 'EnhancedRiding.enhancedRiding', 'EnhancedRiding.RealisticMovement', 'EnhancedRiding.followTerrainEnabled',

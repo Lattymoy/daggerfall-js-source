@@ -229,8 +229,38 @@ export function upscaleEdgeAware(src, w, h, wrap) {
           p1 = s[a1 + c],
           p2 = s[a2 + c],
           p3 = s[a3 + c];
-        const lo = p0 < p1 ? (p0 < p2 ? (p0 < p3 ? p0 : p3) : p2 < p3 ? p2 : p3) : p1 < p2 ? (p1 < p3 ? p1 : p3) : p2 < p3 ? p2 : p3;
-        const hi = p0 > p1 ? (p0 > p2 ? (p0 > p3 ? p0 : p3) : p2 > p3 ? p2 : p3) : p1 > p2 ? (p1 > p3 ? p1 : p3) : p2 > p3 ? p2 : p3;
+        const lo =
+          p0 < p1
+            ? p0 < p2
+              ? p0 < p3
+                ? p0
+                : p3
+              : p2 < p3
+                ? p2
+                : p3
+            : p1 < p2
+              ? p1 < p3
+                ? p1
+                : p3
+              : p2 < p3
+                ? p2
+                : p3;
+        const hi =
+          p0 > p1
+            ? p0 > p2
+              ? p0 > p3
+                ? p0
+                : p3
+              : p2 > p3
+                ? p2
+                : p3
+            : p1 > p2
+              ? p1 > p3
+                ? p1
+                : p3
+              : p2 > p3
+                ? p2
+                : p3;
         v = v < lo ? lo : v > hi ? hi : v;
         out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;
       }
@@ -472,29 +502,55 @@ export function road(src, w, h, { seed }) {
   return out;
 }
 
+/** A field's mean over the (2r + 1)-square round each texel, held at the border. */
+function boxMean(a, w, h, r) {
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      let t = 0;
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) t += a[clampI(y + dy, h) * w + clampI(x + dx, w)];
+      out[y * w + x] = t / ((2 * r + 1) * (2 * r + 1));
+    }
+  return out;
+}
+
 /**
- * THE ALIK'R'S SAND. A record of the desert's ground at its own size: where the texel is sand (a warm tan, light enough
- * - not the water, the green, the grey or the dark dirt), it is graded toward a pale dune sand that keeps the record's
- * own light and dark, and rippled by the wind - crests a few texels apart, bent by a slow noise, whole cycles across the
- * tile so it repeats.
- * @param {Rgba} src @param {{ seed: number }} o @returns {Rgba}
+ * THE ALIK'R'S SAND. A record of the desert's ground at its own size: where the ground is sand (a warm tan, light enough,
+ * over its 5 x 5 - so a pale speck in dark dirt is no dune), it is graded toward a pale dune sand that keeps the record's
+ * own light and dark (its pebbles and mottles darker sand), and rippled by the wind - crests a few texels apart, bent by
+ * a slow noise, whole cycles across the tile so it repeats. Water and green stay the record's, and on a road record so
+ * does the paving - darker over its 7 x 7, on a flank (`road` 'flank': 47, 55) only on its paved, lower-right half.
+ * @param {Rgba} src @param {{ seed: number, road?: false | 'full' | 'flank' }} o @returns {Rgba}
  */
-export function desert(src, { seed }) {
+export function desert(src, { seed, road = false }) {
   const { width: w, height: h, data: s } = src;
   const out = new Uint8Array(s);
-  const sandOf = (i) => {
-    const r = s[i],
-      g = s[i + 1],
-      b = s[i + 2];
+  const luma = new Float32Array(w * h),
+    own = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    const r = s[i * 4],
+      g = s[i * 4 + 1],
+      b = s[i * 4 + 2];
+    luma[i] = lumaOf(r, g, b);
     const warm = smooth(0.02, 0.1, (r - b) / 255) * smooth(-0.02, 0.06, (g - b) / 255);
-    return warm * smooth(0.3, 0.42, lumaOf(r, g, b));
-  };
+    own[i] = warm * smooth(0.3, 0.42, luma[i]);
+  }
+  const near = boxMean(own, w, h, 2),
+    wide = road ? boxMean(luma, w, h, 3) : null;
+  const field = new Float32Array(w * h);
   let sum = 0,
     n = 0;
   for (let i = 0; i < w * h; i++) {
-    const m = sandOf(i * 4);
-    sum += m * lumaOf(s[i * 4], s[i * 4 + 1], s[i * 4 + 2]);
-    n += m;
+    const r = s[i * 4],
+      g = s[i * 4 + 1],
+      b = s[i * 4 + 2];
+    const kept = (1 - waterOf(r, g, b)) * (1 - smooth(0.02, 0.08, (g - Math.max(r, b)) / 255));
+    const side = road === 'flank' ? smooth(-0.3, -0.1, ((i % w) + ((i / w) | 0) + 1) / w - 1) : 1;
+    const paved = wide ? (1 - smooth(0.49, 0.53, wide[i])) * side : 0;
+    field[i] = smooth(0.3, 0.6, near[i]) * kept * (1 - paved);
+    sum += own[i] * field[i] * luma[i];
+    n += own[i] * field[i];
   }
   const mean = n > 0 ? sum / n : 0.5;
   const warp = grain(w, h, 4, 2, seed);
@@ -502,11 +558,11 @@ export function desert(src, { seed }) {
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
-      const m = sandOf(i) * 0.9;
+      const m = field[y * w + x] * 0.9;
       if (m <= 0 || s[i + 3] === 0) continue;
-      const rel = lumaOf(s[i], s[i + 1], s[i + 2]) / mean;
+      const rel = luma[y * w + x] / mean;
       const ripple = Math.sin(2 * Math.PI * ((7 * x) / w + (3 * y) / h) + 2.4 * warp[y * w + x]);
-      const k = (0.86 + 0.7 * (rel - 1)) * (1 + 0.05 * ripple);
+      const k = Math.min(1.1, Math.max(0.62, 0.86 + 0.7 * (rel - 1))) * (1 + 0.06 * ripple);
       for (let c = 0; c < 3; c++) {
         const v = s[i + c] + m * (tone[c] * k - s[i + c]);
         out[i + c] = v < 0 ? 0 : v > 255 ? 255 : v + 0.5;
@@ -579,7 +635,11 @@ function snowCover(src, ground, fromSummer, joints) {
         gy = (at(clampI(y + 1, h) * w + x) - at(clampI(y - 1, h) * w + x)) * 4;
       const flat = 1 - smooth(0.25, 0.7, Math.sqrt(gx * gx + gy * gy));
       const joint = joints ? pavingOf(r, g, b) * smooth(0.02, 0.08, mean3(ground.ht, x, y, w, h) - ground.ht[i]) : 0;
-      spread[i] = Math.max(cover[i], (1 - waterOf(r, g, b)) * Math.max(near * flat, 0.8 * joint));
+      // a joint takes snow only near the drift's edge: a whole road hatched white is no snowfall
+      spread[i] = Math.max(
+        cover[i],
+        (1 - waterOf(r, g, b)) * Math.max(near * flat, 0.8 * joint * smooth(0.1, 0.45, near)),
+      );
     }
   return spread;
 }
@@ -601,6 +661,7 @@ export function snow(src, { seed, fromSummer = false }) {
   const ground = snowGround(src);
   const cover = snowCover(src, ground, fromSummer, true);
   const fine = grain(w, h, Math.max(2, w >> 3), 2, seed);
+  const keepOwn = fromSummer ? 0.25 : 0.5; // the record's own grain, kept in the snow: a field of it is never blank
   const out = new Uint8Array(s);
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
@@ -608,12 +669,13 @@ export function snow(src, { seed, fromSummer = false }) {
         m = cover[i];
       if (m <= 0) continue;
       const o = i * 4;
+      const own = 255 * keepOwn * (lumaOf(s[o], s[o + 1], s[o + 2]) - ground.ht[i]);
       const hollow = clamp01((mean3(ground.ht, x, y, w, h) - ground.ht[i]) * 6);
       const glint = hash01(x, y, seed) > 0.985 ? 1.05 : 1;
       const v = (0.95 + 0.03 * fine[i]) * (0.88 + 0.14 * ground.lit[i]) * glint;
       const tone = [v * (240 - 16 * hollow), v * (244 - 8 * hollow), v * 254];
       for (let c = 0; c < 3; c++) {
-        const t = s[o + c] + m * (tone[c] - s[o + c]);
+        const t = s[o + c] + m * (tone[c] + own - s[o + c]);
         out[o + c] = t < 0 ? 0 : t > 255 ? 255 : t + 0.5;
       }
     }
@@ -663,7 +725,7 @@ const fit = (src, w, h) => (src.width === w && src.height === h ? src : upscaleE
 /**
  * One picture by its spec: `{ rule, w, h, wrap?, fromSummer?, seed }` over the classic source picture. Answers a new
  * picture; the source is not written.
- * @param {{ rule: string, w: number, h: number, wrap?: boolean, fromSummer?: boolean, seed: number }} spec
+ * @param {{ rule: string, w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank', seed: number }} spec
  * @param {Rgba} src
  * @returns {Rgba}
  */
@@ -674,7 +736,7 @@ export function applyOwnRule(spec, src) {
     case 'road':
       return road(src, spec.w, spec.h, { seed: spec.seed });
     case 'desert':
-      return desert(fit(src, spec.w, spec.h), { seed: spec.seed });
+      return desert(fit(src, spec.w, spec.h), { seed: spec.seed, road: spec.road ?? false });
     case 'snow':
       return snow(fit(src, spec.w, spec.h), { seed: spec.seed, fromSummer: !!spec.fromSummer });
     default:

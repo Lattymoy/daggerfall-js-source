@@ -13,7 +13,8 @@ import { comeSailAwayModels, decodeMeshGeometry } from '../../../src/systems/com
 import { spawnBoat, Boat, AUDIO_CLIPS, TRIGGER_MODEL } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { windWidgetFrame, splashPicture, WIND_WIDGET_SIZE } from '../../../src/systems/comeSailAway/csaPictures.js';
 import { windWidgetFrameCount } from '../../../src/systems/comeSailAway/comeSailAway.js';
-import { csaClip, CSA_CLIP_FORMAT } from '../../../src/systems/comeSailAway/csaSynth/csaClips.js';
+import { csaClip, CSA_CLIP_FORMAT, CSA_CLIP_LEVEL, registerCsaClips } from '../../../src/systems/comeSailAway/csaSynth/csaClips.js';
+import { loudnessOf } from '../../../src/audio/synth/dsp.js';
 import { CONTROLLERS } from '../../../src/world/ships/ownBoats/ownBoatAnimation.js';
 
 const files = ownBoatFiles();
@@ -122,19 +123,27 @@ test('OWN-WORK4: the pictures - the wind widget\'s arrow a frame a step, frame 0
   assert.ok(solid > 200 && solid < 52 * 41 * 0.8, `cut at a half, ragged (${solid})`);
 });
 
-test('OWN-WORK4: the five clips Start loads - each at its rate, the strokes as long as Come Sail Away\'s, the loops seamless; never silent, never clipped, the same every time', () => {
+test('OWN-WORK4: the five clips Start loads - each at its rate, the strokes as long as Come Sail Away\'s, the loops a minute and seamless; a loop at the mod\'s own loops\' -24 dBFS, a stroke near Daggerfall\'s large splash; never clipped, the same every time, made a pass a task (mutants: a level moved, a loop cut to 20 s)', async () => {
   assert.deepEqual(Object.keys(CSA_CLIP_FORMAT), [...AUDIO_CLIPS]);
   assert.deepEqual(['Oars_In', 'Oars_Sweep', 'Oars_Out'].map((k) => [CSA_CLIP_FORMAT[k].rate, CSA_CLIP_FORMAT[k].samples]), [[22050, 131982], [22050, 122865], [22050, 134314]]);
+  assert.deepEqual(['SmallShipAmbience', 'ShipExteriorAmbience2'].map((k) => CSA_CLIP_FORMAT[k].samples / CSA_CLIP_FORMAT[k].rate), [60, 60]);
+  assert.deepEqual(CSA_CLIP_LEVEL, { loopRmsDb: -24, strokeLoudness: -17 });
   for (const name of AUDIO_CLIPS) {
     const c = csaClip(name);
     assert.equal(c.rate, CSA_CLIP_FORMAT[name].rate);
     assert.equal(c.samples.length, CSA_CLIP_FORMAT[name].samples);
-    let peak = 0, sum = 0;
-    for (const v of c.samples) { peak = Math.max(peak, Math.abs(v)); sum += v * v; }
-    assert.ok(peak > 0.5 && peak <= 0.8, `${name}: peak ${peak}`);
-    assert.ok(Math.sqrt(sum / c.samples.length) > 0.01, `${name}: heard`);
+    let peak = 0, sum = 0, mean = 0;
+    for (const v of c.samples) { peak = Math.max(peak, Math.abs(v)); sum += v * v; mean += v; }
+    assert.ok(peak < 0.5, `${name}: peak ${peak}, under the limiter at full volume`);
+    assert.ok(Math.abs(mean / c.samples.length) < 1e-3, `${name}: no DC`);
+    if (/Ambience/.test(name)) assert.ok(Math.abs(10 * Math.log10(sum / c.samples.length) - CSA_CLIP_LEVEL.loopRmsDb) < 0.01, name);
+    else assert.ok(Math.abs(loudnessOf(c.samples, c.rate) - CSA_CLIP_LEVEL.strokeLoudness) < 0.01, name);
     assert.equal(csaClip(name), c, 'made once');
   }
+  const taken = [];
+  await registerCsaClips((name, clip) => taken.push([name, clip === csaClip(name)]), AUDIO_CLIPS);
+  assert.deepEqual(taken, AUDIO_CLIPS.map((n) => [n, true]), 'each registered once made, in order');
+  await assert.rejects(registerCsaClips(() => false, AUDIO_CLIPS), /refused/);
   for (const name of ['SmallShipAmbience', 'ShipExteriorAmbience2']) {
     const s = csaClip(name).samples;
     assert.ok(Math.abs(s[0] - s[s.length - 1]) < 0.08, `${name}: its end meets its start`);

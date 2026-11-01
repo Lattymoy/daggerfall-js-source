@@ -564,8 +564,8 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   // finds the live host's slot (systems/notify.js). Still a push -
   // that is the seam's default and B5's law for every
   // DaggerfallUI.MessageBox - and still on BOTH of DFU's own raises.
-  assert.match(world, /betterAmbience\.onStartGame\(\);\s*reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}\);/, 'OnStartGame - a push, B5\'s law');
-  assert.match(world, /betterAmbience\.onLoad\(\);\s*reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}\);/, 'OnLoad');
+  assert.match(world, /betterAmbience\.onStartGame\(\);\s*reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}, 6\);/, 'OnStartGame - a push, B5\'s law; LogModException\'s 6');
+  assert.match(world, /betterAmbience\.onLoad\(\);\s*reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}, 5\);/, 'OnLoad; LogModException\'s 5');
   assert.equal(/reportModCompatibilityIssues\(\{ showText: \(lines\) => townTalk\./.test(world), false, 'and no host-built window');
   assert.match(world, /footsteps\.rebase\(\);\s*betterAmbience\.rebase\(\);/, 'the floating origin');
   // every RemoveHealth sender hands its amount

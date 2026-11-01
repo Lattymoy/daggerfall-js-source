@@ -24360,8 +24360,8 @@
   "by": "claude-in-session"
  },
  "mods.dynamicSkies.MaxParticles.description": {
-  "en": "d94d1768b9d1",
-  "tr": "d7fee39c4819",
+  "en": "69faf5839dda",
+  "tr": "0fc4b05c5a0b",
   "by": "claude-in-session"
  },
  "mods.dynamicSkies.MinParticleSize.description": {
@@ -25350,13 +25350,13 @@
   "by": "claude-in-session"
  },
  "mods.immersiveFootsteps.ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging.description": {
-  "en": "381e66ff63c7",
-  "tr": "19bdbd7f4ddf",
+  "en": "6ba4e2509236",
+  "tr": "1537877e9c05",
   "by": "claude-in-session"
  },
  "mods.immersiveFootsteps.ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs.description": {
-  "en": "381e66ff63c7",
-  "tr": "19bdbd7f4ddf",
+  "en": "e9cec2fe33fb",
+  "tr": "2856e391949d",
   "by": "claude-in-session"
  },
  "mods.immersiveFootsteps.FootstepSettings.AllowFootstepSounds.description": {

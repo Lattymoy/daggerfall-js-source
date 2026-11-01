@@ -97,6 +97,28 @@ test('OWN-WORK4: every class reads as itself - one scheme a class, every sheet\'
   for (let i = 0; i < painted.length; i++) for (let j = i + 1; j < painted.length; j++) assert.notEqual(painted[i][1], painted[j][1], `${painted[i][0]} and ${painted[j][0]}`);
 });
 
+test('OWN-AUDIT: a cloth\'s near-black steps join the garment nearest them - a robe\'s hem shaded in the olive is the robe\'s, a glove\'s own dark stays the glove\'s', () => {
+  // a robe of teal (0x84) whose hem rows are the olive's darkest (0xce), a lit olive glove (0xc4) beside it with a dark
+  // olive strip on its inner edge, and lit olive legs below a gap holding one teal darkest (0x8e)
+  const robe = picture(40, 112, (x, y) => {
+    if (y < 2) return 0;
+    if (x >= 32 && x < 36 && y >= 50 && y <= 60) return x < 34 && y >= 58 ? 0xce : 0xc4;
+    if (x < 8 || x >= 32) return 0;
+    if (y < 20) return 0x24;
+    if (y < 90) return 0x84;
+    if (y < 96) return 0xce;
+    if (y < 100) return 0;
+    return x === 20 && y === 108 ? 0x8e : 0xc4;
+  });
+  assert.deepEqual([0xce, 0x8e, 0xcc, 0x84, 0xc4].map((i) => TABLES.tail[i]), [1, 1, 0, 0, 0], 'steps 13-15 of a cloth ramp alone');
+  const look = CLASS_LOOKS['Daggerfall Adventurer'];   // no marks: the dye alone
+  const painted = paintClassFrame(robe, TABLES, look, { outer: CLOTH });
+  const toneOf = (slot, i) => { const [lo, hi] = TABLES.span[slot]; return Math.max(0, Math.min(1, (TABLES.light[i] - lo) / (hi - lo))); };
+  assert.deepEqual(at(painted, 20, 93), [...rampAt(look.outer, toneOf(CLOTH, 0xce)), 255], 'the hem is the robe\'s, at its own light');
+  assert.deepEqual(at(painted, 32, 59), [...rampAt(look.inner, TABLES.tone[0xce]), 255], 'the glove\'s dark edge, the robe one pixel off and the glove two: the glove\'s');
+  assert.deepEqual(at(painted, 20, 108), [...rampAt(look.inner, toneOf(DRAPE, 0x8e)), 255], 'a teal darkest far inside the olive legs: the legs\'');
+});
+
 test('OWN-WORK4: the marks are drawn on the frame\'s own regions - an insignia on the breast and the back, never the side; a hem; a belt on clothes alone; a shield on the left arm', () => {
   const ink = (pic, colour) => { let n = 0; for (let i = 0; i < pic.data.length; i += 4) if (pic.data[i] === colour[0] && pic.data[i + 1] === colour[1] && pic.data[i + 2] === colour[2] && pic.data[i + 3]) n++; return n; };
   const acolyte = CLASS_LOOKS['Dark Acolyte'];

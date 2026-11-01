@@ -31,6 +31,11 @@ edge stays clear, as SW4 pins. The settings, the slots, the frames and their tim
 (`SHIELD_WIDGET_PRESETS`) follow one rule: a section at its defaults, or every slider of it half the way toward one end
 of its range.
 
+**OWN-WORK4 AUDIT (2026-11-01).** Our faces always load, where the pack's never did in node, and that showed a
+sprite lowered wholly below the screen still drew its quad (`spellhand.test.js`, a buckler beside a readied spell).
+`draw` emits nothing for a rect wholly past the screen's edge; `drawRect` still answers it, the gate ladder's own
+verdict.
+
 ## The source the port reads
 
 The shipped `shield widget.dfmod` is a UnityFS bundle (Unity

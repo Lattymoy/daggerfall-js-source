@@ -16,6 +16,7 @@ import {
   fadeEnds,
   filterAll,
   logBetween,
+  loudnessTo,
   mulberry32,
   peakTo,
   press,
@@ -115,14 +116,21 @@ function gait(ctx, lo = 0.06, hi = 0.11) {
   return { heel, ball, second: between(ctx.dice, 0.45, 0.7) };
 }
 
-/** Boots on a hard path: the thud, the crack and a little grit. @param {Ctx} ctx */
-function hardStep(ctx, { body = 110, crack = 2200, crackAmp = 0.5, gritAmp = 0.12 } = {}) {
+/** Boots on a hard path: the thud, the heel's knock, the crack and a little grit. The thud is kept under the knock:
+ *  at full weight it held 94% of the power under 300 Hz, where Daggerfall's own stone steps hold 56 to 70%. @param {Ctx} ctx */
+function hardStep(ctx, { body = 110, crack = 2200, crackAmp = 0.5, gritAmp = 0.12, weight = 0.45, knock = 0.55 } = {}) {
   const feet = gait(ctx);
   for (const [at, k] of [
     [feet.heel, 1],
     [feet.ball, feet.second],
   ]) {
-    thud(ctx, at, k, body * between(ctx.dice, 0.9, 1.15), between(ctx.dice, 0.03, 0.05));
+    thud(ctx, at, k * weight, body * between(ctx.dice, 0.9, 1.15), between(ctx.dice, 0.03, 0.05));
+    addBurst(ctx.buf, ctx.rate, ctx.noise, {
+      at,
+      amp: k * knock,
+      decay: between(ctx.dice, 0.01, 0.018),
+      stages: [['bandpass', between(ctx.dice, 450, 850), 1.1]],
+    });
     click(ctx, at, k * crackAmp, crack * between(ctx.dice, 0.85, 1.2), between(ctx.dice, 0.8, 1.3), between(ctx.dice, 0.008, 0.014));
     grit(ctx, {
       from: at,
@@ -154,7 +162,8 @@ const FAMILIES = {
       [heel, 1],
       [ball, between(ctx.dice, 0.4, 0.6)],
     ]) {
-      thud(ctx, at, k * 0.8, between(ctx.dice, 125, 160), between(ctx.dice, 0.018, 0.028));
+      thud(ctx, at, k * 0.4, between(ctx.dice, 125, 160), between(ctx.dice, 0.018, 0.028));
+      click(ctx, at, k * 0.55, between(ctx.dice, 550, 950), 1.2, between(ctx.dice, 0.008, 0.012));
       click(ctx, at, k * 0.7, between(ctx.dice, 2200, 3200), 1.2, between(ctx.dice, 0.006, 0.01));
       click(ctx, at, k * 0.2, between(ctx.dice, 4800, 6000), 2, 0.003);
     }
@@ -174,7 +183,8 @@ const FAMILIES = {
       addMode(ctx.buf, ctx.rate, { at, freq: tone * 2.4, tau: 0.012, amp: k * 0.1 });
     }
   },
-  /** Boards: a hollow knock - the board's low modes ringing under the heel - and now and then a creak. */
+  /** Boards: a hollow knock - the board's modes ringing under the heel - and now and then a creak. The lowest mode is
+   *  kept under the board's middle ones (Daggerfall's own boards hold 47 to 78% of their power under 300 Hz). */
   wood: (ctx) => {
     const feet = gait(ctx);
     const freq = between(ctx.dice, 100, 140);
@@ -182,11 +192,11 @@ const FAMILIES = {
       [feet.heel, 1],
       [feet.ball, feet.second],
     ]) {
-      addMode(ctx.buf, ctx.rate, { at, freq, tau: between(ctx.dice, 0.06, 0.08), amp: k });
+      addMode(ctx.buf, ctx.rate, { at, freq, tau: between(ctx.dice, 0.05, 0.065), amp: k * 0.5 });
       addMode(ctx.buf, ctx.rate, { at, freq: between(ctx.dice, 220, 300), tau: 0.05, amp: k * 0.6 });
-      addMode(ctx.buf, ctx.rate, { at, freq: between(ctx.dice, 520, 700), tau: 0.03, amp: k * 0.35 });
-      addMode(ctx.buf, ctx.rate, { at, freq: between(ctx.dice, 900, 1300), tau: 0.015, amp: k * 0.25 });
-      click(ctx, at, k * 0.4, between(ctx.dice, 1400, 2000), 1, 0.008);
+      addMode(ctx.buf, ctx.rate, { at, freq: between(ctx.dice, 480, 720), tau: 0.03, amp: k * 0.6 });
+      addMode(ctx.buf, ctx.rate, { at, freq: between(ctx.dice, 900, 1300), tau: 0.015, amp: k * 0.4 });
+      click(ctx, at, k * 0.5, between(ctx.dice, 1300, 1900), 1, 0.008);
     }
     if (ctx.dice() < 0.5)
       addCreak(ctx.buf, ctx.rate, ctx.noise, {
@@ -350,7 +360,7 @@ const FAMILIES = {
   /** Mud: a wet slap, then the suck of the foot pulled out and a bubble or two. */
   mud: (ctx) => {
     const feet = gait(ctx);
-    thud(ctx, feet.heel, 0.8, between(ctx.dice, 60, 80), 0.07);
+    thud(ctx, feet.heel, 0.45, between(ctx.dice, 60, 85), between(ctx.dice, 0.05, 0.075));
     addBurst(ctx.buf, ctx.rate, ctx.noise, {
       at: feet.heel,
       amp: 0.6,
@@ -446,15 +456,15 @@ const FAMILIES = {
       [feet.heel, 1],
       [feet.ball, feet.second],
     ]) {
-      thud(ctx, at, k * 0.7, between(ctx.dice, 80, 100), 0.03);
+      thud(ctx, at, k * 0.35, between(ctx.dice, 80, 100), 0.03);
       addBurst(ctx.buf, ctx.rate, ctx.noise, {
         at,
-        amp: k * 0.35,
+        amp: k * 0.5,
         attack: 0.001,
-        decay: 0.012,
+        decay: between(ctx.dice, 0.01, 0.016),
         stages: [
-          ['bandpass', between(ctx.dice, 900, 1400), 0.8],
-          ['lowpass', 3000, 0.7],
+          ['bandpass', between(ctx.dice, 600, 1100), 0.8],
+          ['lowpass', 2500, 0.7],
         ],
       });
       click(ctx, at, k * 0.08, 2500, 1, 0.003);
@@ -650,18 +660,20 @@ export const STEP_FAMILIES = Object.freeze([
   'waterLanding',
 ]);
 
-/** How loud each kind of clip is made, at its loudest sample: steps under the landings, the sways under the steps. */
+/** The loudest sample each kind is made to before `loudness` sets its level: the retro quality's 8 bits are taken here,
+ *  near full scale, so a quiet clip keeps all 256 steps. */
 export const STEP_PEAK = Object.freeze({ step: 0.6, sway: 0.35, landing: 0.85 });
 /** The retro quality: the clip under 7 kHz and held to 8 bits, as Daggerfall's own sounds are. */
 export const RETRO = Object.freeze({ lowpassHz: 7000, bits: 8 });
 
 /**
  * A CLIP: `family` made `seconds` long at `rate` from `seed` - the same seed the same clip at any rate - and, `retro`,
- * at the retro quality. `heavy` is a landing's hurt fall. Answers mono Float32 PCM.
+ * at the retro quality. `heavy` is a landing's hurt fall. `loudness` (dsp.js loudnessOf, dB) is its level at the end;
+ * without it the clip stands at its peak. Answers mono Float32 PCM.
  * @param {string} family
- * @param {{ seed: number, seconds: number, rate: number, retro?: boolean, heavy?: boolean, peak?: number }} o
+ * @param {{ seed: number, seconds: number, rate: number, retro?: boolean, heavy?: boolean, peak?: number, loudness?: number }} o
  */
-export function stepSound(family, { seed, seconds, rate, retro = false, heavy = false, peak }) {
+export function stepSound(family, { seed, seconds, rate, retro = false, heavy = false, peak, loudness }) {
   const buf = canvas(seconds, rate);
   /** @type {Ctx} */
   const ctx = { buf, rate, dice: mulberry32(seed), noise: mulberry32(seed ^ 0x9e3779b9), dur: seconds, heavy };
@@ -675,5 +687,6 @@ export function stepSound(family, { seed, seconds, rate, retro = false, heavy = 
   if (retro) filterAll(buf, rate, [['lowpass', RETRO.lowpassHz, 0.707]]);
   fadeEnds(peakTo(buf, level), rate);
   if (retro) crush(buf, RETRO.bits);
+  if (loudness != null) loudnessTo(buf, rate, loudness);
   return toPcm(buf);
 }

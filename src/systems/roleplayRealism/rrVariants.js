@@ -1,9 +1,9 @@
 // RR2 - THE NPC SPRITE VARIANTS (RoleplayRealism.cs :775-1077, Hazelnut, MIT): a shop's or tavern's 182 keeper drawn
 // as one of the seven `197_N` pictures by the building's quality, and four of five residents as the townsfolk walkers
 // of the climate's race, with a face to match. DFU rewrites the interior's billboards after the transition; the port
-// asks `rrVariantPerson` as each person is listed. Six keepers are our own pictures (OWN-WORK4, rrKeeperArt.js), one
-// is rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety arm (:948-978) has no
-// counterpart: `materialSet` is false and the walker's archive is taken, the C#'s else.
+// asks `rrVariantPerson` as each person is listed. Six keepers are our rule over the player's own people (OWN-WORK4
+// AUDIT, rrKeepers.js), one is rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety
+// arm (:948-978) has no counterpart: `materialSet` is false and the walker's archive is taken, the C#'s else.
 import {
   PERSON_TEXTURES,
   PERSON_FACE_RECORDS,
@@ -22,7 +22,8 @@ import { setFlatFaceOverride } from '../../characters/staticNpc.js';
 import { classicArt } from '../classicArt.js';
 import { rrModule, rrRefinedTrainingOn } from './rrRealism.js';
 import RR_DERIVED from './rrDerivedArt.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader (OWN-WORK4)
-import { rrKeeperPicture, rrWeekButtonPicture } from './rrKeeperArt.js'; // OWN-WORK4: our own keepers and week button
+import { rrWeekButtonPicture } from './rrKeeperArt.js'; // OWN-WORK4: our own week button
+import { rrKeeperPicture } from './rrKeepers.js'; // OWN-WORK4 AUDIT: our keepers, put together from the player's own people
 
 /** OWN-WORK3: each record's billboard scale (TextureReplacement's `scaleX`, `scaleY`), by our rule - a variant keeper
  *  stands as big as the classic keeper it replaces (182_0 for records 0-3, 182_1 for 4-5, 182_2 for 6): that keeper's
@@ -185,7 +186,7 @@ export function installRoleplayRealismArt({ art = null } = {}) {
         lazy: true,
         gate,
         selfBuilt: true,
-        build: RR_DERIVED[fileName] ? () => built(fileName) : async () => rrKeeperPicture(record),
+        build: RR_DERIVED[fileName] ? () => built(fileName) : () => rrKeeperPicture(record, art ?? classicArt()),
       };
     }),
   );

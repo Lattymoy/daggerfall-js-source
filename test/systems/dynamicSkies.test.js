@@ -17,7 +17,7 @@ import {
   TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, MAX_DELTA_SECONDS,
   srgbToLinear, linearToSrgb, hexLinear, toSrgb3, luminance, weatherRow, easeRow, weatherShow, hourAt, nightWeight, moonNightWeight,
   phasesAt, moonPhaseLight, skyFrame, fogSettingsFromPresets, fogPresetKey, sunLightDirection, sunCurveTime,
-  LightningFlash, pixelSnowSettings,
+  LightningFlash, FLASH_LOOK, strokeLevel, pixelSnowSettings,
 } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 import { DynamicSkies } from '../../src/systems/dynamicSkies/dynamicSkiesRuntime.js';
 import { DYNAMIC_SKIES_TEXTURES, SKY_NOISE_CHANNELS, dynamicSkiesAssets, paintSkyNoise, paintSnowflake, loadDynamicSkiesTexture, dynamicSkiesTextureUrl } from '../../src/systems/dynamicSkies/dynamicSkiesAssets.js';
@@ -31,6 +31,7 @@ import { fogForWeather, fogFactor } from '../../src/world/weather.js';
 import { MOD_SETTINGS, modSetting, setModSetting, modSettingsOf, isIntKey, _resetModSettings } from '../../src/systems/modSettings.js';
 import { AmbientEffects } from '../../src/systems/ambientEffects.js';
 import { Renderer } from '../../src/render/renderer.js';
+import { PrecipitationRenderer } from '../../src/render/precipitation.js';   // OWN-WORK4: the pixel snow's count
 import { glslFunctions } from '../glsl.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -170,10 +171,16 @@ test('OWN-WORK4 the moons, the stars and the clouds: the tables as written, the 
   assert.ok(st.cloudOffset.every((v) => v >= 0 && v < 1), 'the drift wrapped to the texture\'s period');
   const later = skyFrame({ minuteOfDay: minute + 30, classicMinutes: cm + 30 });
   assert.ok(near(((later.cloudOffset[2] - st.cloudOffset[2]) % 1 + 1) % 1, (30 * CLOUD_LOOK.low.speed) % 1, 1e-6), 'the low layer travels its speed a game minute');
-  // the layers' share of the sky is the cover: the low c, the high 0.3 (1 - c); opaque by c
+  // the layers' share of the sky is the cover: the low c, the high 0.3 (1 - c); opaque by c - the high layer's sliver
+  // through a deck faded out (OWN-WORK4: a thin cut read as scratches over an overcast sky)
   const storm = skyFrame({ minuteOfDay: 720, row: weatherRow('thunder') });
   assert.deepEqual(storm.cloudLow, [0.95, 0.6 + 0.4 * 0.95, CLOUD_LOOK.low.scale, CLOUD_LOOK.soft]);
-  assert.ok(near(storm.cloudHigh[0], 0.3 * 0.05, 1e-12) && storm.cloudHigh[1] === 0.55);
+  assert.ok(near(storm.cloudHigh[0], 0.3 * 0.05, 1e-12) && storm.cloudHigh[1] === 0);
+  const high = (w) => skyFrame({ minuteOfDay: 720, row: weatherRow(w) }).cloudHigh[1];
+  assert.deepEqual([high('sunny'), high('cloudy')], [0.55, 0.55], 'a clear or cloudy sky keeps its high streaks whole');
+  assert.deepEqual([high('overcast'), high('rain'), high('fog')], [0, 0, 0], 'an overcast, rain or fog sky none');
+  const between = skyFrame({ minuteOfDay: 720, row: { ...weatherRow('cloudy'), cover: 0.6 } }).cloudHigh[1];
+  assert.ok(between > 0.2 && between < 0.4, `part faded at 12% of the sky: ${between}`);
 });
 
 test('OWN-WORK4 the world under the sky: its light curve is the rule\'s, and its fog rows half the light at their d50, thickened by the slider (mutants: the slider\'s law; a row\'s mode)', () => {
@@ -462,67 +469,83 @@ test('OWN-WORK4 the pass\'s GL: one painted texture on unit 0, the layers handed
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(host), /sky\.renderer\.fogMix = fogNow\.excludeSky \? 0 : 1 - fogFactor\(fogNow, 800\);/);
 });
 
-// ── THE STORM'S FLASH (LightningFlash: still the retired mod's own routine - code, not art) ──
-test('DS1 lightning: LightningFlash - the 50% roll, the 33% double, the randomised light, on for 0.2 s then off', () => {
-  // rolls: [start < 0.5 -> flash] [double < 0.33? no] then FlashOnce's 8 draws
-  const f = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
-  assert.equal(f.startFlash([10, 20, 30]), true);
-  const on = f.tick(0.05);
-  assert.ok(on, 'lit on the first frame');
-  assert.ok(near(on.x, 10) && near(on.y, 20 + 30) && near(on.z, 30), 'over the player: (-10..10, 20..40, -10..10) at the midpoint');
-  assert.ok(near(on.range, 750), 'range 500..1000');
-  assert.ok(near(on.color[0], 0.9 * 1.0), 'colour 0.8..1 x intensity 0.5..1.5');
-  assert.ok(f.tick(0.1), 'still on at 0.1 s (the entering frame is not charged)');
-  assert.ok(f.tick(0.09), 'still on at 0.19 s');
-  assert.equal(f.tick(0.02), null, 'off after 0.2 s');
-  // a hitch: the frame that starts a flash is lit whatever its dt
-  const hitch = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
-  hitch.startFlash([0, 0, 0]);
-  assert.ok(hitch.tick(0.25), 'a 0.25 s frame still shows the flash it started');
-  assert.equal(hitch.tick(0.25), null);
-  // a miss: Random.value >= 0.5
-  const g = new LightningFlash(seq([0.7]));
-  assert.equal(g.startFlash([0, 0, 0]), false);
-  assert.equal(g.tick(0.1), null);
-  // a double flash: two halves of 0.1 with a 0.1 gap
-  const d = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
-  assert.equal(d.startFlash([0, 0, 0]), true);
-  assert.ok(d.tick(0.05), 'lit on the entering frame'); assert.ok(d.tick(0.05), 'still lit at 0.05'); assert.equal(d.tick(0.05), null, 'first half over at 0.1');
-  assert.equal(d.tick(0.04), null, 'the gap'); assert.ok(d.tick(0.06), 'the second half, at the gap\u2019s end'); assert.equal(d.tick(0.1), null);
-  // stopAll: the interior teardown
-  const h = new LightningFlash(seq([0.1, 0.9, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
-  h.startFlash([0, 0, 0]); h.tick(0.01); h.stopAll();
-  assert.equal(h.tick(0.01), null);
-
-  // AUDIT 62 F31: the two thresholds AT THEIR BOUNDARY. Every drive
-  // above rolls 0.1 / 0.9 / 0.7 (and the runtime's 0.25), all far from
-  // both edges, so `Random.value < (0.5f / Time.timeScale)`
-  // (LightningFlash.cs:52) and `< (0.33f / Time.timeScale)` (:55)
-  // survived 0.5 -> 0.6 and 0.33 -> 0.5 untouched. The comparison is
-  // STRICTLY less-than, so the threshold value itself must not fire.
-  // MUTANT: either literal at dynamicSkies.js's two roll lines.
-  const M8 = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5];    // FlashOnce's 8 draws
-  assert.equal(new LightningFlash(seq([0.5, 0.9, ...M8])).startFlash([0, 0, 0]), false, '0.5 is not < 0.5: no flash');
-  assert.equal(new LightningFlash(seq([0.49, 0.9, ...M8])).startFlash([0, 0, 0]), true, '0.49 < 0.5: a flash');
-  // 0.33 is not < 0.33, so this is the SINGLE 0.2 s routine: still lit
-  // at 0.19 s, where a double would have gone dark at 0.1 s.
-  const sB = new LightningFlash(seq([0.1, 0.33, ...M8]));
-  sB.startFlash([0, 0, 0]);
-  assert.ok(sB.tick(0.05)); assert.ok(sB.tick(0.1));
-  assert.ok(sB.tick(0.09), '0.33 rolls the single 0.2 s flash, not a 0.1 half with a gap');
-  assert.equal(sB.tick(0.02), null);
-  // 0.32 < 0.33: the double, two 0.1 halves around a 0.1 gap
-  const dB = new LightningFlash(seq([0.1, 0.32, ...M8]));
-  dB.startFlash([0, 0, 0]);
-  assert.ok(dB.tick(0.05)); assert.ok(dB.tick(0.05));
-  assert.equal(dB.tick(0.05), null, 'the first half ends at 0.1');
-  assert.equal(dB.tick(0.04), null, 'the gap'); assert.ok(dB.tick(0.06), 'the second half');
+// ── THE STORM'S FLASH, OURS (OWN-WORK4 AUDIT): PIN MOVED - the retired mod's routine (its 50% roll, 33% double, 0.2 s
+// on and off, the light over the player) is replaced by our strokes; these pin our law, not the mod's numbers ──
+test('OWN-WORK4 AUDIT the storm\'s flash: a clap seen at its chance; one to four strokes, each a quick rise and a falling tail, fainter than the last; a cold light at the strike off to one side, riding with the player; gone when the last tail is spent (mutants: the chance unread; the tail a step; the strokes not fainter; the strike over the player)', () => {
+  // the dice in order: the clap, the stroke count, the first peak, then a gap and a fade a stroke, the bearing, the
+  // distance, the height, the range
+  const dice = (clap, count, ...rest) => new LightningFlash(seq([clap, count, ...rest]));
+  assert.equal(dice(FLASH_LOOK.chance).startFlash([0, 0, 0]), false, 'the chance itself does not flash');
+  assert.equal(dice(FLASH_LOOK.chance - 0.01, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5).startFlash([0, 0, 0]), true);
+  assert.equal(dice(0.1).startFlash(null), false, 'no player, no flash');
+  // one stroke (count die 0): lit at its peak on its first frame, whatever the frame's dt
+  const one = dice(0.1, 0, 0.5, 0.5, 0.5, 0.25, 0.5, 0.5, 0.5);
+  one.startFlash([10, 0, 20]);
+  const peak = (FLASH_LOOK.peak[0] + FLASH_LOOK.peak[1]) / 2;
+  const lit = one.tick(0.5, [10, 0, 20]);
+  assert.ok(near(one.level, peak), `the first frame at the peak: ${one.level}`);
+  assert.deepEqual(lit.color.map((c) => +c.toFixed(6)), FLASH_LOOK.color.map((c) => +(c * peak).toFixed(6)), 'cold white times its level');
+  // the strike: a quarter turn round (bearing die 0.25), 100 m off, 90 m up - off to one side, never overhead
+  const away = (FLASH_LOOK.away[0] + FLASH_LOOK.away[1]) / 2, up = (FLASH_LOOK.height[0] + FLASH_LOOK.height[1]) / 2;
+  assert.ok(near(lit.x, 10, 1e-6) && near(lit.z, 20 + away, 1e-6) && near(lit.y, up, 1e-6), `the strike at (${lit.x}, ${lit.y}, ${lit.z})`);
+  assert.ok(lit.range >= FLASH_LOOK.range[0] && lit.range <= FLASH_LOOK.range[1]);
+  assert.ok(near(one.tick(0, [110, 0, 20]).x, 110), 'it rides with the player');
+  // the tail: a decay later at 1/e of the peak, then spent
+  const tail = one.tick(FLASH_LOOK.decay, [10, 0, 20]);
+  assert.ok(tail && near(one.level, peak / Math.E, 1e-6), `a decay on: ${one.level}`);
+  for (let i = 0; i < 40 && one.tick(1 / 60); i++);
+  assert.equal(one.tick(1 / 60), null, 'spent');
+  assert.equal(one._routines.length, 0, 'and forgotten');
+  // four strokes (count die 0.99): each fainter, each a fresh rise after the last one's gap
+  const four = dice(0.1, 0.99, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
+  four.startFlash([0, 0, 0]);
+  const levels = [];
+  for (let t = 0; t < 0.6; t += 0.004) { four.tick(t === 0 ? 0 : 0.004, [0, 0, 0]); levels.push(four.level); }
+  const peaks = levels.filter((v, i) => i > 0 && i < levels.length - 1 && v > levels[i - 1] && v >= levels[i + 1]);
+  assert.equal(peaks.length + 1, 4, `four strokes: ${peaks.length + 1}`);
+  assert.ok([levels[0], ...peaks].every((v, i, a) => i === 0 || v < a[i - 1]), 'each fainter than the last');
+  four.stopAll();
+  assert.equal(four.tick(0.01), null, 'the door puts it out');
+  assert.equal(strokeLevel(-0.01), 0);
+  assert.ok(near(strokeLevel(FLASH_LOOK.rise / 2), 0.5), 'the rise, linear');
 });
 
-test('DS1 pixel snow: the sliders\' numbers - sizes over 100,000 (fractions of the view), the count in thousands and unread', () => {
+test('OWN-WORK4 AUDIT the flash in the sky: the dome and its clouds take it, the clouds the most - the runtime hands its level to the frame (mutants: the sky unflashed; the clouds unflashed)', () => {
+  const at = { minuteOfDay: 1300, classicMinutes: 1300, row: weatherRow('thunder') };
+  const dark = skyFrame(at), lit = skyFrame({ ...at, flash: 1.5 });
+  assert.ok(luminance(lit.zenith) > luminance(dark.zenith) + 0.05 && luminance(lit.horizon) > luminance(dark.horizon) + 0.05, 'the dome brighter');
+  assert.ok(luminance(lit.cloudLit) - luminance(dark.cloudLit) > luminance(lit.zenith) - luminance(dark.zenith), 'the clouds the most');
+  assert.ok(lit.zenith[2] - dark.zenith[2] > lit.zenith[0] - dark.zenith[0], 'a cold light');
+  const d = new DynamicSkies({}, {}, () => 0.1);
+  const frame = () => d.tick({ minuteOfDay: 1300, classicMinutes: BASE + 1300, weather: 'thunder', seconds: 0, dt: 1 / 60, playerPos: [0, 0, 0] });
+  const before = frame();
+  assert.equal(d.onAmbientEffect([0, 0, 0]), true);
+  const during = frame();
+  assert.ok(d.lightningLight && luminance(during.zenith) > luminance(before.zenith), 'the frame of a flash: the sky lit');
+});
+
+test('DS1 pixel snow: the sliders\' numbers - sizes over 100,000 (fractions of the view), the count in thousands', () => {
   assert.deepEqual(pixelSnowSettings({}), { minParticleSize: 0.001, maxParticleSize: 0.003, maxParticles: 20000 });
   assert.deepEqual(pixelSnowSettings({ MinParticleSize: 800, MaxParticleSize: 100, MaxParticles: 15 }), { minParticleSize: 0.008, maxParticleSize: 0.001, maxParticles: 15000 });
   assert.match(read('src/scenes/shared.js'), /pixelSnow: dynamic\?\.pixelSnow \? \{ \.\.\.dynamic\.pixelSnow, textureUrl: dynamicSkiesTextureUrl\('PixelSnow'\) \} : null,/, 'the flake we paint, as a URL');
+});
+
+test('OWN-WORK4 the pixel snow draws at most MaxParticles flakes: 20 the lab\'s own 20,000, 15 a quarter fewer (mutant: the slider unread)', () => {
+  const counts = [];
+  const gl = new Proxy({}, { get: (o, k) => {
+    if (k === 'drawArraysInstanced') return (mode, first, n, count) => counts.push(count);
+    if (typeof k === 'string' && k.toUpperCase() === k) return 1;   // GL enums
+    return () => ({});
+  } });
+  const r = new PrecipitationRenderer(gl, { enhanced: true });
+  r.pixelTex = {};
+  r.intensity = 1;
+  const M = new Float32Array(16), E = new Float32Array(3);
+  for (const n of [20, 15]) {
+    r.pixelSnow = pixelSnowSettings({ MaxParticles: n });
+    r.draw('snow', M, M, E, E, 1);
+  }
+  assert.deepEqual(counts, [20000, 15000]);
 });
 
 // ── THE SEAM ──────────────────────────────────────────────────────
@@ -647,7 +670,7 @@ test('DS1 settings: the switch and the five keys as they shipped, the integer ke
       ActivatePixelSnow: { default: false, description: 'Snow falls as small square flakes in place of the usual snow.' },
       MinParticleSize: { default: 100, min: 100, max: 800, description: 'Size of the smallest square snowflake.' },
       MaxParticleSize: { default: 300, min: 100, max: 800, description: 'Size of the largest square snowflake.' },
-      MaxParticles: { default: 20, min: 15, max: 20, description: 'Has no effect: the mod never uses this setting.' },
+      MaxParticles: { default: 20, min: 15, max: 20, description: 'Most snowflakes drawn, in thousands.' },
     };
     for (const [name, k] of Object.entries(KEYS)) {
       const def = m.keys[name];
@@ -670,23 +693,9 @@ test('DS1 settings: the switch and the five keys as they shipped, the integer ke
   } finally { _resetModSettings(); }
 });
 
-// ── MODS AUDIT (2026-09-08): the flash follows the player ────────────
-test('MODS AUDIT: FlashOnce reads the player LIVE - a double flash\u2019s second half follows the player (LightningFlash.cs:95)', () => {
-  // a double: rolls [< 0.5] [< 0.33] then FlashOnce's draws at 0.5
-  const d = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
-  assert.equal(d.startFlash([0, 0, 0]), true);
-  const first = d.tick(0.05, [0, 0, 0]);
-  assert.ok(near(first.x, 0) && near(first.y, 30), 'the first half over the roll\u2019s position');
-  d.tick(0.05, [100, 0, 0]);            // first half ends
-  assert.equal(d.tick(0.05, [100, 0, 0]), null, 'the gap');
-  d.tick(0.04, [100, 0, 0]);
-  const second = d.tick(0.06, [100, 0, 0]);
-  assert.ok(second, 'the second half');
-  assert.ok(near(second.x, 100), `the second half is over where the player IS (${second.x}), not where the roll was`);
-  // and with no live position the roll's copy stands (a caller without one)
-  const e = new LightningFlash(seq([0.1, 0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]));
-  e.startFlash([7, 0, 0]); e.tick(0.05); e.tick(0.05); e.tick(0.05); e.tick(0.04);
-  assert.ok(near(e.tick(0.06).x, 7));
+// ── MODS AUDIT (2026-09-08): the flash follows the player - PIN MOVED (OWN-WORK4 AUDIT): our strike rides with the
+// live player (above); what stays pinned here is that the controller hands the frame's position through ──
+test('MODS AUDIT: the controller hands the frame\u2019s position to the flash', () => {
   assert.match(read('src/scenes/shared.js'), /playerPos: extra\?\.pos \?\? null,/, 'the controller hands the frame\u2019s position through');
 });
 

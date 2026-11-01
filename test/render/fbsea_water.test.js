@@ -77,7 +77,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: THE SEA\'S STACK IN WINDOW DEPTH - the
   // layer of this stack - a quarter step over the ground it lies on, under the film (the constant terms' order)
   const offsets = RENDERER.match(/gl\.polygonOffset\([^)]*\)/g) ?? [];
   assert.deepEqual(offsets.sort(), ['gl.polygonOffset(0, WATER_LAYER_UNITS.surface)', 'gl.polygonOffset(SNOW_LAYER.factor, SNOW_LAYER.units)'], 'no other offset in the world renderer to agree with it');
-  assert.deepEqual({ ...SNOW_LAYER }, { factor: -0.25, units: -0.25 });
+  assert.deepEqual({ ...SNOW_LAYER }, { factor: -0.5, units: -1 });   // PIN MOVED (OWN-WORK4 AUDIT): our offset, not the retired shader's -0.25, -0.25
   assert.ok(Object.isFrozen(SNOW_LAYER));
   assert.ok(WATER_LAYER_UNITS.surface < SNOW_LAYER.units && SNOW_LAYER.units < 0, 'the snow over the ground and under the film');
 });

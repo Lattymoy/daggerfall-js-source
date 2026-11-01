@@ -117,7 +117,7 @@ export const SCABBARD_PAINT = Object.freeze({
 });
 
 /** A weapon mesh's extent, read off its own geometry (as the holster instances it: no BoneOffset). Each slice of its
- *  length along y holds the widest x and z the mesh reaches there. */
+ *  length along y holds the widest x and z the mesh reaches there, and `top` the highest y a vertex of it stands at. */
 export function weaponExtent(weaponBytes, slices = 16, parse = parseNif) {
   const pts = [];
   for (const b of flattenNif(parse(weaponBytes))) {
@@ -128,12 +128,14 @@ export function weaponExtent(weaponBytes, slices = 16, parse = parseNif) {
   const hi = [0, 1, 2].map((k) => Math.max(...pts.map((vertex) => vertex[k])));
   const len = hi[1] - lo[1] || 1;
   const width = Array.from({ length: slices }, () => [0, 0]);
+  const top = Array.from({ length: slices }, (_, slot) => lo[1] + (slot * len) / slices);
   for (const vertex of pts) {
     const slot = Math.min(slices - 1, Math.floor(((vertex[1] - lo[1]) / len) * slices));
     width[slot][0] = Math.max(width[slot][0], Math.abs(vertex[0]));
     width[slot][1] = Math.max(width[slot][1], Math.abs(vertex[2]));
+    top[slot] = Math.max(top[slot], vertex[1]);
   }
-  return { lo, hi, width, slice: len / slices };
+  return { lo, hi, width, top, slice: len / slices };
 }
 
 /** A tapered box along y from y0 to y1, half-sizes (x0, z0) to (x1, z1), about the line (cx, *, cz): flat faces. */
@@ -187,20 +189,32 @@ const join = (...meshes) => {
   return out;
 };
 
-/** A blade's sheath, sized to the blade: from the guard (the widest slice in the grip's half) to past the tip. */
+/** A sheath reads its blade in fine slices, so its mouth sits on the guard's own top; a guard is this deep at most. */
+const SHEATH_SLICES = 48;
+const GUARD_DEPTH = 3;
+
+/** A blade's sheath, sized to the blade: from the guard's top (the widest slice in the grip's half, and any slice as
+ *  wide just over it) to past the tip, narrowing toward it no faster than the blade does. */
 function sheathShapes(ext) {
   const across = (w) => Math.max(w[0], w[1]);
   const guardSlice = ext.width.slice(0, Math.ceil(ext.width.length / 2)).reduce((best, w, i, all) => (across(w) > across(all[best]) ? i : best), 0);
-  const mouth = ext.lo[1] + (guardSlice + 1) * ext.slice;
-  const blade = ext.width.slice(guardSlice + 1);
+  let guardEnd = guardSlice;
+  for (let i = guardSlice + 1; i < ext.width.length && (i - guardSlice) * ext.slice <= GUARD_DEPTH; i++)
+    if (across(ext.width[i]) >= 0.7 * across(ext.width[guardSlice])) guardEnd = i;
+  const mouth = ext.top[guardEnd];
+  const blade = ext.width.slice(guardEnd + 1);
   const halfX = Math.max(0.6, ...blade.map((w) => w[0])) + 0.35;
   const halfZ = Math.max(0.3, ...blade.map((w) => w[1])) + 0.35;
   const len = Math.max(2, ext.hi[1] - mouth) + 0.6;
+  // the tip's half sizes: the taper's own share, or what keeps every slice of the blade inside it
+  const tipOf = (half, k, share) =>
+    blade.reduce((tip, w, i) => Math.max(tip, half - (half - w[k] - 0.35) / Math.min(1, ((i + 1) * ext.slice) / len)), half * share);
+  const [tipX, tipZ] = [tipOf(halfX, 0, 0.55), tipOf(halfZ, 1, 0.8)];
   return {
     offset: mouth,
     shapes: [
-      { paint: 'leather', mesh: taper(0, len, halfX, halfZ, halfX * 0.55, halfZ * 0.8) },
-      { paint: 'fitting', mesh: join(taper(-0.3, 1.6, halfX + 0.25, halfZ + 0.25, halfX + 0.2, halfZ + 0.2), taper(len - 2.4, len + 0.3, halfX * 0.62, halfZ * 0.88, halfX * 0.5, halfZ * 0.7)) },
+      { paint: 'leather', mesh: taper(0, len, halfX, halfZ, tipX, tipZ) },
+      { paint: 'fitting', mesh: join(taper(-0.3, 1.6, halfX + 0.25, halfZ + 0.25, halfX + 0.2, halfZ + 0.2), taper(len - 2.4, len + 0.3, tipX * 1.13, tipZ * 1.1, tipX * 0.9, tipZ * 0.875)) },
     ],
   };
 }
@@ -277,7 +291,7 @@ function buildScabbard(mwType, weaponBytes, parse) {
   if (!kind || !point) return null;
   let ext;
   try {
-    ext = weaponExtent(weaponBytes, 16, parse);
+    ext = weaponExtent(weaponBytes, kind === 'sheath' ? SHEATH_SLICES : 16, parse);
   } catch {
     return null;
   }

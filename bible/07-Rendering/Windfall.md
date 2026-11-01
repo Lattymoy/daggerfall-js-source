@@ -25,6 +25,11 @@ this page says of the mod's clips, pictures and shader below is history. Pins:
 `test/systems/ownwork4_windfall.test.js`. Commit `cc44705af` still holds the
 vendored copy.
 
+**OWN-WORK4 sound audit (2026-11-01).** The 27 clips were rendered and measured: none clips, none clicks at its ends,
+and at the mod's volumes they sit by Daggerfall's own wind (a full gust at 0.44 of the 0.5 default reads -23 on
+`audio/synth/dsp.js` `loudnessOf`, DAGGER.SND's wind -24 to -29). The gust's low body reached down to 0 Hz and left a
+DC offset of up to 0.3% of full scale; a 40 Hz high-pass takes it out. Pins: `ownwork4_windfall.test.js`.
+
 ## What the mod is
 
 One `.dfmod` bundle: an assembly (`Windfall.dll`, 54,272 bytes - eight types),

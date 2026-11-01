@@ -98,8 +98,8 @@ cooked fish.
   build their looks from the player's records. Layered Gearing and Enemy Expansion's repaints stay (ours, and Kamer and
   Kab's).
 - **What the scan cannot see.** Audio beyond raw 8-bit runs (DAGGER.SND, MIDI.BSA). Morrowind's data, which is not
-  freeware and not here (OWN-WORK4 took out Weapon Sheathing's meshes and its copy of Morrowind's skeleton). Three PNGs it cannot decode (a 4-bit Vanilla
-  Enhanced tile and two greyscale skin maps of ours).
+  freeware and not here (OWN-WORK4 took out Weapon Sheathing's meshes and its copy of Morrowind's skeleton). Two PNGs it cannot decode, greyscale skin maps
+  of ours (`public/skin/`; OWN-WORK4 took out the third, a 4-bit Vanilla Enhanced tile).
 
 ## The inventory
 
@@ -114,9 +114,10 @@ provenance until it is retired.
 | `grimoire-ui` | LordSquacquerone | 93 screens, 38 buttons and 2 fonts (23 MB under `public/art/`) | yes | art | stays (the owner) |
 
 Wave 2 replaced data, tables and words: our own text, our own tables and our own world edits (OWN-WORK2 and
-OWN-WORK3, 2026-10-31). A folder that held art too is cut down to its art, listed by a file of ours, and waits for
-wave 3. Wave 3 replaces art and sound, and it is the largest. The four packs marked Bethesda-derived serve both of the arc's goals: our own
-art in their place also takes Bethesda's silhouettes out of the tree.
+OWN-WORK3, 2026-10-31). A folder that held art too was cut down to its art, listed by a file of ours, until wave 3.
+Wave 3 (OWN-WORK4, 2026-10-31) replaced the art and sound of twenty-one packs, the largest wave. The four that were
+Bethesda-derived served both of the arc's goals: our own art in their place also took Bethesda's silhouettes out of
+the tree.
 
 ## Retired from vendor/
 

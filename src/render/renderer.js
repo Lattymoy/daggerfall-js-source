@@ -6955,10 +6955,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._frameStamp++;      // LA-COST1: and every frame block carries the lights
   }
 
-  /** DS1: THE LIGHTNING FLASH - Dynamic Skies' LightningFlash point light
-   *  (a Unity point light over the player, colour x intensity, range
-   *  500..1000, on for a fifth of a second). Takes {x, y, z, range,
-   *  color} or null (off, which is every frame the storm is quiet).
+  /** DS1: THE LIGHTNING FLASH - Dynamic Skies' storm flash as a point
+   *  light (OWN-WORK4 AUDIT: our strokes at a strike off to one side of the
+   *  player, systems/dynamicSkies/dynamicSkies.js FLASH_LOOK). Takes {x, y, z,
+   *  range, color} or null (off, which is every frame the storm is quiet).
    *  Called AFTER setPointLights on the frame - it composes the flash
    *  into the arrays that call just stored, as their FIRST entry, so
    *  the host's own lanterns, candle and torch keep their order behind

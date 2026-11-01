@@ -69,7 +69,7 @@ test('OWN-WORK4 painter: the rim is drawn toward the dark, `space` places shapes
 
 // Every recipe's [width, height, print]. The sizes are the retired release's; the prints are ours.
 const PICTURES = Object.freeze({
-  'foraging 11600': [64, 64, '59268ef3c01b4e8b'], 'foraging 11601': [64, 64, '6151829368e6898c'],
+  'foraging 11600': [64, 64, 'd40e992193216009'], 'foraging 11601': [64, 64, '6151829368e6898c'],
   'foraging 11602': [64, 64, '9f0a4eebe81cc9ee'], 'foraging 11603': [128, 128, '98cb59ade44bc6d4'],
   'foraging 11604': [64, 64, '8b4a9f36cf6367a1'], 'foraging 11605': [64, 64, '8ca0e6a69ada88a3'],
   'foraging 11606': [64, 64, '4d91125d3b61d0c0'],

@@ -121,19 +121,25 @@ export function foamPicture() {
   return img;
 }
 
+/** The crest's broken edge: teeth a crest, up to WAVE_TOOTH rows deep. */
+export const WAVE_TEETH = 28;
+export const WAVE_TOOTH = 2;
+
 /**
  * Breaker paint `paintIndex` (0 or 1): rows of surf running across it, each a crest of foam (the key) over the wave's face -
- * blue-green, opaque - and clear water between, the fronts wavering along x. Tileable both ways.
+ * blue-green, opaque - and clear water between, the fronts wavering along x. Tileable both ways. The frames alternate
+ * the two paints, so both lay the same fronts and only the crest's teeth trade places: the foam churns, never jumps.
  */
 export function wavePaint(paintIndex) {
   const size = WAVE_SIZE,
     img = picture(size, size);
-  const die = mulberry32(0x3a7e + paintIndex * 101);
+  const die = mulberry32(0x3a7e);
   const fronts = Array.from({ length: 5 }, (_, n) => ({
-    y0: Math.floor((n + 0.5 + paintIndex * 0.5) * (size / 5)) % size,
+    y0: Math.floor((n + 0.5) * (size / 5)) % size,
     waves: [1, 2, 3].map((harmonic) => [harmonic, (die() * 2 - 1) * (10 / harmonic), die() * Math.PI * 2]),
     face: 34 + Math.floor(die() * 14),
     crest: 9 + Math.floor(die() * 6),
+    churn: die() * Math.PI * 2,
   }));
   for (const front of fronts)
     for (let x = 0; x < size; x++) {
@@ -143,7 +149,10 @@ export function wavePaint(paintIndex) {
           (sum, [harmonic, amp, phase]) => sum + amp * Math.sin((2 * Math.PI * harmonic * x) / size + phase),
           0,
         );
-      for (let depth = -front.crest; depth < front.face; depth++) {
+      const tooth = Math.round(
+        WAVE_TOOTH * Math.sin((2 * Math.PI * WAVE_TEETH * x) / size + front.churn + paintIndex * Math.PI),
+      );
+      for (let depth = -front.crest - tooth; depth < front.face; depth++) {
         const y = (((Math.round(frontY) + depth) % size) + size) % size;
         if (depth < 0) {
           put(img, x, y, KEY[0], KEY[1], KEY[2], KEY[3]);

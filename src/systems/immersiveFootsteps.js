@@ -289,6 +289,34 @@ export function readFootstepSettings(read = () => modSettingsOf(IMMERSIVE_FOOTST
 }
 const sameSettings = (a, b) => a && b && Object.keys(a).every((k) => a[k] === b[k]);
 
+/** LogModException (Main.cs:451-491): the handler a caught error came from, by its errorType - a console line, not
+ *  player text, so it names the mod's own handlers. */
+export const EXCEPTION_DOING = Object.freeze([
+  'Unknown',
+  'OnTransitionInterior',
+  'OnTransitionExterior',
+  'OnTransitionDungeonInterior',
+  'OnInventoryClose',
+  'OnLoadSave',
+  'OnStartGame',
+]);
+let exceptionLogging = true; // Main.cs:79
+let lastSpamSetting = null;
+/** LogModException: a handler's error is caught and logged - in full under AllowVerboseErrorLogging, in one line
+ *  otherwise - and under DoNotSpamExceptionsLogs only the first, until that key is changed (LoadSettings :210-213).
+ *  Answers whether it logged. */
+export function logModException(e, errorType = 0, { settings = readFootstepSettings, log = console } = {}) {
+  const s = settings();
+  if (lastSpamSetting !== null && lastSpamSetting !== s.DoNotSpamExceptionsLogs) exceptionLogging = true;
+  lastSpamSetting = s.DoNotSpamExceptionsLogs;
+  if (!exceptionLogging) return false;
+  const line = `ImmersiveFootsteps.LogModException(${EXCEPTION_DOING[errorType] ?? EXCEPTION_DOING[0]})`;
+  if (s.AllowVerboseErrorLogging) log.error(`${line}: ${e?.stack ?? e}`);
+  else log.log(line);
+  if (s.DoNotSpamExceptionsLogs) exceptionLogging = false;
+  return true;
+}
+
 // --- Random (Object.cs:531-586) --------------------------------------------
 
 /** UnityEngine.Random.Range(int min, int max): max EXCLUSIVE. */
@@ -350,6 +378,17 @@ export function createImmersiveFootsteps({
   random = Math.random,
   makeClip = makeFootstepClip,
 } = {}) {
+  /** A handler as the mod wraps it: its error caught and logged (LogModException), never thrown on. */
+  const guarded =
+    (errorType, fn) =>
+    (...args) => {
+      try {
+        return fn(...args);
+      } catch (e) {
+        logModException(e, errorType, { settings });
+        return undefined;
+      }
+    };
   // --- ImmersiveFootstepsMain statics ---
   let s = null; // the settings snapshot LoadSettings last applied
   let stepInterval = 0.6; // Main.cs:56-59
@@ -810,33 +849,33 @@ export function createImmersiveFootsteps({
     },
     /** UpdateFootsteps_OnTransitionInterior (Main.cs:237-308). `materials`
      *  are the combined mesh's material names in order (unityMaterialName). */
-    onTransitionInterior({ buildingType = null, materials = [] } = {}) {
+    onTransitionInterior: guarded(1, ({ buildingType = null, materials = [] } = {}) => {
       lastM = lastM ? { ...lastM, inside: true, inDungeon: false } : { inside: true, inDungeon: false };
       // AUDIT-IF F4: only BuildingTypes.None (-1) skips the walk. A building with no discovery record hands DFU
       // default(DiscoveredBuilding), whose buildingType is 0 - the walk runs; the first draft skipped it on null.
       currInteriorFloorType = buildingType === -1 ? FLOOR_TYPE.Tile : interiorFloorType(materials);
       updateInteriorArmorFootstepSounds();
-    },
+    }),
     /** UpdateFootsteps_OnTransitionExterior (Main.cs:339-354), for the building and the dungeon exit alike. */
-    onTransitionExterior() {
+    onTransitionExterior: guarded(2, () => {
       lastM = lastM ? { ...lastM, inside: false, inDungeon: false } : null;
       currInteriorFloorType = FLOOR_TYPE.Tile;
       lastTileMapIndex = 0;
       pendingExterior = true; // DetermineExteriorClimateFootstep, on the first outdoor frame
-    },
+    }),
     /** UpdateFootsteps_OnTransitionDungeonInterior (Main.cs:356-370). */
-    onTransitionDungeonInterior() {
+    onTransitionDungeonInterior: guarded(3, () => {
       lastM = lastM ? { ...lastM, inside: true, inDungeon: true } : { inside: true, inDungeon: true };
       currInteriorFloorType = FLOOR_TYPE.Tile;
       updateInteriorArmorFootstepSounds();
-    },
+    }),
     /** UIManager_RefreshEquipSlotReferencesOnInventoryClose (Main.cs:372-398):
      *  the inventory window popped to no window. */
-    onInventoryClose(entity) {
+    onInventoryClose: guarded(4, (entity) => {
       syncSettings();
       if (!active()) return;
       if (s.AllowFootstepSounds || s.AllowArmorSwaySounds) refreshEquipmentSlotReferences(entity);
-    },
+    }),
     refreshEquipmentSlotReferences(entity) {
       syncSettings();
       if (active()) refreshEquipmentSlotReferences(entity);
@@ -948,17 +987,20 @@ export const COMPAT_WARNING_LOG = Object.freeze([
  *  message box, in our own words (OWN-WORK4), when the mod is on, AllowModCompatWarnings is on, and Better
  *  Ambience's module is on.
  *  `showText(lines)` is the host's DaggerfallUI.MessageBox; `log` is Debug.Log. Answers whether it fired. */
-export function reportModCompatibilityIssues({
-  showText,
-  log = (l) => console.log(l),
-  read = modSettingIfDeclared,
-  settings = readFootstepSettings,
-} = {}) {
-  const s = settings();
-  if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;
-  const c = modCompatibilityChecking(read);
-  if (!(c.betterAmbienceCheck && c.betterAmbienceFootstepsModuleCheck)) return false;
-  for (const l of COMPAT_WARNING_LOG) log(l);
-  showText?.([...COMPAT_WARNING_LINES]);
-  return true;
+export function reportModCompatibilityIssues(
+  { showText, log = (l) => console.log(l), read = modSettingIfDeclared, settings = readFootstepSettings } = {},
+  errorType = 0, // LogModException's: 5 from OnLoadSave, 6 from OnStartGame
+) {
+  try {
+    const s = settings();
+    if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;
+    const c = modCompatibilityChecking(read);
+    if (!(c.betterAmbienceCheck && c.betterAmbienceFootstepsModuleCheck)) return false;
+    for (const l of COMPAT_WARNING_LOG) log(l);
+    showText?.([...COMPAT_WARNING_LINES]);
+    return true;
+  } catch (e) {
+    logModException(e, errorType, { settings });
+    return false;
+  }
 }

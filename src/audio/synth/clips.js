@@ -3,7 +3,7 @@
 // two qualities and Better Ambience 0.1.4 for 29; each name here answers with a clip our synth makes (steps.js, rain.js)
 // - the same name, the same length, the same rate as the clip it stands for, and nothing of that clip but its name and
 // its length. The two mods' laws (systems/immersiveFootsteps.js, systems/betterAmbience.js) are unchanged.
-import { inTurn, seedOf } from './dsp.js';
+import { inTurn, mulberry32, seedOf } from './dsp.js';
 import { stepSound } from './steps.js';
 import { rainLoop, rainLoopInTurns, RAIN_LOOP } from './rain.js';
 
@@ -58,6 +58,31 @@ const IF_STEP_FAMILY = Object.freeze({
 });
 const IF_SWAY_FAMILY = Object.freeze({ Chainmail: 'swayChain', Leather: 'swayLeather', Plate: 'swayPlate' });
 
+/** How loud each kind is made (dsp.js loudnessOf, dB). The mod plays a step and a sway at 1 and a landing at 4 (12 dB
+ *  up, LANDING_VOLUME_SCALE), so a step sits at the top of Daggerfall's own stride (DAGGER.SND 309-334 heard at 0.7:
+ *  -32.5 to -39.8), a landing near its falls (91 and 92: -12.4 and -19.4) and the sways under the steps. */
+export const IF_LOUDNESS = Object.freeze({
+  step: -32,
+  wade: -30,
+  swim: -24,
+  sway: -38,
+  landing: -33,
+  hurtLanding: -28,
+  waterLanding: -30,
+});
+/** Each clip's own level, up to this many dB either side of its kind's, from its seed: no two steps of a set are
+ *  struck alike. */
+export const LEVEL_SPREAD_DB = 1.5;
+const spread = (/** @type {number} */ seed) => (mulberry32(seed ^ 0x5bd1e995)() * 2 - 1) * LEVEL_SPREAD_DB;
+
+/** Which of IF_LOUDNESS a clip takes. @param {string} stem @param {number} n */
+function ifLoudnessKind(stem, n) {
+  if (stem === 'Water_Landing') return 'waterLanding';
+  if (stem.endsWith('_Hard_Landing')) return n === 2 ? 'hurtLanding' : 'landing';
+  if (stem.endsWith('_Swaying')) return 'sway';
+  return stem === 'Deep_Water_Footstep' ? 'swim' : stem === 'Shallow_Water_Footstep' ? 'wade' : 'step';
+}
+
 /** What an Immersive Footsteps name is made of, or null for a name the mod never asks for. @param {string} name */
 export function immersiveFootstepsRecipe(name) {
   const match = /^(HQ|LQ)_(.+)_(\d)$/.exec(String(name));
@@ -76,13 +101,15 @@ export function immersiveFootstepsRecipe(name) {
   else if (land) [family, heavy] = [`landing:${land[1]}`, n === 2]; // [1] is the fall that hurt (CheckToUseHardFallSounds)
   else if (stem === 'Water_Landing') family = 'waterLanding';
   if (!family) return null;
+  const seed = seedOf(`if:${stem}_${n}`);
   return {
     family,
     heavy,
     seconds: lengthMs / 1000,
     rate: quality === 'HQ' ? IF_RATE.HQ : IF_RATE.LQ,
     retro: quality === 'LQ',
-    seed: seedOf(`if:${stem}_${n}`),
+    seed,
+    loudness: IF_LOUDNESS[ifLoudnessKind(stem, n)] + spread(seed),
   };
 }
 
@@ -92,34 +119,43 @@ export function immersiveFootstepsClip(name) {
   return recipe ? { samples: stepSound(recipe.family, recipe), rate: recipe.rate } : null;
 }
 
-/** Better Ambience's lists: each stem's family, its rate and its clips' lengths in ms, `_000` on. The water list's
- *  `_001` never was (the mod's list plays five), so it is no clip here either. */
+/** Better Ambience's lists: each stem's family, its rate, its clips' lengths in ms (`_000` on) and its loudness (dsp.js
+ *  loudnessOf). The water list's `_001` never was (the mod's list plays five), so it is no clip here either. Each list
+ *  plays at its own volume times 0.7 (LIST_VOLUME, BA_FOOTSTEP_VOLUME_SCALE), which brings a step to -33, the water to
+ *  -30 and the armour's clank to -38, under the step it rides on. */
 export const BA_CLIPS = Object.freeze({
-  sfx_footstep_wood: Object.freeze({ family: 'wood', rate: 44100, ms: [321, 436, 475, 377] }),
-  sfx_footstep_stone: Object.freeze({ family: 'stone', rate: 44100, ms: [145, 174, 184, 188] }),
+  sfx_footstep_wood: Object.freeze({ family: 'wood', rate: 44100, ms: [321, 436, 475, 377], loudness: -21.9 }),
+  sfx_footstep_stone: Object.freeze({ family: 'stone', rate: 44100, ms: [145, 174, 184, 188], loudness: -19.4 }),
   sfx_footstep_armor_light: Object.freeze({
     family: 'armorLight',
     rate: 44100,
     ms: [771, 397, 406, 406, 519, 452, 474, 504, 467, 704, 489],
+    loudness: -26.9,
   }),
-  'sfx_footstep_crunchy-grass': Object.freeze({ family: 'crunchyGrass', rate: 44100, ms: [740, 777, 685, 606] }),
-  sfx_footstep_water: Object.freeze({ family: 'wade', rate: 22050, ms: [963, null, 1068, 1253, 836, 1172] }),
+  'sfx_footstep_crunchy-grass': Object.freeze({
+    family: 'crunchyGrass',
+    rate: 44100,
+    ms: [740, 777, 685, 606],
+    loudness: -13.4,
+  }),
+  sfx_footstep_water: Object.freeze({ family: 'wade', rate: 22050, ms: [963, null, 1068, 1253, 836, 1172], loudness: -18.9 }),
 });
 export const BA_RAIN_CLIP = 'AmbientRaining';
-/** Better Ambience's clips are made loud: its lists play them at 0.15 to 0.4 (LIST_VOLUME). */
-export const BA_PEAK = 0.9;
 
 /** A Better Ambience clip by the name TryImportAudioClips asks for; null for a miss. @param {string} name @returns {Clip | null} */
 export function betterAmbienceClip(name) {
   if (name === BA_RAIN_CLIP) return { samples: rainLoop(), rate: RAIN_LOOP.rate };
   const match = /^(.+)_(\d{3})$/.exec(String(name));
   const list = match
-    ? /** @type {Record<string, { family: string, rate: number, ms: (number | null)[] }>} */ (BA_CLIPS)[match[1]]
+    ? /** @type {Record<string, { family: string, rate: number, ms: (number | null)[], loudness: number }>} */ (BA_CLIPS)[
+        match[1]
+      ]
     : null;
   const lengthMs = list?.ms[Number(match?.[2])];
   if (!list || !lengthMs) return null;
   const rate = list.rate;
-  const samples = stepSound(list.family, { seed: seedOf(`ba:${name}`), seconds: lengthMs / 1000, rate, peak: BA_PEAK });
+  const seed = seedOf(`ba:${name}`);
+  const samples = stepSound(list.family, { seed, seconds: lengthMs / 1000, rate, loudness: list.loudness + spread(seed) });
   return { samples, rate };
 }
 

@@ -932,9 +932,16 @@ export function createShieldWidget({
    *  DaggerfallUI.DrawTextureWithTexCoords, at the weapon's own tint. */
   function draw(paint) {
     const r = drawRect();
-    if (!r || typeof paint !== 'function') return false;
+    if (!r || typeof paint !== 'function' || offScreen(r)) return false;
     paint(w.shieldTexture, r, w.curAnimRect);
     return true;
+  }
+
+  /** A rect wholly past the screen's edge: the Off-screen pose at rest. The DLL's blit draws nothing there, so the
+   *  port's emits no quad (drawRect still answers it, the gate ladder's own verdict). */
+  function offScreen(r) {
+    const sr = w.screenRect;
+    return r.y >= sr.y + sr.height || r.y + r.height <= sr.y || r.x >= sr.x + sr.width || r.x + r.width <= sr.x;
   }
 
   /** AUDIT 27h S3: a rig frame with the Shield Widget switched OFF is a step every widget misses - the switch "takes

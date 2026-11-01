@@ -94,6 +94,8 @@ export class DynamicSkies {
     this._whole = false;
     this.currentWeather = word;
     this.phases = phasesAt(minutes);
+    // the storm's flash first: its light for the land, its level for the sky
+    this.lightningLight = this.playerInside ? null : this.lightningFlash.tick(frame.dt ?? 0, frame.playerPos ?? null);
     const state = skyFrame({
       minuteOfDay: frame.minuteOfDay,
       classicMinutes: minutes,
@@ -103,12 +105,12 @@ export class DynamicSkies {
       weatherScale: frame.weatherScale ?? 1,
       phases: this.phases,
       lightCurve: this.lightCurve,
+      flash: this.lightningLight ? this.lightningFlash.level : 0,
     });
     state.weather = word;
     this.state = state;
     this._sunDir = state.sunDir;
     this.fogColor = state.fogColor;
-    this.lightningLight = this.playerInside ? null : this.lightningFlash.tick(frame.dt ?? 0, frame.playerPos ?? null);
     return state;
   }
 

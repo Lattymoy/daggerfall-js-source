@@ -61,14 +61,13 @@ const filter = () => new Section();
 
 /** A slow wobble: three sines at seeded rates and phases, about 1. */
 function wobble(random, depth, lowHz, highHz) {
-  const parts = [0.55, 0.3, 0.15].map((share) => ({
-    share: share * depth,
-    hz: lowHz + (highHz - lowHz) * random(),
-    phase: TAU * random(),
-  }));
+  const parts = [0.55, 0.3, 0.15].map((share) => {
+    const hz = lowHz + (highHz - lowHz) * random();
+    return { share: share * depth, radiansPerSecond: TAU * hz, phase: TAU * random() };
+  });
   return (seconds) => {
     let sum = 1;
-    for (const part of parts) sum += part.share * Math.sin(TAU * part.hz * seconds + part.phase);
+    for (const part of parts) sum += part.share * Math.sin(part.radiansPerSecond * seconds + part.phase);
     return sum;
   };
 }
@@ -81,8 +80,10 @@ function gustVoice(rate, count, random) {
   const flutter = wobble(random, 0.35, 1.2, 4.5);
   const band = filter(),
     body = filter(),
-    roof = filter();
+    roof = filter(),
+    floor = filter();
   body.set('lowpass', 260, Math.SQRT1_2, rate);
+  floor.set('highpass', 40, Math.SQRT1_2, rate); // the body's low-pass reaches down to 0 Hz: a DC offset of 0.3% without it
   let gain = 0;
   return (index) => {
     if (index % BLOCK === 0) {
@@ -93,7 +94,7 @@ function gustVoice(rate, count, random) {
       gain = swell ** 1.4 * Math.max(0, flutter(index / rate));
     }
     const noise = random() * 2 - 1;
-    return roof.run(band.run(noise) + 0.55 * body.run(noise)) * gain;
+    return floor.run(roof.run(band.run(noise) + 0.55 * body.run(noise)) * gain);
   };
 }
 

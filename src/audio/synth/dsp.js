@@ -266,6 +266,68 @@ export function peakTo(buf, peak) {
   return buf;
 }
 
+/** A high shelf (the RBJ cookbook's): `gainDb` over `freq`, its slope `q`. Five coefficients, as `section` answers. */
+function shelf(freq, gainDb, q, rate) {
+  const A = 10 ** (gainDb / 40),
+    w = (2 * Math.PI * freq) / rate,
+    cos = Math.cos(w),
+    sA = Math.sqrt(A) * (Math.sin(w) / q);
+  const a0 = A + 1 - (A - 1) * cos + sA;
+  return [
+    (A * (A + 1 + (A - 1) * cos + sA)) / a0,
+    (-2 * A * (A - 1 + (A + 1) * cos)) / a0,
+    (A * (A + 1 + (A - 1) * cos - sA)) / a0,
+    (2 * (A - 1 - (A + 1) * cos)) / a0,
+    (A + 1 - (A - 1) * cos - sA) / a0,
+  ];
+}
+
+/**
+ * HOW LOUD A CLIP IS: its loudest 100 ms, K-weighted (ITU-R BS.1770's +4 dB shelf over 1,682 Hz and high-pass at 38 Hz),
+ * in dB of full scale. A level by the peak made a thud and a crunch of one peak 8 dB apart to the ear; this is how the
+ * clips are set beside Daggerfall's own (DAGGER.SND's stride measures -29 to -37 on it).
+ * @param {ArrayLike<number>} buf @param {number} rate
+ */
+export function loudnessOf(buf, rate) {
+  const n = buf.length;
+  const stages = [shelf(1681.97, 4, 0.7072, rate), section('highpass', 38.135, 0.5003, rate)];
+  const power = new Float64Array(n + 1);
+  const state = new Float64Array(8);
+  for (let i = 0; i < n; i++) {
+    let value = buf[i];
+    for (let k = 0, j = 0; k < 2; k++, j += 4) {
+      const [b0, b1, b2, a1, a2] = stages[k];
+      const y = b0 * value + b1 * state[j] + b2 * state[j + 1] - a1 * state[j + 2] - a2 * state[j + 3];
+      state[j + 1] = state[j];
+      state[j] = value;
+      state[j + 3] = state[j + 2];
+      state[j + 2] = y;
+      value = y;
+    }
+    power[i + 1] = power[i] + value * value;
+  }
+  const win = Math.max(1, Math.min(n, Math.round(0.1 * rate))),
+    hop = Math.max(1, Math.round(0.01 * rate));
+  let most = 0;
+  for (let at = 0; ; at += hop) {
+    const end = Math.min(n, at + win);
+    most = Math.max(most, (power[end] - power[at]) / win);
+    if (end >= n) break;
+  }
+  return most > 0 ? 10 * Math.log10(most) : -Infinity;
+}
+
+/**
+ * The clip brought to `db` of loudness (loudnessOf); a silent clip stays silent.
+ * @template {Float64Array | Float32Array} T @param {T} buf @param {number} rate @param {number} db @returns {T}
+ */
+export function loudnessTo(buf, rate, db) {
+  const now = loudnessOf(buf, rate);
+  const k = Number.isFinite(now) ? 10 ** ((db - now) / 20) : 0;
+  for (let i = 0; i < buf.length; i++) buf[i] *= k;
+  return buf;
+}
+
 /** The clip held to `bits` of depth, as an old sound card held it (the retro quality). @param {Float64Array} buf @param {number} bits */
 export function crush(buf, bits) {
   const steps = 2 ** (bits - 1);

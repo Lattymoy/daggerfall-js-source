@@ -1970,7 +1970,7 @@ mods.comeSailAway.unread.description,"Ei vaikutusta: modi ei koskaan käytä tä
 mods.diverseWeapons.Enabled.description,"Eri ensimmäisen persoonan ulkoasu jokaiselle aseelle jokaisessa metallissa, tavallisena ja lumottuna, yhden asetyyppiä kohden sijaan. Pitkämiekka ei enää näytä leveämiekalta. Omat tekstuurit -kohtaan lisätty uudempi versio korvaa sisäänrakennetun."
 mods.diverseWeapons.WeaponWidgetPreset.description,"Käyttää päällä ollessaan Diverse Weaponsin omia Weapon Widget -asetuksia: suuremmat lepoasennot, inertia, rekyyli ja oma heilunta. Omat Weapon Widget -asetuksesi palaavat, kun kytket tämän pois."
 mods.dynamicSkies.Enabled.description,"Uusi taivas parannetulle ulkomaailmalle: pilvikerrokset kullekin säälle, tuikkivat tähdet, molemmat kuut, sumun värit, pidemmät auringonnousut ja -laskut sekä salamat ukkosella. Pois käyttää pelin omaa taivasta."
-mods.dynamicSkies.MaxParticles.description,"Ei vaikutusta: modi ei koskaan käytä tätä asetusta."
+mods.dynamicSkies.MaxParticles.description,"Eniten piirrettyjä lumihiutaleita, tuhansina."
 mods.eyeOfTheBeholder.Animation.BillboardScale.description,"Pelaajaspriten koko."
 mods.eyeOfTheBeholder.Animation.FineBillboardScale.description,"Lisätään BillboardScaleen hienosäätöä varten."
 mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description,"Ei vaikutusta: modi ei koskaan käytä tätä asetusta."

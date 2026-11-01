@@ -1,0 +1,20 @@
+[
+  {
+    "name": "OWNAUDIT-waves-front-moved",
+    "file": "src/systems/comeSailAway/csaPictures.js",
+    "old": "    y0: Math.floor((n + 0.5) * (size / 5)) % size,",
+    "new": "    y0: Math.floor((n + 0.5 + paintIndex * 0.5) * (size / 5)) % size,",
+    "tests": [
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-waves-teeth-alike",
+    "file": "src/systems/comeSailAway/csaPictures.js",
+    "old": "front.churn + paintIndex * Math.PI",
+    "new": "front.churn",
+    "tests": [
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  }
+]

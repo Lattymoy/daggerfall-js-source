@@ -10,15 +10,16 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 
 import {
-  seedOf, canvas, addBurst, addMode, addBubble, crush, filterSpan, inTurn, mulberry32, rmsOf,
+  seedOf, canvas, addBurst, addMode, addBubble, crush, filterSpan, inTurn, mulberry32, rmsOf, loudnessOf,
 } from '../../../src/audio/synth/dsp.js';
-import { stepSound, STEP_FAMILIES, STEP_PEAK, RETRO } from '../../../src/audio/synth/steps.js';
+import { stepSound, STEP_FAMILIES, RETRO } from '../../../src/audio/synth/steps.js';
 import { rainLoop, rainLoopInTurns, RAIN_LOOP } from '../../../src/audio/synth/rain.js';
 import {
-  immersiveFootstepsClip, immersiveFootstepsRecipe, betterAmbienceClip, betterAmbienceClipInTurn, IF_CLIP_MS, BA_CLIPS, BA_RAIN_CLIP, BA_PEAK,
+  immersiveFootstepsClip, immersiveFootstepsRecipe, betterAmbienceClip, betterAmbienceClipInTurn, IF_CLIP_MS, BA_CLIPS, BA_RAIN_CLIP,
+  IF_LOUDNESS, LEVEL_SPREAD_DB,
 } from '../../../src/audio/synth/clips.js';
-import { clipNames, SOUND_CLIP_QUALITY } from '../../../src/systems/immersiveFootsteps.js';
-import { baClipNames, MISSING_CLIPS, AMBIENT_RAIN_CLIP } from '../../../src/systems/betterAmbience.js';
+import { clipNames, SOUND_CLIP_QUALITY, LANDING_VOLUME_SCALE } from '../../../src/systems/immersiveFootsteps.js';
+import { baClipNames, MISSING_CLIPS, AMBIENT_RAIN_CLIP, CLIP_LISTS, LIST_VOLUME, BA_FOOTSTEP_VOLUME_SCALE } from '../../../src/systems/betterAmbience.js';
 
 const peakOf = (s) => s.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
 
@@ -52,7 +53,7 @@ const aWeight = (f) => {
 };
 /** The A-weighted power's share in four bands: under 300 Hz (the weight), 300-1,500 (the body), 1,500-5,000 (the
  *  crack, the crunch, the splash) and over 5,000 (the rings, the spray). */
-function bands(s, rate, N = 1024) {
+function bands(s, rate, N = 1024, weighted = true) {
   const out = [0, 0, 0, 0];
   let total = 0;
   for (let o = 0; o + N <= s.length; o += N / 2) {
@@ -60,7 +61,7 @@ function bands(s, rate, N = 1024) {
     for (let i = 0; i < N; i++) re[i] = s[o + i] * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N));
     fft(re, im);
     for (let k = 1; k < N / 2; k++) {
-      const f = (k * rate) / N, p = (re[k] * re[k] + im[k] * im[k]) * aWeight(f);
+      const f = (k * rate) / N, p = (re[k] * re[k] + im[k] * im[k]) * (weighted ? aWeight(f) : 1);
       out[f < 300 ? 0 : f < 1500 ? 1 : f < 5000 ? 2 : 3] += p;
       total += p;
     }
@@ -88,6 +89,12 @@ test('OWN-WORK4 synth: the primitives are what they say - a name\'s seed, a burs
     const top = rmsOf(b.subarray(Math.round(0.4 * rate), Math.round(0.5 * rate)));
     assert.ok(Math.abs(top - 0.4 * 0.9) < 0.06, `${stages[0][0]}: RMS ${top} near half the amp at the top`);
   }
+  // the loudness: a sine's loudest 100 ms, K-weighted - its RMS (half its amp, -9 dB), a little up at 1 kHz, the shelf's
+  // 4 dB up at 6 kHz, and well down at 25 Hz under the high-pass
+  const sine = (hz) => Float64Array.from({ length: rate }, (_, i) => 0.5 * Math.sin((2 * Math.PI * hz * i) / rate));
+  const rmsDb = 20 * Math.log10(0.5 / Math.SQRT2);
+  const lift = (hz) => loudnessOf(sine(hz), rate) - rmsDb;
+  assert.ok(lift(1000) > 0.2 && lift(1000) < 0.8 && Math.abs(lift(6000) - 4) < 0.3 && lift(25) < -6, `${lift(1000)} ${lift(6000)} ${lift(25)}`);
   // a mode: a damped sine, e down every tau
   const m = canvas(0.2, rate);
   addMode(m, rate, { at: 0, freq: 441, tau: 0.05, amp: 1 });
@@ -127,16 +134,24 @@ test('OWN-WORK4: every name Immersive Footsteps asks for is a clip of ours - the
       assert.equal(c.rate, r.rate);
       assert.equal(c.samples.length, Math.round(r.seconds * r.rate), `${name}: its length`);
       assert.ok(c.samples.every(Number.isFinite), name);
-      const kind = /Swaying/.test(name) ? 'sway' : /Landing/.test(name) ? 'landing' : 'step';
-      const pk = peakOf(c.samples);
-      if (q === SOUND_CLIP_QUALITY.High) assert.ok(Math.abs(pk - STEP_PEAK[kind]) < 1e-6, `${name}: peak ${pk}`);
-      else {
-        assert.ok(Math.abs(pk - STEP_PEAK[kind]) <= 1 / 128, `${name}: retro peak ${pk}`);
-        assert.ok(new Set(c.samples).size <= 257, `${name}: 8 bits`);
-      }
-      assert.ok(rmsOf(c.samples) > 0.02, `${name}: not silent`);
+      const kind = /Water_Landing/.test(name) ? 'waterLanding' : /Landing_2/.test(name) ? 'hurtLanding' : /Landing/.test(name) ? 'landing'
+        : /Swaying/.test(name) ? 'sway' : /Deep_Water/.test(name) ? 'swim' : /Shallow_Water/.test(name) ? 'wade' : 'step';
+      const db = loudnessOf(c.samples, c.rate);
+      assert.ok(Math.abs(db - r.loudness) < 0.01 && Math.abs(r.loudness - IF_LOUDNESS[kind]) <= LEVEL_SPREAD_DB, `${name}: loudness ${db}`);
+      if (q === SOUND_CLIP_QUALITY.Low) assert.ok(new Set(c.samples).size <= 257, `${name}: 8 bits`);
+      // as the mod plays it - a run's step at 1.25, a landing at 4 - it stays under the limiter's -3 dB (systems/audio.js LIMITER)
+      const gain = /Landing/.test(name) ? LANDING_VOLUME_SCALE : 1.25;
+      assert.ok(peakOf(c.samples) * gain < 10 ** (-3 / 20), `${name}: ${peakOf(c.samples) * gain} at its play`);
     }
   }
+  // THE GAME'S LEVEL: DAGGER.SND's stride (309-334) heard at 0.7 measures -32.5 to -39.8 on loudnessOf, its falls (91, 92)
+  // -12.4 and -19.4, its large splash (342) -15.5. A step sits at the top of the stride, a landing at its 4 near the falls.
+  assert.deepEqual(IF_LOUDNESS, { step: -32, wade: -30, swim: -24, sway: -38, landing: -33, hurtLanding: -28, waterLanding: -30 });
+  const heard = (db, gain) => db + 20 * Math.log10(gain);
+  assert.ok(heard(IF_LOUDNESS.landing, LANDING_VOLUME_SCALE) < -19 && heard(IF_LOUDNESS.hurtLanding, LANDING_VOLUME_SCALE) < -12.4);
+  assert.ok(heard(IF_LOUDNESS.waterLanding, LANDING_VOLUME_SCALE) < -15.5 && IF_LOUDNESS.sway < IF_LOUDNESS.step);
+  const spread = clipNames(SOUND_CLIP_QUALITY.High).filter((n) => /Footstep/.test(n)).map((n) => immersiveFootstepsRecipe(n).loudness);
+  assert.ok(Math.max(...spread) - Math.min(...spread) > 2, 'no two steps of a set struck alike');
   assert.deepEqual(immersiveFootstepsClip('HQ_Mud_Footstep_4').samples, immersiveFootstepsClip('HQ_Mud_Footstep_4').samples, 'deterministic');
   assert.equal(immersiveFootstepsClip('HQ_Mud_Footstep_9'), null);
   for (const [stem, ms] of Object.entries(IF_CLIP_MS)) {
@@ -162,10 +177,17 @@ test('OWN-WORK4: every name Better Ambience asks for is a clip of ours at its li
     const list = BA_CLIPS[m[1]];
     assert.equal(c.rate, list.rate, name);
     assert.equal(c.samples.length, Math.round((list.ms[Number(m[2])] / 1000) * list.rate), name);
-    assert.ok(Math.abs(peakOf(c.samples) - BA_PEAK) < 1e-6, name);
+    assert.ok(Math.abs(loudnessOf(c.samples, c.rate) - list.loudness) <= LEVEL_SPREAD_DB + 0.01, name);
     made++;
   }
   assert.equal(made, 28);
+  // each list as the mod plays it (its LIST_VOLUME times 0.7): a step at -33, beside DAGGER.SND's stride at 0.7 (-32.5 to
+  // -39.8); the water at -30; the armour's clank at -38, under the step it rides on
+  const want = { FootstepSoundBuilding: -33, FootstepSoundDungeon: -33, FootstepSoundOutside: -33, FootstepSoundShallow: -30, FootstepsArmor: -38 };
+  for (const [list, db] of Object.entries(want)) {
+    const heard = BA_CLIPS[CLIP_LISTS[list].stem].loudness + 20 * Math.log10(LIST_VOLUME[list][1] * BA_FOOTSTEP_VOLUME_SCALE);
+    assert.ok(Math.abs(heard - db) < 0.1, `${list}: heard at ${heard}`);
+  }
   const r = betterAmbienceClip(BA_RAIN_CLIP);
   assert.equal(r.rate, RAIN_LOOP.rate);
   assert.equal(r.samples.length, Math.round(RAIN_LOOP.seconds * RAIN_LOOP.rate));
@@ -184,8 +206,8 @@ test('OWN-WORK4: every name Better Ambience asks for is a clip of ours at its li
 
 /** [the set, a band test over the four shares] - each held for every variant, in both qualities. */
 const CHARACTER = [
-  ['Path_Footstep', (b) => b[0] > 0.2 && b[2] + b[3] > 0.25, 'a boot on stone: its weight, and its crack'],
-  ['Leather_Footstep', (b) => b[0] > 0.2 && b[2] + b[3] > 0.25, 'a leather sole on stone: weight and a muted crack'],
+  ['Path_Footstep', (b) => b[0] < 0.15 && b[1] > 0.2 && b[2] + b[3] > 0.45, 'a boot on stone: its knock and its crack over its weight, as Daggerfall\'s own (A-weighted 1 to 4% under 300 Hz)'],
+  ['Leather_Footstep', (b) => b[0] < 0.15 && b[1] > 0.35 && b[2] + b[3] > 0.3, 'a leather sole on stone: a knock and a muted crack'],
   ['Wood_Footstep', (b) => b[0] + b[1] > 0.85, 'boards: a hollow knock, all under 1.5 kHz'],
   ['Plate_Footstep', (b) => b[1] > 0.65, 'plate: the plate\'s ring, 300 to 1,500 Hz'],
   ['Plate_Hard_Landing', (b) => b[1] > 0.65, 'a plated fall: the ring'],
@@ -212,6 +234,13 @@ test('OWN-WORK4: each family is heard as what it is - its A-weighted power in th
       });
     }
   }
+  // THE HARD FLOORS' WEIGHT: plain power under 300 Hz, at most 85% (Daggerfall's own stone and boards: 47 to 78%; the
+  // first cut's thud held 92 to 96%)
+  const plainLow = (s, rate) => bands(s, rate, 1024, false)[0];
+  for (const stem of ['Path_Footstep', 'Leather_Footstep', 'Unarmored_Footstep', 'Wood_Footstep'])
+    IF_CLIP_MS[stem].forEach((_, i) => { const c = immersiveFootstepsClip(`HQ_${stem}_${i + 1}`); assert.ok(plainLow(c.samples, c.rate) < 0.85, `${stem}_${i + 1}: ${plainLow(c.samples, c.rate)}`); });
+  for (const stem of ['sfx_footstep_wood', 'sfx_footstep_stone'])
+    for (let i = 0; i < 4; i++) { const c = betterAmbienceClip(`${stem}_00${i}`); assert.ok(plainLow(c.samples, c.rate) < 0.85, `${stem}_00${i}`); }
   const tailMs = (s, rate) => { const pk = peakOf(s); let last = 0; for (let i = 0; i < s.length; i++) if (Math.abs(s[i]) > pk * 0.1) last = i; return (1000 * last) / rate; };
   for (let i = 0; i < 4; i++) {
     const stone = betterAmbienceClip(`sfx_footstep_stone_00${i}`), wood = betterAmbienceClip(`sfx_footstep_wood_00${i}`);
@@ -227,7 +256,7 @@ test('OWN-WORK4: each family is heard as what it is - its A-weighted power in th
 
 /** sha256 of every clip's Float32 PCM in order, its first 16 hex digits. A changed sound changes it: write the new one
  *  here in the change that meant it. */
-const DIGEST = Object.freeze({ HQ: 'ef018ba370e6dad7', LQ: 'acc8e9874b2bd29e', BA: 'af5f4d8d323e2169', rain: '5fd4f34494fa5947' });
+const DIGEST = Object.freeze({ HQ: '3b5fda211e66984d', LQ: '38069d728b2ae152', BA: '8ffe8ba6a8761948', rain: '5fd4f34494fa5947' });
 const digest = (clips) => {
   const h = createHash('sha256');
   for (const c of clips) h.update(new Uint8Array(c.samples.buffer, c.samples.byteOffset, c.samples.byteLength));

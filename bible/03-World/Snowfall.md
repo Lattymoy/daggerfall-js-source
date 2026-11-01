@@ -18,6 +18,10 @@ noise (`snowAlbedo`), and `src/render/snowfallGlsl.js` our own GLSL written from
 track packed darker and colder with its depth. PIN MOVED: the model test's coverage hash is over our masks
 (`test/snowMasks.mjs`, our law over a made-up winter set).
 
+**OWN-WORK4 AUDIT (2026-11-01).** The snow on the winter ground was a flat white: a field of it read as blank. It now
+keeps half the record's own grain (a quarter over a summer record), so the speckle is softened, not lost. Snow sifted
+into a paving's joints only near the drift's edge: across a whole road it drew white hatching. The masks are unchanged.
+
 ## The winter ground
 
 The mod's bundle packages 168 winter ground records - TEXTURE.103, .303 and

@@ -25,6 +25,18 @@ TEXTURE.303; the galley's top deck and the carrack's poop and forecastle are
 climbed by ladders. Mac's three ships still stand for hulls 1, 2 and 4. Pins:
 `csa_own_assets.test.js`.
 
+**OWN-WORK4 sound audit (2026-11-01).** The two loops ran 20 and 24 s, so the boat's slaps, thumps and creaks came
+round three times a minute (the mod's ran 182 and 202 s). They run a minute now, made a pass a task
+(`csaSynth/csaClips.js`): 18 MB held, where the mod's two decoded to 59 MB. They stood 3 to 6 dB over the mod's own
+loops' -24 dBFS at the helm, which SEA-AIR's beds were set under (`08-Audio/Audio.md`); each loop is set to that RMS,
+and a stroke to -17 on `audio/synth/dsp.js` `loudnessOf`, by Daggerfall's large splash heard at 0.7 (-15.5). The
+sweep's DC offset is taken out. Pins: `csa_own_assets.test.js`.
+
+**OWN-AUDIT (2026-11-01).** The 32 breaker frames alternate the two paints, eight a second. Our second paint laid its
+fronts half a spacing below the first's, so the surf jumped back and forth four times a second. Both paints now lay the
+same fronts, and only the crests' teeth trade places, so the foam churns as the frames turn (`csaPictures.js`
+`wavePaint`). Pinned in `csa_waves.test.js`; mutants `tools/mutants/ownaudit_waves.json` (2).
+
 "Adds a usable boat and sailing mechanics": a boat bought as its parts
 (item 1320) or its deed (1321), put in the water near a port, and sailed -
 under oars, or under sails the wind fills and the player trims - with

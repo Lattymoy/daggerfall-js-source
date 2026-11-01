@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  METAL_RAMPS, rampAt, metalLut, bladeAxis, reshapeBlade, singleBit, staffBands, paintFrame, paintIcon, scale2x,
+  METAL_RAMPS, rampAt, metalLut, bladeAxis, reshapeBlade, singleBit, staffBands, paintFrame, paintIcon, scale2x, unspeckle,
   parseOwnName, createOwnWeaponArt, FULLER_SHADE,
 } from '../../../src/combat/diverseWeapons/diverseWeaponsArt.js';
 import { LOOKS, OWN_FILES, shapeOf, ICON_RECORDS, DIVERSE_WEAPONS_METALS } from '../../../src/combat/diverseWeapons/diverseWeaponsIndex.js';
@@ -126,6 +126,50 @@ test('OWN-WORK4 shapes: an axe keeps one bit; a staff takes its rings in shaft w
   const ringRows = [...new Set([...rings.keys()].filter((p) => rings[p]).map((p) => Math.floor(p / W)))];
   assert.deepEqual(ringRows, [18, 19, 20, 21, 22], 'two to three shaft widths (5 px) below the capped tip at y 8');
   assert.equal(rings[9 * W + 20], 0, 'the cap is metal already');
+});
+
+test('OWN-WORK4 AUDIT: the axe\'s bit is the haft\'s right, read base to head, so a swing keeps the same one - upside down, end on, and through an enchantment\'s glow', () => {
+  const axe = (haft) => { const d = new Uint8Array(W * H); for (let y = 20; y < 27; y++) for (let x = 5; x <= 35; x++) d[y * W + x] = 0x78; haft(d); return d; };
+  // upside down: the haft above the head, so its right is the screen's left
+  const flipped = new Uint8Array(W * H);
+  for (let y = 53; y < 60; y++) for (let x = 5; x <= 35; x++) flipped[y * W + x] = 0x78;
+  for (let y = 0; y < 53; y++) for (let x = 19; x <= 21; x++) flipped[y * W + x] = 0x30;
+  const down = singleBit(flipped, W, H);
+  assert.equal(down[56 * W + 34], 0, 'upside down, the screen\'s right bit goes');
+  assert.equal(down[56 * W + 6], 0x78, 'and the left stays');
+  // end on: a stub across the head's foot stands upright under it
+  const stub = singleBit(axe((d) => { for (let y = 27; y < 31; y++) for (let x = 14; x <= 26; x++) d[y * W + x] = 0x30; }), W, H);
+  assert.equal(stub[22 * W + 5], 0, 'end on, the left bit goes');
+  assert.equal(stub[22 * W + 34], 0x78, 'the right stays');
+  assert.equal(stub[22 * W + 20], 0x78, 'and the socket');
+  // a glow beside the head is not haft: with the palette the haft is its wood alone
+  const PAL3 = { get: (i) => (i >= 0x70 && i <= 0x7f ? { r: 128, g: 128, b: 128 } : i === 0x30 ? { r: 120, g: 70, b: 30 } : { r: 90, g: 140, b: 250 }) };
+  const glow = axe((d) => {
+    for (let y = 27; y < H; y++) for (let x = 19; x <= 21; x++) d[y * W + x] = 0x30;
+    for (let y = 4; y < 20; y++) for (let x = 24; x <= 39; x++) d[y * W + x] = 0x40;
+  });
+  assert.equal(singleBit(glow, W, H, PAL3)[22 * W + 8], 0, 'the left bit goes, the glow no part of the haft');
+  assert.equal(singleBit(glow, W, H, PAL3)[22 * W + 30], 0x78);
+});
+
+test('OWN-WORK4 AUDIT: a widened blade carries what hugs it out whole, and a pixel the move strands goes - a lone spark stays', () => {
+  const src = new Uint8Array(W * H);
+  for (let y = 10; y < H; y++) for (let x = 18; x <= 22; x++) src[y * W + x] = 0x7a;
+  for (let y = 20; y < 60; y++) src[y * W + 28] = 0x30; // a glow's line, three past the blade's edge
+  const { idx } = reshapeBlade(src, W, H, { width: 2 });
+  const line = [];
+  for (let p = 0; p < idx.length; p++) if (idx[p] === 0x30) line.push(p % W);
+  assert.equal(line.length, 40, 'the line whole');
+  assert.ok(line.every((x) => x === 30), `moved out by the edge's own growth, not scaled with it (${[...new Set(line)]})`);
+  const before = new Uint8Array(25);
+  for (const p of [7, 11, 12, 13]) before[p] = 1; // a plus round pixel 12
+  before[4] = 1; // a spark alone in the corner
+  const out = new Uint8Array(25), from = new Int32Array(25).fill(-1);
+  out[0] = 1; from[0] = 12; // moved from the plus, and left alone
+  out[24] = 1; from[24] = 4; // moved from the spark
+  unspeckle(out, from, before, 5, 5);
+  assert.equal(out[0], 0, 'a piece of a line the move stranded goes');
+  assert.equal(out[24], 1, 'a spark alone in the source stays');
 });
 
 test('OWN-WORK4 colour: the frame painted - clear and the mask clear, the metal by our law, a groove shaded, a ring by the ramp, every other pixel Daggerfall\'s', () => {

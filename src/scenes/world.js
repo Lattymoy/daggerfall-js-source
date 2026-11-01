@@ -6597,7 +6597,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // BA1: StartGameBehaviour.OnStartGame's two listeners in Better Ambience (the fog, the rain source), and
     // Immersive Footsteps' ModCompatibilityWarning_OnStartGame - the box a DFU player sees with both strides on.
     betterAmbience.onStartGame();
-    reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) });   // ENH-NOTICE3: through the one door - still a PUSH over what is open, which is the seam's default and B5's law for every DaggerfallUI.MessageBox
+    reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) }, 6);   // ENH-NOTICE3: through the one door - still a PUSH over what is open, which is the seam's default and B5's law for every DaggerfallUI.MessageBox
   };
   // TR3: THE TEST ROOM's boot - the same headless seam as ?class=
   // below, with the preset's identity seeded first (applyCharacter
@@ -14752,7 +14752,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // BA1: SaveLoadManager.OnLoad's listeners - Better Ambience's fog and rain source (four frames on), and
       // Immersive Footsteps' ModCompatibilityWarning_OnLoadSave.
       betterAmbience.onLoad();
-      reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) });   // ENH-NOTICE3: through the one door - still a PUSH over what is open, which is the seam's default and B5's law for every DaggerfallUI.MessageBox
+      reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) }, 5);   // ENH-NOTICE3: through the one door - still a PUSH over what is open, which is the seam's default and B5's law for every DaggerfallUI.MessageBox
       dwLoadFinished(performance.now() / 1000);   // DW-D: DeepWaterRuntime.OnLoad - 1.5 s more (a load that throws raises none, as DFU's does not)
       if (dwPlayer) { dwPlayer.saveLoad(player); dwFlushStateChange(); }   // AUDIT DW-F: ...and OutdoorSwimDriver.OnSaveLoad on OnLoad - the save's crouch is back, so it stands
       oceanHoles?.saveLoaded();   // OH-B: OceanHoles.OnSaveLoaded - the queue dropped, every loaded terrain promoted again

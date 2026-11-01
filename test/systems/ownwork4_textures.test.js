@@ -99,7 +99,7 @@ test('OWN-WORK4 the road: the paving\'s own stones raised and lit from the north
   assert.equal(H(r.data), 'd761b1ee66144315');
 });
 
-test('OWN-WORK4 the Alik\'r\'s sand: a desert record at its own size, its tan graded pale and rippled, the water as it was (mutants: the water graded; the sand left dark; the ripple dropped)', () => {
+test('OWN-WORK4 the Alik\'r\'s sand: a desert record at its own size, its tan graded pale and rippled, the water as it was; a pale speck in dark dirt and a road\'s paving left as they were (mutants: the water graded; the sand left dark; the ripple dropped; a speck taken for a dune; the paving paled)', () => {
   const d = R.desert(shore, { seed: 9 });
   assert.deepEqual([d.width, d.height], [16, 16]);
   for (let y = 0; y < 16; y++)
@@ -110,10 +110,27 @@ test('OWN-WORK4 the Alik\'r\'s sand: a desert record at its own size, its tan gr
     }
   const rows = Array.from({ length: 16 }, (_, y) => luma(d.data, (y * 16 + 2) * 4));
   assert.ok(Math.max(...rows) - Math.min(...rows) > 0.02, 'rippled down a column of one tan');
-  assert.equal(H(d.data), '65aa90557a11998e');
+  assert.equal(H(d.data), '104a211646569573');
+  // dark dirt with a pale speck every few texels: no dune round it, so the speck is the record's
+  const DIRT = [70, 52, 34, 255];
+  const dirt = made(16, 16, (x, y) => ((x * 3 + y * 5) % 7 === 0 ? TAN : DIRT));
+  const dd = R.desert(dirt, { seed: 9 }).data;
+  for (let y = 2; y < 14; y++) assert.deepEqual([...dd.slice((y * 16 + 2) * 4, (y * 16 + 14) * 4)], [...dirt.data.slice((y * 16 + 2) * 4, (y * 16 + 14) * 4)], `row ${y}: the dirt and its specks as they were`);
+  // a flank: sand in its upper-left half, a darker paving with pale joints in its lower-right
+  const PAVE = [130, 95, 60, 255];
+  const flank = made(16, 16, (x, y) => (x + y < 15 ? (x > 1 && x < 6 && y > 1 && y < 6 ? PAVE : TAN) : x % 6 === 0 || y % 6 === 0 ? [190, 150, 100, 255] : PAVE));
+  const f = R.desert(flank, { seed: 9, road: 'flank' });
+  for (let y = 0; y < 16; y++)
+    for (let x = 0; x < 16; x++) {
+      const i = (y * 16 + x) * 4;
+      if (x + y >= 20) assert.deepEqual([...f.data.slice(i, i + 4)], [...flank.data.slice(i, i + 4)], `(${x}, ${y}) the paving`);
+      if (x + y <= 10) assert.ok(luma(f.data, i) > luma(flank.data, i) + 0.05, `(${x}, ${y}) the sand paled, a dark mottle on the sand's half too`);
+    }
+  const at = (14 * 16 + 12) * 4;
+  assert.notDeepEqual([...R.desert(flank, { seed: 9 }).data.slice(at, at + 3)], [...flank.data.slice(at, at + 3)], 'no road: a pale joint is sand');
 });
 
-test('OWN-WORK4 our snow law: on a winter record the lying snow made a cold, shaded white and crept over the flat ground beside it, the water left; on a summer record laid over all but the water (mutants: the water snowed on; the summer left bare; the snow left warm)', () => {
+test('OWN-WORK4 our snow law: on a winter record the lying snow made a cold, shaded white and crept over the flat ground beside it, the water left; on a summer record laid over all but the water; the record\'s own grain kept in the snow (mutants: the water snowed on; the summer left bare; the snow left warm; the grain dropped)', () => {
   const winter = made(16, 16, (x) => (x < 6 ? [214, 214, 222, 255] : x < 10 ? [110, 104, 96, 255] : WATER));
   const w = R.snow(winter, { seed: 2 });
   for (let y = 0; y < 16; y++) {
@@ -126,7 +143,14 @@ test('OWN-WORK4 our snow law: on a winter record the lying snow made a cold, sha
   const s = R.snow(summer, { seed: 2, fromSummer: true });
   assert.ok(luma(s.data, (8 * 16 + 3) * 4) > 0.8, 'the summer grass under snow');
   assert.deepEqual([...s.data.slice((8 * 16 + 13) * 4, (8 * 16 + 13) * 4 + 4)], WATER);
-  assert.deepEqual([H(w.data), H(s.data)], ['d1fe88e0654c1ae4', '02bbfd272a2662f8']);
+  // a speckled snow record: its speckle is still there under our snow, at half its strength
+  const speckled = made(16, 16, (x, y) => ((x * 7 + y * 3) % 5 === 0 ? [196, 198, 206, 255] : [226, 228, 236, 255]));
+  const sp = R.snow(speckled, { seed: 2 });
+  const lum = (d) => Array.from({ length: 256 }, (_, i) => luma(d, i * 4));
+  const spread = (a) => Math.sqrt(a.reduce((t, v) => t + v * v, 0) / a.length - (a.reduce((t, v) => t + v, 0) / a.length) ** 2);
+  assert.ok(spread(lum(sp.data)) > 0.25 * spread(lum(speckled.data)), 'the speckle kept');
+  assert.ok(spread(lum(sp.data)) < spread(lum(speckled.data)), 'and softened');
+  assert.deepEqual([H(w.data), H(s.data)], ['116fe8363c20d46a', '104a181ef2687494']);
 });
 
 test('OWN-WORK4 the snow\'s masks: where our law lays snow on a winter record, 0 to 255, in the record\'s own rows (row 0 its top, as SnowCoverage reads them) - water and paving bare, a snow record whole (mutants: the rows flipped; the paving snowed on)', () => {
@@ -183,6 +207,7 @@ test('OWN-WORK4 the specs: each pack\'s name resolves to the classic record our 
       null,
     ],
   );
+  assert.deepEqual(['002_46-0', '002_47-0', '002_55-0', '002_9-0'].map((n) => ownSpec(by('sands-of-the-alikr'), n).road), ['full', 'flank', 'flank', undefined], 'the desert\'s road records keep their paving');
   const slices = ownSliceSpecs(by('masked-roads'), '302-TexArray');
   assert.deepEqual(slices.map((s, r) => (s.rule === 'road' ? r : null)).filter((r) => r !== null), [46, 47, 55]);
   assert.equal(ownSliceSpecs(by('masked-roads'), '403-TexArray'), null, '57 deep: no slices');

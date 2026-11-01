@@ -124,13 +124,13 @@ export const MOD_SETTINGS = Object.freeze({
           return t('mods.dynamicSkies.MaxParticleSize.description', 'Size of the largest square snowflake.');
         },
       }),
-      // AUDIT 61: the value is read and logged by the mod and never applied; carried as it ships. PLAIN-TEXT (2026-10-19): the pane says so - it read as the author wrote it, a slider that did nothing.
+      // AUDIT 61 / OWN-AUDIT (2026-11-01): the mod read this and never applied it; ours caps the pixel snow by it.
       MaxParticles: Object.freeze({
         default: 20,
         min: 15,
         max: 20,
         get description() {
-          return t('mods.dynamicSkies.MaxParticles.description', 'Has no effect: the mod never uses this setting.');
+          return t('mods.dynamicSkies.MaxParticles.description', 'Most snowflakes drawn, in thousands.');
         },
       }),
     }),
@@ -4116,7 +4116,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.immersiveFootsteps.ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging.description',
-            'Has no effect here: this game keeps no error log.',
+            'Logs a caught error in full, not in one line.',
           );
         },
       }),
@@ -4125,7 +4125,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.immersiveFootsteps.ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs.description',
-            'Has no effect here: this game keeps no error log.',
+            'Logs only the first caught error, not every one.',
           );
         },
       }),

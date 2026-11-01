@@ -5,6 +5,9 @@
 // times its coverage and what the tracks left, faded at the tier's edges. The fragment is our albedo, a path's snow
 // trodden grey, a track packed darker and colder with its depth - in the ground's own fragment program in place of the
 // tile (snowTerrainFs), so the snow takes every light the ground takes, on either lane. Port-Ledger A, SNOWFALL1.
+// OWN-WORK4 AUDIT (2026-11-01): the vertex law is our design from what the snow must do (bible/03-World/Snowfall.md):
+// a narrow track kept by the deepest press across the vertex's cell, a track's profile sharpened by an ease, the tiers'
+// edges eased by a quintic, the ring landing on the blanket over three quarters of its band, our own layer offsets.
 import { snowCoreGlsl, SNOW_TILE_M } from './snowCoverGlsl.js'; // AUDIT PRECIP GROUND-9: the ground's own snow, where this snow lies
 
 /** The attribute locations of a snow mesh: position, normal, the grid's uv, three contexts, the blanket's target. */
@@ -20,11 +23,11 @@ export const SNOW_ATTR = Object.freeze({
 });
 /** The texture units the snow's five pictures take - above every unit the world programs reserve (0-15). */
 export const SNOW_UNITS = Object.freeze({ dynamic: 16, static: 17, context: 18, far: 19, albedo: 20 });
-/** AUDIT ENVIRONS G2: a polygon offset of -0.25, -0.25: the snow a quarter of a resolvable step and a quarter
- *  of its slope nearer the eye than the ground it lies on, so a snow surface standing at the ground's own height - a
- *  contact ramp's first texel, a faded rim - is the snow's and not a speckle of both. Under the sea's film
+/** AUDIT ENVIRONS G2: the snow's polygon offset - one resolvable step and half its slope nearer the eye than the
+ *  ground it lies on (OWN-WORK4 AUDIT: our values), so a snow surface standing at the ground's own height - a contact
+ *  ramp's first texel, a faded rim - is the snow's and not a speckle of both. Under the sea's film
  *  (render/waterSurface.js WATER_LAYER_UNITS), a layer of the one stack. */
-export const SNOW_LAYER = Object.freeze({ factor: -0.25, units: -0.25 });
+export const SNOW_LAYER = Object.freeze({ factor: -0.5, units: -1 });
 
 /** SNOW-TELL (2026-10-11, from play: "Can't see any boss ground attack overlays with heavy snow"): the most a tier's
  *  surface stands over the ground under it, from the tier's own uniforms (systems/snowfallRuntime.js depthUniforms and
@@ -69,16 +72,27 @@ vec2 snowBounded(vec2 t, vec2 uv, float bounded) {
   float inside = step(0.0, uv.x) * step(0.0, uv.y) * step(uv.x, 1.0) * step(uv.y, 1.0);
   return bounded >= 0.5 ? mix(vec2(1.0), t, inside) : t;
 }
-// what is left of the snow's depth: a body's hollow leaves the corpse depth over the snow's (green), a track its red,
-// focused toward the track's centre by ImpressionStrength - the lesser
+// what is left of the snow's depth: under a body (green) the setting's depth stays; a track (red) is the stored profile
+// eased toward a narrower, deeper centre and higher shoulders as tracks are made sharper (uSnowFlags.w) - the lesser
 float snowRemain(vec2 m, float depth) {
-  float corpse = clamp(uSnowLimits.w / max(depth, 0.0001), 0.0, 1.0);
-  corpse += m.y * (1.0 - corpse);
+  float body = mix(min(1.0, uSnowLimits.w / max(depth, 0.0001)), 1.0, m.y);
   float r = clamp(m.x, 0.0, 1.0);
-  float track = r + clamp(uSnowFlags.w, 0.0, 1.0) * (1.0 - min(2.0 * (1.0 - r) * (1.0 - r), 1.0) - r);
-  return min(corpse, track);
+  float track = mix(r, r * r * (3.0 - 2.0 * r), clamp(uSnowFlags.w, 0.0, 1.0));
+  return min(body, track);
 }
-float snowStep(float t) { return t * t * (3.0 - 2.0 * t); }
+// our ease for every edge of a tier: a quintic, flat at both ends, so no fade shows a crease
+float snowEase(float t) {
+  t = clamp(t, 0.0, 1.0);
+  return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+// how far past a square band's start a point is (the tiers are squares about a centre: b.xy, the band b.z to b.w)
+float snowPast(vec2 p, vec4 b) {
+  vec2 d = abs(p - b.xy);
+  return max(d.x, d.y) - b.z;
+}
+float snowBand(vec2 p, vec4 b) { return snowEase(snowPast(p, b) / (b.w - b.z)); }
+// the ring lands on the blanket over the first three quarters of its outer band
+float snowLanding(float past, float span) { return snowEase(past / (0.75 * span)); }
 // on a track tile's painted edge or inside it (the blanket's static mask carries a path tile in its blue) - the
 // vertex's surface offset and the fragment's coverage both
 float snowOnPath(float b, vec2 statUV) {
@@ -118,6 +132,15 @@ ${SNOW_LAID_DECL}
 uniform highp ivec3 uEcoOrigin;   // the snow window's first world tile (the terrain's ecotone frame), z unread
 ${snowCoreGlsl()}
 vec2 snowDynAt(vec2 uv) { return snowBounded(textureLod(uSnowDynamic, uv, 0.0).rg, uv, uSnowDynMap.w); }
+// a track narrower than the grid's step still shows: the deepest press across the vertex's own cell - its point and
+// the four along the axes a texel out
+vec2 snowPressed(vec2 uv) {
+  vec2 t = uSnowDynTexel.xy;
+  vec2 m = min(snowDynAt(uv), snowDynAt(uv + vec2(t.x, 0.0)));
+  m = min(m, snowDynAt(uv - vec2(t.x, 0.0)));
+  m = min(m, snowDynAt(uv + vec2(0.0, t.y)));
+  return min(m, snowDynAt(uv - vec2(0.0, t.y)));
+}
 out vec3 vNormal;
 out vec3 vWorldPos;
 out vec2 vLocalXZ;
@@ -145,41 +168,31 @@ void main() {
     float depth = snowResolve(textureLod(uSnowContext, statUV, 0.0));
     float remain = 1.0;
     if (uSnowFlags.x != 0.0) {   // what the tracks left (with tracks off, the mask's read changes nothing)
-      vec2 dyn = snowDynAt(dynUV);
-      if (uSnowFlags.x >= 0.5) {   // the erosion: a track a texel wide is not lost between two vertices
-        dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy));
-        dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy * vec2(1.0, -1.0)));
-        dyn = min(dyn, snowDynAt(dynUV + uSnowDynTexel.xy * vec2(-1.0, 1.0)));
-        dyn = min(dyn, snowDynAt(dynUV - uSnowDynTexel.xy));
-      }
-      remain = 1.0 + uSnowFlags.x * (snowRemain(dyn, depth) - 1.0);
+      vec2 dyn = uSnowFlags.x >= 0.5 ? snowPressed(dynUV) : snowDynAt(dynUV);
+      remain = mix(1.0, snowRemain(dyn, depth), uSnowFlags.x);
     }
     lifted = depth * clamp(st.r * 2.0, 0.0, 1.0) * laid * laid * remain;
   }
   float fade = 1.0;
-  if (uSnowRadius.y > 0.0) {   // the edge fade: the grid's own border
-    vec2 e2 = min(aUV, 1.0 - aUV);
-    fade = snowStep(clamp(2.0 * uSnowRadius.x * min(e2.x, e2.y) / uSnowRadius.y, 0.0, 1.0));
+  if (uSnowRadius.y > 0.0) {   // the edge fade: metres in from the grid's own border, over the fade's width
+    vec2 e2 = min(aUV, 1.0 - aUV) * 2.0 * uSnowRadius.x;
+    fade = snowEase(min(e2.x, e2.y) / uSnowRadius.y);
   }
-  if (uSnowInner.z < uSnowInner.w) {
-    vec2 d2 = abs(xz - uSnowInner.xy);
-    fade *= snowStep(clamp((max(d2.x, d2.y) - uSnowInner.z) / (uSnowInner.w - uSnowInner.z), 0.0, 1.0));
-  }
-  vec2 o2 = abs(xz - uSnowOuter.xy);
-  float outer = max(o2.x, o2.y) - uSnowOuter.z;
+  if (uSnowInner.z < uSnowInner.w) fade *= snowBand(xz, uSnowInner);   // the hole round a nearer tier
+  float past = snowPast(xz, uSnowOuter);
   float span = uSnowOuter.w - uSnowOuter.z;
-  float outerFade = uSnowOuter.z < uSnowOuter.w ? 1.0 - snowStep(clamp(outer / span, 0.0, 1.0)) : 1.0;
-  fade = 1.0 + uSnowBoundaryFade * (fade * outerFade - 1.0);
+  float outerFade = uSnowOuter.z < uSnowOuter.w ? 1.0 - snowBand(xz, uSnowOuter) : 1.0;
+  fade = mix(1.0, fade * outerFade, uSnowBoundaryFade);
   float cover = st.g;   // AUDIT ENVIRONS G9: the coverage the surface offset stands on - on the blanket, a painted track edge's too (the fragment's test)
   if (blanket && st.b != 0.0) cover = max(cover, snowOnPath(st.b, statUV));
   cover *= laid;
   float offset = cover * uSnowRadius.z * st.a * fade;
   float y = aPos.y + (blanket ? vDepth : fade * lifted) + offset;
   vec3 n = aNormal;
-  if (morph) {   // toward the blanket's surface over the ring's outer band
-    float m = snowStep(clamp(outer / (span - 8.0), 0.0, 1.0));
-    y += m * (vDepth + aBlanket.x + aBlanket.y + 0.002 - y);
-    n = normalize(aNormal + m * (aBlanketNormal - aNormal));
+  if (morph) {   // onto the blanket's surface (its own offset over it) as the ring's outer band is crossed
+    float m = snowLanding(past, span);
+    y = mix(y, vDepth + aBlanket.x + aBlanket.y + uSnowRadius.z, m);
+    n = normalize(mix(aNormal, aBlanketNormal, m));
   }
   vec4 world = uModel * vec4(aPos.x, y, aPos.z, 1.0);
   vWorldPos = world.xyz;
@@ -204,17 +217,13 @@ const snowFragment = (
   vec2 snowAt = vWorldPos.xz - uSnowAnchor;
   vec2 snowGx = dFdx(snowAt / ${f(SNOW_TILE_M)}), snowGy = dFdy(snowAt / ${f(SNOW_TILE_M)});
   if (uSnowRadius.y > 0.0) {
-    vec2 e2 = min(sn.xy, 1.0 - sn.xy);
-    if (snowStep(clamp(2.0 * uSnowRadius.x * min(e2.x, e2.y) / uSnowRadius.y, 0.0, 1.0)) - 0.001 < 0.0) discard;
+    vec2 e2 = min(sn.xy, 1.0 - sn.xy) * 2.0 * uSnowRadius.x;
+    if (snowEase(min(e2.x, e2.y) / uSnowRadius.y) < 0.001) discard;
   }
-  if (uSnowInner.z < uSnowInner.w) {
-    vec2 d2 = abs(vWorldPos.xz - uSnowInner.xy);
-    if (snowStep(clamp((max(d2.x, d2.y) - uSnowInner.z) / (uSnowInner.w - uSnowInner.z), 0.0, 1.0)) - 0.00001 < 0.0) discard;
-  }
-  vec2 o2 = abs(vWorldPos.xz - uSnowOuter.xy);
-  float outer = max(o2.x, o2.y) - uSnowOuter.z;
+  if (uSnowInner.z < uSnowInner.w && snowBand(vWorldPos.xz, uSnowInner) < 0.00001) discard;
+  float past = snowPast(vWorldPos.xz, uSnowOuter);
   float span = uSnowOuter.w - uSnowOuter.z;
-  if (uSnowOuter.z < uSnowOuter.w && 0.99999 - snowStep(clamp(outer / span, 0.0, 1.0)) < 0.0) discard;
+  if (uSnowOuter.z < uSnowOuter.w && snowBand(vWorldPos.xz, uSnowOuter) > 0.99999) discard;
   // AUDIT ENVIRONS G8: the masks have one level each - read at it (textureLod), the read's place free of the discards above
   vec2 statUV = (vWorldPos.xz - uSnowStatMap.xy) * uSnowStatMap.z;
   vec4 st = textureLod(uSnowStatic, statUV, 0.0);
@@ -228,7 +237,7 @@ const snowFragment = (
   vec2 dynUV = (vWorldPos.xz - uSnowDynMap.xy) * uSnowDynMap.z;
   float remain = snowRemain(snowBounded(textureLod(uSnowDynamic, dynUV, 0.0).rg, dynUV, uSnowDynMap.w), depth);
   if (morph) {   // the ring hands its tracks to the far mask, and its depth and path to its vertices', over its outer band
-    float m = snowStep(clamp(outer / (span - 8.0), 0.0, 1.0));
+    float m = snowLanding(past, span);
     if (m > 0.0) {   // inside the band's start the hand-off is none: the far mask unread
       vec2 farUV = (vWorldPos.xz - uSnowFarMap.xy) * uSnowFarMap.z;
       float far = snowRemain(snowBounded(textureLod(uSnowFar, farUV, 0.0).rg, farUV, 1.0), sn.z);

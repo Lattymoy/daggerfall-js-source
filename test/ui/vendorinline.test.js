@@ -55,7 +55,8 @@ test('INLINE1: every vendored file under the default inline limit is refused by 
   // and the class covers every vendor FOLDER, not just the ones with art today
   const folders = readdirSync(join(root, 'vendor')).filter((n) => statSync(join(root, 'vendor', n)).isDirectory());
   for (const f of folders) assert.equal(rule(join(root, 'vendor', f, 'x.png')), false, `vendor/${f} is not covered`);
-  assert.ok(folders.length >= 20, `${folders.length} vendor folders - the enumeration this replaced named three`);
+  // PIN MOVED (OWN-WORK4): wave 3 retired 21 folders, 19 stand; the point is more than the three a list named
+  assert.ok(folders.length > 3, `${folders.length} vendor folders - the enumeration this replaced named three`);
 });
 
 test('INLINE1: outside vendor/ the default stands - the rule is the class, not "inline nothing"', () => {

@@ -73,35 +73,76 @@ export function rampAt(ramp, tone) {
 }
 
 const rgbKey = (red, green, blue) => (red << 16) | (green << 8) | blue;
-/** A palette's tables: each colour's index, each index's slot, and its light within its slot (0..1). */
+/** A cloth ramp's last steps (13-15 of 16) are near-black and alike in every ramp, so a sheet shades one garment in
+ *  another's: TEXTURE.486 darkens its teal robe's hem with the olive's. Such a pixel joins the garment nearest it. */
+export const CLOTH_TAIL_STEP = 13;
+/** How much nearer (px) the other garment must be before a near-black pixel joins it. */
+export const SHADE_MARGIN = 2;
+/** A palette's tables: each colour's index, each index's slot, its light within its slot (0..1), its light, each slot's
+ *  span of light, and whether it is a cloth ramp's near-black tail. */
 export function paletteTables(palette) {
   const index = new Map(), slot = new Uint8Array(256).fill(NONE), tone = new Float32Array(256);
-  const light = (i) => (0.299 * palette.getRed(i) + 0.587 * palette.getGreen(i) + 0.114 * palette.getBlue(i)) / 255;
-  const span = new Map();
+  const light = new Float32Array(256), tail = new Uint8Array(256), span = {};
+  for (let i = 0; i < 256; i++) light[i] = (0.299 * palette.getRed(i) + 0.587 * palette.getGreen(i) + 0.114 * palette.getBlue(i)) / 255;
   for (let i = 1; i < 255; i++) {
     const key = rgbKey(palette.getRed(i), palette.getGreen(i), palette.getBlue(i));
     if (!index.has(key)) index.set(key, i);
     slot[i] = SLOT_OF_RAMP[i >> 4] ?? NONE;
-    const [lo, hi] = span.get(slot[i]) ?? [1, 0];
-    span.set(slot[i], [Math.min(lo, light(i)), Math.max(hi, light(i))]);
+    tail[i] = (slot[i] === CLOTH || slot[i] === DRAPE) && (i & 15) >= CLOTH_TAIL_STEP ? 1 : 0;
+    const [lo, hi] = span[slot[i]] ?? [1, 0];
+    span[slot[i]] = [Math.min(lo, light[i]), Math.max(hi, light[i])];
   }
-  for (let i = 1; i < 255; i++) {
-    const [lo, hi] = span.get(slot[i]);
-    tone[i] = hi > lo ? (light(i) - lo) / (hi - lo) : 0.5;
+  for (let i = 1; i < 255; i++) tone[i] = toneIn(span[slot[i]], light[i]);
+  return { index, slot, tone, light, tail, span };
+}
+const toneIn = ([lo, hi], light) => (hi > lo ? Math.max(0, Math.min(1, (light - lo) / (hi - lo))) : 0.5);
+
+/** The near-black cloth pixels (`tail`) joined to the garment nearest them, walking through cloth and shadow: one keeps
+ *  its own ramp unless the other's lit cloth is SHADE_MARGIN nearer. In place on `mat` and `tone`. */
+function shadeByNearest(mat, tone, pal, tables, width, rows) {
+  const count = width * rows;
+  let any = false;
+  for (let i = 0; i < count && !any; i++) any = tables.tail[pal[i]] === 1;
+  if (!any) return;
+  const queue = new Int32Array(count);
+  const walk = (slot) => {
+    const dist = new Int32Array(count).fill(-1);
+    let tail = 0;
+    for (let i = 0; i < count; i++) if (mat[i] === slot && !tables.tail[pal[i]]) { dist[i] = 0; queue[tail++] = i; }
+    for (let head = 0; head < tail; head++) {
+      const i = queue[head], x = i % width, y = (i - x) / width;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy, j = ny * width + nx;
+        if (nx < 0 || ny < 0 || nx >= width || ny >= rows || dist[j] >= 0) continue;
+        if (mat[j] !== CLOTH && mat[j] !== DRAPE && mat[j] !== NONE) continue;
+        dist[j] = dist[i] + 1;
+        queue[tail++] = j;
+      }
+    }
+    return dist;
+  };
+  const near = { [CLOTH]: walk(CLOTH), [DRAPE]: walk(DRAPE) };
+  for (let i = 0; i < count; i++) {
+    if (!tables.tail[pal[i]]) continue;
+    const other = mat[i] === CLOTH ? DRAPE : CLOTH, mine = near[mat[i]][i], theirs = near[other][i];
+    if (theirs < 0 || (mine >= 0 && theirs + SHADE_MARGIN >= mine)) continue;
+    mat[i] = other;
+    tone[i] = toneIn(tables.span[other], tables.light[pal[i]]);
   }
-  return { index, slot, tone };
 }
 
 /** The frame's own regions: each pixel's slot and light, where the figure stands (`bottom`, its feet's row) and the
  *  middle of its trunk (`centreX`), and its height in pixels. */
 function regionsOf(picture, tables, height) {
   const { width, data } = picture, rows = picture.height, mat = new Uint8Array(width * rows), tone = new Float32Array(width * rows);
+  const pal = new Uint8Array(width * rows);
   for (let i = 0; i < width * rows; i++) {
     if (!data[i * 4 + 3]) continue;
-    const idx = tables.index.get(rgbKey(data[i * 4], data[i * 4 + 1], data[i * 4 + 2])) ?? 0;
+    const idx = (pal[i] = tables.index.get(rgbKey(data[i * 4], data[i * 4 + 1], data[i * 4 + 2])) ?? 0);
     mat[i] = idx ? tables.slot[idx] : NONE;
     tone[i] = idx ? tables.tone[idx] : 0;
   }
+  shadeByNearest(mat, tone, pal, tables, width, rows);
   const body = (i) => mat[i] >= CLOTH;
   let bottom = rows - 1;
   for (let y = rows - 1; y >= 0; y--) {

@@ -7,7 +7,7 @@
 import listing from './ownTexturePacks.json' with { type: 'json' };
 import { wrapsOf, recordSeed, snowMask } from './ownTextureRules.js';
 
-/** @typedef {{ rule: string, from: number[], fallback?: number[], w: number, h: number, wrap?: boolean, fromSummer?: boolean, seed: number }} OwnSpec */
+/** @typedef {{ rule: string, from: number[], fallback?: number[], w: number, h: number, wrap?: boolean, fromSummer?: boolean, road?: false | 'full' | 'flank', seed: number }} OwnSpec */
 
 /** The packs: `{ key, dir, rule, index }`, `index` in the door's own shape (dfmodTextures.js buildDfmodIndex). */
 export const OWN_TEXTURE_PACKS = Object.freeze(listing.Mods.map((m) => Object.freeze({ ...m })));
@@ -16,6 +16,8 @@ const NAME = /^(\d+)_(\d+)-(\d+)$/;
 const ARRAY = /^(\d+)-TexArray$/;
 /** Daggerfall's road (46) and its two flanks (47 by dirt, 55 by grass) in every terrain set (world/road/roadPainter.js). */
 export const ROAD_RECORDS = Object.freeze([46, 47, 55]);
+/** A record's road: the paving whole (46), a flank (47, 55), or none. */
+const roadOf = (record) => (record === ROAD_RECORDS[0] ? 'full' : ROAD_RECORDS.includes(record) ? 'flank' : false);
 /** A climate's terrain set - the ground's 56 records (002-004, 102-104, 302-304, 402-404). */
 export const isTerrainSet = (archive) => archive < 500 && [2, 3, 4].includes(archive % 100);
 /** The ground Snowless Swamps and Jungles keeps green: the swamp's summer set. Every other archive it names is a winter
@@ -35,10 +37,25 @@ function specOf(mod, archive, record, frame, w, h) {
         : { rule: 'enhance', from: [archive, record, frame], w, h, wrap: wrapsOf(archive), seed };
     case 'snowless': {
       const summer = archive === SWAMP_SUMMER ? archive : archive - 1;
-      return { rule: 'enhance', from: [summer, record, frame], w, h, wrap: wrapsOf(summer), seed: recordSeed(summer, record, frame) };
+      return {
+        rule: 'enhance',
+        from: [summer, record, frame],
+        w,
+        h,
+        wrap: wrapsOf(summer),
+        seed: recordSeed(summer, record, frame),
+      };
     }
     case 'desert':
-      return { rule: 'desert', from: [archive, record, frame], w, h, seed };
+      // a road record keeps its paving: 46 whole, its flanks (47, 55) on their paved half
+      return {
+        rule: 'desert',
+        from: [archive, record, frame],
+        w,
+        h,
+        seed,
+        ...(roadOf(record) && { road: roadOf(record) }),
+      };
     case 'snow':
       // Daggerfall's own winter record; where the player's data has none, our snow over the summer record
       return { rule: 'snow', from: [archive, record, frame], fallback: [archive - 1, record, frame], w, h, seed };

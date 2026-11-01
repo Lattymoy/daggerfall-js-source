@@ -39,6 +39,7 @@ test('OWN-WORK4 the clips are ours: every clip the pools play is made at its row
     else if (family === 'ruffle') assert.ok(Math.abs(peak(x) - level.rufflePeak) < 1e-6, c.name);
     else assert.ok(Math.abs(rms(x) - level.passageRms) < 1e-4 || Math.abs(peak(x) - level.passagePeak) < 1e-6, c.name);
     assert.ok(peak(x) <= 1, `${c.name}: never past full scale`);
+    assert.ok(Math.abs(x.reduce((a, v) => a + v, 0) / x.length) < 1e-4, `${c.name}: no DC (a gust's low body measured 2.7e-3 without its high-pass)`);
   }
   assert.deepEqual(families, { gust: 12, blowing: 3, whistling: 3, open: 3, ruffle: 6 });
   for (const name of ['wind_gust_07', 'whistling_wind_02_ultrasoft', 'leaf_ruffle_05']) {

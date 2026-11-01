@@ -14,8 +14,8 @@ const ptsOf = (T, uvs) => uvs.map(([u, v]) => T(u, v));
 
 function woodAxe() {
   const p = createPainter(64, 64);
-  const T = along(12, 60, 44, 8);
-  p.fill(stroke([T(0, 0), T(30, 0.6), T(58, 0)], 2.6, 2.2), RAMP.wood, { seed: 1, rough: 0.25 });
+  const T = along(12, 64, 44, 12); // the head's edge (u 59-61) clear of the top row
+  p.fill(stroke([T(4, 0), T(30, 0.6), T(58, 0)], 2.6, 2.2), RAMP.wood, { seed: 1, rough: 0.25 });
   p.fill(
     poly(
       ptsOf(T, [

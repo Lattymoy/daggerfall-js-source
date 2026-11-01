@@ -84,5 +84,16 @@
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ]
+  },
+  {
+    "name": "OWW-SW-a-quad-past-the-screen",
+    "file": "src/combat/shieldWidget.js",
+    "old": "if (!r || typeof paint !== 'function' || offScreen(r)) return false;",
+    "new": "if (!r || typeof paint !== 'function') return false;",
+    "tests": [
+      "test/combat/sw1_shield_widget.test.js",
+      "test/combat/spellhand.test.js"
+    ],
+    "why": "a sprite wholly past the screen's edge emits no quad"
   }
 ]

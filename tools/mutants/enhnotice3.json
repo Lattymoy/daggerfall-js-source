@@ -270,8 +270,8 @@
   {
     "name": "ENH-NOTICE3-P4-mod-compatibility-box-built-by-the-host-again",
     "file": "src/scenes/world.js",
-    "old": "      reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) });",
-    "new": "      reportModCompatibilityIssues({ showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })) });",
+    "old": "      reportModCompatibilityIssues({ showText: (lines) => messageBox(lines) }, 5);",
+    "new": "      reportModCompatibilityIssues({ showText: (lines) => townTalk.pushOverlay(new ChoiceWindow({ lines })) }, 5);",
     "tests": [
       "test/systems/notify.test.js",
       "test/systems/ba1_betterambience.test.js"

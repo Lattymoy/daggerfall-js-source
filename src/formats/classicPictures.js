@@ -60,5 +60,13 @@ export function createClassicPictures(getBytes) {
     const pal = spec.pal ?? DEFAULT_PALETTE;
     return buildDerivedPicture(spec, spec.file ? (r, f) => cifRciPicture(spec.file, r, f, pal) : (a, r, f) => picture(a, r, f, pal));
   };
-  return { picture, cifRciPicture, build };
+  /** OWN-WORK4 AUDIT: the record's frame as palette indices ({ width, height, data }), for a rule that works in the
+   *  palette's own ramps (systems/roleplayRealism/rrKeepers.js) - null where the player's data has none. */
+  async function bitmap(archive, record, frame = 0) {
+    const t = await texture(archive);
+    if (!t || !(record >= 0 && record < t.recordCount)) return null;
+    const bm = t.getDFBitmap(record, frame);
+    return bm?.width ? { width: bm.width, height: bm.height, data: bm.data } : null;
+  }
+  return { picture, cifRciPicture, build, bitmap, palette: (name = DEFAULT_PALETTE) => palette(name) };
 }

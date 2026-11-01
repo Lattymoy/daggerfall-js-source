@@ -52,8 +52,10 @@ import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js'; // BAY-LEFT-
 
 const f32 = Math.fround;
 
+/** OWN-WORK4 AUDIT: the snow's surface stands a centimetre over its bed where it lies (our value), so a thin cover never
+ *  meets the ground it lies on (render/snowfallGlsl.js SNOW_LAYER does the rest). */
+export const SNOW_SURFACE_OFFSET = f32(0.01);
 // ---- the constants the assembly carries ---------------------------------------------------------------------------
-export const SNOW_SURFACE_OFFSET = f32(0.008);
 export const SNOW_GUARD_BAND = 12; // LocalGuardBand: the window's grid reaches 12 m past the snow radius
 const TERRAIN_RETRY_SECONDS = 0.25;
 const REFILL_INTERVAL_SECONDS = 0.5;

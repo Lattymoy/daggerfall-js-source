@@ -1970,7 +1970,7 @@ mods.comeSailAway.unread.description,"Heeft geen effect: de mod gebruikt deze in
 mods.diverseWeapons.Enabled.description,"Een ander eerstepersoonsuiterlijk voor elk wapen in elk metaal, gewoon en betoverd, in plaats van één per wapensoort. Een langzwaard ziet er niet langer uit als een breedzwaard. Een nieuwere versie die je onder Je eigen texturen toevoegt, vervangt de ingebouwde."
 mods.diverseWeapons.WeaponWidgetPreset.description,"Gebruikt de eigen Weapon Widget-instellingen van Diverse Weapons zolang dit aanstaat: grotere rusthoudingen, traagheid, terugslag en een eigen deinen. Je Weapon Widget-instellingen komen terug als je dit uitzet."
 mods.dynamicSkies.Enabled.description,"Een nieuwe lucht voor de verbeterde buitenwereld, met wolkenlagen voor elk weertype, fonkelende sterren, beide manen, mistkleuren, langere zonsopgangen en zonsondergangen, en bliksem bij onweer. Uit gebruikt de eigen lucht van het spel."
-mods.dynamicSkies.MaxParticles.description,"Heeft geen effect: de mod gebruikt deze instelling nooit."
+mods.dynamicSkies.MaxParticles.description,"Meeste getekende sneeuwvlokken, in duizenden."
 mods.eyeOfTheBeholder.Animation.BillboardScale.description,"Grootte van de spelersprite."
 mods.eyeOfTheBeholder.Animation.FineBillboardScale.description,"Opgeteld bij BillboardScale, voor een fijnere afstelling."
 mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description,"Heeft geen effect: de mod gebruikt deze instelling nooit."

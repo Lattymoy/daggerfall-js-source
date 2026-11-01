@@ -33,7 +33,7 @@ import {
   checkClimateTileTables, checkBuildingClimateFloorTypeTables, CLIMATE_TILE_TABLES, BUILDING_FLOOR_TABLES,
   isSnowyClimate, isGrassyClimate, isRockyClimate, isSandyClimate, isSwampyClimate,
   IMMERSIVE_FOOTSTEPS_VENDOR, IMMERSIVE_FOOTSTEPS_MOD, FIXED_DELTA_TIME, SWIM_INTERVAL, REFRESH_SLOTS_TICKS, SOUND_CLIP_QUALITY, FLOOR_TYPE,
-  LANDING_VOLUME_SCALE, SWAY_WEIGHTS, SWAY_SLOTS, SETTING_KEYS, FOOTSTEP_SETS,
+  LANDING_VOLUME_SCALE, SWAY_WEIGHTS, SWAY_SLOTS, SETTING_KEYS, FOOTSTEP_SETS, logModException, EXCEPTION_DOING,
 } from '../../src/systems/immersiveFootsteps.js';
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED } from '../../src/systems/features.js';
@@ -129,8 +129,8 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
     'ArmorSwaySettings.ArmorSwayVolumeMulti': 'Volume of armor sounds',
     'ArmorSwaySettings.ArmorSwayFrequency': 'How often armor sounds play. Lower is more often',
     'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings': 'Warns you when another mod clashes with this one',
-    'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging': 'Has no effect here: this game keeps no error log.',
-    'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs': 'Has no effect here: this game keeps no error log.',
+    'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging': 'Logs a caught error in full, not in one line.',
+    'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs': 'Logs only the first caught error, not every one.',
   };
   let n = 0;
   const kinds = new Set();
@@ -729,4 +729,36 @@ test('IF1/BA1: the one gate - Immersive Footsteps owning the stride silences EVE
     assert.equal(classicFootstepAllowed('step1'), false,
       'Better Ambience would keep this clip; Immersive Footsteps owns the stride, so it does not play');
   } finally { undo(); undoB(); betterAmbience.classicClipKept = keep; }
+});
+
+test('OWN-WORK4 audit: the two logging keys are live - LogModException logs a caught handler\'s error in full under AllowVerboseErrorLogging and in one line otherwise, and under DoNotSpamExceptionsLogs only the first until that key is changed; a handler that throws is caught, as the mod catches it (mutants: the verbose arm ignored; the latch never set; the latch never reset)', () => {
+  const store = { ...defaults() };
+  const settings = () => readFootstepSettings(() => store);
+  const lines = [];
+  const log = { log: (l) => lines.push(['log', l]), error: (l) => lines.push(['error', l]) };
+  const boom = new Error('boom');
+  store['ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs'] = false;
+  assert.equal(logModException(boom, 1, { settings, log }), true);
+  assert.deepEqual(lines.pop(), ['log', `ImmersiveFootsteps.LogModException(${EXCEPTION_DOING[1]})`], 'one line, no stack');
+  store['ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging'] = true;
+  logModException(boom, 3, { settings, log });
+  const [kind, line] = lines.pop();
+  assert.equal(kind, 'error');
+  assert.match(line, /OnTransitionDungeonInterior\): Error: boom/, 'in full');
+  store['ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs'] = true;
+  assert.equal(logModException(boom, 2, { settings, log }), true, 'the key changed: the next is logged');
+  assert.equal(logModException(boom, 2, { settings, log }), false, 'and then no more');
+  store['ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs'] = false;
+  assert.equal(logModException(boom, 2, { settings, log }), true, 'changed again: logged again');
+  // a handler that throws is caught: a building whose materials cannot be read
+  const c = createImmersiveFootsteps({ audio: { registerSamples: () => false, playOneShot() {} }, settings, makeClip: () => null });
+  const before = lines.length;
+  const original = console.error;
+  console.error = (l) => lines.push(['error', l]);
+  try {
+    assert.doesNotThrow(() => c.onTransitionInterior({ get materials() { throw new Error('unreadable'); } }));
+  } finally {
+    console.error = original;
+  }
+  assert.equal(lines.length, before + 1, 'and logged');
 });

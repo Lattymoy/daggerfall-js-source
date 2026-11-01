@@ -1970,7 +1970,7 @@ mods.comeSailAway.unread.description,"Har ingen effekt: modden använder aldrig 
 mods.diverseWeapons.Enabled.description,"Ett eget förstapersonsutseende för varje vapen i varje metall, vanligt och förtrollat, i stället för ett per vapentyp. Ett långsvärd ser inte längre ut som ett bredsvärd. En nyare version tillagd under Dina egna texturer ersätter den inbyggda."
 mods.diverseWeapons.WeaponWidgetPreset.description,"Använder Diverse Weapons egna Weapon Widget-inställningar medan det är på: större vilolägen, tröghet, rekyl och dess egen gungning. Dina Weapon Widget-inställningar kommer tillbaka när du stänger av det här."
 mods.dynamicSkies.Enabled.description,"En ny himmel för den förbättrade utomhusmiljön, med molnlager för varje väder, tindrande stjärnor, båda månarna, dimfärger, längre soluppgångar och solnedgångar, och blixtar i oväder. Av använder spelets egen himmel."
-mods.dynamicSkies.MaxParticles.description,"Har ingen effekt: modden använder aldrig den här inställningen."
+mods.dynamicSkies.MaxParticles.description,"Flest snöflingor som ritas, i tusental."
 mods.eyeOfTheBeholder.Animation.BillboardScale.description,"Storlek på spelarspriten."
 mods.eyeOfTheBeholder.Animation.FineBillboardScale.description,"Läggs till BillboardScale, för en finare justering."
 mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description,"Har ingen effekt: modden använder aldrig den här inställningen."

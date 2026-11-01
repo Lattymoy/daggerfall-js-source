@@ -42,8 +42,8 @@
   {
     "name": "OW4-4-the-width-is-never-scaled",
     "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
-    "old": "      const across = mid + (outAcross - mid - bend * share * share) / wide;",
-    "new": "      const across = mid + (outAcross - mid - bend * share * share);",
+    "old": "      const across = mid + (Math.abs(off) <= edge * wide ? off / wide : off - Math.sign(off) * edge * (wide - 1));",
+    "new": "      const across = mid + off;",
     "tests": [
       "test/combat/weapon/ownwork4_dwart.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "OW4-5-no-blade-bends",
     "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
-    "old": "      const across = mid + (outAcross - mid - bend * share * share) / wide;",
-    "new": "      const across = mid + (outAcross - mid) / wide;",
+    "old": "      const off = outAcross - mid - bend * share * share;",
+    "new": "      const off = outAcross - mid;",
     "tests": [
       "test/combat/weapon/ownwork4_dwart.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "OW4-8-the-war-axe-keeps-both-bits",
     "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
-    "old": "  const keepFrom = -0.1 * axis.len;",
-    "new": "  const keepFrom = -1e9;",
+    "old": "&& acrossOf(x, y) < -keep) out[y * w + x] = 0;",
+    "new": "&& acrossOf(x, y) < -Infinity) out[y * w + x] = 0;",
     "tests": [
       "test/combat/weapon/ownwork4_dwart.test.js"
     ],
@@ -212,5 +212,65 @@
       "test/combat/weapon/nobethesda3_dwdaggers.test.js"
     ],
     "why": "a blade seen end on has no length to shape: coloured only"
+  },
+  {
+    "name": "OW4-21-a-glow-is-scaled-with-the-blade",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "      const across = mid + (Math.abs(off) <= edge * wide ? off / wide : off - Math.sign(off) * edge * (wide - 1));",
+    "new": "      const across = mid + off / wide;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "what hugs a widened blade moves out whole, so a thin line keeps its pixels together"
+  },
+  {
+    "name": "OW4-22-the-axe-bit-read-off-the-screen",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "  if (toX * dirX + toY * dirY < 0) [dirX, dirY] = [-dirX, -dirY];",
+    "new": "  if (dirY > 0) [dirX, dirY] = [-dirX, -dirY];",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the bit is the haft's right read base to head, so an axe upside down keeps the same one"
+  },
+  {
+    "name": "OW4-23-an-end-on-haft-read-as-lying",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "  if (endOn) [dirX, dirY] = [-head.axisY, head.axisX];",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a stub of haft across the head's foot stands square to the wings' line"
+  },
+  {
+    "name": "OW4-24-a-glow-taken-for-haft",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "(rgb[i][0] > rgb[i][2] + 24 && rgb[i][0] >= rgb[i][1] && rgb[i][0] < 235)",
+    "new": "true",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the haft is its wood, never an enchantment's glow"
+  },
+  {
+    "name": "OW4-25-a-stranded-pixel-stays",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "if (neighbours(idx, w, height, from[pixel]) >= 3) drop.push(pixel);",
+    "new": "if (neighbours(idx, w, height, from[pixel]) >= 99) drop.push(pixel);",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a piece of a line the nearest-pixel map broke goes"
+  },
+  {
+    "name": "OW4-26-a-lone-spark-goes",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "if (neighbours(idx, w, height, from[pixel]) >= 3) drop.push(pixel);",
+    "new": "drop.push(pixel);",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a spark alone in the source stays alone"
   }
 ]

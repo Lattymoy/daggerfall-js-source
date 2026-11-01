@@ -1,0 +1,83 @@
+[
+  {
+    "name": "OWN4-flash-chance-unread",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "    if (!playerPos || !(this.rng() < FLASH_LOOK.chance)) return false;",
+    "new": "    if (!playerPos) return false;",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-flash-tail-a-step",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "      : Math.exp(-(t - FLASH_LOOK.rise) / FLASH_LOOK.decay);",
+    "new": "      : 1;",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-flash-strokes-not-fainter",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "      peak *= this._range(FLASH_LOOK.fade);",
+    "new": "      peak *= 1;",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-flash-strike-overhead",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "      offset: [Math.cos(bearing) * away, this._range(FLASH_LOOK.height), Math.sin(bearing) * away],",
+    "new": "      offset: [0 * bearing * away, this._range(FLASH_LOOK.height), 0],",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-flash-sky-unflashed",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "  const strike = scale3(FLASH_LOOK.color, Math.max(0, flash) * FLASH_LOOK.sky);",
+    "new": "  const strike = scale3(FLASH_LOOK.color, 0 * flash * FLASH_LOOK.sky);",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-flash-clouds-unflashed",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "hour.light), scale3(strike, 2)),",
+    "new": "hour.light), scale3(strike, 0)),",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-flash-level-unhanded",
+    "file": "src/systems/dynamicSkies/dynamicSkiesRuntime.js",
+    "old": "      flash: this.lightningLight ? this.lightningFlash.level : 0,",
+    "new": "      flash: 0,",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-high-sliver-unfaded",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "    cloudHigh: cloud('high', 0.3 * (1 - cover), 0.55 * smooth(0.07, 0.16, 0.3 * (1 - cover))),",
+    "new": "    cloudHigh: cloud('high', 0.3 * (1 - cover), 0.55),",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-pixel-snow-count-unread",
+    "file": "src/render/precipitation.js",
+    "old": "    const most = Math.min(LAB_COUNTS.snow, this.pixelSnow.maxParticles ?? LAB_COUNTS.snow);",
+    "new": "    const most = LAB_COUNTS.snow;",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  }
+]

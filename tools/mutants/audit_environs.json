@@ -137,7 +137,7 @@
   {
     "name": "AUDIT-ENVIRONS-G2-no-layer",
     "file": "src/render/snowfallGlsl.js",
-    "old": "export const SNOW_LAYER = Object.freeze({ factor: -0.25, units: -0.25 });",
+    "old": "export const SNOW_LAYER = Object.freeze({ factor: -0.5, units: -1 });",
     "new": "export const SNOW_LAYER = Object.freeze({ factor: 0, units: 0 });",
     "tests": [
       "test/render/snowfall1_runtime.test.js",

@@ -12,6 +12,7 @@ import { SnowCoverage, SNOWFALL_BUILT_IN, roadCorners } from '../../src/systems/
 import { SnowfallRuntime, MID, BLANKET, FAR, SNOW_GUARD_BAND, SNOW_FRAME_BUDGET_MS } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowfallNetwork, settlementsIn, snowPixelBox, authoredTiles, newSnowfallSaveData, SNOWFALL_COMMAND, snowfallOn } from '../../src/scenes/snowfallHost.js';
 import { SNOW_VS, snowTerrainFs, SNOW_ATTR, SNOW_UNITS } from '../../src/render/snowfallGlsl.js';
+import { glslFunctions } from '../glsl.mjs';   // OWN-WORK4 AUDIT: the vertex law run as written
 import { EL_LANE } from '../../src/render/enhancedLighting.js';
 import { classicShadowLane } from '../../src/render/classicShadowLane.js';
 import { setModSetting, modSetting } from '../../src/systems/modSettings.js';
@@ -382,9 +383,9 @@ test('SNOWFALL1 the renderer\'s snow draw: the installed set\'s snow program, th
   const binds = log.slice(log.findIndex((c) => c[0] === 'activeTexture' && c[1] === glEnum('TEXTURE0') + 16)).filter((c) => c[0] === 'bindTexture').slice(0, 5).map((c) => c[2].id);
   assert.deepEqual(binds, ['d', 's', 'c', 'f', 'a'], 'dynamic, static, context, far, albedo');
   const order = log.map((c) => c[0] === 'enable' || c[0] === 'disable' ? `${c[0]}:${[...ids].find(([, v]) => v === c[1])?.[0]}` : c[0] === 'polygonOffset' ? `offset:${c[1]},${c[2]}` : c[0] === 'drawElements' ? 'draw' : null).filter(Boolean);
-  // AUDIT ENVIRONS: the pass's own Offset -0.25, -0.25 (SNOW_LAYER) round the draw and nothing else switched - its back
-  // faces culled as the ground's are (no Cull statement: Unity's Back; the grids wind as the ground's)
-  assert.deepEqual(order.slice(0, 4), ['enable:POLYGON_OFFSET_FILL', 'offset:-0.25,-0.25', 'draw', 'disable:POLYGON_OFFSET_FILL'], 'a quarter step over the ground, the offset handed back');
+  // AUDIT ENVIRONS: the snow's own offset (SNOW_LAYER) round the draw and nothing else switched - its back faces culled
+  // as the ground's are; PIN MOVED (OWN-WORK4 AUDIT): our -0.5, -1 in place of the retired shader's -0.25, -0.25
+  assert.deepEqual(order.slice(0, 4), ['enable:POLYGON_OFFSET_FILL', 'offset:-0.5,-1', 'draw', 'disable:POLYGON_OFFSET_FILL'], 'a step over the ground, the offset handed back');
   assert.ok(!order.includes('disable:CULL_FACE'), 'the cull left on');
   const generic = calls('vertexAttrib4f');
   assert.deepEqual(generic.map((c) => c.slice(1)), [[SNOW_ATTR.ctxA, -1, 0, 0, 0], [SNOW_ATTR.ctxA, 0, 0, 0, 1]], 'the local window\'s Excluded context, and 0,0,0,1 again after it');
@@ -414,4 +415,28 @@ test('SNOWFALL1 the ground the snow reads: a pixel\'s normal from its samples al
   const bump = new Float32Array(4); bump[3] = 1;   // one quad, its (1,1) corner raised
   assert.equal(gridValueAt(bump, 2, 2, 1, 0.75, 0.25), 0.25, 'below the diagonal: the (1,0) half');
   assert.equal(gridValueAt(bump, 2, 2, 1, 0.25, 0.75), 0.25, 'above it: the (0,1) half');
+});
+
+test('OWN-WORK4 AUDIT the vertex law, ours (bible/03-World/Snowfall.md): a track narrower than the grid\'s step kept by the deepest press across the vertex\'s cell; a sharper track deeper at its centre and higher at its shoulders; a body leaves the setting\'s depth; the tiers\' edges eased flat at both ends; the ring on the blanket three quarters into its band (mutants: the cell\'s press one tap; the track unsharpened; the body\'s depth unread; the landing at the band\'s end)', () => {
+  // a track mask 8 texels across, pressed (red 0) along one column only - x = 3
+  const mask = (uv) => (Math.floor(uv[0] * 8) === 3 ? [0, 1, 0, 1] : [1, 1, 0, 1]);
+  const fns = glslFunctions(SNOW_VS, {
+    uSnowDynTexel: [1 / 8, 1 / 8, 8, 8], uSnowDynMap: [0, 0, 1, 0], uSnowLimits: [0, 0.8, 0.4, 0.1], uSnowFlags: [1, 0, 0, 0],
+    textureLod: (_s, uv) => mask(uv),
+  });
+  assert.equal(fns.snowPressed([4.5 / 8, 0.5])[0], 0, 'a vertex a texel off the track still stands in it');
+  assert.equal(fns.snowPressed([5.5 / 8, 0.5])[0], 1, 'two texels off, the snow whole');
+  assert.equal(fns.snowDynAt([4.5 / 8, 0.5])[0], 1, 'one tap alone would lose it');
+  assert.match(SNOW_VS, /vec2 dyn = uSnowFlags\.x >= 0\.5 \? snowPressed\(dynUV\) : snowDynAt\(dynUV\);/, 'the window and the ring read the cell\'s press');
+  // the profile: stored as is at 0, eased at 1 - the centre deeper, the shoulders higher
+  const remain = (r, sharp, depth = 0.4, body = 1) => { fns.globals.uSnowFlags = [1, 0, 0, sharp]; return fns.snowRemain([r, body], depth); };
+  assert.ok(Math.abs(remain(0.3, 0) - 0.3) < 1e-9 && Math.abs(remain(0.8, 0) - 0.8) < 1e-9, 'the stored profile');
+  assert.ok(remain(0.3, 1) < 0.3 && remain(0.8, 1) > 0.8, 'sharper: deeper in, higher out');
+  assert.ok(Math.abs(remain(1, 1, 0.4, 0) - 0.25) < 1e-9, 'a body leaves 0.1 m of 0.4 m');
+  // our ease: flat at both ends, a half at the middle
+  assert.deepEqual([fns.snowEase(0), fns.snowEase(0.5), fns.snowEase(1), fns.snowEase(2)], [0, 0.5, 1, 1]);
+  assert.ok(fns.snowEase(0.02) < 0.001 && fns.snowEase(0.98) > 0.999, 'no crease at either end');
+  // the ring's landing: done three quarters into a 24 m band, half way at 9 m
+  assert.equal(fns.snowLanding(18, 24), 1);
+  assert.ok(Math.abs(fns.snowLanding(9, 24) - 0.5) < 1e-9);
 });

@@ -149,6 +149,21 @@ test('CSA-F / OWN-WORK4: InitializeWaveTextures finds thirty-two frames (112395_
   assert.deepEqual(wavePaint(1).data, wavePaint(1).data, 'painted the same every time');
 });
 
+test('OWN-AUDIT: the frames alternate the two paints, so both lay the same fronts - the faces row for row - and only the crests\' teeth trade places (mutants: a paint\'s fronts moved, the teeth alike)', () => {
+  const [a, b] = [wavePaint(0), wavePaint(1)];
+  const isKey = (d, i) => d[i] === 255 && d[i + 1] === 0 && d[i + 2] === 255 && d[i + 3] === 255;
+  let faces = 0, faceDiffer = 0, crestDiffer = 0;
+  for (let i = 0; i < a.data.length; i += 4) {
+    const faceA = a.data[i + 3] === 255 && !isKey(a.data, i), faceB = b.data[i + 3] === 255 && !isKey(b.data, i);
+    if (faceA) faces++;
+    if (faceA !== faceB) faceDiffer++;
+    if (isKey(a.data, i) !== isKey(b.data, i)) crestDiffer++;
+  }
+  assert.ok(faces > 0);
+  assert.equal(faceDiffer, 0, 'the same faces: a front never jumps from frame to frame');
+  assert.ok(crestDiffer > WAVE_SIZE, `the crests churn (${crestDiffer} texels differ)`);
+});
+
 test('CSA-F: LoadSettings\' numbers - the frame time reads Speed in whole hundreds (the integer division, kept): under 100 a quarter second, 100-199 an eighth, 200 none; the dither ends at half the Length and starts at the Fade\'s share of that', () => {
   assert.equal(waveFrameTimeOf(0), 0.25);
   assert.equal(waveFrameTimeOf(99), 0.25);

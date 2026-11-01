@@ -34,6 +34,14 @@ The laws, the switch and the settings are unchanged. `ownsounds.test.js` holds t
 `if1_immersivefootsteps.test.js` the settings and tables as literals. Git history holds the vendored copy (commit
 `cc44705af`); the provenance is `01-Overview/Own-Work.md`'s.
 
+**OWN-WORK4 sound audit (2026-11-01).** Measured beside DAGGER.SND, the clips stood 20 dB over Daggerfall's own
+stride, and the mod plays a landing at 4, so a hard fall reached +10.6 dBFS and the limiter held the whole mix down. Each clip is now set by its loudness (K-weighted, its loudest 100 ms: `audio/synth/dsp.js`
+`loudnessOf`), not its peak: a step at -32, the top of the stride's -32.5 to -39.8 heard at 0.7; a sway at -38; a
+landing at -33 and a hurt one at -28 before the mod's 4. Each clip sits within 1.5 dB of its kind, from its seed. The
+hard floors' thud held 92 to 96% of their power under 300 Hz, where Daggerfall's own steps hold 47 to 78%; a heel's
+knock now stands over it. The two logging keys log to the console, as the mod's LogModException did. Pins:
+`ownsounds.test.js`, `if1_immersivefootsteps.test.js`.
+
 ## The source the port reads
 
 Unlike Handheld Torches, Ambient Text and Eye Of The Beholder, this

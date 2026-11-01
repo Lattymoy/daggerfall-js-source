@@ -1970,7 +1970,7 @@ mods.comeSailAway.unread.description,"Δεν έχει καμία επίδρασ�
 mods.diverseWeapons.Enabled.description,"Διαφορετική εμφάνιση πρώτου προσώπου για κάθε όπλο σε κάθε μέταλλο, απλό και μαγεμένο, αντί για μία ανά είδος όπλου. Ένα μακρύ ξίφος δεν μοιάζει πια με πλατύ σπαθί. Μια νεότερη έκδοση που προστίθεται στις Δικές σας υφές αντικαθιστά την ενσωματωμένη."
 mods.diverseWeapons.WeaponWidgetPreset.description,"Όσο είναι ενεργό, χρησιμοποιεί τις δικές του ρυθμίσεις Weapon Widget του Diverse Weapons: μεγαλύτερες στάσεις αδράνειας, αδράνεια, ανάκρουση και τη δική του ταλάντευση. Οι δικές σας ρυθμίσεις Weapon Widget επιστρέφουν όταν το απενεργοποιήσετε."
 mods.dynamicSkies.Enabled.description,"Ένας νέος ουρανός για τους βελτιωμένους εξωτερικούς χώρους, με στρώματα νεφών για κάθε καιρό, αστέρια που τρεμοπαίζουν, τα δύο φεγγάρια, χρώματα ομίχλης, μεγαλύτερες ανατολές και δύσεις, και αστραπές στις καταιγίδες. Το Ανενεργό χρησιμοποιεί τον ουρανό του ίδιου του παιχνιδιού."
-mods.dynamicSkies.MaxParticles.description,"Δεν έχει καμία επίδραση: το mod δεν χρησιμοποιεί ποτέ αυτή τη ρύθμιση."
+mods.dynamicSkies.MaxParticles.description,"Οι περισσότερες νιφάδες χιονιού που σχεδιάζονται, σε χιλιάδες."
 mods.eyeOfTheBeholder.Animation.BillboardScale.description,"Μέγεθος του sprite του παίκτη."
 mods.eyeOfTheBeholder.Animation.FineBillboardScale.description,"Προστίθεται στο BillboardScale, για πιο λεπτή ρύθμιση."
 mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description,"Δεν έχει καμία επίδραση: το mod δεν χρησιμοποιεί ποτέ αυτή τη ρύθμιση."

@@ -327,9 +327,9 @@ test('ENH-NOTICE3 B: every migrated host seam names the KIND and mints no window
   assert.match(src('src/scenes/shared.js'),
     /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null \} = \{\}\)/);
   // Immersive Footsteps' compatibility warning is the same box, at
-  // both of DFU's own raises (OnStartGame and OnLoad).
+  // both of DFU's own raises (OnStartGame and OnLoad), each with LogModException's errorType (6 and 5).
   const w = hostText('src/scenes/world.js');
-  assert.equal((w.match(/reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}\)/g) ?? []).length, 2);
+  assert.equal((w.match(/reportModCompatibilityIssues\(\{ showText: \(lines\) => messageBox\(lines\) \}, [56]\)/g) ?? []).length, 2);
   // and DaggerfallAction's ShowText carries its null previousWindow
   // THROUGH the door rather than minting a box to hold it.
   assert.match(src('src/scenes/dungeonContext.js'), /messageBox\(lines, \{ previousWindow: false \}\);/);

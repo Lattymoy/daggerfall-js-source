@@ -175,6 +175,19 @@ test('SW1: the gate ladder - Hide hides, Off-screen still draws while it leaves,
   assert.equal(eye.widget.drawRect(), null);
 });
 
+test('OWN-WORK4 AUDIT: a sprite wholly past the screen\'s edge is answered by drawRect and painted by nobody - the Off-screen pose at rest emits no quad', () => {
+  const off = rig({ 'Shield.WhenSheathed': SHIELD_POSE.OffScreen });
+  settle(off.widget, { sheathed: true });
+  assert.ok(off.widget.drawRect(), 'the gate ladder still says it draws');
+  const painted = [];
+  assert.equal(off.widget.draw((...a) => painted.push(a)), false);
+  assert.deepEqual(painted, [], 'and no quad is painted');
+  const ready = rig({ 'Shield.WhenSheathed': SHIELD_POSE.Ready });
+  settle(ready.widget, { sheathed: true });
+  assert.equal(ready.widget.draw((...a) => painted.push(a)), true);
+  assert.equal(painted.length, 1, 'a shield on screen is painted');
+});
+
 test('SW1: with the Animation module a leaving sprite still draws, because `animating` holds it on screen', () => {
   // the raise plays on an AWAY pose: Hide and Ready call SetGuard, which
   // at frame 0 has nothing to animate, and the sprite simply stops being

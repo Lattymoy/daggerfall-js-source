@@ -300,6 +300,7 @@ export function reshapeBlade(idx, w, height, blade) {
   const { midX, midY, axisX, axisY, normX, normY, lo, len, centre, half } = axis;
   const own = blade.only ? withAura(idx, w, height, axis) : null;
   const out = own ? idx.map((i, pixel) => (own[pixel] ? 0 : i)) : new Uint8Array(idx.length);
+  const from = new Int32Array(idx.length).fill(-1);
   const stretch = blade.length ?? 1,
     wide = blade.width ?? 1,
     bend = (blade.curve ?? 0) * len;
@@ -311,9 +312,13 @@ export function reshapeBlade(idx, w, height, blade) {
         outAcross = dx * normX + dy * normY;
       const along = outAlong < lo ? outAlong : lo + (outAlong - lo) / stretch;
       const share = Math.max(0, (along - lo) / len),
-        mid = centre(along);
-      const across = mid + (outAcross - mid - bend * share * share) / wide;
-      const rel = (across - mid) / Math.max(0.75, half(along));
+        mid = centre(along),
+        edge = Math.max(0.75, half(along));
+      // the blade is widened; past its new edge what hugs it (a guard's prong, a glow) moves out with it whole, so a
+      // thin line keeps its pixels together
+      const off = outAcross - mid - bend * share * share;
+      const across = mid + (Math.abs(off) <= edge * wide ? off / wide : off - Math.sign(off) * edge * (wide - 1));
+      const rel = (across - mid) / edge;
       if (blade.tip === 'chisel' && share > 0.8 + 0.1 * (1 - rel)) continue;
       const srcX = Math.round(midX + along * axisX + across * normX),
         srcY = Math.round(midY + along * axisY + across * normY);
@@ -321,28 +326,79 @@ export function reshapeBlade(idx, w, height, blade) {
       if (own && (!own[srcY * w + srcX] || out[y * w + x])) continue; // the hand stays Daggerfall's
       const i = idx[srcY * w + srcX];
       out[y * w + x] = i;
+      from[y * w + x] = srcY * w + srcX;
       if (blade.fuller && isMetal(i) && share > 0.05 && share < 0.78 && Math.abs(rel) < 0.2) fuller[y * w + x] = 1;
     }
   }
-  return { idx: out, fuller };
+  return { idx: unspeckle(out, from, idx, w, height), fuller };
 }
 
-/** One bit of a double axe: the metal on the head's left of its socket goes (the head's long axis, read rightward). */
-export function singleBit(idx, w, height) {
-  const axis = bladeAxis(idx, w, height);
-  const out = Uint8Array.from(idx);
-  if (!axis) return out;
-  // the head's long axis is the wings' line: the first principal axis, turned to read left to right
-  const flip = axis.axisX < 0 || (axis.axisX === 0 && axis.axisY < 0) ? -1 : 1;
-  const keepFrom = -0.1 * axis.len;
-  for (let y = 0; y < height; y++)
-    for (let x = 0; x < w; x++) {
-      const pixel = y * w + x;
-      if (isMetal(idx[pixel]) && flip * ((x - axis.midX) * axis.axisX + (y - axis.midY) * axis.axisY) < keepFrom)
-        out[pixel] = 0;
-    }
+/** The drawn 8-neighbours of `pixel` in `idx`. */
+function neighbours(idx, w, height, pixel) {
+  const x = pixel % w,
+    y = (pixel - x) / w;
+  let n = 0;
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++)
+      if ((dx || dy) && x + dx >= 0 && y + dy >= 0 && x + dx < w && y + dy < height && idx[(y + dy) * w + x + dx]) n++;
+  return n;
+}
+
+/** A moved pixel left alone (one neighbour or none) whose source sat among three or more is a piece of a thin line the
+ *  nearest-pixel map broke: it goes. A spark alone in the source stays. */
+export function unspeckle(out, from, idx, w, height) {
+  const drop = [];
+  for (let pixel = 0; pixel < out.length; pixel++)
+    if (out[pixel] && from[pixel] >= 0 && neighbours(out, w, height, pixel) <= 1)
+      if (neighbours(idx, w, height, from[pixel]) >= 3) drop.push(pixel);
+  for (const pixel of drop) out[pixel] = 0;
   return out;
 }
+
+/** One bit of a double axe: the wing on the haft's left goes, its outline and glow with it; the socket, the spike and
+ *  the haft stay. The haft gives the side, so a swing keeps the same bit from frame to frame; a haft seen end on stands
+ *  upright. With `palette` the haft is its wood (warm and not bright), never an enchantment's glow. */
+export function singleBit(idx, w, height, palette = null) {
+  const out = Uint8Array.from(idx);
+  const rgb = palette && rgbOf(palette);
+  const isWood = (i) => !rgb || (rgb[i][0] > rgb[i][2] + 24 && rgb[i][0] >= rgb[i][1] && rgb[i][0] < 235);
+  const metal = [],
+    wood = [];
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < w; x++) {
+      const i = idx[y * w + x];
+      if (isMetal(i)) metal.push(x, y);
+      else if (i && i !== MASK && isWood(i)) wood.push(x, y);
+    }
+  if (metal.length / 2 < MIN_BLADE) return out;
+  const head = principal(metal),
+    haft = wood.length / 2 >= MIN_BLADE ? principal(wood) : null;
+  const [woodX, woodY] = haft ? [haft.midX, haft.midY] : [head.midX, head.midY];
+  let [dirX, dirY] = haft && haft.elongation >= MIN_ELONGATION ? [haft.axisX, haft.axisY] : [0, -1];
+  // a stub of haft across the head's foot is the haft seen end on: the socket stands square to the wings' line
+  const toX = head.midX - woodX,
+    toY = head.midY - woodY,
+    endOn = Math.abs(toX * dirX + toY * dirY) < 0.5 * Math.hypot(toX, toY);
+  if (endOn) [dirX, dirY] = [-head.axisY, head.axisX];
+  if (toX * dirX + toY * dirY < 0) [dirX, dirY] = [-dirX, -dirY];
+  const alongOf = (x, y) => (x - woodX) * dirX + (y - woodY) * dirY,
+    acrossOf = (x, y) => (woodX - x) * dirY + (y - woodY) * dirX; // right of the haft, read base to head
+  // the socket's half width: the haft's own, measured, and half again (more round a stub the frame's edge cuts)
+  const spread = [];
+  for (let i = 0; i < wood.length; i += 2) spread.push(Math.abs(acrossOf(wood[i], wood[i + 1])));
+  spread.sort((a, b) => a - b);
+  const haftHalf = Math.max(1, spread.length ? spread[Math.floor(spread.length * 0.8)] : 1);
+  const keep = SOCKET * (endOn ? 1.5 : 1) * haftHalf + 1;
+  let headFrom = Infinity;
+  for (let i = 0; i < metal.length; i += 2) headFrom = Math.min(headFrom, alongOf(metal[i], metal[i + 1]));
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < w; x++)
+      if (out[y * w + x] && alongOf(x, y) >= headFrom - GLOW && acrossOf(x, y) < -keep) out[y * w + x] = 0;
+  return out;
+}
+/** The socket's half width in the haft's, and how far an enchantment's glow reaches past the metal. */
+const SOCKET = 1.6;
+const GLOW = 8;
 
 /** A staff's metal rings: the shaft's drawn pixels whose distance from the tip falls in a band (in shaft widths). */
 export function staffBands(idx, w, height, bands) {
@@ -437,7 +493,7 @@ export function paintFrame(bitmap, palette, lookName, metal) {
     fuller = null,
     rings = null;
   if (look.blade) ({ idx, fuller } = reshapeBlade(idx, w, height, look.blade));
-  if (look.head === 'single') idx = singleBit(idx, w, height);
+  if (look.head === 'single') idx = singleBit(idx, w, height, palette);
   if (look.bands) rings = staffBands(idx, w, height, look.bands);
   const ramp = METAL_RAMPS[look.ramp ?? metal] ?? METAL_RAMPS.Steel;
   return colour(idx, w, height, palette, metalLut(palette, ramp), ramp, { fuller, rings });

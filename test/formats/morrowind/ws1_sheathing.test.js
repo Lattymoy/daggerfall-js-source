@@ -285,8 +285,8 @@ test('WS1: an empty weapon node takes the base mesh under the node\'s own transf
   const holster = r.parts.find((p) => p.slot === 'holster');
   assert.equal(holster.bytes, SWORD); assert.equal(holster.bare, true); assert.equal(holster.inheritOffsetFrom, 'sheath');
   assert.ok(holster.preTransform && holster.preTransform.a.length === 9);
-  // the mouth is the end of the guard's slice: the widest of the grip's half (16 slices of the 36-unit sword, 2.25 each)
-  assert.ok(near(holster.preTransform.t[1], -0.75, 1e-4), `the guard at the scabbard's mouth (${holster.preTransform.t[1]})`);
+  // the mouth is the guard's own top (OWN-WORK4 AUDIT: read in fine slices, never the end of a coarse one)
+  assert.ok(near(holster.preTransform.t[1], -0.8, 1e-4), `the guard at the scabbard's mouth (${holster.preTransform.t[1]})`);
   assert.equal(r.info.weaponNodeEmpty, true);
 });
 
@@ -333,6 +333,12 @@ test('WS1: the whole assembly - our addon in, the scabbard and the holster place
   // an addon that will not parse is a note, not a refusal
   const arm3 = await assembleFirstPersonArm({ skeletonBytes: RETAIL_SKELETON_BYTES, parts: sword.parts, boneSources: [...addon, { name: 'bad.nif', bytes: new Uint8Array([1, 2]) }] });
   assert.ok(arm3.ok, 'a bad addon is not a refusal'); assert.match(arm3.notes.find((n) => n.startsWith('bones: bad.nif')), /bad\.nif/);
+  // OWN-WORK4 AUDIT: the player's own scabbard, its weapon node full - the sheath binds without that node, the holster
+  // with it alone (ours keeps the node empty, so only this case can see the binder's subtree)
+  const players = resolveHolsterParts({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponModel: 'w\\w_iron_longsword.nif', weaponBytes: SWORD, find: playersFind({ players: true }), hasBone: hasAll, parseNif, ...ours });
+  const arm4 = await assembleFirstPersonArm({ skeletonBytes: RETAIL_SKELETON_BYTES, parts: players.parts, boneSources: addon });
+  assert.ok(arm4.ok, `the player's scabbard: ${arm4.error}`);
+  assert.deepEqual(['sheath', 'holster'].map((slot) => arm4.pieces.filter((p) => p.slot === slot).length), [1, 2], 'the sheath\'s one shape, the weapon node\'s two');
 });
 
 test('OWN-WORK4: our scabbards, one kind a weapon kind - each sized to its own weapon, the file law kept (a sheath node, an EMPTY weapon node, a quiver\'s ammo slots); the mod\'s folder is gone', () => {
@@ -360,6 +366,27 @@ test('OWN-WORK4: our scabbards, one kind a weapon kind - each sized to its own w
   assert.deepEqual([ext.lo[1], ext.hi[1]], [-6, 30]);
   assert.equal(ownScabbardBytes({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponBytes: new Uint8Array([1, 2, 3]) }), null, 'a mesh that will not read takes none');
   assert.equal(existsSync(new URL('vendor/weapon-sheathing', root)), false, 'no file of the mod is carried');
+});
+
+test('OWN-WORK4 AUDIT: a sheath holds its blade - its mouth on the guard\'s top, as wide as the blade and not the guard, and no blade corner through its narrowing tip (mutants: the guard\'s width; the old taper)', () => {
+  for (const mesh of [{}, { grip: 4, guard: 2, blade: 14 }, { grip: 14, guard: 6, blade: 62, width: 1.8 }, { grip: 8, guard: 4, blade: 42 }]) {
+    const weapon = weaponMesh(mesh), blade = mesh.width ?? 1.2, guardTop = 0.8;
+    const nif = parseNif(ownScabbardBytes({ mwType: MW_WEAPON_TYPE.LongBladeOneHand, weaponBytes: weapon }));
+    const mouth = -findNodeByName(nif, SHEATH_WEAPON_NODE).rec.translation[1];
+    const sheath = flattenNif(nif)[0].positions;
+    let top = -Infinity, half = 0;
+    for (let i = 0; i < sheath.length; i += 3) { top = Math.max(top, sheath[i + 1]); half = Math.max(half, Math.abs(sheath[i])); }
+    assert.ok(mouth >= guardTop && mouth < guardTop + 1.5, `${JSON.stringify(mesh)}: the mouth on the guard's top (${mouth})`);
+    assert.ok(half < blade + 0.5, `${JSON.stringify(mesh)}: the blade's width, not the guard's (${half})`);
+    // the sheath's half width at a height: its own corners at either end, between them a straight taper
+    const ends = [0, top].map((y) => { let x = 0; for (let i = 0; i < sheath.length; i += 3) if (near(sheath[i + 1], y)) x = Math.max(x, Math.abs(sheath[i])); return x; });
+    const pts = flattenNif(parseNif(weapon))[0].positions;
+    for (let i = 0; i < pts.length; i += 3) {
+      const y = pts[i + 1] - mouth;
+      if (y <= 0) continue;
+      assert.ok(y < top && Math.abs(pts[i]) <= ends[0] + (ends[1] - ends[0]) * (y / top) + 1e-6, `${JSON.stringify(mesh)}: the blade inside at ${y.toFixed(1)}`);
+    }
+  }
 });
 
 test('WS1: the archive duck and its canonical paths; the bone-source listing; the loose store keys animations/', async () => {

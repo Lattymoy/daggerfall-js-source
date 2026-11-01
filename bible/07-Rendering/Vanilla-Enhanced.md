@@ -23,6 +23,12 @@ texels), our grain and a gentle grade; Masked Roads the same, the paving's own s
 winter its summer record. The build runs in the pack's worker and is kept a while. The card credits DFO Online.
 Pins: `test/systems/ownwork4_textures.test.js`, `tools/mutants/ownwork4_textures.json`.
 
+**OWN-WORK4 AUDIT (2026-11-01).** Every name the three mods carried is built but eight of the Base's 1,246: the
+textures of RMB Resource Pack's rock meshes (`Woodland_3-0`, `Desert_3-0` and six more). The port draws no such mesh.
+Its stand-in boulders wear the climate's rock record (`world/townStandIns.js` RMBRP_ROCKS), which the Base dresses. A
+terrain set of 56 records at 256 takes about 0.8 s of building on a loaded machine, shared by the pack's two workers.
+The 21.3 MB of pictures is no longer served.
+
 ## What the mod is, and why it needed an exception
 
 Five manifests stand in its tree:

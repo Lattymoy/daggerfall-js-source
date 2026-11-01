@@ -40,6 +40,13 @@ still plays five. The six modules, their switches and their settings are unchang
 holds the shipped settings as literals and `ownsounds.test.js` the clips. Git history holds the vendored copy (commit
 `cc44705af`); the provenance is `01-Overview/Own-Work.md`'s.
 
+**OWN-WORK4 sound audit (2026-11-01).** The clips were made at 0.9 of full scale, so each list, heard at its own
+volume times 0.7, stood 2 to 17 dB over Daggerfall's stride on the same ground. Each clip is now set by its loudness
+(`audio/synth/dsp.js` `loudnessOf`), so its list plays it at -33 (the boards, the flags, the grass), -30 (the water)
+and -38 (the armour's clank, under its step), within 1.5 dB from its seed. The boards and the flags carry a knock over
+their thud, as Daggerfall's own do. Better Rain's two keys still change nothing: the mod tuned Unity's rain and snow
+particles, and our precipitation is its own. Pins: `ownsounds.test.js`.
+
 ## The compatibility brief, and the two departures
 
 Immersive Footsteps (IF1) and this mod both take the player's stride:

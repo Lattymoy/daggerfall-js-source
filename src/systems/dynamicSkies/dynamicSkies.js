@@ -26,6 +26,10 @@ export function linearToSrgb(channel) {
   return channel <= 0.0031308 ? channel * 12.92 : 1.055 * Math.pow(channel, 1 / 2.4) - 0.055;
 }
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const smooth = (a, b, x) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
 const mix = (a, b, share) => a + (b - a) * share;
 const mix3 = (a, b, share) => [mix(a[0], b[0], share), mix(a[1], b[1], share), mix(a[2], b[2], share)];
 const scale3 = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
@@ -107,8 +111,8 @@ const HOURS_LINEAR = SKY_HOURS.map((a) => ({
 
 /** THE WEATHER: one number, its cover c, and the grey its sky turns. The rule (`weatherRow`, `skyFrame`): the sky's
  *  colours mix toward the grey by c^1.5 and darken by 0.35 c^2; the sun, the moons and the stars show (1 - c^2)^2;
- *  the low cloud layer covers c, the high one 0.3 (1 - c). Snow's grey is pale, a storm's slate, the sandstorm
- *  ochre and the ashfall a warm brown, so a province's own weather wears its own sky. */
+ *  the low cloud layer covers c, the high one 0.3 (1 - c), fading out from 0.16 to 0.07. Snow's grey is pale, a storm's
+ *  slate, the sandstorm ochre and the ashfall a warm brown, so a province's own weather wears its own sky. */
 export const WEATHER_LOOK = Object.freeze({
   sunny: Object.freeze({ cover: 0.1, grey: '#a4aeb8' }),
   cloudy: Object.freeze({ cover: 0.45, grey: '#a4aeb8' }),
@@ -263,7 +267,7 @@ const wrap = (value) => value - Math.floor(value);
 /**
  * One frame of the sky, in the shape the pass and the bridge read.
  * @param {object} f { minuteOfDay, classicMinutes, row (weatherRow, eased), season (SEASONS), seconds,
- *   weatherScale, phases (phasesAt), lightCurve }
+ *   weatherScale, phases (phasesAt), lightCurve, flash (the storm's flash now, LightningFlash's level) }
  */
 export function skyFrame({
   minuteOfDay,
@@ -274,8 +278,10 @@ export function skyFrame({
   weatherScale = 1,
   phases = null,
   lightCurve = DYNAMIC_LIGHT_CURVE,
+  flash = 0,
 }) {
   const sunDir = sunLightDirection(minuteOfDay);
+  const strike = scale3(FLASH_LOOK.color, Math.max(0, flash) * FLASH_LOOK.sky); // the storm's flash in the sky's colours
   const height = sunDir[1];
   const hour = hourAt(height);
   const cover = row.cover;
@@ -284,18 +290,22 @@ export function skyFrame({
   const show = weatherShow(cover);
   const leanBy = SEASON_LEAN[season] ?? {};
   const greyNow = scale3(row.grey, Math.max(hour.light, 0.04));
-  const zenith = scale3(mix3(lean(hour.zenith, leanBy.zenith, hour.light), scale3(greyNow, 0.85), greyMix), dark);
-  const horizon = scale3(mix3(lean(hour.horizon, leanBy.horizon, hour.light), greyNow, greyMix), dark);
+  const zenith = add3(
+    scale3(mix3(lean(hour.zenith, leanBy.zenith, hour.light), scale3(greyNow, 0.85), greyMix), dark),
+    strike,
+  );
+  const horizon = add3(scale3(mix3(lean(hour.horizon, leanBy.horizon, hour.light), greyNow, greyMix), dark), strike);
   const glow = scale3(hour.glow, hour.glowAmount * (1 - 0.7 * greyMix));
   const lowSun = 1 - clamp01(height / 0.3);
   const lit = mix3(hexLinear(CLOUD_LOOK.white), row.grey, cover * 0.8);
+  // the clouds take the flash whole - the storm's own deck is what it lights
   const cloudLit = add3(
-    scale3(mix3(lit, hour.sun, 0.55 * lowSun * (height > -0.05 ? 1 : 0)), hour.light),
+    add3(scale3(mix3(lit, hour.sun, 0.55 * lowSun * (height > -0.05 ? 1 : 0)), hour.light), scale3(strike, 2)),
     hexLinear(CLOUD_LOOK.nightLit),
   );
   const cloudShade = add3(
     add3(scale3(row.grey, (0.5 + 0.2 * (1 - cover)) * hour.light), scale3(horizon, 0.15)),
-    hexLinear(CLOUD_LOOK.nightShade),
+    add3(hexLinear(CLOUD_LOOK.nightShade), scale3(strike, 1.5)),
   );
   const fractions = phases ?? phasesAt(classicMinutes);
   const moon = (name) => {
@@ -336,7 +346,8 @@ export function skyFrame({
     masser: moon('masser'),
     secunda: moon('secunda'),
     cloudLow: cloud('low', cover, 0.6 + 0.4 * cover),
-    cloudHigh: cloud('high', 0.3 * (1 - cover), 0.55),
+    // a sliver of a high layer cut through a deck reads as scratches: it fades out from 16% of the sky to 7%
+    cloudHigh: cloud('high', 0.3 * (1 - cover), 0.55 * smooth(0.07, 0.16, 0.3 * (1 - cover))),
     cloudOffset: [...drift('high'), ...drift('low')],
     cloudLit,
     cloudShade,
@@ -456,124 +467,121 @@ export function sunLightColor(minuteOfDay, lightCurve = DYNAMIC_LIGHT_CURVE, wea
 export const seasonAt = (classicMinutes) => seasonValue(dateFromClassicMinutes(classicMinutes));
 
 /** The most real time one frame's clock carries into the flash below: a hitch past it is spread over the frames
- *  that follow (the routine's 0.2 s and 0.1 s steps would otherwise retire in one frame). */
+ *  that follow, so a flash's strokes are never all spent in one frame. */
 export const MAX_DELTA_SECONDS = 1 / 3;
 
 // ── The storm's flash ──────────────────────────────────────────────
 
-/** LightningFlash: a point light over the player when a storm's clap rolls under 0.5, a third of those a double
- *  flash; each flash a colour of 0.8..1 a channel, an intensity of 0.5..1.5, a range of 500..1000, over the player
- *  by (-10..10, 20..40, -10..10). Still the retired mod's own routine (LightningFlash.cs, Dynamic Skies 2.3.4):
- *  code, not art - OWN-WORK4 replaced the sky, not this. */
+/** THE STORM'S FLASH, OURS (OWN-WORK4 AUDIT, 2026-11-01). A storm's clap is seen as well as heard at `chance`. A flash
+ *  is a few return strokes - one to four, mostly one or two - each a quick rise and a falling tail, `gap` apart, each
+ *  fainter than the last. Its light is a cold point light at the strike, `away` from the player and `height` up, so
+ *  the land is lit from one side; the sky and its clouds take `sky` of it (skyFrame's `flash`). */
+export const FLASH_LOOK = Object.freeze({
+  chance: 0.65,
+  rise: 0.012,
+  decay: 0.07,
+  gap: Object.freeze([0.05, 0.12]),
+  fade: Object.freeze([0.55, 0.85]),
+  peak: Object.freeze([1.2, 2.2]),
+  color: Object.freeze([0.8, 0.86, 1]),
+  range: Object.freeze([600, 900]),
+  away: Object.freeze([40, 160]),
+  height: Object.freeze([60, 120]),
+  sky: 0.35,
+});
+/** Where a stroke's tail is spent: under 2% of its peak. */
+const STROKE_END = FLASH_LOOK.rise + FLASH_LOOK.decay * Math.log(50);
+/** A stroke's light at `t` seconds from its start, 0..1: a linear rise, then an exponential fall. */
+export const strokeLevel = (t) =>
+  t < 0 || t > STROKE_END
+    ? 0
+    : t < FLASH_LOOK.rise
+      ? t / FLASH_LOOK.rise
+      : Math.exp(-(t - FLASH_LOOK.rise) / FLASH_LOOK.decay);
+
 export class LightningFlash {
-  constructor(rng = Math.random, { flashDuration = 0.2, timeScale = 1 } = {}) {
+  constructor(rng = Math.random) {
     this.rng = rng;
-    this.flashDuration = flashDuration; // BLBSkybox.Start sets 0.2 (Dynamic Skies 2.3.4)
-    this.timeScale = timeScale;
-    this.light = { x: 0, y: 0, z: 0, range: 0, color: [1, 1, 1], intensity: 0 };
-    this.enabled = false;
+    /** the flashes in flight: { t (s since the first stroke; null until its first frame), strokes: [[start, peak]],
+     *  offset: the strike from the player, range } */
     this._routines = [];
+    this.level = 0;
   }
 
-  _range(min, max) {
+  _range([min, max]) {
     return min + this.rng() * (max - min);
   }
 
-  /** StartFlash(). `playerPos` is the position at the roll; FlashOnce
-   *  reads `playerTransform.position` LIVE at each flash, so a
-   *  double flash's second half follows the player - `tick` takes the
-   *  frame's position and each entry prefers it (MODS AUDIT: the port
-   *  froze the roll's copy for both halves). */
+  /** A storm's clap: a flash at `chance`, its strokes and its strike drawn now. Answers whether it flashes. */
   startFlash(playerPos) {
-    if (!playerPos) return false;
-    if (this.rng() < 0.5 / this.timeScale) {
-      if (this.rng() < 0.33 / this.timeScale) {
-        const half = (this.flashDuration * this.timeScale) / 2;
-        this._routines.push({
-          t: 0,
-          steps: [
-            ['on', half],
-            ['gap', 0.1 * this.timeScale],
-            ['on', half],
-          ],
-          step: -1,
-          playerPos: [...playerPos],
-        });
-      } else {
-        this._routines.push({
-          t: 0,
-          steps: [['on', this.flashDuration * this.timeScale]],
-          step: -1,
-          playerPos: [...playerPos],
-        });
-      }
-      return true;
+    if (!playerPos || !(this.rng() < FLASH_LOOK.chance)) return false;
+    const count = 1 + Math.floor(this.rng() ** 2 * 4);
+    const strokes = [];
+    let at = 0,
+      peak = this._range(FLASH_LOOK.peak);
+    for (let k = 0; k < count; k++) {
+      strokes.push([at, peak]);
+      at += this._range(FLASH_LOOK.gap);
+      peak *= this._range(FLASH_LOOK.fade);
     }
-    return false;
+    const bearing = this.rng() * 2 * Math.PI,
+      away = this._range(FLASH_LOOK.away);
+    this._routines.push({
+      t: null,
+      strokes,
+      offset: [Math.cos(bearing) * away, this._range(FLASH_LOOK.height), Math.sin(bearing) * away],
+      range: this._range(FLASH_LOOK.range),
+      origin: [...playerPos],
+    });
+    return true;
   }
 
-  _flashOnce(playerPos) {
-    const l = this.light;
-    l.color = [this._range(0.8, 1), this._range(0.8, 1), this._range(0.8, 1)];
-    l.intensity = this._range(0.5, 1.5);
-    l.range = this._range(500, 1000);
-    l.x = playerPos[0] + this._range(-10, 10);
-    l.y = playerPos[1] + this._range(20, 40);
-    l.z = playerPos[2] + this._range(-10, 10);
-    this.enabled = true;
+  /** A flash's light at its own clock: its strongest stroke's. */
+  _levelOf(r) {
+    let level = 0;
+    for (const [start, peak] of r.strokes) level = Math.max(level, peak * strokeLevel(r.t - start));
+    return level;
   }
 
-  /** Advance the routines by a frame. Returns the light for the point-
-   *  light channel ({x, y, z, range, color = colour x intensity}) while
-   *  it is on, else null. */
+  /** Advance by a frame. A flash's first frame is its first stroke's peak, whatever the frame's dt. Answers the light
+   *  for the point-light channel ({x, y, z, range, color}) while one is lit, else null; `level` is its strength for
+   *  the sky. The strike rides with the player (`playerPos`, live), so the floating origin carries it. */
   tick(dt, playerPos = null) {
-    this._livePos = playerPos;
+    let best = null,
+      level = 0;
     for (const r of this._routines) {
-      // The frame that starts a routine turns the light on and is NOT
-      // charged against the duration: Unity's `yield return new
-      // WaitForSeconds(duration)` starts counting at the yield and cannot
-      // resume before the next frame, so a flash is always rendered for
-      // at least one frame (the DS1 review: a hitch frame's dt used to
-      // switch the light on and off inside one call - no flash at all).
-      if (r.step === -1) {
-        r.step = 0;
-        r.t = 0;
-        this._enter(r);
-        continue;
-      }
-      r.t += dt;
-      while (r.step < r.steps.length && r.t >= r.steps[r.step][1]) {
-        r.t -= r.steps[r.step][1];
-        if (r.steps[r.step][0] === 'on') this.enabled = false; // "Turn off the light"
-        r.step++;
-        if (r.step < r.steps.length) this._enter(r);
+      r.t = r.t === null ? FLASH_LOOK.rise : r.t + Math.max(0, dt);
+      const l = this._levelOf(r);
+      if (l > level) {
+        level = l;
+        best = r;
       }
     }
-    this._routines = this._routines.filter((r) => r.step < r.steps.length);
-    if (!this.enabled) return null;
-    const l = this.light;
+    this._routines = this._routines.filter((r) => r.t <= r.strokes[r.strokes.length - 1][0] + STROKE_END);
+    this.level = level;
+    if (!best || level <= 0) return null;
+    const at = playerPos ?? best.origin,
+      o = best.offset,
+      c = FLASH_LOOK.color;
     return {
-      x: l.x,
-      y: l.y,
-      z: l.z,
-      range: l.range,
-      color: [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity],
+      x: at[0] + o[0],
+      y: at[1] + o[1],
+      z: at[2] + o[2],
+      range: best.range,
+      color: [c[0] * level, c[1] * level, c[2] * level],
     };
   }
 
-  _enter(r) {
-    if (r.steps[r.step][0] === 'on') this._flashOnce(this._livePos ?? r.playerPos);
-  }
-
-  /** The door's teardown: every routine stopped and the light off. */
+  /** The door's teardown: every flash stopped and the light off. */
   stopAll() {
     this._routines.length = 0;
-    this.enabled = false;
+    this.level = 0;
   }
 }
 
 /** The pixel snow's numbers from its sliders: a flake's size is the slider over 100,000 of the view (a fraction,
- *  as the snow's pass takes it); the count is the slider in thousands, and the pass does not read it. */
+ *  as the snow's pass takes it); the count is the slider in thousands, the most flakes the pass draws (OWN-WORK4: the
+ *  retired mod logged it and never applied it). */
 export function pixelSnowSettings({ MinParticleSize = 100, MaxParticleSize = 300, MaxParticles = 20 } = {}) {
   return {
     minParticleSize: MinParticleSize / 100000,
