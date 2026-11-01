@@ -23,7 +23,7 @@
   {
     "name": "CACHE-PROOF-a-held-cache-called-unproved",
     "file": "server-account/src/aurumCache.js",
-    "old": "return { error: held ? 'cache-taken' : 'cache-proof' };",
+    "old": "return held ? { error: 'cache-taken', until } : { error: 'cache-proof' };",
     "new": "return { error: 'cache-proof' };",
     "tests": ["test/server/aurum_cache_service.test.js"]
   },
