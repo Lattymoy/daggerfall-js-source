@@ -243,7 +243,8 @@ test('FOLIOS in Collections: a folio\'s item is had from its page, in its folio,
   const e = { kind: 'title', key: 'tremorborn', ...wardrobeEntry('title', 'tremorborn') }, at = passItemsIn('s1').find((it) => it.grant === 'title:tremorborn');
   assert.equal(e.how(), `On page ${['I', 'II', 'III'][at.panel]} of The Brass Folio, for ${at.aurum} Aurum. Open the Folios in the shop, the gem on the pause screen.`);
   assert.match(wardrobeEntry('glyph', 'gearcrown').how(), /^On page II of The Gilded Folio, for \d+ Aurum, once that folio is unlocked\./);
-  assert.equal(wardrobeAvail(e, Date.UTC(2026, 10, 1)), 'dormant', 'before the season: not yet');
+  assert.equal(wardrobeAvail(e, Date.UTC(2026, 9, 31)), 'dormant', 'before the folios open: not yet');
+  assert.equal(wardrobeAvail(e, Date.UTC(2026, 10, 1)), 'pass', 'open before the season\'s world');
   assert.equal(wardrobeAvail(e, NOW), 'pass');
   assert.equal(wardrobeAvail(e, Date.UTC(2027, 5, 1)), 'pass', 'long after the season: still sold');
   assert.equal(availLine(e, NOW), 'Bought with Aurum from the Folios. They never close, and those who buy it keep it.');

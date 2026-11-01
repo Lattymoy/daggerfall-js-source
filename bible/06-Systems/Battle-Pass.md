@@ -11,7 +11,8 @@ tremors and Brass Fissures. The player reads "folio" and "page"; the code keeps 
 
 **The season** (`PASS_SEASONS`). Season One runs from 10 November 2026 (UTC) for sixty days in three stages of twenty:
 I. The Tremor, II. The Brass Halls, III. The Heart Wakes. The season's days bound its world and its challenges. Its
-tracks stay on sale for good (`passTracksOpen`), and finds never stop.
+tracks open on their own day (`tracksFromMs`), 1 November for Season One, before its world. Then they stay on sale for
+good (`passTracksOpen`). Finds start with the season and never stop.
 
 **The tracks** (`PASS_PANELS`). The free track is every registered account's. The premium track opens once for
 `PASS_PREMIUM_AURUM` (1,000 Aurum). Each item is bought once for its own Aurum. A page (panel) opens when its own track
