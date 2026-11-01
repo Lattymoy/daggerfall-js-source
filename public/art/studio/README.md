@@ -15,6 +15,7 @@ public/art/studio/
   trashBattery/      trashBattery's pictures
   Redclaw/           Redclaw's pictures
   maya/              maya's pictures
+  forge/             the sprite forge's renders (tools/sprite-forge) - made by its tool, not by hand
 ```
 
 Your folder is made by your first picture. On GitHub's upload page, open `public/art/studio/`, drag in a folder named

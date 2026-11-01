@@ -42,7 +42,8 @@ mod.
   over the mods' vendored art, and on the ground (`src/systems/dfmodTextures.js` `dfmodGroundLayers` lays its records
   into the tile set). It draws with Replace Game Artwork off and on Classic: it is the game's own art.
 - A player's own loose texture pack still answers first. The spectral archives take no replacement.
-- An artist's picture is worn as drawn; the palette look laid on pictures painted from numbers is not laid on it.
+- An artist's picture is worn as drawn; the palette look laid on pictures painted from numbers is not laid on it. The
+  sprite forge's renders (`forge/`) are snapped to the palette with no grain (`07-Rendering/Sprite-Forge.md`).
 
 ### The painted doors
 
@@ -69,8 +70,8 @@ data, so nothing draws them as templates.
 
 ## Rules
 
-- The studio exists for the team's own 2D art (Mac). The roster holds trashBattery and Redclaw (Mac) and maya (the
-  owner).
+- The studio exists for the team's own 2D art (Mac). The roster holds trashBattery and Redclaw (Mac), maya (the
+  owner) and the sprite forge (Mac).
 - The studio's pictures are claimed as the port's own, not as a render of game data; Port-Doctrine stands unchanged. By
   committing a picture, an artist says it is their own drawing with no pixel of ARENA2's.
 - `test/tooling/doctrine.test.js` reads the folder by the studio's own membership rule: a served picture is ours, and

@@ -41,7 +41,8 @@ look too.
 
 Where the studio has a drawn picture for a record, the studio's picture is worn as drawn and the look is not laid on.
 The ships and hangings reach it through the vendor tier. The other doors ask `src/systems/studioArt/studioArt.js`
-`wearPainted` before they paint.
+`wearPainted` before they paint. The sprite forge's renders are snapped with no grain (`dfLook` at grain 0;
+`07-Rendering/Sprite-Forge.md`).
 
 ### Windows
 

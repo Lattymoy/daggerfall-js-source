@@ -27,6 +27,7 @@ import { getBool } from './settings/settings.js';
 import { toColor32 } from '../formats/color32Order.js'; // ROAD-H H4: the one door a decoded PNG crosses into the port's texel convention
 import { dyeToken } from '../characters/dyes.js'; // DW3: GetName's dye arm - the key carries the dye a caller asks with
 import { isTouchDevice } from '../ui/touch/touchDevice.js'; // IOS-BUDGET: a touch browser that keeps deviceMemory to itself is an iOS tab
+import { dfLook } from '../world/dfLook.js'; // a picture rendered from numbers wears the player's palette
 
 /** TextureReplacement.cs:39-47, in declaration order. Albedo is the
  *  default and carries NO suffix, which is why it leads. */
@@ -232,6 +233,7 @@ export function addVendorTextures(entries) {
       yields: e.yields === true,
       offset: e.offset ?? null,
       studio: e.studio === true,
+      look: e.look === true, // a render, not a drawing (the sprite forge's): snapped to the player's palette as decoded
       under: null,
       readOnly: e.readOnly === true,
       cutout: e.cutout === true,
@@ -884,7 +886,9 @@ async function pictureColor32(entry, decode) {
   }
   const bytes = await (entry.load ?? _load)(entry.fileName);
   if (!bytes || !bytes.byteLength) return null;
-  return toColor32(await decode(bytes));
+  const picture = await decode(bytes);
+  // `look`: a render (the sprite forge's) is snapped to the player's palette as a classic sprite was; no grain
+  return toColor32(entry.look ? dfLook(picture, 0, 0) : picture);
 }
 
 /** The browser decode. Injectable because node has none of this, and

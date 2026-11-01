@@ -1,0 +1,237 @@
+"""The medium fighter's keyed poses: walk (4), attack (6), hurt (1), idle (1) and bow (4) frames, as the classic
+class sprites' records hold them. One animation serves all five views; the view only turns the body.
+
+Rotations are degrees about the joint's rest axes (+X left, +Y back, +Z up): a thigh or arm swings forward on -X,
+a knee bends on +X, an elbow on -X, the trunk leans forward on +X; a left limb spreads out on -Y, a right on +Y.
+Points given in body space are in the root's frame: the ground under the body, facing -Y."""
+from mathutils import Matrix, Vector
+
+from rig import Pose, solve_arm
+
+SOLE = [Vector((0, 0.04, -0.085)), Vector((0, -0.13, -0.08)), Vector((0, -0.19, -0.075))]
+FIST = 0.075   # wrist to the middle of a closed fist
+
+
+def frame_matrix(origin, z_dir, x_dir):
+    z = Vector(z_dir).normalized()
+    x = Vector(x_dir)
+    x = (x - x.project(z)).normalized()
+    y = z.cross(x)
+    m = Matrix((x, y, z)).transposed().to_4x4()
+    m.translation = Vector(origin)
+    return m
+
+
+def root_matrix(pose):
+    return pose.world()['root']
+
+
+def grounded(pose):
+    """Lower or lift the root so the lowest sole point touches the ground."""
+    W = pose.world()
+    low = min((W[f'foot_{s}'] @ p).z for s in 'LR' for p in SOLE)
+    pose.root_loc.z -= low
+    return pose
+
+
+def grip(pose, side, at, haft, pole, knuckles=None):
+    """Close the `side` fist around a haft at body-space point `at` running along `haft`: the arm solved to it, the
+    elbow toward `pole`. The fist's long axis is the forearm's line squared to the haft, or `knuckles` if given."""
+    R = root_matrix(pose)
+    rot = R.to_3x3()
+    at_w = R @ Vector(at)
+    haft_w = (rot @ Vector(haft)).normalized()
+    W = pose.world()
+    shoulder = W[f'uarm_{side}'].translation
+    k = (rot @ Vector(knuckles)) if knuckles is not None else (at_w - shoulder)
+    k = (k - k.project(haft_w)).normalized()
+    wrist = at_w - k * FIST
+    solve_arm(pose, side, wrist, rot @ Vector(pole), hand_dir=k, hand_up=haft_w.cross(k))
+    return at_w, haft_w
+
+
+def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), pole_l=(1, 0.3, -0.5),
+           knuckles_r=None, knuckles_l=None):
+    """The axe held by its haft at `grip_at` (right fist), the head along `haft`, blades along `blade_up`; with
+    `left_at` (a distance up the haft) the left fist holds it too."""
+    at_w, haft_w = grip(pose, 'R', grip_at, haft, pole_r, knuckles_r)
+    if left_at is not None:
+        hv = Vector(haft).normalized()
+        grip(pose, 'L', Vector(grip_at) + hv * left_at, haft, pole_l, knuckles_l)
+    rot = root_matrix(pose).to_3x3()
+    return frame_matrix(at_w, haft_w, rot @ Vector(blade_up))
+
+
+def stance(rot, yaw, extra=None):
+    p = Pose(dict(rot), yaw=yaw)
+    if extra:
+        for j, r in extra.items():
+            p.rot[j] = r
+    grounded(p)
+    return p
+
+
+def idle(frame, view, yaw):
+    p = stance({
+        'pelvis': (0, 0, 10), 'spine': (4, 0, -4), 'chest': (2, 0, -4), 'neck': (6, 0, 0), 'head': (-8, 0, 0),
+        'thigh_R': (-15, 14, 14), 'shin_R': (8, 0, 0), 'foot_R': (8, 0, -8),
+        'thigh_L': (25, -2, -10), 'shin_L': (16, 0, 0), 'foot_L': (4, 0, 8),
+        'clav_L': (0, -6, 0), 'uarm_L': (4, -12, 0), 'farm_L': (-12, 0, 8),
+        'clav_R': (0, 6, 0),
+    }, yaw)
+    axe = axe_at(p, (-0.26, -0.22, 0.86), (-0.18, -1.0, 0.13), (-0.7, 0.1, 0.7), pole_r=(-1, 0.6, -0.3))
+    return p, {'axe': axe}
+
+
+# walk: contact, passing, contact, passing - the left leg leads on frame 0
+WALK_LEGS = [
+    {'thigh_L': (-24, -5, -6), 'shin_L': (6, 0, 0), 'foot_L': (-6, 0, 6),
+     'thigh_R': (20, 5, 6), 'shin_R': (22, 0, 0), 'foot_R': (10, 0, -6)},
+    {'thigh_L': (-4, -5, -6), 'shin_L': (4, 0, 0), 'foot_L': (2, 0, 6),
+     'thigh_R': (-14, 5, 6), 'shin_R': (48, 0, 0), 'foot_R': (-6, 0, -6)},
+]
+
+
+def _mirror_legs(legs):
+    out = {}
+    for j, (x, y, z) in legs.items():
+        out[j.replace('_L', '_X').replace('_R', '_L').replace('_X', '_R')] = (x, -y, -z)
+    return out
+
+
+def walk(frame, view, yaw):
+    legs = WALK_LEGS[frame % 2] if frame < 2 else _mirror_legs(WALK_LEGS[frame % 2])
+    lead_left = frame in (0, 1)
+    swing = (16 if frame == 0 else -16 if frame == 2 else 0)
+    p = stance({
+        'pelvis': (0, 0, -5 if lead_left else 5), 'spine': (8, 0, 0), 'chest': (3, 0, 3 if lead_left else -3),
+        'neck': (6, 0, 0), 'head': (-8, 0, 0),
+        'clav_L': (0, -6, 0), 'uarm_L': (swing, -15, 0), 'farm_L': (-16, 0, 8), 'clav_R': (0, 6, 0),
+        **legs}, yaw)
+    bob = (0.0, 0.015, 0.0, 0.015)[frame]
+    axe = axe_at(p, (-0.31, -0.10, 0.86 + bob), (-0.10, -1.0, 0.02), (-0.7, 0.1, 0.7))
+    return p, {'axe': axe}
+
+
+# The attack, keyed per view as the classic records draw it: the body turns differently in each view (its back to
+# the viewer at the wind-up from the side), so one motion turned five ways cannot match them. A key is
+# (turn, fist, axe head, depth, crouch, lean, blades): the turn in degrees past the view's angle; the right fist and
+# the axe head's centre as the viewer sees them (metres right and up from the ground under the body); how far the
+# head sits away from the viewer (+) or toward them (-) when the axe is foreshortened; and blades 'face' (seen flat)
+# or 'edge'.
+AXE_REACH = 0.62   # grip to the axe head's centre
+ATTACK = {
+    0: [(0, (-0.22, 1.70), (0.05, 2.02), 1, 0.0, -4, 'face'),
+        (0, (-0.12, 1.76), (-0.05, 2.14), 1, 0.0, -4, 'face'),
+        (-15, (-0.30, 1.10), (-0.95, 1.42), 0, 0.04, 8, 'face'),
+        (-30, (0.05, 1.08), (0.05, 0.55), -1, 0.12, 20, 'edge'),
+        (-20, (0.50, 0.84), (0.56, 1.32), -1, 0.08, 14, 'face'),
+        (0, (0.18, 1.66), (0.36, 2.02), 1, 0.0, -4, 'face')],
+    1: [(0, (-0.50, 1.80), (0.14, 2.06), 0, 0.0, -4, 'face'),
+        (0, (-0.58, 1.66), (-0.14, 2.12), 1, 0.0, -4, 'face'),
+        (0, (-0.60, 1.18), (-1.04, 1.40), -1, 0.04, 8, 'face'),
+        (0, (-0.20, 0.82), (-0.69, 1.18), -1, 0.12, 18, 'edge'),
+        (20, (0.34, 0.92), (0.66, 1.30), -1, 0.08, 12, 'face'),
+        (0, (-0.06, 1.74), (0.34, 2.08), 1, 0.0, -4, 'face')],
+    2: [(-90, (-0.26, 1.74), (0.30, 2.00), 0, 0.0, -4, 'face'),
+        (-90, (-0.32, 1.62), (0.18, 2.02), 0, 0.0, -4, 'face'),
+        (0, (-0.56, 1.28), (-0.80, 1.36), -1, 0.04, 8, 'face'),
+        (30, (-0.42, 0.88), (-0.86, 1.18), 0, 0.12, 18, 'edge'),
+        (80, (-0.18, 0.76), (0.40, 1.28), -1, 0.08, 12, 'face'),
+        (-60, (-0.26, 1.70), (0.24, 1.98), 0, 0.0, -4, 'face')],
+    3: [(-45, (0.16, 1.72), (0.21, 2.0), 1, 0.0, -4, 'face'),
+        (-45, (0.13, 1.68), (0.30, 1.98), 1, 0.0, -4, 'face'),
+        (45, (0.10, 1.36), (0.45, 1.40), 1, 0.04, 8, 'edge'),
+        (45, (-0.34, 0.86), (-0.68, 1.20), -1, 0.12, 14, 'face'),
+        (45, (-0.55, 0.86), (-0.65, 0.80), 1, 0.12, 18, 'edge'),
+        (0, (-0.40, 1.68), (-0.19, 1.98), 1, 0.0, -4, 'face')],
+    4: [(0, (0.24, 1.66), (-0.08, 2.03), 1, 0.0, -4, 'face'),
+        (0, (0.34, 1.74), (0.30, 2.08), 1, 0.0, -4, 'face'),
+        (0, (0.21, 1.28), (0.84, 1.48), 1, 0.04, 8, 'edge'),
+        (0, (0.0, 0.92), (0.05, 0.85), 1, 0.12, 20, 'edge'),
+        (20, (-0.44, 0.88), (-0.60, 1.22), 1, 0.08, 12, 'face'),
+        (0, (-0.32, 1.80), (-0.44, 2.06), 1, 0.0, -4, 'face')],
+}
+
+
+def attack(frame, view, yaw):
+    turn, fist, head, depth, crouch, lean, blades = ATTACK[view][frame]
+    bend = crouch * 220
+    p = stance({
+        'pelvis': (0, 0, 0), 'spine': (lean * 0.5, 0, 0), 'chest': (lean * 0.5, 0, 0), 'neck': (4, 0, 0),
+        'head': (-6 - lean * 0.4, 0, 0),
+        'thigh_L': (-14 - bend * 0.5, -14, -14), 'shin_L': (10 + bend, 0, 0), 'foot_L': (4 - bend * 0.5, 0, 10),
+        'thigh_R': (16 - bend * 0.5, 14, 12), 'shin_R': (12 + bend, 0, 0), 'foot_R': (2 - bend * 0.5, 0, -8),
+    }, yaw + turn)
+    # screen to body space: the root turned by the yaw; the fist sits a little in front of the trunk
+    R = root_matrix(p)
+    to_body = R.inverted().to_3x3()
+    fwd = R.to_3x3() @ Vector((0, -1, 0))
+    fist_w = Vector((fist[0], 0, fist[1])) + Vector((fwd.x, fwd.y, 0)) * 0.28
+    span = Vector((head[0] - fist[0], 0, head[1] - fist[1]))
+    lift = max(AXE_REACH ** 2 - span.length_squared, 0.0) ** 0.5
+    haft_w = (span + Vector((0, lift * depth, 0))).normalized()
+    if blades == 'face':
+        blade_w = haft_w.cross(Vector((0, 1, 0)))
+        if blade_w.length < 1e-3:
+            blade_w = Vector((1, 0, 0))
+    else:
+        blade_w = Vector((0, 1, 0))
+    axe = axe_at(p, R.inverted() @ fist_w, to_body @ haft_w, to_body @ blade_w, left_at=0.20)
+    return p, {'axe': axe}
+
+
+def hurt(frame, view, yaw):
+    """Knocked back: thrown onto the left leg, the right knee kicked up, the free arm flung out, the axe high."""
+    p = stance({
+        'pelvis': (-10, 0, 0), 'spine': (-14, 0, 4), 'chest': (-12, 0, 4), 'neck': (-8, 0, 0), 'head': (-18, 0, 0),
+        'thigh_R': (-68, 10, 10), 'shin_R': (66, 0, 0), 'foot_R': (-16, 0, -6),
+        'thigh_L': (14, -8, -8), 'shin_L': (12, 0, 0), 'foot_L': (2, 0, 6),
+        'clav_L': (0, -10, 0), 'uarm_L': (-45, -58, 0), 'farm_L': (-20, 0, 0),
+        'clav_R': (0, 12, 0),
+    }, yaw)
+    axe = axe_at(p, (-0.30, 0.06, 1.42), (-0.30, 0.3, 1.0), (1, 0, 0.3), pole_r=(-1, 0.4, -0.4))
+    return p, {'axe': axe}
+
+
+# The bow: full draw, held, loose, lowered. The archer stands side-on to the shot, the bow arm out along the body's
+# left (+X) toward the target, in every view. Keys: (left fist, bow's up direction, draw in metres, arrow nocked)
+BOW_KEYS = [
+    ((0.66, -0.04, 1.47), (0.0, 0.0, 1.0), 0.58, True),
+    ((0.67, -0.04, 1.48), (0.04, 0.0, 1.0), 0.60, True),
+    ((0.60, -0.10, 1.34), (0.35, 0.0, 1.0), 0.02, False),
+    ((0.36, -0.22, 1.02), (0.8, 0.0, 0.6), 0.0, False),
+]
+BOW_TURN = -90   # the body's front a quarter turn right of the shot
+
+
+def bow(frame, view, yaw):
+    at, up, draw, nocked = BOW_KEYS[frame]
+    p = stance({
+        'pelvis': (0, 0, 0), 'spine': (2, 0, 0), 'chest': (0, 0, 0),
+        'neck': (4, 0, 30), 'head': (-6, 0, 30),
+        'thigh_L': (-16, -12, -10), 'shin_L': (8, 0, 0), 'foot_L': (6, 0, 14),
+        'thigh_R': (18, 12, 8), 'shin_R': (12, 0, 0), 'foot_R': (2, 0, -8),
+        'clav_R': (0, 4, 0),
+    }, yaw + BOW_TURN)
+    R = root_matrix(p)
+    rot = R.to_3x3()
+    at_w, up_w = grip(p, 'L', at, up, (0.2, 1, -0.6), knuckles=(1, 0, 0))
+    bow_m = frame_matrix(at_w, up_w, rot @ Vector((0, 1, 0)))
+    gear = {'bow': bow_m}
+    string_rest = bow_m @ Vector((0, 0.11, 0))
+    back = (rot @ Vector((-1, 0, 0))).normalized()
+    nock = string_rest + back * draw
+    gear['nock'] = nock
+    if nocked:
+        gear['arrow'] = nock - back * 0.80
+    hand = R.inverted() @ (nock + back * 0.03)
+    grip(p, 'R', hand, (0, 0, 1), (-1, 0.4, 0.5), knuckles=(1, 0, 0))
+    return p, gear
+
+
+ANIMS = {'idle': idle, 'walk': walk, 'attack': attack, 'hurt': hurt, 'bow': bow}
+
+
+def pose_for(anim, frame, view, yaw):
+    return ANIMS[anim](frame, view, yaw)

@@ -79,6 +79,11 @@ export function studioEntries(files) {
   return [...byKey.values()];
 }
 
+/** The sprite forge's folder (tools/sprite-forge): its pictures are renders, snapped to the player's palette as worn. */
+export const FORGE_FOLDER = 'forge';
+/** Whether a studio path is one of the forge's renders. */
+export const isForgeRender = (path) => String(path).split('/')[0] === FORGE_FOLDER;
+
 /** A studio path's served URL. */
 export const studioUrl = (path, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
   new URL(`${STUDIO_DIR}/${String(path).split('/').map(encodeURIComponent).join('/')}`, root).href;
@@ -126,7 +131,7 @@ async function register({ fetch = (u) => globalThis.fetch(u), root = undefined, 
   const bytes = async (path) => { const r = await fetch(studioUrl(path, root)); return r?.ok ? new Uint8Array(await r.arrayBuffer()) : null; };
   const n = addVendorTextures(_worn.map((e) => ({
     archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,
-    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path),
+    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path), look: isForgeRender(e.path),
   })));
   if (n) _generation++;
   const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);

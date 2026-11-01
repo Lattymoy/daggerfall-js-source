@@ -1,0 +1,38 @@
+[
+  {
+    "name": "FORGE-the-look-dropped",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  return toColor32(entry.look ? dfLook(picture, 0, 0) : picture);",
+    "new": "  return toColor32(picture);",
+    "tests": [
+      "test/systems/studioArt/forge_sprites.test.js"
+    ]
+  },
+  {
+    "name": "FORGE-grained-as-a-painting",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  return toColor32(entry.look ? dfLook(picture, 0, 0) : picture);",
+    "new": "  return toColor32(entry.look ? dfLook(picture, 0) : picture);",
+    "tests": [
+      "test/systems/studioArt/forge_sprites.test.js"
+    ]
+  },
+  {
+    "name": "FORGE-every-artist-snapped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "export const isForgeRender = (path) => String(path).split('/')[0] === FORGE_FOLDER;",
+    "new": "export const isForgeRender = (path) => String(path).includes(FORGE_FOLDER);",
+    "tests": [
+      "test/systems/studioArt/forge_sprites.test.js"
+    ]
+  },
+  {
+    "name": "FORGE-grain-0-still-grains",
+    "file": "src/world/dfLook.js",
+    "old": "    const j = grain ? grain * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1)) : 0;",
+    "new": "    const j = (grain || DF_GRAIN) * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1));",
+    "tests": [
+      "test/systems/studioArt/forge_sprites.test.js"
+    ]
+  }
+]

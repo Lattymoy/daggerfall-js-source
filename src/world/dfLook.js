@@ -118,7 +118,7 @@ export const lookSeed = (archive, record) => (Math.imul(archive | 0, 1000003) + 
  * @param {number} seed - lookSeed(archive, record)
  * @returns {P}
  */
-export function dfLook(pic, seed) {
+export function dfLook(pic, seed, grain = DF_GRAIN) { // grain 0 snaps only: a render (the sprite forge's) is shaded already
   /** @type {{ width: number, height: number, data?: Uint8Array, colors?: Uint8Array }} */
   const p = /** @type {any} */ (pic);
   if (!_rgb || !_lut || !_lab || !p) return pic;
@@ -139,7 +139,7 @@ export function dfLook(pic, seed) {
     }
     const x = t % w,
       y = (t / w) | 0;
-    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1));
+    const j = grain ? grain * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1)) : 0;
     const r = Math.max(0, Math.min(255, src[i] + j)),
       g = Math.max(0, Math.min(255, src[i + 1] + j)),
       b = Math.max(0, Math.min(255, src[i + 2] + j));

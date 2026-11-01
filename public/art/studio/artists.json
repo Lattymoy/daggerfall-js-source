@@ -15,6 +15,11 @@
       "folder": "maya",
       "name": "maya",
       "approved": "2026-10-21, the owner approved maya (weapon sprites), whom trashBattery proposed in #1108"
+    },
+    {
+      "folder": "forge",
+      "name": "DFO Sprite Forge",
+      "approved": "2026-11-01, Mac: \"You have the autonomy to take this on\" - class sprites rendered by tools/sprite-forge from the forge's own 3D models, never traced from a record"
     }
   ]
 }

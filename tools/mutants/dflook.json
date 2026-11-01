@@ -47,8 +47,8 @@
   {
     "name": "DFLOOK-the-grain-the-picture's-alone",
     "file": "src/world/dfLook.js",
-    "old": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1));",
-    "new": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, 0, 0) + texelGrain(~seed, 0, 0));",
+    "old": "    const j = grain ? grain * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1)) : 0;",
+    "new": "    const j = grain ? grain * 0.5 * (texelGrain(seed, 0, 0) + texelGrain(~seed, 0, 0)) : 0;",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DFLOOK-the-clumps-dropped",
     "file": "src/world/dfLook.js",
-    "old": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1));",
-    "new": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x, y));",
+    "old": "    const j = grain ? grain * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1)) : 0;",
+    "new": "    const j = grain ? grain * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x, y)) : 0;",
     "tests": [
       "test/world/dflook.test.js"
     ]
