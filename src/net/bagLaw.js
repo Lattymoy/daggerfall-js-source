@@ -171,6 +171,10 @@ export const carriedUsable = (c, held) => carriedSpendable(clampCarried(c, held)
  *  (GOLD-MARKET's wall: a unit the pack no longer holds is gone, and gold's go first, CLAMP_ORDER). */
 export const carriedWorkable = (c, held) => Math.max(0, Math.max(0, held | 0) - clampCarried(c, held).gold);
 
+/** BUTCHER-STORES (Professions-Arc 60): whether a carried harvest's second find went to the Stores - a body's butchery,
+ *  which the service counts carried no more (no `extraCarried`) once the client asks it so. An older service's still is. */
+export const extraStored = (d) => d?.carry === true && typeof d.extra === 'string' && d.extraCarried == null;
+
 /** WHERE A HARVEST'S GOODS WENT, in the words its line ends on (scenes/gatherHost.js storesLine, fishHost.js haulLine) -
  *  the Stores (an older book's harvest), else the bag, the pack or both as the mint put them (net/profBook.js `put`),
  *  and what found no room said beside them. */

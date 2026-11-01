@@ -31,8 +31,8 @@
   {
     "name": "NET-three-neighbours",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
-    "new": "      .slice(0, (p.neighbours ?? LANE_NEIGHBOURS) + 1); // RUMARE-WATER: a canal harbour's own count",
+    "old": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // A canal harbour's own count",
+    "new": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(\n        0,\n        (p.neighbours ?? LANE_NEIGHBOURS) + 1,\n      ); // RUMARE-WATER: a canal harbour's own count",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "NET-reach-short",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= reach)",
-    "new": "      .filter((x) => x.d > 0 && x.d < reach)",
+    "old": "    const reached = by.filter((x) => x.d <= reach),",
+    "new": "    const reached = by.filter((x) => x.d < reach),",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "STRAIGHT-over-land",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  for (let i = 1; i < n; i++) if (!waterNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;",
-    "new": "  for (let i = 1; i < n; i++) if (false) return false;",
+    "old": "  const at = (/** @type {number} */ i, /** @type {number} */ k) =>\n    (i === ex && k === ez) || !!waterNative((i + 0.5) * P, (k + 0.5) * P);",
+    "new": "  const at = (/** @type {number} */ i, /** @type {number} */ k) => true;",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "STRAIGHT-never",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "    while (j > i + 1 && !holds(pts[i], pts[j], waterNative)) j--;",
-    "new": "    j = i + 1;",
+    "old": "      let j = hi;\n      while (j > i + 1 && !ok(i, j)) j--;",
+    "new": "      const j = i + 1;",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "WAY-length-native",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  for (let i = 1; i < pts.length; i++)\n    len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;",
-    "new": "  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);",
+    "old": "      for (let i = 1; i < pts.length; i++)\n        len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;",
+    "new": "      for (let i = 1; i < pts.length; i++)\n        len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "CLOCK-count-ceil",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  const count = Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
-    "new": "  const count = Math.max(1, Math.ceil((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
+    "old": "  const count = Math.min(LANE_PACKETS_MAX, Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S)));",
+    "new": "  const count = Math.min(LANE_PACKETS_MAX, Math.max(1, Math.ceil((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S)));",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "FEED-way-sounded-again",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (way === undefined) {\n        way = onBay\n          ? laneWay(lane, bayOpen, bayOpenNative)\n          : tamrielTrace()\n            ? beyondLaneWay(lane, worldOpenNative)\n            : laneWay(lane, worldOpen, worldOpenNative);\n        ways.set(lane.key, way);\n      } // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX",
-    "new": "      way = onBay\n        ? laneWay(lane, bayOpen, bayOpenNative)\n        : tamrielTrace()\n          ? beyondLaneWay(lane, worldOpenNative)\n          : laneWay(lane, worldOpen, worldOpenNative);\n      ways.set(lane.key, way); // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX",
+    "old": "      if (way === undefined) {\n        way = laneWay(lane, bayOpen, bayOpenNative, kernel);\n        bayWays.set(lane.key, way);\n      } // the Bay's own water; past it beyondWay's (AUDIT TESA II P7: the picture's scale)",
+    "new": "      way = laneWay(lane, bayOpen, bayOpenNative, kernel);\n      bayWays.set(lane.key, way); // the Bay's own water; past it beyondWay's (AUDIT TESA II P7: the picture's scale)",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
@@ -606,8 +606,8 @@
   {
     "name": "FEED-lake-a-sea",
     "file": "src/scenes/world.js",
-    "old": "  const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py) && maps.getClimateIndex(px, py) === CLIMATES.Ocean;",
-    "new": "  const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py);",
+    "old": "  const laneOpen = bayLaneWater(tvWater, (px, py) => (inBay(px, py) ? undilatedClimateIndex(maps, px, py) : maps.getClimateIndex(px, py)) === CLIMATES.Ocean);",
+    "new": "  const laneOpen = bayLaneWater(tvWater, () => true);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]

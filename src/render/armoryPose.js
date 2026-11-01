@@ -110,17 +110,17 @@ export const REST_POINTS = Object.freeze([
   0,
 ]);
 
-/** WOLF-KIT (2026-10-30, mob: "get the feet chest and arm and hand cosmetic to work on werewolf form"): how much thicker
+/** WOLF-KIT (2026-10-30): how much thicker
  *  than a person's the wolf's limbs and chest stand - a turned wearer's pose scale (poseFromBones' `beast`), each piece's
  *  rings and decals that much wider round the fur. */
 export const ARMORY_BEAST_FIT = 1.35;
-/** WOLF-KIT (mob: "chest need more center"): the wolf's chest, hunched and turned in its idle - centred between its
+/** WOLF-KIT: the wolf's chest, hunched and turned in its idle - centred between its
  *  shoulders, not on its spine's bone (which leans to one side), its face this far forward of them (m; a person's a hand
  *  forward of the spine, 0.12), `down` m under the spine's bone, and its back this far behind the face (`back`, m - the
  *  chest's back piece; a person's the pass's own). */
 export const ARMORY_BEAST_CHEST = Object.freeze({ face: 0.08, back: 0.55, down: 0.1 });
-/** WOLF-KIT (mob: "they clip through on the arms"): the wolf's arms thicker again than its fit - a band's rings `arm`
- *  times wider round them. They stop at the wrist (mob: "the wrist stick out to far"): the claws wear the weapon glow. */
+/** WOLF-KIT: the wolf's arms thicker again than its fit - a band's rings `arm`
+ *  times wider round them. They stop at the wrist: the claws wear the weapon glow. */
 export const ARMORY_BEAST_ARM = Object.freeze({ arm: 1.25 });
 
 /** THE SPRITE'S POINTS BY THE PIXEL - a sprite figure's rows over the frame's foot (EOTB_FIGURE's own for the shoulder,

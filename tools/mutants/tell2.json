@@ -133,7 +133,7 @@
   {
     "name": "TELL2-landing-never-releases",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowHold = false; // TELL2: the held swing strikes on its next frame\n  s.blowReady = cooled;",
+    "old": "  ai._blowHold = false; // The held swing strikes on its next frame\n  s.blowReady = cooled;",
     "new": "  s.blowReady = cooled;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
@@ -143,8 +143,8 @@
   {
     "name": "TELL2-wind-never-raised",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowWind = swings; // TELL2: the swing begins now and stands at its raised arm until the landing",
-    "new": "  ai._blowWind = false; // TELL2: the swing begins now and stands at its raised arm until the landing",
+    "old": "  ai._blowWind = swings; // The swing begins now and stands at its raised arm until the landing",
+    "new": "  ai._blowWind = false; // The swing begins now and stands at its raised arm until the landing",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js",
       "test/characters/enemy/tact4.test.js"
@@ -171,8 +171,8 @@
   {
     "name": "TELL2-landing-unstamped",
     "file": "src/ai/tactics.js",
-    "old": "    ai._blowLandedAt = now; // TELL2: the landing, for the LAND cue (scenes/hostCombat.js tellCues)",
-    "new": "    // TELL2: the landing, for the LAND cue (scenes/hostCombat.js tellCues)",
+    "old": "    ai._blowLandedAt = now; // The landing, for the LAND cue (scenes/hostCombat.js tellCues)",
+    "new": "    // The landing, for the LAND cue (scenes/hostCombat.js tellCues)",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]

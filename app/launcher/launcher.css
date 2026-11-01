@@ -123,6 +123,15 @@ body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
 .opt > .caps { margin: 0; font-size: 13px; }
 .files { margin: 0; width: 100%; min-width: 0; font-size: 14px; color: #a89f88; }
 .files .path { font-size: 14px; }
+/* The Private server option */
+#private-note { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+#private-off { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
+#private-off[hidden] { display: none; }
+.address {
+  width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: 14px; color: #d8cfae;
+  border: 2px solid #7d7460; background: rgba(10,12,17,0.72);
+}
+.address:focus-visible { outline: none; border-color: var(--brass); }
 #backend-note { font-size: 13px; line-height: 1.35; }
 #backend-note:empty { display: none; }
 .check { display: flex; align-items: center; gap: 10px; cursor: pointer; }

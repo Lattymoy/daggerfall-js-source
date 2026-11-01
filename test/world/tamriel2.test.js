@@ -318,8 +318,7 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (AUDIT FB1028 A1): 73 - TS2's blend as it stood, kept for the town move (world/terrain/townBlendBefore.js), pure
   // PIN MOVED (FB1029 GROUND): 75 - ACROSS-EDGE's meet (world/terrain/townMeet.js) and ROAD-DRY's lift (world/road/roadDry.js), both pure
   // PIN MOVED (FOUNDATION F4): 77 - the land's rows (world/land/landLayer.js and its landEdits.json), asked by the ground, pure
-  // PIN MOVED (RMB-CONTRACTS RMBC3): 86 - a settlement's layout on its pixel and its ground carved (world/settlement/: the
-  // stand, the places and settlements.json, the layout, styles, limits, ground, geometry and exact maths), all pure
-  // PIN MOVED (RMB-CONTRACTS RMBC6): 87 - a town's outskirts laid and carved on its pixel (world/settlement/townGrowth.js), pure
-  assert.ok(seen.size > 20 && seen.size < 88, `${seen.size} modules`);
+  // Skyrim's plant catalog (world/tamriel/skyrimFlora.js) sits on the Lands table; bump when that import lands.
+  // the settlements' layout, ground and outskirts on a pixel (world/settlement/), all pure, sit on it too
+  assert.ok(seen.size > 20 && seen.size < 89, `${seen.size} modules`);
 });

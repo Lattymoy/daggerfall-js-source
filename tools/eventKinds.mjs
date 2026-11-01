@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// STAFF-EVENT (2026-10-24, mob: "should allow all of the monster in the game"): EVERY MONSTER THE GAME STANDS, for the
+// STAFF-EVENT (2026-10-24): EVERY MONSTER THE GAME STANDS, for the
 // Staff Panel's Events page (its lib/pages/eventKinds.js) - MobileTypes' monsters (0-42) and classes (128-145), and Enemy
 // Expansion's (256-290, 384-398), which the game registers on every load (systems/enemyExpansion/dexInstall.js). The two
 // the event law bars are left out (net/staffEvent/staffEventLaw.js STAFF_EVENT_KINDS_BARRED). Prints the panel's module.

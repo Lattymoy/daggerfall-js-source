@@ -792,19 +792,23 @@ export function createTravelOptions(deps = {}) {
     // that floats her (seaMark.js; `seaWaterAt` the host's reading of the ground the boat floats on)
     // OW-ROADSIDE: the join is a point of the road's own lane
     const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;   // SEA-SQUARE: past the Bay about the pixel's byte
-    const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;
+    const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;   // a mended leg's own point is the kernel's sea
     // AUDIT FB1021d PS-1: a pixel built where nowhere floats her is passed - she makes for the next leg; one whose ground
     // is not built yet is aimed at its middle, and again once it is (`update`: r.seaUnbuilt)
     if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) { r.i++; startRouteLeg(); return; }
     r.seaUnbuilt = read === SEA_LEG_UNBUILT ? r.i : null;
     const mark = read === SEA_LEG_DRY || read === SEA_LEG_UNBUILT ? null : read;
     const rect = mark ? rectOf(mark.x - SEA_LEG_SIZE / 2, mark.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)
+      : leg.kind === 'sea' && leg.at ? rectOf(leg.at.x - SEA_LEG_SIZE / 2, leg.at.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)   // a leg round the kernel's land (seaLegsMend.js)
       : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // ROAD-FOLLOW: a curve's apex
     const lane = routeLane(r, Math.min(r.i, r.legs.length - 1));   // OW-ROAD-TRUE: a road's leg walks its line
     const path = lane?.pts ?? null;   // ROAD-FOLLOW: on the curves past the Bay
     // ROAD-SMOOTH: the line the next leg walks, so a leg that ends inside a curve is walked on through it
     const after = lane && r.i + 1 < r.legs.length ? routeLane(r, r.i + 1) : null;
-    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN };
+    // a leg sailed or launched arrives anywhere in its window - past the Bay that window is centred on
+    // the pixel's byte, a corner four pixels share, and three quarters of it lay outside the pixel the arrival was asked in
+    const atSea = leg.kind === 'sea' || leg.kind === 'embark';
+    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN, edgeArrival: atSea ? true : undefined };
     if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), line);
     else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), line);
     st.autopilot.onArrival = () => {

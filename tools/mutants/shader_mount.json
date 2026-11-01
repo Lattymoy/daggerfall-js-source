@@ -2,8 +2,8 @@
   {
     "name": "SM-depth-programs-left-out-of-the-lane",
     "file": "src/render/bootPrograms.js",
-    "old": "  if (lane?.shadows && !renderer._shadowPass) programs.push(...shadowDepthPrograms(SHADOW_PASS_VS)); // SHADER-EASE MOUNT-START",
-    "new": "  void shadowDepthPrograms; // SHADER-EASE MOUNT-START",
+    "old": "  if (lane?.shadows && !renderer._shadowPass) programs.push(...shadowDepthPrograms(SHADOW_PASS_VS));",
+    "new": "  void shadowDepthPrograms;",
     "tests": [
       "test/render/bootcompile.test.js",
       "test/render/shadermount.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "SM-wisps-on-the-lighting-lane",
     "file": "src/render/mountPrograms.js",
-    "old": "  const sky = o.enhancedSky; // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it",
-    "new": "  const sky = !!lane; // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it",
+    "old": "  const sky = o.enhancedSky;",
+    "new": "  const sky = !!lane;",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "SM-built-bodies-listed-again",
     "file": "src/render/mountPrograms.js",
-    "old": "  const bodies = lane?.shadows && !renderer._shadowPass?._bodyBuilt ? shadowBodyPrograms(SHADOW_PASS_VS) : [];",
-    "new": "  const bodies = lane?.shadows ? shadowBodyPrograms(SHADOW_PASS_VS) : [];",
+    "old": "lane?.shadows && !renderer._shadowPass?._bodyBuilt ?",
+    "new": "lane?.shadows ?",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "SM-a-mount-pass-left-out",
     "file": "src/render/mountPrograms.js",
-    "old": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []), // every skin",
-    "new": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...FLAG_PROGRAMS] : []), // every skin",
+    "old": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []),",
+    "new": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...FLAG_PROGRAMS] : []),",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "SM-wisps-pair-drifts",
     "file": "src/render/windWisps.js",
-    "old": "export const WISP_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([WISP_VS, WISP_FS]))]);",
-    "new": "export const WISP_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([WISP_VS, `${WISP_FS}\\n`]))]);",
+    "old": "([WISP_VS, WISP_FS])",
+    "new": "([WISP_VS, `${WISP_FS}\\n`])",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -215,8 +215,8 @@
   {
     "name": "QO-naval-pair-drifts",
     "file": "src/render/navalRender.js",
-    "old": "export const NAVAL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, NAVAL_FS]))]);",
-    "new": "export const NAVAL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, `${NAVAL_FS}\\n`]))]);",
+    "old": "([VS, NAVAL_FS])",
+    "new": "([VS, `${NAVAL_FS}\\n`])",
     "tests": [
       "test/render/shadermount.test.js"
     ],

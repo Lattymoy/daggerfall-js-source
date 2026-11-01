@@ -2,8 +2,8 @@
   {
     "name": "AFB-TLA-1-the-guard-unregistered",
     "file": "vite.config.js",
-    "old": "firstVisitPinsPlugin(), noImportedTopLevelAwait()]",
-    "new": "firstVisitPinsPlugin()]",
+    "old": "floraPlaygroundAlias(), noImportedTopLevelAwait()]",
+    "new": "floraPlaygroundAlias()]",
     "tests": [
       "test/tree/toplevelawait.test.js"
     ],

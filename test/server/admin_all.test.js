@@ -1,5 +1,5 @@
-// ADMIN-ALL (2026-10-30, the owner: "give staff all in shop items" - "only admins" - "get all cosmetic title auras" -
-// "everything" - "always"): AN ADMIN HOLDS EVERY COSMETIC THERE IS, derived from DEVELOPER_HANDLES at every ask
+// ADMIN-ALL (2026-10-30: Admins only, every
+// cosmetic title and aura, always): AN ADMIN HOLDS EVERY COSMETIC THERE IS, derived from DEVELOPER_HANDLES at every ask
 // (server-account/src/titles.js holdsAll). These pins drive what a one-off grant could not do: a ware added to the
 // vocabulary later is held with no write, a moderator holds nothing more, a handle taken off the list (or an Admin cut
 // off) holds only what the row earned, and the glyphs that are rights or facts are never handed out.

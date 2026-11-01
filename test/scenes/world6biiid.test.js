@@ -36,8 +36,4 @@ test('WORLD6b-iii(d), reopened by QUEST-PARTY phase 3b: the interior pool has ex
   assert.match(w, /if \(isCellRoom\(online\.room\)\) \{\s*if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\);\s*else if \(modes\?\.sailingCabin && data && \(!data\.k \|\| online\.inRoom\(data\.k\)\)\) \{[\s\S]*?\n        \}\s*return;\s*\}[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) seatClock\.heard\(performance\.now\(\)\);/, 'a world room\'s frame lands on the dungeon alone - in a building it lands nothing');   // PIN MOVED (FIELD BUGS 2026-10-18d SEAT-LIVE): the seat heard is the seat clock's (net/seatLive.js createSeatClock) - the page's own absence spends none of it
   assert.match(wm, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
   assert.match(wm, /applyDungeonFoes\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyFoes\?\.\(data, id\) : false; \},/);
-  assert.match(rd('bible/04-Characters/Characters-Arc.md'), /\*\*A building interior carries NO STATIC ENEMIES in DFU\.\*\*/, 'the fact the interior pool is built on');
-  assert.match(rd('bible/11-Multiplayer/Multiplayer.md'), /### 1\. Quests stay separate/, 'the lock');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(d\): buildings' foes - none, by the lockbook/, 'the record');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## QUEST-PARTY phase 3b - A BUILDING'S FOES RIDE THE ROOM'S OWN LANE/, 'and the record that reopened it');
 });

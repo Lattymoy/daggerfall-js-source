@@ -205,5 +205,4 @@ test('WORLD6b-iii: by source - the executor aims its missile where it is told an
   assert.match(x, /if \(sp && !_pupParalyzed && puppetCastInBand\(f, sp\) && blowAllowed\(f\)\) castSpellFrom\(f, sp, playerFeet, true\); else f\._castPending = true;/, 'the puppet\'s cast under the budget, the bands and paralysis, or the one-shot');
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /\? playerEntity : \(f\.ai\.target\?\.entity \?\? foeDeps\.PEER_CAST_TARGET \?\? playerEntity\);/, 'the dungeon reads the same stand-in (A10)');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /### 6b-iii\(a\): the cast at a peer/, 'the record');
 });

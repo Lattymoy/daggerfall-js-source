@@ -2,8 +2,8 @@
   {
     "name": "ROCKET1-word-dropped",
     "file": "src/net/wire.js",
-    "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket']);",
-    "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby']);",
+    "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket', 'newera']);",
+    "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'newera']);",
     "tests": [
       "test/world/rocket1_event.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROCKET1-relay-row-early",
     "file": "src/net/wire.js",
-    "old": "sunbaby: 163, rocket: 253 });",
-    "new": "sunbaby: 163, rocket: 252 });",
+    "old": "sunbaby: 163, rocket: 253, newera: 303 });",
+    "new": "sunbaby: 163, rocket: 252, newera: 303 });",
     "tests": [
       "test/world/rocket1_event.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "ROCKET1-world-word-unheard",
     "file": "src/scenes/world.js",
-    "old": "sunbaby.set(ev, o); rocket.set(ev, o); };",
+    "old": "sunbaby.set(ev, o); rocket.set(ev, o); newEra.set(ev, o); };",
     "new": "sunbaby.set(ev, o); };",
     "tests": [
       "test/world/rocket1_event.test.js"

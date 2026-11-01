@@ -1,5 +1,5 @@
 // @ts-check
-// DRAGON-POV (2026-10-30, mob: "can we get a 3rd person dragon for scrolling its brokewn"): MY DRAGON IN THIRD PERSON.
+// DRAGON-POV (2026-10-30): MY DRAGON IN THIRD PERSON.
 // The wheel out of the head on a dragon did nothing (a tamed dragon is a ride, and RIDE-POV held every ride but the 3D
 // horse in the head) or showed my own body standing in the air under the saddle's picture (an Admin's /dragon). Out of
 // the head on a dragon the camera stands back from the dragon the others see me on - its own sprite with its rider in
@@ -18,14 +18,14 @@ export { DRAGON_VIEW_REACH_M };
 export const DRAGON_VIEW_SEAT = 0.75;
 /** The seat's height (m) until the sprite's pictures are up. */
 export const DRAGON_VIEW_SEAT_M = 4;
-/** AURA-ON-DRAGON (2026-10-30, mob: "aura float below on dragon"): how far under the rider's seat the ground a horse's rider
+/** AURA-ON-DRAGON (2026-10-30): how far under the rider's seat the ground a horse's rider
  *  stands on would be (m) - an aura and the armory hang a rider's rest pose over that ground lifted by the saddle's
  *  AURA_SADDLE_M (render/auraRing.js, render/armoryPose.js poseAtRest), so the dragon's rider wears them where the art
  *  sits them, never at the dragon's feet. */
 export const DRAGON_AURA_DROP_M = 1.7;
 /** The seat over a dragon's feet (m) by its sprite's drawn height `h` (DRAGON_VIEW_SEAT_M until it is up). Pure. */
 export const dragonSeatOver = (/** @type {number} */ h) => (h > 0 ? h * DRAGON_VIEW_SEAT : DRAGON_VIEW_SEAT_M);
-/** AURA-SEAT (2026-10-31, mob: "aura floating"): WHERE THE ART SITS ITS RIDER, as a share of the sprite's height - the
+/** AURA-SEAT (2026-10-31): WHERE THE ART SITS ITS RIDER, as a share of the sprite's height - the
  *  camera's pivot (DRAGON_VIEW_SEAT) stands over the rider's head, and an aura hung from it floated a dragon's height over
  *  him. The pictures (public/art/dwarven-dragon, 471x262 with the sky above the wings) seat the rider near 0.6 walking
  *  (records 0-19) and near 0.5 hovering (records 20-24, DRAGON-HOVER), the body lower in the beat. */

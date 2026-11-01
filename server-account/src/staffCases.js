@@ -1,6 +1,6 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL2 (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS:
+// STAFF-PANEL2 (2026-10-22; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS:
 // the open chat cases most urgent first, one case read with its lines and the account's strike record, a case claimed
 // and let go, and Mute, Ban, Unban and Dismiss - Admins and Moderators both (mob, 03:03Z: Moderators get "only chat report
 // notifications with Mute and Ban").
@@ -11,18 +11,18 @@
 // (pushLaw) as one does. What the panel adds is who acted from where ("(staff panel)"), the audit row, and the claim.
 // STAFF-PANEL2-FIX: an act's audit row is written in modAct, as every door's is, by the panel's own writer - once.
 //
-// WHAT GOES FIRST (design doc, "What goes first"; mob, 04:05Z: "prioty of reports"): each case a level - high, medium or
+// WHAT GOES FIRST (design doc, "What goes first"): each case a level - high, medium or
 // low - and the words that say why, from what mod_cases and mod_reports already hold (caseUrgency). The reviewer's
 // severity is read off the row, never `modCases`' verdict, which hides one while a case is read again. The weights are
 // starting numbers to tune, not measured ones.
 //
-// A CLAIM (mob, 04:13Z: "admin can alwasy take a case", "mods can only take one"): a Moderator holds one open case at a
+// A CLAIM: a Moderator holds one open case at a
 // time, checked in the statement that takes it; an Admin takes any, one a Moderator holds too, and the Moderator is told
 // (`claim_from`, answered as `lost`). A claim lets go CLAIM_S after its holder's last look or act on it. While another
 // member holds a case, the panel's acts on its account are refused (`staff-claimed`), and so is a Discord press on it
 // (discord.js onPress).
 //
-// EVERY LIST PAGES (mob, 19:25Z: "put inf scroll in anything that pull lists"): `from` the offset of the next page,
+// EVERY LIST PAGES: `from` the offset of the next page,
 // answered as `next` while more stand.
 //
 // STAFF-PANEL2-FIX (2026-10-22; design doc, Weak spots "Sanctions, cases and roles" and "Panel Mute and Ban have no
@@ -134,7 +134,7 @@ export async function staffCases(ctx, env, path, body, who, audit) {
   if (path === '/v1/staff/cases') {
     const sort = body.sort === 'newest' ? 'newest' : 'urgent';
     const from = Number.isSafeInteger(body.from) && body.from > 0 ? body.from : 0;
-    // STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows (it's waiting on the server)"): the
+    // STAFF-PANEL-SPEED: the
     // list's reads and its audit row in one batch, one trip - none needs another's answer (Home's watch writes no row)
     const said = audit('cases-read', null, { sort }, { onceIn: 10 * 60 });
     const read = await db.batch([
@@ -176,8 +176,7 @@ export async function staffCases(ctx, env, path, body, who, audit) {
     return { cases: page, next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE : null, total: ranked.length, high: ranked.filter((c) => c.level === 'high').length, lost };   // STAFF-PANEL6-STATUS: `high`, the Reports' "N high of M"
   }
 
-  // STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a
-  // tab for banned players as well", "add a ban status as well to player list", "so we can filter them") - THE BANNED TAB:
+  // STAFF-BANNED (2026-10-23) - THE BANNED TAB:
   // every account banned now, guests too (a lapsed ban is none: sanctions.js isBanned), with until when (BAN_FOREVER for
   // good, `banForever`), the reason, who set the ban that stands (`banned_by`) and whether it is an Admin's (`banAdmin`:
   // an Admin's to lift alone, sanctions.js unbanAccount). Admins and Moderators both, as Unban is: the tab's Unban is this

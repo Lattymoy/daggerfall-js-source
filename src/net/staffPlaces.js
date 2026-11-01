@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-EVENT (2026-10-24, mob: "needs to be bale to select a town or area for these events"; net/staffEvent/
+// STAFF-EVENT (2026-10-24; net/staffEvent/
 // staffEventLaw.js, bible/11-Multiplayer/Staff-Events.md) - THE STAFF PANEL'S PLACE PICKER, the game's half. The places
 // are the player's own game data (MAPS.BSA), never in the panel nor in this repository, so the panel over the game asks
 // the game: a region's named places (each its location index, name, kind and map pixel), and where the staff member

@@ -57,8 +57,8 @@
   {
     "name": "TELL6c-fit-near",
     "file": "src/ai/foeBlows.js",
-    "old": "  const far = b.ahead > 2 ? b.ahead : 2; // TELL6: a leap's disc lies on the ground at its point",
-    "new": "  const far = 2; // TELL6: a leap's disc lies on the ground at its point",
+    "old": "  const far = b.ahead > 2 ? b.ahead : 2; // A leap's disc lies on the ground at its point",
+    "new": "  const far = 2; // A leap's disc lies on the ground at its point",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -157,7 +157,7 @@
   {
     "name": "TELL6c-no-jump",
     "file": "src/ai/tactics.js",
-    "old": "  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0); // TELL6c: the jump\n  if (now >= s.blow.land && b0.kind === 'aimed') {",
+    "old": "  if (b0.kind === 'leap' && now >= b0.jumpAt && now < b0.land) return leapStep(ai, b0); // The jump\n  if (now >= s.blow.land && b0.kind === 'aimed') {",
     "new": "  if (now >= s.blow.land && b0.kind === 'aimed') {",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"

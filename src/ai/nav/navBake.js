@@ -30,7 +30,7 @@ import {
   findPath,
 } from './navmesh.js';
 
-/** THE SOUP AGENT (2026-09-27): AGENT with ONE ring of erosion (radius =
+/** THE SOUP AGENT: AGENT with ONE ring of erosion (radius =
  *  cs). Every classic dungeon doorway is 1.25 m (frames 55000-55005; the
  *  1.2 m door fills it), and AGENT's 0.4 m radius erodes two 0.25 m cells
  *  off each jamb on top of the conservative wall stamp: 0 of 12 grid
@@ -72,7 +72,7 @@ export function navInputFromCollider(collider, { buckets = null, exclude = null 
     p = 0;
   for (const bucket of use) {
     const t = bucket.t ? bucket.t() : [0, 0, 0];
-    const R = bucket.r ? bucket.r() : null; // AUDIT NAV1 (#12): a mover's bucket, its triangles turned as they stand
+    const R = bucket.r ? bucket.r() : null; // A mover's bucket, its triangles turned as they stand
     for (const tri of bucket.tris) {
       for (let k = 0; k < 3; k++) {
         const v = tri[k];
@@ -98,7 +98,7 @@ export function navInputFromCollider(collider, { buckets = null, exclude = null 
  * than any real floor not itself at 0, so an anchor without y elects
  * the phantom and culls every real floor. Three call sites once built
  * this literal by hand and all three dropped the y; bakeSoup, their one
- * home now (AUDIT 68), builds it here.
+ * home now, builds it here.
  */
 export function regionAnchor(anchor) {
   return { x: anchor[0], y: anchor[1], z: anchor[2] };
@@ -150,7 +150,7 @@ export function landAnchors(chf, anchors, tol = ANCHOR_Y_TOLERANCE) {
  */
 export function bakeSoup(positions, indices, { floor, anchor, anchors = null, agent = SOUP_AGENT }) {
   const t0 = (globalThis.performance ?? Date).now();
-  // NO COARSENING (2026-09-27). coarsenAgent is his rule for OPEN TERRAIN
+  // NO COARSENING. coarsenAgent is his rule for OPEN TERRAIN
   // ("open terrain does not need fine cells"), and it sizes by the soup's
   // BOX: every classic dungeon's block box is three blocks (153.6 m) or
   // more a side, so all 4232 coarsen - to 0.54-1.05 m cells, at which no
@@ -183,7 +183,7 @@ export function bakeSoup(positions, indices, { floor, anchor, anchors = null, ag
   // the walls read as walkable - and routes ran straight through them.
   // Real dungeons are not at 0. Mac's report: foes into walls, clumped,
   // gone.
-  // EVERY PLACE AGENTS LIVE (2026-09-27): his anchor UNION (FOUNDRY S3 ->
+  // EVERY PLACE AGENTS LIVE: his anchor UNION (FOUNDRY S3 ->
   // the experiment integration) - the player's feet and each foe's. A
   // classic dungeon is legitimately segmented for a walker: ledges dropped
   // off one way, flooded halls, locked doors. With the fixes above the
@@ -194,7 +194,7 @@ export function bakeSoup(positions, indices, { floor, anchor, anchors = null, ag
   // union, and unlanded they take his nearest-span pick, so none landing
   // keeps his single-anchor pick exactly.
   const feet = landAnchors(chf, [anchor]);
-  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // AUDIT PRE-MERGE 0928 N2: feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room
+  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room
   buildRegions(chf, { anchor: regionAnchor(anchor), anchors: landed });
   buildContours(chf);
   buildPolyMesh(chf);

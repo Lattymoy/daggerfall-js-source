@@ -423,7 +423,7 @@
   {
     "name": "SS5-the-enhanced-card-without-dismantle",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
     "new": "  if (false) {",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "SS5-the-card-dismantling-a-worn-ware",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
-    "new": "  if (side === 'local' && dismantleStones(picked) > 0) {",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
+    "new": "  if (side === 'local' && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -459,8 +459,8 @@
   {
     "name": "SS5-the-lock-unsaid",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };",
-    "new": "const refusedFor = (why) => { notice = null; refresh(); render(); };",
+    "old": "  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : why === 'realm' ? realmLockedText(name) : null; refresh(); render(); };",
+    "new": "  const refusedFor = (why) => { notice = null; refresh(); render(); };",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

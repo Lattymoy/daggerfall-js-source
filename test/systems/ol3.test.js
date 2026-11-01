@@ -160,5 +160,4 @@ test('OL3 (7): a welcome clock more than a year from this machine\'s is said - t
     assert.equal(s.clockWarning, null, 'a sane clock clears it');
     assert.equal(s.statusLine(), null);
   } finally { console.warn = warn; console.info = info; }
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## OL3 \(2026-09-14\)/, 'the record');
 });

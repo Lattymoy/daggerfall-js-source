@@ -497,7 +497,7 @@ test('LPT1 BB_VS mesh mode sway (AUDIT LPT A3): the crown leans by the height up
 
 test('LPT1 the fragment: the far picture and its tree are complementary screen-door shares across the band - every pixel one or the other, never both, never neither - and the tree keeps its texel past the flats\' margin clear (AUDIT LPT A7), takes its shade, and its alpha its material\'s (0 an opaque card)', () => {
   const fs = `${LPT_FS_HEAD}\nfloat bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); return (q.x * 4.0 + q.y) / 16.0; }\nvec4 shade(vec4 tex, float margin) {\n${LPT_FS_KEEP}  if (margin > 0.5) tex = vec4(0.0);\n${LPT_FS_TEXEL}\n return tex; }`;
-  const run = (fade, frag, { tex = [1, 1, 1, 1], margin = 0, alpha = 1, shadeV = [1, 1, 1] } = {}) => glslFunctions(fs, { vShade: shadeV, vAlpha: alpha, vFade: fade, gl_FragCoord: [...frag, 0, 1] }).shade(tex, margin);
+  const run = (fade, frag, { tex = [1, 1, 1, 1], margin = 0, alpha = 1, shadeV = [1, 1, 1] } = {}) => glslFunctions(fs, { vShade: shadeV, vAlpha: alpha, vFade: fade, gl_FragCoord: [...frag, 0, 1], uFocus: [0, 0, 0, 0], uCamPos: [0, 0, 0], vBBWorld: [0, 0, 0] }).shade(tex, margin);   // CANOPY-SEE: no travel view
   const kept = (fade, frag) => { try { run(fade, frag); return true; } catch (e) { if (e instanceof GlslDiscard) return false; throw e; } };
   for (const share of [0.1, 0.37, 0.5, 0.81]) {
     let both = 0, neither = 0;

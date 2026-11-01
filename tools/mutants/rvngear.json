@@ -56,8 +56,8 @@
   {
     "name": "RVN-GEAR-bows-let-in",
     "file": "src/systems/revenant/revenantGear.js",
-    "old": "  item.templateIndex <= WEAPONS.War_Axe;",
-    "new": "  item.templateIndex <= WEAPONS.Long_Bow;",
+    "old": "  ((item.templateIndex >= WEAPONS.Dagger && item.templateIndex <= WEAPONS.War_Axe) ||",
+    "new": "  ((item.templateIndex >= WEAPONS.Dagger && item.templateIndex <= WEAPONS.Long_Bow) ||",
     "tests": [
       "test/systems/revenant/rvngear.test.js"
     ]

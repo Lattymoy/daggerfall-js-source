@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PILOT (2026-10-26, mob: "like play as a boss as attack players"; Staff-Events.md section 10): a staff member
+// STAFF-PILOT (2026-10-26; Staff-Events.md section 10): a staff member
 // steers their event's mini boss from the Staff Panel's Play as boss. My claim says the oldest age the wire carries, so
 // every game hands me the raid's run. The boss takes my feet and facing; its own swings and casts are held, a left
 // click swings at the player nearest my facing and a right click opens its cast. My body draws as concealment 7 and

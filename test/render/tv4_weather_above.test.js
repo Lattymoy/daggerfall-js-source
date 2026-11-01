@@ -155,12 +155,15 @@ test('TV4 shadows: under the light rows the view now sees past the cloud shadow\
   }
 });
 
-test('TV4 far ring: under an exp fog the ring\'s nearest edge is already fog at the default grid - the gate that hides it hides nothing a traveller would see; under light weather (linear) it stands as ever', () => {
+// PIN MOVED (RED-MOUNTAIN-SEEN, FIELD FEEDBACK 2026-10-31): the reading stands - the ring's nearest edge is fog under
+// every exp row - and under a sky drawn clear the ring now stands in that fog's colour, its shape against the sky
+// (render/farRing.js ringFogOf; test/world/redmountain_seen.test.js)
+test('TV4 far ring: under an exp fog the ring\'s nearest edge is already fog at the default grid - the ring stands in the fog\'s colour, or not at all; under light weather (linear) it stands as ever', () => {
   const ringNear = LAND_VIEW_DEFAULT * PIXEL_METRES;
-  for (const w of ['rainy', 'snowy', 'heavy', 'sandstorm']) assert.ok(Math.exp(-FOG_SETTINGS[w].density * ringNear) < 1e-4, `${w}: fog at ${ringNear} m`);
+  for (const w of ['rainy', 'snowy', 'heavy', 'sandstorm', 'ashfall']) assert.ok(Math.exp(-FOG_SETTINGS[w].density * ringNear) < 1e-4, `${w}: fog at ${ringNear} m`);
   const farRing = rd('test/ui/farring.test.js');
-  assert.match(farRing, /exp fog \(weather\) hides the ring/, 'the gate stands, pinned where it was');
-  assert.match(rd('src/scenes/world.js'), /if \(farRing && fogNow\.mode === 'linear'\)/);
+  assert.match(farRing, /the fog row says how the ring stands/, 'the gate stands, pinned where it was');
+  assert.match(rd('src/scenes/world.js'), /if \(farRing && ringFogOf\(fogNow\)\)/);
 });
 
 test('TV4 lightning: a strike\'s column stands on the traveller\'s ground - from the raised eye its foot hung 448 m in the air', () => {
@@ -205,7 +208,7 @@ test('AUDIT DEEP R-1: EVERY fogged program under the travel view measures its fo
   assert.match(readFileSync(new URL('shipFlagPass.js', dir), 'utf8'), /if \(U\.uFocus\) gl\.uniform4fv\(U\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
   assert.match(rd('src/scenes/world.js'), /const frameShipFlags = \(\) => \{   \/\/ PERF-V8[\s\S]{0,900}dw: renderer\._dwFog, haze: renderer\._haze, focus: renderer\._focus \},/, 'the flags handed it');
   // NAV-B (2026-09-28) joined the list: the naval pass's smoke, flashes and aim ride Come Sail Away's frame, under the view too
-  assert.deepEqual(fogged.filter((f) => !RENDERER_OWNED[f] && !NEVER_UNDER_THE_VIEW[f]).sort(), ['bannerPass.js', 'comeSailAwayRender.js', 'deepWatersRender.js', 'duelWall.js', 'foeTelegraph.js', 'gatePass.js', 'killFx.js', 'navalRender.js', 'oceanHolesRender.js', 'rainCurtains.js', 'riteSmoke.js', 'rocketPass.js', 'serpentRender.js', 'shipFlagPass.js', 'spellImpactFx.js', 'starfallPass.js'], 'the passes the view draws, all accounted for (ROCKET1: the rocket\'s mounds, poop and horses round the traveller; STAR4: a fallen star\'s beacon over the land the view flies over; merged beside CSA-F and OH-C: the boats\' parts and waves, the pits; NAV-B: the sea fight\'s; WB12d: the rite\'s smoke; SERPENT1: the sea serpent over the open sea; IMPACTFX: a spell\'s landing - the world pass draws the missiles, and so their bursts, under the view too)');
+  assert.deepEqual(fogged.filter((f) => !RENDERER_OWNED[f] && !NEVER_UNDER_THE_VIEW[f]).sort(), ['bannerPass.js', 'comeSailAwayRender.js', 'deepWatersRender.js', 'duelWall.js', 'foeTelegraph.js', 'gatePass.js', 'killFx.js', 'navalRender.js', 'newEraPass.js', 'oceanHolesRender.js', 'rainCurtains.js', 'riteSmoke.js', 'rocketPass.js', 'serpentRender.js', 'shipFlagPass.js', 'spellImpactFx.js', 'starfallPass.js'], 'the passes the view draws, all accounted for (ROCKET1: the rocket\'s mounds, poop and horses round the traveller; STAR4: a fallen star\'s beacon over the land the view flies over; merged beside CSA-F and OH-C: the boats\' parts and waves, the pits; NAV-B: the sea fight\'s; WB12d: the rite\'s smoke; SERPENT1: the sea serpent over the open sea; IMPACTFX: a spell\'s landing - the world pass draws the missiles, and so their bursts, under the view too)');
   // IMPACTFX (2026-10-05) joined the list: the cast engine hands its burst pass the renderer\'s focus
   // STOREFRONT (2026-10-29) joined the list: the kill effects' pass uploads the focus the cast engine hands it, as the bursts'
   assert.match(rd('src/render/killFx.js'), /if \(u\.uFocus\) gl\.uniform4fv\(u\.uFocus, fog\?\.focus \?\? \[0, 0, 0, 0\]\);/, 'the kill pass uploads it');
@@ -215,6 +218,9 @@ test('AUDIT DEEP R-1: EVERY fogged program under the travel view measures its fo
   // ROCKET1 (2026-10-23) joined the list: the rocket's mounds stand round the traveller the view flies over - its pass uploads the focus its host hands it
   assert.match(readFileSync(new URL('rocketPass.js', dir), 'utf8'), /if \(U\.uFocus\) gl\.uniform4fv\(U\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
   assert.match(rd('src/scenes/rocketHost.js'), /camPos: renderer\._camPos, focus: renderer\._focus, haze: renderer\._haze \}\);/, 'the rocket handed it');
+  // the New Era's clouds, cracks and gunship stand round the traveller the view flies over - its pass uploads the focus its host hands it
+  assert.match(readFileSync(new URL('newEraPass.js', dir), 'utf8'), /if \(loc\.uFocus\) gl\.uniform4fv\(loc\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
+  assert.match(rd('src/scenes/newEraHost.js'), /camPos: renderer\._camPos,\n\s*focus: renderer\._focus,/, 'the New Era handed it');
   assert.match(rd('src/scenes/hostMagic.js'), /fxPass\.draw\([^\n]*camPos: eye, focus: renderer\._focus, haze: renderer\._haze \}\);/, 'the spell impacts handed it');
   const w = rd('src/scenes/world.js');
   assert.match(w, /camPos: renderer\._camPos, dw: renderer\._dwFog, haze: renderer\._haze, focus: renderer\._focus \}\);   \/\/ DW-C/, 'the duel wall handed it');

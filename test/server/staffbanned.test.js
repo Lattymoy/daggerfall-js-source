@@ -1,5 +1,4 @@
-// STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a
-// tab for banned players as well", "add a ban status as well to player list", "so we can filter them") - THE PLAYERS
+// STAFF-BANNED (2026-10-23) - THE PLAYERS
 // LIST'S BAN STATUS AND FILTER (server-account/src/staffPlayers.js /v1/staff/players `ban`) and THE BANNED TAB
 // (server-account/src/staffCases.js /v1/staff/banned), driven through the real Worker on the node:sqlite database every
 // account pin stands on (test/accountDb.mjs): a banned account out of the list unless asked for, a lapsed ban none, the

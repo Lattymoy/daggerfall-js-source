@@ -208,6 +208,15 @@ export function egFirstHandles(env) {
 }
 export const isSpireFirst = (player, env) =>
   typeof player?.handle === 'string' && !!player.handle && egFirstHandles(env).has(player.handle.toLowerCase());
+/** FIRST-WYRM (2026-10-31, the owner: "Seasoning needs to be granted the first dragon rider. He hasnt recieved it"):
+ *  First Wyrm Rider by name, as First of the Spire is - wrangler.toml FIRST_WYRM_RIDER_HANDLES, an account's handle, held
+ *  while listed, never a guest's. While the list names anyone it names the First, and the earliest-tame reading (hunts.js
+ *  FIRST_OF) gives the title to no one else: there is one First. FIRST-WYRM-NAME (the owner: "His name is Seanobi"). */
+export function firstWyrmHandles(env) {
+  return handleList(env?.FIRST_WYRM_RIDER_HANDLES);
+}
+export const isNamedFirstWyrm = (player, env) =>
+  typeof player?.handle === 'string' && !!player.handle && firstWyrmHandles(env).has(player.handle.toLowerCase());
 
 /** How long the sprout stays on a new account: two weeks, in seconds,
  *  spelled as the arithmetic rather than as 1209600 so a reader can
@@ -381,8 +390,8 @@ export const MOD_TIERS = Object.freeze(['shadowfang']);
 export const canModerate = (player, env) =>
   isModerator(player, env) || isDeveloper(player, env) || MOD_TIERS.some((t) => holdsTier(t, player, env));
 
-/** ADMIN-ALL (2026-10-30, the owner: "give staff all in shop items" - "only admins" - "get all cosmetic title auras" -
- *  "everything" - "always"): AN ADMIN HOLDS EVERY COSMETIC THERE IS - every title, aura, profile icon, Aura Armory piece
+/** ADMIN-ALL (2026-10-30: Admins only, every
+ *  cosmetic title and aura, always): AN ADMIN HOLDS EVERY COSMETIC THERE IS - every title, aura, profile icon, Aura Armory piece
  *  and the glyphs that are paint alone - while the handle is in DEVELOPER_HANDLES, derived at every ask as the developer
  *  title is, so a ware added to the vocabulary later is held the moment it ships and a handle taken off the list holds
  *  only what it earned or bought. Read off the vocabularies, never a list kept here. Left out, because they are not
@@ -494,8 +503,12 @@ export function titlesHeld(player, env) {
     if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);
     // HUNTERS-MARK, MARKS-OF-MASTERY: derived from the account's rows (hunts.js masteryMarksRead) - its board clears, a
     // living Master of a profession, the serpents it helped slay - laid on the row as `masteryMarks` for this request alone
+    const namedFirst = firstWyrmHandles(env).size > 0; // FIRST-WYRM: a named First stands in for the earliest tame
     if (Array.isArray(player?.masteryMarks))
-      for (const t of MASTERY_MARKS) if (player.masteryMarks.includes(t) && !held.includes(t)) held.push(t);
+      for (const t of MASTERY_MARKS)
+        if (player.masteryMarks.includes(t) && !held.includes(t) && !(namedFirst && t === DRAGON_TITLES.first))
+          held.push(t);
+    if (isNamedFirstWyrm(player, env) && !held.includes(DRAGON_TITLES.first)) held.push(DRAGON_TITLES.first); // FIRST-WYRM: by name
     for (const t of shopKeys(player, 'title')) if (!held.includes(t)) held.push(t); // SHOP: Genesis, bought (shop.js)
     for (const t of passKeys(player, 'title')) if (!held.includes(t)) held.push(t); // STOREFRONT: the Battle Pass's, bought
   }

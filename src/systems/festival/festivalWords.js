@@ -33,6 +33,7 @@ const REFUSALS = Object.freeze({
   held: () => t('festival.refusal.held', 'Your account does not hold that.'),
   capped: () => t('festival.refusal.capped', 'You have found enough for today.'),
   rate: () => t('festival.refusal.rate', 'Too fast. Wait a moment.'),
+  count: () => t('festival.refusal.count', 'You hold fewer than that now.'), // BOUND-DESTROY: a let-go past the count
 });
 /** Whether a refusal's code is the festival's own (every other is the account service's - net/accountClient.js). */
 export const isFestivalRefusal = (/** @type {unknown} */ code) =>

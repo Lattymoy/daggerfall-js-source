@@ -20,9 +20,8 @@
 //     is drawn by the billboard program's mesh mode and lit, fogged, hazed and lantern-lit as every 3D tree is, under
 //     either lane; and the nearest few recorded as the sun's casters (renderer.recordShadowMesh), so their crowns throw
 //     their shade, and their gaps their light, on the ground, the buildings and the jungle under them (the enhanced lane);
-//     THE TRAVEL VIEW'S WELL: while the travel view holds its focus (the traveller, renderer._focus - its eye hundreds of
-//     metres up), a tree whose crown stands between the eye and the traveller is not drawn (it still casts), so the
-//     traveller is seen walking under the canopy (crownBlocks);
+//     under the travel view every tree is drawn, and the trees' fragment half sees through a crown over the traveller
+//     (render/lowPolyTreesGlsl.js CANOPY-SEE; GRAHT1's well never fired, its eye the focus - AUDIT CANOPY-SEE C1);
 //   - THE TEARDOWN (destroy): the buffers, the pictures and the casters - EVERY ALLOCATION HAS AN OWNER. The world holds
 //     the host for the session, as it holds the trees' doors (leaving it reloads the page); destroy is the test host's.
 // `?graht=off` is the kill door, offline (grahtOaksOn): online the graht-oaks stand for everyone, since every storey of
@@ -40,10 +39,8 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';
 export const GRAHT_SLOT = 2;
 /** The draw's numbers: the share of the wind's lean (BB_VS's, up the tree's height - a crown a few tenths of a metre in a
  *  breeze), where a tree reads its sun (a share of its height - its crown's top, over its neighbours' shade), how far
- *  from the eye a tree casts into the sun's maps (m, past the far cascade's 240 and a crown's reach), how many cast, and
- *  the share of a crown's reach the travel view's sight line keeps out of (crownBlocks - its masses' bulk, not its
- *  cards' fringe). */
-export const GRAHT_DRAW = Object.freeze({ sway: 0.12, sunLift: 0.96, castReach: 360, casters: 24, well: 0.85 });
+ *  from the eye a tree casts into the sun's maps (m, past the far cascade's 240 and a crown's reach), and how many cast. */
+export const GRAHT_DRAW = Object.freeze({ sway: 0.12, sunLift: 0.96, castReach: 360, casters: 24 });
 /** Each variant's leaves and cards, tinted a little apart (the material's colour, over its picture). */
 export const GRAHT_TINTS = Object.freeze([
   Object.freeze([1, 1, 1]),
@@ -64,42 +61,6 @@ export function fogReach(r) {
   if (mode === 2 && d > 0) return Math.log(256) / d;
   if (mode === 3 && d > 0) return Math.sqrt(Math.log(256)) / d;
   return Infinity;
-}
-
-/**
- * THE TRAVEL VIEW'S WELL: whether the sight line from `eye` to `focus` passes through a tree's crown - the upright
- * cylinder from its crown's underside to its top, GRAHT_DRAW.well of its reach about its trunk - its root at (x, y, z),
- * its measures `m` at scale `s`.
- * @param {ArrayLike<number>} eye @param {ArrayLike<number>} focus @param {number} x @param {number} y @param {number} z
- * @param {{ crownFrom: number, height: number, crownR: number }} m @param {number} s
- */
-export function crownBlocks(eye, focus, x, y, z, m, s) {
-  const y0 = y + m.crownFrom * s,
-    y1 = y + m.height * s,
-    R = m.crownR * s * GRAHT_DRAW.well;
-  const dy = focus[1] - eye[1];
-  // the run of the line (t in 0..1) inside the crown's height
-  let t0 = 0,
-    t1 = 1;
-  if (Math.abs(dy) < 1e-6) {
-    if (eye[1] < y0 || eye[1] > y1) return false;
-  } else {
-    const a = (y0 - eye[1]) / dy,
-      b = (y1 - eye[1]) / dy;
-    t0 = Math.max(0, Math.min(a, b));
-    t1 = Math.min(1, Math.max(a, b));
-    if (t0 > t1) return false;
-  }
-  // that run, on the ground, against the trunk's place: its nearest point within the reach
-  const ax = eye[0] + (focus[0] - eye[0]) * t0 - x,
-    az = eye[2] + (focus[2] - eye[2]) * t0 - z;
-  const bx = eye[0] + (focus[0] - eye[0]) * t1 - x,
-    bz = eye[2] + (focus[2] - eye[2]) * t1 - z;
-  const ex = bx - ax,
-    ez = bz - az,
-    l2 = ex * ex + ez * ez;
-  const k = l2 > 1e-9 ? Math.max(0, Math.min(1, -(ax * ex + az * ez) / l2)) : 0;
-  return Math.hypot(ax + ex * k, az + ez * k) <= R;
 }
 
 /** Every variant at every LOD (`made`, grahtOakMesh's, `[variant * GRAHT_LODS + lod]` - made here when none is handed)
@@ -414,7 +375,6 @@ export function createGrahtHost({ renderer, hides = null, breathe = async () => 
             _t[2] = t[2];
             if (hides(_box, _t)) continue; // the jungle's haze hides it whole (its own bound - jungleHaze.js hazeHides)
           }
-          if (focus && crownBlocks(eye, focus, x, y, z, m, s)) continue; // THE TRAVEL VIEW'S WELL: the traveller seen under it
           const lod = grahtLodOf(Math.hypot(dh, y - ey) / s),
             b = v * GRAHT_LODS + lod;
           counts[b]++;

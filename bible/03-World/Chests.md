@@ -1,48 +1,47 @@
-# The Chest (CHEST3D)
+# Chests
 
-THE PORT'S OWN. Not a DFU member: Daggerfall Unity draws ARCH3D's chest models; the port draws the owner's chest in their
-place, in Daggerfall's own pictures. Ledger A (CHEST3D).
+Every chest in the game is one 3D model the owner supplied, dressed in Daggerfall's own textures. The player meets it
+in a house, a ship's berth, a Delve, the Crown Hall and as the Aurum Coffer. The chest stands where ARCH3D's chest stood
+and keeps its record and its press.
 
-## 1. What was asked
+## How it works
 
-The owner, 2026-10-31, sending `Low_Poly_Chest_Mimic.fbx`: *"I want to implement this and ensure any chests use this.
-Texture it with daggerfall textures"*.
+- `tools/bakeChest.mjs` reads the owner's Blender export (a base, a lid, a hinge and a latch, each on a bone) and bakes
+  each part's triangles twice into `src/assets/chest/chest.json`: shut (the rest pose) and open (the lid's widest key).
+  The frame is the game's: +y up, the latch to +z (Daggerfall's furniture faces +z), the origin on the floor under the
+  base's middle. The source sits beside it in `src/assets/chest/source/`. The mimic's hop animation is not used.
+- `src/world/chestModel.js` `chestModel` lays each face on its texture where it stands (`chestUv`), at 40 texels a metre
+  (`CHEST_TEXELS_M`), the grain along the chest. Wood is TEXTURE.067, the hinge iron and the latch brass from
+  TEXTURE.000 (`CHEST_IRON`, `CHEST_BRASS`).
+- `registerChestModels` puts the models on the custom-model door (`src/world/customModels.js` `registerCustomModel`),
+  which `src/scenes/dataPipeline.js` asks before ARCH3D:
+  - ARCH3D's three chests, 41811-41813 (`CHEST_MODELS`; the "Chest" of `src/systems/worldTooltips.js` `HOUSE_CONTAINER_NAMES`), each fitted inside the box its classic chest filled
+    (`CHEST_BOXES`), with its own lid wood (`CHEST_LOOKS`).
+  - The Aurum Coffer, models 864320 and 864321, shut and open (`AURUM_COFFER_MODELS`), stood by
+    `src/scenes/aurumCacheHost.js`. An emptied coffer stands open. A host with no mesh door stands its picture instead.
+    The coffer has no collision body.
+- DET's sea chest stand-in (`src/world/detStandIns.js`) builds the same chest in a darker wood (`SEA_CHEST_BOX`,
+  `SEA_CHEST_LOOK`).
 
-## 2. The model
+## Rules
 
-A Blender export of four objects - a base, a lid, a hinge and a latch - each parented rigidly to a bone, with one
-action: a mimic's hop, the lid 77 degrees open at its widest. No material and no picture. `tools/bakeChest.mjs` reads the
-bone chain and bakes each part's triangles twice into `src/assets/chest/chest.json`: shut (the rest pose) and open (the
-lid's widest key). Its frame is the game's: +y up, the latch to +z (Daggerfall's furniture faces +z: a dresser's drawers,
-a cupboard's doors), the origin on the floor under the base's middle. The source is committed beside it
-(`src/assets/chest/source/`); the hop itself is not used.
+- Any chest uses this model, in Daggerfall's textures (the owner). The models are climate-free: the same chest in every
+  province.
+- A chest fits inside its classic model's box, on its floor and centred, so placement, the container record
+  (`src/scenes/chestRecords.js`) and interaction stay unchanged.
+- Not chests: TEXTURE.216 records 46 and 47 (gold heaped in a chest) stay flat pictures, because they are loot piles drawn
+  by the dungeon, drop, PvP-spoils and corpse systems. The gate rite's casket and the shipyard's sea chest are part of
+  larger scenery models.
 
-## 3. Daggerfall's pictures
+## Daggerfall Unity
 
-`src/world/chestModel.js` lays each face on its picture from where it stands, at Daggerfall's own density (a texel a
-classic unit, 40 a metre), the grain along the chest. Each classic chest's wood is its own (TEXTURE.067 - 41812's lid
-its reddish record 1); the hinge is iron and the latch brass, TEXTURE.000's swatches, as the classic chests' trim is.
+DFU draws ARCH3D's chest models as they are. This model is the port's own departure (CHEST3D).
 
-## 4. Where it stands
+## Code and tests
 
-On the model door (`customModels.js` registerCustomModel, asked before ARCH3D), registered as the data pipeline is made:
-
-- ARCH3D's three chests, 41811-41813 - every model the game calls a chest (`worldTooltips.js` HOUSE_CONTAINER_NAMES):
-  a house's chests, the ships' berths, the Delve's chest, the Crown Hall's. Each fits inside the box its classic chest
-  filled, on its floor and in its middle, so its placement, its record (`chestRecords.js`) and its press are unchanged.
-- DET's sea chest (`detStandIns.js` 45190), in Daggerfall's darker wood.
-- The Aurum Coffer (`scenes/aurumCacheHost.js`): models 864320 and 864321, shut and open, dark oak with a gold hinge
-  and latch, in the box its picture stood in, its front away from the pile it stands beside. Emptied, the open one
-  stands. Where a host hands no mesh door, its picture stands as before. Like its picture, it has no body to walk into.
-
-## 5. Not done, and why
-
-- Daggerfall's two treasure piles that picture a chest heaped with gold (TEXTURE.216 records 46 and 47) stay pictures:
-  they are loot piles, drawn by four systems (a dungeon's piles, dropped loot, PvP spoils, corpses), not chests.
-- The gate rite's casket and the shipyard's sea chest are boxes inside larger scenery of one archive.
-
-## 6. Pins
-
-`test/world/chest3d.test.js` (the bake to the byte, its frame and winding, the fit, the pictures, the model door; the
-classic boxes against ARCH3D on the freeware) and `test/scenes/aurum_cache_world.test.js` (the coffer's model: stood,
-facing, opened, torn down). The mutants are `tools/mutants/chest3d.json`.
+- `src/world/chestModel.js` - the model, its textures and its registration
+- `tools/bakeChest.mjs` - the bake from the owner's source
+- `test/world/chest3d.test.js` - the bake to the byte, frame and winding, the fit, the textures, the model door, and the
+  classic boxes against ARCH3D when the game data is present
+- `test/scenes/aurum_cache_world.test.js` - the coffer's model stood, facing, opened and torn down
+- `tools/mutants/chest3d.json` - the mutants

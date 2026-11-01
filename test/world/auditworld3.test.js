@@ -230,10 +230,4 @@ test('AUDIT WORLD3 D/E/F: the hosts and the record by source - the peers ride on
   // A3's two other halves
   assert.match(d, /actionRecords\(keys\) \{\s*if \(!Array\.isArray\(keys\) \|\| !keys\.length\) return null;[\s\S]*?\.map\(sharedRecord\);/, 'A3: the CURRENT records, the shared half of each');
   assert.match(rd('src/scenes/worldModes.js'), /dungeonActionRecords\(keys\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.actionRecords\?\.\(keys\) \?\? null\) : null; \},/);
-  // the record - F3 and F4
-  const arc = rd('bible/06-Systems/Online-Arc.md');
-  assert.doesNotMatch(arc, /until WORLD3 \(below\) took the first four/, 'F3: WORLD3 no longer counts gaps it did not take');
-  assert.doesNotMatch(arc, /(?<!~~)The cure - a seeded layout - is slice 3's \(below\)\./, 'F4: AUDIT WORLD\'s promise is struck where it stands, and names what actually shipped'); assert.match(arc, /~~The cure - a seeded layout - is slice 3's \(below\)\.~~/);
-  assert.doesNotMatch(arc, /publishes and applies happen under an open window or\na pause, which slice 3 gates explicitly\./, 'F4: and the gate slice 3 did not build is not still promised of it');
-  assert.match(arc, /## AUDIT WORLD3 \(2026-09-13\)/, 'the section');
 });

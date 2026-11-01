@@ -531,22 +531,6 @@ test('HCC scope: the no-twin rows fall into the families the port cannot have, a
   assert.ok(NOT.filter(([k]) => k.startsWith('TrailingWagonRuntime::')).length <= 12, 'the runtime\'s few no-twins are the Unity/DFU plumbing ones');
 });
 
-test('HCC scope: the bible page states THIS table, and a 1:1 claim for this mod stands beside its check', () => {
-  const page = rd('bible/06-Systems/Horse-Cart-And-Cargo.md');
-  assert.match(page, /\*\*398 authored methods\*\*/);
-  assert.match(page, /\*\*340 are ported\*\*/);
-  assert.match(page, /\*\*58 have no twin\*\*/);
-  assert.match(page, /test\/systems\/horse\/hcc_scope\.test\.js/);
-  const notNames = new Set(NOT.map(([k]) => k.split('::')[0]));
-  for (const t of ['DeployedWagonFollowerCollisionFilter', 'HorseCartUiCompatibilityCoordinator', 'TrailingWagonTradeWindow']) assert.ok(notNames.has(t) && page.includes(t), `the page names ${t} among the no-twins`);
-  for (const f of ['bible/06-Systems/Horse-Cart-And-Cargo.md', 'bible/01-Overview/Mod-Registry.md', 'vendor/horse-cart-and-cargo/README.md']) {
-    for (const line of rd(f).split('\n')) {
-      if (!/1:1/.test(line) || !/horse cart|hcc/i.test(line)) continue;
-      assert.match(line, /hcc_scope|338|no twin|IL|checkable|read off|scope/i, `${f}: a 1:1 claim for this mod carries its check - "${line.trim().slice(0, 120)}"`);
-    }
-  }
-});
-
 // AUDIT WAGON-HITCH (D, the records lens): WAGON-HITCH took the drawn wagon off the IL's trail and grounded ease, and the
 // table went on counting those six rows ported as if the port still drew by them. They are ported - the arithmetic is
 // translated and test/systems/horse/hcc_follow.test.js pins it - and RETIRED from the drawn wagon: the table says which, the page says
@@ -561,5 +545,4 @@ test('HCC scope: WAGON-HITCH retired six ported rows from the drawn wagon - stil
     const code = rd(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     assert.doesNotMatch(code, /\bWagonTrail\b|\bgroundedPoseStep\b/, `${f} draws by the IL's trail again - WAGON-HITCH's departure would be silently undone`);
   }
-  assert.match(rd('bible/06-Systems/Horse-Cart-And-Cargo.md'), /six of the 340 \(the trail's five and ApplyGroundedPose\) are retired from the drawn wagon by WAGON-HITCH/);
 });

@@ -378,7 +378,7 @@ export function morphSelf(
       return { ok: false, refused: ONCE_PER_DAY };
     }
     entry.isTransformed = true;
-    // WERE-WRAPS (2026-10-30, the owner: "let them keep the wraps", "make them useful"): Hand Wraps stay on the claws
+    // WERE-WRAPS (2026-10-30): Hand Wraps stay on the claws
     for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand])
       if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);
     entry.raceNameOverride = entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? 'Wereboar' : 'Werewolf';

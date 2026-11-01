@@ -12,12 +12,12 @@
 --                when they wrote it - no key on `author`, so a staff account gone keeps its notes. RETENTION: the newest
 --                STAFF_NOTES_KEEP a player (the insert trims past it in the same batch), and the account's own go with it
 --                (CASCADE). `id` is the rowid - no AUTOINCREMENT, whose sequence table the schema does not carry (0013's).
--- staff_watch    A STAFF MEMBER'S OWN WATCHLIST (mob, 04:13Z; 06:28Z: "their own"): at most STAFF_WATCH_MAX rows a
+-- staff_watch    A STAFF MEMBER'S OWN WATCHLIST: at most STAFF_WATCH_MAX rows a
 --                member, bounded inside the insert. Nothing writes here but the panel's own add and remove, and the
 --                watch's events are read from what the service already records (logins, trades, sales, findings,
 --                reports) - only from the open panel, never from a login, a trade or a checkpoint (design doc, Server
 --                load). Either account gone takes the row.
--- staff_settings YOUR SETTINGS (mob, 03:24Z: "saved every time"): one JSON document a staff member, bounded and its keys
+-- staff_settings YOUR SETTINGS: one JSON document a staff member, bounded and its keys
 --                checked by staffDesk.js before it is written. Shared limits Admins set are kept elsewhere.
 --
 -- Two indexes for the panel's reads of mod_cases, which no route read this way before: a watched account's cases (its

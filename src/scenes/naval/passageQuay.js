@@ -44,7 +44,9 @@ const RING = Array.from({ length: 8 }, (_, k) => [Math.sin((k / 8) * 2 * Math.PI
  *  TOW_CLEAR_M, so a way's leg and corners keep her sides off the land. */
 export function beamWater(isWater, hull) {
   const r = hullBuild(hull).halfWidth + TOW_CLEAR_M;
-  return (x, z, h) => !!isWater(x, z, h) && RING.every(([sx, sz]) => isWater(x + sx * r, z + sz * r, h));
+  const beam = (/** @type {number} */ x, /** @type {number} */ z, /** @type {number} */ h) =>
+    !!isWater(x, z, h) && RING.every(([sx, sz]) => isWater(x + sx * r, z + sz * r, h));
+  return Object.assign(beam, { tile: isWater.tile }); // the host's tiles, the grid's lines asked of each
 }
 
 /** @param {any} host */

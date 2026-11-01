@@ -56,13 +56,14 @@
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
 import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf, specTrialShown, workEmbers } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track; DAEDRIC-SMELT: a work's embers
-import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
+import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried, extraStored } from './bagLaw.js';   // BAG1: what a character carries, counted; BUTCHER-STORES: a body's meat the Stores'
 import { recipeById, recipeInputs, recipeOpen, counterMade } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
 import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
 import { temperableRecipe, temperCost } from './temperLaw.js';   // CRAFT4: a temper's input, moved in from the bag first
 import { MASTER_CATALYSTS, masterDayOf } from './masterLaw.js';   // MASTER-ART: a Master's work's catalysts, moved in from the bag first; its day
-import { pixelKey, parseNodeKey } from './nodeLaw.js';
+import { pixelKey, parseNodeKey, pixelOk, factConfirmed } from './nodeLaw.js';   // WITNESS-MAP: a ground's pixel the world's
+import { WITNESS_TILES_ASK, tileOk, tileOf, tileKey, unpackTile } from './witnessTileLaw.js';   // AUDIT FB1031 W1 W4: the ground in tiles
 import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
 import { t } from '../systems/textManager.js';   // L10N4: the Stores' words in the player's language
@@ -91,6 +92,8 @@ export const PROF_DUNGEONS_MAX = 4;
  *  read answered for another UTC day than this device's (the two clocks either side of midnight) is not stale again
  *  before it either. */
 export const PROF_REFRESH_BACKOFF_MS = 30_000;
+/** AUDIT FB1031 II T2: the least wait between two ground reads that landed - the map takes at most 60 a minute. */
+export const PROF_GROUND_ASK_GAP_MS = 1000;
 /** AUDIT HORIZONTAL A (the read held across a craft): a state read an act's answer overtook is read again, at most this
  *  many times in all - then applied as it stands. */
 export const PROF_STATE_READS = 3;
@@ -339,6 +342,22 @@ export function createProfBook({ door, storage = null, character = () => null, n
   /** PROF2: the dungeons' states the same way: id -> { day, state, climate?, region?, stale? }. */
   const dungeons = new Map();
   let _pixelsBusy = null;
+  /** WITNESS-MAP, AUDIT FB1031 W1 W4: the day's witnessed tiles as the service laid them - 'tx,ty' -> { day, pixels }, a
+   *  tile asked and holding none an empty one; `groundGen` moves with every tile landed and every pixel heard. */
+  const groundTiles = new Map();
+  /** AUDIT FB1031 W6: the pixels this page heard confirmed (a harvest's read again, the ore card's), by tile - 'tx,ty' ->
+   *  ('x,y' -> [x, y, day]). */
+  const groundHeard = new Map();
+  let _groundBusy = null, _groundWait = -Infinity, groundGen = 0;
+  /** W6: a pixel heard confirmed on `day` joins its tile's wash at once - the day's tiles were laid at its start. */
+  function hearGround(x, y, day) {
+    if (!pixelOk(x, y)) return;
+    const tk = tileKey(...tileOf(x, y));
+    const t = groundTiles.get(tk);
+    if (t && t.day >= day && !t.pixels.some((p) => p[0] === x && p[1] === y)) { t.pixels = [...t.pixels, [x, y]]; groundGen++; }
+    if (!groundHeard.has(tk)) groundHeard.set(tk, new Map());
+    groundHeard.get(tk).set(pixelKey(x, y), [x, y, day]);
+  }
   /**
    * GROUND-STALE (AUDIT 2026-10-01 part four): A HARVEST'S ANSWER IS WHEN ITS GROUND CAN MOVE. The service reads a
    * pixel's or a dungeon's witnesses fresh at every harvest, and the third week-old account's harvest confirms it in that
@@ -552,6 +571,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
           const k = pixelKey(p.x, p.y);
           const before = pixels.get(k);
           pixels.set(k, { day, state: p.state, climate: p.climate ?? null, region: p.region ?? null, ...(p.jungle === true ? { jungle: true } : {}) });   // AUDIT TESA II J5: a confirmed jungle's word
+          if (factConfirmed(p)) hearGround(p.x, p.y, day);   // AUDIT FB1031 W6: on the map's wash the moment it is heard
           // GROUND-MIDNIGHT (AUDIT 2026-10-01 part four): yesterday's word is no word - the day's turn stood every pixel
           // again before today's states were read (the ground's least), so a pixel confirmed yesterday AND today was
           // never stood again: it stood unconfirmed all day, its signature veins gone
@@ -585,6 +605,50 @@ export function createProfBook({ door, storage = null, character = () => null, n
         return !before || before.day !== day || before.state !== (d?.state ?? 'none') ? [id] : [];   // GROUND-MIDNIGHT: yesterday's is no word
       })().finally(() => { _pixelsBusy = null; });
       return (await _pixelsBusy).length > 0;
+    },
+
+    // ─── WITNESS-MAP: THE WITNESSED GROUND, TILE BY TILE ─────────────
+    /** A tile's confirmed pixels today (`{ day, pixels: [[x, y]...] }`, with those heard confirmed since), or null not yet
+     *  heard. AUDIT FB1031 W1 W4: tiles, not regions - a province is one region, the sea past the Bay region 0. */
+    groundTile(tx, ty) { const g = groundTiles.get(tileKey(tx, ty)); return g && g.day >= heldDay() ? g : null; },
+    /** What the held ground is: moves with a tile landed, a pixel heard, the page's day turned. */
+    groundKey() { return `${heldDay()}:${groundGen}`; },
+    /** Asks the tiles of `list` not yet heard today, in its order, WITNESS_TILES_ASK at a time, while the professions are
+     *  open - one read in flight, and none inside PROF_REFRESH_BACKOFF_MS of a read that failed, was answered for an
+     *  older day (this device's clock past midnight first) or came before the day was laid. Answers whether tiles landed. */
+    async askGround(list) {
+      const c = character();
+      if (_groundBusy || state.open !== true || !c || now() < _groundWait) return false;
+      const want = new Map();
+      for (const t of list ?? []) {
+        if (want.size >= WITNESS_TILES_ASK) break;
+        const [tx, ty] = Array.isArray(t) ? t : [];
+        if (tileOk(tx, ty) && !this.groundTile(tx, ty)) want.set(tileKey(tx, ty), [tx, ty]);
+      }
+      if (!want.size) return false;
+      const owner = slot();
+      _groundBusy = (async () => {
+        const r = await ask(() => door.ground(c, [...want.values()]));
+        if (owner !== slot()) return false;
+        const day = r?.data?.day;
+        if (!r?.ok || r.data?.laid !== true || !Number.isSafeInteger(day) || day < heldDay()) {
+          shutBy(r);
+          _groundWait = now() + PROF_REFRESH_BACKOFF_MS;
+          return false;
+        }
+        const got = new Map((Array.isArray(r.data.tiles) ? r.data.tiles : []).filter(Array.isArray).map((t) => [tileKey(t[0], t[1]), t[2]]));
+        for (const [k, [tx, ty]] of want) {
+          const pixels = (got.has(k) ? unpackTile(tx, ty, got.get(k)) : null) ?? [];
+          for (const [x, y, d] of groundHeard.get(k)?.values() ?? []) {   // W6: and what this page heard since the day was laid
+            if (d >= day && !pixels.some((p) => p[0] === x && p[1] === y)) pixels.push([x, y]);
+          }
+          groundTiles.set(k, { day, pixels });
+        }
+        groundGen++;
+        _groundWait = now() + PROF_GROUND_ASK_GAP_MS;   // AUDIT FB1031 II T2: a pan asked at the 4 Hz poll, the account's whole door rate
+        return true;
+      })().finally(() => { _groundBusy = null; });
+      return _groundBusy;
     },
 
     // ─── A HARVEST ──────────────────────────────────────────────────
@@ -1225,7 +1289,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       ...(h.jungle === true ? { jungle: true } : {}),   // AUDIT TESA II J5: its pixel past the Bay a jungle zone's (nodeLaw.js jungleWoods - witnessed)
       ...(h.foe === undefined ? {} : { foe: h.foe }),   // PROF7: the foe a body is (PROF0 6: the client's claim)
       ...(typeof h.watch === 'string' ? { watch: h.watch } : {}),   // PROF2b: a Motherlode's - the relay's Watch receipt for its pixel
-      ...(h.carry === true ? { carry: true, ...heldBody(h) } : {}),   // BAG1: into the bag or the pack
+      ...(h.carry === true ? { carry: true, butcheryStores: true, ...heldBody(h) } : {}),   // BAG1: into the bag or the pack; BUTCHER-STORES: a body's meat to the Stores
     };
     let r;
     sending.add(h.rid);
@@ -1313,7 +1377,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     };
     add(d.material, Number(d.qty) || 0);
     if (d.gem) add(d.gem, 1);
-    if (d.extra) add(d.extra, Number(d.extraQty) || 1);
+    if (d.extra && !extraStored(d)) add(d.extra, Number(d.extraQty) || 1);   // BUTCHER-STORES: the Stores' meat is never minted
     return out;
   }
   function drop(id, key) {

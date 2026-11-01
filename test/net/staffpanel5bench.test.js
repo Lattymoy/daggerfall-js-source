@@ -67,7 +67,7 @@ test('STAFF-PANEL5-FOLLOW bench: what the where note and the follow cost the bus
   void spies;
 }));
 
-// STAFF-PANEL5-FEEDS-FIX (the relay flaw review, findings 9 and 12; mob: features only "if it wont affect server") - WHAT
+// STAFF-PANEL5-FEEDS-FIX (the relay flaw review, findings 9 and 12; features only if they do not affect the server) - WHAT
 // THE FEEDS' FIXES COST A FRAME: a pose read by two open episodes (the teleport check one compare), and a quiet sender's
 // full foes frame (no row made now). A bench on this machine, not live: the numbers print, the bounds are loose.
 test('STAFF-PANEL5-FEEDS-FIX bench: a pose read by open episodes and a quiet foes frame stay a few microseconds, and quiet senders hold no memory', async (t) => {
@@ -87,8 +87,8 @@ test('STAFF-PANEL5-FEEDS-FIX bench: a pose read by open episodes and a quiet foe
   assert.ok(usPose < 50 && usFoes < 50, line);
 });
 
-// STAFF-PANEL5-MONSTERS (2026-10-23; mob wants all three feed pages working with grantStrip off, and "it need to not hurt
-// server performance") - WHAT COUNTING MONSTERS WITH grantStrip OFF COSTS A FOES FRAME: staffFoesSeen on every fanned
+// STAFF-PANEL5-MONSTERS (2026-10-23; mob wants all three feed pages working with grantStrip off, without hurting
+// server performance) - WHAT COUNTING MONSTERS WITH grantStrip OFF COSTS A FOES FRAME: staffFoesSeen on every fanned
 // frame (the feed's URL unset, one compare; set, a delta two; a full frame one pass over its records), against the fan it
 // rides - a full cell's frame to 31 listeners through the Room's own _foesFan, its parse included, every send a no-op (so
 // the fan is cheaper than live and the share an upper bound). A bench on this machine, not live: the numbers print, the

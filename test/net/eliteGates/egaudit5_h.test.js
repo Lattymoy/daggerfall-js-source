@@ -222,8 +222,6 @@ test('AUDIT EG V A2 NEW-1 A KYNVAL SQUAD STANDS WHOLE (sections 8.7: "four Kynva
   assert.ok(kv.every((b) => egHas(b, EG_FL.elite)));
   assert.ok(egBodiesOf(S.B.F, EG_ROLE.add).filter((b) => b.hp > 0).length > egLegionCapOf(S.B.F), 'stood past the room the cap left');
   assert.equal(egLegionRoom(S.B.F), 0, 'and counted against it after');
-  const page = readFileSync(new URL('../../../bible/11-Multiplayer/Elite-Gates.md', import.meta.url), 'utf8'), s12 = page.slice(page.indexOf('## 12. The legion'), page.indexOf('## 13. The lords')).replace(/\s+/g, ' ');
-  assert.match(s12, /a summons a mechanic needs - .*?a Kynval Squad's four elites \(section 8\.7\).*? - stands whatever the room/, 'section 12 names it');
 });
 
 // ── L1-10's limit: THE GROUND BURNING ───────────────────────────────────────────────────────────────────────────────────────

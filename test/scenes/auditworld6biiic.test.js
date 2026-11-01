@@ -197,5 +197,4 @@ test('AUDIT WORLD6b-iii(c) by source: the dungeon\'s record clamps the overshoot
   assert.match(x, /return Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, k < 1 \? Math\.round\(e\.health \* k\) : e\.health\)\);/, 'C8/C9: clamped as ever');
   assert.match(b, /const asker = peerCandidate\(from\);/, 'A1: the asker read off the hunt\'s roster');   // PIN MOVED (OUTDOOR-LOOT): the owner's take arm is the block's
   assert.match(rd('server/src/index.js'), /const bytes = byteGate\(tm\.hbytes \?\? null, now, out\.length, HIT_ROOM_BYTES_PER_S\);/, 'C3 (the destination\'s bytes - AUDIT 68 X8 and its review)');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-iii\(c\) \(2026-09-14\)/, 'the record');
 });

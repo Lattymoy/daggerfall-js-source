@@ -424,8 +424,8 @@
   {
     "name": "PROF11-decor-model-its-template",
     "file": "src/net/recipeLaw.js",
-    "old": "?.model ?? null;",
-    "new": "?.templateIndex ?? null;",
+    "old": "  STONE_DECOR.find((d) => d.templateIndex === templateIndex)?.model ?? null;",
+    "new": "  STONE_DECOR.find((d) => d.templateIndex === templateIndex)?.templateIndex ?? null;",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "PROF11-decor-one-mortar",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze({ key: MORTAR.key, n: d.mortar })",
-    "new": "Object.freeze({ key: MORTAR.key, n: 1 })",
+    "old": "        Object.freeze({ key: MORTAR.key, n: d.mortar }),",
+    "new": "        Object.freeze({ key: MORTAR.key, n: 1 }),",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -496,8 +496,8 @@
   {
     "name": "PROF11-sculptor-at-50",
     "file": "src/net/recipeLaw.js",
-    "old": "(!r.spec || specs?.[100] === r.spec)",
-    "new": "(!r.spec || specs?.[50] === r.spec)",
+    "old": "  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
+    "new": "  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[50] === r.spec);",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -507,8 +507,8 @@
   {
     "name": "PROF11-sculptor-unasked",
     "file": "src/net/recipeLaw.js",
-    "old": "(!r.spec || specs?.[100] === r.spec)",
-    "new": "true",
+    "old": "export const recipeOpen = (r, rank, specs = null) =>\n  !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
+    "new": "export const recipeOpen = (r, rank, specs = null) => !!r && !r.later && rank >= r.rank && true;",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -677,8 +677,8 @@
   {
     "name": "PROF11-chisel-band-strength-alone",
     "file": "src/net/recipeLaw.js",
-    "old": "actBand(Math.trunc((strength + endurance) / 2));",
-    "new": "actBand(Math.trunc((strength + strength) / 2));",
+    "old": "export const chiselBand = ({ strength, endurance }) => actBand(Math.trunc((strength + endurance) / 2));",
+    "new": "export const chiselBand = ({ strength, endurance }) => actBand(Math.trunc((strength + strength) / 2));",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "PROF11-chisel-carving-any-furniture",
     "file": "src/net/recipeLaw.js",
-    "old": "(r?.family === 'stonework' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes)",
-    "new": "(r?.kind === 'furniture' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes)",
+    "old": "export const chiselStrikes = (r) => (r?.family === 'stonework' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes);",
+    "new": "export const chiselStrikes = (r) => (r?.kind === 'furniture' ? CHISEL_ACT.carveStrikes : CHISEL_ACT.strikes);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "PROF11-chisel-master-past-100",
     "file": "src/net/recipeLaw.js",
-    "old": "(rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
-    "new": "(rank > PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
+    "old": "  (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
+    "new": "  (rank > PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "PROF11-chisel-band-ignored",
     "file": "src/net/recipeLaw.js",
-    "old": "(rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
-    "new": "(rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS);",
+    "old": "export const chiselMarkS = (rank, band = 1) =>\n  (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS) * band;",
+    "new": "export const chiselMarkS = (rank, band = 1) => (rank >= PROF_RANK_MAX ? CHISEL_ACT.masterMarkS : CHISEL_ACT.markS);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "PROF11-xp-clean-a-quarter",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);\n  return xp;\n}",
-    "new": "  if (clean) xp = Math.floor((xp * 5) / 4);\n  return xp;\n}",
+    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);",
+    "new": "  if (clean) xp = Math.floor((xp * 5) / 4);",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -744,8 +744,8 @@
   {
     "name": "PROF11-xp-any-units",
     "file": "src/net/recipeLaw.js",
-    "old": "(Number.isSafeInteger(units) && units > 0 ? units : 0)",
-    "new": "(units)",
+    "old": "  let xp = CRAFT_XP_PER_TIER * masonTier(rank) * (Number.isSafeInteger(units) && units > 0 ? units : 0);",
+    "new": "  let xp = CRAFT_XP_PER_TIER * masonTier(rank) * units;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -1215,8 +1215,8 @@
   {
     "name": "PROF11-svc-first-500-for-a-smelt",
     "file": "src/net/recipeLaw.js",
-    "old": "if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
-    "new": "if (firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
+    "old": "for (const w of /** @type {any[]} */ (WORK_RECIPES)) if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
+    "new": "for (const w of /** @type {any[]} */ (WORK_RECIPES)) if (firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
     "tests": [
       "test/net/prof11_service.test.js",
       "test/net/prof3_law.test.js"
