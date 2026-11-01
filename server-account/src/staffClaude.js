@@ -14,8 +14,8 @@ export const DIGEST_SINCE_S = 3600;
 /** A read is one audit row per member and view in this many seconds (the log's own habit). */
 const READ_ROW_S = 10 * 60;
 
-const json = (/** @type {any} */ s) => {
-  try { return s ? JSON.parse(s) : null; } catch { return null; }
+const json = (/** @type {any} */ text) => {
+  try { return text ? JSON.parse(text) : null; } catch { return null; }
 };
 
 /**
@@ -34,7 +34,7 @@ export async function staffClaude(ctx, env, path, body, who, audit) {
     const status = ['pending', 'accepted', 'dismissed'].includes(body.status) ? body.status : null;
     const before = Number.isSafeInteger(body.before) && body.before > 0 ? body.before : null;
     const limit = Number.isSafeInteger(body.limit) ? Math.min(Math.max(body.limit, 1), CLAUDE_PAGE) : CLAUDE_PAGE;
-    const [r] = await db.batch([
+    const [page] = await db.batch([
       db
         .prepare(`SELECT s.*, p.handle, p.guest_name FROM claude_suggestions s JOIN players p ON p.id = s.subject
           WHERE (?1 IS NULL OR s.status = ?1) AND (?2 IS NULL OR s.id < ?2) AND (?3 = 'admin' OR s.kind = 'report')
@@ -44,9 +44,9 @@ export async function staffClaude(ctx, env, path, body, who, audit) {
     ]);
     return {
       author: claudeHandle(env),
-      suggestions: (r.results ?? []).map((/** @type {any} */ s) => ({
-        id: s.id, kind: s.kind, subject: s.subject, name: displayName(s), caseId: s.case_id, urgency: s.urgency, summary: s.summary,
-        evidence: json(s.evidence), action: json(s.action), status: s.status, decidedBy: s.decided_by, decidedAt: s.decided_at, createdAt: s.created_at,
+      suggestions: (page.results ?? []).map((/** @type {any} */ row) => ({
+        id: row.id, kind: row.kind, subject: row.subject, name: displayName(row), caseId: row.case_id, urgency: row.urgency, summary: row.summary,
+        evidence: json(row.evidence), action: json(row.action), status: row.status, decidedBy: row.decided_by, decidedAt: row.decided_at, createdAt: row.created_at,
       })),
     };
   }

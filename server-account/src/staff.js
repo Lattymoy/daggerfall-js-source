@@ -384,7 +384,7 @@ export async function staffSession(ctx, env, token, { act = true } = {}) {
 export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (path === '/v1/staff/login') return staffLogin(ctx, env, body, ip);
   if (path === '/v1/staff/enroll') return staffEnroll(ctx, env, body, ip);
-  if (path === ORDER_PATH) return staffOrder(ctx, env, body, ip, (/** @type {any} */ who, /** @type {string} */ p, /** @type {any} */ b) => staffDispatch(ctx, env, p, b, who));
+  if (path === ORDER_PATH) return staffOrder(ctx, env, body, ip, (/** @type {any} */ who, /** @type {string} */ doorPath, /** @type {any} */ b) => staffDispatch(ctx, env, doorPath, b, who));
   const who = await staffSession(ctx, env, token, { act: body.poll !== true });
   if (!who) return { error: 'staff-session' };
   if (ORDER_KEY_ROUTES.includes(path)) return staffOrderKeys(ctx, env, path, body, who);

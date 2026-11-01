@@ -96,15 +96,15 @@ export function scriptedSigns(hours, ats) {
   if (set.length >= RING_AROUND_HOURS) out.push('round-the-clock');
   const sorted = [...ats].sort((a, b) => a - b);
   if (sorted.length > RING_GAPS_MIN) {
-    const gaps = sorted.slice(1).map((t, i) => t - sorted[i]);
-    const mean = gaps.reduce((s, g) => s + g, 0) / gaps.length;
-    const sd = Math.sqrt(gaps.reduce((s, g) => s + (g - mean) ** 2, 0) / gaps.length);
-    if (mean > 0 && sd / mean <= RING_GAP_CV) out.push('even-gaps');
+    const gaps = sorted.slice(1).map((stamp, i) => stamp - sorted[i]);
+    const mean = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
+    const spread = Math.sqrt(gaps.reduce((sum, gap) => sum + (gap - mean) ** 2, 0) / gaps.length);
+    if (mean > 0 && spread / mean <= RING_GAP_CV) out.push('even-gaps');
   }
-  const days = new Set(set.map((h) => Math.floor(h / 86400)));
+  const days = new Set(set.map((hour) => Math.floor(hour / 86400)));
   if (set.length && days.size >= RING_NIGHT_DAYS)
     for (let b = 0; b <= RING_NIGHT_START_MAX; b++) {
-      const inBlock = set.filter((h) => ((h % 86400) / 3600 - b + 24) % 24 < RING_NIGHT_BLOCK_H).length;
+      const inBlock = set.filter((hour) => ((hour % 86400) / 3600 - b + 24) % 24 < RING_NIGHT_BLOCK_H).length;
       if (inBlock / set.length >= RING_NIGHT_SHARE) {
         out.push('nightly');
         break;
@@ -127,30 +127,30 @@ export async function botRings(db, nowS) {
   const trades = (await db.prepare("SELECT a_player, b_player, result FROM realm_trades WHERE state = 'done' AND created_at > ?1 LIMIT 5000").bind(since).all())?.results ?? [];
   /** @type {Map<string, Map<string, number>>} receiver -> giver -> free trades */
   const free = new Map();
-  for (const t of trades) {
-    let r = null;
-    try { r = JSON.parse(t.result); } catch { continue; }
-    const a = gotOf(r?.a), b = gotOf(r?.b);
+  for (const trade of trades) {
+    let result = null;
+    try { result = JSON.parse(trade.result); } catch { continue; }
+    const a = gotOf(result?.a), b = gotOf(result?.b);
     const one = (/** @type {string} */ to, /** @type {string} */ from, /** @type {{items: number, gold: number}} */ got, /** @type {{items: number, gold: number}} */ back) => {
       if (!to || !from || to === from || got.items + got.gold === 0 || back.items > 0 || back.gold > RING_BACK_GOLD) return;
       const givers = free.get(to) ?? new Map();
       givers.set(from, (givers.get(from) ?? 0) + 1);
       free.set(to, givers);
     };
-    one(t.a_player, t.b_player, a, b);
-    one(t.b_player, t.a_player, b, a);
+    one(trade.a_player, trade.b_player, a, b);
+    one(trade.b_player, trade.a_player, b, a);
   }
   const rings = [];
-  const receivers = [...free].map(([to, g]) => [to, [...g].filter(([, n]) => n >= RING_FREE_MIN)]).filter(([, g]) => g.length >= RING_FEEDERS_MIN);
+  const receivers = [...free].map(([to, givers]) => [to, [...givers].filter(([, n]) => n >= RING_FREE_MIN)]).filter(([, givers]) => givers.length >= RING_FEEDERS_MIN);
   for (const [receiver, givers] of receivers.slice(0, RING_RECEIVERS_MAX)) {
     const feeders = [];
     for (const [id, trades] of givers.slice(0, RING_FEEDERS_READ)) {
-      const [h, a] = await Promise.all([
+      const [hourRows, a] = await Promise.all([
         db.prepare('SELECT DISTINCT hour FROM progress_hours WHERE player = ?1 AND hour > ?2 AND (claims > 0 OR played_s > 0)').bind(id, since).all(),
         db.prepare('SELECT at FROM node_harvests WHERE player = ?1 AND at > ?2 ORDER BY at LIMIT 500').bind(id, since).all(),
       ]);
-      const hours = (h?.results ?? []).map((/** @type {any} */ r) => r.hour);
-      const signs = scriptedSigns(hours, (a?.results ?? []).map((/** @type {any} */ r) => r.at));
+      const hours = (hourRows?.results ?? []).map((/** @type {any} */ row) => row.hour);
+      const signs = scriptedSigns(hours, (a?.results ?? []).map((/** @type {any} */ row) => row.at));
       if (signs.length) feeders.push({ id, freeTrades: trades, hoursPlayed: new Set(hours).size, signs });
     }
     if (feeders.length < RING_FEEDERS_MIN) continue;
@@ -164,9 +164,9 @@ export async function botRings(db, nowS) {
 /** @typedef {{ kind: string, subject: string, caseId?: string|null, facts: any, lines?: { sub: string, at: number, tab: string, name: string, text: string }[] }} Item */
 
 /** @param {any} db @param {() => Promise<any>} f @param {string} what */
-const safely = async (db, f, what) => {
+const safely = async (db, read, what) => {
   try {
-    return (await f()) ?? [];
+    return (await read()) ?? [];
   } catch (e) {
     console.warn(`[claude] ${what}`, /** @type {any} */ (e)?.message ?? e);
     return [];
@@ -178,30 +178,30 @@ const safely = async (db, f, what) => {
  * @param {any} db @param {number} since @param {number} nowS @returns {Promise<Item[]>}
  */
 export async function gather(db, since, nowS) {
-  const q = async (/** @type {string} */ sql, /** @type {any[]} */ ...args) => (await db.prepare(sql).bind(...args).all())?.results ?? [];
+  const rows = async (/** @type {string} */ sql, /** @type {any[]} */ ...args) => (await db.prepare(sql).bind(...args).all())?.results ?? [];
   const [reports, net, monsters, reactions, dupes, gains, holds, rings] = await Promise.all([
     safely(db, async () => {
-      const cases = await q("SELECT id, target, reports, credible, ai_category, ai_severity, ai_confidence, ai_reason, ai_mode FROM mod_cases WHERE source = 'report' AND status = 'open' AND ai_state != 'due' AND ai_state != 'reading' AND updated_at > ?1 ORDER BY credible DESC, updated_at DESC LIMIT 10", since);
-      return Promise.all(cases.map(async (/** @type {any} */ c) => ({
-        kind: 'report', subject: c.target, caseId: c.id,
-        facts: { reports: c.reports, credible: c.credible, reviewerShadow: c.ai_category ? { category: c.ai_category, severity: c.ai_severity, confidence: c.ai_confidence, reason: c.ai_reason, mode: c.ai_mode } : null },
-        lines: (await q('SELECT sub, at, tab, name, text FROM mod_case_lines WHERE case_id = ?1 ORDER BY at DESC LIMIT ?2', c.id, CASE_LINES_MAX)).reverse(),
+      const cases = await rows("SELECT id, target, reports, credible, ai_category, ai_severity, ai_confidence, ai_reason, ai_mode FROM mod_cases WHERE source = 'report' AND status = 'open' AND ai_state != 'due' AND ai_state != 'reading' AND updated_at > ?1 ORDER BY credible DESC, updated_at DESC LIMIT 10", since);
+      return Promise.all(cases.map(async (/** @type {any} */ report) => ({
+        kind: 'report', subject: report.target, caseId: report.id,
+        facts: { reports: report.reports, credible: report.credible, reviewerShadow: report.ai_category ? { category: report.ai_category, severity: report.ai_severity, confidence: report.ai_confidence, reason: report.ai_reason, mode: report.ai_mode } : null },
+        lines: (await rows('SELECT sub, at, tab, name, text FROM mod_case_lines WHERE case_id = ?1 ORDER BY at DESC LIMIT ?2', report.id, CASE_LINES_MAX)).reverse(),
       })));
     }, 'reports'),
-    safely(db, async () => (await q('SELECT sub, SUM(closes) AS closes, SUM(refused + junk) AS refused, MAX(p10) AS peak10, MAX(p60) AS peak60 FROM staff_net_rows WHERE at > ?1 GROUP BY sub HAVING SUM(closes) > 0 OR SUM(refused + junk) >= ?2 LIMIT 10', since, NET_REFUSED_HIGH))
-      .map((/** @type {any} */ r) => ({ kind: 'net', subject: r.sub, facts: { closes: r.closes, refused: r.refused, framesPer10s: r.peak10, framesPerMinute: r.peak60 } })), 'net'),
-    safely(db, async () => (await monstersRanked(db, nowS)).ranked.filter((/** @type {any} */ p) => p.level !== 'low').slice(0, 10)
-      .map((/** @type {any} */ p) => ({ kind: 'monster', subject: p.sub, facts: { level: p.level, why: p.why } })), 'monster'),
-    safely(db, async () => (await q('SELECT sub, SUM(n) AS n, SUM(members) AS members, SUM(p1) AS p1, SUM(p1_n) AS p1_n, SUM(wd) AS wd, SUM(wd_n) AS wd_n, SUM(ac) AS ac, SUM(ac_n) AS ac_n, SUM(hk) AS hk, SUM(hk_n) AS hk_n, SUM(hu) AS hu, SUM(hu_n) AS hu_n, SUM(dd_n) AS dd_n, SUM(drawn) AS drawn, SUM(struck) AS struck, SUM(mv) AS mv, SUM(tn) AS tn FROM encounter_reactions WHERE at > ?1 GROUP BY sub HAVING SUM(n) >= ?2 LIMIT 100', since, REACT_PATTERN))
-      .map((/** @type {any} */ r) => ({ kind: 'reactions', subject: r.sub, facts: reactionSummary(r) }))
+    safely(db, async () => (await rows('SELECT sub, SUM(closes) AS closes, SUM(refused + junk) AS refused, MAX(p10) AS peak10, MAX(p60) AS peak60 FROM staff_net_rows WHERE at > ?1 GROUP BY sub HAVING SUM(closes) > 0 OR SUM(refused + junk) >= ?2 LIMIT 10', since, NET_REFUSED_HIGH))
+      .map((/** @type {any} */ row) => ({ kind: 'net', subject: row.sub, facts: { closes: row.closes, refused: row.refused, framesPer10s: row.peak10, framesPerMinute: row.peak60 } })), 'net'),
+    safely(db, async () => (await monstersRanked(db, nowS)).ranked.filter((/** @type {any} */ ranked) => ranked.level !== 'low').slice(0, 10)
+      .map((/** @type {any} */ ranked) => ({ kind: 'monster', subject: ranked.sub, facts: { level: ranked.level, why: ranked.why } })), 'monster'),
+    safely(db, async () => (await rows('SELECT sub, SUM(n) AS n, SUM(members) AS members, SUM(p1) AS p1, SUM(p1_n) AS p1_n, SUM(wd) AS wd, SUM(wd_n) AS wd_n, SUM(ac) AS ac, SUM(ac_n) AS ac_n, SUM(hk) AS hk, SUM(hk_n) AS hk_n, SUM(hu) AS hu, SUM(hu_n) AS hu_n, SUM(dd_n) AS dd_n, SUM(drawn) AS drawn, SUM(struck) AS struck, SUM(mv) AS mv, SUM(tn) AS tn FROM encounter_reactions WHERE at > ?1 GROUP BY sub HAVING SUM(n) >= ?2 LIMIT 100', since, REACT_PATTERN))
+      .map((/** @type {any} */ row) => ({ kind: 'reactions', subject: row.sub, facts: reactionSummary(row) }))
       .filter((/** @type {any} */ i) => i.facts.actMs !== null && i.facts.actMs < REACT_FAST_MS).slice(0, 10), 'reactions'),
-    safely(db, async () => (await q('SELECT c.player AS sub, COUNT(*) AS n FROM item_dupes d JOIN realm_characters c ON c.id = d.char_id WHERE d.at > ?1 GROUP BY c.player LIMIT 10', since))
-      .map((/** @type {any} */ r) => ({ kind: 'dupe', subject: r.sub, facts: { copiesFound: r.n } })), 'dupes'),
-    safely(db, async () => (await q("SELECT player AS sub, COUNT(*) AS n, MAX(detail) AS detail FROM realm_findings WHERE kind IN ('budget', 'measure') AND at > ?1 GROUP BY player LIMIT 10", since))
-      .map((/** @type {any} */ r) => ({ kind: 'gains', subject: r.sub, facts: { findings: r.n, detail: String(r.detail ?? '').slice(0, 400) } })), 'gains'),
-    safely(db, async () => (await q("SELECT player AS sub, COUNT(*) AS n, GROUP_CONCAT(DISTINCT held) AS why FROM realm_characters WHERE held IS NOT NULL AND held != 'staff' AND held_at > ?1 GROUP BY player LIMIT 10", since))
-      .map((/** @type {any} */ r) => ({ kind: 'hold', subject: r.sub, facts: { characters: r.n, why: r.why } })), 'holds'),
-    safely(db, async () => (await botRings(db, nowS)).map((r) => ({ kind: 'bot-ring', subject: r.receiver, facts: r.facts })), 'bot-ring'),
+    safely(db, async () => (await rows('SELECT c.player AS sub, COUNT(*) AS n FROM item_dupes d JOIN realm_characters c ON c.id = d.char_id WHERE d.at > ?1 GROUP BY c.player LIMIT 10', since))
+      .map((/** @type {any} */ row) => ({ kind: 'dupe', subject: row.sub, facts: { copiesFound: row.n } })), 'dupes'),
+    safely(db, async () => (await rows("SELECT player AS sub, COUNT(*) AS n, MAX(detail) AS detail FROM realm_findings WHERE kind IN ('budget', 'measure') AND at > ?1 GROUP BY player LIMIT 10", since))
+      .map((/** @type {any} */ row) => ({ kind: 'gains', subject: row.sub, facts: { findings: row.n, detail: String(row.detail ?? '').slice(0, 400) } })), 'gains'),
+    safely(db, async () => (await rows("SELECT player AS sub, COUNT(*) AS n, GROUP_CONCAT(DISTINCT held) AS why FROM realm_characters WHERE held IS NOT NULL AND held != 'staff' AND held_at > ?1 GROUP BY player LIMIT 10", since))
+      .map((/** @type {any} */ row) => ({ kind: 'hold', subject: row.sub, facts: { characters: row.n, why: row.why } })), 'holds'),
+    safely(db, async () => (await botRings(db, nowS)).map((ring) => ({ kind: 'bot-ring', subject: ring.receiver, facts: ring.facts })), 'bot-ring'),
   ]);
   return [...reports, ...net, ...monsters, ...reactions, ...dupes, ...gains, ...holds, ...rings].slice(0, ITEMS_MAX);
 }
@@ -250,8 +250,8 @@ export function itemsPayload(items) {
   };
   return {
     items: items.map((it, i) => ({
-      i, kind: it.kind, subject: tag(it.subject), facts: JSON.parse(JSON.stringify(it.facts, (k, v) => (k === 'id' && typeof v === 'string' ? tag(v) : v))),
-      ...(it.lines ? { lines: it.lines.map((l) => ({ speaker: tag(l.sub), tab: l.tab, text: l.text })) } : {}),
+      i, kind: it.kind, subject: tag(it.subject), facts: JSON.parse(JSON.stringify(it.facts, (k, value) => (k === 'id' && typeof value === 'string' ? tag(value) : value))),
+      ...(it.lines ? { lines: it.lines.map((line) => ({ speaker: tag(line.sub), tab: line.tab, text: line.text })) } : {}),
     })),
   };
 }
@@ -262,11 +262,11 @@ const budgetKey = (nowS) => `${dayOf(nowS)}:claude`;
 export async function spendClaudeCall(db, env, nowS) {
   const cap = claudeDailyMax(env);
   if (cap < 1) return false;
-  const r = await db
+  const spent = await db
     .prepare('INSERT INTO mod_ai_days (day, calls) VALUES (?1, 1) ON CONFLICT (day) DO UPDATE SET calls = calls + 1 WHERE calls < ?2 RETURNING calls')
     .bind(budgetKey(nowS), cap)
     .first();
-  return !!r;
+  return !!spent;
 }
 
 /** One call: spend, ask, hold the answer to its schema. `{ verdict }` or `{ error }`. @param {any} db @param {any} env @param {any} fetchFn @param {number} nowS @param {{ system: string, payload: any, tag: string, schema: any }} ask */
@@ -284,10 +284,10 @@ async function ask(db, env, fetchFn, nowS, { system, payload, tag, schema }) {
 }
 
 /** A suggestion's action as stored: one existing staff act and its arguments, or null. @param {Item} item @param {any} s */
-export function actionOf(item, s) {
-  if (s.act === 'mute' && item.kind === 'report')
-    return { act: 'mute', path: CLAUDE_ACTS.mute, args: { target: item.subject, minutes: Math.min(MUTE_MAX, Math.max(MUTE_MIN, Math.trunc(Number(s.minutes)) || 30)), ...(item.caseId ? { case: item.caseId } : {}) } };
-  if (s.act === 'hold' || s.act === 'watch') return { act: s.act, path: CLAUDE_ACTS[/** @type {'hold'|'watch'} */ (s.act)], args: { target: item.subject } };
+export function actionOf(item, said) {
+  if (said.act === 'mute' && item.kind === 'report')
+    return { act: 'mute', path: CLAUDE_ACTS.mute, args: { target: item.subject, minutes: Math.min(MUTE_MAX, Math.max(MUTE_MIN, Math.trunc(Number(said.minutes)) || 30)), ...(item.caseId ? { case: item.caseId } : {}) } };
+  if (said.act === 'hold' || said.act === 'watch') return { act: said.act, path: CLAUDE_ACTS[/** @type {'hold'|'watch'} */ (said.act)], args: { target: item.subject } };
   return null;
 }
 
@@ -295,19 +295,19 @@ export function actionOf(item, s) {
 async function writeSuggestions(db, items, verdict, nowS) {
   const wrote = [];
   const held = await heldBack(db, nowS); // a case claimed, or a freeze laid, while the model read
-  for (const s of Array.isArray(verdict?.suggestions) ? verdict.suggestions : []) {
-    const item = Number.isSafeInteger(s?.item) ? items[s.item] : null;
-    const summary = typeof s?.summary === 'string' ? s.summary.replace(/\s+/g, ' ').trim().slice(0, SUMMARY_MAX) : '';
+  for (const said of Array.isArray(verdict?.suggestions) ? verdict.suggestions : []) {
+    const item = Number.isSafeInteger(said?.item) ? items[said.item] : null;
+    const summary = typeof said?.summary === 'string' ? said.summary.replace(/\s+/g, ' ').trim().slice(0, SUMMARY_MAX) : '';
     if (!item || !summary || held.has(item.subject)) continue;
-    const evidence = JSON.stringify({ facts: item.facts, ...(item.lines ? { lines: item.lines.map((l) => ({ at: l.at, tab: l.tab, name: l.name, text: l.text, target: l.sub === item.subject })) } : {}) });
-    const action = actionOf(item, s);
+    const evidence = JSON.stringify({ facts: item.facts, ...(item.lines ? { lines: item.lines.map((line) => ({ at: line.at, tab: line.tab, name: line.name, text: line.text, target: line.sub === item.subject })) } : {}) });
+    const action = actionOf(item, said);
     // a subject that is no account row (a stale feed id) fails the foreign key: skipped, never a thrown sweep
-    const r = await db
+    const written = await db
       .prepare('INSERT OR IGNORE INTO claude_suggestions (kind, subject, case_id, urgency, summary, evidence, action, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
-      .bind(item.kind, item.subject, item.caseId ?? null, s.urgent === true ? 'urgent' : 'normal', summary, evidence, action ? JSON.stringify(action) : null, nowS)
+      .bind(item.kind, item.subject, item.caseId ?? null, said.urgent === true ? 'urgent' : 'normal', summary, evidence, action ? JSON.stringify(action) : null, nowS)
       .run()
       .catch(() => null);
-    if (r?.meta?.changes) wrote.push({ kind: item.kind, urgent: s.urgent === true });
+    if (written?.meta?.changes) wrote.push({ kind: item.kind, urgent: said.urgent === true });
   }
   return wrote;
 }
@@ -318,7 +318,7 @@ export async function heldBack(db, nowS) {
     db.prepare(`SELECT target FROM mod_cases WHERE status = 'open' AND ${claimHeldSql('mod_cases', 1)}`).bind(nowS).all(),
     db.prepare('SELECT id FROM players WHERE frozen_until > ?1').bind(nowS).all(),
   ]);
-  return new Set([...(claimed?.results ?? []).map((/** @type {any} */ c) => c.target), ...(frozen?.results ?? []).map((/** @type {any} */ p) => p.id)]);
+  return new Set([...(claimed?.results ?? []).map((/** @type {any} */ claim) => claim.target), ...(frozen?.results ?? []).map((/** @type {any} */ player) => player.id)]);
 }
 
 /** An urgent suggestion's card: the kind and urgency only - no lines, no player text. @param {string} kind */
@@ -329,7 +329,7 @@ export const urgentCard = (kind) => ({ content: `New urgent case from Claude (${
  * call over what is new. Answers how many rows it wrote.
  * @param {{ db: any, nowS: number }} ctx @param {any} env @param {{ fetchFn?: (url: string, init: any) => Promise<Response> }} [opt]
  */
-export async function claudeSweep(ctx, env, { fetchFn = (u, i) => globalThis.fetch(u, i) } = {}) {
+export async function claudeSweep(ctx, env, { fetchFn = (url, i) => globalThis.fetch(url, i) } = {}) {
   if (!claudeOn(env)) return 0;
   const { db, nowS } = ctx;
   const last = (await db.prepare('SELECT last_run FROM claude_state WHERE id = 1').first())?.last_run ?? null;
@@ -340,10 +340,10 @@ export async function claudeSweep(ctx, env, { fetchFn = (u, i) => globalThis.fet
   let n = 0;
   let wait = false;
   if (items.length) {
-    const r = await ask(db, env, fetchFn, nowS, { system: claudePrompt(), tag: 'data', schema: SUGGESTION_SCHEMA, payload: itemsPayload(items) });
-    if ('error' in r) wait = /** @type {readonly string[]} */ (AI_WAITS).includes(r.error);
+    const answer = await ask(db, env, fetchFn, nowS, { system: claudePrompt(), tag: 'data', schema: SUGGESTION_SCHEMA, payload: itemsPayload(items) });
+    if ('error' in answer) wait = /** @type {readonly string[]} */ (AI_WAITS).includes(answer.error);
     else {
-      const wrote = await writeSuggestions(db, items, r.verdict, nowS);
+      const wrote = await writeSuggestions(db, items, answer.verdict, nowS);
       n += wrote.length;
       for (const w of wrote.filter((x) => x.urgent)) await sendCard(env, fetchFn, urgentCard(w.kind));
     }
@@ -356,8 +356,8 @@ export async function claudeSweep(ctx, env, { fetchFn = (u, i) => globalThis.fet
 /** The hourly job: suggestions past their 30 days. @param {{ db: any, nowS: number }} ctx */
 export async function claudeKeep({ db, nowS }) {
   const old = nowS - CLAUDE_KEEP_S;
-  const rs = await db.batch([
+  const results = await db.batch([
     db.prepare('DELETE FROM claude_suggestions WHERE created_at < ?1').bind(old),
   ]);
-  return rs.reduce((s, r) => s + (Number(r?.meta?.changes) || 0), 0);
+  return results.reduce((sum, result) => sum + (Number(result?.meta?.changes) || 0), 0);
 }

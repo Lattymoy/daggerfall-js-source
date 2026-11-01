@@ -27,21 +27,21 @@ const FORBIDDEN = new Set([
 ]);
 
 /** A value as JSON with every object's keys in order, so signer and service hash the same bytes. @param {any} v @returns {string} */
-export const canonicalJson = (v) =>
-  Array.isArray(v) ? `[${v.map(canonicalJson).join(',')}]`
-    : v && typeof v === 'object' ? `{${Object.keys(v).sort().filter((k) => v[k] !== undefined).map((k) => `${JSON.stringify(k)}:${canonicalJson(v[k])}`).join(',')}}`
-      : JSON.stringify(v) ?? 'null';
+export const canonicalJson = (value) =>
+  Array.isArray(value) ? `[${value.map(canonicalJson).join(',')}]`
+    : value && typeof value === 'object' ? `{${Object.keys(value).sort().filter((k) => value[k] !== undefined).map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(',')}}`
+      : JSON.stringify(value) ?? 'null';
 
-/** What an order signs. @param {string} lc @param {number} ts @param {string} path @param {any} body @param {SubtleCrypto} subtle */
-export async function orderWords(lc, ts, path, body, subtle) {
+/** What an order signs. @param {string} handleLower @param {number} second @param {string} path @param {any} body @param {SubtleCrypto} subtle */
+export async function orderWords(handleLower, second, path, body, subtle) {
   const hash = await subtle.digest('SHA-256', new TextEncoder().encode(`${path}\n${canonicalJson(body)}`));
-  return `dfo-staff:v1:order:${lc}:${ts}:${[...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
+  return `dfo-staff:v1:order:${handleLower}:${second}:${[...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
-const lcOf = (/** @type {unknown} */ h) => (typeof h === 'string' ? h.trim().toLowerCase().slice(0, 64) : '');
-const b64 = (/** @type {unknown} */ s) => {
-  if (typeof s !== 'string' || !/^[\w-]+$/.test(s)) return null;
-  try { return Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0)); } catch { return null; }
+const lcOf = (/** @type {unknown} */ handle) => (typeof handle === 'string' ? handle.trim().toLowerCase().slice(0, 64) : '');
+const b64 = (/** @type {unknown} */ text) => {
+  if (typeof text !== 'string' || !/^[\w-]+$/.test(text)) return null;
+  try { return Uint8Array.from(atob(text.replace(/-/g, '+').replace(/_/g, '/')), (char) => char.charCodeAt(0)); } catch { return null; }
 };
 const onList = (/** @type {any} */ env, /** @type {any} */ player) => typeof player?.handle === 'string' && handleList(env?.CLAUDE_ORDER_HANDLES).has(player.handle.toLowerCase());
 
@@ -50,19 +50,19 @@ const onList = (/** @type {any} */ env, /** @type {any} */ player) => typeof pla
  * `staff-login`; one written down is a valid signature from a member who may no longer order.
  * @param {any} ctx @param {any} env @param {any} body @param {string} ip @param {(who: any, path: string, body: any) => Promise<any>} dispatch
  */
-export async function staffOrder(ctx, env, body, ip, dispatch) {
+export async function staffOrder(ctx, env, body, address, dispatch) {
   const { db, subtle, nowS } = ctx;
-  const lc = lcOf(body.handle);
+  const handleLower = lcOf(body.handle);
   if (typeof body.path !== 'string' || !Number.isSafeInteger(body.ts) || typeof body.sig !== 'string' || (body.body !== undefined && (typeof body.body !== 'object' || body.body === null || Array.isArray(body.body)))) return { error: 'body' };
-  if (await overRate(ctx, `staffip:${ip}`, STAFF_IP_MAX, STAFF_TRY_WINDOW_S)) return { error: 'rate' };
-  if (lc && (await overRate(ctx, `stafftry:${lc}:${ip}`, STAFF_TRY_MAX, STAFF_TRY_WINDOW_S))) return { error: 'rate' };
-  const player = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
+  if (await overRate(ctx, `staffip:${address}`, STAFF_IP_MAX, STAFF_TRY_WINDOW_S)) return { error: 'rate' };
+  if (handleLower && (await overRate(ctx, `stafftry:${handleLower}:${address}`, STAFF_TRY_MAX, STAFF_TRY_WINDOW_S))) return { error: 'rate' };
+  const player = handleLower ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(handleLower).first() : null;
   const role = player ? staffRole(player, env) : null;
-  const keys = player ? (await db.prepare('SELECT * FROM staff_order_keys WHERE player_id = ? AND handle_lc = ? AND revoked_at IS NULL').bind(player.id, lc).all())?.results ?? [] : [];
+  const keys = player ? (await db.prepare('SELECT * FROM staff_order_keys WHERE player_id = ? AND handle_lc = ? AND revoked_at IS NULL').bind(player.id, handleLower).all())?.results ?? [] : [];
   const sig = b64(body.sig);
   let key = null;
   if (sig && keys.length && Math.abs(nowS - body.ts) <= STAFF_SIG_S) {
-    const words = new TextEncoder().encode(await orderWords(lc, body.ts, body.path, body.body ?? {}, subtle));
+    const words = new TextEncoder().encode(await orderWords(handleLower, body.ts, body.path, body.body ?? {}, subtle));
     for (const k of keys) {
       try {
         const pub = await subtle.importKey('raw', /** @type {Uint8Array} */ (b64(k.pub)), { name: 'Ed25519' }, false, ['verify']);
@@ -77,7 +77,7 @@ export async function staffOrder(ctx, env, body, ip, dispatch) {
   // the second taken in the statement that checks it is newer - a signature replayed, or two racing, one gets in
   const took = await db.prepare('UPDATE staff_order_keys SET last_ts = ?, last_used = ? WHERE id = ? AND last_ts < ? AND revoked_at IS NULL').bind(body.ts, nowS, key.id, body.ts).run();
   if (!took.meta.changes) return refused(ctx, player, role, 'replayed');
-  await clearRate(ctx, `stafftry:${lc}:${ip}`);
+  await clearRate(ctx, `stafftry:${handleLower}:${address}`);
   await auditStatement(db, nowS, { actor: player, role, act: 'order', target: body.path.slice(0, 64), detail: { via: ORDER_VIA }, keyId: key.id }).run();
   // owner doors (Team, cutting a member off, the audit log, invites) stay with a live panel session: an order is never an owner
   const who = { player, role, owner: false, hash: null, keyId: key.id, idleAt: nowS, expiresAt: nowS, via: ORDER_VIA };
@@ -102,11 +102,11 @@ export async function staffOrderKeys(ctx, env, path, body, who) {
       owner = await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lcOf(body.handle)).first();
       if (!owner) return { error: 'no-player' };
     }
-    const [r] = await db.batch([
+    const [page] = await db.batch([
       db.prepare('SELECT id, label, created_at, last_used, revoked_at FROM staff_order_keys WHERE player_id = ? ORDER BY created_at DESC LIMIT 20').bind(owner.id),
       audit('order-key-read', owner.id, null, { onceIn: 600 }),
     ]);
-    return { keys: (r.results ?? []).map((/** @type {any} */ k) => ({ id: k.id, label: k.label, createdAt: k.created_at, lastUsed: k.last_used, revokedAt: k.revoked_at })) };
+    return { keys: (page.results ?? []).map((/** @type {any} */ k) => ({ id: k.id, label: k.label, createdAt: k.created_at, lastUsed: k.last_used, revokedAt: k.revoked_at })) };
   }
   if (path === '/v1/staff/order-key/revoke') {
     if (typeof body.id !== 'string' || body.id.length > 64) return { error: 'body' };
@@ -122,13 +122,13 @@ export async function staffOrderKeys(ctx, env, path, body, who) {
   const label = typeof body.label === 'string' ? body.label.replace(/\s+/g, ' ').trim().slice(0, LABEL_MAX) : '';
   if (!raw || raw.length !== 32 || !label) return { error: 'order-key-bad' };
   try { await subtle.importKey('raw', raw, { name: 'Ed25519' }, false, ['verify']); } catch { return { error: 'order-key-bad' }; }
-  const lc = String(me.handle).toLowerCase();
+  const handleLower = String(me.handle).toLowerCase();
   // the cap is counted inside the statement that writes, so two enrolments racing for the last place land one
   const [, made] = await db.batch([
     audit('order-key-add', null, { label }, { okIf: { sql: '(SELECT COUNT(*) FROM staff_order_keys WHERE player_id = ? AND revoked_at IS NULL) < ? AND NOT EXISTS (SELECT 1 FROM staff_order_keys WHERE pub = ?)', args: [me.id, ORDER_KEYS_MAX, body.publicKey] } }),
     db.prepare(`INSERT INTO staff_order_keys (id, player_id, handle_lc, pub, label, created_at)
       SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE (SELECT COUNT(*) FROM staff_order_keys WHERE player_id = ?2 AND revoked_at IS NULL) < ?7
-      ON CONFLICT (pub) DO NOTHING`).bind(mintId(rand), me.id, lc, body.publicKey, label, nowS, ORDER_KEYS_MAX),
+      ON CONFLICT (pub) DO NOTHING`).bind(mintId(rand), me.id, handleLower, body.publicKey, label, nowS, ORDER_KEYS_MAX),
   ]);
   if (made.meta.changes) return { ok: true };
   const taken = await db.prepare('SELECT 1 AS y FROM staff_order_keys WHERE pub = ?').bind(body.publicKey).first();

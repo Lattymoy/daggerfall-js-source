@@ -306,9 +306,9 @@ export async function reviewLines(db, env, fetchFn, { lines, focus = null, nowS,
     messages: [{ role: 'user', content: linesMessage(payload) }],
     output_config: { effort: 'low', format: { type: 'json_schema', schema: VERDICT_SCHEMA } },
   };
-  const r = await messagesCall(db, env, fetchFn, body, dayOf(nowS));
-  if ('error' in r) return r;
-  const flags = flagsOf(r.verdict, lines.length);
+  const answer = await messagesCall(db, env, fetchFn, body, dayOf(nowS));
+  if ('error' in answer) return answer;
+  const flags = flagsOf(answer.verdict, lines.length);
   return flags ? { ok: true, flags } : { error: AI_ERRORS.shape };
 }
 
