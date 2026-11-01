@@ -3,6 +3,10 @@
  "src/characters/clothing.js": "AUDIT 39: staged with armorSet.js for the same seam.",
  "src/characters/pieces/greaves.js": "AUDIT 39: staged with armorSet.js for the same seam.",
  "src/systems/gateTier.js": "EG1: the gate's tier words. The HUD, the timers and the herald still spell them themselves (Elite-Gates.md section 2).",
+ "src/world/gen2/edit/prefabCheck.js": "World 2.0: the prefab checks, pinned by the editor's tests; waiting for the World Editor's checks panel to call them (03-World/World-2-Arc.md, Open).",
+ "src/world/gen2/settle/rmbAdapter.js": "World 2.0: legacy RMB blocks read as building records, pinned; waiting for a town that mixes RMB blocks with generated ones.",
+ "src/world/gen2/settle/siteSelect.js": "World 2.0: settlement sites chosen by type, pinned; the shipped bakes still place their five prototype towns by hand.",
+ "src/world/gen2/vegetation.js": "World 2.0: plants placed from a full bake, pinned; a published (lean) bake carries no plant planes, so nothing ships it yet.",
  "src/world/peaks/massif.js": "PEAKS2: a range's relief, pinned and waiting for the kernel's shaper (03-World/Peaks.md).",
  "src/world/tamriel/tamrielRaster.js": "TAMRIEL1: the continent as byte planes, kept for a later use (03-World/Tamriel.md, The raster)."
 }

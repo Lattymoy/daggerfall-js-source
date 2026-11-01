@@ -79,7 +79,7 @@ assignTiles(tileData, tilemap, true);
 const tilemapBytes = convertTilemap(tilemap);
 const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
 const grid = buildTerrainGrid(heightmap, 1);
-const bed = waterBedOf(grid, tilemapBytes, { stride: 1, levelAt: (vx, vz, y) => seaLevelAt(y) }); // WATER-NEXT 2: the bed under the lab's water, as the hosts carve it; WATER-LEVEL: the sea at its level
+const bed = waterBedOf(grid, tilemapBytes, { stride: 1, levelAt: (_column, _row, height) => seaLevelAt(height) }); // the bed under the lab's water, as the hosts carve it, the sea at its level
 const terrain = renderer.createTerrainSurface(
   bed?.ground.positions ?? grid.positions,
   bed?.ground.normals ?? grid.normals,
@@ -120,7 +120,7 @@ for (let r = 0; r < 64; r++) {
 }
 const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
-// WATER-LEVEL: the water's sheet at its level, carved with the bed, as the hosts draw it
+// The water's sheet at its level, carved with the bed, as the hosts draw it
 const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;
 const hasWater = !!water;
 renderer.waterBed = hasWater; // AUDIT WATER-NEXT G15: the lab's ground under its water is a bed, as the hosts draw it (render/waterBedGlsl.js)
