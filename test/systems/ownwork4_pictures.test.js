@@ -16,7 +16,7 @@ import { TORCH_ART, TORCH_OVER, FLAME_FRAMES, dousedCandle } from '../../src/sys
 import { FISH_ART } from '../../src/systems/deepWater/fishArt.js';
 import { TRAVEL_ART } from '../../src/ui/travel/travelArt.js';
 import { SURVIVAL_ART } from '../../src/systems/survival/survivalArt.js';
-import { rrKeeperPicture, rrWeekButtonPicture, RR_KEEPER_SIZE } from '../../src/systems/roleplayRealism/rrKeeperArt.js';
+import { rrWeekButtonPicture } from '../../src/systems/roleplayRealism/rrKeeperArt.js';   // OWN-WORK4 AUDIT: the keepers are our rule over the player's people (rr2_realism.test.js)
 import { OWN_ICONS, ownIconPicture } from '../../src/systems/survival/itemIcons.js';
 import { rotPicture, MOULDY } from '../../src/systems/survival/rotPicture.js';
 import { ANIMATION_TIME, torchPicture } from '../../src/systems/handheldTorches.js';
@@ -89,8 +89,6 @@ const PICTURES = Object.freeze({
   'travel TOcontrolUI': [320, 27, '2630f9223dcadec3'], 'travel TOportsOff': [45, 11, '165efd4f22a9c01b'],
   'travel TOportsOn': [45, 11, '38cb9d7a2e82d409'],
   'survival 538_2-0': [47, 24, '5d1a2b6d7c75adda'], 'survival 539_0-0': [23, 26, 'b9440e83bc15be03'],
-  'keeper 0': [47, 76, '07942d3c23a76022'], 'keeper 1': [47, 76, '31e88c2749660ef7'], 'keeper 2': [47, 76, 'a2d12aeb0e023031'],
-  'keeper 3': [47, 76, 'cefa18a350b7e1b7'], 'keeper 5': [61, 117, 'e421eb2bb9311f6a'], 'keeper 6': [71, 128, 'c2be637fb895fcff'],
   'button 21': [32, 16, 'd377582744dda0b4'],
 });
 const recipes = () => [
@@ -99,7 +97,6 @@ const recipes = () => [
   ...Object.entries(FISH_ART).map(([k, f]) => [`fish ${k}`, f]),
   ...Object.entries(TRAVEL_ART).map(([k, f]) => [`travel ${k}`, f]),
   ...Object.entries(SURVIVAL_ART).map(([k, f]) => [`survival ${k}`, f]),
-  ...Object.keys(RR_KEEPER_SIZE).map((r) => [`keeper ${r}`, () => rrKeeperPicture(Number(r))]),
   ['button 21', rrWeekButtonPicture],
 ];
 
@@ -109,7 +106,7 @@ test('OWN-WORK4: every picture is a recipe of ours, at the release\'s size, its 
   // the 52 carried, less the eleven spoiled faces our rot draws over a fresh one; and three that were specs with the
   // authors' pixels as edits: Roleplay & Realism's finer tavern keeper and its week button (the other sixteen relabelled
   // buttons nothing asks for), the mouldy bread (our rot) and the doused candles (our rule) - the coordinator, OWN-WORK4
-  assert.equal(all.length, 43);
+  assert.equal(all.length, 37, 'OWN-WORK4 AUDIT: less the six keepers, built from the player\'s own people now');
   for (const [k, paint] of all) {
     const p = paint();
     const [w, h, print] = PICTURES[k];

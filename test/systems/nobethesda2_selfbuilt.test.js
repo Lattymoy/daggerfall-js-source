@@ -32,5 +32,5 @@ test('NO-BETHESDA2: every registrant that builds through classicArt says so', ()
   // OWN-WORK4: every survival picture is built - rebuilt or ours - so every entry says so once, for both
   assert.match(rd('src/systems/survival/itemIcons.js'), /fileName: f, standIn, selfBuilt: true \};\n\s*return \{ \.\.\.at, build: ownIconSpec\(f\) \? \(\) => ownIconPicture\(f, art\) : \(\) => rebuiltPicture\(spec, art\) \};/);
   assert.match(rd('src/systems/roleplayRealismItems/rriInstall.js'), /build: \(\) => rriOwnPicture\(e\.name, art \?\? classicArt\(\)\), selfBuilt: true/, 'OWN-WORK4: every picture ours');
-  assert.match(rd('src/systems/roleplayRealism/rrVariants.js'), /selfBuilt: true,\n\s*build: RR_DERIVED\[fileName\] \? \(\) => built\(fileName\) : async \(\) => rrKeeperPicture\(record\),/, 'OWN-WORK4: and our keepers');
+  assert.match(rd('src/systems/roleplayRealism/rrVariants.js'), /selfBuilt: true,\n\s*build: RR_DERIVED\[fileName\] \? \(\) => built\(fileName\) : \(\) => rrKeeperPicture\(record, art \?\? classicArt\(\)\),/, 'OWN-WORK4: and our keepers, over the player\'s own people (OWN-WORK4 AUDIT)');
 });

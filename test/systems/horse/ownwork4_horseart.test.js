@@ -9,8 +9,12 @@ import { createHash } from 'node:crypto';
 
 import {
   HORSE_ART_FILES, HORSE_ART_ARCHIVE, HORSE_ART_PALETTE, HORSE_ART_WIDTH, HORSE_ART_STILL_HEIGHT, HORSE_ART_WALK_HEIGHT,
-  HORSE_ART_GROUND_GAP, horseArtOf, unpackRiderMask, riderColour, composeHorse, ownHorsePicture,
+  HORSE_ART_GROUND_GAP, horseArtOf, unpackRiderMask, riderColour, composeHorse, ownHorsePicture, withFrontRider,
 } from '../../../src/systems/horse/horseArt.js';
+import { FRONT_RIDER_MASKS, FRONT_RIDER_SIZE } from '../../../src/systems/horse/horseFrontRider.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { DFPalette } from '../../../src/formats/dfPalette.js';
 import { isCoatPixel } from '../../../src/systems/horse/horseCoats.js';
 import { packMask } from '../../../tools/bakeEotbRiders.mjs';
 import { horsePictures } from '../../../tools/lib/horsePictures.mjs';
@@ -109,6 +113,48 @@ test('OWN-WORK4 the picture by its name: TEXTURE.495\'s record for the view, the
   await assert.rejects(ownHorsePicture('horse1.png', { art, masks }), /TEXTURE\.495 record 0 frame 0 is not in the player's data/);
 });
 
+test('OWN-AUDIT the front view\'s rider is ours as data: a mask a walk frame, over a record of the front view\'s size alone, laid over the baked one (mutants: the drawn mask unread, the size unchecked, one frame\'s mask for all)', async () => {
+  const [wide, tall] = FRONT_RIDER_SIZE;
+  assert.deepEqual([wide, tall], [47, 94]);
+  assert.equal(FRONT_RIDER_MASKS.length, 8);
+  for (const packed of FRONT_RIDER_MASKS) {
+    const { width, height, mask } = unpackRiderMask(packed);
+    assert.deepEqual([width, height], [wide, tall]);
+    assert.ok(mask.some((bit, i) => bit && i < wide * 20) && mask.some((bit, i) => bit && i > wide * 30), 'his body over the head and his legs below it');
+  }
+  const front = { width: wide, height: tall, data: new Uint8Array(wide * tall * 4) };   // hide from the top row down
+  for (let i = 0; i < wide * tall; i++) front.data.set([...HIDE, 255], i * 4);
+  const art = { picture: async () => front }, masks = async () => ({});
+  const drawn = (frame) => unpackRiderMask(FRONT_RIDER_MASKS[frame]).mask;
+  assert.deepEqual(await ownHorsePicture('horse1.png', { art, masks }), composeHorse(front, drawn(0), 0, 94), 'the standing view: frame 0\'s');
+  assert.deepEqual(await ownHorsePicture('Walk.0-4.png', { art, masks }), composeHorse(front, drawn(3), 0, 95), 'the walk\'s fourth: its own');
+  assert.notDeepEqual(composeHorse(front, drawn(0), 0, 94), composeHorse(front, null, 0, 94), 'and it takes something off');
+  const baked = new Uint8Array(wide * tall).fill(1, wide * tall - wide);   // a baked mask's last row
+  const laid = withFrontRider(baked, front, 0);
+  assert.ok(laid[wide * tall - 1] && drawn(0).some((bit, i) => bit && laid[i]), 'both');
+  assert.equal(withFrontRider(baked, { width: 46, height: 94 }, 0), baked, 'another record\'s size: the baked mask alone');
+  assert.equal(withFrontRider(baked, front, 8), baked, 'no ninth frame');
+});
+
+/** ART_PAL's ramps the rider paints in and the horse's front never does past its noseband: his tans (3, 4), steels (5,
+ *  7), cloths (6, 8, 10, 12), gold (9) and highlights (14). The hooves wear some of them too, so they are not read. */
+const RIDER_RAMPS = [3, 4, 5, 6, 7, 8, 9, 10, 12, 14], HOOF_ROWS = 16;
+test('OWN-AUDIT the front view from the real TEXTURE.495: none of the rider is left - not a pixel of his skin\'s, his cloth\'s, his steel\'s or his gold\'s ramps above the hooves, in the standing view or any walk frame', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH is not set (sh tools/fetch-data.sh)' }, async () => {
+  const pal = new DFPalette();
+  pal.load(new Uint8Array(readFileSync(join(/** @type {string} */ (process.env.ARENA2_PATH), 'ART_PAL.COL'))), 'ART_PAL.COL');
+  const ramp = new Map();
+  for (let i = 1; i < 255; i++) { const k = (pal.getRed(i) << 16) | (pal.getGreen(i) << 8) | pal.getBlue(i); if (!ramp.has(k)) ramp.set(k, i >> 4); }
+  const pictures = horsePictures();
+  for (const file of ['horse1.png', ...HORSE_ART_FILES.filter((f) => f.startsWith('Walk.0-'))]) {
+    const pic = await pictures.picture(file), his = [];
+    for (let y = 0; y < pic.height - HOOF_ROWS; y++) for (let x = 0; x < pic.width; x++) {
+      const o = (y * pic.width + x) * 4;
+      if (pic.data[o + 3] && RIDER_RAMPS.includes(ramp.get((pic.data[o] << 16) | (pic.data[o + 1] << 8) | pic.data[o + 2]) ?? -1)) his.push(`${x},${y}`);
+    }
+    assert.deepEqual(his, [], `${file}: the rider's pixels`);
+  }
+});
+
 test('OWN-WORK4 all 45 from the real TEXTURE.495, at the mod\'s sizes, and their print', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH is not set (sh tools/fetch-data.sh)' }, async () => {
   const pictures = horsePictures();
   const hash = createHash('sha256');
@@ -122,4 +168,4 @@ test('OWN-WORK4 all 45 from the real TEXTURE.495, at the mod\'s sizes, and their
   }
   assert.equal(hash.digest('hex').slice(0, 16), PRINT, 'a change to the recipe is a change here');
 });
-const PRINT = '45a644f9f045662b';
+const PRINT = '4f112fa6f1d64a6b';

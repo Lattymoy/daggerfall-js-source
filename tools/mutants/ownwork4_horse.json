@@ -97,5 +97,32 @@
     "tests": [
       "test/player/eyeOfTheBeholder/nobethesda2_eotb.test.js"
     ]
+  },
+  {
+    "name": "OWNAUDIT-front-rider-unread",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "named.view === 0 ? withFrontRider(mask, record, named.frame) : mask,",
+    "new": "mask,",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-front-size-unchecked",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "  if (!packed || record.width !== wide || record.height !== tall) return mask;",
+    "new": "  if (!packed) return mask;",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-front-one-frame",
+    "file": "src/systems/horse/horseArt.js",
+    "old": "    packed = FRONT_RIDER_MASKS[frame];",
+    "new": "    packed = FRONT_RIDER_MASKS[0];",
+    "tests": [
+      "test/systems/horse/ownwork4_horseart.test.js"
+    ]
   }
 ]

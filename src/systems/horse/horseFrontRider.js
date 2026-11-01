@@ -1,10 +1,10 @@
 // @ts-check
 // OWN-AUDIT (2026-11-01): THE FRONT VIEW'S RIDER, AUTHORED. From the front the baked masks (eotbRiderMasks.js) miss
-// most of the rider of TEXTURE.495 record 0: his lap and hands over the horse's head, a hilt, his legs down its
-// shoulders - the five mounted sets agree there, so no comparison finds him. These are ours, drawn by eye over the
-// player's frames: everything above the horse's forehead, the pixels of the head the five sets disagree on, and every
-// pixel but the hide and its shadow over each leg. One a frame, 1 a pixel of his, rows top first, packed as the bake
-// packs (tools/bakeEotbRiders.mjs packMask; systems/horse/horseArt.js unpackRiderMask reads them).
+// most of TEXTURE.495 record 0's rider - his lap and hands over the horse's head, a hilt, his legs and feet - where the
+// five mounted sets agree. These are ours, drawn over the player's eight frames: every row above the horse's forehead
+// (its row set by eye, a frame each), every pixel above the hooves in the rider's ramps (ART_PAL 3, 4, 5-10, 12, 14 -
+// the noseband's tans go with them), a box on his arm beside the head, and all but the hide and its shadow over his
+// legs and feet. 1 a pixel of his, rows top first, packed as tools/bakeEotbRiders.mjs packMask packs.
 
 /** The front frames' size: a mask is his only over a record this size. */
 export const FRONT_RIDER_SIZE = Object.freeze([47, 94]);

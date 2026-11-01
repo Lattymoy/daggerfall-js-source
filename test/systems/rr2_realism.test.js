@@ -97,6 +97,45 @@ test('RR2 the record: our seven keeper scales (OWN-WORK3: a variant keeper stand
 });
 
 // ---- the shop and tavern keeper (:775-849) -----------------------------------------
+test('OWN-WORK4 AUDIT the keepers\' rule: a body on the floor and centred, its own head cleared, a piece laid by its corner, a cloth moved to another ramp (darker by its steps) inside its rect alone - in the palette\'s indices (mutants: the feet off the floor; the head kept; the piece misplaced; the swap past its rect; the ramp\'s shade lost)', () => {
+  // made-up records: a 4 x 6 body of ramp 7 (shade 2) with a head of ramp 2 on its top two rows, and a 2 x 2 head of ramp 3
+  const body = { width: 4, height: 6, data: Uint8Array.from({ length: 24 }, (_, p) => (p < 8 ? 0x22 : 0x72)) };
+  const head = { width: 3, height: 3, data: Uint8Array.from([0, 0, 0, 0, 0x35, 0x36, 0, 0x37, 0x38]) };
+  const read = (a, r) => (a === 1 ? body : head);
+  const spec = { size: [8, 8], body: [1, 0], clear: [[0, 0, 4, 2]], pieces: [{ from: [2, 0], rect: [1, 1, 3, 3], at: [1, 0] }], swaps: [{ from: 0x7, to: 0xb, darker: 3, rect: [0, 3, 4, 6] }] };
+  const { width, height, data } = composeKeeper(spec, read);
+  assert.deepEqual([width, height], [8, 8]);
+  const at = (x, y) => data[y * 8 + x];
+  // the body: centred ((8 - 4) / 2 = 2) and standing on the bottom row (8 - 6 = 2)
+  assert.equal(at(2, 7), 0xb5, 'the cloth under the rect moved to ramp b, three shades darker');
+  assert.equal(at(2, 4), 0x72, 'above the rect the cloth is its own');
+  assert.equal(at(1, 7), 0, 'nothing past the body');
+  assert.deepEqual([at(3, 2), at(4, 2), at(3, 3), at(4, 3)], [0x35, 0x36, 0x37, 0x38], 'the new head laid by its corner');
+  assert.deepEqual([at(2, 2), at(5, 2), at(2, 3), at(5, 3)], [0, 0, 0, 0], 'the body\'s own head cleared');
+  // the darker steps stop at the ramp's darkest shade
+  assert.equal(composeKeeper({ ...spec, swaps: [{ from: 0x7, to: 0xb, darker: 99, rect: [0, 3, 4, 6] }] }, read).data[7 * 8 + 2], 0xbf);
+});
+
+test('OWN-WORK4 AUDIT the keepers (ARENA2): six people of Daggerfall\'s own tavern and shop folk, no two of one body or one head, each at the aspect of the classic keeper it stands in for and Daggerfall\'s own height, drawn opaque or clear', { skip: !ARENA2 && 'ARENA2_PATH not set' }, async () => {
+  const art = createClassicPictures(async (n) => readFileSync(join(ARENA2, n)));
+  const t182 = (() => { const t = new TextureFile(); t.load(new Uint8Array(readFileSync(join(ARENA2, 'TEXTURE.182'))), 'TEXTURE.182'); return t; })();
+  const bodies = Object.values(RR_KEEPERS).map((k) => k.body.join('_')), heads = Object.values(RR_KEEPERS).map((k) => k.pieces[0].from.join('_'));
+  assert.equal(new Set(bodies).size, 6, 'six bodies');
+  assert.equal(new Set(heads).size, 6, 'six heads');
+  assert.ok(heads.every((h) => !bodies.includes(h)), 'no head on its own body, and no keeper\'s head another\'s body');
+  for (const [r, [w, h]] of Object.entries(RR_KEEPER_SIZE)) {
+    const pic = await rrKeeperPicture(Number(r), art);
+    assert.deepEqual([pic.width, pic.height], [w, h], `197_${r}-0`);
+    const k = t182.getSize(RR_KEEPER_OF[r]);
+    assert.ok(Math.abs(w / h - k.width / k.height) < 0.01, `197_${r}-0 at the aspect of 182_${RR_KEEPER_OF[r]} (${w}x${h} for ${k.width}x${k.height})`);
+    assert.ok(h >= t182.getSize(RR_KEEPERS[r].body[1]).height, 'the body at its own height');
+    let solid = 0;
+    for (let i = 3; i < pic.data.length; i += 4) if (pic.data[i] === 255) solid++; else assert.equal(pic.data[i], 0, 'opaque or clear');
+    assert.ok(solid > w * h * 0.15, `197_${r}-0: a whole person drawn`);
+  }
+  assert.equal(await rrKeeperPicture(4, art), null, 'record 4 is Daggerfall\'s own, rebuilt');
+});
+
 test('RR2 the keeper: GetRecord_182_0 by quality, the tavern keeper and the 182_2 arms, only in a shop or a tavern', () => {
   assert.deepEqual([5, 6, 9, 10, 13, 14, 17, 18, 20, 21].map(rrRecord182_0), [-1, 0, 0, 1, 1, 2, 2, 3, 3, -1]);
   const T = BUILDING_TYPES.Tavern, S = BUILDING_TYPES.GeneralStore, H = BUILDING_TYPES.House1;
