@@ -659,8 +659,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-quickload-scale-only",
     "file": "src/scenes/world.js",
-    "old": "const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;",
-    "new": "const today = was === STREAMING_TERRAIN_SCALE && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;",
+    "old": "const restandRows = (rows) => (!Array.isArray(rows) ? rows : rows.map(",
+    "new": "const restandRows = (rows) => (was === STREAMING_TERRAIN_SCALE && !landform || !Array.isArray(rows) ? rows : rows.map(",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -670,8 +670,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-camps-fast-path-scale-only",
     "file": "src/scenes/world.js",
-    "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length ? outer : outer.map((r) => {",
-    "new": "const rows = savedScale === STREAMING_TERRAIN_SCALE ? outer : outer.map((r) => {",
+    "old": "const rows = outer.map((r) => {",
+    "new": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -704,7 +704,7 @@
   {
     "name": "AUDIT-LANDFORMS-C1-frame-identity",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
+    "old": "const groundFrameHeight = (y, x, z) => (Number.isFinite(y) ? y - (landform ? landformLiftAt(x, z) : 0) - (padsMovedAt ? padsMovedAt(x, z, false) : 0) : y);",
     "new": "const groundFrameHeight = (y, x, z) => y;",
     "tests": [
       "test/systems/landform.test.js",
@@ -839,8 +839,8 @@
   {
     "name": "AUDIT-LANDFORMS-C1-deck-never-stood-again",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform ||",
-    "new": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE ||",
+    "old": "    if (localPos && !legacy) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",

@@ -214,7 +214,7 @@ test('AUDIT LANDFORMS C1: a scene cache\'s piles and torches go in DFU\'s frame 
   assert.deepEqual(plain.got, { pile: 950 + lift(3, 4), torch: 960 + lift(5, 6) }, 'a cache written with the row off, read with it on: lifted with its ground');
 });
 
-test('AUDIT LANDFORMS C1: the quickload and the camps left outside stand every height again while the row is on - its lift goes back on whatever the scale; off, a save on today\'s scale lands as it came', () => {
+test('AUDIT LANDFORMS C1: the quickload and the camps left outside stand every height again while the row is on - its lift goes back on whatever the scale; off, every height stands again by a settlement\'s carve under it', () => {
   const body = between('        const was = scaleOf(extras.terrainScale);', '        if (extras.interior) {');
   const helpers = (extras, landform) => {
     const calls = [];
@@ -227,11 +227,8 @@ test('AUDIT LANDFORMS C1: the quickload and the camps left outside stand every h
   assert.deepEqual(on.restandAt('pos')([{ pos: [101, 7, 202] }]), [{ pos: [101, 1007, 202] }]);
   assert.deepEqual(on.calls, [[50, 10, 20, STREAMING_TERRAIN_SCALE], [7, 1, 2, STREAMING_TERRAIN_SCALE]], 'each at its own spot');
   const off = helpers({ terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: RECORD_GROUND_STAMP.groundFrame }, false);
-  assert.equal(off.restandRows(rows), rows, 'the row off, today\'s scale and frame: as it came');
-  assert.equal(off.calls.length, 0);
-  for (const extras of [{ terrainScale: STREAMING_TERRAIN_SCALE }, { terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: RECORD_GROUND_STAMP.groundFrame, padsOwed: ['3,4'] }]) {
-    assert.notEqual(helpers(extras, false).restandRows(rows), rows, 'the row off: an older frame, or a carve owed, stood again');
-  }
+  assert.deepEqual(off.restandRows(rows), [{ nativeX: 110, nativeZ: 220, y: 1050 }], 'the row off, today\'s scale and frame: stood again, a settlement\'s carve under it');
+  assert.deepEqual(off.calls, [[50, 10, 20, STREAMING_TERRAIN_SCALE]]);
   // the camps a dungeon save carries outside (standSavedOuterCamps)
   const stood = [];
   const st = {
@@ -244,9 +241,7 @@ test('AUDIT LANDFORMS C1: the quickload and the camps left outside stand every h
   assert.deepEqual(stood.at(-1), [{ pos: [101, `5@1,2/${STREAMING_TERRAIN_SCALE}`, 202] }], 'the row on: the lift put back on');
   st.landform = false;
   stand({ world: { outerCamps: outer }, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: RECORD_GROUND_STAMP.groundFrame });
-  assert.equal(stood.at(-1), outer, 'off, today\'s scale and frame: as they came');
-  stand({ world: { outerCamps: outer }, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: RECORD_GROUND_STAMP.groundFrame, padsOwed: ['3,4'] });
-  assert.notEqual(stood.at(-1), outer, 'a carve owed: stood again');
+  assert.deepEqual(stood.at(-1), [{ pos: [101, `5@1,2/${STREAMING_TERRAIN_SCALE}`, 202] }], 'off, today\'s scale and frame: stood again, a settlement\'s carve under them');
 });
 
 // ---- B1/A1, D1: the lift a record takes ----------------------------------------------------------------------------------

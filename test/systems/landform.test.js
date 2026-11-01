@@ -389,8 +389,8 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/, 'the travel view past the built grid');   // PIN MOVED (RELIEF-PEAKS): the ring's ground at the pixel's centre, its fades the kernel's; PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is; PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
   // AUDIT LANDFORMS C1 MOVED THESE PINS: they read a stamp - every record is DFU's frame now, the row's lift put back on at
   // every read (test/world/terrain/auditlandforms.test.js runs each path, row on and off)
-  assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && !landform && extras\.groundFrame >= RECORD_GROUND_STAMP\.groundFrame && !extras\.padsOwed\?\.length;/, 'the quickload: with the row off, an older frame or a carve owed is stood again');
-  assert.match(WORLD, /const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform && extras\.groundFrame >= RECORD_GROUND_STAMP\.groundFrame && !extras\.padsOwed\?\.length \? outer : outer\.map/, 'the camps left outside');
+  assert.match(WORLD, /const restandRows = \(rows\) => \(!Array\.isArray\(rows\) \? rows : rows\.map\(/, 'the quickload: every height stood again, the row off too - a settlement\'s carve under it');
+  assert.match(WORLD, /const rows = outer\.map\(\(r\) => \{/, 'the camps left outside');
   // PIN MOVED (BAY-LEFT-GROUND, D5): each record's frame's law (`groundFrame`) stamped beside its scale and read beside it
   assert.match(WORLD, /return restandHeight\(y, x, z, was, arrived\.groundFrame\); \};   \/\/ LANDFORM1: the row's lift put back on[^\n]*\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrain/terrainGen.js');

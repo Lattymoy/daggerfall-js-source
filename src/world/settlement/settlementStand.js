@@ -87,18 +87,20 @@ export function settlementTreeFlats(settlement, nature = [], natureArchive = nul
 }
 
 /**
- * How far a built pixel's settlement carve moved the ground at a scene point, metres - its build's own `moved` field,
- * read between its samples as the ground is drawn; 0 off the pixel or where none stands.
- * @param {any} settlement a built pixel's @param {number[]} origin its translation @param {number} x @param {number} z
+ * How far a built pixel's settlement carve moved the ground at a scene point, metres - its build's own `moved` field (or
+ * the `box` a streamed-out pixel kept of it, settlementOwed.js cropMoved), read between its samples as the ground is
+ * drawn; 0 off the pixel or where none stands.
+ * @param {any} settlement a built pixel's, or `{ box }` @param {number[]} origin its translation @param {number} x @param {number} z
  * @param {number} cell a sample's spacing in scene units
  */
 export function settlementMovedAt(settlement, origin, x, z, cell) {
-  const field = settlement?.moved;
-  if (!field) return 0;
+  const field = settlement?.moved, box = settlement?.box;
+  if (!field && !box) return 0;
   const dim = HEIGHTMAP_DIMENSION, cellX = (x - origin[0]) / cell, cellY = (z - origin[2]) / cell;
   if (!(cellX >= 0 && cellY >= 0 && cellX <= dim - 1 && cellY <= dim - 1)) return 0;
   const x0 = Math.min(dim - 2, Math.floor(cellX)), y0 = Math.min(dim - 2, Math.floor(cellY)), partX = cellX - x0, partY = cellY - y0;
-  const at = (a, b) => field[a * dim + b];
+  const rows = box ? box.y1 - box.y0 + 1 : 0;
+  const at = field ? (a, b) => field[a * dim + b] : (a, b) => (a < box.x0 || a > box.x1 || b < box.y0 || b > box.y1 ? 0 : box.field[(a - box.x0) * rows + b - box.y0]);
   // the two triangles the ground is drawn and walked as (terrainSurface.js surfaceHeightAt): its diagonal (x, y)-(x+1, y+1)
   const height = partY >= partX ? at(x0, y0) + partY * (at(x0, y0 + 1) - at(x0, y0)) + partX * (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) : at(x0, y0) + partX * (at(x0 + 1, y0) - at(x0, y0)) + partY * (at(x0 + 1, y0 + 1) - at(x0 + 1, y0));
   return height * STREAMING_TERRAIN_SCALE;

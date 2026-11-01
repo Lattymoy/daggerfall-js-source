@@ -117,7 +117,7 @@ test('TERRAIN-SCALE1: the host stands every saved exterior height again as it la
   // AUDIT LANDFORMS C1 MOVED THIS PIN: the deck's height goes in DFU's frame (groundFrameHeight), as every record's
   assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[player\.pos\[0\], groundFrameHeight\(player\.pos\[1\] - state\.compensation\[1\], player\.pos\[0\], player\.pos\[2\]\) \+ state\.compensation\[1\], player\.pos\[2\]\], yaw: cam\.yaw, \.\.\.RECORD_GROUND_STAMP \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
   const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });'));
-  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && \(scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE \|\| landform \|\| !\(t\.restore\?\.groundFrame >= RECORD_GROUND_STAMP\.groundFrame\)\)\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\), t\.restore\.groundFrame\) \+ c;[^\n]*\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
+  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\), t\.restore\.groundFrame\) \+ c;[^\n]*\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */
@@ -134,7 +134,7 @@ function quickloadHelpers(stamp, frame = RECORD_GROUND_STAMP.groundFrame) {
   return { ...api, calls };
 }
 
-test('TERRAIN-SCALE1: the quickload stands each record on the ground under its OWN native spot, and leaves a save on today\'s scale as it came', () => {
+test('TERRAIN-SCALE1: the quickload stands each record on the ground under its OWN native spot, a save on today\'s scale too', () => {
   const h = quickloadHelpers(undefined);
   assert.equal(h.was, 1.5, 'no stamp: written on the prefab\'s scale');
   const rows = [{ nativeX: 110, nativeZ: 220, y: 50, id: 'a' }, null];
@@ -147,9 +147,9 @@ test('TERRAIN-SCALE1: the quickload stands each record on the ground under its O
   assert.equal(h.restandRows(undefined), undefined, 'a list the envelope does not carry passes through as it came');
   const t = quickloadHelpers(1.25);
   const same = [{ nativeX: 1, nativeZ: 2, y: 3 }];
-  assert.equal(t.restandRows(same), same, 'written on today\'s scale and frame: the rows as they came');
-  assert.equal(t.restandAt('pos')(same), same);
-  assert.equal(t.calls.length, 0);
+  assert.deepEqual(t.restandRows(same), [{ nativeX: 1, nativeZ: 2, y: 2 }], 'written on today\'s scale and frame: stood again all the same, a settlement\'s carve under it');
+  assert.deepEqual(t.calls, [[3, -99, -198, 1.25]]);
+  assert.deepEqual(t.restandAt('pos')([{ pos: [1, 3, 2] }]), [{ pos: [1, 2, 2] }], 'a camp too');
   const older = quickloadHelpers(1.25, RECORD_GROUND_STAMP.groundFrame - 1);   // an older frame's moves stand with the row off too
   assert.deepEqual(older.restandRows(same), [{ nativeX: 1, nativeZ: 2, y: 2 }]);
 });

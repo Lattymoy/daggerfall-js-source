@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { snapshotPlayer, restorePlayer, SAVE_VERSION } from '../../../src/systems/save/save.js';
 import { routeKey } from '../../../src/ui/input.js';
 import { STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW } from '../../../src/world/terrain/terrainSampler.js';
-import { owePads, clearPadsOwed } from '../../../src/world/settlement/settlementOwed.js';
+import { owePads, padsOwed, clearPadsOwed } from '../../../src/world/settlement/settlementOwed.js';
 
 const mkEntity = () => ({
   name: 'Mac', gender: 'female', careerIndex: 4, level: 3, reflexes: 2,
@@ -30,7 +30,7 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   // smallerDungeonsState joined the extras (both hosts already passed
   // them and snapshotPlayer dropped them in silence), so the exact
   // shape grew three keys - null/null/0 when the caller passes none.
-  assert.deepEqual(extras, { position: [1, 2, 3], pose: null, classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, interior: null, dungeon: null, travelMap: null, escortingFaces: null, quickslots: null, spawns: null, smallerDungeonsState: 0, modData: null, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: [] });   // PIN MOVED (BAY-LEFT-GROUND, D5): and its frame's law   // TERRAIN-SCALE1: the scale its heights stood on   // TTL1: `spawns` is the spawned-dungeon ledger, and `quickslots` is QS1's block, which this name list had never carried (so every save dropped it)   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none); IS1: the interior slot (null outside a building)
+  assert.deepEqual(extras, { position: [1, 2, 3], pose: null, classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, interior: null, dungeon: null, travelMap: null, escortingFaces: null, quickslots: null, spawns: null, smallerDungeonsState: 0, modData: null, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });   // PIN MOVED (BAY-LEFT-GROUND, D5): and its frame's law   // TERRAIN-SCALE1: the scale its heights stood on   // TTL1: `spawns` is the spawned-dungeon ledger, and `quickslots` is QS1's block, which this name list had never carried (so every save dropped it)   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none); IS1: the interior slot (null outside a building)
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');
@@ -140,12 +140,13 @@ test('AUDIT 22 F7/F8: the lit light source and the training clock survive a load
   assert.equal(e4.lightSource, null, 'an older save reads as nothing lit, not as a dangling reference');
 });
 
-test('save: the carve a settlement\'s records still owe rides the envelope and comes back with it (mutants: the save carries none, the load drops it)', () => {
+test('save: a save owes no settlement\'s carve - its heights are written off it - and its load begins the ledger afresh (mutants: the debt written, the load not begun)', () => {
   clearPadsOwed();
   owePads('4100,-12');
   owePads('201,200');
   const snap = snapshotPlayer(mkEntity(), {});
-  assert.deepEqual(snap.padsOwed, ['201,200', '4100,-12'], 'a pixel past the Bay beside the Bay\'s');
-  assert.deepEqual(restorePlayer({}, JSON.parse(JSON.stringify(snap))).padsOwed, ['201,200', '4100,-12']);
+  assert.equal(Object.hasOwn(snap, 'padsOwed'), false, 'no debt in the envelope');
+  restorePlayer({}, JSON.parse(JSON.stringify(snap)));
+  assert.deepEqual(padsOwed(), [], 'what the session before owed is no record\'s now');
   clearPadsOwed();
 });

@@ -10,7 +10,7 @@ The owner's rules: every town grows, and it grows along its roads, not in planne
 whose towns are flat RMB grids that end at their rect and have no stairs between levels.
 
 The code is `src/world/settlement/`. Every module there is `@ts-check`, and all but `settlementOwed.js` (the loaded
-world's owed carve, below) are pure. The layout's modules are worker-safe (`world/` and `formats/` alone).
+world's carve under its records, below) are pure. The layout's modules are worker-safe (`world/` and `formats/` alone).
 
 ## Identity: a place and a building key
 
@@ -203,26 +203,27 @@ settlement does, `settlementStand.js` `standSettlementGround` lays it out on the
 `standTownGrowth` does the same with the town's rect, its roads' tiles, camps and water. Each hands back its layout, its
 trees' clearing and `moved`, what the carve moved each sample. `pixelBuild.js` puts it on the built entry.
 
-### A record written before the carve
+### No record carries the carve
 
-The carve moved the ground under saved records, so the record frame's law is 6 (`terrainSampler.js` `GROUND_FRAME_LAW`
-and `PADS_FRAME_LAW`). A record written under an older law re-stands by the carve's move under it (`groundFrameHost.js`
-`padsMovedAt`), and that move is always its pixel's build's own `moved` (`settlementMovedAt`): no other thread can lay a
-town's outskirts as the kernel lays them, with its roads, camps and tiles.
+A record's height is kept on the ground as it stood before any settlement's carve. The frame host takes the carve's
+move under a record off as it writes it (`groundFrameHost.js` `groundFrameHeight`), and puts its pixel's build's move
+back on as it re-stands it (`padsMovedAt`). The move differs between the Landforms rows, because each row lays its
+town out on its own ground, so a save made with the row on reads right with it off, and the other way. The record
+frame's law stays 5 (`terrainSampler.js` `GROUND_FRAME_LAW`): a save reads alike on a build without settlements, where
+no carve stands.
 
-A record that loads before its pixel is built stands without the move, and its pixel is owed
-(`settlementOwed.js`: a published settlement's pixel, or a town's that grows). The save carries the debt (`padsOwed`, an
-additive field). Every load reads its save's debt as it restores the save (`save.js` `restorePlayer`); a pixel built
-already is not owed on, its records re-standing by its build's own move. Only that save's own records owe: a load hands
-its envelope to each re-stand as the stamp, while an anchor, a ship's deck or a cached pile, written on carved ground and
-stamped with the law by number, owes nothing.
+The move is always its pixel's build's own `moved` (`settlementMovedAt`): no other thread can lay a town's outskirts as
+the kernel lays them, with its roads, camps and tiles. A pixel streamed out keeps its last build's move, cropped to the
+samples it moved (`settlementOwed.js` `keepCarve`), for the records still on it. A load keeps that only for a pixel
+built through it (`padsOwedFrom`).
 
+A record that re-stands on a settlement's pixel never built stands without the move, and its pixel is owed (a published
+settlement's pixel, or a town's that grows). A save never owes: whatever stands without the move is written without it.
 A pixel's first build pays the debt: `pixelBuild.js` rides every record on the pixel by the build's own move, through
-`rideGround` (the piles, torches, camps and bodies; the living walk on the ground as it is). A rebuild within one
-load pays without riding, its own ride carrying what lies there; ground kept from a build before a load is no
-record's, and rides nothing (`owedEpoch`). The move is read as the ground is drawn, the two triangles of
-each quad. With the Landforms row off, a save of an older frame or one that owes a carve is still stood again, a ship's
-deck too.
+`rideGround` (the piles, torches, camps and bodies; the living walk on the ground as it is). A rebuild within one load
+pays without riding, its own ride carrying what lies there; ground kept from a build before a load is no record's, and
+rides nothing (`owedEpoch`). The move is read as the ground is drawn, the two triangles of each quad. Every height a
+save, an anchor, a ship's deck or a cached scene carries is stood again, the row off too.
 
 ## Standing in the world
 
@@ -350,6 +351,3 @@ Hammerfell id in the corpus.
 
 - A third layout, a branching street tree, for a settlement of its own.
 - Cyrodiil's rivers as water, so Corrol Ford can stand as a river town.
-- Offline, a save made with the Landforms row on and loaded with it off (or the other way) reads a record on a
-  settlement's carved ground without the carve's difference between the two rows, up to metres in a town's outskirts:
-  the lift field (`landformLiftField`) carries no carve. Online the row is always on.

@@ -146,8 +146,8 @@
   {
     "name": "the ledger block survives snapshotPlayer's name list",
     "file": "src/systems/save/save.js",
-    "old": "escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
-    "new": "escortingFaces, quickslots, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
+    "old": "escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
+    "new": "escortingFaces, quickslots, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "QS1: the quickslot diamond survives it as well",
     "file": "src/systems/save/save.js",
-    "old": "escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
-    "new": "escortingFaces, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
+    "old": "escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
+    "new": "escortingFaces, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ]

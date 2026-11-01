@@ -266,8 +266,8 @@
   {
     "name": "LANDFORM-restand-backwards",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
-    "new": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y + landformLiftAt(x, z) : y);",
+    "old": "y - (landform ? landformLiftAt(x, z) : 0)",
+    "new": "y + (landform ? landformLiftAt(x, z) : 0)",
     "tests": [
       "test/systems/landform.test.js"
     ]

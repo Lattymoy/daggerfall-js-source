@@ -127,7 +127,7 @@ import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pi
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
 import { growthJobAt, settlementHomeTown, settlementHomeRegion } from '../world/settlement/townGrowthJob.js';
 import { settlementMovedAt } from '../world/settlement/settlementStand.js';
-import { payPads, owedEpoch } from '../world/settlement/settlementOwed.js';   // a record's carve owed until its pixel builds
+import { payPads, owedEpoch, keepCarve } from '../world/settlement/settlementOwed.js';   // a record's carve owed until its pixel builds, and kept once it streams out
 /** Each build's ground and the saves read when it stood: ground kept from before a load rides nothing. */
 const KEPT_UNDER = new WeakMap();
 
@@ -1633,6 +1633,7 @@ export function createPixelBuild(host) {
     // rides the build's own move now, and the debt is paid
     const owedTown = built.get(pkey)?.settlement;
     KEPT_UNDER.set(built.get(pkey).samples, owedEpoch());
+    keepCarve(pkey, owedTown?.moved, HEIGHTMAP_DIMENSION);   // the carve the records on it stand on, once it streams out
     if (host.rideGround && payPads(pkey) && !groundWas && owedTown?.moved) {   // a rebuild's own ride, above, carries its records
       const origin = host.state.pixelTranslation(px, py);
       host.rideGround(origin, pkey, (x, z) => settlementMovedAt(owedTown, origin, x, z, TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)), key !== pkey);

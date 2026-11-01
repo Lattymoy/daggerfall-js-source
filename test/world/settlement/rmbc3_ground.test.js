@@ -1,8 +1,8 @@
 // THE GROUND UNDER A SETTLEMENT AND WHERE ONE STANDS - the carve
 // never stands a vertex over the paving of any cut pad near it, so the 6.4 m grid never pokes through a terrace, and leaves
 // the land its own past the ease; a raised pad leaves the land alone. The published settlements, one a province past the
-// Bay, each found on its pixel in its own lane of map ids; the kernel lays one out on a pixel no location holds, and a
-// record written before PADS_FRAME_LAW rides the carve. Pins mutation-checked (tools/mutants/rmbc3.json).
+// Bay, each found on its pixel in its own lane of map ids; the kernel lays one out on a pixel no location holds, and no
+// record's height carries the carve. Pins mutation-checked (tools/mutants/rmbc3.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -19,7 +19,7 @@ import { inBay, setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js
 import { CAPITAL_LANE } from '../../../src/world/capitalLane.js';
 import { COUNTRY_LANE, LAIR_LANE } from '../../../src/world/tamrielCountry.js';
 import { recordFrame } from '../../../src/scenes/groundFrameHost.js';
-import { GROUND_FRAME_LAW, PADS_FRAME_LAW, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT } from '../../../src/world/terrain/terrainSampler.js';
+import { GROUND_FRAME_LAW, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, MAX_TERRAIN_HEIGHT } from '../../../src/world/terrain/terrainSampler.js';
 import { generatePixelTerrain } from '../../../src/world/terrain/terrainGen.js';
 import { isTreeRecord } from '../../../src/world/terrain/terrainNature.js';
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
@@ -128,14 +128,19 @@ test('RMBC3 the kernel lays out a pixel\'s settlement and carves it; a location 
   assert.equal(standSettlementGround(px + 3, py, new Float32Array(HEIGHTMAP_DIMENSION ** 2)), null);
 });
 
-test('RMBC3 the frame\'s law: a record written before PADS_FRAME_LAW rides the carve, one stamped with it stands as written (mutants: the move dropped, taken by a stamped record)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, PADS_FRAME_LAW], [6, 6]);
+test('RMBC3 the frame\'s law: no record carries the carve - written less its move under it, the row on or off, stood again plus its build\'s, whatever its law (mutants: the move left on, taken off with the row on alone, not put back, put back by law)', () => {
+  assert.equal(GROUND_FRAME_LAW, 5, 'the stamp main writes: a record of either build reads on the other');
   const state = { compensation: [0, 0, 0], localFromWorld: (x, z) => [x, z] };
-  const law = recordFrame({ landform: false, liftAt: () => 0, heightAt: () => 100, state, bayAt: () => false, padsMovedAt: () => -2.5 });
-  assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, 5), 101 - 2.5);
-  assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, 6), 101);
+  const asked = [];
+  for (const landform of [false, true]) {
+    const law = recordFrame({ landform, liftAt: () => 4, heightAt: () => 100, state, bayAt: () => true, padsMovedAt: (x, z, owe = true) => { asked.push(owe); return -2.5; } });
+    assert.equal(law.groundFrameHeight(101, 0, 0), 101 + 2.5 - (landform ? 4 : 0), `written, the row ${landform ? 'on' : 'off'}`);
+    assert.equal(law.groundFrameNative(0, 0, 101), 101 + 2.5 - (landform ? 4 : 0), 'a record in natives too');
+    for (const frame of [GROUND_FRAME_LAW, GROUND_FRAME_LAW - 1, null]) assert.equal(law.restandHeight(103.5 - (landform ? 4 : 0), 0, 0, STREAMING_TERRAIN_SCALE, frame), 101, `read, stamped ${frame}`);
+  }
+  assert.ok(asked.length === 10 && asked.filter((owe) => !owe).length === 4, 'a write never owes a pixel, a re-stand may');
   const host = readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8');
-  assert.match(host, /return settlementMovedAt\(stood\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/, 'a built pixel\'s own carve');
+  assert.match(host, /return settlementMovedAt\(stood\.settlement, origin, x, z, heightCell\);/, 'a built pixel\'s own carve');
 });
 
 test('RMBC3 a published quay meets its sea: the pixel\'s carve leaves the sea\'s bed off its pads, its docks run out over the water (mutant: the sea unread by the stand)', () => {

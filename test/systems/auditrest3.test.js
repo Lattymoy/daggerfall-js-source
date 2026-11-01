@@ -62,7 +62,7 @@ test('AUDIT REST III A1: the same dungeon\'s own load (F9, the pause\'s Load und
   assert.match(rd('src/scenes/world.js'), /outerCampsLoad: \(extras\) => standSavedOuterCamps\(extras\),/);
 });
 
-test('AUDIT REST III A1: the world host\'s one home stands the save\'s camps outside - the page\'s own dropped first, each re-stood on today\'s ground when the save\'s terrain scale differs; a save from before carries none and what stands, stands', () => {
+test('AUDIT REST III A1: the world host\'s one home stands the save\'s camps outside - the page\'s own dropped first, each re-stood on today\'s ground; a save from before carries none and what stands, stands', () => {
   const calls = [];
   const state = {
     camps: { dropOwn: () => calls.push('drop'), restore: (rows, from) => calls.push(['restore', rows, from]) },
@@ -77,7 +77,7 @@ test('AUDIT REST III A1: the world host\'s one home stands the save\'s camps out
   assert.deepEqual(calls, [], 'a save from before AUDIT REST II H6 carries none: nothing dropped');
   const row = { id: 'me:1:1', pos: [100, 5, 200] };
   stand({ world: { outerCamps: [row] }, terrainScale: 2, groundFrame: RECORD_GROUND_STAMP.groundFrame });
-  assert.deepEqual(calls, ['drop', ['restore', [row], 'fromNatives']], 'the same ground and frame: the save\'s rows as they are');
+  assert.deepEqual(calls, ['drop', ['restore', [{ id: 'me:1:1', pos: [100, 'y5@10,20/2', 200] }], 'fromNatives']], 'the same ground and frame: re-stood all the same, a settlement\'s carve under them');
   calls.length = 0;
   stand({ world: { outerCamps: [row] }, terrainScale: 1 });
   assert.deepEqual(calls[1][1], [{ id: 'me:1:1', pos: [100, 'y5@10,20/1', 200] }], 'another ground: re-stood');

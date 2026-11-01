@@ -669,8 +669,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-save-unstamped",
     "file": "src/systems/save/save.js",
-    "old": "terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
-    "new": "terrainScale: STREAMING_TERRAIN_SCALE, padsOwed: padsOwed() };",
+    "old": "terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
+    "new": "terrainScale: STREAMING_TERRAIN_SCALE };",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -678,8 +678,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-save-restore-drops-it",
     "file": "src/systems/save/save.js",
-    "old": ", groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
-    "new": ", padsOwed: snap.padsOwed ?? [] };",
+    "old": ", groundFrame: snap.groundFrame ?? null };",
+    "new": " };",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]

@@ -7039,7 +7039,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const outer = extras?.world?.outerCamps;
     if (!Array.isArray(outer)) return;
     const savedScale = scaleOf(extras.terrainScale);   // TERRAIN-SCALE1: each stood again on today's ground, as the world branch's
-    const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length ? outer : outer.map((r) => {   // LANDFORM1: and the row's lift put back on (DFU's frame, AUDIT LANDFORMS C1); an older frame's moves, or a carve owed, with the row off too
+    const rows = outer.map((r) => {   // LANDFORM1: and the row's lift put back on (DFU's frame, AUDIT LANDFORMS C1); an older frame's moves and a settlement's carve, the row off too
       const p = r?.pos;
       if (!Array.isArray(p)) return r;
       const [x, z] = state.localFromWorld(p[0], p[2]);
@@ -13219,7 +13219,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return true;
   }
   const { boardOrDisembark } = createShipBoard({   // HOST-SPLIT: src/scenes/shipBoardHost.js
-    _teleportToPixel, cacheExteriorScene, cam, enterLinkedBankCabin, groundFrameHeight, landform, player,
+    _teleportToPixel, cacheExteriorScene, cam, enterLinkedBankCabin, groundFrameHeight, player,
     playerTravelPixel, restandHeight, restoreExteriorScene, scaleOf, setTransportModeHere, state, walkMode,
     worldMoveBusy,
     get veilRefused() { return veilRefused; },
@@ -14640,11 +14640,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // exact over the arrival pixel, which is built by now, and over the
         // building an inside save re-enters)
         const was = scaleOf(extras.terrainScale);
-        const today = was === STREAMING_TERRAIN_SCALE && !landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame && !extras.padsOwed?.length;   // LANDFORM1: every height DFU's frame - the row's lift goes back on; an older frame's moves and a carve owed stand with the row off too
         const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras); };   // BAY-LEFT-GROUND: by its frame's law
         // a list the envelope does not carry passes through as it came, and a record without its position is the restore's to refuse
-        const restandRows = (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
-        const restandAt = (key) => (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
+        const restandRows = (rows) => (!Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
+        const restandAt = (key) => (rows) => (!Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
         if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = restandHeight(w.y ?? 2, lx, lz, was, extras) + state.compensation[1];

@@ -234,8 +234,8 @@
   {
     "name": "TS1-save-unstamped",
     "file": "src/systems/save/save.js",
-    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
-    "new": "modData, groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed() };",
+    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
+    "new": "modData, groundFrame: GROUND_FRAME_LAW };",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "TS1-restore-drops-stamp",
     "file": "src/systems/save/save.js",
-    "old": "terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
-    "new": "terrainScale: null, groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };",
+    "old": "terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null };",
+    "new": "terrainScale: null, groundFrame: snap.groundFrame ?? null };",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ],

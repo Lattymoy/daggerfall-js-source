@@ -21,7 +21,7 @@
 // (`movedAt`: world/landforms.js groundMovedField over today's reader and the one it was written on, tamrielGround.js
 // groundBefore) before the lift goes on - its height over the ground kept - and the old law's lift it takes off is the one
 // with no ranges (the host's `landformsHere({ before: true })`): the ranges were not there when it was written.
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, TOWN_FRAME_LAW, MEET_FRAME_LAW, LIFT_FRAME_LAW, RELIEF_FRAME_LAW, PADS_FRAME_LAW } from '../world/terrain/terrainSampler.js';
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, TOWN_FRAME_LAW, MEET_FRAME_LAW, LIFT_FRAME_LAW, RELIEF_FRAME_LAW } from '../world/terrain/terrainSampler.js';
 import { landformLiftField, groundMovedField, townGroundMovedField, townMeetMovedField } from '../world/landforms.js';
 import { meetsTown, createTownMeets } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: the outline a record's town had
@@ -31,7 +31,7 @@ import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { settlementMovedAt } from '../world/settlement/settlementStand.js';   // a settlement's carve, as its build handed it back
 import { settlementOnPixel } from '../world/settlement/settlementPlaces.js';
 import { growthJobAt } from '../world/settlement/townGrowthJob.js';
-import { owePads, payPads, padsOwedFrom, savedPadsOwed, clearPadsOwed, padsOwedBuilt } from '../world/settlement/settlementOwed.js';
+import { owePads, payPads, padsOwedFrom, carveKept, clearPadsOwed, padsOwedBuilt } from '../world/settlement/settlementOwed.js';
 
 /** The map pixel under a scene point of the stream's frame (`state`: its origin and its compensation). */
 export function framePixelAt(state, x, z) {
@@ -45,12 +45,12 @@ export function framePixelAt(state, x, z) {
  * the lift under the frame's old law - the ground past the Bay before its sites), the ground the stream stands
  * (`heightAt`, with the frame's compensation), the frame (`state`: its compensation and its natives) and the Landforms
  * row (`landform`); `bayAt(x, z)` whether a scene point's pixel is the Bay's; the moves under an older record (metres):
- * `movedAt` DFU's own ground's before 3, `townMovedAt` a town's blend's before 4, `meetMovedAt` the meets' before 5, `padsMovedAt` a settlement's carve before 6.
+ * `movedAt` DFU's own ground's before 3, `townMovedAt` a town's blend's before 4, `meetMovedAt` the meets' before 5, `padsMovedAt` a settlement's carve, in no record.
  * @param {{ landform: boolean, liftAt: (x: number, z: number, o?: { before?: boolean }) => number,
  *   heightAt: (x: number, z: number) => number, state: any, bayAt: (x: number, z: number) => boolean,
- *   movedAt?: ?((x: number, z: number) => number), townMovedAt?: ?((x: number, z: number) => number), meetMovedAt?: ?((x: number, z: number) => number), padsMovedAt?: ?((x: number, z: number) => number), owesAt?: ?((x: number, z: number) => boolean), readOwed?: ?((stamp: any) => void) }} o - owesAt: the loaded save owes a point's carve; readOwed: hands the ledger the save
+ *   movedAt?: ?((x: number, z: number) => number), townMovedAt?: ?((x: number, z: number) => number), meetMovedAt?: ?((x: number, z: number) => number), padsMovedAt?: ?((x: number, z: number, owe?: boolean) => number), readOwed?: ?((stamp: any) => void) }} o - readOwed: a load's envelope begins the ledger
  */
-export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt = null, townMovedAt = null, meetMovedAt = null, padsMovedAt = null, owesAt = null, readOwed = null }) {
+export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt = null, townMovedAt = null, meetMovedAt = null, padsMovedAt = null, readOwed = null }) {
   const landformLiftAt = liftAt;
   /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU'S FRAME. With the row on the ground at (x, z) stands
    *  `landformLiftAt(x, z)` over DFU's, and every exterior height a record carries (the save, the scene cache, the ship's
@@ -59,10 +59,9 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
    *  stamp), a record stood the lift over its ground on any build before: a save loaded on a desktop copy that has not
    *  updated, or after a revert, dropped its character - a fall of over 100 HP from 30% of the land. `y` is
    *  compensation-free, (x, z) scene coordinates. */
-  const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);
+  const groundFrameHeight = (y, x, z) => (Number.isFinite(y) ? y - (landform ? landformLiftAt(x, z) : 0) - (padsMovedAt ? padsMovedAt(x, z, false) : 0) : y);   // and off a settlement's carve, which differs between the rows (world/settlement/settlementOwed.js)
   /** ...for a record in NATIVE coordinates (a pile, a foe, a guard). */
   const groundFrameNative = (nx, nz, y) => {
-    if (!landform) return y;
     const [x, z] = state.localFromWorld(nx, nz);
     return groundFrameHeight(y, x, z);
   };
@@ -100,14 +99,13 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
     return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;
   };
   const restandHeight = (y, x, z, was, stamped = null) => {
-    // a save's envelope as its stamp: its law, and the carve its records on a pixel still owe (world/settlement/settlementOwed.js)
+    // a save's envelope as its stamp: its law, and the load it begins (world/settlement/settlementOwed.js)
     const stamp = stamped !== null && typeof stamped === 'object' ? stamped : null;
     if (stamp) readOwed?.(stamp);
     const frame = stamp ? stamp.groundFrame : stamped;
     const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;
     const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;
-    const owes = !(frame >= PADS_FRAME_LAW) || (!!stamp && !!owesAt?.(x, z));   // a record written on carved ground (an anchor, a deck, a cached pile) owes nothing
-    const pads = padsMovedAt && Number.isFinite(y) && owes ? padsMovedAt(x, z) : 0;   // a settlement's carve
+    const pads = padsMovedAt && Number.isFinite(y) ? padsMovedAt(x, z) : 0;   // the carve of a settlement under it, its build's
     const town = (yy) => (townMovedAt && Number.isFinite(y) && !(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0);
     if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet + pads;
     if (!Number.isFinite(y)) return y;
@@ -245,23 +243,25 @@ export function createGroundFrame(host) {
     const t = host.state.pixelTranslation(px, py);
     return moved ? moved((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
   };
-  /** How far a settlement's carve moved the ground at a scene point under a record written before it, world units: its
-   *  pixel's build's own move, exact - no other thread lays a town's outskirts as the kernel does. A settlement's pixel
-   *  not built yet is owed: the record stands without the move, and the build pays it (scenes/pixelBuild.js). */
-  const padsMovedAt = (x, z) => {
+  /** How far a settlement's carve moved the ground at a scene point, world units: its pixel's build's own move, exact -
+   *  no other thread lays a town's outskirts as the kernel does - or, streamed out, its last build's this load. A record
+   *  re-standing (`owe`) on a settlement's pixel never built stands without it, the pixel owed, and the build pays it
+   *  (scenes/pixelBuild.js). */
+  const padsMovedAt = (x, z, owe = true) => {
     const [px, py] = framePixelAt(host.state, x, z), key = `${px},${py}`;
     if (!host.woods || !inWorldGrid(px, py)) return 0;
-    const stood = built.get(key);
+    const stood = built.get(key), origin = host.state.pixelTranslation(px, py);
     if (stood) {
-      payPads(key);
-      return settlementMovedAt(stood.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);
+      if (owe) payPads(key);
+      return settlementMovedAt(stood.settlement, origin, x, z, heightCell);
     }
-    if (settlementOnPixel(px, py) || growthJobAt(_liftLocationAt(px, py), px, py)) owePads(key);
+    const box = carveKept(key);
+    if (box) return settlementMovedAt({ box }, origin, x, z, heightCell);
+    if (owe && (settlementOnPixel(px, py) || growthJobAt(_liftLocationAt(px, py), px, py))) owePads(key);
     return 0;
   };
-  const owesAt = (x, z) => savedPadsOwed(framePixelAt(host.state, x, z).join(','));
   /** The stream's frame, read live (a load's teleport makes a new origin). */
   const frameNow = { get compensation() { return host.state.compensation; }, localFromWorld: (nx, nz) => host.state.localFromWorld(nx, nz) };
-  const law = recordFrame({ landform, liftAt: landformLiftAt, heightAt, state: frameNow, bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z)), movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, owesAt, readOwed: padsOwedFrom });
+  const law = recordFrame({ landform, liftAt: landformLiftAt, heightAt, state: frameNow, bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z)), movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, readOwed: padsOwedFrom });
   return { ...law, landformLiftAt, groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt, townMeets };
 }

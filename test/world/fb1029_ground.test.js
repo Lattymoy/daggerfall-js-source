@@ -190,7 +190,7 @@ test('ACROSS-EDGE the levels: a location stands where it stood - its level, outl
 });
 
 test('ACROSS-EDGE the records\' frame (MEET_FRAME_LAW 5): a record written before it rides the meets\' move, its height over the ground kept, the row on or off; one stamped 5 takes none; before 4 the town\'s test reads the ground less the meets (mutants: the move dropped; taken by a stamped record; the town\'s test read on the met ground)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, MEET_FRAME_LAW, TOWN_FRAME_LAW], [6, 5, 4]);   // the stamp 6: a settlement's carve (PADS_FRAME_LAW)
+  assert.deepEqual([GROUND_FRAME_LAW, MEET_FRAME_LAW, TOWN_FRAME_LAW], [5, 5, 4]);
   const ground = 500, off = 2.5, x = 12, meet = () => 30, town = () => 24, lift = (xx) => 100 + xx;
   const state = { compensation: [0, 7, 0], localFromWorld: (nx, nz) => [nx, nz] };
   for (const landform of [true, false]) {

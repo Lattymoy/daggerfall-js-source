@@ -1195,10 +1195,10 @@
     ]
   },
   {
-    "name": "OWED-negative-pixel-dropped",
+    "name": "OWED-crop-axes",
     "file": "src/world/settlement/settlementOwed.js",
-    "old": "/^-?\\d+,-?\\d+$/",
-    "new": "/^\\d+,\\d+$/",
+    "old": "field[(x - x0) * rows + y - y0] = moved[x * dim + y];",
+    "new": "field[(x - x0) * rows + y - y0] = moved[y * dim + x];",
     "tests": [
       "test/world/settlement/rmbc3_owed.test.js"
     ]
