@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import bpy  # noqa: E402
 import numpy as np  # noqa: E402
+from mathutils import Vector  # noqa: E402
 
 import forge  # noqa: E402
 import poses  # noqa: E402
@@ -233,6 +234,27 @@ def weapon(sil, held):
     return thin | blobs | (core & ~body)
 
 
+def axe_head(ref_weapon):
+    """The reference's axe head: the centre (column, row) of the largest blob in its weapon mask, or None when the head
+    is lost in the body."""
+    from scipy import ndimage as ndi
+    if ref_weapon is None or not ref_weapon.any():
+        return None
+    blob = ndi.binary_opening(ref_weapon, structure=np.ones((3, 3)))
+    lab, n = ndi.label(blob)
+    if n == 0:
+        return None
+    sizes = ndi.sum(blob, lab, range(1, n + 1))
+    k = int(np.argmax(sizes)) + 1
+    if sizes[k - 1] < 12:
+        return None
+    rows, cols = np.nonzero(lab == k)
+    return cols.mean(), rows.mean()
+
+
+HEAD_PULL = 0.004   # score lost a pixel the axe head stands from the reference's
+
+
 def score(img, ref, ref_weapon=None):
     total, wsum = 0.0, 0.0
     for key, w in WEIGHTS.items():
@@ -285,6 +307,7 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
     low = int(np.nonzero(ref.any(axis=1))[0].max())
 
     planted = rec['anim'] in ('idle', 'attack', 'bow') or (rec['anim'] == 'walk' and frame % 2 == 0)
+    head_at = axe_head(ref_weapon) if rec['anim'] != 'bow' else None
 
     def evaluate(x):
         adj = adj_of(params, x[:len(params)])
@@ -301,6 +324,11 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
         place_y = low - lowest(work) + stage.ROOT_PX[1]
         img = crop(work, rec['canvas'], (place_x, place_y))
         reg = 0.0006 * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift
+        if head_at is not None and gear.get('axe') is not None:   # the axe head drawn where the reference's is
+            hx, hy, _ = project(np.array([list(gear['axe'] @ Vector((0, 0, 0.62 * shape.SHAPE['axe'])))]), cloud.scale)
+            dx = hx[0] - (stage.ROOT_PX[0] - place_x) - head_at[0]
+            dy = hy[0] - (stage.ROOT_PX[1] - place_y) - head_at[1]
+            reg += HEAD_PULL * float(np.hypot(dx, dy))
         return score(img, ref, ref_weapon) - reg, place_x
 
     x = np.zeros(len(steps))
