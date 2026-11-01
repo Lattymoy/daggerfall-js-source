@@ -44,7 +44,7 @@ class Fighter:
             sk.rest = shape.transform(sk.ob.name, sk.rest, alpha=sk.alpha)
             sk.me.vertices.foreach_set('co', sk.rest.ravel())
             sk.me.update()
-        rigid = [ob for ob, _ in self.parts] + self.axe
+        rigid = [ob for ob, _ in self.parts] + self.axe + self.bow
         for ob in rigid:
             p = shape.transform(ob.name, coords(ob.data))
             ob.data.vertices.foreach_set('co', p.ravel())

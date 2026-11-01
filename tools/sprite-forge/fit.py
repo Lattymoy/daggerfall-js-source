@@ -51,6 +51,7 @@ def class_of(mat):
 
 
 RESTARTS = 1   # searches a frame runs (fit.py --restarts)
+REG = 0.0003   # the pull of a frame's adjustments back toward its keys (fit.py --reg)
 MAX_EDGE = 0.03   # metres: a triangle is split until no edge is longer (under 2 px), so three centres an axis test it
 
 
@@ -109,7 +110,8 @@ class Cloud:
     def set_shape(self, S):
         for sk in self.skins:
             sk[7] = shape.transform(sk[0], sk[1], S, sk[8])
-        for pc in [pc for pc, _ in self.parts] + [k for kinds in self.hands.values() for k in kinds.values()] + self.axe:
+        for pc in ([pc for pc, _ in self.parts] + [k for kinds in self.hands.values() for k in kinds.values()] + self.axe
+                   + self.bow):
             pc[4] = shape.transform(pc[0], pc[1], S)
         self.scale = S['scale']
 
@@ -325,7 +327,7 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
         place_x = start_place[0] + (round(x[-1]) if dx_free else 0)
         place_y = low - lowest(work) + stage.ROOT_PX[1]
         img = crop(work, rec['canvas'], (place_x, place_y))
-        reg = 0.0006 * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift
+        reg = REG * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift
         if head_at is not None and gear.get('axe') is not None:   # the axe head drawn where the reference's is
             hx, hy, _ = project(np.array([list(gear['axe'] @ Vector((0, 0, 0.62 * shape.SHAPE['axe'])))]), cloud.scale)
             dx = hx[0] - (stage.ROOT_PX[0] - place_x) - head_at[0]
@@ -399,7 +401,7 @@ _JOB = {}
 
 def _shape_of(x):
     """The flat vector `x` back into a shape table, its lists rebuilt."""
-    S, i = {}, 0
+    S, i = dict(shape.SHAPE), 0
     for k in _JOB['keys']:
         n = len(shape.DEFAULT[k]) if isinstance(shape.DEFAULT[k], list) else 0
         S[k] = list(x[i:i + n]) if n else float(x[i])
@@ -413,10 +415,11 @@ def _shape_value(x):
     return float(np.mean([frame_score(cloud, rec, f, ref, rec['place'], wpn) for rec, f, ref, wpn in frames]))
 
 
-def fit_shape(cloud, spec, refs, iters, rng):
-    """Fit the proportions over every frame, each frame in its fitted pose; candidates weighed on every core."""
+def fit_shape(cloud, spec, refs, iters, rng, keys=None, records=None):
+    """Fit the proportions (`keys`, or all of them) over every frame (of `records`, or all), each frame in its fitted
+    pose; candidates weighed on every core."""
     import multiprocessing
-    keys = list(shape.DEFAULT)
+    keys = keys or list(shape.DEFAULT)
     steps, base = [], []
     for k in keys:
         v = shape.SHAPE.get(k, shape.DEFAULT[k])
@@ -429,7 +432,7 @@ def fit_shape(cloud, spec, refs, iters, rng):
     steps, base = np.array(steps), np.array(base, dtype=np.float64)
     weapons = _JOB.get('weapons')
     frames = [(rec, f, refs[r][f], weapons[r][f] if weapons else None)
-              for r, rec in enumerate(spec['records']) for f in range(rec['frames'])]
+              for r, rec in enumerate(spec['records']) for f in range(rec['frames']) if not records or r in records]
     _JOB.update(cloud=cloud, keys=keys, frames=frames)
     first = _shape_value(base)   # poses every frame once, before the workers fork
     pool = multiprocessing.get_context('fork').Pool(4)
@@ -470,6 +473,7 @@ def _fit_record(r):
 
 
 def main():
+    global RESTARTS, HEAD_PULL, REG
     ap = argparse.ArgumentParser()
     ap.add_argument('--spec', required=True)
     ap.add_argument('--ref', required=True)
@@ -479,9 +483,10 @@ def main():
     ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--restarts', type=int, default=1, help='searches a frame: its last fit, its keys, wider throws')
     ap.add_argument('--no-head', action='store_true', help='leave the axe head unpinned (when its blob is unreliable)')
+    ap.add_argument('--keys', default='', help='with --shape, only these proportions (comma-separated)')
+    ap.add_argument('--reg', type=float, default=REG, help="the pull of a frame's adjustments toward its keys")
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
-    global RESTARTS, HEAD_PULL
-    RESTARTS = args.restarts
+    RESTARTS, REG = args.restarts, args.reg
     if args.no_head:
         HEAD_PULL = 0.0
     spec = json.load(open(args.spec))
@@ -502,7 +507,11 @@ def main():
                                    .max(axis=2) <= 60) for img, h in zip(imgs, r['rgb'])]
                            for imgs, r in zip(refs, ref['records'])]
     if args.shape:
-        shape.write_shape(shape_path, fit_shape(cloud, spec, refs, args.iters, np.random.default_rng(3)))
+        keys = [k for k in args.keys.split(',') if k]
+        fitted_shape = dict(shape.SHAPE)
+        only = {int(r) for r in args.records.split(',') if r != ''}
+        fitted_shape.update(fit_shape(cloud, spec, refs, args.iters, np.random.default_rng(3), keys, only))
+        shape.write_shape(shape_path, fitted_shape)
         return
     only = {int(r) for r in args.records.split(',') if r != ''}
     todo = [r for r in range(len(spec['records'])) if not only or r in only]

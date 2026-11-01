@@ -32,11 +32,13 @@ Knight enemies wear.
   shoulders, the body, the axe's grip, roll and slide along the haft, and each solved elbow's swivel, searching by
   CMA-ES. It lays the body's triangles on the work frame as Cycles samples it, the nearest surface over each pixel's
   centre, so its picture is the render's pixel for pixel. A standing frame keeps both feet down, and the bow stays
-  near its keyed lean. `--restarts` runs several searches a frame (its last fit, its keys, wider throws). The
-  adjustments are kept in `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays them on.
+  near its keyed lean. `--restarts` runs several searches a frame (its last fit, its keys, wider throws), and
+  `--reg` sets how hard each adjustment is pulled back toward its key. The adjustments are kept in
+  `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays them on.
 - **Fitting the body.** `fit.py --shape` fits the proportions over every frame in its fitted pose: the torso's width
   and depth, the limbs', the head's, the hands', the boots', the pauldrons' size and place, the loincloth's width, the
-  axe's size, and the whole body's size on screen. `tools/sprite-forge/shape.py` `transform` lays them on the meshes
+  axe's size, the bow's length, bend and thickness, and the whole body's size on screen. `--keys` fits only the named
+  proportions, over the frames of `--records`. `tools/sprite-forge/shape.py` `transform` lays them on the meshes
   the renderer draws and on the fitter's triangles alike (`specs/488-shape.json`). A vertex of the fused body or its
   layers moves as each piece it lies on would move it, by its shares.
 - **Fitting the colour.** `tools/sprite-forge/colour.py` tints each material until its pixels' mean colour is the
@@ -69,7 +71,8 @@ Blender runs as a Python module: `pip install bpy==5.2.3` (Python 3.13). Then:
 ```
 ARENA2_PATH=... node tools/sprite-forge/reference.mjs 488 /tmp/forge-ref-488.json
 python -I tools/sprite-forge/fit.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json --shape
-python -I tools/sprite-forge/fit.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json
+python -I tools/sprite-forge/fit.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json \
+  --restarts 2 --iters 600
 python -I tools/sprite-forge/colour.py --spec tools/sprite-forge/specs/488.json --ref /tmp/forge-ref-488.json
 python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json --register /tmp/forge-ref-488.json --out /tmp/x
 python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json --out public/art/studio/forge/488
@@ -77,7 +80,7 @@ python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json -
 
 Fitting needs `scipy` beside `bpy`. Fit and register again after the body or a key changes. `--records 0,5` limits a
 run; `--work` writes uncropped renders; `--outfit naked` renders the body bare, with its weapons. `fit.py --no-head`
-leaves the axe head unpinned: records 0, 3, 4, 12, 13, 15 and 19 fit better so.
+leaves the axe head unpinned: records 0, 3, 4, 12, 15 and 19 fit better so.
 
 ## Rules
 
@@ -109,9 +112,9 @@ tables and sizes are read as they are.
 ## Open
 
 - Only TEXTURE.488 is forged. The other class archives (475-490, and the guard's 399) need their own gear and specs.
-- The overlap with Daggerfall's outlines averages 0.79 a record. Walk and idle are closest (0.80-0.86); attack
-  0.78-0.82; hurt 0.75-0.80; the bow 0.69-0.78. The side attack's swing and the bow are furthest.
-- In 31 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
+- The overlap with Daggerfall's outlines averages 0.80 a record. Walk and idle are closest (0.81-0.86); attack
+  0.77-0.82; hurt 0.76-0.82; the bow 0.74-0.77. The bow is furthest.
+- In 34 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
 - The arms are fitted as thick as Daggerfall's outline asks, past the naked body's own girth.
 - The body has no cloth folds, and no sculpted detail finer than its muscles' swells.
 - Layered Gearing still draws the player from traced strips (`04-Characters/Layered-Gearing.md`). The forge could

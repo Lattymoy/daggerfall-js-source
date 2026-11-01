@@ -16,6 +16,7 @@ DEFAULT = {
     'helm_s': 1.0, 'helm_dy': 0.0, 'helm_dz': 0.0, 'paul_sz': 1.0,
     'waist_w': 1.0, 'chest_w': 1.0,   # the torso's width below the ribs and across the chest, past torso_w
     'head_dy': 0.0, 'head_dz': 0.0,   # the whole head moved back (+y) or forward, up (+z) or down, on its neck
+    'bow_len': 1.0, 'bow_bend': 1.0, 'bow_w': 1.0,   # the bow's length, the depth of its curve, its limbs' girth
     # a factor a cross-section of the body (anatomy.py's rows), eased between: the torso's width and depth, the arms'
     # and the legs' girth
     'torso_pw': [1.0] * len(TORSO), 'torso_pd': [1.0] * len(TORSO), 'arm_p': [1.0] * len(ARM), 'leg_p': [1.0] * len(LEG),
@@ -50,6 +51,19 @@ def _chain_xy(points, z):
     pts = sorted(points, key=lambda v: v.z)
     zs = [p.z for p in pts]
     return np.interp(z, zs, [p.x for p in pts]), np.interp(z, zs, [p.y for p in pts])
+
+
+def _bow(p, S):
+    from model import BOW_HALF, BOW_SAG
+    z = p[:, 2]
+    cy = BOW_SAG * (z / BOW_HALF) ** 2   # the limbs' centre line, curving back toward the tips
+    w = S.get('bow_w', 1.0)
+    return np.stack([p[:, 0] * w, cy * S.get('bow_bend', 1.0) + (p[:, 1] - cy) * w, z * S.get('bow_len', 1.0)], axis=1)
+
+
+def bow_point(p, S=None):
+    """A point of the bow's own frame (a tip, the string's rest) under the proportions."""
+    return _bow(np.array([p], dtype=np.float64), S or SHAPE)[0]
 
 
 def transform(name, p, S=None, alpha=None):
@@ -121,4 +135,6 @@ def transform(name, p, S=None, alpha=None):
         return out
     if base.startswith('axe_'):
         return p * S['axe']
+    if base == 'bow':
+        return _bow(p, S)
     return p

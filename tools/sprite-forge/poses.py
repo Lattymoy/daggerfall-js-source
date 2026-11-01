@@ -10,6 +10,8 @@ import os
 
 from mathutils import Matrix, Vector
 
+import shape
+from model import BOW_SAG
 from rig import Pose, solve_arm
 
 # A frame's fitted adjustment (fit.py): joint rotations added to its keys ('rot'), the body's turn ('turn'), the axe
@@ -260,7 +262,7 @@ def bow(frame, view, yaw):
     at_w, up_w = grip(p, 'L', at, up, (0.2, 1, -0.6), knuckles=(1, 0, 0))
     bow_m = frame_matrix(at_w, up_w, rot @ Vector((0, 1, 0)))
     gear = {'bow': bow_m}
-    string_rest = bow_m @ Vector((0, 0.11, 0))
+    string_rest = bow_m @ Vector(shape.bow_point((0, BOW_SAG, 0)))
     back = (rot @ Vector((-1, 0, 0))).normalized()
     nock = string_rest + back * draw
     gear['nock'] = nock
