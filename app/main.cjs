@@ -428,8 +428,9 @@ function handleDagger(req) {
   // DA13: a version the channel brought is served by its own index - its own files, or the seed's where they are the
   // same - and a path it does not name is no file of the game's, whatever the seed holds (a file it removed). A
   // directory serves its index.html, as below.
-  if (gameStore?.active()) {
-    const file = gameStore.resolve(rel) ?? gameStore.resolve(`${rel}/index.html`);
+  const store = servingStore ?? gameStore;   // a private server plays the pinned game (hostingGame)
+  if (store?.active()) {
+    const file = store.resolve(rel) ?? store.resolve(`${rel}/index.html`);
     return file ? fileResponse(file) : new Response('not found', { status: 404 });
   }
   let p = path.normalize(path.join(DIST, rel));
@@ -488,6 +489,7 @@ function handleDagger(req) {
 // the next one is asked for, or when GitHub does not answer.
 const RELEASES_LATEST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/latest';
 const RELEASES_LIST_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases?per_page=20';
+const RELEASES_TAG_API = 'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/tags/';   // + the hosting pin's tag
 const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases/latest';
 const { isNewerRelease } = require('./lib/updateCheck.cjs');
 const { updateTransport } = require('./lib/autoUpdate.cjs');
@@ -2059,9 +2061,30 @@ ipcMain.on('dagger:gpu-trail', (e, trail) => {
 // 127.0.0.1 to a friend's host. Either way the game page is told the address (dagger:private-server) and a local
 // character it loads plays online there - never on the main servers.
 let priv = null;   // { url, stop, timer } while hosting or joined
+let hostingStore = null;   // the pinned release's game (lib/hostingPin.cjs), opened on the first Host or Join
+let servingStore = null;   // the store dagger:// serves while a private server runs: the pin's, or null for the app's
+/** The pinned release's game, fetched once into its own folder - or null when nothing is pinned or the app plays it. */
+async function hostingGame() {
+  const { HOSTING_PIN } = require('./lib/hostingPin.cjs');
+  if (!HOSTING_PIN || !gameStore) return null;
+  const version = versionOfTag(HOSTING_PIN);
+  if (gameStore.version() === version) return null;
+  hostingStore ??= openGameStore({ root: path.join(app.getPath('userData'), 'Hosting game'), seed: gameStore.seed, dist: DIST });
+  if (hostingStore.active() && hostingStore.version() === version) return hostingStore;
+  privateTell({ status: 'starting' });
+  const rel = await net.fetch(RELEASES_TAG_API + HOSTING_PIN, { headers: { 'User-Agent': 'daggerfall-js-app', Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000) });
+  const game = rel.ok ? gameAssetsOf(await rel.json()) : null;
+  if (!game) throw new Error(`the hosting version (${HOSTING_PIN}) could not be found`);
+  const res = await gameFetch(game.manifest, { headers: { 'User-Agent': 'daggerfall-js-app' }, signal: AbortSignal.timeout(30000) });
+  if (!res.ok) throw new Error(`the hosting version's manifest answered HTTP ${res.status}`);
+  const manifest = parseManifestFile(Buffer.from(await res.arrayBuffer()), { version });
+  await hostingStore.stage(manifest, { fetchRange: (start, end) => fetchPackRange(game.pack, start, end), onProgress: () => {} });
+  hostingStore.activate(version);
+  return hostingStore;
+}
 const privateHost = () => import(pathToFileURL(path.join(__dirname, 'private', 'host.mjs')).href);
 /** The relay the game being played carries (scripts/privateRelay.mjs writes it into dist/). */
-const privateRelay = () => (gameStore?.active() ? gameStore.resolve('private/relay.mjs') : path.join(DIST, 'private', 'relay.mjs'));
+const privateRelay = () => { const store = servingStore ?? gameStore; return store?.active() ? store.resolve('private/relay.mjs') : path.join(DIST, 'private', 'relay.mjs'); };
 /** This PC's own IPv4 addresses - the ones a friend can type (a LAN's, a Tailscale's). */
 function lanAddresses() {
   return Object.values(require('node:os').networkInterfaces()).flat().filter((n) => n && n.family === 'IPv4' && !n.internal).map((n) => n.address);
@@ -2070,13 +2093,18 @@ const privateTell = (p) => launcherDispatch({ type: 'private', priv: p });
 async function privateStop() {
   const p = priv;
   priv = null;
+  const pinned = servingStore;
+  servingStore = null;
   if (p) { clearInterval(p.timer); await p.stop().catch(() => {}); }
+  if (pinned && gameWindow && !gameWindow.isDestroyed()) gameWindow.reload();   // back to the app's own game
 }
 async function privateAct(action, arg) {
   if (action === 'private-stop') { await privateStop(); privateTell({ status: 'off' }); return; }
   if (priv) return;
   try {
     const host = await privateHost();
+    servingStore = await hostingGame();   // the pinned game, before any relay or page reads a file
+    if (servingStore && gameWindow && !gameWindow.isDestroyed()) gameWindow.reload();
     if (action === 'private-host') {
       const relayScript = privateRelay();
       if (!relayScript || !fs.existsSync(relayScript)) { privateTell({ status: 'failed', error: 'This version of the game has no private server in it.' }); return; }
