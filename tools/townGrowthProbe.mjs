@@ -9,9 +9,9 @@ import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const REGION = process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 'Daggerfall';
-const TOWN = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : 'Arkbridge';
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : 'scratch/town-growth';
+const named = process.argv.slice(2).filter((arg, i, all) => !arg.startsWith('--') && all[i - 1] !== '--out');   // the flag's value is no town
+const [REGION = 'Daggerfall', TOWN = 'Arkbridge'] = named;
 mkdirSync(out, { recursive: true });
 const server = await createServer({ server: { port: 5242, strictPort: true }, logLevel: 'error' });
 await server.listen();
