@@ -231,7 +231,7 @@ test('AUDIT WB D9 no ridge and no tower stands above RIDGES_TOP, and the sky ski
   assert.ok(RIDGES_TOP > SIGIL_TOWER.top + 0.03, 'the great tower\'s crown and its crest\'s margin');
   for (const t of LESSER_TOWERS) assert.ok(RIDGES_TOP > t.top + 0.03);
   for (const r of RIDGES) assert.ok(RIDGES_TOP > r.base + r.rise + 0.03);
-  assert.match(DEAD_SKY_FS, new RegExp(`if \\(e < ${RIDGES_TOP.toFixed(4)}\\) \\{\\n\\s+\\{\\n\\s+float hgt = `));
+  assert.match(DEAD_SKY_FS, new RegExp(`if \\(e < ${RIDGES_TOP.toFixed(4)}\\) \\{\\n\\s+\\{\\n\\s+float aa = fwidth\\(e\\) \\* 1\\.5;`));
 });
 
 test('AUDIT WB D10 what the court asks for every frame is made once: its lists refilled, an empty floor\'s the same frozen one, the braziers\' lights and places, the fog one object', () => {

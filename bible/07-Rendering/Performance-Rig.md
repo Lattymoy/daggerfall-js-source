@@ -39,6 +39,10 @@ A telegraph's quad is laid over only the ground its shape can draw on (`src/rend
 moving lights keep their identity, so their shadow cubes are not redrawn as new lights each frame
 (`src/render/lightId.js`, `Enhanced-Lighting-Arc.md`).
 
+The Deadlands' sky round the Burning Court is the court's heaviest pixel work. It reads its noise only where the noise
+can show: no cloud deck at or under the horizon, where the deck has faded out, and no ridge above its highest crest
+unless one of its towers stands there (`src/render/deadlands.js`). The picture is the same to the bit.
+
 ### Ships in port
 
 A ship's objects are made again only where one moved and only when read; a boat's plan is walked where it stands; a
@@ -68,4 +72,5 @@ still animation clip is posed once and a rope's bones are read off the frame's o
 - `test/net/perfcrowd1.test.js` - names, peers and the crowd frame
 - `test/systems/comeSailAway/perfsails3.test.js`, `test/systems/comeSailAway/perfsails4.test.js` - ships in port
 - `test/net/gate/fb1013e_aoeperf.test.js` - the boss's telegraphs
+- `test/world/gate/wb6a_deadlands.test.js` - the Deadlands' sky, its skipped noise
 - `tools/peerLab.mjs` - a crowd of peers, measured

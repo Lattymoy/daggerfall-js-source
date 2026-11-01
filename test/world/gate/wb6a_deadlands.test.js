@@ -111,7 +111,18 @@ test('WB6a the towers and the ranges: the great tower behind the boss as the pla
   assert.ok(SIGIL_TOWER.top > 0.25 && VORTEX_ELEV > SIGIL_TOWER.top + 0.3, 'tall, the vortex well over it');
   for (const t of LESSER_TOWERS) { assert.ok(t.top < SIGIL_TOWER.top && t.w < SIGIL_TOWER.w); assert.ok(Math.abs(t.az) > 1, 'round the horizon, off the great one'); }
   for (let i = 1; i < RIDGES.length; i++) assert.ok(RIDGES[i].haze < RIDGES[i - 1].haze && RIDGES[i].rise > RIDGES[i - 1].rise, 'nearer: clearer and taller');
-  assert.match(DEAD_SKY_FS, /m = max\(m, sigil\(az, e\)\);/, 'the great tower stands in the near range');
+  assert.match(DEAD_SKY_FS, /tw = max\(tw, sigil\(az, e\)\);/, 'the great tower stands in the near range');
+});
+
+test('the sky skips noise that cannot show: the clouds where the deck has faded, a ridge over its highest crest and off its towers - a flash still lights the air under the deck (mutants: the bound dropped; the flash lost under the deck)', () => {
+  assert.match(DEAD_SKY_FS, /float deck = smoothstep\(0\.015, 0\.2, e\);\n {2}if \(deck > 0\.0\) \{/, 'the deck skipped where it adds nothing');
+  assert.match(DEAD_SKY_FS, /\} else if \(uFlash\.z > 0\.0\) \{[^}]*col \+= vec3\(0\.5, 0\.22, 0\.12\) \* uGain \* uFlash\.z \* near \* 0\.3;/, 'a flash under the deck still lights the air');
+  for (const R of RIDGES) {
+    const bound = `if (e < ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} + aa || tw > 0.0) {`;
+    const at = DEAD_SKY_FS.indexOf(bound);
+    assert.ok(at > 0, `a ridge's bound is its own base and rise: ${bound}`);
+    assert.ok(DEAD_SKY_FS.indexOf(`float hgt = ${R.base.toFixed(4)} + ${R.rise.toFixed(4)} * ridge(`, at) > at, 'its noise read only inside the bound');
+  }
 });
 
 test('WB6a the court\'s light: red from the sky, fire-orange from under, the vortex\'s key from behind the boss, high - fresh copies each time (mutants: the key from the arrival\'s side; the fire\'s light from above)', () => {
