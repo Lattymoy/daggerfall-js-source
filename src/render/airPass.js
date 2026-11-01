@@ -1510,7 +1510,8 @@ export class AirPass {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, 1, 1, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, new Uint8Array([0]));
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.pending = false;   // a resolve is owed to the frame
-    this.width = 0; this.height = 0;
+    this.width = 0;
+    this.height = 0;
     this.targets = null;
     // EL4: the frame image (canvas-sized), the luminance image and the two adaptation images
     this.frame = null;
@@ -1678,11 +1679,26 @@ export class AirPass {
   /** A frame image's texture, its two depths and their two framebuffers, deleted. */
   _deleteFrame(k) {
     const gl = this.gl;
-    gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.fbos) gl.deleteFramebuffer(f);
-    if (k.prevColor) { gl.deleteTexture(k.prevColor); gl.deleteFramebuffer(k.prevColorFbo); }   // WET1e
-    if (k.puddle) { gl.deleteTexture(k.puddle); gl.deleteFramebuffer(k.puddleFbo); }   // WET1e
-    if (k.aoDepth) { gl.deleteTexture(k.aoDepth); gl.deleteFramebuffer(k.aoFbo); }   // GRASS-LIT
-    if (k.uwFbo) { gl.deleteTexture(k.uwColor); gl.deleteTexture(k.uwDepth); gl.deleteFramebuffer(k.uwFbo); }   // WATER-NEXT 2
+    gl.deleteTexture(k.tex);
+    for (const d of k.depths) gl.deleteTexture(d);
+    for (const f of k.fbos) gl.deleteFramebuffer(f);
+    if (k.prevColor) {
+      gl.deleteTexture(k.prevColor);
+      gl.deleteFramebuffer(k.prevColorFbo);
+    }   // WET1e
+    if (k.puddle) {
+      gl.deleteTexture(k.puddle);
+      gl.deleteFramebuffer(k.puddleFbo);
+    }   // WET1e
+    if (k.aoDepth) {
+      gl.deleteTexture(k.aoDepth);
+      gl.deleteFramebuffer(k.aoFbo);
+    }   // GRASS-LIT
+    if (k.uwFbo) {
+      gl.deleteTexture(k.uwColor);
+      gl.deleteTexture(k.uwDepth);
+      gl.deleteFramebuffer(k.uwFbo);
+    }   // WATER-NEXT 2
   }
   /**
    * GRASS-LIT (2026-10-01): THE OCCLUSION'S DEPTH, TAKEN BEFORE THE GRASS. The AO is read off the frame's depth at the
@@ -1850,8 +1866,12 @@ export class AirPass {
   setWetRoad(tex, originX, originZ, tileSize) {
     this._wetRoadTex = tex || null;
     const m = this._wetRoadMap;
-    if (tex && tileSize > 0) { m[0] = originX; m[1] = originZ; m[2] = tileSize; m[3] = 1; }
-    else m.fill(0);
+    if (tex && tileSize > 0) {
+      m[0] = originX;
+      m[1] = originZ;
+      m[2] = tileSize;
+      m[3] = 1;
+    } else m.fill(0);
   }
 
   /**
@@ -2523,7 +2543,15 @@ export class AirPass {
     gl.uniform2fv(PP.uCanvas, this.canvas);
     gl.uniformMatrix4fv(PP.uVP, false, this._vp);
     const v = f.view, R = this._viewRot;
-    R[0] = v[0]; R[1] = v[4]; R[2] = v[8]; R[3] = v[1]; R[4] = v[5]; R[5] = v[9]; R[6] = v[2]; R[7] = v[6]; R[8] = v[10];
+    R[0] = v[0];
+    R[1] = v[4];
+    R[2] = v[8];
+    R[3] = v[1];
+    R[4] = v[5];
+    R[5] = v[9];
+    R[6] = v[2];
+    R[7] = v[6];
+    R[8] = v[10];
     gl.uniformMatrix3fv(PP.uViewRot, false, R);
     gl.uniform3fv(PP.uCamPos, f.eye);
     gl.uniform4fv(PP.uWet, this._wet);

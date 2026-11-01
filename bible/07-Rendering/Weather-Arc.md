@@ -113,10 +113,11 @@ by 6.86, and a night's sprinkle (rain 0.04) by 0.86, as its law says. In Daggerf
 date the ground lay under snow, and the wet stayed under it. No probe stood past the Bay. Settings: Features / Graphics row
 `wet-world` (Off / Wet / Full). High and Ultra ship Full (puddle building colour). `?wet=off` still kills it.
 
-**WET1b (2026-10-31).** A puddle, a road and soil were one highlight: the stone's lobe (`elSpecK`, left at 1 off the
-rain) plus one sheen. In the rain soil stays nearly matte (WET_SHEEN_SOIL), a path tile (46, 47, 55) takes a dull
-sheen, and a puddle drops that lobe and keeps a tight lamp glint. The puddle's edge is PUDDLE_EDGE wide, not a line.
-The lab's rain streaks fade to 0.22 alpha. The sky mix takes the ambient with the fog, so a night puddle is not black.
+**WET1b (2026-10-31).** A puddle, a road and soil shared one highlight: the stone lobe (`elSpecK`, left at 1 off the
+rain) plus one sheen. In rain, soil stays nearly matte (WET_SHEEN_SOIL), a path tile (46, 47, 55) takes a dull sheen,
+and a puddle drops that lobe and keeps a tight lamp glint. The puddle edge is PUDDLE_EDGE wide, not a line. Lab rain
+streaks fade to 0.22 alpha. The sky mix takes ambient with fog, so a night puddle is not black.
+
 **WET1c.** Lab rain enables DEPTH_TEST and culls drops inside nearby building AABBs (`setShelters`), floor to roof
 (`uShelterY` min/max), so a porch and a room stay dry and open air under a tall box still rains. Puddle rings use a
 finer cell and a higher rate. Eave drips were tried and pulled: the AABB eave was the ridge, and the model-edge pass

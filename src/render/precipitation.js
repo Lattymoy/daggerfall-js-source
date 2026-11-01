@@ -151,8 +151,12 @@ export function packShelters(xzOut, yOut, buildings, eye) {
   for (; n < near.length && n < cap; n++) {
     const { min, max } = near[n].aabb;
     const o = n * 4;
-    xzOut[o] = min[0]; xzOut[o + 1] = min[2]; xzOut[o + 2] = max[0]; xzOut[o + 3] = max[2];
-    yOut[n * 2] = min[1]; yOut[n * 2 + 1] = max[1];
+    xzOut[o] = min[0];
+    xzOut[o + 1] = min[2];
+    xzOut[o + 2] = max[0];
+    xzOut[o + 3] = max[2];
+    yOut[n * 2] = min[1];
+    yOut[n * 2 + 1] = max[1];
   }
   return n;
 }
@@ -594,7 +598,10 @@ export class PrecipitationRenderer {
    * @param {number[]|Float32Array} eye
    */
   setShelters(buildings, eye) {
-    if (!this._shelterXZ) { this._shelterXZ = new Float32Array(SHELTER_MAX * 4); this._shelterY = new Float32Array(SHELTER_MAX * 2); }
+    if (!this._shelterXZ) {
+      this._shelterXZ = new Float32Array(SHELTER_MAX * 4);
+      this._shelterY = new Float32Array(SHELTER_MAX * 2);
+    }
     this._shelterN = packShelters(this._shelterXZ, this._shelterY, buildings, eye);
   }
 
@@ -783,7 +790,8 @@ export class PrecipitationRenderer {
       gl.uniform4fv(L.uShelterXZ, this._shelterXZ);
       gl.uniform2fv(L.uShelterY, this._shelterY);
     }
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.DEPTH_TEST);   // walls and roofs occlude; an open 2D run left this off and rain drew through
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);

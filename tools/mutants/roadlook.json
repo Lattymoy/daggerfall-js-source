@@ -156,8 +156,8 @@
   {
     "name": "ROAD-LOOK-glsl-the-bilinear-x-weight",
     "file": "src/render/roadEdgeGlsl.js",
-    "old": "  float wxa = float(c.x) == k.x ? s.x : 1.0 - s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;",
-    "new": "  float wxa = float(c.x) == k.x ? 1.0 - s.x : s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;",
+    "old": "  // the dual square about the nearest tile corner k: s runs 0..1 from the cells' centres west and south of it\n  vec2 k = floor(p + 0.5);\n  vec2 s = p - (k - 0.5);\n  float wxa = float(c.x) == k.x ? s.x : 1.0 - s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;",
+    "new": "  // the dual square about the nearest tile corner k: s runs 0..1 from the cells' centres west and south of it\n  vec2 k = floor(p + 0.5);\n  vec2 s = p - (k - 0.5);\n  float wxa = float(c.x) == k.x ? 1.0 - s.x : s.x, wxb = float(cb.x) == k.x ? s.x : 1.0 - s.x;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]

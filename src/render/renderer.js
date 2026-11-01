@@ -2629,7 +2629,7 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object, wet?: WebGLUniformLocation | null }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object, wet?: WebGLUniformLocation | null, wetProxy?: WebGLUniformLocation | null }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'), sunOrigin: gl.getUniformLocation(p, 'uSunOrigin'),
