@@ -3699,6 +3699,16 @@
   "tr": "c53c44aad03e",
   "by": "claude-in-session"
  },
+ "menu.home.getApp": {
+  "en": "9c18e2a4586c",
+  "tr": "34464273cbe9",
+  "by": "claude-in-session"
+ },
+ "menu.home.mainServers": {
+  "en": "e2039c7849a4",
+  "tr": "24b148c36d2d",
+  "by": "claude-in-session"
+ },
  "menu.home.offline": {
   "en": "e01fa717bacc",
   "tr": "cf6cb23c8c18",
@@ -3719,9 +3729,29 @@
   "tr": "50ab52ba80d1",
   "by": "claude-in-session"
  },
+ "menu.home.private": {
+  "en": "75bc9d44704a",
+  "tr": "f6caa395eb13",
+  "by": "claude-in-session"
+ },
+ "menu.home.privateNote": {
+  "en": "5e8e9e5fce4c",
+  "tr": "e1076075a230",
+  "by": "claude-in-session"
+ },
+ "menu.home.privateSub": {
+  "en": "c6e1178eafa0",
+  "tr": "0b1365a251d3",
+  "by": "claude-in-session"
+ },
  "menu.home.realmHead": {
   "en": "25de5315bb88",
   "tr": "3c182f187fa6",
+  "by": "claude-in-session"
+ },
+ "menu.home.where": {
+  "en": "6d3176405675",
+  "tr": "ba381323a13f",
   "by": "claude-in-session"
  },
  "menu.hud.piece.helm": {

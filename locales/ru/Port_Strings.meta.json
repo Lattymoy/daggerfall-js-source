@@ -22144,9 +22144,19 @@
   "tr": "2ade33f377e9",
   "by": "claude-in-session"
  },
+ "menu.home.getApp": {
+  "en": "9c18e2a4586c",
+  "tr": "f9a85c961fa2",
+  "by": "claude-in-session"
+ },
  "menu.home.homeAria": {
   "en": "c920f897c537",
   "tr": "5ee5961640bb",
+  "by": "claude-in-session"
+ },
+ "menu.home.mainServers": {
+  "en": "e2039c7849a4",
+  "tr": "644404fe2b89",
   "by": "claude-in-session"
  },
  "menu.home.offline": {
@@ -22169,9 +22179,29 @@
   "tr": "eb169b8189db",
   "by": "claude-in-session"
  },
+ "menu.home.private": {
+  "en": "75bc9d44704a",
+  "tr": "93c3152c2a0a",
+  "by": "claude-in-session"
+ },
+ "menu.home.privateNote": {
+  "en": "5e8e9e5fce4c",
+  "tr": "2e55c7b4974e",
+  "by": "claude-in-session"
+ },
+ "menu.home.privateSub": {
+  "en": "c6e1178eafa0",
+  "tr": "1465d6f5e826",
+  "by": "claude-in-session"
+ },
  "menu.home.realmHead": {
   "en": "25de5315bb88",
   "tr": "24db25f2c75e",
+  "by": "claude-in-session"
+ },
+ "menu.home.where": {
+  "en": "6d3176405675",
+  "tr": "d4fd984cb6c9",
   "by": "claude-in-session"
  },
  "menu.hud.foeBar": {

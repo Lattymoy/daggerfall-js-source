@@ -2518,12 +2518,12 @@ ${badgeCss()}
 .px-home.px-title .px-menu .doorbtn .px-c { font-size: 14px; }
 .px-home.px-title .px-menu[data-level="top"] { width: min(780px, 100%); gap: 10px 18px; }
 .px-home.px-title .px-menu[data-level="top"] .doorbtn { flex: 1 1 300px; min-height: 76px; padding-top: 8px; padding-bottom: 8px; font-size: 28px; }
-.px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
-.px-home.px-title .px-menu[data-level="offline"] .px-pagenote { flex: 0 0 100%; margin: 0; }
+.px-home.px-title .px-menu:not([data-level="top"]) .px-pagehead,
+.px-home.px-title .px-menu:not([data-level="top"]) .px-pagenote { flex: 0 0 100%; margin: 0; }
 /* the offline level's word and line stand bare on the map, among its own names - a glow of the night under them (Plus's
    alone: DFO Grimoire writes them on its page) */
-:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
-:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu[data-level="offline"] .px-pagenote { text-shadow: 1px 1px 0 #000, 0 0 6px #000, 0 0 14px #000; }
+:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu:not([data-level="top"]) .px-pagehead,
+:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu:not([data-level="top"]) .px-pagenote { text-shadow: 1px 1px 0 #000, 0 0 6px #000, 0 0 14px #000; }
 .px-home.px-title .px-menu .doorbtn.door-back { margin-top: 0; min-height: 50px; font-size: 15px; }
 /* a phone: the two questions one over the other, the games two to a row and the way back under them */
 @media (max-width: 600px) {
