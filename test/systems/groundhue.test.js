@@ -73,7 +73,7 @@ const winter = made(16, 16, (x, y) =>
           : snowy(x, y),
 );
 
-test('the ground\'s hue: a stray violet in the sand takes the sand\'s hue and keeps its light; a pale tan (the sand\'s own hue) and every other texel are as they were (mutants: the stray law dropped; the light not kept; strength counted as hue)', () => {
+test('the ground\'s hue: a stray violet in the sand takes the sand\'s hue and keeps its light; a pale tan (the sand\'s own hue) and every other texel are as they were (mutants: the stray law dropped; the light not kept; strength counted as hue; the desert\'s violet not foreign; a foreign texel taking a foreign median; violet read too narrowly)', () => {
   const g = R.groundHue(sand);
   const moved = [];
   for (let i = 0; i < 256; i++) if ([0, 1, 2].some((c) => g.data[i * 4 + c] !== sand.data[i * 4 + c])) moved.push(i);
@@ -90,6 +90,9 @@ test('the ground\'s hue: a stray violet in the sand takes the sand\'s hue and ke
   const tan = 4 * (3 * 16 + 3);
   assert.deepEqual([...R.groundHue(dirt).data.slice(tan, tan + 4)], [176, 130, 80, 255], 'a tan in dark dirt: the dirt\'s hue, stronger - kept');
   assert.deepEqual([violets(dirt), violets(R.desert(dirt, { seed: 9 }))], [1, 0], 'the desert\'s dirt');
+  // a violet rim three texels wide - a fifth of the record, no stray by its share: violet is no hue of the desert's
+  const rim = made(16, 16, (x, y) => (y >= 6 && y <= 8 ? VIOLET : [70 + ((x + y) % 3) * 4, 52 + ((x + y) % 3) * 3, 34, 255]));
+  assert.deepEqual([violets(rim), violets(R.groundHue(rim)), violets(R.desert(rim, { seed: 9 }))], [48, 48, 0], 'the desert\'s rim');
   const edge = made(16, 16, (x, y) => (x < 6 ? [214, 214, 222, 255] : x === 7 && y === 8 ? VIOLET : [110 + (y % 2) * 4, 104, 96, 255]));
   assert.deepEqual([violets(edge), violets(R.snow(edge, { seed: 2 }))], [1, 0], 'the snow\'s thin edge');
 });
@@ -153,20 +156,20 @@ test('the specs say which records are ground: a terrain set\'s, a winter set\'s 
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
-test('over the player\'s own records (ARENA2_PATH): the Alik\'r\'s classic sand carries violet, and neither the Base\'s 256-texel sand nor Sands\' does on its sand records; the Base\'s sand is as crisp as the classic where its texel is a pixel; the Base\'s winter snow has no hue of its own', { skip: !ARENA2 || !existsSync(join(ARENA2 ?? '', 'TEXTURE.002')) ? 'needs ARENA2_PATH (sh tools/fetch-data.sh)' : false }, async () => {
+test('over the player\'s own records (ARENA2_PATH): the Alik\'r\'s classic ground carries violet, and Sands\' 56 records carry none - its shores and rocks with its sand - nor do the Base\'s 256-texel sand records; the Base\'s sand is as crisp as the classic where its texel is a pixel; the Base\'s winter snow has no hue of its own', { skip: !ARENA2 || !existsSync(join(ARENA2 ?? '', 'TEXTURE.002')) ? 'needs ARENA2_PATH (sh tools/fetch-data.sh)' : false }, async () => {
   const art = createClassicPictures(async (n) => readFileSync(join(ARENA2, n)));
   const base = OWN_TEXTURE_PACKS.find((m) => m.dir === 'base'),
     sands = OWN_TEXTURE_PACKS.find((m) => m.dir === 'sands-of-the-alikr');
   const SAND_RECORDS = [1, 2, 9, 10, 11, 12, 13, 14, 15];
   let classic = 0;
-  for (const r of SAND_RECORDS) {
+  for (let r = 0; r < 56; r++) {
     const src = await art.picture(2, r, 0);
     classic += violets(src);
     const name = `002_${r}-0`;
-    assert.equal(violets(R.applyOwnRule(ownSpec(base, name), src)), 0, `the Base's ${name}`);
+    if (SAND_RECORDS.includes(r)) assert.equal(violets(R.applyOwnRule(ownSpec(base, name), src)), 0, `the Base's ${name}`);
     assert.equal(violets(R.applyOwnRule(ownSpec(sands, name), src)), 0, `Sands' ${name}`);
   }
-  assert.ok(classic > 300, `the classic sand's violet (${classic})`);
+  assert.ok(classic > 1500, `the classic ground's violet (${classic})`);
   const src = await art.picture(2, 2, 0);
   const ours = R.applyOwnRule(ownSpec(base, '002_2-0'), src);
   assert.ok(crispness(boxDown(ours, 4)) > 0.9 * crispness(src), 'as crisp as the classic at the record\'s own scale');

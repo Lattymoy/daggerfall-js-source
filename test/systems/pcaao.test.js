@@ -500,7 +500,7 @@ test('PCO1: the seams - the Mods pane entry, the record, the shipped manifest an
   const m = MOD_SETTINGS.pcaao;
   // The shipped manifest's author and version and its modsettings' one section, `Modules` -
   // the seven ToggleKeys, name and Value in order - written out when vendor/pcaao left the tree
-  assert.equal(m.author, 'Kirk.O', 'the manifest\'s ModAuthor'); assert.equal(PCAAO_VERSION, '1.44', 'the manifest\'s ModVersion');
+  assert.ok(!('author' in m), 'no author named: the game carries no credits'); assert.equal(PCAAO_VERSION, '1.44', 'the manifest\'s ModVersion');
   const shipped = [
     ['equipmentDamageEnhanced', true], ['fadingEnchantedItems', true], ['fixedStrengthDamageModifier', true], ['armorHitFormulaRedone', true],
     ['criticalStrikesIncreaseDamage', true], ['conditionBasedEffectiveness', true], ['softMaterialRequirements', true],

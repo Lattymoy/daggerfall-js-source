@@ -113,7 +113,7 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(manifest.GUID, IMMERSIVE_FOOTSTEPS_MOD.guid);
   assert.equal(manifest.ModTitle, IMMERSIVE_FOOTSTEPS_MOD.title); assert.equal(manifest.ModVersion, IMMERSIVE_FOOTSTEPS_MOD.version); assert.equal(manifest.ModAuthor, IMMERSIVE_FOOTSTEPS_MOD.author);
   assert.equal(manifest.DFUnity_Version, IMMERSIVE_FOOTSTEPS_MOD.dfunity);
-  assert.equal(m.title, 'Immersive Footsteps'); assert.equal(m.author, manifest.ModAuthor);
+  assert.equal(m.title, 'Immersive Footsteps'); assert.ok(!('author' in m), 'no author named: the game carries no credits');
   assert.equal(manifest.clips, 210, 'the 210 clips the manifest names - each name now a clip of ours');
   assert.equal(Object.values(IF_CLIP_MS).flat().length * 2, manifest.clips, 'OWN-WORK4: our synth answers every one, in both qualities');
   assert.equal(manifest.scripts.length, 2, 'the two scripts the manifest names, from the author\'s MIT repository');

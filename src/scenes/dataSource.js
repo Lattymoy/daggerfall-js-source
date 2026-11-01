@@ -17,6 +17,7 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';   // TI3
 import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the asset picker's face follows the skin
 import { PIXEL_FONT_CSS } from '../ui/pixelifyFive.js';   // FONT3
 import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2
+import { noteTextureStoreRegistering } from '../systems/textureStoreGate.js';   // the door's ground sets wait for this registration
 
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
@@ -1209,6 +1210,7 @@ let _textureStore = null;   // the page's latest registration of the store
 let _textureStoreSettled = false;
 export function registerTextureStore({ warm = true } = {}) {
   const p = registerTextureStoreNow({ warm });
+  noteTextureStoreRegistering(p);
   _textureStore = p;
   _textureStoreSettled = false;
   const land = () => { if (_textureStore === p) _textureStoreSettled = true; };

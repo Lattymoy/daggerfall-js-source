@@ -55,6 +55,10 @@ per archive. The result for Vanilla Enhanced: the Base's arrays decide all eleve
 over them when on (403 by records); Snowless Swamps' 402 and 403 decide over both. When Snowless Swamps decides 403, the
 weather and Snowfall lay no snow on that ground (`winterGroundSnowless`).
 
+A set asked while the texture store's registration is under way waits for it (`src/systems/textureStoreGate.js`).
+Asked before the shipped packs are in the door, the set would be Daggerfall's own, and a host keeps an uploaded set for
+the session.
+
 ### The Texture Overhaul card
 
 `src/systems/vanillaEnhanced/vanillaEnhanced.js`:
@@ -103,6 +107,8 @@ Departures:
   client, add-ons; mutants `tools/mutants/ve4.json`
 - `test/systems/ownwork4_textures.test.js` - the rules; mutants `tools/mutants/ownwork4_textures.json`
 - `test/systems/groundhue.test.js` - the ground's hue and edges; mutants `tools/mutants/groundhue.json`
+- `test/systems/groundwait.test.js` - a ground set waits for the store's registration; mutants
+  `tools/mutants/groundwait.json`
 - `tools/overhaulsProbe.mjs` - the card in Chromium
 
 ## Open

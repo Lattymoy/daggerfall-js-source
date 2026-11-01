@@ -107,7 +107,7 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(manifest.ModTitle, WEAPON_WIDGET_MOD.title);
   assert.equal(manifest.ModVersion, WEAPON_WIDGET_MOD.version);
   assert.equal(manifest.ModAuthor, WEAPON_WIDGET_MOD.author);
-  assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
+  assert.equal(m.title, manifest.ModTitle); assert.ok(!('author' in m), 'no author named: the game carries no credits');
   assert.equal(manifest.textures.length, 173, 'the 173 double-scale textures the manifest names, none vendored');
   assert.match(manifest.script, /FPSWeaponClone\.cs$/, 'the one script the manifest names and the bundle does not carry');
   // Every line the mod wrote is in our own words now (PLAIN-TEXT, 2026-10-19, said Step.Length plainly) - ours, exactly

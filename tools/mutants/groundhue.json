@@ -2,8 +2,8 @@
   {
     "name": "GH-stray-law-dropped",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      const stray = shareOf(i) < STRAY_HUE.share;",
-    "new": "      const stray = false;",
+    "old": "      const stray = alien || shareOf(i) < STRAY_HUE.share;",
+    "new": "      const stray = alien;",
     "tests": [
       "test/systems/groundhue.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "GH-desert-keeps-its-violet",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "  const srcData = groundHue(src).data;",
+    "old": "  const srcData = groundHue(src, { foreign: violetOf }).data;",
     "new": "  const srcData = src.data;",
     "tests": [
       "test/systems/groundhue.test.js"
@@ -123,6 +123,42 @@
     "new": "{ ground: true }",
     "tests": [
       "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-desert-violet-not-foreign",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  const srcData = groundHue(src, { foreign: violetOf }).data;",
+    "new": "  const srcData = groundHue(src).data;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-foreign-median-takes-foreign",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "            if (kin) around[channel].push(chroma[j * 3 + channel]);",
+    "new": "            around[channel].push(chroma[j * 3 + channel]);",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-violet-read-too-narrowly",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "const violetOf = (red, green, blue) => blue > green + 8 && red > green;",
+    "new": "const violetOf = (red, green, blue) => blue > green + 80 && red > green;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "SANDS-record-3-dropped",
+    "file": "src/systems/ownTextures/ownTexturePacks.json",
+    "old": "[\"002_3-0\",64,64], ",
+    "new": "",
+    "tests": [
+      "test/systems/environs_texturePacks.test.js"
     ]
   }
 ]

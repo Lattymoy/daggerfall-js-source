@@ -446,10 +446,11 @@ export const STRAY_HUE = Object.freeze({ share: 0.03, cells: 1, gap: 30 });
  * THE GROUND'S HUE. A classic ground record carries stray texels of a hue it has almost nowhere else - violet in the
  * Alik'r's sand, pink, yellow and teal in the snow - one texel at the record's size, a blot once upscaled. A stray texel
  * keeps its light and takes the median hue of its 5 x 5. With `snow`, a snowy (bright) texel takes the mean hue of the
- * snowy texels round it: the snow's grain is light and shade, never hue. The alpha and every light are kept.
- * @param {Rgba} src @param {{ snow?: boolean }} [o] @returns {Rgba}
+ * snowy texels round it: the snow's grain is light and shade, never hue. `foreign(r, g, b)`: a hue the ground never
+ * holds, stray wherever it stands, which takes its neighbours' own hue. The alpha and every light are kept.
+ * @param {Rgba} src @param {{ snow?: boolean, foreign?: ?((r: number, g: number, b: number) => boolean) }} [o] @returns {Rgba}
  */
-export function groundHue(src, { snow = false } = {}) {
+export function groundHue(src, { snow = false, foreign = null } = {}) {
   const { width, height, data } = src;
   const n = width * height;
   const chroma = new Float32Array(n * 3),
@@ -479,7 +480,8 @@ export function groundHue(src, { snow = false } = {}) {
       const i = y * width + x;
       if (data[i * 4 + 3] === 0) continue;
       const snowy = snow ? smooth(150, 170, light[i]) : 0;
-      const stray = shareOf(i) < STRAY_HUE.share;
+      const alien = foreign ? foreign(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]) : false;
+      const stray = alien || shareOf(i) < STRAY_HUE.share;
       if (!stray && snowy <= 0) continue;
       around[0].length = around[1].length = around[2].length = 0;
       const sum = [0, 0, 0];
@@ -489,18 +491,19 @@ export function groundHue(src, { snow = false } = {}) {
           const j = clampI(y + dy, height) * width + clampI(x + dx, width);
           if ((!dx && !dy) || data[j * 4 + 3] === 0) continue;
           const snowyThere = snow ? smooth(150, 170, light[j]) : 0;
+          const kin = !foreign || !foreign(data[j * 4], data[j * 4 + 1], data[j * 4 + 2]);
           for (let channel = 0; channel < 3; channel++) {
-            around[channel].push(chroma[j * 3 + channel]);
+            if (kin) around[channel].push(chroma[j * 3 + channel]);
             sum[channel] += snowyThere * chroma[j * 3 + channel];
           }
           weight += snowyThere;
         }
       let target = null,
         amount = 0;
-      if (stray && around[0].length >= 12) {
+      if (stray && around[0].length >= (alien ? 3 : 12)) {
         const median = around.map((values) => values.sort((a, b) => a - b)[values.length >> 1]);
         const own = chroma.subarray(i * 3, i * 3 + 3);
-        if (hueGap(own[0], own[1], own[2], median[0], median[1], median[2]) >= STRAY_HUE.gap) {
+        if (alien || hueGap(own[0], own[1], own[2], median[0], median[1], median[2]) >= STRAY_HUE.gap) {
           target = median;
           amount = 1;
         }
@@ -702,7 +705,7 @@ function boxMean(field, width, height, radius) {
  */
 export function desert(src, { seed, road = false }) {
   const { width, height } = src;
-  const srcData = groundHue(src).data;
+  const srcData = groundHue(src, { foreign: violetOf }).data;
   const out = new Uint8Array(srcData);
   const luma = new Float32Array(width * height),
     own = new Float32Array(width * height);
@@ -748,6 +751,9 @@ export function desert(src, { seed, road = false }) {
     }
   return { width, height, data: out };
 }
+
+/** Violet - blue and red both over green - is no hue of the desert's ground: the classic record's specks of it. */
+const violetOf = (red, green, blue) => blue > green + 8 && red > green;
 
 /** How much a texel is water: blue well over red, and too dark to be snow in a blue light. */
 const waterOf = (red, green, blue) =>

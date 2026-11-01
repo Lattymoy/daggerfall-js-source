@@ -64,6 +64,7 @@ import {
 import { toColor32 } from '../formats/color32Order.js'; // GROUND1: the terrain's layers are world texels, bottom row first
 import { registerBillboardXml, unregisterBillboardXml } from '../world/billboardXml.js';
 import { getPref, setPref } from './uiPrefs.js'; // VE3: which attached mods are switched off - the port's prefs shelf
+import { textureStoreRegistering } from './textureStoreGate.js'; // a ground set waits for the shipped packs
 import { setSnowlessGround } from '../world/climateSwaps.js'; // SNOWLESS1: the door's word on a snowless winter set, for the weather and Snowfall
 
 export const DFMOD_PREFIX = 'dfmod/'; // the stored key of a bundle (seasonsIliacBayAssets' DFMOD_KEY_PREFIX)
@@ -903,6 +904,12 @@ const classicLayer = (tex, r) => tex.getColor32(tex.getDFBitmap(r, 0), 0);
  * picture (the browser's decodePng).
  */
 export function dfmodGroundLayers(archive, tex, { decode = decodePng } = {}) {
+  const registering = textureStoreRegistering();
+  if (registering) {
+    // asked before the store's registration put the shipped packs in the door: the set would be Daggerfall's own
+    const again = () => dfmodGroundLayers(archive, tex, { decode });
+    return registering.then(again, again);
+  }
   const n = tex?.recordCount ?? 0;
   const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : []; // STUDIO1: the studio's records, worn with the gate shut too
   if (!n || (!textureReplacementEnabled() && !studio.length)) return Promise.resolve(null);

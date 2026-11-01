@@ -13,9 +13,9 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import {
   setDfmodSources, attachedDfmods, setDfmodEnabled, DFMOD_SHIPPED_PREF, DFMOD_OFF_PREF, DFMOD_INDEX_VERSION, dfmodStoreKey,
-  dfmodGroundLayers, groundSource, _resetDfmodForTests,
+  dfmodGroundLayers, groundSource, _resetDfmodForTests, setShippedDfmods,
 } from '../../src/systems/dfmodTextures.js';
-import { ENVIRONMENT_PACK_MODS, installVanillaEnhancedPack, _setVePackIoForTests } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';
+import { ENVIRONMENT_PACK_MODS, VE_PACK_MODS, installVanillaEnhancedPack, vePackClient, _setVePackIoForTests } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';
 import { ownSpec } from '../../src/systems/ownTextures/ownTexturePacks.js';
 import { clearTextureReplacements } from '../../src/systems/textureReplacement.js';
 import { VE_ADDONS_PREF } from '../../src/systems/vanillaEnhanced/vanillaEnhanced.js';
@@ -31,8 +31,8 @@ const MASKED = 'dfmod/vanilla enhanced - masked roads.dfmod';
 const SNOWLESS = 'dfmod/vanilla enhanced - snowless swamps and jungles.dfmod';
 const SANDS = 'dfmod/sands of the alikr.dfmod';
 const SNOWFALL = 'dfmod/snowfall.dfmod';
-/** The records the pack dresses - every TEXTURE.002 record but 0, 3, 29 to 33, 50 and 54. */
-const SANDS_RECORDS = Object.freeze([1, 2, ...Array.from({ length: 25 }, (_, i) => i + 4), ...Array.from({ length: 16 }, (_, i) => i + 34), 51, 52, 53, 55]);
+/** The records the pack dresses - every TEXTURE.002 record, so no classic one (and none of its violet) stands in the desert. */
+const SANDS_RECORDS = Object.freeze(Array.from({ length: 56 }, (_, r) => r));
 
 const ids = new Map();
 const idOf = (tag) => { if (!ids.has(tag)) ids.set(tag, ids.size + 1); return ids.get(tag); };
@@ -90,15 +90,24 @@ test('ALIKR1/SNOWFALL1 the door: both ship ON by default, built on the Base - af
   assert.deepEqual(attachedDfmods().filter((m) => m.key === SANDS || m.key === SNOWFALL).map((m) => m.enabled), [false, false]);
 });
 
-test('ALIKR1 the desert\'s ground: Sands of the Alik\'r decides TEXTURE.002 over the Base\'s array - its 47 records (our desert rule) over Daggerfall\'s own, at the classic size, no record of the Base\'s; switched off, the Base\'s array again; a mod loaded after it still decides first; the other archives are the Base\'s (mutants: the looseGround rule dropped; the set taking the Base\'s records where Sands carries none; the rule placed before the walk)', async () => {
+test('ALIKR1 the desert\'s ground: Sands of the Alik\'r decides TEXTURE.002 over the Base\'s array - all 56 records our desert rule, at the classic size, no record of the Base\'s; a loose pack that carries fewer stands Daggerfall\'s own for the rest; switched off, the Base\'s array again; a mod loaded after it still decides first; the other archives are the Base\'s (mutants: the looseGround rule dropped; the set taking the Base\'s records where a loose pack carries none; the rule placed before the walk)', async () => {
   fresh();
   installVanillaEnhancedPack();
   assert.deepEqual(groundSource(2), { kind: 'records', pack: SANDS });
   const L = await dfmodGroundLayers(2, classicTex(56));
   assert.equal(L.length, 56);
   const want = Array.from({ length: 56 }, (_, r) => (SANDS_RECORDS.includes(r) ? idOf(tagOf('desert', 2, r)) : 0));
-  assert.deepEqual(L.map(idAt), want, 'its own records, Daggerfall\'s for the eleven it carries none of - never the Base\'s');
-  assert.ok(!L.some((l) => [0, 3, 29, 30, 31, 32, 33, 50, 54].map((r) => idOf(tagOf('enhance', 2, r))).includes(idAt(l))));
+  assert.deepEqual(L.map(idAt), want, 'its own records, every one - never the Base\'s');
+  // a loose pack that carries two records: its own two, and Daggerfall's own for the rest - never the Base's
+  const LOOSE = 'dfmod/dunes loose.dfmod';
+  const base = VE_PACK_MODS.find((m) => m.dir === 'base');
+  const looseIndex = { v: DFMOD_INDEX_VERSION, title: 'Dunes', version: null, author: null, guid: null, deps: [['vanilla enhanced - base', true, false]], looseGround: [2], textures: [['002_1-0', 1, 1], ['002_2-0', 1, 1]], arrays: [], xml: {} };
+  const looseClient = { rgba: async (name) => ({ width: 1, height: 1, data: Uint8Array.of(idOf(`loose:${name}`), 0, 0, 255) }), layers: async () => null, close() {} };
+  setShippedDfmods([{ key: BASE, index: base.index, open: () => vePackClient(base), on: true }, { key: LOOSE, index: looseIndex, open: () => looseClient, on: true }]);
+  assert.deepEqual(groundSource(2), { kind: 'records', pack: LOOSE });
+  const loose = await dfmodGroundLayers(2, classicTex(56));
+  assert.deepEqual(loose.map(idAt), Array.from({ length: 56 }, (_, r) => (r === 1 || r === 2 ? idOf(`loose:002_${r}-0`) : 0)), 'its own two, Daggerfall\'s for the rest');
+  installVanillaEnhancedPack();
   assert.deepEqual(groundSource(302), { kind: 'array', key: BASE, name: '302-TexArray', depth: 56 }, 'the pack names one archive');
   setDfmodEnabled(SANDS, false);
   assert.deepEqual(groundSource(2), { kind: 'array', key: BASE, name: '002-TexArray', depth: 56 }, 'off: DFU\'s own walk, the Base\'s array');

@@ -1,9 +1,9 @@
 // @ts-check
 // THE TEXTURE PACKS, OUR OWN. Vanilla Enhanced's three mods, Sands of the Alik'r and Snowfall's winter ground were
 // outside authors' repaints of Daggerfall's textures; they are retired. Each keeps the interface the player had - its
-// key, title, switch, dependencies, arrays and the records and sizes it dresses (ownTexturePacks.json) - and each
-// picture is ours: the player's own classic record under one of our rules (ownTextureRules.js). This says which record
-// and rule.
+// key, title, switch, dependencies, arrays and the records and sizes it dresses (ownTexturePacks.json; Sands dresses
+// every desert record, so no classic one stands there) - and each picture is ours: the player's own classic record under
+// one of our rules (ownTextureRules.js). This says which record and rule.
 import listing from './ownTexturePacks.json' with { type: 'json' };
 import { wrapsOf, recordSeed, snowMask } from './ownTextureRules.js';
 import { ROAD_RECORDS } from '../../world/road/roadEdge.js'; // Daggerfall's road (46) and its two flanks (47, 55): their one home

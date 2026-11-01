@@ -1,0 +1,29 @@
+[
+  {
+    "name": "GW-the-wait-dropped",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "  const registering = textureStoreRegistering();\n  if (registering) {",
+    "new": "  const registering = null;\n  if (registering) {",
+    "tests": [
+      "test/systems/groundwait.test.js"
+    ]
+  },
+  {
+    "name": "GW-the-registration-unnoted",
+    "file": "src/scenes/dataSource.js",
+    "old": "  noteTextureStoreRegistering(p);\n",
+    "new": "",
+    "tests": [
+      "test/systems/groundwait.test.js"
+    ]
+  },
+  {
+    "name": "GW-never-forgotten",
+    "file": "src/systems/textureStoreGate.js",
+    "old": "    if (_registering === registration) _registering = null;",
+    "new": "    if (_registering === registration) _registering = registration;",
+    "tests": [
+      "test/systems/groundwait.test.js"
+    ]
+  }
+]

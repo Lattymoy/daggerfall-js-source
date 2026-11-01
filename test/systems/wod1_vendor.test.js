@@ -235,7 +235,7 @@ test('WOD1: the registry row, the Features row and the online lane all name the 
 
   const mod = MOD_SETTINGS['world-of-daggerfall'];
   assert.equal(mod.title, 'World of Daggerfall');
-  assert.equal(mod.author, 'Kamer');
+  assert.ok(!('author' in mod), 'no author named: the game carries no credits');
   assert.deepEqual(Object.keys(mod.keys), ['Enabled', 'Mountains'], 'no modsettings.json ships, so Enabled - and the port\'s own Mountains switch (WOD-PEAKS), off');   // PIN MOVED (WOD-PEAKS)
   assert.equal(mod.keys.Mountains.default, false, 'the spires stand only when asked for');
   const row2 = FEATURES.find((f) => f.id === 'mod-world-of-daggerfall');
