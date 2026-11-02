@@ -36,6 +36,11 @@ Knight enemies wear.
   a circular arc that keeps its length. Braced, its tip turns a little from straight. Drawn, it turns further for
   each metre of draw (`bow_flex`), so the tips come back and in. Daggerfall's drawn bow is bent deep: its tips sit
   0.35 to 0.48 m behind the grip.
+- **Motion capture.** `tools/sprite-forge/mocap.py` puts a captured motion on the forge's body. It reads CMU's
+  ASF/AMC files, or an FBX or BVH armature such as Mixamo's. Each trunk and leg joint turns until its bone points as
+  the captured bone does, and each arm is solved to the captured wrist (`solve_arm`). Only the bones' directions are
+  carried, never their lengths, so the forge keeps its own proportions. It renders the bare body from the sprites'
+  views beside the captured skeleton, a row a frame.
 - **Fitting the poses.** `tools/sprite-forge/fit.py` adjusts each frame's keyed pose until the body covers the
   record's outline, its colour regions (skin, boot teal, cloth green) and its weapon best. It turns joints, the
   shoulders, the body, the axe's grip, roll and slide along the haft, and each solved elbow's swivel, searching by
@@ -88,14 +93,17 @@ python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json -
 ```
 
 Fitting needs `scipy` and `cma` beside `bpy`. Fit and register again after the body or a key changes. `--records 0,5` limits a
-run; `--work` writes uncropped renders; `--outfit naked` renders the body bare, with its weapons. `fit.py --no-head`
+run; `--work` writes uncropped renders; `--outfit naked` renders the body bare, with its weapons.
+`mocap.py --asf <subject.asf> --amc <trial.amc> --frames 1,43 --out <sheet.png>` (or `--fbx <clip.fbx>`) shows
+captured frames on the bare body. `fit.py --no-head`
 leaves the axe head unpinned: records 0, 3, 4, 12, 15 and 19 fit better so.
 
 ## Rules
 
 - The forge's sprites are the game's own. They are rendered from the forge's models, never traced or repainted from
   a record. The reference outlines and colours that fit and place the body never enter the repo; only joint angles
-  and places do (Port-Doctrine).
+  and places do (Port-Doctrine). Motion captures (CMU's, Mixamo's) stay outside it too: neither may be passed on
+  as files.
 - They match Daggerfall's class sprites as closely as the forge can: the same records, frames, canvases, views,
   poses, gear and palette (Mac).
 - The palette is the player's own, laid on as each picture is decoded (DF-Art).
@@ -109,8 +117,8 @@ tables and sizes are read as they are.
 ## Code and tests
 
 - `tools/sprite-forge/` - the forge: `forge.py`, `fit.py`, `colour.py`, `shape.py`, `model.py`, `anatomy.py`,
-  `body.py`, `rig.py`, `poses.py`, `stage.py`, `shapes.py`, `materials.py`, `reference.mjs`, and the fitted tables
-  beside `specs/488.json`
+  `body.py`, `rig.py`, `poses.py`, `mocap.py`, `stage.py`, `shapes.py`, `materials.py`, `reference.mjs`, and the
+  fitted tables beside `specs/488.json`
 - `public/art/studio/forge/488/` - the frames
 - `src/systems/studioArt/studioArt.js` `FORGE_FOLDER`, `isForgeRender`; `src/systems/textureReplacement.js` (an
   entry's `look`)
@@ -125,6 +133,8 @@ tables and sizes are read as they are.
   0.77-0.82; hurt 0.76-0.82; the bow 0.76-0.78. The bow is furthest.
 - In 34 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
 - The arms are fitted as thick as Daggerfall's outline asks, past the naked body's own girth.
+- The keyed poses are typed by hand. `mocap.py` carries a captured walk, chop or sword cut onto the body, but no
+  key is seeded from a capture yet.
 - The body has no cloth folds, and no sculpted detail finer than its muscles' swells.
 - Layered Gearing still draws the player from traced strips (`04-Characters/Layered-Gearing.md`). The forge could
   render its 27 outfits as layers instead.

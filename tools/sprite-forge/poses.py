@@ -10,7 +10,6 @@ import os
 
 from mathutils import Matrix, Vector
 
-import shape
 from model import bow_tips
 from rig import Pose, reach, solve_arm
 
