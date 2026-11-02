@@ -11,8 +11,8 @@
   {
     "name": "RMBC6-capital-grows",
     "file": "src/world/settlement/townGrowth.js",
-    "old": "  if (!GROWTH_TYPES.includes(type) || location?.capital) return null;",
-    "new": "  if (!GROWTH_TYPES.includes(type)) return null;",
+    "old": "(type) || location?.capital || isSettlementPlaceId(",
+    "new": "(type) || isSettlementPlaceId(",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]
@@ -504,6 +504,15 @@
     "file": "src/world/settlement/townGrowth.js",
     "old": "layout.datum, keep, SEA_M, bars.wet ?? null);",
     "new": "layout.datum, keep, -Infinity, bars.wet ?? null);",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "GROWTH-lane-unread",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": " || isSettlementPlaceId(location.mapTableData.mapId)) return null;",
+    "new": ") return null;",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

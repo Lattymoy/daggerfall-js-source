@@ -44,6 +44,15 @@ test('RMBC6 the job: a city, town or village grows; a farm, a dungeon, a capital
   assert.ok(!SETTLEMENT_ARCHETYPES.village.core && SETTLEMENT_ARCHETYPES.outskirts.core, 'the outskirts stand round a core alone');
 });
 
+test('RMBC6 a town made without RMB blocks never grows: map id lane 0x342 - a published settlement, or World 2.0\'s Tava Wells on its own region\'s ground - is whole; a town of another made lane past the Bay still grows (mutant: the lane unread)', () => {
+  const lane = (high, n) => ((high << 20) | 0x80000 | n) >>> 0;
+  for (const type of [1, 2]) {
+    assert.equal(growthJobAt({ mapTableData: { mapId: lane(0x342, 1), locationType: type }, name: 'Tava Wells' }, ...HAMMERFELL), null, `World 2.0's town, type ${type}`);
+    assert.equal(townGrowthJob({ mapTableData: { mapId: lane(0x342, 9), locationType: type }, name: 'Hrolfsfork' }, 'Skyrim', 1), null, 'a published settlement');
+  }
+  assert.ok(growthJobAt({ mapTableData: { mapId: lane(0x300, 5), locationType: 2 }, name: 'Countryside' }, ...HAMMERFELL), 'the countryside\'s town grows');
+});
+
 test('RMBC6 the outskirts keep the contract round a core that never moves: its pad legacy, at the datum, no building on it, the way in its; Valenwood\'s decks on a slope too (mutants: the core\'s fixed give, the datum, the gate, a deck too steep kept)', () => {
   for (const [job, slope, blocks] of [[village(5001, 'IliacBay'), 0, 4], [village(5002, 'Hammerfell', 63), 0.04, 2], [village(5003, 'Valenwood', 67), 0.08, 2]]) {
     const rect = rectOf(blocks), g = standTownGrowth(...HAMMERFELL, ground(slope, rect), job, rect, {});

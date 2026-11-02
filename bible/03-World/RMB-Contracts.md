@@ -3,7 +3,8 @@
 A settlement is a plan in metres, not a grid of RMB blocks. Its ground is flat pads at their own heights joined by
 grade steps, stairs, ramps and bridges, and its buildings stand on those pads. A plan may mix sources: DFU's own
 buildings from their RMB records, buildings the generator makes, and authored ones. Every city, town and village grows
-outskirts round its legacy core, and nine settlements of the generator's own stand past the Bay, one in each province.
+outskirts round its legacy core, and ten settlements of the generator's own stand past the Bay, one in each province
+and a tenth in Skyrim.
 
 The owner set the aim: settlements made procedurally, with heights, not block layouts, and free to hold new buildings.
 The owner's rules: every town grows, and it grows along its roads, not in planned rings. Both are departures from DFU,
@@ -180,7 +181,8 @@ Golden prints in `rmbc3_exact.test.js` hold three plans bit for bit; a change th
 ## Every town grows
 
 `townGrowth.js` `townGrowthJob` takes a city, town or village (MAPS types 0 to 2), on the Bay and past it, never a
-capital over several pixels. `pixelBuild.js` hands it to the terrain worker as `growth`, with its theatre's style and
+capital over several pixels, nor a town made without RMB blocks (map id lane 0x342: a published settlement, or World
+2.0's), which is whole on its own ground. `pixelBuild.js` hands it to the terrain worker as `growth`, with its theatre's style and
 region (`townGrowthJob.js` `growthJobAt`). The town's core keeps every block, building and key at its own height: it is
 the layout's plaza, `legacy`, fixed at the town's ground, and the terrace solve never moves it. The core is the town's
 own rectangle with a street round it (`coreHalf`, `CORE_CLEAR` 6 m), so a long town grows hard by its long sides. Each

@@ -11,6 +11,7 @@ import { layoutSettlement, rectEdge } from './settlementLayout.js';
 import { carveSettlementGround } from './settlementGround.js';
 import { sampleEnv, SAMPLE_M, SEA_M } from './settlementStand.js';
 import { isOutdoorWaterTile } from '../terrain/terrainSurface.js';
+import { isSettlementPlaceId } from './settlementPlaces.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../terrain/terrainSampler.js';
 
 /** MAPS location types that grow (DFU DFRegion.LocationTypes): TownCity, TownHamlet, TownVillage. */
@@ -28,11 +29,12 @@ const UNIT_METRES = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
  * @typedef {{ xMin: number, xMax: number, yMin: number, yMax: number, mask?: Uint8Array|null }} TileRect - tiles, x east, y north
  */
 
-/** The job of a built pixel's location (a MapsFile location), or null where it does not grow: a farm, a dungeon, a capital.
+/** The job of a built pixel's location (a MapsFile location), or null where it does not grow: a farm, a dungeon, a capital,
+ *  or a town made without RMB blocks (map id lane 0x342: a published settlement, or World 2.0's), already whole on its ground.
  *  @param {any} location @param {string} style its theatre's style key @param {number} regionIndex @returns {GrowthJob|null} */
 export function townGrowthJob(location, style, regionIndex) {
   const type = location?.mapTableData?.locationType;
-  if (!GROWTH_TYPES.includes(type) || location?.capital) return null;
+  if (!GROWTH_TYPES.includes(type) || location?.capital || isSettlementPlaceId(location.mapTableData.mapId)) return null;
   const place = location.mapTableData.mapId >>> 0, grid = location.exterior?.exteriorData;
   const blocks = Math.max(1, (grid?.width ?? 1) * (grid?.height ?? 1));   // Its houses priced by its town's size
   return { place, name: String(location.name ?? ''), type, style, seed: hash32(place, 0x6e0b, type) >>> 0, regionIndex, blocks };
