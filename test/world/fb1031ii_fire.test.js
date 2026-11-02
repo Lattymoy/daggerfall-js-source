@@ -18,10 +18,8 @@ import { fallTerms, blendFog } from '../../src/systems/weather/weatherFront.js';
 import { fogSettingsFromPresets } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const dsRows = () => {
-  const dir = 'vendor/dynamic-skies/FogSettings/';
-  return fogSettingsFromPresets(Object.fromEntries(readdirSync(new URL(`../../${dir}`, import.meta.url)).map((f) => [f.replace('.json', ''), rd(dir + f)])), 1);
-};
+// Dynamic Skies' fog rows are our own (dynamicSkies.js FOG_LOOK), read as the runtime reads them
+const dsRows = () => fogSettingsFromPresets(undefined, 1);
 const light = { sun: 0.65, dim: 0.8 };   // an overcast sky's sun and grass (redmountain_seen.test.js's)
 const CLEAR = { mode: 'linear', start: 0, end: 4000, excludeSky: true };
 /** Every row that leaves the sky clear, the land drawn through it. */

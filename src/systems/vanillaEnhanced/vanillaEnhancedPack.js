@@ -101,8 +101,8 @@ function decodeWorkers() {
 function letGo(lane) {
   lane.dead = true;
   lane.w.terminate?.();
-  for (const p of lane.pending.values())
-    p.reject(Object.assign(new Error('decode worker let go'), { unsupported: true }));
+  for (const ask of lane.pending.values())
+    ask.reject(Object.assign(new Error('decode worker let go'), { unsupported: true }));
   lane.pending.clear();
 }
 const askWorker = (lanes, msg, transfer = []) =>

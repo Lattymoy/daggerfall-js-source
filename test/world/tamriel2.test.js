@@ -294,5 +294,5 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   const outside = [...seen].filter((f) => !/^src\/(world|formats)\//.test(f));
   assert.deepEqual(outside, [], `the worker reaches ${outside.join(', ')}`);
   assert.ok(seen.has('src/world/tamriel/tamrielGround.js') && seen.has('src/world/tamriel/tamrielGeography.js') && seen.has('src/world/segment.js'), 'the ground, through the pure homes');
-  assert.ok(seen.size > 20 && seen.size < 81, `${seen.size} modules`);
+  assert.ok(seen.size > 20 && seen.size < 82, `${seen.size} modules`);   // the Bay's own road network and Skyrim's plant catalog both ride it
 });

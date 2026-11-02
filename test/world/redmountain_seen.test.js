@@ -17,12 +17,8 @@ import { LAND_VIEW_DEFAULT } from '../../src/world/landView.js';
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-/** Dynamic Skies' five rows as the enhanced sky installs them (its density setting at its default, 1). */
-const dsRows = () => {
-  const dir = 'vendor/dynamic-skies/FogSettings/';
-  const json = Object.fromEntries(readdirSync(new URL(`../../${dir}`, import.meta.url)).map((f) => [f.replace('.json', ''), rd(dir + f)]));
-  return fogSettingsFromPresets(json, 1);
-};
+/** Dynamic Skies' rows as the enhanced sky installs them (its own FOG_LOOK, its density setting at its default, 1). */
+const dsRows = () => fogSettingsFromPresets(undefined, 1);
 const WEATHERS = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall'];
 
 test('RED-MOUNTAIN-SEEN the rows: a linear row its haze as ever; an exp row under a clear sky - rain, snow, ash, and Dynamic Skies\' overcast, rain and snow - the fog\'s own colour; a fog over the sky - the heavy fog, the sandstorm - none (mutants: a fog over the sky stands it; exp2 unread; the weather\'s hold; its ramp open)', () => {

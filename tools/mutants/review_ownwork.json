@@ -20,8 +20,8 @@
   {
     "name": "REVIEW-vepack-let-go-not-terminated",
     "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
-    "old": "  lane.w.terminate?.();\n  for (const p of lane.pending",
-    "new": "  for (const p of lane.pending",
+    "old": "  lane.w.terminate?.();\n  for (const ask of lane.pending",
+    "new": "  for (const ask of lane.pending",
     "tests": [
       "test/systems/auditve.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REVIEW-vepack-let-go-asks-left-waiting",
     "file": "src/systems/vanillaEnhanced/vanillaEnhancedPack.js",
-    "old": "  for (const p of lane.pending.values())\n    p.reject(",
-    "new": "  for (const p of [].values())\n    p.reject(",
+    "old": "  for (const ask of lane.pending.values())\n    ask.reject(",
+    "new": "  for (const ask of [].values())\n    ask.reject(",
     "tests": [
       "test/systems/auditve.test.js"
     ]

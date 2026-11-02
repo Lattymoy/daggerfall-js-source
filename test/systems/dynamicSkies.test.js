@@ -197,7 +197,7 @@ test('OWN-WORK4 the world under the sky: its light curve is the rule\'s, and its
   } finally { setLightCurve(null); }
   assert.deepEqual(JSON.parse(JSON.stringify(FOG_LOOK)), {
     sunny: { mode: 'linear', start: 1200, end: 4800, excludeSky: true },
-    overcast: { mode: 'linear', start: 600, end: 3600, excludeSky: true },
+    overcast: { mode: 'exp2', d50: 1100, excludeSky: true },
     rainy: { mode: 'exp2', d50: 700, excludeSky: true },
     snowy: { mode: 'exp2', d50: 450, excludeSky: true },
     heavy: { mode: 'exp2', d50: 120, excludeSky: false },

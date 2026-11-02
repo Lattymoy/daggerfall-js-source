@@ -11,10 +11,10 @@ export const IDLE_WAIT_MS = 50;
 export const FORCED_SLICE_MS = 2;
 
 /** The page's idle callback, a timer standing in where it has none, or null where there is no page. */
-export function pageIdleCallback(g = /** @type {any} */ (globalThis)) {
-  if (typeof g.requestIdleCallback === 'function') return (fn, o) => g.requestIdleCallback(fn, o);
-  if (typeof g.document !== 'undefined' && typeof g.setTimeout === 'function')
-    return (fn) => g.setTimeout(() => fn({ didTimeout: true, timeRemaining: () => 0 }), 16);
+export function pageIdleCallback(page = /** @type {any} */ (globalThis)) {
+  if (typeof page.requestIdleCallback === 'function') return (fn, options) => page.requestIdleCallback(fn, options);
+  if (typeof page.document !== 'undefined' && typeof page.setTimeout === 'function')
+    return (fn) => page.setTimeout(() => fn({ didTimeout: true, timeRemaining: () => 0 }), 16);
   return null;
 }
 

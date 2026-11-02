@@ -35,7 +35,7 @@ keeps Daggerfall's painted sky.
 | season | the calendar's, the same in every province: summer deeper, autumn golden, winter paler, by the hour's light (`SEASON_LEAN`) |
 | moons | where the port's dome puts them; Masser rose, Secunda silver; lit from the sun's side by the clock's phase (`moonPhaseLight`) |
 | stars | two layers hashed from cube-face cells and a faint band, turning once a day about the dome's pole (`STAR_LOOK`) |
-| fog | clear rows linear to 4,800; falling rows exp2, half the light at d50 (rain 700, snow 450, fog 120, sandstorm 90, ash 400); the slider thickens by 1 + (x - 1) / 3 (`FOG_LOOK`) |
+| fog | the clear row linear to 4,800; every other row exp2, half the light at d50 (overcast 1,100, rain 700, snow 450, fog 120, sandstorm 90, ash 400), so each hides the ground by the far views' nearest edge; the slider thickens by 1 + (x - 1) / 3 (`FOG_LOOK`) |
 | light | 0.92 sin(pi t)^0.6 over the day: longer sunrises and sunsets than the rig's (`LIGHT_RULE`) |
 | pixel snow | our six-armed flake; `MaxParticles` (thousands) caps the flakes drawn (`pixelSnowSettings`) |
 | storm flash | a clap is seen at 0.65; one to four strokes, each a 12 ms rise and a 70 ms fall, 50 to 120 ms apart, each fainter; a cold light 40 to 160 m off and 60 to 120 m up; the dome takes 0.35 of it and the clouds more |

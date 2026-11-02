@@ -385,13 +385,13 @@ export function crispInRange(pic, src, amount, wrap) {
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       let sum = 0;
-      for (let d = -radius; d <= radius; d++) sum += luma[y * width + at(x + d, width)];
+      for (let step = -radius; step <= radius; step++) sum += luma[y * width + at(x + step, width)];
       across[y * width + x] = sum / (2 * radius + 1);
     }
   for (let y = 0; y < height; y++)
     for (let x = 0; x < width; x++) {
       let sum = 0;
-      for (let d = -radius; d <= radius; d++) sum += across[at(y + d, height) * width + x];
+      for (let step = -radius; step <= radius; step++) sum += across[at(y + step, height) * width + x];
       mean[y * width + x] = sum / (2 * radius + 1);
     }
   const srcLuma = new Float32Array(srcWidth * srcHeight);
@@ -429,14 +429,14 @@ export function crispInRange(pic, src, amount, wrap) {
 /** The chroma plane a record's share of each hue is counted on: (blue - luma, red - luma), cells of 16. */
 const HUE_GRID = 32;
 const hueCell = (value) => (value < -256 ? 0 : value >= 256 ? HUE_GRID - 1 : Math.floor((value + 256) / 16));
-/** How far hue `a` lies from a ground's hue `b` (each a chroma: the colour less its light). A difference along the
+/** How far a texel's hue lies from a ground's hue (each a chroma: the colour less its light). A difference along the
  *  ground's own hue is strength, not hue - a pale tan in dark dirt is the dirt's hue - so it is not counted. */
-function hueGap(a0, a1, a2, b0, b1, b2) {
-  const full = Math.hypot(a0 - b0, a1 - b1, a2 - b2);
-  const strength = Math.hypot(b0, b1, b2);
+function hueGap(hueR, hueG, hueB, groundR, groundG, groundB) {
+  const full = Math.hypot(hueR - groundR, hueG - groundG, hueB - groundB);
+  const strength = Math.hypot(groundR, groundG, groundB);
   if (strength < 8) return full;
-  const along = (a0 * b0 + a1 * b1 + a2 * b2) / (strength * strength);
-  return along < 0 ? full : Math.hypot(a0 - along * b0, a1 - along * b1, a2 - along * b2);
+  const along = (hueR * groundR + hueG * groundG + hueB * groundB) / (strength * strength);
+  return along < 0 ? full : Math.hypot(hueR - along * groundR, hueG - along * groundG, hueB - along * groundB);
 }
 /** A texel's hue is stray where the record holds under `share` of its texels within `cells` cells of it on the chroma
  *  plane, and it is `gap` off the median hue of its 5 x 5. */

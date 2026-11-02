@@ -65,7 +65,7 @@ test('LEGAL: the notices the MIT and OFL licences require ship as plain files in
   const vite = readFileSync(join(root, 'vite.config.js'), 'utf8');
   assert.match(vite, /this\.emitFile\(\{ type: 'asset', fileName: 'LICENSE\.txt', source: readFileSync\('LICENSE', 'utf8'\) \}\);/);
   assert.match(vite, /this\.emitFile\(\{ type: 'asset', fileName: 'OFL-Silkscreen\.txt', source: readFileSync\('vendor\/silkscreen-five\/OFL\.txt', 'utf8'\) \}\);/);
-  assert.match(vite, /noImportedTopLevelAwait\(\), licenceFiles\(\)\]/, 'the plugin is in the build');
+  assert.match(vite, /noImportedTopLevelAwait\(\), licenceFiles\(\), leanBundlePlugin\(\)\]/, 'the plugin is in the build');
   for (const p of ['src/ui/enhanced/enhancedMenu.js', 'index.html', 'src/ui/settings/settingsMap.js']) {
     assert.doesNotMatch(readFileSync(join(root, p), 'utf8'), /LICENSE\.txt|OFL-Silkscreen/, `${p} does not link the licences`);
   }

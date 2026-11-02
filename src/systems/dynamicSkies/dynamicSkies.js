@@ -376,13 +376,14 @@ export const DYNAMIC_LIGHT_CURVE = Object.freeze(
   }),
 );
 
-/** THE FOG ROWS this sky installs for the world (world/weather.js fogForWeather reads them). A clear row is linear
- *  and ends at 4,800, the widest Land View's own end; a falling row is exponential-squared, named by `d50` - the
- *  distance at which the air has taken half the light. The slider `densitySetting` (1..10) thickens every row by
+/** THE FOG ROWS this sky installs for the world (world/weather.js fogForWeather reads them). The clear row is linear
+ *  and ends at 4,800, the widest Land View's own end; every other row is exponential-squared, named by `d50` - the
+ *  distance at which the air has taken half the light - and hides the ground by the far views' nearest edge, so the
+ *  fire and the fences fog as the land does. The slider `densitySetting` (1..10) thickens every row by
  *  k = 1 + (x - 1) / 3: a density times k, a linear row's distances over k. */
 export const FOG_LOOK = Object.freeze({
   sunny: Object.freeze({ mode: 'linear', start: 1200, end: 4800, excludeSky: true }),
-  overcast: Object.freeze({ mode: 'linear', start: 600, end: 3600, excludeSky: true }),
+  overcast: Object.freeze({ mode: 'exp2', d50: 1100, excludeSky: true }),
   rainy: Object.freeze({ mode: 'exp2', d50: 700, excludeSky: true }),
   snowy: Object.freeze({ mode: 'exp2', d50: 450, excludeSky: true }),
   heavy: Object.freeze({ mode: 'exp2', d50: 120, excludeSky: false }),

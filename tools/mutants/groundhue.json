@@ -11,7 +11,7 @@
   {
     "name": "GH-strength-counted-as-hue",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "  return along < 0 ? full : Math.hypot(a0 - along * b0, a1 - along * b1, a2 - along * b2);",
+    "old": "  return along < 0 ? full : Math.hypot(hueR - along * groundR, hueG - along * groundG, hueB - along * groundB);",
     "new": "  return full;",
     "tests": [
       "test/systems/groundhue.test.js"

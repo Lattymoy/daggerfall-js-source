@@ -3,13 +3,15 @@
 // the last test scans the tree's bytes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   readCorpus, embeddedRuns, keyOf, nearestDown, pictureIndex, matchPicture, inException, EXCEPTION_DIRS, ANCHOR, STRIDE,
   scan, trackedFiles,
 } from '../../tools/bethesdaScan.mjs';
+
+const ROOT = new URL('../../', import.meta.url).pathname;
 
 /** Bytes from a seeded generator (xorshift), so a run is the same every time. */
 function noise(n, seed) {
@@ -132,5 +134,15 @@ test('NO-BETHESDA: no tracked file is an ARENA2 file or record, and no run of AR
   // Known: DFU's MIT quest scripts and its TEXT.RSC table carry Bethesda's words; the
   // exceptions' indexed PNGs carry Daggerfall's palette in their PLTE chunk.
   const known = (p) => inException(p) || p.startsWith('vendor/dfu-quests/') || p === 'vendor/dfu-text/Internal_RSC.csv';
-  assert.deepEqual(report.embedded.filter((e) => !known(e.path)).map((e) => `${e.path} <- ${e.sources.join(', ')}`), []);
+  // A picture drawn in Daggerfall's own 256 colours carries that palette in its PLTE chunk: a list of colours, not art.
+  // Only a run wholly inside the chunk is the palette; any other run is reported.
+  const paletteOnly = (e) => {
+    if (!e.path.endsWith('.png') || e.runs !== 1) return false;
+    const bytes = readFileSync(join(ROOT, e.path));
+    const at = bytes.indexOf('PLTE');
+    if (at < 4) return false;
+    const from = at + 4, to = from + bytes.readUInt32BE(at - 4);
+    return e.first.at >= from && e.first.at + e.first.length <= to;
+  };
+  assert.deepEqual(report.embedded.filter((e) => !known(e.path) && !paletteOnly(e)).map((e) => `${e.path} <- ${e.sources.join(', ')}`), []);
 });

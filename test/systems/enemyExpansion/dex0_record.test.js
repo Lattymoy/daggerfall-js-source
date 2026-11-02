@@ -378,7 +378,7 @@ test('DEX0 the mod\'s switch and its one key, as modsettings.json ships it', () 
   const shipped = JSON.parse(read('modsettings.json'));
   const key = shipped.Sections[0].Keys[0];
   const ours = MOD_SETTINGS['daggerfall-enemy-expansion'];
-  assert.equal(ours.author, JSON.parse(read('daggerfall-enemy-expansion.dfmod.json')).ModAuthor);
+  assert.ok(!('author' in ours), 'no author named: the game carries no credits');
   assert.deepEqual(Object.keys(ours.keys), ['Enabled', `${shipped.Sections[0].Name}.${key.Name}`]);
   assert.equal(ours.keys.Enabled.default, true);
   assert.equal(ours.keys['Cheat.DisableTrollRespawn'].default, key.Value);
