@@ -66,6 +66,7 @@ import { motherlodesOf, confirmedGroundBefore } from './motherlodes.js';
 import { layWitnessTiles } from './witnessTiles.js'; // AUDIT FB1031 W3: the held map's tiles, once a day
 import { sweepBoard } from './board.js';
 import { claudeSweep, claudeKeep } from './claudeStaff.js'; // Claude's sweep and its 30-day keep
+import { claudeCheck } from './claudeCheck.js'; // Claude's bot check in a freeze chat
 import { safetyMinute, safetySweep } from './safetyClock.js'; // SAFE5 + SAFE8: the reviewer's reads and the moderators' cards; the hour's sweep
 import { sweepGuildNotes } from './guildBoard.js';
 import { sweepHarvests } from './professions.js';
@@ -232,8 +233,11 @@ export const MINUTE_JOBS = Object.freeze([
   [
     'safety',
     async (ctx, env) =>
-      (await safetyMinute(ctx, env)) + (await retryFreezePushes(ctx, env)) + (await claudeSweep(ctx, env)),
-  ], // Claude as staff rides this job: nothing while CLAUDE_STAFF is off, else a sweep each 15 minutes (2 hours when few are online)
+      (await safetyMinute(ctx, env)) +
+      (await retryFreezePushes(ctx, env)) +
+      (await claudeSweep(ctx, env)) +
+      (await claudeCheck(ctx, env)),
+  ], // Claude as staff rides this job: nothing while CLAUDE_STAFF is off, else a sweep each 15 minutes (2 hours when few are online) and its bot checks in freeze chats
   [
     'motherlodes',
     async (ctx, env) => {
