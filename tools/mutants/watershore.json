@@ -119,7 +119,7 @@
   {
     "name": "WS-open-depth-without-a-copy-alone",
     "file": "src/render/waterSurface.js",
-    "old": "  float bedPath = uOpen == 1 ? 0.0 : (mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, open) + 0.02) / slant;   // what the bed under the sheet says",
+    "old": "  float bedPath = uOpen == 1 ? 0.0 : (mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, uSceneOn == 1 ? 0.0 : open) + 0.02) / slant;   // what the bed under the sheet says",
     "new": "  float bedPath = uOpen == 1 ? 0.0 : (vDepth.y + 0.02) / slant;   // what the bed under the sheet says",
     "tests": [
       "test/world/water/watershore.test.js"
@@ -256,6 +256,60 @@
     "file": "src/scenes/pixelBuild.js",
     "old": "renderer.createWaterSheet(bed.sheet, tilemapTex)",
     "new": "renderer.createWaterSheet(bed.sheet)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-unweighted",
+    "file": "src/world/water/waterLevel.js",
+    "old": "        coast = seaField[k] * Math.min(1, COAST_NEAR * share),",
+    "new": "        coast = 0,",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-line-sign",
+    "file": "src/world/water/waterLevel.js",
+    "old": "(COAST_EDGE - share) * COAST_RAMP",
+    "new": "(share - COAST_EDGE) * COAST_RAMP",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-silt-kept",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      data[k * 4 + 1] = toByte(wetField[k] + (1 - wetField[k]) * coast);",
+    "new": "      data[k * 4 + 1] = toByte(wetField[k]);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-sea-unmarked",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      atSea[i] = level[i] === SEA_LEVEL_Y ? 1 : 0;",
+    "new": "      atSea[i] = 1;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-edge-shallow",
+    "file": "src/world/water/waterLevel.js",
+    "old": "export const COAST_EDGE = 0.5;",
+    "new": "export const COAST_EDGE = 0.3;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-copy-reads-open-depth",
+    "file": "src/render/waterSurface.js",
+    "old": "uSceneOn == 1 ? 0.0 : open) + 0.02) / slant;",
+    "new": "open) + 0.02) / slant;",
     "tests": [
       "test/world/water/watershore.test.js"
     ]

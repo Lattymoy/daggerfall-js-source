@@ -101,8 +101,8 @@
   {
     "name": "COAST-LOOK-js-cut-wander-unscaled",
     "file": "src/world/terrain/groundEdge.js",
-    "old": "  if (lin + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };",
-    "new": "  if (lin + groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };",
+    "old": "  if (!shareAt && lin + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };",
+    "new": "  if (!shareAt && lin + groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "COAST-LOOK-glsl-cut-wander-unscaled",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "  if (lin + ${f(COAST_CUT_WANDER)} * geWander(p) > ${f(COAST_CUT.line)}) return true;",
-    "new": "  if (lin + geWander(p) > ${f(COAST_CUT.line)}) return true;",
+    "old": "  if (!byShare && lin + ${f(COAST_CUT_WANDER)} * geWander(p) > ${f(COAST_CUT.line)}) return true;",
+    "new": "  if (!byShare && lin + geWander(p) > ${f(COAST_CUT.line)}) return true;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "COAST-LOOK-glsl-mirror-dropped",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n  tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = ROT[t] * dux; gy = ROT[t] * duy;",
-    "new": "  tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = ROT[t] * dux; gy = ROT[t] * duy;",
+    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n  if (far) l = fract(p);",
+    "new": "  if (far) l = fract(p);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -383,6 +383,61 @@
     "file": "src/world/deepWater/deepWaterCap.js",
     "old": "        for (let dx = -1; dx <= 1; dx++)",
     "new": "        for (let dx = 0; dx <= 1; dx++)",
+    "tests": [
+      "test/render/coastlook.test.js"
+    ]
+  },
+  {
+    "name": "COAST-LOOK-share-js-unread",
+    "file": "src/world/terrain/groundEdge.js",
+    "old": "  if (shareAt && shareAt(x, y) + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.share)",
+    "new": "  if (false && shareAt && shareAt(x, y) + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.share)",
+    "tests": [
+      "test/render/coastlook.test.js",
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "COAST-LOOK-share-glsl-unread",
+    "file": "src/render/groundEdgeGlsl.js",
+    "old": "  bool byShare = uShoreOn == 1;",
+    "new": "  bool byShare = false;",
+    "tests": [
+      "test/render/coastlook.test.js"
+    ]
+  },
+  {
+    "name": "COAST-LOOK-far-ring-glsl",
+    "file": "src/render/groundEdgeGlsl.js",
+    "old": "      if (max(abs(dx), abs(dy)) < 2) continue;",
+    "new": "      if (max(abs(dx), abs(dy)) < 1) continue;",
+    "tests": [
+      "test/render/coastlook.test.js"
+    ]
+  },
+  {
+    "name": "COAST-LOOK-far-place-glsl",
+    "file": "src/render/groundEdgeGlsl.js",
+    "old": "\n  if (far) l = fract(p);",
+    "new": "",
+    "tests": [
+      "test/render/coastlook.test.js"
+    ]
+  },
+  {
+    "name": "COAST-LOOK-far-ring-js",
+    "file": "src/world/terrain/groundEdge.js",
+    "old": "      if (Math.max(Math.abs(dx), Math.abs(dy)) < 2 || cutAt(tileX + dx, tileY + dy)) continue;",
+    "new": "      if (Math.max(Math.abs(dx), Math.abs(dy)) < 1 || cutAt(tileX + dx, tileY + dy)) continue;",
+    "tests": [
+      "test/render/coastlook.test.js"
+    ]
+  },
+  {
+    "name": "COAST-LOOK-share-shallow",
+    "file": "src/world/terrain/groundEdge.js",
+    "old": "  share: 0.75,",
+    "new": "  share: 0.55,",
     "tests": [
       "test/render/coastlook.test.js"
     ]

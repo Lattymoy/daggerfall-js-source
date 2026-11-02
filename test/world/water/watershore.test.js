@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { waterVotes, shoreMap, fanCut, seaLevelAt, SEA_LEVEL_Y, SHORE_SIGMA, SHORE_HOLD, OPEN_SIGMA, RISE_SIGMA, RISE_MAX } from '../../../src/world/water/waterLevel.js';
+import { waterVotes, shoreMap, fanCut, seaLevelAt, SEA_LEVEL_Y, SHORE_SIGMA, SHORE_HOLD, OPEN_SIGMA, RISE_SIGMA, RISE_MAX, COAST_EDGE, COAST_RAMP, COAST_NEAR } from '../../../src/world/water/waterLevel.js';
 import { waterBedOf, flatGrid } from '../../../src/world/water/waterBed.js';
 import { streamLevelAt } from '../../../src/world/water/streamLevels.js';
 import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -37,6 +37,12 @@ const tiles = (T, wet) => { const b = new Uint8Array(T * T).fill(DRY); for (let 
 const field = (sheet, u, v) => {
   const { w, h, data } = sheet.shore, x = Math.min(w - 1.001, Math.max(0, 2 * u)), z = Math.min(h - 1.001, Math.max(0, 2 * v)), i = Math.floor(x), j = Math.floor(z), fx = x - i, fz = z - j;
   const at = (a, b) => data[(b * w + a) * 4] / 127.5 - 1;
+  return (at(i, j) * (1 - fx) + at(i + 1, j) * fx) * (1 - fz) + (at(i, j + 1) * (1 - fx) + at(i + 1, j + 1) * fx) * fz;
+};
+/** A sheet's clip share (b) at a tile coordinate, bilinear as the GPU reads it, 0..1. */
+const shareOf = (sheet, u, v) => {
+  const { w, h, data } = sheet.shore, x = Math.min(w - 1.001, Math.max(0, 2 * u)), z = Math.min(h - 1.001, Math.max(0, 2 * v)), i = Math.floor(x), j = Math.floor(z), fx = x - i, fz = z - j;
+  const at = (a, b) => data[(b * w + a) * 4 + 2] / 255;
   return (at(i, j) * (1 - fx) + at(i + 1, j) * fx) * (1 - fz) + (at(i, j + 1) * (1 - fx) + at(i + 1, j + 1) * fx) * fz;
 };
 /** The fan's own cut at a tile coordinate (the vertices' and the centres', as waterSheet lays them). */
@@ -91,6 +97,35 @@ test('WATER-SHORE the shore is a line, not a tile\'s edge: the fan\'s field on a
   const flat = shoreMap(2, 2, corner, mid, 1e-6, Infinity);
   assert.deepEqual([flat.w, flat.h], [3, 3]);
   assert.deepEqual([...flat.field].map((v) => +v.toFixed(6)), [1, 0, -1, 1, 0.25, -1, 1, 0, -1], 'unblurred: the fan sampled at half tiles');
+});
+
+test('WATER-SHORE THE CAP\'S COAST rides the clip\'s smoothed share: by the clip, at the sea\'s level, the cut is the share\'s own line - water past COAST_EDGE, dry short of it, a tile the cap kept in its notch no step - and the ground under it keeps its art; a river at its own level two tiles off keeps the votes\' line (mutants: the coast unweighted; the line\'s sign; the silt kept; the sea unmarked)', () => {
+  const T = 16, g = T + 1;
+  // the carved sea west of x 6, a tile the cap kept at (5, 7); land at the sea's height to x 8; a river at 36 east of it
+  const b = tiles(T, (x, z) => x >= 8 && z >= 11 && z <= 12);
+  const grid = flatGrid(T, T, SEA_LEVEL_Y);
+  for (let z = 0; z < g; z++) for (let x = 8; x < g; x++) grid.positions[(z * g + x) * 3 + 1] = 36;
+  const water = new Uint8Array(b);
+  for (let z = 0; z < T; z++) for (let x = 0; x < 6; x++) if (!(x === 5 && z === 7)) { b[z * T + x] = CLIP_SENTINEL; water[z * T + x] = 0; }
+  const levelAt = (vx, vz, y) => seaLevelAt(y);
+  const s = waterBedOf(grid, b, { tileDim: T, levelAt }).sheet, plain = waterBedOf(grid, water, { tileDim: T, levelAt }).sheet;
+  const { w, data } = s.shore, texel = (i, j, c) => data[(j * w + i) * 4 + c];
+  let checked = 0;
+  for (let j = 0; j < 2 * T + 1; j++) for (let i = 0; i <= 12; i++) {
+    const share = texel(i, j, 2) / 255;
+    if (COAST_NEAR * share < 1) continue;
+    const line = Math.max(-1, Math.min(1, (COAST_EDGE - share) * COAST_RAMP));
+    assert.ok(Math.abs(texel(i, j, 0) / 127.5 - 1 - line) < 0.03, `(${i / 2}, ${j / 2}): the cut the share's line (${(texel(i, j, 0) / 127.5 - 1).toFixed(3)} against ${line.toFixed(3)})`);
+    assert.equal(texel(i, j, 1), 255, `(${i / 2}, ${j / 2}): the ground under it keeps its art`);
+    checked++;
+  }
+  assert.ok(checked > 200, `the coast's points (${checked})`);
+  assert.ok(field(s, 5.5, 7.5) < -2 * SHORE_SOFTNESS && field(s, 2, 7.5) < -0.9, `the tile the cap kept in its notch: under full water, no step (${field(s, 5.5, 7.5).toFixed(3)}, ${field(s, 2, 7.5).toFixed(3)})`);
+  assert.ok(field(s, 6.6, 3) > 0.5, 'short of the share\'s line: dry');
+  for (let j = 21; j <= 25; j++) for (let i = 16; i <= 20; i++) {
+    const d = Math.abs(texel(i, j, 0) - plain.shore.data[(j * w + i) * 4]) / 127.5;
+    assert.ok(d < 0.04, `the river at (${i / 2}, ${j / 2}): the votes' line (${d.toFixed(3)} off it)`);
+  }
 });
 
 test('WATER-SHORE the sheet\'s fields as texels: r the water\'s cut, g the bed\'s own water (the votes alone - a bank the ground rises through is dry to the silt though the plane runs on to it), b the clip\'s share spread by OPEN_SIGMA; a near grid\'s alone (mutants: the bed\'s field the cut\'s; the share unspread)', () => {
@@ -172,7 +207,7 @@ function onTileLines(f, T) {
   return { all, share: on / all };
 }
 
-test('WATER-SHORE THE COAST AS THE EYE READS IT: a coast Deep Waters\' cap clipped, with a notch of land the cap kept, on the Bay and past it, and a stream marched across a slope - the sea\'s edge and the stream\'s, as the program draws them from the sheet\'s fields, run on lines that know no tiles, and the ground the cap cuts lies out of sight under the sea; the clip\'s own edge, the old shore, is all tile lines (mutants: the open sea\'s depth unspread or unread; the cut unsmoothed)', () => {
+test('WATER-SHORE THE COAST AS THE EYE READS IT: a coast Deep Waters\' cap clipped, with a notch of land the cap kept, on the Bay and past it, and a stream marched across a slope - the sea\'s edge, the land\'s where the cap cuts it and the stream\'s, as the programs draw them from the sheet\'s fields, run on lines that know no tiles, and the sea stands full wherever the ground is cut; the clip\'s own edge, the old shore, is all tile lines (mutants: the coast off the share; the cut unsmoothed)', () => {
   const T = 32, g = T + 1, SEA = SEA_LEVEL_Y;
   const landAt = (x, z) => z - (16 + 2.2 * Math.sin(x * 0.21) + (x >= 10 && x <= 12 ? -2 : 0));   // > 0 land
   const grid = flatGrid(T, T, 0);
@@ -182,18 +217,17 @@ test('WATER-SHORE THE COAST AS THE EYE READS IT: a coast Deep Waters\' cap clipp
   // TAMRIEL-WIDE: the Bay's harbour (Sentinel's coast) and Topal Bay past it (by Leyawiin) - one sea, one law
   for (const [px, py] of [[398, 341], [2371, 1148]]) {
     assert.equal(inBay(px, py), px < 1000, `${px},${py}: ${px < 1000 ? 'the Bay' : 'past it'}`);
-    const seen = seenOf(waterBedOf(grid, bytes, { tileDim: T, levelAt: streamLevelAt(px, py) }), T), coast = onTileLines(seen, T);
+    const bed = waterBedOf(grid, bytes, { tileDim: T, levelAt: streamLevelAt(px, py) }), seen = seenOf(bed, T, false), coast = onTileLines(seen, T);
     assert.ok(coast.all > 500 && coast.share < 0.35, `${px},${py}: the sea's seen edge knows no tiles (${coast.share.toFixed(3)} of ${coast.all})`);
-    // THE LAND'S EDGE: the ground the cap cuts (COAST-LOOK's line, inside the clipped tiles) lies under the open sea's
-    // depth - out of sight, so it is no shore
+    // THE LAND'S EDGE: the ground the cap cuts, on the clip's smoothed share (COAST-LOOK under the water's fields) - a
+    // line that knows no tiles, and the sea full over every point of it
     const cutAt = (cx, cy) => cx >= 0 && cy >= 0 && cx < T && cy < T && bytes[cy * T + cx] === CLIP_SENTINEL;
-    const cut = (u, v) => coastCutAt(cutAt, u, v).cut;
-    let under = 1, edges = 0;
-    for (let v = 1; v < T - 1; v += 1 / 16) for (let u = 1; u < T - 1; u += 1 / 16) {
-      if (!cut(u, v) || (cut(u + 1 / 16, v) && cut(u - 1 / 16, v) && cut(u, v + 1 / 16) && cut(u, v - 1 / 16))) continue;
-      edges++; under = Math.min(under, seen(u, v));
-    }
-    assert.ok(edges > 100 && under > 0.85, `${px},${py}: the ground's cut is under the sea's own depth (${under.toFixed(3)} at ${edges} points of its edge)`);
+    const cut = (u, v) => coastCutAt(cutAt, u, v, (x, y) => shareOf(bed.sheet, x, y)).cut;
+    let full = 1, cuts = 0;
+    for (let v = 1; v < T - 1; v += 1 / 16) for (let u = 1; u < T - 1; u += 1 / 16) if (cut(u, v)) { cuts++; full = Math.min(full, seen(u, v)); }
+    assert.ok(cuts > 1000 && full > 0.98, `${px},${py}: the sea full wherever the ground is cut (${full.toFixed(3)} over ${cuts} points)`);
+    const land = onTileLines((u, v) => (cut(u, v) ? 1 : 0), T);
+    assert.ok(land.all > 300 && land.share < 0.35, `${px},${py}: the land's edge where the cap cuts it knows no tiles (${land.share.toFixed(3)} of ${land.all})`);
   }
   const clip = onTileLines((u, v) => (bytes[Math.floor(v) * T + Math.floor(u)] === CLIP_SENTINEL ? 1 : 0), T);
   assert.ok(clip.share > 0.95, `the clip's edge, the old shore: tile lines (${clip.share.toFixed(3)})`);
@@ -205,16 +239,16 @@ test('WATER-SHORE THE COAST AS THE EYE READS IT: a coast Deep Waters\' cap clipp
   assert.ok(stream.all > 500 && stream.share < 0.35, `the stream's banks know no tiles (${stream.share.toFixed(3)} of ${stream.all})`);
 });
 
-test('WATER-SHORE the water program reads its shore off the field: the cut, the open sea\'s depth over the clip with a copy or without (the mod\'s floor and its cut\'s tiles no shore), its swell, its underside left to the mod; the sea under the mod\'s tint (mutants: the field\'s half-tile lattice; the open look\'s channel; the clip\'s swell; the tint unread)', () => {
+test('WATER-SHORE the water program reads its shore off the field: the cut, over the clip the mod\'s floor with a copy and the open sea\'s depth without, its swell, its underside left to the mod; the sea under the mod\'s tint (mutants: the field\'s half-tile lattice; the open look\'s channel; the copy\'s path; the clip\'s swell; the tint unread)', () => {
   const fs = waterSurfaceFs('');
   assert.match(fs, /vec4 shoreAt\(\) \{ return textureLod\(uShore, \(2\.0 \* vLocalXZ \/ uTileSize \+ 0\.5\) \/ vec2\(textureSize\(uShore, 0\)\), 0\.0\); \}/);
   assert.match(fs, /vec4 sh = uShoreOn == 1 \? shoreAt\(\) : vec4\(0\.0\);\n\s+float cut = uShoreOn == 1 \? sh\.r \* 2\.0 - 1\.0 : vCut;/);
   assert.match(fs, /edge \*= 1\.0 - smoothstep\(0\.025, 0\.065, sh\.a \* 0\.500\);/, 'the bank\'s rise ends the water short of the ground\'s own line');
   assert.match(fs, /float open = uOpen == 1 \? 1\.0 : \(uShoreOn == 1 \? shoreAt\(\)\.b : vSea\.x\);/);
   assert.equal(OPEN_PATH, 60);
-  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(mix\(vDepth\.y, 60\.0, open\) \+ 0\.02\) \/ slant;/, 'the bed\'s path: the open sea\'s over the clip');
+  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(mix\(vDepth\.y, 60\.0, uSceneOn == 1 \? 0\.0 : open\) \+ 0\.02\) \/ slant;/, 'the bed\'s path: without a copy the open sea\'s over the clip, with one the mod\'s floor as its own sheet reads it');
   assert.match(fs, /float path = uOpen == 1 \? 60\.0 : bedPath;/);
-  assert.match(fs, /path = max\(bedD - here, bedPath\);/, 'with a copy, never under it: the mod\'s floor and its cut\'s edge under the open sea\'s depth');
+  assert.match(fs, /path = max\(bedD - here, bedPath\);/, 'with a copy, the scene\'s measure');
   assert.match(fs, /float vdepth = uSceneOn == 1 \? path \* slant : mix\(vDepth\.y, 60\.0, open\);/);
   assert.match(fs, /body = textureLod\(uTileArr, vec3\(0\.5, 0\.5, 0\.0\), 8\.0\)\.rgb \* uTint \* mix\(vec3\(1\.0\), uOpenColor, vSea\.y\);/);
   assert.match(fs, /if \(\(uOpen == 1 \|\| vSea\.x > 0\.5\) && uCamPos\.y - vWorldPos\.y \+ 0\.02 < 0\.0\) discard;/);
@@ -292,10 +326,10 @@ test('WATER-SHORE the hosts: from above, a coastal pixel\'s sea is its own sheet
   assert.match(read('src/scenes/exterior.js'), /renderer\.createWaterSheet\(townBed\.sheet, tilemapTex\)/);
 });
 
-test('WATER-SHORE the page: the arc says how a shore is drawn now - the smoothed line, the rounded bank, the open sea over the clip - and names the departure from Iliac Puddle No More', () => {
-  const arc = read('bible/07-Rendering/Water-Arc.md');
+test('WATER-SHORE the page: the arc says how a shore is drawn now - the smoothed line, the rounded bank, the open sea over the clip, the cap\'s coast on its share - and names the departure from Iliac Puddle No More', () => {
+  const arc = read('bible/07-Rendering/Water-Arc.md').replace(/\s+/g, ' ');
   const how = arc.slice(arc.indexOf('## How it works'), arc.indexOf('## Rules'));
-  for (const said of ['**The shore is a curve, never a tile\'s edge.**', '`shoreMap`', '`SHORE_SIGMA`', '**A bank is rounded.**', '`RISE_FADE`', '`OPEN_PATH`'])
+  for (const said of ['**The shore is a curve, never a tile\'s edge.**', '`shoreMap`', '`SHORE_SIGMA`', '**A bank is rounded.**', '`RISE_FADE`', '`OPEN_PATH`', '**The cap\'s coast is a curve** (`COAST_EDGE`)', '`COAST_CUT.share`'])
     assert.ok(how.includes(said), said);
   assert.ok(arc.slice(arc.indexOf('## Daggerfall Unity')).includes('its Top Color tints the near sheet\'s sea'));
   assert.ok(arc.includes('`test/world/water/watershore.test.js`'));

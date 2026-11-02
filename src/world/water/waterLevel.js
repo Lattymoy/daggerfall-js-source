@@ -110,8 +110,8 @@ export function waterLevels({ grid, gx, gz, votes, levelAt = null }) {
 /**
  * THE SHEET at its level: a quad whose four corners hold a level, one the water's own, as four triangles about its centre
  * (the tile's own water there). Attributes: the level; the depth over the carved `ground` and the shading's (never under
- * `bedDepths`); the cut (waterLevels'); `sea`, the clip's share about a vertex and its standing at the sea's
- * level. `shore` (stride 1): shoreMap's r the cut, g the bed's own water, b the clip's share, a the bank's rise.
+ * `bedDepths`); the cut (waterLevels'); `sea`, the clip's share about a vertex and its standing at the sea's level.
+ * `shore` (stride 1): r the cut (COAST_EDGE's by the cap), g the bed's own water, b the clip's share, a the bank's rise.
  * @param {{grid: Float32Array, ground: Float32Array, gx: number, gz: number, votes: Float32Array, level: Float32Array, cut: Float32Array, bedDepths?: ?Float32Array, bytes: Uint8Array, stride?: number, tileDim?: number, table?: Uint8Array|number[]}} o
  * @returns {{positions: Float32Array, depths: Float32Array, cut: Float32Array, sea: Float32Array, shore: ?{w: number, h: number, data: Uint8Array}, indices: Uint32Array}|null}
  */
@@ -232,11 +232,13 @@ export function waterSheet({
       cutAt = new Float32Array(n),
       wet = new Float32Array(n),
       open = new Float32Array(n),
-      rise = new Float32Array(n);
+      rise = new Float32Array(n),
+      atSea = new Float32Array(n);
     const cutMid = new Float32Array(quadCount),
       wetMid = new Float32Array(quadCount),
       openMid = new Float32Array(quadCount),
-      riseMid = new Float32Array(quadCount);
+      riseMid = new Float32Array(quadCount),
+      atSeaMid = new Float32Array(quadCount);
     for (let i = 0; i < n; i++) {
       const col = i % gx,
         row = (i - col) / gx;
@@ -244,6 +246,7 @@ export function waterSheet({
       wet[i] = 1 - 2 * (votes[i] > 0 ? votes[i] : 0);
       open[i] = clipShare(bytes, col - 1, row - 1, col + 1, row + 1, tilesWide, tilesDeep, tileDim);
       rise[i] = Number.isFinite(level[i]) ? Math.max(0, ground[i * 3 + 1] - level[i]) : RISE_MAX;
+      atSea[i] = level[i] === SEA_LEVEL_Y ? 1 : 0;
     }
     for (let z = 0; z < gz - 1; z++) {
       for (let x = 0; x < gx - 1; x++) {
@@ -259,16 +262,22 @@ export function waterSheet({
         openMid[k] = tile === CLIP_SENTINEL ? 1 : 0;
         const meanLevel = (level[near] + level[near + 1] + level[near + gx] + level[far]) / 4;
         riseMid[k] = Number.isFinite(meanLevel) ? Math.max(0, centreGround(ground, near, far) - meanLevel) : RISE_MAX;
+        atSeaMid[k] = (atSea[near] + atSea[near + 1] + atSea[near + gx] + atSea[far]) / 4;
       }
     }
     const cutField = shoreMap(gx, gz, cutAt, cutMid).field,
       wetField = shoreMap(gx, gz, wet, wetMid).field,
       openMap = shoreMap(gx, gz, open, openMid, OPEN_SIGMA, Infinity);
     const riseField = shoreMap(gx, gz, rise, riseMid, RISE_SIGMA, Infinity).field,
+      seaField = shoreMap(gx, gz, atSea, atSeaMid, RISE_SIGMA, Infinity).field,
       data = new Uint8Array(openMap.field.length * 4);
     for (let k = 0; k < openMap.field.length; k++) {
-      data[k * 4] = toByte(cutField[k]);
-      data[k * 4 + 1] = toByte(wetField[k]);
+      // By the cap's clip the sea ends on the clip's smoothed share, and the ground under it keeps its own art
+      const share = openMap.field[k],
+        coast = seaField[k] * Math.min(1, COAST_NEAR * share),
+        line = Math.max(-1, Math.min(1, (COAST_EDGE - share) * COAST_RAMP));
+      data[k * 4] = toByte(cutField[k] + (line - cutField[k]) * coast);
+      data[k * 4 + 1] = toByte(wetField[k] + (1 - wetField[k]) * coast);
       data[k * 4 + 2] = Math.round(openMap.field[k] * 255);
       data[k * 4 + 3] = Math.round(Math.min(1, riseField[k] / RISE_MAX) * 255);
     }
@@ -285,6 +294,12 @@ export const SHORE_SIGMA = 0.6;
 export const SHORE_HOLD = 0.7;
 /** The clip's share's spread, in tiles - the band over which the open sea's look fades in. */
 export const OPEN_SIGMA = 1;
+/** THE CAP'S COAST. By Deep Waters' clip the sea's water ends where the clip's smoothed share (`OPEN_SIGMA`) stands
+ *  at COAST_EDGE, not on the votes: the clip's tiles are a staircase, its share a curve. The cut runs from 1 to -1
+ *  over 2 / COAST_RAMP of share, and takes over within 1 / COAST_NEAR of share from the clip, at the sea's level. */
+export const COAST_EDGE = 0.5;
+export const COAST_RAMP = 8;
+export const COAST_NEAR = 3;
 /** THE BANK'S RISE - how far the drawn ground stands over the plane (0 under it), smoothed by RISE_SIGMA
  *  tiles, enough to iron out a triangle's zigzag; the texel holds 0 to RISE_MAX units (waterCorners.js, the program's
  *  read too), a vertex with no level the most. The program fades the water out on it (waterSurface.js RISE_FADE). */

@@ -35,11 +35,13 @@ highp uint geEntry(highp uint d) { return (GE_KINDS[int(d >> 1u)] >> ((d & 1u) *
 }
 
 /** The ground's read of its water's smoothed fields (world/water/waterLevel.js shoreMap; renderer.js
- *  drawTerrain binds them) - `shoreWet(p)` at a tile coordinate, 1 wet, 0 dry: the silt's line and a shore's kinds'. */
+ *  drawTerrain binds them) - `shoreWet(p)` at a tile coordinate, 1 wet, 0 dry: the silt's line and a shore's kinds';
+ *  `shoreOpen(p)` the clip's smoothed share, the coast's cut. */
 export function shoreGlsl() {
   return `uniform sampler2D uShore;
 uniform int uShoreOn;       // 1 where this ground's water has its fields
-float shoreWet(vec2 p) { return 1.0 - textureLod(uShore, (2.0 * p + 0.5) / vec2(textureSize(uShore, 0)), 0.0).g; }`;
+float shoreWet(vec2 p) { return 1.0 - textureLod(uShore, (2.0 * p + 0.5) / vec2(textureSize(uShore, 0)), 0.0).g; }
+float shoreOpen(vec2 p) { return textureLod(uShore, (2.0 * p + 0.5) / vec2(textureSize(uShore, 0)), 0.0).b; }`;
 }
 
 /** The terrain programs' chunk, after ROAD-LOOK's (its noise, `reCell`, the program's ROT and TRANS), `decode` the lane's
@@ -73,24 +75,39 @@ bool coastCut(vec2 p, inout uint data, inout int layer, inout int t, inout vec2 
   highp ivec2 cb = c + ivec2(sg.x, 0), cc = c + ivec2(0, sg.y), cd = c + sg;
   highp uint db = reCell(cb), dc = reCell(cc), dd = reCell(cd);
   bool kb = db == ${CLIP_SENTINEL}u, kc = dc == ${CLIP_SENTINEL}u, kd = dd == ${CLIP_SENTINEL}u;
-  if (kb && kc && kd) return true;
+  bool byShare = uShoreOn == 1;   // with the water's fields the line is the clip's smoothed share's
+  if (byShare && shoreOpen(p) + ${f(COAST_CUT_WANDER)} * geWander(p) > ${f(COAST_CUT.share)}) return true;
+  if (!byShare && kb && kc && kd) return true;
   // the dual square about the nearest tile corner k: s runs 0..1 from the cells' centres west and south of it
   vec2 k = floor(p + 0.5);
   vec2 q = p - (k - 0.5);
   float wxa = float(c.x) == k.x ? q.x : 1.0 - q.x, wxb = float(cb.x) == k.x ? q.x : 1.0 - q.x;
   float wya = float(c.y) == k.y ? q.y : 1.0 - q.y, wyc = float(cc.y) == k.y ? q.y : 1.0 - q.y;
   float lin = wxa * wya + (kb ? wxb * wya : 0.0) + (kc ? wxa * wyc : 0.0) + (kd ? wxb * wyc : 0.0);
-  if (lin + ${f(COAST_CUT_WANDER)} * geWander(p) > ${f(COAST_CUT.line)}) return true;
+  if (!byShare && lin + ${f(COAST_CUT_WANDER)} * geWander(p) > ${f(COAST_CUT.line)}) return true;
   // kept: the nearest kept cell across this corner - its x or y neighbour (the nearer edge first), else the diagonal
   float u = min(fr.x, 1.0 - fr.x), v = min(fr.y, 1.0 - fr.y);
   highp ivec2 n = cd; highp uint dn = dd;
   if (u <= v) { if (!kb) { n = cb; dn = db; } else if (!kc) { n = cc; dn = dc; } }
   else { if (!kc) { n = cc; dn = dc; } else if (!kb) { n = cb; dn = db; } }
+  bool far = kb && kc && kd;   // all three clipped (only the share's line keeps one): the nearest kept cell two out
+  if (far) {
+    float best = 1e9;
+    for (int dy = -2; dy <= 2; dy++) for (int dx = -2; dx <= 2; dx++) {
+      if (max(abs(dx), abs(dy)) < 2) continue;
+      highp ivec2 m = c + ivec2(dx, dy);
+      highp uint dm = reCell(m);
+      float away = length(p - vec2(m) - 0.5);
+      if (dm != ${CLIP_SENTINEL}u && away < best) { best = away; n = m; dn = dm; }
+    }
+    if (dn == ${CLIP_SENTINEL}u) return true;
+  }
   // the coordinate's own gradient, back from the cut byte's turn (ROT is orthonormal), turned by the kept cell's
   vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;
   data = dn; layer = int(dn >> 2u); t = int(dn & 3u);
   vec2 l = p - vec2(n);
   l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));
+  if (far) l = fract(p);
   tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = ROT[t] * dux; gy = ROT[t] * duy;
   return false;
 }

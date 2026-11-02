@@ -55,19 +55,23 @@ town's ponds and moats by the RMB's ground tiles. The terrain pass draws it opaq
 - **The ripples** (`src/world/water/waterRipples.js`). A damped wave equation (`RIPPLE_DAMPING` 0.975) on a 96-cell grid
   48 units round the camera at 30 Hz, stirred by the player and every boat afloat. Uploaded only when it moved.
 - **The open sea.** A coastal pixel's sea is its near sheet's, to the coast. Over Deep Waters' clip the sheet swells
-  whole and reads at the open sea's depth (`OPEN_PATH`), copy or none, so the mod's floor near the coast and the land the
-  cap cuts lie out of sight; the clip's smoothed share fades that depth in, so the shallows end on a curve. The water at
-  the sea's level wears the mod's Top Color, as Iliac Puddle No More's own sheets and the far ring's sea do. Those
-  sheets are drawn by the same program from above where no near sheet stands (a hidden pure-ocean pixel); from under
-  the sea, the mod's underside, and the near sheet over the clip stands down.
+  whole. With the frame's copy it reads the mod's floor through the water as the mod's own sheet does; without one it
+  stands at the open sea's depth (`OPEN_PATH`), faded in by the clip's smoothed share. The water at the sea's level
+  wears the mod's Top Color, as Iliac Puddle No More's own sheets and the far ring's sea do. Those sheets are drawn by
+  the same program from above where no near sheet stands (a hidden pure-ocean pixel); from under the sea, the mod's
+  underside, and the near sheet over the clip stands down.
+- **The cap's coast is a curve** (`COAST_EDGE`). By the clip, at the sea's level, the sea ends where the clip's
+  smoothed share stands at a half, not on the votes. The ground the cap cuts follows the same share, deeper
+  (`COAST_CUT.share`), so the sea stands full over it and the drop to the mod's floor is a curve too. A tile the cap
+  kept in a notch goes under the sea; a kept point with no kept tile beside it wears the nearest two out.
 - **The horizon.** One haze law for every surface past the streamed grid's fog (`src/render/horizonHaze.js`
   `HORIZON_HAZE_GLSL`): the world fog's ramp capped at the far ring's hold. The streamed sea holds it too, and the far
   ring's sea shares the water's own look (`SEA_LOOK_GLSL`), so the sea runs on continuously to the horizon. Ring cells
   inside the streamed rect fill the sea past the world's far plane, only those the eye can see.
 - **The coast** (`src/world/terrain/groundEdge.js`, `src/render/groundEdgeGlsl.js`). A transition tile draws its two
   kinds' base records at a share moved by a three-octave wander, so shores have no straight tile edges; Deep Waters' sea
-  is cut on a wandering line instead of whole tiles, under the sheet's open sea. `?coastedges=off` restores the tile
-  edges.
+  is cut on a wandering line instead of whole tiles, on the clip's smoothed share where the sheet stands.
+  `?coastedges=off` restores the tile edges.
 - **Town puddles are dry** (`src/world/puddleDry.js`). A one-tile patch of water, or one made only of shallow-water art,
   takes the ground its dry neighbours stand on. It runs where a block is served (`src/formats/blocksFile.js`
   `getBlock`), so every reader of the ground sees one ground, on both skins. Moats, ponds and docks stay.
@@ -91,8 +95,8 @@ town's ponds and moats by the RMB's ground tiles. The terrain pass draws it opaq
 DFU draws water as an opaque terrain tile, and classic palette-cycled it. Departures, enhanced skin only: the moving
 sheet, bed, body and shore above; the coast's wandering blend (DFU's tiles have straight edges); and, on both skins,
 dry town puddles. From Iliac Puddle No More, enhanced skin only: its top is not drawn over a coastal pixel seen from
-above (the near sheet carries that sea), its Top Color tints the near sheet's sea, and its floor under a coastal
-pixel's clip is not seen from above (a pure-ocean pixel's still is).
+above (the near sheet carries that sea, reading the mod's floor as its own sheet does), its Top Color tints the near
+sheet's sea, and its coast is the clip's smoothed share, not the clip's tiles.
 
 ## Code and tests
 
@@ -125,5 +129,8 @@ pixel's clip is not seen from above (a pure-ocean pixel's still is).
 - A shore's smoothing holds each pixel's own edge, so a shore crossing a seam can step a fraction of a tile there.
 - The far ring (stride 4) keeps its vertices' cut: its shores are a cell's polyline, seen only far off.
 - With the mod's Spawn Surfaces off, the near sheet still covers the clip.
+- By the cap's clip the drawn sea ends on the clip's smoothed share: a sliver of land the cap kept at the sea's height
+  can lie under the water's edge, and a clipped tile poking into the land can show as sand. The swim keeps the mod's
+  line.
 - The lane's terrain program reads sixteen samplers with the shore's, the least every WebGL2 offers.
 - The cost on a real GPU is not measured here.

@@ -565,11 +565,10 @@ void main() {
   lit += body * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor * 0.25;
   // THE PATH through the water
   float slant = max(V.y, 0.12);
-  // Over the clip the sea is the open sea's, deep however near the mod's floor stands - its edge, the cut's
-  // tiles, is no shore; the clip's smoothed share fades it in, so the shallows end on a curve (the open sea's own sheet
-  // still reads its floor)
+  // Over the clip, with the frame's copy the sea reads the mod's floor as the mod's own sheet does; without one it is
+  // the open sea's depth, faded in by the clip's smoothed share
   float open = uOpen == 1 ? 1.0 : (uShoreOn == 1 ? shoreAt().b : vSea.x);
-  float bedPath = uOpen == 1 ? 0.0 : (mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, open) + 0.02) / slant;   // what the bed under the sheet says
+  float bedPath = uOpen == 1 ? 0.0 : (mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, uSceneOn == 1 ? 0.0 : open) + 0.02) / slant;   // what the bed under the sheet says
   float meet = vDepth.x;   // WATER-LEVEL: how far over the ground the plane stands here - 0 where the ground rises through it
   float path = uOpen == 1 ? ${OPEN_PATH.toFixed(1)} : bedPath;
   vec2 uv0 = gl_FragCoord.xy / uSceneSize;

@@ -66,7 +66,7 @@ test('WATER-NEXT 2 the look: the path through the water is the scene\'s depth be
   assert.match(fs, /vec3 T = exp\(-uAbsorb \* path\);\s*\n\s*under = textureLod\(uScene, uv, 0\.0\)\.rgb;[^\n]*\n\s*trans = T \* \(1\.0 - F\);\s*\n\s*own = lit \* \(vec3\(1\.0\) - T\) \* \(1\.0 - F\) \+ skyRefl \* F;/);
   assert.match(fs, /cover = 1\.0 - t \* \(1\.0 - F\);\s*\n\s*own = lit \* \(1\.0 - t\) \* \(1\.0 - F\) \+ skyRefl \* F;/);
   assert.ok(WATER_ABSORB[0] > WATER_ABSORB[1] && WATER_ABSORB[1] > WATER_ABSORB[2], 'red is swallowed first');
-  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(mix\(vDepth\.y, 60\.0, open\) \+ 0\.02\) \/ slant;/, 'PIN MOVED (WATER-LEVEL): the bed\'s path is the shading\'s depth - never under the bed\'s profile; PIN MOVED (WATER-SHORE): the open sea\'s over the clip');
+  assert.match(fs, /float bedPath = uOpen == 1 \? 0\.0 : \(mix\(vDepth\.y, 60\.0, uSceneOn == 1 \? 0\.0 : open\) \+ 0\.02\) \/ slant;/, 'the bed\'s path is the shading\'s depth - never under the bed\'s profile; without a copy, the open sea\'s over the clip');
 });
 
 test('WATER-NEXT 3 the shore: foam over the shallow band the swell pushes up and down the bank, crests whitening only in a strong wind, foam opaque and unglinting (mutants: no run-up; crests in a calm; the foam see-through)', () => {
