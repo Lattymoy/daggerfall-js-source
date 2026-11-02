@@ -224,7 +224,7 @@ MOD_AI_DAILY_MAX = ""
 # under this many players online it sweeps every two hours instead of every fifteen minutes. CLAUDE_ORDER_HANDLES: who may
 # accept or dismiss a suggestion and enrol an order key (src/staffOrder.js).
 CLAUDE_STAFF = "on"
-CLAUDE_STAFF_HANDLE = "Claude"
+CLAUDE_STAFF_HANDLE = "ClaudeSTAFF"
 CLAUDE_STAFF_MODEL = "claude-sonnet-5-5"
 CLAUDE_STAFF_DAILY_MAX = "200"
 CLAUDE_STAFF_QUIET_MIN = "50"
