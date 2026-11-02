@@ -12,7 +12,7 @@
 //   node tools/sendServerPost.mjs --look <handles> <batch>                                 the dry run's statement
 //   node tools/sendServerPost.mjs --words <subject> <message>                              the words as they will be sent
 //   node tools/sendServerPost.mjs --sql <handles> <batch> <item> <subject> <message>       the send's statement
-//   node tools/sendServerPost.mjs --migration hours-first|tamriel|thanks                   a frozen send's migration
+//   node tools/sendServerPost.mjs --migration hours-first|tamriel|thanks|maintenance       a frozen send's migration
 //
 // `handles` is comma-separated, as the config's lists are; `item` is one of POST_ITEMS - an item is MINTED here by the
 // game's own code (the Hourlock as its drop mints it, src/systems/gilded.js), never typed into a workflow; `message`
@@ -30,7 +30,7 @@ import { isMain } from './lib/isMain.mjs';
 import { HANDLE_RE } from '../src/net/handleShape.js';
 import { POST_BATCH_RE, POST_SENDER, POST_SUBJECT_MAX, POST_BODY_MAX } from '../src/net/postLaw.js';
 import { mintHourlock } from '../src/systems/gilded.js';
-import { GIFTS } from '../src/net/giftLaw.js'; // THANKS-POST: what the update's gift gives
+import { GIFTS, giftOf } from '../src/net/giftLaw.js'; // THANKS-POST: what the update's gift gives
 
 /** THE ITEMS A PIECE MAY HOLD, by name - each minted by the game's own code. `none` a message alone. */
 export const POST_ITEMS = Object.freeze({
@@ -103,6 +103,43 @@ export const THANKS_POST = Object.freeze({
     'As a thank-you, 500 Aurum and the Crystal Spurs are on your account now. The Spurs are an Aura Armory piece for your arms. Wear them from your profile.',
     '',
     "Let's continue our journey, together.",
+    '',
+    'With love,',
+    'The DFO Team',
+  ].join('\n'),
+});
+
+/** MAINTENANCE-APOLOGY (2026-11-02, the owner: "Please grant all users 500 aurum and an apology for the maintence"): the
+ *  apology's letter, to every registered account standing, naming its gift - 500 Aurum, on the account already
+ *  (net/giftLaw.js `maintenance`). Migration 0209 (`--migration maintenance`) sends it; its words are FROZEN here. */
+export const MAINTENANCE_POST = Object.freeze({
+  batch: 'maintenance-apology',
+  gift: 'maintenance',
+  sender: 'The DFO Team',
+  subject: 'Sorry for the downtime',
+  body: [
+    "We're sorry for the maintenance and for the time it kept you out of the game. We know how frustrating it is to sit down to play and not be able to get in.",
+    '',
+    'As an apology, 500 Aurum is on your account now. Spend it in the shop whenever you like.',
+    '',
+    'Thank you for your patience, and for sticking with us.',
+    '',
+    'With love,',
+    'The DFO Team',
+  ].join('\n'),
+});
+/** MAINTENANCE-APOLOGY (the owner: "Grant MarioTheShiba 1000 aurum. In total 1500 for Mario"): one account's extra 1000,
+ *  on top of the apology's 500 - its gift `maintenanceplus`, its own letter. Migration 0209 sends it; FROZEN here. */
+export const MAINTENANCE_PLUS_POST = Object.freeze({
+  batch: 'maintenance-apology-plus',
+  gift: 'maintenanceplus',
+  handles: 'MarioTheShiba',
+  sender: 'The DFO Team',
+  subject: 'A little extra, with thanks',
+  body: [
+    'On top of the 500 Aurum from our maintenance apology, an extra 1,000 Aurum is on your account now - 1,500 in all.',
+    '',
+    'Thank you for everything you do for the game.',
     '',
     'With love,',
     'The DFO Team',
@@ -214,6 +251,30 @@ FROM players p WHERE p.handle IS NOT NULL;
 ${everyoneSql(THANKS_POST)}`;
 }
 
+/** MAINTENANCE-APOLOGY: A GIFT AND ITS LETTER - its key on each account (players.gifts), its Aurum a ledger line (`gift`,
+ *  ref the key - once an account by the line's key), and the letter naming it (once a send an account, 0093's index). To
+ *  every registered account standing, or to the accounts `handles` names (postHandles' shape). Each once, run again. */
+export function giftPostSql({ batch, gift, sender, subject, body, handles = null }) {
+  const g = giftOf(gift);
+  if (!g) throw new Error(`not a gift: ${JSON.stringify(gift)}`);
+  const b = postBatch(batch),
+    words = postWords({ subject, body }),
+    now = "CAST(strftime('%s', 'now') AS INTEGER)",
+    who = `handle IS NOT NULL${handles ? ` AND handle_lc IN (${inList(postHandles(handles))})` : ''}`,
+    pwho = who.replaceAll('handle', 'p.handle');
+  return `UPDATE players SET gifts = trim(gifts || ' ' || ${sqlText(gift)})
+WHERE ${who} AND instr(' ' || gifts || ' ', ${sqlText(` ${gift} `)}) = 0;
+INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at)
+SELECT p.id, 'gift', ${sqlText(gift)}, ${g.aurum}, ${now} / 86400, ${now}
+FROM players p WHERE ${pwho};
+INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at, gift)
+SELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, NULL, ${now}, ${sqlText(gift)}
+FROM players p WHERE ${pwho};`;
+}
+/** MAINTENANCE-APOLOGY: migration 0209's statement - the apology to every registered account, then the one account's extra. */
+export const maintenancePostSql = () => `${giftPostSql(MAINTENANCE_POST)}
+${giftPostSql(MAINTENANCE_PLUS_POST)}`;
+
 function main(argv) {
   if (argv[0] === '--names' && argv.length === 2)
     return void process.stdout.write(`${postHandles(argv[1]).join('\n')}\n`);
@@ -230,8 +291,10 @@ function main(argv) {
     return void process.stdout.write(`${tamrielPostSql()}\n`);
   if (argv[0] === '--migration' && argv[1] === 'thanks' && argv.length === 2)
     return void process.stdout.write(`${thanksPostSql()}\n`);
+  if (argv[0] === '--migration' && argv[1] === 'maintenance' && argv.length === 2)
+    return void process.stdout.write(`${maintenancePostSql()}\n`);
   throw new Error(
-    'usage: node tools/sendServerPost.mjs --names <handles> | --look <handles> <batch> | --words <subject> <message> | --sql <handles> <batch> <item> <subject> <message> | --migration hours-first|tamriel|thanks',
+    'usage: node tools/sendServerPost.mjs --names <handles> | --look <handles> <batch> | --words <subject> <message> | --sql <handles> <batch> <item> <subject> <message> | --migration hours-first|tamriel|thanks|maintenance',
   );
 }
 
