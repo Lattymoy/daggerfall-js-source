@@ -2110,7 +2110,7 @@ async function privateAct(action, arg) {
       if (!relayScript || !fs.existsSync(relayScript)) { privateTell({ status: 'failed', error: 'This version of the game has no private server in it.' }); return; }
       privateTell({ status: 'starting' });
       // the runtime's binary cannot run from inside app.asar: electron-builder unpacks it (asarUnpack), and miniflare is told where
-      if (app.isPackaged) process.env.MINIFLARE_WORKERD_PATH ??= require('workerd').replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+      if (app.isPackaged) process.env.MINIFLARE_WORKERD_PATH ??= require('workerd').default.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
       const { Miniflare, supportedCompatibilityDate } = await import('miniflare');
       const h = await host.startHost({ dir: path.join(app.getPath('userData'), 'Private server'), relayScript, Miniflare, compatibilityDate: supportedCompatibilityDate });
       const tell = () => privateTell({ status: 'hosting', port: h.port, max: h.max, players: h.players(), addresses: lanAddresses() });
