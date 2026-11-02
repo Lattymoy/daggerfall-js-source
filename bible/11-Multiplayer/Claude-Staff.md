@@ -49,6 +49,14 @@ works once. The same dispatcher a panel session uses checks the role, owner and 
 `via: claude-project`. Sign-in, key, invite, claim, hiding, following and order-key doors are refused, and every refusal is the word `staff-login`. An order is never an owner: Team, cutting a member off and the audit log answer `staff-owner` to it and stay with a live panel session. No
 password is stored and no session outlives the request.
 
+**Bot check in a freeze chat** (`src/claudeCheck.js`, on the same minute job). When staff freeze a player whom Claude
+reported as a likely bot (a bot-ring, reactions, monster watch or network suggestion, not dismissed, made in the week before
+the freeze), Claude asks that player short questions in the freeze's staff chat, one at a time, as the `CLAUDE_STAFF_HANDLE`
+account. It asks at most four questions, or stops when the player has not answered in ten minutes. It then writes a staff note:
+likely bot, likely person or unsure, and why. It never freezes, unfreezes, mutes or bans, and its lines give no help. It does
+not start, and it stops, as soon as another staff member writes in the thread or holds a live claim on the player's case. The
+player's lines go to the model as escaped JSON data. The account named by `CLAUDE_STAFF_HANDLE` must exist; without it nothing runs.
+
 **Keeping.** The hourly job deletes suggestions after 30 days.
 
 ## Open

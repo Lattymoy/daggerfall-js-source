@@ -270,7 +270,7 @@ export async function spendClaudeCall(db, env, nowS) {
 }
 
 /** One call: spend, ask, hold the answer to its schema. `{ verdict }` or `{ error }`. @param {any} db @param {any} env @param {any} fetchFn @param {number} nowS @param {{ system: string, payload: any, tag: string, schema: any }} ask */
-async function ask(db, env, fetchFn, nowS, { system, payload, tag, schema }) {
+export async function ask(db, env, fetchFn, nowS, { system, payload, tag, schema }) {
   if (!(await spendClaudeCall(db, env, nowS))) return { error: AI_ERRORS.budget };
   const body = linesMessage(payload);
   const message = `<${tag}>${body.slice('<chat_lines>'.length, -'</chat_lines>'.length)}</${tag}>`;
