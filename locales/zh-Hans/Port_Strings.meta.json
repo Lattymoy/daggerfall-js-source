@@ -3519,6 +3519,31 @@
   "tr": "eb979bca9926",
   "by": "claude-in-session"
  },
+ "net.staff.noclipHelp": {
+  "en": "c1a3dfd6802d",
+  "tr": "773d7c40397a",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipOff": {
+  "en": "bae0074e5e3a",
+  "tr": "0321a9529356",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipOn": {
+  "en": "1ea855b3b4ea",
+  "tr": "20b1d79f3bca",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipSpeed": {
+  "en": "c1fd31dc6f33",
+  "tr": "72137ca59706",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipSpeedUsage": {
+  "en": "9f2fca222d26",
+  "tr": "df5adcf6eba1",
+  "by": "claude-in-session"
+ },
  "net.staffFlat.close": {
   "en": "bbfa773e5a63",
   "tr": "6c14bd7f6f9e",

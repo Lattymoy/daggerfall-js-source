@@ -95,6 +95,11 @@ export function flySpeedMult() {
   for (const fn of _flyMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a ride is not the flight's problem */ } }
   return k;
 }
+// /noclip (net/staffNoclip.js): one slot the host registers - while it answers true, a levitating step
+// moves the body with no collider at all (through walls, floors and terrain). None registered, or one that throws, is none.
+let _noclip = null;
+export function registerNoclip(fn) { _noclip = typeof fn === 'function' ? fn : null; }
+export const noclipOn = () => { try { return !!_noclip?.(); } catch { return false; } };
 // DRAGON5 (bible/11-Multiplayer/Dwarven-Dragon.md section 10; Ledger A): a tamed dragon's flight. The ride's step is told
 // each update's input before the motor moves (player/dragonRide.js: the takeoff's held jump), one slot; and a named
 // registry of sinks pulls the levitating ladder down (a winded dragon glides). None registered is DFU's levitation.
@@ -3272,6 +3277,15 @@ export class PlayerMotor {
       // never pulls the capsule DOWN onto what is under it; the snap is AcrobatMotor's anti-bump, PlayerMotor's
       // grounded path alone. With it here a swimmer (or a levitator) passing within a step of anything under it was
       // dragged onto it - a carved sea's floor wall caught a surface swimmer by the knees at the coast (measured).
+      if (this.levitating && noclipOn()) {
+        // the flight passes through everything - no collider, never grounded
+        this.pos[0] += mx * speed * dt;
+        this.pos[1] += my * speed * dt;
+        this.pos[2] += mz * speed * dt;
+        this.groundKey = null;
+        this.grounded = false;
+        return;
+      }
       const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height, false);
       this.groundKey = r.grounded ? (r.groundKey ?? null) : null;
       this.grounded = r.grounded;
