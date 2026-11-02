@@ -292,8 +292,8 @@
   {
     "name": "PERF-EXT13-9-the-host-draws-each-pixel-through-its-own-call-again",
     "file": "src/scenes/world.js",
-    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);\n",
-    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n",
+    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);",
+    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n      void TERRAIN_TILE_DIM;",
     "tests": [
       "test/render/perfextb.test.js",
       "test/world/terrain/water.test.js"

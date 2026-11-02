@@ -429,8 +429,11 @@ export function createPixelBuild(host) {
     const bed = hostBed({ positions, normals }, carved);
     const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    // The water's sheet at its level, carved with the bed - null for a pixel without water, which never enters the pass
-    const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;
+    const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
+    made.tilemapTex = tilemapTex;   // BUILD-FAIL1
+    // The water's sheet at its level, carved with the bed - null for a pixel without water, which never enters the pass.
+    // Its smoothed fields are found by the tilemap the ground draws with: the silt reads them too
+    const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet, tilemapTex) : null;
     made.terrain = terrain; made.water = water;   // BUILD-FAIL1
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.
@@ -444,8 +447,6 @@ export function createPixelBuild(host) {
         if (b[3 + i] > bounds[3 + i]) bounds[3 + i] = b[3 + i];
       }
     };
-    const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
-    made.tilemapTex = tilemapTex;   // BUILD-FAIL1
 
     // Flat groups: pixel-local base positions. AUDIT PRECIP HOST-7: THE PIXEL'S FLATS, logged in the order they stand
     // (groupFlats groups them) - each with its own centre, the flat's identity (a felled tree is known by it), and how it

@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-WATER-NEXT-H2-stream-the-carves-zero",
     "file": "src/world/water/waterLevel.js",
-    "old": "      if (!(votes[i] > 0)) continue;",
-    "new": "      if (!(votes[i] >= 1)) continue;",
+    "old": "      if (!(votes[i] > 0)) continue;\n      const own",
+    "new": "      if (!(votes[i] >= 1)) continue;\n      const own",
     "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - H2's law moved: water on ground never carved stands at its level (a stream with no wet vertex keeps its sheet).",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-WATER-NEXT-H2-swell-on-uncarved-ground",
     "file": "src/render/waterSurface.js",
-    "old": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
-    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.y);",
+    "old": "  float grow = uOpen == 1 ? 1.0 : max(smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);",
+    "new": "  float grow = uOpen == 1 ? 1.0 : max(smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.y), sea.x);",
     "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the swell grows with the depth over the carved ground, never the shading's.",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
@@ -294,8 +294,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G7-the-underside-drawn",
     "file": "src/render/waterSurface.js",
-    "old": "  if (uOpen == 1 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
-    "new": "  if (uOpen == 2 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;",
+    "old": "  if ((uOpen == 1 || vSea.x > 0.5) && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;   // the terrain's sheet over the clip too",
+    "new": "  if ((uOpen == 2 || vSea.x > 0.5) && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;   // the terrain's sheet over the clip too",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]

@@ -28,7 +28,7 @@ const DRY = 2 << 2, WET = 0;
 /** A T x T tilemap: `wet(x, z)` water (record 0), the rest grass. */
 const map = (T, wet) => { const b = new Uint8Array(T * T).fill(DRY); for (let z = 0; z < T; z++) for (let x = 0; x < T; x++) if (wet(x, z)) b[z * T + x] = WET; return b; };
 
-test('WATER-LEVEL the tiles mark the water: each vertex\'s share of the tiles meeting it that call that corner water, by the draw\'s table; a tile past the map is no vote, nor is a Deep Waters clip; none where no tile is water (mutants: the share\'s divisor; the clip voting dry; the law\'s table)', () => {
+test('WATER-LEVEL the tiles mark the water: each vertex\'s share of the tiles meeting it that call that corner water, by the draw\'s table; a tile past the map is no vote; a Deep Waters clip is the open sea, water at every corner (WATER-SHORE); none where no tile is water (mutants: the share\'s divisor; the clip voting dry; the law\'s table)', () => {
   const b = map(4, (x, z) => x === 1 && z === 1);
   const f = waterVotes(b, { tileDim: 4 }), at = (x, z) => f[z * 5 + x];
   assert.deepEqual([at(1, 1), at(2, 1), at(1, 2), at(2, 2)], [0.25, 0.25, 0.25, 0.25], 'a lone tile: a quarter of each corner\'s four');
@@ -36,9 +36,10 @@ test('WATER-LEVEL the tiles mark the water: each vertex\'s share of the tiles me
   const edge = waterVotes(map(4, (x) => x === 0), { tileDim: 4 });
   assert.equal(edge[0], 1, 'the map\'s corner: its one tile the only vote');
   assert.equal(edge[2 * 5], 1, 'the map\'s edge: two tiles, both water');
-  const clip = map(4, () => true);
+  const clip = map(4, () => false);
   clip[1 * 4 + 2] = CLIP_SENTINEL;
-  assert.equal(waterVotes(clip, { tileDim: 4 })[1 * 5 + 2], 1, 'a clipped tile is no vote - the water beside it is the water\'s own');
+  const cv = waterVotes(clip, { tileDim: 4 });
+  assert.deepEqual([cv[1 * 5 + 2], cv[1 * 5 + 3], cv[2 * 5 + 2], cv[2 * 5 + 3]], [0.25, 0.25, 0.25, 0.25], 'a clipped tile in grass: a quarter of each corner, as a water tile');
   assert.equal(waterVotes(map(4, () => false), { tileDim: 4 }), null, 'no water, no votes');
   const nine = new Uint8Array(16).fill(DRY); nine[5] = 9 << 2;
   assert.ok(waterVotes(nine, { tileDim: 4 }), 'the draw\'s table: record 9 reads as water to the eye (WATER-DRAW1)');
@@ -96,7 +97,7 @@ test('WATER-LEVEL the bed: carved to at least its profile under the level and ne
   assert.ok(Math.abs(deep.sheet.depths[(8 * 17 + 8) * 2] - (13 - (10 - Math.max(0, BED_DEPTH - 3)))) < 1e-5, 'its depth over the carved ground');
 });
 
-test('WATER-LEVEL the sheet: a quad whose four corners hold a level and one is the water\'s own, never a clip; four triangles about its centre, the centre the corners\' mean level and the tile\'s own water at its middle; the depths the plane over the carved ground and the shading never under the bed (mutants: a quad of borrowed corners; a clipped quad drawn; the centre\'s tile water; the shading\'s floor)', () => {
+test('WATER-LEVEL the sheet: a quad whose four corners hold a level and one is the water\'s own, a clip\'s too (WATER-SHORE); four triangles about its centre, the centre the corners\' mean level and the tile\'s own water at its middle; the depths the plane over the carved ground and the shading never under the bed (mutants: a quad of borrowed corners; a clipped quad drawn; the centre\'s tile water; the shading\'s floor)', () => {
   const T = 6, b = map(T, (x, z) => x === 2 && z >= 0);   // a stream a tile wide, every corner shared with grass
   const bed = waterBedOf(flatGrid(T, T, 5), b, { tileDim: T }), s = bed.sheet, g = T + 1;
   assert.ok(s, 'a stream with no wet vertex still has its sheet');
@@ -115,11 +116,10 @@ test('WATER-LEVEL the sheet: a quad whose four corners hold a level and one is t
   const two = waterBedOf(flatGrid(8, 2, 5), map(8, (x) => x === 1 || x === 5).subarray(0, 16), { tileDim: 8, width: 8, height: 2 }).sheet;
   const tq = []; for (let t = 1; t < two.indices.length; t += 12) tq.push(two.indices[t] % 9);
   assert.deepEqual([...new Set(tq)].sort(), [0, 1, 2, 4, 5, 6], 'the gap\'s quad (3) borrowed on all four corners');
-  // a clip: no quad holding one
   const clipped = map(T, () => true); clipped[3 * T + 3] = CLIP_SENTINEL;
   const cs = waterBedOf(flatGrid(T, T, 5), clipped, { tileDim: T }).sheet;
   const cq = []; for (let t = 1; t < cs.indices.length; t += 12) cq.push(cs.indices[t]);
-  assert.ok(!cq.includes(3 * g + 3) && cq.length === T * T - 1, 'Iliac Puddle No More\'s own sea stands there');
+  assert.ok(cq.includes(3 * g + 3) && cq.length === T * T, 'the clip\'s quad stands with the rest');
   // a pond: the shading never under the bed's profile, the plane's depth over the carved ground
   const P = 16, pond = map(P, (x, z) => x >= 2 && x < 14 && z >= 2 && z < 14), pb = waterBedOf(flatGrid(P, P, 10), pond, { tileDim: P }), f = bedFields(pond, { tileDim: P });
   for (let i = 0; i < f.depths.length; i++) if (f.depths[i] > 0) assert.ok(pb.sheet.depths[i * 2 + 1] >= f.depths[i] - 1e-6 && pb.sheet.depths[i * 2 + 1] >= pb.sheet.depths[i * 2] - 1e-6);
@@ -167,7 +167,7 @@ test('WATER-LEVEL the streamed world\'s levels: the sea at its clamp on the Bay;
 test('WATER-LEVEL the sheet\'s shader: no tile says where the water is - the shore is the cut field, softened where the ground meets the plane; the swell grows with the water over the ground (mutants: the meet dropped; the cut\'s sign)', () => {
   const fs = waterSurfaceFs('');
   assert.doesNotMatch(fs, /uWaterMask|waterCorners\(|coverage\(/);
-  assert.match(fs, /edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* vCut - /);
+  assert.match(fs, /float cut = uShoreOn == 1 \? sh\.r \* 2\.0 - 1\.0 : vCut;\n\s+edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* cut - /);
   assert.match(fs, /float meet = vDepth\.x;/);
   assert.match(fs, /meet = \(bedD - here\) \* slant;/, 'Full: the scene\'s own depth behind the surface');
   assert.match(fs, /if \(uOpen == 0\) edge \*= smoothstep\(0\.0, 0\.060, meet\);/);
@@ -179,11 +179,11 @@ test('WATER-LEVEL the sheet\'s shader: no tile says where the water is - the sho
 
 test('WATER-LEVEL THE FOUR HOSTS, and the play keeps its line: the streaming world and the fixed town draw the sheet at its level; the interiors and the dungeons draw none; the feet, the townsfolk and the swim read the law\'s table, never a level (mutants: a host off the sheet)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/, 'the build');
-  assert.match(w, /p\.water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/, 'the restride');
-  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet\) : null;/, 'Deep Waters\' cap');
+  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, tilemapTex\) : null;/, 'the build');
+  assert.match(w, /p\.water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, p\.tilemapTex\) : null;/, 'the restride');
+  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet, p\.tilemapTex\) : null;/, 'Deep Waters\' cap');
   assert.match(read('src/world/terrain/terrainGen.js'), /levelAt: at \? streamLevelAt\(at\.px, at\.py, stride\) : null/, 'the kernel levels by the pixel\'s own laws');
-  assert.match(read('src/scenes/exterior.js'), /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet\) : null;/, 'the fixed town: its own ground, no law');
+  assert.match(read('src/scenes/exterior.js'), /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet, tilemapTex\) : null;/, 'the fixed town: its own ground, no law');
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(f), /createWaterSheet|waterBedOf|water\/waterLevel\.js|streamLevels/, `${f}: the classic plane`);
   // the play: its readers ask the law's table and the uncarved ground, never the sheet
   const feet = read('src/player/exteriorSurface.js'), town = read('src/world/city/cityNavigation.js');

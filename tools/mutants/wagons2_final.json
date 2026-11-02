@@ -389,8 +389,8 @@
   {
     "name": "WAGONS2-FINAL-the-streets-visibility-read",
     "file": "src/scenes/world.js",
-    "old": "      if ((cells || p._visible) && h?.surface)",
-    "new": "      if (p._visible && h?.surface)",
+    "old": "      if ((cells || p._visible) && h?.surface && ",
+    "new": "      if (p._visible && h?.surface && ",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

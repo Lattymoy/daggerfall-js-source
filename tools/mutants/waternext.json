@@ -164,7 +164,7 @@
   {
     "name": "SWELL-on-the-bank",
     "file": "src/render/waterSurface.js",
-    "old": "  float grow = uOpen == 1 ? 1.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);",
+    "old": "  float grow = uOpen == 1 ? 1.0 : max(smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);",
     "new": "  float grow = 1.0;",
     "note": "WATER-LEVEL (PIN MOVED): re-aimed by content - the swell grows with the water over the ground.",
     "tests": [

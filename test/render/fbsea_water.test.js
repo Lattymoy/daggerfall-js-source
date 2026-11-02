@@ -71,7 +71,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: THE SEA\'S STACK IN WINDOW DEPTH - the
   assert.ok(WATER_LAYER_UNITS.surface < 0, 'the film over the ground');
   assert.ok(WATER_LAYER_UNITS.breakers <= WATER_LAYER_UNITS.surface - 2, 'the breakers over the film, by more than the film is over the ground');
   // WATER1 wears the film's place (it met the law first - WATER-AUDIT M3's offset, now the table's)
-  const water1 = RENDERER.slice(RENDERER.indexOf('  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128) {'));
+  const water1 = RENDERER.slice(RENDERER.indexOf('  drawWaterSurfaces(rows, n, tileSize, u, tileDim = 128, sea = null) {'));
   assert.match(water1, /gl\.enable\(gl\.POLYGON_OFFSET_FILL\);\n\s+gl\.polygonOffset\(0, WATER_LAYER_UNITS\.surface\);/);
   // AUDIT ENVIRONS (the snow's pass, its own `Offset -0.25, -0.25`): the world renderer's one other offset is the snow's
   // layer of this stack - a quarter step over the ground it lies on, under the film (the constant terms' order)
@@ -112,7 +112,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #4: ILIAC PUDDLE NO MORE\'S TOP IS THE FIL
 
 test('FIELD BUGS 2026-09-29 (the sea) #4: the breakers are drawn BEFORE the film - with the ground, written - so the film tests against their depth, lifted in the stack; the world keeps that order (mutants: the waves after the film)', () => {
   const waves = WORLD.indexOf('    if (!tvf) csaDrawWaves();');   // FIELD BUGS 2026-09-30b TV-SURF: gated on the travel view (PIN MOVED)
-  const water1 = WORLD.indexOf('      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);');
+  const water1 = WORLD.indexOf('      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);');
   const top = WORLD.indexOf('    if (deepWaters) drawDeepWatersSurfaces(now);');
   assert.ok(waves > 0 && water1 > waves && top > waves, 'the breakers before WATER1 and before the top');
 });

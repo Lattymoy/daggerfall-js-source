@@ -1,0 +1,317 @@
+[
+  {
+    "name": "WS-clip-share-one-tile",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      col * stride - 1,\n      row * stride - 1,",
+    "new": "      col * stride,\n      row * stride,",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-sea-unmarked",
+    "file": "src/world/water/waterLevel.js",
+    "old": "    sea[i * 2 + 1] = level[i] === SEA_LEVEL_Y ? 1 : 0;",
+    "new": "    sea[i * 2 + 1] = 0;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-blur-spread-narrowed",
+    "file": "src/world/water/waterLevel.js",
+    "old": "  const spread = 2 * sigma,",
+    "new": "  const spread = 0.5 * sigma,",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-hold-dropped",
+    "file": "src/world/water/waterLevel.js",
+    "old": "  for (let i = 0; i < cols * rows; i++) field[i] = Math.max(fan[i] - hold, Math.min(fan[i] + hold, field[i]));",
+    "new": "",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-edge-middle-one-end",
+    "file": "src/world/water/waterLevel.js",
+    "old": "            : (corner[at] + corner[at + 1]) / 2",
+    "new": "            : corner[at]",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-centre-a-corner",
+    "file": "src/world/water/waterLevel.js",
+    "old": "            ? centre[z * (gx - 1) + x]",
+    "new": "            ? corner[at]",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-bed-field-the-cut",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      wetField = shoreMap(gx, gz, wet, wetMid).field,",
+    "new": "      wetField = shoreMap(gx, gz, cutAt, cutMid).field,",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-share-unspread",
+    "file": "src/world/water/waterLevel.js",
+    "old": "shoreMap(gx, gz, open, openMid, OPEN_SIGMA, Infinity)",
+    "new": "shoreMap(gx, gz, open, openMid, 1e-6, Infinity)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-lattice-a-tile",
+    "file": "src/render/waterSurface.js",
+    "old": "vec4 shoreAt() { return textureLod(uShore, (2.0 * vLocalXZ / uTileSize + 0.5) / vec2(textureSize(uShore, 0)), 0.0); }",
+    "new": "vec4 shoreAt() { return textureLod(uShore, (1.0 * vLocalXZ / uTileSize + 0.5) / vec2(textureSize(uShore, 0)), 0.0); }",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-rise-unclamped",
+    "file": "src/world/water/waterLevel.js",
+    "old": "rise[i] = Number.isFinite(level[i]) ? Math.max(0, ground[i * 3 + 1] - level[i]) : RISE_MAX;",
+    "new": "rise[i] = Number.isFinite(level[i]) ? ground[i * 3 + 1] - level[i] : RISE_MAX;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-rise-no-level-none",
+    "file": "src/world/water/waterLevel.js",
+    "old": "rise[i] = Number.isFinite(level[i]) ? Math.max(0, ground[i * 3 + 1] - level[i]) : RISE_MAX;",
+    "new": "rise[i] = Number.isFinite(level[i]) ? Math.max(0, ground[i * 3 + 1] - level[i]) : 0;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-rise-unspread",
+    "file": "src/world/water/waterLevel.js",
+    "old": "shoreMap(gx, gz, rise, riseMid, RISE_SIGMA, Infinity)",
+    "new": "shoreMap(gx, gz, rise, riseMid, 1e-6, Infinity)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-rise-fade-unread",
+    "file": "src/render/waterSurface.js",
+    "old": "    edge *= 1.0 - smoothstep(${RISE_FADE[0].toFixed(3)}, ${RISE_FADE[1].toFixed(3)}, sh.a * ${RISE_MAX.toFixed(3)});\n    // WATER-PUDDLE: a puddle record keeps only the texels its own art paints water (world/puddleMask.js)",
+    "new": "    // WATER-PUDDLE: a puddle record keeps only the texels its own art paints water (world/puddleMask.js)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-open-depth-without-a-copy-alone",
+    "file": "src/render/waterSurface.js",
+    "old": "  float bedPath = uOpen == 1 ? 0.0 : (mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, uSceneOn == 1 ? 0.0 : open) + 0.02) / slant;   // what the bed under the sheet says",
+    "new": "  float bedPath = uOpen == 1 ? 0.0 : (vDepth.y + 0.02) / slant;   // what the bed under the sheet says",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-open-look-wrong-channel",
+    "file": "src/render/waterSurface.js",
+    "old": "  float open = uOpen == 1 ? 1.0 : (uShoreOn == 1 ? shoreAt().b : vSea.x);",
+    "new": "  float open = uOpen == 1 ? 1.0 : (uShoreOn == 1 ? shoreAt().g : vSea.x);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-clip-swell-dropped",
+    "file": "src/render/waterSurface.js",
+    "old": "  float grow = uOpen == 1 ? 1.0 : max(smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);",
+    "new": "  float grow = uOpen == 1 ? 1.0 : max(smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), 0.0);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-tint-unread",
+    "file": "src/render/waterSurface.js",
+    "old": "    body = textureLod(uTileArr, vec3(0.5, 0.5, 0.0), 8.0).rgb * uTint * mix(vec3(1.0), uOpenColor, vSea.y);   // the sea wears the mod's tint",
+    "new": "    body = textureLod(uTileArr, vec3(0.5, 0.5, 0.0), 8.0).rgb * uTint;   // the sea wears the mod's tint",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-kinds-field-unread",
+    "file": "src/render/groundEdgeGlsl.js",
+    "old": "float c = uShoreOn == 1 && a == ",
+    "new": "float c = uShoreOn == 2 && a == ",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-silt-field-unread",
+    "file": "src/render/waterBedGlsl.js",
+    "old": "float c = uShoreOn == 1 && m != 15u ? shoreWet(p)",
+    "new": "float c = uShoreOn == 2 && m != 15u ? shoreWet(p)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-silt-whole-water-on-the-field",
+    "file": "src/render/waterBedGlsl.js",
+    "old": "float c = uShoreOn == 1 && m != 15u ? shoreWet(p)",
+    "new": "float c = uShoreOn == 1 ? shoreWet(p)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-silt-dry-tile-left-bare",
+    "file": "src/render/waterBedGlsl.js",
+    "old": "  if (m == 0u && uShoreOn == 0) return vec2(0.0);",
+    "new": "  if (m == 0u) return vec2(0.0);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-fields-unregistered",
+    "file": "src/render/renderer.js",
+    "old": "    if (sheet.shore && tilemapTex) this._shoreOf.set(tilemapTex, sheet.shore);\n",
+    "new": "",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-fields-kept-past-the-sheet",
+    "file": "src/render/renderer.js",
+    "old": "      if (water.ground && this._shoreOf.get(water.ground) === water.shore) this._shoreOf.delete(water.ground);\n",
+    "new": "",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-ground-blind-to-the-fields",
+    "file": "src/render/renderer.js",
+    "old": "    this._bindShore(this.waterBed ? this._shoreOf.get(tilemapTex) ?? null : null, this.tUShoreOn, null);",
+    "new": "    this._bindShore(null, this.tUShoreOn, null);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-tint-unsent",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform3f(L.openColor, sea ? sea[0] : 1, sea ? sea[1] : 1, sea ? sea[2] : 1);   // `sea` the open sea's tint (the mod's Top Color) on the sheets' sea, white with none\n    this._drawWaterRows(L, rows, n);",
+    "new": "    this._drawWaterRows(L, rows, n);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-sea-marks-unbound",
+    "file": "src/render/renderer.js",
+    "old": "[cut, 2, 1], [sea, 3, 2]]",
+    "new": "[cut, 2, 1]]",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-top-over-the-sheet",
+    "file": "src/scenes/world.js",
+    "old": " && !(waterOn && !f.underwater && p.water && !p.deepWaters.hide)) _dwSurfaceList.push",
+    "new": ") _dwSurfaceList.push",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-tint-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);",
+    "new": "      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-sheet-without-its-tilemap",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "renderer.createWaterSheet(bed.sheet, tilemapTex)",
+    "new": "renderer.createWaterSheet(bed.sheet)",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-unweighted",
+    "file": "src/world/water/waterLevel.js",
+    "old": "        coast = seaField[k] * Math.min(1, COAST_NEAR * share),",
+    "new": "        coast = 0,",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-line-sign",
+    "file": "src/world/water/waterLevel.js",
+    "old": "(COAST_EDGE - share) * COAST_RAMP",
+    "new": "(share - COAST_EDGE) * COAST_RAMP",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-silt-kept",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      data[k * 4 + 1] = toByte(wetField[k] + (1 - wetField[k]) * coast);",
+    "new": "      data[k * 4 + 1] = toByte(wetField[k]);",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-sea-unmarked",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      atSea[i] = level[i] === SEA_LEVEL_Y ? 1 : 0;",
+    "new": "      atSea[i] = 1;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-coast-edge-shallow",
+    "file": "src/world/water/waterLevel.js",
+    "old": "export const COAST_EDGE = 0.5;",
+    "new": "export const COAST_EDGE = 0.3;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  },
+  {
+    "name": "WS-copy-reads-open-depth",
+    "file": "src/render/waterSurface.js",
+    "old": "uSceneOn == 1 ? 0.0 : open) + 0.02) / slant;",
+    "new": "open) + 0.02) / slant;",
+    "tests": [
+      "test/world/water/watershore.test.js"
+    ]
+  }
+]

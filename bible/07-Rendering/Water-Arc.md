@@ -18,7 +18,7 @@ town's ponds and moats by the RMB's ground tiles. The terrain pass draws it opaq
 
 - **The level** (`src/world/water/waterLevel.js`, `src/world/water/streamLevels.js`). The tiles only mark where water
   is: each grid vertex gets the share of the tiles meeting it that call that corner water (`waterVotes`, the draw's
-  table). A marked vertex takes its body's level: World 2.0's surface, Cyrodiil's river or lake level, the sea's 34
+  table; a tile Deep Waters' cap clipped is the open sea, water at every corner). A marked vertex takes its body's level: World 2.0's surface, Cyrodiil's river or lake level, the sea's 34
   where the ground stands at its clamp, else its uncarved ground (a town's pond, a Bay river). A dry vertex beside the
   water borrows its neighbours' mean, never above its own ground. The sheet is its own mesh at that level
   (`waterSheet`), four triangles about each quad's centre, so water one tile wide keeps a middle. It is built with the
@@ -28,8 +28,10 @@ town's ponds and moats by the RMB's ground tiles. The terrain pass draws it opaq
   ground is carved only past one cell from the bank (`SHELF_CHAMFER`), to min(ground, level - carve): never raised, and
   World 2.0's deeper floors are left alone. The bed is drawn only; `heightAt` and the feet read the uncarved samples.
 - **The bed's face** (`src/render/waterBedGlsl.js`). Under the enhanced water a ground water texel takes the climate's
-  dirt darkened to silt. A shore record's painted water outside the sheet goes under the silt too, and the fringe beyond
-  is wet mud (`src/world/puddleMask.js` `shoreWaterColours`, `SHORE_DRY_RATIO`).
+  dirt darkened to silt, on the sheet's own smoothed line (below): a dry tile the line calls wet is silted, a whole water
+  tile's art is silt whole, and a shore transition's two kinds meet on the same line (`groundEdgeGlsl.js` `shoreGlsl`).
+  A shore record's painted water outside the sheet goes under the silt too, and the fringe beyond is wet mud
+  (`src/world/puddleMask.js` `shoreWaterColours`, `SHORE_DRY_RATIO`).
 - **The swell.** Three wave trains about the wind, at deep water's speed, their height the wind's from `SWELL_CALM`
   (0.05) to `SWELL_GALE` (0.34), faded over the bank. `swellAt` is the same sum on the CPU. The open sea takes the swell
   as slope only.
@@ -38,22 +40,38 @@ town's ponds and moats by the RMB's ground tiles. The terrain pass draws it opaq
   copied once a frame before the first water draw (`AirPass.snapshotUnderWater`), so the water refracts what lies under
   it; on the classic lane the blend does the same sum. Schlick Fresnel over the sky (capped at 0.85), glints of sun,
   moon and lamps, the fog.
-- **The shore.** The water's edge is where its plane meets the ground: the depth test, faded over `SHORE_MEET` (0.06) of
-  depth behind the surface. Where the plane runs on over ground no higher than it, a cut field from the votes ends it,
-  with the coast's wander. Foam over the shallow band (`FOAM_DEPTH` 0.22), its edge riding the swell up the bank (`FOAM_RUNUP`),
+- **The shore is a curve, never a tile's edge.** Where the plane runs on over ground no higher than it, a cut field from
+  the votes ends it, with the coast's wander. The field is smoothed (`shoreMap`): laid on a lattice of half tiles,
+  blurred by `SHORE_SIGMA` (0.6 tile) and held within `SHORE_HOLD` (0.7) of itself, so a stream or a pool a tile wide
+  keeps its heart. A near sheet carries its fields as an RGBA8 texture read bilinear (`WATER_SHORE_UNIT`): the cut, the
+  bed's own water, the clip's share spread a tile (`OPEN_SIGMA`), and the bank's rise.
+- **A bank is rounded.** Where a plane meets rising ground the depth test would cut the sheet on the ground's own
+  triangles, kinked on their diagonal. The bank's rise - how far the drawn ground stands over the plane, smoothed by
+  `RISE_SIGMA` (0.35 tile) - fades the water out over `RISE_FADE` (0.025 to 0.065), short of `WATER_LIFT`, so it ends
+  on that curve a fraction of a tile inside the triangles' line. Finer drawn ground would part from the walked one
+  (`heightAt`). The water also fades in over `SHORE_MEET` (0.06) of depth behind it. Foam over the shallow band (`FOAM_DEPTH` 0.22), its edge riding the swell up the bank (`FOAM_RUNUP`),
   cut into lace by drifting noise; steep crests whiten in a strong wind. Come Sail Away's sprite breakers stand down
   under the enhanced water.
 - **The ripples** (`src/world/water/waterRipples.js`). A damped wave equation (`RIPPLE_DAMPING` 0.975) on a 96-cell grid
   48 units round the camera at 30 Hz, stirred by the player and every boat afloat. Uploaded only when it moved.
-- **The open sea.** Iliac Puddle No More's surface sheets (Deep Waters) are drawn by the same program from above; its own
-  underside from below.
+- **The open sea.** A coastal pixel's sea is its near sheet's, to the coast. Over Deep Waters' clip the sheet swells
+  whole. With the frame's copy it reads the mod's floor through the water as the mod's own sheet does; without one it
+  stands at the open sea's depth (`OPEN_PATH`), faded in by the clip's smoothed share. The water at the sea's level
+  wears the mod's Top Color, as Iliac Puddle No More's own sheets and the far ring's sea do. Those sheets are drawn by
+  the same program from above where no near sheet stands (a hidden pure-ocean pixel); from under the sea, the mod's
+  underside, and the near sheet over the clip stands down.
+- **The cap's coast is a curve** (`COAST_EDGE`). By the clip, at the sea's level, the sea ends where the clip's
+  smoothed share stands at a half, not on the votes. The ground the cap cuts follows the same share, deeper
+  (`COAST_CUT.share`), so the sea stands full over it and the drop to the mod's floor is a curve too. A tile the cap
+  kept in a notch goes under the sea; a kept point with no kept tile beside it wears the nearest two out.
 - **The horizon.** One haze law for every surface past the streamed grid's fog (`src/render/horizonHaze.js`
   `HORIZON_HAZE_GLSL`): the world fog's ramp capped at the far ring's hold. The streamed sea holds it too, and the far
   ring's sea shares the water's own look (`SEA_LOOK_GLSL`), so the sea runs on continuously to the horizon. Ring cells
   inside the streamed rect fill the sea past the world's far plane, only those the eye can see.
 - **The coast** (`src/world/terrain/groundEdge.js`, `src/render/groundEdgeGlsl.js`). A transition tile draws its two
   kinds' base records at a share moved by a three-octave wander, so shores have no straight tile edges; Deep Waters' sea
-  is cut on a wandering line instead of whole tiles. `?coastedges=off` restores the tile edges.
+  is cut on a wandering line instead of whole tiles, on the clip's smoothed share where the sheet stands.
+  `?coastedges=off` restores the tile edges.
 - **Town puddles are dry** (`src/world/puddleDry.js`). A one-tile patch of water, or one made only of shallow-water art,
   takes the ground its dry neighbours stand on. It runs where a block is served (`src/formats/blocksFile.js`
   `getBlock`), so every reader of the ground sees one ground, on both skins. Moats, ponds and docks stay.
@@ -76,7 +94,9 @@ town's ponds and moats by the RMB's ground tiles. The terrain pass draws it opaq
 
 DFU draws water as an opaque terrain tile, and classic palette-cycled it. Departures, enhanced skin only: the moving
 sheet, bed, body and shore above; the coast's wandering blend (DFU's tiles have straight edges); and, on both skins,
-dry town puddles.
+dry town puddles. From Iliac Puddle No More, enhanced skin only: its top is not drawn over a coastal pixel seen from
+above (the near sheet carries that sea, reading the mod's floor as its own sheet does), its Top Color tints the near
+sheet's sea, and its coast is the clip's smoothed share, not the clip's tiles.
 
 ## Code and tests
 
@@ -91,6 +111,8 @@ dry town puddles.
 - `test/render/waternext.test.js`, `test/world/terrain/waterbed.test.js`, `test/world/water/waterripples.test.js` - the
   surface, bed and ripples
 - `test/world/water/waterlevel.test.js` - the level, the votes and the sheet
+- `test/world/water/watershore.test.js` - the shore's smoothed fields, the bank's rise, the coast as the eye reads it
+  (on the Bay and past it), the programs and the renderer
 - `test/render/farsea1.test.js`, `test/world/shoresilt.test.js`, `test/world/water/bankflush.test.js`,
   `test/render/coastlook.test.js`, `test/world/puddledry.test.js`
 
@@ -102,6 +124,13 @@ dry town puddles.
 - World 2.0's water is drawn at its surface, but the feet and the swim still stand on its bed: moving them is a change to
   play.
 - On the far ring (stride 4) a river or pond narrower than a cell gets no sheet and shows as silt.
-- Shores are not yet round everywhere: the sea coast follows Deep Waters' clip, and a bank follows the ground's
-  triangles.
+- On a rising bank the water ends a fraction of a tile short of where the plane meets the ground, so a thin rim of wet
+  ground shows; a stream a tile wide reads a little narrower than its tiles.
+- A shore's smoothing holds each pixel's own edge, so a shore crossing a seam can step a fraction of a tile there.
+- The far ring (stride 4) keeps its vertices' cut: its shores are a cell's polyline, seen only far off.
+- With the mod's Spawn Surfaces off, the near sheet still covers the clip.
+- By the cap's clip the drawn sea ends on the clip's smoothed share: a sliver of land the cap kept at the sea's height
+  can lie under the water's edge, and a clipped tile poking into the land can show as sand. The swim keeps the mod's
+  line.
+- The lane's terrain program reads sixteen samplers with the shore's, the least every WebGL2 offers.
 - The cost on a real GPU is not measured here.

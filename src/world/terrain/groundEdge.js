@@ -134,14 +134,19 @@ export const COAST_CUT = Object.freeze({
   line: 0.875,
   /** the wander's widest move of the line, either way */
   reach: 0.12,
+  /** with the enhanced water's fields, the clip's smoothed share past which a point is cut: deeper than the share the
+   *  sea's own edge rides (world/water/waterLevel.js COAST_EDGE), so the cut ground is always under full water */
+  share: 0.75,
 });
 /** The ground's wander (+-(GROUND_EDGE_REACH - soft) at its widest) carried as +-reach. */
 export const COAST_CUT_WANDER = COAST_CUT.reach / (GROUND_EDGE_REACH - GROUND_EDGE.soft);
 
 /** The cut at a pixel-local point: `{ cut, from }` - `from` the kept cell a kept point of a clipped cell draws.
- *  `cutAt(cx, cy)` whether a cell is clipped (the caller clamps to its tilemap).
- *  @param {(cx: number, cy: number) => boolean} cutAt @param {number} x @param {number} y */
-export function coastCutAt(cutAt, x, y) {
+ *  `cutAt(cx, cy)` whether a cell is clipped (the caller clamps to its tilemap); `shareAt(x, y)`, where the water's
+ *  fields stand, the clip's smoothed share, which then draws the line.
+ *  @param {(cx: number, cy: number) => boolean} cutAt @param {number} x @param {number} y
+ *  @param {((x: number, y: number) => number) | null} [shareAt] */
+export function coastCutAt(cutAt, x, y, shareAt = null) {
   const D = 128,
     cx = Math.min(D - 1, Math.max(0, Math.floor(x))),
     cy = Math.min(D - 1, Math.max(0, Math.floor(y)));
@@ -156,7 +161,9 @@ export function coastCutAt(cutAt, x, y) {
   const kb = cutAt(cb[0], cb[1]),
     kc = cutAt(cc[0], cc[1]),
     kd = cutAt(cd[0], cd[1]);
-  if (kb && kc && kd) return { cut: true, from: null };
+  if (shareAt && shareAt(x, y) + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.share)
+    return { cut: true, from: null };
+  if (!shareAt && kb && kc && kd) return { cut: true, from: null };
   const kx = Math.floor(x + 0.5),
     ky = Math.floor(y + 0.5),
     s0 = x - (kx - 0.5),
@@ -168,7 +175,7 @@ export function coastCutAt(cutAt, x, y) {
     (kb ? wx(cb[0]) * wy(cb[1]) : 0) +
     (kc ? wx(cc[0]) * wy(cc[1]) : 0) +
     (kd ? wx(cd[0]) * wy(cd[1]) : 0);
-  if (lin + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };
+  if (!shareAt && lin + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.line) return { cut: true, from: null };
   // kept: the nearest kept cell across this corner - its x or y neighbour (the nearer edge first), else the diagonal
   const u = Math.min(fx, 1 - fx),
     v = Math.min(fy, 1 - fy);
@@ -183,5 +190,22 @@ export function coastCutAt(cutAt, x, y) {
           [kb, cb],
         ];
   for (const [k, c] of order) if (!k) return { cut: false, from: /** @type {[number, number]} */ (c) };
-  return { cut: false, from: /** @type {[number, number]} */ (cd) };
+  return kd ? keptFar(cutAt, x, y, cx, cy) : { cut: false, from: /** @type {[number, number]} */ (cd) };
+}
+
+/** A kept point whose three cells across its corner are clipped (only the share's line keeps one): the nearest kept
+ *  cell two out draws it, `far` - none, and it is cut. */
+function keptFar(cutAt, x, y, tileX, tileY) {
+  let best = Infinity,
+    from = null;
+  for (let dy = -2; dy <= 2; dy++)
+    for (let dx = -2; dx <= 2; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 2 || cutAt(tileX + dx, tileY + dy)) continue;
+      const away = Math.hypot(x - (tileX + dx + 0.5), y - (tileY + dy + 0.5));
+      if (away < best) {
+        best = away;
+        from = [tileX + dx, tileY + dy];
+      }
+    }
+  return from ? { cut: false, from: /** @type {[number, number]} */ (from), far: true } : { cut: true, from: null };
 }

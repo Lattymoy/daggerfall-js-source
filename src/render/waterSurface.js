@@ -32,7 +32,7 @@
 // pass draws water the player swims). The coverage inside a tile is
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
-import { WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';
+import { WATER_DRAW_MASK_TABLE, RISE_MAX } from '../world/water/waterCorners.js'; // And the bank's rise's range
 import { snowCoreGlsl } from './snowCoverGlsl.js'; // AUDIT PRECIP GROUND-5: the ground's snow, for a puddle's mask under it
 import { PUDDLE_RECORDS } from '../world/puddleMask.js'; // WATER-PUDDLE: the records whose water is their art's   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
@@ -42,6 +42,7 @@ import { FOG_GLSL } from './fogGlsl.js'; // AUDIT 68 S17-fog-glsl-dup: the fog e
 import { SEA_LOOK_GLSL, SEA_HAZE_BAND } from './horizonHaze.js'; // FAR-SEA1: the sea takes the far ring's haze; AUDIT FAR-SEA1 C12: and the open sea's light is one text with the ring's sea
 import { pageParam } from '../systems/pageQuery.js';
 import { EDGE_NOISE_GLSL } from './roadEdgeGlsl.js'; // COAST-LOOK: the edges' lattice noise, its one text
+
 import { groundWanderGlsl, groundKindsGlsl } from './groundEdgeGlsl.js'; // COAST-LOOK: the shore's wander and the transitions' table, the ground's own (the sheet, the sand and the silt on one line)
 import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/water/waterRipples.js';
 
@@ -103,7 +104,7 @@ export const WATER_TINT = Object.freeze([0.36, 0.5, 0.6]);
 export const WATER_F0 = 0.02;
 /** Half-width of the shore feather, in coverage (0.5 is the diagonal). */
 export const SHORE_SOFTNESS = 0.16;
-/** WATER-LEVEL: the depth over the ground (units) over which the water fades in where the ground rises through its
+/** The depth over the ground (units) over which the water fades in where the ground rises through its
  *  plane - under the lift, so a shelf standing at the level is water whole. */
 export const SHORE_MEET = 0.06;
 /** The classic texel's slow flow, in tiles per second. AUDIT 65 CV-3:
@@ -279,6 +280,12 @@ export const CREST_SLOPE = 0.075;
 /** The texture units the scene's copy rides (bound before every water draw, never trusted to persist - inside
  *  Dynamic Skies' nine and under the lane's own, as BB_SURFACE_UNIT). */
 export const WATER_SCENE_UNIT = 7;
+/** The bank's rise over which the sheet fades out (world/water/waterLevel.js shoreMap's fourth field), units -
+ *  done short of WATER_LIFT, so the water ends on that smoothed curve before the ground's own triangles cut it. */
+export const RISE_FADE = Object.freeze([0.025, 0.065]);
+/** The unit a water sheet's smoothed fields ride (world/water/waterLevel.js shoreMap) - the water's and its
+ *  ground's (the silt's line), no other pass's. */
+export const WATER_SHORE_UNIT = 26;
 /** WATER-NEXT 4: the ripple field's unit - 1, the billboards' emission unit, its shadow forgotten after the bind. */
 export const WATER_RIPPLE_UNIT = 1;
 export const WATER_SCENE_DEPTH_UNIT = 6;
@@ -292,14 +299,16 @@ export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2((len
  *  shows the curtains as it shows a lamp's glint; the bare Fresnel, a few hundredths looking down, hid them. */
 export const AURORA_MIRROR = 0.3;
 
-/** WATER-LEVEL: the sheet AT ITS LEVEL (world/water/waterLevel.js), lifted WATER_LIFT and heaved by the swell -
- *  attribute 1 its depth over the carved ground and the shading's depth, attribute 2 the shore's cut. The swell grows
- *  with the depth over the ground, so a trough never dips under it. The open sea's sheet (Deep Waters' top, `uOpen`)
- *  reads neither and swells everywhere. */
+/** The sheet AT ITS LEVEL (world/water/waterLevel.js), lifted WATER_LIFT and heaved by the swell -
+ *  attribute 1 its depth over the carved ground and the shading's depth, attribute 2 the shore's cut, attribute 3 the
+ *  sea's marks (the share of Deep Waters' clip about it and its standing at the sea's level). The swell
+ *  grows with the depth over the ground, or over the clip, so a trough never dips under it. The open sea's sheet (Deep
+ *  Waters' top, `uOpen`) reads none and swells everywhere. */
 export const WATER_SURFACE_VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec2 aDepth;
 layout(location=2) in float aCut;
+layout(location=3) in vec2 aSea;
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform mat4 uModel;
@@ -314,10 +323,12 @@ out vec2 vLocalXZ;
 out vec2 vDepth;
 out float vGrow;
 out float vCut;               // the shore's cut field (world/water/waterLevel.js waterSheet)
+out vec2 vSea;                // the clip's share (the open sea) and the sea's level
 ${SWELL_GLSL}
 void main() {
   vec4 world = uModel * vec4(aPos.x, aPos.y + uLift, aPos.z, 1.0);
-  float grow = uOpen == 1 ? 1.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x);
+  vec2 sea = uOpen == 1 ? vec2(0.0) : aSea;   // the open sea's sheet binds its uvs on 2 and nothing on 3
+  float grow = uOpen == 1 ? 1.0 : max(smoothstep(0.0, ${SWELL_DEPTH.toFixed(3)}, aDepth.x), sea.x);
   vec3 sw = swellAt(world.xz, uTime, uWindDir, uSwell * grow);
   // AUDIT WATER-NEXT G8: the heave fades out before the far rings' strided grids, whose cells are as long as the
   // shortest train (a vertex a wave: the distant sheet heaved in an aliased lattice); the slope stays the fragment's
@@ -328,6 +339,7 @@ void main() {
   vDepth = vec2(aDepth.x + uLift + lift, max(aDepth.y + lift, 0.0));
   vGrow = grow;
   vCut = aCut;
+  vSea = sea;
   gl_Position = uProj * uView * world;
 }`;
 
@@ -359,6 +371,7 @@ in vec2 vLocalXZ;
 in vec2 vDepth;
 in float vGrow;
 in float vCut;
+in vec2 vSea;
 uniform sampler2DArray uTileArr;
 uniform usampler2D uTilemap;
 uniform highp ivec3 uEcoOrigin;   // AUDIT PRECIP GROUND-5: the pixel's first world tile on the snow lane (render/snowCoverGlsl.js)
@@ -366,7 +379,9 @@ ${snowCoreGlsl()}
 uniform float uTileSize;
 uniform int uTileDim;          // WATER-AUDIT: the tilemap's side (128 in the world, the town's own in the fixed city)
 uniform int uOpen;             // WATER-NEXT 2: the open sea's sheet - no tilemap, all water
-uniform vec3 uOpenColor;       // and the mod's tint over its water's colour
+uniform vec3 uOpenColor;       // and the mod's tint over its water's colour - the sea's, on the terrain's sheet too (vSea.y)
+uniform sampler2D uShore;      // the sheet's smoothed fields (world/water/waterLevel.js shoreMap), half a tile a texel
+uniform int uShoreOn;
 uniform float uTime;
 uniform vec2 uWindDir;
 uniform float uWindStrength;   // 0..1 on the sky's row scale
@@ -453,6 +468,9 @@ float lace(vec2 p, float t) {
   vec2 drift = uWindDir * t * 0.35;
   return 0.65 * vnoise(p * 0.9 - drift) + 0.35 * vnoise(p * 2.7 + drift.yx);
 }
+// The sheet's smoothed fields here (world/water/waterLevel.js shoreMap): r the cut, b the clip's share, a the
+// bank's rise
+vec4 shoreAt() { return textureLod(uShore, (2.0 * vLocalXZ / uTileSize + 0.5) / vec2(textureSize(uShore, 0)), 0.0); }
 // the eye's distance to a window depth, off the frame's own projection (a GL perspective: z_ndc = 2d - 1)
 float eyeDepth(float d) { return uProj[3][2] / ((d * 2.0 - 1.0) + uProj[2][2]); }
 void main() {
@@ -470,8 +488,14 @@ void main() {
     uint data = texelFetch(uTilemap, cell, 0).r;   // WATER-LEVEL: the record, for a puddle's art and the ground's line - never the water's extent
     vec2 f = fract(unwrapped);
     // WATER-LEVEL: where the plane runs on over ground no higher than it, the cut field ends it (world/water/waterLevel.js),
-    // on the ground's wandering line where the ground blends (COAST-LOOK); elsewhere the ground rises through it
-    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, 0.5 - 0.5 * vCut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));
+    // on the ground's wandering line where the ground blends (COAST-LOOK); elsewhere the ground rises through it.
+    // The field smoothed, read bilinear - the shore a curve, never a tile's edge
+    vec4 sh = uShoreOn == 1 ? shoreAt() : vec4(0.0);
+    float cut = uShoreOn == 1 ? sh.r * 2.0 - 1.0 : vCut;
+    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, 0.5 - 0.5 * cut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));
+    // Where the bank rises through the plane the water fades out on the rise's smoothed field, short of the
+    // ground's own triangles - the bank a curve, not their zigzag
+    edge *= 1.0 - smoothstep(${RISE_FADE[0].toFixed(3)}, ${RISE_FADE[1].toFixed(3)}, sh.a * ${RISE_MAX.toFixed(3)});
     // WATER-PUDDLE: a puddle record keeps only the texels its own art paints water (world/puddleMask.js)
     uint rec = data >> 2u;
     if (isPuddleRecord(rec)) {
@@ -486,11 +510,11 @@ void main() {
     }
     if (edge <= 0.002) discard;
     // the water's own colour: the climate's water texel (record 0), averaged to one colour by its mip chain
-    body = textureLod(uTileArr, vec3(0.5, 0.5, 0.0), 8.0).rgb * uTint;
+    body = textureLod(uTileArr, vec3(0.5, 0.5, 0.0), 8.0).rgb * uTint * mix(vec3(1.0), uOpenColor, vSea.y);   // the sea wears the mod's tint
   }
   // AUDIT WATER-NEXT G7: the open sea from under its own crest is not drawn - the mod's top discards the same
   // (uCamPos.y - vWorldPos.y + 0.02 < 0): a swimmer at the surface under a heaving sheet saw the wave's underside
-  if (uOpen == 1 && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;
+  if ((uOpen == 1 || vSea.x > 0.5) && uCamPos.y - vWorldPos.y + 0.02 < 0.0) discard;   // the terrain's sheet over the clip too
   vec3 toEye = uCamPos - vWorldPos;
   float dist = length(toEye);
   vec3 V = toEye / max(dist, 1e-4);
@@ -541,7 +565,10 @@ void main() {
   lit += body * (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor * 0.25;
   // THE PATH through the water
   float slant = max(V.y, 0.12);
-  float bedPath = uOpen == 1 ? 0.0 : (vDepth.y + 0.02) / slant;   // what the bed under the sheet says
+  // Over the clip, with the frame's copy the sea reads the mod's floor as the mod's own sheet does; without one it is
+  // the open sea's depth, faded in by the clip's smoothed share
+  float open = uOpen == 1 ? 1.0 : (uShoreOn == 1 ? shoreAt().b : vSea.x);
+  float bedPath = uOpen == 1 ? 0.0 : (mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, uSceneOn == 1 ? 0.0 : open) + 0.02) / slant;   // what the bed under the sheet says
   float meet = vDepth.x;   // WATER-LEVEL: how far over the ground the plane stands here - 0 where the ground rises through it
   float path = uOpen == 1 ? ${OPEN_PATH.toFixed(1)} : bedPath;
   vec2 uv0 = gl_FragCoord.xy / uSceneSize;
@@ -574,7 +601,7 @@ void main() {
   }
   // WATER-NEXT 3: THE FOAM - the shore's band (the water's vertical depth here, the swell's crest pushing it up the
   // bank) and, on open water in a strong wind, the steep crests
-  float vdepth = uSceneOn == 1 ? path * slant : (uOpen == 1 ? ${OPEN_PATH.toFixed(1)} : vDepth.y);
+  float vdepth = uSceneOn == 1 ? path * slant : mix(vDepth.y, ${OPEN_PATH.toFixed(1)}, open);
   if (uOpen == 0) edge *= smoothstep(0.0, ${SHORE_MEET.toFixed(3)}, meet);   // WATER-LEVEL: the shore where the ground meets the plane, soft
   // the open sea's sheets are 6.4-unit cells, their edge a staircase over the beach: where a sheet covers no water
   // (the scene's ground at or above it) it is gone, so the shore is where the sea's plane meets the sand

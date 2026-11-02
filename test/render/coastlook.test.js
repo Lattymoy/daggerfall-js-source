@@ -16,11 +16,12 @@ import { join } from 'node:path';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
 
 import { GROUND_KIND, GROUND_EDGE, GROUND_EDGE_REACH, GROUND_KIND_TABLE, COAST_CUT, COAST_CUT_WANDER, groundKindsOf, packGroundKinds, cornerShare, groundEdgeWander, edgeShare, groundEdgeAt, coastCutAt } from '../../src/world/terrain/groundEdge.js';
-import { groundEdgeGlsl, groundWanderGlsl, groundKindsGlsl, coastEdgesOn } from '../../src/render/groundEdgeGlsl.js';
+import { groundEdgeGlsl, groundWanderGlsl, groundKindsGlsl, coastEdgesOn, shoreGlsl } from '../../src/render/groundEdgeGlsl.js';
 import { roadEdgeGlsl, EDGE_NOISE_GLSL } from '../../src/render/roadEdgeGlsl.js';
 import { roadEdgeNoise } from '../../src/world/road/roadEdge.js';
 import { WATER_BED_GLSL, waterBedMix } from '../../src/render/waterBedGlsl.js';
 import { waterSurfaceFs, SHORE_SOFTNESS } from '../../src/render/waterSurface.js';
+import { COAST_EDGE, COAST_RAMP } from '../../src/world/water/waterLevel.js';
 import { waterBedOf, flatGrid } from '../../src/world/water/waterBed.js';
 import { fanCut } from '../../src/world/water/waterLevel.js';
 import { EL_TERRAIN_FS } from '../../src/render/enhancedLighting.js';
@@ -251,10 +252,47 @@ test('COAST-LOOK the GLSL is the JS: the wander to the float, the table entry fo
   assert.equal(fns.groundMix(convertTile(marchTile(DIRT, WATER, WATER, WATER)), [0.3, 0.3], [5.3, 5.3], { value: 0 }, { value: 0 }, { value: 0 }), false, 'off: every tile its own');
 });
 
+test('COAST-LOOK under the water\'s fields the cut rides the clip\'s smoothed share, the GLSL the JS: cut past COAST_CUT.share less the wander, kept short of it - by the nearest kept tile across the corner, mirrored, or where all three are clipped by the nearest kept tile two out at the point\'s own place; none, and it is cut; deeper than the sea\'s own edge, so the cut ground is under full water (mutants: the share unread on either side; the far tile\'s ring; its place)', () => {
+  const share = (x, y) => 0.55 + 0.35 * Math.sin(x * 0.37) * Math.cos(y * 0.23);   // any smooth field: the twin is the law
+  const fns = glslFunctions(terrainChunk, {
+    uGroundEdge: 1, uRoadEdge: 1, uShoreOn: 1,
+    texelFetch: (_s, c) => [CUT.byteAt(c[0], c[1]), 0, 0, 0],
+    textureSize: () => [257, 257],
+    textureLod: (_s, uv) => [0, 0, share((uv[0] * 257 - 0.5) / 2, (uv[1] * 257 - 0.5) / 2), 1],
+  });
+  const du = [0.013, -0.002], dv = [0.001, 0.017];
+  let cut = 0, kept = 0, far = 0;
+  for (let y = 60.013; y < 115; y += 0.093) for (let x = 0.017; x < D; x += 0.371) {
+    const cx = Math.floor(x), cy = Math.floor(y), d = CUT.byteAt(cx, cy), t = d & 3;
+    const io = { data: { value: d }, layer: { value: d >> 2 }, t: { value: t }, tileUV: { value: [x - cx, y - cy] }, tuv: { value: turned(t, [x - cx, y - cy]) }, gx: { value: rot(t, du) }, gy: { value: rot(t, dv) } };
+    const got = fns.coastCut([x, y], io.data, io.layer, io.t, io.tileUV, io.tuv, io.gx, io.gy), want = coastCutAt(CUT.cutAt, x, y, share);
+    assert.equal(got, want.cut, `(${x.toFixed(3)}, ${y.toFixed(3)}): cut or kept`);
+    if (want.cut) {
+      const ring = [-2, -1, 0, 1, 2].every((dy) => [-2, -1, 0, 1, 2].every((dx) => CUT.cutAt(cx + dx, cy + dy)));
+      assert.ok(share(x, y) + COAST_CUT_WANDER * groundEdgeWander(x, y) > COAST_CUT.share || ring, 'cut past the share, or with no kept tile near');
+      cut++;
+      continue;
+    }
+    if (!want.from) continue;
+    const dn = CUT.byteAt(...want.from), tn = dn & 3, l = want.far ? [x - cx, y - cy] : mirror(want.from, [x, y]);
+    assert.deepEqual([io.data.value, io.layer.value, io.t.value], [dn, dn >> 2, tn], `(${x.toFixed(3)}, ${y.toFixed(3)}): the kept tile's byte`);
+    nearAll(io.tileUV.value, l, 1e-12, want.far ? 'two out: the point\'s own place' : 'its point, mirrored about its own square');
+    nearAll(io.tuv.value, turned(tn, l), 1e-12, '...turned by its own transform');
+    if (want.far) {
+      assert.equal(Math.max(Math.abs(want.from[0] - cx), Math.abs(want.from[1] - cy)), 2, 'two out');
+      far++;
+    }
+    kept++;
+  }
+  assert.ok(cut > 1000 && kept > 300 && far > 20, `cut, kept and kept from two out (${cut}, ${kept}, ${far})`);
+  assert.ok(COAST_CUT.share - COAST_CUT.reach > COAST_EDGE + (2 * SHORE_SOFTNESS) / COAST_RAMP, 'the ground is cut only where the sea stands full');
+});
+
 test('COAST-LOOK the silt and the sheet take the ground\'s line where the ground blends, and their own elsewhere: the bed\'s share the water\'s coverage less the wander on a blended transition, the art\'s painted water no fringe there, a tile not blended its own share and its art\'s; the sheet\'s program the same wander and the same table, its shore the coverage less the wander on a blended transition alone (mutants: the bed\'s wander ungated; the fringe kept on a blend; the sheet\'s wander ungated or its sign)', () => {
   const words = packWaterMask(WATER_DRAW_MASK_TABLE);
-  const bed = glslFunctions(`uniform sampler2DArray uTileArr;\n${EDGE_NOISE_GLSL}\n${groundWanderGlsl()}\n${WATER_BED_GLSL}`, {
-    uGroundEdge: 1, uWaterBed: 1, uSnowArr: [0, 0, 0, 0],
+  // shoreGlsl) - off here, the tile's own line as before; watershore.test.js runs it on
+  const bed = glslFunctions(`uniform sampler2DArray uTileArr;\n${EDGE_NOISE_GLSL}\n${groundWanderGlsl()}\n${shoreGlsl()}\n${WATER_BED_GLSL}`, {
+    uGroundEdge: 1, uWaterBed: 1, uSnowArr: [0, 0, 0, 0], uShoreOn: 0,
     uBedMask: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => [...words.slice(4 * i, 4 * i + 4)]),
     textureGrad: () => [0, 0, 0, 0.9],   // the art paints water everywhere: a fringe wherever it is read
   });
@@ -276,7 +314,7 @@ test('COAST-LOOK the silt and the sheet take the ground\'s line where the ground
   const sheet = glslFunctions(fs, { uGroundEdge: 1 });
   for (let y = 0.05; y < D; y += 7.1) for (let x = 0.07; x < D; x += 6.3) near(sheet.geWander([x, y]), groundEdgeWander(x, y), 1e-12, `the sheet's wander at (${x}, ${y})`);
   for (let byte = 0; byte < 256; byte++) assert.equal(sheet.geEntry(byte), GROUND_KIND_TABLE[byte], `the sheet's entry ${byte}`);
-  assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* vCut - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');
+  assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* cut - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');
   // the sheet and the sand on one line: where the ground's share of land is a half, the sheet's water is a half - the
   // sheet built over a dirt row, a row of the march's edge and a row of water, its cut as the GPU interpolates it
   const edge = convertTile(marchTile(DIRT, DIRT, WATER, WATER)), dirt = convertTile(marchTile(DIRT, DIRT, DIRT, DIRT));

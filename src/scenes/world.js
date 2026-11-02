@@ -72,7 +72,7 @@ import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchMo
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt, walkGroundAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none; FLORA-GROUND: the ground's one law
-import { waterUniforms, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface; WATER-LEVEL: its sheet stands at its level (world/water/waterLevel.js), carved with the bed
+import { waterUniforms, waterSwitchOn } from '../render/waterSurface.js';   // The enhanced water surface; WATER-LEVEL: its sheet stands at its level (world/water/waterLevel.js), carved with the bed
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/water/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -290,7 +290,7 @@ import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // WW2: which picture a theatre's gate scan read
 import { keptBayFit } from '../world/tamriel/bayFitKept.js';   // TAMRIEL3: where the Bay stands on it; FIRST-VISIT: kept across launches
-import { gen2Bakes } from './gen2Host.js';   // WG2: the published regions' bakes (bible/03-World/World-2-Canon.md)
+import { gen2Bakes } from './gen2Host.js';   // The published regions' bakes
 import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
@@ -4946,7 +4946,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  edge, where the mod's floor is fitted to the vanilla shore - carved under it, the ground stood metres below the floor
    *  it should meet, and the gap between them was open. */
   function bedBytesOf(p) { return p._dwBytes ?? p.tilemapBytes; }
-  /** AUDIT WATER-NEXT H1 (2026-10-07): A REPAINTED TILE IS GROUND. The cap repaints a water tile that stands above the
+  /** A REPAINTED TILE IS GROUND. The cap repaints a water tile that stands above the
    *  sea with the ground beside it (world/deepWater/deepWaterCap.js) - and the bed had been carved by the pixel's own TileMap at
    *  the build, so every such tile was a pit four units deep, of grass or sand, with no water over it (Iliac Puddle No
    *  More is on by default: a river's mouth on a coast). When the cap's TileMap moves the bed, the ground is carved again
@@ -4958,7 +4958,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const stride = p._stride ?? 1;
     const halo = stride === 1 ? p._bed.halo : null;   // AUDIT WATER-NEXT F2: the seams' tiles the build read
     const grid = { positions: p._bed.grid, normals: p._bed.normals };
-    const bed = gridBed(grid, bedBytesOf(p), stride, halo, p);   // WATER-LEVEL: carved and levelled by the TileMap that stands
+    const bed = gridBed(grid, bedBytesOf(p), stride, halo, p);   // Carved and levelled by the TileMap that stands
     const same = (a, b) => a === b || (a && b && a.length === b.length && a.every((d, i) => d === b[i]));
     const moved = !same(bed?.depths ?? null, p._bed.depths);
     p._bed = { grid: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheet: bed?.sheet ?? null, halo };   // the grid kept: a cap lifted carves it back
@@ -4968,7 +4968,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants on the ground as carved now (scenes/floraSeat.js)
   }
-  /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (its normals too, for a re-carve), the
+  /** A pixel's bed as the host keeps it - the grid AS IT STOOD (its normals too, for a re-carve), the
    *  depths and the water's sheet (WATER-LEVEL); the carved ground is uploaded and let go. null where no tile is water. */
   function hostBed(grid, bed) { return bed ? { grid: grid.positions, normals: grid.normals, depths: bed.depths, sheet: bed.sheet, halo: bed.halo ?? null } : null; }
   // DW-F: WATER1 - the port's own water, drawn over the tiles whose art is water - reads the TileMap the cap
@@ -4980,7 +4980,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function dwWaterSurface(p) {
     if (!waterOn || !p.terrain) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
-    p.water = p._bed?.sheet ? renderer.createWaterSheet(p._bed.sheet) : null;   // WATER-LEVEL: the sheet dwRecarve levelled by the cap's TileMap
+    p.water = p._bed?.sheet ? renderer.createWaterSheet(p._bed.sheet, p.tilemapTex) : null;   // The sheet dwRecarve levelled by the cap's TileMap; its fields the ground's silt reads
   }
   // DW-C: THE CLIP'S CULL - a quad, and at a far stride a skirt segment, whose every tile the cap clipped leaves the
   // ground's index set: the mod's discard exactly while a tile is a quad (stride 1). FAR-CLIP1: at EV4's far stride a
@@ -5250,7 +5250,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _dwSurfaceList.length = 0;
     for (const p of cells ?? built.values()) {   // RW1 x WAGONS2 (FINAL AUDIT): `cells` the view out's own, culled by its own planes (the street frame's _visible is the street's)
       const h = p.deepWaters?.gpu;
-      if ((cells || p._visible) && h?.surface) _dwSurfaceList.push({ h, model: p._pixelMatrix });
+      if ((cells || p._visible) && h?.surface && !(waterOn && !f.underwater && p.water && !p.deepWaters.hide)) _dwSurfaceList.push({ h, model: p._pixelMatrix });   // From above, a coastal pixel's sea is its own sheet's
     }
     if (!_dwSurfaceList.length) return;
     // WATER-NEXT 2: from above, the sea is the water's own - the swell, the depth to the floor the mod carved, the
@@ -5645,7 +5645,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     p._bed = bed;
     p.terrain = renderer.createTerrainSurface(grid.bed?.positions ?? grid.positions, grid.bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;   // WATER-LEVEL: the kernel's sheet, levelled by the TileMap the water draws from (DW-F)
+    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet, p.tilemapTex) : null;   // The kernel's sheet, levelled by the TileMap the water draws from (DW-F); its fields the ground's silt reads
     p._stride = stride;
     seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass
@@ -6513,7 +6513,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
       const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(filedClimate(x, y, maps.getClimateIndex(x, y)), filedHeight(x, y, woods.getHeightMapValue(x, y))), trace });   // AUDIT FOUNDATION II L1: the Bay as it came
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
-      terrainGen.setTamriel({ trace, fit: fitPx, wg2: await gen2Bakes() });   // WG2: the published regions (scenes/gen2Host.js)
+      terrainGen.setTamriel({ trace, fit: fitPx, wg2: await gen2Bakes() });   // The published regions (scenes/gen2Host.js)
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
       console.log(`[tamriel] the picture traced: ${trace.land.reduce((n, v) => n + v, 0)} land pixels; the Bay fitted at picture (${fit?.ox}, ${fit?.oy}) x${fit?.ppu}, ${fit ? Math.round((100 * fit.score) / fit.cells) : 0}% of its cells and ${fit ? Math.round((100 * fit.seam) / fit.edge) : 0}% of its edge agreeing`);   // TAMRIEL4: the seam the fit is made for
       arenaWarm();   // TESA1: the places onto the trace that just landed
@@ -27132,7 +27132,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const row = _waterRows[n++] ??= [null, null, null, null, null];
         row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);
       }
-      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);
+      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);   // The sea in the mod's tint
       for (let i = 0; i < n; i++) _waterRows[i].fill(null);
     }
     if (flats.length) r.drawBillboards(flats, new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]), UP_Y);
@@ -32239,7 +32239,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const row = _waterRows[n++] ??= [null, null, null, null, null];
         row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);
       }
-      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);
+      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);   // The sea in the mod's tint
       for (let i = 0; i < n; i++) _waterRows[i].fill(null);   // a scratch keeps no evicted pixel's surface alive
     }
     };

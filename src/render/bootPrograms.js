@@ -66,7 +66,7 @@ export function outdoorPasses(search) {
 
 /** @typedef {{ gl: any, _laneSet: { key: string, terrainClip: any } | null, _classicSet: { terrainClip: any }, waterSurfaceProgramLane: any, _airPass: any, _shadowPass?: any }} BootRenderer  The renderer state the lane list reads. */
 /** The shadow pass's vertex shaders, as setLightingLane hands them over:
- *  renderer.js:"vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS, charSkin: CHAR_SKIN_VS }". */
+ *  renderer.js:"this._shadows = this._shadowPass". */
 export const SHADOW_PASS_VS = Object.freeze({
   mesh: MESH_VS,
   bb: BB_VS,

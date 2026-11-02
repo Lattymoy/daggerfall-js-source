@@ -21,8 +21,8 @@
   {
     "name": "WL-clip-votes-dry",
     "file": "src/world/water/waterLevel.js",
-    "old": "    return b === CLIP_SENTINEL ? -1 : table[b];",
-    "new": "    return b === CLIP_SENTINEL ? 0 : table[b];",
+    "old": "const bitsOf = (b, table) => (b === CLIP_SENTINEL ? 15 : table[b]);",
+    "new": "const bitsOf = (b, table) => (b === CLIP_SENTINEL ? 0 : table[b]);",
     "tests": [
       "test/world/water/waterlevel.test.js"
     ]
@@ -100,20 +100,10 @@
     ]
   },
   {
-    "name": "WL-clipped-quad-drawn",
-    "file": "src/world/water/waterLevel.js",
-    "old": "      if (clipped(bytes, x, z, stride, tileDim)) continue; // Iliac Puddle No More's own sea stands there",
-    "new": "      // Iliac Puddle No More's own sea stands there",
-    "tests": [
-      "test/world/water/waterlevel.test.js",
-      "test/world/deepWater/dwf_farsea.test.js"
-    ]
-  },
-  {
     "name": "WL-centre-without-its-tile",
     "file": "src/world/water/waterLevel.js",
-    "old": "    cuts[c] = stride === 1 ? Math.min(mean, 1 - 2 * corners(tileBits(bytes, x, z, tileDim, table))) : mean;",
-    "new": "    cuts[c] = mean;",
+    "old": "    return stride === 1 ? Math.min(mean, 1 - 2 * corners(bitsOf(bytes[z * tileDim + x], table))) : mean;",
+    "new": "    return mean;",
     "tests": [
       "test/world/water/waterlevel.test.js"
     ]
@@ -121,8 +111,8 @@
   {
     "name": "WL-centre-off-the-diagonal",
     "file": "src/world/water/waterLevel.js",
-    "old": "    positions[c * 3] = (grid[i0 * 3] + grid[i3 * 3]) / 2;",
-    "new": "    positions[c * 3] = grid[i0 * 3];",
+    "old": "positions[c * 3] = (grid[i0 * 3] + grid[i3 * 3]) / 2;",
+    "new": "positions[c * 3] = grid[i0 * 3];",
     "tests": [
       "test/world/water/waterlevel.test.js"
     ]
@@ -140,8 +130,8 @@
   {
     "name": "WL-sea-strict",
     "file": "src/world/water/waterLevel.js",
-    "old": "export const seaLevelAt = (y) => (y <= SEA_LEVEL_Y + SEA_GROUND_EPSILON ? SEA_LEVEL_Y : NaN);",
-    "new": "export const seaLevelAt = (y) => (y < SEA_LEVEL_Y ? SEA_LEVEL_Y : NaN);",
+    "old": "(y <= SEA_LEVEL_Y + SEA_GROUND_EPSILON ? SEA_LEVEL_Y : NaN);",
+    "new": "(y < SEA_LEVEL_Y ? SEA_LEVEL_Y : NaN);",
     "tests": [
       "test/world/water/waterlevel.test.js"
     ]
@@ -176,8 +166,8 @@
   {
     "name": "WL-meet-dropped",
     "file": "src/render/waterSurface.js",
-    "old": "  if (uOpen == 0) edge *= smoothstep(0.0, ${SHORE_MEET.toFixed(3)}, meet);",
-    "new": "",
+    "old": "  if (uOpen == 0) edge *= smoothstep(0.0, ${SHORE_MEET.toFixed(3)}, meet);   // WATER-LEVEL: the shore where the ground meets the plane, soft",
+    "new": "   // WATER-LEVEL: the shore where the ground meets the plane, soft",
     "tests": [
       "test/world/water/waterlevel.test.js"
     ]
@@ -194,8 +184,8 @@
   {
     "name": "WL-cut-sign",
     "file": "src/render/waterSurface.js",
-    "old": "0.5 - 0.5 * vCut - (geEntry(data)",
-    "new": "0.5 + 0.5 * vCut - (geEntry(data)",
+    "old": "    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, 0.5 - 0.5 * cut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));",
+    "new": "    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, 0.5 + 0.5 * cut - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));",
     "tests": [
       "test/world/water/waterlevel.test.js",
       "test/render/coastlook.test.js"
@@ -204,7 +194,7 @@
   {
     "name": "WL-restride-off-the-sheet",
     "file": "src/scenes/world.js",
-    "old": "    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;",
+    "old": "    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet, p.tilemapTex) : null;",
     "new": "    p.water = null;",
     "tests": [
       "test/world/water/waterlevel.test.js"
@@ -226,6 +216,16 @@
     "new": "depths: bed?.depths ?? null, sheet: p._bed.sheet, halo };",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
+    ]
+  },
+  {
+    "name": "WL-clipped-quad-skipped",
+    "file": "src/world/water/waterLevel.js",
+    "old": "      if (!(votes[i0] > 0 || votes[i1] > 0 || votes[i2] > 0 || votes[i3] > 0)) continue;\n      quads.push(i0);",
+    "new": "      if (!(votes[i0] > 0 || votes[i1] > 0 || votes[i2] > 0 || votes[i3] > 0)) continue;\n      if (bytes[z * tileDim + x] === CLIP_SENTINEL) continue;\n      quads.push(i0);",
+    "tests": [
+      "test/world/water/waterlevel.test.js",
+      "test/world/deepWater/dwf_farsea.test.js"
     ]
   }
 ]

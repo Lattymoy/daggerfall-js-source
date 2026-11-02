@@ -1060,7 +1060,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     toGlobal: (x, z) => { _snowG[0] = snowPixel.x * TERRAIN_SIZE + (x - snowSW[0]); _snowG[1] = (499 - snowPixel.y) * TERRAIN_SIZE + (z - snowSW[2]); return _snowG; },
     settlements: (a, b, c, d) => settlementsIn((x, y) => (x === snowPixel.x && y === snowPixel.y ? dfLocation : null), a, b, c, d),
   } });
-  const townWater = townBed?.sheet ? renderer.createWaterSheet(townBed.sheet) : null;   // WATER-LEVEL: the town's water at its level, its sheet carved with the bed
+  const townWater = townBed?.sheet ? renderer.createWaterSheet(townBed.sheet, tilemapTex) : null;   // The town's water at its level, its sheet carved with the bed
 
   /** FD1 - the RAW (pre-conversion) tilemap byte under the player,
    *  this host's twin of world.js's FS1 `playerGroundTile`.

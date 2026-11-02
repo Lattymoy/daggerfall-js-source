@@ -121,7 +121,7 @@ for (let r = 0; r < 64; r++) {
 const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
 // The water's sheet at its level, carved with the bed, as the hosts draw it
-const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;
+const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet, tilemapTex) : null;
 const hasWater = !!water;
 renderer.waterBed = hasWater; // AUDIT WATER-NEXT G15: the lab's ground under its water is a bed, as the hosts draw it (render/waterBedGlsl.js)
 

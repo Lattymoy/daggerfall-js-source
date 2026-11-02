@@ -475,7 +475,7 @@
   {
     "name": "RW1-AUDIT-the-water-left-out",
     "file": "src/scenes/world.js",
-    "old": "      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU);\n      for (let i = 0; i < n; i++) _waterRows[i].fill(null);\n    }\n    if (flats.length)",
+    "old": "      r.drawWaterSurfaces(_waterRows, n, 6.4, _waterU, TERRAIN_TILE_DIM, _dwFrame?.look.topColor);   // The sea in the mod's tint\n      for (let i = 0; i < n; i++) _waterRows[i].fill(null);\n    }\n    if (flats.length)",
     "new": "      void n;\n      for (let i = 0; i < n; i++) _waterRows[i].fill(null);\n    }\n    if (flats.length)",
     "tests": [
       "test/render/windows1_view.test.js"

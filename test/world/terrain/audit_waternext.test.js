@@ -212,7 +212,7 @@ test('AUDIT WATER-NEXT H2, MOVED BY WATER-LEVEL: water on ground never carved st
       assert.equal(bed.sheet.depths[at(x, z) * 2], 0, 'no water over that ground - the swell has nothing to dip into');
     }
   }
-  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : smoothstep\(0\.0, 2\.500, aDepth\.x\);/);
+  assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : max\(smoothstep\(0\.0, 2\.500, aDepth\.x\), sea\.x\);/);
   assert.match(WATER_SURFACE_VS, /vDepth = vec2\(aDepth\.x \+ uLift \+ lift, max\(aDepth\.y \+ lift, 0\.0\)\);/);
   for (const k of ['NO_BED_DEPTH', 'SHEET_NO_BED', 'SHELF_SHEET_DEPTH']) assert.equal(WATER_CORNERS[k], undefined, `${k} retired: every sheet stands at a level`);
   assert.doesNotMatch(rd('src/render/renderer.js'), /NO_BED_DEPTH/);
@@ -378,7 +378,7 @@ test('AUDIT WATER-NEXT m7: the record\'s numbers are the code\'s (mutants: any o
 
 test('AUDIT WATER-NEXT G7/G8/G10: the open sea\'s underside is not drawn, the heave fades before the strided rings, and every sample after a discard names its level (mutants: the underside drawn; the far lattice; an implicit level)', () => {
   const fs = waterSurfaceFs('');
-  assert.match(fs, /if \(uOpen == 1 && uCamPos\.y - vWorldPos\.y \+ 0\.02 < 0\.0\) discard;/);
+  assert.match(fs, /if \(\(uOpen == 1 \|\| vSea\.x > 0\.5\) && uCamPos\.y - vWorldPos\.y \+ 0\.02 < 0\.0\) discard;/);
   assert.match(WATER_SURFACE_VS, /uniform vec3 uCamPos;/);
   assert.doesNotMatch(fs, /\btexture\(uRipple|\btexture\(uScene/, 'the ripple field and the copy read at an explicit level');
   assert.equal((fs.match(/textureLod\(uRipple, /g) || []).length, 4);

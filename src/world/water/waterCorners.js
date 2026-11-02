@@ -167,6 +167,10 @@ export const WATER_MASK_TABLE = buildWaterMaskTable();
  *  eye. The law's, plus SHALLOW_DRAWN and WATER-DRAW2's. */
 export const WATER_DRAW_MASK_TABLE = buildWaterMaskTable(true);
 
+/** The most of a bank's rise a sheet's texel holds, units (world/water/waterLevel.js writes it, the water's
+ *  program reads it) - here, a leaf both already reach. */
+export const RISE_MAX = 0.5;
+
 /** The table packed eight nibbles to a uint, as the shader's
  *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */
 export function packWaterMask(table = WATER_MASK_TABLE) {
