@@ -20,6 +20,9 @@
  "chest_w": 1.1026,
  "head_dy": -0.0277,
  "head_dz": 0.0158,
+ "bow_len": 1.0,
+ "bow_bend": 1.0,
+ "bow_w": 1.0,
  "torso_pw": [
   1.0465,
   1.0321,

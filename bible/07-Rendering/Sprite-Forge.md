@@ -32,7 +32,7 @@ Knight enemies wear.
   shoulders, the body, the axe's grip, roll and slide along the haft, and each solved elbow's swivel, searching by
   CMA-ES. It lays the body's triangles on the work frame as Cycles samples it, the nearest surface over each pixel's
   centre, so its picture is the render's pixel for pixel. A standing frame keeps both feet down, and the bow stays
-  near its keyed lean. `--restarts` runs several searches a frame (its last fit, its keys, wider throws), and
+  near its keyed lean. `--restarts` runs several searches a frame (its last fit, its keys, then the best so far), and
   `--reg` sets how hard each adjustment is pulled back toward its key. The adjustments are kept in
   `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays them on.
 - **Fitting the body.** `fit.py --shape` fits the proportions over every frame in its fitted pose: the torso's width
@@ -112,8 +112,8 @@ tables and sizes are read as they are.
 ## Open
 
 - Only TEXTURE.488 is forged. The other class archives (475-490, and the guard's 399) need their own gear and specs.
-- The overlap with Daggerfall's outlines averages 0.80 a record. Walk and idle are closest (0.81-0.86); attack
-  0.77-0.82; hurt 0.76-0.82; the bow 0.74-0.77. The bow is furthest.
+- The overlap with Daggerfall's outlines averages 0.81 a record. Walk and idle are closest (0.81-0.86); attack
+  0.77-0.82; hurt 0.76-0.82; the bow 0.76-0.78. The bow is furthest.
 - In 34 of the 80 frames a few pixels of the axe, a hand or the helm fall past the canvas and are cut.
 - The arms are fitted as thick as Daggerfall's outline asks, past the naked body's own girth.
 - The body has no cloth folds, and no sculpted detail finer than its muscles' swells.

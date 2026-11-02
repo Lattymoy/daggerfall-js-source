@@ -341,15 +341,16 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
     best, place_x = evaluate(x)
     first = best
     # CMA-ES in units of each parameter's step: it learns which joints move together, where a plain random walk stalls.
-    # Started from the frame's last fit, from its bare keys, and (with --restarts) from wider throws round the last fit,
-    # the best of them kept: a fit that settled in the wrong valley gets a way out.
+    # Started from the frame's last fit, from its bare keys, and (with --restarts) again from the best so far, the best
+    # of them kept: a fit that settled in the wrong valley gets a way out, and one still climbing goes on.
     import cma
     xbest = x.copy()
     starts = [(x.copy(), 0.6)]
     if init:
         starts.append((np.zeros(len(steps)), 0.8))
-    starts += [(x.copy(), 1.2)] * max(0, RESTARTS - len(starts))
+    starts += [(None, 0.6)] * max(0, RESTARTS - len(starts))
     for x0, sigma in starts[:max(RESTARTS, 1)]:
+        x0 = xbest.copy() if x0 is None else x0
         es = cma.CMAEvolutionStrategy(np.zeros(len(steps)), sigma, {
             'popsize': 12, 'maxfevals': iters * 12, 'verbose': -9, 'seed': int(rng.integers(1, 2 ** 31)),
             'tolfun': 1e-5})
@@ -481,7 +482,7 @@ def main():
     ap.add_argument('--iters', type=int, default=220)
     ap.add_argument('--shape', action='store_true', help='fit the proportions instead of the poses')
     ap.add_argument('--jobs', type=int, default=4)
-    ap.add_argument('--restarts', type=int, default=1, help='searches a frame: its last fit, its keys, wider throws')
+    ap.add_argument('--restarts', type=int, default=1, help='searches a frame: its last fit, its keys, the best so far')
     ap.add_argument('--no-head', action='store_true', help='leave the axe head unpinned (when its blob is unreliable)')
     ap.add_argument('--keys', default='', help='with --shape, only these proportions (comma-separated)')
     ap.add_argument('--reg', type=float, default=REG, help="the pull of a frame's adjustments toward its keys")
