@@ -664,7 +664,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
 
     // ── THE FIELDS ──────────────────────────────────────────────────
     for (const key of FIELDS[stage] ?? []) root.append(field(key));
-    if (stage === 'register' && flow.inviteAsked) root.append(field('invite'));   // DEV-SIGNUP: a dev server's invite box
+    if (stage === 'register' && flow.inviteAsked) root.append(field('invite'));   // a dev server's invite box
 
     // ── TERMS1: THE BOXES, under the fields and over the button ──────
     for (const key of AGREEMENTS[stage] ?? []) root.append(agreement(key));

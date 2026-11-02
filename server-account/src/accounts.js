@@ -54,7 +54,7 @@ import {
   hashPassword, verifyPassword, needsRehash, passwordRefusal,
   mintRecoveryCode, codeForHashing,
   mintRecoverySet, hashRecoverySet, joinRecoverySet, matchRecoveryCode, recoveryLeft,   // RECOVERY-SET: eight codes, each spent alone
-  timingSafeEqual,   // DEV-SIGNUP: an invite code compared without a timing tell
+  timingSafeEqual,   // an invite code compared without a timing tell
 } from './password.js';
 import { gateRegionOk } from '../../src/net/townSeatLaw.js';   // SEAT1b: a gate claim's region; WW7-3: its lane's (a province's gate its own province's)
 import { DB_ANY, DB_ROOT } from './service.js';   // BOOKMARK-SPIRAL: a session started at any instance, and the binding behind it
@@ -719,7 +719,7 @@ export function legalRefusal(body) {
   return { error: 'terms-unaccepted' };
 }
 
-/** DEV-SIGNUP: a deployment whose SIGNUP_CODES lists invite codes (comma-separated; a dev server's own .dev.vars,
+/** A deployment whose SIGNUP_CODES lists invite codes (comma-separated; a dev server's own .dev.vars,
  *  never set on live) opens a new account only for a body whose `invite` is one of them. Unset or empty: no gate.
  *  Login and recover are untouched - an account that exists already got past it.
  *  shortcut: codes are reusable until removed from the list; make them single-use if a code leaks. */

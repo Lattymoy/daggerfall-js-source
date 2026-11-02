@@ -1070,7 +1070,7 @@ const service = {
           // Privacy Policy - so the service asks the same, before it writes.
           const refused = legalRefusal(body);
           if (refused) return no(refused.error, 400, origin);
-          const gated = signupCodeRefusal(env, body);   // DEV-SIGNUP: a dev server's invite gate, off on live
+          const gated = signupCodeRefusal(env, body);   // a dev server's invite gate, off on live
           if (gated) return no(gated.error, 403, origin);
           const made = await createGuest(ctx, { deviceLabel: body.label ?? null, legal: { terms: body.terms, privacy: body.privacy } });
           return json(made, 200, origin);

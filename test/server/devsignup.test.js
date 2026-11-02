@@ -1,4 +1,4 @@
-// DEV-SIGNUP (2026-11-02): a dev server opens new accounts only for an invite code from its SIGNUP_CODES; unset (live)
+// A dev server opens new accounts only for an invite code from its SIGNUP_CODES; unset (live)
 // changes nothing. The register form draws the code box once that server asks for it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

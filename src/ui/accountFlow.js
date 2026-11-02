@@ -171,7 +171,7 @@ export const FIELD_SPEC = Object.freeze({
     secret: false,
     max: 64,
     hint: '',
-  }, // DEV-SIGNUP: drawn on register only once a dev server asked for it (flow.inviteAsked)
+  }, // drawn on register only once a dev server asked for it (flow.inviteAsked)
   code: {
     get label() {
       return t('account.field.code', 'Recovery code');
@@ -284,7 +284,7 @@ export const NAME_AS_NOTE = Object.freeze({
 export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date.now() }) {
   const self = {
     stage: /** @type {string} */ ('loading'),
-    /** DEV-SIGNUP: this service refused a new account without an invite code - the register form draws its box */
+    /** This service refused a new account without an invite code - the register form draws its box */
     inviteAsked: false,
     /** the account view from /v1/account, when signed in */
     account: /** @type {any} */ (null),
@@ -1148,7 +1148,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     if (!secret()) {
       const made = await ask(() => openGuest(io, null, ACCEPTED, v('invite')));
       if (!made) return false;
-      if (made.error === 'invite') self.inviteAsked = true;   // DEV-SIGNUP: the box appears once this server asks for it
+      if (made.error === 'invite') self.inviteAsked = true;   // the box appears once this server asks for it
       if (!made.ok) return refuse(accountRefusalText(made.error));
       // KEPT BEFORE THE UPGRADE IS ATTEMPTED. If `register` fails on
       // `handle-taken`, the guest row and its session are real and this
