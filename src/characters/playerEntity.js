@@ -234,7 +234,7 @@ export function damageShieldPool(entity, dmg) {
  * first.
  */
 let _damageVeto = null;
-const _staff = { god: false, fly: false };   // STAFF1: the staff's switches (setStaffPowers, below) - declared above their readers (BOOT-TDZ)
+const _staff = { god: false, fly: false, noclip: false };   // STAFF1: the staff's switches (setStaffPowers, below) - declared above their readers (BOOT-TDZ)
 /** STAFF-PANEL5-FREEZE (net/staffChat.js; design doc "DFO Staff Panel: design", Freeze player): STAFF FROZE THIS PLAYER until
  *  then (epoch seconds) - the relay's word, never saved. While it stands the motor is held as paralysis holds it (every
  *  host's paralysis gate ORs `staffFrozen()`) and no blow is delivered (the veto's door below): "the player can only
@@ -250,9 +250,12 @@ export const playerDamageWithheld = () => { if (_staff.god || staffFrozen()) ret
 /** STAFF1 (net/staffCommands.js): THE STAFF'S OWN TWO SWITCHES - /god (no blow delivered: the veto's door above, so a
  *  caller asking before it spends a blow is told too) and /fly (levitation without the spell: every host's motor-flag
  *  write ORs `staffFly()` beside the Levitate effect). The typer's alone, never saved, never sent. */
-export function setStaffPowers({ god, fly } = {}) { if (typeof god === 'boolean') _staff.god = god; if (typeof fly === 'boolean') _staff.fly = fly; }
+export function setStaffPowers({ god, fly, noclip } = {}) { if (typeof god === 'boolean') _staff.god = god; if (typeof fly === 'boolean') _staff.fly = fly; if (typeof noclip === 'boolean') _staff.noclip = noclip; }
 export const staffPowers = () => ({ ..._staff });
-export const staffFly = () => _staff.fly;
+export const staffFly = () => _staff.fly || _staff.noclip;   // STAFF-NOCLIP: a no-clip flies too
+/** STAFF-NOCLIP (net/staffCommands.js /noclip): the flight goes through what it meets - the motor's levitating step moves
+ *  the body without the collider (player/motor.js registerNoclip). The typer's alone, never saved, never sent. */
+export const staffNoclip = () => _staff.noclip;
 /** AUDIT-SEATS G5 (Seats-Arc 6.1: "Teleport, Recall and Levitate do nothing in a siege room"): THE WARD ON THE LEVITATE
  *  EFFECT, registered by the host that knows where the player stands (scenes/world.js - a siege's own room): while it
  *  answers true, the motor-flag write reads the effect as lifting nothing - inside that ONE write (scenes/shared.js

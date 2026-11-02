@@ -28544,6 +28544,21 @@
   "tr": "ba4f29237a92",
   "by": "claude-in-session"
  },
+ "net.staff.noclipHelp": {
+  "en": "4852b7ee81b2",
+  "tr": "0a31dd2470f5",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipOff": {
+  "en": "bae0074e5e3a",
+  "tr": "5e1034694817",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipOn": {
+  "en": "1ea855b3b4ea",
+  "tr": "628f74feb159",
+  "by": "claude-in-session"
+ },
  "net.staffFlat.close": {
   "en": "bbfa773e5a63",
   "tr": "44424b18700e",

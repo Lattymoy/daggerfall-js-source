@@ -1113,6 +1113,8 @@ import { createInstanceDoor } from './instanceDoor.js';   // INSTANCES: public o
 const TEST_GODMODE = false;
 const isStaffT = (g) => TEST_GODMODE || isStaff(g);
 import { isStaff, findPlace } from '../net/staffCommands.js';   // STAFF1: the staff's own commands
+import { noclipHelpLine } from '../net/staffNoclip.js';   // STAFF-NOCLIP: /noclip's line in /staff
+import { createStaffNoclipHost } from './staffNoclipHost.js';   // STAFF-NOCLIP: /noclip, a Moderator's too
 import { parseStaffLine, staffHelpLines, staffTpPlaces } from './staffTp.js';   // AUDIT TAMRIEL-WIDE B4/C7: /tp to a pixel and a place past the Bay
 import { RELAY_CFG_KEYS, mayRelayCfg } from '../net/relayCfg.js';   // SCALE5b: the relay's settings, a developer's
 import { shardOf, isChannelBus, isChannelShard, channelOf, hubShardsSupported } from '../net/hubShards.js';
@@ -18832,7 +18834,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
     if (c.cmd === 'tpa') { staffPull.command(c.player, say); return; }   // STAFF-PULL
-    if (c.cmd === 'staff') { for (const line of [...staffHelpLines(), DRAGON_HELP_LINE]) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of [...staffHelpLines(), noclipHelpLine(), DRAGON_HELP_LINE]) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -19570,6 +19572,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
+        const noclipSaid = staffNoclipHost.chat(text, chatLog, tabId);   // STAFF-NOCLIP: /noclip, a Moderator's too
+        if (noclipSaid != null) return noclipSaid;
         const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffLine(text.replace(/^\/godmode\b/i, '/god'), staffPowers())) : null;   // DRAGON-RIDE: /dragon, its own grammar   // TESTBUILD: /godmode = /god; AUDIT TAMRIEL-WIDE B4/C7: a pixel past the Bay
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
@@ -20453,6 +20457,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const inSiegeRoom = () => !!online?.room && online.room === siegeSession?.room();
   /** AUDIT-SEATS G5: the cast engine's word on a spell here (hostMagic.js spellRefusal) - a siege's wards. */
   const battleSpellRefusal = (sp) => (inSiegeRoom() && siegeSpellBarred(sp) ? SIEGE_SPELL_BARRED_TEXT : null) ?? pvpKit.refusal(sp);   // PVP-KIT: under the flag, the bar's spells alone
+  const staffNoclipHost = createStaffNoclipHost(staffGlyphs, isStaffT);   // STAFF-NOCLIP: the typer's /noclip, while the service's glyphs still name them staff or a Moderator
   registerLevitateWard(() => inSiegeRoom() || madeRuleHere('levitate') === 'banned');   // AUDIT-SEATS G5: a Levitate already running lifts nothing in a siege's room; SD7b: nor in the Shattered Hour - its Steps are walked, not flown; EG-PLAY: nor in an Elite Breach - its spans are walked, its void is real (EG-H2: the made level's law, OR'd into the ONE ward - Elite-Gates.md section 10.7)
   /** AUDIT-SEATS G4 (Seats-Arc 6.6, 19: "a free camera (WASD, the mouse, the pad's sticks); nothing they do reaches the
    *  fight"): whether I watch a battle - a siege or a Royal Tourney, on a spectator's pass - from its own room. */
