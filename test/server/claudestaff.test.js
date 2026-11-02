@@ -100,10 +100,10 @@ test('off: the sweep reads nothing and calls nothing, with the switch off, or on
   assert.equal(t.raw.prepare('SELECT COUNT(*) AS n FROM claude_state').get().n, 0);
 });
 
-test('shipped off in the config, and wired: the cron jobs and the staff doors exist', async () => {
+test('switched on in the config, and wired: the cron jobs and the staff doors exist', async () => {
   const { readFileSync } = await import('node:fs');
   const toml = readFileSync(new URL('../../server-account/wrangler.toml', import.meta.url), 'utf8');
-  assert.match(toml, /^CLAUDE_STAFF = "off"$/m);
+  assert.match(toml, /^CLAUDE_STAFF = "on"$/m);
   assert.match(toml, /^MOD_AI = "shadow"$/m);
   assert.match(toml, /^CLAUDE_ORDER_HANDLES = "SirMcMobdon,kpblca_1,Lattymoy"$/m);
   assert.ok(MINUTE_JOBS.some(([n]) => n === 'safety'));

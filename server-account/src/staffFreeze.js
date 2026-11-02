@@ -139,7 +139,7 @@ export async function pushFreeze({ db, nowS, subtle }, env, row, tries = 3) {
 }
 
 /** A staff line's nudge pushed to the relay's door - whether it went. @param {{ nowS: number, subtle: SubtleCrypto }} ctx @param {any} env @param {string} player @param {number} line */
-async function pushLine({ nowS, subtle }, env, player, line) {
+export async function pushLine({ nowS, subtle }, env, player, line) {
   const key = await signingKey(env, subtle);
   if (!key) return false;
   return pushLaw(env, (u, i) => globalThis.fetch(u, i), await mintStaffLineOrder({ s: player, sl: line }, key, { subtle, nowS }));
