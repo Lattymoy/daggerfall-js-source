@@ -472,8 +472,8 @@
   {
     "name": "STAFF-PANEL3-ECON-burn-takes-moves",
     "file": "server-account/src/staffEconomy.js",
-    "old": "        WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind = 'burn') GROUP BY day, kind, minted`,",
-    "new": "        WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind != 'x') GROUP BY day, kind, minted`,",
+    "old": "        WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind = 'burn') AND NOT ${banned} GROUP BY day, kind, minted`,",
+    "new": "        WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind != 'x') AND NOT ${banned} GROUP BY day, kind, minted`,",
     "why": "an escrow move counted as burnt",
     "tests": [
       "test/server/staffpanel3econ.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "STAFF-PANEL3-ECON-gold-sinks-any-currency",
     "file": "server-account/src/staffEconomy.js",
-    "old": "            \"SELECT day, SUM(tax) AS tax, SUM(fee) AS fee, SUM(total) AS total, COUNT(*) AS n FROM market_sales WHERE day >= ?1 AND currency = 'gold' GROUP BY day\",",
-    "new": "            \"SELECT day, SUM(tax) AS tax, SUM(fee) AS fee, SUM(total) AS total, COUNT(*) AS n FROM market_sales WHERE day >= ?1 AND currency != 'x' GROUP BY day\",",
+    "old": "        WHERE day >= ?1 AND currency = 'gold' AND NOT ${banned}",
+    "new": "        WHERE day >= ?1 AND currency != 'x' AND NOT ${banned}",
     "why": "a Drakes sale's tax counted as gold",
     "tests": [
       "test/server/staffpanel3econ.test.js"

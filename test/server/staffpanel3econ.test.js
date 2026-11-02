@@ -505,7 +505,22 @@ test('ECON-LEFT-OUT and ECON-WORTH: a banned account\'s and a held character\'s 
   const wh = raw.prepare('INSERT INTO realm_wealth_hours (char_id, hour, player, level, gain, loss) VALUES (?, ?, ?, 10, ?, ?)');
   wh.run(idOf('Good'), hour, ok, 5, 1); wh.run(idOf('Banned'), hour, banned, 900_000, 0); wh.run(idOf('Held'), hour, holder, 800_000, 3);
 
+  // a banned account's Marks struck, burnt and held, and its gold sales, kept out too
+  const day = utcDay(t);
+  const line = (src, srcId, dst, dstId, amount, rid) => raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
+    VALUES (?, ?, ?, ?, 'gather', ?, ?, ?, ?, NULL, ?)`).run(src, srcId, dst, dstId, amount, day, t - 60, ok, rid);
+  line('mint', null, 'account', ok, 100, 'm1'); line('mint', null, 'account', banned, 5000, 'm2');
+  line('account', ok, 'burn', null, 10, 'b1'); line('account', banned, 'burn', null, 400, 'b2');
+  fx.sale({ buyer: ok, seller: lapsed, currency: 'gold', price: 100, tax: 5, fee: 1, at: t - 60 });
+  fx.sale({ buyer: banned, seller: ok, currency: 'gold', price: 9000, tax: 900, fee: 90, at: t - 60 });
+  fx.sale({ buyer: ok, seller: banned, currency: 'gold', price: 8000, tax: 800, fee: 80, at: t - 60 });
+
   const e = await economy(db, t, 7);
+  assert.deepEqual(e.marks.minted, { gather: 100 }, 'a banned account\'s Marks struck kept out');
+  assert.deepEqual(e.marks.burnt, { gather: 10 }, 'and burnt');
+  assert.equal(e.marks.accounts, 90, 'and held');
+  const d = e.daily.find((r) => r.day === day);
+  assert.deepEqual([d.marksMinted, d.marksBurnt, d.goldOut], [100, 10, 6], 'a sale either side of a banned account kept out');
   assert.equal(e.gold.held.market, 11 + 3, 'the banned and the held character\'s market gold kept out');
   assert.equal(e.gold.held.rent, 7);
   assert.deepEqual(e.gold.inGames, { gain: 5, loss: 1 }, 'their hours kept out');

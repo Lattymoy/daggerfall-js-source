@@ -2,7 +2,7 @@
   {
     "name": "ECON-LEFT-OUT-the-ban-ignored",
     "file": "server-account/src/staffEconomy.js",
-    "old": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "old": "  `(${bannedSql(p, nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
     "new": "  `(0 OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
     "tests": [
       "test/server/staffpanel3econ.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ECON-LEFT-OUT-the-hold-ignored",
     "file": "server-account/src/staffEconomy.js",
-    "old": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
-    "new": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)})`;",
+    "old": "  `(${bannedSql(p, nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "new": "  `(${bannedSql(p, nowS)})`;",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ECON-LEFT-OUT-any-hold-stands",
     "file": "server-account/src/staffEconomy.js",
-    "old": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
-    "new": "  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(c.held IS NOT NULL, 0))`;",
+    "old": "  `(${bannedSql(p, nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "new": "  `(${bannedSql(p, nowS)} OR COALESCE(c.held IS NOT NULL, 0))`;",
     "tests": [
       "test/server/staffpanel3econ.test.js"
     ],
@@ -58,5 +58,25 @@
       "test/server/staffpanel4census.test.js"
     ],
     "note": "the tally no longer says its banks' share"
+  },
+  {
+    "name": "ECON-BANNED-OUT-marks-ban-ignored",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "      banned = bannedSql('p', nowS);",
+    "new": "      banned = '0';",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a banned account's Marks and gold sales counted again"
+  },
+  {
+    "name": "ECON-BANNED-OUT-sale-seller-ignored",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "AND NOT ${bannedSql('q', nowS)} GROUP BY day",
+    "new": "GROUP BY day",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a sale to a banned seller counted"
   }
 ]
