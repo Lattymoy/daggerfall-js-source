@@ -7,7 +7,7 @@ chat. Staff meet it in the Staff Panel as a list of suggestions. The code is `se
 
 ## How it works
 
-**Off by default.** `CLAUDE_STAFF` in `server-account/wrangler.toml` ships `"off"`. Off, or with no `ANTHROPIC_API_KEY`, the
+**The switch.** `CLAUDE_STAFF` in `server-account/wrangler.toml` is `"on"`; `"off"` stops it at the next deploy. Off, or with no `ANTHROPIC_API_KEY`, the
 minute job returns before it reads a row or opens a connection. It does not change `MOD_AI`.
 
 **No sign-in.** Claude runs inside the account service on its minute clock, like the chat reviewer. It writes as the staff
