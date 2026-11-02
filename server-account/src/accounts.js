@@ -724,13 +724,13 @@ export function legalRefusal(body) {
  *  Login and recover are untouched - an account that exists already got past it.
  *  shortcut: codes are reusable until removed from the list; make them single-use if a code leaks. */
 export function signupCodeRefusal(env, body) {
-  const codes = String(env?.SIGNUP_CODES ?? '').split(',').map((c) => c.trim()).filter(Boolean);
+  const codes = String(env?.SIGNUP_CODES ?? '').split(',').map((code) => code.trim()).filter(Boolean);
   if (!codes.length) return null;
-  const bytes = (v) => new TextEncoder().encode(v);
+  const bytes = (text) => new TextEncoder().encode(text);
   const given = bytes(typeof body?.invite === 'string' ? body.invite.trim() : '');
-  let ok = false;
-  for (const c of codes) ok = timingSafeEqual(bytes(c), given) || ok;   // every code read, whichever matches
-  return ok ? null : { error: 'invite' };
+  let matched = false;
+  for (const code of codes) matched = timingSafeEqual(bytes(code), given) || matched;   // every code read, whichever matches
+  return matched ? null : { error: 'invite' };
 }
 
 /** TERMS1: what a row keeps of an agreement - the two versions and the

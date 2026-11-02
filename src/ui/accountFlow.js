@@ -1148,7 +1148,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     if (!secret()) {
       const made = await ask(() => openGuest(io, null, ACCEPTED, v('invite')));
       if (!made) return false;
-      if (made.error === 'invite') self.inviteAsked = true;   // the box appears once this server asks for it
+      if (made.error === 'invite') self.inviteAsked = true; // the box appears once this server asks for it
       if (!made.ok) return refuse(accountRefusalText(made.error));
       // KEPT BEFORE THE UPGRADE IS ATTEMPTED. If `register` fails on
       // `handle-taken`, the guest row and its session are real and this
