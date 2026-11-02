@@ -142,7 +142,11 @@ const GUILD_SORTS = Object.freeze({
  *  as SQL over the character aliased `c` and its account `p`, either of them perhaps missing (a LEFT JOIN). Their gold is
  *  never touched: it is only kept out of the economy's totals and lists, and its sum said beside them. */
 export const leftOutSql = (/** @type {string} */ c, /** @type {string} */ p, /** @type {number} */ nowS) =>
-  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;
+  `(${bannedSql(p, nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;
+
+/** ECON-BANNED-OUT: the account `p` banned now - for the economy's rows that name an account and no character. */
+const bannedSql = (/** @type {string} */ p, /** @type {number} */ nowS) =>
+  `COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)}`;
 
 /** The character and the account a row of `t` (a `player` and a `char_id`) names, joined for leftOutSql('c', 'p'). */
 const OUT_JOIN = (/** @type {string} */ t) =>
@@ -821,7 +825,8 @@ export function economy(db, nowS, days) {
   return kept(db, `economy:${days}`, nowS, ECON_KEEP_S, async () => {
     const today = utcDay(nowS),
       fromDay = today - days + 1;
-    const out = leftOutSql('c', 'p', nowS);
+    const out = leftOutSql('c', 'p', nowS),
+      banned = bannedSql('p', nowS);
     // STAFF-PANEL-SPEED: the richest guilds' kept list asked beside the batch, never after it
     const [[places, accounts, guilds, escrow, ledger, faucets, sales, games, rich, worth], ranked] = await Promise.all([
       readAll(db, [
@@ -832,7 +837,10 @@ export function economy(db, nowS, days) {
         (SELECT COALESCE(SUM(MAX(treasury - realm_gold, 0)), 0) FROM guilds) AS guild_legacy,
         (SELECT COALESCE(SUM(CASE WHEN ${out} THEN 0 ELSE m.rent_due END), 0) FROM homes m ${OUT_JOIN('m')}) AS rent_held,
         (SELECT COALESCE(SUM(CASE WHEN ${out} THEN m.rent_due ELSE 0 END), 0) FROM homes m ${OUT_JOIN('m')}) AS rent_out`),
-        db.prepare('SELECT COALESCE(SUM(balance), 0) AS s, COUNT(*) AS n FROM marks WHERE balance > 0'),
+        // ECON-BANNED-OUT: a banned account's Marks, its Marks minted or burnt and its gold sales kept out too
+        db.prepare(
+          `SELECT COALESCE(SUM(m.balance), 0) AS s, COUNT(*) AS n FROM marks m LEFT JOIN players p ON p.id = m.account WHERE m.balance > 0 AND NOT ${banned}`,
+        ),
         db.prepare('SELECT COALESCE(SUM(balance), 0) AS s FROM guild_marks'),
         // marks.js marksReport's escrow - the ledger's escrow end, what went in less what came out - on 0153's covering index
         db.prepare(`SELECT COALESCE(SUM(CASE WHEN dst_kind = 'escrow' THEN amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s
@@ -840,7 +848,8 @@ export function economy(db, nowS, days) {
         db
           .prepare(
             `SELECT day, kind, CASE WHEN src_kind = 'mint' THEN 1 ELSE 0 END AS minted, SUM(amount) AS s FROM marks_ledger
-        WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind = 'burn') GROUP BY day, kind, minted`,
+        LEFT JOIN players p ON p.id = CASE WHEN src_kind = 'mint' THEN dst_id ELSE src_id END
+        WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind = 'burn') AND NOT ${banned} GROUP BY day, kind, minted`,
           )
           .bind(fromDay),
         // the service's own gold faucets (budget.js FAUCET_KINDS), kept by the hour's number
@@ -852,7 +861,9 @@ export function economy(db, nowS, days) {
         // gold's market sales: the tax and the fee are burnt (marketLaw.js goldSaleOf)
         db
           .prepare(
-            "SELECT day, SUM(tax) AS tax, SUM(fee) AS fee, SUM(total) AS total, COUNT(*) AS n FROM market_sales WHERE day >= ?1 AND currency = 'gold' GROUP BY day",
+            `SELECT day, SUM(tax) AS tax, SUM(fee) AS fee, SUM(total) AS total, COUNT(*) AS n FROM market_sales s
+        LEFT JOIN players p ON p.id = s.buyer LEFT JOIN players q ON q.id = s.seller
+        WHERE day >= ?1 AND currency = 'gold' AND NOT ${banned} AND NOT ${bannedSql('q', nowS)} GROUP BY day`,
           )
           .bind(fromDay),
         // made or spent inside players' games: the gain no witness explained and the losses, by the hour (verdict.js)
