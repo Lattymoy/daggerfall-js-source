@@ -515,6 +515,8 @@ import { hitFlashStrength, setBatchHitFlash, HIT_FLASH_S } from '../systems/hitF
 import { setOneShotObserver } from '../systems/audio.js';   // PEERFX1
 import { createTownScratch, createPersonTextureKeys } from './townScratch.js';   // PERF-TOWN1: the town loop's per-frame seats, and the memoised texture key
 import { createDroppedTorches } from './droppedTorches.js';
+import { createWorldPartyVisibility } from './partyVisibilityHost.js';
+import { createPartyEntranceHost } from './partyEntranceHost.js';
 import { createCamps } from './camps.js';   // SURV3: the camps this host stands - the tent and the fire
 import { drinkAtSource, DRY_SOURCE_TEXT } from '../systems/survival/items.js';   // SURV3: the mod's water sources under the one ray
 import { survivalOn } from '../systems/survival/switch.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -24139,7 +24141,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** AUDIT (the pre-merge audit, I-E): the party the MAPS mark - those drawn here; a mate the classic lane stands nowhere
    *  (INVIS-NET) is no caret on a plan either. The roll's election, the party's size and the Renown share read
    *  `partyNear` whole - a concealed mate still fights beside me. */
-  const partyOnMaps = () => partyNear().filter((m) => !_hiddenPeers.has(m.id));
+  const partyOnMaps = () => [...partyNear().filter((m) => !_hiddenPeers.has(m.id)),...partyEntrances.map()];
   /** NODE-MARKS (2026-10-01, Mac: "Any profession node, like herbs, should appear on the compass. The node itself should
    *  also stand out with a detailed slight glow"): THE NODES STANDING ABOUT `feet` (the place's own frame - the street's,
    *  or the dungeon's), for the compass and the glow (scenes/gatherHost.js marks: a Prospector's veins from 500 m off,
@@ -27031,7 +27033,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peer/peerBodies.js drawVeiled), with the camera its body pass took. */
-  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' light - NODE-GLINT's glints, the glow a node with no picture
+  const partyEntrances = createPartyEntranceHost({ doors: buildingDoors, generation: () => doorGeneration, shift: shiftedDoor,
+    locations: locationIndex, built, dungeonTarget: arenaDoorTarget, hidden: _hiddenPeers, mode: _mode,
+    get social() { return social; }, get online() { return online; } });
+  const partyVisibility = createWorldPartyVisibility({ renderer, canvas, player, state, partyNear, entrances: partyEntrances, partyPing, hidden: _hiddenPeers,
+    regionAt: (x, y) => maps.getRegionName(maps.getRegionIndexAt(x, y)),
+    mode: _mode, pixel: playerTravelPixel, terrainSize: TERRAIN_SIZE, viewport: worldViewportRect,
+    get social() { return social; }, get online() { return online; }, get peerBodies() { return peerBodies; },
+    get peerWalkers() { return peerWalkers; }, get peerRiders() { return peerRiders; }, get remotePlayers() { return remotePlayers; } });
+  const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); partyVisibility.frame(renderer._proj,renderer._view,renderer._camPos,gamePaused()||townTalk.hudCovered||townTalk.hudHidden||!hudRenderEnabled()||modes?.hudCovered||!!travelView?.active); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' light - NODE-GLINT's glints, the glow a node with no picture
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
    *  WORD, IN THE SKIN'S FACE. The online lane is the enhanced lane whole (systems/online/onlineLane.js), so this line -
    *  connecting, reconnecting, refused - was the one online surface still drawn in the classic bitmap font while
@@ -30024,8 +30034,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // shipped; the HOSTS that drive it never did, and `world.js`
     // imported the door without ever calling it. A host that boots
     // after this one rebuilds the node on its first painted frame.
-    if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop (TV1: the travel view goes on its own heartbeat - scenes/travelView.js)
+    if (!frameAlive(_frameToken)) { partyVisibility.dispose(); destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop (TV1: the travel view goes on its own heartbeat - scenes/travelView.js)
     if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }   // FPS-CAP1: held back to the Frame Rate Cap - no stamp, no input frame, `last` kept
+    if (gamePaused() || townTalk.hudCovered || townTalk.hudHidden || !hudRenderEnabled() || modes?.hudCovered || travelView?.active) partyVisibility.hide();
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(latch.edge); csaInputFrame();   // MWCROUCH; CSA-I: the position reading's window keys, rotated with the host's
     // AUDIT 39 (#160): a full-screen video owns the canvas for its

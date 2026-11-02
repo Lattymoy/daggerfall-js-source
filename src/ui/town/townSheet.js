@@ -210,7 +210,7 @@ export function createTownSheet(deps = {}) {
   function partyOnSheet() {
     const h = ensureField().h;
     return readPartyBodies(deps.party).map((m) => ({
-      x: m.feet[0] / WORLD_PER_PX, y: sheetY(h, m.feet[2] / WORLD_PER_PX), yaw: m.yaw, name: m.name,
+      x: m.feet[0] / WORLD_PER_PX, y: sheetY(h, m.feet[2] / WORLD_PER_PX), yaw: m.yaw, name: m.name, entrance: m.entrance,
     }));
   }
 

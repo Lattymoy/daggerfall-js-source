@@ -280,6 +280,17 @@ export const CATEGORIES = Object.freeze([
     sec('language', 'Language', ['port:language']),
     sec('shop', 'Shop', ['port:shopHidden']), // SHOP-HIDE
     sec('hud', 'HUD', [
+      'feat:keta-party-entrance-map',
+      'feat:keta-party-enabled',
+      'feat:keta-party-outline',
+      'feat:keta-party-walls',
+      'feat:keta-party-range',
+      'feat:keta-party-opacity',
+      'feat:keta-party-trail',
+      'feat:keta-party-entrances',
+      'feat:keta-party-colors',
+      'feat:keta-party-health',
+      'feat:keta-party-companions',
       'port:hudScale',
       'port:hudLock',
       'port:hudBars',

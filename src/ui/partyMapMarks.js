@@ -267,6 +267,7 @@ export function readPartyBodies(party) {
       acct: r.acct ?? null,
       name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT,
       feet: [x, y, z],
+      ...(r.entrance === true ? {entrance:true} : {}),
       yaw: Number.isFinite(yaw) ? yaw : 0,
     });
   }

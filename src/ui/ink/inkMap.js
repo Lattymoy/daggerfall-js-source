@@ -873,7 +873,19 @@ export function paintPartyCarets(ctx, marks, pen) {
   if (!ctx?.beginPath || !marks?.length) return;
   const placed = [];
   for (const m of marks) {
-    paintCaret(ctx, m.x, m.y, m.yaw ?? 0, { fill: pen.fill, halo: pen.halo });
+    if (m.entrance) {
+      ctx.strokeStyle = pen.halo;
+         ctx.fillStyle = pen.fill;
+         ctx.lineWidth = 2 * HALO_PEN;
+      ctx.beginPath();
+         ctx.moveTo(m.x, m.y - CARET_R);
+      ctx.lineTo(m.x + CARET_R, m.y);
+         ctx.lineTo(m.x, m.y + CARET_R);
+         ctx.lineTo(m.x - CARET_R, m.y);
+      ctx.closePath();
+         ctx.stroke();
+         ctx.fill();
+    } else paintCaret(ctx, m.x, m.y, m.yaw ?? 0, { fill: pen.fill, halo: pen.halo });
     // the i-th member standing where another already is drops a line, so two names never print over each other
     const stack = placed.filter(
       (q) => Math.abs(q.x - m.x) < PARTY_CARET_STACK_PX && Math.abs(q.y - m.y) < PARTY_CARET_STACK_PX,

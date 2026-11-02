@@ -1434,9 +1434,10 @@ export class PeerBodies {
   }
 
   /** The standing bodies of one kind - the open (`veiled` false) or the concealed. */
-  _drawBodies(canvas, proj, view, eye, veiled, flashOf = null) {
+  _drawBodies(canvas, proj, view, eye, veiled, flashOf = null, onlyId = null) {
     let drawn = 0;
     for (const b of this._bodies.values()) {
+      if (onlyId !== null && b.id !== onlyId) continue;
       if (!this._standing(b) || !b.veil !== !veiled) continue;
       // WB9h: out of the view (the frustum's sides and near, the body's own reach): nothing to draw - the sprite pass
       // has no such test. A view that is no lens (a stub's) keeps the old test alone: behind the eye.
@@ -1512,6 +1513,24 @@ export class PeerBodies {
       } // AUDIT MWBODY A1; HITFLASH1: a struck body flashes red; INVIS-LOOK: a concealed one blends; OW-PEERS: grown and leaned under the Overworld; MWNPC16: its own shadow; COATS3D: astride, its horse
     }
     return drawn;
+  }
+
+  /** Replay one current body into an accessibility mask without recording another shadow. */
+  drawSelected(id) {
+    const c = this._cam;
+    if (!c || this.renderer.characterSpriteBatchOpen) return 0;
+    const casts = this._casts;
+    this._casts = false;
+    try {
+      this.renderer.beginCharacterSpriteBatch();
+      return this._drawBodies(c.canvas, c.proj, c.view, c.eye, false, null, id);
+    } finally {
+      try {
+        this.renderer.flushCharacterSpriteBatch();
+      } finally {
+        this._casts = casts;
+      }
+    }
   }
 
   /** The floating origin moved under the scene: every body's feet follow it (D5's law for the dolls). */
