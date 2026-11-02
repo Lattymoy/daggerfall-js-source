@@ -1,5 +1,6 @@
 Key,Value
 account.card.voyages,"已完成的航程"
+account.field.invite,"邀请码"
 account.refusal.badText,"请写点内容再发送。"
 account.refusal.badTown,"无法读取该城镇。"
 account.refusal.decorLapsed,"箱子开着的时间太长，里面的东西都没有移动。请重新打开。"
@@ -14,6 +15,7 @@ account.refusal.fallenFrozen,"该玩家已被管理员扣留，无法从其身�
 account.refusal.foe,"现在在开放区域被敌人杀死不会掉落任何东西。游戏可能需要更新。"
 account.refusal.frozen,"你的账号已被管理员冻结。你仍可以在 Staff 标签页中与管理员交谈。"
 account.refusal.homeUnlisted,"那座房子不出售。"
+account.refusal.invite,"此测试服务器需要邀请码。请输入你收到的邀请码。"
 account.refusal.lineageInUse,"仍有在世的角色在玩这个家族。"
 account.refusal.marketSellerFrozen,"该卖家的商品目前暂被冻结。"
 account.refusal.noEscrow,"那件物品并非为这个角色保管。"

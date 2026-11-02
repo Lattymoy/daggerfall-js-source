@@ -1,5 +1,6 @@
 Key,Value
 account.card.voyages,"Chuyến hành trình đã đi"
+account.field.invite,"Mã mời"
 account.refusal.badText,"Hãy viết gì đó để gửi."
 account.refusal.badTown,"Không thể đọc thị trấn đó."
 account.refusal.decorLapsed,"Rương bị để mở quá lâu nên không có gì bên trong được chuyển đi. Hãy mở lại."
@@ -14,6 +15,7 @@ account.refusal.fallenFrozen,"Người chơi đó đang bị đội ngũ giữ l
 account.refusal.foe,"Chết dưới tay kẻ thù trong vùng mở giờ không làm rơi gì cả. Có thể trò chơi cần được cập nhật."
 account.refusal.frozen,"Tài khoản của bạn đã bị đội ngũ đóng băng. Bạn vẫn có thể nói chuyện với đội ngũ ở thẻ Staff."
 account.refusal.homeUnlisted,"Ngôi nhà đó không được bán."
+account.refusal.invite,"Máy chủ thử nghiệm này cần mã mời. Hãy nhập mã bạn đã nhận."
 account.refusal.lineageInUse,"Một nhân vật còn sống vẫn đang chơi gia tộc đó."
 account.refusal.marketSellerFrozen,"Hàng của người bán đó đang bị tạm giữ."
 account.refusal.noEscrow,"Món đồ đó không được giữ cho nhân vật này."

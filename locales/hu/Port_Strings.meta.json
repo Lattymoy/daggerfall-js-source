@@ -299,6 +299,11 @@
   "tr": "1e8b19ac6ff5",
   "by": "claude-in-session"
  },
+ "account.field.invite": {
+  "en": "e91cf27d1adf",
+  "tr": "deb5c69407e2",
+  "by": "claude-in-session"
+ },
  "account.field.oldPassword": {
   "en": "19dff4dad0a7",
   "tr": "7c16d30bd7d6",
@@ -1632,6 +1637,11 @@
  "account.refusal.inboxFull": {
   "en": "1fa7ad576235",
   "tr": "ec7aae83de8c",
+  "by": "claude-in-session"
+ },
+ "account.refusal.invite": {
+  "en": "8a18b2846971",
+  "tr": "809695d591ae",
   "by": "claude-in-session"
  },
  "account.refusal.joined": {
