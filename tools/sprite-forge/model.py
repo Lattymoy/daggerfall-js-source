@@ -46,14 +46,16 @@ def _hand(x, closed):
     def at(px, py, pz):
         return tuple(Vector((0.262 * x + px * inward, py, pz)) + d)
     rows = (-0.034, -0.012, 0.01, 0.03)   # each finger's place, front to back
+    # the wrist runs up past the joint into the forearm, so however the hand turns no gap opens between them
+    wrist = blob(at(0.0, -0.004, 0.955), (0.022, 0.028, 0.032))
     if closed:   # the fist: knuckles in a row, the fingers curled under against the palm, the thumb over them
-        parts = [blob(at(0.0, -0.004, 0.912), (0.03, 0.05, 0.038))]
+        parts = [wrist, blob(at(0.0, -0.004, 0.912), (0.03, 0.05, 0.038))]
         for i, fy in enumerate(rows):
             parts.append(blob(at(-0.012, fy, 0.874), (0.014, 0.012, 0.014)))
             parts.append(seg(at(-0.008, fy, 0.874), at(0.02, fy, 0.872), 0.011 - 0.001 * i))
         parts.append(seg(at(0.012, -0.05, 0.93), at(0.022, -0.045, 0.88), 0.013))
         return parts
-    parts = [blob(at(0.0, -0.004, 0.918), (0.02, 0.048, 0.046))]
+    parts = [wrist, blob(at(0.0, -0.004, 0.918), (0.02, 0.048, 0.046))]
     for i, fy in enumerate(rows):
         length = (0.072, 0.08, 0.076, 0.062)[i]
         parts.append(seg(at(-0.002, fy, 0.882), at(0.012, fy * 1.05, 0.882 - length), 0.0105 - 0.0008 * i))
