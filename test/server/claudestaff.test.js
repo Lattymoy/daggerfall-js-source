@@ -181,8 +181,12 @@ test('sweep: one batched call, accounts as P tags, a suggestion written, an urge
   assert.deepEqual(JSON.parse(row.action), { act: 'watch', path: '/v1/staff/watch/add', args: { target: t.troll.id } });
   const card = api.calls.find((c) => String(c.url).includes('discord'));
   assert.ok(card, 'the urgent case reached the moderators\' channel');
-  assert.match(card.body.content, /urgent case.*net.*Staff Panel/);
-  assert.ok(!JSON.stringify(card.body).includes('Troll') && !JSON.stringify(card.body).includes('frames'));
+  const embed = card.body.embeds[0];
+  assert.equal(embed.title, 'Claude: Network (urgent)');
+  assert.match(embed.description, /too many frames/, "Claude's reason is on the card");
+  assert.match(embed.fields[0].value, new RegExp(`Troll.*${t.troll.id}`));
+  assert.match(embed.fields[1].value, /watchlist.*Staff Panel/);
+  assert.deepEqual(card.body.allowed_mentions, { parse: [] }, 'it pings nobody');
   assert.equal(t.raw.prepare('SELECT banned_until FROM players WHERE id = ?').get(t.troll.id).banned_until, null);
   assert.equal(t.raw.prepare('SELECT calls FROM mod_ai_days WHERE day LIKE ?').get('%:claude').calls, 1);
   // within the gap nothing runs; a second sweep after the gap finds the pending row already there
@@ -207,7 +211,9 @@ test('sweep: a report case reads its lines as data, and a prompt-injection line 
   assert.deepEqual(JSON.parse(row.action), { act: 'mute', path: '/v1/staff/mute', args: { target: t.troll.id, minutes: 1440, case: 'case0000000001' } });
   assert.equal(JSON.parse(row.evidence).lines[0].name, 'Troll', 'staff keep the lines as stored');
   assert.equal(t.raw.prepare("SELECT status FROM mod_cases WHERE id = 'case0000000001'").get().status, 'open', 'nothing acted on the case');
-  assert.equal(api.calls.some((c) => String(c.url).includes('discord')), false, 'a normal case posts no card');
+  const cards = api.calls.filter((c) => String(c.url).includes('discord'));
+  assert.equal(cards.length, 1, 'a normal suggestion posts its card too');
+  assert.ok(!JSON.stringify(cards[0].body).includes('ignore your instructions'), 'no chat line on the card');
 });
 
 test('sweep: a failed call is not spent and the window waits; quiet hours stretch the gap; the day\'s budget holds', async () => {

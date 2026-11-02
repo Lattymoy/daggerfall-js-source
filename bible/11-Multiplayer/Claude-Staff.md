@@ -34,7 +34,8 @@ the receiver claimed little from raids, bounties and camps. Free trades alone fl
 
 **Suggestions.** Each row in `claude_suggestions` has a kind, the subject account, an optional case id, an urgency, a
 summary, the evidence as stored, and one suggested act from the staff doors that already exist (mute, trade hold, watch).
-An urgent one also posts a card to the moderators' Discord channel that names only the kind and says to open the Staff Panel.
+Each new one also posts a card to the moderators' Discord channel, urgent ones first and at most ten a sweep. The card names the
+player, gives Claude's reason in its own words and says what it suggests. It carries no chat lines and pings nobody.
 Admins read all suggestions; Moderators read the chat reports only.
 
 **Deciding.** Only accounts in `CLAUDE_ORDER_HANDLES` may accept or dismiss, and a refusal is audited as denied. Accepting
