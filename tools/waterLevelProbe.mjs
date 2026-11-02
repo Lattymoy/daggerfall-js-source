@@ -20,7 +20,9 @@ const out = process.argv[2];
 if (!out) { console.error('usage: node tools/waterLevelProbe.mjs out-prefix [scene ...]'); process.exit(2); }
 mkdirSync(dirname(`${out}_x`), { recursive: true });
 const PORT = Number(process.env.PORT || 5207);
-const BASE = 'world&shot&class=0&season=summer&tod=12:00&weather=sunny&timescale=0&skin=enhanced&novideo&nofoes&touch=off';
+// WL_BASE replaces the page's query (another skin, hour or season); WL_UI is JSON merged into the UI prefs (waterQuality)
+const BASE = process.env.WL_BASE || 'world&shot&class=0&season=summer&tod=12:00&weather=sunny&timescale=0&skin=enhanced&novideo&nofoes&touch=off';
+const UI = { landViewDistance: 1, tutorialPopups: false, survival: false, ...JSON.parse(process.env.WL_UI || '{}') };
 
 /** The page's helpers: a pose aimed at a point, and the water tiles of a pixel grouped into bodies (WATERS: water and the
  *  shores the marching squares and the river painter lay). */
@@ -97,6 +99,7 @@ const SCENES = {
         const px = [...per].sort((a, b) => b[1] - a[1])[0][0], b = __wl.bodies(px)[0], t = { ...__wl.nearest(b, e[0], e[2]) }; t.y = window.__seaY?.() ?? t.y; __wl.aim(t, 25, 6, Math.atan2(t.x - e[0], t.z - e[2]) + 0.5); return { px, n: b.n, t }; })()` },
       { name: 'coast_top', pose: `(() => { const per = new Map(), e = __cam(); for (const t of __findTiles([0], 400000)) per.set(t.pixel, (per.get(t.pixel) ?? 0) + 1);
         const px = [...per].sort((a, b) => b[1] - a[1])[0][0], b = __wl.bodies(px)[0], t = { ...__wl.nearest(b, e[0], e[2]) }; t.y = window.__seaY?.() ?? t.y; __wl.aim(t, 8, 50, Math.atan2(t.x - e[0], t.z - e[2])); return { px, n: b.n, t }; })()` },
+      { name: 'coast_far', pose: `(() => { const e = __cam(); const t = { x: e[0], y: window.__seaY?.() ?? e[1], z: e[2] }; __wl.aim(t, 300, 120, 0.4); return { t }; })()` },
     ],
   },
   cyrodiil: {
@@ -123,6 +126,7 @@ const SCENES = {
       { name: 'shore_near', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 20, 7, 1.4); return { n: b.n, t }; })()` },
       { name: 'shore_wide', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 70, 30, 2.6); return { n: b.n, t }; })()` },
       { name: 'shore_low', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; return { n: b.n, t: __wl.low(b, 10, 2.5) }; })()` },
+      { name: 'under', pose: `(() => { const { px, py } = window.__wlTarget; const b = __wl.bodies(px + ',' + py)[0]; const t = __wl.nearest(b, b.cx, b.cz); __wl.aim(t, 6, 0.8, 1.4); return { n: b.n, t }; })()` },
     ],
   },
   wg2: {
@@ -155,13 +159,13 @@ async function shootScene(name, scene) {
     const t = m.text();
     if (/shader|compile|link|GL_INVALID|INVALID_OPERATION|water/i.test(t) && (m.type() === 'error' || m.type() === 'warning')) { faults.push(`${name}: ${t}`); console.log(`[page:${m.type()}]`, t.slice(0, 600)); }
   });
-  await page.addInitScript(() => {
-    localStorage.setItem('dagger.ui.v1', JSON.stringify({ landViewDistance: 1, tutorialPopups: false, survival: false }));
+  await page.addInitScript((ui) => {
+    localStorage.setItem('dagger.ui.v1', JSON.stringify(ui));
     localStorage.setItem('dagger.settings.v1', JSON.stringify({ Experimental: { TerrainDistance: '1' } }));
     // Basic Roads' rivers (off as the mod ships it, offline); Snowfall's deep snow off - it lies to the tiles' edge and
     // hides the shore the water draws
     localStorage.setItem('dfjs-mod-settings', JSON.stringify({ 'roads-hazelnut': { RiversAndStreams: true }, snowfall: { Enabled: false } }));
-  });
+  }, UI);
   const frames = async (n) => { const f = await page.evaluate(() => window.__frame); await page.waitForFunction(([f0, k]) => window.__frame >= f0 + k, [f, n], { timeout: 900000, polling: 1000 }); };
   const idle = () => page.waitForFunction(() => !window.__streamIdle || window.__streamIdle() === true, null, { timeout: 1800000, polling: 2000 });
   const t0 = Date.now();
