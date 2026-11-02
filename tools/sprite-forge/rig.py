@@ -85,6 +85,11 @@ class Pose:
         return m
 
 
+def reach(side):
+    """How far arm `side` puts its wrist from its shoulder, straight."""
+    return (offset(f'farm_{side}').length + offset(f'hand_{side}').length) * 0.999
+
+
 def solve_arm(pose, side, wrist_target, pole, hand_dir=None, hand_up=None):
     """Two-bone IK: put the wrist of arm `side` on `wrist_target` (world), the elbow bent toward `pole` (world
     direction). With `hand_dir` the hand's long axis points there (world), rolled so its back faces `hand_up`."""
@@ -95,7 +100,7 @@ def solve_arm(pose, side, wrist_target, pole, hand_dir=None, hand_up=None):
     b = offset(f'hand_{side}').length
     t = Vector(wrist_target)
     d = t - shoulder
-    dist = min(d.length, (a + b) * 0.999)
+    dist = min(d.length, reach(side))
     d.normalize()
     # elbow position in the plane of d and pole
     cos_s = (a * a + dist * dist - b * b) / (2 * a * dist)

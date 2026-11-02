@@ -39,12 +39,13 @@ class Fighter:
         self.shaped()
 
     def shaped(self):
-        """Lay the fitted proportions (shape.py) on every mesh."""
+        """Lay the fitted proportions (shape.py) on every mesh. The bow stays straight: `place` bends it each frame."""
+        self.bow_rest = [coords(ob.data) for ob in self.bow]
         for sk in self.skins:
             sk.rest = shape.transform(sk.ob.name, sk.rest, alpha=sk.alpha)
             sk.me.vertices.foreach_set('co', sk.rest.ravel())
             sk.me.update()
-        rigid = [ob for ob, _ in self.parts] + self.axe + self.bow
+        rigid = [ob for ob, _ in self.parts] + self.axe
         for ob in rigid:
             p = shape.transform(ob.name, coords(ob.data))
             ob.data.vertices.foreach_set('co', p.ravel())
@@ -76,9 +77,12 @@ class Fighter:
         bow_m = gear.get('bow')
         self.show(self.bow, bow_m is not None)
         if bow_m is not None:
-            for ob in self.bow:
+            draw = gear.get('draw', 0.0)
+            for ob, rest in zip(self.bow, self.bow_rest):
+                ob.data.vertices.foreach_set('co', shape.transform(ob.name, rest, draw=draw).ravel())
+                ob.data.update()
                 ob.matrix_world = bow_m
-            a, b = model.bow_tips()
+            a, b = model.bow_tips(draw)
             a, b = bow_m @ a, bow_m @ b
             nock = gear.get('nock') or (a + b) / 2
             self.extra.append(model.string_mesh(self.M, a, nock, b))

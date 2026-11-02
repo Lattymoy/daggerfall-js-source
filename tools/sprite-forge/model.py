@@ -174,19 +174,20 @@ def build_axe(M):
     return obs
 
 
-BOW_HALF, BOW_SAG = 0.66, 0.11   # the bow's half length, and how far behind the grip its tips sit
+BOW_HALF = 0.66   # the length of each limb, grip to tip
+BOW_ARC = 0.336   # radians each braced limb's tip turns from straight: the tips 0.11 m behind the grip
 
 
 def build_bow(M):
-    """The long bow in its own frame: the left-hand grip at the origin, limbs along +-Z, its back toward -Y. Its
-    fitted length, bend and thickness are laid on by shape.py."""
-    pts = [(0, BOW_SAG * (z / BOW_HALF) ** 2, z) for z in [i * BOW_HALF / 8 for i in range(-8, 9)]]
+    """The long bow in its own frame: the left-hand grip at the origin, limbs along +-Z, its back toward -Y. It is
+    made straight; shape.py bends it, braced and as far as it is drawn, and lays on its fitted size."""
+    pts = [(0, 0, i * BOW_HALF / 12) for i in range(-12, 13)]
     return [tube_path('bow', pts, lambda t: 0.011 + 0.007 * (1 - abs(2 * t - 1)), M['wood'], n=6)]
 
 
-def bow_tips():
+def bow_tips(draw=0.0):
     import shape
-    return tuple(Vector(shape.bow_point((0, BOW_SAG, z))) for z in (BOW_HALF, -BOW_HALF))
+    return tuple(Vector(shape.bow_point((0, 0, z), draw=draw)) for z in (BOW_HALF, -BOW_HALF))
 
 
 def string_mesh(M, a, nock, b):

@@ -26,7 +26,16 @@ Knight enemies wear.
   differently in each view of the attack: from the side its back is to the viewer at the wind-up. So the attack is
   keyed per view (`ATTACK`), by where the fist and the axe head show on screen. The idle's axe is keyed per view too
   (`IDLE_AXE`): the front view hangs it to the ground. The archer stands side-on to the shot in every view
-  (`BOW_TURN`).
+  (`BOW_TURN`). Drawn, the bow arm is straight (`BOW_KEYS`).
+- **Holding.** `poses.py` `grip` closes a fist round a haft or a bow. A grip past the arm's reach is held where the
+  straight arm puts the fist, and the weapon goes with it, so nothing floats off a hand. The attack's left fist holds
+  the haft further up from the right fist. If it cannot reach the haft, the fit pays for each metre it falls short
+  (`fit.py` `GAP_PULL`). While an arrow is nocked, the string is where the right fist holds it. Loosed, the fist has
+  let it go, and the string is back at rest.
+- **The bow.** `model.py` `build_bow` makes the bow straight, and `shape.py` `_bow` bends it each frame. Each limb is
+  a circular arc that keeps its length. Braced, its tip turns a little from straight. Drawn, it turns further for
+  each metre of draw (`bow_flex`), so the tips come back and in. Daggerfall's drawn bow is bent deep: its tips sit
+  0.35 to 0.48 m behind the grip.
 - **Fitting the poses.** `tools/sprite-forge/fit.py` adjusts each frame's keyed pose until the body covers the
   record's outline, its colour regions (skin, boot teal, cloth green) and its weapon best. It turns joints, the
   shoulders, the body, the axe's grip, roll and slide along the haft, and each solved elbow's swivel, searching by
@@ -37,7 +46,7 @@ Knight enemies wear.
   `tools/sprite-forge/specs/488-fit.json`; `poses.py` `load_fit` lays them on.
 - **Fitting the body.** `fit.py --shape` fits the proportions over every frame in its fitted pose: the torso's width
   and depth, the limbs', the head's, the hands', the boots', the pauldrons' size and place, the loincloth's width, the
-  axe's size, the bow's length, bend and thickness, and the whole body's size on screen. `--keys` fits only the named
+  axe's size, the bow's length, braced bend, flex and thickness, and the whole body's size on screen. `--keys` fits only the named
   proportions, over the frames of `--records`. `tools/sprite-forge/shape.py` `transform` lays them on the meshes
   the renderer draws and on the fitter's triangles alike (`specs/488-shape.json`). A vertex of the fused body or its
   layers moves as each piece it lies on would move it, by its shares.
@@ -78,7 +87,7 @@ python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json -
 python -I tools/sprite-forge/forge.py --spec tools/sprite-forge/specs/488.json --out public/art/studio/forge/488
 ```
 
-Fitting needs `scipy` beside `bpy`. Fit and register again after the body or a key changes. `--records 0,5` limits a
+Fitting needs `scipy` and `cma` beside `bpy`. Fit and register again after the body or a key changes. `--records 0,5` limits a
 run; `--work` writes uncropped renders; `--outfit naked` renders the body bare, with its weapons. `fit.py --no-head`
 leaves the axe head unpinned: records 0, 3, 4, 12, 15 and 19 fit better so.
 

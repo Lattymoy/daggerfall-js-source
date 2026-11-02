@@ -11,8 +11,8 @@ import os
 from mathutils import Matrix, Vector
 
 import shape
-from model import BOW_SAG
-from rig import Pose, solve_arm
+from model import bow_tips
+from rig import Pose, reach, solve_arm
 
 # A frame's fitted adjustment (fit.py): joint rotations added to its keys ('rot'), the body's turn ('turn'), the axe
 # grip and haft ('grip', 'haft', body space), the attack's fist and axe head on screen ('fist', 'head'), the axe's
@@ -20,6 +20,7 @@ from rig import Pose, solve_arm
 # swivel ('elbow_L', 'elbow_R', degrees). Keyed '<anim>:<view>:<frame>'.
 FIT = {}
 _adj = {}
+_gap = [0.0]   # metres the second hand on the axe falls short of the haft, this frame (pose_for gives it as 'gap')
 
 
 def load_fit(path):
@@ -60,7 +61,9 @@ def grounded(pose):
 
 def grip(pose, side, at, haft, pole, knuckles=None):
     """Close the `side` fist around a haft at body-space point `at` running along `haft`: the arm solved to it, the
-    elbow toward `pole`. The fist's long axis is the forearm's line squared to the haft, or `knuckles` if given."""
+    elbow toward `pole`. The fist's long axis is the forearm's line squared to the haft, or `knuckles` if given.
+    Gives the grip as held (world), the haft's direction and how far short of `at` the fist fell: a grip past the
+    arm's reach is held where the straight arm puts the fist, so what it holds never floats off the hand."""
     R = root_matrix(pose)
     rot = R.to_3x3()
     at_w = R @ Vector(at)
@@ -70,12 +73,16 @@ def grip(pose, side, at, haft, pole, knuckles=None):
     k = (rot @ Vector(knuckles)) if knuckles is not None else (at_w - shoulder)
     k = (k - k.project(haft_w)).normalized()
     wrist = at_w - k * FIST
+    short = max(0.0, (wrist - shoulder).length - reach(side))
+    if short:
+        wrist = shoulder + (wrist - shoulder).normalized() * reach(side)
+        at_w = wrist + k * FIST
     pole_w = rot @ Vector(pole)
     swivel = _adj.get(f'elbow_{side}')
     if swivel:   # the elbow turned about the shoulder-to-wrist line
         pole_w = Matrix.Rotation(math.radians(swivel), 3, (wrist - shoulder).normalized()) @ pole_w
     solve_arm(pose, side, wrist, pole_w, hand_dir=k, hand_up=haft_w.cross(k))
-    return at_w, haft_w
+    return at_w, haft_w, short
 
 
 def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), pole_l=(1, 0.3, -0.5),
@@ -83,10 +90,10 @@ def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), 
     """The axe held by its haft at `grip_at` (right fist), the head along `haft`, blades along `blade_up`; with
     `left_at` (a distance up the haft) the left fist holds it too."""
     grip_at, haft = _plus(grip_at, 'grip'), _plus(haft, 'haft')
-    at_w, haft_w = grip(pose, 'R', grip_at, haft, pole_r, knuckles_r)
-    if left_at is not None:
-        hv = Vector(haft).normalized()
-        grip(pose, 'L', Vector(grip_at) + hv * left_at, haft, pole_l, knuckles_l)
+    at_w, haft_w, _ = grip(pose, 'R', grip_at, haft, pole_r, knuckles_r)
+    if left_at is not None:   # up the haft from where the right fist holds it
+        _, _, short = grip(pose, 'L', root_matrix(pose).inverted() @ (at_w + haft_w * left_at), haft, pole_l, knuckles_l)
+        _gap[0] += short
     rot = root_matrix(pose).to_3x3()
     blade = rot @ Vector(blade_up)
     if _adj.get('roll'):
@@ -237,10 +244,11 @@ def hurt(frame, view, yaw):
 
 
 # The bow: full draw, held, loose, lowered. The archer stands side-on to the shot, the bow arm out along the body's
-# left (+X) toward the target, in every view. Keys: (left fist, bow's up direction, draw in metres, arrow nocked)
+# left (+X) toward the target, in every view; drawn, that arm is straight. Keys: (left fist, bow's up direction, draw
+# in metres, arrow nocked)
 BOW_KEYS = [
-    ((0.66, -0.04, 1.47), (0.0, 0.0, 1.0), 0.58, True),
-    ((0.67, -0.04, 1.48), (0.04, 0.0, 1.0), 0.60, True),
+    ((0.86, -0.04, 1.47), (0.0, 0.0, 1.0), 0.58, True),
+    ((0.86, -0.04, 1.48), (0.04, 0.0, 1.0), 0.60, True),
     ((0.60, -0.10, 1.34), (0.35, 0.0, 1.0), 0.02, False),
     ((0.36, -0.22, 1.02), (0.8, 0.0, 0.6), 0.0, False),
 ]
@@ -259,17 +267,18 @@ def bow(frame, view, yaw):
     }, yaw + BOW_TURN)
     R = root_matrix(p)
     rot = R.to_3x3()
-    at_w, up_w = grip(p, 'L', at, up, (0.2, 1, -0.6), knuckles=(1, 0, 0))
+    at_w, up_w, _ = grip(p, 'L', at, up, (0.2, 1, -0.6), knuckles=(1, 0, 0))
     bow_m = frame_matrix(at_w, up_w, rot @ Vector((0, 1, 0)))
-    gear = {'bow': bow_m}
-    string_rest = bow_m @ Vector(shape.bow_point((0, BOW_SAG, 0)))
+    string_rest = bow_m @ (sum(bow_tips(), Vector()) / 2)   # the braced string's middle
     back = (rot @ Vector((-1, 0, 0))).normalized()
-    nock = string_rest + back * draw
-    gear['nock'] = nock
+    held, _, _ = grip(p, 'R', R.inverted() @ (string_rest + back * (draw + 0.03)), (0, 0, 1), (-1, 0.4, 0.5),
+                      knuckles=(1, 0, 0))
+    # nocked, the string is where the fist holds it; loosed, the fist has let it go
+    nock = held - back * 0.03 if nocked else string_rest + back * draw
+    # the limbs bend as far as the string is drawn back from its rest
+    gear = {'bow': bow_m, 'nock': nock, 'draw': max(0.0, (nock - string_rest).dot(back))}
     if nocked:
         gear['arrow'] = nock - back * 0.80
-    hand = R.inverted() @ (nock + back * 0.03)
-    grip(p, 'R', hand, (0, 0, 1), (-1, 0.4, 0.5), knuckles=(1, 0, 0))
     return p, gear
 
 
@@ -283,7 +292,9 @@ FISTS = {'idle': 'R', 'walk': 'R', 'hurt': 'R', 'attack': 'LR', 'bow': 'LR'}
 def pose_for(anim, frame, view, yaw, adj=None):
     global _adj
     _adj = adj if adj is not None else FIT.get(f'{anim}:{view}:{frame}', {})
+    _gap[0] = 0.0
     pose, gear = ANIMS[anim](frame, view, yaw)
     _adj = {}
+    gear['gap'] = _gap[0]
     gear['fist'] = {s: s in FISTS[anim] for s in 'LR'}
     return pose, gear

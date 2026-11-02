@@ -16,7 +16,8 @@ DEFAULT = {
     'helm_s': 1.0, 'helm_dy': 0.0, 'helm_dz': 0.0, 'paul_sz': 1.0,
     'waist_w': 1.0, 'chest_w': 1.0,   # the torso's width below the ribs and across the chest, past torso_w
     'head_dy': 0.0, 'head_dz': 0.0,   # the whole head moved back (+y) or forward, up (+z) or down, on its neck
-    'bow_len': 1.0, 'bow_bend': 1.0, 'bow_w': 1.0,   # the bow's length, the depth of its curve, its limbs' girth
+    'bow_len': 1.0, 'bow_bend': 1.0, 'bow_w': 1.0,   # the bow's length, its braced curve, its limbs' girth
+    'bow_flex': 0.0,   # radians more each limb's tip turns a metre the string is drawn
     # a factor a cross-section of the body (anatomy.py's rows), eased between: the torso's width and depth, the arms'
     # and the legs' girth
     'torso_pw': [1.0] * len(TORSO), 'torso_pd': [1.0] * len(TORSO), 'arm_p': [1.0] * len(ARM), 'leg_p': [1.0] * len(LEG),
@@ -53,23 +54,27 @@ def _chain_xy(points, z):
     return np.interp(z, zs, [p.x for p in pts]), np.interp(z, zs, [p.y for p in pts])
 
 
-def _bow(p, S):
-    from model import BOW_HALF, BOW_SAG
-    z = p[:, 2]
-    cy = BOW_SAG * (z / BOW_HALF) ** 2   # the limbs' centre line, curving back toward the tips
-    w = S.get('bow_w', 1.0)
-    return np.stack([p[:, 0] * w, cy * S.get('bow_bend', 1.0) + (p[:, 1] - cy) * w, z * S.get('bow_len', 1.0)], axis=1)
+def _bow(p, S, draw=0.0):
+    """The straight bow bent. Each limb is a circular arc that keeps its length: braced, its tip turns `bow_bend`
+    times BOW_ARC from straight, and `bow_flex` more a metre of `draw`. So a drawn bow's tips come back and in."""
+    from model import BOW_ARC, BOW_HALF
+    n, w = S.get('bow_len', 1.0), S.get('bow_w', 1.0)
+    k = max(BOW_ARC * S.get('bow_bend', 1.0) + S.get('bow_flex', 0.0) * draw, 1e-6) / (BOW_HALF * n)
+    a = k * p[:, 2] * n   # the turn at each point's length along its limb
+    off = p[:, 1] * w   # across the limb, toward the string (+Y)
+    return np.stack([p[:, 0] * w, (1 - np.cos(a)) / k + off * np.cos(a), np.sin(a) / k - off * np.sin(a)], axis=1)
 
 
-def bow_point(p, S=None):
-    """A point of the bow's own frame (a tip, the string's rest) under the proportions."""
-    return _bow(np.array([p], dtype=np.float64), S or SHAPE)[0]
+def bow_point(p, S=None, draw=0.0):
+    """A point of the straight bow's frame (a tip, the grip) bent and sized as the bow is."""
+    return _bow(np.array([p], dtype=np.float64), S or SHAPE, draw)[0]
 
 
-def transform(name, p, S=None, alpha=None):
+def transform(name, p, S=None, alpha=None, draw=0.0):
     """Part `name`'s points `p` (its mesh space: rest space for a skinned part, its joint's space for a rigid one,
     the weapon's for the axe) under the proportions `S`. The fused body and its layers give `alpha`, each point's
-    share of each of anatomy's PIECES: a point moves as each piece would move it, by its shares."""
+    share of each of anatomy's PIECES: a point moves as each piece would move it, by its shares. The bow bends as
+    far as its string is drawn back (`draw`, metres)."""
     S = S or SHAPE
     if alpha is not None:
         return sum(alpha[:, k:k + 1] * transform(piece, p, S) for k, piece in enumerate(PIECES) if alpha[:, k].any())
@@ -136,5 +141,5 @@ def transform(name, p, S=None, alpha=None):
     if base.startswith('axe_'):
         return p * S['axe']
     if base == 'bow':
-        return _bow(p, S)
+        return _bow(p, S, draw)
     return p

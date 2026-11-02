@@ -106,14 +106,15 @@ class Cloud:
         self.axe = [rigid(ob) for ob in fighter.axe]
         self.bow = [rigid(ob) for ob in fighter.bow]
         self.scale = 1.0
+        self.S = shape.SHAPE
 
     def set_shape(self, S):
         for sk in self.skins:
             sk[7] = shape.transform(sk[0], sk[1], S, sk[8])
-        for pc in ([pc for pc, _ in self.parts] + [k for kinds in self.hands.values() for k in kinds.values()] + self.axe
-                   + self.bow):
+        for pc in [pc for pc, _ in self.parts] + [k for kinds in self.hands.values() for k in kinds.values()] + self.axe:
             pc[4] = shape.transform(pc[0], pc[1], S)
         self.scale = S['scale']
+        self.S = S
 
     def mesh(self, pose, gear, W=None):
         """Every posed vertex, triangle (indices into them) and triangle class."""
@@ -144,6 +145,8 @@ class Cloud:
         for key, pcs in (('axe', self.axe), ('bow', self.bow)):
             if gear.get(key) is not None:
                 for pc in pcs:
+                    if key == 'bow':   # made straight, bent as far as the string is drawn
+                        pc = pc[:4] + [shape.transform(pc[0], pc[1], self.S, draw=gear.get('draw', 0.0))]
                     put(pc, np.array(gear[key]))
         return np.concatenate(verts), np.concatenate(tris), np.concatenate(cls)
 
@@ -257,6 +260,7 @@ def axe_head(ref_weapon):
 
 
 HEAD_PULL = 0.004   # score lost a pixel the axe head stands from the reference's
+GAP_PULL = 1.0   # score lost a metre the second hand on the axe falls short of the haft
 
 
 def score(img, ref, ref_weapon=None):
@@ -327,7 +331,7 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
         place_x = start_place[0] + (round(x[-1]) if dx_free else 0)
         place_y = low - lowest(work) + stage.ROOT_PX[1]
         img = crop(work, rec['canvas'], (place_x, place_y))
-        reg = REG * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift
+        reg = REG * float(((x[:len(params)] / steps[:len(params)]) ** 2).sum()) + 2.0 * lift + GAP_PULL * gear['gap']
         if head_at is not None and gear.get('axe') is not None:   # the axe head drawn where the reference's is
             hx, hy, _ = project(np.array([list(gear['axe'] @ Vector((0, 0, 0.62 * shape.SHAPE['axe'])))]), cloud.scale)
             dx = hx[0] - (stage.ROOT_PX[0] - place_x) - head_at[0]
@@ -416,6 +420,9 @@ def _shape_value(x):
     return float(np.mean([frame_score(cloud, rec, f, ref, rec['place'], wpn) for rec, f, ref, wpn in frames]))
 
 
+SHAPE_STEP = {'scale': 0.02, 'bow_bend': 0.25, 'bow_flex': 0.5}   # past the factors' 0.06: the bow's turns move far
+
+
 def fit_shape(cloud, spec, refs, iters, rng, keys=None, records=None):
     """Fit the proportions (`keys`, or all of them) over every frame (of `records`, or all), each frame in its fitted
     pose; candidates weighed on every core."""
@@ -428,7 +435,7 @@ def fit_shape(cloud, spec, refs, iters, rng, keys=None, records=None):
             steps += [0.04] * len(shape.DEFAULT[k])
             base += list(v)
         else:
-            steps.append(0.02 if k == 'scale' else 0.015 if k.endswith(('_dx', '_dy', '_dz')) else 0.06)
+            steps.append(SHAPE_STEP.get(k, 0.015 if k.endswith(('_dx', '_dy', '_dz')) else 0.06))
             base.append(v)
     steps, base = np.array(steps), np.array(base, dtype=np.float64)
     weapons = _JOB.get('weapons')
