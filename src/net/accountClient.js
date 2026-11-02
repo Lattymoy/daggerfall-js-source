@@ -147,6 +147,7 @@ const REFUSAL_WORDS = {
   'terms-unaccepted': () => t('account.refusal.termsUnaccepted', 'Tick both boxes to agree to the Terms of Service and the Privacy Policy.'),
   'terms-stale': () => t('account.refusal.termsStale', 'The Terms of Service or the Privacy Policy has changed. Reload the game (or update the app) to read the current version, then tick the boxes again.'),   // AUDIT PRE-MERGE 0929 T1: a reload brings the desktop app's own bundled copy back - the app is updated
   'no-account': () => t('account.refusal.noAccount', 'That account no longer exists.'),
+  invite: () => t('account.refusal.invite', 'This test server needs an invite code. Type the one you were given.'),   // DEV-SIGNUP: a dev server's gate (server-account accounts.js signupCodeRefusal)
   'bad-login': () => t('account.refusal.badLogin', 'That username and password do not match.'),
   'bad-code': () => t('account.refusal.badCode', 'That username and recovery code do not match.'),
   'codes-moved': () => t('account.refusal.codesMoved', 'Your recovery codes changed in the meantime. Try again.'),   // RECOVERY-SET: two presses raced (accounts.js newRecoveryCodes)
@@ -1317,7 +1318,7 @@ const legalFields = (accepted) => (accepted ? { terms: accepted.terms, privacy: 
 /** A guest row and the session that owns it. `{ id, name, kind,
  *  sessionId, secret }`. TERMS1: the service opens no row for a player
  *  who has not ticked the documents, so `accepted` rides the request. */
-export const openGuest = (io, label = null, accepted = null) => call(io, '/v1/auth/guest', { label, ...legalFields(accepted) });
+export const openGuest = (io, label = null, accepted = null, invite = '') => call(io, '/v1/auth/guest', { label, ...legalFields(accepted), ...(invite ? { invite } : {}) });   // DEV-SIGNUP: a dev server's invite code, sent only when typed
 
 /** Fill in a handle and a password on the guest row THIS SESSION
  *  already owns - an upgrade in place, never a new account. Answers
