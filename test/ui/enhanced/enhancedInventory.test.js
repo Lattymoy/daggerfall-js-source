@@ -2267,6 +2267,19 @@ test('JAN2: a repaint that lands after the unmount paints nothing instead of thr
   });
 });
 
+// FIELD: Guildhall Shelf / Take all - TypeError Cannot read properties of null (reading 'items')
+// bulkMove('take') read remote.items after unmount nulled remote; a held Take all button still fired.
+test('Take all after unmount does not read remote.items', () => {
+  const pile = [mk('Dagger')];
+  withPack(({ view, dom }) => {
+    assert.deepEqual(barOf(dom), ['Take all'], 'Take all is on the loot bar');
+    const takeAll = [...dom.doc.querySelectorAll('.remoteacts')[0].children].find((b) => b.textContent === 'Take all');
+    const click = takeAll.onclick;
+    view.unmount();
+    assert.doesNotThrow(() => click(), 'mutants: bulkMove reading remote.items with remote null');
+  }, { deps: { loot: { items: () => pile } } });
+});
+
 
 // ── ENH-NOTICE3: THE PANE'S `notice` IS A BOX, AND THE PANEL'S ────
 

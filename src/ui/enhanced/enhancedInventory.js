@@ -977,10 +977,11 @@ const bagRefuses = (item) => (remote?.kind === 'bag' ? bagStoreRefusal(item) : n
  *  hooks' `playerOwned`, as the classic skin reads it) and storage are the player's. Every gate asks it. */
 const letterRefuses = (item) => letterRefusesPut(item, { container: remote?.kind === 'container', own: deps.loot?.playerOwned === true });
 function stowIntent(item) {
-  if (remote?.kind === 'ground' && lockRefuses(item, 'drop')) return { kind: 'stow', label: null, speaks: true };   // LOCK1: released, it says why
+  if (!remote) return { kind: 'nope', label: null };   // unmounted pane: a stale drag must not read remote.items
+  if (remote.kind === 'ground' && lockRefuses(item, 'drop')) return { kind: 'stow', label: null, speaks: true };   // LOCK1: released, it says why
   if (bagRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // AUDIT BAG1: a dagger dragged to the bag read "Put in bag
-  if (remote && boundRefusesPut(item, remote.kind)) return { kind: 'stow', label: null, speaks: true };   // SS3: a bound piece - released, it says why
-  if (remote && letterRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // HACKED-GOLD: a letter online - released, it says why
+  if (boundRefusesPut(item, remote.kind)) return { kind: 'stow', label: null, speaks: true };   // SS3: a bound piece - released, it says why
+  if (letterRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // HACKED-GOLD: a letter online - released, it says why
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
@@ -1667,6 +1668,7 @@ function canStow(item) {
   // right for a click and catastrophic for a render - every repaint
   // would mark a quest item as dropped. The dry run cannot change the
   // answer, because that rung's refusal speaks.
+  if (!remote) return false;   // unmounted: no stow control on a closed pane
   if (bagRefuses(item)) return false;   // AUDIT BAG1: no "Put in bag" on a dagger's card - the bag takes materials alone
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
@@ -1680,7 +1682,7 @@ function canStow(item) {
 /** DISC25-F: the most a transfer of this item would move - its plan's own amount, asked as a DRY RUN (canStow's
  *  reason: the quest rung writes) - or 0 where it would move nothing, or is a map's interception rather than a move. */
 function splitMax(item, dir) {
-  if (dir === 'store' && bagRefuses(item)) return 0;   // AUDIT BAG1: no how-many field for what the bag refuses
+  if (dir === 'store' && (!remote || bagRefuses(item))) return 0;   // AUDIT BAG1: no how-many field for what the bag refuses; unmounted: nothing to store into
   const plan = dir === 'store'
     ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
     : planTake(item, {
@@ -1895,6 +1897,8 @@ function shownFilter() {
  */
 function bulkMove(dir) {
   notice = null;
+  // Take/Stash all on a pane whose remote was cleared (unmount, orphan click) must not read remote.items
+  if (!remote || !model) return;
   const taking = dir === 'take';
   const shown = taking
     ? filterStore(remote.items, shownFilter(), storeNameOf)
