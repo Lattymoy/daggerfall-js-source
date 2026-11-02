@@ -469,6 +469,9 @@ function cachedNews(json) {
     .sort((a, b) => cmpV(parseVersion(b.version), parseVersion(a.version)));
 }
 
+/** Every release reads the same to a player: what changed stays in the repository, not the launcher. */
+const TECH_NOTE = 'Technical updates.';
+
 const NEWS_NOTE = Object.freeze({
   loading: 'Loading the patch notes',
   failed: 'The patch notes could not be loaded - GitHub did not answer.',
@@ -498,7 +501,7 @@ function newsView(s) {
     .filter((x) => x.v)
     .map(({ n, v }) => ({ version: v.join('.'), date: dateLabel(n.date), text: String(n.text ?? ''), badge: badge(v), ...(UPDATE_NUMBER_RE.test(n.update) ? { update: n.update } : {}) }));
   const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));
-  const list = (said.length ? said : items.slice(0, 1)).slice(0, NEWS_MAX);
+  const list = (said.length ? said : items.slice(0, 1)).slice(0, NEWS_MAX).map((n) => ({ ...n, text: TECH_NOTE }));
   return { items: list, note: list.length ? '' : NEWS_NOTE[s.news.status] ?? '' };
 }
 

@@ -368,7 +368,7 @@ test('R2-E1: after the first run\'s card the focus is on PLAY - Enter plays (it 
   assert.equal(r.doc.activeElement.id, 'update-check', 'the same card again leaves the focus where the player put it');
 });
 
-test('R2-E4/E8: one live region, and the notes as written - nested bullets stay nested, titles without "Patch Notes:"', async () => {
+test('R2-E4/E8: one live region, and every release reads Technical updates', async () => {
   const html = rd('app/launcher/index.html');
   assert.deepEqual([...html.matchAll(/<([a-z0-9]+)[^>]*\saria-live="[^"]+"[^>]*>/g)].map((m) => /id="([^"]+)"/.exec(m[0])?.[1]), ['status'],
     'the status line alone - the card is announced by the focus that moves to its answer');
@@ -377,13 +377,9 @@ test('R2-E4/E8: one live region, and the notes as written - nested bullets stay 
   const text = '# Patch Notes: The Warden\n\n## Phases\n- **Three phases:**\n  - **The Burning Court**: fire.\n  - **Champion**: spokes.\n- He leaps.\n\nA paragraph\nthat wraps.';
   p.show(view(state({ arena2Dir: '/a', news: [{ version: '0.1.4700', date: '2026-09-29T00:00:00Z', text }] })));
   const release = p.doc.querySelector('#news .feed .release');
-  assert.equal(release.querySelector('h4').textContent, 'The Warden', 'E-21: the title as a player reads it');
-  const top = release.querySelector('ul');
-  assert.deepEqual(top.children.map((li) => li.childNodes.filter((c) => !(c.tagName === 'UL')).map((c) => c.textContent).join('')), ['Three phases:', 'He leaps.']);
-  const nested = top.children[0].querySelector('ul');
-  assert.ok(nested, 'the sub-points inside their point');
-  assert.deepEqual(nested.children.map((li) => li.textContent), ['The Burning Court: fire.', 'Champion: spokes.']);
-  assert.equal(release.querySelector('p').textContent, 'A paragraph that wraps.');
+  // a player reads one line for every release; what changed stays on the pull requests
+  assert.equal(release.querySelector('p').textContent, 'Technical updates.');
+  assert.ok(!release.textContent.includes('Warden'), 'the notes as written never reach the page');
 });
 
 test('R2-E (L5-21, L5-12): the page redraws what changed and nothing else - a button under the pointer is never rebuilt between press and release', async () => {
