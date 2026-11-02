@@ -252,8 +252,8 @@ export const playerDamageWithheld = () => { if (_staff.god || staffFrozen()) ret
  *  write ORs `staffFly()` beside the Levitate effect). The typer's alone, never saved, never sent. */
 export function setStaffPowers({ god, fly, noclip } = {}) { if (typeof god === 'boolean') _staff.god = god; if (typeof fly === 'boolean') _staff.fly = fly; if (typeof noclip === 'boolean') _staff.noclip = noclip; }
 export const staffPowers = () => ({ ..._staff });
-export const staffFly = () => _staff.fly || _staff.noclip;   // STAFF-NOCLIP: a no-clip flies too
-/** STAFF-NOCLIP (net/staffCommands.js /noclip): the flight goes through what it meets - the motor's levitating step moves
+export const staffFly = () => _staff.fly || _staff.noclip;   // a no-clip flies too
+/** /noclip (net/staffNoclip.js): the flight goes through what it meets - the motor's levitating step moves
  *  the body without the collider (player/motor.js registerNoclip). The typer's alone, never saved, never sent. */
 export const staffNoclip = () => _staff.noclip;
 /** AUDIT-SEATS G5 (Seats-Arc 6.1: "Teleport, Recall and Levitate do nothing in a siege room"): THE WARD ON THE LEVITATE

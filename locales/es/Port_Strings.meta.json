@@ -28545,8 +28545,8 @@
   "by": "claude-in-session"
  },
  "net.staff.noclipHelp": {
-  "en": "4852b7ee81b2",
-  "tr": "fab15c35d458",
+  "en": "c1a3dfd6802d",
+  "tr": "a5a034e338cd",
   "by": "claude-in-session"
  },
  "net.staff.noclipOff": {
@@ -28557,6 +28557,16 @@
  "net.staff.noclipOn": {
   "en": "1ea855b3b4ea",
   "tr": "2d11fc8d0bd2",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipSpeed": {
+  "en": "c1fd31dc6f33",
+  "tr": "0e280be08be8",
+  "by": "claude-in-session"
+ },
+ "net.staff.noclipSpeedUsage": {
+  "en": "9f2fca222d26",
+  "tr": "2ef10193eb0f",
   "by": "claude-in-session"
  },
  "net.staffFlat.close": {

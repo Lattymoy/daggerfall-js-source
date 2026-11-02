@@ -1,4 +1,4 @@
-// STAFF-NOCLIP (src/net/staffNoclip.js, src/player/motor.js registerNoclip): /noclip's grammar and who may type it, and the
+// src/net/staffNoclip.js and src/player/motor.js registerNoclip: /noclip's grammar and who may type it, and the
 // levitating step that passes through what it meets while the host's switch answers true.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { parseNoclipCommand, mayNoclip, NOCLIP_GLYPHS, noclipHelpLine } from '../../src/net/staffNoclip.js';
 import { STAFF_GLYPHS, isStaff } from '../../src/net/staffCommands.js';
 import { createStaffNoclipHost } from '../../src/scenes/staffNoclipHost.js';
-import { PlayerMotor, registerNoclip, noclipOn } from '../../src/player/motor.js';
+import { PlayerMotor, registerNoclip, noclipOn, flySpeedMult } from '../../src/player/motor.js';
 import { Collider } from '../../src/player/collider.js';
 import { setStaffPowers, staffFly, staffNoclip } from '../../src/characters/playerEntity.js';
 
@@ -20,7 +20,10 @@ test('STAFF-NOCLIP grammar: /noclip flips, takes on|off, refuses anything else; 
   assert.ok('error' in parseNoclipCommand('/noclip maybe'));
   assert.ok('error' in parseNoclipCommand('/noclip on now'));
   for (const line of ['/fly', '/noclipx', 'noclip', '/tp Daggerfall', '']) assert.equal(parseNoclipCommand(line), null, line);
-  assert.match(noclipHelpLine(), /^\/noclip \[on\|off\]/);
+  assert.deepEqual(parseNoclipCommand('/noclip speed 5'), { cmd: 'noclip', speed: 5 });
+  assert.deepEqual(parseNoclipCommand('/noclip SPEED 1.5'), { cmd: 'noclip', speed: 1.5 });
+  for (const line of ['/noclip speed', '/noclip speed 0', '/noclip speed 21', '/noclip speed fast', '/noclip speed 2 3']) assert.ok('error' in parseNoclipCommand(line), line);
+  assert.match(noclipHelpLine(), /^\/noclip \[on\|off\|speed <1-20>\]/);
 });
 
 test('STAFF-NOCLIP who may: the staff glyphs and a Moderator\'s `mod`, nobody else (mutants: mod left out; a cosmetic glyph let in)', () => {
@@ -86,6 +89,12 @@ test('STAFF-NOCLIP the host: a Moderator and staff are asked, anyone else is not
   glyphs = ['dev'];
   assert.equal(host.chat('/noclip', log, 7), true);
   assert.equal(staffNoclip(), true, 'a bare /noclip flips it on');
+  assert.equal(flySpeedMult(), 1, 'the levitating pace until a speed is set');
+  assert.equal(host.chat('/noclip speed 8', log, 7), true);
+  assert.equal(flySpeedMult(), 8, 'the pace times the speed while on');
+  assert.equal(staffNoclip(), true, 'a speed leaves the switch as it was');
+  setStaffPowers({ noclip: false });
+  assert.equal(flySpeedMult(), 1, 'off: /fly and the spell fly at their own pace');
   registerNoclip(null);
   setStaffPowers({ noclip: false });
 });
