@@ -7,7 +7,7 @@ chat. Staff meet it in the Staff Panel as a list of suggestions. The code is `se
 
 ## How it works
 
-**Off by default.** `CLAUDE_STAFF` in `server-account/wrangler.toml` ships `"off"`. Off, or with no `ANTHROPIC_API_KEY`, the
+**The switch.** `CLAUDE_STAFF` in `server-account/wrangler.toml` is `"on"`; `"off"` stops it at the next deploy. Off, or with no `ANTHROPIC_API_KEY`, the
 minute job returns before it reads a row or opens a connection. It does not change `MOD_AI`.
 
 **No sign-in.** Claude runs inside the account service on its minute clock, like the chat reviewer. It writes as the staff
@@ -34,7 +34,8 @@ the receiver claimed little from raids, bounties and camps. Free trades alone fl
 
 **Suggestions.** Each row in `claude_suggestions` has a kind, the subject account, an optional case id, an urgency, a
 summary, the evidence as stored, and one suggested act from the staff doors that already exist (mute, trade hold, watch).
-An urgent one also posts a card to the moderators' Discord channel that names only the kind and says to open the Staff Panel.
+Each new one also posts a card to the moderators' Discord channel, urgent ones first and at most ten a sweep. The card names the
+player, gives Claude's reason in its own words and says what it suggests. It carries no chat lines and pings nobody.
 Admins read all suggestions; Moderators read the chat reports only.
 
 **Deciding.** Only accounts in `CLAUDE_ORDER_HANDLES` may accept or dismiss, and a refusal is audited as denied. Accepting
