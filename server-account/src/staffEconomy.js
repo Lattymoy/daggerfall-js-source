@@ -144,7 +144,7 @@ const GUILD_SORTS = Object.freeze({
 export const leftOutSql = (/** @type {string} */ c, /** @type {string} */ p, /** @type {number} */ nowS) =>
   `(${bannedSql(p, nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;
 
-/** ECON-BANNED-OUT: the account `p` banned now - for the economy's rows that name an account and no character. */
+/** The account `p` banned now - for the economy's rows that name an account and no character. */
 const bannedSql = (/** @type {string} */ account, /** @type {number} */ nowS) =>
   `COALESCE(${account}.banned_until, 0) > ${Math.floor(nowS)}`;
 
@@ -837,7 +837,7 @@ export function economy(db, nowS, days) {
         (SELECT COALESCE(SUM(MAX(treasury - realm_gold, 0)), 0) FROM guilds) AS guild_legacy,
         (SELECT COALESCE(SUM(CASE WHEN ${out} THEN 0 ELSE m.rent_due END), 0) FROM homes m ${OUT_JOIN('m')}) AS rent_held,
         (SELECT COALESCE(SUM(CASE WHEN ${out} THEN m.rent_due ELSE 0 END), 0) FROM homes m ${OUT_JOIN('m')}) AS rent_out`),
-        // ECON-BANNED-OUT: a banned account's Marks, its Marks minted or burnt and its gold sales kept out too
+        // a banned account's Marks, its Marks minted or burnt and its gold sales kept out too
         db.prepare(
           `SELECT COALESCE(SUM(m.balance), 0) AS s, COUNT(*) AS n FROM marks m LEFT JOIN players p ON p.id = m.account WHERE m.balance > 0 AND NOT ${banned}`,
         ),

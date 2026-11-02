@@ -505,7 +505,7 @@ test('ECON-LEFT-OUT and ECON-WORTH: a banned account\'s and a held character\'s 
   const wh = raw.prepare('INSERT INTO realm_wealth_hours (char_id, hour, player, level, gain, loss) VALUES (?, ?, ?, 10, ?, ?)');
   wh.run(idOf('Good'), hour, ok, 5, 1); wh.run(idOf('Banned'), hour, banned, 900_000, 0); wh.run(idOf('Held'), hour, holder, 800_000, 3);
 
-  // ECON-BANNED-OUT: a banned account's Marks struck, burnt and held, and its gold sales, kept out too
+  // a banned account's Marks struck, burnt and held, and its gold sales, kept out too
   const day = utcDay(t);
   const line = (src, srcId, dst, dstId, amount, rid) => raw.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
     VALUES (?, ?, ?, ?, 'gather', ?, ?, ?, ?, NULL, ?)`).run(src, srcId, dst, dstId, amount, day, t - 60, ok, rid);
