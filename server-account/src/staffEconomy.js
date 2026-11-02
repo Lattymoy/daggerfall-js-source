@@ -145,8 +145,8 @@ export const leftOutSql = (/** @type {string} */ c, /** @type {string} */ p, /**
   `(${bannedSql(p, nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;
 
 /** ECON-BANNED-OUT: the account `p` banned now - for the economy's rows that name an account and no character. */
-const bannedSql = (/** @type {string} */ p, /** @type {number} */ nowS) =>
-  `COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)}`;
+const bannedSql = (/** @type {string} */ account, /** @type {number} */ nowS) =>
+  `COALESCE(${account}.banned_until, 0) > ${Math.floor(nowS)}`;
 
 /** The character and the account a row of `t` (a `player` and a `char_id`) names, joined for leftOutSql('c', 'p'). */
 const OUT_JOIN = (/** @type {string} */ t) =>
