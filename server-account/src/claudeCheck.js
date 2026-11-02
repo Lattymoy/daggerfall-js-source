@@ -1,5 +1,5 @@
 // @ts-check
-// CLAUDE'S BOT CHECK IN THE FREEZE CHAT (bible/11-Multiplayer/Claude-Staff.md). When staff freeze a player whom Claude
+// CLAUDE'S BOT CHECK IN THE FREEZE CHAT, described in the Claude-Staff bible note. When staff freeze a player whom Claude
 // reported as a likely bot (a bot-ring, reactions, monster watch or network suggestion made before the freeze), Claude asks
 // that player a few short questions in the freeze's staff chat, then writes what it found as a staff note for staff to
 // read. It never freezes, unfreezes, mutes or bans anyone. It stays out of any thread where another staff member has
@@ -30,7 +30,7 @@ export const CHECK_DONE_LINE = 'Thanks for answering. A staff member will look a
 
 export const checkPrompt = () =>
   [
-    'You are Claude, a member of staff on the Daggerfall Online game. Staff froze this player because they may be a bot or a script.',
+    'You are Claude, a member of staff on this online game. Staff froze this player because they may be a bot or a script.',
     'You talk to the player in the freeze chat to check whether a person is at the keyboard. Ask ONE short, friendly question at a time',
     '(at most 150 characters) that a person answers at once and a script does not: what they were just doing, a simple question about',
     'the conversation itself, or a small request such as typing a word back. Never give help: no tips, game answers, directions, prices',
